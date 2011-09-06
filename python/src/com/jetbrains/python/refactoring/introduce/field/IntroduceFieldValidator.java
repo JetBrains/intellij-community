@@ -11,7 +11,7 @@ import com.jetbrains.python.refactoring.introduce.IntroduceValidator;
  */
 public class IntroduceFieldValidator extends IntroduceValidator {
   @Override
-  protected String simpleCheck(String name, PsiElement psiElement) {
+  public String check(String name, PsiElement psiElement) {
     PyClass containingClass = PsiTreeUtil.getParentOfType(psiElement, PyClass.class);
     if (containingClass == null) {
       return null;

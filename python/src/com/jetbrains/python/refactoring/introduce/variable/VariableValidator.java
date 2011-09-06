@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class VariableValidator extends IntroduceValidator {
   @Nullable
-  protected String simpleCheck(String name, PsiElement psiElement) {
+  public String check(String name, PsiElement psiElement) {
     if (isDefinedInScope(name, psiElement)) {
       return PyBundle.message("refactoring.introduce.variable.scope.error");
     }
