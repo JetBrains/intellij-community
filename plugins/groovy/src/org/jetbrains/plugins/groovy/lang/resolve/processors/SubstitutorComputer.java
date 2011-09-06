@@ -1,0 +1,219 @@
+/*
+ * Copyright 2000-2011 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.jetbrains.plugins.groovy.lang.resolve.processors;
+
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.*;
+import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.containers.hash.HashSet;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
+import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+
+import java.util.Set;
+
+/**
+ * @author Max Medvedev
+ */
+public abstract class SubstitutorComputer {
+  private static final Logger LOG = Logger.getInstance(SubstitutorComputer.class);
+
+  protected final GroovyPsiElement myPlace;
+
+  private final PsiType myThisType;
+  @Nullable private final PsiType[] myArgumentTypes;
+  private final PsiType[] myTypeArguments;
+
+  private final boolean myAllVariants;
+
+  private final GrControlFlowOwner myFlowOwner;
+
+
+  public SubstitutorComputer(PsiType thisType,
+                             PsiType[] argumentTypes,
+                             PsiType[] typeArguments,
+                             boolean allVariants,
+                             GroovyPsiElement place) {
+    myThisType = thisType;
+    myArgumentTypes = argumentTypes;
+    myTypeArguments = typeArguments;
+    myAllVariants = allVariants;
+    myPlace = place;
+
+    if (canBexExitPoint(place)) {
+      myFlowOwner = ControlFlowUtils.findControlFlowOwner(place);
+    }
+    else {
+      myFlowOwner = null;
+    }
+  }
+
+  private static boolean canBexExitPoint(PsiElement place) {
+    while (place != null) {
+      if (place instanceof GrMethod || place instanceof GrClosableBlock || place instanceof GrClassInitializer) return true;
+      if (place instanceof GrThrowStatement || place instanceof GrTypeDefinitionBody || place instanceof GroovyFile) return false;
+      place = place.getParent();
+    }
+    return false;
+  }
+
+  public PsiSubstitutor obtainSubstitutor(PsiSubstitutor substitutor, PsiMethod method, ResolveState state) {
+    final PsiTypeParameter[] typeParameters = method.getTypeParameters();
+    if (myTypeArguments.length == typeParameters.length) {
+      for (int i = 0; i < typeParameters.length; i++) {
+        PsiTypeParameter typeParameter = typeParameters[i];
+        final PsiType typeArgument = myTypeArguments[i];
+        substitutor = substitutor.put(typeParameter, typeArgument);
+      }
+      return substitutor;
+    }
+
+    if (myArgumentTypes != null && method.hasTypeParameters()) {
+      PsiType[] argTypes = myArgumentTypes;
+      final GroovyPsiElement resolveContext = state.get(ResolverProcessor.RESOLVE_CONTEXT);
+      if (method instanceof GrGdkMethod) {
+        //type inference should be performed from static method
+        PsiType[] newArgTypes = new PsiType[argTypes.length + 1];
+        if (GdkMethodUtil.isInWithContext(resolveContext)) {
+          newArgTypes[0] = ((GrExpression)resolveContext).getType();
+        }
+        else {
+          newArgTypes[0] = myThisType;
+        }
+        System.arraycopy(argTypes, 0, newArgTypes, 1, argTypes.length);
+        argTypes = newArgTypes;
+
+        method = ((GrGdkMethod)method).getStaticMethod();
+        LOG.assertTrue(method.isValid());
+      }
+      else if (GdkMethodUtil.isInUseScope(resolveContext, method)) {
+        PsiType[] newArgTypes = new PsiType[argTypes.length + 1];
+        newArgTypes[0] = myThisType;
+        System.arraycopy(argTypes, 0, newArgTypes, 1, argTypes.length);
+        argTypes = newArgTypes;
+      }
+
+      return inferMethodTypeParameters(method, substitutor, typeParameters, argTypes);
+    }
+
+    return substitutor;
+  }
+
+  private PsiSubstitutor inferMethodTypeParameters(PsiMethod method,
+                                                   PsiSubstitutor partialSubstitutor,
+                                                   final PsiTypeParameter[] typeParameters,
+                                                   final PsiType[] argTypes) {
+    if (typeParameters.length == 0 || myArgumentTypes == null) return partialSubstitutor;
+
+    final GrClosureSignature erasedSignature = GrClosureSignatureUtil.createSignatureWithErasedParameterTypes(method);
+
+    final GrClosureSignature signature = GrClosureSignatureUtil.createSignature(method, partialSubstitutor);
+    final GrClosureParameter[] params = signature.getParameters();
+
+    final GrClosureSignatureUtil.ArgInfo<PsiType>[] argInfos =
+      GrClosureSignatureUtil.mapArgTypesToParameters(erasedSignature, argTypes, myPlace, myAllVariants);
+    if (argInfos == null) return partialSubstitutor;
+
+    int max = Math.max(params.length, argTypes.length);
+
+    PsiType[] parameterTypes = new PsiType[max];
+    PsiType[] argumentTypes = new PsiType[max];
+    int i = 0;
+    for (int paramIndex = 0; paramIndex < argInfos.length; paramIndex++) {
+      PsiType paramType = params[paramIndex].getType();
+
+      GrClosureSignatureUtil.ArgInfo<PsiType> argInfo = argInfos[paramIndex];
+      if (argInfo != null) {
+        if (argInfo.isMultiArg) {
+          if (paramType instanceof PsiArrayType) paramType = ((PsiArrayType)paramType).getComponentType();
+        }
+        for (PsiType type : argInfo.args) {
+          argumentTypes[i] = handleConversion(paramType, type);
+          parameterTypes[i] = paramType;
+          i++;
+        }
+      }
+      else {
+        parameterTypes[i] = paramType;
+        argumentTypes[i] = PsiType.NULL;
+        i++;
+      }
+    }
+    final PsiResolveHelper helper = JavaPsiFacade.getInstance(method.getProject()).getResolveHelper();
+    PsiSubstitutor substitutor = helper.inferTypeArguments(typeParameters, parameterTypes, argumentTypes, LanguageLevel.HIGHEST);
+    for (PsiTypeParameter typeParameter : typeParameters) {
+      if (!substitutor.getSubstitutionMap().containsKey(typeParameter)) {
+        substitutor = inferFromContext(typeParameter, PsiUtil.getSmartReturnType(method), substitutor, helper);
+      }
+    }
+
+    return partialSubstitutor.putAll(substitutor);
+  }
+
+  private PsiType handleConversion(PsiType paramType, PsiType argType) {
+    final GroovyPsiElement context = myPlace;
+    if (!TypesUtil.isAssignable(TypeConversionUtil.erasure(paramType), argType, context.getManager(), context.getResolveScope(), false) &&
+        TypesUtil.isAssignableByMethodCallConversion(paramType, argType, context)) {
+      return paramType;
+    }
+    return argType;
+  }
+
+  private PsiSubstitutor inferFromContext(PsiTypeParameter typeParameter,
+                                          PsiType lType,
+                                          PsiSubstitutor substitutor,
+                                          PsiResolveHelper helper) {
+    if (myPlace != null) {
+      final PsiType inferred =
+        helper.getSubstitutionForTypeParameter(typeParameter, lType, getContextType(), false, LanguageLevel.HIGHEST);
+      if (inferred != PsiType.NULL) {
+        return substitutor.put(typeParameter, inferred);
+      }
+    }
+    return substitutor;
+  }
+
+  @Nullable
+  protected abstract PsiType getContextType();
+
+  private Set<GrStatement> myExitPoints;
+
+  protected boolean exitsContains(PsiElement call) {
+    if (myFlowOwner == null) return false;
+    if (myExitPoints == null) {
+      myExitPoints = new HashSet<GrStatement>();
+      myExitPoints.addAll(ControlFlowUtils.collectReturns(myFlowOwner));
+    }
+    return myExitPoints.contains(call);
+  }
+}
