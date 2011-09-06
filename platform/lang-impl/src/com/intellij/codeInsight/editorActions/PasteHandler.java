@@ -444,7 +444,10 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
       }
       
       // Insert white space from the start line of the pasted block.
-      document.insertString(start, chars.subSequence(firstLineStart, CharArrayUtil.shiftForward(chars, firstLineStart, " \t")));
+      int indentToKeepEndOffset = Math.min(startOffset, CharArrayUtil.shiftForward(chars, firstLineStart, " \t"));
+      if (indentToKeepEndOffset > firstLineStart) {
+        document.insertString(start, chars.subSequence(firstLineStart, indentToKeepEndOffset));
+      }
     }
     else {
       lastLine = document.getLineNumber(endOffset);
