@@ -94,7 +94,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
   }
 
   private final IntroduceValidator myValidator;
-  private final String myDialogTitle;
+  protected final String myDialogTitle;
 
   protected IntroduceHandler(@NotNull final IntroduceValidator validator, @NotNull final String dialogTitle) {
     myValidator = validator;
@@ -305,8 +305,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
   }
 
   private void performActionOnElement(IntroduceOperation operation) {
-    final Project project = operation.getProject();
-    if (!checkEnabled(project, operation.getEditor(), operation.getElement(), myDialogTitle)) {
+    if (!checkEnabled(operation)) {
       return;
     }
     final PsiElement element = operation.getElement();
@@ -408,7 +407,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     return PyElementGenerator.getInstance(project).createFromText(langLevel, PyAssignmentStatement.class, assignmentText);
   }
 
-  protected boolean checkEnabled(Project project, Editor editor, PsiElement element1, String dialogTitle) {
+  protected boolean checkEnabled(IntroduceOperation operation) {
     return true;
   }
 

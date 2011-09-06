@@ -82,10 +82,10 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
   }
 
   @Override
-  protected boolean checkEnabled(Project project, Editor editor, PsiElement element1, String dialogTitle) {
-    if (PyUtil.getContainingClassOrSelf(element1) == null) {
-      CommonRefactoringUtil.showErrorHint(project, editor, "Cannot introduce field: not in class", dialogTitle,
-                                          "refactoring.extractMethod");
+  protected boolean checkEnabled(IntroduceOperation operation) {
+    if (PyUtil.getContainingClassOrSelf(operation.getElement()) == null) {
+      CommonRefactoringUtil.showErrorHint(operation.getProject(), operation.getEditor(), "Cannot introduce field: not in class", myDialogTitle,
+                                          getHelpId());
       return false;
     }
     return true;
