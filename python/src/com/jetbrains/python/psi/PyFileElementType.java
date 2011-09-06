@@ -15,12 +15,17 @@ import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.io.StringRef;
+import com.jetbrains.python.console.parsing.PyConsoleParsingContext;
+import com.jetbrains.python.console.PydevConsoleRunner;
+import com.jetbrains.python.console.parsing.PythonConsoleLexer;
 import com.jetbrains.python.lexer.PythonIndentingLexer;
+import com.jetbrains.python.parsing.ParsingContext;
 import com.jetbrains.python.parsing.PyParser;
 import com.jetbrains.python.parsing.StatementParsing;
 import com.jetbrains.python.psi.impl.stubs.PyFileStubBuilder;
 import com.jetbrains.python.psi.impl.stubs.PyFileStubImpl;
 import com.jetbrains.python.psi.stubs.PyFileStub;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -29,8 +34,8 @@ import java.util.BitSet;
 import java.util.List;
 
 /**
-* @author yole
-*/
+ * @author yole
+ */
 public class PyFileElementType extends IStubFileElementType<PyFileStub> {
   public PyFileElementType(Language language) {
     super(language);
@@ -50,6 +55,10 @@ public class PyFileElementType extends IStubFileElementType<PyFileStub> {
   public ASTNode parseContents(ASTNode chameleon) {
     final FileElement node = (FileElement)chameleon;
     final LanguageLevel languageLevel = getLanguageLevel(node.getPsi());
+
+    if (PydevConsoleRunner.isInPydevConsole(node)) {
+      return parseConsoleCode(node, languageLevel);
+    }
     final Lexer lexer = new PythonIndentingLexer();
 
     final Project project = chameleon.getPsi().getProject();
@@ -60,8 +69,26 @@ public class PyFileElementType extends IStubFileElementType<PyFileStub> {
     final PyParser parser = new PyParser(languageLevel);
     if (languageLevel == LanguageLevel.PYTHON26 &&
         node.getPsi().getContainingFile().getName().equals("__builtin__.py")) {
-      parser.setFutureFlag(StatementParsing.FUTURE.PRINT_FUNCTION);      
+      parser.setFutureFlag(StatementParsing.FUTURE.PRINT_FUNCTION);
     }
+
+    return parser.parse(this, builder).getFirstChildNode();
+  }
+
+  private ASTNode parseConsoleCode(@NotNull FileElement node, LanguageLevel languageLevel) {
+    final Lexer lexer = new PythonConsoleLexer();
+
+    final Project project = node.getPsi().getProject();
+    final PsiBuilderFactory factory = PsiBuilderFactory.getInstance();
+
+    final PsiBuilder builder = factory.createBuilder(project, node, lexer, getLanguage(), node.getChars());
+
+    final PyParser parser = new PyParser(languageLevel) {
+      @Override
+      protected ParsingContext createParsingContext(PsiBuilder builder, LanguageLevel languageLevel, StatementParsing.FUTURE futureFlag) {
+        return new PyConsoleParsingContext(builder, languageLevel, futureFlag);
+      }
+    };
 
     return parser.parse(this, builder).getFirstChildNode();
   }
@@ -100,7 +127,7 @@ public class PyFileElementType extends IStubFileElementType<PyFileStub> {
     // NOTE: here we assume that bitset has no more than 32 bits so that the value fits into an int.
     BitSet ret = new BitSet(32); // see PyFileStubImpl: we assume that all bits fit into an int
     int bits = dataStream.readInt();
-    for (int i=0; i<32; i+=1) {
+    for (int i = 0; i < 32; i += 1) {
       boolean bit = (bits & (1 << i)) != 0;
       ret.set(i, bit);
     }
@@ -110,8 +137,8 @@ public class PyFileElementType extends IStubFileElementType<PyFileStub> {
   private static void writeBitSet(StubOutputStream dataStream, BitSet bitset) throws IOException {
     // NOTE: here we assume that bitset has no more than 32 bits so that the value fits into an int.
     int result = 0;
-    for (int i=0; i <32; i+=1) {
-      int bit = (bitset.get(i)? 1 : 0) << i;
+    for (int i = 0; i < 32; i += 1) {
+      int bit = (bitset.get(i) ? 1 : 0) << i;
       result |= bit;
     }
     dataStream.writeInt(result);
@@ -124,7 +151,7 @@ public class PyFileElementType extends IStubFileElementType<PyFileStub> {
     else {
       dataStream.writeBoolean(true);
       dataStream.writeVarInt(names.size());
-      for(String name: names) {
+      for (String name : names) {
         dataStream.writeName(name);
       }
     }
@@ -137,7 +164,7 @@ public class PyFileElementType extends IStubFileElementType<PyFileStub> {
     if (hasNames) {
       int size = dataStream.readVarInt();
       names = new ArrayList<String>(size);
-      for(int i=0; i<size; i++) {
+      for (int i = 0; i < size; i++) {
         names.add(dataStream.readName().getString());
       }
     }

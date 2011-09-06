@@ -77,7 +77,7 @@ public class PythonHighlightingLexer extends PythonLexer {
     pending_id,
     pending_comma,
     stop
-  } ;
+  }
 
   private state myState = state.init;
   private boolean hasUnicodeImport = false;

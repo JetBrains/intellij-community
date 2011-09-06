@@ -82,7 +82,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
   }
 
   @Nullable
-  private static PsiElement replaceExpression(PyExpression newExpression, Project project, PsiElement expression) {
+  protected PsiElement replaceExpression(PsiElement expression, PyExpression newExpression) {
     PyExpressionStatement statement = PsiTreeUtil.getParentOfType(expression, PyExpressionStatement.class);
     if (statement != null) {
       if (statement.getExpression() == expression) {
@@ -90,7 +90,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
         return null;
       }
     }
-    return PyPsiUtils.replaceExpression(project, expression, newExpression);
+    return PyPsiUtils.replaceExpression(expression, newExpression);
   }
 
   private final IntroduceValidator myValidator;
@@ -102,7 +102,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
-    performAction(new IntroduceOperation(project, editor, file, null, false, false, false));
+    performAction(new IntroduceOperation(project, editor, file, null, false, false));
   }
 
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
@@ -166,10 +166,6 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
       }
     }
     return candidates;
-  }
-
-  public void performAction(@NotNull final Project project, Editor editor, PsiFile file, String name, boolean replaceAll, boolean hasConstructor, boolean isTestClass) {
-    performAction(new IntroduceOperation(project, editor, file, name, replaceAll, hasConstructor, isTestClass));
   }
 
   public void performAction(IntroduceOperation operation) {
@@ -330,20 +326,25 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
 
   protected void performActionOnElementOccurrences(final IntroduceOperation operation) {
     final Editor editor = operation.getEditor();
-    if (editor.getSettings().isVariableInplaceRenameEnabled() && !ApplicationManager.getApplication().isUnitTestMode()) {
+    if (editor.getSettings().isVariableInplaceRenameEnabled()) {
       ensureName(operation);
-      new OccurrencesChooser<PsiElement>(editor) {
-        @Override
-        protected TextRange getOccurrenceRange(PsiElement occurrence) {
-          return occurrence.getTextRange();
-        }
-      }.showChooser(operation.getElement(), operation.getOccurrences(), new Pass<OccurrencesChooser.ReplaceChoice>() {
-        @Override
-        public void pass(OccurrencesChooser.ReplaceChoice replaceChoice) {
-          operation.setReplaceAll(replaceChoice == OccurrencesChooser.ReplaceChoice.ALL);
-          performInplaceIntroduce(operation);
-        }
-      });
+      if (operation.isReplaceAll() != null) {
+        performInplaceIntroduce(operation);
+      }
+      else {
+        new OccurrencesChooser<PsiElement>(editor) {
+          @Override
+          protected TextRange getOccurrenceRange(PsiElement occurrence) {
+            return occurrence.getTextRange();
+          }
+        }.showChooser(operation.getElement(), operation.getOccurrences(), new Pass<OccurrencesChooser.ReplaceChoice>() {
+          @Override
+          public void pass(OccurrencesChooser.ReplaceChoice replaceChoice) {
+            operation.setReplaceAll(replaceChoice == OccurrencesChooser.ReplaceChoice.ALL);
+            performInplaceIntroduce(operation);
+          }
+        });
+      }
     }
     else {
       performIntroduceWithDialog(operation);
@@ -431,7 +432,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
         if (operation.isReplaceAll()) {
           List<PsiElement> newOccurrences = new ArrayList<PsiElement>();
           for (PsiElement occurrence : operation.getOccurrences()) {
-            final PsiElement replaced = replaceExpression(newExpression, project, occurrence);
+            final PsiElement replaced = replaceExpression(occurrence, newExpression);
             if (replaced != null) {
               newOccurrences.add(replaced);
             }
@@ -439,7 +440,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
           operation.setOccurrences(newOccurrences);
         }
         else {
-          replaceExpression(newExpression, project, expression);
+          replaceExpression(expression, newExpression);
         }
 
         postRefactoring(operation.getElement());

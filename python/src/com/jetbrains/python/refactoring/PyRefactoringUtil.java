@@ -75,26 +75,27 @@ public class PyRefactoringUtil {
     // Check if selection breaks AST node in binary expression
     if (parent instanceof PyBinaryExpression) {
       final String selection = file.getText().substring(element1.getTextOffset(), element2.getTextOffset() + element2.getTextLength());
-      final PyExpression expression =
-        PyElementGenerator.getInstance(project).createFromText(LanguageLevel.getDefault(), PyAssignmentStatement.class, "z=" + selection)
-          .getAssignedValue();
-      if (PsiUtilBase.hasErrorElementChild(expression)) {
+      final PyElementGenerator generator = PyElementGenerator.getInstance(project);
+      final LanguageLevel langLevel = LanguageLevel.forElement(element1);
+      final PyExpression expression = generator.createFromText(langLevel, PyAssignmentStatement.class, "z=" + selection).getAssignedValue();
+      if (PsiUtilBase.hasErrorElementChild(expression) || !(expression instanceof PyBinaryExpression)) {
         return null;
       }
       final String parentText = parent.getText();
       final int startOffset = element1.getTextOffset() - parent.getTextOffset() - 1;
+      if (startOffset < 0) {
+        return null;
+      }
       final int endOffset = element2.getTextOffset() + element2.getTextLength() - parent.getTextOffset();
 
       final String prefix = parentText.substring(0, startOffset);
       final String suffix = parentText.substring(endOffset, parentText.length());
       final TextRange textRange = TextRange.from(startOffset, endOffset - startOffset);
-      final PsiElement fakeExpression =
-        PyElementGenerator.getInstance(project).createFromText(LanguageLevel.getDefault(), parent.getClass(), prefix + "python" + suffix);
+      final PsiElement fakeExpression = generator.createFromText(langLevel, parent.getClass(), prefix + "python" + suffix);
       if (PsiUtilBase.hasErrorElementChild(fakeExpression)) {
         return null;
       }
 
-      assert expression != null;
       expression.putUserData(PyPsiUtils.SELECTION_BREAKS_AST_NODE, Pair.create(parent, textRange));
       return expression;
     }

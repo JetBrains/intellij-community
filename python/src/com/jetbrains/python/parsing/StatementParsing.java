@@ -217,7 +217,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     return myContext.getLanguageLevel().hasPrintStatement() && !myFutureFlags.contains(FUTURE.PRINT_FUNCTION);
   }
 
-  private void checkEndOfStatement(boolean inSuite) {
+  protected void checkEndOfStatement(boolean inSuite) {
     PsiBuilder builder = myContext.getBuilder();
     if (builder.getTokenType() == PyTokenTypes.STATEMENT_BREAK) {
       builder.advanceLexer();

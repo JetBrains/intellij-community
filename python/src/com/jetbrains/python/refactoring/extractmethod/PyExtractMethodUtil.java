@@ -234,7 +234,7 @@ public class PyExtractMethodUtil {
               PsiElement callElement = fragment.isReturnInstructionInside() ? returnStatement : returnStatement.getExpression();
 
               // replace statements with call
-              callElement = PyPsiUtils.replaceExpression(project, expression, callElement);
+              callElement = PyPsiUtils.replaceExpression(expression, callElement);
 
               // Set editor
               setSelectionAndCaret(editor, callElement);

@@ -29,7 +29,7 @@ public class PyHighlighter extends SyntaxHighlighterBase {
 
   @NotNull
   public Lexer getHighlightingLexer() {
-    LayeredLexer ret = new LayeredLexer(new PythonHighlightingLexer(myLanguageLevel));
+    LayeredLexer ret = new LayeredLexer(createHighlightingLexer(myLanguageLevel));
     ret.registerLayer(
       new PyStringLiteralLexer(PyTokenTypes.SINGLE_QUOTED_STRING),
       PyTokenTypes.SINGLE_QUOTED_STRING
@@ -48,6 +48,10 @@ public class PyHighlighter extends SyntaxHighlighterBase {
     );
 
     return ret;
+  }
+
+  protected PythonHighlightingLexer createHighlightingLexer(LanguageLevel languageLevel) {
+    return new PythonHighlightingLexer(myLanguageLevel);
   }
 
   private static TextAttributesKey _copy(String name, TextAttributesKey src) {

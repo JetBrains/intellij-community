@@ -36,6 +36,10 @@ public class PyIntroduceConstantTest extends PyIntroduceTestCase {
   public void testSuggestUniqueNames() {  // PY-4409
     doTestSuggestions(PyExpression.class, "STR1");
   }
+  
+  public void testPy4414() {
+    doTestInplace();
+  }
 
   @Override
   protected String getTestDataPath() {

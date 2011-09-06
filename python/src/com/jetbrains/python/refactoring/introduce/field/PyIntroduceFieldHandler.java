@@ -12,7 +12,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -44,7 +43,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
-    performAction(new IntroduceOperation(project, editor, file, null, false, true, isTestClass(file, editor)));
+    performAction(new IntroduceOperation(project, editor, file, null, true, isTestClass(file, editor)));
   }
 
   private static boolean isTestClass(PsiFile file, Editor editor) {
@@ -227,22 +226,36 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
   protected void performInplaceIntroduce(IntroduceOperation operation) {
     final PyAssignmentStatement statement = performRefactoring(operation);
     // put caret on identifier after "self."
-    putCaretOnFieldName(operation.getEditor(), statement);
-    PyTargetExpression target = (PyTargetExpression) statement.getTargets() [0];
     final List<PsiElement> occurrences = operation.getOccurrences();
-    final InplaceVariableIntroducer<PsiElement> introducer =
-            new PyInplaceFieldIntroducer(target, operation, occurrences);
+    final PsiElement occurrence = findOccurrenceUnderCaret(occurrences, operation.getEditor());
+    PyTargetExpression target = (PyTargetExpression) statement.getTargets() [0];
+    putCaretOnFieldName(operation.getEditor(), occurrence != null ? occurrence : target);
+    final InplaceVariableIntroducer<PsiElement> introducer = new PyInplaceFieldIntroducer(target, operation, occurrences);
     introducer.performInplaceRename(false, new LinkedHashSet<String>(operation.getSuggestedNames()));
   }
 
-  private static void putCaretOnFieldName(Editor editor, PyAssignmentStatement statement) {
-    int caretOffset = editor.getCaretModel().getOffset();
-    PsiElement elementAtOffset = statement.getContainingFile().findElementAt(caretOffset);
-    while (elementAtOffset instanceof PsiWhiteSpace && caretOffset > 0) {
-      elementAtOffset = statement.getContainingFile().findElementAt(--caretOffset);
+  @Nullable
+  private static PsiElement findOccurrenceUnderCaret(List<PsiElement> occurrences, Editor editor) {
+    if (occurrences.isEmpty()) {
+      return null;
     }
-    
-    PyQualifiedExpression qExpr = PsiTreeUtil.getParentOfType(elementAtOffset, PyQualifiedExpression.class);
+    int offset = editor.getCaretModel().getOffset();
+    for (PsiElement occurrence : occurrences) {
+      if (occurrence.getTextRange().contains(offset)) {
+        return occurrence;
+      }
+    }
+    int line = editor.getDocument().getLineNumber(offset);
+    for (PsiElement occurrence : occurrences) {
+      if (editor.getDocument().getLineNumber(occurrence.getTextRange().getStartOffset()) == line) {
+        return occurrence;
+      }
+    }
+    return occurrences.get(0);
+  }
+
+  private static void putCaretOnFieldName(Editor editor, PsiElement occurrence) {
+    PyQualifiedExpression qExpr = PsiTreeUtil.getParentOfType(occurrence, PyQualifiedExpression.class, false);
     if (qExpr != null && qExpr.getQualifier() == null) {
       qExpr = PsiTreeUtil.getParentOfType(qExpr, PyQualifiedExpression.class);
     }

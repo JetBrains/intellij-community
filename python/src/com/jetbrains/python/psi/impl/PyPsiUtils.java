@@ -65,8 +65,7 @@ public class PyPsiUtils {
     return node;
   }
 
-  public static PsiElement replaceExpression(@NotNull final Project project,
-                                             @NotNull final PsiElement oldExpression,
+  public static PsiElement replaceExpression(@NotNull final PsiElement oldExpression,
                                              @NotNull final PsiElement newExpression) {
     final Pair<PsiElement, TextRange> data = oldExpression.getUserData(SELECTION_BREAKS_AST_NODE);
     if (data != null) {
@@ -75,8 +74,9 @@ public class PyPsiUtils {
       final String parentText = parent.getText();
       final String prefix = parentText.substring(0, textRange.getStartOffset());
       final String suffix = parentText.substring(textRange.getEndOffset(), parent.getTextLength());
-      final PsiElement expression = PyElementGenerator.getInstance(project).createFromText(LanguageLevel.getDefault(), parent.getClass(),
-                                                                                           prefix + newExpression.getText() + suffix);
+      final PyElementGenerator generator = PyElementGenerator.getInstance(oldExpression.getProject());
+      final LanguageLevel languageLevel = LanguageLevel.forElement(oldExpression);
+      final PsiElement expression = generator.createFromText(languageLevel, parent.getClass(), prefix + newExpression.getText() + suffix);
       return parent.replace(expression);
     }
     else {
