@@ -132,8 +132,13 @@ public class LibrariesDownloadAssistant {
       @Override
       public LibraryInfo fun(ArtifactItem artifactItem) {
         String downloadUrl = artifactItem.getUrl();
-        if (!downloadUrl.startsWith("http://") && urlPrefix != null) {
-          downloadUrl = urlPrefix + downloadUrl;
+        if (urlPrefix != null) {
+          if (downloadUrl == null) {
+            downloadUrl = artifactItem.getName();
+          }
+          if (!downloadUrl.startsWith("http://")) {
+            downloadUrl = urlPrefix + downloadUrl;
+          }
         }
         return new LibraryInfo(artifactItem.getName(), downloadUrl, downloadUrl, artifactItem.getMD5(), artifactItem.getRequiredClasses());
       }
