@@ -220,7 +220,7 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
 
       myUpdatedFilesManager.setCvsFileSystem(clientEnvironment.getCvsFileSystem());
       final EventManager eventManager = new EventManager(CvsApplicationLevelConfiguration.getCharset());
-      IGlobalOptions globalOptions = command.getIGlobalOptions();
+      IGlobalOptions globalOptions = command.getGlobalOptions();
 
 
       final IRequestProcessor requestProcessor = new RequestProcessor(clientEnvironment,

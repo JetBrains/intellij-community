@@ -159,7 +159,7 @@ public final class UpdateCommand extends AbstractCommand
 
 	protected void addModifiedRequest(FileObject fileObject, Entry entry, Requests requests, IClientEnvironment clientEnvironment) {
 		if (isCleanCopy()) {
-			if (!getIGlobalOptions().isDoNoChanges()) {
+			if (!getGlobalOptions().isDoNoChanges()) {
 				final String newFileName = ".#" + fileObject.getName() + '.' + entry.getRevision();
 
 				try {
