@@ -1695,11 +1695,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
       buffer.removeUserText(startOffset - deferredOffset, endOffset - deferredOffset);
       int charCountToDelete = endOffset - startOffset;
-
-      info.endOffset -= charCountToDelete;
-      if (info.startOffset == info.endOffset) {
-        consoleView.myTokens.remove(consoleView.myTokens.size() - 1);
-      }
     }
 
     document.deleteString(startOffset, endOffset);
