@@ -163,14 +163,14 @@ public class LookupTypedHandler extends TypedHandlerDelegate {
     final LookupElement currentItem = lookup.getCurrentItem();
     if (currentItem != null && charTyped != ' ') {
       if (charTyped != '*' || filtersDecision != CharFilter.Result.SELECT_ITEM_AND_FINISH_LOOKUP) {
-        String postfix = lookup.getAdditionalPrefix() + charTyped;
-        final PrefixMatcher matcher = lookup.itemMatcher(currentItem);
-        if (matcher.cloneWithPrefix(matcher.getPrefix() + postfix).prefixMatches(currentItem)) {
+        if (charTyped == '*') {
           return CharFilter.Result.ADD_TO_PREFIX;
         }
-        for (final LookupElement element : lookup.getItems()) {
-          PrefixMatcher elementMatcher = lookup.itemMatcher(element);
-          if (elementMatcher.cloneWithPrefix(elementMatcher.getPrefix() + postfix).prefixMatches(element)) {
+
+        String postfix = lookup.getAdditionalPrefix() + charTyped;
+        final PrefixMatcher matcher = lookup.itemMatcher(currentItem);
+        for (String lookupString : currentItem.getAllLookupStrings()) {
+          if (lookupString.startsWith(matcher.getPrefix() + postfix)) {
             return CharFilter.Result.ADD_TO_PREFIX;
           }
         }

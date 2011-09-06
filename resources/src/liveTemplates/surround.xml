@@ -39,7 +39,6 @@
     <context>
       <option name="JAVA_CODE" value="false" />
       <option name="JAVA_STATEMENT" value="true" />
-      <option name="ASPECTJ" value="true" />
     </context>
   </template>
   <template name="RL" resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.surround.with.read.lock"
@@ -49,7 +48,6 @@
     <context>
       <option name="JAVA_CODE" value="false" />
       <option name="JAVA_STATEMENT" value="true" />
-      <option name="ASPECTJ" value="true" />
     </context>
   </template>
   <template name="WL" resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.surround.with.write.lock" 
@@ -59,7 +57,6 @@
     <context>
       <option name="JAVA_CODE" value="false" />
       <option name="JAVA_STATEMENT" value="true" />
-      <option name="ASPECTJ" value="true" />
     </context>
   </template>
   <template name="I" value="for ($ELEMENT_TYPE$ $VAR$ : $SELECTION$) {&#10;  $END$&#10;}&#10;"
@@ -70,7 +67,6 @@
     <context>
       <option name="JAVA_CODE" value="false" />
       <option name="JAVA_STATEMENT" value="true" />
-      <option name="ASPECTJ" value="true" />
     </context>
   </template>
 </templateSet>

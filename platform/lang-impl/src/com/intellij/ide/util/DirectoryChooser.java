@@ -124,7 +124,7 @@ public class DirectoryChooser extends DialogWrapper {
     });
     final JComponent component = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actionGroup, true).getComponent();
     component.setBorder(null);
-    panel.add(component, BorderLayout.EAST);
+    panel.add(component, BorderLayout.WEST);
     return panel;
   }
 

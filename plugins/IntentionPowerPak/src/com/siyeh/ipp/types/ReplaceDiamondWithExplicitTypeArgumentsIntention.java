@@ -16,6 +16,7 @@
 package com.siyeh.ipp.types;
 
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
@@ -63,6 +64,6 @@ public class ReplaceDiamondWithExplicitTypeArgumentsIntention extends Intention 
                 JavaPsiFacade.getElementFactory(element.getProject());
         final PsiJavaCodeReferenceElement newReference =
                 elementFactory.createReferenceFromText(text.toString(), element);
-        javaCodeReferenceElement.replace(newReference);
+        CodeStyleManager.getInstance(javaCodeReferenceElement.getProject()).reformat(javaCodeReferenceElement.replace(newReference));
     }
 }

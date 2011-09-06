@@ -579,12 +579,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
       callback.pass(null);
     }
     else {
-      new OccurrencesChooser<PsiExpression>(editor) {
-        @Override
-        protected TextRange getOccurrenceRange(PsiExpression occurrence) {
-          return occurrence.getTextRange();
-        }
-      }.showChooser(callback, occurrencesMap);
+      new OccurrencesChooser<PsiExpression>(editor).showChooser(callback, occurrencesMap);
     }
     return wasSucceed[0];
   }
