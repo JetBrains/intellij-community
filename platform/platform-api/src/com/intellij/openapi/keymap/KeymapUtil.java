@@ -128,7 +128,7 @@ public class KeymapUtil {
       // do nothing
     }
     else {
-      throw new IllegalStateException("unknown button: " + button);
+      buttonNum = button;
     }
 
     if (clickCount == 1) {
