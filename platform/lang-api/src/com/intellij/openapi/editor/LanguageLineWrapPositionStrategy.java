@@ -45,7 +45,7 @@ public class LanguageLineWrapPositionStrategy extends LanguageExtension<LineWrap
   public LineWrapPositionStrategy forEditor(@NotNull Editor editor) {
     LineWrapPositionStrategy result = getDefaultImplementation();
     Project project = editor.getProject();
-    if (project != null) {
+    if (project != null && !project.isDisposed()) {
       PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       if (psiFile != null) {
         result = INSTANCE.forLanguage(psiFile.getLanguage());
