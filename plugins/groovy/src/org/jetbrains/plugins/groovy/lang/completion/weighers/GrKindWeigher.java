@@ -70,6 +70,7 @@ public class GrKindWeigher extends CompletionWeigher {
         if (isAccessor((PsiMember)o)) return NotQualifiedKind.accessor;
         if (PsiTreeUtil.isContextAncestor(containingClass, position, false)) return NotQualifiedKind.currentClassMember;
         if (o instanceof PsiClass && ((PsiClass)o).getContainingClass() == null || o instanceof PsiPackage) return NotQualifiedKind.unknown;
+        if (o instanceof PsiClass) return NotQualifiedKind.innerClass;
         return NotQualifiedKind.member;
       }
       return NotQualifiedKind.unknown;
@@ -118,6 +119,7 @@ public class GrKindWeigher extends CompletionWeigher {
   }
 
   private static enum NotQualifiedKind {
+    innerClass,
     unknown,
     accessor,
     member,
