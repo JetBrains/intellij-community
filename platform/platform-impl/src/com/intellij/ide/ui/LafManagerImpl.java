@@ -236,14 +236,6 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     return myCurrentLaf;
   }
 
-  public boolean isUnderAquaLookAndFeel() {
-    return UIUtil.isUnderAquaLookAndFeel();
-  }
-
-  public boolean isUnderQuaquaLookAndFeel() {
-    return UIUtil.isUnderQuaquaLookAndFeel();
-  }
-
   /**
    * @return default LookAndFeelInfo for the running OS. For Win32 and
    * Linux the method returns Alloy LAF or IDEA LAF if first not found, for Mac OS X it returns Aqua
@@ -844,7 +836,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     private static void fixPopupSize(final Popup popup, final Component contents) {
       if (!UIUtil.isUnderGTKLookAndFeel() || !(contents instanceof JPopupMenu)) return;
 
-      for (Class aClass = popup.getClass(); aClass != null && Popup.class.isAssignableFrom(aClass); aClass = aClass.getSuperclass()) {
+      for (Class<?> aClass = popup.getClass(); aClass != null && Popup.class.isAssignableFrom(aClass); aClass = aClass.getSuperclass()) {
         try {
           final Method getComponent = aClass.getDeclaredMethod("getComponent");
           getComponent.setAccessible(true);
