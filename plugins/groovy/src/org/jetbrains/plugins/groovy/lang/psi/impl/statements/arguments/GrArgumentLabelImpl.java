@@ -73,7 +73,7 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
       return null;
     }
 
-    GrCall call = PsiUtil.getMethodByNamedParameter((GrNamedArgument)namedArgument);
+    GrCall call = PsiUtil.getCallByNamedParameter((GrNamedArgument)namedArgument);
     if (call == null) return null;
 
     String labelName = getName();

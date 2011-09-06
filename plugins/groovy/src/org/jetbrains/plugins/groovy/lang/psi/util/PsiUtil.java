@@ -1058,7 +1058,15 @@ public class PsiUtil {
   }
 
   @Nullable
-  public static GrCall getMethodByNamedParameter(GrNamedArgument namedArgument) {
+  public static GrMethodCall getMethodCallByNamedParameter(GrNamedArgument namedArgument) {
+    GrCall res = getCallByNamedParameter(namedArgument);
+    if (res instanceof GrMethodCall) return (GrMethodCall)res;
+
+    return null;
+  }
+  
+  @Nullable
+  public static GrCall getCallByNamedParameter(GrNamedArgument namedArgument) {
     PsiElement parent = namedArgument.getParent();
 
     PsiElement eMethodCall;
