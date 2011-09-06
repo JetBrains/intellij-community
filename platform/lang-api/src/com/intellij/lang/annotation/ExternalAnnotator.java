@@ -27,19 +27,21 @@ import org.jetbrains.annotations.Nullable;
  * @author ven
  * @see com.intellij.lang.ExternalLanguageAnnotators
  */
-public abstract class ExternalAnnotator {
-
+public abstract class ExternalAnnotator<InitialInfoType, AnnotationResultType> {
+  // Invoked initially in read action
   @Nullable
-  public Object collectionInformation(@NotNull PsiFile file) {
+  public InitialInfoType collectionInformation(@NotNull PsiFile file) {
     return null;
   }
 
+  // Lengthy annotation goes here
   @Nullable
-  public Object doAnnotate(Object collectedInfo) {
+  public AnnotationResultType doAnnotate(InitialInfoType collectedInfo) {
     return null;
   }
 
-  public void apply(@NotNull PsiFile file, Object annotationResult, @NotNull AnnotationHolder holder) {
+  // Result of annotation is applied in read action
+  public void apply(@NotNull PsiFile file, AnnotationResultType annotationResult, @NotNull AnnotationHolder holder) {
   }
 
   /**
