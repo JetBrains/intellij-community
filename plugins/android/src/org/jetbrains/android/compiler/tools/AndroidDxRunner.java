@@ -15,7 +15,9 @@
  */
 package org.jetbrains.android.compiler.tools;
 
+import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -139,19 +141,47 @@ public class AndroidDxRunner {
     t.printStackTrace();
   }
 
-  private static void collectFiles(File root, Collection<String> result, Set<String> visited) throws IOException {
-    String path = root.getCanonicalPath();
+  private static void reportWarning(String message) {
+    System.err.println("warning: " + message);
+  }
+
+  private static void collectFiles(File root, Collection<String> result, Set<String> visited, Set<String> qNames) throws IOException {
+    collectFiles(root.getParentFile(), root, result, visited, qNames);
+  }
+
+  private static void collectFiles(File root, File file, Collection<String> result, Set<String> visited, Set<String> qNames)
+    throws IOException {
+    String path = file.getCanonicalPath();
     if (!visited.add(path)) {
       return;
     }
-    if (root.isDirectory()) {
-      for (File child : root.listFiles()) {
-        collectFiles(child, result, visited);
+    
+    if (file.isDirectory()) {
+      for (File child : file.listFiles()) {
+        collectFiles(root, child, result, visited, qNames);
       }
     }
     else {
+      if ("class".equals(FileUtil.getExtension(file.getName()))) {
+        final String qName = getQualifiedName(root, file);
+        if (qName != null && !qNames.add(qName)) {
+          reportWarning(FileUtil.toSystemDependentName(file.getPath()) + " won't be added. Class " +
+                        qName + " already exists in classpath");
+          return;
+        }
+      }
       result.add(path);
     }
+  }
+
+  @Nullable
+  private static String getQualifiedName(File root, File classFile) {
+    String relativePath = FileUtil.getRelativePath(root, classFile);
+    if (relativePath == null) {
+      return null;
+    }
+
+    return FileUtil.getNameWithoutExtension(FileUtil.toSystemIndependentName(relativePath)).replace('/', '.');
   }
 
   public static void main(String[] args) {
@@ -166,8 +196,11 @@ public class AndroidDxRunner {
     if (args.length == 2) {
       System.err.println("Error: no files");
     }
+
     Set<String> files = new HashSet<String>();
     HashSet<String> visited = new HashSet<String>();
+    HashSet<String> qNames = new HashSet<String>();
+
     int i = 2;
     while (i < args.length) {
       String arg = args[i];
@@ -177,7 +210,7 @@ public class AndroidDxRunner {
       File file = new File(arg);
       if (file.exists()) {
         try {
-          collectFiles(file, files, visited);
+          collectFiles(file, files, visited, qNames);
         }
         catch (IOException e) {
           reportError("I/O error", e);
