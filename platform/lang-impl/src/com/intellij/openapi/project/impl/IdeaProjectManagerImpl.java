@@ -23,6 +23,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,11 +51,12 @@ public class IdeaProjectManagerImpl extends ProjectManagerImpl {
   }
 
   @Nullable
-  protected Project convertAndLoadProject(String filePath, boolean convert) throws IOException {
+  public Project convertAndLoadProject(String filePath, boolean convert, Ref<Boolean> cancelled) throws IOException {
     final ConversionResult conversionResult;
     if (convert) {
       conversionResult = convertProject(filePath);
       if (conversionResult.openingIsCanceled()) {
+        cancelled.set(true);
         return null;
       }
     }

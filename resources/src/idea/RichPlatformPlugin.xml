@@ -31,9 +31,6 @@
     <xi:include href="/META-INF/VcsExtensionPoints.xml" xpointer="xpointer(/extensionPoints/*)"/>
     <xi:include href="/META-INF/LangExtensionPoints.xml" xpointer="xpointer(/extensionPoints/*)"/>
 
-    <extensionPoint name="project.converterProvider"
-                    interface="com.intellij.conversion.ConverterProvider"/>
-
     <extensionPoint name="antBuildGen"
                     interface="com.intellij.compiler.ant.ChunkBuildExtension"/>
 
@@ -172,9 +169,6 @@
 
     <projectService serviceInterface="com.intellij.lang.injection.InjectedLanguageManager"
                     serviceImplementation="com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl"/>
-
-    <applicationService serviceInterface="com.intellij.conversion.ConversionService"
-                        serviceImplementation="com.intellij.conversion.impl.ConversionServiceImpl"/>
 
     <projectService serviceInterface="com.intellij.codeInsight.ExternalAnnotationsManager"
                     serviceImplementation="com.intellij.codeInsight.ExternalAnnotationsManagerImpl"/>

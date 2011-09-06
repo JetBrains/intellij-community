@@ -156,6 +156,9 @@
   <applicationService serviceInterface="com.intellij.psi.impl.source.codeStyle.IndentHelper"
                       serviceImplementation="com.intellij.psi.impl.source.codeStyle.IndentHelperImpl"/>
 
+  <applicationService serviceInterface="com.intellij.conversion.ConversionService"
+                      serviceImplementation="com.intellij.conversion.impl.ConversionServiceImpl"/>
+
   <projectService serviceInterface="com.intellij.ui.EditorTextFieldProvider"
                   serviceImplementation="com.intellij.ui.EditorTextFieldProviderImpl"/>
 
@@ -678,4 +681,5 @@
 
   <editorTabTitleProvider implementation="com.intellij.openapi.fileEditor.impl.UniqueNameEditorTabTitleProvider"/>
   <fileDocumentManagerListener implementation="com.intellij.openapi.fileEditor.impl.TrailingSpacesStripper"/>
+
 </extensions>

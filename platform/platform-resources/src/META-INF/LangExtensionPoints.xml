@@ -495,4 +495,6 @@
   <extensionPoint name="patternProvider"
                   interface="com.intellij.codeInsight.generation.PatternProvider"/>
 
+  <extensionPoint name="project.converterProvider"
+                  interface="com.intellij.conversion.ConverterProvider"/>
 </extensionPoints>
