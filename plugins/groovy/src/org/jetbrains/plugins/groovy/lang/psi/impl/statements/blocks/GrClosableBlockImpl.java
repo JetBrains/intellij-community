@@ -68,10 +68,9 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
   }
 
   @Override
-  public PsiElement copy() {
-    final GrClosableBlockImpl clone = (GrClosableBlockImpl)super.copy();
-    clone.mySyntheticItParameter = null;
-    return clone;
+  public void clearCaches() {
+    super.clearCaches();
+    mySyntheticItParameter = null;
   }
 
   public boolean processDeclarations(final @NotNull PsiScopeProcessor processor,
@@ -181,21 +180,18 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     return getType();
   }
 
-  public void subtreeChanged() {
-    super.subtreeChanged();
-    mySyntheticItParameter = null;
-  }
-
   public GrParameter getSyntheticItParameter() {
-    if (mySyntheticItParameter == null) {
-      GrParameter fresh = new ClosureSyntheticParameter(this);
+    GrParameter res = mySyntheticItParameter;
+    if (res == null) {
+      res = new ClosureSyntheticParameter(this);
       synchronized (this) {
         if (mySyntheticItParameter == null) {
-          mySyntheticItParameter = fresh;
+          mySyntheticItParameter = res;
         }
       }
     }
-    return mySyntheticItParameter;
+
+    return res;
   }
 
   private PsiVariable getOwner() {
