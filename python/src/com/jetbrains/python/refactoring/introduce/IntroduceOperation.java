@@ -9,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 
 /**
@@ -19,10 +20,9 @@ public class IntroduceOperation {
   private final Editor myEditor;
   private final PsiFile myFile;
   private String myName;
+  private EnumSet<IntroduceHandler.InitPlace> myAvailableInitPlaces = EnumSet.of(IntroduceHandler.InitPlace.SAME_METHOD);
   private IntroduceHandler.InitPlace myInitPlace = IntroduceHandler.InitPlace.SAME_METHOD;
   private Boolean myReplaceAll;
-  private final boolean myHasConstructor;
-  private final boolean myTestClass;
   private PsiElement myElement;
   private PyExpression myInitializer;
   private List<PsiElement> myOccurrences = Collections.emptyList();
@@ -31,15 +31,19 @@ public class IntroduceOperation {
   public IntroduceOperation(Project project,
                             Editor editor,
                             PsiFile file,
-                            String name,
-                            boolean hasConstructor,
-                            boolean testClass) {
+                            String name) {
     myProject = project;
     myEditor = editor;
     myFile = file;
     myName = name;
-    myHasConstructor = hasConstructor;
-    myTestClass = testClass;
+  }
+
+  public void addAvailableInitPlace(IntroduceHandler.InitPlace initPlace) {
+    myAvailableInitPlaces.add(initPlace);
+  }
+
+  public EnumSet<IntroduceHandler.InitPlace> getAvailableInitPlaces() {
+    return myAvailableInitPlaces;
   }
 
   public String getName() {
@@ -108,13 +112,5 @@ public class IntroduceOperation {
 
   public void setSuggestedNames(Collection<String> suggestedNames) {
     mySuggestedNames = suggestedNames;
-  }
-
-  public boolean hasConstructor() {
-    return myHasConstructor;
-  }
-
-  public boolean isTestClass() {
-    return myTestClass;
   }
 }

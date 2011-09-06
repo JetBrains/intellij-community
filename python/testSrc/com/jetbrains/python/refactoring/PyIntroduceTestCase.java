@@ -46,8 +46,7 @@ public abstract class PyIntroduceTestCase extends PyLightFixtureTestCase {
     try {
       myFixture.getEditor().getSettings().setVariableInplaceRenameEnabled(false);
       IntroduceHandler handler = createHandler();
-      final IntroduceOperation operation = new IntroduceOperation(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile(),
-                                                                  "a", false, false);
+      final IntroduceOperation operation = new IntroduceOperation(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile(), "a");
       operation.setReplaceAll(true);
       if (customization != null) {
         customization.consume(operation);
@@ -70,8 +69,7 @@ public abstract class PyIntroduceTestCase extends PyLightFixtureTestCase {
       myFixture.getEditor().getSettings().setVariableInplaceRenameEnabled(true);
 
       IntroduceHandler handler = createHandler();
-      final IntroduceOperation introduceOperation = new IntroduceOperation(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile(), "a",
-                                                                           false, false);
+      final IntroduceOperation introduceOperation = new IntroduceOperation(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile(), "a");
       introduceOperation.setReplaceAll(true);
       if (customization != null) {
         customization.consume(introduceOperation);

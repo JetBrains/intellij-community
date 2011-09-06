@@ -44,7 +44,12 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
-    performAction(new IntroduceOperation(project, editor, file, null, true, isTestClass(file, editor)));
+    final IntroduceOperation operation = new IntroduceOperation(project, editor, file, null);
+    operation.addAvailableInitPlace(InitPlace.CONSTRUCTOR);
+    if (isTestClass(file, editor)) {
+      operation.addAvailableInitPlace(InitPlace.SET_UP);
+    }
+    performAction(operation);
   }
 
   private static boolean isTestClass(PsiFile file, Editor editor) {
@@ -287,8 +292,8 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
       super(target, operation.getEditor(), operation.getProject(), "Introduce Field",
             occurrences.toArray(new PsiElement[occurrences.size()]), null);
       myTarget = target;
-      if (!inConstructor(target)) {
-        myPanel = new PyIntroduceFieldPanel(myProject, operation.isTestClass());
+      if (operation.getAvailableInitPlaces().size() > 1) {
+        myPanel = new PyIntroduceFieldPanel(myProject, operation.getAvailableInitPlaces());
       }
       else {
         myPanel = null;

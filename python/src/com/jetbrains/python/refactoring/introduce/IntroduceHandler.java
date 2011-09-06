@@ -102,7 +102,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
-    performAction(new IntroduceOperation(project, editor, file, null, false, false));
+    performAction(new IntroduceOperation(project, editor, file, null));
   }
 
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {

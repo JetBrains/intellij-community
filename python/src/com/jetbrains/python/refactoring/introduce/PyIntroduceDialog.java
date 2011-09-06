@@ -18,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.*;
 import java.util.Collection;
+import java.util.EnumSet;
 
 /**
  * Created by IntelliJ IDEA.
@@ -57,7 +58,7 @@ public class PyIntroduceDialog extends DialogWrapper implements PyIntroduceSetti
     setModal(true);
     setTitle(caption);
     init();
-    setupDialog(operation.hasConstructor(), operation.isTestClass());
+    setupDialog(operation.getAvailableInitPlaces());
     updateControls();
   }
 
@@ -100,11 +101,12 @@ public class PyIntroduceDialog extends DialogWrapper implements PyIntroduceSetti
     }
   }
 
-  private void setupDialog(boolean hasConstructor, boolean isTest) {
+  private void setupDialog(EnumSet<IntroduceHandler.InitPlace> availableInitPlaces) {
     myReplaceAll.setMnemonic(KeyEvent.VK_A);
     myNameLabel.setLabelFor(myNameComboBox);
-    myPlaceSelector.setVisible(hasConstructor);
-    mySetUp.setVisible(isTest);
+    myPlaceSelector.setVisible(availableInitPlaces.size() > 0);
+    myConstructor.setVisible(availableInitPlaces.contains(IntroduceHandler.InitPlace.CONSTRUCTOR));
+    mySetUp.setVisible(availableInitPlaces.contains(IntroduceHandler.InitPlace.SET_UP));
     mySamePlace.setSelected(true);
     
     // Replace occurences check box setup
