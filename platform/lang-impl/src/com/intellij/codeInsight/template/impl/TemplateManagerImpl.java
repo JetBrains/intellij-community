@@ -486,7 +486,6 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
   }
 
   public static boolean isApplicable(PsiFile file, int offset, TemplateImpl template) {
-    TemplateManager instance = getInstance(file.getProject());
     TemplateContext context = template.getTemplateContext();
     if (isEnabled(file, offset, null, context)) {
       return true;

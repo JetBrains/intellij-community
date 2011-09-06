@@ -103,28 +103,23 @@ public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
   }
 
   public static ArrayList<TemplateImpl> getApplicableTemplates(Editor editor, PsiFile file, boolean selection) {
-    int offset = editor.getCaretModel().getOffset();
-    int startOffset = offset;
-    if (selection && editor.getSelectionModel().hasSelection()) {
-      final int selStart = editor.getSelectionModel().getSelectionStart();
-      final int selEnd = editor.getSelectionModel().getSelectionEnd();
-      startOffset = (offset == selStart) ? selEnd : selStart;
-    }
+    file = (PsiFile)file.copy();
+    final Document document = file.getViewProvider().getDocument();
+    assert document != null;
 
-    if (!selection) {
-      file = (PsiFile)file.copy();
-      final Document document = file.getViewProvider().getDocument();
-      assert document != null;
-      document.insertString(offset, CompletionUtil.DUMMY_IDENTIFIER_TRIMMED);
-      PsiDocumentManager.getInstance(file.getProject()).commitDocument(document);
+    int startOffset = editor.getCaretModel().getOffset();
+    if (selection && editor.getSelectionModel().hasSelection()) {
+      startOffset = editor.getSelectionModel().getSelectionStart();
+      document.deleteString(startOffset, editor.getSelectionModel().getSelectionEnd());
     }
-    
+    document.insertString(startOffset, CompletionUtil.DUMMY_IDENTIFIER_TRIMMED);
+    PsiDocumentManager.getInstance(file.getProject()).commitDocument(document);
+
     ArrayList<TemplateImpl> list = new ArrayList<TemplateImpl>();
     for (TemplateImpl template : TemplateSettings.getInstance().getTemplates()) {
       if (!template.isDeactivated() &&
           template.isSelectionTemplate() == selection &&
-          (TemplateManagerImpl.isApplicable(file, offset, template) ||
-           (selection && TemplateManagerImpl.isApplicable(file, startOffset, template)))) {
+          TemplateManagerImpl.isApplicable(file, startOffset, template)) {
         list.add(template);
       }
     }
