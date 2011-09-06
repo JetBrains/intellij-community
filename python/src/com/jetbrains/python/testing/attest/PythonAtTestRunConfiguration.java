@@ -9,6 +9,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.jetbrains.python.testing.AbstractPythonTestRunConfiguration;
+import com.jetbrains.python.testing.PyTestFrameworksUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -68,5 +69,12 @@ public class PythonAtTestRunConfiguration extends AbstractPythonTestRunConfigura
 
   public void setPattern(String pattern) {
     myPattern = pattern;
+  }
+
+  @Override
+  public void checkConfiguration() throws RuntimeConfigurationException {
+    super.checkConfiguration();
+    if (!PyTestFrameworksUtil.isAtTestInstalled(getProject(), getSdkHome()))
+      throw new RuntimeConfigurationError("No attest runner found in selected interpreter");
   }
 }

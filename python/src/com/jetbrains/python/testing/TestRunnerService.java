@@ -20,6 +20,10 @@ public class TestRunnerService implements PersistentStateComponent<TestRunnerSer
   private List<String> myConfigurations = new ArrayList<String>();
   public String PROJECT_CONFIGURATION = PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME;
 
+  public String PY_TEST_INSTALLED = "False";
+  public String NOSE_TEST_INSTALLED = "False";
+  public String AT_TEST_INSTALLED = "False";
+
   public TestRunnerService() {
     myConfigurations.add(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME);
     myConfigurations.add(PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME);
@@ -52,5 +56,29 @@ public class TestRunnerService implements PersistentStateComponent<TestRunnerSer
   }
   public String getProjectConfiguration() {
     return PROJECT_CONFIGURATION;
+  }
+
+  public void pyTestInstalled(String installed) {
+    PY_TEST_INSTALLED = installed;
+  }
+
+  public String isPyTestInstalled() {
+    return PY_TEST_INSTALLED;
+  }
+
+  public void noseTestInstalled(String installed) {
+    NOSE_TEST_INSTALLED = installed;
+  }
+
+  public String isNoseTestInstalled() {
+    return NOSE_TEST_INSTALLED;
+  }
+
+  public void atTestInstalled(String installed) {
+    AT_TEST_INSTALLED = installed;
+  }
+
+  public String isAtTestInstalled() {
+    return AT_TEST_INSTALLED;
   }
 }

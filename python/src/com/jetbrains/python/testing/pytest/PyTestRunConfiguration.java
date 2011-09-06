@@ -9,6 +9,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.jetbrains.python.testing.AbstractPythonTestRunConfiguration;
+import com.jetbrains.python.testing.PyTestFrameworksUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -82,7 +83,7 @@ public class PyTestRunConfiguration extends AbstractPythonTestRunConfiguration {
 
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
-    if (!PyTestUtil.isPyTestInstalled(getSdkHome()))
+    if (!PyTestFrameworksUtil.isPyTestInstalled(getProject(), getSdkHome()))
       throw new RuntimeConfigurationError("No py.test runner found in selected interpreter");
   }
 
