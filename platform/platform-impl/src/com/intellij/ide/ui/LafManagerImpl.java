@@ -445,8 +445,6 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       updateUI(frame);
     }
     fireLookAndFeelChanged();
-
-    initSeparatorDefaults(uiDefaults);
   }
 
   /**
@@ -666,14 +664,6 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     defaults.put("TextPane.font", font1);
     defaults.put("EditorPane.font", font1);
     defaults.put("TitledBorder.font", font);
-  }
-
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private static void initSeparatorDefaults(UIDefaults defaults) {
-    defaults.put("Separator.foreground", UIUtil.getTitledBorderLineColor());
-    defaults.put("Separator.background", null);
-    defaults.put("Separator.highlight", UIUtil.getTitledBorderLineColor());
-    defaults.put("Separator.shadow", null);
   }
 
 
