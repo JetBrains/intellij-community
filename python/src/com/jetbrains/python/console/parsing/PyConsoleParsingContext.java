@@ -1,6 +1,7 @@
 package com.jetbrains.python.console.parsing;
 
 import com.intellij.lang.PsiBuilder;
+import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.parsing.ExpressionParsing;
 import com.jetbrains.python.parsing.ParsingContext;
@@ -74,16 +75,27 @@ public class PyConsoleParsingContext extends ParsingContext {
 
     @Override
     public boolean parseExpressionOptional() {
-      if (myBuilder.getTokenType() == PyTokenTypes.PERC) {
+      if (myBuilder.getTokenType() == PyTokenTypes.PERC || myBuilder.getTokenType() == PyConsoleTokenTypes.PLING) {
+        PsiBuilder.Marker expr = myBuilder.mark();
+
         myBuilder.advanceLexer();
+
+        PsiBuilder.Marker command = myBuilder.mark();
         if (myBuilder.getTokenType() == PyTokenTypes.IDENTIFIER) {
           myBuilder.advanceLexer();
-          return true;
+          command.done(PyElementTypes.DECORATOR_CALL);
         }
         else {
+          expr.drop();
+          command.drop();
           myBuilder.error("Identifier expected.");
           return false;
         }
+        while (myBuilder.getTokenType() != null) {
+          myBuilder.advanceLexer();
+        }
+        expr.done(PyElementTypes.EMPTY_EXPRESSION);
+        return true;
       }
       else {
         return super.parseExpressionOptional();
