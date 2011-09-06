@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Set;
 
 public class PlaybackContext  {
@@ -33,6 +34,8 @@ public class PlaybackContext  {
   private Set<Class> myCallClasses;
   private PlaybackRunner myRunner;
 
+  private ArrayList<StageInfo> myStages = new ArrayList<StageInfo>();
+  
   public PlaybackContext(PlaybackRunner runner, PlaybackRunner.StatusCallback callback, int currentLine, Robot robot, boolean useDriectActionCall, PlaybackCommand currentCmd, File baseDir, Set<Class> callClasses) {
     myRunner = runner;
     myCallback = callback;
@@ -96,14 +99,30 @@ public class PlaybackContext  {
   }
 
   public void error(String text, int currentLine) {
-    getCallback().error(myRunner, text, currentLine);
+    getCallback().message(this, text, currentLine, PlaybackRunner.StatusCallback.Type.error);
   }
 
   public void message(String text, int currentLine) {
-    getCallback().message(myRunner, text, currentLine);
+    getCallback().message(this, text, currentLine, PlaybackRunner.StatusCallback.Type.message);
   }
 
   public void code(String text, int currentLine) {
-    getCallback().code(myRunner, text, currentLine);
+    getCallback().message(this, text, currentLine, PlaybackRunner.StatusCallback.Type.code);
+  }
+
+  public void pushStage(StageInfo info) {
+    myStages.add(info);
+  }
+
+  public StageInfo popStage() {
+    if (myStages.size() > 0) {
+      return myStages.remove(myStages.size() - 1);
+    }
+
+    return null;
+  }
+
+  public PlaybackRunner getRunner() {
+    return myRunner;
   }
 }

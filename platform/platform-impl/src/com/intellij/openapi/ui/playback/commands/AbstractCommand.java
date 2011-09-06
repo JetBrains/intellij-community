@@ -51,7 +51,9 @@ public abstract class AbstractCommand implements PlaybackCommand {
 
   public final ActionCallback execute(final PlaybackContext context) {
     try {
-      dumpCommand(context);
+      if (isToDumpCommand()) {
+        dumpCommand(context);
+      }
       final ActionCallback result = new ActionCallback();
       if (isAwtThread()) {
         _execute(context).notify(result);
@@ -70,6 +72,10 @@ public abstract class AbstractCommand implements PlaybackCommand {
       context.error(e.getMessage(), getLine());
       return new ActionCallback.Rejected();
     }
+  }
+
+  protected boolean isToDumpCommand() {
+    return true;
   }
 
   protected boolean isAwtThread() {

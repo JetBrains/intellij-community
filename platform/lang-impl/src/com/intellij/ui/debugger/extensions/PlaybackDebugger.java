@@ -29,6 +29,7 @@ import com.intellij.openapi.fileChooser.FileElement;
 import com.intellij.openapi.fileChooser.ex.FileChooserKeys;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.ui.playback.PlaybackRunner;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.*;
@@ -398,11 +399,11 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
         };                                            
 
         if (myRunner == null) {
-          _message("Script stopped", -1);
+          message(null, "Script stopped", -1, Type.message, true);
           return;
         }
 
-        _message("Starting script...", -1);
+        message(null, "Starting script...", -1, Type.message, true);
 
         try {
           sleep(1000);
@@ -411,7 +412,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
 
 
         if (myRunner == null) {
-          _message("Script stopped", -1);
+          message(null, "Script stopped", -1, Type.message, true);
           return;
         }
 
@@ -428,37 +429,27 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
     }.start();
   }
 
-  public void error(PlaybackRunner runner, final String text, final int currentLine) {
-    if (myRunner != runner) return;
-
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      public void run() {
-        addError(text, currentLine);
-      }
-    });
+  public void message(@Nullable final PlaybackContext context, final String text, final int currentLine, final Type type) {
+    message(context, text, currentLine, type, false);
   }
 
-  public void message(PlaybackRunner runner, final String text, final int currentLine) {
-    if (myRunner != runner) return;
-
-    _message(text, currentLine);
-  }
-
-  private void _message(final String text, final int currentLine) {
+  private void message(@Nullable final PlaybackContext context, final String text, final int currentLine, final Type type, final boolean forced) {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
       public void run() {
-        addInfo(text, currentLine, MESSAGE_COLOR);
-      }
-    });
-  }
+        if (!forced && (context != null && myRunner != context.getRunner())) return;
 
-  @Override
-  public void code(PlaybackRunner runner, final String text, final int currentLine) {
-    if (myRunner != runner) return;
-
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      public void run() {
-        addInfo(text, currentLine, CODE_COLOR);
+        switch (type) {
+          case message:
+            addInfo(text, currentLine, MESSAGE_COLOR);
+            break;
+          case error:
+            addInfo(text, currentLine, ERROR_COLOR);
+            break;
+          case code:
+            addInfo(text, currentLine, CODE_COLOR);
+            break;
+        }
       }
     });
   }
