@@ -21,6 +21,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VfsUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenConstants;
@@ -32,16 +33,26 @@ import java.util.Collection;
 import java.util.List;
 
 public class MavenOrderEnumeratorHandler extends OrderEnumerationHandler {
-  @Override
-  public boolean isApplicable(@NotNull Project project) {
-    return MavenProjectsManager.getInstance(project).isMavenizedProject();
+
+  public static class FactoryImpl extends OrderEnumerationHandler.Factory {
+    @Override
+    public boolean isApplicable(@NotNull Project project) {
+      return MavenProjectsManager.getInstance(project).isMavenizedProject();
+    }
+
+    @Override
+    public boolean isApplicable(@NotNull Module module) {
+      final MavenProjectsManager manager = MavenProjectsManager.getInstance(module.getProject());
+      return manager.isMavenizedModule(module);
+    }
+
+    @Override
+    public OrderEnumerationHandler createHandler(@Nullable Module module) {
+      return INSTANCE;
+    }
   }
 
-  @Override
-  public boolean isApplicable(@NotNull Module module) {
-    final MavenProjectsManager manager = MavenProjectsManager.getInstance(module.getProject());
-    return manager.isMavenizedModule(module);
-  }
+  private static final MavenOrderEnumeratorHandler INSTANCE = new MavenOrderEnumeratorHandler();
 
   @Override
   @NotNull

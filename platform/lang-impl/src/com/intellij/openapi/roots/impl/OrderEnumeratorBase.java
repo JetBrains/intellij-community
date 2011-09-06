@@ -56,12 +56,12 @@ abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnume
   public OrderEnumeratorBase(@Nullable Module module, @NotNull Project project, @Nullable OrderRootsCache cache) {
     myCache = cache;
     List<OrderEnumerationHandler> customHandlers = null;
-    for (OrderEnumerationHandler handler : OrderEnumerationHandler.EP_NAME.getExtensions()) {
-      if (handler.isApplicable(project) && (module == null || handler.isApplicable(module))) {
+    for (OrderEnumerationHandler.Factory handlerFactory : OrderEnumerationHandler.EP_NAME.getExtensions()) {
+      if (handlerFactory.isApplicable(project) && (module == null || handlerFactory.isApplicable(module))) {
         if (customHandlers == null) {
           customHandlers = new SmartList<OrderEnumerationHandler>();
         }
-        customHandlers.add(handler);
+        customHandlers.add(handlerFactory.createHandler(module));
       }
     }
     this.myCustomHandlers = customHandlers == null ? Collections.<OrderEnumerationHandler>emptyList() : customHandlers;
