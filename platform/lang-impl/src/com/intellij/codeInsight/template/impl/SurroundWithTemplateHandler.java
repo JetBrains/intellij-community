@@ -19,10 +19,12 @@ package com.intellij.codeInsight.template.impl;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.template.CustomLiveTemplate;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -108,6 +110,15 @@ public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
       final int selEnd = editor.getSelectionModel().getSelectionEnd();
       startOffset = (offset == selStart) ? selEnd : selStart;
     }
+
+    if (!selection) {
+      file = (PsiFile)file.copy();
+      final Document document = file.getViewProvider().getDocument();
+      assert document != null;
+      document.insertString(offset, CompletionUtil.DUMMY_IDENTIFIER_TRIMMED);
+      PsiDocumentManager.getInstance(file.getProject()).commitDocument(document);
+    }
+    
     ArrayList<TemplateImpl> list = new ArrayList<TemplateImpl>();
     for (TemplateImpl template : TemplateSettings.getInstance().getTemplates()) {
       if (!template.isDeactivated() &&
