@@ -146,11 +146,11 @@ public class ProjectUtil {
     }
 
     if (!forceOpenInNewFrame && openProjects.length > 0) {
-      int exitCode = confirmOpenNewProject();
-      if (exitCode == 0) { // "Yes" option
+      int exitCode = confirmOpenNewProject(false);
+      if (exitCode == 0) { // this window option
         if (!closeAndDispose(projectToClose != null ? projectToClose : openProjects[openProjects.length - 1])) return null;
       }
-      else if (exitCode != 1) { // not "No"
+      else if (exitCode != 1) { // not in a new window
         return null;
       }
     }
@@ -177,11 +177,17 @@ public class ProjectUtil {
     return project;
   }
 
-  public static int confirmOpenNewProject() {
+  /**
+   * @return 0 - this window
+   *         1 - new window
+   *         2 - cancel
+   * @param isNewProject
+   */
+  public static int confirmOpenNewProject(boolean isNewProject) {
     final GeneralSettings settings = GeneralSettings.getInstance();
     if (settings.getConfirmOpenNewProject() == GeneralSettings.OPEN_PROJECT_ASK) {
       return Messages.showYesNoCancelDialog(IdeBundle.message("prompt.open.project.in.new.frame"),
-                                            IdeBundle.message("title.open.project"),
+                                            isNewProject ? IdeBundle.message("title.new.project") : IdeBundle.message("title.open.project"),
                                             IdeBundle.message("button.existingframe"),
                                             IdeBundle.message("button.newframe"),
                                             CommonBundle.getCancelButtonText(), Messages.getQuestionIcon(),

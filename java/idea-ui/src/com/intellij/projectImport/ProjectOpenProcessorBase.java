@@ -151,8 +151,6 @@ public abstract class ProjectOpenProcessorBase extends ProjectOpenProcessor {
       final String projectFilePath = wizardContext.getProjectFileDirectory() + File.separator + wizardContext.getProjectName() +
                                      ProjectFileType.DOT_DEFAULT_EXTENSION;
 
-      boolean shouldOpenExisting = false;
-
       File dotIdeaFile = new File(dotIdeaFilePath);
       File projectFile = new File(projectFilePath);
 
@@ -163,12 +161,14 @@ public abstract class ProjectOpenProcessorBase extends ProjectOpenProcessor {
         pathToOpen = dotIdeaFile.getParent();
       }
 
+      boolean shouldOpenExisting = false;
       if (!ApplicationManager.getApplication().isHeadlessEnvironment() && (projectFile.exists() || dotIdeaFile.exists())) {
         String existingName;
         if (dotIdeaFile.exists()) {
           existingName = "an existing project";
           pathToOpen = dotIdeaFile.getParent();
-        } else {
+        }
+        else {
           existingName = "'" + projectFile.getName() + "'";
           pathToOpen = projectFilePath;
         }

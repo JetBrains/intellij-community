@@ -99,11 +99,11 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
 
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     if (!forceOpenInNewFrame && openProjects.length > 0) {
-      int exitCode = ProjectUtil.confirmOpenNewProject();
-      if (exitCode == 1) { // "No" option
+      int exitCode = ProjectUtil.confirmOpenNewProject(false);
+      if (exitCode == 0) { // this window option
         if (!ProjectUtil.closeAndDispose(projectToClose != null ? projectToClose : openProjects[openProjects.length - 1])) return null;
       }
-      else if (exitCode != 0) { // not "Yes"
+      else if (exitCode != 1) { // not in a new window
         return null;
       }
     }
