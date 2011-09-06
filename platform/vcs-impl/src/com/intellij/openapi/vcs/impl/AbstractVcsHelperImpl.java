@@ -33,6 +33,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -393,13 +394,13 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   }
 
   private ChangesBrowserDialog createChangesBrowserDialog(CommittedChangesTableModel changelists,
-                                  String title,
-                                  boolean showSearchAgain,
-                                  @Nullable final Component parent) {
+                                                          String title,
+                                                          boolean showSearchAgain,
+                                                          @Nullable final Component parent, Consumer<ChangesBrowserDialog> initRunnable) {
     final ChangesBrowserDialog.Mode mode = showSearchAgain ? ChangesBrowserDialog.Mode.Browse : ChangesBrowserDialog.Mode.Simple;
     final ChangesBrowserDialog dlg = parent != null
-                                     ? new ChangesBrowserDialog(myProject, parent, changelists, mode)
-                                     : new ChangesBrowserDialog(myProject, changelists, mode);
+                                     ? new ChangesBrowserDialog(myProject, parent, changelists, mode, initRunnable)
+                                     : new ChangesBrowserDialog(myProject, changelists, mode, initRunnable);
     if (title != null) {
       dlg.setTitle(title);
     }
@@ -412,8 +413,8 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
                                   @Nullable final Component parent) {
     final ChangesBrowserDialog.Mode mode = showSearchAgain ? ChangesBrowserDialog.Mode.Browse : ChangesBrowserDialog.Mode.Simple;
     final ChangesBrowserDialog dlg = parent != null
-                                     ? new ChangesBrowserDialog(myProject, parent, changelists, mode)
-                                     : new ChangesBrowserDialog(myProject, changelists, mode);
+                                     ? new ChangesBrowserDialog(myProject, parent, changelists, mode, null)
+                                     : new ChangesBrowserDialog(myProject, changelists, mode, null);
     if (title != null) {
       dlg.setTitle(title);
     }
@@ -468,24 +469,31 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
           parent = WindowManager.getInstance().suggestParentWindow(myProject);
         }
         final CommittedChangesTableModel model = new CommittedChangesTableModel(versions, true);
-        final ChangesBrowserDialog dlg = createChangesBrowserDialog(model, title, filterUI != null, parent);
+        final AsynchronousListsLoader[] task = new AsynchronousListsLoader[1];
+        final ChangeBrowserSettings finalSettings = settings;
+        final ChangesBrowserDialog dlg = createChangesBrowserDialog(model, title, filterUI != null, parent, new Consumer<ChangesBrowserDialog>() {
+          @Override
+          public void consume(ChangesBrowserDialog changesBrowserDialog) {
+            task[0] = new AsynchronousListsLoader(myProject, provider, location, finalSettings, changesBrowserDialog);
+            ProgressManager.getInstance().run(task[0]);
+          }
+        });
 
-        final AsynchronousListsLoader task = new AsynchronousListsLoader(myProject, provider, location, settings, dlg);
-        ProgressManager.getInstance().run(task);
-        dlg.show();
         dlg.startLoading();
-        task.cancel();
+        dlg.show();
+        if (task[0] != null) {
+          task[0].cancel();
+          final List<VcsException> exceptions = task[0].getExceptions();
+          if (! exceptions.isEmpty()) {
+            Messages.showErrorDialog(myProject, VcsBundle.message("browse.changes.error.message", exceptions.get(0).getMessage()),
+                                     VcsBundle.message("browse.changes.error.title"));
+            return;
+          }
 
-        final List<VcsException> exceptions = task.getExceptions();
-        if (! exceptions.isEmpty()) {
-          Messages.showErrorDialog(myProject, VcsBundle.message("browse.changes.error.message", exceptions.get(0).getMessage()),
-                                   VcsBundle.message("browse.changes.error.title"));
-          return;
-        }
-
-        if (! task.isRevisionsReturned()) {
-          Messages.showInfoMessage(myProject, VcsBundle.message("browse.changes.nothing.found"),
-                                   VcsBundle.message("browse.changes.nothing.found.title"));
+          if (! task[0].isRevisionsReturned()) {
+            Messages.showInfoMessage(myProject, VcsBundle.message("browse.changes.nothing.found"),
+                                     VcsBundle.message("browse.changes.nothing.found.title"));
+          }
         }
       }
       else {
@@ -506,7 +514,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     }
     final ChangesBrowserDialog dlg = new ChangesBrowserDialog(myProject, new CommittedChangesTableModel((List<CommittedChangeList>)changes,
                                                                                                         provider.getColumns(), false),
-                                                                         ChangesBrowserDialog.Mode.Choose);
+                                                                         ChangesBrowserDialog.Mode.Choose, null);
     dlg.show();
     if (dlg.isOK()) {
       return (T)dlg.getSelectedChangeList();

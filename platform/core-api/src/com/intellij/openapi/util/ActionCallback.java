@@ -211,13 +211,25 @@ public class ActionCallback implements Disposable {
     public final void run() {
       if (!isProcessed()) {
         setRejected();
-        if (myAllocation != null) {
-          LOG.error(myMessage, myAllocation);
-        } else {
-          LOG.error(myMessage);
-        }
+        dumpError();
         onTimeout();
       }
+    }
+
+    protected void dumpError() {
+      if (myAllocation != null) {
+        LOG.error(myMessage, myAllocation);
+      } else {
+        LOG.error(myMessage);
+      }
+    }
+
+    public String getMessage() {
+      return myMessage;
+    }
+
+    public Throwable getAllocation() {
+      return myAllocation;
     }
 
     @Override

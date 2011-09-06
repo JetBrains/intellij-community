@@ -20,6 +20,7 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.UiActivityMonitor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -45,6 +46,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.ui.ChildFocusWatcher;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -1081,9 +1083,10 @@ public class AbstractPopup implements JBPopup {
     }
   }
 
-  public static class MyContentPanel extends JPanel {
+  public static class MyContentPanel extends JPanel implements DataProvider {
     private final boolean myResizable;
     private final boolean myDrawMacCorner;
+    @Nullable private DataProvider myDataProvider;
 
     public MyContentPanel(final boolean resizable, final PopupBorder border, boolean drawMacCorner) {
       super(new BorderLayout());
@@ -1113,6 +1116,16 @@ public class AbstractPopup implements JBPopup {
         return result;
       }
       return getPreferredSize();
+    }
+
+    @Nullable
+    @Override
+    public Object getData(@NonNls String dataId) {
+      return myDataProvider != null ? myDataProvider.getData(dataId) : null;
+    }
+
+    public void setDataProvider(DataProvider dataProvider) {
+      myDataProvider = dataProvider;
     }
   }
 
@@ -1414,6 +1427,13 @@ public class AbstractPopup implements JBPopup {
 
   public void setOk(boolean ok) {
     myOk = ok;
+  }
+
+  @Override
+  public void setDataProvider(@NotNull DataProvider dataProvider) {
+    if (myContent != null) {
+      myContent.setDataProvider(dataProvider);
+    }
   }
 
   private class SpeedSearchKeyListener implements KeyListener {

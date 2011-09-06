@@ -13,91 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.ui.playback;
+package com.intellij.openapi.ui.playback.util;
 
-import com.intellij.ide.RecentProjectsManagerBase;
 import com.intellij.ide.UiActivityMonitor;
-import com.intellij.openapi.project.*;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Queryable;
+import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.AsyncResult;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.ui.UIUtil;
 
 import java.awt.*;
-import java.io.File;
-import java.io.IOException;
 import java.util.*;
 
-/**
- * Created by IntelliJ IDEA.
- * User: kirillk
- * Date: 8/3/11
- * Time: 4:15 PM
- * To change this template use File | Settings | File Templates.
- */
-public class PlaybackCallFacade {
-
-
-  public static AsyncResult<String> openProjectClone(final PlaybackContext context, String path) {
-    try {
-      File parentDir = FileUtil.createTempDirectory("funcTest", "");
-      File sourceDir = context.getPathMacro().resolveFile(path, context.getBaseDir());
-      
-      context.getCallback().message("Cloning project: " + sourceDir.getAbsolutePath(), context.getCurrentLine());
-      FileUtil.copyDir(sourceDir, parentDir);
-      File projectDir = new File(parentDir, sourceDir.getName());
-      return openProject(context, projectDir.getAbsolutePath());
-    }
-    catch (IOException e) {
-      return new AsyncResult.Rejected<String>("Cannot create temp directory for clone");
-    }
-  }
-
-  public static AsyncResult<String> openLastProject(final PlaybackContext context) {
-    return openProject(context, RecentProjectsManagerBase.getInstance().getLastProjectPath());
-  }
-
-  public static AsyncResult<String> openProject(final PlaybackContext context, final String path) {
-    final AsyncResult<String> result = new AsyncResult<String>();
-    final ProjectManager pm = ProjectManager.getInstance();
-    final Ref<ProjectManagerListener> listener = new Ref<ProjectManagerListener>();
-    listener.set(new ProjectManagerAdapter() {
-      @Override
-      public void projectOpened(final Project project) {
-        StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
-          @Override
-          public void run() {
-            pm.removeProjectManagerListener(listener.get());
-            DumbService.getInstance(project).runWhenSmart(new Runnable() {
-              @Override
-              public void run() {
-                result.setDone("Opened successfully: " + project.getProjectFilePath());
-              }
-            });
-          }
-        });
-      }
-    });
-    pm.addProjectManagerListener(listener.get());
-
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          pm.loadAndOpenProject(path);
-        }
-        catch (Exception e) {
-          context.getCallback().error(e.getMessage(), context.getCurrentLine());
-          result.setRejected();
-        }
-      }
-    });
-
-    return result;
-  }
+public class WindowSystemPlaybackCall {
 
   public static AsyncResult<String> printFocus(final PlaybackContext context) {
     final AsyncResult result = new AsyncResult<String>();
@@ -207,7 +134,7 @@ public class PlaybackCallFacade {
     result.setDone();
 
     if (untestedText.length() > 0) {
-      context.getCallback().message("Untested focus info: " + untestedText.toString(), context.getCurrentLine());
+      context.message("Untested focus info: " + untestedText.toString(), context.getCurrentLine());
     }
   }
 
@@ -235,5 +162,4 @@ public class PlaybackCallFacade {
     getUiReady(context).notify(result);
     return result;
   }
-
 }

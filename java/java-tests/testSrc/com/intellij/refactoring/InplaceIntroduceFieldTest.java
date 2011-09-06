@@ -98,7 +98,7 @@ public class InplaceIntroduceFieldTest extends AbstractJavaInplaceIntroduceTest 
     return new MyIntroduceFieldHandler();
   }
 
-  public static class MyIntroduceFieldHandler extends IntroduceFieldHandler implements MyIntroduceHandler<PsiExpression, PsiLocalVariable>  {
+  public static class MyIntroduceFieldHandler extends IntroduceFieldHandler implements MyIntroduceHandler {
     @Override
     public boolean invokeImpl(Project project, @NotNull PsiExpression selectedExpr, Editor editor) {
       return super.invokeImpl(project, selectedExpr, editor);

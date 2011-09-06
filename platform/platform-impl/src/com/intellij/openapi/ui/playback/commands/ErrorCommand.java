@@ -25,7 +25,7 @@ public class ErrorCommand extends AbstractCommand {
   }
 
   public ActionCallback _execute(PlaybackContext context) {
-    dumpError(context.getCallback(), getText());
+    dumpError(context, getText());
     return new ActionCallback.Rejected();
   }
 }

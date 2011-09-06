@@ -24,6 +24,7 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -51,7 +52,7 @@ public class BrowseRepositoryAction extends AnAction implements DumbAware {
         RepositoryToolWindowPanel component = new RepositoryToolWindowPanel(project);
         w = manager.registerToolWindow(REPOSITORY_BROWSER_TOOLWINDOW, true, ToolWindowAnchor.BOTTOM, project, true);
         final Content content = ContentFactory.SERVICE.getInstance().createContent(component, "", false);
-        content.setDisposer(component);
+        Disposer.register(content, component);
         w.getContentManager().addContent(content);
       }
       w.show(null);

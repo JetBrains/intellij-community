@@ -93,7 +93,7 @@ public class InplaceIntroduceParameterTest extends AbstractJavaInplaceIntroduceT
     fail("Conflict expected");
   }
 
-  private static class MyIntroduceParameterHandler extends IntroduceParameterHandler implements MyIntroduceHandler<PsiExpression, PsiLocalVariable> {
+  private static class MyIntroduceParameterHandler extends IntroduceParameterHandler implements MyIntroduceHandler {
 
     @Override
     public boolean invokeImpl(Project project, @NotNull PsiExpression selectedExpr, Editor editor) {

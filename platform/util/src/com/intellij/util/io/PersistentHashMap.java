@@ -119,7 +119,9 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
           );
 
           updateValueId(id, headerRecord, oldHeaderRecord, key, 0);
-          if (oldHeaderRecord == HeaderRecord.EMPTY) myLiveAndGarbageKeysCounter += LIVE_KEY_MASK;
+          if (oldHeaderRecord == HeaderRecord.EMPTY) {
+            myLiveAndGarbageKeysCounter += LIVE_KEY_MASK;
+          }
 
           myStreamPool.recycle(value);
         }
@@ -262,8 +264,12 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
       final int id = enumerate(key);
 
       HeaderRecord oldheader = readValueId(id);
-      if (oldheader != HeaderRecord.EMPTY) myLiveAndGarbageKeysCounter++;
-      else myLiveAndGarbageKeysCounter += LIVE_KEY_MASK;
+      if (oldheader != HeaderRecord.EMPTY) {
+        myLiveAndGarbageKeysCounter++;
+      }
+      else {
+        myLiveAndGarbageKeysCounter += LIVE_KEY_MASK;
+      }
 
       HeaderRecord header = new HeaderRecord(myValueStorage.appendBytes(bytes, 0));
 
@@ -330,7 +336,9 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
         myEnumerator.markDirty(true);
 
         updateValueId(id, new HeaderRecord(readResult.first), oldHeader, key, 0);
-        if (oldHeader != HeaderRecord.EMPTY) myLiveAndGarbageKeysCounter++;
+        if (oldHeader != HeaderRecord.EMPTY) {
+          myLiveAndGarbageKeysCounter++;
+        }
       }
 
       final DataInputStream input = new DataInputStream(new ByteArrayInputStream(readResult.second));
@@ -364,7 +372,9 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
       myEnumerator.markDirty(true);
 
       final HeaderRecord record = readValueId(id);
-      if (record != HeaderRecord.EMPTY) myLiveAndGarbageKeysCounter++;
+      if (record != HeaderRecord.EMPTY) {
+        myLiveAndGarbageKeysCounter++;
+      }
 
       updateValueId(id, HeaderRecord.EMPTY, record, key, 0);
     }

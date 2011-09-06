@@ -18,6 +18,7 @@ package com.intellij.openapi.roots.ui.configuration.classpath;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
 import com.intellij.openapi.roots.libraries.Library;
@@ -38,21 +39,29 @@ import java.util.*;
 /**
 * @author nik
 */
-class CreateModuleLibraryChooser implements ClasspathElementChooser<Library> {
-  private final ClasspathPanel myClasspathPanel;
+public class CreateModuleLibraryChooser implements ClasspathElementChooser<Library> {
+  private final JComponent myParentComponent;
+  private final Module myModule;
   private final LibraryTable.ModifiableModel myModuleLibrariesModel;
   private final HashMap<LibraryRootsComponentDescriptor,LibraryType> myLibraryTypes;
   private LibraryType myLibraryType;
   private final DefaultLibraryRootsComponentDescriptor myDefaultDescriptor;
   private List<OrderRoot> myChosenRoots;
 
-  public CreateModuleLibraryChooser(ClasspathPanel classpathPanel,
+  public CreateModuleLibraryChooser(ClasspathPanel classpathPanel, LibraryTable.ModifiableModel moduleLibraryModel) {
+    this(LibraryEditingUtil.getSuitableTypes(classpathPanel), classpathPanel.getComponent(), classpathPanel.getRootModel().getModule(),
+         moduleLibraryModel);
+  }
+
+  public CreateModuleLibraryChooser(List<? extends LibraryType> libraryTypes, JComponent parentComponent,
+                                    Module module,
                                     final LibraryTable.ModifiableModel moduleLibrariesModel) {
-    myClasspathPanel = classpathPanel;
+    myParentComponent = parentComponent;
+    myModule = module;
     myModuleLibrariesModel = moduleLibrariesModel;
     myLibraryTypes = new HashMap<LibraryRootsComponentDescriptor, LibraryType>();
     myDefaultDescriptor = new DefaultLibraryRootsComponentDescriptor();
-    for (LibraryType<?> libraryType : LibraryEditingUtil.getSuitableTypes(classpathPanel)) {
+    for (LibraryType<?> libraryType : libraryTypes) {
       LibraryRootsComponentDescriptor descriptor = null;
       if (libraryType != null) {
         descriptor = libraryType.createLibraryRootsComponentDescriptor();
@@ -128,7 +137,6 @@ class CreateModuleLibraryChooser implements ClasspathElementChooser<Library> {
   }
 
   public void doChoose() {
-    final JComponent parent = myClasspathPanel.getComponent();
     final FileChooserDescriptor chooserDescriptor;
     final List<Pair<LibraryRootsComponentDescriptor, FileChooserDescriptor>> descriptors = new ArrayList<Pair<LibraryRootsComponentDescriptor, FileChooserDescriptor>>();
     for (LibraryRootsComponentDescriptor componentDescriptor : myLibraryTypes.keySet()) {
@@ -160,9 +168,9 @@ class CreateModuleLibraryChooser implements ClasspathElementChooser<Library> {
         }
       };
     }
-    chooserDescriptor.putUserData(LangDataKeys.MODULE_CONTEXT, myClasspathPanel.getRootModel().getModule());
+    chooserDescriptor.putUserData(LangDataKeys.MODULE_CONTEXT, myModule);
 
-    final VirtualFile[] files = FileChooser.chooseFiles(parent, chooserDescriptor);
+    final VirtualFile[] files = FileChooser.chooseFiles(myParentComponent, chooserDescriptor);
     List<LibraryRootsComponentDescriptor> suitableDescriptors = new ArrayList<LibraryRootsComponentDescriptor>();
     for (Pair<LibraryRootsComponentDescriptor, FileChooserDescriptor> pair : descriptors) {
       if (acceptAll(pair.getSecond(), files)) {
@@ -179,7 +187,7 @@ class CreateModuleLibraryChooser implements ClasspathElementChooser<Library> {
       rootsComponentDescriptor = myDefaultDescriptor;
     }
     myChosenRoots = RootDetectionUtil
-        .detectRoots(Arrays.asList(files), parent, myClasspathPanel.getProject(), rootsComponentDescriptor.getRootDetectors(), true);
+        .detectRoots(Arrays.asList(files), myParentComponent, myModule.getProject(), rootsComponentDescriptor.getRootDetectors(), true);
   }
 
   private static boolean acceptAll(FileChooserDescriptor descriptor, VirtualFile[] files) {

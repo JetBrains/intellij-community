@@ -15,13 +15,14 @@
  */
 package com.intellij.openapi.ui.playback.commands;
 
-import com.intellij.openapi.ui.playback.PlaybackCallFacade;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.AsyncResult;
+import com.intellij.openapi.util.Pair;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -45,13 +46,13 @@ public class CallCommand extends AbstractCommand {
     final String cmd = getText().substring(PREFIX.length()).trim();
     final int open = cmd.indexOf("(");
     if (open == -1) {
-      context.getCallback().error("( expected", getLine());
+      context.error("( expected", getLine());
       return new ActionCallback.Done();
     }
 
     final int close = cmd.lastIndexOf(")");
     if (close == -1) {
-      context.getCallback().error(") expected", getLine());
+      context.error(") expected", getLine());
       return new ActionCallback.Done();
     }
 
@@ -67,9 +68,16 @@ public class CallCommand extends AbstractCommand {
 
     
     try {
-     final Method m = PlaybackCallFacade.class.getMethod(methodName, types);
-     if (!m.getReturnType().isAssignableFrom(AsyncResult.class)) {
-       context.getCallback().error("Method " + methodName + " must return AsyncResult object", getLine());
+      Pair<Method, Class> methodClass = findMethod(context, methodName, types);
+      if (methodClass == null) {
+        context.error("No method \"" + methodName + "\" found in facade classes: " + context.getCallClasses(), getLine());
+        return new ActionCallback.Rejected();
+      }
+
+      Method m = methodClass.getFirst();
+
+      if (!m.getReturnType().isAssignableFrom(AsyncResult.class)) {
+       context.error("Method " + methodClass.getSecond() + ":" + methodName + " must return AsyncResult object", getLine());
        return new ActionCallback.Rejected();
      }
      
@@ -82,39 +90,51 @@ public class CallCommand extends AbstractCommand {
 
      AsyncResult result = (AsyncResult<String>)m.invoke(null, actualArgs);
      if (result == null) {
-       context.getCallback().error("Method " + methodName + " must return AsyncResult object, but was null", getLine());
-       return new ActionCallback.Done();
+       context.error("Method " + methodClass.getSecond() + ":" + methodName + " must return AsyncResult object, but was null", getLine());
+       return new ActionCallback.Rejected();
      }
       
      result.doWhenDone(new AsyncResult.Handler<String>() {
        @Override
        public void run(String s) {
          if (s != null) {
-           context.getCallback().message(s, getLine());
+           context.message(s, getLine());
          }
          cmdResult.setDone();
        }
      }).doWhenRejected(new AsyncResult.Handler<String>() {
        @Override
        public void run(String s) {
-         context.getCallback().error(s, getLine());
+         context.error(s, getLine());
          cmdResult.setRejected();
        }
      }); 
       
     }
-    catch (NoSuchMethodException e) {
-      context.getCallback().error("No method found in PlaybackCallFacade", getLine());
-    }
     catch (InvocationTargetException e) {
-      context.getCallback().error("InvocationTargetException while executing command: " + cmd, getLine());
+      context.error("InvocationTargetException while executing command: " + cmd, getLine());
     }
     catch (IllegalAccessException e) {
-      context.getCallback().error("IllegalAccessException while executing command: " + cmd, getLine());
+      context.error("IllegalAccessException while executing command: " + cmd, getLine());
     }
     return cmdResult;
   }
 
+  private Pair<Method, Class> findMethod(PlaybackContext context, String methodName, Class[] types) {
+    Set<Class> classes = context.getCallClasses();
+    for (Class eachClass : classes) {
+      try {
+        Method method = eachClass.getMethod(methodName, types);
+        return new Pair<Method, Class>(method, eachClass);
+      }
+      catch (NoSuchMethodException e) {
+        continue;
+      }
+    }
+    
+    return null;
+  } 
+  
   @Override
   protected boolean isAwtThread() {
     return true;

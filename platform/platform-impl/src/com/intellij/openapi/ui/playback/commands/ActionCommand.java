@@ -42,7 +42,7 @@ public class ActionCommand extends TypeCommand {
     final ActionManager am = ActionManager.getInstance();
     final AnAction targetAction = am.getAction(actionName);
     if (targetAction == null) {
-      dumpError(context.getCallback(), "Unknown action: " + actionName);
+      dumpError(context, "Unknown action: " + actionName);
       return new ActionCallback.Rejected();
     }
 
@@ -63,14 +63,19 @@ public class ActionCommand extends TypeCommand {
       }
 
       if (stroke != null) {
-        final ActionCallback result = new ActionCallback.TimedOut(Registry.intValue("actionSystem.commandProcessingTimeout"), "Timed out calling action id=" + actionName, new Throwable(), true);
-        context.getCallback().message("Invoking action via shortcut: " + stroke.toString(), getLine());
+        final ActionCallback result = new ActionCallback.TimedOut(Registry.intValue("actionSystem.commandProcessingTimeout"), "Timed out calling action id=" + actionName, new Throwable(), true) {
+          @Override
+          protected void dumpError() {
+            context.error(getMessage(), getLine());
+          }
+        };
+        context.message("Invoking action via shortcut: " + stroke.toString(), getLine());
         final Ref<AnActionListener> listener = new Ref<AnActionListener>();
         listener.set(new AnActionListener.Adapter() {
           @Override
           public void afterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
             if (targetAction.equals(action)) {
-              context.getCallback().message("Performed action: " + actionName, context.getCurrentLine());
+              context.message("Performed action: " + actionName, context.getCurrentLine());
               am.removeAnActionListener(listener.get());
               result.setDone();
             }

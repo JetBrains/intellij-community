@@ -23,6 +23,8 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.util.AsynchConsumer;
+import com.intellij.util.Consumer;
+import com.intellij.util.ui.AdjustComponentWhenShown;
 
 import javax.swing.*;
 import java.awt.*;
@@ -37,16 +39,19 @@ public class ChangesBrowserDialog extends DialogWrapper {
   private Mode myMode;
   private CommittedChangesBrowser myCommittedChangesBrowser;
   private AsynchConsumer<List<CommittedChangeList>> myAppender;
+  private final Consumer<ChangesBrowserDialog> myInitRunnable;
 
   public enum Mode { Simple, Browse, Choose }
 
-  public ChangesBrowserDialog(Project project, CommittedChangesTableModel changes, final Mode mode) {
+  public ChangesBrowserDialog(Project project, CommittedChangesTableModel changes, final Mode mode, Consumer<ChangesBrowserDialog> initRunnable) {
     super(project, true);
+    myInitRunnable = initRunnable;
     initDialog(project, changes, mode);
   }
 
-  public ChangesBrowserDialog(Project project, Component parent, CommittedChangesTableModel changes, final Mode mode) {
+  public ChangesBrowserDialog(Project project, Component parent, CommittedChangesTableModel changes, final Mode mode, Consumer<ChangesBrowserDialog> initRunnable) {
     super(parent, true);
+    myInitRunnable = initRunnable;
     initDialog(project, changes, mode);
   }
 
@@ -63,27 +68,43 @@ public class ChangesBrowserDialog extends DialogWrapper {
     myAppender = new AsynchConsumer<List<CommittedChangeList>>() {
 
       public void finished() {
-        new AbstractCalledLater(myProject, ModalityState.stateForComponent(myCommittedChangesBrowser)) {
+        SwingUtilities.invokeLater(new Runnable() {
+          @Override
           public void run() {
-            myCommittedChangesBrowser.stopLoading();
+            if (ChangesBrowserDialog.this.isShowing()) {
+              myCommittedChangesBrowser.stopLoading();
+            }
           }
-        }.callMe();
+        });
       }
 
       public void consume(final List<CommittedChangeList> committedChangeLists) {
-        new AbstractCalledLater(myProject, ModalityState.stateForComponent(myCommittedChangesBrowser)) {
+        SwingUtilities.invokeLater(new Runnable() {
+          @Override
           public void run() {
-            final boolean selectFirst = (myChanges.getRowCount() == 0) && (!committedChangeLists.isEmpty());
-            myChanges.addRows(committedChangeLists);
-            if (selectFirst) {
-              myCommittedChangesBrowser.selectFirstIfAny();
+            if (ChangesBrowserDialog.this.isShowing()) {
+              final boolean selectFirst = (myChanges.getRowCount() == 0) && (!committedChangeLists.isEmpty());
+              myChanges.addRows(committedChangeLists);
+              if (selectFirst) {
+                myCommittedChangesBrowser.selectFirstIfAny();
+              }
             }
           }
-        }.callMe();
+        });
       }
     };
 
     init();
+
+    if (myInitRunnable != null) {
+      new AdjustComponentWhenShown() {
+        @Override
+        protected boolean init() {
+          myInitRunnable.consume(ChangesBrowserDialog.this);
+          return true;
+        }
+      }.install(myCommittedChangesBrowser);
+    }
   }
 
   public AsynchConsumer<List<CommittedChangeList>> getAppender() {

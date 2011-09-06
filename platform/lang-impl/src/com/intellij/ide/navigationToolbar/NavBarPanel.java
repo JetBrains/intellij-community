@@ -124,6 +124,8 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     Disposer.register(project, this);
   }
 
+
+
   public boolean isNodePopupActive() {
     return myNodePopup != null && myNodePopup.isVisible();
   }
