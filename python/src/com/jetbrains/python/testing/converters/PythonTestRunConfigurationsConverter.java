@@ -22,7 +22,8 @@ public class PythonTestRunConfigurationsConverter extends ConversionProcessor<Ru
   @Override
   public boolean isConversionNeeded(RunManagerSettings runManagerSettings) {
     for (Element e : runManagerSettings.getRunConfigurations()) {
-      if (isConversionNeeded(e)) {
+      final String confType = e.getAttributeValue("type");
+      if (ourTypeToFactoryNameMap.containsKey(confType)) {
         return true;
       }
     }
@@ -39,10 +40,5 @@ public class PythonTestRunConfigurationsConverter extends ConversionProcessor<Ru
         element.setAttribute("factoryName", factoryName);
       }
     }
-  }
-
-  private static boolean isConversionNeeded(Element element) {
-    final String confType = element.getAttributeValue("type");
-    return ourTypeToFactoryNameMap.containsKey(confType);
   }
 }
