@@ -58,6 +58,31 @@ class Test {
     doTest(before, toPaste, expected)
   }
 
+  void _testStringBeforeAnotherStringShouldNotIncreaseIndentOfTheFollowingString() {
+    def before = '''\
+class Test {
+    void test() {
+<caret>        int a = 100;
+        int b = 200;
+    }\
+'''
+    
+    def toPaste = '''\
+    int b = 200;
+'''
+    
+    def expected = '''\
+class Test {
+    void test() {
+        int b = 200;
+<caret>        int a = 100;
+        int b = 200;
+    }\
+'''
+                                        
+    doTest(before, toPaste, expected)
+  }
+  
   void testJavaComplexBlockWithDecreasedIndent() {
     def before = '''\
 class Test {
