@@ -310,6 +310,9 @@ public class UIUtil {
     if (s.indexOf('&') != -1) {
       s = StringUtil.replace(s, "&", "");
     }
+    if (s.indexOf('_') != -1) {
+      s = StringUtil.replace(s, "_", "");
+    }
     if (s.indexOf(MNEMONIC) != -1) {
       s = StringUtil.replace(s, String.valueOf(MNEMONIC), "");
     }
