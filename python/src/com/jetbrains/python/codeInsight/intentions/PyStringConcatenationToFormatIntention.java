@@ -43,13 +43,17 @@ public class PyStringConcatenationToFormatIntention extends BaseIntentionAction 
     if (expressions.size() == 0) {
       return false;
     }
+    boolean hasReferenceOrCall = false;
     for (PyExpression expression: expressions) {
-      if (!(expression instanceof PyStringLiteralExpression
-            || expression instanceof PyReferenceExpression
-            || expression instanceof PyCallExpression)) {
+      if (expression instanceof PyReferenceExpression
+            || expression instanceof PyCallExpression)
+        hasReferenceOrCall = true;
+      else if (!(expression instanceof PyStringLiteralExpression))
         return false;
-      }
     }
+    if (!hasReferenceOrCall)
+      return false;
+
     setText(PyBundle.message("INTN.replace.plus.with.format.operator"));
     return true;
   }
