@@ -15,13 +15,15 @@
  */
 package git4idea.history.wholeTree;
 
+import com.intellij.util.Ticket;
+
 import java.util.Collection;
 
 /**
 * @author irengrig
 */
 public interface Loader {
-  void loadSkeleton(Mediator.Ticket ticket,
+  void loadSkeleton(Ticket ticket,
                     RootsHolder rootsHolder,
                     final Collection<String> startingPoints,
                     final GitLogFilters filters, LoadGrowthController loadGrowthController);

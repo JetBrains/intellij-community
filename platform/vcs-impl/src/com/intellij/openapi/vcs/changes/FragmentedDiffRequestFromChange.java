@@ -59,7 +59,7 @@ public class FragmentedDiffRequestFromChange {
     myRangesCache = new SLRUMap<Pair<Long, String>, List<BeforeAfter<TextRange>>>(10, 10);
   }
 
-  public boolean canCreateRequest(Change change) {
+  public static boolean canCreateRequest(Change change) {
     if (ChangesUtil.isTextConflictingChange(change)) return false;
     if (ShowDiffAction.isBinaryChange(change)) return false;
     final FilePath filePath = ChangesUtil.getFilePath(change);

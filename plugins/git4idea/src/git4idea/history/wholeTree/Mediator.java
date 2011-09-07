@@ -14,6 +14,7 @@ package git4idea.history.wholeTree;
 
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Ticket;
 import git4idea.history.browser.SymbolicRefs;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,41 +45,4 @@ public interface Mediator {
   void acceptException(final VcsException e);
 
   void oneFinished();
-
-  final class Ticket {
-    private int myId;
-
-    public Ticket() {
-      myId = 0;
-    }
-
-    private Ticket(int id) {
-      myId = id;
-    }
-
-    public Ticket copy() {
-      return new Ticket(myId);
-    }
-
-    public void increment() {
-      ++ myId;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      Ticket ticket = (Ticket)o;
-
-      if (myId != ticket.myId) return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      return myId;
-    }
-  }
 }

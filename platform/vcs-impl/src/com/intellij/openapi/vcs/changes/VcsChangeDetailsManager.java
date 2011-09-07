@@ -16,31 +16,25 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.DiffContent;
+import com.intellij.openapi.diff.DiffManager;
 import com.intellij.openapi.diff.DiffPanel;
+import com.intellij.openapi.diff.ex.DiffPanelEx;
+import com.intellij.openapi.diff.ex.DiffPanelOptions;
 import com.intellij.openapi.diff.impl.DiffPanelImpl;
 import com.intellij.openapi.progress.BackgroundTaskQueue;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vcs.Details;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.VcsKey;
+import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.changes.actions.ShowDiffAction;
 import com.intellij.openapi.vcs.history.ShortVcsRevisionNumber;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.BeforeAfter;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.continuation.ModalityIgnorantBackgroundableTask;
 import com.intellij.vcsUtil.UIVcsUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -60,8 +54,6 @@ public class VcsChangeDetailsManager {
   private static final int extraLines = 2;
   private final Map<VcsKey, VcsChangeDetailsProvider> myProviderMap = new HashMap<VcsKey, VcsChangeDetailsProvider>();
   private final List<VcsChangeDetailsProvider> myDedicatedList;
-  // todo also check for size
-  private final LinkedList<DiffPanel> myDiffPanelCache;
   private final Project myProject;
   private final BackgroundTaskQueue myQueue;
 
@@ -70,218 +62,194 @@ public class VcsChangeDetailsManager {
     myQueue = new BackgroundTaskQueue(myProject, "Loading change details");
     myDedicatedList = new ArrayList<VcsChangeDetailsProvider>();
 
-    myDiffPanelCache = new LinkedList<DiffPanel>();
-    myDedicatedList.add(new BinaryDiffDetailsProvider(project, myDiffPanelCache));
-    myDedicatedList.add(new FragmentedDiffDetailsProvider(project, myDiffPanelCache));
+    myDedicatedList.add(new BinaryDetailsProviderNew(project, myQueue));
+    myDedicatedList.add(new FragmentedDiffDetailsProvider(myProject, myQueue));
 
     Disposer.register(project, new Disposable() {
       @Override
       public void dispose() {
         myQueue.clear();
-        for (DiffPanel diffPanel : myDiffPanelCache) {
-          Disposer.dispose(diffPanel);
-        }
       }
     });
   }
 
   public boolean canComment(final Change change) {
-    return getProvider(change) != null;
+    for (VcsChangeDetailsProvider provider : myDedicatedList) {
+      if (provider.canComment(change)) return true;
+    }
+    return false;
   }
 
   @Nullable
-  private VcsChangeDetailsProvider getProvider(final Change change) {
-    for (VcsChangeDetailsProvider provider : myDedicatedList) {
-      if (provider.canComment(change)) return provider;
+  public RefreshablePanel getPanel(final Change change) {
+    for (VcsChangeDetailsProvider convertor : myDedicatedList) {
+      if (! convertor.canComment(change)) continue;
+      RefreshablePanel panel = convertor.comment(change);
+      if (panel != null) {
+        return panel;
+      }
     }
     return null;
-  }
-
-  // true -> loading
-  public boolean getPanel(final Change change, final Details<Change, Pair<RefreshablePanel, Disposable>> details) {
-    // text details
-    final VcsChangeDetailsProvider<?> provider = getProvider(change);
-    if (provider == null) {
-      return false;
-    }
-
-    myQueue.run(new LoaderTask(myProject, provider, change, details), ModalityState.current(), null);
-    return true;
   }
 
   public static VcsChangeDetailsManager getInstance(Project project) {
     return ServiceManager.getService(project, VcsChangeDetailsManager.class);
   }
 
-  private static class LoaderTask<T> extends ModalityIgnorantBackgroundableTask {
-    private T myResult;
-    private final VcsChangeDetailsProvider<T> myProvider;
-    private final Change myChange;
-    private final Details<Change, Pair<RefreshablePanel, Disposable>> myDetails;
-
-    private LoaderTask(@Nullable Project project, final VcsChangeDetailsProvider<T> provider, final Change change,
-                       final Details<Change, Pair<RefreshablePanel, Disposable>> consumer) {
-      super(project, provider.getProgressTitle(), false, BackgroundFromStartOption.getInstance());
-      myProvider = provider;
-      myChange = change;
-      myDetails = consumer;
-    }
-
-    @Override
-    protected void doInAwtIfFail(Exception e) {
-      VcsBalloonProblemNotifier.showOverChangesView(myProject, e.getMessage(), MessageType.ERROR);
-    }
-
-    @Override
-    protected void doInAwtIfCancel() {
-    }
-
-    @Override
-    protected void doInAwtIfSuccess() {
-      if (myProject.isDisposed() || ! myProject.isOpen()) return;
-      if (myResult != null) {
-        final Pair<RefreshablePanel, Disposable> pair = myProvider.comment(myChange, myResult);
-        try {
-          myDetails.take(myChange, pair);
-        }
-        catch (Details.AlreadyDisposedException e) {
-          if (pair != null && pair.getSecond() != null) {
-            Disposer.dispose(pair.getSecond());
-          }
-        }
-      }
-    }
-
-    @Override
-    protected void runImpl(@NotNull ProgressIndicator indicator) {
-      if (myProject.isDisposed() || ! myProject.isOpen() || !Comparing.equal(myChange, myDetails.getCurrentlySelected())) return;
-      myResult = myProvider.load(myChange);
-    }
-  }
-
-  private static class BinaryDiffDetailsProvider implements VcsChangeDetailsProvider<ValueWithVcsException<List<BeforeAfter<DiffContent>>>> {
-    private final BinaryDiffRequestFromChange myRequestFromChange;
+  private static class BinaryDetailsProviderNew implements VcsChangeDetailsProvider {
     private final Project myProject;
-    private DiffPanelHolder myDiffPanelHolder;
+    private final BackgroundTaskQueue myQueue;
 
-    private BinaryDiffDetailsProvider(Project project, LinkedList<DiffPanel> diffPanelCache) {
+    private BinaryDetailsProviderNew(Project project, final BackgroundTaskQueue queue) {
       myProject = project;
-      myRequestFromChange = new BinaryDiffRequestFromChange(myProject);
-      myDiffPanelHolder = new DiffPanelHolder(diffPanelCache, project);
-    }
-
-    @Override
-    public String getProgressTitle() {
-      return "Loading change content";
+      myQueue = queue;
     }
 
     @Override
     public boolean canComment(Change change) {
-      return myRequestFromChange.canCreateRequest(change);
+      return ShowDiffAction.isBinaryChangeAndCanShow(myProject, change);
     }
 
     @Override
-    public Pair<RefreshablePanel, Disposable> comment(Change change, ValueWithVcsException<List<BeforeAfter<DiffContent>>> value) {
+    public RefreshablePanel comment(Change change) {
+      return new BinaryDiffDetailsPanel(myProject, myQueue, change);
+    }
+  }
+
+  private static class BinaryDiffDetailsPanel extends AbstractRefreshablePanel<ValueWithVcsException<List<BeforeAfter<DiffContent>>>> {
+    private final BinaryDiffRequestFromChange myRequestFromChange;
+    private final Project myProject;
+    private final ChangeListManager myChangeListManager;
+    private final FilePath myFilePath;
+    private Change myChange;
+    private final DiffPanel myPanel;
+
+    private BinaryDiffDetailsPanel(Project project, BackgroundTaskQueue queue, final Change change) {
+      super(project, "Loading change content", queue);
+      myProject = project;
+      myFilePath = ChangesUtil.getFilePath(change);
+      myRequestFromChange = new BinaryDiffRequestFromChange(myProject);
+      myChangeListManager = ChangeListManager.getInstance(myProject);
+
+      myPanel = DiffManager.getInstance().createDiffPanel(null, myProject);
+      myPanel.enableToolbar(false);
+      myPanel.removeStatusBar();
+      DiffPanelOptions o = ((DiffPanelEx)myPanel).getOptions();
+      o.setRequestFocusOnNewContent(false);
+    }
+
+    @Override
+    protected ValueWithVcsException<List<BeforeAfter<DiffContent>>> loadImpl() throws VcsException {
+      myChange = myChangeListManager.getChange(myFilePath);
+      if (myChange == null) {
+        return null;
+      }
+      return new ValueWithVcsException<List<BeforeAfter<DiffContent>>>() {
+        @Override
+        protected List<BeforeAfter<DiffContent>> computeImpl() throws VcsException {
+          return myRequestFromChange.createRequestForChange(myChange, 0);
+        }
+      };
+    }
+
+    @Override
+    protected JPanel dataToPresentation(ValueWithVcsException<List<BeforeAfter<DiffContent>>> value) {
+      if (value == null) return noDifferences();
       final List<BeforeAfter<DiffContent>> contents;
       try {
         contents = value.get();
         if (contents == null) throw new VcsException("Can not load content");
       }
       catch (VcsException e) {
-        return new Pair<RefreshablePanel, Disposable>(new NotRefreshablePanel(UIVcsUtil.errorPanel(e.getMessage(), true)), null);
+        return UIVcsUtil.errorPanel(e.getMessage(), true);
       }
       if (contents.isEmpty()) return noDifferences();
       assert contents.size() == 1;
-      final DiffPanel panel = myDiffPanelHolder.getOrCreate();
-      panel.setContents(contents.get(0).getBefore(), contents.get(0).getAfter());
-      ((DiffPanelImpl) panel).getOptions().setRequestFocusOnNewContent(false);
+
+      myPanel.setContents(contents.get(0).getBefore(), contents.get(0).getAfter());
+      ((DiffPanelImpl)myPanel).getOptions().setRequestFocusOnNewContent(false);
 
       final JPanel wholeWrapper = new JPanel(new BorderLayout());
       final JPanel topPanel = new JPanel(new BorderLayout());
       final JPanel wrapper = new JPanel();
       final BoxLayout boxLayout = new BoxLayout(wrapper, BoxLayout.X_AXIS);
       wrapper.setLayout(boxLayout);
-      final JLabel label = new JLabel(changeDescription(change));
+      final JLabel label = new JLabel(changeDescription(myChange));
       label.setBorder(BorderFactory.createEmptyBorder(1,2,0,0));
       wrapper.add(label);
       topPanel.add(wrapper, BorderLayout.CENTER);
 
       wholeWrapper.add(topPanel, BorderLayout.NORTH);
       //wholeWrapper.add(new JBScrollPane(panel.getComponent()), BorderLayout.CENTER);
-      wholeWrapper.add(panel.getComponent(), BorderLayout.CENTER);
-
-      return new Pair<RefreshablePanel, Disposable>(new NotRefreshablePanel(wholeWrapper), new Disposable() {
-        @Override
-        public void dispose() {
-          myDiffPanelHolder.resetPanels();
-        }
-      });
+      wholeWrapper.add(myPanel.getComponent(), BorderLayout.CENTER);
+      return wholeWrapper;
     }
 
     @Override
-    public ValueWithVcsException<List<BeforeAfter<DiffContent>>> load(final Change change) {
-      return new ValueWithVcsException<List<BeforeAfter<DiffContent>>>() {
-        @Override
-        protected List<BeforeAfter<DiffContent>> computeImpl() throws VcsException {
-          return myRequestFromChange.createRequestForChange(change, 0);
-        }
-      };
+    protected void disposeImpl() {
+      Disposer.dispose(myPanel);
     }
   }
 
-  private abstract static class ValueWithVcsException<T> extends TransparentlyFailedValue<T, VcsException> {
-    protected ValueWithVcsException() {
-      try {
-        set(computeImpl());
-      }
-      catch (VcsException e) {
-        fail(e);
-      }
-    }
-
-    protected abstract T computeImpl() throws VcsException;
+  private static JPanel noDifferences() {
+    return UIVcsUtil.errorPanel(DiffBundle.message("diff.contents.have.differences.only.in.line.separators.message.text"), false);
   }
 
-  private static Pair<RefreshablePanel, Disposable> noDifferences() {
-    return new Pair<RefreshablePanel, Disposable>(
-      new NotRefreshablePanel(
-        UIVcsUtil.errorPanel(DiffBundle.message("diff.contents.have.differences.only.in.line.separators.message.text"), false)), null);
-  }
-
-  private static class FragmentedDiffDetailsProvider implements VcsChangeDetailsProvider<ValueWithVcsException<FragmentedContent>> {
-    private final FragmentedDiffRequestFromChange myRequestFromChange;
+  private static class FragmentedDiffDetailsProvider implements VcsChangeDetailsProvider {
     private final Project myProject;
-    private final LinkedList<DiffPanel> myDiffPanelCache;
+    private final BackgroundTaskQueue myQueue;
 
-    private FragmentedDiffDetailsProvider(Project project,
-                                          final LinkedList<DiffPanel> diffPanelCache) {
-      myRequestFromChange = new FragmentedDiffRequestFromChange(project);
+    private FragmentedDiffDetailsProvider(Project project, final BackgroundTaskQueue queue) {
       myProject = project;
-      myDiffPanelCache = diffPanelCache;
-    }
-
-    @Override
-    public String getProgressTitle() {
-      return "Loading change content";
+      myQueue = queue;
     }
 
     @Override
     public boolean canComment(Change change) {
-      return myRequestFromChange.canCreateRequest(change);
+      return FragmentedDiffRequestFromChange.canCreateRequest(change);
     }
 
     @Override
-    public ValueWithVcsException<FragmentedContent> load(final Change change) {
+    public RefreshablePanel comment(Change change) {
+      return new FragmentedDiffDetailsPanel(myProject, myQueue, change);
+    }
+  }
+
+  private static class FragmentedDiffDetailsPanel extends AbstractRefreshablePanel<ValueWithVcsException<FragmentedContent>> {
+    private final FragmentedDiffRequestFromChange myRequestFromChange;
+    private final FilePath myFilePath;
+    private final ChangeListManager myChangeListManager;
+    private final ChangesFragmentedDiffPanel myDiffPanel;
+
+    private FragmentedDiffDetailsPanel(Project project, BackgroundTaskQueue queue, final Change change) {
+      super(project, "Loading change content", queue);
+      myFilePath = ChangesUtil.getFilePath(change);
+      myRequestFromChange = new FragmentedDiffRequestFromChange(project);
+      myChangeListManager = ChangeListManager.getInstance(project);
+      myDiffPanel = new ChangesFragmentedDiffPanel(project, changeDescription(change));
+      myDiffPanel.buildUi();
+    }
+
+    @Override
+    protected ValueWithVcsException<FragmentedContent> loadImpl() throws VcsException {
       return new ValueWithVcsException<FragmentedContent>() {
         @Override
         protected FragmentedContent computeImpl() throws VcsException {
+          final Change change = myChangeListManager.getChange(myFilePath);
+          if (change == null) {
+            return null;
+          }
+          myDiffPanel.setTitle(changeDescription(change));
           return myRequestFromChange.getRanges(change, extraLines);
         }
       };
     }
 
     @Override
-    public Pair<RefreshablePanel, Disposable> comment(Change change, ValueWithVcsException<FragmentedContent> value) {
+    protected JPanel dataToPresentation(ValueWithVcsException<FragmentedContent> value) {
+      if (value == null) {
+        return noDifferences();
+      }
       final FragmentedContent requestForChange;
       try {
         requestForChange = value.get();
@@ -291,13 +259,15 @@ public class VcsChangeDetailsManager {
         }
       }
       catch (VcsException e) {
-        return new Pair<RefreshablePanel, Disposable>(new NotRefreshablePanel(UIVcsUtil.errorPanel(e.getMessage(), true)), null);
+        return UIVcsUtil.errorPanel(e.getMessage(), true);
       }
+      myDiffPanel.refreshData(requestForChange);
+      return myDiffPanel.getPanel();
+    }
 
-      final ChangesFragmentedDiffPanel panel =
-        new ChangesFragmentedDiffPanel(myProject, requestForChange, myDiffPanelCache, changeDescription(change));
-      panel.buildUi();
-      return new Pair<RefreshablePanel, Disposable>(panel.getRefreshablePanel(), panel);
+    @Override
+    protected void disposeImpl() {
+      Disposer.dispose(myDiffPanel);
     }
   }
 

@@ -20,18 +20,19 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vcs.Details;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.GenericDetailsLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.PairConsumer;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.SLRUMap;
 import com.intellij.vcsUtil.UIVcsUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -45,9 +46,9 @@ public class ShortDiffDetails implements RefreshablePanel, Disposable {
   private final Getter<Change[]> myMaster;
 
   private DetailsPanel myDetailsPanel;
-  private GenericDetailsLoader<Change, Pair<RefreshablePanel, Disposable>> myDetailsLoader;
-  private PairConsumer<Change,Pair<RefreshablePanel, Disposable>> myDetailsConsumer;
-  private final SLRUMap<FilePath, Pair<RefreshablePanel, Disposable>> myDetailsCache;
+  private GenericDetailsLoader<Change, RefreshablePanel> myDetailsLoader;
+  private PairConsumer<Change,RefreshablePanel> myDetailsConsumer;
+  private final SLRUMap<FilePath,RefreshablePanel> myDetailsCache;
   private FilePath myCurrentFilePath;
 
   public ShortDiffDetails(Project project, Getter<Change[]> master, final VcsChangeDetailsManager vcsChangeDetailsManager) {
@@ -55,14 +56,18 @@ public class ShortDiffDetails implements RefreshablePanel, Disposable {
     myProject = project;
     myVcsChangeDetailsManager = vcsChangeDetailsManager;
 
-    myDetailsCache = new SLRUMap<FilePath, Pair<RefreshablePanel, Disposable>>(10, 10) {
+    myDetailsCache = new SLRUMap<FilePath, RefreshablePanel>(10, 10) {
       @Override
-      protected void onDropFromCache(FilePath key, Pair<RefreshablePanel, Disposable> value) {
-        if (value.getSecond() != null) {
-          Disposer.dispose(value.getSecond());
+      protected void onDropFromCache(FilePath key, RefreshablePanel value) {
+        if (value != null) {
+          Disposer.dispose(value);
         }
       }
     };
+  }
+
+  @Override
+  public void dataChanged() {
   }
 
   @Override
@@ -70,10 +75,6 @@ public class ShortDiffDetails implements RefreshablePanel, Disposable {
     ensureDetailsCreated();
     myCurrentFilePath = setDetails();
     myDetailsPanel.layout();
-  }
-
-  public boolean removeFromCache(final VirtualFile vf) {
-    return myDetailsCache.remove(new FilePathImpl(vf));
   }
 
   public FilePath getCurrentFilePath() {
@@ -114,46 +115,54 @@ public class ShortDiffDetails implements RefreshablePanel, Disposable {
   @Override
   public JPanel getPanel() {
     ensureDetailsCreated();
-    return myDetailsPanel.myPanel;
+    return myDetailsPanel.getPanel();
   }
 
   private void ensureDetailsCreated() {
     if (myDetailsConsumer != null) return;
 
     myDetailsPanel = new DetailsPanel();
-    final PairConsumer<Change, Pair<RefreshablePanel, Disposable>> cacheConsumer = new PairConsumer<Change, Pair<RefreshablePanel, Disposable>>() {
+    final PairConsumer<Change, RefreshablePanel> cacheConsumer = new PairConsumer<Change, RefreshablePanel>() {
       @Override
-      public void consume(Change change, Pair<RefreshablePanel, Disposable> pair) {
+      public void consume(Change change, RefreshablePanel pair) {
         final FilePath filePath = ChangesUtil.getFilePath(change);
-        final Pair<RefreshablePanel, Disposable> old = myDetailsCache.get(filePath);
+        final RefreshablePanel old = myDetailsCache.get(filePath);
         if (old == null) {
           myDetailsCache.put(filePath, pair);
         } else if (old != pair) {
-          if (pair.getSecond() != null) {
-            Disposer.dispose(pair.getSecond());
+          if (pair != null) {
+            Disposer.dispose(pair);
           }
         }
       }
     };
-    myDetailsConsumer = new PairConsumer<Change, Pair<RefreshablePanel, Disposable>>() {
+    myDetailsConsumer = new PairConsumer<Change, RefreshablePanel>() {
       @Override
-      public void consume(Change change, Pair<RefreshablePanel, Disposable> pair) {
+      public void consume(Change change, RefreshablePanel pair) {
         cacheConsumer.consume(change, pair);
-        pair.getFirst().refresh();
-        myDetailsPanel.data(pair.getFirst().getPanel());
+        pair.refresh();
+        myDetailsPanel.data(pair.getPanel());
         myDetailsPanel.layout();
       }
     };
-    myDetailsLoader = new GenericDetailsLoader<Change, Pair<RefreshablePanel, Disposable>>(new Consumer<Change>() {
+    myDetailsLoader = new GenericDetailsLoader<Change, RefreshablePanel>(new Consumer<Change>() {
       @Override
       public void consume(Change change) {
         final FilePath filePath = ChangesUtil.getFilePath(change);
-        Pair<RefreshablePanel, Disposable> details = myDetailsCache.get(filePath);
+        RefreshablePanel details = myDetailsCache.get(filePath);
         if (details != null) {
           myDetailsConsumer.consume(change, details);
-        } else if (myVcsChangeDetailsManager.getPanel(change, myDetailsLoader)) {
-          myDetailsPanel.loading();
-          myDetailsPanel.layout();
+        } else {
+          final RefreshablePanel detailsPanel = myVcsChangeDetailsManager.getPanel(change);
+          if (detailsPanel != null) {
+            try {
+              myDetailsLoader.take(change, detailsPanel);
+            }
+            catch (Details.AlreadyDisposedException e) {
+              Disposer.dispose(detailsPanel);
+            }
+//            myDetailsPanel.layout();
+          }
         }
       }
     }, myDetailsConsumer);
@@ -167,60 +176,12 @@ public class ShortDiffDetails implements RefreshablePanel, Disposable {
     myDetailsCache.clear();
   }
 
-  private static class DetailsPanel {
-    private CardLayout myLayout;
-    private JPanel myPanel;
-    private JPanel myDataPanel;
-    private Layer myCurrentLayer;
-
-    private DetailsPanel() {
-      myPanel = new JPanel();
-      myLayout = new CardLayout();
-      myPanel.setLayout(myLayout);
-      myDataPanel = new JPanel(new BorderLayout());
-
-      myPanel.add(UIVcsUtil.errorPanel("No details available", false), Layer.notAvailable.name());
-      myPanel.add(UIVcsUtil.errorPanel("Nothing selected", false), Layer.nothingSelected.name());
-      myPanel.add(UIVcsUtil.errorPanel("Changes content is not loaded yet", false), Layer.notLoadedInitial.name());
-      myPanel.add(UIVcsUtil.errorPanel("Loading...", false), Layer.loading.name());
-      myPanel.add(myDataPanel, Layer.data.name());
+  public boolean refreshData(VirtualFile vf) {
+    RefreshablePanel panel = myDetailsCache.get(new FilePathImpl(vf));
+    if (panel != null) {
+      panel.dataChanged();
+      return true;
     }
-
-    public void nothingSelected() {
-      myCurrentLayer = Layer.nothingSelected;
-    }
-
-    public void notAvailable() {
-      myCurrentLayer = Layer.notAvailable;
-    }
-
-    public void loading() {
-      myCurrentLayer = Layer.loading;
-    }
-
-    public void loadingInitial() {
-      myCurrentLayer = Layer.notLoadedInitial;
-    }
-
-    public void data(final JPanel panel) {
-      myCurrentLayer = Layer.data;
-      myPanel.add(panel, Layer.data.name());
-    }
-
-    public void layout() {
-      myLayout.show(myPanel, myCurrentLayer.name());
-    }
-
-    public void clear() {
-      myPanel.removeAll();
-    }
-
-    private static enum Layer {
-      notAvailable,
-      nothingSelected,
-      notLoadedInitial,
-      loading,
-      data,
-    }
+    return false;
   }
 }

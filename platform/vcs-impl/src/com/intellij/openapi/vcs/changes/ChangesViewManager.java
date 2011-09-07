@@ -54,14 +54,10 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.Alarm;
-import com.intellij.util.Consumer;
-import com.intellij.util.PairConsumer;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.containers.SLRUMap;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.vcsUtil.UIVcsUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -94,7 +90,6 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
   private final ChangeListListener myListener = new MyChangeListListener();
   private final Project myProject;
   private final ChangesViewContentManager myContentManager;
-  private final VcsChangeDetailsManager myVcsChangeDetailsManager;
 
   @NonNls private static final String ATT_FLATTENED_VIEW = "flattened_view";
   @NonNls private static final String ATT_SHOW_IGNORED = "show_ignored";
@@ -119,7 +114,6 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
   public ChangesViewManager(Project project, ChangesViewContentManager contentManager, final VcsChangeDetailsManager vcsChangeDetailsManager) {
     myProject = project;
     myContentManager = contentManager;
-    myVcsChangeDetailsManager = vcsChangeDetailsManager;
     myView = new ChangesListView(project);
 
     Disposer.register(project, myView);
@@ -530,7 +524,7 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
   }
 
   private void impl(final VirtualFile vf) {
-    final boolean wasInCache = myDiffDetails.removeFromCache(vf);
+    final boolean wasInCache = myDiffDetails.refreshData(vf);
     if (wasInCache || (myDetailsFilePath != null && myDetailsFilePath.getVirtualFile() != null && myDetailsFilePath.getVirtualFile().equals(vf))) {
       myDetailsUpdater.queue(myUpdateDetails);
     }

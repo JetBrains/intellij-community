@@ -35,12 +35,17 @@ public class GenericDetailsLoader<Id, Data> implements Details<Id,Data>, Disposa
   private final AtomicReference<Id> myCurrentlySelected;
   private boolean myIsDisposed;
 
+  /**
+   * @param loader - is called in AWT. Should call {@link #take} with data when ready. Also in AWT
+   * @param valueConsumer - is called in AWT. passive, just benefits from details loading
+   */
   public GenericDetailsLoader(final Consumer<Id> loader, final PairConsumer<Id, Data> valueConsumer) {
     myLoader = loader;
     myValueConsumer = new ValueConsumer<Id, Data>(valueConsumer);
     myCurrentlySelected = new AtomicReference<Id>(null);
   }
 
+  @CalledInAwt
   public void updateSelection(@Nullable final Id id, boolean force) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (myIsDisposed) return;
@@ -56,6 +61,7 @@ public class GenericDetailsLoader<Id, Data> implements Details<Id,Data>, Disposa
     myValueConsumer.setCacheConsumer(cacheConsumer);
   }
 
+  @CalledInAwt
   @Override
   public void take(Id id, Data data) throws AlreadyDisposedException {
     ApplicationManager.getApplication().assertIsDispatchThread();
@@ -63,6 +69,7 @@ public class GenericDetailsLoader<Id, Data> implements Details<Id,Data>, Disposa
     myValueConsumer.consume(id, data);
   }
 
+  @CalledInAny
   @Override
   public Id getCurrentlySelected() {
     return myCurrentlySelected.get();

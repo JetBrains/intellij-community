@@ -15,21 +15,23 @@
  */
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vcs.CalledInAwt;
-import com.intellij.openapi.vcs.CalledInBackground;
-
-import javax.swing.*;
+import com.intellij.openapi.vcs.VcsException;
 
 /**
- * @author irengrig
- *         Date: 7/5/11
- *         Time: 2:49 PM
- */
-public interface VcsChangeDetailsProvider {
-  @CalledInAwt
-  boolean canComment(final Change change);
-  @CalledInAwt
-  RefreshablePanel comment(final Change change);
+* Created by IntelliJ IDEA.
+* User: Irina.Chernushina
+* Date: 9/7/11
+* Time: 5:33 PM
+*/
+public abstract class ValueWithVcsException<T> extends TransparentlyFailedValue<T, VcsException> {
+  public ValueWithVcsException() {
+    try {
+      set(computeImpl());
+    }
+    catch (VcsException e) {
+      fail(e);
+    }
+  }
+
+  protected abstract T computeImpl() throws VcsException;
 }
