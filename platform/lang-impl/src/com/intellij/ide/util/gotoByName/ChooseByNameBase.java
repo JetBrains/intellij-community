@@ -38,7 +38,6 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
@@ -855,17 +854,23 @@ public abstract class ChooseByNameBase {
   private int detectBestStatisticalPosition() {
     int best = 0;
     int bestPosition = 0;
+    int bestMatch = Integer.MIN_VALUE;
     final int count = myListModel.getSize();
+
+    NameUtil.Matcher matcher = buildPatternMatcher(getNamePattern(myTextField.getText()));
 
     final String statContext = statisticsContext();
     for (int i = 0; i < count; i++) {
       final Object modelElement = myListModel.getElementAt(i);
       String text = EXTRA_ELEM.equals(modelElement) ? null : myModel.getFullName(modelElement);
       if (text != null) {
+        String shortName = myModel.getElementName(modelElement);
+        int match = shortName != null && matcher instanceof NameUtil.MinusculeMatcher ? ((NameUtil.MinusculeMatcher)matcher).matchingDegree(shortName) : Integer.MIN_VALUE;
         int stats = StatisticsManager.getInstance().getUseCount(new StatisticsInfo(statContext, text));
-        if (stats > best) {
+        if (stats > best || stats == best && match > bestMatch) {
           best = stats;
           bestPosition = i;
+          bestMatch = match;
         }
       }
     }
