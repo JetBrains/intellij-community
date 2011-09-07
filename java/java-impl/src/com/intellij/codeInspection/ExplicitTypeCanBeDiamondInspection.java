@@ -66,7 +66,7 @@ public class ExplicitTypeCanBeDiamondInspection extends BaseJavaLocalInspectionT
 
       @Override
       public void visitNewExpression(PsiNewExpression expression) {
-        if (PsiDiamondTypeUtil.canCollapseToDiamond(expression, expression)) {
+        if (PsiDiamondTypeUtil.canCollapseToDiamond(expression, expression, null)) {
           final PsiJavaCodeReferenceElement classReference = expression.getClassOrAnonymousClassReference();
           LOG.assertTrue(classReference != null);
           final PsiReferenceParameterList parameterList = classReference.getParameterList();

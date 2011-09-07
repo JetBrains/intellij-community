@@ -16,6 +16,7 @@ import com.intellij.util.containers.MultiMap;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NonNls;
 
+import java.util.ArrayList;
 import java.util.Collection;
 
 /**
@@ -251,6 +252,10 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
 
   public void testCollapsedToDiamond() throws Exception {
     doTest(new MockIntroduceVariableHandler("a", true, true, true, "java.util.ArrayList<java.lang.String>"));
+  }
+
+  public void testCantCollapsedToDiamond() throws Exception {
+    doTest(new MockIntroduceVariableHandler("a", true, true, true, "Foo<java.lang.Number>"));
   }
 
   public void testSiblingInnerClassType() throws Exception {

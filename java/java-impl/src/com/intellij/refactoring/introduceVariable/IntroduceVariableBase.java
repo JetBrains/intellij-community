@@ -749,7 +749,9 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
         .createVariableDeclarationStatement("x", expectedType, initializer).getDeclaredElements()[0])
         .getInitializer();
       if (tryToDetectDiamondNewExpr instanceof PsiNewExpression &&
-          PsiDiamondTypeUtil.canCollapseToDiamond((PsiNewExpression)tryToDetectDiamondNewExpr, initializer)) {
+          PsiDiamondTypeUtil.canCollapseToDiamond((PsiNewExpression)tryToDetectDiamondNewExpr,
+                                                  (PsiNewExpression)tryToDetectDiamondNewExpr,
+                                                  expectedType)) {
         final PsiElement paramList = PsiDiamondTypeUtil
           .replaceExplicitWithDiamond(newExpression.getClassOrAnonymousClassReference().getParameterList());
         return PsiTreeUtil.getParentOfType(paramList, PsiNewExpression.class);
