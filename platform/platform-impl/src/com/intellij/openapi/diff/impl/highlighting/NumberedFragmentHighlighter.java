@@ -90,7 +90,15 @@ public class NumberedFragmentHighlighter extends FragmentHighlighterImpl {
       if (line.getType() == null || TextDiffTypeEnum.NONE.equals(line.getType())) continue;
       
       final Iterator<Fragment> iterator = line.getChildrenIterator();
-      if (iterator == null) continue;
+      if (iterator == null) {
+        TextRange left = line.getRange(FragmentSide.SIDE1);
+        TextRange right = line.getRange(FragmentSide.SIDE2);
+
+        leftMap.putValue(myAppender1.getDocument().getLineNumber(left.getStartOffset()), new Pair<Integer, TextDiffTypeEnum>(cnt, line.getType()));
+        rightMap.putValue(myAppender2.getDocument().getLineNumber(right.getStartOffset()), new Pair<Integer, TextDiffTypeEnum>(cnt, line.getType()));
+        ++ cnt;
+        continue;
+      }
       while (iterator.hasNext()) {
         final Fragment next = iterator.next();
         if (next.getType() == null || TextDiffTypeEnum.NONE.equals(next.getType())) continue;
