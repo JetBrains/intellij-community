@@ -1,4 +1,4 @@
-package com.jetbrains.python.codeInsight;
+package com.jetbrains.python.codeInsight.completion;
 
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.*;
@@ -16,6 +16,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.codeInsight.*;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.patterns.Matcher;
 import com.jetbrains.python.psi.patterns.SyntaxMatchers;

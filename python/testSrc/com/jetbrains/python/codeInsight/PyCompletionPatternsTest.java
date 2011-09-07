@@ -2,6 +2,7 @@ package com.jetbrains.python.codeInsight;
 
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PythonFileType;
+import com.jetbrains.python.codeInsight.completion.PyKeywordCompletionContributor;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 
 /**

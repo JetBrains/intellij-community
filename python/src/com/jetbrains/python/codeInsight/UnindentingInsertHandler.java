@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.jetbrains.python.codeInsight.completion.PythonLookupElement;
 import com.jetbrains.python.psi.PyStatementWithElse;
 import com.jetbrains.python.psi.PyTryExceptStatement;
 import com.jetbrains.python.psi.patterns.Matcher;

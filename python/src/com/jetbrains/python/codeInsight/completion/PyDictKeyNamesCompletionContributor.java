@@ -1,4 +1,4 @@
-package com.jetbrains.python.codeInsight;
+package com.jetbrains.python.codeInsight.completion;
 
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -25,7 +25,7 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
  *
  * Complete known keys for dictionaries
  */
-public class PyDictKeyNamesCompletionContributor extends PySeeingOriginalCompletionContributor {
+public class PyDictKeyNamesCompletionContributor extends CompletionContributor {
   public PyDictKeyNamesCompletionContributor() {
     extend(
       CompletionType.BASIC,
