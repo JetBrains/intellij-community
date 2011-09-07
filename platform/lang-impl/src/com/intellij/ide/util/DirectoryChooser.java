@@ -18,6 +18,7 @@ package com.intellij.ide.util;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.FileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -320,7 +321,20 @@ public class DirectoryChooser extends DialogWrapper {
     }
 
     public String getPresentableUrl() {
-      String directoryUrl = myDirectory != null ? myDirectory.getVirtualFile().getPresentableUrl() : "";
+      String directoryUrl;
+      if (myDirectory != null) {
+        directoryUrl = myDirectory.getVirtualFile().getPresentableUrl();
+        final VirtualFile baseDir = myDirectory.getProject().getBaseDir();
+        if (baseDir != null) {
+          final String projectHomeUrl = baseDir.getPresentableUrl();
+          if (directoryUrl.startsWith(projectHomeUrl)) {
+            directoryUrl = "..." + directoryUrl.substring(projectHomeUrl.length());
+          }
+        }
+      }
+      else {
+        directoryUrl = "";
+      }
       return myPostfix != null ? directoryUrl + myPostfix : directoryUrl;
     }
 
