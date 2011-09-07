@@ -43,6 +43,11 @@ public class PythonLanguage extends Language {
     ELTYPE_FILE = new PyFileElementType(this);
   }
 
+  protected PythonLanguage(String id) {
+    super(getInstance(), id);
+    ELTYPE_FILE = new PyFileElementType(this);
+  }
+
   public IStubFileElementType getFileElementType() {
     return ELTYPE_FILE;
   }

@@ -1,5 +1,6 @@
 package com.jetbrains.python;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileTypes.EditorHighlighterProvider;
@@ -34,7 +35,11 @@ public class PythonFileType extends LanguageFileType {
   private final Icon _icon;
 
   public PythonFileType() {
-    super(new PythonLanguage());
+    this(new PythonLanguage());
+  }
+
+  public PythonFileType(Language language) {
+    super(language);
     _icon = IconLoader.getIcon("/com/jetbrains/python/icons/pythonFile.png");
 
     FileTypeEditorHighlighterProviders.INSTANCE.addExplicitExtension(this, new EditorHighlighterProvider() {
@@ -54,7 +59,7 @@ public class PythonFileType extends LanguageFileType {
 
   @NotNull
   public String getDescription() {
-    return "Python script";
+    return "Python files";
   }
 
   @NotNull

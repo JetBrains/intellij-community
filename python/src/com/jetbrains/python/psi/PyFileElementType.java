@@ -1,9 +1,6 @@
 package com.jetbrains.python.psi;
 
-import com.intellij.lang.ASTNode;
-import com.intellij.lang.Language;
-import com.intellij.lang.PsiBuilder;
-import com.intellij.lang.PsiBuilderFactory;
+import com.intellij.lang.*;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -15,6 +12,7 @@ import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.io.StringRef;
+import com.jetbrains.python.PythonParserDefinition;
 import com.jetbrains.python.console.parsing.PyConsoleParsingContext;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.console.parsing.PythonConsoleLexer;
@@ -51,11 +49,38 @@ public class PyFileElementType extends IStubFileElementType<PyFileStub> {
     return 36;
   }
 
+  /*
   @Override
   public ASTNode parseContents(ASTNode chameleon) {
     final FileElement node = (FileElement)chameleon;
     final LanguageLevel languageLevel = getLanguageLevel(node.getPsi());
+    if (PydevConsoleRunner.isInPydevConsole(node)) {
+      return parseConsoleCode(node, languageLevel);
+    }
+    final Project project = chameleon.getPsi().getProject();
+    final PsiBuilderFactory factory = PsiBuilderFactory.getInstance();
+    final Language language = getLanguage();
+    final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
+    final Lexer lexer = parserDefinition.createLexer(project);
+    final PsiParser parser = parserDefinition instanceof PythonParserDefinition ?
+                             ((PythonParserDefinition)parserDefinition).createParser(project, languageLevel) :
+                             parserDefinition.createParser(project);
 
+    final PsiBuilder builder = factory.createBuilder(project, chameleon, lexer, getLanguage(), chameleon.getChars());
+    if (parser instanceof PyParser &&
+        languageLevel == LanguageLevel.PYTHON26 &&
+        node.getPsi().getContainingFile().getName().equals("__builtin__.py")) {
+      ((PyParser)parser).setFutureFlag(StatementParsing.FUTURE.PRINT_FUNCTION);
+    }
+
+    return parser.parse(this, builder).getFirstChildNode();
+  }
+  */
+
+  @Override
+  public ASTNode parseContents(ASTNode chameleon) {
+    final FileElement node = (FileElement)chameleon;
+    final LanguageLevel languageLevel = getLanguageLevel(node.getPsi());
     if (PydevConsoleRunner.isInPydevConsole(node)) {
       return parseConsoleCode(node, languageLevel);
     }

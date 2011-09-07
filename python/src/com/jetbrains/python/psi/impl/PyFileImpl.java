@@ -1,6 +1,7 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.extapi.psi.PsiFileBase;
+import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -46,7 +47,11 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   private boolean myDunderAllCalculated;
 
   public PyFileImpl(FileViewProvider viewProvider) {
-    super(viewProvider, PythonLanguage.getInstance());
+    this(viewProvider, PythonLanguage.getInstance());
+  }
+
+  public PyFileImpl(FileViewProvider viewProvider, Language language) {
+    super(viewProvider, language);
     myImportTargetsTransitive = CachedValuesManager.getManager(getProject()).createCachedValue(new CachedValueProvider<List<PyImportElement>>() {
       @Override
       public Result<List<PyImportElement>> compute() {
