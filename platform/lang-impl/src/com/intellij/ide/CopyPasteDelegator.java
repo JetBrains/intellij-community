@@ -21,14 +21,17 @@ import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDirectoryContainer;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.copy.CopyHandler;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandler;
+import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -129,13 +132,17 @@ public abstract class CopyPasteDelegator implements CopyPasteSupport {
       if (elements == null) return false;
       try {
         PsiElement target = LangDataKeys.PASTE_TARGET_PSI_ELEMENT.getData(dataContext);
+        final Module module = LangDataKeys.MODULE.getData(dataContext);
+        if (module != null && target instanceof PsiDirectoryContainer) {
+          final PsiDirectory[] directories = ((PsiDirectoryContainer)target).getDirectories(GlobalSearchScope.moduleScope(module));
+          if (directories.length == 1) {
+            target = directories[0];
+          }
+        }
         if (isCopied[0]) {
           PsiDirectory targetDirectory = target instanceof PsiDirectory ? (PsiDirectory)target : null;
           if (targetDirectory == null && target instanceof PsiDirectoryContainer) {
-            final PsiDirectory[] directories = ((PsiDirectoryContainer)target).getDirectories();
-            if (directories.length > 0) {
-              targetDirectory = directories[0];
-            }
+            targetDirectory = MoveFilesOrDirectoriesUtil.resolveToDirectory(myProject, target);
           }
           if (CopyHandler.canCopy(elements)) {
             CopyHandler.doCopy(elements, targetDirectory);

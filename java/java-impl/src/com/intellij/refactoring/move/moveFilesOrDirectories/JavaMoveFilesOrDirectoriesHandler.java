@@ -15,11 +15,15 @@
  */
 package com.intellij.refactoring.move.moveFilesOrDirectories;
 
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.file.JavaDirectoryServiceImpl;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.moveClassesOrPackages.JavaMoveClassesOrPackagesHandler;
@@ -39,6 +43,20 @@ public class JavaMoveFilesOrDirectoriesHandler extends MoveFilesOrDirectoriesHan
     if (JavaMoveClassesOrPackagesHandler.nonFileSystemOrAllJava(srcElements)) return false;
 
     return super.canMove(srcElements, targetContainer);
+  }
+
+  @Override
+  public PsiElement adjustTargetForMove(DataContext dataContext, PsiElement targetContainer) {
+    if (targetContainer instanceof PsiPackage) {
+      final Module module = LangDataKeys.TARGET_MODULE.getData(dataContext);
+      if (module != null) {
+        final PsiDirectory[] directories = ((PsiPackage)targetContainer).getDirectories(GlobalSearchScope.moduleScope(module));
+        if (directories.length == 1) {
+          return directories[0];
+        }
+      }
+    }
+    return super.adjustTargetForMove(dataContext, targetContainer);
   }
 
   @Override
