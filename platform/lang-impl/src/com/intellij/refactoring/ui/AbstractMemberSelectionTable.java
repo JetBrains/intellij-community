@@ -27,10 +27,8 @@ import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.intellij.refactoring.classMembers.MemberInfoChange;
 import com.intellij.refactoring.classMembers.MemberInfoChangeListener;
 import com.intellij.refactoring.classMembers.MemberInfoModel;
-import com.intellij.ui.BooleanTableCellRenderer;
-import com.intellij.ui.ColoredTableCellRenderer;
-import com.intellij.ui.RowIcon;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.*;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.Table;
 import org.jetbrains.annotations.NotNull;
@@ -101,6 +99,7 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
     setIntercellSpacing(new Dimension(0, 0));
 
     new MyEnableDisableAction().register();
+    new TableSpeedSearch(this);
   }
 
   public Collection<M> getSelectedMemberInfos() {
