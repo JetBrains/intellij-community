@@ -230,7 +230,7 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
         break;
       }
       VirtualFile file = event.getFile();
-      if (file == null || file.isDirectory()) {
+      if (file == null) {
         continue;
       }
       String path = file.getPath();
@@ -244,7 +244,7 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
 
     // if index has changed, no need to refresh specific files - we get the full status of all files
     if (indexChanged) {
-        myDirtyScopeManager.dirDirtyRecursively(myRoot);
+      myDirtyScopeManager.dirDirtyRecursively(myRoot);
       synchronized (LOCK) {
         myReady = false;
       }

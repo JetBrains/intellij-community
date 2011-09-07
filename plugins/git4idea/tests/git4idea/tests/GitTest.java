@@ -33,6 +33,8 @@ import org.testng.annotations.BeforeMethod;
 import java.io.File;
 import java.util.Map;
 
+import static org.testng.Assert.assertNotNull;
+
 /**
  * The common ancestor for git test cases which need git executable.
  * These tests can be executed only if git is installed in the system and IDEA_TEST_GIT_EXECUTABLE_PATH targets to the folder which
@@ -55,6 +57,7 @@ public abstract class GitTest extends AbstractVcsTestCase {
   protected static final String MAIN_USER_EMAIL = "john.smith@email.com";
   protected static final String BROTHER_USER_NAME = "Bob Doe";
   protected static final String BROTHER_USER_EMAIL = "bob.doe@email.com";
+  protected GitVcs myVcs;
 
   @BeforeMethod
   protected void setUp() throws Exception {
@@ -75,6 +78,8 @@ public abstract class GitTest extends AbstractVcsTestCase {
       }
     });
 
+    myVcs = GitVcs.getInstance(myProject);
+    assertNotNull(myVcs);
     myTraceClient = true;
     doActionSilently(VcsConfiguration.StandardConfirmation.ADD);
     doActionSilently(VcsConfiguration.StandardConfirmation.REMOVE);

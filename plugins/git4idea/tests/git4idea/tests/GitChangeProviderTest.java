@@ -15,31 +15,24 @@
  */
 package git4idea.tests;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.VcsModifiableDirtyScope;
 import com.intellij.openapi.vcs.changes.pending.MockChangeListManagerGate;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.vcs.MockChangelistBuilder;
 import com.intellij.testFramework.vcs.MockDirtyScope;
-import com.intellij.ui.GuiUtils;
 import git4idea.GitVcs;
 import git4idea.status.GitChangeProvider;
 import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.intellij.openapi.vcs.FileStatus.*;
 import static org.testng.Assert.*;
 
 /**
@@ -51,11 +44,11 @@ import static org.testng.Assert.*;
  */
 public class GitChangeProviderTest extends GitTest {
 
-  private GitChangeProvider myChangeProvider;
-  private VcsModifiableDirtyScope myDirtyScope;
-  private Map<String, VirtualFile> myFiles;
-  private VirtualFile afile;
-  private VirtualFile myRootDir;
+  protected GitChangeProvider myChangeProvider;
+  protected VcsModifiableDirtyScope myDirtyScope;
+  protected Map<String, VirtualFile> myFiles;
+  protected VirtualFile afile;
+  protected VirtualFile myRootDir;
 
   @BeforeMethod
   @Override
@@ -73,147 +66,7 @@ public class GitChangeProviderTest extends GitTest {
     myDirtyScope = new MockDirtyScope(myProject, GitVcs.getInstance(myProject));
   }
 
-  @Test
-  public void testUnversionedFile() throws IOException, VcsException {
-    setStandardConfirmation(GitVcs.NAME, VcsConfiguration.StandardConfirmation.ADD, VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY);
-    VirtualFile file = create(myRootDir, "new.txt");
-
-    MockChangelistBuilder builder = new MockChangelistBuilder();
-    myChangeProvider.getChanges(myDirtyScope, builder, new EmptyProgressIndicator(),
-                                new MockChangeListManagerGate(ChangeListManager.getInstance(myProject)));
-    List<VirtualFile> unversionedFiles = builder.getUnversionedFiles();
-    assertEquals(unversionedFiles.size(), 1, "Incorrect number of unversioned files.");
-    assertEquals(unversionedFiles.get(0), file, "Unversioned file doesn't match.");
-  }
-
-  @Test
-  public void testCreateFile() throws Exception {
-    VirtualFile file = create(myRootDir, "new.txt");
-    assertChanges(file, ADDED);
-  }
-
-  @Test
-  public void testCreateFileInDir() throws Exception {
-    VirtualFile dir = createDir(myRootDir, "newdir");
-    VirtualFile bfile = create(dir, "new.txt");
-    assertChanges(new VirtualFile[] {bfile, dir}, new FileStatus[] { ADDED, null} );
-  }
-
-  @Test
-  public void testEditFile() throws Exception {
-    edit(afile, "new content");
-    assertChanges(afile, MODIFIED);
-  }
-
-  @Test
-  public void testDeleteFile() throws Exception {
-    delete(afile);
-    assertChanges(afile, DELETED);
-  }
-
-  @Test
-  public void testDeleteDirRecursively() throws Exception {
-    GuiUtils.runOrInvokeAndWait(new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            final VirtualFile dir= myRepo.getVFRootDir().findChild("dir");
-            myDirtyScope.addDirtyDirRecursively(new FilePathImpl(dir));
-            FileUtil.delete(VfsUtil.virtualToIoFile(dir));
-          }
-        });
-      }
-    });
-    assertChanges(new VirtualFile[] { myFiles.get("dir/c.txt"), myFiles.get("dir/subdir/d.txt") }, new FileStatus[] { DELETED, DELETED });
-  }
-
-  @Test
-  public void testMoveNewFile() throws Exception {
-    // IDEA-59587
-    // Reproducibility of the bug (in the original roots cause) depends on the order of new and old paths in the dirty scope.
-    // MockDirtyScope shouldn't preserve the order of items added there - a Set is returned from getDirtyFiles().
-    // But the order is likely preserved if it meets the natural order of the items inserted into the dirty scope.
-    // That's why the test moves from .../repo/dir/new.txt to .../repo/new.txt - to make the old path appear later than the new one.
-    // This is not consistent though.
-    final VirtualFile dir= myRepo.getVFRootDir().findChild("dir");
-    final VirtualFile file = create(dir, "new.txt");
-    move(file, myRootDir);
-    assertChanges(file, ADDED);
-  }
-
-  @Test
-  public void testSimultaneousOperationsOnMultipleFiles() throws Exception {
-    VirtualFile dfile = myFiles.get("dir/subdir/d.txt");
-    VirtualFile cfile = myFiles.get("dir/c.txt");
-
-    edit(afile, "new afile content");
-    edit(cfile, "new cfile content");
-    delete(dfile);
-    VirtualFile newfile = create(myRootDir, "newfile.txt");
-
-    assertChanges(new VirtualFile[] {afile, cfile, dfile, newfile}, new FileStatus[] {MODIFIED, MODIFIED, DELETED, ADDED});
-  }
-
-  /**
-   * "modify-modify" merge conflict.
-   * 1. Create a file and commit it.
-   * 2. Create new branch and switch to it.
-   * 3. Edit the file in that branch and commit.
-   * 4. Switch to master, conflictly edit the file and commit.
-   * 5. Merge the branch on master.
-   * Merge conflict "modify-modify" happens.
-   */
-  @Test
-  public void testConflictMM() throws Exception {
-    modifyFileInBranches("a.txt", FileAction.MODIFY, FileAction.MODIFY);
-    assertChanges(afile, FileStatus.MERGED_WITH_CONFLICTS);
-  }
-
-  /**
-   * Modify-Delete conflict.
-   */
-  @Test
-  public void testConflictMD() throws Exception {
-    modifyFileInBranches("a.txt", FileAction.MODIFY, FileAction.DELETE);
-    assertChanges(afile, FileStatus.MERGED_WITH_CONFLICTS);
-  }
-
-  /**
-   * Delete-Modify conflict.
-   */
-  @Test
-  public void testConflictDM() throws Exception {
-    modifyFileInBranches("a.txt", FileAction.DELETE, FileAction.MODIFY);
-    assertChanges(afile, FileStatus.MERGED_WITH_CONFLICTS);
-  }
-
-  /**
-   * Create a file with conflicting content.
-   */
-  @Test
-  public void testConflictCC() throws Exception {
-    modifyFileInBranches("z.txt", FileAction.CREATE, FileAction.CREATE);
-    VirtualFile zfile = myRepo.getVFRootDir().findChild("z.txt");
-    assertChanges(zfile, FileStatus.MERGED_WITH_CONFLICTS);
-  }
-
-  @Test
-  public void testConflictRD() throws Exception {
-    modifyFileInBranches("a.txt", FileAction.RENAME, FileAction.DELETE);
-    VirtualFile newfile = myRepo.getVFRootDir().findChild("a.txt_master_new"); // renamed in master
-    assertChanges(newfile, FileStatus.MERGED_WITH_CONFLICTS);
-  }
-
-  @Test
-  public void testConflictDR() throws Exception {
-    modifyFileInBranches("a.txt", FileAction.DELETE, FileAction.RENAME);
-    VirtualFile newFile = myRepo.getVFRootDir().findChild("a.txt_feature_new"); // deleted in master, renamed in feature
-    assertChanges(newFile, FileStatus.MERGED_WITH_CONFLICTS);
-  }
-
-  private void modifyFileInBranches(String filename, FileAction masterAction, FileAction featureAction) throws Exception {
+  protected void modifyFileInBranches(String filename, FileAction masterAction, FileAction featureAction) throws Exception {
     myRepo.createBranch("feature");
     performActionOnFileAndRecordToIndex(filename, "feature", featureAction);
     myRepo.commit();
@@ -224,7 +77,7 @@ public class GitChangeProviderTest extends GitTest {
     myRepo.refresh();
   }
 
-  private enum FileAction {
+  protected enum FileAction {
     CREATE, MODIFY, DELETE, RENAME
   }
 
@@ -261,7 +114,7 @@ public class GitChangeProviderTest extends GitTest {
    * Checks that the given files have respective statuses in the change list retrieved from myChangesProvider.
    * Pass null in the fileStatuses array to indicate that proper file has not changed.
    */
-  private void assertChanges(VirtualFile[] virtualFiles, FileStatus[] fileStatuses) throws VcsException {
+  protected void assertChanges(VirtualFile[] virtualFiles, FileStatus[] fileStatuses) throws VcsException {
     Map<FilePath, Change> result = getChanges(virtualFiles);
     for (int i = 0; i < virtualFiles.length; i++) {
       FilePath fp = new FilePathImpl(virtualFiles[i]);
@@ -275,7 +128,7 @@ public class GitChangeProviderTest extends GitTest {
     }
   }
 
-  private void assertChanges(VirtualFile virtualFile, FileStatus fileStatus) throws VcsException {
+  protected void assertChanges(VirtualFile virtualFile, FileStatus fileStatus) throws VcsException {
     assertChanges(new VirtualFile[] { virtualFile }, new FileStatus[] { fileStatus });
   }
 
@@ -283,7 +136,7 @@ public class GitChangeProviderTest extends GitTest {
    * Marks the given files dirty in myDirtyScope, gets changes from myChangeProvider and groups the changes in the map.
    * Assumes that only one change for a file has happened.
    */
-  private Map<FilePath, Change> getChanges(VirtualFile... changedFiles) throws VcsException {
+  protected Map<FilePath, Change> getChanges(VirtualFile... changedFiles) throws VcsException {
     final List<FilePath> changedPaths = ObjectsConvertor.vf2fp(Arrays.asList(changedFiles));
 
     // get changes
@@ -312,11 +165,11 @@ public class GitChangeProviderTest extends GitTest {
     return result;
   }
 
-  private VirtualFile create(VirtualFile parent, String name) {
+  protected VirtualFile create(VirtualFile parent, String name) {
     return create(parent, name, false);
   }
 
-  private VirtualFile createDir(VirtualFile parent, String name) {
+  protected VirtualFile createDir(VirtualFile parent, String name) {
     return create(parent, name, true);
   }
 
@@ -326,18 +179,18 @@ public class GitChangeProviderTest extends GitTest {
     return file;
   }
 
-  private void edit(VirtualFile file, String content) {
+  protected void edit(VirtualFile file, String content) {
     editFileInCommand(file, content);
     dirty(file);
   }
 
-  private void move(VirtualFile file, VirtualFile newParent) {
+  protected void move(VirtualFile file, VirtualFile newParent) {
     dirty(file);
     moveFileInCommand(file, newParent);
     dirty(file);
   }
 
-  private void delete(VirtualFile file) {
+  protected void delete(VirtualFile file) {
     dirty(file);
     deleteFileInCommand(file);
   }
