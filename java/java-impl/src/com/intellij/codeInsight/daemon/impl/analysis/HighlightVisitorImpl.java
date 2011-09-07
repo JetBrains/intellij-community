@@ -44,6 +44,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import gnu.trove.THashMap;
+import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -64,7 +65,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   private final Map<PsiElement, Collection<PsiReferenceExpression>> myUninitializedVarProblems = new THashMap<PsiElement, Collection<PsiReferenceExpression>>();
   // map codeBlock->List of PsiReferenceExpression of extra initialization of final variable
   private final Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> myFinalVarProblems = new THashMap<PsiElement, Collection<ControlFlowUtil.VariableInfo>>();
-  private final Map<PsiParameter, Boolean> myParameterIsReassigned = new THashMap<PsiParameter, Boolean>();
+
+  // value==1: no info if the parameter was reassigned (but the parameter is present in current file), value==2: parameter was reassigned
+  private final TObjectIntHashMap<PsiParameter> myReassignedParameters = new TObjectIntHashMap<PsiParameter>();
 
   private final Map<String, Pair<PsiImportStaticReferenceElement, PsiClass>> mySingleImportedClasses = new THashMap<String, Pair<PsiImportStaticReferenceElement, PsiClass>>();
   private final Map<String, Pair<PsiImportStaticReferenceElement, PsiField>> mySingleImportedFields = new THashMap<String, Pair<PsiImportStaticReferenceElement, PsiField>>();
@@ -144,7 +147,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       myFinalVarProblems.clear();
       mySingleImportedClasses.clear();
       mySingleImportedFields.clear();
-      myParameterIsReassigned.clear();
+      myReassignedParameters.clear();
 
       myRefCountHolder = null;
       myFile = null;
@@ -329,29 +332,31 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     ProgressManager.checkCanceled(); // visitLiteralExpression is invoked very often in array initializers
     
     super.visitExpression(expression);
-    if (myHolder.add(HighlightUtil.checkMustBeBoolean(expression))) return;
+    PsiType type = expression.getType();
+    if (myHolder.add(HighlightUtil.checkMustBeBoolean(expression, type))) return;
+    PsiExpression indexExpression;
+
     if (expression instanceof PsiArrayAccessExpression
-        && ((PsiArrayAccessExpression)expression).getIndexExpression() != null) {
-      myHolder.add(HighlightUtil.checkValidArrayAccessExpression(((PsiArrayAccessExpression)expression).getArrayExpression(),
-                                                                 ((PsiArrayAccessExpression)expression).getIndexExpression()));
+        && (indexExpression = ((PsiArrayAccessExpression)expression).getIndexExpression()) != null) {
+      PsiExpression arrayExpression = ((PsiArrayAccessExpression)expression).getArrayExpression();
+      myHolder.add(HighlightUtil.checkValidArrayAccessExpression(arrayExpression, indexExpression, indexExpression.getType()));
     }
     if (expression.getParent() instanceof PsiNewExpression
              && ((PsiNewExpression)expression.getParent()).getQualifier() != expression
              && ((PsiNewExpression)expression.getParent()).getArrayInitializer() != expression) {
       // like in 'new String["s"]'
-      myHolder.add(HighlightUtil.checkValidArrayAccessExpression(null, expression));
+      myHolder.add(HighlightUtil.checkValidArrayAccessExpression(null, expression, type));
     }
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightControlFlowUtil.checkCannotWriteToFinal(expression));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkVariableExpected(expression));
-    if (!myHolder.hasErrorResults()) myHolder.addAll(HighlightUtil.checkArrayInitializer(expression));
-    if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkTernaryOperatorConditionIsBoolean(expression));
-    if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkAssertOperatorTypes(expression));
-    if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkSynchronizedExpressionType(expression));
-    if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkConditionalExpressionBranchTypesMatch(expression));
+    if (!myHolder.hasErrorResults()) myHolder.addAll(HighlightUtil.checkArrayInitializer(expression, type));
+    if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkTernaryOperatorConditionIsBoolean(expression, type));
+    if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkAssertOperatorTypes(expression, type));
+    if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkSynchronizedExpressionType(expression, type));
+    if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkConditionalExpressionBranchTypesMatch(expression, type));
     if (!myHolder.hasErrorResults()
         && expression.getParent() instanceof PsiThrowStatement
         && ((PsiThrowStatement)expression.getParent()).getException() == expression) {
-      PsiType type = expression.getType();
       myHolder.add(HighlightUtil.checkMustBeThrowable(type, expression, true));
     }
 
@@ -392,11 +397,17 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         final PsiElement child = variable.getLastChild();
         if (child instanceof PsiErrorElement && child.getPrevSibling() == identifier) return;
       }
-      if (isReassigned(variable)) {
-        myHolder.add(HighlightNamesUtil.highlightReassignedVariable(variable, variable.getNameIdentifier()));
+      boolean isMethodParameter = variable instanceof PsiParameter && ((PsiParameter)variable).getDeclarationScope() instanceof PsiMethod;
+      if (!isMethodParameter) { // method params are highlighted in visitMethod since we should make sure the method body was visited before
+        if (HighlightControlFlowUtil.isReassigned(variable, myFinalVarProblems)) {
+          myHolder.add(HighlightNamesUtil.highlightReassignedVariable(variable, identifier));
+        }
+        else {
+          myHolder.add(HighlightNamesUtil.highlightVariableName(variable, identifier, colorsScheme));
+        }
       }
       else {
-        myHolder.add(HighlightNamesUtil.highlightVariableName(variable, identifier, colorsScheme));
+        myReassignedParameters.put((PsiParameter)variable, 1); // mark param as present in current file
       }
     }
     else if (parent instanceof PsiClass) {
@@ -565,6 +576,21 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkSafeVarargsAnnotation(method));
     if (!myHolder.hasErrorResults() && method.isConstructor()) {
       myHolder.add(HighlightClassUtil.checkThingNotAllowedInInterface(method, method.getContainingClass()));
+    }
+
+    // method params are highlighted in visitMethod since we should make sure the method body was visited before
+    PsiParameter[] parameters = method.getParameterList().getParameters();
+    final EditorColorsScheme colorsScheme = myHolder.getColorsScheme();
+
+    for (PsiParameter parameter : parameters) {
+      int info = myReassignedParameters.get(parameter);
+      if (info == 0) continue; // out of this file
+      if (info == 2) {// reassigned
+        myHolder.add(HighlightNamesUtil.highlightReassignedVariable(parameter, parameter.getNameIdentifier()));
+      }
+      else {
+        myHolder.add(HighlightNamesUtil.highlightVariableName(parameter, parameter.getNameIdentifier(), colorsScheme));
+      }
     }
   }
 
@@ -792,6 +818,10 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         }
       }
 
+      if (variable instanceof PsiParameter && ref instanceof PsiExpression && PsiUtil.isAccessedForWriting((PsiExpression)ref)) {
+        myReassignedParameters.put((PsiParameter)variable, 2);
+      }
+
       final EditorColorsScheme colorsScheme = myHolder.getColorsScheme();
       if (!variable.hasModifierProperty(PsiModifier.FINAL) && isReassigned(variable)) {
         myHolder.add(HighlightNamesUtil.highlightReassignedVariable(variable, ref));
@@ -976,7 +1006,15 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   private boolean isReassigned(PsiVariable variable) {
     try {
-      return HighlightControlFlowUtil.isReassigned(variable, myFinalVarProblems, myParameterIsReassigned);
+      boolean reassigned;
+      if (variable instanceof PsiParameter) {
+        reassigned = myReassignedParameters.get((PsiParameter)variable) == 2;
+      }
+      else  {
+        reassigned = HighlightControlFlowUtil.isReassigned(variable, myFinalVarProblems);
+      }
+
+      return reassigned;
     }
     catch (IndexNotReadyException e) {
       return false;

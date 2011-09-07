@@ -143,17 +143,15 @@ public class HighlightNamesUtil {
         || var instanceof PsiParameter && ((PsiParameter)var).getDeclarationScope() instanceof PsiForeachStatement) {
       return HighlightInfoType.LOCAL_VARIABLE;
     }
-    else if (var instanceof PsiField) {
+    if (var instanceof PsiField) {
       return var.hasModifierProperty(PsiModifier.STATIC)
              ? HighlightInfoType.STATIC_FIELD
              : HighlightInfoType.INSTANCE_FIELD;
     }
-    else if (var instanceof PsiParameter) {
+    if (var instanceof PsiParameter) {
       return HighlightInfoType.PARAMETER;
     }
-    else { //?
-      return null;
-    }
+    return null;
   }
 
   private static HighlightInfoType getClassNameHighlightType(PsiClass aClass) {
