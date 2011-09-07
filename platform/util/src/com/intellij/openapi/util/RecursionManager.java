@@ -311,7 +311,7 @@ public class RecursionManager {
 
     private void checkZero() {
       if (!progressMap.isEmpty() && !new Integer(0).equals(progressMap.get(progressMap.keySet().iterator().next()))) {
-        throw new AssertionError("Prisoner Zero has escaped: " + progressMap);
+        throw new AssertionError("Prisoner Zero has escaped: " + progressMap + "; value=" + progressMap.get(progressMap.keySet().iterator().next()));
       }
     }
 
