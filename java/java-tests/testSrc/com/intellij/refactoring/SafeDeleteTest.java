@@ -134,6 +134,16 @@ public class SafeDeleteTest extends MultiFileTestCase {
     doSingleFileTest();
   }
 
+  public void testLastTypeParam() throws Exception {
+    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_7);
+    doSingleFileTest();
+  }
+
+  public void testTypeParamFromDiamond() throws Exception {
+    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_7);
+    doSingleFileTest();
+  }
+
   private void doTest(@NonNls final String qClassName) throws Exception {
     doTest(new PerformAction() {
       @Override
