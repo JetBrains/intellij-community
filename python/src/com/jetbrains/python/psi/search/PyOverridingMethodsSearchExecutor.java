@@ -1,5 +1,7 @@
 package com.jetbrains.python.psi.search;
 
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
 import com.jetbrains.python.psi.PyClass;
@@ -15,7 +17,14 @@ public class PyOverridingMethodsSearchExecutor implements QueryExecutor<PyFuncti
     PyClass containingClass = baseMethod.getContainingClass();
     return PyClassInheritorsSearch.search(containingClass, queryParameters.isCheckDeep()).forEach(new Processor<PyClass>() {
       public boolean process(final PyClass pyClass) {
-        PyFunction overridingMethod = pyClass.findMethodByName(baseMethod.getName(), false);
+        final AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
+        PyFunction overridingMethod;
+        try {
+          overridingMethod = pyClass.findMethodByName(baseMethod.getName(), false);
+        }
+        finally {
+          accessToken.finish();
+        }
         //noinspection SimplifiableIfStatement
         if (overridingMethod != null) {
           return consumer.process(overridingMethod);
