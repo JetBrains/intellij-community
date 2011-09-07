@@ -35,7 +35,6 @@ public class AddFileConfirmationPanel extends AbstractAddFileConfirmationPanel {
   private FileLabel myFileLabel;
   private JPanel myPanel;
 
-
   public AddFileConfirmationPanel(AddedFileInfo addedFileInfo) {
     super(addedFileInfo);
 
@@ -43,20 +42,23 @@ public class AddFileConfirmationPanel extends AbstractAddFileConfirmationPanel {
 
     final JPanel panel1 = new JPanel(new GridBagLayout());
     final GridBagConstraints constraints = new GridBagConstraints();
+    constraints.anchor = GridBagConstraints.WEST;
     final JLabel label1 = new JLabel(CvsBundle.message("label.add.file.confirmation.keyword.substitution.add.file"));
     panel1.add(label1, constraints);
     myFileLabel = new FileLabel();
+    constraints.weightx = 1.0;
     constraints.insets.left = 10;
     panel1.add(myFileLabel, constraints);
+
     final JLabel label2 = new JLabel(CvsBundle.message("label.add.file.confirmation.keyword.substitution.to.cvs.with"));
+    constraints.weightx = 0.0;
     constraints.gridx = 0;
     constraints.gridy = 0;
     constraints.gridwidth = 3;
     constraints.insets.left = 0;
-    constraints.anchor = GridBagConstraints.LINE_START;
+    constraints.fill = GridBagConstraints.HORIZONTAL;
     constraints.insets.bottom = 5;
     myPanel.add(panel1, constraints);
-
     constraints.gridy = 1;
     constraints.gridx = 0;
     constraints.gridwidth = 1;
@@ -66,9 +68,10 @@ public class AddFileConfirmationPanel extends AbstractAddFileConfirmationPanel {
     myPanel.add(mySubstitutionComboBox, constraints);
     final JLabel label3 = new JLabel(CvsBundle.message("label.add.file.confirmation.keyword.substitution"));
     constraints.gridx = 2;
+    constraints.weightx = 1.0;
     myPanel.add(label3, constraints);
 
-    KeywordSubstitution defaultSubstitution = myAddedFileInfo.getKeywordSubstitution();
+    final KeywordSubstitution defaultSubstitution = myAddedFileInfo.getKeywordSubstitution();
     KeywordSubstitutionWrapper.fillComboBox(mySubstitutionComboBox, defaultSubstitution);
 
     mySubstitutionComboBox.addActionListener(new ActionListener() {
