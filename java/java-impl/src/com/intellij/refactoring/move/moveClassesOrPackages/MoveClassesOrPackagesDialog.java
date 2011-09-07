@@ -291,7 +291,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
 
           final PsiDirectory directory = itemWrapper.getDirectory();
           final VirtualFile virtualFile = directory != null ? directory.getVirtualFile() : null;
-          append(virtualFile != null ? ProjectUtil.calcRelativeToProjectPath(virtualFile, myProject) : itemWrapper.getPresentableUrl());
+          append(virtualFile != null ? ProjectUtil.calcRelativeToProjectPath(virtualFile, myProject, true, true) : itemWrapper.getPresentableUrl());
 
         } else {
           setText("Leave in same source root");
