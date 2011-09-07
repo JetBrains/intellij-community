@@ -522,6 +522,8 @@
                                   implementationClass="com.jetbrains.mako.MakoFileProviderFactory"/>
     <gotoDeclarationHandler implementation="com.jetbrains.mako.MakoGotoProvider" order="FIRST"/>
 
+    <lang.commenter language="Mako" implementationClass="com.jetbrains.mako.MakoCommenter"/>
+
     <projectService serviceInterface="com.jetbrains.mako.TemplatesService"
                     serviceImplementation="com.jetbrains.mako.TemplatesService"/>
   </extensions>
