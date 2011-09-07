@@ -245,8 +245,8 @@ public class RecursionManager {
         LOG.error("Inconsistent depth after computation; depth=" + depth + "; map=" + progressMap);
       }
 
-      depth--;
       Integer value = progressMap.remove(realKey);
+      depth--;
       toMemoize.remove(realKey);
       key2ReentrancyDuringItsCalculation.remove(realKey);
 
@@ -305,7 +305,7 @@ public class RecursionManager {
       int oldDepth = depth;
       if (oldDepth != progressMap.size()) {
         depth = progressMap.size();
-        throw new AssertionError("Inconsistent depth " + s + "; depth=" + oldDepth + "; enters=" + enters + "; exits=" + exits + "; map=" + progressMap);
+        throw new AssertionError("_Inconsistent depth " + s + "; depth=" + oldDepth + "; enters=" + enters + "; exits=" + exits + "; map=" + progressMap);
       }
     }
 
