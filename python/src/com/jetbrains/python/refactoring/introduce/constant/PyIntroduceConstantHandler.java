@@ -24,9 +24,9 @@ public class PyIntroduceConstantHandler extends IntroduceHandler {
   }
 
   @Override
-  protected PsiElement replaceExpression(PsiElement expression, PyExpression newExpression) {
+  protected PsiElement replaceExpression(PsiElement expression, PyExpression newExpression, IntroduceOperation operation) {
     if (PsiTreeUtil.getParentOfType(expression, ScopeOwner.class) instanceof PyFile) {
-      return super.replaceExpression(expression, newExpression);
+      return super.replaceExpression(expression, newExpression, operation);
     }
     return PyPsiUtils.replaceExpression(expression, newExpression);
   }

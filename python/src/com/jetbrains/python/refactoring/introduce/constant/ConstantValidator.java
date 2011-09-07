@@ -8,8 +8,8 @@ import com.jetbrains.python.refactoring.introduce.IntroduceValidator;
  * @author Alexey.Ivanov
  */
 public class ConstantValidator extends IntroduceValidator {
-  protected String simpleCheck(String name, PsiElement psiElement) {
-    if (isDefinedInScope(name, psiElement)) {
+  public String check(String name, PsiElement psiElement) {
+    if (isDefinedInScope(name, psiElement) || isDefinedInScope(name, psiElement.getContainingFile())) {
       return PyBundle.message("refactoring.introduce.constant.scope.error");
     }
     return null;

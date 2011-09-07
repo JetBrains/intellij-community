@@ -310,6 +310,8 @@
 
     <treeStructureProvider implementation="com.jetbrains.python.projectView.PyTreeStructureProvider"/>
 
+    <project.converterProvider implementation="com.jetbrains.python.testing.converters.PythonTestConverterProvider"/>
+
     <!-- Django -->
     <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.django.annotator.ViewMethodLineMarkerProvider"/>
     <configurationType implementation="com.jetbrains.django.run.DjangoServerRunConfigurationType"/>

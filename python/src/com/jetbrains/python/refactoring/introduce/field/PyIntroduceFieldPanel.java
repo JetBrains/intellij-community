@@ -5,6 +5,7 @@ import com.intellij.refactoring.introduce.inplace.KeyboardComboSwitcher;
 import com.jetbrains.python.refactoring.introduce.IntroduceHandler;
 
 import javax.swing.*;
+import java.util.EnumSet;
 
 /**
  * @author yole
@@ -13,9 +14,9 @@ public class PyIntroduceFieldPanel {
   private JPanel myRootPanel;
   private JComboBox myInitializerPlaceCombo;
 
-  public PyIntroduceFieldPanel(Project project, boolean testClass) {
+  public PyIntroduceFieldPanel(Project project, EnumSet<IntroduceHandler.InitPlace> initPlaces) {
     KeyboardComboSwitcher.setupActions(myInitializerPlaceCombo, project);
-    if (testClass) {
+    if (initPlaces.contains(IntroduceHandler.InitPlace.SET_UP)) {
       ((DefaultComboBoxModel) myInitializerPlaceCombo.getModel()).addElement("setUp() method");
     }
   }

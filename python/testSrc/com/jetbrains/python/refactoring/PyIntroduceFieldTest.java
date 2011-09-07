@@ -29,11 +29,15 @@ public class PyIntroduceFieldTest extends PyIntroduceTestCase {
   }
 
   public void testPy4453() {
-    doTestInplace();
+    doTestInplace(null);
   }
 
   public void testPy4414() {
-    doTestInplace();
+    doTestInplace(null);
+  }
+
+  public void testPy4437() {
+    doTestInplace(new IntroduceOperationCustomizer(IntroduceHandler.InitPlace.CONSTRUCTOR));
   }
 
   @Override

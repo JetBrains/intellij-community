@@ -30,7 +30,7 @@ import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyNoneType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import com.jetbrains.python.refactoring.NameSuggestorUtil;
+import com.jetbrains.python.refactoring.NameSuggesterUtil;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -82,7 +82,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
   }
 
   @Nullable
-  protected PsiElement replaceExpression(PsiElement expression, PyExpression newExpression) {
+  protected PsiElement replaceExpression(PsiElement expression, PyExpression newExpression, IntroduceOperation operation) {
     PyExpressionStatement statement = PsiTreeUtil.getParentOfType(expression, PyExpressionStatement.class);
     if (statement != null) {
       if (statement.getExpression() == expression) {
@@ -94,7 +94,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
   }
 
   private final IntroduceValidator myValidator;
-  private final String myDialogTitle;
+  protected final String myDialogTitle;
 
   protected IntroduceHandler(@NotNull final IntroduceValidator validator, @NotNull final String dialogTitle) {
     myValidator = validator;
@@ -102,7 +102,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
-    performAction(new IntroduceOperation(project, editor, file, null, false, false));
+    performAction(new IntroduceOperation(project, editor, file, null));
   }
 
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
@@ -141,13 +141,17 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
       }
     }
     if (text != null) {
-      candidates.addAll(NameSuggestorUtil.generateNames(text));
+      candidates.addAll(NameSuggesterUtil.generateNames(text));
     }
-    PyType type = expression.getType(TypeEvalContext.slow());
+    final TypeEvalContext context = TypeEvalContext.slow();
+    PyType type = expression.getType(context);
     if (type != null && type != PyNoneType.INSTANCE) {
-      final String typeName = type.getName();
+      String typeName = type.getName();
       if (typeName != null) {
-        candidates.addAll(NameSuggestorUtil.generateNamesByType(typeName));
+        if (type.isBuiltin(context)) {
+          typeName = typeName.substring(0, 1);
+        }
+        candidates.addAll(NameSuggesterUtil.generateNamesByType(typeName));
       }
     }
     final PyKeywordArgument kwArg = PsiTreeUtil.getParentOfType(expression, PyKeywordArgument.class);
@@ -301,8 +305,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
   }
 
   private void performActionOnElement(IntroduceOperation operation) {
-    final Project project = operation.getProject();
-    if (!checkEnabled(project, operation.getEditor(), operation.getElement(), myDialogTitle)) {
+    if (!checkEnabled(operation)) {
       return;
     }
     final PsiElement element = operation.getElement();
@@ -332,12 +335,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
         performInplaceIntroduce(operation);
       }
       else {
-        new OccurrencesChooser<PsiElement>(editor) {
-          @Override
-          protected TextRange getOccurrenceRange(PsiElement occurrence) {
-            return occurrence.getTextRange();
-          }
-        }.showChooser(operation.getElement(), operation.getOccurrences(), new Pass<OccurrencesChooser.ReplaceChoice>() {
+        new OccurrencesChooser<PsiElement>(editor).showChooser(operation.getElement(), operation.getOccurrences(), new Pass<OccurrencesChooser.ReplaceChoice>() {
           @Override
           public void pass(OccurrencesChooser.ReplaceChoice replaceChoice) {
             operation.setReplaceAll(replaceChoice == OccurrencesChooser.ReplaceChoice.ALL);
@@ -404,7 +402,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     return PyElementGenerator.getInstance(project).createFromText(langLevel, PyAssignmentStatement.class, assignmentText);
   }
 
-  protected boolean checkEnabled(Project project, Editor editor, PsiElement element1, String dialogTitle) {
+  protected boolean checkEnabled(IntroduceOperation operation) {
     return true;
   }
 
@@ -432,7 +430,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
         if (operation.isReplaceAll()) {
           List<PsiElement> newOccurrences = new ArrayList<PsiElement>();
           for (PsiElement occurrence : operation.getOccurrences()) {
-            final PsiElement replaced = replaceExpression(occurrence, newExpression);
+            final PsiElement replaced = replaceExpression(occurrence, newExpression, operation);
             if (replaced != null) {
               newOccurrences.add(replaced);
             }
@@ -440,7 +438,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
           operation.setOccurrences(newOccurrences);
         }
         else {
-          replaceExpression(expression, newExpression);
+          replaceExpression(expression, newExpression, operation);
         }
 
         postRefactoring(operation.getElement());

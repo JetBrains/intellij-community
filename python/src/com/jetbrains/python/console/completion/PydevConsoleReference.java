@@ -1,16 +1,20 @@
 package com.jetbrains.python.console.completion;
 
+import com.intellij.codeInsight.completion.CompletionInitializationContext;
 import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPolyVariantReferenceBase;
 import com.intellij.psi.ResolveResult;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.console.pydev.IToken;
 import com.jetbrains.python.console.pydev.PyCodeCompletionImages;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
+import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,7 +45,7 @@ public class PydevConsoleReference extends PsiPolyVariantReferenceBase<PyReferen
   public Object[] getVariants() {
     List<LookupElement> variants = new ArrayList<LookupElement>();
     try {
-      final List<PydevCompletionVariant> completions = myCommunication.getCompletions(myPrefix, myPrefix);
+      final List<PydevCompletionVariant> completions = myCommunication.getCompletions(getText(), myPrefix);
       for (PydevCompletionVariant completion : completions) {
         final PsiManager manager = myElement.getManager();
         final String name = completion.getName();
@@ -64,5 +68,13 @@ public class PydevConsoleReference extends PsiPolyVariantReferenceBase<PyReferen
       //LOG.error(e);
     }
     return variants.toArray();
+  }
+
+  private String getText() {
+    PsiElement element = PsiTreeUtil.getParentOfType(getElement(), PyFile.class);
+    if (element != null) {
+      return element.getText().replace(CompletionInitializationContext.DUMMY_IDENTIFIER, "");
+    }
+    return myPrefix;
   }
 }

@@ -21,8 +21,10 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.Function;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.actions.AddFieldQuickFix;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFunctionBuilder;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.refactoring.introduce.IntroduceHandler;
 import com.jetbrains.python.refactoring.introduce.IntroduceOperation;
 import com.jetbrains.python.refactoring.introduce.variable.PyIntroduceVariableHandler;
@@ -43,7 +45,12 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
-    performAction(new IntroduceOperation(project, editor, file, null, true, isTestClass(file, editor)));
+    final IntroduceOperation operation = new IntroduceOperation(project, editor, file, null);
+    operation.addAvailableInitPlace(InitPlace.CONSTRUCTOR);
+    if (isTestClass(file, editor)) {
+      operation.addAvailableInitPlace(InitPlace.SET_UP);
+    }
+    performAction(operation);
   }
 
   private static boolean isTestClass(PsiFile file, Editor editor) {
@@ -68,13 +75,51 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
   }
 
   @Override
-  protected boolean checkEnabled(Project project, Editor editor, PsiElement element1, String dialogTitle) {
-    if (PyUtil.getContainingClassOrSelf(element1) == null) {
-      CommonRefactoringUtil.showErrorHint(project, editor, "Cannot introduce field: not in class", dialogTitle,
-                                          "refactoring.extractMethod");
+  protected PsiElement replaceExpression(PsiElement expression, PyExpression newExpression, IntroduceOperation operation) {
+    if (operation.getInitPlace() != InitPlace.SAME_METHOD) {
+      return PyPsiUtils.replaceExpression(expression, newExpression);
+    }
+    return super.replaceExpression(expression, newExpression, operation);
+  }
+
+  @Override
+  protected boolean checkEnabled(IntroduceOperation operation) {
+    if (PyUtil.getContainingClassOrSelf(operation.getElement()) == null) {
+      CommonRefactoringUtil.showErrorHint(operation.getProject(), operation.getEditor(), "Cannot introduce field: not in class", myDialogTitle,
+                                          getHelpId());
       return false;
     }
+    if (dependsOnLocalScopeValues(operation.getElement())) {
+      operation.removeAvailableInitPlace(InitPlace.CONSTRUCTOR);
+      operation.removeAvailableInitPlace(InitPlace.SET_UP);
+    }
     return true;
+  }
+
+  private static boolean dependsOnLocalScopeValues(PsiElement initializer) {
+    ScopeOwner scope = PsiTreeUtil.getParentOfType(initializer, ScopeOwner.class);
+    ResolvingVisitor visitor = new ResolvingVisitor(scope);
+    initializer.accept(visitor);
+    return visitor.hasLocalScopeDependencies;
+    
+  }
+  
+  private static class ResolvingVisitor extends PyRecursiveElementVisitor {
+    private boolean hasLocalScopeDependencies = false;
+    private final ScopeOwner myScope;
+
+    public ResolvingVisitor(ScopeOwner scope) {
+      myScope = scope;
+    }
+
+    @Override
+    public void visitPyReferenceExpression(PyReferenceExpression node) {
+      super.visitPyReferenceExpression(node);
+      final PsiElement result = node.getReference().resolve();
+      if (result != null && PsiTreeUtil.getParentOfType(result, ScopeOwner.class) == myScope) {
+        hasLocalScopeDependencies = true;
+      }
+    }
   }
 
   @Nullable
@@ -278,8 +323,8 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
       super(target, operation.getEditor(), operation.getProject(), "Introduce Field",
             occurrences.toArray(new PsiElement[occurrences.size()]), null);
       myTarget = target;
-      if (!inConstructor(target)) {
-        myPanel = new PyIntroduceFieldPanel(myProject, operation.isTestClass());
+      if (operation.getAvailableInitPlaces().size() > 1) {
+        myPanel = new PyIntroduceFieldPanel(myProject, operation.getAvailableInitPlaces());
       }
       else {
         myPanel = null;

@@ -2,6 +2,7 @@ package com.jetbrains.python.refactoring.introduce;
 
 import com.intellij.lang.LanguageNamesValidation;
 import com.intellij.lang.refactoring.NamesValidator;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -24,26 +25,18 @@ import org.jetbrains.annotations.Nullable;
 public abstract class IntroduceValidator {
   private final NamesValidator myNamesValidator = LanguageNamesValidation.INSTANCE.forLanguage(PythonLanguage.getInstance());
 
-  public boolean isNameValid(@NotNull PyIntroduceSettings settings) {
-    final String name = settings.getName();
+  public boolean isNameValid(final String name, final Project project) {
     return (name != null) &&
-           (myNamesValidator.isIdentifier(name, settings.getProject())) &&
-           !(myNamesValidator.isKeyword(name, settings.getProject()));
-  }
-
-  @Nullable
-  public String check(@NotNull PyIntroduceSettings settings) {
-    final String name = settings.getName();
-    PsiElement psiElement = settings.getExpression();
-    return simpleCheck(name, psiElement);
+           (myNamesValidator.isIdentifier(name, project)) &&
+           !(myNamesValidator.isKeyword(name, project));
   }
 
   public boolean checkPossibleName(@NotNull final String name, @NotNull final PyExpression expression) {
-    return simpleCheck(name, expression) == null;
+    return check(name, expression) == null;
   }
 
   @Nullable
-  protected abstract String simpleCheck(String name, PsiElement psiElement);
+  public abstract String check(String name, PsiElement psiElement);
 
   protected static boolean isDefinedInScope(String name, PsiElement psiElement) {
     if (psiElement.getUserData(PyPsiUtils.SELECTION_BREAKS_AST_NODE) != null) {
