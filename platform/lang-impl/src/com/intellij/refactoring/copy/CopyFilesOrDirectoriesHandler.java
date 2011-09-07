@@ -50,25 +50,10 @@ public class CopyFilesOrDirectoriesHandler implements CopyHandlerDelegate {
         return false;
       }
       names.add(name);
-
-      if (element instanceof PsiFile && !canCopyFile((PsiFile) element)) {
-        return false;
-      }
-      if (element instanceof PsiDirectory && !canCopyDirectory((PsiDirectory)element)) {
-        return false;
-      }
     }
 
     PsiElement[] filteredElements = PsiTreeUtil.filterAncestors(elements);
     return filteredElements.length == elements.length;
-  }
-
-  protected boolean canCopyFile(PsiFile element) {
-    return true;
-  }
-
-  protected boolean canCopyDirectory(PsiDirectory element) {
-    return true;
   }
 
   public void doCopy(final PsiElement[] elements, PsiDirectory defaultTargetDirectory) {

@@ -15,14 +15,12 @@
  */
 package com.intellij.refactoring.move.moveFilesOrDirectories;
 
-import com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.file.JavaDirectoryServiceImpl;
 import com.intellij.psi.util.PsiUtilBase;
-import com.intellij.refactoring.copy.JavaCopyFilesOrDirectoriesHandler;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.moveClassesOrPackages.JavaMoveClassesOrPackagesHandler;
 import com.intellij.util.ArrayUtil;
@@ -38,23 +36,7 @@ public class JavaMoveFilesOrDirectoriesHandler extends MoveFilesOrDirectoriesHan
     final PsiElement[] srcElements = adjustForMove(null, elements, targetContainer);
     assert srcElements != null;
 
-    boolean allJava = true;
-    for (PsiElement element : srcElements) {
-      if (element instanceof PsiDirectory) {
-        allJava &= JavaCopyFilesOrDirectoriesHandler.hasPackages((PsiDirectory)element);
-        if (allJava) {
-          allJava = JavaMoveClassesOrPackagesHandler.hasJavaFiles((PsiDirectory)element);
-        }
-      }
-      else if (element instanceof PsiFile) {
-        allJava &= element instanceof PsiJavaFile && !JspPsiUtil.isInJspFile(element) &&
-                   ((PsiJavaFile)element).getClasses().length > 0 && !CollectHighlightsUtil.isOutsideSourceRootJavaFile((PsiJavaFile) element);
-      }
-      else {
-        return false;
-      }
-    }
-    if (allJava) return false;
+    if (JavaMoveClassesOrPackagesHandler.nonFileSystemOrAllJava(srcElements)) return false;
 
     return super.canMove(srcElements, targetContainer);
   }
