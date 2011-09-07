@@ -167,6 +167,8 @@ class GitNewChangesCollector extends GitChangesCollector {
             reportDeleted(filepath, head);
           } else if (yStatus == 'T') {
             reportTypeChanged(filepath, head);
+          } else if (yStatus == 'U') {
+            reportConflict(filepath, head);
           } else {
             throwYStatus(output, handler, line, xStatus, yStatus);
           }
@@ -192,7 +194,7 @@ class GitNewChangesCollector extends GitChangesCollector {
           } else if (yStatus == 'D') {
             // added + deleted => no change (from IDEA point of view).
           } else if (yStatus == 'U' || yStatus == 'A') { // AU - unmerged, added by us; AA - unmerged, both added
-            reportConflict(head, filepath);
+            reportConflict(filepath, head);
           }  else {
             throwYStatus(output, handler, line, xStatus, yStatus);
           }
@@ -202,7 +204,7 @@ class GitNewChangesCollector extends GitChangesCollector {
           if (yStatus == 'M' || yStatus == ' ' || yStatus == 'T') {
             reportDeleted(filepath, head);
           } else if (yStatus == 'U') { // DU - unmerged, deleted by us
-            reportConflict(head, filepath);
+            reportConflict(filepath, head);
           } else if (yStatus == 'D') { // DD - unmerged, both deleted
             // TODO
             // currently not displaying, because "both deleted" conflicts can't be handled by our conflict resolver.
@@ -215,7 +217,7 @@ class GitNewChangesCollector extends GitChangesCollector {
         case 'U':
           if (yStatus == 'U' || yStatus == 'A' || yStatus == 'D' || yStatus == 'T') {
             // UU - unmerged, both modified; UD - unmerged, deleted by them; UA - umerged, added by them
-            reportConflict(head, filepath);
+            reportConflict(filepath, head);
           } else {
             throwYStatus(output, handler, line, xStatus, yStatus);
           }
@@ -228,7 +230,7 @@ class GitNewChangesCollector extends GitChangesCollector {
           if (yStatus == 'D') {
             reportDeleted(filepath, head);
           } else if (yStatus == ' ' || yStatus == 'M' || yStatus == 'T') {
-            reportRename(head, filepath, oldFilename);
+            reportRename(filepath, oldFilename, head);
           } else {
             throwYStatus(output, handler, line, xStatus, yStatus);
           }
@@ -321,13 +323,13 @@ class GitNewChangesCollector extends GitChangesCollector {
     reportChange(FileStatus.DELETED, before, after);
   }
 
-  private void reportRename(VcsRevisionNumber head, String filepath, String oldFilename) throws VcsException {
+  private void reportRename(String filepath, String oldFilename, VcsRevisionNumber head) throws VcsException {
     ContentRevision before = GitContentRevision.createRevision(myVcsRoot, oldFilename, head, myProject, true, true, false);
     ContentRevision after = GitContentRevision.createRevision(myVcsRoot, filepath, null, myProject, false, false, false);
     reportChange(FileStatus.MODIFIED, before, after);
   }
 
-  private void reportConflict(VcsRevisionNumber head, String filepath) throws VcsException {
+  private void reportConflict(String filepath, VcsRevisionNumber head) throws VcsException {
     ContentRevision before = GitContentRevision.createRevision(myVcsRoot, filepath, head, myProject, false, true, false);
     ContentRevision after = GitContentRevision.createRevision(myVcsRoot, filepath, null, myProject, false, false, false);
     reportChange(FileStatus.MERGED_WITH_CONFLICTS, before, after);
