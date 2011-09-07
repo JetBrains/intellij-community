@@ -61,9 +61,9 @@ public class EditorWithProviderComposite extends EditorComposite {
     }
     else{ // we have to get myEditor from tabbed pane
       LOG.assertTrue(myTabbedPaneWrapper!=null);
-      final int index=myTabbedPaneWrapper.getSelectedIndex();
+      int index = myTabbedPaneWrapper.getSelectedIndex();
       if (index == -1) {
-        LOG.error("No selected editors for " + getFile());
+        index = 0;
       }
       LOG.assertTrue(index>=0, index);
       LOG.assertTrue(index<myEditors.length, index);
