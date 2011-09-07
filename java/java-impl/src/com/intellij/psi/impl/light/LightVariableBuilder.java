@@ -2,6 +2,7 @@ package com.intellij.psi.impl.light;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
+import com.intellij.navigation.NavigationItem;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.ui.RowIcon;
@@ -16,7 +17,7 @@ import javax.swing.*;
 /**
  * @author peter
  */
-public class LightVariableBuilder<T extends LightVariableBuilder> extends LightElement implements PsiVariable {
+public class LightVariableBuilder<T extends LightVariableBuilder> extends LightElement implements PsiVariable, NavigationItem {
   private final String myName;
   private final PsiType myType;
   private volatile LightModifierList myModifierList;
