@@ -40,12 +40,16 @@ public class UnsafeUsagesDialog extends DialogWrapper {
     myConflictDescriptions = conflictDescriptions;
     setTitle(RefactoringBundle.message("usages.detected"));
     setOKButtonText(RefactoringBundle.message("ignore.button"));
-    getOKAction().putValue(Action.MNEMONIC_KEY, new Integer('I'));
     init();
   }
 
   protected Action[] createActions() {
-    return new Action[]{getOKAction(), new ViewUsagesAction(), new CancelAction()};
+    final ViewUsagesAction viewUsagesAction = new ViewUsagesAction();
+
+    final Action ignoreAction = getOKAction();
+    ignoreAction.putValue(DialogWrapper.DEFAULT_ACTION, null);
+
+    return new Action[]{viewUsagesAction, ignoreAction, new CancelAction()};
   }
 
   protected JComponent createCenterPanel() {
@@ -93,7 +97,6 @@ public class UnsafeUsagesDialog extends DialogWrapper {
   private class ViewUsagesAction extends AbstractAction {
     public ViewUsagesAction() {
       super(RefactoringBundle.message("view.usages"));
-      putValue(Action.MNEMONIC_KEY, new Integer('V'));
       putValue(DialogWrapper.DEFAULT_ACTION, Boolean.TRUE);
     }
 
