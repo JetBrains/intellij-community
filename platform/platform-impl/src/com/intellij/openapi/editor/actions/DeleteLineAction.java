@@ -45,7 +45,10 @@ public class DeleteLineAction extends TextComponentEditorAction {
         int selectionEnd = selectionModel.getSelectionEnd();
         selectionModel.removeSelection();
         int lineStartOffset = document.getLineStartOffset(document.getLineNumber(selectionStart));
-        int nextLineStartOffset = Math.min(document.getTextLength(), document.getLineStartOffset(document.getLineNumber(selectionEnd) + 1));
+        final int nextLine = document.getLineNumber(selectionEnd) + 1;
+        int nextLineStartOffset = nextLine == document.getLineCount()
+                                  ? document.getTextLength()
+                                  : Math.min(document.getTextLength(), document.getLineStartOffset(nextLine));
         document.deleteString(lineStartOffset, nextLineStartOffset);
         return;
       }
