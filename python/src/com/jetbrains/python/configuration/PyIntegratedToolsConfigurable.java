@@ -122,7 +122,6 @@ public class PyIntegratedToolsConfigurable implements Configurable, NonDefaultPr
       public boolean processFile(VirtualFile fileOrDir) {
         if (!fileOrDir.isDirectory() && DjangoTemplateFileType.getPossibleExtensions().contains(fileOrDir.getExtension())) {
           templatesToReparse.add(fileOrDir);
-          System.out.println(fileOrDir);
         }
         return true;
       }

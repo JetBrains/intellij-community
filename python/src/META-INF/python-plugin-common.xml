@@ -523,6 +523,7 @@
     <gotoDeclarationHandler implementation="com.jetbrains.mako.MakoGotoProvider" order="FIRST"/>
 
     <lang.commenter language="Mako" implementationClass="com.jetbrains.mako.MakoCommenter"/>
+    <lang.braceMatcher language="Mako" implementationClass="com.jetbrains.mako.MakoBraceMatcher"/>
 
     <projectService serviceInterface="com.jetbrains.mako.TemplatesService"
                     serviceImplementation="com.jetbrains.mako.TemplatesService"/>
