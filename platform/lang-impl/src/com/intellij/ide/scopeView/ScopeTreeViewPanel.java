@@ -19,26 +19,23 @@ package com.intellij.ide.scopeView;
 import com.intellij.ProjectTopics;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
-import com.intellij.ide.CopyPasteDelegator;
-import com.intellij.ide.DeleteProvider;
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.IdeView;
+import com.intellij.ide.*;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.ProjectViewNodeDecorator;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.ProjectViewPane;
+import com.intellij.ide.projectView.impl.ProjectViewTree;
 import com.intellij.ide.scopeView.nodes.BasePsiNode;
+import com.intellij.ide.ui.customization.CustomizationUtil;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -71,6 +68,7 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.*;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.Function;
+import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
@@ -86,6 +84,8 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.List;
@@ -245,6 +245,20 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
     for (ScopeTreeStructureExpander expander : Extensions.getExtensions(ScopeTreeStructureExpander.EP_NAME, myProject)) {
       myTree.addTreeWillExpandListener(expander);
     }
+    myTree.addKeyListener(new KeyAdapter() {
+      public void keyPressed(KeyEvent e) {
+        if (KeyEvent.VK_ENTER == e.getKeyCode()) {
+          final Object component = myTree.getLastSelectedPathComponent();
+          if (component instanceof DefaultMutableTreeNode) {
+            final DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode)component;
+            if (selectedNode.isLeaf()) {
+              OpenSourceUtil.openSourcesFrom(DataManager.getInstance().getDataContext(myTree), false);
+            }
+          }
+        }
+      }
+    });
+    CustomizationUtil.installPopupHandler(myTree, IdeActions.GROUP_PROJECT_VIEW_POPUP, ActionPlaces.PROJECT_VIEW_POPUP);
   }
 
   @NotNull
