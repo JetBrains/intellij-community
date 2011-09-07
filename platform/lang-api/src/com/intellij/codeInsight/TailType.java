@@ -120,9 +120,16 @@ public abstract class TailType {
       return "COND_EXPR_COLON";
     }
   };
-  public static final TailType EQ = new TailType(){
+
+  public static final TailType EQ = new TailTypeEQ();
+
+  public static class TailTypeEQ extends TailType {
+
+    protected boolean isSpaceAroundAssignmentOperators(Editor editor, int tailOffset) {
+      return CodeStyleSettingsManager.getSettings(editor.getProject()).SPACE_AROUND_ASSIGNMENT_OPERATORS;
+    }
+
     public int processTail(final Editor editor, int tailOffset) {
-      CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(editor.getProject());
       Document document = editor.getDocument();
       int textLength = document.getTextLength();
       CharSequence chars = document.getCharsSequence();
@@ -132,25 +139,19 @@ public abstract class TailType {
       if (tailOffset < textLength && chars.charAt(tailOffset) == '='){
         return moveCaret(editor, tailOffset, 1);
       }
-      if (styleSettings.SPACE_AROUND_ASSIGNMENT_OPERATORS){
+      if (isSpaceAroundAssignmentOperators(editor, tailOffset)) {
         document.insertString(tailOffset, " =");
         tailOffset = moveCaret(editor, tailOffset, 2);
+        tailOffset = insertChar(editor, tailOffset, ' ');
       }
       else{
         document.insertString(tailOffset, "=");
         tailOffset = moveCaret(editor, tailOffset, 1);
-
-      }
-      if (styleSettings.SPACE_AROUND_ASSIGNMENT_OPERATORS){
-        tailOffset = insertChar(editor, tailOffset, ' ');
       }
       return tailOffset;
     }
+  }
 
-    public String toString() {
-      return "EQ";
-    }
-  };
   public static final TailType LPARENTH = new CharTailType('(');
 
   public abstract int processTail(final Editor editor, int tailOffset);

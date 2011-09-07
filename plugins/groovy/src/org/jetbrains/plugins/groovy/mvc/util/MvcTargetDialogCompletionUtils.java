@@ -1,7 +1,10 @@
 package org.jetbrains.plugins.groovy.mvc.util;
 
+import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInsight.lookup.TailTypeDecorator;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderEx;
@@ -26,6 +29,26 @@ public class MvcTargetDialogCompletionUtils {
   
   private static final Key<CachedValue<Set<String>>> ALL_TARGET_KEY = Key.create("MvcTargetDialogCompletionUtils");
 
+  private static final String[] SYSTEM_PROPERTIES = {
+    "grails.home",
+
+    // System properties from ivy
+    "ivy.default.ivy.user.dir", "ivy.default.conf.dir",
+    "ivy.local.default.root", "ivy.local.default.ivy.pattern", "ivy.local.default.artifact.pattern",
+    "ivy.shared.default.root", "ivy.shared.default.ivy.pattern", "ivy.shared.default.artifact.pattern",
+    "ivy.ivyrep.default.ivy.root", "ivy.ivyrep.default.ivy.pattern", "ivy.ivyrep.default.artifact.root", "ivy.ivyrep.default.artifact.pattern",
+
+
+    // System properties from grails.util.BuildSettings
+    "grails.servlet.version", "base.dir", "grails.work.dir", "grails.project.work.dir", "grails.project.war.exploded.dir",
+    "grails.project.plugins.dir", "grails.global.plugins.dir", "grails.project.resource.dir", "grails.project.source.dir",
+    "grails.project.web.xml", "grails.project.class.dir", "grails.project.plugin.class.dir", "grails.project.plugin.build.class.dir",
+    "grails.project.plugin.provided.class.dir", "grails.project.test.class.dir", "grails.project.test.reports.dir",
+    "grails.project.docs.output.dir", "grails.project.test.source.dir", "grails.project.target.dir", "grails.project.war.file",
+    "grails.project.war.file", "grails.project.war.osgi.headers", "grails.build.listeners", "grails.project.compile.verbose",
+    "grails.testing.functional.baseUrl", "grails.compile.artefacts.closures.convert"
+  };
+
   private MvcTargetDialogCompletionUtils() {
   }
 
@@ -33,7 +56,11 @@ public class MvcTargetDialogCompletionUtils {
     List<LookupElement> res = new ArrayList<LookupElement>();
 
     if (prefix.startsWith("-D")) {
+      for (String property : SYSTEM_PROPERTIES) {
+        res.add(TailTypeDecorator.withTail(LookupElementBuilder.create("-D" + property), MyTailTypeEQ.INSTANCE));
+      }
 
+      return res;
     }
 
     if (text.substring(0, offset).matches("\\s*(?:(:?-\\S+)\\s+)*\\S*")) {
@@ -50,7 +77,7 @@ public class MvcTargetDialogCompletionUtils {
 
     return res;
   }
-  
+
   public static Set<String> getAllTargetNamesInternal(@NotNull Module module) {
     final Set<String> result = new HashSet<String>();
 
@@ -113,6 +140,19 @@ public class MvcTargetDialogCompletionUtils {
     }
 
     return cachedTargets.getValue();
+  }
+
+  private static class MyTailTypeEQ extends TailType.TailTypeEQ {
+    public static final MyTailTypeEQ INSTANCE = new MyTailTypeEQ();
+
+    @Override
+    protected boolean isSpaceAroundAssignmentOperators(Editor editor, int tailOffset) {
+      return false;
+    }
+
+    public String toString() {
+      return "MvcTargetDialogCompletionUtils.TailTypeEQ";
+    }
   }
 
 }

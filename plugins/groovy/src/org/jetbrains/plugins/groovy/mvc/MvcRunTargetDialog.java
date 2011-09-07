@@ -145,7 +145,7 @@ public class MvcRunTargetDialog extends DialogWrapper {
       @NotNull
       @Override
       protected String getPrefix(@NotNull String currentTextPrefix) {
-        return currentTextPrefix.substring(currentTextPrefix.lastIndexOf(' ') + 1);
+        return MvcRunTargetDialog.getPrefix(currentTextPrefix);
       }
 
       @Override
@@ -163,6 +163,10 @@ public class MvcRunTargetDialog extends DialogWrapper {
       }
     });
     setOKActionEnabled(false);
+  }
+
+  public static String getPrefix(String currentTextPrefix) {
+    return currentTextPrefix.substring(currentTextPrefix.lastIndexOf(' ') + 1);
   }
 
 }
