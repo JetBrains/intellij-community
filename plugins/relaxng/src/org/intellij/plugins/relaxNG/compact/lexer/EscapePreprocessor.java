@@ -120,6 +120,7 @@ class EscapePreprocessor extends FilterReader {
 
   private int consume() {
     if (myQueuedChars.size() > 0) {
+      myOffset++;
       return myQueuedChars.remove(0);
     }
     return -1;
