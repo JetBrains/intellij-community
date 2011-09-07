@@ -54,6 +54,11 @@ final class PatternsTableModel extends AbstractTableModel implements ItemRemovab
     return myPatterns.size();
   }
 
+  @Override
+  public boolean isCellEditable(int rowIndex, int columnIndex) {
+    return columnIndex == 1;
+  }
+
   public Object getValueAt(int row,int column){
     TodoPattern pattern=myPatterns.get(row);
     switch(column){
