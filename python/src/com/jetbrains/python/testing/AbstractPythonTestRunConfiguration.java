@@ -54,7 +54,8 @@ public abstract class AbstractPythonTestRunConfiguration extends AbstractPythonR
     myFolderName = JDOMExternalizerUtil.readField(element, "FOLDER_NAME");
 
     try {
-      myTestType = TestType.valueOf(JDOMExternalizerUtil.readField(element, "TEST_TYPE"));
+      final String testType = JDOMExternalizerUtil.readField(element, "TEST_TYPE");
+      myTestType = testType != null ? TestType.valueOf(testType) : TestType.TEST_SCRIPT;
     }
     catch (IllegalArgumentException e) {
       myTestType = TestType.TEST_SCRIPT; // safe default
