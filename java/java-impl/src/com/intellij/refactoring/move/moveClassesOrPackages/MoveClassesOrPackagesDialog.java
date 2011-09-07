@@ -32,6 +32,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.ui.ComboBoxWithWidePopup;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -187,6 +188,8 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
         return myHavePackages ? myMovePackagePanel.getPreferredSize() : myMoveClassPanel.getPreferredSize();
       }
     };
+
+    myDestinationFolderCB = new ComboboxWithBrowseButton(new ComboBoxWithWidePopup());
   }
 
   private ReferenceEditorComboWithBrowseButton createPackageChooser() {
