@@ -30,6 +30,7 @@ class JavaWithIfExpressionSurrounder extends JavaExpressionSurrounder{
   public boolean isApplicable(PsiExpression expr) {
     PsiType type = expr.getType();
     if (PsiType.BOOLEAN != type) return false;
+    if (!expr.isPhysical()) return false;
     PsiElement parent = expr.getParent();
     if (!(parent instanceof PsiExpressionStatement)) return false;
     final PsiElement element = parent.getParent();

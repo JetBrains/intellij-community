@@ -21,11 +21,13 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
 import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
+import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 
@@ -43,7 +45,14 @@ class JavaWithCastSurrounder extends JavaExpressionSurrounder {
     assert expr.isValid();
     PsiType[] types = GuessManager.getInstance(project).guessTypeToCast(expr);
     final Template template = generateTemplate(project, expr.getText(), types);
-    TextRange range = expr.getTextRange();
+    TextRange range;
+    if (expr.isPhysical()) {
+      range = expr.getTextRange();
+    } else {
+      final RangeMarker rangeMarker = expr.getUserData(ElementToWorkOn.TEXT_RANGE);
+      if (rangeMarker == null) return null;
+      range = new TextRange(rangeMarker.getStartOffset(), rangeMarker.getEndOffset());
+    }
     editor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
     editor.getCaretModel().moveToOffset(range.getStartOffset());
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
