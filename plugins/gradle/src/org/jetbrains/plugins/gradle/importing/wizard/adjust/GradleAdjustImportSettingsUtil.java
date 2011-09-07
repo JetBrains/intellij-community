@@ -1,9 +1,11 @@
 package org.jetbrains.plugins.gradle.importing.wizard.adjust;
 
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.importing.model.Named;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
+import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -23,13 +25,14 @@ public class GradleAdjustImportSettingsUtil {
    *
    * @param builder    target settings builder
    * @param component  component which name management should be exposed
-   * @return           label that should be used for reporting errors within the given component's name
+   * @return    UI control that holds target component's name
    */
-  public static JLabel configureNameControl(@NotNull GradleProjectSettingsBuilder builder, @NotNull final Named component) {
-    final JTextField nameField = new JTextField();
-    nameField.setText(component.getName());
-    final JLabel result = builder.add("gradle.import.structure.settings.label.name", nameField);
-    nameField.getDocument().addDocumentListener(new DocumentListener() {
+  @NotNull
+  public static JComponent configureNameControl(@NotNull GradleProjectSettingsBuilder builder, @NotNull final Named component) {
+    final JTextField result = new JTextField();
+    result.setText(component.getName());
+    builder.add("gradle.import.structure.settings.label.name", result);
+    result.getDocument().addDocumentListener(new DocumentListener() {
       @Override
       public void insertUpdate(DocumentEvent e) {
         applyNewName();
@@ -42,14 +45,11 @@ public class GradleAdjustImportSettingsUtil {
       public void changedUpdate(DocumentEvent e) {
       }
       private void applyNewName() {
-        String text = nameField.getText();
+        String text = result.getText();
         if (text == null) {
           return;
         }
         component.setName(text.trim());
-        if (result.isVisible()) {
-          result.setVisible(false);
-        }
       }
     });
     return result;
@@ -59,15 +59,14 @@ public class GradleAdjustImportSettingsUtil {
    * Performs generic check of the name of the given component.
    * 
    * @param namedComponent  target component
-   * @param errorLabel      storage for the validation error message
+   * @param componentNameUI UI control that allow to manage target component's name
    * @return                <code>true</code> if validation is successful; <code>false</code> otherwise
    */
-  public static boolean validate(@NotNull Named namedComponent, @NotNull JLabel errorLabel) {
+  public static boolean validate(@NotNull Named namedComponent, @NotNull JComponent componentNameUI) {
     if (!StringUtil.isEmptyOrSpaces(namedComponent.getName())) {
       return true;
     }
-    errorLabel.setText(GradleBundle.message("gradle.import.text.error.undefined.name"));
-    errorLabel.setVisible(true);
+    GradleUtil.showBalloon(componentNameUI, MessageType.ERROR, GradleBundle.message("gradle.import.text.error.undefined.name"));
     return false;
   }
 }

@@ -13,19 +13,19 @@ public class GradleLibrarySettings implements GradleProjectStructureNodeSettings
 
   private final GradleLibrary myLibrary;
   private final JComponent    myComponent;
-  private final JLabel        myNameErrorLabel;
+  private final JComponent    myNameControl;
   
   public GradleLibrarySettings(@NotNull GradleLibrary library) {
     myLibrary = library;
     
     GradleProjectSettingsBuilder builder = new GradleProjectSettingsBuilder();
-    myNameErrorLabel = GradleAdjustImportSettingsUtil.configureNameControl(builder, library);
+    myNameControl = GradleAdjustImportSettingsUtil.configureNameControl(builder, library);
     myComponent = builder.build();
   }
 
   @Override
   public boolean validate() {
-    return GradleAdjustImportSettingsUtil.validate(myLibrary, myNameErrorLabel);
+    return GradleAdjustImportSettingsUtil.validate(myLibrary, myNameControl);
   }
 
   @NotNull
