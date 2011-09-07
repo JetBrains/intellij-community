@@ -21,6 +21,8 @@ import org.jetbrains.android.dom.AndroidAttributeValue;
 import org.jetbrains.android.dom.converters.PackageClassConverter;
 import org.jetbrains.android.util.AndroidUtils;
 
+import java.util.List;
+
 /**
  * @author yole
  */
@@ -31,4 +33,8 @@ public interface Receiver extends ApplicationComponent {
   @Convert(PackageClassConverter.class)
   @ExtendClass(AndroidUtils.RECEIVER_CLASS_NAME)
   AndroidAttributeValue<PsiClass> getReceiverClass();
+
+  List<IntentFilter> getIntentFilters();
+
+  IntentFilter addIntentFilter();
 }

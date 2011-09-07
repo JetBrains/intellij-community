@@ -48,4 +48,12 @@ public class FragmentedContent {
   public List<BeforeAfter<TextRange>> getRanges() {
     return myRanges;
   }
+  
+  public int getSize() {
+    return myRanges.size();
+  }
+
+  public boolean isOneSide() {
+    return myRanges.size() == 1 && (myRanges.get(0).getAfter().isEmpty() || myRanges.get(0).getBefore().isEmpty());
+  }
 }

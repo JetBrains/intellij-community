@@ -19,6 +19,7 @@ package com.intellij.application.options;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.project.Project;
@@ -46,6 +47,7 @@ public class CodeCompletionPanel {
 
   private JComboBox myCaseSensitiveCombo;
   private JComboBox myFocusLookup;
+  private JCheckBox myCbSorting;
   private static final String CASE_SENSITIVE_ALL = ApplicationBundle.message("combobox.autocomplete.casesensitive.all");
   private static final String CASE_SENSITIVE_NONE = ApplicationBundle.message("combobox.autocomplete.casesensitive.none");
   private static final String CASE_SENSITIVE_FIRST_LETTER = ApplicationBundle.message("combobox.autocomplete.casesensitive.first.letter");
@@ -95,7 +97,7 @@ public class CodeCompletionPanel {
   public void reset() {
     CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
 
-    String value = "";
+    final String value;
     switch(codeInsightSettings.COMPLETION_CASE_SENSITIVE){
       case CodeInsightSettings.ALL:
         value = CASE_SENSITIVE_ALL;
@@ -133,6 +135,7 @@ public class CodeCompletionPanel {
     myCbShowFullParameterSignatures.setSelected(codeInsightSettings.SHOW_FULL_SIGNATURES_IN_PARAMETER_INFO);
 
     myCbAutocompletion.setSelected(codeInsightSettings.AUTO_POPUP_COMPLETION_LOOKUP);
+    myCbSorting.setSelected(UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY);
   }
 
   public void apply() {
@@ -156,6 +159,8 @@ public class CodeCompletionPanel {
     codeInsightSettings.AUTO_LOOKUP_DELAY = getIntegerValue(myAutocompletionDelayField.getText(), 0);
     codeInsightSettings.PARAMETER_INFO_DELAY = getIntegerValue(myParameterInfoDelayField.getText(), 0);
     codeInsightSettings.JAVADOC_INFO_DELAY = getIntegerValue(myAutopopupJavaDocField.getText(), 0);
+    
+    UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY = myCbSorting.isSelected();
 
     final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myPanel));
     if (project != null){
@@ -183,6 +188,7 @@ public class CodeCompletionPanel {
     isModified |= isModified(myAutocompletionDelayField, codeInsightSettings.AUTO_LOOKUP_DELAY, 0);
     isModified |= isModified(myParameterInfoDelayField, codeInsightSettings.PARAMETER_INFO_DELAY, 0);
     isModified |= isModified(myAutopopupJavaDocField, codeInsightSettings.JAVADOC_INFO_DELAY, 0);
+    isModified |= isModified(myCbSorting, UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY);
 
     return isModified;
   }

@@ -58,7 +58,7 @@ class Test {
     doTest(before, toPaste, expected)
   }
 
-  void _testStringBeforeAnotherStringShouldNotIncreaseIndentOfTheFollowingString() {
+  void testStringBeforeAnotherStringShouldNotIncreaseIndentOfTheFollowingString() {
     def before = '''\
 class Test {
     void test() {
@@ -75,7 +75,7 @@ class Test {
 class Test {
     void test() {
         int b = 200;
-<caret>        int a = 100;
+        int a = 100;
         int b = 200;
     }\
 '''

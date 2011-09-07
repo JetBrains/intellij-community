@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.surroundWith
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.codeInsight.generation.surroundWith.SurroundWithHandler
 import com.intellij.openapi.actionSystem.Separator
+import com.intellij.openapi.application.WriteAction
 
 /**
  * @author peter
@@ -55,16 +56,23 @@ class SurrounderOrderTest extends LightCodeInsightFixtureTestCase {
   private List<String> getSurrounders(final String fileText) {
     myFixture.configureByText("a.groovy", fileText)
 
-    def actions = SurroundWithHandler.buildSurroundActions(project, myFixture.editor, myFixture.file, null)
-    def names = []
-    for (action in actions) {
-      if (action instanceof Separator) {
-        break
-      }
+    def token = WriteAction.start()
 
-      def text = action.templatePresentation.text
-      names << text.substring(text.indexOf('. ') + 2)
+    try {
+      def actions = SurroundWithHandler.buildSurroundActions(project, myFixture.editor, myFixture.file, null)
+      def names = []
+      for (action in actions) {
+        if (action instanceof Separator) {
+          break
+        }
+
+        def text = action.templatePresentation.text
+        names << text.substring(text.indexOf('. ') + 2)
+      }
+      return names
     }
-    return names
+    finally {
+      token.finish()
+    }
   }
 }

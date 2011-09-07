@@ -1,7 +1,6 @@
 package com.intellij.ui.border;
 
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.xmlb.annotations.Text;
 import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
@@ -46,10 +45,10 @@ public class IdeaTitledBorder extends TitledBorder {
 
   private void updateUI() {
     this.titleFont = UIUtil.getBorderFont(smallFont ? UIUtil.FontSize.SMALL : UIUtil.FontSize.NORMAL, boldFont);
-    this.titleColor = UIUtil.getBorderTitleColor();
+    this.titleColor = UIUtil.getTitledBorderTitleColor();
     this.border = BorderFactory.createCompoundBorder(new EmptyBorder(outsideInsets),
                                                      BorderFactory.createCompoundBorder(
-                                                       BorderFactory.createMatteBorder(1, 0, 0, 0, UIUtil.getTitledBorderColor()),
+                                                       BorderFactory.createMatteBorder(1, 0, 0, 0, UIUtil.getTitledBorderLineColor()),
                                                        new EmptyBorder(insideInsets)));
   }
 

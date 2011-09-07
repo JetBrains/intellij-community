@@ -860,8 +860,8 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   public void testQualifyInnerMembers() throws Throwable { doTest('\n') }
 
   public void testSuggestExpectedTypeMembers() throws Throwable { doTest('\n') }
-
   public void testSuggestExpectedTypeMembersInCall() throws Throwable { doTest('\n') }
+  public void testExpectedTypesDotSelectsItem() throws Throwable { doTest('.') }
 
   public void testSuggestExpectedTypeMembersNonImported() throws Throwable {
     myFixture.addClass("package foo; public class Super { public static final Super FOO = null; }")

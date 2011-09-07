@@ -19,10 +19,12 @@ package com.intellij.codeInsight.template.impl;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.template.CustomLiveTemplate;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -101,19 +103,23 @@ public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
   }
 
   public static ArrayList<TemplateImpl> getApplicableTemplates(Editor editor, PsiFile file, boolean selection) {
-    int offset = editor.getCaretModel().getOffset();
-    int startOffset = offset;
+    file = (PsiFile)file.copy();
+    final Document document = file.getViewProvider().getDocument();
+    assert document != null;
+
+    int startOffset = editor.getCaretModel().getOffset();
     if (selection && editor.getSelectionModel().hasSelection()) {
-      final int selStart = editor.getSelectionModel().getSelectionStart();
-      final int selEnd = editor.getSelectionModel().getSelectionEnd();
-      startOffset = (offset == selStart) ? selEnd : selStart;
+      startOffset = editor.getSelectionModel().getSelectionStart();
+      document.deleteString(startOffset, editor.getSelectionModel().getSelectionEnd());
     }
+    document.insertString(startOffset, CompletionUtil.DUMMY_IDENTIFIER_TRIMMED);
+    PsiDocumentManager.getInstance(file.getProject()).commitDocument(document);
+
     ArrayList<TemplateImpl> list = new ArrayList<TemplateImpl>();
     for (TemplateImpl template : TemplateSettings.getInstance().getTemplates()) {
       if (!template.isDeactivated() &&
           template.isSelectionTemplate() == selection &&
-          (TemplateManagerImpl.isApplicable(file, offset, template) ||
-           (selection && TemplateManagerImpl.isApplicable(file, startOffset, template)))) {
+          TemplateManagerImpl.isApplicable(file, startOffset, template)) {
         list.add(template);
       }
     }

@@ -801,7 +801,7 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
       buffer.append(' ');
     }
     else {
-      throw new IllegalStateException("unknown button: " + button);
+      buffer.append("button").append(button);
     }
 
     if (shortcut.getClickCount() > 1) {

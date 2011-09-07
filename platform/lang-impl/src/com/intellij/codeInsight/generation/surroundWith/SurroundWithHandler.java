@@ -66,7 +66,7 @@ public class SurroundWithHandler implements CodeInsightActionHandler{
   }
 
   public boolean startInWriteAction() {
-    return false;
+    return true;
   }
 
   public static void invoke(final Project project, final Editor editor, PsiFile file, Surrounder surrounder){

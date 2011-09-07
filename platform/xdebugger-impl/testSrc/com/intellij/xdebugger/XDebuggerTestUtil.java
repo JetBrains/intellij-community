@@ -130,7 +130,7 @@ public class XDebuggerTestUtil {
       node.myName = ((XNamedValue)value).getName();
     }
     value.computePresentation(node, XValuePlace.TREE);
-    Assert.assertTrue(node.waitFor(TIMEOUT));
+    Assert.assertTrue("timed out", node.waitFor(TIMEOUT));
     return node;
   }
 

@@ -19,7 +19,6 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.UiActivityMonitor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationActivationListener;
-import com.intellij.openapi.application.ApplicationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.playback.commands.AssertFocused;
 import com.intellij.openapi.diagnostic.Logger;
@@ -30,6 +29,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.text.StringTokenizer;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -57,7 +57,9 @@ public class PlaybackRunner {
   private final ApplicationActivationListener myAppListener;
 
   private HashSet<Class> myFacadeClasses = new HashSet<Class>();
-  
+  private ArrayList<StageInfo> myStages = new ArrayList<StageInfo>();
+  private ArrayList<StageInfo> myPassedStages = new ArrayList<StageInfo>();
+
   private Disposable myOnStop = new Disposable() {
     @Override
     public void dispose() {
@@ -77,7 +79,7 @@ public class PlaybackRunner {
       @Override
       public void applicationDeactivated(IdeFrame ideFrame) {
         if (myStopOnAppDeactivation) {
-          myCallback.message(PlaybackRunner.this, "App lost focus, stopping...", 0);
+          myCallback.message(null, "App lost focus, stopping...", 0, StatusCallback.Type.message);
           stop();
         }
       }
@@ -88,7 +90,9 @@ public class PlaybackRunner {
     myStopRequested = false;
 
     UiActivityMonitor.getInstance().clear();
-    
+    myStages.clear();
+    myPassedStages.clear();
+
     ApplicationManager.getApplication().getMessageBus().connect(myOnStop).subscribe(ApplicationActivationListener.TOPIC, myAppListener);
 
     try {
@@ -109,7 +113,8 @@ public class PlaybackRunner {
         public void run() {
           if (myUseDirectActionCall) {
             executeFrom(0, getScriptDir());
-          } else {
+          }
+          else {
             IdeEventQueue.getInstance().doWhenReady(new Runnable() {
               public void run() {
                 executeFrom(0, getScriptDir());
@@ -118,7 +123,6 @@ public class PlaybackRunner {
           }
         }
       }.start();
-
     }
     catch (AWTException e) {
       LOG.error(e);
@@ -131,11 +135,33 @@ public class PlaybackRunner {
     if (cmdIndex < myCommands.size()) {
       final PlaybackCommand cmd = myCommands.get(cmdIndex);
       if (myStopRequested) {
-        myCallback.message(this, "Stopped", cmdIndex);
+        myCallback.message(null, "Stopped", cmdIndex, StatusCallback.Type.message);
         myActionCallback.setRejected();
         return;
       }
-      final PlaybackContext context = new PlaybackContext(this, myCallback, cmdIndex, myRobot, myUseDirectActionCall, cmd, baseDir, (Set<Class>)myFacadeClasses.clone());
+      final PlaybackContext context =
+        new PlaybackContext(this, myCallback, cmdIndex, myRobot, myUseDirectActionCall, cmd, baseDir, (Set<Class>)myFacadeClasses.clone()) {
+          public void pushStage(StageInfo info) {
+            myStages.add(info);
+          }
+
+          public StageInfo popStage() {
+            if (myStages.size() > 0) {
+              return myStages.remove(myStages.size() - 1);
+            }
+
+            return null;
+          }
+
+          public int getStageCount() {
+            return myStages.size();
+          }
+
+          @Override
+          public void addPassed(StageInfo stage) {
+            myPassedStages.add(stage);
+          }
+        };
       final ActionCallback cmdCallback = cmd.execute(context);
       cmdCallback.doWhenDone(new Runnable() {
         public void run() {
@@ -143,19 +169,19 @@ public class PlaybackRunner {
             executeFrom(cmdIndex + 1, context.getBaseDir());
           }
           else {
-            myCallback.message(PlaybackRunner.this, "Stopped", cmdIndex);
+            myCallback.message(null, "Stopped", cmdIndex, StatusCallback.Type.message);
             myActionCallback.setDone();
           }
         }
       }).doWhenRejected(new Runnable() {
         public void run() {
-          myCallback.message(PlaybackRunner.this, "Stopped", cmdIndex);
+          myCallback.message(null, "Stopped", cmdIndex, StatusCallback.Type.message);
           myActionCallback.setRejected();
         }
       });
     }
     else {
-      myCallback.message(this, "Finished", myCommands.size() - 1);
+      myCallback.message(null, "Finished OK " + myPassedStages.size() + " tests", myCommands.size() - 1, StatusCallback.Type.message);
       myActionCallback.setDone();
     }
   }
@@ -187,7 +213,8 @@ public class PlaybackRunner {
           commandList.add(new ErrorCommand("Error reading file: " + file.getAbsolutePath(), line));
           return;
         }
-      } else if (eachLine.startsWith(importCallCmd)) {
+      }
+      else if (eachLine.startsWith(importCallCmd)) {
         String className = eachLine.substring(importCallCmd.length()).trim();
         try {
           Class<?> facadeClass = Class.forName(className);
@@ -198,7 +225,8 @@ public class PlaybackRunner {
           commandList.add(new ErrorCommand("Cannot find class: " + className, line));
           return;
         }
-      } else {
+      }
+      else {
         final PlaybackCommand cmd = createCommand(eachLine, line++, scriptDir);
         commandList.add(cmd);
       }
@@ -207,34 +235,50 @@ public class PlaybackRunner {
 
   private PlaybackCommand createCommand(String string, int line, File scriptDir) {
     AbstractCommand cmd;
-    String actualString = string.toLowerCase();
+    String actualString = string;
 
     if (actualString.startsWith(AbstractCommand.CMD_PREFIX + AbstractCommand.CMD_PREFIX)) {
       cmd = new EmptyCommand(line);
-    } else if (actualString.startsWith(KeyCodeTypeCommand.PREFIX)) {
+    }
+    else if (actualString.startsWith(KeyCodeTypeCommand.PREFIX)) {
       cmd = new KeyCodeTypeCommand(string, line);
-    } else if (actualString.startsWith(DelayCommand.PREFIX)) {
-      cmd =  new DelayCommand(string, line);
-    } else if (actualString.startsWith(KeyShortcutCommand.PREFIX)) {
+    }
+    else if (actualString.startsWith(DelayCommand.PREFIX)) {
+      cmd = new DelayCommand(string, line);
+    }
+    else if (actualString.startsWith(KeyShortcutCommand.PREFIX)) {
       cmd = new KeyShortcutCommand(string, line);
-    } else if (actualString.startsWith(ActionCommand.PREFIX)) {
+    }
+    else if (actualString.startsWith(ActionCommand.PREFIX)) {
       cmd = new ActionCommand(string, line);
-    } else if (actualString.startsWith(ToggleActionCommand.PREFIX)) {
+    }
+    else if (actualString.startsWith(ToggleActionCommand.PREFIX)) {
       cmd = new ToggleActionCommand(string, line);
-    } else if (actualString.startsWith(StopCommand.PREFIX)) {
+    }
+    else if (actualString.startsWith(StopCommand.PREFIX)) {
       cmd = new StopCommand(string, line);
-    } else if (actualString.startsWith(AssertFocused.PREFIX)) {
+    }
+    else if (actualString.startsWith(AssertFocused.PREFIX)) {
       return new AssertFocused(string, line);
-    } else if (actualString.startsWith(CallCommand.PREFIX)) {
+    }
+    else if (actualString.startsWith(CallCommand.PREFIX)) {
       cmd = new CallCommand(string, line);
-    } else if (actualString.startsWith(CdCommand.PREFIX)) {
+    }
+    else if (actualString.startsWith(CdCommand.PREFIX)) {
       cmd = new CdCommand(string, line);
-    } else {
+    }
+    else if (actualString.startsWith(PushStage.PREFIX)) {
+      cmd = new PushStage(string, line);
+    }
+    else if (actualString.startsWith(PopStage.PREFIX)) {
+      cmd = new PopStage(string, line);
+    }
+    else {
       cmd = new AlphaNumericTypeCommand(string, line);
     }
 
     cmd.setScriptDir(scriptDir);
-    
+
     return cmd;
   }
 
@@ -257,57 +301,30 @@ public class PlaybackRunner {
 
   public interface StatusCallback {
 
-    void error(PlaybackRunner runner, String text, int currentLine);
+    enum Type {message, error, code, test}
 
-    void message(PlaybackRunner runner, String text, int currentLine);
+    void message(@Nullable PlaybackContext context, String text, int currentLine, Type type);
 
-    void code(PlaybackRunner runner, String text, int currentLine);
+    abstract class Edt implements StatusCallback {
 
-    public abstract static class Edt implements StatusCallback {
-      public final void error(final PlaybackRunner runner, final String text, final int currentLine) {
+
+      public final void message(final PlaybackContext context,
+                                final String text,
+                                final int currentLine,
+                                final Type type) {
         if (SwingUtilities.isEventDispatchThread()) {
-          errorEdt(runner, text, currentLine);
-        } else {
+          messageEdt(context, text, currentLine, type);
+        }
+        else {
           SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-              errorEdt(runner, text, currentLine);
+              messageEdt(context, text, currentLine, type);
             }
           });
         }
       }
 
-      public abstract void errorEdt(PlaybackRunner runner, String text, int curentLine);
-
-      public final void message(final PlaybackRunner runner, final String text, final int currentLine) {
-        if (SwingUtilities.isEventDispatchThread()) {
-          messageEdt(runner, text, currentLine);
-        } else {
-          SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-              messageEdt(runner, text, currentLine);
-            }
-          });
-        }
-      }
-
-      public abstract void messageEdt(PlaybackRunner runner, String text, int curentLine);
-
-      @Override
-      public void code(final PlaybackRunner runner, final String text, final int currentLine) {
-        if (SwingUtilities.isEventDispatchThread()) {
-          codeEdt(runner, text, currentLine);
-        } else {
-          SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-              codeEdt(runner, text, currentLine);
-            }
-          });
-        }
-      }
-
-      public abstract void codeEdt(PlaybackRunner runner, String text, int curentLine);
+      public abstract void messageEdt(@Nullable PlaybackContext context, String text, int curentLine, Type type);
     }
   }
-
-
 }

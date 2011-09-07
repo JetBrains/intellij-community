@@ -45,6 +45,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -388,8 +389,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     LookupElement oldSelected = mySelectionTouched ? (LookupElement)myList.getSelectedValue() : null;
     String oldInvariant = mySelectionInvariant;
 
-    boolean selectionVisible = isSelectionVisible();
-
     LinkedHashSet<LookupElement> model = new LinkedHashSet<LookupElement>();
     model.addAll(getPrefixItems(items, true));
     model.addAll(getPrefixItems(items, false));
@@ -397,9 +396,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     myFrozenItems.retainAll(items);
     model.addAll(myFrozenItems);
 
-    addMostRelevantItems(model, snapshot.second);
-    if (hasPreselected) {
-      model.add(myPreselectedItem);
+    if (!isAlphaSorted()) {
+      addMostRelevantItems(model, snapshot.second);
+      if (hasPreselected) {
+        model.add(myPreselectedItem);
+      }
     }
 
     myPreferredItemsCount = model.size();
@@ -408,7 +409,19 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       myFrozenItems.addAll(model);
     }
 
-    model.addAll(addRemainingItemsLexicographically(model, items));
+    if (isAlphaSorted()) {
+      model.addAll(items);
+    } else if (limitRelevance()) {
+      model.addAll(addRemainingItemsLexicographically(model, items));
+    } else  {
+      for (List<LookupElement> group : snapshot.second) {
+        for (LookupElement element : group) {
+          if (prefixMatches(element)) {
+            model.add(element);
+          }
+        }
+      }
+    }
 
     DefaultListModel listModel = (DefaultListModel)myList.getModel();
     synchronized (myList) {
@@ -435,10 +448,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       }
       else {
         myList.setSelectedIndex(0);
-      }
-
-      if (selectionVisible) {
-        ensureSelectionVisible();
       }
     }
   }
@@ -562,6 +571,10 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     }
   }
 
+  public static boolean limitRelevance() {
+    return ApplicationManager.getApplication().isUnitTestMode() || Registry.is("limited.relevance.sorting.in.completion");
+  }
+
   public boolean isFrozen(@NotNull LookupElement element) {
     return myFrozenItems.contains(element);
   }
@@ -592,10 +605,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   }
 
   private LookupArranger getActualArranger() {
-    if (isCompletion() && UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY) {
-      return LookupArranger.LEXICOGRAPHIC;
-    }
     return myCustomArranger;
+  }
+
+  private boolean isAlphaSorted() {
+    return isCompletion() && UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY;
   }
 
   private boolean isExactPrefixItem(LookupElement item, final boolean caseSensitive) {
@@ -1271,6 +1285,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   public void refreshUi() {
     final boolean reused = checkReused();
 
+    boolean selectionVisible = isSelectionVisible();
+
     updateList();
 
     if (isVisible()) {
@@ -1283,7 +1299,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       updateScrollbarVisibility();
       updateLookupBounds();
 
-      if (reused) {
+      if (reused || selectionVisible) {
         ensureSelectionVisible();
       }
     }

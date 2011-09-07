@@ -16,6 +16,8 @@
 package com.siyeh.ipp.types;
 
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -45,9 +47,11 @@ public class ReplaceDiamondWithExplicitTypeArgumentsIntention extends Intention 
         final StringBuilder text = new StringBuilder();
         text.append(javaCodeReferenceElement.getQualifiedName());
         text.append('<');
-        final PsiType[] typeArguments = referenceParameterList.getTypeArguments();
+        final PsiTypeElement[] typeElements = referenceParameterList.getTypeParameterElements();
+        final PsiNewExpression newExpression = PsiTreeUtil.getParentOfType(typeElements[0], PsiNewExpression.class);
+        final PsiDiamondType.DiamondInferenceResult result = PsiDiamondType.resolveInferredTypesNoCheck(newExpression, newExpression);
         boolean first = true;
-        for (PsiType typeArgument : typeArguments) {
+        for (PsiType typeArgument : result.getInferredTypes()) {
             if (first) {
                 first = false;
             } else {
@@ -60,6 +64,6 @@ public class ReplaceDiamondWithExplicitTypeArgumentsIntention extends Intention 
                 JavaPsiFacade.getElementFactory(element.getProject());
         final PsiJavaCodeReferenceElement newReference =
                 elementFactory.createReferenceFromText(text.toString(), element);
-        javaCodeReferenceElement.replace(newReference);
+        CodeStyleManager.getInstance(javaCodeReferenceElement.getProject()).reformat(javaCodeReferenceElement.replace(newReference));
     }
 }

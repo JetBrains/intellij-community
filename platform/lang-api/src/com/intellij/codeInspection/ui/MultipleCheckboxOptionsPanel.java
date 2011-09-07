@@ -37,10 +37,7 @@ public class MultipleCheckboxOptionsPanel extends JPanel {
                             @NonNls String property) {
         final boolean selected = getPropertyValue(owner, property);
         final JCheckBox checkBox = new JCheckBox(label, selected);
-        final ButtonModel model = checkBox.getModel();
-        final CheckboxChangeListener changeListener
-                = new CheckboxChangeListener(owner, property, model);
-        model.addChangeListener(changeListener);
+        configureCheckbox(owner, property, checkBox);
         final GridBagConstraints constraints = new GridBagConstraints();
         constraints.anchor = GridBagConstraints.FIRST_LINE_START;
         constraints.gridx = 0;
@@ -55,6 +52,17 @@ public class MultipleCheckboxOptionsPanel extends JPanel {
         }
         constraints.weighty = 1.0;
         add(checkBox, constraints);
+    }
+
+    private static void configureCheckbox(InspectionProfileEntry owner, String property, JCheckBox checkBox) {
+        final ButtonModel model = checkBox.getModel();
+        final CheckboxChangeListener changeListener = new CheckboxChangeListener(owner, property, model);
+        model.addChangeListener(changeListener);
+    }
+
+    public static void initAndConfigureCheckbox(InspectionProfileEntry owner, String property, JCheckBox checkBox) {
+        checkBox.setSelected(getPropertyValue(owner, property));
+        configureCheckbox(owner, property, checkBox);
     }
 
     private static boolean getPropertyValue(InspectionProfileEntry owner,

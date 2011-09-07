@@ -59,7 +59,6 @@
                         serviceImplementation="com.intellij.openapi.wm.impl.PlatformFrameTitleBuilder"/>
     <projectService serviceInterface="com.intellij.platform.ProjectBaseDirectory"
                         serviceImplementation="com.intellij.platform.ProjectBaseDirectory"/>
-    <postStartupActivity implementation="com.intellij.platform.FilesystemToolwindowOpener"/>
 
     <applicationService serviceInterface="com.intellij.ide.util.ModuleRendererFactory"
                         serviceImplementation="com.intellij.ide.util.PlatformModuleRendererFactory"/>

@@ -666,6 +666,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     defaults.put("TitledBorder.font", font);
   }
 
+
   private static final class IdeaLookAndFeelInfo extends UIManager.LookAndFeelInfo{
     public IdeaLookAndFeelInfo(){
       super(IdeBundle.message("idea.default.look.and.feel"), IDEA_LAF_CLASS_NAME);

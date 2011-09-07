@@ -25,7 +25,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.EdtRunnable;
@@ -84,15 +83,12 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
         flushIdleRequests();
       }
       else {
-        if (isFocusTransferReady() && getFocusOwner() == null && (myFocusRevalidator == null || myFocusRevalidator.isExpired())) {
-          requestDefaultFocus(false);
-
-          if (isFocusTransferReady() && getFocusOwner() == null) {
+        if (processFocusRevalidation()) {
+          if (isFocusTransferReady()) {
             flushIdleRequests();
-            return;
-          }
+          }  
         }
-
+  
         restartIdleAlarm();
       }
     }
@@ -244,10 +240,14 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
               }
             };
 
-          myCmdTimestamp++;
+          if (command.invalidatesRequestors()) {
+            myCmdTimestamp++;
+          }
           revalidateFurtherRequestors();
           if (forced) {
-            myForcedCmdTimestamp++;
+            if (command.invalidatesRequestors()) {
+              myForcedCmdTimestamp++;
+            }
             revalidateFurtherRequestors();
           }
 
@@ -442,18 +442,6 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   }
 
   private void flushIdleRequests() {
-    if (myFocusRevalidator != null) {
-      ExpirableRunnable revalidator = myFocusRevalidator;
-      myFocusRevalidator = null;
-      if (!revalidator.isExpired()) {
-        revalidator.run();
-        if (!canFlushIdleRequests()) {
-          restartIdleAlarm();
-          return;
-        }
-      }
-    }
-
     int currentModalityCount = getCurrentModalityCount();
     try {
       incFlushingRequests(1, currentModalityCount);
@@ -537,6 +525,18 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
         restartIdleAlarm();
       }
     }
+  }
+
+  private boolean processFocusRevalidation() {
+    ExpirableRunnable revalidator = myFocusRevalidator;
+    myFocusRevalidator = null;
+    
+    if (revalidator != null && !revalidator.isExpired()) {
+      revalidator.run();
+      return true;
+    }
+    
+    return false;
   }
 
   private void flushNow() {
@@ -711,9 +711,14 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   }
   
   @Override
-  public void revalidateFocus(@NotNull ExpirableRunnable runnable) {
-    myFocusRevalidator = runnable;
-    restartIdleAlarm();
+  public void revalidateFocus(@NotNull final ExpirableRunnable runnable) {
+    SwingUtilities.invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        myFocusRevalidator = runnable;
+        restartIdleAlarm();
+      }
+    });
   }
 
   @Override
@@ -932,7 +937,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     } 
     
     if (toFocus != null) {
-      return requestFocus(toFocus, forced);      
+      return requestFocus(new FocusCommand.ByComponent(toFocus).setToInvalidateRequestors(false), forced);      
     }
     
     

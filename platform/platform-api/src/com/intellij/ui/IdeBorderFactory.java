@@ -58,7 +58,7 @@ public class IdeBorderFactory {
   }
 
   public static IdeaTitledBorder createTitledBorder(String title, boolean hasBoldFont, boolean hasIndent, boolean hasSmallFont) {
-    Insets insets = new Insets(5, 0, 10, 0);
+    Insets insets = new Insets(10, 0, 15, 0);
     return createTitledBorder(title, hasBoldFont, hasIndent, hasSmallFont, insets);
   }
 

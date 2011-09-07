@@ -469,8 +469,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
 
   @Nullable
-  protected Project convertAndLoadProject(String filePath, boolean convert) throws IOException {
-    return loadProjectWithProgress(filePath);
+  public Project convertAndLoadProject(String filePath, boolean convert, Ref<Boolean> cancelled) throws IOException {
+    return loadProjectWithProgress(filePath, cancelled);
   }
 
   @Nullable
@@ -481,7 +481,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       @Override
       public void run() {
         try {
-          final Project project = convertAndLoadProject(filePath, convert);
+          final Project project = convertAndLoadProject(filePath, convert, new Ref<Boolean>());
           if (project == null) {
             return;
           }

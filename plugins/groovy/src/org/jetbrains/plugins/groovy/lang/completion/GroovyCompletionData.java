@@ -250,7 +250,7 @@ public class GroovyCompletionData {
     return context.getTextRange().getStartOffset() == 0 && !(context instanceof OuterLanguageElement);
   }
 
-  private static boolean suggestClassInterfaceEnum(PsiElement context) {
+  public static boolean suggestClassInterfaceEnum(PsiElement context) {
     if (context.getParent() != null &&
         (context.getParent() instanceof GrReferenceExpression) &&
         context.getParent().getParent() instanceof GroovyFile) {

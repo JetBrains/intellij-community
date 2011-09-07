@@ -22,6 +22,7 @@ import com.intellij.conversion.impl.ConversionContextImpl;
 import com.intellij.conversion.impl.ConversionRunner;
 import com.intellij.conversion.impl.ProjectConversionUtil;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -65,8 +66,10 @@ public class ConvertProjectDialog extends DialogWrapper {
 
     myBackupDir = ProjectConversionUtil.getBackupDir(context.getProjectBaseDir());
     myTextPane.setSize(new Dimension(350, Integer.MAX_VALUE));
-    final String message =
-      IdeBundle.message("label.text.project.has.older.format", context.getProjectFile().getName(), myBackupDir.getAbsolutePath());
+    final String message = IdeBundle.message("label.text.project.has.older.format",
+                                             context.getProjectFile().getName(),
+                                             ApplicationNamesInfo.getInstance().getProductName(),
+                                             myBackupDir.getAbsolutePath());
     Messages.configureMessagePaneUi(myTextPane, message, false);
 
     myTextPane.addHyperlinkListener(new HyperlinkListener() {
@@ -145,7 +148,9 @@ public class ConvertProjectDialog extends DialogWrapper {
   private boolean checkReadOnlyFiles() throws IOException {
     List<File> files = getReadOnlyFiles();
     if (!files.isEmpty()) {
-      final String message = IdeBundle.message("message.text.unlock.read.only.files", getFilesString(files));
+      final String message = IdeBundle.message("message.text.unlock.read.only.files",
+                                               ApplicationNamesInfo.getInstance().getProductName(),
+                                               getFilesString(files));
       final String[] options = {CommonBundle.getContinueButtonText(), CommonBundle.getCancelButtonText()};
       if (Messages.showOkCancelDialog(myMainPanel, message, IdeBundle.message("dialog.title.convert.project"), options[0], options[1], null) != 0) {
         return false;

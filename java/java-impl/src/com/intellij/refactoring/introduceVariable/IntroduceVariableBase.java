@@ -579,12 +579,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
       callback.pass(null);
     }
     else {
-      new OccurrencesChooser<PsiExpression>(editor) {
-        @Override
-        protected TextRange getOccurrenceRange(PsiExpression occurrence) {
-          return occurrence.getTextRange();
-        }
-      }.showChooser(callback, occurrencesMap);
+      new OccurrencesChooser<PsiExpression>(editor).showChooser(callback, occurrencesMap);
     }
     return wasSucceed[0];
   }
@@ -754,7 +749,9 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
         .createVariableDeclarationStatement("x", expectedType, initializer).getDeclaredElements()[0])
         .getInitializer();
       if (tryToDetectDiamondNewExpr instanceof PsiNewExpression &&
-          PsiDiamondTypeUtil.canCollapseToDiamond((PsiNewExpression)tryToDetectDiamondNewExpr, initializer)) {
+          PsiDiamondTypeUtil.canCollapseToDiamond((PsiNewExpression)tryToDetectDiamondNewExpr,
+                                                  (PsiNewExpression)tryToDetectDiamondNewExpr,
+                                                  expectedType)) {
         final PsiElement paramList = PsiDiamondTypeUtil
           .replaceExplicitWithDiamond(newExpression.getClassOrAnonymousClassReference().getParameterList());
         return PsiTreeUtil.getParentOfType(paramList, PsiNewExpression.class);

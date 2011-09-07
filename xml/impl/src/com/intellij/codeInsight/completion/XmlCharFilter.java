@@ -89,6 +89,7 @@ public class XmlCharFilter extends CharFilter {
     if (Character.isJavaIdentifierPart(c)) return Result.ADD_TO_PREFIX;
     switch(c){
       case '-':
+      case ':':
         return Result.ADD_TO_PREFIX;
       case '/':
         if (isWithinTag(lookup)) {

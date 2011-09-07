@@ -31,7 +31,9 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.PathUtil;
+import com.intellij.util.PathsList;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.android.compiler.AndroidDexCompilerConfiguration;
 import org.jetbrains.android.util.AndroidBundle;
@@ -107,7 +109,9 @@ public class AndroidDx1 {
     if (!hasXmxParam(vmParamList)) {
       vmParamList.add("-Xmx" + configuration.MAX_HEAP_SIZE + "M");
     }
-    parameters.getClassPath().add(PathUtil.getJarPathForClass(AndroidDxRunner.class));
+    final PathsList classPath = parameters.getClassPath();
+    classPath.add(PathUtil.getJarPathForClass(AndroidDxRunner.class));
+    classPath.add(PathUtil.getJarPathForClass(FileUtil.class));
 
     // delete file to check if it will exist after dex compilation
     new File(outFile).delete();

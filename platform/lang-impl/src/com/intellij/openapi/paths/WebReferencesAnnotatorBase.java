@@ -36,7 +36,7 @@ import java.util.Collection;
 /**
  * @author Eugene.Kudelevsky
  */
-public abstract class WebReferencesAnnotatorBase extends ExternalAnnotator {
+public abstract class WebReferencesAnnotatorBase extends ExternalAnnotator<WebReferencesAnnotatorBase.MyInfo[], WebReferencesAnnotatorBase.MyInfo[]> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.paths.WebReferencesAnnotatorBase");
 
   protected static final WebReference[] EMPTY_ARRAY = new WebReference[0];
@@ -67,7 +67,7 @@ public abstract class WebReferencesAnnotatorBase extends ExternalAnnotator {
   }
 
   @Override
-  public Object collectionInformation(@NotNull PsiFile file) {
+  public MyInfo[] collectionInformation(@NotNull PsiFile file) {
     final WebReference[] references = collectWebReferences(file);
     final MyInfo[] infos = new MyInfo[references.length];
 
@@ -79,8 +79,7 @@ public abstract class WebReferencesAnnotatorBase extends ExternalAnnotator {
   }
 
   @Override
-  public Object doAnnotate(Object collectedInfo) {
-    final MyInfo[] infos = (MyInfo[])collectedInfo;
+  public MyInfo[] doAnnotate(MyInfo[] infos) {
     for (MyInfo info : infos) {
       if (checkUrl(info.myUrl)) {
         info.myResult = true;
@@ -90,8 +89,7 @@ public abstract class WebReferencesAnnotatorBase extends ExternalAnnotator {
   }
 
   @Override
-  public void apply(@NotNull PsiFile file, Object annotationResult, @NotNull AnnotationHolder holder) {
-    final MyInfo[] infos = (MyInfo[])annotationResult;
+  public void apply(@NotNull PsiFile file, MyInfo[] infos, @NotNull AnnotationHolder holder) {
     for (MyInfo info : infos) {
       if (!info.myResult) {
         final PsiElement element = info.myAnchor.retrieve();
@@ -122,7 +120,7 @@ public abstract class WebReferencesAnnotatorBase extends ExternalAnnotator {
     }
   }
 
-  private static class MyInfo {
+  protected static class MyInfo {
     final PsiAnchor myAnchor;
     final String myUrl;
     final TextRange myRangeInElement;

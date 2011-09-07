@@ -113,7 +113,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
     Ref<Boolean> cancelled = new Ref<Boolean>();
     if (projectDir.exists()) {
       try {
-        project = ((ProjectManagerImpl) projectManager).loadProjectWithProgress(baseDir.getPath(), cancelled);
+        project = ((ProjectManagerImpl) projectManager).convertAndLoadProject(baseDir.getPath(), true, cancelled);
       }
       catch (Exception e) {
         // ignore

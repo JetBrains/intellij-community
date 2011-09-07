@@ -235,7 +235,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
       ((EditorGutterComponentEx) getEditor2().getGutter()).setLineNumberConvertor(newConvertor);
     }
   }
-
+  // todo pay attention here
   private static DiffHighlighterFactory createHighlighter(FileType contentType, VirtualFile file, Project project) {
     return new DiffHighlighterFactoryImpl(contentType, file, project);
   }
@@ -307,8 +307,11 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
   }
 
   private void updateStatusBar() {
-    int differentLineBlocks = getLineBlocks().getCount();
-    myPanel.setStatusBarText(DiffBundle.message("diff.count.differences.status.text", differentLineBlocks));
+    myPanel.setStatusBarText(getNumDifferencesText());
+  }
+
+  public String getNumDifferencesText() {
+    return DiffBundle.message("diff.count.differences.status.text", getLineBlocks().getCount());
   }
 
   public boolean hasDifferences() {
@@ -416,7 +419,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     return getSideView(side).getEditor();
   }
 
-  private DiffSideView getSideView(FragmentSide side) {
+  public DiffSideView getSideView(FragmentSide side) {
     if (side == FragmentSide.SIDE1) {
       return myLeftSide;
     }

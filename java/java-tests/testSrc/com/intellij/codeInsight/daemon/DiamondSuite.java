@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.daemon;
 
+import com.intellij.codeInsight.daemon.quickFix.ChangeNewOperatorTypeTest;
 import com.intellij.codeInsight.daemon.quickFix.Simplify2DiamondInspectionsTest;
 import com.intellij.refactoring.*;
 import junit.framework.Test;
@@ -33,6 +34,8 @@ public class DiamondSuite {
     testSuite.addTestSuite(LightAdvHighlightingJdk7Test.class);
     testSuite.addTestSuite(Simplify2DiamondInspectionsTest.class);
     testSuite.addTestSuite(IntroduceParameterTest.class);
+    testSuite.addTestSuite(IntroduceVariableTest.class);
+    testSuite.addTestSuite(ChangeNewOperatorTypeTest.class);
     return testSuite;
   }
 }

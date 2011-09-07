@@ -46,7 +46,7 @@ public class GroovyNamedArgumentPattern extends GroovyElementPattern<GrNamedArgu
   public GroovyNamedArgumentPattern isParameterOfMethodCall(@Nullable final ElementPattern<? extends GrCall> methodCall) {
     return with(new PatternCondition<GrNamedArgument>("left") {
       public boolean accepts(@NotNull GrNamedArgument namedArgument, final ProcessingContext context) {
-        GrCall call = PsiUtil.getMethodByNamedParameter(namedArgument);
+        GrCall call = PsiUtil.getCallByNamedParameter(namedArgument);
 
         return call != null && (methodCall == null || methodCall.accepts(call, context));
       }

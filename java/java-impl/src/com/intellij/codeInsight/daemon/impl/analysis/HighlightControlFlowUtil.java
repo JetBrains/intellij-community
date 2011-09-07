@@ -422,8 +422,7 @@ public class HighlightControlFlowUtil {
   }
 
   public static boolean isReassigned(PsiVariable variable,
-                                     Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> finalVarProblems,
-                                     Map<PsiParameter, Boolean> parameterIsReassigned) {
+                                     Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> finalVarProblems) {
     if (variable instanceof PsiLocalVariable) {
       final PsiElement parent = variable.getParent();
       if (parent == null) return false;
@@ -433,11 +432,7 @@ public class HighlightControlFlowUtil {
     }
     else if (variable instanceof PsiParameter) {
       final PsiParameter parameter = (PsiParameter)variable;
-      final Boolean isReassigned = parameterIsReassigned.get(parameter);
-      if (isReassigned != null) return isReassigned.booleanValue();
-      boolean isAssigned = PsiUtil.isAssigned(parameter);
-      parameterIsReassigned.put(parameter, Boolean.valueOf(isAssigned));
-      return isAssigned;
+      return PsiUtil.isAssigned(parameter);
     }
     else {
       return false;

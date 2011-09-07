@@ -19,7 +19,6 @@ package com.intellij.ui;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
-import javax.swing.plaf.SeparatorUI;
 import java.awt.*;
 
 /**
@@ -58,14 +57,7 @@ public class TitledSeparator extends JPanel {
     super.updateUI();
     if (separator != null && myLabel != null) {
       myLabel.setFont(UIUtil.getBorderFont(smallFont ? UIUtil.FontSize.SMALL : UIUtil.FontSize.NORMAL, boldFont));
-      myLabel.setForeground(UIUtil.getBorderTitleColor());
-
-      UIManager.put("Separator.foreground", UIUtil.getTitledBorderColor());
-      UIManager.put("Separator.background", getBackground());
-      UIManager.put("Separator.highlight", UIUtil.getTitledBorderColor());
-      UIManager.put("Separator.shadow", getBackground());
-      separator.setForeground(UIUtil.getTitledBorderColor());
-      separator.setBackground(getBackground());
+      myLabel.setForeground(UIUtil.getTitledBorderTitleColor());
     }
   }
 

@@ -11,7 +11,8 @@
       <option name="HTML" value="false" />
       <option name="JSP" value="false" />
       <option name="COMPLETION" value="false" />
-      <option name="GROOVY" value="true" />
+      <option name="GROOVY" value="false" />
+      <option name="GROOVY_STATEMENT" value="true" />
       <option name="OTHER" value="true" />
     </context>
   </template>
@@ -26,7 +27,8 @@
       <option name="HTML" value="false" />
       <option name="JSP" value="false" />
       <option name="COMPLETION" value="false" />
-      <option name="GROOVY" value="true" />
+      <option name="GROOVY" value="false" />
+      <option name="GROOVY_EXPRESSION" value="true" />
       <option name="OTHER" value="true" />
     </context>
   </template>
@@ -37,7 +39,6 @@
     <context>
       <option name="JAVA_CODE" value="false" />
       <option name="JAVA_STATEMENT" value="true" />
-      <option name="ASPECTJ" value="true" />
     </context>
   </template>
   <template name="RL" resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.surround.with.read.lock"
@@ -47,7 +48,6 @@
     <context>
       <option name="JAVA_CODE" value="false" />
       <option name="JAVA_STATEMENT" value="true" />
-      <option name="ASPECTJ" value="true" />
     </context>
   </template>
   <template name="WL" resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.surround.with.write.lock" 
@@ -57,7 +57,6 @@
     <context>
       <option name="JAVA_CODE" value="false" />
       <option name="JAVA_STATEMENT" value="true" />
-      <option name="ASPECTJ" value="true" />
     </context>
   </template>
   <template name="I" value="for ($ELEMENT_TYPE$ $VAR$ : $SELECTION$) {&#10;  $END$&#10;}&#10;"
@@ -68,7 +67,6 @@
     <context>
       <option name="JAVA_CODE" value="false" />
       <option name="JAVA_STATEMENT" value="true" />
-      <option name="ASPECTJ" value="true" />
     </context>
   </template>
 </templateSet>

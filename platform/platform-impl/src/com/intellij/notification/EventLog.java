@@ -187,10 +187,10 @@ public class EventLog implements Notifications {
 
   private static int eolIndex(String mainText) {
     TreeSet<Integer> indices = new TreeSet<Integer>();
-    indices.add(mainText.indexOf("<br>"));
-    indices.add(mainText.indexOf("<br/>"));
-    indices.add(mainText.indexOf("<p/>"));
-    indices.add(mainText.indexOf("<p>"));
+    indices.add(mainText.indexOf("<br>", 1));
+    indices.add(mainText.indexOf("<br/>", 1));
+    indices.add(mainText.indexOf("<p/>", 1));
+    indices.add(mainText.indexOf("<p>", 1));
     indices.add(mainText.indexOf("\n"));
     indices.remove(-1);
     return indices.isEmpty() ? -1 : indices.iterator().next();

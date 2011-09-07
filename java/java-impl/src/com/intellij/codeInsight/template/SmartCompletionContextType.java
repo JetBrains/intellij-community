@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class SmartCompletionContextType extends TemplateContextType {
   public SmartCompletionContextType() {
-    super("COMPLETION", CodeInsightBundle.message("dialog.edit.template.checkbox.smart.type.completion"));
+    super("COMPLETION", CodeInsightBundle.message("dialog.edit.template.checkbox.smart.type.completion"), JavaCodeContextType.class);
   }
 
   @Override

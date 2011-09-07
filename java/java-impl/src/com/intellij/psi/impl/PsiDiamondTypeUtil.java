@@ -16,12 +16,11 @@
 package com.intellij.psi.impl;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
-import com.intellij.codeInspection.ExplicitTypeCanBeDiamondInspection;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -34,13 +33,9 @@ public class PsiDiamondTypeUtil {
   private PsiDiamondTypeUtil() {
   }
 
-  public static boolean canCollapseToDiamond(PsiNewExpression expression, PsiExpression context) {
-    return canCollapseToDiamond(expression, context, true);
-  }
-
-  public static boolean canCollapseToDiamond(PsiNewExpression expression,
-                                             PsiExpression context,
-                                             boolean checkAssignable) {
+  public static boolean canCollapseToDiamond(final PsiNewExpression expression,
+                                             final PsiNewExpression context,
+                                             final @Nullable PsiType expectedType) {
     if (PsiUtil.getLanguageLevel(context).isAtLeast(LanguageLevel.JDK_1_7)) {
       final PsiJavaCodeReferenceElement classReference = expression.getClassOrAnonymousClassReference();
       if (classReference != null) {
@@ -49,11 +44,16 @@ public class PsiDiamondTypeUtil {
           final PsiTypeElement[] typeElements = parameterList.getTypeParameterElements();
           if (typeElements.length > 0) {
             if (typeElements.length == 1 && typeElements[0].getType() instanceof PsiDiamondType) return false;
-            final PsiDiamondType.DiamondInferenceResult inferenceResult = PsiDiamondType.resolveInferredTypes(expression);
+            final PsiDiamondType.DiamondInferenceResult inferenceResult = PsiDiamondType.resolveInferredTypes(expression, context);
             if (inferenceResult.getErrorMessage() == null) {
-              if (!checkAssignable) return true;
               final List<PsiType> types = inferenceResult.getInferredTypes();
-              final PsiType[] typeArguments = parameterList.getTypeArguments();
+              PsiType[] typeArguments = null;
+              if (expectedType instanceof PsiClassType) {
+                typeArguments = ((PsiClassType)expectedType).getParameters();
+              }
+              if (typeArguments == null) {
+                typeArguments = parameterList.getTypeArguments();
+              }
               if (types.size() == typeArguments.length) {
                 for (int i = 0, typeArgumentsLength = typeArguments.length; i < typeArgumentsLength; i++) {
                   PsiType typeArgument = typeArguments[i];

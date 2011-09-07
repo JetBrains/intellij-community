@@ -26,6 +26,7 @@ import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.ui.playback.PlaybackRunner;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
@@ -206,18 +207,13 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
     }
 
     final PlaybackRunner runner = new PlaybackRunner(script.toString(), new PlaybackRunner.StatusCallback.Edt() {
-      public void errorEdt(PlaybackRunner runner, String text, int curentLine) {
-        frame.getStatusBar().setInfo("Line " + curentLine + ":" + " Error: " + text);
+
+      public void messageEdt(PlaybackContext context, String text, int curentLine, Type type) {
+        if (type == Type.message || type == Type.error) {
+          frame.getStatusBar().setInfo("Line " + curentLine + ": " + text);
+        }
       }
 
-      public void messageEdt(PlaybackRunner runner, String text, int curentLine) {
-        frame.getStatusBar().setInfo("Line " + curentLine + ": " + text);
-      }
-
-      @Override
-      public void codeEdt(PlaybackRunner runner, String text, int curentLine) {
-
-      }
     }, Registry.is("actionSystem.playback.useDirectActionCall"), true);
 
     myIsPlaying = true;

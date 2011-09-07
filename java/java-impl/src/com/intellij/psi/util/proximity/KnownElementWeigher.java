@@ -16,6 +16,7 @@
 package com.intellij.psi.util.proximity;
 
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -37,6 +38,10 @@ public class KnownElementWeigher extends ProximityWeigher {
     if (element instanceof PsiClass) {
       @NonNls final String qname = ((PsiClass)element).getQualifiedName();
       if (qname != null) {
+        String pkg = StringUtil.getPackageName(qname);
+        if (pkg.equals("java.lang")) return 6;
+        if (pkg.equals("java.util")) return 5;
+
         if (qname.startsWith("java.lang")) return 4;
         if (qname.startsWith("java.util")) return 3;
         if (qname.startsWith("java.")) return 2;

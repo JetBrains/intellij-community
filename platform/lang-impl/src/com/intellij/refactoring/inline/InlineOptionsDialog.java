@@ -23,6 +23,7 @@ import com.intellij.refactoring.util.RadioUpDownListener;
 import com.intellij.ui.IdeBorderFactory;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
@@ -50,7 +51,7 @@ public abstract class InlineOptionsDialog extends RefactoringDialog implements I
 
   protected JComponent createCenterPanel() {
     myOptionsPanel = new JPanel();
-    myOptionsPanel.setBorder(IdeBorderFactory.createTitledBorder(getBorderTitle(), false, true, true));
+    myOptionsPanel.setBorder(new EmptyBorder(10, 0, 0, 0));
     myOptionsPanel.setLayout(new BoxLayout(myOptionsPanel, BoxLayout.Y_AXIS));
 
     myRbInlineAll = new JRadioButton();

@@ -23,7 +23,6 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface Computable <T> {
 
-  @Nullable
   T compute();
 
   class PredefinedValueComputable<T> implements Computable<T> {

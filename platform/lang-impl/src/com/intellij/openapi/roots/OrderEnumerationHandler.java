@@ -19,6 +19,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -26,12 +27,18 @@ import java.util.Collection;
  * @author nik
  */
 public abstract class OrderEnumerationHandler {
-  public static final ExtensionPointName<OrderEnumerationHandler> EP_NAME =
-    ExtensionPointName.create("com.intellij.orderEnumerationHandler");
+  public static final ExtensionPointName<Factory> EP_NAME =
+    ExtensionPointName.create("com.intellij.orderEnumerationHandlerFactory");
 
-  public abstract boolean isApplicable(@NotNull Project project);
+  public static abstract class Factory {
 
-  public abstract boolean isApplicable(@NotNull Module module);
+    public abstract boolean isApplicable(@NotNull Project project);
+
+    public abstract boolean isApplicable(@NotNull Module module);
+
+    public abstract OrderEnumerationHandler createHandler(@Nullable Module module);
+  }
+
 
   public static enum AddDependencyType {ADD, DO_NOT_ADD, DEFAULT}
 
