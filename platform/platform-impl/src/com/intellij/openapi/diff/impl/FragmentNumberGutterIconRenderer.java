@@ -16,15 +16,15 @@ import java.awt.*;
  *         Time: 3:12 PM
  */
 public class FragmentNumberGutterIconRenderer extends GutterIconRenderer {
-  private final int myNumber;
+  private final String myPresentation;
   private CaptionIcon myIcon;
 
-  public FragmentNumberGutterIconRenderer(int number, final TextAttributesKey key, final Component component) {
-    myNumber = number;
+  public FragmentNumberGutterIconRenderer(String presentation, final TextAttributesKey key, final Component component) {
+    myPresentation = presentation;
     final EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
     final Color color = globalScheme.getAttributes(key).getBackgroundColor();
 
-    myIcon = new CaptionIcon(color, UIUtil.getButtonFont(), String.valueOf(number), component, CaptionIcon.Form.ROUNDED, false, false);
+    myIcon = new CaptionIcon(color, UIUtil.getButtonFont(), presentation, component, CaptionIcon.Form.ROUNDED, false, false);
   }
 
   @NotNull
@@ -40,13 +40,13 @@ public class FragmentNumberGutterIconRenderer extends GutterIconRenderer {
 
     FragmentNumberGutterIconRenderer that = (FragmentNumberGutterIconRenderer)o;
 
-    if (myNumber != that.myNumber) return false;
+    if (!myPresentation.equals(that.myPresentation)) return false;
 
     return true;
   }
 
   @Override
   public int hashCode() {
-    return myNumber;
+    return myPresentation.hashCode();
   }
 }

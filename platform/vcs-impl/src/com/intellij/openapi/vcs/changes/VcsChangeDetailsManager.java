@@ -33,6 +33,8 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.Details;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsKey;
+import com.intellij.openapi.vcs.history.ShortVcsRevisionNumber;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.BeforeAfter;
 import com.intellij.util.containers.HashMap;
@@ -302,6 +304,12 @@ public class VcsChangeDetailsManager {
   private static String changeDescription(Change o) {
     return new StringBuilder().append(ChangesUtil.getFilePath(o).getName()).append(" (").append(
       o.getBeforeRevision() == null
-      ? "New" : o.getBeforeRevision().getRevisionNumber().asString()).append(")").toString();
+      ? "New" : beforeRevisionText(o)).append(")").toString();
+  }
+
+  private static String beforeRevisionText(Change o) {
+    VcsRevisionNumber revisionNumber = o.getBeforeRevision().getRevisionNumber();
+    return revisionNumber instanceof ShortVcsRevisionNumber ? ((ShortVcsRevisionNumber) revisionNumber).toShortString() :
+           revisionNumber.asString();
   }
 }

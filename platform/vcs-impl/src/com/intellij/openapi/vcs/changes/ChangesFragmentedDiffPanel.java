@@ -24,12 +24,11 @@ import com.intellij.openapi.diff.SimpleContent;
 import com.intellij.openapi.diff.ex.DiffPanelEx;
 import com.intellij.openapi.diff.ex.DiffPanelOptions;
 import com.intellij.openapi.diff.impl.DiffPanelImpl;
+import com.intellij.openapi.diff.impl.DiffSideView;
 import com.intellij.openapi.diff.impl.highlighting.DiffPanelState;
+import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.diff.impl.highlighting.FragmentedDiffPanelState;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.ScrollingModel;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -48,11 +47,13 @@ import com.intellij.util.BeforeAfter;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
+import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
 
@@ -74,8 +75,11 @@ public class ChangesFragmentedDiffPanel implements Disposable {
   private DiffPanel myVertical;
   private boolean myCurrentHorizontal;
   private JPanel myTopPanel;
+  private List<Integer> myLeftLines;
+  private List<Integer> myRightLines;
+  private final MyNextDiffAction myNextDiff;
+  private final MyPreviousDiffAction myPreviousDiff;
 
-  // todo here
   public ChangesFragmentedDiffPanel(final Project project, final FragmentedContent fragmentedContent,
                                     final LinkedList<DiffPanel> cache, String filePath) {
     myProject = project;
@@ -112,6 +116,8 @@ public class ChangesFragmentedDiffPanel implements Disposable {
       return myPanel;
     }
   };
+    myNextDiff = new MyNextDiffAction();
+    myPreviousDiff = new MyPreviousDiffAction();
   }
 
   @Override
@@ -129,10 +135,22 @@ public class ChangesFragmentedDiffPanel implements Disposable {
     final JPanel wrapper = new JPanel();
     //final BoxLayout boxLayout = new BoxLayout(wrapper, BoxLayout.X_AXIS);
     wrapper.setLayout(new BorderLayout());
-    final JLabel label = new JLabel(myFilePath);
-    label.setBorder(BorderFactory.createEmptyBorder(1,2,0,0));
-    wrapper.add(label, BorderLayout.WEST);
-    wrapper.add(new MyShowSettingsButton(), BorderLayout.EAST);      // todo should be one button for all..
+    final JLabel titleLabel = new JLabel(myFilePath);
+    titleLabel.setBorder(BorderFactory.createEmptyBorder(1, 2, 0, 0));
+    wrapper.add(titleLabel, BorderLayout.WEST);
+    DefaultActionGroup dag = new DefaultActionGroup();
+    boolean navigationEnabled = !myFragmentedContent.isOneSide() && myFragmentedContent.getSize() > 1;
+    myNextDiff.setEnabled(navigationEnabled);
+    myPreviousDiff.setEnabled(navigationEnabled);
+    myPreviousDiff.copyShortcutFrom(ActionManager.getInstance().getAction("PreviousDiff"));
+    myNextDiff.copyShortcutFrom(ActionManager.getInstance().getAction("NextDiff"));
+    dag.add(myPreviousDiff);
+    dag.add(myNextDiff);
+    myPreviousDiff.registerCustomShortcutSet(myPreviousDiff.getShortcutSet(), myPanel);
+    myNextDiff.registerCustomShortcutSet(myNextDiff.getShortcutSet(), myPanel);
+    dag.add(new PopupAction());
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, dag, true);
+    wrapper.add(toolbar.getComponent(), BorderLayout.EAST);
 
     myTopPanel.add(wrapper, BorderLayout.CENTER);
 
@@ -176,6 +194,11 @@ public class ChangesFragmentedDiffPanel implements Disposable {
     final DiffPanel diffPanel = createPanel(oldConvertor, newConvertor, sbOld, sbNew, ranges);
     myCurrentHorizontal = myConfiguration.SHORT_DIFF_HORISONTALLY;
     savePanel(diffPanel);
+    titleLabel.setText(titleText((DiffPanelImpl)diffPanel));
+    FragmentedDiffPanelState state = (FragmentedDiffPanelState)((DiffPanelImpl)diffPanel).getDiffPanelState();
+    myLeftLines = state.getLeftLines();
+    myRightLines = state.getRightLines();
+
     myConfiguration.SHORT_DIFF_HORISONTALLY = ! myConfiguration.SHORT_DIFF_HORISONTALLY;
     final DiffPanel diffPanel2 = createPanel(oldConvertor, newConvertor, sbOld, sbNew, ranges);
     savePanel(diffPanel2);
@@ -183,6 +206,10 @@ public class ChangesFragmentedDiffPanel implements Disposable {
 
     myPanel.add(myTopPanel, BorderLayout.NORTH);
     myPanel.add(diffPanel.getComponent(), BorderLayout.CENTER);
+  }
+
+  private String titleText(DiffPanelImpl diffPanel) {
+    return myFilePath + " " + diffPanel.getNumDifferencesText();
   }
 
   private void savePanel(DiffPanel diffPanel) {
@@ -426,7 +453,8 @@ public class ChangesFragmentedDiffPanel implements Disposable {
     private AnAction myNumbered;
 
     private PopupAction() {
-      myUsual = new AnAction("Vertical") {
+      super("Settings", "Settings", IconLoader.getIcon("/general/secondaryGroup.png"));
+      myUsual = new AnAction("Top | Bottom") {
         @Override
         public void actionPerformed(AnActionEvent e) {
           boolean was = myConfiguration.SHORT_DIFF_HORISONTALLY;
@@ -436,7 +464,7 @@ public class ChangesFragmentedDiffPanel implements Disposable {
           }
         }
       };
-      myNumbered = new AnAction("Horizontal") {
+      myNumbered = new AnAction("Left | Right") {
         @Override
         public void actionPerformed(AnActionEvent e) {
           boolean was = myConfiguration.SHORT_DIFF_HORISONTALLY;
@@ -460,13 +488,19 @@ public class ChangesFragmentedDiffPanel implements Disposable {
       final ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(null, dag, e.getDataContext(),
                                                                                        JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
                                                                                        false);
-      final Dimension dimension = popup.getContent().getPreferredSize();
-      final Point at = new Point(-dimension.width / 2, 0);
-      popup.show(new RelativePoint(myParent, at));
+      if (e.getInputEvent() instanceof MouseEvent) {
+        popup.show(new RelativePoint((MouseEvent)e.getInputEvent()));
+      } else {
+        // todo correct
+        /*final Dimension dimension = popup.getContent().getPreferredSize();
+        final Point at = new Point(-dimension.width / 2, 0);
+        popup.show(new RelativePoint(myParent, at));*/
+        popup.showInBestPositionFor(e.getDataContext());
+      }
     }
   }
 
-  private class MyShowSettingsButton extends ActionButton implements DumbAware {
+  /*private class MyShowSettingsButton extends ActionButton implements DumbAware {
     MyShowSettingsButton() {
       this(new PopupAction(), new Presentation(), ActionPlaces.CHANGES_LOCAL_DIFF_SETTINGS, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
     }
@@ -476,16 +510,11 @@ public class ChangesFragmentedDiffPanel implements Disposable {
       ((PopupAction) getAction()).setParent(this);
       myPresentation.setIcon(IconLoader.getIcon("/general/secondaryGroup.png"));
     }
-  }
+  }*/
 
   private void ensurePresentation() {
     if (myCurrentHorizontal != myConfiguration.SHORT_DIFF_HORISONTALLY) {
-      final DiffPanel panel;
-      if (myConfiguration.SHORT_DIFF_HORISONTALLY) {
-        panel = myHorizontal;
-      } else {
-        panel = myVertical;
-      }
+      final DiffPanel panel = getCurrentPanel();
 
       myPanel.removeAll();
       myPanel.add(myTopPanel, BorderLayout.NORTH);
@@ -496,4 +525,106 @@ public class ChangesFragmentedDiffPanel implements Disposable {
       myCurrentHorizontal = myConfiguration.SHORT_DIFF_HORISONTALLY;
     }
   }
+
+  private DiffPanel getCurrentPanel() {
+    DiffPanel panel;
+    if (myConfiguration.SHORT_DIFF_HORISONTALLY) {
+      panel = myHorizontal;
+    } else {
+      panel = myVertical;
+    }
+    return panel;
+  }
+
+  private int getCurrentLogicalLineIdx(final boolean forward) {
+    assert ! myLeftLines.isEmpty();
+
+    final Editor editor = ((DiffPanelImpl) getCurrentPanel()).getEditor1();
+    Point location = editor.getScrollingModel().getVisibleArea().getLocation();
+    LogicalPosition lp = editor.xyToLogicalPosition(location);
+    int line = lp.line;
+    if (forward) {
+      if (line >= myLeftLines.get(myLeftLines.size() - 1)) {
+        return myLeftLines.size() - 1;
+      }
+      for (int i = myLeftLines.size() - 1; i >= 0; i--) {
+        Integer integer = myLeftLines.get(i);
+        if (integer <= line) return i + 1;
+      }
+      return 0;
+    } else {
+      if (line <= myLeftLines.get(0)) return 0;
+      for (int i = 0; i < myLeftLines.size(); i++) {
+        Integer integer = myLeftLines.get(i);
+        if (integer > line) {
+          return i;
+        }
+      }
+      return myLeftLines.size() - 1;
+    }
+  }
+
+  private class MyPreviousDiffAction extends AnAction {
+    private boolean myEnabled;
+
+    private MyPreviousDiffAction() {
+      super("Previous Change", "Previous Change", IconLoader.getIcon("/actions/previousOccurence.png"));
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      int currentLogicalLineIdx = getCurrentLogicalLineIdx(false);
+      int nextLineIdx = currentLogicalLineIdx == 0 ? 0 : currentLogicalLineIdx - 1;
+      int rightIndex = nextLineIdx >= myRightLines.size() ? (myRightLines.size() - 1) : nextLineIdx;
+
+      DiffPanelImpl panel = (DiffPanelImpl) getCurrentPanel();
+      panel.getSideView(FragmentSide.SIDE1).scrollToFirstDiff(myLeftLines.get(nextLineIdx));
+      panel.getSideView(FragmentSide.SIDE2).scrollToFirstDiff(myRightLines.get(rightIndex));
+    }
+
+    public void setEnabled(boolean enabled) {
+      myEnabled = enabled;
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      super.update(e);
+      e.getPresentation().setEnabled(myEnabled);
+    }
+  }
+
+  private class MyNextDiffAction extends AnAction {
+    private boolean myEnabled;
+    
+    private MyNextDiffAction() {
+      // todo text
+      super("Next Change", "Next Change", IconLoader.getIcon("/actions/nextOccurence.png"));
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      int currentLogicalLineIdx = getCurrentLogicalLineIdx(true);
+      int nextLineIdx = currentLogicalLineIdx == (myLeftLines.size() - 1) ? currentLogicalLineIdx : currentLogicalLineIdx + 1;
+      int rightIndex = nextLineIdx >= myRightLines.size() ? (myRightLines.size() - 1) : nextLineIdx;
+
+      DiffPanelImpl panel = (DiffPanelImpl) getCurrentPanel();
+      panel.getSideView(FragmentSide.SIDE1).scrollToFirstDiff(myLeftLines.get(nextLineIdx));
+      panel.getSideView(FragmentSide.SIDE2).scrollToFirstDiff(myRightLines.get(rightIndex));
+    }
+
+    public void setEnabled(boolean enabled) {
+      myEnabled = enabled;
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      super.update(e);
+      e.getPresentation().setEnabled(myEnabled);
+    }
+  }
+  /*      <action id="VcsShowNextChangeMarker" class="com.intellij.openapi.vcs.actions.ShowNextChangeMarkerAction"
+                icon="/actions/nextOccurence.png"/>
+        <action id="VcsShowPrevChangeMarker" class="com.intellij.openapi.vcs.actions.ShowPrevChangeMarkerAction"
+                icon="/actions/previousOccurence.png"/>
+  /**/
 }
