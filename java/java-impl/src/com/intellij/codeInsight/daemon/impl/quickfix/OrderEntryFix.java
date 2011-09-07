@@ -222,7 +222,16 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
           if (files.length == 0) continue;
           final VirtualFile jar = files[0];
 
-          if (jar == null || libraryEntry.isModuleLevel() && !librariesToAdd.add(jar) || !librariesToAdd.add(library) || moduleFileIndex.getOrderEntryForFile(virtualFile) != null) continue;
+          if (jar == null || libraryEntry.isModuleLevel() && !librariesToAdd.add(jar) || !librariesToAdd.add(library)) continue;
+          OrderEntry entryForFile = moduleFileIndex.getOrderEntryForFile(virtualFile);
+          if (entryForFile != null) {
+            if (entryForFile instanceof ExportableOrderEntry &&
+                ((ExportableOrderEntry)entryForFile).getScope() == DependencyScope.TEST &&
+                !ModuleRootManager.getInstance(currentModule).getFileIndex().isInTestSourceContent(classVFile)) {
+            } else {
+              continue;
+            }
+          }
           final OrderEntryFix fix = new OrderEntryFix() {
             @NotNull
             public String getText() {
