@@ -9,6 +9,10 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -64,18 +68,52 @@ public class MvcTargetDialogCompletionUtils {
     }
 
     if (text.substring(0, offset).matches("\\s*(?:(:?-\\S+|dev|prod|test)\\s+)*\\S*")) {
+      // Complete command name because command name is not typed.
       for (String completionVariant : getAllTargetNames(module)) {
         res.add(TailTypeDecorator.withTail(LookupElementBuilder.create(completionVariant), TailType.SPACE));
       }
     }
     else {
-      // Grails command already typed. Try to complete classes and packages names.
-      //GlobalSearchScope.moduleScope(myModule);
+      // Command name already typed. Try to complete classes and packages names.
 
-      //PsiPackage defaultPackage = JavaPsiFacade.getInstance(myModule.getProject()).findPackage("");
+      GlobalSearchScope scope = GlobalSearchScope.moduleScope(module);
+      JavaPsiFacade facade = JavaPsiFacade.getInstance(module.getProject());
+      
+      // Complete class names if prefix is a package name with dot at end.
+      if (prefix.endsWith(".") && prefix.length() > 1) {
+        PsiPackage p = facade.findPackage(prefix.substring(0, prefix.length() - 1));
+        if (p != null) {
+          for (PsiClass aClass : p.getClasses(scope)) {
+            String qualifiedName = aClass.getQualifiedName();
+            if (qualifiedName != null) {
+              res.add(LookupElementBuilder.create(aClass, qualifiedName));
+            }
+          }
+        }
+      }
+
+      PsiPackage defaultPackage = facade.findPackage("");
+      if (defaultPackage != null) {
+        collectClassesAndPackageNames(res, defaultPackage, scope);
+      }
     }
 
     return res;
+  }
+
+  private static void collectClassesAndPackageNames(Collection<LookupElement> res, @NotNull PsiPackage aPackage, GlobalSearchScope scope) {
+    PsiPackage[] subPackages = aPackage.getSubPackages(scope);
+
+    String qualifiedName = aPackage.getQualifiedName();
+    if (qualifiedName.length() > 0) {
+      if (subPackages.length == 0 || aPackage.getClasses(scope).length > 0) {
+        res.add(TailTypeDecorator.withTail(LookupElementBuilder.create(qualifiedName), TailType.DOT));
+      }
+    }
+
+    for (PsiPackage subPackage : subPackages) {
+      collectClassesAndPackageNames(res, subPackage, scope);
+    }
   }
 
   public static Set<String> getAllTargetNamesInternal(@NotNull Module module) {
