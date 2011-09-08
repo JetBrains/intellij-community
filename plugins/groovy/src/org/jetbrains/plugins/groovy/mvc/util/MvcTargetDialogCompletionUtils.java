@@ -63,9 +63,9 @@ public class MvcTargetDialogCompletionUtils {
       return res;
     }
 
-    if (text.substring(0, offset).matches("\\s*(?:(:?-\\S+)\\s+)*\\S*")) {
+    if (text.substring(0, offset).matches("\\s*(?:(:?-\\S+|dev|prod|test)\\s+)*\\S*")) {
       for (String completionVariant : getAllTargetNames(module)) {
-        res.add(LookupElementBuilder.create(completionVariant));
+        res.add(TailTypeDecorator.withTail(LookupElementBuilder.create(completionVariant), TailType.SPACE));
       }
     }
     else {
