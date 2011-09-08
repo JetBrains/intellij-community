@@ -21,10 +21,6 @@ public class PyParser implements PsiParser {
     myLanguageLevel = LanguageLevel.getDefault();
   }
 
-  public PyParser(LanguageLevel languageLevel) {
-    myLanguageLevel = languageLevel;
-  }
-
   public void setLanguageLevel(LanguageLevel languageLevel) {
     myLanguageLevel = languageLevel;
   }

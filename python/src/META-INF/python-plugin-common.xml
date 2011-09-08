@@ -312,7 +312,7 @@
 
     <project.converterProvider implementation="com.jetbrains.python.testing.converters.PythonTestConverterProvider"/>
     
-    <lang.parserDefinition language="Cython" implementationClass="com.jetbrains.python.cython.CythonParserDefinition"/>
+    <lang.parserDefinition language="Cython" implementationClass="com.jetbrains.cython.parser.CythonParserDefinition"/>
 
     <!-- Django -->
     <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.django.annotator.ViewMethodLineMarkerProvider"/>

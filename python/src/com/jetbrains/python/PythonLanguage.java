@@ -12,11 +12,11 @@ import java.util.concurrent.CopyOnWriteArraySet;
  * @author yole
  */
 public class PythonLanguage extends Language {
-  private final IStubFileElementType ELTYPE_FILE;
+  private IStubFileElementType myFileElementType;
   private final Set<Class<? extends PyAnnotator>> _annotators = new CopyOnWriteArraySet<Class<? extends PyAnnotator>>();
 
   public static PythonLanguage getInstance() {
-    return (PythonLanguage) PythonFileType.INSTANCE.getLanguage();
+    return (PythonLanguage)PythonFileType.INSTANCE.getLanguage();
   }
 
   @Override
@@ -40,16 +40,11 @@ public class PythonLanguage extends Language {
 
   protected PythonLanguage() {
     super("Python");
-    ELTYPE_FILE = new PyFileElementType(this);
-  }
-
-  protected PythonLanguage(String id) {
-    super(getInstance(), id);
-    ELTYPE_FILE = new PyFileElementType(this);
+    myFileElementType = new PyFileElementType(this);
   }
 
   public IStubFileElementType getFileElementType() {
-    return ELTYPE_FILE;
+    return myFileElementType;
   }
 
   public Set<Class<? extends PyAnnotator>> getAnnotators() {

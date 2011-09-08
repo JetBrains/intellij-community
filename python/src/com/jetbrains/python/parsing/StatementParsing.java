@@ -94,7 +94,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     parseSimpleStatement(false);
   }
 
-  private void parseSimpleStatement(boolean inSuite) {
+  protected void parseSimpleStatement(boolean inSuite) {
     PsiBuilder builder = myContext.getBuilder();
     final IElementType firstToken = builder.getTokenType();
     if (firstToken == null) {

@@ -69,11 +69,6 @@ public class PythonParserDefinition implements ParserDefinition {
   }
 
   @NotNull
-  public PsiParser createParser(Project project, LanguageLevel languageLevel) {
-    return new PyParser(languageLevel);
-  }
-
-  @NotNull
   public PsiElement createElement(ASTNode node) {
     final IElementType type = node.getElementType();
     if (type instanceof PyElementType) {

@@ -82,7 +82,7 @@ public class PyFileElementType extends IStubFileElementType<PyFileStub> {
       final Project project = psi.getProject();
       final PsiBuilderFactory factory = PsiBuilderFactory.getInstance();
       final PsiBuilder builder = factory.createBuilder(project, node, lexer, getLanguage(), node.getChars());
-      final PyParser parser = new PyParser(languageLevel) {
+      final PyParser parser = new PyParser() {
         @Override
         protected ParsingContext createParsingContext(PsiBuilder builder, LanguageLevel languageLevel, StatementParsing.FUTURE futureFlag) {
           return new PyConsoleParsingContext(builder, languageLevel, futureFlag);

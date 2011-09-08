@@ -876,10 +876,4 @@ public class ExpressionParsing extends Parsing {
 
     return true;
   }
-
-  private static void buildTokenElement(IElementType type, PsiBuilder builder) {
-    final PsiBuilder.Marker marker = builder.mark();
-    builder.advanceLexer();
-    marker.done(type);
-  }
 }
