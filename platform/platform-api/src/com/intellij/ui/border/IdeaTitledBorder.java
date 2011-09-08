@@ -1,7 +1,6 @@
 package com.intellij.ui.border;
 
 import com.intellij.util.ui.UIUtil;
-import com.sun.java.swing.plaf.gtk.GTKLookAndFeel;
 import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
