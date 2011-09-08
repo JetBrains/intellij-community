@@ -283,7 +283,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
     return myTemplateGroups;
   }
 
-  private void createTemplateEditor(TemplateImpl template,
+  private void createTemplateEditor(final TemplateImpl template,
                                     String shortcut,
                                     Map<TemplateOptionalProcessor, Boolean> options,
                                     Map<TemplateContextType, Boolean> context) {
@@ -293,6 +293,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
         DefaultMutableTreeNode node = getNode(getSelectedIndex());
         if (node != null) {
           ((DefaultTreeModel)myTree.getModel()).nodeChanged(node);
+          TemplateSettings.getInstance().setLastSelectedTemplate(template.getGroupName(), template.getKey());
         }
       }
     });
@@ -833,7 +834,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
     }
     else {
       TemplateImpl newTemplate = getTemplate(selected);
-      if (myCurrentTemplateEditor == null || !myCurrentTemplateEditor.getTemplate().equals(newTemplate)) {
+      if (myCurrentTemplateEditor == null || myCurrentTemplateEditor.getTemplate() != newTemplate) {
         if (myCurrentTemplateEditor != null) {
           myCurrentTemplateEditor.dispose();
         }
