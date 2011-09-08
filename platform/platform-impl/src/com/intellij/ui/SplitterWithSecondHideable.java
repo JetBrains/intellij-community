@@ -59,7 +59,7 @@ public abstract class SplitterWithSecondHideable {
       openIcon = IconLoader.getIcon("/general/comboArrowRightPassive.png");
     }
 
-    myTitledSeparator = new AbstractTitledSeparatorWithIcon(icon, openIcon, separatorText, false, false) {
+    myTitledSeparator = new AbstractTitledSeparatorWithIcon(icon, openIcon, separatorText, true, true) {
       @Override
       protected RefreshablePanel createPanel() {
         return createDetails();
