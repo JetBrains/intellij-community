@@ -97,15 +97,7 @@ public class GitRebaseUpdater extends GitUpdater {
   private GitUpdateResult handleRebaseFailure(GitRebaseProblemDetector rebaseConflictDetector, GitLineHandler pullHandler) {
     if (rebaseConflictDetector.isMergeConflict()) {
       LOG.info("handleRebaseFailure merge conflict");
-      final boolean allMerged = new GitMergeConflictResolver(myProject, true, "Merge conflicts detected. Resolve them before continuing rebase.", "Can't continue rebase", "Then you may <b>continue rebase</b>. <br/> You also may <b>abort rebase</b> to restore the original branch and stop rebasing.") {
-        @Override protected boolean proceedIfNothingToMerge() throws VcsException {
-          return myRebaser.continueRebase(myRoot);
-        }
-
-        @Override protected boolean proceedAfterAllMerged() throws VcsException {
-          return myRebaser.continueRebase(myRoot);
-        }
-      }.merge(Collections.singleton(myRoot));
+      final boolean allMerged = new MyConflictResolver(myProject, myRoot, myRebaser).merge();
       return allMerged ? GitUpdateResult.SUCCESS : GitUpdateResult.INCOMPLETE;
     } else {
       LOG.info("handleRebaseFailure error " + pullHandler.errors());
@@ -148,5 +140,33 @@ public class GitRebaseUpdater extends GitUpdater {
       }
     });
     return !cancelled.get();
+  }
+
+  private static class MyConflictResolver extends GitMergeConflictResolver {
+    private final GitRebaser myRebaser;
+    private final VirtualFile myRoot;
+
+    public MyConflictResolver(Project project, VirtualFile root, GitRebaser rebaser) {
+      super(project, Collections.singleton(root), makeParams());
+      myRebaser = rebaser;
+      myRoot = root;
+    }
+    
+    private static Params makeParams() {
+      Params params = new Params();
+      params.setReverse(true);
+      params.setMergeDescription("Merge conflicts detected. Resolve them before continuing rebase.");
+      params.setErrorNotificationTitle("Can't continue rebase");
+      params.setErrorNotificationAdditionalDescription("Then you may <b>continue rebase</b>. <br/> You also may <b>abort rebase</b> to restore the original branch and stop rebasing.");
+      return params;
+    }
+
+    @Override protected boolean proceedIfNothingToMerge() throws VcsException {
+      return myRebaser.continueRebase(myRoot);
+    }
+
+    @Override protected boolean proceedAfterAllMerged() throws VcsException {
+      return myRebaser.continueRebase(myRoot);
+    }
   }
 }

@@ -432,7 +432,7 @@ public class GitUnstashDialog extends DialogWrapper {
 
     if (conflict.get()) {
       VirtualFile root = d.getGitRoot();
-      boolean conflictsResolved = new UnstashConflictResolver(project, d.getSelectedStash()).merge(Collections.singleton(root));
+      boolean conflictsResolved = new UnstashConflictResolver(project, root, d.getSelectedStash()).merge();
       if (conflictsResolved) {
         LOG.info("loadRoot " + root + " conflicts resolved, dropping stash");
         GitStashUtils.dropStash(project, root);
@@ -443,15 +443,25 @@ public class GitUnstashDialog extends DialogWrapper {
   }
 
   private static class UnstashConflictResolver extends GitMergeConflictResolver {
-    private StashInfo myStashInfo;
 
-    public UnstashConflictResolver(Project project, StashInfo stashInfo) {
-      super(project, false, new UnstashMergeDialogCustomizer(stashInfo), "Unstashed with conflicts", "");
+    private final VirtualFile myRoot;
+    private final StashInfo myStashInfo;
+
+    public UnstashConflictResolver(Project project, VirtualFile root, StashInfo stashInfo) {
+      super(project, Collections.singleton(root), makeParams(stashInfo));
+      myRoot = root;
       myStashInfo = stashInfo;
+    }
+    
+    private static Params makeParams(StashInfo stashInfo) {
+      Params params = new Params();
+      params.setErrorNotificationTitle("Unstashed with conflicts");
+      params.setMergeDialogCustomizer(new UnstashMergeDialogCustomizer(stashInfo));
+      return params;
     }
 
     @Override
-    protected void notifyUnresolvedRemain(final Collection<VirtualFile> roots) {
+    protected void notifyUnresolvedRemain() {
       GitVcs.IMPORTANT_ERROR_NOTIFICATION.createNotification("Conflicts were not resolved during unstash",
                                                 "Unstash is not complete, you have unresolved merges in your working tree<br/>" +
                                                 "<a href='resolve'>Resolve</a> conflicts.",
@@ -460,7 +470,7 @@ public class GitUnstashDialog extends DialogWrapper {
           public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
             if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
               if (event.getDescription().equals("resolve")) {
-                new UnstashConflictResolver(myProject, myStashInfo).justMerge(roots);
+                new UnstashConflictResolver(myProject, myRoot, myStashInfo).mergeNoProceed();
               }
             }
           }

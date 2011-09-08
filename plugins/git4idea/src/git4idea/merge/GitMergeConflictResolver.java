@@ -29,39 +29,76 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitVcs;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 
 /**
+ *
+ * The class is highly customizable, since the procedure of resolving conflicts is very common in Git operations.
  * @author Kirill Likhodedov
  */
 public class GitMergeConflictResolver {
 
   private static final Logger LOG = Logger.getInstance(GitMergeConflictResolver.class);
-  protected final @NotNull Project myProject;
-  private final boolean myReverseMerge;
-  private final @NotNull String myErrorNotificationTitle;
-  private final @NotNull String myErrorNotificationAdditionalDescription;
-  private final @NotNull MergeDialogCustomizer myMergeDialogCustomizer;
+
+  protected final Project myProject;
+  private final Collection<VirtualFile> myRoots;
+  private final Params myParams;
+
   private final AbstractVcsHelper myVcsHelper;
   private final GitVcs myVcs;
 
   /**
-   * @param reverseMerge specify if reverse merge provider has to be used for merging - it is the case of rebase or stash.
+   * Customizing parameters - mostly String notification texts, etc.
    */
-  public GitMergeConflictResolver(@NotNull Project project, boolean reverseMerge, @Nullable String mergeDialogTitle, @NotNull String errorNotificationTitle, @NotNull String errorNotificationAdditionalDescription) {
-    this(project, reverseMerge, new SimpleMergeDialogCustomizer(mergeDialogTitle), errorNotificationTitle, errorNotificationAdditionalDescription);
+  public static class Params {
+    private boolean reverse;
+    private String myErrorNotificationTitle = "";
+    private String myErrorNotificationAdditionalDescription = "";
+    private String myMergeDescription = "";
+    private MergeDialogCustomizer myMergeDialogCustomizer = new MergeDialogCustomizer() {
+      @Override public String getMultipleFileMergeDescription(Collection<VirtualFile> files) {
+        return myMergeDescription;
+      }
+    };
+
+    /**
+     * @param reverseMerge specify {@code true} if reverse merge provider has to be used for merging - it is the case of rebase or stash.
+     */
+    public Params setReverse(boolean reverseMerge) {
+      reverse = reverseMerge;
+      return this;
+    }
+
+    public Params setErrorNotificationTitle(String errorNotificationTitle) {
+      myErrorNotificationTitle = errorNotificationTitle;
+      return this;
+    }
+
+    public Params setErrorNotificationAdditionalDescription(String errorNotificationAdditionalDescription) {
+      myErrorNotificationAdditionalDescription = errorNotificationAdditionalDescription;
+      return this;
+    }
+
+    public Params setMergeDescription(String mergeDescription) {
+      myMergeDescription = mergeDescription;
+      return this;
+    }
+
+    public Params setMergeDialogCustomizer(MergeDialogCustomizer mergeDialogCustomizer) {
+      myMergeDialogCustomizer = mergeDialogCustomizer;
+      return this;
+    }
+    
   }
 
-  public GitMergeConflictResolver(@NotNull Project project, boolean reverseMerge, @NotNull MergeDialogCustomizer mergeDialogCustomizer, @NotNull String errorNotificationTitle, @NotNull String errorNotificationAdditionalDescription) {
+  protected GitMergeConflictResolver(@NotNull Project project, @NotNull Collection<VirtualFile> roots, @NotNull Params params) {
     myProject = project;
-    myReverseMerge = reverseMerge;
-    myErrorNotificationTitle = errorNotificationTitle;
-    myErrorNotificationAdditionalDescription = errorNotificationAdditionalDescription;
-    myMergeDialogCustomizer = mergeDialogCustomizer;
+    myRoots = roots;
+    myParams = params;
+
     myVcsHelper = AbstractVcsHelper.getInstance(project);
     myVcs = GitVcs.getInstance(project);
   }
@@ -84,119 +121,114 @@ public class GitMergeConflictResolver {
    * @param roots Git repositories to look for unmerged files.
    * @return {@code true} if there is nothing to merge anymore, {@code false} if unmerged files remain or in the case of error.
    */
-  public final boolean merge(@NotNull final Collection<VirtualFile> roots) {
-    return merge(roots, false);
+  public final boolean merge() {
+    return merge(false);
   }
 
   /**
-   * This is executed from {@link #merge(java.util.Collection)} if the initial check tells that there is nothing to merge.
+   * This is executed from {@link #merge()} if the initial check tells that there is nothing to merge.
    * In the basic implementation no action is performed, {@code true} is returned.
-   * @return Return value is returned from {@link #merge(java.util.Collection)}
+   * @return Return value is returned from {@link #merge()}
    */
   protected boolean proceedIfNothingToMerge() throws VcsException {
     return true;
   }
 
   /**
-   * This is executed from {@link #merge(java.util.Collection)} after all conflicts are resolved.
+   * This is executed from {@link #merge()} after all conflicts are resolved.
    * In the basic implementation no action is performed, {@code true} is returned.
-   * @return Return value is returned from {@link #merge(java.util.Collection)}
+   * @return Return value is returned from {@link #merge()}
    */
   protected boolean proceedAfterAllMerged() throws VcsException {
     return true;
   }
   
-  protected boolean justMerge(Collection<VirtualFile> roots) {
-    return merge(roots, true);
-  }
-
-  private boolean merge(@NotNull final Collection<VirtualFile> roots, boolean mergeDialogInvokedFromNotification) {
-    try {
-      final Collection<VirtualFile> initiallyUnmergedFiles = GitMergeUtil.getUnmergedFiles(myProject, roots);
-      if (initiallyUnmergedFiles.isEmpty()) {
-        LOG.info("merge: no unmerged files");
-        return mergeDialogInvokedFromNotification ? true : proceedIfNothingToMerge();
-      }
-      else {
-        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-          @Override public void run() {
-            final MergeProvider mergeProvider = myReverseMerge ? myVcs.getReverseMergeProvider() : myVcs.getMergeProvider();
-            myVcsHelper.showMergeDialog(new ArrayList<VirtualFile>(initiallyUnmergedFiles), mergeProvider, myMergeDialogCustomizer);
-          }
-        });
-
-        final Collection<VirtualFile> unmergedFilesAfterResolve = GitMergeUtil.getUnmergedFiles(myProject, roots);
-        if (unmergedFilesAfterResolve.isEmpty()) {
-          LOG.info("merge no more unmerged files");
-          return mergeDialogInvokedFromNotification ? true : proceedAfterAllMerged();
-        } else {
-          LOG.info("mergeFiles unmerged files remain: " + unmergedFilesAfterResolve);
-          if (mergeDialogInvokedFromNotification) {
-            GitVcs.IMPORTANT_ERROR_NOTIFICATION.createNotification("Not all conflicts resolved",
-                                                                   "You should <a href='resolve'>resolve</a> all conflicts before update. <br>" +
-                                                                   myErrorNotificationAdditionalDescription,
-                                                                   NotificationType.WARNING,
-                                                                   new ResolveNotificationListener(roots)).notify(myProject);
-
-          } else {
-            notifyUnresolvedRemain(roots);
-          }
-        }
-      }
-    } catch (VcsException e) {
-      LOG.info("mergeFiles ", e);
-      final String description = mergeDialogInvokedFromNotification
-                                 ? "Be sure to resolve all conflicts before update. <br/>"
-                                 : "Be sure to resolve all conflicts first. ";
-      GitVcs.IMPORTANT_ERROR_NOTIFICATION.createNotification("Not all conflicts resolved",
-                                                             description + myErrorNotificationAdditionalDescription + "<br/>" +
-                                                             e.getLocalizedMessage(),
-                                                             NotificationType.ERROR,
-                                                             new ResolveNotificationListener(roots)).notify(myProject);
-    }
-    return false;
-
+  protected final boolean mergeNoProceed() {
+    return merge(true);
   }
 
   /**
    * Shows notification that not all conflicts were resolved.
    * @param roots Roots that were merged.
    */
-  protected void notifyUnresolvedRemain(Collection<VirtualFile> roots) {
-    GitVcs.IMPORTANT_ERROR_NOTIFICATION.createNotification(myErrorNotificationTitle,
-                                              "You have to <a href='resolve'>resolve</a> all conflicts first." + myErrorNotificationAdditionalDescription, NotificationType.WARNING,
-                                              new ResolveNotificationListener(roots)).notify(myProject);
+  protected void notifyUnresolvedRemain() {
+    notifyWarning(myParams.myErrorNotificationTitle,
+                  "You have to <a href='resolve'>resolve</a> all conflicts first." + myParams.myErrorNotificationAdditionalDescription);
+  }
+  
+  private void notifyUnresolvedRemainAfterNotification() {
+    notifyWarning("Not all conflicts resolved",
+                  "You should <a href='resolve'>resolve</a> all conflicts before update. <br>" +
+                  myParams.myErrorNotificationAdditionalDescription);
+  }
+  
+  private void notifyWarning(String title, String content) {
+    GitVcs.IMPORTANT_ERROR_NOTIFICATION.createNotification(title, content, NotificationType.WARNING, new ResolveNotificationListener()).notify(myProject);
   }
 
-  private class ResolveNotificationListener implements NotificationListener {
-    private final Collection<VirtualFile> myRoots;
+  private boolean merge(boolean mergeDialogInvokedFromNotification) {
+    try {
+      final Collection<VirtualFile> initiallyUnmergedFiles = GitMergeUtil.getUnmergedFiles(myProject, myRoots);
+      if (initiallyUnmergedFiles.isEmpty()) {
+        LOG.info("merge: no unmerged files");
+        return mergeDialogInvokedFromNotification ? true : proceedIfNothingToMerge();
+      }
+      else {
+        showMergeDialog(initiallyUnmergedFiles);
 
-    public ResolveNotificationListener(Collection<VirtualFile> roots) {
-      myRoots = roots;
+        final Collection<VirtualFile> unmergedFilesAfterResolve = GitMergeUtil.getUnmergedFiles(myProject, myRoots);
+        if (unmergedFilesAfterResolve.isEmpty()) {
+          LOG.info("merge no more unmerged files");
+          return mergeDialogInvokedFromNotification ? true : proceedAfterAllMerged();
+        } else {
+          LOG.info("mergeFiles unmerged files remain: " + unmergedFilesAfterResolve);
+          if (mergeDialogInvokedFromNotification) {
+            notifyUnresolvedRemainAfterNotification();
+          } else {
+            notifyUnresolvedRemain();
+          }
+        }
+      }
+    } catch (VcsException e) {
+      notifyException(mergeDialogInvokedFromNotification, e);
     }
+    return false;
 
+  }
+
+  private void showMergeDialog(final Collection<VirtualFile> initiallyUnmergedFiles) {
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override public void run() {
+        final MergeProvider mergeProvider = myParams.reverse ? myVcs.getReverseMergeProvider() : myVcs.getMergeProvider();
+        myVcsHelper.showMergeDialog(new ArrayList<VirtualFile>(initiallyUnmergedFiles), mergeProvider, myParams.myMergeDialogCustomizer);
+      }
+    });
+  }
+
+  private void notifyException(boolean mergeDialogInvokedFromNotification, VcsException e) {
+    LOG.info("mergeFiles ", e);
+    final String description = mergeDialogInvokedFromNotification
+                               ? "Be sure to resolve all conflicts before update. <br/>"
+                               : "Be sure to resolve all conflicts first. ";
+    GitVcs.IMPORTANT_ERROR_NOTIFICATION.createNotification("Not all conflicts resolved",
+                                                           description + myParams.myErrorNotificationAdditionalDescription + "<br/>" +
+                                                           e.getLocalizedMessage(),
+                                                           NotificationType.ERROR,
+                                                           new ResolveNotificationListener()).notify(myProject);
+  }
+
+
+  private class ResolveNotificationListener implements NotificationListener {
     @Override public void hyperlinkUpdate(@NotNull final Notification notification, @NotNull HyperlinkEvent event) {
       if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED && event.getDescription().equals("resolve")) {
         notification.expire();
         ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
           @Override public void run() {
-            justMerge(myRoots);
+            mergeNoProceed();
           }
         });
       }
     }
   }
 
-  private static class SimpleMergeDialogCustomizer extends MergeDialogCustomizer {
-    private final String myMergeDialogTitle;
-
-    public SimpleMergeDialogCustomizer(String mergeDialogTitle) {
-      myMergeDialogTitle = mergeDialogTitle;
-    }
-
-    @Override
-    public String getMultipleFileMergeDescription(Collection<VirtualFile> files) {
-      return myMergeDialogTitle;
-    }
-  }
 }

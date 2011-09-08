@@ -220,8 +220,7 @@ public class LowLevelAccessImpl implements LowLevelAccess {
     handler.runInCurrentThread(null);
 
     if (conflict.get()) {
-      boolean allConflictsResolved = new CherryPickConflictResolver(myProject, commit.getShortHash().getString(), commit.getAuthor(), commit.getSubject()).merge(Collections.singleton(myRoot));
-      return allConflictsResolved;
+      return new CherryPickConflictResolver(myProject, myRoot, commit.getShortHash().getString(), commit.getAuthor(), commit.getSubject()).merge();
     } else {
       final List<VcsException> errors = handler.errors();
       if (!errors.isEmpty()) {
@@ -234,19 +233,28 @@ public class LowLevelAccessImpl implements LowLevelAccess {
 
   private static class CherryPickConflictResolver extends GitMergeConflictResolver {
 
+    private VirtualFile myRoot;
     private String myCommitHash;
     private String myCommitAuthor;
     private String myCommitMessage;
 
-    public CherryPickConflictResolver(Project project, String commitHash, String commitAuthor, String commitMessage) {
-      super(project, false, new CherryPickMergeDialogCustomizer(commitHash, commitAuthor, commitMessage), "Cherry-picked with conflicts", "");
+    public CherryPickConflictResolver(Project project, VirtualFile root, String commitHash, String commitAuthor, String commitMessage) {
+      super(project, Collections.singleton(root), makeParams(commitHash, commitAuthor, commitMessage));
+      myRoot = root;
       myCommitHash = commitHash;
       myCommitAuthor = commitAuthor;
       myCommitMessage = commitMessage;
     }
+    
+    private static Params makeParams(String commitHash, String commitAuthor, String commitMessage) {
+      Params params = new Params();
+      params.setErrorNotificationTitle("Cherry-picked with conflicts");
+      params.setMergeDialogCustomizer(new CherryPickMergeDialogCustomizer(commitHash, commitAuthor, commitMessage));
+      return params;
+    }
 
     @Override
-    protected void notifyUnresolvedRemain(final Collection<VirtualFile> roots) {
+    protected void notifyUnresolvedRemain() {
       GitVcs.IMPORTANT_ERROR_NOTIFICATION.createNotification("Conflicts were not resolved during cherry-pick",
                                                 "Cherry-pick is not complete, you have unresolved merges in your working tree<br/>" +
                                                 "<a href='resolve'>Resolve</a> conflicts.",
@@ -255,7 +263,7 @@ public class LowLevelAccessImpl implements LowLevelAccess {
           public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
             if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
               if (event.getDescription().equals("resolve")) {
-                new CherryPickConflictResolver(myProject, myCommitHash, myCommitAuthor, myCommitMessage).justMerge(roots);
+                new CherryPickConflictResolver(myProject, myRoot, myCommitHash, myCommitAuthor, myCommitMessage).mergeNoProceed();
               }
             }
           }
