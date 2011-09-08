@@ -850,9 +850,10 @@ public class JavaCompletionUtil {
         }
       }
       toInsert.processTail(editor, context.getTailOffset());
-
       if (completionChar == '.') {
         AutoPopupController.getInstance(file.getProject()).autoPopupMemberLookup(context.getEditor(), null);
+      } else if (completionChar == ',') {
+        AutoPopupController.getInstance(file.getProject()).autoPopupParameterInfo(context.getEditor(), null);
       }
     }
   }
