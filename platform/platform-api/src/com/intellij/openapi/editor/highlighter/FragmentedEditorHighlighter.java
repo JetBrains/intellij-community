@@ -57,7 +57,7 @@ public class FragmentedEditorHighlighter implements EditorHighlighter {
         iterator.advance();
         if (iterator.atEnd()) return;
       }
-      offset += range.getLength();
+      offset += range.getLength() + 1;
     }
   }
 
