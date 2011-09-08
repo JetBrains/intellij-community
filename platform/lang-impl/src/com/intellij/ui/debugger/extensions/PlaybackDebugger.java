@@ -451,7 +451,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
-        if (!forced && (context != null && myRunner != context.getRunner())) return;
+        if (!forced && (context != null && context.isDisposed())) return;
 
         switch (type) {
           case message:

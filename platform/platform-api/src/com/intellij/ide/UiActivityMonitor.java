@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.util.BusyObject;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,9 +60,9 @@ public class UiActivityMonitor implements ApplicationComponent {
 
 
   public void addActivity(@NotNull final Project project, final Object activity) {
-    invokeLaterIfNeeded(new Runnable() {
+    invokeLaterIfNeeded(new MyRunnable() {
       @Override
-      public void run() {
+      public void run(Throwable allocation) {
         if (!hasObjectFor(project)) {
           Project[] open = ProjectManager.getInstance().getOpenProjects();
           for (Project each : open) {
@@ -72,33 +73,33 @@ public class UiActivityMonitor implements ApplicationComponent {
           }
         }
 
-        _getBusy(project).addActivity(activity);
+        _getBusy(project).addActivity(activity, allocation);
       }
     });
   }
 
   public void removeActivity(@NotNull final Project project, final Object activity) {
-    invokeLaterIfNeeded(new Runnable() {
+    invokeLaterIfNeeded(new MyRunnable() {
       @Override
-      public void run() {
+      public void run(Throwable allocation) {
         _getBusy(project).removeActivity(activity);
       }
     });
   }
 
   public void addActivity(final Object activity) {
-    invokeLaterIfNeeded(new Runnable() {
+    invokeLaterIfNeeded(new MyRunnable() {
       @Override
-      public void run() {
-        _getBusy(null).addActivity(activity);
+      public void run(Throwable allocation) {
+        _getBusy(null).addActivity(activity, allocation);
       }
     });
   }
 
   public void removeActivity(final Object activity) {
-    invokeLaterIfNeeded(new Runnable() {
+    invokeLaterIfNeeded(new MyRunnable() {
       @Override
-      public void run() {
+      public void run(Throwable allocation) {
         _getBusy(null).removeActivity(activity);
       }
     });
@@ -146,7 +147,7 @@ public class UiActivityMonitor implements ApplicationComponent {
 
   private class BusyImpl extends BusyObject.Impl {
 
-    private Set<Object> myActivities = new HashSet<Object>();
+    private Map<Object, Throwable> myActivities = new HashMap<Object, Throwable>();
     private Set<Object> myQueuedToRemove = new HashSet<Object>();
 
     @Override
@@ -159,13 +160,13 @@ public class UiActivityMonitor implements ApplicationComponent {
     }
 
 
-    public void addActivity(Object activity) {
-      myActivities.add(activity);
+    public void addActivity(Object activity, Throwable allocation) {
+      myActivities.put(activity, allocation);
       myQueuedToRemove.remove(activity);
     }
 
     public void removeActivity(final Object activity) {
-      if (!myActivities.contains(activity)) return;
+      if (!myActivities.containsKey(activity)) return;
 
       myQueuedToRemove.add(activity);
 
@@ -187,7 +188,7 @@ public class UiActivityMonitor implements ApplicationComponent {
     }
 
     public void clear() {
-      Object[] activities = myActivities.toArray(new Object[myActivities.size()]);
+      Object[] activities = myActivities.keySet().toArray(new Object[myActivities.size()]);
       for (Object each : activities) {
         removeActivity(each);
       }
@@ -210,13 +211,24 @@ public class UiActivityMonitor implements ApplicationComponent {
     }
   }
 
-  private void invokeLaterIfNeeded(Runnable runnable) {
+  private void invokeLaterIfNeeded(final MyRunnable runnable) {
+    final Throwable allocation = Registry.is("ide.debugMode") ? new Exception() : null;
+    
     if (isUnitTestMode()) {
-      runnable.run();
+      runnable.run(allocation);
     } else {
-      UIUtil.invokeLaterIfNeeded(runnable);
+      UIUtil.invokeLaterIfNeeded(new Runnable() {
+        @Override
+        public void run() {
+          runnable.run(allocation);
+        }
+      });
     }
   }
+  
+  private interface MyRunnable {
+    public abstract void run(Throwable allocation);
+  } 
   
   private boolean isUnitTestMode() {
       Application app = ApplicationManager.getApplication();

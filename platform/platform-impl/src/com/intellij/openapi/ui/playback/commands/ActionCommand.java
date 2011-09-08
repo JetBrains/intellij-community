@@ -22,6 +22,7 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.wm.IdeFocusManager;
 
 import javax.swing.*;
 import java.awt.event.InputEvent;
@@ -70,20 +71,33 @@ public class ActionCommand extends TypeCommand {
           }
         };
         context.message("Invoking action via shortcut: " + stroke.toString(), getLine());
-        final Ref<AnActionListener> listener = new Ref<AnActionListener>();
-        listener.set(new AnActionListener.Adapter() {
+
+        final KeyStroke finalStroke = stroke;
+
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(new Runnable() {
           @Override
-          public void afterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
-            if (targetAction.equals(action)) {
-              context.message("Performed action: " + actionName, context.getCurrentLine());
-              am.removeAnActionListener(listener.get());
-              result.setDone();
-            }
+          public void run() {
+            final Ref<AnActionListener> listener = new Ref<AnActionListener>();
+            listener.set(new AnActionListener.Adapter() {
+              @Override
+              public void afterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
+                if (context.isDisposed()) {
+                  am.removeAnActionListener(listener.get());
+                  return;
+                }
+
+                if (targetAction.equals(action)) {
+                  context.message("Performed action: " + actionName, context.getCurrentLine());
+                  am.removeAnActionListener(listener.get());
+                  result.setDone();
+                }
+              }
+            });
+            am.addAnActionListener(listener.get());
+
+            type(context.getRobot(), finalStroke);
           }
         });
-        am.addAnActionListener(listener.get());
-        
-        type(context.getRobot(), stroke);
 
         return result;
       }

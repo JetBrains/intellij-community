@@ -103,7 +103,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     return isFocusTransferReady()
            && !isIdleQueueEmpty()
            && !IdeEventQueue.getInstance().isDispatchingFocusEvent()
-           && !(focusOwner == null && myValidFurtherRequestors.size() > 0);
+           && !(focusOwner == null && (myValidFurtherRequestors.size() > 0 || myFocusRevalidator != null && !myFocusRevalidator.isExpired()));
   }
 
   private final Map<IdeFrame, WeakReference<Component>> myLastFocused = new HashMap<IdeFrame, WeakReference<Component>>();
@@ -738,6 +738,10 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
       if (permOwner != null) {
         result = permOwner;
       }
+      
+      //if (UIUtil.isMeaninglessFocusOwner(result)) {
+      //  result = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+      //}
     }
 
     return result;

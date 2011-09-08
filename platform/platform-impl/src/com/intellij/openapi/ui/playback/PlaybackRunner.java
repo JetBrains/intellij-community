@@ -60,6 +60,8 @@ public class PlaybackRunner {
   private ArrayList<StageInfo> myStages = new ArrayList<StageInfo>();
   private ArrayList<StageInfo> myPassedStages = new ArrayList<StageInfo>();
 
+  private long myContextTimestamp;
+
   private Disposable myOnStop = new Disposable() {
     @Override
     public void dispose() {
@@ -92,6 +94,7 @@ public class PlaybackRunner {
     UiActivityMonitor.getInstance().clear();
     myStages.clear();
     myPassedStages.clear();
+    myContextTimestamp++;
 
     ApplicationManager.getApplication().getMessageBus().connect(myOnStop).subscribe(ApplicationActivationListener.TOPIC, myAppListener);
 
@@ -141,6 +144,9 @@ public class PlaybackRunner {
       }
       final PlaybackContext context =
         new PlaybackContext(this, myCallback, cmdIndex, myRobot, myUseDirectActionCall, cmd, baseDir, (Set<Class>)myFacadeClasses.clone()) {
+
+          private long myTimeStamp = myContextTimestamp;
+
           public void pushStage(StageInfo info) {
             myStages.add(info);
           }
@@ -160,6 +166,11 @@ public class PlaybackRunner {
           @Override
           public void addPassed(StageInfo stage) {
             myPassedStages.add(stage);
+          }
+
+          @Override
+          public boolean isDisposed() {
+            return myTimeStamp != myContextTimestamp;
           }
         };
       final ActionCallback cmdCallback = cmd.execute(context);

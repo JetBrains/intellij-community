@@ -151,6 +151,8 @@ public class AbstractPopup implements JBPopup {
   private JLabel myAdComponent;
   private boolean myDisposed;
 
+  private Object myActivityKey;
+
 
   AbstractPopup() {
   }
@@ -195,6 +197,7 @@ public class AbstractPopup implements JBPopup {
       assert false : "Incorrect argument combination: requestFocus=" + requestFocus + " focusable=" + focusable;
     }
 
+    myActivityKey = this;
     myProject = project;
     myComponent = component;
     myPopupBorder = PopupBorder.Factory.create(true, showShadow);
@@ -583,9 +586,11 @@ public class AbstractPopup implements JBPopup {
 
     assert ApplicationManager.getApplication().isDispatchThread();
 
+    addActivity(myActivityKey);
 
     final boolean shouldShow = beforeShow();
     if (!shouldShow) {
+      removeActivity(myActivityKey);
       return;
     }
 
@@ -752,20 +757,19 @@ public class AbstractPopup implements JBPopup {
           myFocusTrackback.registerFocusComponent(myPreferredFocusedComponent);
         }
 
+        removeActivity(myActivityKey);
+
         afterShow();
 
-        UiActivityMonitor.getInstance().removeActivity(AbstractPopup.this);
       }
     };
-
-    UiActivityMonitor.getInstance().addActivity(this);
 
     if (myRequestFocus) {
       getFocusManager().requestFocus(new FocusCommand() {
         @Override
         public ActionCallback run() {
           if (isDisposed()) {
-            UiActivityMonitor.getInstance().removeActivity(AbstractPopup.this);
+            removeActivity(myActivityKey);
             return new ActionCallback.Done();
           }
 
@@ -774,13 +778,18 @@ public class AbstractPopup implements JBPopup {
 
           return new ActionCallback.Done();
         }
-      }, true);
+      }, true).doWhenRejected(new Runnable() {
+        @Override
+        public void run() {
+          afterShow.run();
+        }
+      });
     } else {
       SwingUtilities.invokeLater(new Runnable() {
         @Override
         public void run() {
           if (isDisposed()) {
-            UiActivityMonitor.getInstance().removeActivity(AbstractPopup.this);
+            removeActivity(myActivityKey);
             return;
           }
 
@@ -788,6 +797,14 @@ public class AbstractPopup implements JBPopup {
         }
       });
     }
+  }
+
+  private void addActivity(Object key) {
+    UiActivityMonitor.getInstance().addActivity(key);
+  }
+
+  private void removeActivity(Object key) {
+    UiActivityMonitor.getInstance().removeActivity(key);
   }
 
   private void prepareToShow() {

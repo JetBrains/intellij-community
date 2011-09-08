@@ -1856,6 +1856,9 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   @Override
   public ActionCallback getReady(@NotNull Object requestor) {
     AbstractProjectViewPane pane = myId2Pane.get(myCurrentViewSubId);
+    if (pane == null) {
+      pane = myId2Pane.get(myCurrentViewId);
+    }
     return pane != null ? pane.getReady(requestor) : new ActionCallback.Done();
   }
 }

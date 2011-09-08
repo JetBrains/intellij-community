@@ -16,10 +16,16 @@
 package com.intellij.openapi.ui.playback.util;
 
 import com.intellij.ide.UiActivityMonitor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.AsyncResult;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.util.ui.UIUtil;
 
 import java.awt.*;
 import java.util.*;
@@ -83,6 +89,62 @@ public class WindowSystemPlaybackCall {
     });
 
     return result;
+  }
+
+  public static AsyncResult<String> waitForToolWindow(final PlaybackContext context, final String id) {
+    final AsyncResult<String> result = new AsyncResult<String>();
+
+    findProject().doWhenDone(new AsyncResult.Handler<Project>() {
+      @Override
+      public void run(Project project) {
+        ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(id);
+        if (toolWindow == null) {
+          result.setRejected("Cannot find tool window with id: " + id);
+          return;
+        }
+
+        toolWindow.getReady(context).doWhenDone(new Runnable() {
+          @Override
+          public void run() {
+            result.setDone();
+          }
+        }).doWhenRejected(new Runnable() {
+          @Override
+          public void run() {
+            result.setRejected("Cannot activate tool window with id:" + id);
+          }
+        });
+      }
+    }).doWhenRejected(new Runnable() {
+      @Override
+      public void run() {
+        result.setRejected("Cannot retrieve open project");
+      }
+    });
+
+    return result;
+  }
+
+  private static AsyncResult<Project> findProject() {
+    final AsyncResult<Project> project = new AsyncResult<Project>();
+    final IdeFocusManager fm = IdeFocusManager.getGlobalInstance();
+    fm.doWhenFocusSettlesDown(new Runnable() {
+      @Override
+      public void run() {
+        Component parent = UIUtil.findUltimateParent(fm.getFocusOwner());
+        if (parent instanceof IdeFrame) {
+          IdeFrame frame = (IdeFrame)parent;
+          if (frame.getProject() != null) {
+            project.setDone(frame.getProject());
+            return;
+          }
+        }
+
+        project.setRejected();
+      }
+    });
+
+    return project;
   }
 
   private static ActionCallback getUiReady(final PlaybackContext context) {

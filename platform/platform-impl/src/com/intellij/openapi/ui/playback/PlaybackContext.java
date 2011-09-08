@@ -120,8 +120,6 @@ public abstract class PlaybackContext  {
 
   public abstract void addPassed(StageInfo stage);
 
-  public PlaybackRunner getRunner() {
-    return myRunner;
-  }
+  public abstract boolean isDisposed();
 
 }
