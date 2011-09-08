@@ -16,7 +16,7 @@
 
 package com.intellij.psi.impl.source.tree;
 
-import com.intellij.diagnostic.PerformanceWatcher;
+import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.extapi.psi.ASTDelegatePsiElement;
 import com.intellij.lang.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -510,7 +510,7 @@ public class CompositeElement extends TreeElement {
       catch (AssertionError e) {
         myCachedLength = NOT_CACHED;
         String assertion = StringUtil.getThrowableText(e);
-        throw new AssertionError("Walking failure: ===\n"+assertion+"\n=== Thread dump:\n"+PerformanceWatcher.dumpThreadsToString()+"\n===\n");
+        throw new AssertionError("Walking failure: ===\n"+assertion+"\n=== Thread dump:\n"+ ThreadDumper.dumpThreadsToString()+"\n===\n");
       }
       return myCachedLength;
     }

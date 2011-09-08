@@ -22,13 +22,11 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.io.*;
 import java.lang.management.ManagementFactory;
-import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -211,7 +209,14 @@ public class PerformanceWatcher implements ApplicationComponent {
     }
     OutputStreamWriter writer = new OutputStreamWriter(fos);
     try {
-      dumpThreadsToFile(writer);
+      final StackTraceElement[] edtStack = ThreadDumper.dumpThreadsToFile(myThreadMXBean, writer);
+      if (myStacktraceCommonPart == null) {
+        myStacktraceCommonPart = new ArrayList<StackTraceElement>();
+        Collections.addAll(myStacktraceCommonPart, edtStack);
+      }
+      else {
+        updateStacktraceCommonPart(edtStack);
+      }
     }
     finally {
       try {
@@ -232,54 +237,7 @@ public class PerformanceWatcher implements ApplicationComponent {
     catch (IOException e) {
       throw new RuntimeException(e);
     }
-    getInstance().dumpThreadsToFile(writer);
-  }
-
-  public static String dumpThreadsToString() {
-    StringWriter writer = new StringWriter();
-    getInstance().dumpThreadsToFile(writer);
-    return writer.toString();
-  }
-
-  private void dumpThreadsToFile(final Writer f) {
-    boolean dumpSuccessful = false;
-
-    try {
-      ThreadInfo[] threads = myThreadMXBean.dumpAllThreads(false, false);
-      for(ThreadInfo info: threads) {
-        if (info != null) {
-          dumpThreadInfo(info, f);
-        }
-      }
-      dumpSuccessful = true;
-    }
-    catch (Exception ignored) {
-
-    }
-
-    if (!dumpSuccessful) {
-      final long[] threadIds = myThreadMXBean.getAllThreadIds();
-      final ThreadInfo[] threadInfo = myThreadMXBean.getThreadInfo(threadIds, Integer.MAX_VALUE);
-      for (ThreadInfo info : threadInfo) {
-        if (info != null) {
-          dumpThreadInfo(info, f);
-        }
-      }
-    }
-  }
-
-  private void dumpThreadInfo(final ThreadInfo info, final Writer f) {
-    StackTraceElement[] stackTraceElements = info.getStackTrace();
-    dumpCallStack(info, f, stackTraceElements);
-    if (info.getThreadName().equals("AWT-EventQueue-1")) {
-      if (myStacktraceCommonPart == null) {
-        myStacktraceCommonPart = new ArrayList<StackTraceElement>();
-        Collections.addAll(myStacktraceCommonPart, stackTraceElements);
-      }
-      else {
-        updateStacktraceCommonPart(stackTraceElements);
-      }
-    }
+    ThreadDumper.dumpThreadsToFile(getInstance().myThreadMXBean, writer);
   }
 
   private void updateStacktraceCommonPart(final StackTraceElement[] stackTraceElements) {
@@ -290,47 +248,6 @@ public class PerformanceWatcher implements ApplicationComponent {
         myStacktraceCommonPart = myStacktraceCommonPart.subList(myStacktraceCommonPart.size() - i, myStacktraceCommonPart.size());
         break;
       }
-    }
-  }
-
-  private static String getReadableState(Thread.State state) {
-    switch (state) {
-      case BLOCKED: return "blocked";
-      case TIMED_WAITING:
-      case WAITING: return "waiting on condition";
-      case RUNNABLE: return "runnable";
-      case NEW: return "new";
-      case TERMINATED: return "terminated";
-    }
-    return null;
-  }
-
-  private static void dumpCallStack(final ThreadInfo info, final Writer f, final StackTraceElement[] stackTraceElements) {
-    try {
-      @NonNls StringBuilder sb = new StringBuilder("\"").append(info.getThreadName()).append("\"");
-      sb.append(" prio=0 tid=0x0 nid=0x0 ").append(getReadableState(info.getThreadState())).append("\n");
-      sb.append("     java.lang.Thread.State: ").append(info.getThreadState()).append("\n");
-      if (info.getLockName() != null) {
-        sb.append(" on ").append(info.getLockName());
-      }
-      if (info.getLockOwnerName() != null) {
-        sb.append(" owned by \"").append(info.getLockOwnerName()).append("\" Id=").append(info.getLockOwnerId());
-      }
-      if (info.isSuspended()) {
-          sb.append(" (suspended)");
-      }
-      if (info.isInNative()) {
-          sb.append(" (in native)");
-      }
-
-      f.write(sb + "\n");
-      for (StackTraceElement element : stackTraceElements) {
-        f.write("\tat " + element.toString() + "\n");
-      }
-      f.write("\n");
-    }
-    catch (IOException e) {
-      e.printStackTrace();
     }
   }
 
