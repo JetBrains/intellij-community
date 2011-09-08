@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationComponentLocator;
 import com.intellij.openapi.application.CachedSingletonsRegistry;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,6 +42,9 @@ public abstract class FileTypeManager extends FileTypeRegistry {
   }
 
   private static FileTypeManager ourInstance = CachedSingletonsRegistry.markCachedField(FileTypeManager.class);
+
+  public static final Topic<FileTypeListener> TOPIC = new Topic<FileTypeListener>("File types change", FileTypeListener.class);
+
   /**
    * Returns the singleton instance of the FileTypeManager component.
    *
@@ -117,7 +121,7 @@ public abstract class FileTypeManager extends FileTypeRegistry {
    * registered file types.
    *
    * @param listener The listener instance.
-   * @deprecated Subscribe to #FILE_TYPES on any message bus level.
+   * @deprecated Subscribe to #TOPIC on any message bus level.
    */
 
   public abstract void addFileTypeListener(@NotNull FileTypeListener listener);
@@ -127,7 +131,7 @@ public abstract class FileTypeManager extends FileTypeRegistry {
    * registered file types.
    *
    * @param listener The listener instance.
-   * @deprecated Subscribe to #FILE_TYPES on any message bus level.
+   * @deprecated Subscribe to #TOPIC on any message bus level.
    */
 
   public abstract void removeFileTypeListener(@NotNull FileTypeListener listener);

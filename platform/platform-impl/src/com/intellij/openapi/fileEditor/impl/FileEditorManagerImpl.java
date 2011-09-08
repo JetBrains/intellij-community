@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.fileEditor.impl;
 
-import com.intellij.AppTopics;
 import com.intellij.ProjectTopics;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.PluginManager;
@@ -41,6 +40,7 @@ import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.FileTypeEvent;
 import com.intellij.openapi.fileTypes.FileTypeListener;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -1201,7 +1201,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
       final MyFileStatusListener myFileStatusListener = new MyFileStatusListener();
       fileStatusManager.addFileStatusListener(myFileStatusListener, myProject);
     }
-    connection.subscribe(AppTopics.FILE_TYPES, new MyFileTypeListener());
+    connection.subscribe(FileTypeManager.TOPIC, new MyFileTypeListener());
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new MyRootsListener());
 
     /**

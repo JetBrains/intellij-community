@@ -16,7 +16,6 @@
 
 package com.maddyhome.idea.copyright.util;
 
-import com.intellij.AppTopics;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.LanguageCommenters;
 import com.intellij.openapi.components.ServiceManager;
@@ -294,7 +293,7 @@ public class FileTypeUtil
     {
         createMappings();
         loadFileTypes();
-        bus.connect().subscribe(AppTopics.FILE_TYPES, new FileTypeListener() {
+        bus.connect().subscribe(FileTypeManager.TOPIC, new FileTypeListener() {
           @Override
           public void beforeFileTypesChanged(FileTypeEvent event) {
           }

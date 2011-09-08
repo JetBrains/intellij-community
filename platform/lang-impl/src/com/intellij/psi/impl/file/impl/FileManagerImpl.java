@@ -204,23 +204,19 @@ public class FileManagerImpl implements FileManager {
     myDisposed = false;
     myInitialized = true;
 
-    myConnection.subscribe(AppTopics.FILE_TYPES, new FileTypeListener() {
-      public void beforeFileTypesChanged(FileTypeEvent event) {}
-
-      public void fileTypesChanged(FileTypeEvent e) {
-        handleFileTypesChange(new FileTypesChanged() {
-          protected void updateMaps() {
-            removeInvalidFilesAndDirs(true);
-          }
-        });
-      }
-    });
-
     myConnection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new MyFileDocumentManagerAdapter());
   }
 
   public boolean isInitialized() {
     return myInitialized;
+  }
+
+  void processFileTypesChanged() {
+    handleFileTypesChange(new FileTypesChanged() {
+      protected void updateMaps() {
+        removeInvalidFilesAndDirs(true);
+      }
+    });
   }
 
   private abstract class FileTypesChanged implements Runnable {

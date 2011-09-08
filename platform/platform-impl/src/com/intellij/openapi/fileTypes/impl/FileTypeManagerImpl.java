@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.fileTypes.impl;
 
-import com.intellij.AppTopics;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.ide.highlighter.custom.impl.ReadFileType;
 import com.intellij.ide.plugins.PluginManager;
@@ -408,7 +407,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
   public void fireBeforeFileTypesChanged() {
     FileTypeEvent event = new FileTypeEvent(this);
-    myMessageBus.syncPublisher(AppTopics.FILE_TYPES).beforeFileTypesChanged(event);
+    myMessageBus.syncPublisher(TOPIC).beforeFileTypesChanged(event);
   }
 
   public SchemesManager<FileType, AbstractFileType> getSchemesManager() {
@@ -416,14 +415,14 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   }
 
   public void fireFileTypesChanged() {
-    myMessageBus.syncPublisher(AppTopics.FILE_TYPES).fileTypesChanged(new FileTypeEvent(this));
+    myMessageBus.syncPublisher(TOPIC).fileTypesChanged(new FileTypeEvent(this));
   }
 
   private final Map<FileTypeListener, MessageBusConnection> myAdapters = new HashMap<FileTypeListener, MessageBusConnection>();
 
   public void addFileTypeListener(@NotNull FileTypeListener listener) {
     final MessageBusConnection connection = myMessageBus.connect();
-    connection.subscribe(AppTopics.FILE_TYPES, listener);
+    connection.subscribe(TOPIC, listener);
     myAdapters.put(listener, connection);
   }
 

@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.fileEditor.impl.text;
 
-import com.intellij.AppTopics;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -36,6 +35,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.fileTypes.FileTypeEvent;
 import com.intellij.openapi.fileTypes.FileTypeListener;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
@@ -107,7 +107,7 @@ class TextEditorComponent extends JPanel implements DataProvider{
     myEditorPropertyChangeListener = new MyEditorPropertyChangeListener();
 
     myConnection = project.getMessageBus().connect();
-    myConnection.subscribe(AppTopics.FILE_TYPES, new MyFileTypeListener());
+    myConnection.subscribe(FileTypeManager.TOPIC, new MyFileTypeListener());
 
     myVirtualFileListener = new MyVirtualFileListener();
     myFile.getFileSystem().addVirtualFileListener(myVirtualFileListener);

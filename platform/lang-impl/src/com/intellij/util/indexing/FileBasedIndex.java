@@ -165,7 +165,7 @@ public class FileBasedIndex implements ApplicationComponent {
       }
     });
 
-    connection.subscribe(AppTopics.FILE_TYPES, new FileTypeListener() {
+    connection.subscribe(FileTypeManager.TOPIC, new FileTypeListener() {
       private Map<FileType, Set<String>> myTypeToExtensionMap;
       public void beforeFileTypesChanged(final FileTypeEvent event) {
         cleanupProcessedFlag();

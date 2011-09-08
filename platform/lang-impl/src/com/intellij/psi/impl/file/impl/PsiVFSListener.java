@@ -21,6 +21,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeEvent;
+import com.intellij.openapi.fileTypes.FileTypeListener;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
@@ -63,6 +65,13 @@ public class PsiVFSListener extends VirtualFileAdapter {
       public void run() {
         myConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkVirtualFileListenerAdapter(PsiVFSListener.this));
         myConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new MyModuleRootListener());
+        myConnection.subscribe(FileTypeManager.TOPIC, new FileTypeListener() {
+          public void beforeFileTypesChanged(FileTypeEvent event) {}
+
+          public void fileTypesChanged(FileTypeEvent e) {
+            myFileManager.processFileTypesChanged();
+          }
+        });
       }
     });
   }
