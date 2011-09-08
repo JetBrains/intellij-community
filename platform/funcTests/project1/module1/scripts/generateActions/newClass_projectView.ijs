@@ -7,11 +7,10 @@ PsiManager\n
 %action SelectIn
 %[right]
 1\n
-%call waitForToolWindow(Project)
+%call flushUi()
 
-%stop
-%[escape]
 %action NewElement
 Java\n
-NewClass
+NewClass\n
+%call checkFocus(editorTab=NewClass.java|caret=9:21)
 %endTest
