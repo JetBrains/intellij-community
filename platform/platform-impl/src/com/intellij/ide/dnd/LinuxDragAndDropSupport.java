@@ -45,10 +45,19 @@ public class LinuxDragAndDropSupport {
 
   private LinuxDragAndDropSupport() { }
 
-  @NotNull
+  @Nullable
   public static List<File> getFiles(@NotNull final Transferable transferable) throws IOException, UnsupportedFlavorException {
-    final Object transferData = transferable.getTransferData(uriListFlavor);
-    return getFiles(transferData.toString());
+    if (transferable.isDataFlavorSupported(uriListFlavor)) {
+      final Object transferData = transferable.getTransferData(uriListFlavor);
+      return getFiles(transferData.toString());
+    }
+    else if (transferable.isDataFlavorSupported(gnomeFileListFlavor)) {
+      final Object transferData = transferable.getTransferData(gnomeFileListFlavor);
+      final String content = FileUtil.loadTextAndClose((InputStream)transferData);
+      return getFiles(content);
+    }
+
+    return null;
   }
 
   @NotNull

@@ -69,17 +69,21 @@ public class FileCopyPasteUtil {
 
   public static boolean isFileListFlavorSupported(@NotNull final Transferable transferable) {
     return transferable.isDataFlavorSupported(DataFlavor.javaFileListFlavor) ||
-           transferable.isDataFlavorSupported(LinuxDragAndDropSupport.uriListFlavor);
+           transferable.isDataFlavorSupported(LinuxDragAndDropSupport.uriListFlavor) ||
+           transferable.isDataFlavorSupported(LinuxDragAndDropSupport.gnomeFileListFlavor);
   }
 
   public static boolean isFileListFlavorSupported(@NotNull final DnDEvent event) {
     return event.isDataFlavorSupported(DataFlavor.javaFileListFlavor) ||
-           event.isDataFlavorSupported(LinuxDragAndDropSupport.uriListFlavor);
+           event.isDataFlavorSupported(LinuxDragAndDropSupport.uriListFlavor) ||
+           event.isDataFlavorSupported(LinuxDragAndDropSupport.gnomeFileListFlavor);
   }
 
   public static boolean isFileListFlavorSupported(@NotNull final DataFlavor[] transferFlavors) {
     for (DataFlavor flavor : transferFlavors) {
-      if (flavor.equals(DataFlavor.javaFileListFlavor) || flavor.equals(LinuxDragAndDropSupport.uriListFlavor)) {
+      if (flavor != null && (flavor.equals(DataFlavor.javaFileListFlavor) ||
+                             flavor.equals(LinuxDragAndDropSupport.uriListFlavor) ||
+                             flavor.equals(LinuxDragAndDropSupport.gnomeFileListFlavor))) {
         return true;
       }
     }
@@ -94,7 +98,7 @@ public class FileCopyPasteUtil {
         final List<File> fileList = (List<File>)transferable.getTransferData(DataFlavor.javaFileListFlavor);
         return fileList;
       }
-      else if (transferable.isDataFlavorSupported(LinuxDragAndDropSupport.uriListFlavor)) {
+      else {
         return LinuxDragAndDropSupport.getFiles(transferable);
       }
     }
