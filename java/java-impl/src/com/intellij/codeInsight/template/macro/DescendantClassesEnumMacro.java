@@ -68,7 +68,10 @@ public class DescendantClassesEnumMacro implements Macro {
     if (params == null || params.length == 0) return null;
     PsiManager instance = PsiManager.getInstance(context.getProject());
 
-    final String paramResult = params[0].calculateResult(context).toString();
+    Result result = params[0].calculateResult(context);
+    if (result == null) return null;
+    
+    final String paramResult = result.toString();
     if (paramResult == null) return null;
 
     final boolean isAllowAbstract = isAllowAbstract(context, params);
