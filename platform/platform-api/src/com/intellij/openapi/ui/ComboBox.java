@@ -15,7 +15,12 @@
  */
 package com.intellij.openapi.ui;
 
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
@@ -23,9 +28,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.plaf.basic.ComboPopup;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
+import java.util.List;
 
 /**
  * Due to many bugs and "features" in <code>JComboBox</code> implementation we provide
@@ -41,8 +45,10 @@ import java.awt.event.KeyEvent;
  *
  * @author Vladimir Kondratyev
  */
-public class ComboBox extends ComboBoxWithWidePopup {
+public class ComboBox extends ComboBoxWithWidePopup implements AWTEventListener {
   private int myMinimumAndPreferredWidth;
+  private boolean mySwingPopup = true;
+  private JBPopup myJBPopup;
 
   public ComboBox() {
     this(-1);
@@ -53,31 +59,95 @@ public class ComboBox extends ComboBoxWithWidePopup {
   }
 
   /**
-   * @param minimumAndPreferredWidth preferred width of the combobox. Value <code>-1</code> means undefined.
+   * @param width preferred width of the combobox. Value <code>-1</code> means undefined.
    */
-  public ComboBox(final int minimumAndPreferredWidth) {
-    this(new DefaultComboBoxModel(), minimumAndPreferredWidth);
-    UIUtil.installComboBoxCopyAction(this);
+  public ComboBox(final int width) {
+    this(new DefaultComboBoxModel(), width);
   }
 
-  public ComboBox(final ComboBoxModel model, final int minimumAndPreferredWidth) {
+
+  public ComboBox(final ComboBoxModel model, final int width) {
     super(model);
-    myMinimumAndPreferredWidth = minimumAndPreferredWidth;
+    myMinimumAndPreferredWidth = width;
     registerCancelOnEscape();
+    UIUtil.installComboBoxCopyAction(this);
+    final JButton arrowButton = UIUtil.findComponentOfType(this, JButton.class);
+    if (arrowButton != null) {
+      arrowButton.addMouseListener(new MouseAdapter() {
+        @Override
+        public void mousePressed(MouseEvent e) {
+          if (!mySwingPopup) {
+            e.consume();
+            setPopupVisible(true);
+          }
+        }
+      });
+    }
   }
 
   @Override
-  public void setPopupVisible(boolean v) {
-    if (getModel().getSize() == 0 && v) return;
+  public void setPopupVisible(boolean visible) {
+    if (!isSwingPopup()) {
+      if (visible && (myJBPopup == null || myJBPopup.isDisposed())) {
+        final JBList list = new JBList(getModel());
+        myJBPopup = JBPopupFactory.getInstance()
+          .createListPopupBuilder(list)
+          .setItemChoosenCallback(new Runnable() {
+            @Override
+            public void run() {
+              final Object value = list.getSelectedValue();
+              if (value != null) {
+                configureEditor(getEditor(), value);
+                IdeFocusManager.getGlobalInstance().requestFocus(ComboBox.this, true);
+              }
+            }
+          })
+          .setMinSize(new Dimension(getWidth(), -1))
+          .setMovable(false)
+          .setResizable(false)
+          .createPopup();
+        list.setBorder(IdeBorderFactory.createEmptyBorder(0));
+        myJBPopup.showUnderneathOf(this);
+        list.addFocusListener(new FocusAdapter() {
+          @Override
+          public void focusLost(FocusEvent e) {
+            myJBPopup.cancel();
+          }
+        });
+      }
+      return;
+    }
+
+    if (getModel().getSize() == 0 && visible) return;
+    if (visible && JBPopupFactory.getInstance().getChildFocusedPopup(this) != null) return;
 
     final boolean wasShown = isPopupVisible();
-    super.setPopupVisible(v);
-    if (!wasShown && v && isEditable() && !wasShown && !UIManager.getBoolean("ComboBox.isEnterSelectablePopup")) {
+    super.setPopupVisible(visible);
+    if (!wasShown
+        && visible
+        && isEditable()
+        && !UIManager.getBoolean("ComboBox.isEnterSelectablePopup")) {
+
       final ComboBoxEditor editor = getEditor();
       final Object item = editor.getItem();
       final Object selectedItem = getSelectedItem();
-      if (item == null || item != selectedItem) {
+      if (isSwingPopup() && (item == null || item != selectedItem)) {
         configureEditor(editor, selectedItem);
+      }
+    }
+  }
+
+  @Override
+  public void eventDispatched(AWTEvent event) {
+    if (event.getID() == WindowEvent.WINDOW_OPENED) {
+      final WindowEvent we = (WindowEvent)event;
+      final List<JBPopup> popups = JBPopupFactory.getInstance().getChildPopups(this);
+      if (popups != null) {
+        for (JBPopup each : popups) {
+          if (each.getContent() != null && SwingUtilities.isDescendingFrom(each.getContent(), we.getWindow())) {
+            super.setPopupVisible(false);
+          }
+        }
       }
     }
   }
@@ -89,7 +159,19 @@ public class ComboBox extends ComboBoxWithWidePopup {
     if (SwingUtilities.getAncestorOfClass(JTable.class, this) != null) {
       putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
     }
+
+    Toolkit.getDefaultToolkit().addAWTEventListener(this, AWTEvent.WINDOW_EVENT_MASK);
   }
+
+  @Override
+  public void removeNotify() {
+    super.removeNotify();
+    Toolkit.getDefaultToolkit().removeAWTEventListener(this);
+    if (myJBPopup != null && myJBPopup.isVisible()) {
+      myJBPopup.cancel();
+    }
+  }
+
 
   @Nullable
   public ComboPopup getPopup() {
@@ -102,13 +184,25 @@ public class ComboBox extends ComboBoxWithWidePopup {
     registerCancelOnEscape();
   }
 
+
+  public boolean isSwingPopup() {
+    return mySwingPopup;
+  }
+
+  public void setSwingPopup(boolean swingPopup) {
+    mySwingPopup = swingPopup;
+  }
+
   public void setMinimumAndPreferredWidth(final int minimumAndPreferredWidth) {
     myMinimumAndPreferredWidth = minimumAndPreferredWidth;
   }
 
+  @Nullable
   private static DialogWrapperDialog getParentDialog(Component c) {
     do {
-      if (c == null || c instanceof DialogWrapperDialog) return (DialogWrapperDialog)c;
+      if (c == null || c instanceof DialogWrapperDialog) {
+        return (DialogWrapperDialog)c;
+      }
       c = c.getParent();
     }
     while (true);
