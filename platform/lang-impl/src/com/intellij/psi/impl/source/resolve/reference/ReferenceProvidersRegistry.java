@@ -19,7 +19,7 @@ package com.intellij.psi.impl.source.resolve.reference;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.patterns.ElementPattern;
@@ -108,7 +108,7 @@ public class ReferenceProvidersRegistry {
   }
 
   public static PsiReference[] getReferencesFromProviders(PsiElement context, @NotNull PsiReferenceService.Hints hints) {
-    ProgressManager.checkCanceled();
+    ProgressIndicatorProvider.checkCanceled();
     assert context.isValid() : "Invalid context: " + context;
 
     ReferenceProvidersRegistry registry = getInstance();

@@ -16,7 +16,7 @@
 package com.intellij.psi.impl.source.text;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.pom.tree.events.impl.TreeChangeEventImpl;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -29,7 +29,6 @@ import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.diff.DiffTreeChangeBuilder;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,7 +44,7 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
 
   private abstract static class LogEntry {
     protected LogEntry() {
-      ProgressManager.checkCanceled();
+      ProgressIndicatorProvider.checkCanceled();
     }
     abstract void doActualPsiChange(@NotNull PsiFile file, @NotNull ASTDiffBuilder astDiffBuilder);
   }

@@ -22,7 +22,7 @@ package com.intellij.extapi.psi;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.progress.NonCancelableSection;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -67,7 +67,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
       synchronized (file.getStubLock()) {
         node = myNode;
         if (node == null) {
-          NonCancelableSection criticalSection = ProgressManager.getInstance().startNonCancelableSection();
+          NonCancelableSection criticalSection = ProgressIndicatorProvider.getInstance().startNonCancelableSection();
           try {
             if (!file.isValid()) throw new PsiInvalidElementAccessException(this);
             FileElement treeElement = file.getTreeElement();
@@ -194,7 +194,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   }
 
   public T getStub() {
-    ProgressManager.checkCanceled(); // Hope, this is called often
+    ProgressIndicatorProvider.checkCanceled(); // Hope, this is called often
     return myStub;
   }
 

@@ -22,8 +22,7 @@ import com.intellij.lang.Language;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
@@ -87,10 +86,7 @@ public class LeafPsiElement extends LeafElement implements PsiElement, Navigatio
   }
 
   private void invalid() {
-    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    if (indicator != null) {
-      indicator.checkCanceled();
-    }
+    ProgressIndicatorProvider.checkCanceled();
 
     final StringBuilder builder = new StringBuilder();
     TreeElement element = this;

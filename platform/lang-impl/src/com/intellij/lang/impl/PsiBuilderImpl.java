@@ -19,7 +19,7 @@ package com.intellij.lang.impl;
 import com.intellij.lang.*;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
@@ -187,7 +187,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     int i = 0;
     int offset = 0;
     while (true) {
-      ProgressManager.checkCanceled();
+      ProgressIndicatorProvider.checkCanceled();
       IElementType type = myLexer.getTokenType();
       if (type == null) break;
 
@@ -630,7 +630,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     }
     myTokenTypeChecked = false;
     myCurrentLexeme++;
-    ProgressManager.checkCanceled();
+    ProgressIndicatorProvider.checkCanceled();
   }
 
   private void skipWhitespace() {
@@ -946,7 +946,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     final MyTreeStructure treeStructure = new MyTreeStructure(newRoot, null);
     final MyComparator comparator = new MyComparator(getUserDataUnprotected(CUSTOM_COMPARATOR), treeStructure);
 
-    BlockSupportImpl.diffTrees(oldRoot, builder, comparator, treeStructure, ProgressManager.getInstance().getProgressIndicator());
+    BlockSupportImpl.diffTrees(oldRoot, builder, comparator, treeStructure, ProgressIndicatorProvider.getInstance().getProgressIndicator());
     return diffLog;
   }
 
@@ -1102,7 +1102,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   private int insertLeaves(int curToken, int lastIdx, final CompositeElement curNode) {
     lastIdx = Math.min(lastIdx, myLexemeCount);
     while (curToken < lastIdx) {
-      ProgressManager.checkCanceled();
+      ProgressIndicatorProvider.checkCanceled();
       final int start = myLexStarts[curToken];
       final int end = myLexStarts[curToken + 1];
       if (start < end || myLexTypes[curToken] instanceof ILeafElementType) { // Empty token. Most probably a parser directive like indent/dedent in Python
@@ -1162,7 +1162,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     }
 
     public ThreeState deepEqual(final ASTNode oldNode, final LighterASTNode newNode) {
-      ProgressManager.checkCanceled();
+      ProgressIndicatorProvider.checkCanceled();
 
       boolean oldIsErrorElement = oldNode instanceof PsiErrorElement;
       boolean newIsErrorElement = newNode.getTokenType() == TokenType.ERROR_ELEMENT;

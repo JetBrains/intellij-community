@@ -21,7 +21,7 @@ import com.intellij.extapi.psi.ASTDelegatePsiElement;
 import com.intellij.lang.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.tree.events.ChangeInfo;
 import com.intellij.pom.tree.events.TreeChangeEvent;
@@ -723,7 +723,7 @@ public class CompositeElement extends TreeElement {
   }
 
   public final PsiElement getPsi() {
-    ProgressManager.checkCanceled(); // We hope this method is being called often enough to cancel daemon processes smoothly
+    ProgressIndicatorProvider.checkCanceled(); // We hope this method is being called often enough to cancel daemon processes smoothly
 
     PsiElement wrapper = myWrapper;
     if (wrapper != null) return wrapper;
@@ -810,7 +810,7 @@ public class CompositeElement extends TreeElement {
 
     @Override
     public void visitComposite(CompositeElement composite) {
-      ProgressManager.checkCanceled(); // we can safely interrupt creating children PSI any moment
+      ProgressIndicatorProvider.checkCanceled(); // we can safely interrupt creating children PSI any moment
       if (composite.myWrapper != null) {
         // someone else 've managed to create the PSI in the meantime. Abandon our attempts to cache everything.
         stopWalking();

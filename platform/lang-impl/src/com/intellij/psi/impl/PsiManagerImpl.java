@@ -24,7 +24,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.startup.StartupManager;
@@ -186,13 +186,13 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
 
   @NotNull
   public ResolveCache getResolveCache() {
-    ProgressManager.checkCanceled(); // We hope this method is being called often enough to cancel daemon processes smoothly
+    ProgressIndicatorProvider.checkCanceled(); // We hope this method is being called often enough to cancel daemon processes smoothly
     return myResolveCache;
   }
 
 
   public boolean areElementsEquivalent(PsiElement element1, PsiElement element2) {
-    ProgressManager.checkCanceled(); // We hope this method is being called often enough to cancel daemon processes smoothly
+    ProgressIndicatorProvider.checkCanceled(); // We hope this method is being called often enough to cancel daemon processes smoothly
 
     if (element1 == element2) return true;
     if (element1 == null || element2 == null) {
@@ -237,7 +237,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   }
 
   public PsiDirectory findDirectory(@NotNull VirtualFile file) {
-    ProgressManager.checkCanceled();
+    ProgressIndicatorProvider.checkCanceled();
 
     return myFileManager.findDirectory(file);
   }

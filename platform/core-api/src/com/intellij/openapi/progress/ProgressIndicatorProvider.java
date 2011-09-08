@@ -33,6 +33,8 @@ public abstract class ProgressIndicatorProvider {
 
   protected abstract void doCheckCanceled() throws ProcessCanceledException;
 
+  public abstract NonCancelableSection startNonCancelableSection();
+
   public static boolean ourNeedToCheckCancel = false;
   public static void checkCanceled() throws ProcessCanceledException {
     // smart optimization! There's a thread started in ProgressManagerImpl, that set's this flag up once in 10 milliseconds
