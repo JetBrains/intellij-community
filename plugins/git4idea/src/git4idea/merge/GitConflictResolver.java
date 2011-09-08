@@ -94,7 +94,7 @@ public class GitConflictResolver {
     
   }
 
-  protected GitConflictResolver(@NotNull Project project, @NotNull Collection<VirtualFile> roots, @NotNull Params params) {
+  public GitConflictResolver(@NotNull Project project, @NotNull Collection<VirtualFile> roots, @NotNull Params params) {
     myProject = project;
     myRoots = roots;
     myParams = params;
