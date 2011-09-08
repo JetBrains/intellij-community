@@ -39,7 +39,7 @@ import git4idea.actions.GitShowAllSubmittedFilesAction;
 import git4idea.commands.*;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.i18n.GitBundle;
-import git4idea.merge.GitMergeConflictResolver;
+import git4idea.merge.GitConflictResolver;
 import git4idea.stash.GitStashUtils;
 import git4idea.validators.GitBranchNameValidator;
 import org.jetbrains.annotations.NotNull;
@@ -442,7 +442,7 @@ public class GitUnstashDialog extends DialogWrapper {
     }
   }
 
-  private static class UnstashConflictResolver extends GitMergeConflictResolver {
+  private static class UnstashConflictResolver extends GitConflictResolver {
 
     private final VirtualFile myRoot;
     private final StashInfo myStashInfo;

@@ -39,9 +39,9 @@ import java.util.Collection;
  * The class is highly customizable, since the procedure of resolving conflicts is very common in Git operations.
  * @author Kirill Likhodedov
  */
-public class GitMergeConflictResolver {
+public class GitConflictResolver {
 
-  private static final Logger LOG = Logger.getInstance(GitMergeConflictResolver.class);
+  private static final Logger LOG = Logger.getInstance(GitConflictResolver.class);
 
   protected final Project myProject;
   private final Collection<VirtualFile> myRoots;
@@ -94,7 +94,7 @@ public class GitMergeConflictResolver {
     
   }
 
-  protected GitMergeConflictResolver(@NotNull Project project, @NotNull Collection<VirtualFile> roots, @NotNull Params params) {
+  protected GitConflictResolver(@NotNull Project project, @NotNull Collection<VirtualFile> roots, @NotNull Params params) {
     myProject = project;
     myRoots = roots;
     myParams = params;

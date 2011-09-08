@@ -39,7 +39,7 @@ import git4idea.commands.GitLineHandlerAdapter;
 import git4idea.config.GitConfigUtil;
 import git4idea.history.GitHistoryUtils;
 import git4idea.history.wholeTree.CommitHashPlusParents;
-import git4idea.merge.GitMergeConflictResolver;
+import git4idea.merge.GitConflictResolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -231,7 +231,7 @@ public class LowLevelAccessImpl implements LowLevelAccess {
     }
   }
 
-  private static class CherryPickConflictResolver extends GitMergeConflictResolver {
+  private static class CherryPickConflictResolver extends GitConflictResolver {
 
     private VirtualFile myRoot;
     private String myCommitHash;

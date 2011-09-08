@@ -25,7 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
 import git4idea.branch.GitBranchPair;
 import git4idea.commands.*;
-import git4idea.merge.GitMergeConflictResolver;
+import git4idea.merge.GitConflictResolver;
 import git4idea.rebase.GitRebaseProblemDetector;
 import git4idea.rebase.GitRebaser;
 import git4idea.ui.GitUIUtil;
@@ -142,7 +142,7 @@ public class GitRebaseUpdater extends GitUpdater {
     return !cancelled.get();
   }
 
-  private static class MyConflictResolver extends GitMergeConflictResolver {
+  private static class MyConflictResolver extends GitConflictResolver {
     private final GitRebaser myRebaser;
     private final VirtualFile myRoot;
 

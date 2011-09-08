@@ -31,7 +31,7 @@ import com.intellij.util.ui.UIUtil;
 import git4idea.GitUtil;
 import git4idea.branch.GitBranchPair;
 import git4idea.commands.*;
-import git4idea.merge.GitMergeConflictResolver;
+import git4idea.merge.GitConflictResolver;
 import git4idea.merge.GitMerger;
 import git4idea.ui.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -102,7 +102,7 @@ public class GitMergeUpdater extends GitUpdater {
     LOG.info("doUpdate merge error: " + error);
     if (error == MergeError.CONFLICT) {
       final boolean allMerged =
-        new MyMergeConflictResolver(myProject, merger, myRoot).merge();
+        new MyConflictResolver(myProject, merger, myRoot).merge();
       return allMerged ? GitUpdateResult.SUCCESS : GitUpdateResult.INCOMPLETE;
     }
     else if (error == MergeError.LOCAL_CHANGES) {
@@ -255,11 +255,11 @@ public class GitMergeUpdater extends GitUpdater {
     }
   }
 
-  private static class MyMergeConflictResolver extends GitMergeConflictResolver {
+  private static class MyConflictResolver extends GitConflictResolver {
     private final GitMerger myMerger;
     private final VirtualFile myRoot;
 
-    public MyMergeConflictResolver(Project project, GitMerger merger, VirtualFile root) {
+    public MyConflictResolver(Project project, GitMerger merger, VirtualFile root) {
       super(project, Collections.singleton(root), makeParams());
       myMerger = merger;
       myRoot = root;

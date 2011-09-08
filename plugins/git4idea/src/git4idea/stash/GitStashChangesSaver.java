@@ -34,7 +34,7 @@ import git4idea.GitVcs;
 import git4idea.commands.*;
 import git4idea.config.GitVcsSettings;
 import git4idea.convert.GitFileSeparatorConverter;
-import git4idea.merge.GitMergeConflictResolver;
+import git4idea.merge.GitConflictResolver;
 import git4idea.ui.GitUIUtil;
 import git4idea.ui.GitUnstashDialog;
 import org.jetbrains.annotations.NotNull;
@@ -167,7 +167,7 @@ public class GitStashChangesSaver extends GitChangesSaver {
     }
   }
 
-  private static class UnstashConflictResolver extends GitMergeConflictResolver {
+  private static class UnstashConflictResolver extends GitConflictResolver {
 
     private final VirtualFile myRoot;
     private final Set<VirtualFile> myStashedRoots;

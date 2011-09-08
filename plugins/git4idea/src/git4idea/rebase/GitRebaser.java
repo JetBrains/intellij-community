@@ -25,7 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.commands.*;
-import git4idea.merge.GitMergeConflictResolver;
+import git4idea.merge.GitConflictResolver;
 import git4idea.ui.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -171,7 +171,7 @@ public class GitRebaser {
   private boolean handleRebaseFailure(final VirtualFile root, final GitLineHandler h, GitRebaseProblemDetector rebaseConflictDetector) {
     if (rebaseConflictDetector.isMergeConflict()) {
       LOG.info("handleRebaseFailure merge conflict");
-      return new GitMergeConflictResolver(myProject, Collections.singleton(root), makeParamsForRebaseConflict()) {
+      return new GitConflictResolver(myProject, Collections.singleton(root), makeParamsForRebaseConflict()) {
         @Override protected boolean proceedIfNothingToMerge() {
           return continueRebase(root, "--continue");
         }
@@ -191,8 +191,8 @@ public class GitRebaser {
     }
   }
 
-  private static GitMergeConflictResolver.Params makeParamsForRebaseConflict() {
-    return new GitMergeConflictResolver.Params().
+  private static GitConflictResolver.Params makeParamsForRebaseConflict() {
+    return new GitConflictResolver.Params().
       setReverse(true).
       setErrorNotificationTitle("Can't continue rebase").
       setMergeDescription("Merge conflicts detected. Resolve them before continuing rebase.").

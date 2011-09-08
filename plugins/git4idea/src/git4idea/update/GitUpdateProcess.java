@@ -29,7 +29,7 @@ import com.intellij.util.continuation.ContinuationFinalTasksInserter;
 import com.intellij.util.text.DateFormatUtil;
 import git4idea.GitBranch;
 import git4idea.branch.GitBranchPair;
-import git4idea.merge.GitMergeConflictResolver;
+import git4idea.merge.GitConflictResolver;
 import git4idea.merge.GitMerger;
 import git4idea.rebase.GitRebaser;
 import git4idea.stash.GitChangesSaver;
@@ -275,10 +275,10 @@ public class GitUpdateProcess {
     if (mergingRoots.isEmpty()) {
       return false;
     }
-    GitMergeConflictResolver.Params params = new GitMergeConflictResolver.Params();
+    GitConflictResolver.Params params = new GitConflictResolver.Params();
     params.setErrorNotificationTitle("Can't update");
     params.setMergeDescription("You have unfinished merge. These conflicts must be resolved before update.");
-    return !new MergeCommittingMergeConflictResolver(myProject, myMerger, mergingRoots, params).merge();
+    return !new MergeCommittingConflictResolver(myProject, myMerger, mergingRoots, params).merge();
   }
 
   /**
@@ -286,10 +286,10 @@ public class GitUpdateProcess {
    * @return true if there are unmerged files at
    */
   private boolean areUnmergedFiles() {
-    GitMergeConflictResolver.Params params = new GitMergeConflictResolver.Params();
+    GitConflictResolver.Params params = new GitConflictResolver.Params();
     params.setErrorNotificationTitle("Can't update");
     params.setMergeDescription("Unmerged files detected. These conflicts must be resolved before update.");
-    return !new MergeCommittingMergeConflictResolver(myProject, myMerger, myRoots, params).merge();
+    return !new MergeCommittingConflictResolver(myProject, myMerger, myRoots, params).merge();
   }
 
   /**
@@ -304,12 +304,12 @@ public class GitUpdateProcess {
     }
     LOG.info("checkRebaseInProgress rebasingRoots: " + rebasingRoots);
 
-    GitMergeConflictResolver.Params params = new GitMergeConflictResolver.Params();
+    GitConflictResolver.Params params = new GitConflictResolver.Params();
     params.setErrorNotificationTitle("Can't update");
     params.setMergeDescription("You have unfinished rebase process. These conflicts must be resolved before update.");
     params.setErrorNotificationAdditionalDescription("Then you may <b>continue rebase</b>. <br/> You also may <b>abort rebase</b> to restore the original branch and stop rebasing.");
     params.setReverse(true);
-    return !new GitMergeConflictResolver(myProject, rebasingRoots, params) {
+    return !new GitConflictResolver(myProject, rebasingRoots, params) {
       @Override protected boolean proceedIfNothingToMerge() {
         return rebaser.continueRebase(rebasingRoots);
       }
@@ -321,11 +321,11 @@ public class GitUpdateProcess {
   }
 
   // conflict resolver that makes a merge commit after all conflicts are resolved
-  private static class MergeCommittingMergeConflictResolver extends GitMergeConflictResolver {
+  private static class MergeCommittingConflictResolver extends GitConflictResolver {
     private final Collection<VirtualFile> myMergingRoots;
     private final GitMerger myMerger;
 
-    public MergeCommittingMergeConflictResolver(Project project, GitMerger merger, Collection<VirtualFile> mergingRoots, Params params) {
+    public MergeCommittingConflictResolver(Project project, GitMerger merger, Collection<VirtualFile> mergingRoots, Params params) {
       super(project, mergingRoots, params);
       myMerger = merger;
       myMergingRoots = mergingRoots;
