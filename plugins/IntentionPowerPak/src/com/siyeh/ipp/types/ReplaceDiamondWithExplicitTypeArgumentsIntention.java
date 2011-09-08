@@ -16,14 +16,11 @@
 package com.siyeh.ipp.types;
 
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.ArrayList;
 
 public class ReplaceDiamondWithExplicitTypeArgumentsIntention extends Intention {
 
@@ -36,34 +33,6 @@ public class ReplaceDiamondWithExplicitTypeArgumentsIntention extends Intention 
     @Override
     protected void processIntention(@NotNull PsiElement element)
             throws IncorrectOperationException {
-        final PsiElement parent = element.getParent();
-        if (!(parent instanceof PsiJavaCodeReferenceElement)) {
-            return;
-        }
-        final PsiJavaCodeReferenceElement javaCodeReferenceElement =
-                (PsiJavaCodeReferenceElement) parent;
-        final PsiReferenceParameterList referenceParameterList =
-                (PsiReferenceParameterList) element;
-        final StringBuilder text = new StringBuilder();
-        text.append(javaCodeReferenceElement.getQualifiedName());
-        text.append('<');
-        final PsiTypeElement[] typeElements = referenceParameterList.getTypeParameterElements();
-        final PsiNewExpression newExpression = PsiTreeUtil.getParentOfType(typeElements[0], PsiNewExpression.class);
-        final PsiDiamondType.DiamondInferenceResult result = PsiDiamondType.resolveInferredTypesNoCheck(newExpression, newExpression);
-        boolean first = true;
-        for (PsiType typeArgument : result.getInferredTypes()) {
-            if (first) {
-                first = false;
-            } else {
-                text.append(',');
-            }
-            text.append(typeArgument.getCanonicalText());
-        }
-        text.append('>');
-        final PsiElementFactory elementFactory =
-                JavaPsiFacade.getElementFactory(element.getProject());
-        final PsiJavaCodeReferenceElement newReference =
-                elementFactory.createReferenceFromText(text.toString(), element);
-        CodeStyleManager.getInstance(javaCodeReferenceElement.getProject()).reformat(javaCodeReferenceElement.replace(newReference));
+      PsiDiamondTypeUtil.replaceDiamondWithExplicitTypes(element);
     }
 }

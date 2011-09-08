@@ -16,6 +16,7 @@
 package com.siyeh.ipp.trivialif;
 
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
@@ -148,11 +149,11 @@ public class ReplaceIfWithConditionalIntention extends Intention {
                                              PsiExpression elseValue,
                                              PsiType requiredType) {
         condition = ParenthesesUtils.stripParentheses(condition);
-        thenValue = ParenthesesUtils.stripParentheses(thenValue);
+        thenValue = PsiDiamondTypeUtil.expandTopLevelDiamondsInside(ParenthesesUtils.stripParentheses(thenValue));
         if (thenValue == null) {
             return null;
         }
-        elseValue = ParenthesesUtils.stripParentheses(elseValue);
+        elseValue = PsiDiamondTypeUtil.expandTopLevelDiamondsInside(ParenthesesUtils.stripParentheses(elseValue));
         if (elseValue ==  null) {
             return null;
         }
