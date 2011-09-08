@@ -96,6 +96,10 @@ public abstract class PlaybackContext  {
     }
   }
 
+  public void runPooledThread(Runnable runnable) {
+    ApplicationManager.getApplication().executeOnPooledThread(runnable);
+  }
+  
   public void error(String text, int currentLine) {
     getCallback().message(this, text, currentLine, PlaybackRunner.StatusCallback.Type.error);
   }

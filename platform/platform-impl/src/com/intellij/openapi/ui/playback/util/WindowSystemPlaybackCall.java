@@ -15,7 +15,10 @@
  */
 package com.intellij.openapi.ui.playback.util;
 
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.UiActivityMonitor;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.playback.PlaybackContext;
@@ -27,7 +30,12 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.ui.UIUtil;
 
+import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import java.awt.*;
+import java.awt.event.InputEvent;
+import java.awt.event.MouseEvent;
 import java.util.*;
 
 public class WindowSystemPlaybackCall {
@@ -145,6 +153,140 @@ public class WindowSystemPlaybackCall {
     });
 
     return project;
+  }
+
+  public static AsyncResult<String> contextMenu(final PlaybackContext context, final String path) {
+    final AsyncResult<String> result = new AsyncResult<String>();
+
+    final IdeFocusManager fm = IdeFocusManager.getGlobalInstance();
+    fm.doWhenFocusSettlesDown(new Runnable() {
+      @Override
+      public void run() {
+        Component owner = fm.getFocusOwner();
+        if (owner == null) {
+          result.setRejected("No component focused");
+          return;
+        }
+
+        ActionManager am = ActionManager.getInstance();
+        AnAction showPopupMenu = am.getAction("ShowPopupMenu");
+        if (showPopupMenu == null) {
+          result.setRejected("Cannot find action: ShowPopupMenu");
+          return;
+        }
+
+        am.tryToExecute(showPopupMenu, new MouseEvent(owner, MouseEvent.MOUSE_PRESSED, System.currentTimeMillis(), 0, 0, 0, 1, true), null,
+                        null, false).doWhenDone(
+          new Runnable() {
+            @Override
+            public void run() {
+              SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                  MenuElement[] selectedPath = MenuSelectionManager.defaultManager().getSelectedPath();
+                  if (selectedPath.length == 0) {
+                    result.setRejected("Failed to find active popup menu");
+                    return;
+                  }
+                  selectNext(context, path.split("\\|"), 0, selectedPath[0].getSubElements(), result);
+                }
+              });
+            }
+          }).doWhenRejected(new Runnable() {
+          @Override
+          public void run() {
+            result.setRejected("Cannot invoke popup menu from the ShowPopupMenu action, action call rejected");
+          }
+        });
+      }
+    });
+
+    return result;
+  }
+
+  private static void selectNext(final PlaybackContext context, final String[] toSelect, final int toSelectIndex, MenuElement[] menuElements, final AsyncResult<String> result) {
+    if (menuElements == null || menuElements.length == 0) {
+      result.setDone();
+    }
+
+    if (toSelectIndex > toSelect.length - 1) {
+      result.setDone();
+      return;
+    }
+
+    String target = toSelect[toSelectIndex];
+    for (final MenuElement each : menuElements) {
+      if (each.getComponent() instanceof AbstractButton) {
+        final AbstractButton eachButton = (AbstractButton)each.getComponent();
+        if (eachButton.getText() != null && eachButton.getText().startsWith(target)) {
+          activateItem(context, each).doWhenDone(new AsyncResult.Handler<MenuElement[]>() {
+            @Override
+            public void run(MenuElement[] menuElements) {
+              selectNext(context, toSelect, toSelectIndex + 1, menuElements, result);
+            }
+          }).doWhenRejected(new Runnable() {
+            @Override
+            public void run() {
+              result.setRejected("Cannot activate menu element: " + eachButton.getText());
+              return;
+            }
+          });
+          return;
+        }
+      }
+      else {
+        result.setRejected("Unknown class for context menu item: " + each.getComponent());
+        return;
+      }
+    }
+
+    result.setRejected("Failed to find menu item: " + target);
+  }
+
+  private static AsyncResult<MenuElement[]> activateItem(final PlaybackContext context, final MenuElement element) {
+    final AsyncResult<MenuElement[]> result = new AsyncResult<MenuElement[]>();
+    final AbstractButton c = (AbstractButton)element.getComponent();
+    if (!c.isShowing()) {
+      result.setRejected();
+      return result; 
+    }
+
+    context.runPooledThread(new Runnable() {
+      @Override
+      public void run() {
+        Robot robot = context.getRobot();
+        Point location = c.getLocationOnScreen();
+        Dimension size = c.getSize();
+        Point point = new Point(location.x + size.width / 2, location.y + size.height / 2);
+        robot.mouseMove(point.x, point.y);
+        robot.delay(90);
+        robot.mousePress(InputEvent.BUTTON1_MASK);
+        robot.delay(90);
+        robot.mouseRelease(InputEvent.BUTTON1_MASK);
+        robot.delay(90);
+        context.flushAwtAndRun(new Runnable() {
+          @Override
+          public void run() {
+
+            context.flushAwtAndRun(new Runnable() {
+              @Override
+              public void run() {
+                MenuElement[] subElements = element.getSubElements();
+                if (subElements == null || subElements.length == 0) {
+                  result.setDone();
+                }
+                else {
+                  MenuElement[] menuElements = subElements[0].getSubElements();
+                  result.setDone(menuElements);
+                }
+              }
+            });
+          }
+        });
+      }
+    });
+
+    return result;
   }
 
   private static ActionCallback getUiReady(final PlaybackContext context) {

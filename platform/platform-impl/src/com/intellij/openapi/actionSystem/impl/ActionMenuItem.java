@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.actionholder.ActionRef;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
@@ -221,7 +222,10 @@ public class ActionMenuItem extends JMenuItem {
     }
 
     public void actionPerformed(final ActionEvent e) {
-      IdeFocusManager.findInstanceByContext(myContext).runOnOwnContext(myContext, new Runnable() {
+      IdeFocusManager fm = IdeFocusManager.findInstanceByContext(myContext);
+      final ActionCallback typeahead = new ActionCallback();
+      fm.typeAheadUntil(typeahead);
+      fm.runOnOwnContext(myContext, new Runnable() {
         @Override
         public void run() {
           final AnActionEvent event = new AnActionEvent(
@@ -236,6 +240,14 @@ public class ActionMenuItem extends JMenuItem {
             if (component != null && !isInTree(component)) {
               return;
             }
+
+            SwingUtilities.invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                typeahead.setDone();
+              }
+            });
+
             action.actionPerformed(event);
             actionManager.queueActionPerformedEvent(action, myContext, event);
           }

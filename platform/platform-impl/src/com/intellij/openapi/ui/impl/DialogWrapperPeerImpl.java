@@ -833,8 +833,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
       }
 
       public void windowOpened(final WindowEvent e) {
-        final FocusRequestor requestor = IdeFocusManager.findInstanceByComponent(e.getWindow()).getFurtherRequestor();
-
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
             myOpened = true;
@@ -857,8 +855,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
               final JComponent toRequest = toFocus;
               SwingUtilities.invokeLater(new Runnable() {
                 public void run() {
-                  if (isShowing()) {
-                    requestor.requestFocus(toRequest, true);
+                  if (isShowing() && isActive()) {
+                    getFocusManager().requestFocus(toRequest, true);
                     notifyFocused(activeWrapper);
                   }
                 }
@@ -946,6 +944,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
 
       private MyFocusCommand(DialogWrapper wrapper) {
         myWrapper = getDialogWrapper();
+        setToInvalidateRequestors(false);
 
         Disposer.register(wrapper.getDisposable(), new Disposable() {
           public void dispose() {
