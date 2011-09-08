@@ -126,7 +126,7 @@ public class JavaCompletionContributor extends CompletionContributor {
       return new ElementExtractorFilter(ElementClassFilter.CLASS);
     }
 
-    if (JavaCompletionData.AFTER_FINAL.accepts(position)) {
+    if (JavaCompletionData.VARIABLE_AFTER_FINAL.accepts(position)) {
       return ElementClassFilter.CLASS;
     }
 
