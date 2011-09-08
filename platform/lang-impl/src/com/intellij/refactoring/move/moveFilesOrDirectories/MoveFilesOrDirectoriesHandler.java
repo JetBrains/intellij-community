@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandlerDelegate;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 
@@ -59,7 +60,12 @@ public class MoveFilesOrDirectoriesHandler extends MoveHandlerDelegate {
     return psiElement instanceof PsiDirectory || psiElement instanceof PsiDirectoryContainer;
   }
 
-  public void doMove(final Project project, final PsiElement[] elements, final PsiElement targetContainer, final MoveCallback callback) {
+  public void doMove(final PsiElement[] elements, final PsiElement targetContainer) {
+    final Project project = targetContainer != null ? targetContainer.getProject() : elements[0].getProject();
+    doMove(project, elements, targetContainer, null);
+  }
+
+  public void doMove(final Project project, final PsiElement[] elements, final PsiElement targetContainer, @Nullable final MoveCallback callback) {
     if (!LOG.assertTrue(targetContainer == null || targetContainer instanceof PsiDirectory || targetContainer instanceof PsiDirectoryContainer)) {
       return;
     }

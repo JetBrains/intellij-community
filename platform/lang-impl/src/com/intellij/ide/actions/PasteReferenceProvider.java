@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,10 +36,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.Producer;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
-import java.awt.datatransfer.UnsupportedFlavorException;
-import java.io.IOException;
 
 public class PasteReferenceProvider implements PasteProvider {
   public void performPaste(DataContext dataContext) {
@@ -85,12 +82,15 @@ public class PasteReferenceProvider implements PasteProvider {
   }
 
   private static void insert(final String fqn, final PsiElement element, final Editor editor, final QualifiedNameProvider provider) {
-    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(editor.getProject());
+    final Project project = editor.getProject();
+    if (project == null) return;
+
+    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     documentManager.commitDocument(editor.getDocument());
+
     final PsiFile file = documentManager.getPsiFile(editor.getDocument());
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
 
-    final Project project = editor.getProject();
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -108,12 +108,9 @@ public class PasteReferenceProvider implements PasteProvider {
 
   @Nullable
   private static String getCopiedFqn(DataContext dataContext) {
-    final DataFlavor flavor = CopyReferenceAction.getFlavor();
-    if (flavor == null) {
-      return null;
-    }
-
     Transferable transferable = null;
+
+    @SuppressWarnings("unchecked")
     Producer<Transferable> transferableProducer = (Producer<Transferable>)dataContext.getData(PasteHandler.TRANSFERABLE_PROVIDER);
     if (transferableProducer != null) {
       transferable = transferableProducer.produce();
@@ -121,22 +118,13 @@ public class PasteReferenceProvider implements PasteProvider {
         transferable = CopyPasteManager.getInstance().getContents();
       }
     }
-
     if (transferable == null) return null;
+
     try {
-      if (flavor != null) {
-        return (String)transferable.getTransferData(flavor);
-      }
+      return (String)transferable.getTransferData(CopyReferenceAction.ourFlavor);
     }
-    catch (UnsupportedFlavorException e) {
-      // ignore
-    }
-    catch (IOException e) {
-      // ignore
-    }
-    catch (NoClassDefFoundError e) {
-      // ignore
-    }
+    catch (Exception ignored) { }
+
     return null;
   }
 }

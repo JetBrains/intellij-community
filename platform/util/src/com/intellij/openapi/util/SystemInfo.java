@@ -17,6 +17,8 @@ package com.intellij.openapi.util;
 
 import com.intellij.openapi.util.text.StringUtil;
 
+import java.io.File;
+
 @SuppressWarnings({"HardCodedStringLiteral", "UtilityClassWithoutPrivateConstructor", "UnusedDeclaration"})
 public class SystemInfo {
   public static final String OS_NAME = System.getProperty("os.name");
@@ -47,6 +49,8 @@ public class SystemInfo {
   public static final boolean isKDE = _SUN_DESKTOP.contains("kde");
   public static final boolean isGnome = _SUN_DESKTOP.contains("gnome");
 
+  public static final boolean hasXdgOpen = isUnix && new File("/usr/bin/xdg-open").canExecute();
+
   public static final boolean isMacSystemMenu = isMac && "true".equals(System.getProperty("apple.laf.useScreenMenuBar"));
 
   public static final boolean isFileSystemCaseSensitive = !isWindows && !isOS2 && !isMac;
@@ -58,15 +62,18 @@ public class SystemInfo {
   public static final boolean isAMD64 = "amd64".equals(OS_ARCH);
   public static final boolean isMacIntel64 = isMac && "x86_64".equals(OS_ARCH);
 
-  public static final String nativeFileManagerName = isMac ? "Finder" : isGnome ? "Nautilus" : isKDE ? "Konqueror" : "Explorer";
-  
+  public static final String nativeFileManagerName = isMac ? "Finder" :
+                                                     isGnome ? "Nautilus" :
+                                                     isKDE ? "Konqueror" :
+                                                     isWindows ? "Explorer" :
+                                                     "File Manager";
+
   /**
    * Whether IDEA is running under MacOS X version 10.4 or later.
    *
    * @since 5.0.2
    */
   public static final boolean isMacOSTiger = isTiger();
-
 
   /**
    * Whether IDEA is running under MacOS X on an Intel Machine

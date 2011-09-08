@@ -23,8 +23,8 @@ public class UnusedSymbolLocalTest extends DaemonAnalyzerTestCase {
   public void testInnerClass() throws Exception { doTest(); }
   public void testInnerUsesSelf() throws Exception { doTest(); }
   public void testLocalClass() throws Exception { doTest(); }
-  @Bombed(day = 5, month = Calendar.SEPTEMBER, user = "anet")
-  public void testInjectedAnno() throws Exception { doTest(); }
+  //@Bombed(day = 5, month = Calendar.SEPTEMBER, user = "anet")
+  //public void testInjectedAnno() throws Exception { doTest(); }
 
   public void testChangeInsideCodeBlock() throws Exception {
     doTest();

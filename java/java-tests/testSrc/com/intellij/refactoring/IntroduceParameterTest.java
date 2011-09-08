@@ -276,6 +276,10 @@ public class IntroduceParameterTest extends LightCodeInsightTestCase {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_ALL, true, false, true, false);
   }
 
+  public void testSubstituteTypeParams() throws Exception {
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_ALL, true, false, true, false);
+  }
+
   private void doTestThroughHandler() throws Exception {
     configureByFile("/refactoring/introduceParameter/before" + getTestName(false) + ".java");
     boolean enabled = true;

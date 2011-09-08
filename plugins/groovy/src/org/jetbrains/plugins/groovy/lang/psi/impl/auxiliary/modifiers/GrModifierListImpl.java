@@ -337,10 +337,10 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
       final ASTNode node = annotation.getNode();
       final ASTNode treeNext = node.getTreeNext();
       if (treeNext != null) {
-        getNode().addLeaf(GroovyTokenTypes.mNLS, "\n", treeNext);
+        getNode().addLeaf(TokenType.WHITE_SPACE, "\n", treeNext);
       }
       else {
-        parent.getNode().addLeaf(GroovyTokenTypes.mNLS, "\n", getNode().getTreeNext());
+        parent.getNode().addLeaf(TokenType.WHITE_SPACE, "\n", getNode().getTreeNext());
       }
     }
 

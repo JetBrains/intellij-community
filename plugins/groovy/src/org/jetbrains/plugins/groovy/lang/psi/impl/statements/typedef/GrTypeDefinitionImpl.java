@@ -701,15 +701,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
       return super.addBefore(element, anchor);
     }
 
-    ASTNode node = element.getNode();
-    assert node != null;
-    final ASTNode bodyNode = body.getNode();
-    final ASTNode anchorNode = anchor.getNode();
-    bodyNode.addChild(node, anchorNode);
-    bodyNode.addLeaf(GroovyTokenTypes.mWS, " ", node);
-    bodyNode.addLeaf(GroovyTokenTypes.mNLS, "\n", anchorNode);
-
-    return element;
+    return body.addBefore(element, anchor);
   }
 
   public PsiElement add(@NotNull PsiElement psiElement) throws IncorrectOperationException {

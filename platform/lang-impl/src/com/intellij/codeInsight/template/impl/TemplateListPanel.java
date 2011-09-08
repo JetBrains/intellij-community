@@ -283,7 +283,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
     return myTemplateGroups;
   }
 
-  private void createTemplateEditor(TemplateImpl template,
+  private void createTemplateEditor(final TemplateImpl template,
                                     String shortcut,
                                     Map<TemplateOptionalProcessor, Boolean> options,
                                     Map<TemplateContextType, Boolean> context) {
@@ -293,6 +293,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
         DefaultMutableTreeNode node = getNode(getSelectedIndex());
         if (node != null) {
           ((DefaultTreeModel)myTree.getModel()).nodeChanged(node);
+          TemplateSettings.getInstance().setLastSelectedTemplate(template.getGroupName(), template.getKey());
         }
       }
     });
@@ -614,6 +615,9 @@ public class TemplateListPanel extends JPanel implements Disposable {
       .setBeanProvider(new NullableFunction<DnDActionInfo, DnDDragStartBean>() {
         @Override
         public DnDDragStartBean fun(DnDActionInfo dnDActionInfo) {
+          Point point = dnDActionInfo.getPoint();
+          if (myTree.getPathForLocation(point.x, point.y) == null) return null;
+
           int selectedIndex = getSelectedIndex();
           TemplateImpl template = getTemplate(selectedIndex);
           return template != null ? new DnDDragStartBean(Pair.create(template, getNode(selectedIndex))) : null;
@@ -640,11 +644,12 @@ public class TemplateListPanel extends JPanel implements Disposable {
           moveTemplate(pair.first, ObjectUtils.assertNotNull(getDropGroup(event)).getName(), pair.second);
         }
       })
-      .setImageProvider(new Function<DnDActionInfo, DnDImage>() {
+      .setImageProvider(new NullableFunction<DnDActionInfo, DnDImage>() {
         @Override
         public DnDImage fun(DnDActionInfo dnDActionInfo) {
           Point point = dnDActionInfo.getPoint();
-          return new DnDImage(DnDAwareTree.getDragImage(myTree, myTree.getPathForLocation(point.x, point.y), point).first);
+          TreePath path = myTree.getPathForLocation(point.x, point.y);
+          return path == null ? null : new DnDImage(DnDAwareTree.getDragImage(myTree, path, point).first);
         }
       })
       .install();
@@ -829,7 +834,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
     }
     else {
       TemplateImpl newTemplate = getTemplate(selected);
-      if (myCurrentTemplateEditor == null || !myCurrentTemplateEditor.getTemplate().equals(newTemplate)) {
+      if (myCurrentTemplateEditor == null || myCurrentTemplateEditor.getTemplate() != newTemplate) {
         if (myCurrentTemplateEditor != null) {
           myCurrentTemplateEditor.dispose();
         }

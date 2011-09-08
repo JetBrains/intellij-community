@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,16 +32,6 @@ public abstract class LafManager {
   public abstract UIManager.LookAndFeelInfo[] getInstalledLookAndFeels();
 
   public abstract UIManager.LookAndFeelInfo getCurrentLookAndFeel();
-
-  /**
-   * @deprecated use {@link com.intellij.util.ui.UIUtil#isUnderAquaLookAndFeel()}
-   */
-  public abstract boolean isUnderAquaLookAndFeel();
-
-  /**
-   * @deprecated use {@link com.intellij.util.ui.UIUtil#isUnderQuaquaLookAndFeel()}
-   */
-  public abstract boolean isUnderQuaquaLookAndFeel();
 
   public abstract boolean checkLookAndFeel(UIManager.LookAndFeelInfo lookAndFeelInfo);
 

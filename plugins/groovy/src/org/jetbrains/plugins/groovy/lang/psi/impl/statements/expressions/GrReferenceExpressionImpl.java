@@ -175,7 +175,8 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     String[] accessorNames = isLValue ? GroovyPropertyUtils.suggestSettersName(name) : GroovyPropertyUtils.suggestGettersName(name);
     List<GroovyResolveResult> accessorResults = new ArrayList<GroovyResolveResult>();
     for (String accessorName : accessorNames) {
-      AccessorResolverProcessor accessorResolver = new AccessorResolverProcessor(accessorName, this, !isLValue);
+      AccessorResolverProcessor accessorResolver =
+        new AccessorResolverProcessor(accessorName, this, !isLValue, false, getThisType(), getTypeArguments());
       GrReferenceResolveUtil.resolveImpl(accessorResolver, this);
       final GroovyResolveResult[] candidates = accessorResolver.getCandidates(); //can be only one correct candidate
       if (candidates.length > 0 && candidates[candidates.length - 1].isStaticsOK()) {
@@ -286,7 +287,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
     //search for getters
     for (String getterName : GroovyPropertyUtils.suggestGettersName(name)) {
-      AccessorResolverProcessor getterResolver = new AccessorResolverProcessor(getterName, this, true);
+      AccessorResolverProcessor getterResolver = new AccessorResolverProcessor(getterName, this, true, genericsMatter, getThisType(), getTypeArguments());
       GrReferenceResolveUtil.resolveImpl(getterResolver, this);
       final GroovyResolveResult[] candidates = getterResolver.getCandidates(); //can be only one candidate
       if (!allVariants && candidates.length == 1) {

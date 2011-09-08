@@ -114,6 +114,14 @@ public class UIUtil {
   private static final Color INACTIVE_HEADER_COLOR = new Color(128, 128, 128);
   private static final Color BORDER_COLOR = Color.LIGHT_GRAY;
 
+  public static final int DEFAULT_HGAP = 10;
+  public static final int DEFAULT_VGAP = 5;
+  public static final int LARGE_HGAP = 30;
+  public static final int LARGE_VGAP = 20;
+
+  public static final Insets PANEL_REGULAR_INSETS = new Insets(8, 12, 8, 12);
+  public static final Insets PANEL_SMALL_INSETS = new Insets(5, 8, 5, 8);
+
   // accessed only from EDT
   private static final HashMap<Color, BufferedImage> ourAppleDotSamples = new HashMap<Color, BufferedImage>();
 
@@ -596,16 +604,28 @@ public class UIUtil {
     return UIManager.getFont("OptionPane.messageFont");
   }
 
-  public static Color getSeparatorShadow() {
-    return UIManager.getColor("Separator.shadow");
-  }
-
   public static Font getMenuFont() {
     return UIManager.getFont("Menu.font");
   }
 
+  public static Color getSeparatorForeground() {
+    return UIManager.getColor("Separator.foreground");
+  }
+
+  public static Color getSeparatorBackground() {
+    return UIManager.getColor("Separator.background");
+  }
+
+  public static Color getSeparatorShadow() {
+    return UIManager.getColor("Separator.shadow");
+  }
+
   public static Color getSeparatorHighlight() {
     return UIManager.getColor("Separator.highlight");
+  }
+
+  public static Color getSeparatorColorUnderNimbus() {
+    return UIManager.getColor("nimbusBlueGrey");
   }
 
   public static Border getTableFocusCellHighlightBorder() {
@@ -1462,10 +1482,10 @@ public class UIUtil {
   public static Font getBorderFont(@NotNull FontSize size, boolean isBold) {
     Font defFont = getTitledBorderFont();
     if (size == FontSize.SMALL) {
-      defFont = defFont.deriveFont(defFont.getSize() - 2f);
+      defFont = defFont.deriveFont(Math.max(defFont.getSize() - 2f, 11f));
     }
     if (size == FontSize.MINI) {
-      defFont = defFont.deriveFont(defFont.getSize() - 4f);
+      defFont = defFont.deriveFont(Math.max(defFont.getSize() - 4f, 9f));
     }
     if (isBold) {
       defFont = defFont.deriveFont(Font.BOLD);

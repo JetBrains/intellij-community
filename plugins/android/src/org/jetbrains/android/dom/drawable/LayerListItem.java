@@ -34,4 +34,6 @@ public interface LayerListItem extends DrawableDomElement {
   List<BitmapOrNinePatchElement> getBitmaps();
 
   List<Shape> getShapes();
+  
+  List<InsetOrClipOrScale> getClips();
 }

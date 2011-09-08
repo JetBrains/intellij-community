@@ -124,15 +124,15 @@ public class JavaCompletionUtil {
   }
 
   public static void completeVariableNameForRefactoring(Project project, Set<LookupElement> set, String prefix, PsiType varType, VariableKind varKind) {
-    JavaMemberNameCompletionContributor.completeVariableNameForRefactoring(project, set, new CamelHumpMatcher(prefix), varType, varKind,
-                                                                           true);
+    final CamelHumpMatcher camelHumpMatcher = new CamelHumpMatcher(prefix);
+    JavaMemberNameCompletionContributor.completeVariableNameForRefactoring(project, set, camelHumpMatcher, varType, varKind, true, false);
   }
 
   public static String[] completeVariableNameForRefactoring(JavaCodeStyleManager codeStyleManager, final PsiType varType,
                                                                final VariableKind varKind,
                                                                SuggestedNameInfo suggestedNameInfo) {
     return JavaMemberNameCompletionContributor
-      .completeVariableNameForRefactoring(codeStyleManager, new CamelHumpMatcher(""), varType, varKind, suggestedNameInfo, true);
+      .completeVariableNameForRefactoring(codeStyleManager, new CamelHumpMatcher(""), varType, varKind, suggestedNameInfo, true, false);
   }
 
   public static PsiType eliminateWildcards(PsiType type) {
@@ -181,18 +181,6 @@ public class JavaCompletionUtil {
       }
     }
     return false;
-  }
-
-  private static PsiClass findClassByName(PsiClass defResult, PsiClass[] classes) {
-    String name = defResult.getName();
-    if (name == null) return defResult;
-
-    for (PsiClass candidate : classes) {
-      if (name.equals(candidate.getName())) {
-        return candidate;
-      }
-    }
-    return defResult;
   }
 
   @SuppressWarnings({"unchecked"})
@@ -850,9 +838,10 @@ public class JavaCompletionUtil {
         }
       }
       toInsert.processTail(editor, context.getTailOffset());
-
       if (completionChar == '.') {
         AutoPopupController.getInstance(file.getProject()).autoPopupMemberLookup(context.getEditor(), null);
+      } else if (completionChar == ',') {
+        AutoPopupController.getInstance(file.getProject()).autoPopupParameterInfo(context.getEditor(), null);
       }
     }
   }

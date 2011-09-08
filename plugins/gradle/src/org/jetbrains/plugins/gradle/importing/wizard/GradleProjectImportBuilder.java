@@ -158,7 +158,7 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
           catch (Exception e) {
             Throwable unwrapped = RemoteUtil.unwrap(e);
             if (unwrapped.getClass() == NoClassDefFoundError.class) {
-              errorReason.set(GradleBundle.message("gradle.import.text.error.too.old.gradle"));
+              errorReason.set(GradleBundle.message("gradle.import.text.incomplete.tooling.api"));
             }
             else {
               errorReason.set(unwrapped.getLocalizedMessage());

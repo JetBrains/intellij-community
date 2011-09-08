@@ -42,6 +42,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
+import static com.intellij.patterns.PsiJavaPatterns.psiClass;
+import static com.intellij.patterns.PsiJavaPatterns.psiField;
 import static com.intellij.patterns.StandardPatterns.or;
 
 /**
@@ -227,10 +229,8 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
     final VariableKind variableKind = JavaCodeStyleManager.getInstance(var.getProject()).getVariableKind(var);
 
     final String prefix = matcher.getPrefix();
-    if (PsiType.VOID.equals(var.getType()) || prefix.startsWith(JavaCompletionUtil.IS_PREFIX) ||
-        prefix.startsWith(JavaCompletionUtil.GET_PREFIX) ||
-        prefix.startsWith(JavaCompletionUtil.SET_PREFIX)) {
-      completeVariableNameForRefactoring(var.getProject(), set, matcher, var.getType(), variableKind, includeOverlapped);
+    if (PsiType.VOID.equals(var.getType()) || psiField().inClass(psiClass().isInterface()).accepts(var)) {
+      completeVariableNameForRefactoring(var.getProject(), set, matcher, var.getType(), variableKind, includeOverlapped, true);
       return;
     }
 
@@ -266,11 +266,11 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
                                                         Set<LookupElement> set,
                                                         PrefixMatcher matcher,
                                                         PsiType varType,
-                                                        VariableKind varKind, final boolean includeOverlapped) {
+                                                        VariableKind varKind, final boolean includeOverlapped, final boolean methodPrefix) {
     JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
     SuggestedNameInfo suggestedNameInfo = codeStyleManager.suggestVariableName(varKind, null, null, varType);
     final String[] strings = completeVariableNameForRefactoring(codeStyleManager, matcher, varType, varKind, suggestedNameInfo,
-                                                                includeOverlapped);
+                                                                includeOverlapped, methodPrefix);
     tunePreferencePolicy(LookupItemUtil.addLookupItems(set, strings, matcher), suggestedNameInfo);
   }
 
@@ -278,7 +278,8 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
                                                             final PrefixMatcher matcher,
                                                             final PsiType varType,
                                                             final VariableKind varKind,
-                                                            SuggestedNameInfo suggestedNameInfo, final boolean includeOverlapped) {
+                                                            SuggestedNameInfo suggestedNameInfo,
+                                                            final boolean includeOverlapped, final boolean methodPrefix) {
     Set<String> result = new LinkedHashSet<String>();
     final String[] suggestedNames = suggestedNameInfo.names;
     for (final String suggestedName : suggestedNames) {
@@ -291,9 +292,7 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
       // use suggested names as suffixes
       final String requiredSuffix = codeStyleManager.getSuffixByVariableKind(varKind);
       final String prefix = matcher.getPrefix();
-      final boolean isMethodPrefix = prefix.startsWith(JavaCompletionUtil.IS_PREFIX) || prefix.startsWith(JavaCompletionUtil.GET_PREFIX) || prefix.startsWith(
-        JavaCompletionUtil.SET_PREFIX);
-      if (varKind != VariableKind.STATIC_FINAL_FIELD || isMethodPrefix) {
+      if (varKind != VariableKind.STATIC_FINAL_FIELD || methodPrefix) {
         for (int i = 0; i < suggestedNames.length; i++) {
           suggestedNames[i] = codeStyleManager.variableNameToPropertyName(suggestedNames[i], varKind);
         }
@@ -304,6 +303,11 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
 
     }
     return ArrayUtil.toStringArray(result);
+  }
+
+  private static boolean isMethodPrefix(String prefix) {
+    return prefix.startsWith(JavaCompletionUtil.IS_PREFIX) || prefix.startsWith(JavaCompletionUtil.GET_PREFIX) || prefix.startsWith(
+      JavaCompletionUtil.SET_PREFIX);
   }
 
   private static void completeMethodName(Set<LookupElement> set, PsiElement element, final PrefixMatcher matcher){

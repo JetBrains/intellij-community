@@ -122,20 +122,34 @@ class GroovyAutoPopupTest extends CompletionAutoPopupTestCase {
   }
 
   public void testTypingNonImportedClassName() {
-    CodeInsightSettings.instance.AUTOPOPUP_FOCUS_POLICY = CodeInsightSettings.ALWAYS
+    setFocusLookup()
 
-    try {
-      myFixture.addClass("package foo; public class Foo239 {} ")
-      myFixture.addClass("class Foo239Util {} ")
-      myFixture.configureByText "a.groovy", "<caret>"
-      type 'Foo239 '
-      myFixture.checkResult 'Foo239 <caret>'
-    }
-    finally {
-      CodeInsightSettings.instance.AUTOPOPUP_FOCUS_POLICY = CodeInsightSettings.SMART
-    }
+    myFixture.addClass("package foo; public class Foo239 {} ")
+    myFixture.addClass("class Foo239Util {} ")
+    myFixture.configureByText "a.groovy", "<caret>"
+    type 'Foo239 '
+    myFixture.checkResult 'Foo239 <caret>'
   }
 
+  @Override
+  protected void tearDown() {
+    CodeInsightSettings.instance.AUTOPOPUP_FOCUS_POLICY = CodeInsightSettings.SMART
+    super.tearDown()
+  }
+
+  private def setFocusLookup() {
+    CodeInsightSettings.instance.AUTOPOPUP_FOCUS_POLICY = CodeInsightSettings.ALWAYS
+  }
+
+  public void testPopupAfterDotAfterPackage() {
+    setFocusLookup()
+
+    myFixture.configureByText 'a.groovy', '<caret>'
+    type 'import jav'
+    assert lookup
+    type '.'
+    assert lookup
+  }
 
 
 }

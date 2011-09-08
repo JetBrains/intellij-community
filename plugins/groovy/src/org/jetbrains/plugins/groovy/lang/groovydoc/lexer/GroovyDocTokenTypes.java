@@ -16,8 +16,8 @@
 
 package org.jetbrains.plugins.groovy.lang.groovydoc.lexer;
 
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.plugins.groovy.lang.groovydoc.parser.elements.GroovyDocTagValueTokenType;
 
 /**
@@ -51,7 +51,7 @@ public interface GroovyDocTokenTypes {
       mGDOC_COMMENT_END,
       mGDOC_COMMENT_DATA,
       mGDOC_TAG_NAME,
-      mGDOC_WHITESPACE,
+//      mGDOC_WHITESPACE,
       mGDOC_TAG_VALUE_TOKEN,
       mGDOC_TAG_VALUE_LPAREN,
       mGDOC_TAG_VALUE_RPAREN,

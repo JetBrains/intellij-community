@@ -41,10 +41,12 @@ import java.util.List;
 
 public class MvcRunTargetDialog extends DialogWrapper {
 
+  private static final String GRAILS_PREFIX = "grails ";
+
   private JPanel contentPane;
   private JLabel myTargetLabel;
   private JPanel myFakePanel;
-  private JTextField myVmOptionsField;
+  private EditorTextField myVmOptionsField;
   private JComboBox myModuleBox;
   private JLabel myModuleLabel;
   private JLabel myVmOptionLabel;
@@ -109,6 +111,12 @@ public class MvcRunTargetDialog extends DialogWrapper {
 
   public String[] getTargetArguments() {
     String text = getSelectedText();
+
+    text = text.trim();
+    if (text.startsWith(GRAILS_PREFIX)) {
+      text = text.substring(GRAILS_PREFIX.length());
+    }
+
     Iterable<String> iterable = StringUtil.tokenize(text, " ");
     ArrayList<String> args = new ArrayList<String>();
     for (String s : iterable) {
@@ -139,6 +147,22 @@ public class MvcRunTargetDialog extends DialogWrapper {
 
     myFakePanel = new JPanel(new BorderLayout());
     myFakePanel.add(myTargetField, BorderLayout.CENTER);
+
+    TextFieldCompletionProvider vmOptionCompletionProvider = new TextFieldCompletionProvider() {
+      @NotNull
+      @Override
+      protected String getPrefix(@NotNull String currentTextPrefix) {
+        return MvcRunTargetDialog.getPrefix(currentTextPrefix);
+      }
+
+      @Override
+      protected void addCompletionVariants(@NotNull String text, int offset, @NotNull String prefix, @NotNull CompletionResultSet result) {
+        if (prefix.endsWith("-D")) {
+          result.addAllElements(MvcTargetDialogCompletionUtils.getSystemPropertiesVariants());
+        }
+      }
+    };
+    myVmOptionsField = vmOptionCompletionProvider.createEditor(myModule.getProject());
 
     new TextFieldCompletionProvider() {
 

@@ -6,4 +6,8 @@ class Test {
     List<String> lss = new ArrayList<>();
     List<Integer> li = new ArrayList<>();
   }
+  
+  void bar() {
+    foo();
+  }
 }

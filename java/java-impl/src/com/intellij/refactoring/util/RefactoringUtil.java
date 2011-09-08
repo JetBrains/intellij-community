@@ -883,12 +883,12 @@ public class RefactoringUtil {
                                                       final PsiSubstitutor substitutor,
                                                       final PsiElementFactory factory) {
     for (PsiTypeParameter parameter : parametersIterable) {
+      PsiType substitutedType = substitutor.substitute(parameter);
+      if (substitutedType == null) {
+        substitutedType = TypeConversionUtil.erasure(factory.createType(parameter));
+      }
       for (PsiReference reference : ReferencesSearch.search(parameter, new LocalSearchScope(member))) {
         final PsiElement element = reference.getElement();
-        PsiType substitutedType = substitutor.substitute(parameter);
-        if (substitutedType == null) {
-          substitutedType = TypeConversionUtil.erasure(factory.createType(parameter));
-        }
         final PsiElement parent = element.getParent();
         if (parent instanceof PsiTypeElement) {
           parent.replace(factory.createTypeElement(substitutedType));

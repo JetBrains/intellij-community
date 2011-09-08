@@ -313,6 +313,10 @@ public class PsiDiamondType extends PsiType {
     public String getErrorMessage() {
       return myErrorMessage;
     }
+    
+    public boolean failedToInfer() {
+      return myErrorMessage != null;
+    }
 
     public void addInferredType(PsiType psiType) {
       if (myErrorMessage != null) return;

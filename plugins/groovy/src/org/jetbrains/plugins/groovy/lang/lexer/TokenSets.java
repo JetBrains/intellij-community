@@ -46,8 +46,7 @@ public abstract class TokenSets {
 
 
   public static TokenSet WHITE_SPACE_TOKEN_SET = TokenSet.create(
-      mWS,
-      mGDOC_WHITESPACE
+      TokenType.WHITE_SPACE
   );
 
   public static final TokenSet NUMBERS = TokenSet.create(mNUM_INT,
@@ -139,7 +138,7 @@ public abstract class TokenSets {
           mGE,
           kIN
   );
-  public static final TokenSet WHITE_SPACES_SET = TokenSet.create(mWS, mNLS, TokenType.WHITE_SPACE);
+  public static final TokenSet WHITE_SPACES_SET = TokenSet.create(mNLS, TokenType.WHITE_SPACE);
 
   public static final TokenSet COMMENT_SET = TokenSet.create(mML_COMMENT, mSH_COMMENT, mSL_COMMENT, GROOVY_DOC_COMMENT);
 

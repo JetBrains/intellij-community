@@ -292,7 +292,7 @@ public class GenericsUtil {
           substitutor = substitutor.put(typeParameter, toPut);
         }
         final PsiAnnotation[] applicableAnnotations = classType.getApplicableAnnotations();
-        if (substitutor == PsiSubstitutor.EMPTY && !toExtend && applicableAnnotations.length == 0) return classType;
+        if (substitutor == PsiSubstitutor.EMPTY && !toExtend && applicableAnnotations.length == 0 && !(aClass instanceof PsiTypeParameter)) return classType;
         PsiManager manager = aClass.getManager();
         PsiType result = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory()
           .createType(aClass, substitutor, PsiUtil.getLanguageLevel(aClass), applicableAnnotations);

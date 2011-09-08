@@ -16,16 +16,19 @@
 
 package com.intellij.ide;
 
+import com.intellij.ide.dnd.LinuxDragAndDropSupport;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.DataFlavor;
@@ -33,6 +36,7 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.dnd.InvalidDnDOperationException;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -199,8 +203,12 @@ public class PsiCopyPasteManager {
   }
 
   public static class MyTransferable implements Transferable {
+    private static final DataFlavor[] DATA_FLAVOR_ARRAY = {
+      ourDataFlavor, DataFlavor.stringFlavor, DataFlavor.javaFileListFlavor,
+      LinuxDragAndDropSupport.uriListFlavor, LinuxDragAndDropSupport.gnomeFileListFlavor
+    };
+
     private final MyData myDataProxy;
-    private static final DataFlavor[] DATA_FLAVOR_ARRAY = new DataFlavor[]{ourDataFlavor, DataFlavor.stringFlavor, DataFlavor.javaFileListFlavor};
 
     public MyTransferable(MyData data) {
       myDataProxy = data;
@@ -211,48 +219,66 @@ public class PsiCopyPasteManager {
       if (ourDataFlavor.equals(flavor)) {
         return myDataProxy;
       }
-      if (DataFlavor.stringFlavor.equals(flavor)) {
+      else if (DataFlavor.stringFlavor.equals(flavor)) {
         return getDataAsText();
       }
-      if (DataFlavor.javaFileListFlavor.equals(flavor)) {
-        return ApplicationManager.getApplication().runReadAction(new Computable<List<File>>() {
-          @Override
-          public List<File> compute() {
-            return asFileList(myDataProxy.getElements());
-          }
-        });
+      else if (DataFlavor.javaFileListFlavor.equals(flavor)) {
+        return getDataAsFileList();
       }
+      else if (flavor.equals(LinuxDragAndDropSupport.uriListFlavor)) {
+        final List<File> files = getDataAsFileList();
+        if (files != null) {
+          return LinuxDragAndDropSupport.toUriList(files);
+        }
+      }
+      else if (flavor.equals(LinuxDragAndDropSupport.gnomeFileListFlavor)) {
+        final List<File> files = getDataAsFileList();
+        if (files != null) {
+          final String string = (myDataProxy.isCopied() ? "copy\n" : "cut\n") + LinuxDragAndDropSupport.toUriList(files);
+          return new ByteArrayInputStream(string.getBytes(CharsetToolkit.UTF8_CHARSET));
+        }
+      }
+
       return null;
     }
 
     @Nullable
     private String getDataAsText() {
-      final List<String> names = new ArrayList<String>();
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        public void run() {
-          for (PsiElement element : myDataProxy.getElements()) {
-            if (element instanceof PsiNamedElement) {
-              String name = ((PsiNamedElement) element).getName();
-              if (name != null) {
-                names.add(name);
-              }
+      final AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
+      try {
+        final List<String> names = new ArrayList<String>();
+        for (PsiElement element : myDataProxy.getElements()) {
+          if (element instanceof PsiNamedElement) {
+            String name = ((PsiNamedElement)element).getName();
+            if (name != null) {
+              names.add(name);
             }
           }
         }
-      });
-      if (names.isEmpty()) {
-        return null;
+        return names.isEmpty() ? null : StringUtil.join(names, "\n");
       }
-      return StringUtil.join(names, "\n");
+      finally {
+        token.finish();
+      }
     }
 
+    @Nullable
+    private List<File> getDataAsFileList() {
+      final AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
+      try {
+        return asFileList(myDataProxy.getElements());
+      }
+      finally {
+        token.finish();
+      }
+    }
 
     public DataFlavor[] getTransferDataFlavors() {
       return DATA_FLAVOR_ARRAY;
     }
 
     public boolean isDataFlavorSupported(DataFlavor flavor) {
-      return flavor.equals(ourDataFlavor) || flavor.equals(DataFlavor.stringFlavor) || flavor.equals(DataFlavor.javaFileListFlavor);
+      return ArrayUtil.find(DATA_FLAVOR_ARRAY, flavor) != -1;
     }
 
     public PsiElement[] getElements() {

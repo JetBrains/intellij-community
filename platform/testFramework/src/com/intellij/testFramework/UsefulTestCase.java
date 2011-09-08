@@ -64,6 +64,7 @@ public abstract class UsefulTestCase extends TestCase {
   private static final String DEFAULT_SETTINGS_EXTERNALIZED;
   private static final Random PRNG = new SecureRandom();
   private static final String ORIGINAL_TEMP_DIR = FileUtil.getTempDirectory();
+  public static final String IDEA_MARKER_CLASS = "com.intellij.openapi.components.impl.stores.IdeaProjectStoreImpl";
 
   protected final Disposable myTestRootDisposable = Disposer.newDisposable();
   private CodeStyleSettings myOldCodeStyleSettings;

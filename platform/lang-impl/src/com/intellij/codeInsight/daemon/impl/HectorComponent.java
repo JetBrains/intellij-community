@@ -71,6 +71,7 @@ public class HectorComponent extends JPanel {
 
   public HectorComponent(PsiFile file) {
     super(new GridBagLayout());
+    setBorder(BorderFactory.createEmptyBorder(0, 0, 7, 0));
     myFile = file;
     mySliders = new HashMap<Language, JSlider>();
 
@@ -118,10 +119,10 @@ public class HectorComponent extends JPanel {
     }
 
     GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.NORTHWEST,
-                                                   GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0);
+                                                   GridBagConstraints.NONE, new Insets(0, 5, 0, 0), 0, 0);
 
     JPanel panel = new JPanel(new GridBagLayout());
-    panel.setBorder(IdeBorderFactory.createTitledBorder(myTitle, false, false, true));
+    panel.setBorder(IdeBorderFactory.createTitledBorder(myTitle, false, false, true, new Insets(5, 0, 0, 0)));
     final boolean addLabel = mySliders.size() > 1;
     if (addLabel) {
       layoutVertical(panel);
@@ -130,7 +131,7 @@ public class HectorComponent extends JPanel {
       layoutHorizontal(panel);
     }
     gc.gridx = 0;
-    gc.gridy = 2;
+    gc.gridy = 0;
     gc.weighty = 1.0;
     gc.fill = GridBagConstraints.BOTH;
     add(panel, gc);
@@ -139,6 +140,7 @@ public class HectorComponent extends JPanel {
     gc.weighty = 0;
 
     final HyperlinkLabel configurator = new HyperlinkLabel("Configure inspections");
+    gc.insets.right = 5;
     gc.weightx = 0;
     gc.fill = GridBagConstraints.NONE;
     gc.anchor = GridBagConstraints.EAST;
@@ -158,6 +160,9 @@ public class HectorComponent extends JPanel {
     });
 
     gc.anchor = GridBagConstraints.WEST;
+    gc.weightx = 1.0;
+    gc.insets.right = 0;
+    gc.fill = GridBagConstraints.HORIZONTAL;
     myAdditionalPanels = new ArrayList<HectorComponentPanel>();
     for (HectorComponentPanelsProvider provider : Extensions.getExtensions(HectorComponentPanelsProvider.EP_NAME, project)) {
       final HectorComponentPanel componentPanel = provider.createConfigurable(file);

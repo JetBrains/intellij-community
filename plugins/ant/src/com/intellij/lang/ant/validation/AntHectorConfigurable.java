@@ -71,17 +71,16 @@ public class AntHectorConfigurable extends HectorComponentPanel {
 
   public JComponent createComponent() {
     final JPanel panel = new JPanel(new GridBagLayout());
-    panel.setBorder(IdeBorderFactory.createTitledBorder("File Context", false, true, true));
+    panel.setBorder(IdeBorderFactory.createTitledBorder("File Context", false, false, true));
     myCombo = new ComboBox();
     myCombo.putClientProperty(CONTEXTS_COMBO_KEY, Boolean.TRUE);
     panel.add(
         new JLabel("Included into:"), 
-        new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(5, 5, 5, 0), 0, 0)
+        new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(5, 0, 5, 0), 0, 0)
     );
     panel.add(
-        myCombo, 
-        new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(5, 5, 5, 5), 0, 0)
-    );
+      myCombo,
+      new GridBagConstraints(1, 0, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(5, 5, 5, 0), 0, 0));
 
     final PsiManager psiManager = PsiManager.getInstance(myProject);
     final FileBasedIndex fbi = FileBasedIndex.getInstance();
@@ -125,7 +124,7 @@ public class AntHectorConfigurable extends HectorComponentPanel {
       }
     }
     myCombo.setSelectedItem(myOriginalContext);
-    
+
     return panel;
   }
 

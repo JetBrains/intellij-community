@@ -16,6 +16,7 @@
 
 package org.jetbrains.plugins.groovy.lang.completion;
 
+import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
@@ -145,6 +146,10 @@ public class GroovyInsertHandler implements InsertHandler<LookupElement> {
       context.setAddCompletionChar(false);
       TailType.EQ.processTail(context.getEditor(), context.getTailOffset());
       return;
+    }
+
+    if (obj instanceof PsiPackage) {
+      AutoPopupController.getInstance(context.getProject()).scheduleAutoPopup(context.getEditor(), null);
     }
 
     addTailType(item).processTail(context.getEditor(), context.getTailOffset());

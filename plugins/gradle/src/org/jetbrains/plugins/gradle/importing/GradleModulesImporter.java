@@ -15,6 +15,7 @@ import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -223,8 +224,20 @@ public class GradleModulesImporter {
     CompilerModuleExtension compilerExtension = model.getModuleExtension(CompilerModuleExtension.class);
     compilerExtension.inheritCompilerOutputPath(module.isInheritProjectCompileOutputPath());
     if (!module.isInheritProjectCompileOutputPath()) {
-      compilerExtension.setCompilerOutputPath(module.getCompileOutputPath(SourceType.SOURCE));
-      compilerExtension.setCompilerOutputPathForTests(module.getCompileOutputPath(SourceType.TEST));
+      String compileOutputPath = module.getCompileOutputPath(SourceType.SOURCE);
+      String testCompileOutputPath = module.getCompileOutputPath(SourceType.TEST);
+      if (StringUtil.isEmpty(compileOutputPath) || StringUtil.isEmpty(testCompileOutputPath)) {
+        GradleLog.LOG.warn(String.format(
+          "Module '%s' doesn't inherit project compile output path but has incomplete local setup. Falling back to the project "
+          + "compile output path. Local compile output path: '%s', local test compile output path: '%s'",
+          module.getName(), compileOutputPath, testCompileOutputPath
+        ));
+        compilerExtension.inheritCompilerOutputPath(true);
+      }
+      else {
+        compilerExtension.setCompilerOutputPath(compileOutputPath);
+        compilerExtension.setCompilerOutputPathForTests(testCompileOutputPath);
+      }
     }
     
     // Content roots.

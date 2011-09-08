@@ -39,6 +39,11 @@ public class VariablesCompletionTest extends CompletionTestCase {
     doTest("TestSource1.java", "TestResult1.java");
   }
 
+  public void testInterfaceMethod() throws Exception {
+    configureByFile(FILE_PREFIX + "locals/" + "InterfaceMethod.java");
+    assertStringItems("calcGooBarDoo", "calcBarDoo", "calcDoo");
+  }
+
   public void testLocals2() throws Exception {
     configureByFile(FILE_PREFIX + "locals/" + "TestSource2.java");
     compareLookup(FILE_PREFIX + "locals/test2-lst.txt");
@@ -117,7 +122,7 @@ public class VariablesCompletionTest extends CompletionTestCase {
     complete();
     checkResultByFile(FILE_PREFIX + "locals/" + "TestFieldOutOfAnonymousResult.java");
   }
-  
+
   public void testUnresolvedMethodName() throws Exception {
     configureByFile(FILE_PREFIX + "locals/" + "UnresolvedMethodName.java");
     complete();

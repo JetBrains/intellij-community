@@ -215,7 +215,7 @@ public class VcsChangeDetailsManager {
     }
   }
 
-  private static class FragmentedDiffDetailsPanel extends AbstractRefreshablePanel<ValueWithVcsException<FragmentedContent>> {
+  private static class FragmentedDiffDetailsPanel extends AbstractRefreshablePanel<ValueWithVcsException<PreparedFragmentedContent>> {
     private final FragmentedDiffRequestFromChange myRequestFromChange;
     private final FilePath myFilePath;
     private final ChangeListManager myChangeListManager;
@@ -231,10 +231,10 @@ public class VcsChangeDetailsManager {
     }
 
     @Override
-    protected ValueWithVcsException<FragmentedContent> loadImpl() throws VcsException {
-      return new ValueWithVcsException<FragmentedContent>() {
+    protected ValueWithVcsException<PreparedFragmentedContent> loadImpl() throws VcsException {
+      return new ValueWithVcsException<PreparedFragmentedContent>() {
         @Override
-        protected FragmentedContent computeImpl() throws VcsException {
+        protected PreparedFragmentedContent computeImpl() throws VcsException {
           final Change change = myChangeListManager.getChange(myFilePath);
           if (change == null) {
             return null;
@@ -246,15 +246,15 @@ public class VcsChangeDetailsManager {
     }
 
     @Override
-    protected JPanel dataToPresentation(ValueWithVcsException<FragmentedContent> value) {
+    protected JPanel dataToPresentation(ValueWithVcsException<PreparedFragmentedContent> value) {
       if (value == null) {
         return noDifferences();
       }
-      final FragmentedContent requestForChange;
+      final PreparedFragmentedContent requestForChange;
       try {
         requestForChange = value.get();
         if (requestForChange == null) throw new VcsException("Can not load content");
-        if (requestForChange.getRanges().isEmpty()) {
+        if (requestForChange.isEmpty()) {
           return noDifferences();
         }
       }

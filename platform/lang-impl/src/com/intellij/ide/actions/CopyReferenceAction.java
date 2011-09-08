@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.dnd.FileCopyPasteUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -40,6 +41,7 @@ import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.LogicalRoot;
 import com.intellij.util.LogicalRootsManager;
 import org.jetbrains.annotations.NotNull;
@@ -51,6 +53,8 @@ import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
 
 public class CopyReferenceAction extends AnAction {
+  public static final DataFlavor ourFlavor = FileCopyPasteUtil.createJvmDataFlavor(MyTransferable.class);
+
   public CopyReferenceAction() {
     super();
     setEnabledInModalContext(true);
@@ -82,10 +86,11 @@ public class CopyReferenceAction extends AnAction {
     PsiElement element = getElementToCopy(editor, dataContext);
 
     if (!doCopy(element, project, editor)) return;
+
     HighlightManager highlightManager = HighlightManager.getInstance(project);
     EditorColorsManager manager = EditorColorsManager.getInstance();
     TextAttributes attributes = manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
-    if (editor != null) {
+    if (editor != null && element != null) {
       PsiElement nameIdentifier = HighlightUsagesHandler.getNameIdentifier(element);
       if (nameIdentifier != null) {
         highlightManager.addOccurrenceHighlights(editor, new PsiElement[]{nameIdentifier}, attributes, true, null);
@@ -139,24 +144,9 @@ public class CopyReferenceAction extends AnAction {
     return true;
   }
 
-  private static DataFlavor ourFlavor;
-
-  @Nullable
-  static DataFlavor getFlavor() {
-    if (ourFlavor != null) {
-      return ourFlavor;
-    }
-    try {
-      ourFlavor = new DataFlavor(DataFlavor.javaJVMLocalObjectMimeType + ";class=" + MyTransferable.class.getName());
-    }
-    catch (ClassNotFoundException e) {
-      return null;
-    }
-    return ourFlavor;
-  }
-
-
   private static class MyTransferable implements Transferable {
+    private static final DataFlavor[] DATA_FLAVORS = new DataFlavor[]{ourFlavor, DataFlavor.stringFlavor};
+
     private final String fqn;
 
     public MyTransferable(String fqn) {
@@ -164,21 +154,19 @@ public class CopyReferenceAction extends AnAction {
     }
 
     public DataFlavor[] getTransferDataFlavors() {
-      final DataFlavor flavor = getFlavor();
-      if (flavor != null) {
-        return new DataFlavor[]{flavor, DataFlavor.stringFlavor};
-      }
-      return new DataFlavor[]{DataFlavor.stringFlavor};
+      return DATA_FLAVORS;
     }
 
     public boolean isDataFlavorSupported(DataFlavor flavor) {
-      return flavor.equals(getFlavor()) || DataFlavor.stringFlavor.equals(flavor);
+      return ArrayUtil.find(DATA_FLAVORS, flavor) != -1;
     }
 
     @Nullable
     public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException, IOException {
-      if (!isDataFlavorSupported(flavor)) return null;
-      return fqn;
+      if (isDataFlavorSupported(flavor)) {
+        return fqn;
+      }
+      return null;
     }
   }
 
@@ -208,6 +196,7 @@ public class CopyReferenceAction extends AnAction {
     return fqn;
   }
 
+  @Nullable
   private static String getQualifiedNameFromProviders(@Nullable PsiElement element) {
     if (element == null) return null;
     for (QualifiedNameProvider provider : Extensions.getExtensions(QualifiedNameProvider.EP_NAME)) {

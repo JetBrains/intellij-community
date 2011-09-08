@@ -92,7 +92,11 @@ public class LookupTypedHandler extends TypedHandlerDelegate {
 
       if (result == CharFilter.Result.SELECT_ITEM_AND_FINISH_LOOKUP && lookup.isFocused()) {
         LookupElement item = lookup.getCurrentItem();
-        if (item != null){
+        if (item != null) {
+          if (completeTillTypedCharOccurrence(charTyped, lookup, item)) {
+            return Result.STOP;
+          }
+
           inside = false;
           ((CommandProcessorEx)CommandProcessor.getInstance()).enterModal();
           try {
@@ -115,6 +119,29 @@ public class LookupTypedHandler extends TypedHandlerDelegate {
     finally {
       inside = false;
     }
+  }
+
+  private boolean completeTillTypedCharOccurrence(char charTyped, LookupImpl lookup, LookupElement item) {
+    PrefixMatcher matcher = lookup.itemMatcher(item);
+    final String oldPrefix = matcher.getPrefix() + lookup.getAdditionalPrefix();
+    PrefixMatcher expanded = matcher.cloneWithPrefix(oldPrefix + charTyped);
+    if (expanded.prefixMatches(item)) {
+      for (String s : item.getAllLookupStrings()) {
+        if (matcher.prefixMatches(s)) {
+          int i = -1;
+          while (true) {
+            i = s.indexOf(charTyped, i + 1);
+            if (i < 0)  break;
+            final String newPrefix = s.substring(0, i + 1);
+            if (expanded.prefixMatches(newPrefix)) {
+              lookup.replacePrefix(oldPrefix, newPrefix);
+              return true;
+            }
+          }
+        }
+      }
+    }
+    return false;
   }
 
   public static void finishLookup(final char charTyped, @NotNull final LookupImpl lookup, final Runnable baseChange) {

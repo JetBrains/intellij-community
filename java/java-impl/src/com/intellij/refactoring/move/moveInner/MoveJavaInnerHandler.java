@@ -48,7 +48,7 @@ public class MoveJavaInnerHandler implements MoveInnerHandler {
         final PsiModifierList modifierList = constructor.getModifierList();
         modifierList.setModifierProperty(PsiModifier.PRIVATE, false);
         modifierList.setModifierProperty(PsiModifier.PROTECTED, false);
-        if (makePublic) {
+        if (makePublic && !newClass.isEnum()) {
           modifierList.setModifierProperty(PsiModifier.PUBLIC, true);
         }
       }

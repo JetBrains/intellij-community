@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.groovydoc.lexer;
 
 import com.intellij.lexer.LexerBase;
 import com.intellij.lexer.MergingLexerAdapter;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.text.CharArrayUtil;
@@ -31,7 +32,7 @@ public class GroovyDocLexer extends MergingLexerAdapter implements GroovyDocToke
 
   private static final TokenSet TOKENS_TO_MERGE = TokenSet.create(
       mGDOC_COMMENT_DATA,
-      mGDOC_WHITESPACE
+      TokenType.WHITE_SPACE
   );
 
   public GroovyDocLexer() {
@@ -101,7 +102,7 @@ public class GroovyDocLexer extends MergingLexerAdapter implements GroovyDocToke
       if (myTokenType != null) return;
       _locateToken();
 
-      if (myTokenType == mGDOC_WHITESPACE) {
+      if (myTokenType == TokenType.WHITE_SPACE) {
         myAfterLineBreak = CharArrayUtil.containLineBreaks(myBuffer, getTokenStart(), getTokenEnd());
       }
     }
@@ -148,7 +149,7 @@ public class GroovyDocLexer extends MergingLexerAdapter implements GroovyDocToke
 
         if (myBufferIndex < myTokenEndOffset) {
           myTokenType = lf || state == _GroovyDocLexer.PARAM_TAG_SPACE || state == _GroovyDocLexer.TAG_DOC_SPACE || state == _GroovyDocLexer.INLINE_TAG_NAME || state == _GroovyDocLexer.DOC_TAG_VALUE_IN_PAREN
-              ? mGDOC_WHITESPACE
+              ? TokenType.WHITE_SPACE
               : mGDOC_COMMENT_DATA;
 
           return;

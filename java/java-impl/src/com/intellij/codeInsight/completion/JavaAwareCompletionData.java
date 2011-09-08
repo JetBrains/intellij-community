@@ -36,19 +36,6 @@ public class JavaAwareCompletionData extends CompletionData{
   static TailType analyzeItem(final Object completion, final PsiElement position) {
     if(completion instanceof PsiKeyword){
       final String text = ((PsiKeyword)completion).getText();
-      if(PsiKeyword.BREAK.equals(text) || PsiKeyword.CONTINUE.equals(text)) {
-        PsiElement scope = position;
-        while(true){
-          if (scope instanceof PsiFile || scope instanceof PsiMethod || scope instanceof PsiClassInitializer){
-            return TailType.SEMICOLON;
-          }
-
-          if (scope instanceof PsiLabeledStatement){
-            return TailType.NONE;
-          }
-          scope = scope.getParent();
-        }
-      }
       if(PsiKeyword.RETURN.equals(text)){
         PsiElement scope = position;
         while(true){

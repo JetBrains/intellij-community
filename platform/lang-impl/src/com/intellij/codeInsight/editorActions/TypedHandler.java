@@ -175,7 +175,7 @@ public class TypedHandler extends TypedActionHandlerBase {
         autoPopupController.autoPopupMemberLookup(editor, null);
       }
 
-      if (charTyped == '(' && !isInsideStringLiteral(editor, file)) {
+      if ((charTyped == '(' || charTyped == ',') && !isInsideStringLiteral(editor, file)) {
         autoPopupController.autoPopupParameterInfo(editor, null);
       }
     }

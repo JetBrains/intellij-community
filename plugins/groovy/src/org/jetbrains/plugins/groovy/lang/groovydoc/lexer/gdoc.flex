@@ -17,11 +17,12 @@ package org.jetbrains.plugins.groovy.lang.groovydoc.lexer;
 
 import com.intellij.lexer.FlexLexer;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.TokenType;
 
 %%
 
 %class _GroovyDocLexer
-%implements FlexLexer, GroovyDocTokenTypes
+%implements FlexLexer, GroovyDocTokenTypes, TokenType
 %unicode
 %public
 
@@ -77,20 +78,20 @@ IDENTIFIER={ALPHA}({ALPHA}|{DIGIT}|[":.-"])*
 %%
 
 <YYINITIAL> "/**" { yybegin(COMMENT_DATA_START); return mGDOC_COMMENT_START; }
-<COMMENT_DATA_START> {WHITE_DOC_SPACE_CHAR}+ { return mGDOC_WHITESPACE; }
+<COMMENT_DATA_START> {WHITE_DOC_SPACE_CHAR}+ { return WHITE_SPACE; }
 <COMMENT_DATA>  {WHITE_DOC_SPACE_NO_NL}+ { return mGDOC_COMMENT_DATA; }
-<COMMENT_DATA>  [\n\r]+{WHITE_DOC_SPACE_CHAR}* { return mGDOC_WHITESPACE; }
+<COMMENT_DATA>  [\n\r]+{WHITE_DOC_SPACE_CHAR}* { return WHITE_SPACE; }
 
-<DOC_TAG_VALUE> {WHITE_DOC_SPACE_CHAR}+ { yybegin(COMMENT_DATA); return mGDOC_WHITESPACE; }
+<DOC_TAG_VALUE> {WHITE_DOC_SPACE_CHAR}+ { yybegin(COMMENT_DATA); return WHITE_SPACE; }
 <DOC_TAG_VALUE, DOC_TAG_VALUE_IN_PAREN> ({ALPHA}|[_0-9\."$"\[\]])+ { return mGDOC_TAG_VALUE_TOKEN; }
 <DOC_TAG_VALUE> [\(] { yybegin(DOC_TAG_VALUE_IN_PAREN); return mGDOC_TAG_VALUE_LPAREN; }
 <DOC_TAG_VALUE_IN_PAREN> [\)] { yybegin(DOC_TAG_VALUE); return mGDOC_TAG_VALUE_RPAREN; }
 <DOC_TAG_VALUE> [#] { return mGDOC_TAG_VALUE_SHARP_TOKEN; }
 <DOC_TAG_VALUE, DOC_TAG_VALUE_IN_PAREN> [,] { return mGDOC_TAG_VALUE_COMMA; }
-<DOC_TAG_VALUE_IN_PAREN> {WHITE_DOC_SPACE_CHAR}+ { return mGDOC_WHITESPACE; }
+<DOC_TAG_VALUE_IN_PAREN> {WHITE_DOC_SPACE_CHAR}+ { return WHITE_SPACE; }
 
 <INLINE_TAG_NAME, COMMENT_DATA_START> "@param" { yybegin(PARAM_TAG_SPACE); return mGDOC_TAG_NAME; }
-<PARAM_TAG_SPACE>  {WHITE_DOC_SPACE_CHAR}+ {yybegin(DOC_TAG_VALUE); return mGDOC_WHITESPACE;}
+<PARAM_TAG_SPACE>  {WHITE_DOC_SPACE_CHAR}+ {yybegin(DOC_TAG_VALUE); return WHITE_SPACE;}
 <DOC_TAG_VALUE> [\<] { yybegin(DOC_TAG_VALUE_IN_LTGT); return mGDOC_TAG_VALUE_LT; }
 <DOC_TAG_VALUE_IN_LTGT> {IDENTIFIER} { return mGDOC_TAG_VALUE_TOKEN; }
 <DOC_TAG_VALUE_IN_LTGT> [\>] { yybegin(COMMENT_DATA); return mGDOC_TAG_VALUE_GT; }
@@ -116,7 +117,7 @@ IDENTIFIER={ALPHA}({ALPHA}|{DIGIT}|[":.-"])*
   else if (checkAhead('\u007b') ) yybegin(COMMENT_DATA); //lbrace -  there's some error in JLex when typing lbrace directly
   else yybegin(DOC_TAG_VALUE);
 
- return mGDOC_WHITESPACE;
+ return WHITE_SPACE;
 }
 
 "*"+"/" { return mGDOC_COMMENT_END; }

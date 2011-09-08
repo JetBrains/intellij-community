@@ -22,6 +22,7 @@ import com.intellij.lexer.MergingLexerAdapter;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 
+import static com.intellij.psi.TokenType.WHITE_SPACE;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 
 /**
@@ -34,7 +35,7 @@ public class GroovyLexer extends LookAheadLexer {
       mREGEX_BEGIN,
       mREGEX_CONTENT,
       mREGEX_END,
-      mWS
+      WHITE_SPACE
   );
 
   public GroovyLexer() {
@@ -47,8 +48,8 @@ public class GroovyLexer extends LookAheadLexer {
     if (type == mDOT || type == kIMPORT || type == kPACKAGE) {
       addToken(type);
       baseLexer.advance();
-      while (baseLexer.getTokenType() == mWS) {
-        addToken(mWS);
+      while (baseLexer.getTokenType() == WHITE_SPACE) {
+        addToken(WHITE_SPACE);
         baseLexer.advance();
       }
       final IElementType token = baseLexer.getTokenType();

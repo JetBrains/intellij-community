@@ -35,7 +35,6 @@ public interface GroovyTokenTypes extends GroovyDocElementTypes {
  *  Whitespaces & NewLines
  * ****************************************************************************************************/
 
-  IElementType mWS = new GroovyElementType("white space");
   IElementType mNLS = new GroovyElementType("new line");
 
   /* **************************************************************************************************

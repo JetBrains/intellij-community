@@ -70,6 +70,7 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
     else if (completionChar == ',' && getAttribute(LookupItem.TAIL_TYPE_ATTR) != TailType.UNKNOWN) {
       context.setAddCompletionChar(false);
       TailType.COMMA.processTail(context.getEditor(), context.getTailOffset());
+      AutoPopupController.getInstance(context.getProject()).autoPopupParameterInfo(context.getEditor(), null);
     }
     else if (completionChar == ':') {
       context.setAddCompletionChar(false);

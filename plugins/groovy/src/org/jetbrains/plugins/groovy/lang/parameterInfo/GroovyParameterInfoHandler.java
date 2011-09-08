@@ -144,9 +144,10 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     final PsiElement parent = place.getParent();
     if (parent instanceof GrMethodCall) {
       final GrExpression invoked = ((GrMethodCall)parent).getInvokedExpression();
-      if (!(invoked instanceof GrReferenceExpression &&
-            ((GrReferenceExpression)invoked).advancedResolve() instanceof PsiMethod &&
-            !((GrReferenceExpression)invoked).advancedResolve().isInvokedOnProperty())) {
+      if (isSimpleMethodInvoked(invoked)) {
+        elementToShow.addAll(ContainerUtil.findAll(variants, condition));
+      }
+      else {
         final PsiType type = invoked.getType();
         if (type instanceof GrClosureType) {
           elementToShow.add(type);
@@ -156,12 +157,16 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
             ContainerUtil.findAll(ResolveUtil.getMethodCandidates(type, "call", place, PsiUtil.getArgumentTypes(place, true)), condition));
         }
       }
-      else {
-        elementToShow.addAll(ContainerUtil.findAll(variants, condition));
-      }
     }
     context.setItemsToShow(ArrayUtil.toObjectArray(elementToShow));
     context.showHint(place, place.getTextRange().getStartOffset(), this);
+  }
+
+  private static boolean isSimpleMethodInvoked(GrExpression invoked) {
+    if (!(invoked instanceof GrReferenceExpression)) return false;
+
+    final GroovyResolveResult resolveResult = ((GrReferenceExpression)invoked).advancedResolve();
+    return resolveResult.getElement() instanceof PsiMethod && !resolveResult.isInvokedOnProperty();
   }
 
   public void updateParameterInfo(@NotNull GroovyPsiElement place, UpdateParameterInfoContext context) {

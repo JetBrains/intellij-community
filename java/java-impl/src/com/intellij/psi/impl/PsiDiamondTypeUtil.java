@@ -17,9 +17,13 @@ package com.intellij.psi.impl;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -95,5 +99,50 @@ public class PsiDiamondTypeUtil {
       return psiElement.replace(parameterList);
     }
     return psiElement;
+  }
+
+  public static PsiElement replaceDiamondWithExplicitTypes(PsiElement element) {
+    final PsiElement parent = element.getParent();
+    if (!(parent instanceof PsiJavaCodeReferenceElement)) {
+      return parent;
+    }
+    final PsiJavaCodeReferenceElement javaCodeReferenceElement =
+            (PsiJavaCodeReferenceElement) parent;
+    final PsiReferenceParameterList referenceParameterList =
+            (PsiReferenceParameterList) element;
+    final StringBuilder text = new StringBuilder();
+    text.append(javaCodeReferenceElement.getQualifiedName());
+    text.append('<');
+    final PsiTypeElement[] typeElements = referenceParameterList.getTypeParameterElements();
+    final PsiNewExpression newExpression = PsiTreeUtil.getParentOfType(typeElements[0], PsiNewExpression.class);
+    final PsiDiamondType.DiamondInferenceResult result = PsiDiamondType.resolveInferredTypesNoCheck(newExpression, newExpression);
+    text.append(StringUtil.join(result.getInferredTypes(), new Function<PsiType, String>() {
+      @Override
+      public String fun(PsiType psiType) {
+        return psiType.getCanonicalText();
+      }
+    }, ","));
+    text.append('>');
+    final PsiElementFactory elementFactory =
+            JavaPsiFacade.getElementFactory(element.getProject());
+    final PsiJavaCodeReferenceElement newReference =
+            elementFactory.createReferenceFromText(text.toString(), element);
+    return CodeStyleManager.getInstance(javaCodeReferenceElement.getProject()).reformat(javaCodeReferenceElement.replace(newReference));
+  }
+  
+  public static PsiExpression expandTopLevelDiamondsInside(PsiExpression expr) {
+    if (expr instanceof PsiNewExpression) {
+      final PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)expr).getClassReference();
+      if (classReference != null) {
+        final PsiReferenceParameterList parameterList = classReference.getParameterList();
+        if (parameterList != null) {
+          final PsiTypeElement[] typeParameterElements = parameterList.getTypeParameterElements();
+          if (typeParameterElements.length == 1 && typeParameterElements[0].getType() instanceof PsiDiamondType) {
+            return  (PsiExpression)replaceDiamondWithExplicitTypes(parameterList).getParent();
+          }
+        }
+      }
+    }
+    return expr;
   }
 }

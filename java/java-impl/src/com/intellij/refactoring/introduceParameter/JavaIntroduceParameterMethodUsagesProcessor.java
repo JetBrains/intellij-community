@@ -20,9 +20,11 @@ import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -64,11 +66,12 @@ public class JavaIntroduceParameterMethodUsagesProcessor implements IntroducePar
     PsiExpression[] oldArgs = argList.getExpressions();
 
     final PsiExpression anchor;
-    if (!data.getMethodToSearchFor().isVarArgs()) {
+    final PsiMethod methodToSearchFor = data.getMethodToSearchFor();
+    if (!methodToSearchFor.isVarArgs()) {
       anchor = getLast(oldArgs);
     }
     else {
-      final PsiParameter[] parameters = data.getMethodToSearchFor().getParameterList().getParameters();
+      final PsiParameter[] parameters = methodToSearchFor.getParameterList().getParameters();
       if (parameters.length > oldArgs.length) {
         anchor = getLast(oldArgs);
       }
@@ -89,6 +92,10 @@ public class JavaIntroduceParameterMethodUsagesProcessor implements IntroducePar
       PsiElement initializer =
         ExpressionConverter.getExpression(data.getParameterInitializer().getExpression(), StdLanguages.JAVA, data.getProject());
       assert initializer instanceof PsiExpression;
+      if (initializer instanceof PsiNewExpression) {
+        initializer = PsiDiamondTypeUtil.expandTopLevelDiamondsInside((PsiNewExpression)initializer);
+      }
+      substituteTypeParametersInInitializer(initializer, callExpression, argList, methodToSearchFor);
       ChangeContextUtil.encodeContextInfo(initializer, true);
       PsiExpression newArg = (PsiExpression)argList.addAfter(initializer, anchor);
       ChangeContextUtil.decodeContextInfo(newArg, null, null);
@@ -104,6 +111,18 @@ public class JavaIntroduceParameterMethodUsagesProcessor implements IntroducePar
     LOG.assertTrue(argumentList != null, callExpression.getText());
     removeParametersFromCall(argumentList, data.getParametersToRemove());
     return false;
+  }
+
+  private static void substituteTypeParametersInInitializer(PsiElement initializer,
+                                                            PsiCall callExpression,
+                                                            PsiExpressionList argList,
+                                                            PsiMethod method) {
+    final Project project = method.getProject();
+    final PsiSubstitutor psiSubstitutor = JavaPsiFacade.getInstance(project).getResolveHelper()
+      .inferTypeArguments(method.getTypeParameters(), method.getParameterList().getParameters(),
+                          argList.getExpressions(), PsiSubstitutor.EMPTY, callExpression, false);
+    RefactoringUtil.replaceMovedMemberTypeParameters(initializer, PsiUtil.typeParametersIterable(method), psiSubstitutor,
+                                                     JavaPsiFacade.getElementFactory(project));
   }
 
   private static void removeParametersFromCall(@NotNull final PsiExpressionList argList, TIntArrayList parametersToRemove) {

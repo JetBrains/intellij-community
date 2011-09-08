@@ -66,7 +66,7 @@ public class DnDAwareTree extends Tree implements DnDAware {
     return this;
   }
 
-  public static Pair<Image, Point> getDragImage(Tree dndAwareTree, TreePath path, Point dragOrigin) {
+  public static Pair<Image, Point> getDragImage(Tree dndAwareTree, @NotNull TreePath path, Point dragOrigin) {
     int row = dndAwareTree.getRowForPath(path);
     Component comp = dndAwareTree.getCellRenderer().getTreeCellRendererComponent(dndAwareTree, path.getLastPathComponent(), false, true, true, row, false);
     return createDragImage(dndAwareTree, comp, dragOrigin, true);

@@ -44,12 +44,31 @@ public class IdeaTitledBorder extends TitledBorder {
   }
 
   private void updateUI() {
+
     this.titleFont = UIUtil.getBorderFont(smallFont ? UIUtil.FontSize.SMALL : UIUtil.FontSize.NORMAL, boldFont);
     this.titleColor = UIUtil.getTitledBorderTitleColor();
+
+    Color foregroundColor = UIUtil.getSeparatorForeground();
+    Color backgroundColor = UIUtil.getSeparatorBackground();
+    if (UIUtil.isUnderAlloyLookAndFeel()) {
+      foregroundColor = UIUtil.getSeparatorShadow();
+      backgroundColor = UIUtil.getSeparatorHighlight();
+    }
+    if (UIUtil.isUnderNimbusLookAndFeel()) {
+      foregroundColor = null;
+      backgroundColor = UIUtil.getSeparatorColorUnderNimbus();
+    }
+    //under GTK+ L&F colors setted hard
+    if (UIUtil.isUnderGTKLookAndFeel()) {
+      foregroundColor = new Color(215, 215, 215);
+      backgroundColor = new Color(250, 250, 250);
+    }
+
+    Border lineBorder = BorderFactory.createCompoundBorder(
+      BorderFactory.createMatteBorder(1, 0, 0, 0, foregroundColor),
+      BorderFactory.createMatteBorder(1, 0, 0, 0, backgroundColor));
     this.border = BorderFactory.createCompoundBorder(new EmptyBorder(outsideInsets),
-                                                     BorderFactory.createCompoundBorder(
-                                                       BorderFactory.createMatteBorder(1, 0, 0, 0, UIUtil.getTitledBorderLineColor()),
-                                                       new EmptyBorder(insideInsets)));
+                                                     BorderFactory.createCompoundBorder(lineBorder, new EmptyBorder(insideInsets)));
   }
 
   private void calculateInsets() {

@@ -178,7 +178,14 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
 
       final MoveInnerOptions moveInnerOptions = new MoveInnerOptions(myInnerClass, myOuterClass, myTargetContainer, myNewClassName);
       final MoveInnerHandler handler = MoveInnerHandler.EP_NAME.forLanguage(myInnerClass.getLanguage());
-      final PsiClass newClass = handler.copyClass(moveInnerOptions);
+      final PsiClass newClass;
+      try {
+        newClass = handler.copyClass(moveInnerOptions);
+      }
+      catch (IncorrectOperationException e) {
+        RefactoringUIUtil.processIncorrectOperation(myProject, e);
+        return;
+      }
 
       // replace references in a new class to old inner class with references to itself
       for (PsiReference ref : ReferencesSearch.search(myInnerClass, new LocalSearchScope(newClass), true)) {

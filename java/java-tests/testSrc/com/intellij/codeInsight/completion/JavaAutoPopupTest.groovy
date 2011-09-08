@@ -968,6 +968,14 @@ public class UTest {
     assert !lookup
   }
 
+  public void testPopupAfterDotAfterPackage() {
+    myFixture.configureByText 'a.java', '<caret>'
+    type 'import jav'
+    assert lookup
+    type '.'
+    assert lookup
+  }
+
   public void testSamePrefixIgnoreCase() {
     myFixture.addClass("package xxxxx; public class SYSTEM_EXCEPTION {}")
     myFixture.configureByText "a.java", "import xxxxx.*; class Foo { S<caret> }"

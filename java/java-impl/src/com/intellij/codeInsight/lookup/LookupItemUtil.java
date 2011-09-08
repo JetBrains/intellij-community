@@ -22,7 +22,6 @@ import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.PsiUtilBase;
@@ -108,6 +107,9 @@ public class LookupItemUtil{
     if (object instanceof PsiType) {
       return PsiTypeLookupItem.createLookupItem((PsiType)object, null);
     }
+    if (object instanceof PsiPackage) {
+      return new PackageLookupItem((PsiPackage)object);
+    }
 
     String s = null;
     LookupItem item = new LookupItem(object, "");
@@ -115,11 +117,7 @@ public class LookupItemUtil{
       s = PsiUtilBase.getName((PsiElement) object);
     }
     TailType tailType = TailType.NONE;
-    if (object instanceof PsiPackage) {
-      tailType = TailType.DOT;
-      s = StringUtil.notNullize(s);
-    }
-    else if (object instanceof PsiMetaData) {
+    if (object instanceof PsiMetaData) {
       s = ((PsiMetaData)object).getName();
     }
     else if (object instanceof String) {
@@ -147,5 +145,4 @@ public class LookupItemUtil{
     item.setTailType(tailType);
     return item;
   }
-
 }

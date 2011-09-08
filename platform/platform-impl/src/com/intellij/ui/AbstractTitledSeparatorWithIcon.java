@@ -59,8 +59,8 @@ public abstract class AbstractTitledSeparatorWithIcon extends JPanel {
                                    new Insets(3, 0, 0, 0), 0, 0);
     add(mySeparator, gb);
     setBorder(IdeBorderFactory.createEmptyBorder(3, 0, 5, 5));
-
     myLabel.setFont(UIUtil.getBorderFont(smallFont ? UIUtil.FontSize.SMALL : UIUtil.FontSize.NORMAL, boldFont));
+    myLabel.setForeground(UIUtil.getTitledBorderTitleColor());
     originalText = text;
     myLabel.setText(UIUtil.replaceMnemonicAmpersand(originalText));
 

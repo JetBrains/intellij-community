@@ -321,7 +321,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testIDEADEV6408() throws Exception {
     configureByFile("IDEADEV6408.java");
-    assertEquals(2, myItems.length);
+    assertStringItems "boolean", "byte"
   }
 
   public void testMethodWithLeftParTailType() throws Exception {
@@ -441,6 +441,8 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     doTest();
   }
 
+  public void testBreakInIfCondition() throws Throwable { doTest(); }
+
   public void testNoThisInComment() throws Throwable { doAntiTest() }
 
   public void testLastExpressionInFor() throws Throwable { doTest(); }
@@ -459,6 +461,11 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testBooleanLiterals() throws Throwable {
     doTest();
+  }
+
+  public void testDoubleBooleanInParameter() throws Throwable {
+    configure()
+    assertStringItems("boolean", "byte")
   }
 
   public void testNotOnlyKeywordsInsideSwitch() throws Throwable {

@@ -35,6 +35,11 @@ public class KnownElementWeigher extends ProximityWeigher {
       final Comparable weigh = weigher.getForcedWeigh(element);
       if (weigh != null) return weigh;
     }
+
+    if (!SdkOrLibraryWeigher.isJdkElement(element, location.getProject())) {
+      return 0;
+    }
+
     if (element instanceof PsiClass) {
       @NonNls final String qname = ((PsiClass)element).getQualifiedName();
       if (qname != null) {
