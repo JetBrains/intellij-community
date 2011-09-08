@@ -18,6 +18,7 @@ package com.intellij.openapi.project;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.util.messages.Topic;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,6 +29,8 @@ import java.io.IOException;
  * Provides project management.
  */
 public abstract class ProjectManager {
+  public static final Topic<ProjectManagerListener> TOPIC = new Topic<ProjectManagerListener>("Project open and close events", ProjectManagerListener.class);
+
   /**
    * Gets <code>ProjectManager</code> instance.
    *
