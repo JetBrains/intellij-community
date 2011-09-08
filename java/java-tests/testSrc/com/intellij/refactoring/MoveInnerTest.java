@@ -76,6 +76,10 @@ public class MoveInnerTest extends MultiFileTestCase {
     doTest(createAction("p.A.E", "E", false, null, false, false, null));
   }
 
+  public void testEnumConstructorVisibility() throws Exception { // IDEADEV-28619
+    doTest(createAction("p.A.E", "E", false, null, false, false, "p2"));
+  }
+
   public void testQualifyThisHierarchy() throws Exception {
     final String innerClassName = "pack1.DImpl.MyRunnable";
     doTest(new MyPerformAction(innerClassName, "MyRunnable", false, "d",
