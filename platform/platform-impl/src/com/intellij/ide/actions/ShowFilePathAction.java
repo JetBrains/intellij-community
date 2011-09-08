@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package com.intellij.ide.actions;
 
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -46,7 +48,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 public class ShowFilePathAction extends AnAction {
-
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.ShowFilePathAction");
 
   @Override
@@ -165,50 +166,49 @@ public class ShowFilePathAction extends AnAction {
   }
 
   public static boolean isSupported() {
-    return SystemInfo.isWindows || SystemInfo.isMac || SystemInfo.isGnome || SystemInfo.isKDE || Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN);
+    return SystemInfo.isWindows || SystemInfo.isMac ||
+           Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN) ||
+           SystemInfo.hasXdgOpen || SystemInfo.isGnome || SystemInfo.isKDE;
   }
 
-  public static void open(@NotNull File ioFile, @Nullable File toSelect) {
+  public static void open(@NotNull final File ioFile, @Nullable final File toSelect) {
     try {
-      if (SystemInfo.isWindows || SystemInfo.isMac) {
-        final String path = toSelect == null ? ioFile.getCanonicalPath() : toSelect.exists() ? toSelect.getCanonicalPath() : ioFile.getCanonicalPath();
-        final Runtime runtime = Runtime.getRuntime();
-
-        String[] args;
-        if (SystemInfo.isMac) {
-          final String script = String.format(
-            "tell application \"Finder\"\n" +
-            "\treveal {\"%s\"} as POSIX file\n" +
-            "\tactivate\n" +
-            "end tell", path);
-
-          args = new String[] {"osascript", "-e", script};
-        } else {
-          if (path.indexOf(' ') >= 0) {
-            args = new String[]{"explorer", String.format("/select,\"%s\"", path.substring(0, path.indexOf(' '))), 
-              String.format("\"%s\"", path.substring(path.indexOf(' ') + 1))};
-          } else {
-            args = new String[]{"explorer", String.format("/select,\"%s\"", path)};
-          }
-        }
-
-        runtime.exec(args);
-      }
-      else if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN)) {
-        Desktop.getDesktop().open(ioFile);
-      }
-      else if (SystemInfo.isGnome) {
-        Runtime.getRuntime().exec(new String[]{"gnome-open", ioFile.getCanonicalPath()});
-      }
-      else if (SystemInfo.isKDE) {
-        Runtime.getRuntime().exec(new String[]{"kfmclient", "exec", ioFile.getCanonicalPath()});
-      }
-      else {
-        Messages.showErrorDialog("This action isn't supported on the current platform", "Cannot Open File");
-      }
+      final String path = (SystemInfo.isWindows || SystemInfo.isMac) && toSelect != null && toSelect.exists() ?
+                          toSelect.getCanonicalPath() : ioFile.getCanonicalPath();
+      doOpen(path);
     }
-    catch (IOException e) {
+    catch (Exception e) {
       LOG.warn(e);
+    }
+  }
+
+  private static void doOpen(@NotNull final String path) throws IOException, ExecutionException {
+
+    if (SystemInfo.isWindows) {
+      new GeneralCommandLine("explorer", "/select,", path).createProcess();
+    }
+    else if (SystemInfo.isMac) {
+      final String script = String.format(
+        "tell application \"Finder\"\n" +
+        "\treveal {\"%s\"} as POSIX file\n" +
+        "\tactivate\n" +
+        "end tell", path);
+      new GeneralCommandLine("osascript", "-e", script).createProcess();
+    }
+    else if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN)) {
+      Desktop.getDesktop().open(new File(path));
+    }
+    else if (SystemInfo.hasXdgOpen) {
+      new GeneralCommandLine("/usr/bin/xdg-open", path).createProcess();
+    }
+    else if (SystemInfo.isGnome) {
+      new GeneralCommandLine("gnome-open", path).createProcess();
+    }
+    else if (SystemInfo.isKDE) {
+      new GeneralCommandLine("kfmclient", "exec", path).createProcess();
+    }
+    else {
+      Messages.showErrorDialog("This action isn't supported on the current platform", "Cannot Open File");
     }
   }
 
@@ -216,5 +216,4 @@ public class ShowFilePathAction extends AnAction {
   private static VirtualFile getFile(final AnActionEvent e) {
     return PlatformDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
   }
-
 }
