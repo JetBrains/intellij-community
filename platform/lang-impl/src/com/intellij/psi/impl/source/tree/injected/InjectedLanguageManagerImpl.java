@@ -129,7 +129,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     final Computable<Boolean> commitRunnable = new Computable<Boolean>() {
       @Override
       public Boolean compute() {
-        return JobUtil.invokeConcurrentlyUnderProgress(injected, myProgress, !synchronously, new Processor<DocumentWindow>() {
+        return JobUtil.invokeConcurrentlyUnderProgress(new ArrayList<DocumentWindow>(injected), myProgress, !synchronously, new Processor<DocumentWindow>() {
           @Override
           public boolean process(DocumentWindow documentWindow) {
             ProgressManager.checkCanceled();
@@ -370,7 +370,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     try {
       for (Map.Entry<Class, MultiHostInjector[]> entry : injectors.entrySet()) {
         Class key = entry.getKey();
-        if (myInjectorsClone.size() == 0) return;
+        if (myInjectorsClone.isEmpty()) return;
         MultiHostInjector[] oldInjectors = myInjectorsClone.get(key);
         for (MultiHostInjector injector : entry.getValue()) {
           if (!ArrayUtil.contains(injector, oldInjectors)) {
