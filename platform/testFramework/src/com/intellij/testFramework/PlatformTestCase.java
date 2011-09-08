@@ -635,7 +635,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   public static void initPlatformLangPrefix() {
-    initPlatformPrefix("com.intellij.openapi.components.impl.stores.IdeaProjectStoreImpl", "PlatformLangXml");
+    initPlatformPrefix(IDEA_MARKER_CLASS, "PlatformLangXml");
   }
 
   protected static void initPlatformPrefix(String classToTest, String prefix) {
