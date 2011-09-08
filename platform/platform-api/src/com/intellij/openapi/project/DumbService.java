@@ -108,22 +108,7 @@ public abstract class DumbService {
     return new ArrayList<T>(collection);
   }
 
-  public DumbUnawareHider wrapGently(@NotNull JComponent dumbUnawareContent, @NotNull Disposable parentDisposable) {
-    final DumbUnawareHider wrapper = new DumbUnawareHider(dumbUnawareContent);
-    wrapper.setContentVisible(!isDumb());
-    getProject().getMessageBus().connect(parentDisposable).subscribe(DUMB_MODE, new DumbModeListener() {
-
-      public void enteredDumbMode() {
-        wrapper.setContentVisible(false);
-      }
-
-      public void exitDumbMode() {
-        wrapper.setContentVisible(true);
-      }
-    });
-
-    return wrapper;
-  }
+  public abstract JComponent wrapGently(@NotNull JComponent dumbUnawareContent, @NotNull Disposable parentDisposable);
 
   public void makeDumbAware(@NotNull final JComponent component, @NotNull Disposable disposable) {
     component.setEnabled(!isDumb());

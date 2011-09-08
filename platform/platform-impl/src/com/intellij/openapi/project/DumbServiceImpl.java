@@ -18,6 +18,7 @@ package com.intellij.openapi.project;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.ide.util.DelegatingProgressIndicator;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -41,6 +42,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -241,6 +243,23 @@ public class DumbServiceImpl extends DumbService {
       }
     });
     semaphore.waitFor();
+  }
+
+  public JComponent wrapGently(@NotNull JComponent dumbUnawareContent, @NotNull Disposable parentDisposable) {
+    final DumbUnawareHider wrapper = new DumbUnawareHider(dumbUnawareContent);
+    wrapper.setContentVisible(!isDumb());
+    getProject().getMessageBus().connect(parentDisposable).subscribe(DUMB_MODE, new DumbModeListener() {
+
+      public void enteredDumbMode() {
+        wrapper.setContentVisible(false);
+      }
+
+      public void exitDumbMode() {
+        wrapper.setContentVisible(true);
+      }
+    });
+
+    return wrapper;
   }
 
   private class IndexUpdateRunnable implements Runnable {
