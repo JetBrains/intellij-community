@@ -38,6 +38,7 @@ import git4idea.merge.GitConflictResolver;
 import git4idea.ui.GitUIUtil;
 import git4idea.ui.GitUnstashDialog;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
 import java.util.*;
@@ -155,7 +156,7 @@ public class GitStashChangesSaver extends GitChangesSaver {
 
     if (failure.get()) {
       if (conflict.get()) {
-        boolean conflictsResolved = new UnstashConflictResolver(myProject, root, myStashedRoots).merge();
+        boolean conflictsResolved = new UnstashConflictResolver(myProject, root, myStashedRoots, myParams).merge();
         if (conflictsResolved) {
           LOG.info("loadRoot " + root + " conflicts resolved, dropping stash");
           GitStashUtils.dropStash(myProject, root);
@@ -172,13 +173,16 @@ public class GitStashChangesSaver extends GitChangesSaver {
     private final VirtualFile myRoot;
     private final Set<VirtualFile> myStashedRoots;
 
-    public UnstashConflictResolver(Project project, VirtualFile root, Set<VirtualFile> stashedRoots) {
-      super(project, Collections.singleton(root), makeParams());
+    public UnstashConflictResolver(@NotNull Project project, @NotNull VirtualFile root, @NotNull Set<VirtualFile> stashedRoots, @Nullable Params params) {
+      super(project, Collections.singleton(root), makeParamsOrUse(params));
       myRoot = root;
       myStashedRoots = stashedRoots;
     }
 
-    private static Params makeParams() {
+    private static Params makeParamsOrUse(@Nullable Params givenParams) {
+      if (givenParams != null) {
+        return givenParams;
+      }
       Params params = new Params();
       params.setErrorNotificationTitle("Local changes were not restored");
       params.setMergeDialogCustomizer(new UnstashMergeDialogCustomizer());
@@ -190,7 +194,7 @@ public class GitStashChangesSaver extends GitChangesSaver {
     @Override
     protected void notifyUnresolvedRemain() {
       GitVcs.IMPORTANT_ERROR_NOTIFICATION.createNotification("Local changes were restored with conflicts",
-                                                "Before update your uncommitted changes were saved to <a href='saver'>stash</a><br/>" +
+                                                "Before update your uncommitted changes were saved to <a href='saver'>stash</a><br/>." +
                                                 "Unstash is not complete, you have unresolved merges in your working tree<br/>" +
                                                 "<a href='resolve'>Resolve</a> conflicts and drop the stash.",
                                                 NotificationType.WARNING, new NotificationListener() {
@@ -202,7 +206,7 @@ public class GitStashChangesSaver extends GitChangesSaver {
                 GitUnstashDialog.showUnstashDialog(myProject, new ArrayList<VirtualFile>(myStashedRoots), myRoot,
                                                    new HashSet<VirtualFile>());
               } else if (event.getDescription().equals("resolve")) {
-                new UnstashConflictResolver(myProject, myRoot, myStashedRoots).mergeNoProceed();
+                mergeNoProceed();
               }
             }
           }
