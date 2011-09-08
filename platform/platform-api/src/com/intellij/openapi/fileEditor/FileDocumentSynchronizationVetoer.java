@@ -13,7 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/*
+ * @author max
+ */
 package com.intellij.openapi.fileEditor;
 
-public class VetoDocumentSavingException extends Exception {
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.vfs.VirtualFile;
+
+public interface FileDocumentSynchronizationVetoer {
+  ExtensionPointName<FileDocumentSynchronizationVetoer> EP_NAME = ExtensionPointName.create("com.intellij.fileDocumentSynchronizationVetoer");
+
+  boolean maySaveDocument(Document document);
+  boolean mayReloadFileContent(VirtualFile file, Document document);
 }

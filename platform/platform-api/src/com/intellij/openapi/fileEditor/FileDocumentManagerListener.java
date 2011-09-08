@@ -43,12 +43,12 @@ public interface FileDocumentManagerListener extends EventListener {
   void beforeAllDocumentsSaving();
 
   /**
-   * NOTE: Vetoing facility is deprecated in this listener implement {@link com.intellij.openapi.fileEditor.FileDocumentSynchronizationVetoListener} instead.
+   * NOTE: Vetoing facility is deprecated in this listener implement {@link FileDocumentSynchronizationVetoer} instead.
    */
   void beforeDocumentSaving(Document document);
 
   /**
-   * NOTE: Vetoing facility is deprecated in this listener implement {@link com.intellij.openapi.fileEditor.FileDocumentSynchronizationVetoListener} instead.
+   * NOTE: Vetoing facility is deprecated in this listener implement {@link FileDocumentSynchronizationVetoer} instead.
    */
   void beforeFileContentReload(VirtualFile file, Document document);
 

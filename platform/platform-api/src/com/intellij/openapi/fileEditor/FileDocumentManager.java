@@ -50,9 +50,6 @@ public abstract class FileDocumentManager implements SavingRequestor {
   public abstract boolean isDocumentUnsaved(@NotNull Document document);
   public abstract boolean isFileModified(@NotNull VirtualFile file);
 
-  public abstract void addFileDocumentSynchronizationVetoer(@NotNull FileDocumentSynchronizationVetoListener vetoer);
-  public abstract void removeFileDocumentSynchronizationVetoer(@NotNull FileDocumentSynchronizationVetoListener vetoer);
-
   public abstract void reloadFromDisk(@NotNull Document document);
 
   @NotNull
