@@ -21,7 +21,6 @@ package com.intellij.concurrency;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.util.ConcurrencyUtil;
-import org.jetbrains.annotations.NonNls;
 
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -32,8 +31,6 @@ public abstract class JobScheduler {
   public static JobScheduler getInstance() {
     return ServiceManager.getService(JobScheduler.class);
   }
-
-  public abstract <T> Job<T> createJob(@NonNls String title, int priority);
 
   public static ScheduledExecutorService getScheduler() {
     return ourScheduledExecutorService;
