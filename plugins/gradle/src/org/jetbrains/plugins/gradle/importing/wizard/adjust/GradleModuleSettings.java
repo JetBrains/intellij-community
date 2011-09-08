@@ -15,18 +15,18 @@ public class GradleModuleSettings implements GradleProjectStructureNodeSettings 
 
   private final JComponent   myComponent;
   private final GradleModule myModule;
-  private final JLabel       myNameErrorLabel;
+  private final JComponent   myNameControl;
 
   public GradleModuleSettings(@NotNull GradleModule module) {
     myModule = module;
     GradleProjectSettingsBuilder builder = new GradleProjectSettingsBuilder();
-    myNameErrorLabel = GradleAdjustImportSettingsUtil.configureNameControl(builder, myModule);
+    myNameControl = GradleAdjustImportSettingsUtil.configureNameControl(builder, myModule);
     myComponent = builder.build();
   }
 
   @Override
   public boolean validate() {
-    return GradleAdjustImportSettingsUtil.validate(myModule, myNameErrorLabel);
+    return GradleAdjustImportSettingsUtil.validate(myModule, myNameControl);
   }
 
   @NotNull

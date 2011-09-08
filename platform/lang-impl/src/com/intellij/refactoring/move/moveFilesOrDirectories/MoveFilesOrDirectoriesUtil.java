@@ -187,7 +187,7 @@ public class MoveFilesOrDirectoriesUtil {
   }
 
   @Nullable
-  private static PsiDirectory resolveToDirectory(final Project project, final PsiElement element) {
+  public static PsiDirectory resolveToDirectory(final Project project, final PsiElement element) {
     if (!(element instanceof PsiDirectoryContainer)) {                                                                 
       return (PsiDirectory)element;
     }

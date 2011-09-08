@@ -92,7 +92,7 @@ public class StringLiteralLexer extends LexerBase {
   }
 
   private static boolean isHexDigit(char c) {
-    return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
+    return c >= '0' && c <= '9' || c >= 'a' && c <= 'f' || c >= 'A' && c <= 'F';
   }
 
   public IElementType getTokenType() {
@@ -220,23 +220,21 @@ public class StringLiteralLexer extends LexerBase {
         return i + 1;
       }
     }
-    else {
-      LOG.assertTrue(myState == AFTER_FIRST_QUOTE || myBuffer.charAt(i) == myQuoteChar);
-      while (i < myBufferEnd) {
-        if (myBuffer.charAt(i) == '\\') {
-          return i;
-        }
-        //if (myBuffer[i] == '\n') {
-        //  myState = AFTER_LAST_QUOTE;
-        //  return i;
-        //}
-        if (myState == AFTER_FIRST_QUOTE && myBuffer.charAt(i) == myQuoteChar) {
-          if (i + 1 == myBufferEnd) myState = AFTER_LAST_QUOTE;
-          return i + 1;
-        }
-        i++;
-        myState = AFTER_FIRST_QUOTE;
+    LOG.assertTrue(myState == AFTER_FIRST_QUOTE || myBuffer.charAt(i) == myQuoteChar, myState);
+    while (i < myBufferEnd) {
+      if (myBuffer.charAt(i) == '\\') {
+        return i;
       }
+      //if (myBuffer[i] == '\n') {
+      //  myState = AFTER_LAST_QUOTE;
+      //  return i;
+      //}
+      if (myState == AFTER_FIRST_QUOTE && myBuffer.charAt(i) == myQuoteChar) {
+        if (i + 1 == myBufferEnd) myState = AFTER_LAST_QUOTE;
+        return i + 1;
+      }
+      i++;
+      myState = AFTER_FIRST_QUOTE;
     }
 
     return i;

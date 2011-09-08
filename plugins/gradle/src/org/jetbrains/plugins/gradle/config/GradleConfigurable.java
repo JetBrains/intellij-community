@@ -31,9 +31,9 @@ import org.jetbrains.plugins.gradle.util.GradleLibraryManager;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.concurrent.TimeUnit;
 
@@ -99,11 +99,19 @@ public class GradleConfigurable implements SearchableConfigurable {
       false,
       false
     );
-    myGradleHomeComponent.getPathComponent().addKeyListener(new KeyAdapter() {
+    myGradleHomeComponent.getPathComponent().getDocument().addDocumentListener(new DocumentListener() {
       @Override
-      public void keyTyped(KeyEvent e) {
+      public void insertUpdate(DocumentEvent e) {
         useNormalColorForPath();
         myPathManuallyModified = true;
+      }
+      @Override
+      public void removeUpdate(DocumentEvent e) {
+        useNormalColorForPath();
+        myPathManuallyModified = true;
+      }
+      @Override
+      public void changedUpdate(DocumentEvent e) {
       }
     });
     myGradleHomeComponent.setNameComponentVisible(false);
@@ -134,6 +142,7 @@ public class GradleConfigurable implements SearchableConfigurable {
   @Override
   public void reset() {
     useNormalColorForPath();
+    myPathManuallyModified = false;
     String valueToUse = GradleSettings.getInstance(myProject).GRADLE_HOME;
     if (!StringUtil.isEmpty(valueToUse)) {
       myGradleHomeSettingType = myLibraryManager.isGradleSdkHome(new File(valueToUse)) ?

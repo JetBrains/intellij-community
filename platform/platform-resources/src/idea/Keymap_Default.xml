@@ -894,6 +894,12 @@
     <keyboard-shortcut first-keystroke="ctrl TAB"/>
     <keyboard-shortcut first-keystroke="ctrl shift TAB"/>
   </action>
+  <action id="NextProjectWindow">
+    <keyboard-shortcut first-keystroke="control alt CLOSE_BRACKET"/>
+  </action>
+  <action id="PreviousProjectWindow">
+    <keyboard-shortcut first-keystroke="control alt OPEN_BRACKET"/>
+  </action>
 
   <action id="Vcs.QuickListPopupAction">
     <keyboard-shortcut first-keystroke="alt BACK_QUOTE"/>

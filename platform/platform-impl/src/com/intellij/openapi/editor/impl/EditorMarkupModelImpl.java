@@ -81,7 +81,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   private int myEditorScrollbarTop = -1;
   private int myEditorTargetHeight = -1;
   private int myEditorSourceHeight = -1;
-  private TextRange myDirtyRange = null;
+  private ProperTextRange myDirtyYPositions = null;
 
   @NotNull private ErrorStripTooltipRendererProvider myTooltipRendererProvider = new BasicTooltipRendererProvider();
 
@@ -388,24 +388,24 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       Rectangle clip = g.getClipBounds().intersection(bounds);
       if (clip.height == 0) return;
 
-      final Rectangle componentBounds = c.getBounds();
-      final TextRange docRange = TextRange.create(0, getEditor().getDocument().getTextLength());
+      Rectangle componentBounds = c.getBounds();
+      ProperTextRange docRange = ProperTextRange.create(0, (int)componentBounds.getHeight());
       if (myCachedTrack == null || myCachedTrack.getHeight() != componentBounds.getHeight()) {
         myCachedTrack = new BufferedImage(componentBounds.width, componentBounds.height, BufferedImage.TYPE_INT_ARGB);
-        myDirtyRange = docRange;
+        myDirtyYPositions = docRange;
         paintTrackBasement(myCachedTrack.getGraphics(), new Rectangle(0, 0, componentBounds.width, componentBounds.height));
       }
 
-      if (myDirtyRange != null) {
+      if (myDirtyYPositions != null) {
         final Graphics2D imageGraphics = myCachedTrack.createGraphics();
 
         ((ApplicationImpl)ApplicationManager.getApplication()).editorPaintStart();
 
         try {
-          myDirtyRange = myDirtyRange.intersection(docRange);
-          if (myDirtyRange == null) myDirtyRange = docRange;
-          repaint(imageGraphics, componentBounds.width, ERROR_ICON_WIDTH - 1, myDirtyRange.getStartOffset(), myDirtyRange.getEndOffset());
-          myDirtyRange = null;
+          myDirtyYPositions = myDirtyYPositions.intersection(docRange);
+          if (myDirtyYPositions == null) myDirtyYPositions = docRange;
+          repaint(imageGraphics, componentBounds.width, ERROR_ICON_WIDTH - 1, myDirtyYPositions);
+          myDirtyYPositions = null;
         }
         finally {
           ((ApplicationImpl)ApplicationManager.getApplication()).editorPaintFinish();
@@ -429,18 +429,16 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       return ColorUtil.withAlpha(ColorUtil.shift(super.adjustColor(c), 0.9), 0.85);
     }
 
-    private void repaint(final Graphics g, int gutterWidth, final int stripeWidth, int startOffset, int endOffset) {
-      final ProperTextRange yrange = offsetToYPosition(startOffset, endOffset);
+    private void repaint(final Graphics g, int gutterWidth, final int stripeWidth, ProperTextRange yrange) {
       final Rectangle clip = new Rectangle(0, yrange.getStartOffset(), gutterWidth, yrange.getLength() + getMinHeight());
       paintTrackBasement(g, clip);
 
       Document document = myEditor.getDocument();
-      startOffset = yPositionToOffset(clip.y - getMinHeight(), true);
-      endOffset = yPositionToOffset(clip.y + clip.height, false);
+      int startOffset = yPositionToOffset(clip.y - getMinHeight(), true);
+      int endOffset = yPositionToOffset(clip.y + clip.height, false);
 
       drawMarkup(g, stripeWidth, startOffset, endOffset, EditorMarkupModelImpl.this);
-      drawMarkup(g, stripeWidth, startOffset, endOffset, (MarkupModelEx)DocumentMarkupModel
-        .forDocument(document, myEditor.getProject(), true));
+      drawMarkup(g, stripeWidth, startOffset, endOffset, (MarkupModelEx)DocumentMarkupModel.forDocument(document, myEditor.getProject(), true));
     }
 
     private void drawMarkup(final Graphics g, final int width, int startOffset, int endOffset, MarkupModelEx markup) {
@@ -718,17 +716,17 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   }
 
   public void markDirtied(int startOffset, int endOffset) {
+    ProperTextRange pos = offsetToYPosition(startOffset, endOffset);
+    if (myDirtyYPositions == null) {
+      myDirtyYPositions = pos;
+    }
+    else {
+      myDirtyYPositions = myDirtyYPositions.union(pos);
+    }
+
     myEditorScrollbarTop = -1;
     myEditorSourceHeight = -1;
     myEditorTargetHeight = -1;
-
-    final TextRange range = TextRange.create(startOffset, endOffset);
-    if (myDirtyRange == null) {
-      myDirtyRange = range;
-    }
-    else {
-      myDirtyRange = myDirtyRange.union(range);
-    }
   }
 
   public void setMinMarkHeight(final int minMarkHeight) {

@@ -27,12 +27,9 @@ import javax.swing.*;
  *         Date: 7/5/11
  *         Time: 2:49 PM
  */
-public interface VcsChangeDetailsProvider<T> {
-  String getProgressTitle();
+public interface VcsChangeDetailsProvider {
   @CalledInAwt
   boolean canComment(final Change change);
-  @CalledInBackground
-  T load(final Change change);
   @CalledInAwt
-  Pair<RefreshablePanel, Disposable> comment(final Change change, final T t);
+  RefreshablePanel comment(final Change change);
 }

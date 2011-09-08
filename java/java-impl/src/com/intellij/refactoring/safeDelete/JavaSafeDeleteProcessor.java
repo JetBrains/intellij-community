@@ -367,22 +367,27 @@ public class JavaSafeDeleteProcessor implements SafeDeleteProcessorDelegate {
   private static void findTypeParameterExternalUsages(final PsiTypeParameter typeParameter, final Collection<UsageInfo> usages) {
     PsiTypeParameterListOwner owner = typeParameter.getOwner();
     if (owner != null) {
-      final int index = owner.getTypeParameterList().getTypeParameterIndex(typeParameter);
+      final PsiTypeParameterList parameterList = owner.getTypeParameterList();
+      if (parameterList != null) {
+        final int paramsCount = parameterList.getTypeParameters().length;
+        final int index = parameterList.getTypeParameterIndex(typeParameter);
 
-      ReferencesSearch.search(owner).forEach(new Processor<PsiReference>() {
-        public boolean process(final PsiReference reference) {
-          if (reference instanceof PsiJavaCodeReferenceElement) {
-            final PsiReferenceParameterList parameterList = ((PsiJavaCodeReferenceElement)reference).getParameterList();
-            if (parameterList != null) {
-              PsiTypeElement[] typeArgs = parameterList.getTypeParameterElements();
-              if (typeArgs.length > index) {
-                usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(typeArgs[index], typeParameter, true));
+        ReferencesSearch.search(owner).forEach(new Processor<PsiReference>() {
+          public boolean process(final PsiReference reference) {
+            if (reference instanceof PsiJavaCodeReferenceElement) {
+              final PsiReferenceParameterList parameterList = ((PsiJavaCodeReferenceElement)reference).getParameterList();
+              if (parameterList != null) {
+                PsiTypeElement[] typeArgs = parameterList.getTypeParameterElements();
+                if (typeArgs.length > index) {
+                  if (typeArgs.length == 1 && paramsCount > 1 && typeArgs[0].getType() instanceof PsiDiamondType) return true;
+                  usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(typeArgs[index], typeParameter, true));
+                }
               }
             }
+            return true;
           }
-          return true;
-        }
-      });
+        });
+      }
     }
   }
 

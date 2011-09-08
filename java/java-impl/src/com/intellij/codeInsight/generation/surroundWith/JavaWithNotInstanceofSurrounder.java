@@ -23,12 +23,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.util.IncorrectOperationException;
 
 class JavaWithNotInstanceofSurrounder extends JavaExpressionSurrounder{
   public boolean isApplicable(PsiExpression expr) {
     PsiType type = expr.getType();
     if (type == null) return false;
+    if (!expr.isPhysical()) return false;
     return !(type instanceof PsiPrimitiveType);
   }
 

@@ -28,11 +28,11 @@ import java.awt.*;
 import java.awt.event.*;
 
 public class ButtonlessScrollBarUI extends BasicScrollBarUI {
-  public static final Color GRADIENT_LIGHT = new SameColor(0xfb);
-  public static final Color GRADIENT_DARK = new SameColor(0xd7);
-  public static final Color GRADIENT_THUMB_BORDER = new SameColor(0xc9);
+  public static final Color GRADIENT_LIGHT = new Color(0xfb,0xfb,0xfb);
+  public static final Color GRADIENT_DARK = new Color(0xd7,0xd7,0xd7);
+  public static final Color GRADIENT_THUMB_BORDER = new Color(0xc9,0xc9,0xc9);
   public static final Color TRACK_BACKGROUND = LightColors.SLIGHTLY_GRAY;
-  public static final Color TRACK_BORDER = new SameColor(230);
+  public static final Color TRACK_BORDER = new Color(230,230,230);
 
   private final AdjustmentListener myAdjustmentListener;
   private final MouseMotionAdapter myMouseMotionListener;

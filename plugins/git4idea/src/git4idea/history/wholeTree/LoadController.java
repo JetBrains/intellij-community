@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.CalledInAwt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import com.intellij.util.Ticket;
 import com.intellij.util.continuation.Continuation;
 import git4idea.history.NewGitUsersComponent;
 import git4idea.history.browser.ChangesFilter;
@@ -47,7 +48,7 @@ public class LoadController implements Loader {
 
   @CalledInAwt
   @Override
-  public void loadSkeleton(final Mediator.Ticket ticket,
+  public void loadSkeleton(final Ticket ticket,
                            final RootsHolder rootsHolder,
                            final Collection<String> startingPoints,
                            final GitLogFilters filters,

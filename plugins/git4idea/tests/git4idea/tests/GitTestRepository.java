@@ -87,7 +87,12 @@ public class GitTestRepository {
    */
   @NotNull
   public File createFile(String filename, String content) throws IOException {
-    File f = new File(myRootDir, filename);
+    return createFile(myRootDir, filename, content);
+  }
+  
+  @NotNull
+  public static File createFile(File parentDir, String filename, String content) throws IOException {
+    File f = new File(parentDir, filename);
     assert f.createNewFile();
     FileUtil.writeToFile(f, content);
     return f;

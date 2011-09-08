@@ -60,12 +60,6 @@ public abstract class Command {
                 resetCvsCommand();
         }
 
-        // Implemented ============================================================
-
-        public final IGlobalOptions getIGlobalOptions() {
-                return globalOptions;
-        }
-
         // Accessing ==============================================================
 
         public final GlobalOptions getGlobalOptions() {

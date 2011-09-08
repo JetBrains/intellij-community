@@ -223,9 +223,11 @@ public class ChangeListStorageImpl implements ChangeListStorage {
 
       // todo remove this when bug is found
       Pair<Long, Integer> os = myStorage.getOffsetAndSize(id);
+      String message =
+        "Block was written: " + id + " offset: " + os.first + " size: " + os.second + " real bytes size: " + writtenBytes.length;
       LocalHistoryLog.LOG
-        .info("Block was written: " + id + " offset: " + os.first + " size: " + os.second + " real bytes size: " + writtenBytes.length);
-      if (os.second != writtenBytes.length) throw new IOException("wrong space was allocated for the record!");
+        .info(message);
+      if (os.second != writtenBytes.length) throw new IOException("wrong space was allocated for the record!\n" + message);
 
       // todo remove this when bug is found
       if (ApplicationManagerEx.getApplicationEx().isInternal()) {

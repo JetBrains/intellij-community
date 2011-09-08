@@ -23,9 +23,9 @@ public class CompletionContributorForTextField extends CompletionContributor {
     if (field == null) return;
 
     String text = file.getText();
-    int offset = parameters.getOffset();
+    int offset = Math.min(text.length(), parameters.getOffset());
 
-    String prefix = field.getPrefix(text.substring(0, Math.min(text.length(), offset)));
+    String prefix = field.getPrefix(text.substring(0, offset));
 
     CompletionResultSet activeResult;
 

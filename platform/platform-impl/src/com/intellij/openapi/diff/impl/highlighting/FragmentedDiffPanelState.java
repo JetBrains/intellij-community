@@ -58,6 +58,8 @@ public class FragmentedDiffPanelState extends DiffPanelState {
   }
 
   private LineBlocks addMarkup(final List<LineFragment> lines) {
+    myFragmentHighlighter.precalculateNumbers(lines);
+
     for (Iterator<LineFragment> iterator = lines.iterator(); iterator.hasNext();) {
       LineFragment line = iterator.next();
       myFragmentHighlighter.setIsLast(!iterator.hasNext());
@@ -125,5 +127,13 @@ public class FragmentedDiffPanelState extends DiffPanelState {
       }
     }
     myRanges.addAll(ranges);
+  }
+  
+  public List<Integer> getLeftLines() {
+    return myFragmentHighlighter.getLeftLines();
+  }
+
+  public List<Integer> getRightLines() {
+    return myFragmentHighlighter.getRightLines();
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.cvsSupport2.cvsoperations.cvsEdit;
 
 import com.intellij.cvsSupport2.connections.CvsRootProvider;
-import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.cvsoperations.common.CvsExecutionEnvironment;
 import com.intellij.cvsSupport2.cvsoperations.common.CvsOperationOnFiles;
 import com.intellij.cvsSupport2.errorHandling.CvsException;
@@ -24,19 +23,19 @@ import com.intellij.cvsSupport2.javacvsImpl.io.ReadWriteStatistics;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.command.Command;
 import org.netbeans.lib.cvsclient.command.CommandAbortedException;
 import org.netbeans.lib.cvsclient.command.CommandException;
 import org.netbeans.lib.cvsclient.command.Watch;
 import org.netbeans.lib.cvsclient.command.reservedcheckout.EditCommand;
-import org.jetbrains.annotations.NonNls;
+import org.netbeans.lib.cvsclient.progress.IProgressViewer;
 
 import java.io.File;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
+import java.util.List;
 import java.util.StringTokenizer;
 
 /**
@@ -44,7 +43,7 @@ import java.util.StringTokenizer;
  */
 public class EditOperation extends CvsOperationOnFiles {
   private final boolean myIsReservedEdit;
-  private final Collection myEditFileInfos = new ArrayList();
+  private final List<EditedFileInfo> myEditFileInfos = new ArrayList();
   @NonNls public static final String FILES_BEING_EDITED_EXCEPTION = "cvs [edit aborted]: files being edited";
 
   private final static class EditedFileInfo {
@@ -61,17 +60,17 @@ public class EditOperation extends CvsOperationOnFiles {
     }
 
     public static EditedFileInfo createOn(String editInfoString){
-      StringTokenizer tokens = new StringTokenizer(editInfoString, "\t");
+      final StringTokenizer tokens = new StringTokenizer(editInfoString, "\t");
       if (!tokens.hasMoreTokens()) return null;
-      String fileName = tokens.nextToken();
+      final String fileName = tokens.nextToken();
       if (!tokens.hasMoreTokens()) return null;
-      String user = tokens.nextToken();
+      final String user = tokens.nextToken();
       if (!tokens.hasMoreTokens()) return null;
       tokens.nextToken();
       if (!tokens.hasMoreTokens()) return null;
-      String host = tokens.nextToken();
+      final String host = tokens.nextToken();
       if (!tokens.hasMoreTokens()) return null;
-      String editLocation = tokens.nextToken();
+      final String editLocation = tokens.nextToken();
       return new EditedFileInfo(fileName, user, host, editLocation);
     }
 
@@ -81,7 +80,7 @@ public class EditOperation extends CvsOperationOnFiles {
 
     public boolean isSuitableFor(CvsRootProvider root) {
       try {
-        String hostName = InetAddress.getLocalHost().getHostName();
+        final String hostName = InetAddress.getLocalHost().getHostName();
         return myUser.equals(root.getCvsRoot().getUser())
             && myEditLocation.equals(getFile(root).getParentFile())
             && myHost.equals(hostName);
@@ -97,7 +96,7 @@ public class EditOperation extends CvsOperationOnFiles {
   }
 
   protected Command createCommand(CvsRootProvider root, CvsExecutionEnvironment cvsExecutionEnvironment) {
-    EditCommand result = new EditCommand();
+    final EditCommand result = new EditCommand();
     result.setTemporaryWatch(Watch.TALL);
     result.setCheckThatUnedited(myIsReservedEdit);
     result.setForceEvenIfEdited(false);
@@ -105,31 +104,28 @@ public class EditOperation extends CvsOperationOnFiles {
     return result;
   }
 
+  @Override
   protected void execute(CvsRootProvider root,
                          CvsExecutionEnvironment executionEnvironment,
-                         ReadWriteStatistics statistics, ModalityContext executor) throws CommandException,
+                         ReadWriteStatistics statistics, IProgressViewer progressViewer) throws CommandException,
       CommandAbortedException, VcsException {
-    super.execute(root, executionEnvironment, statistics, executor);
+    super.execute(root, executionEnvironment, statistics, progressViewer);
     final VcsException vcsException = new CvsException(FILES_BEING_EDITED_EXCEPTION, root.getCvsRootAsString());
 
-    for (Iterator iterator = myEditFileInfos.iterator(); iterator.hasNext();) {
-      EditedFileInfo info = (EditedFileInfo) iterator.next();
-
+    for (EditedFileInfo info : myEditFileInfos) {
       if (info.isSuitableFor(root)) return;
 
       final File file = info.getFile(root);
-      VirtualFile virtualFile = CvsVfsUtil.findFileByIoFile(file);
+      final VirtualFile virtualFile = CvsVfsUtil.findFileByIoFile(file);
       if (virtualFile != null) vcsException.setVirtualFile(virtualFile);
-
     }
 
     if (!myEditFileInfos.isEmpty()) throw vcsException;
-
   }
 
   public void messageSent(String message, final byte[] byteMessage, boolean error, boolean tagged) {
     super.messageSent(message, byteMessage, error, tagged);
-    EditedFileInfo editedFileInfo = EditedFileInfo.createOn(message);
+    final EditedFileInfo editedFileInfo = EditedFileInfo.createOn(message);
     if (editedFileInfo != null)
       myEditFileInfos.add(editedFileInfo);
   }

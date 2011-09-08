@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import com.intellij.util.Ticket;
 import com.intellij.util.continuation.ContinuationContext;
 import com.intellij.util.continuation.TaskDescriptor;
 import com.intellij.util.continuation.Where;
@@ -46,7 +47,7 @@ public class ByRootLoader extends TaskDescriptor {
   private final Mediator myMediator;
   private final DetailsCache myDetailsCache;
   private SymbolicRefs mySymbolicRefs;
-  private final Mediator.Ticket myTicket;
+  private final Ticket myTicket;
   private final UsersIndex myUsersIndex;
   private final Collection<String> myStartingPoints;
   @NotNull
@@ -56,7 +57,7 @@ public class ByRootLoader extends TaskDescriptor {
                       LoaderAndRefresherImpl.MyRootHolder rootHolder,
                       Mediator mediator,
                       DetailsCache detailsCache,
-                      Mediator.Ticket ticket, UsersIndex usersIndex, GitLogFilters gitLogFilters, final Collection<String> startingPoints) {
+                      Ticket ticket, UsersIndex usersIndex, GitLogFilters gitLogFilters, final Collection<String> startingPoints) {
     super("Initial checks", Where.POOLED);
     myProject = project;
     myRootHolder = rootHolder;

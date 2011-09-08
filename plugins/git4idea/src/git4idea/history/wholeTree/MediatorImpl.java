@@ -21,6 +21,7 @@ import com.intellij.openapi.vcs.CalledInBackground;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
+import com.intellij.util.Ticket;
 import git4idea.history.browser.SymbolicRefs;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;

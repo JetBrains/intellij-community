@@ -301,6 +301,11 @@
         <action id="UnsplitAll" class="com.intellij.ide.actions.UnsplitAllAction"/>
         <action id="NextSplitter" class="com.intellij.ide.actions.NextSplitAction"/>
         <action id="PrevSplitter" class="com.intellij.ide.actions.PrevSplitAction"/>
+        <separator/>
+        <group id="OpenProjectWindows" class="com.intellij.openapi.wm.impl.ProjectWindowActionGroup">
+          <action id="NextProjectWindow" class="com.intellij.openapi.wm.impl.NextProjectWindow"/>
+          <action id="PreviousProjectWindow" class="com.intellij.openapi.wm.impl.PreviousProjectWindow"/>
+        </group>
       </group>
 
       <!-- Help -->

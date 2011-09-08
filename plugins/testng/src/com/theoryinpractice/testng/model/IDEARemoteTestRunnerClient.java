@@ -43,87 +43,90 @@ public class IDEARemoteTestRunnerClient extends AbstractRemoteTestRunnerClient
         protected void handleThrowable(Throwable cause) {
           cause.printStackTrace();
         }
+
+        @Override
+        public void run() {
+          try {
+            messageSender.initReceiver();
+          }
+          catch (SocketTimeoutException e) {
+            e.printStackTrace();
+          }
+          super.run();
+        }
       };
-      try {
-        messageSender.initReceiver();
-      }
-      catch (SocketTimeoutException e) {
-        e.printStackTrace();
-      }
-      startListening(new IRemoteSuiteListener[]{myListener},
+    startListening(new IRemoteSuiteListener[]{myListener},
                      new IRemoteTestListener[]{myListener},
                      srvConnection);
     }
 
     @Override
     protected void notifyStart(final GenericMessage genericMessage) {
-        ApplicationManager.getApplication().invokeLater(new Runnable()
-        {
-            public void run() {
-                for (final IRemoteSuiteListener listener : m_suiteListeners) {
-                    listener.onInitialization(genericMessage);
-                }
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            for (final IRemoteSuiteListener listener : m_suiteListeners) {
+              listener.onInitialization(genericMessage);
             }
+          }
         }, ModalityState.NON_MODAL);
     }
 
     @Override
     protected void notifySuiteEvents(final SuiteMessage suiteMessage) {
-        ApplicationManager.getApplication().invokeLater(new Runnable()
-        {
-            public void run() {
-                for (final IRemoteSuiteListener listener : m_suiteListeners) {
-                    if (suiteMessage.isMessageOnStart()) {
-                        listener.onStart(suiteMessage);
-                    } else {
-                        listener.onFinish(suiteMessage);
-                    }
-                }
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            for (final IRemoteSuiteListener listener : m_suiteListeners) {
+              if (suiteMessage.isMessageOnStart()) {
+                listener.onStart(suiteMessage);
+              }
+              else {
+                listener.onFinish(suiteMessage);
+              }
             }
+          }
         }, ModalityState.NON_MODAL);
     }
 
     @Override
     protected void notifyTestEvents(final TestMessage testMessage) {
-        ApplicationManager.getApplication().invokeLater(new Runnable()
-        {
-            public void run() {
-                for (final IRemoteTestListener listener : m_testListeners) {
-                    if (testMessage.isMessageOnStart()) {
-                        listener.onStart(testMessage);
-                    } else {
-                        listener.onFinish(testMessage);
-                    }
-                }
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            for (final IRemoteTestListener listener : m_testListeners) {
+              if (testMessage.isMessageOnStart()) {
+                listener.onStart(testMessage);
+              }
+              else {
+                listener.onFinish(testMessage);
+              }
             }
+          }
         }, ModalityState.NON_MODAL);
     }
 
     @Override
     protected void notifyResultEvents(final TestResultMessage testResultMessage) {
-        ApplicationManager.getApplication().invokeLater(new Runnable()
-        {
-            public void run() {
-                for (final IRemoteTestListener listener : m_testListeners) {
-                    switch (testResultMessage.getResult()) {
-                        case MessageHelper.TEST_STARTED:
-                            listener.onTestStart(testResultMessage);
-                            break;
-                        case MessageHelper.PASSED_TEST:
-                            listener.onTestSuccess(testResultMessage);
-                            break;
-                        case MessageHelper.FAILED_TEST:
-                            listener.onTestFailure(testResultMessage);
-                            break;
-                        case MessageHelper.SKIPPED_TEST:
-                            listener.onTestSkipped(testResultMessage);
-                            break;
-                        case MessageHelper.FAILED_ON_PERCENTAGE_TEST:
-                            listener.onTestFailedButWithinSuccessPercentage(testResultMessage);
-                            break;
-                    }
-                }
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            for (final IRemoteTestListener listener : m_testListeners) {
+              switch (testResultMessage.getResult()) {
+                case MessageHelper.TEST_STARTED:
+                  listener.onTestStart(testResultMessage);
+                  break;
+                case MessageHelper.PASSED_TEST:
+                  listener.onTestSuccess(testResultMessage);
+                  break;
+                case MessageHelper.FAILED_TEST:
+                  listener.onTestFailure(testResultMessage);
+                  break;
+                case MessageHelper.SKIPPED_TEST:
+                  listener.onTestSkipped(testResultMessage);
+                  break;
+                case MessageHelper.FAILED_ON_PERCENTAGE_TEST:
+                  listener.onTestFailedButWithinSuccessPercentage(testResultMessage);
+                  break;
+              }
             }
+          }
         }, ModalityState.NON_MODAL);
     }
 

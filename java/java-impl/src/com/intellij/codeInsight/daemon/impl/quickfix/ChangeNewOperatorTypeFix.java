@@ -86,15 +86,16 @@ public class ChangeNewOperatorTypeFix implements IntentionAction {
     else {
       final PsiAnonymousClass anonymousClass = originalExpression.getAnonymousClass();
       newExpression = (PsiNewExpression)factory.createExpressionFromText("new " + toType.getCanonicalText() + "()" + (anonymousClass != null ? "{}" : ""), originalExpression);
+      PsiExpressionList argumentList = originalExpression.getArgumentList();
+      if (argumentList == null) return;
+      newExpression.getArgumentList().replace(argumentList);
       if (anonymousClass == null) { //just to prevent useless inference
-        if (PsiDiamondTypeUtil.canCollapseToDiamond(newExpression, originalExpression, false)) {
+        if (PsiDiamondTypeUtil.canCollapseToDiamond(newExpression, originalExpression, toType)) {
           final PsiElement paramList = PsiDiamondTypeUtil.replaceExplicitWithDiamond(newExpression.getClassOrAnonymousClassReference().getParameterList());
           newExpression = PsiTreeUtil.getParentOfType(paramList, PsiNewExpression.class);
         }
       }
-      PsiExpressionList argumentList = originalExpression.getArgumentList();
-      if (argumentList == null) return;
-      newExpression.getArgumentList().replace(argumentList);
+
       if (anonymousClass != null) {
         final PsiAnonymousClass newAnonymousClass = (PsiAnonymousClass)newExpression.getAnonymousClass().replace(anonymousClass);
         final PsiClass aClass = PsiUtil.resolveClassInType(toType);

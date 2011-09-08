@@ -68,6 +68,13 @@ public class ProjectUtil {
   }
 
   public static String calcRelativeToProjectPath(final VirtualFile file, final Project project, final boolean includeFilePath) {
+    return calcRelativeToProjectPath(file, project, includeFilePath, false);
+  }
+
+  public static String calcRelativeToProjectPath(final VirtualFile file,
+                                                 final Project project,
+                                                 final boolean includeFilePath,
+                                                 final boolean keepModuleAlwaysOnTheLeft) {
     if (file instanceof VirtualFilePathWrapper) {
       return includeFilePath ? ((VirtualFilePathWrapper)file).getPresentablePath() : file.getName();
     }    
@@ -84,8 +91,7 @@ public class ProjectUtil {
           url = "..." + url.substring(projectHomeUrl.length());
         }
       }
-      final Module module = ModuleUtil.findModuleForFile(file, project);
-      
+
       if (SystemInfo.isMac && file.getFileSystem() instanceof JarFileSystem) {
         final VirtualFile fileForJar = ((JarFileSystem)file.getFileSystem()).getVirtualFileForJar(file);
         if (fileForJar != null) {
@@ -101,13 +107,15 @@ public class ProjectUtil {
           }
         }
       }
-      
+
+      final Module module = ModuleUtil.findModuleForFile(file, project);
       if (module == null) return url;
-      return SystemInfo.isMac ? new StringBuffer().append(url).append(" - [").append(module.getName()).append("]").toString() :
-        new StringBuffer().append("[").append(module.getName()).append("] - ").append(url).toString();
+      return !keepModuleAlwaysOnTheLeft && SystemInfo.isMac ?
+             new StringBuffer().append(url).append(" - [").append(module.getName()).append("]").toString() :
+             new StringBuffer().append("[").append(module.getName()).append("] - ").append(url).toString();
     }
-  }  
-  
+  }
+
   public static String calcRelativeToProjectPath(final VirtualFile file, final Project project) {
     return calcRelativeToProjectPath(file, project, true);
   }

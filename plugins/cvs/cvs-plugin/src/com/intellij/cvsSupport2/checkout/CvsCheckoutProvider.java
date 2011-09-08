@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,16 +36,13 @@ import java.io.File;
 public class CvsCheckoutProvider implements CheckoutProvider {
   public void doCheckout(@NotNull final Project project, final CheckoutProvider.Listener listener) {
 
-    final File checkoutDirectory;
-    final CvsElement[] selectedElements;
-
-    CheckoutWizard checkoutWizard = new CheckoutWizard(project);
+    final CheckoutWizard checkoutWizard = new CheckoutWizard(project);
     checkoutWizard.show();
     if (!checkoutWizard.isOK()) return;
     final boolean useAlternateCheckoutPath = checkoutWizard.useAlternativeCheckoutLocation();
-    checkoutDirectory = checkoutWizard.getCheckoutDirectory();
+    final File checkoutDirectory = checkoutWizard.getCheckoutDirectory();
 
-    selectedElements = checkoutWizard.getSelectedElements();
+    final CvsElement[] selectedElements = checkoutWizard.getSelectedElements();
     final CvsHandler checkoutHandler = CommandCvsHandler.createCheckoutHandler(
       checkoutWizard.getSelectedConfiguration(),
       collectCheckoutPaths(selectedElements),
@@ -76,7 +73,7 @@ public class CvsCheckoutProvider implements CheckoutProvider {
       public void run() {
         // shouldn't hold write action when calling this (IDEADEV-20086)
         for (CvsElement element : selectedElements) {
-          File path = useAlternateCheckoutPath ? checkoutDirectory : new File(checkoutDirectory, element.getCheckoutPath());
+          final File path = useAlternateCheckoutPath ? checkoutDirectory : new File(checkoutDirectory, element.getCheckoutPath());
           listener.directoryCheckedOut(path);
         }
         listener.checkoutCompleted();
@@ -85,9 +82,9 @@ public class CvsCheckoutProvider implements CheckoutProvider {
   }
 
   private static String[] collectCheckoutPaths(final CvsElement[] mySelectedElements) {
-    String[] checkoutPaths = new String[mySelectedElements.length];
+    final String[] checkoutPaths = new String[mySelectedElements.length];
     for (int i = 0; i < mySelectedElements.length; i++) {
-      CvsElement selectedElement = mySelectedElements[i];
+      final CvsElement selectedElement = mySelectedElements[i];
       checkoutPaths[i] = selectedElement.getCheckoutPath();
     }
     return checkoutPaths;

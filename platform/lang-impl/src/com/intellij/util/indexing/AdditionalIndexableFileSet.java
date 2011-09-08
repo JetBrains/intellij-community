@@ -17,11 +17,9 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.roots.ContentIterator;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
@@ -29,33 +27,46 @@ import java.util.Set;
  * @author peter
  */
 public class AdditionalIndexableFileSet implements IndexableFileSet {
-
-  private NotNullLazyValue<Set<VirtualFile>> myRoots = new NotNullLazyValue<Set<VirtualFile>>() {
-    @NotNull
-    @Override
-    protected Set<VirtualFile> compute() {
-      THashSet<VirtualFile> virtualFiles = new THashSet<VirtualFile>();
-      if (myExtensions == null) {
-        myExtensions = Extensions.getExtensions(IndexableSetContributor.EP_NAME);
-      }
-        for (IndexedRootsProvider provider : myExtensions) {
-          virtualFiles.addAll(IndexableSetContributor.getRootsToIndex(provider));
-        }
-      return virtualFiles;
-    }
-  };
-
-  private IndexedRootsProvider[] myExtensions;
-
-  public AdditionalIndexableFileSet() {
-  }
+  private volatile Set<VirtualFile> cachedFiles;
+  private volatile IndexedRootsProvider[] myExtensions;
 
   public AdditionalIndexableFileSet(IndexedRootsProvider... extensions) {
     myExtensions = extensions;
   }
 
+  private Set<VirtualFile> getFiles() {
+    Set<VirtualFile> files = cachedFiles;
+    if (files == null || filesInvalidated(files)) {
+      cachedFiles = files = collectFiles();
+    }
+    return files;
+  }
+
+  private Set<VirtualFile> collectFiles() {
+    THashSet<VirtualFile> virtualFiles = new THashSet<VirtualFile>();
+    if (myExtensions == null) {
+      myExtensions = Extensions.getExtensions(IndexableSetContributor.EP_NAME);
+    }
+    for (IndexedRootsProvider provider : myExtensions) {
+      virtualFiles.addAll(IndexableSetContributor.getRootsToIndex(provider));
+    }
+    return virtualFiles;
+  }
+
+  public static boolean filesInvalidated(Set<VirtualFile> files) {
+    for (VirtualFile file : files) {
+      if (!file.isValid()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public AdditionalIndexableFileSet() {
+  }
+
   public boolean isInSet(VirtualFile file) {
-    for (final VirtualFile root : myRoots.getValue()) {
+    for (final VirtualFile root : getFiles()) {
       if (VfsUtil.isAncestor(root, file, false)) {
         return true;
       }

@@ -884,14 +884,13 @@ public class HighlightUtil {
 
 
   @Nullable
-  static HighlightInfo checkMustBeBoolean(PsiExpression expr) {
+  static HighlightInfo checkMustBeBoolean(@NotNull PsiExpression expr, PsiType type) {
     PsiElement parent = expr.getParent();
     if (parent instanceof PsiIfStatement || parent instanceof PsiWhileStatement ||
         parent instanceof PsiForStatement && expr.equals(((PsiForStatement)parent).getCondition()) ||
         parent instanceof PsiDoWhileStatement && expr.equals(((PsiDoWhileStatement)parent).getCondition())) {
       if (expr.getNextSibling() instanceof PsiErrorElement) return null;
 
-      PsiType type = expr.getType();
       if (!TypeConversionUtil.isBooleanType(type)) {
         final HighlightInfo info = createIncompatibleTypeHighlightInfo(PsiType.BOOLEAN, type, expr.getTextRange());
         if (expr instanceof PsiMethodCallExpression) {
@@ -1225,7 +1224,7 @@ public class HighlightUtil {
   }
 
   @Nullable
-  static HighlightInfo checkValidArrayAccessExpression(PsiExpression arrayExpression, PsiExpression indexExpression) {
+  static HighlightInfo checkValidArrayAccessExpression(PsiExpression arrayExpression, PsiExpression indexExpression, PsiType type) {
     PsiType arrayExpressionType = arrayExpression == null ? null : arrayExpression.getType();
     if (arrayExpressionType != null && !(arrayExpressionType instanceof PsiArrayType)) {
       String description = JavaErrorMessages.message("array.type.expected", formatType(arrayExpressionType));
@@ -1255,13 +1254,11 @@ public class HighlightUtil {
   }
 
   @Nullable
-  public static Collection<HighlightInfo> checkArrayInitializer(final PsiExpression initializer) {
-    if (! (initializer instanceof PsiArrayInitializerExpression)) return null;
+  public static Collection<HighlightInfo> checkArrayInitializer(final PsiExpression initializer, PsiType type) {
+    if (!(initializer instanceof PsiArrayInitializerExpression)) return null;
+    if (!(type instanceof PsiArrayType)) return null;
 
-    final PsiType arrayInitializerType = initializer.getType();
-    if (! (arrayInitializerType instanceof PsiArrayType)) return null;
-
-    final PsiType componentType = ((PsiArrayType) arrayInitializerType).getComponentType();
+    final PsiType componentType = ((PsiArrayType) type).getComponentType();
     final PsiArrayInitializerExpression arrayInitializer = (PsiArrayInitializerExpression) initializer;
 
     boolean arrayTypeFixChecked = false;
@@ -1895,12 +1892,10 @@ public class HighlightUtil {
 
 
   @Nullable
-  public static HighlightInfo checkTernaryOperatorConditionIsBoolean(PsiExpression expression) {
+  public static HighlightInfo checkTernaryOperatorConditionIsBoolean(PsiExpression expression, PsiType type) {
     if (expression.getParent() instanceof PsiConditionalExpression &&
-        ((PsiConditionalExpression)expression.getParent()).getCondition() == expression && expression.getType() != null &&
-        !TypeConversionUtil.isBooleanType(expression.getType())) {
-      PsiType foundType = expression.getType();
-      return createIncompatibleTypeHighlightInfo(PsiType.BOOLEAN, foundType, expression.getTextRange());
+        ((PsiConditionalExpression)expression.getParent()).getCondition() == expression && !TypeConversionUtil.isBooleanType(type)) {
+      return createIncompatibleTypeHighlightInfo(PsiType.BOOLEAN, type, expression.getTextRange());
     }
     return null;
   }
@@ -1920,18 +1915,17 @@ public class HighlightUtil {
 
 
   @Nullable
-  public static HighlightInfo checkAssertOperatorTypes(PsiExpression expression) {
+  public static HighlightInfo checkAssertOperatorTypes(PsiExpression expression, PsiType type) {
+    if (type == null) return null;
     if (!(expression.getParent() instanceof PsiAssertStatement)) {
       return null;
     }
     PsiAssertStatement assertStatement = (PsiAssertStatement)expression.getParent();
-    PsiType type = expression.getType();
-    if (type == null) return null;
     if (expression == assertStatement.getAssertCondition() && !TypeConversionUtil.isBooleanType(type)) {
       // addTypeCast quickfix is not applicable here since no type can be cast to boolean
       return createIncompatibleTypeHighlightInfo(PsiType.BOOLEAN, type, expression.getTextRange());
     }
-    else if (expression == assertStatement.getAssertDescription() && TypeConversionUtil.isVoidType(type)) {
+    if (expression == assertStatement.getAssertDescription() && TypeConversionUtil.isVoidType(type)) {
       String description = JavaErrorMessages.message("void.type.is.not.allowed");
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, expression, description);
     }
@@ -1940,10 +1934,9 @@ public class HighlightUtil {
 
 
   @Nullable
-  public static HighlightInfo checkSynchronizedExpressionType(PsiExpression expression) {
+  public static HighlightInfo checkSynchronizedExpressionType(PsiExpression expression, PsiType type) {
+    if (type == null) return null;
     if (expression.getParent() instanceof PsiSynchronizedStatement) {
-      PsiType type = expression.getType();
-      if (type == null) return null;
       PsiSynchronizedStatement synchronizedStatement = (PsiSynchronizedStatement)expression.getParent();
       if (expression == synchronizedStatement.getLockExpression() &&
           (type instanceof PsiPrimitiveType || TypeConversionUtil.isNullType(type))) {
@@ -1956,17 +1949,18 @@ public class HighlightUtil {
 
 
   @Nullable
-  public static HighlightInfo checkConditionalExpressionBranchTypesMatch(PsiExpression expression) {
-    if (!(expression.getParent() instanceof PsiConditionalExpression)) {
+  public static HighlightInfo checkConditionalExpressionBranchTypesMatch(final PsiExpression expression, PsiType type) {
+    PsiElement parent = expression.getParent();
+    if (!(parent instanceof PsiConditionalExpression)) {
       return null;
     }
-    PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)expression.getParent();
+    PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)parent;
     // check else branches only
     if (conditionalExpression.getElseExpression() != expression) return null;
     final PsiExpression thenExpression = conditionalExpression.getThenExpression();
     assert thenExpression != null;
     PsiType thenType = thenExpression.getType();
-    PsiType elseType = expression.getType();
+    PsiType elseType = type;
     if (thenType == null || elseType == null) return null;
     if (conditionalExpression.getType() == null) {
       // cannot derive type of conditional expression

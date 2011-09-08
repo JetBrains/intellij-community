@@ -36,21 +36,23 @@ public class CommitCompletionContributor extends CompletionContributor {
 
   @Override
   public void fillCompletionVariants(CompletionParameters parameters, CompletionResultSet result) {
-    if (parameters.getInvocationCount() == 0) return;
     PsiFile file = parameters.getOriginalFile();
     Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
     if (document != null) {
       DataContext dataContext = document.getUserData(CommitMessage.DATA_CONTEXT_KEY);
       if (dataContext != null) {
-        ChangeList[] lists = VcsDataKeys.CHANGE_LISTS.getData(dataContext);
-        if (lists != null) {
-          CompletionResultSet insensitive = result.caseInsensitive();
-          for (ChangeList list : lists) {
-            for (Change change : list.getChanges()) {
-              VirtualFile virtualFile = change.getVirtualFile();
-              if (virtualFile != null) {
-                insensitive.addElement(LookupElementBuilder.create(virtualFile.getName()).
-                  setIcon(VirtualFilePresentation.getIcon(virtualFile)));
+        result.stopHere();
+        if (parameters.getInvocationCount() > 0) {
+          ChangeList[] lists = VcsDataKeys.CHANGE_LISTS.getData(dataContext);
+          if (lists != null) {
+            CompletionResultSet insensitive = result.caseInsensitive();
+            for (ChangeList list : lists) {
+              for (Change change : list.getChanges()) {
+                VirtualFile virtualFile = change.getVirtualFile();
+                if (virtualFile != null) {
+                  insensitive.addElement(LookupElementBuilder.create(virtualFile.getName()).
+                    setIcon(VirtualFilePresentation.getIcon(virtualFile)));
+                }
               }
             }
           }

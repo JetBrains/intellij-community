@@ -26,6 +26,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.xmlb.Accessor;
 import com.intellij.util.xmlb.SerializationFilter;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -75,6 +76,7 @@ public class UISettings implements PersistentStateComponent<UISettings>, Exporta
   public boolean SHOW_ICONS_IN_QUICK_NAVIGATION = true;
   public boolean CLOSE_NON_MODIFIED_FILES_FIRST = false;
   public boolean ACTIVATE_MRU_EDITOR_ON_CLOSE = false;
+  public boolean ACTIVATE_RIGHT_EDITOR_ON_CLOSE = PlatformUtils.isCidr();
   public boolean ANTIALIASING_IN_EDITOR = true;
   public boolean MOVE_MOUSE_ON_DEFAULT_BUTTON = false;
   public boolean ENABLE_ALPHA_MODE = false;

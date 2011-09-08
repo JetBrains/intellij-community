@@ -103,14 +103,15 @@ class EventLogConsole {
       }
 
       public void actionPerformed(final AnActionEvent e) {
+        for (Notification notification : myProjectModel.getNotifications()) {
+          notification.expire();
+          myProjectModel.removeNotification(notification);
+        }
+        myProjectModel.setStatusMessage(null);
         final Editor editor = e.getData(PlatformDataKeys.EDITOR);
         if (editor != null) {
           editor.getDocument().deleteString(0, editor.getDocument().getTextLength());
         }
-        for (Notification notification : myProjectModel.getNotifications()) {
-          myProjectModel.removeNotification(notification);
-        }
-        myProjectModel.setStatusMessage(null);
       }
     });
     group.add(new EditorCopyAction());

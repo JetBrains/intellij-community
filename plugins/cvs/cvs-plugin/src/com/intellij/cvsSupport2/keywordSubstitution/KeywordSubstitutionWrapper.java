@@ -54,7 +54,7 @@ public class KeywordSubstitutionWrapper {
   }
 
   public static KeywordSubstitutionWrapper getValue(String substitution) {
-    KeywordSubstitution keywordSubstitution = KeywordSubstitution.getValue(substitution);
+    final KeywordSubstitution keywordSubstitution = KeywordSubstitution.getValue(substitution);
     return getValue(keywordSubstitution);
   }
 
@@ -72,7 +72,9 @@ public class KeywordSubstitutionWrapper {
     for (KeywordSubstitutionWrapper value : values()) {
       comboBox.addItem(value);
     }
-    comboBox.setSelectedItem(getValue(defaultSubstitution));
+    if (defaultSubstitution != null) {
+      comboBox.setSelectedItem(getValue(defaultSubstitution));
+    }
   }
 
   public static List<KeywordSubstitutionWrapper> values() {

@@ -43,6 +43,7 @@ import org.netbeans.lib.cvsclient.ValidRequestsExpectedException;
 import org.netbeans.lib.cvsclient.command.CommandException;
 import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.connection.IConnection;
+import org.netbeans.lib.cvsclient.progress.DummyProgressViewer;
 import org.netbeans.lib.cvsclient.util.BugLog;
 
 import java.io.IOException;
@@ -95,10 +96,9 @@ public class CvsRootConfiguration extends AbstractConfiguration implements CvsEn
   }
 
   public static String createStringRepresentationOn(CvsMethod method, String user, String host, String port, String repository) {
-    StringBuffer result = new StringBuffer();
-
     if (method == CvsMethod.LOCAL_METHOD) return repository;
 
+    final StringBuilder result = new StringBuilder();
     result.append(SEPARATOR);
     result.append(method.getName());
     result.append(SEPARATOR);
@@ -153,7 +153,7 @@ public class CvsRootConfiguration extends AbstractConfiguration implements CvsEn
 
   public static void testConnection(final IConnection connection, final CvsConnectionSettings settings)
     throws AuthenticationException, IOException {
-    ErrorMessagesProcessor errorProcessor = new ErrorMessagesProcessor();
+    final ErrorMessagesProcessor errorProcessor = new ErrorMessagesProcessor();
     final CvsExecutionEnvironment cvsExecutionEnvironment = new CvsExecutionEnvironment(errorProcessor,
                                                                                         CvsExecutionEnvironment.DUMMY_STOPPER,
                                                                                         errorProcessor, new ModalityContextImpl(true),
@@ -171,7 +171,7 @@ public class CvsRootConfiguration extends AbstractConfiguration implements CvsEn
             if (connection instanceof SelfTestingConnection) {
               ((SelfTestingConnection)connection).test(CvsListenerWithProgress.createOnProgress());
             }
-            operation.execute(cvsRootProvider, cvsExecutionEnvironment, connection);
+            operation.execute(cvsRootProvider, cvsExecutionEnvironment, connection, DummyProgressViewer.INSTANCE);
           }
           catch (ValidRequestsExpectedException ex) {
             result.addError(new CvsException(ex, cvsRootProvider.getCvsRootAsString()));
@@ -193,12 +193,12 @@ public class CvsRootConfiguration extends AbstractConfiguration implements CvsEn
       if (result.isCanceled()) throw new ProcessCanceledException();
 
       if (!result.hasNoErrors()) {
-        VcsException vcsException = result.composeError();
+        final VcsException vcsException = result.composeError();
         throw new AuthenticationException(vcsException.getLocalizedMessage(), vcsException.getCause());
       }
-      List<VcsException> errors = errorProcessor.getErrors();
+      final List<VcsException> errors = errorProcessor.getErrors();
       if (!errors.isEmpty()) {
-        VcsException firstError = errors.get(0);
+        final VcsException firstError = errors.get(0);
         throw new AuthenticationException(firstError.getLocalizedMessage(), firstError);
       }
     }
@@ -215,7 +215,7 @@ public class CvsRootConfiguration extends AbstractConfiguration implements CvsEn
     if (!(obj instanceof CvsRootConfiguration)) {
       return false;
     }
-    CvsRootConfiguration another = ((CvsRootConfiguration)obj);
+    final CvsRootConfiguration another = (CvsRootConfiguration)obj;
 
     return CVS_ROOT.equals(another.CVS_ROOT) && DATE_OR_REVISION_SETTINGS.equals(another.DATE_OR_REVISION_SETTINGS) &&
            Comparing.equal(EXT_CONFIGURATION, another.EXT_CONFIGURATION);
@@ -242,21 +242,21 @@ public class CvsRootConfiguration extends AbstractConfiguration implements CvsEn
   }
 
   public CvsRepository createCvsRepository() {
-    CvsConnectionSettings settings = createSettings();
+    final CvsConnectionSettings settings = createSettings();
     return new CvsRepository(settings.getCvsRootAsString(), (settings.METHOD == null) ? "" : settings.METHOD.getName(), settings.USER,
                              settings.HOST, settings.REPOSITORY, settings.PORT, DATE_OR_REVISION_SETTINGS);
 
   }
 
   public static CvsRootConfiguration createOn(CvsRepository repository) {
-    CvsRootConfiguration result = CvsApplicationLevelConfiguration.createNewConfiguration(CvsApplicationLevelConfiguration.getInstance());
+    final CvsRootConfiguration result = CvsApplicationLevelConfiguration.createNewConfiguration(CvsApplicationLevelConfiguration.getInstance());
     result.DATE_OR_REVISION_SETTINGS.updateFrom(repository.getDateOrRevision());
     result.CVS_ROOT = createFieldByFieldCvsRoot(repository);
     return result;
   }
 
   protected Object clone() throws CloneNotSupportedException {
-    CvsRootConfiguration result = (CvsRootConfiguration)super.clone();
+    final CvsRootConfiguration result = (CvsRootConfiguration)super.clone();
     result.DATE_OR_REVISION_SETTINGS = (DateOrRevisionSettings)DATE_OR_REVISION_SETTINGS.clone();
     return result;
   }
@@ -268,5 +268,4 @@ public class CvsRootConfiguration extends AbstractConfiguration implements CvsEn
   public boolean isOffline() {
     return getSettings().isOffline();
   }
-
 }

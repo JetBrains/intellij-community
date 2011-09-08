@@ -91,10 +91,12 @@ public class ConflictsDialog extends DialogWrapper{
   }
 
   protected Action[] createActions(){
+    final Action okAction = getOKAction();
     if (myElementConflictDescription == null) {
-      return new Action[]{getOKAction(),new CancelAction()};
+      return new Action[]{okAction,new CancelAction()};
     }
-    return new Action[]{getOKAction(), new MyShowConflictsInUsageViewAction(), new CancelAction()};
+    okAction.putValue(DEFAULT_ACTION, null);
+    return new Action[]{okAction, new MyShowConflictsInUsageViewAction(), new CancelAction()};
   }
 
   public boolean isShowConflicts() {

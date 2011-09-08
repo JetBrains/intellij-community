@@ -23,6 +23,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiFile;
+import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -44,8 +45,13 @@ public class JavaExpressionSurroundDescriptor implements SurroundDescriptor {
   };
 
   @NotNull public PsiElement[] getElementsToSurround(PsiFile file, int startOffset, int endOffset) {
-    final PsiExpression expr = CodeInsightUtil.findExpressionInRange(file, startOffset, endOffset);
-    if (expr == null) return PsiElement.EMPTY_ARRAY;
+    PsiExpression expr = CodeInsightUtil.findExpressionInRange(file, startOffset, endOffset);
+    if (expr == null) {
+      expr = IntroduceVariableBase.getSelectedExpression(file.getProject(), file, startOffset, endOffset);
+      if (expr == null) {
+        return PsiElement.EMPTY_ARRAY;
+      }
+    }
     FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.surroundwith.expression");
     return new PsiElement[] {expr};
   }

@@ -50,6 +50,7 @@ public class JavaWithRuntimeCastSurrounder extends JavaExpressionSurrounder {
   }
 
   public boolean isApplicable(PsiExpression expr) {
+    if (!expr.isPhysical()) return false;
     PsiFile file = expr.getContainingFile();
     if (!(file instanceof PsiCodeFragment)) return false;
     if (file.getUserData(DebuggerExpressionComboBox.KEY) == null) {

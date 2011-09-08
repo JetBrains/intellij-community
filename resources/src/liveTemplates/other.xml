@@ -58,7 +58,6 @@
     <context>
       <option name="JAVA_CODE" value="false" />
       <option name="JAVA_EXPRESSION" value="true" />
-      <option name="ASPECTJ" value="true" />
     </context>
   </template>
   <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.lazy"

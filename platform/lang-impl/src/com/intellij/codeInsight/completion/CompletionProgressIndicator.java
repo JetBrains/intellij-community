@@ -402,7 +402,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   public void closeAndFinish(boolean hideLookup) {
     if (!myLookup.isLookupDisposed()) {
       Lookup lookup = LookupManager.getActiveLookup(myEditor);
-      LOG.assertTrue(lookup == myLookup, lookup + "; " + this);
+      LOG.assertTrue(lookup == myLookup, "lookup changed: " + lookup + "; " + this);
     }
     myLookup.removeLookupListener(myLookupListener);
     finishCompletionProcess(true);

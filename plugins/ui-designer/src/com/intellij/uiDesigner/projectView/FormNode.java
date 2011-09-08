@@ -81,11 +81,13 @@ public class FormNode extends ProjectViewNode<Form>{
   }
 
   public boolean canNavigate() {
-    return getValue().canNavigate();
+    final Form value = getValue();
+    return value != null && value.canNavigate();
   }
 
   public boolean canNavigateToSource() {
-    return getValue().canNavigateToSource();
+    final Form value = getValue();
+    return value != null && value.canNavigateToSource();
   }
 
   public String getToolTip() {

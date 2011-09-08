@@ -43,6 +43,7 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
   private JCheckBox myCbModifiedTabsMarkedWithAsterisk;
   private JCheckBox myShowCloseButtonOnCheckBox;
   private JCheckBox myShowDirectoryInTabCheckBox;
+  private JRadioButton myActivateRightNeighbouringTabRadioButton;
 
   public EditorTabsConfigurable() {
     myEditorTabPlacement.setModel(new DefaultComboBoxModel(new Object[]{
@@ -109,6 +110,9 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
     if (uiSettings.ACTIVATE_MRU_EDITOR_ON_CLOSE) {
       myActivateMRUEditorOnCloseRadio.setSelected(true);
     }
+    else if (uiSettings.ACTIVATE_RIGHT_EDITOR_ON_CLOSE) {
+      myActivateRightNeighbouringTabRadioButton.setSelected(true);
+    }
     else {
       myActivateLeftEditorOnCloseRadio.setSelected(true);
     }
@@ -140,6 +144,7 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
 
     uiSettings.CLOSE_NON_MODIFIED_FILES_FIRST = myCloseNonModifiedFilesFirstRadio.isSelected();
     uiSettings.ACTIVATE_MRU_EDITOR_ON_CLOSE = myActivateMRUEditorOnCloseRadio.isSelected();
+    uiSettings.ACTIVATE_RIGHT_EDITOR_ON_CLOSE = myActivateRightNeighbouringTabRadioButton.isSelected();
 
     String temp = myEditorTabLimitField.getText();
     if(temp.trim().length() > 0){
@@ -170,6 +175,7 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
 
     isModified |= isModified(myCloseNonModifiedFilesFirstRadio, uiSettings.CLOSE_NON_MODIFIED_FILES_FIRST);
     isModified |= isModified(myActivateMRUEditorOnCloseRadio, uiSettings.ACTIVATE_MRU_EDITOR_ON_CLOSE);
+    isModified |= isModified(myActivateRightNeighbouringTabRadioButton, uiSettings.ACTIVATE_RIGHT_EDITOR_ON_CLOSE);
 
     return isModified;
   }

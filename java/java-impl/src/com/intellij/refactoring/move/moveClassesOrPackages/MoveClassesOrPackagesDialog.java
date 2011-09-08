@@ -32,6 +32,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.ui.ComboBoxWithWidePopup;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -187,6 +188,8 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
         return myHavePackages ? myMovePackagePanel.getPreferredSize() : myMoveClassPanel.getPreferredSize();
       }
     };
+
+    myDestinationFolderCB = new ComboboxWithBrowseButton(new ComboBoxWithWidePopup());
   }
 
   private ReferenceEditorComboWithBrowseButton createPackageChooser() {
@@ -288,7 +291,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
 
           final PsiDirectory directory = itemWrapper.getDirectory();
           final VirtualFile virtualFile = directory != null ? directory.getVirtualFile() : null;
-          append(virtualFile != null ? ProjectUtil.calcRelativeToProjectPath(virtualFile, myProject) : itemWrapper.getPresentableUrl());
+          append(virtualFile != null ? ProjectUtil.calcRelativeToProjectPath(virtualFile, myProject, true, true) : itemWrapper.getPresentableUrl());
 
         } else {
           setText("Leave in same source root");

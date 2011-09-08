@@ -17,10 +17,12 @@ package com.intellij.refactoring.rename;
 
 import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -61,9 +63,22 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
                                                               boolean searchInNonJavaFiles);
 
   public boolean isAvailableOnDataContext(final DataContext dataContext) {
-    final PsiElement element = PsiElementRenameHandler.getElement(dataContext);
+    PsiElement element = adjustForRename(dataContext, PsiElementRenameHandler.getElement(dataContext));
     return element instanceof PsiDirectory &&
            ProjectRootManager.getInstance(element.getProject()).getFileIndex().isInContent(((PsiDirectory)element).getVirtualFile());
+  }
+
+  private static PsiElement adjustForRename(DataContext dataContext, PsiElement element) {
+    if (element instanceof PsiDirectoryContainer) {
+      final Module module = LangDataKeys.MODULE.getData(dataContext);
+      if (module != null) {
+        final PsiDirectory[] directories = ((PsiDirectoryContainer)element).getDirectories(GlobalSearchScope.moduleScope(module));
+        if (directories.length == 1) {
+          element = directories[0];
+        }
+      }
+    }
+    return element;
   }
 
   public boolean isRenaming(final DataContext dataContext) {
@@ -71,7 +86,7 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
   }
 
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, final DataContext dataContext) {
-    PsiElement element = PsiElementRenameHandler.getElement(dataContext);
+    PsiElement element = adjustForRename(dataContext, PsiElementRenameHandler.getElement(dataContext));
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     final PsiElement nameSuggestionContext = file.findElementAt(editor.getCaretModel().getOffset());
     doRename(element, project, nameSuggestionContext, editor);
@@ -80,6 +95,7 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
   public void invoke(@NotNull final Project project, @NotNull final PsiElement[] elements, final DataContext dataContext) {
     PsiElement element = elements.length == 1 ? elements[0] : null;
     if (element == null) element = PsiElementRenameHandler.getElement(dataContext);
+    element = adjustForRename(dataContext, element);
     LOG.assertTrue(element != null);
     Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
     doRename(element, project, element, editor);

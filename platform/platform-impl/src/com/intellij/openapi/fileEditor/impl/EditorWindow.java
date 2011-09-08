@@ -195,7 +195,8 @@ public class EditorWindow {
       // if the file being closed is not currently selected, keep the currently selected file open
       return currentlySelectedIndex;
     }
-    if (UISettings.getInstance().ACTIVATE_MRU_EDITOR_ON_CLOSE) {
+    UISettings uiSettings = UISettings.getInstance();
+    if (uiSettings.ACTIVATE_MRU_EDITOR_ON_CLOSE) {
       // try to open last visited file
       final VirtualFile[] histFiles = EditorHistoryManager.getInstance(getManager ().getProject()).getFiles();
       for (int idx = histFiles.length - 1; idx >= 0; idx--) {
@@ -213,7 +214,11 @@ public class EditorWindow {
           return histFileIndex;
         }
       }
+    } else 
+    if (uiSettings.ACTIVATE_RIGHT_EDITOR_ON_CLOSE && (fileIndex + 1 < myTabbedPane.getTabCount())) {
+      return fileIndex + 1;
     }
+    
     // by default select previous neighbour
     if (fileIndex > 0) {
       return fileIndex - 1;

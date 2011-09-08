@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.AsynchConsumer;
 import com.intellij.util.BufferedListConsumer;
 import com.intellij.util.Consumer;
+import com.intellij.util.Ticket;
 import com.intellij.util.containers.Convertor;
 import git4idea.GitBranch;
 import git4idea.history.browser.ChangesFilter;
@@ -39,7 +40,7 @@ public class LoaderAndRefresherImpl implements LoaderAndRefresher<CommitHashPlus
   private final static int ourPreload = (! parameterCheck(Integer.getInteger("git.log.preload.size"))) ? 100 : Integer.getInteger("git.log.preload.size");
 
   private final Collection<String> myStartingPoints;
-  private final Mediator.Ticket myTicket;
+  private final Ticket myTicket;
   private final Collection<ChangesFilter.Filter> myFilters;
   private final Mediator myMediator;
   private final DetailsCache myDetailsCache;
@@ -64,7 +65,7 @@ public class LoaderAndRefresherImpl implements LoaderAndRefresher<CommitHashPlus
     return i != null && i > 0;
   }
 
-  public LoaderAndRefresherImpl(final Mediator.Ticket ticket,
+  public LoaderAndRefresherImpl(final Ticket ticket,
                                 Collection<ChangesFilter.Filter> filters,
                                 Mediator mediator,
                                 Collection<String> startingPoints,

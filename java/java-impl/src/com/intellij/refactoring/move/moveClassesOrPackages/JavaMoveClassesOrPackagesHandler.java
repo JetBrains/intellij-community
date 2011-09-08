@@ -310,7 +310,35 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
      return true;
    }
 
-   private static class SelectMoveOrRearrangePackageDialog extends DialogWrapper {
+  public static boolean hasPackages(PsiDirectory directory) {
+    if (JavaDirectoryService.getInstance().getPackage(directory) != null) {
+      return true;
+    }
+    return false;
+  }
+
+  public static boolean nonFileSystemOrAllJava(PsiElement[] srcElements) {
+    boolean allJava = true;
+    for (PsiElement element : srcElements) {
+      if (element instanceof PsiDirectory) {
+        allJava &= hasPackages((PsiDirectory)element);
+        if (allJava) {
+          allJava = hasJavaFiles((PsiDirectory)element);
+        }
+      }
+      else if (element instanceof PsiFile) {
+        allJava &= element instanceof PsiJavaFile && !JspPsiUtil.isInJspFile(element) &&
+                   ((PsiJavaFile)element).getClasses().length > 0 && !CollectHighlightsUtil
+          .isOutsideSourceRootJavaFile((PsiJavaFile)element);
+      }
+      else {
+        return true;
+      }
+    }
+    return allJava;
+  }
+
+  private static class SelectMoveOrRearrangePackageDialog extends DialogWrapper {
      private JRadioButton myRbMovePackage;
      private JRadioButton myRbRearrangePackage;
      private JRadioButton myRbMoveDirectory;

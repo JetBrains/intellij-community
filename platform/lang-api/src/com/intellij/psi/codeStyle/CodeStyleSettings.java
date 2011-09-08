@@ -16,6 +16,8 @@
 package com.intellij.psi.codeStyle;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionException;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -36,6 +38,9 @@ import javax.swing.*;
 import java.util.*;
 
 public class CodeStyleSettings extends CommonCodeStyleSettings implements Cloneable, JDOMExternalizable {
+  
+  private static final Logger LOG = Logger.getInstance("#" + CodeStyleSettings.class.getName());
+  
   private final ClassMap<CustomCodeStyleSettings> myCustomSettings = new ClassMap<CustomCodeStyleSettings>();
 
   @NonNls private static final String ADDITIONAL_INDENT_OPTIONS = "ADDITIONAL_INDENT_OPTIONS";
@@ -685,7 +690,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
     final FileTypeIndentOptionsProvider[] providers = Extensions.getExtensions(FileTypeIndentOptionsProvider.EP_NAME);
     for (final FileTypeIndentOptionsProvider provider : providers) {
       if (provider.getFileType().equals(fileType)) {
-        return provider.createIndentOptions();
+        return getFileTypeIndentOptions(provider);
       }
     }
     return new IndentOptions();
@@ -697,6 +702,15 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
     return OTHER_INDENT_OPTIONS;
   }
 
+  /**
+   * If the file type has an associated language and language indent options are defined, returns these options. Otherwise attempts to find
+   * indent options from <code>FileTypeIndentOptionsProvider</code>. If none are found, other indent options are returned.
+   * @param fileType The file type to search indent options for.
+   * @return File type indent options or <code>OTHER_INDENT_OPTIONS</code>.
+   *
+   * @see FileTypeIndentOptionsProvider
+   * @see LanguageCodeStyleSettingsProvider
+   */
   public IndentOptions getIndentOptions(FileType fileType) {
     IndentOptions indentOptions = getLanguageIndentOptions(fileType);
     if (indentOptions != null) return indentOptions;
@@ -861,11 +875,21 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
       final FileTypeIndentOptionsProvider[] providers = Extensions.getExtensions(FileTypeIndentOptionsProvider.EP_NAME);
       for (final FileTypeIndentOptionsProvider provider : providers) {
         if (!myAdditionalIndentOptions.containsKey(provider.getFileType())) {
-          registerAdditionalIndentOptions(provider.getFileType(), provider.createIndentOptions());
+          registerAdditionalIndentOptions(provider.getFileType(), getFileTypeIndentOptions(provider));
         }
       }
     }
-  }  
+  }
+  
+  private static IndentOptions getFileTypeIndentOptions(FileTypeIndentOptionsProvider provider) {
+    try {
+      return provider.createIndentOptions();
+    }
+    catch (AbstractMethodError error) {
+      LOG.error("Plugin uses obsolete API.", new ExtensionException(provider.getClass()));
+      return new IndentOptions(); 
+    }
+  }
 
   @TestOnly
   public void clearCodeStyleSettings() throws Exception {

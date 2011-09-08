@@ -216,6 +216,7 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
     context.setProjectName(myGradleProject.getName());
     context.setProjectFileDirectory(myGradleProject.getProjectFileDirectoryPath());
     context.setCompilerOutputDirectory(myGradleProject.getCompileOutputPath());
+    context.setProjectJdk(myGradleProject.getSdk());
   }
 
   /**

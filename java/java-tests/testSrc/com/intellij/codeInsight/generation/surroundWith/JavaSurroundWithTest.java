@@ -78,13 +78,25 @@ public class JavaSurroundWithTest extends LightCodeInsightTestCase {
   public void testCommentAsFirstSurroundStatement() throws Exception {
     String template = "CommentAsFirst%sSurroundStatement";
     for (SurroundType type : SurroundType.values()) {
-      doTest(type, String.format(template, StringUtil.capitalize(type.toFileName())));
+      doTest(String.format(template, StringUtil.capitalize(type.toFileName())), type.getSurrounder());
     }
   }
-  
-  private void doTest(@NotNull SurroundType surroundType, @NotNull String fileName) throws Exception {
+
+  public void testSurroundNonExpressionWithParenthesis() throws Exception {
+    doTest(getTestName(false), new JavaWithParenthesesSurrounder());
+  }
+
+  public void testSurroundNonExpressionWithCast() throws Exception {
+    doTest(getTestName(false), new JavaWithCastSurrounder());
+  }
+
+  public void testSurroundNonExpressionWithNot() throws Exception {
+    doTest(getTestName(false), new JavaWithNotSurrounder());
+  }
+
+  private void doTest(@NotNull String fileName, final Surrounder surrounder) throws Exception {
     configureByFile(BASE_PATH + fileName + ".java");
-    SurroundWithHandler.invoke(getProject(), getEditor(), getFile(), surroundType.getSurrounder());
+    SurroundWithHandler.invoke(getProject(), getEditor(), getFile(), surrounder);
     checkResultByFile(BASE_PATH + fileName + "_after.java");
   }
 }

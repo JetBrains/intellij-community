@@ -379,6 +379,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   }
 
   private void doCommit(@NotNull final Document document, final PsiFile excludeFile) {
+    assert !myIsCommitInProgress : "Do not call commitDocument() from inside PSI change listener";
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         // otherwise there are many clients calling commitAllDocs() on PSI childrenChanged()

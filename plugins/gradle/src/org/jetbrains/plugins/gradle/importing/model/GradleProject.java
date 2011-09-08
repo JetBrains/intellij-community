@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.gradle.importing.model;
 
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,7 +32,8 @@ public class GradleProject extends AbstractNamedGradleEntity {
 
   private JavaSdkVersion myJdkVersion    = DEFAULT_JDK_VERSION;
   private LanguageLevel  myLanguageLevel = DEFAULT_LANGUAGE_LEVEL;
-
+  
+  private Sdk mySdk;
   private String myProjectFileDirectoryPath;
   private String myCompileOutputPath;
 
@@ -110,6 +112,15 @@ public class GradleProject extends AbstractNamedGradleEntity {
     }
     assert false : version + ", max value: " + JavaSdkVersion.values().length;
     return false;
+  }
+  
+  @Nullable
+  public Sdk getSdk() {
+    return mySdk;
+  }
+
+  public void setSdk(@NotNull Sdk sdk) {
+    mySdk = sdk;
   }
 
   @NotNull
