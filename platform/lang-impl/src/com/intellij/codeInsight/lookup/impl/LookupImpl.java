@@ -1130,29 +1130,27 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       myInitialPrefix = null;
     }
 
-    final String finalCommonPrefix = commonPrefix;
-    Runnable runnable = new Runnable() {
-      public void run() {
-        doInsertCommonPrefix(presentPrefix, finalCommonPrefix);
-      }
-    };
-    performGuardedChange(runnable);
+    replacePrefix(presentPrefix, commonPrefix);
     return true;
   }
 
-  private void doInsertCommonPrefix(String presentPrefix, String newPrefix) {
-    EditorModificationUtil.deleteSelectedText(myEditor);
-    int offset = myEditor.getCaretModel().getOffset();
-    final int start = offset - presentPrefix.length();
-    myEditor.getDocument().replaceString(start, offset, newPrefix);
+  public void replacePrefix(final String presentPrefix, final String newPrefix) {
+    performGuardedChange(new Runnable() {
+      public void run() {
+        EditorModificationUtil.deleteSelectedText(myEditor);
+        int offset = myEditor.getCaretModel().getOffset();
+        final int start = offset - presentPrefix.length();
+        myEditor.getDocument().replaceString(start, offset, newPrefix);
 
-    Map<LookupElement, PrefixMatcher> newItems = myModel.retainMatchingItems(newPrefix, this);
-    myMatchers.clear();
-    myMatchers.putAll(newItems);
+        Map<LookupElement, PrefixMatcher> newItems = myModel.retainMatchingItems(newPrefix, LookupImpl.this);
+        myMatchers.clear();
+        myMatchers.putAll(newItems);
 
-    myAdditionalPrefix = "";
+        myAdditionalPrefix = "";
 
-    myEditor.getCaretModel().moveToOffset(start + newPrefix.length());
+        myEditor.getCaretModel().moveToOffset(start + newPrefix.length());
+      }
+    });
     refreshUi();
   }
 
