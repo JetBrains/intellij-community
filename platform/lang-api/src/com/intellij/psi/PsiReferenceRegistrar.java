@@ -16,8 +16,6 @@
 package com.intellij.psi;
 
 import com.intellij.patterns.ElementPattern;
-import com.intellij.patterns.PlatformPatterns;
-import com.intellij.patterns.StandardPatterns;
 import com.intellij.pom.references.PomReferenceProvider;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,7 +35,7 @@ public abstract class PsiReferenceRegistrar {
 
   /**
    * Register reference provider with default priority ({@link #DEFAULT_PRIORITY})
-   * @param pattern reference place description. See {@link StandardPatterns}, {@link PlatformPatterns} and their extenders
+   * @param pattern reference place description. See {@link com.intellij.patterns.StandardPatterns}, {@link com.intellij.patterns.PlatformPatterns} and their extenders
    * @param provider provider to be registered
    */
   public void registerReferenceProvider(@NotNull ElementPattern<? extends PsiElement> pattern, @NotNull PsiReferenceProvider provider) {
@@ -47,7 +45,7 @@ public abstract class PsiReferenceRegistrar {
 
   /**
    * Register reference provider
-   * @param pattern reference place description. See {@link StandardPatterns}, {@link PlatformPatterns} and their extenders
+   * @param pattern reference place description. See {@link com.intellij.patterns.StandardPatterns}, {@link com.intellij.patterns.PlatformPatterns} and their extenders
    * @param provider provider to be registered
    * @param priority @see DEFAULT_PRIORITY, HIGHER_PRIORITY, LOWER_PRIORITY
    */
