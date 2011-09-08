@@ -26,7 +26,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ExcludedFileIndex;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -74,7 +73,6 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   public static final Topic<AnyPsiChangeListener> ANY_PSI_CHANGE_TOPIC = Topic.create("ANY_PSI_CHANGE_TOPIC",AnyPsiChangeListener.class, Topic.BroadcastDirection.TO_PARENT);
 
   public PsiManagerImpl(Project project,
-                        StartupManager startupManager,
                         FileDocumentManager fileDocumentManager,
                         PsiBuilderFactory psiBuilderFactory,
                         ExcludedFileIndex excludedFileIndex,
@@ -93,16 +91,6 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
     myModificationTracker = new PsiModificationTrackerImpl(myProject);
     myTreeChangePreprocessors.add(myModificationTracker);
     myResolveCache = new ResolveCache(messageBus);
-
-    if (startupManager != null) {
-      startupManager.registerPreStartupActivity(
-        new Runnable() {
-          public void run() {
-            runPreStartupActivity();
-          }
-        }
-      );
-    }
   }
 
   public void initComponent() {
@@ -154,13 +142,6 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   }
 
   public void projectOpened() {
-  }
-
-  private void runPreStartupActivity() {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("PsiManager.runPreStartupActivity()");
-    }
-    myFileManager.runStartupActivity();
   }
 
   public void setAssertOnFileLoadingFilter(VirtualFileFilter filter) {

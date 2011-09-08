@@ -29,8 +29,6 @@ import java.util.List;
 public interface FileManager {
   void dispose();
 
-  void runStartupActivity();
-
   @Nullable
   PsiFile findFile(@NotNull VirtualFile vFile);
 

@@ -16,7 +16,6 @@
 
 package com.intellij.psi.impl.file.impl;
 
-import com.intellij.AppTopics;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.Language;
@@ -25,8 +24,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
-import com.intellij.openapi.fileTypes.*;
+import com.intellij.openapi.fileTypes.ContentBasedFileSubstitutor;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ExcludedFileIndex;
@@ -199,12 +199,10 @@ public class FileManagerImpl implements FileManager {
     return null;
   }
 
-  public void runStartupActivity() {
+  public void markInitialized() {
     LOG.assertTrue(!myInitialized);
     myDisposed = false;
     myInitialized = true;
-
-    myConnection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new MyFileDocumentManagerAdapter());
   }
 
   public boolean isInitialized() {
@@ -457,7 +455,7 @@ public class FileManagerImpl implements FileManager {
     reloadFromDisk(file, false);
   }
 
-  private void reloadFromDisk(PsiFile file, boolean ignoreDocument) {
+  void reloadFromDisk(PsiFile file, boolean ignoreDocument) {
     VirtualFile vFile = file.getVirtualFile();
     assert vFile != null;
 
@@ -495,21 +493,6 @@ public class FileManagerImpl implements FileManager {
       if (psiFile instanceof PsiFileImpl && ((PsiFileImpl)psiFile).isContentsLoaded()) {
         out.write(fileCacheEntry.getPresentableUrl());
         out.write("\n");
-      }
-    }
-  }
-
-  private class MyFileDocumentManagerAdapter extends FileDocumentManagerAdapter {
-    public void fileWithNoDocumentChanged(VirtualFile file) {
-      final PsiFile psiFile = getCachedPsiFileInner(file);
-      if (psiFile != null) {
-        ApplicationManager.getApplication().runWriteAction(
-          new ExternalChangeAction() {
-            public void run() {
-              reloadFromDisk(psiFile, true); // important to ignore document which might appear already!
-            }
-          }
-        );
       }
     }
   }
