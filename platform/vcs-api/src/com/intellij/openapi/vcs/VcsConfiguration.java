@@ -78,7 +78,7 @@ public final class VcsConfiguration implements PersistentStateComponent<Element>
   public boolean SHOW_ONLY_CHANGED_IN_SELECTION_DIFF = true;
   public boolean CHECK_COMMIT_MESSAGE_SPELLING = true;
   public String DEFAULT_PATCH_EXTENSION = PATCH;
-  public boolean SHORT_DIFF_HORISONTALLY = false;
+  public boolean SHORT_DIFF_HORISONTALLY = true;
 
   public enum StandardOption {
     ADD(VcsBundle.message("vcs.command.name.add")),
