@@ -25,7 +25,6 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.popup.BalloonHandler;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.wm.AppIconScheme;
@@ -219,21 +218,10 @@ public class DumbServiceImpl extends DumbService {
   }
 
   @Override
-  public BalloonHandler showDumbModeNotification(final String message) {
-    final BalloonHandler emptyBalloonHandler = new BalloonHandler() {
-      public void hide() {
-      }
-    };
-    if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      return emptyBalloonHandler;
-    }
-
+  public void showDumbModeNotification(final String message) {
     final IdeFrame ideFrame = WindowManager.getInstance().getIdeFrame(myProject);
-    if (ideFrame == null) {
-      return emptyBalloonHandler;
-    }
     StatusBarEx statusBar = (StatusBarEx)ideFrame.getStatusBar();
-    return statusBar.notifyProgressByBalloon(MessageType.WARNING, message, null, null);
+    statusBar.notifyProgressByBalloon(MessageType.WARNING, message, null, null);
   }
 
   private static final Ref<CacheUpdateRunner> NULL_ACTION = new Ref<CacheUpdateRunner>(null);

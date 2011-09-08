@@ -19,7 +19,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.ui.popup.BalloonHandler;
 import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
@@ -139,7 +138,7 @@ public abstract class DumbService {
     });
   }
 
-  public abstract BalloonHandler showDumbModeNotification(String message);
+  public abstract void showDumbModeNotification(String message);
 
   public abstract Project getProject();
 
