@@ -233,8 +233,11 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
 
     final List<UsageInfo> filtered = new ArrayList<UsageInfo>();
     for (UsageInfo usage : usages) {
-      if (usage instanceof MoveMembersUsageInfo && ((MoveMembersUsageInfo)usage).member == newMember) {
-        filtered.add(usage);
+      if (usage instanceof MoveMembersUsageInfo) {
+        final PsiElement reference = ((MoveMembersUsageInfo)usage).reference;
+        if (reference instanceof PsiReference && ((PsiReference)reference).resolve() == newMember) {
+          filtered.add(usage);
+        }
       }
     }
     VisibilityUtil.fixVisibility(filtered.toArray(new UsageInfo[filtered.size()]), newMember, myNewVisibility);
