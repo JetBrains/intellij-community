@@ -35,7 +35,7 @@ import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class PsiElementBase extends ElementBase implements PsiElement {
+public abstract class PsiElementBase extends ElementBase implements NavigatablePsiElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiElementBase");
 
   public PsiElement getFirstChild() {
