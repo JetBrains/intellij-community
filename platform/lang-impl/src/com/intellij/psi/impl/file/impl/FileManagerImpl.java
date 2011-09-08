@@ -30,6 +30,7 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ExcludedFileIndex;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiFileEx;
@@ -85,6 +86,7 @@ public class FileManagerImpl implements FileManager {
         recalcAllViewProviders();
       }
     });
+    Disposer.register(manager.getProject(), this);
   }
 
   public void processQueue() {

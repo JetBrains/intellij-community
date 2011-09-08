@@ -20,7 +20,6 @@ import com.intellij.ide.caches.FileContent;
 import com.intellij.lang.PsiBuilderFactory;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
@@ -48,7 +47,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
+public class PsiManagerImpl extends PsiManagerEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiManagerImpl");
 
   private final Project myProject;
@@ -91,15 +90,13 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
     myModificationTracker = new PsiModificationTrackerImpl(myProject);
     myTreeChangePreprocessors.add(myModificationTracker);
     myResolveCache = new ResolveCache(messageBus);
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
-    myFileManager.dispose();
-
-    myIsDisposed = true;
+    
+    Disposer.register(project, new Disposable() {
+      @Override
+      public void dispose() {
+        myIsDisposed = true;
+      }
+    });
   }
 
   public boolean isDisposed() {
@@ -136,12 +133,6 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
       return myExcludedFileIndex.isInContent(virtualFile);
     }
     return false;
-  }
-
-  public void projectClosed() {
-  }
-
-  public void projectOpened() {
   }
 
   public void setAssertOnFileLoadingFilter(VirtualFileFilter filter) {
@@ -537,10 +528,5 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
 
   public boolean isBatchFilesProcessingMode() {
     return myBatchFilesProcessingModeCount.get() > 0;
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "PsiManager";
   }
 }

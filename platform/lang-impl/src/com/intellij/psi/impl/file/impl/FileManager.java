@@ -16,6 +16,7 @@
 
 package com.intellij.psi.impl.file.impl;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiDirectory;
@@ -26,9 +27,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
 
-public interface FileManager {
-  void dispose();
-
+public interface FileManager extends Disposable {
   @Nullable
   PsiFile findFile(@NotNull VirtualFile vFile);
 
