@@ -19,15 +19,11 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Processor;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import org.intellij.lang.xpath.context.VariableContext;
 import org.intellij.lang.xpath.psi.XPathElement;
 import org.intellij.lang.xpath.psi.XPathVariable;
@@ -43,6 +39,8 @@ import org.intellij.lang.xpath.xslt.quickfix.CreateParameterFix;
 import org.intellij.lang.xpath.xslt.quickfix.CreateVariableFix;
 import org.intellij.lang.xpath.xslt.util.ElementProcessor;
 import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -68,10 +66,7 @@ public class XsltVariableContext implements VariableContext<XsltVariable> {
 
     public XPathVariable resolve(final XPathVariableReference reference) {
         final PsiManager mgr = reference.getManager();
-        if (mgr instanceof PsiManagerEx) {
-            return (XPathVariable)((PsiManagerEx)mgr).getResolveCache().resolveWithCaching(reference, RESOLVER, true, false);
-        }
-        return resolveInner(reference);
+        return (XPathVariable) ResolveCache.getInstance(mgr.getProject()).resolveWithCaching(reference, RESOLVER, true, false);
     }
 
     @Nullable

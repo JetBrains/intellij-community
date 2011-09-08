@@ -369,7 +369,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       return JavaResolveResult.EMPTY_ARRAY;
     }
 
-    final ResolveCache resolveCache = manager.getResolveCache();
+    final ResolveCache resolveCache = ResolveCache.getInstance(getProject());
     final ResolveResult[] results = resolveCache.resolveWithCaching(this, OurGenericsResolver.INSTANCE, true, incompleteCode);
     return results.length == 0 ? JavaResolveResult.EMPTY_ARRAY : (JavaResolveResult[])results;
   }

@@ -16,8 +16,10 @@
 package com.intellij.psi.impl.source.resolve.reference.impl;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
-import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.ElementManipulator;
+import com.intellij.psi.ElementManipulators;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,11 +28,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class CachingReference implements PsiReference, EmptyResolveMessageProvider {
   public PsiElement resolve(){
-    final PsiManager manager = getElement().getManager();
-    if(manager instanceof PsiManagerImpl){
-      return ((PsiManagerImpl)manager).getResolveCache().resolveWithCaching(this, MyResolver.INSTANCE, false, false);
-    }
-    return resolveInner();
+    return ResolveCache.getInstance(getElement().getProject()).resolveWithCaching(this, MyResolver.INSTANCE, false, false);
   }
 
   @Nullable

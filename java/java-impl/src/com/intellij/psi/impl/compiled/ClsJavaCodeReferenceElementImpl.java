@@ -19,7 +19,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiSubstitutorImpl;
 import com.intellij.psi.impl.search.JavaDirectInheritorsSearcher;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
@@ -141,7 +140,7 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
 
   @NotNull
   public JavaResolveResult[] multiResolve(boolean incompleteCode) {
-    final ResolveCache resolveCache = ((PsiManagerEx)getManager()).getResolveCache();
+    final ResolveCache resolveCache = ResolveCache.getInstance(getProject());
     ResolveResult[] results = resolveCache.resolveWithCaching(this, Resolver.INSTANCE, true, incompleteCode);
     return (JavaResolveResult[])results;
   }

@@ -24,7 +24,6 @@ import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReferenceBase;
 import com.intellij.psi.ResolveResult;
-import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.IncorrectOperationException;
@@ -80,7 +79,7 @@ public class AntDomPropertyReference extends PsiPolyVariantReferenceBase<PsiElem
   
   @NotNull 
   public ResolveResult[] multiResolve(boolean incompleteCode) {
-    return ((PsiManagerEx)getElement().getManager()).getResolveCache().resolveWithCaching(this, MyResolver.INSTANCE, false, incompleteCode);
+    return ResolveCache.getInstance(getElement().getProject()).resolveWithCaching(this, MyResolver.INSTANCE, false, incompleteCode);
   }
 
   @NotNull

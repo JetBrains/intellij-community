@@ -29,9 +29,6 @@ public abstract class PsiManagerEx extends PsiManager {
 
   public abstract boolean isAssertOnFileLoading(@NotNull VirtualFile file);
 
-  @NotNull
-  public abstract ResolveCache getResolveCache();
-
   /**
    * @param runnable to be run before <b>physical</b> PSI change
    */

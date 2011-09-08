@@ -56,7 +56,7 @@ public abstract class GrThisSuperReferenceExpressionBase extends GrExpressionImp
 
   @Override
   public PsiElement resolve() {
-    final ResolveResult[] results = getManager().getResolveCache().resolveWithCaching(this, OUR_RESOLVER, false, false);
+    final ResolveResult[] results = ResolveCache.getInstance(getProject()).resolveWithCaching(this, OUR_RESOLVER, false, false);
     if (results.length == 1) return results[0].getElement();
     return null;
   }

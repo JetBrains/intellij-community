@@ -33,7 +33,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.resolve.ClassResolverProcessor;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
@@ -327,11 +326,8 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
 
   @NotNull
   public JavaResolveResult advancedResolve(boolean incompleteCode) {
-    final PsiManager manager = getElement().getManager();
-    if (manager instanceof PsiManagerImpl) {
-      return (JavaResolveResult)((PsiManagerImpl)manager).getResolveCache().resolveWithCaching(this, MyResolver.INSTANCE, false, false)[0];
-    }
-    return doAdvancedResolve();
+    final ResolveCache resolveCache = ResolveCache.getInstance(getElement().getProject());
+    return (JavaResolveResult) resolveCache.resolveWithCaching(this, MyResolver.INSTANCE, false, false)[0];
   }
 
   private JavaResolveResult doAdvancedResolve() {

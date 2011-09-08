@@ -22,7 +22,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
@@ -248,17 +247,13 @@ public class PackageClassConverter extends ResolvingConverter<PsiClass> implemen
 
     @Override
     public PsiElement resolve() {
-      final PsiManager manager = getElement().getManager();
-      if (manager instanceof PsiManagerImpl) {
-        return ((PsiManagerImpl)manager).getResolveCache().resolveWithCaching(this, new ResolveCache.Resolver() {
-            @Nullable
-            @Override
-            public PsiElement resolve(PsiReference reference, boolean incompleteCode) {
-              return resolveInner();
-            }
-          }, false, false);
-      }
-      return resolveInner();
+      return ResolveCache.getInstance(myElement.getProject()).resolveWithCaching(this, new ResolveCache.Resolver() {
+          @Nullable
+          @Override
+          public PsiElement resolve(PsiReference reference, boolean incompleteCode) {
+            return resolveInner();
+          }
+        }, false, false);
     }
 
     @Nullable

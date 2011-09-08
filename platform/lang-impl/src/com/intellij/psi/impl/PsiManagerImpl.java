@@ -34,7 +34,6 @@ import com.intellij.psi.impl.cache.impl.CacheUtil;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -56,7 +55,6 @@ public class PsiManagerImpl extends PsiManagerEx {
 
   private final FileManager myFileManager;
   private final PsiModificationTrackerImpl myModificationTracker;
-  private final ResolveCache myResolveCache;
 
   private final List<PsiTreeChangePreprocessor> myTreeChangePreprocessors = ContainerUtil.createEmptyCOWList();
   private final List<PsiTreeChangeListener> myTreeChangeListeners = ContainerUtil.createEmptyCOWList();
@@ -89,8 +87,7 @@ public class PsiManagerImpl extends PsiManagerEx {
 
     myModificationTracker = new PsiModificationTrackerImpl(myProject);
     myTreeChangePreprocessors.add(myModificationTracker);
-    myResolveCache = new ResolveCache(messageBus);
-    
+
     Disposer.register(project, new Disposable() {
       @Override
       public void dispose() {
@@ -153,13 +150,6 @@ public class PsiManagerImpl extends PsiManagerEx {
   public FileManager getFileManager() {
     return myFileManager;
   }
-
-  @NotNull
-  public ResolveCache getResolveCache() {
-    ProgressIndicatorProvider.checkCanceled(); // We hope this method is being called often enough to cancel daemon processes smoothly
-    return myResolveCache;
-  }
-
 
   public boolean areElementsEquivalent(PsiElement element1, PsiElement element2) {
     ProgressIndicatorProvider.checkCanceled(); // We hope this method is being called often enough to cancel daemon processes smoothly

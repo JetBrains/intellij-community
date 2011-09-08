@@ -18,13 +18,12 @@ package org.intellij.lang.xpath.xslt.impl.references;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 abstract class SimpleAttributeReference implements PsiReference {
     protected final XmlAttribute myAttribute;
@@ -74,17 +73,12 @@ abstract class SimpleAttributeReference implements PsiReference {
 
     @Nullable
     public final PsiElement resolve() {
-        final PsiManager manager = myAttribute.getManager();
-        if (manager instanceof PsiManagerImpl) {
-            return ((PsiManagerImpl)manager).getResolveCache().resolveWithCaching(this, new ResolveCache.Resolver() {
-                @Nullable
-                public PsiElement resolve(PsiReference psiReference, boolean b) {
-                    return resolveImpl();
-                }
-            }, false, false);
-        } else {
-            return resolveImpl();
-        }
+        return ResolveCache.getInstance(myAttribute.getProject()).resolveWithCaching(this, new ResolveCache.Resolver() {
+            @Nullable
+            public PsiElement resolve(PsiReference psiReference, boolean b) {
+                return resolveImpl();
+            }
+        }, false, false);
     }
 
     @Nullable

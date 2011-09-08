@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
@@ -62,7 +61,7 @@ public class OnClickConverter extends Converter<String> implements CustomReferen
     @NotNull
     @Override
     public ResolveResult[] multiResolve(boolean incompleteCode) {
-      return ((PsiManagerEx)getElement().getManager()).getResolveCache()
+      return ResolveCache.getInstance(myElement.getProject())
         .resolveWithCaching(this, new ResolveCache.PolyVariantResolver<MyReference>() {
           @Override
           public ResolveResult[] resolve(MyReference myReference, boolean incompleteCode) {

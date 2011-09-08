@@ -119,7 +119,7 @@ public class GrUnaryExpressionImpl extends GrExpressionImpl implements GrUnaryEx
   @NotNull
   @Override
   public GroovyResolveResult[] multiResolve(boolean incompleteCode) {
-    return (GroovyResolveResult[])getManager().getResolveCache().resolveWithCaching(this, OUR_RESOLVER, false, incompleteCode);
+    return (GroovyResolveResult[])ResolveCache.getInstance(getProject()).resolveWithCaching(this, OUR_RESOLVER, false, incompleteCode);
   }
 
   @Override
