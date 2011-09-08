@@ -61,7 +61,8 @@ public class NumberedFragmentHighlighter extends FragmentHighlighterImpl {
     if (myPreviousLineLeft == lineLeft || left == null) {
       myAppender1.highlightText(fragment, drawBorder, null);
     } else {
-      myAppender1.highlightText(fragment, drawBorder, new FragmentNumberGutterIconRenderer(left.getFirst(), getColorAttributesKey(left.getSecond()), myAppender1.getEditor().getScrollPane()));
+      // draw border == true for range marker with highlighting and number be set anyway, even if range is empty
+      myAppender1.highlightText(fragment, true, new FragmentNumberGutterIconRenderer(left.getFirst(), getColorAttributesKey(left.getSecond()), myAppender1.getEditor().getScrollPane()));
       myPreviousLineLeft = lineLeft;
     }
 
@@ -69,7 +70,8 @@ public class NumberedFragmentHighlighter extends FragmentHighlighterImpl {
     if (myPreviousLineRight == lineRight || right == null) {
       myAppender2.highlightText(fragment, drawBorder, null);
     } else {
-      myAppender2.highlightText(fragment, drawBorder, new FragmentNumberGutterIconRenderer(right.getFirst(), getColorAttributesKey(right.getSecond()), myAppender1.getEditor().getScrollPane()));
+      // draw border == true for range marker with highlighting and number be set anyway, even if range is empty
+      myAppender2.highlightText(fragment, true, new FragmentNumberGutterIconRenderer(right.getFirst(), getColorAttributesKey(right.getSecond()), myAppender1.getEditor().getScrollPane()));
       myPreviousLineRight = lineRight;
     }
   }
