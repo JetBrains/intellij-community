@@ -514,16 +514,16 @@
     <lang.substitutor language="XHTML" implementationClass="com.jetbrains.mako.MakoLanguageSubstitutor"/>
     <lang.substitutor language="XML" implementationClass="com.jetbrains.mako.MakoLanguageSubstitutor"/>
 
-    <colorSettingsPage implementation="com.jetbrains.mako.MakoColorsPage"/>
+    <colorSettingsPage implementation="com.jetbrains.mako.highlighting.MakoColorsPage"/>
     <lang.syntaxHighlighterFactory key="Mako"
-                                   implementationClass="com.jetbrains.mako.MakoHighlighterFactory"/>
-    <lang.parserDefinition language="Mako" implementationClass="com.jetbrains.mako.MakoParserDefinition"/>
+                                   implementationClass="com.jetbrains.mako.highlighting.MakoHighlighterFactory"/>
+    <lang.parserDefinition language="Mako" implementationClass="com.jetbrains.mako.parser.MakoParserDefinition"/>
     <lang.fileViewProviderFactory language="Mako"
                                   implementationClass="com.jetbrains.mako.MakoFileProviderFactory"/>
     <gotoDeclarationHandler implementation="com.jetbrains.mako.MakoGotoProvider" order="FIRST"/>
 
     <lang.commenter language="Mako" implementationClass="com.jetbrains.mako.MakoCommenter"/>
-    <lang.braceMatcher language="Mako" implementationClass="com.jetbrains.mako.MakoBraceMatcher"/>
+    <lang.braceMatcher language="Mako" implementationClass="com.jetbrains.mako.highlighting.MakoBraceMatcher"/>
 
     <projectService serviceInterface="com.jetbrains.mako.TemplatesService"
                     serviceImplementation="com.jetbrains.mako.TemplatesService"/>
