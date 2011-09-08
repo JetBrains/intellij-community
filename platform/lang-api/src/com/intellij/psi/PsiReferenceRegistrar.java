@@ -16,7 +16,6 @@
 package com.intellij.psi;
 
 import com.intellij.patterns.ElementPattern;
-import com.intellij.pom.references.PomReferenceProvider;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -50,11 +49,4 @@ public abstract class PsiReferenceRegistrar {
    * @param priority @see DEFAULT_PRIORITY, HIGHER_PRIORITY, LOWER_PRIORITY
    */
   public abstract <T extends PsiElement> void registerReferenceProvider(@NotNull ElementPattern<T> pattern, @NotNull PsiReferenceProvider provider, double priority);
-
-  public <T extends PsiElement> void registerReferenceProvider(@NotNull ElementPattern<T> pattern, @NotNull PomReferenceProvider<T> provider) {
-    registerReferenceProvider(pattern, provider, DEFAULT_PRIORITY);
-  }
-
-  public abstract <T extends PsiElement> void registerReferenceProvider(@NotNull ElementPattern<T> pattern, @NotNull PomReferenceProvider<T> provider, double priority);
-
 }

@@ -17,7 +17,6 @@ package com.intellij.psi.impl.source.resolve.reference;
 
 import com.intellij.openapi.util.Trinity;
 import com.intellij.patterns.*;
-import com.intellij.pom.references.PomReferenceProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.PsiReferenceRegistrar;
@@ -73,11 +72,6 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
                                         @NotNull PsiReferenceProvider provider,
                                         double priority) {
     registerReferenceProvider(PlatformPatterns.psiElement(scope).and(new FilterPattern(elementFilter)), provider, priority);
-  }
-
-  public <T extends PsiElement> void registerReferenceProvider(@NotNull ElementPattern<T> pattern,
-                                                               @NotNull PomReferenceProvider<T> provider,
-                                                               double priority) {
   }
 
   public <T extends PsiElement> void registerReferenceProvider(@NotNull ElementPattern<T> pattern,
