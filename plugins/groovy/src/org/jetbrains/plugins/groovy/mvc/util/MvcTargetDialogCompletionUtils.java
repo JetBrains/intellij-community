@@ -53,19 +53,30 @@ public class MvcTargetDialogCompletionUtils {
     "grails.testing.functional.baseUrl", "grails.compile.artefacts.closures.convert"
   };
 
+  private static List<LookupElement> SYSTEM_PROPERTIES_VARIANTS;
+  
   private MvcTargetDialogCompletionUtils() {
   }
 
-  public static Collection<LookupElement> collectVariants(@NotNull Module module, @NotNull String text, int offset, @NotNull String prefix) {
-    List<LookupElement> res = new ArrayList<LookupElement>();
-
-    if (prefix.startsWith("-D")) {
-      for (String property : SYSTEM_PROPERTIES) {
-        res.add(TailTypeDecorator.withTail(LookupElementBuilder.create("-D" + property), MyTailTypeEQ.INSTANCE));
+  public static List<LookupElement> getSystemPropertiesVariants() {
+    if (SYSTEM_PROPERTIES_VARIANTS == null) {
+      LookupElement[] res = new LookupElement[SYSTEM_PROPERTIES.length];
+      for (int i = 0; i < res.length; i++) {
+        res[i] = TailTypeDecorator.withTail(LookupElementBuilder.create("-D" + SYSTEM_PROPERTIES[i]), MyTailTypeEQ.INSTANCE);
       }
 
-      return res;
+      SYSTEM_PROPERTIES_VARIANTS = Arrays.asList(res);
     }
+
+    return SYSTEM_PROPERTIES_VARIANTS;
+  }
+  
+  public static Collection<LookupElement> collectVariants(@NotNull Module module, @NotNull String text, int offset, @NotNull String prefix) {
+    if (prefix.startsWith("-D")) {
+      return getSystemPropertiesVariants();
+    }
+
+    List<LookupElement> res = new ArrayList<LookupElement>();
 
     if (text.substring(0, offset).matches("\\s*(?:(:?-\\S+|dev|prod|test)\\s+)*\\S*")) {
       // Complete command name because command name is not typed.

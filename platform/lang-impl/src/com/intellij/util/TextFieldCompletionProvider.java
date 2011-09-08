@@ -46,4 +46,8 @@ public abstract class TextFieldCompletionProvider {
   }
 
   protected abstract void addCompletionVariants(@NotNull String text, int offset, @NotNull String prefix, @NotNull CompletionResultSet result);
+
+  public EditorTextField createEditor(Project project) {
+    return new EditorTextField(createDocument(project), project, PlainTextLanguage.INSTANCE.getAssociatedFileType());
+  }
 }

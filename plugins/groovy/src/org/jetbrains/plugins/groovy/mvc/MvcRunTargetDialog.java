@@ -44,7 +44,7 @@ public class MvcRunTargetDialog extends DialogWrapper {
   private JPanel contentPane;
   private JLabel myTargetLabel;
   private JPanel myFakePanel;
-  private JTextField myVmOptionsField;
+  private EditorTextField myVmOptionsField;
   private JComboBox myModuleBox;
   private JLabel myModuleLabel;
   private JLabel myVmOptionLabel;
@@ -139,6 +139,22 @@ public class MvcRunTargetDialog extends DialogWrapper {
 
     myFakePanel = new JPanel(new BorderLayout());
     myFakePanel.add(myTargetField, BorderLayout.CENTER);
+
+    TextFieldCompletionProvider vmOptionCompletionProvider = new TextFieldCompletionProvider() {
+      @NotNull
+      @Override
+      protected String getPrefix(@NotNull String currentTextPrefix) {
+        return MvcRunTargetDialog.getPrefix(currentTextPrefix);
+      }
+
+      @Override
+      protected void addCompletionVariants(@NotNull String text, int offset, @NotNull String prefix, @NotNull CompletionResultSet result) {
+        if (prefix.endsWith("-D")) {
+          result.addAllElements(MvcTargetDialogCompletionUtils.getSystemPropertiesVariants());
+        }
+      }
+    };
+    myVmOptionsField = vmOptionCompletionProvider.createEditor(myModule.getProject());
 
     new TextFieldCompletionProvider() {
 
