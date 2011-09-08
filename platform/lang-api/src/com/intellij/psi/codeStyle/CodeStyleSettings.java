@@ -702,6 +702,15 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
     return OTHER_INDENT_OPTIONS;
   }
 
+  /**
+   * If the file type has an associated language and language indent options are defined, returns these options. Otherwise attempts to find
+   * indent options from <code>FileTypeIndentOptionsProvider</code>. If none are found, other indent options are returned.
+   * @param fileType The file type to search indent options for.
+   * @return File type indent options or <code>OTHER_INDENT_OPTIONS</code>.
+   *
+   * @see FileTypeIndentOptionsProvider
+   * @see LanguageCodeStyleSettingsProvider
+   */
   public IndentOptions getIndentOptions(FileType fileType) {
     IndentOptions indentOptions = getLanguageIndentOptions(fileType);
     if (indentOptions != null) return indentOptions;
