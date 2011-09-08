@@ -23,10 +23,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ExcludedFileIndex;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -54,7 +53,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiManagerImpl");
 
   private final Project myProject;
-  private final ProjectFileIndex myProjectFileIndex;
+  private final ExcludedFileIndex myExcludedFileIndex;
   private final MessageBus myMessageBus;
 
   private final FileManager myFileManager;
@@ -78,10 +77,10 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
                         StartupManager startupManager,
                         FileDocumentManager fileDocumentManager,
                         PsiBuilderFactory psiBuilderFactory,
-                        ProjectFileIndex projectFileIndex,
+                        ExcludedFileIndex excludedFileIndex,
                         MessageBus messageBus) {
     myProject = project;
-    myProjectFileIndex = projectFileIndex;
+    myExcludedFileIndex = excludedFileIndex;
     myMessageBus = messageBus;
 
     //We need to initialize PsiBuilderFactory service so it won't initialize under PsiLock from ChameleonTransform
@@ -89,7 +88,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
 
     boolean isProjectDefault = project.isDefault();
 
-    myFileManager = isProjectDefault ? new EmptyFileManager(this) : new FileManagerImpl(this, fileDocumentManager, projectFileIndex);
+    myFileManager = isProjectDefault ? new EmptyFileManager(this) : new FileManagerImpl(this, fileDocumentManager, excludedFileIndex);
 
     myModificationTracker = new PsiModificationTrackerImpl(myProject);
     myTreeChangePreprocessors.add(myModificationTracker);
@@ -146,8 +145,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
     }
 
     if (virtualFile != null) {
-      Module module = myProjectFileIndex.getModuleForFile(virtualFile);
-      return module != null;
+      return myExcludedFileIndex.isInContent(virtualFile);
     }
     return false;
   }

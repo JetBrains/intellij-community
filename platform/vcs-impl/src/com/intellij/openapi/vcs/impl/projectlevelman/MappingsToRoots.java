@@ -15,13 +15,13 @@
  */
 package com.intellij.openapi.vcs.impl.projectlevelman;
 
+import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ExcludedFileIndex;
 import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy;
-import com.intellij.openapi.vcs.impl.ExcludedFileIndex;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -53,7 +53,7 @@ public class MappingsToRoots {
       while(i < result.size()) {
         final VirtualFile previous = result.get(i - 1);
         final VirtualFile current = result.get(i);
-        if (ExcludedFileIndex.getInstance(myProject).isValidAncestor(previous, current)) {
+        if (PeriodicalTasksCloser.getInstance().safeGetService(myProject, ExcludedFileIndex.class).isValidAncestor(previous, current)) {
 //        if (ExcludedFileIndex.getInstance(myProject).isValidAncestor(previous, current) && vcs.isVersionedDirectory(previous)) {
           result.remove(i);
         }
@@ -90,7 +90,7 @@ public class MappingsToRoots {
         final VirtualFile module = iterator.next();
         boolean included = false;
         for (VirtualFile root : result) {
-          if (ExcludedFileIndex.getInstance(myProject).isValidAncestor(root, module)) {
+          if (PeriodicalTasksCloser.getInstance().safeGetService(myProject, ExcludedFileIndex.class).isValidAncestor(root, module)) {
             included = true;
             break;
           }

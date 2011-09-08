@@ -29,7 +29,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ExcludedFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiFileEx;
@@ -55,7 +55,7 @@ public class FileManagerImpl implements FileManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.file.impl.FileManagerImpl");
 
   private final PsiManagerImpl myManager;
-  private final ProjectFileIndex myFileIndex;
+  private final ExcludedFileIndex myFileIndex;
 
   private final ConcurrentMap<VirtualFile, PsiDirectory> myVFileToPsiDirMap = new ConcurrentSoftValueHashMap<VirtualFile, PsiDirectory>();
   private final ConcurrentWeakValueHashMap<VirtualFile, FileViewProvider> myVFileToViewProviderMap = new ConcurrentWeakValueHashMap<VirtualFile, FileViewProvider>();
@@ -68,7 +68,7 @@ public class FileManagerImpl implements FileManager {
 
   public FileManagerImpl(PsiManagerImpl manager,
                          FileDocumentManager fileDocumentManager,
-                         ProjectFileIndex fileIndex) {
+                         ExcludedFileIndex fileIndex) {
     myManager = manager;
     myFileIndex = fileIndex;
     myConnection = manager.getProject().getMessageBus().connect();
@@ -343,7 +343,7 @@ public class FileManagerImpl implements FileManager {
     PsiDirectory psiDir = myVFileToPsiDirMap.get(vFile);
     if (psiDir != null) return psiDir;
 
-    if (myFileIndex.isIgnored(vFile)) return null;
+    if (myFileIndex.isExcludedFile(vFile)) return null;
 
     VirtualFile parent = vFile.getParent();
     if (parent != null) { //?

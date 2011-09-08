@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vcs.impl;
+package com.intellij.openapi.roots;
 
-import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -24,10 +23,6 @@ import com.intellij.openapi.vfs.VirtualFile;
  */
 public abstract class ExcludedFileIndex {
   protected final Project myProject;
-
-  public static ExcludedFileIndex getInstance(Project project) {
-    return PeriodicalTasksCloser.getInstance().safeGetService(project, ExcludedFileIndex.class);
-  }
 
   protected ExcludedFileIndex(final Project project) {
     myProject = project;

@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.vcs.impl;
 
+import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.module.Module;
@@ -23,6 +24,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
+import com.intellij.openapi.roots.ExcludedFileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
@@ -108,7 +110,8 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
 
   @Nullable
   public VirtualFile getVcsRootFor(final VirtualFile file) {
-    if (myBaseDir != null && ExcludedFileIndex.getInstance(myProject).isValidAncestor(myBaseDir, file)) {
+    if (myBaseDir != null && PeriodicalTasksCloser.getInstance().safeGetService(myProject, ExcludedFileIndex.class)
+      .isValidAncestor(myBaseDir, file)) {
       return myBaseDir;
     }
     final VirtualFile contentRoot = ProjectRootManager.getInstance(myProject).getFileIndex().getContentRootForFile(file);

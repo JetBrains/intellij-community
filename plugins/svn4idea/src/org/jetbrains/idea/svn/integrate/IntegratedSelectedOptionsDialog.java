@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.svn.integrate;
 
+import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -23,7 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vcs.impl.ExcludedFileIndex;
+import com.intellij.openapi.roots.ExcludedFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.UIUtil;
@@ -209,7 +210,7 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
 
   private boolean underProject(final File file) {
     final VirtualFile vf = SvnUtil.getVirtualFile(file.getAbsolutePath());
-    return (vf == null) || ExcludedFileIndex.getInstance(myProject).isInContent(vf);
+    return (vf == null) || PeriodicalTasksCloser.getInstance().safeGetService(myProject, ExcludedFileIndex.class).isInContent(vf);
   }
 
   public WorkingCopyInfo getSelectedWc() {

@@ -1,11 +1,12 @@
 
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ExcludedFileIndex;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vcs.impl.ExcludedFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.OpenTHashSet;
 import org.jetbrains.annotations.NotNull;
@@ -132,7 +133,7 @@ public class LocalChangeListImpl extends LocalChangeList {
     createReadChangesCache();
     final Collection<Change> result = new ArrayList<Change>();
     myChangesBeforeUpdate = new OpenTHashSet<Change>(myChanges);
-    final ExcludedFileIndex fileIndex = ExcludedFileIndex.getInstance(project);
+    final ExcludedFileIndex fileIndex = PeriodicalTasksCloser.getInstance().safeGetService(project, ExcludedFileIndex.class);
     for (Change oldBoy : myChangesBeforeUpdate) {
       final ContentRevision before = oldBoy.getBeforeRevision();
       final ContentRevision after = oldBoy.getAfterRevision();

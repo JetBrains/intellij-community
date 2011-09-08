@@ -15,14 +15,15 @@
  */
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
+import com.intellij.openapi.roots.ExcludedFileIndex;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.impl.ExcludedFileIndex;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -36,7 +37,7 @@ public class VcsGuess {
   VcsGuess(final Project project) {
     myProject = project;
     myVcsManager = (ProjectLevelVcsManagerImpl) ProjectLevelVcsManagerImpl.getInstance(myProject);
-    myExcludedFileIndex = ExcludedFileIndex.getInstance(myProject);
+    myExcludedFileIndex = PeriodicalTasksCloser.getInstance().safeGetService(myProject, ExcludedFileIndex.class);
   }
 
   @Nullable
