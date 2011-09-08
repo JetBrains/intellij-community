@@ -19,5 +19,9 @@
       <implementation-class>com.intellij.openapi.wm.impl.IdeFocusManagerImpl</implementation-class>
       <headless-implementation-class>com.intellij.openapi.wm.impl.IdeFocusManagerHeadless</headless-implementation-class>
     </component>
+    <component>
+      <implementation-class>com.intellij.openapi.wm.impl.WindowDressing</implementation-class>
+      <skipForDefaultProject/>
+    </component>
   </project-components>
 </components>
