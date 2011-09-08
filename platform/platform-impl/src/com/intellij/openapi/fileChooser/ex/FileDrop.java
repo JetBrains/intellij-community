@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,58 +15,47 @@
  */
 package com.intellij.openapi.fileChooser.ex;
 
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.ide.dnd.FileCopyPasteUtil;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import javax.swing.*;
-import java.awt.datatransfer.DataFlavor;
 import java.awt.dnd.*;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
 public class FileDrop {
-
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileChooser.ex.FileDrop");
-
   public FileDrop(JComponent c, final Target target) {
     final DropTargetListener listener = new DropTargetListener() {
-
-      public void dragEnter(final DropTargetDragEvent dtde) {
+      public void dragEnter(final DropTargetDragEvent event) {
       }
 
-      public void dragOver(final DropTargetDragEvent dtde) {
+      public void dragOver(final DropTargetDragEvent event) {
       }
 
-      public void dropActionChanged(final DropTargetDragEvent dtde) {
+      public void dropActionChanged(final DropTargetDragEvent event) {
       }
 
       public void dragExit(final DropTargetEvent dte) {
       }
 
-      public void drop(final DropTargetDropEvent dtde) {
-        dtde.acceptDrop(dtde.getDropAction());
-        List<VirtualFile> files = new ArrayList<VirtualFile>();
-        try {
-          final List list = (List)dtde.getTransferable().getTransferData(DataFlavor.javaFileListFlavor);
-          for (int i = 0; i < list.size(); i++) {
-            Object each = list.get(i);
-            if (each instanceof File) {
-              final File eachFile = (File)each;
-              final VirtualFile vFile = LocalFileSystem.getInstance().findFileByIoFile(eachFile);
-              if (vFile != null && vFile.exists()) {
-                if (target.getDescriptor().isFileVisible(vFile, target.isHiddenShown())) {
-                  files.add(vFile);
-                }
-              }
-            }
+      public void drop(final DropTargetDropEvent event) {
+        event.acceptDrop(event.getDropAction());
+
+        final List<File> fileList = FileCopyPasteUtil.getFileList(event.getTransferable());
+        if (fileList == null) return;
+
+        final List<VirtualFile> files = new ArrayList<VirtualFile>();
+        final LocalFileSystem fileSystem = LocalFileSystem.getInstance();
+        for (File file : fileList) {
+          final VirtualFile vFile = fileSystem.findFileByIoFile(file);
+          if (vFile != null && vFile.exists() && target.getDescriptor().isFileVisible(vFile, target.isHiddenShown())) {
+            files.add(vFile);
           }
         }
-        catch (Exception e) {
-          LOG.debug(e);
-        }
+
         if (files.size() > 0) {
           target.dropFiles(files);
         }
@@ -76,10 +65,9 @@ public class FileDrop {
     new DropTarget(c, TransferHandler.COPY_OR_MOVE, listener, true);
   }
 
-  public static interface Target {
+  public interface Target {
     FileChooserDescriptor getDescriptor();
     boolean isHiddenShown();
     void dropFiles(List<VirtualFile> files);
   }
-
 }

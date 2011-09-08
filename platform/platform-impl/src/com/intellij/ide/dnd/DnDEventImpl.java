@@ -26,22 +26,16 @@ import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
+import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 public class DnDEventImpl extends UserDataHolderBase implements Transferable, DnDEvent {
   private static final Logger LOG = Logger.getInstance("com.intellij.ide.dnd.DnDEventImpl");
 
-  public static DataFlavor ourDataFlavor;
+  public static final DataFlavor ourDataFlavor = FileCopyPasteUtil.createDataFlavor(DataFlavor.javaJVMLocalObjectMimeType);
+
   private DnDTarget myDelegatedTarget;
-
-  static {
-    try {
-      ourDataFlavor = new DataFlavor(DataFlavor.javaJVMLocalObjectMimeType);
-    } catch (ClassNotFoundException e) {
-      LOG.error(e);
-    }
-  }
-
   private DnDManagerImpl myManager;
   private DnDAction myAction;
   private Object myAttachedObject;
@@ -54,7 +48,7 @@ public class DnDEventImpl extends UserDataHolderBase implements Transferable, Dn
 
   private DropActionHandler myDropHandler;
   private Component myHandlerComponent;
-  private boolean myShouldRemoveHightlighter = true;
+  private boolean myShouldRemoveHighlighter = true;
   private Point myLocalPoint;
   private Cursor myCursor;
 
@@ -98,7 +92,7 @@ public class DnDEventImpl extends UserDataHolderBase implements Transferable, Dn
       return ((Transferable)myAttachedObject).getTransferDataFlavors();
     }
     else if (myAttachedObject instanceof FileFlavorProvider) {
-      return new DataFlavor[]{ourDataFlavor, DataFlavor.javaFileListFlavor};
+      return new DataFlavor[]{ourDataFlavor, DataFlavor.javaFileListFlavor, LinuxDragAndDropSupport.uriListFlavor};
     }
     else if (myAttachedObject instanceof DnDNativeTarget.EventInfo) {
       return ((DnDNativeTarget.EventInfo)myAttachedObject).getFlavors();
@@ -113,9 +107,13 @@ public class DnDEventImpl extends UserDataHolderBase implements Transferable, Dn
     else if (myAttachedObject instanceof FileFlavorProvider && flavor == DataFlavor.javaFileListFlavor) {
       return ((FileFlavorProvider)myAttachedObject).asFileList();
     }
+    else if (myAttachedObject instanceof FileFlavorProvider && flavor == LinuxDragAndDropSupport.uriListFlavor) {
+      final List<File> files = ((FileFlavorProvider)myAttachedObject).asFileList();
+      return LinuxDragAndDropSupport.toUriList(files);
+    }
+
     return getAttachedObject();
   }
-
 
   public boolean isDataFlavorSupported(DataFlavor flavor) {
     DataFlavor[] flavors = getTransferDataFlavors();
@@ -139,7 +137,7 @@ public class DnDEventImpl extends UserDataHolderBase implements Transferable, Dn
   }
 
   public Point getPoint() {
-    // TODO: it is better to return a new point every time 
+    // TODO: it is better to return a new point every time
     return myPoint;
   }
 
@@ -187,19 +185,16 @@ public class DnDEventImpl extends UserDataHolderBase implements Transferable, Dn
     myManager.showHighlighter(layeredPane, rectangle, aType, this);
   }
 
-  boolean shouldRemoveHighlightings() {
-    return myShouldRemoveHightlighter;
+  boolean shouldRemoveHighlighting() {
+    return myShouldRemoveHighlighter;
   }
 
   public void setAutoHideHighlighterInDrop(boolean aValue) {
-    myShouldRemoveHightlighter = aValue;
+    myShouldRemoveHighlighter = aValue;
   }
 
   public void hideHighlighter() {
-//    if (manager.getCurrentEvent().equals(this)) {
-      myManager.hideCurrentHighlighter();
-//    }
-
+    myManager.hideCurrentHighlighter();
     myHighlighting = 0;
   }
 

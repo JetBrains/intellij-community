@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.uiDesigner;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.CutProvider;
 import com.intellij.ide.PasteProvider;
+import com.intellij.ide.dnd.FileCopyPasteUtil;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -227,15 +228,7 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
     }
   }
 
-  private static final DataFlavor ourDataFlavor;
-  static {
-    try {
-      ourDataFlavor = new DataFlavor(DataFlavor.javaJVMLocalObjectMimeType + ";class=com.intellij.uiDesigner.SerializedComponentData");
-    }
-    catch (ClassNotFoundException e) {
-      throw new RuntimeException(e);
-    }
-  }
+  private static final DataFlavor ourDataFlavor = FileCopyPasteUtil.createJvmDataFlavor(SerializedComponentData.class);
 
   @Nullable
   public static List<RadComponent> copyComponents(GuiEditor editor, List<RadComponent> components) {

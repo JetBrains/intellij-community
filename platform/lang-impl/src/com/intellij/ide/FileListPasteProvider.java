@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,11 @@
 
 package com.intellij.ide;
 
+import com.intellij.ide.dnd.FileCopyPasteUtil;
+import com.intellij.ide.dnd.LinuxDragAndDropSupport;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -26,14 +29,12 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.copy.CopyFilesOrDirectoriesHandler;
+import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesHandler;
 
-import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
-import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,23 +43,15 @@ import java.util.List;
  */
 public class FileListPasteProvider implements PasteProvider {
   public void performPaste(DataContext dataContext) {
-    Project project = LangDataKeys.PROJECT.getData(dataContext);
+    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     final IdeView ideView = LangDataKeys.IDE_VIEW.getData(dataContext);
     if (project == null || ideView == null) return;
-    List<File> fileList;
-    try {
-      final Transferable contents = CopyPasteManager.getInstance().getContents();
-      //noinspection unchecked
-      fileList = (List<File>)contents.getTransferData(DataFlavor.javaFileListFlavor);
-    }
-    catch (UnsupportedFlavorException e) {
-      return;
-    }
-    catch (IOException e) {
-      return;
-    }
+
+    final Transferable contents = CopyPasteManager.getInstance().getContents();
+    final List<File> fileList = FileCopyPasteUtil.getFileList(contents);
     if (fileList == null) return;
-    List<PsiElement> elements = new ArrayList<PsiElement>();
+
+    final List<PsiElement> elements = new ArrayList<PsiElement>();
     for (File file : fileList) {
       final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
       if (vFile != null) {
@@ -69,10 +62,17 @@ public class FileListPasteProvider implements PasteProvider {
         }
       }
     }
+
     if (elements.size() > 0) {
       final PsiDirectory dir = ideView.getOrChooseDirectory();
       if (dir != null) {
-        new CopyFilesOrDirectoriesHandler().doCopy(PsiUtilBase.toPsiElementArray(elements), dir);
+        final boolean move = LinuxDragAndDropSupport.isMoveOperation(contents);
+        if (move) {
+          new MoveFilesOrDirectoriesHandler().doMove(PsiUtilCore.toPsiElementArray(elements), dir);
+        }
+        else {
+          new CopyFilesOrDirectoriesHandler().doCopy(PsiUtilCore.toPsiElementArray(elements), dir);
+        }
       }
     }
   }
@@ -84,6 +84,6 @@ public class FileListPasteProvider implements PasteProvider {
   public boolean isPasteEnabled(DataContext dataContext) {
     final Transferable contents = CopyPasteManager.getInstance().getContents();
     final IdeView ideView = LangDataKeys.IDE_VIEW.getData(dataContext);
-    return contents != null && contents.isDataFlavorSupported(DataFlavor.javaFileListFlavor) && ideView != null;
+    return contents != null && FileCopyPasteUtil.isFileListFlavorSupported(contents) && ideView != null;
   }
 }

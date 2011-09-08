@@ -18,6 +18,7 @@ package com.intellij.ide.projectView.impl;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.dnd.DnDEvent;
 import com.intellij.ide.dnd.DnDNativeTarget;
+import com.intellij.ide.dnd.FileCopyPasteUtil;
 import com.intellij.ide.projectView.impl.nodes.DropTargetNode;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -27,7 +28,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringActionHandlerFactory;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
@@ -43,7 +44,6 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.datatransfer.DataFlavor;
 import java.awt.dnd.DnDConstants;
 import java.io.File;
 import java.util.ArrayList;
@@ -66,24 +66,26 @@ class ProjectViewDropTarget implements DnDNativeTarget {
   }
 
   @Override
-  public boolean update(DnDEvent aEvent) {
-    final Object attached = aEvent.getAttachedObject();
-    aEvent.setDropPossible(false, "");
-    final int dropAction = aEvent.getAction().getActionId();
+  public boolean update(DnDEvent event) {
+    event.setDropPossible(false, "");
+
+    final Object attached = event.getAttachedObject();
+    final int dropAction = event.getAction().getActionId();
     final DropHandler dropHandler = getDropHandler(dropAction);
     final TreeNode[] sourceNodes = getSourceNodes(attached);
-    final Point point = aEvent.getPoint();
+    final Point point = event.getPoint();
     final TreeNode targetNode = getTargetNode(point);
 
     if (targetNode == null || (dropAction & DnDConstants.ACTION_COPY_OR_MOVE) == 0) {
       return false;
     }
-    else if (sourceNodes == null && !aEvent.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
+    else if (sourceNodes == null && !FileCopyPasteUtil.isFileListFlavorSupported(event)) {
       return false;
     }
     else if (sourceNodes != null && !dropHandler.isValidSource(sourceNodes, targetNode)) {
       return false;
     }
+
     if (sourceNodes != null) {
       boolean redundant = true;
       for (TreeNode sourceNode : sourceNodes) {
@@ -97,47 +99,39 @@ class ProjectViewDropTarget implements DnDNativeTarget {
     else {
       // it seems like it's not possible to obtain dragged items _before_ accepting _drop_ on Macs, so just skip this check
       if (!SystemInfo.isMac) {
-        final PsiFileSystemItem[] psiFiles = getPsiFiles(attached);
+        final PsiFileSystemItem[] psiFiles = getPsiFiles(getFileListFromAttachedObject(attached));
         if (psiFiles == null) return false;
         if (!MoveHandler.isValidTarget(getPsiElement(targetNode), psiFiles)) return false;
       }
     }
+
     final Rectangle pathBounds = myTree.getPathBounds(myTree.getPathForLocation(point.x, point.y));
-    aEvent.setHighlighting(new RelativeRectangle(myTree, pathBounds), DnDEvent.DropTargetHighlightingType.RECTANGLE);
-    aEvent.setDropPossible(true, null);
+    event.setHighlighting(new RelativeRectangle(myTree, pathBounds), DnDEvent.DropTargetHighlightingType.RECTANGLE);
+    event.setDropPossible(true, null);
     return false;
   }
 
-  private PsiFileSystemItem[] getPsiFiles(Object attached) {
-    return getPsiFiles(getFileListFromAttachedObject(attached));
-  }
-
+  @Nullable
   private static List<File> getFileListFromAttachedObject(Object attached) {
-    List fileList;
-    try {
-      if (attached instanceof TransferableWrapper) {
-        fileList = ((TransferableWrapper)attached).asFileList();
-      }
-      else {
-        fileList = (List)((EventInfo)attached).getTransferable().getTransferData(DataFlavor.javaFileListFlavor);
-      }
+    if (attached instanceof TransferableWrapper) {
+      return ((TransferableWrapper)attached).asFileList();
     }
-    catch (Exception e) {
-      return null;
+    else if (attached instanceof EventInfo) {
+      return FileCopyPasteUtil.getFileList(((EventInfo)attached).getTransferable());
     }
-    return fileList;
+    return null;
   }
 
   @Override
-  public void drop(DnDEvent aEvent) {
-    Object attached = aEvent.getAttachedObject();
+  public void drop(DnDEvent event) {
+    final Object attached = event.getAttachedObject();
     final TreeNode[] sourceNodes = getSourceNodes(attached);
-    final TreeNode targetNode = getTargetNode(aEvent.getPoint());
+    final TreeNode targetNode = getTargetNode(event.getPoint());
     assert targetNode != null;
-    final int dropAction = aEvent.getAction().getActionId();
+    final int dropAction = event.getAction().getActionId();
     if (sourceNodes == null) {
-      if (aEvent.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
-        List<File> fileList = getFileListFromAttachedObject(attached);
+      if (FileCopyPasteUtil.isFileListFlavorSupported(event)) {
+        final List<File> fileList = getFileListFromAttachedObject(attached);
         if (fileList != null) {
           getDropHandler(dropAction).doDropFiles(fileList, targetNode);
         }
@@ -238,7 +232,6 @@ class ProjectViewDropTarget implements DnDNativeTarget {
   }
 
   public abstract class MoveCopyDropHandler implements DropHandler {
-
     public boolean isValidSource(@NotNull final TreeNode[] sourceNodes, TreeNode targetNode) {
       return canDrop(sourceNodes, targetNode);
     }
@@ -248,7 +241,6 @@ class ProjectViewDropTarget implements DnDNativeTarget {
     }
 
     protected abstract boolean canDrop(@NotNull TreeNode[] sourceNodes, @Nullable TreeNode targetNode);
-
 
     @NotNull
     protected PsiElement[] getPsiElements(@NotNull TreeNode[] nodes) {
@@ -260,7 +252,7 @@ class ProjectViewDropTarget implements DnDNativeTarget {
         }
       }
       if (psiElements.size() != 0) {
-        return PsiUtilBase.toPsiElementArray(psiElements);
+        return PsiUtilCore.toPsiElementArray(psiElements);
       }
       else {
         return BaseRefactoringAction.getPsiElementArray(DataManager.getInstance().getDataContext(myTree));
@@ -269,7 +261,7 @@ class ProjectViewDropTarget implements DnDNativeTarget {
   }
 
   @Nullable
-  protected PsiFileSystemItem[] getPsiFiles(List<File> fileList) {
+  protected PsiFileSystemItem[] getPsiFiles(@Nullable List<File> fileList) {
     if (fileList == null) return null;
     List<PsiFileSystemItem> sourceFiles = new ArrayList<PsiFileSystemItem>();
     for (File file : fileList) {
@@ -287,7 +279,6 @@ class ProjectViewDropTarget implements DnDNativeTarget {
   }
 
   private class MoveDropHandler extends MoveCopyDropHandler {
-
     protected boolean canDrop(@NotNull final TreeNode[] sourceNodes, @Nullable final TreeNode targetNode) {
       if (targetNode instanceof DefaultMutableTreeNode) {
         final Object userObject = ((DefaultMutableTreeNode)targetNode).getUserObject();
@@ -364,7 +355,6 @@ class ProjectViewDropTarget implements DnDNativeTarget {
   }
 
   private class CopyDropHandler extends MoveCopyDropHandler {
-
     protected boolean canDrop(@NotNull final TreeNode[] sourceNodes, @Nullable final TreeNode targetNode) {
       final PsiElement[] sourceElements = getPsiElements(sourceNodes);
       final PsiElement targetElement = getPsiElement(targetNode);
