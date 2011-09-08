@@ -203,9 +203,13 @@ public class PsiCopyPasteManager {
   }
 
   public static class MyTransferable implements Transferable {
-    private static final DataFlavor[] DATA_FLAVOR_ARRAY = {
+    private static final DataFlavor[] DATA_FLAVORS_COPY = {
       ourDataFlavor, DataFlavor.stringFlavor, DataFlavor.javaFileListFlavor,
       LinuxDragAndDropSupport.uriListFlavor, LinuxDragAndDropSupport.gnomeFileListFlavor
+    };
+    private static final DataFlavor[] DATA_FLAVORS_CUT = {
+      ourDataFlavor, DataFlavor.stringFlavor, DataFlavor.javaFileListFlavor,
+      LinuxDragAndDropSupport.uriListFlavor, LinuxDragAndDropSupport.gnomeFileListFlavor, LinuxDragAndDropSupport.kdeCutMarkFlavor
     };
 
     private final MyData myDataProxy;
@@ -237,6 +241,9 @@ public class PsiCopyPasteManager {
           final String string = (myDataProxy.isCopied() ? "copy\n" : "cut\n") + LinuxDragAndDropSupport.toUriList(files);
           return new ByteArrayInputStream(string.getBytes(CharsetToolkit.UTF8_CHARSET));
         }
+      }
+      else if (flavor.equals(LinuxDragAndDropSupport.kdeCutMarkFlavor) && !myDataProxy.isCopied()) {
+        return new ByteArrayInputStream("1".getBytes());
       }
 
       return null;
@@ -274,11 +281,11 @@ public class PsiCopyPasteManager {
     }
 
     public DataFlavor[] getTransferDataFlavors() {
-      return DATA_FLAVOR_ARRAY;
+      return myDataProxy.isCopied() ? DATA_FLAVORS_COPY : DATA_FLAVORS_CUT;
     }
 
     public boolean isDataFlavorSupported(DataFlavor flavor) {
-      return ArrayUtil.find(DATA_FLAVOR_ARRAY, flavor) != -1;
+      return ArrayUtil.find(getTransferDataFlavors(), flavor) != -1;
     }
 
     public PsiElement[] getElements() {
