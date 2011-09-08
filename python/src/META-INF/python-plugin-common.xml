@@ -40,13 +40,13 @@
     <extendWordSelectionHandler implementation="com.jetbrains.python.editor.selectWord.PyStatementSelectionHandler"/>
     <extendWordSelectionHandler implementation="com.jetbrains.python.editor.selectWord.PyListSelectionHandler"/>
     <extendWordSelectionHandler implementation="com.jetbrains.python.editor.selectWord.PyCommaSelectionHandler"/>
-    <completion.contributor language="Python" implementationClass="com.jetbrains.python.codeInsight.PyKeywordCompletionContributor"/>
+    <completion.contributor language="Python" implementationClass="com.jetbrains.python.codeInsight.completion.PyKeywordCompletionContributor"/>
     <completion.contributor language="Python"
-                            implementationClass="com.jetbrains.python.codeInsight.PySpecialMethodNamesCompletionContributor"/>
-    <completion.contributor language="Python" implementationClass="com.jetbrains.python.codeInsight.PySuperMethodCompletionContributor"/>
+                            implementationClass="com.jetbrains.python.codeInsight.completion.PySpecialMethodNamesCompletionContributor"/>
+    <completion.contributor language="Python" implementationClass="com.jetbrains.python.codeInsight.completion.PySuperMethodCompletionContributor"/>
     <completion.contributor language="Python"
-                            implementationClass="com.jetbrains.python.codeInsight.PySuperClassAttributesCompletionContributor"/>
-    <completion.contributor language="Python" implementationClass="com.jetbrains.python.codeInsight.PyDictKeyNamesCompletionContributor"/>
+                            implementationClass="com.jetbrains.python.codeInsight.completion.PySuperClassAttributesCompletionContributor"/>
+    <completion.contributor language="Python" implementationClass="com.jetbrains.python.codeInsight.completion.PyDictKeyNamesCompletionContributor"/>
     <lang.tokenSeparatorGenerator language="Python" implementationClass="com.jetbrains.python.PyTokenSeparatorGenerator"/>
     <lang.elementManipulator forClass="com.jetbrains.python.psi.PyReferenceExpression"
                              implementationClass="com.jetbrains.python.psi.impl.PyReferenceExpressionManipulator"/>
@@ -245,8 +245,8 @@
 
     <defaultLiveTemplatesProvider implementation="com.jetbrains.python.codeInsight.PyDefaultLiveTemplatesProvider"/>
 
-    <completion.contributor language="Python" implementationClass="com.jetbrains.python.codeInsight.PyClassNameCompletionContributor"/>
-    <weigher key="completion" implementationClass="com.jetbrains.python.codeInsight.PythonCompletionWeigher" order="first"/>
+    <completion.contributor language="Python" implementationClass="com.jetbrains.python.codeInsight.completion.PyClassNameCompletionContributor"/>
+    <weigher key="completion" implementationClass="com.jetbrains.python.codeInsight.completion.PythonCompletionWeigher" order="first"/>
     <typedHandler implementation="com.jetbrains.python.console.completion.PythonConsoleAutopopupBlockingHandler" id="pydevBlockAutoPopup"
                   order="first, before completionAutoPopup"/>
 
@@ -311,6 +311,8 @@
     <treeStructureProvider implementation="com.jetbrains.python.projectView.PyTreeStructureProvider"/>
 
     <project.converterProvider implementation="com.jetbrains.python.testing.converters.PythonTestConverterProvider"/>
+    
+    <lang.parserDefinition language="Cython" implementationClass="com.jetbrains.python.cython.CythonParserDefinition"/>
 
     <!-- Django -->
     <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.django.annotator.ViewMethodLineMarkerProvider"/>

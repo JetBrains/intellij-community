@@ -1,6 +1,8 @@
 package com.jetbrains.python.psi.search;
 
 import com.google.common.collect.ImmutableSet;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.stubs.StubIndex;
@@ -32,27 +34,30 @@ public class PyClassInheritorsSearchExecutor implements QueryExecutor<PyClass, P
   private static boolean processDirectInheritors(
       final PyClass superClass, final Processor<PyClass> consumer, final boolean checkDeep, final Set<PyClass> processed
   ) {
-    if (IGNORED_BASES.contains(superClass.getName())) {  // we don't want to look for inheritors of overly general classes
-      return true;
-    }
-    if (processed.contains(superClass)) return true;
-    processed.add(superClass);
-    Project project = superClass.getProject();
-    final String superClassName = superClass.getName();
-    if (superClassName == null) return true;
-    final Collection<PyClass> candidates = StubIndex.getInstance().get(PySuperClassIndex.KEY, superClassName, project,
-                                                                       ProjectScope.getAllScope(project));
-    for (PyClass candidate : candidates) {
-      final PyClass[] classes = candidate.getSuperClasses();
-      for (PyClass superClassCandidate : classes) {
-        if (superClassCandidate.isEquivalentTo(superClass)) {
-          if (!consumer.process(candidate)) {
-            return false;
+    AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
+    try {
+      final String superClassName = superClass.getName();
+      if (superClassName == null || IGNORED_BASES.contains(superClassName)) return true;  // we don't want to look for inheritors of overly general classes
+      if (processed.contains(superClass)) return true;
+      processed.add(superClass);
+      Project project = superClass.getProject();
+      final Collection<PyClass> candidates = StubIndex.getInstance().get(PySuperClassIndex.KEY, superClassName, project,
+                                                                         ProjectScope.getAllScope(project));
+      for (PyClass candidate : candidates) {
+        final PyClass[] classes = candidate.getSuperClasses();
+        for (PyClass superClassCandidate : classes) {
+          if (superClassCandidate.isEquivalentTo(superClass)) {
+            if (!consumer.process(candidate)) {
+              return false;
+            }
+            if (checkDeep && !processDirectInheritors(candidate, consumer, checkDeep, processed)) return false;
+            break;
           }
-          if (checkDeep && !processDirectInheritors(candidate, consumer, checkDeep, processed)) return false;
-          break;
         }
       }
+    }
+    finally {
+      accessToken.finish();
     }
     return true;
   }

@@ -1,18 +1,16 @@
-package com.jetbrains.python.codeInsight;
+package com.jetbrains.python.codeInsight.completion;
 
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
-import com.intellij.psi.filters.position.FilterPattern;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.PyIcons;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyStatementList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
@@ -24,7 +22,7 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
  * User: dcheryasov
  * Date: Dec 3, 2009 10:06:12 AM
  */
-public class PySpecialMethodNamesCompletionContributor extends PySeeingOriginalCompletionContributor {
+public class PySpecialMethodNamesCompletionContributor extends CompletionContributor {
   @Override
   public AutoCompletionDecision handleAutoCompletionPossibility(AutoCompletionContext context) {
     // auto-insert the obvious only case; else show other cases. 
@@ -35,17 +33,12 @@ public class PySpecialMethodNamesCompletionContributor extends PySeeingOriginalC
     return AutoCompletionDecision.SHOW_LOOKUP;
   }
 
-
-  private static final FilterPattern IN_METHOD_DEF = new FilterPattern(
-    new InSequenceFilter(psiElement(PyFunction.class), psiElement(PyStatementList.class), psiElement(PyClass.class))
-  );
-
   public PySpecialMethodNamesCompletionContributor() {
     extend(
       CompletionType.BASIC,
       psiElement()
         .withLanguage(PythonLanguage.getInstance())
-        .and(IN_METHOD_DEF)
+        .and(psiElement().inside(psiElement(PyFunction.class).inside(psiElement(PyClass.class))))
         .and(psiElement().afterLeaf("def"))
      ,
       new CompletionProvider<CompletionParameters>() {

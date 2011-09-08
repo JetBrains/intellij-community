@@ -1,4 +1,4 @@
-package com.jetbrains.python.codeInsight;
+package com.jetbrains.python.codeInsight.completion;
 
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -9,12 +9,10 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.filters.position.FilterPattern;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -27,19 +25,11 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
  *
  * Complete known keys for dictionaries
  */
-public class PyDictKeyNamesCompletionContributor extends PySeeingOriginalCompletionContributor {
-
-  private static final FilterPattern DICT_KEY = new FilterPattern(
-    new InSequenceFilter(psiElement(PySubscriptionExpression.class))
-  );
-
+public class PyDictKeyNamesCompletionContributor extends CompletionContributor {
   public PyDictKeyNamesCompletionContributor() {
     extend(
       CompletionType.BASIC,
-      psiElement()
-        .withLanguage(PythonLanguage.getInstance())
-        .and(DICT_KEY)
-     ,
+      psiElement().inside(PySubscriptionExpression.class),
       new CompletionProvider<CompletionParameters>() {
         protected void addCompletions(
           @NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {

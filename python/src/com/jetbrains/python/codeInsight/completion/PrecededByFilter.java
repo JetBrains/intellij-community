@@ -1,4 +1,4 @@
-package com.jetbrains.python.codeInsight;
+package com.jetbrains.python.codeInsight.completion;
 
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.patterns.ElementPattern;
@@ -7,6 +7,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.util.ProcessingContext;
+import com.jetbrains.python.codeInsight.PySeeingOriginalCompletionContributor;
 import com.jetbrains.python.psi.PyStatementList;
 
 /**

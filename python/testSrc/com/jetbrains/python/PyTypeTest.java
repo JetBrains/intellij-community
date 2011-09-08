@@ -34,7 +34,7 @@ public class PyTypeTest extends PyLightFixtureTestCase {
            "expr = [1] + [2]");
   }
 
-  public void testAssignementChainBinaryExprType() {
+  public void testAssignmentChainBinaryExprType() {
     doTest("int or long or float or complex",
            "class C(object):\n" +
            "    def __add__(self, other):\n" +
@@ -273,6 +273,14 @@ public class PyTypeTest extends PyLightFixtureTestCase {
            "        x = 1 if c else 'foo'\n" +
            "        self.assertIsInstance(x, int)\n" +
            "        expr = x\n");
+  }
+  
+  public void testSOEOnRecursiveCall() {
+    PyExpression expr = parseExpr("def foo(x): return foo(x)\n" +
+                                  "expr = foo(1)");
+    TypeEvalContext context = TypeEvalContext.slow().withTracing();
+    PyType actual = expr.getType(context);
+    assertFalse(actual.isBuiltin(context));
   }
 
   private PyExpression parseExpr(String text) {

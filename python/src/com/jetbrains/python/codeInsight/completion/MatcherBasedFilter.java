@@ -1,4 +1,4 @@
-package com.jetbrains.python.codeInsight;
+package com.jetbrains.python.codeInsight.completion;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.ElementFilter;

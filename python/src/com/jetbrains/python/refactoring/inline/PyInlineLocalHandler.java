@@ -215,12 +215,16 @@ public class PyInlineLocalHandler extends InlineActionHandler {
   private static Pair<PyStatement, Boolean> getAssignmentToInline(ScopeOwner containerBlock, PyReferenceExpression expr,
                                                                   PyTargetExpression local, Project project) {
     if (expr != null) {
-      final List<ReadWriteInstruction> candidates = PyDefUseUtil.getLatestDefs(containerBlock, local, expr);
-      if (candidates.size() == 1) {
-        final PyStatement expression = getAssignmentByLeftPart((PyElement)candidates.get(0).getElement());
-        return Pair.create(expression, false);
+      try {
+        final List<ReadWriteInstruction> candidates = PyDefUseUtil.getLatestDefs(containerBlock, local, expr);
+        if (candidates.size() == 1) {
+          final PyStatement expression = getAssignmentByLeftPart((PyElement)candidates.get(0).getElement());
+          return Pair.create(expression, false);
+        }
+        return Pair.create(null, candidates.size() > 0);
       }
-      return Pair.create(null, candidates.size() > 0);
+      catch (PyDefUseUtil.InstructionNotFoundException ignored) {
+      }
     }
     final Query<PsiReference> query = ReferencesSearch.search(local, GlobalSearchScope.allScope(project), false);
     final PsiReference first = query.findFirst();
