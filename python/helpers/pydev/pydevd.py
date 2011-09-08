@@ -32,6 +32,7 @@ from pydevd_comm import  CMD_CHANGE_VARIABLE, \
                          CMD_LOAD_SOURCE, \
                          CMD_ADD_DJANGO_EXCEPTION_BREAK, \
                          CMD_REMOVE_DJANGO_EXCEPTION_BREAK, \
+                         CMD_SMART_STEP_INTO, \
                          GetGlobalDebugger, \
                          InternalChangeVariable, \
                          InternalGetCompletions, \
@@ -465,7 +466,7 @@ class PyDB:
                         int_cmd = InternalStepThread(thread_id, cmd_id)
                         self.postInternalCommand(int_cmd, thread_id)
 
-                elif cmd_id == CMD_RUN_TO_LINE or cmd_id == CMD_SET_NEXT_STATEMENT:
+                elif cmd_id == CMD_RUN_TO_LINE or cmd_id == CMD_SET_NEXT_STATEMENT or cmd_id == CMD_SMART_STEP_INTO:
                     #we received some command to make a single step
                     thread_id, line, func_name = text.split('\t', 2)
                     t = PydevdFindThreadById(thread_id)
@@ -750,10 +751,17 @@ class PyDB:
         #process any stepping instructions 
         if info.pydev_step_cmd == CMD_STEP_INTO:
             info.pydev_step_stop = None
+            info.pydev_smart_step_stop = None
 
         elif info.pydev_step_cmd == CMD_STEP_OVER:
             info.pydev_step_stop = frame
+            info.pydev_smart_step_stop = None
             self.SetTraceForFrameAndParents(frame)
+
+        elif info.pydev_step_cmd == CMD_SMART_STEP_INTO:
+            self.SetTraceForFrameAndParents(frame)
+            info.pydev_step_stop = None
+            info.pydev_smart_step_stop = frame
 
         elif info.pydev_step_cmd == CMD_RUN_TO_LINE or info.pydev_step_cmd == CMD_SET_NEXT_STATEMENT :
             self.SetTraceForFrameAndParents(frame)

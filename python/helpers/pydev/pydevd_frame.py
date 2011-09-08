@@ -208,6 +208,23 @@ class PyDBFrame:
                 else:
                     stop = info.pydev_step_stop is frame and event in ('line', 'return')
 
+            elif info.pydev_step_cmd == CMD_SMART_STEP_INTO:
+                stop = False
+                if info.pydev_smart_step_stop is frame:
+                    info.pydev_func_name = None
+                    info.pydev_smart_step_stop = None
+
+                if event == 'line' or event == 'exception':
+                    curr_func_name = frame.f_code.co_name
+                    print(curr_func_name)
+
+                    #global context is set with an empty name
+                    if curr_func_name in ('?', '<module>') or curr_func_name is None:
+                        curr_func_name = ''
+
+                    if curr_func_name == info.pydev_func_name:
+                            stop = True
+
             elif info.pydev_step_cmd == CMD_STEP_RETURN:
                 stop = event == 'return' and info.pydev_step_stop is frame
 
