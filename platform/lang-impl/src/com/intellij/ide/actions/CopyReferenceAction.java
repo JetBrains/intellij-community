@@ -145,8 +145,6 @@ public class CopyReferenceAction extends AnAction {
   }
 
   private static class MyTransferable implements Transferable {
-    private static final DataFlavor[] DATA_FLAVORS = new DataFlavor[]{ourFlavor, DataFlavor.stringFlavor};
-
     private final String fqn;
 
     public MyTransferable(String fqn) {
@@ -154,11 +152,11 @@ public class CopyReferenceAction extends AnAction {
     }
 
     public DataFlavor[] getTransferDataFlavors() {
-      return DATA_FLAVORS;
+      return new DataFlavor[]{ourFlavor, DataFlavor.stringFlavor};
     }
 
     public boolean isDataFlavorSupported(DataFlavor flavor) {
-      return ArrayUtil.find(DATA_FLAVORS, flavor) != -1;
+      return ArrayUtil.find(getTransferDataFlavors(), flavor) != -1;
     }
 
     @Nullable
