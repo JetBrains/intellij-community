@@ -41,6 +41,8 @@ import java.util.List;
 
 public class MvcRunTargetDialog extends DialogWrapper {
 
+  private static final String GRAILS_PREFIX = "grails ";
+
   private JPanel contentPane;
   private JLabel myTargetLabel;
   private JPanel myFakePanel;
@@ -109,6 +111,12 @@ public class MvcRunTargetDialog extends DialogWrapper {
 
   public String[] getTargetArguments() {
     String text = getSelectedText();
+
+    text = text.trim();
+    if (text.startsWith(GRAILS_PREFIX)) {
+      text = text.substring(GRAILS_PREFIX.length());
+    }
+
     Iterable<String> iterable = StringUtil.tokenize(text, " ");
     ArrayList<String> args = new ArrayList<String>();
     for (String s : iterable) {
