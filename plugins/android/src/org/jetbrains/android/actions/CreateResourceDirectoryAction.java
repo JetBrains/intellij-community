@@ -67,7 +67,7 @@ public class CreateResourceDirectoryAction extends CreateElementActionBase {
 
   @Override
   protected String getCommandName() {
-    return AndroidBundle.message("new.resource.command.name");
+    return AndroidBundle.message("new.resource.dir.command.name");
   }
 
   @Nullable
