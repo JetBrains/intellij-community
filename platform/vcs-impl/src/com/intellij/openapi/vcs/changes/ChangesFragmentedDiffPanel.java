@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.highlighter.FragmentedEditorHighlighter;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
@@ -41,7 +42,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.BeforeAfter;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
 import org.jetbrains.annotations.NotNull;
 
@@ -61,7 +61,7 @@ import java.util.List;
 public class ChangesFragmentedDiffPanel implements Disposable {
   private final JPanel myPanel;
   private final Project myProject;
-  private FragmentedContent myFragmentedContent;
+  private PreparedFragmentedContent myFragmentedContent;
   private final String myFilePath;
   private final VcsConfiguration myConfiguration;
 
@@ -131,49 +131,15 @@ public class ChangesFragmentedDiffPanel implements Disposable {
     myTitleLabel.setText(filePath);
   }
 
-  public void refreshData(final FragmentedContent fragmentedContent) {
+  public void refreshData(final PreparedFragmentedContent fragmentedContent) {
     myFragmentedContent = fragmentedContent;
-    assert ! myFragmentedContent.getRanges().isEmpty();
 
-    boolean navigationEnabled = !myFragmentedContent.isOneSide() && myFragmentedContent.getSize() > 1;
+    boolean navigationEnabled = !myFragmentedContent.isOneSide();
     myNextDiff.setEnabled(navigationEnabled);
     myPreviousDiff.setEnabled(navigationEnabled);
 
-    final LineNumberConvertor oldConvertor = new LineNumberConvertor();
-    final LineNumberConvertor newConvertor = new LineNumberConvertor();
-    final StringBuilder sbOld = new StringBuilder();
-    final StringBuilder sbNew = new StringBuilder();
-    // line starts
-    final List<BeforeAfter<Integer>> ranges = new ArrayList<BeforeAfter<Integer>>();
-
-    BeforeAfter<Integer> lines = new BeforeAfter<Integer>(0,0);
-    for (BeforeAfter<TextRange> lineNumbers : myFragmentedContent.getRanges()) {
-      ranges.add(lines);
-      oldConvertor.put(lines.getBefore(), lineNumbers.getBefore().getStartOffset());
-      newConvertor.put(lines.getAfter(), lineNumbers.getAfter().getStartOffset());
-
-      final Document document = myFragmentedContent.getBefore();
-      if (sbOld.length() > 0) {
-        sbOld.append('\n');
-      }
-      sbOld.append(document.getText(new TextRange(document.getLineStartOffset(lineNumbers.getBefore().getStartOffset()),
-                                                  document.getLineEndOffset(lineNumbers.getBefore().getEndOffset()))));
-
-      final Document document1 = myFragmentedContent.getAfter();
-      if (sbNew.length() > 0) {
-        sbNew.append('\n');
-      }
-      sbNew.append(document1.getText(new TextRange(document1.getLineStartOffset(lineNumbers.getAfter().getStartOffset()),
-                                    document1.getLineEndOffset(lineNumbers.getAfter().getEndOffset()))));
-      int before = lines.getBefore() + lineNumbers.getBefore().getEndOffset() - lineNumbers.getBefore().getStartOffset() + 1;
-      int after = lines.getAfter() + lineNumbers.getAfter().getEndOffset() - lineNumbers.getAfter().getStartOffset() + 1;
-      lines = new BeforeAfter<Integer>(before, after);
-    }
-    ranges.add(new BeforeAfter<Integer>(lines.getBefore() == 0 ? 0 : lines.getBefore() - 1,
-                                        lines.getAfter() == 0 ? 0 : lines.getAfter() - 1));
-
-    adjustPanelData((DiffPanelImpl)myHorizontal, oldConvertor, newConvertor, sbOld, sbNew, ranges);
-    adjustPanelData((DiffPanelImpl) myVertical, oldConvertor, newConvertor, sbOld, sbNew, ranges);
+    adjustPanelData((DiffPanelImpl)myHorizontal);
+    adjustPanelData((DiffPanelImpl) myVertical);
 
     DiffPanel currentPanel = getCurrentPanel();
     FragmentedDiffPanelState state = (FragmentedDiffPanelState)((DiffPanelImpl)currentPanel).getDiffPanelState();
@@ -181,6 +147,14 @@ public class ChangesFragmentedDiffPanel implements Disposable {
     myLeftLines = state.getLeftLines();
     myRightLines = state.getRightLines();
 
+    FragmentedEditorHighlighter bh = fragmentedContent.getBeforeHighlighter();
+    if (bh != null) {
+      ((EditorEx) ((DiffPanelImpl) currentPanel).getEditor1()).setHighlighter(bh);
+    }
+    FragmentedEditorHighlighter ah = fragmentedContent.getAfterHighlighter();
+    if (ah != null) {
+      ((EditorEx) ((DiffPanelImpl) currentPanel).getEditor2()).setHighlighter(ah);
+    }
     ensurePresentation();
   }
 
@@ -188,15 +162,11 @@ public class ChangesFragmentedDiffPanel implements Disposable {
     return myFilePath + " " + diffPanel.getNumDifferencesText();
   }
 
-  private void adjustPanelData(final DiffPanelImpl diffPanel, LineNumberConvertor oldConvertor,
-                                  LineNumberConvertor newConvertor,
-                                  StringBuilder sbOld,
-                                  StringBuilder sbNew,
-                                  List<BeforeAfter<Integer>> ranges) {
+  private void adjustPanelData(final DiffPanelImpl diffPanel) {
     final FragmentedDiffPanelState diffPanelState = (FragmentedDiffPanelState)diffPanel.getDiffPanelState();
-    diffPanelState.setRanges(ranges);
-    diffPanel.setContents(new SimpleContent(sbOld.toString()), new SimpleContent(sbNew.toString()));
-    diffPanel.setLineNumberConvertors(oldConvertor, newConvertor);
+    diffPanelState.setRanges(myFragmentedContent.getLineRanges());
+    diffPanel.setContents(new SimpleContent(myFragmentedContent.getSbOld().toString()), new SimpleContent(myFragmentedContent.getSbNew().toString()));
+    diffPanel.setLineNumberConvertors(myFragmentedContent.getOldConvertor(), myFragmentedContent.getNewConvertor());
     diffPanel.prefferedSizeByContents(-1);
   }
 
@@ -213,24 +183,6 @@ public class ChangesFragmentedDiffPanel implements Disposable {
     o.setRequestFocusOnNewContent(false);
     Disposer.register(this, diffPanel);
     return diffPanel;
-  }
-
-  private static class LineNumberConvertor implements Convertor<Integer, Integer> {
-    private final TreeMap<Integer, Integer> myFragmentStarts;
-
-    private LineNumberConvertor() {
-      myFragmentStarts = new TreeMap<Integer, Integer>();
-    }
-
-    public void put(final int start, final int offset) {
-      myFragmentStarts.put(start, offset);
-    }
-
-    @Override
-    public Integer convert(Integer o) {
-      final Map.Entry<Integer, Integer> floor = myFragmentStarts.floorEntry(o);
-      return floor == null ? o : floor.getValue() + o - floor.getKey();
-    }
   }
 
   private static class MyScrollingHelper {

@@ -21,12 +21,13 @@ import com.intellij.openapi.diff.impl.fragments.LineFragment;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.diff.impl.processing.TextCompareProcessor;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.highlighter.*;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.progress.BackgroundSynchronousInvisibleComputable;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
@@ -67,7 +68,7 @@ public class FragmentedDiffRequestFromChange {
     return true;
   }
 
-  public FragmentedContent getRanges(Change change, int extraLines) throws VcsException {
+  public PreparedFragmentedContent getRanges(Change change, int extraLines) throws VcsException {
     final FilePath filePath = ChangesUtil.getFilePath(change);
 
     final RangesCalculator calculator = new RangesCalculator();
@@ -77,8 +78,32 @@ public class FragmentedDiffRequestFromChange {
       throw exception;
     }
     final List<BeforeAfter<TextRange>> ranges = calculator.expand(extraLines);
+    final PreparedFragmentedContent preparedFragmentedContent =
+      new PreparedFragmentedContent(new FragmentedContent(calculator.getOldDocument(), calculator.getDocument(), ranges));
+    if (! ranges.isEmpty()) {
 
-    return new FragmentedContent(calculator.getOldDocument(), calculator.getDocument(), ranges);
+      EditorHighlighterFactory editorHighlighterFactory = EditorHighlighterFactory.getInstance();
+      final SyntaxHighlighter syntaxHighlighter = SyntaxHighlighter.PROVIDER.create(filePath.getFileType(), myProject, null);
+      final EditorHighlighter highlighter =
+        editorHighlighterFactory.createEditorHighlighter(syntaxHighlighter, EditorColorsManager.getInstance().getGlobalScheme());
+
+      highlighter.setEditor(new LightHighlighterClient(calculator.myOldDocument, myProject));
+      highlighter.setText(calculator.myOldDocument.getText());
+      HighlighterIterator iterator = highlighter.createIterator(ranges.get(0).getBefore().getStartOffset());
+      FragmentedEditorHighlighter beforeHighlighter =
+        new FragmentedEditorHighlighter(iterator, preparedFragmentedContent.getBeforeFragments());
+      preparedFragmentedContent.setBeforeHighlighter(beforeHighlighter);
+
+      final EditorHighlighter highlighter1 =
+        editorHighlighterFactory.createEditorHighlighter(syntaxHighlighter, EditorColorsManager.getInstance().getGlobalScheme());
+      highlighter1.setEditor(new LightHighlighterClient(calculator.myDocument, myProject));
+      highlighter1.setText(calculator.myDocument.getText());
+      HighlighterIterator iterator1 = highlighter1.createIterator(ranges.get(0).getAfter().getStartOffset());
+      FragmentedEditorHighlighter afterHighlighter =
+        new FragmentedEditorHighlighter(iterator1, preparedFragmentedContent.getAfterFragments());
+      preparedFragmentedContent.setAfterHighlighter(afterHighlighter);
+    }
+    return preparedFragmentedContent;
   }
 
   private static class RangesCalculator {

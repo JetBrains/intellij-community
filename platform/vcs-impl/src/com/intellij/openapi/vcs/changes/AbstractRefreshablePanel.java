@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -42,6 +43,7 @@ import javax.swing.*;
  * Time: 3:13 PM
  */
 public abstract class AbstractRefreshablePanel<T> implements RefreshablePanel {
+  private final static Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.AbstractRefreshablePanel");
   private final Ticket myTicket;
   private final DetailsPanel myDetailsPanel;
   private final GenericDetailsLoader<Ticket, T> myDetailsLoader;
@@ -123,6 +125,7 @@ public abstract class AbstractRefreshablePanel<T> implements RefreshablePanel {
       } else {
         cause = e;
       }
+      LOG.info(e);
       VcsBalloonProblemNotifier.showOverChangesView(myProject, cause.getMessage(), MessageType.ERROR);
     }
 
