@@ -172,3 +172,12 @@ class TestWildcardInference {
     }
   }
 }
+
+class PredefinedErrorsOverRaw<T> {
+  <U> PredefinedErrorsOverRaw(T t) {
+  }
+
+  void test() {
+    PredefinedErrorsOverRaw mc = new <Boolean>PredefinedErrorsOverRaw<<error descr="Cannot use diamonds with explicit type parameters for constructor"></error>>("");
+  }
+}
