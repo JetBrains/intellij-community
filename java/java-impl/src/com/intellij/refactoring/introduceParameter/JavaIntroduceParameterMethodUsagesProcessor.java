@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -90,8 +91,11 @@ public class JavaIntroduceParameterMethodUsagesProcessor implements IntroducePar
     else {
       PsiElement initializer =
         ExpressionConverter.getExpression(data.getParameterInitializer().getExpression(), StdLanguages.JAVA, data.getProject());
-      substituteTypeParametersInInitializer(initializer, callExpression, argList, methodToSearchFor);
       assert initializer instanceof PsiExpression;
+      if (initializer instanceof PsiNewExpression) {
+        initializer = PsiDiamondTypeUtil.expandTopLevelDiamondsInside((PsiNewExpression)initializer);
+      }
+      substituteTypeParametersInInitializer(initializer, callExpression, argList, methodToSearchFor);
       ChangeContextUtil.encodeContextInfo(initializer, true);
       PsiExpression newArg = (PsiExpression)argList.addAfter(initializer, anchor);
       ChangeContextUtil.decodeContextInfo(newArg, null, null);
