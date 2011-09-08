@@ -19,10 +19,7 @@ package com.intellij.psi.impl.source.resolve.reference;
 import com.intellij.lang.Language;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiReferenceProvider;
-import com.intellij.psi.PsiReferenceService;
+import com.intellij.psi.*;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
@@ -46,7 +43,7 @@ public abstract class ReferenceProvidersRegistry {
     return ServiceManager.getService(ReferenceProvidersRegistry.class);
   }
 
-  public abstract PsiReferenceRegistrarImpl getRegistrar(Language language);
+  public abstract PsiReferenceRegistrar getRegistrar(Language language);
 
   @Deprecated
   public static PsiReference[] getReferencesFromProviders(PsiElement context, @NotNull Class clazz) {
