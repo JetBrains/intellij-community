@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 public class PyParser implements PsiParser {
   private static final Logger LOGGER = Logger.getInstance(PyParser.class.getName());
 
-  private final LanguageLevel myLanguageLevel;
+  private LanguageLevel myLanguageLevel;
   private StatementParsing.FUTURE myFutureFlag;
 
   public PyParser() {
@@ -22,6 +22,10 @@ public class PyParser implements PsiParser {
   }
 
   public PyParser(LanguageLevel languageLevel) {
+    myLanguageLevel = languageLevel;
+  }
+
+  public void setLanguageLevel(LanguageLevel languageLevel) {
     myLanguageLevel = languageLevel;
   }
 
