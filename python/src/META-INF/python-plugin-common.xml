@@ -520,7 +520,6 @@
     <lang.parserDefinition language="Mako" implementationClass="com.jetbrains.mako.parser.MakoParserDefinition"/>
     <lang.fileViewProviderFactory language="Mako"
                                   implementationClass="com.jetbrains.mako.MakoFileProviderFactory"/>
-    <gotoDeclarationHandler implementation="com.jetbrains.mako.MakoGotoProvider" order="FIRST"/>
 
     <lang.commenter language="Mako" implementationClass="com.jetbrains.mako.MakoCommenter"/>
     <lang.braceMatcher language="Mako" implementationClass="com.jetbrains.mako.highlighting.MakoBraceMatcher"/>
