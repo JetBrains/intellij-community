@@ -33,6 +33,9 @@ class ProjectCallback extends LegacyCallback implements IProjectCallback {
   private final Map<ResourceType, Map<String, Integer>> myResource2Id = new HashMap<ResourceType, Map<String, Integer>>();
   private final Map<Integer, Pair<ResourceType, String>> myId2Resource = new HashMap<Integer, Pair<ResourceType, String>>();
 
+  // start resource ids at 0x7f000000 to avoid colliding with the framework ids
+  private int myIdCounter = 0x7f000000;
+
   @Nullable
   public AdapterBinding getAdapterBinding(ResourceReference adapterViewRef, Object adapterCookie, Object viewObject) {
     return null;
@@ -78,7 +81,7 @@ class ProjectCallback extends LegacyCallback implements IProjectCallback {
 
     Integer value = typeMap.get(name);
     if (value == null) {
-      value = typeMap.size() + 1;
+      value = ++myIdCounter;
       typeMap.put(name, value);
       myId2Resource.put(value, Pair.of(type, name));
     }
