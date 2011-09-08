@@ -31,8 +31,6 @@ import org.jetbrains.annotations.Nullable;
  * @author max
  */
 public abstract class ASTFactory {
-  public static final ASTFactory DEFAULT = (ASTFactory) ServiceManager.getService(DefaultASTFactory.class);
-
   private static final CharTable WHITESPACES = new CharTableImpl();
 
   // interface methods
@@ -67,7 +65,7 @@ public abstract class ASTFactory {
     }
 
     final LazyParseableElement customLazy = factory(type).createLazy(type, text);
-    return customLazy != null ? customLazy : DEFAULT.createLazy(type, text);
+    return customLazy != null ? customLazy : DefaultFactoryHolder.DEFAULT.createLazy(type, text);
   }
 
   @NotNull
@@ -77,7 +75,7 @@ public abstract class ASTFactory {
     }
 
     final CompositeElement customComposite = factory(type).createComposite(type);
-    return customComposite != null ? customComposite : DEFAULT.createComposite(type);
+    return customComposite != null ? customComposite : DefaultFactoryHolder.DEFAULT.createComposite(type);
   }
 
   @NotNull
@@ -91,7 +89,7 @@ public abstract class ASTFactory {
     }
 
     final LeafElement customLeaf = factory(type).createLeaf(type, text);
-    return customLeaf != null ? customLeaf : DEFAULT.createLeaf(type, text);
+    return customLeaf != null ? customLeaf : DefaultFactoryHolder.DEFAULT.createLeaf(type, text);
   }
 
   private static ASTFactory factory(final IElementType type) {
@@ -103,5 +101,16 @@ public abstract class ASTFactory {
     final PsiWhiteSpaceImpl w = new PsiWhiteSpaceImpl(WHITESPACES.intern(text));
     CodeEditUtil.setNodeGenerated(w, true);
     return w;
+  }
+  
+  public static class DefaultFactoryHolder {
+    public static final ASTFactory DEFAULT = def();
+
+    private static ASTFactory def() {
+      return (ASTFactory)ServiceManager.getService(DefaultASTFactory.class);
+    }
+
+    private DefaultFactoryHolder() {
+    }
   }
 }
