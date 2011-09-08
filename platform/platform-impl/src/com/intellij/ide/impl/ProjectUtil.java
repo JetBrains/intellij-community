@@ -186,12 +186,20 @@ public class ProjectUtil {
   public static int confirmOpenNewProject(boolean isNewProject) {
     final GeneralSettings settings = GeneralSettings.getInstance();
     if (settings.getConfirmOpenNewProject() == GeneralSettings.OPEN_PROJECT_ASK) {
-      return Messages.showYesNoCancelDialog(IdeBundle.message("prompt.open.project.in.new.frame"),
-                                            isNewProject ? IdeBundle.message("title.new.project") : IdeBundle.message("title.open.project"),
-                                            IdeBundle.message("button.existingframe"),
-                                            IdeBundle.message("button.newframe"),
-                                            CommonBundle.getCancelButtonText(), Messages.getQuestionIcon(),
-                                            new ProjectNewWindowDoNotAskOption());
+      if (isNewProject) {
+        Messages.showYesNoDialog(IdeBundle.message("prompt.open.project.in.new.frame"),
+                                 IdeBundle.message("title.new.project"),
+                                 IdeBundle.message("button.existingframe"),
+                                 IdeBundle.message("button.newframe"),
+                                 Messages.getQuestionIcon(), new ProjectNewWindowDoNotAskOption());
+      }
+      else {
+        return Messages.showYesNoCancelDialog(IdeBundle.message("prompt.open.project.in.new.frame"),
+                                              IdeBundle.message("title.open.project"),
+                                              IdeBundle.message("button.existingframe"), IdeBundle.message("button.newframe"),
+                                              CommonBundle.getCancelButtonText(), Messages.getQuestionIcon(),
+                                              new ProjectNewWindowDoNotAskOption());
+      }
     }
     return settings.getConfirmOpenNewProject();
   }
