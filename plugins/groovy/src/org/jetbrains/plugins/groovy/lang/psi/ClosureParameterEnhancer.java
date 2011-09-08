@@ -66,6 +66,7 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
     iterations.add("reverseEach");
     iterations.add("collect");
     iterations.add("collectAll");
+    iterations.add("collectEntries");
     iterations.add("find");
     iterations.add("findAll");
     iterations.add("retainAll");
