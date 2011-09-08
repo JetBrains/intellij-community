@@ -65,7 +65,7 @@ public class NumberedFragmentHighlighter extends FragmentHighlighterImpl {
       myPreviousLineLeft = lineLeft;
     }
 
-    Pair<String, TextDiffTypeEnum> right = myLeftPrecalculated.get(lineRight);
+    Pair<String, TextDiffTypeEnum> right = myRightPrecalculated.get(lineRight);
     if (myPreviousLineRight == lineRight || right == null) {
       myAppender2.highlightText(fragment, drawBorder, null);
     } else {
