@@ -421,7 +421,12 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
     }
 
     public void fileClosed(FileEditorManager source, VirtualFile file) {
-      processFileEditorChange(getActiveLayoutXmlEditor());
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          processFileEditorChange(getActiveLayoutXmlEditor());
+        }
+      });
     }
 
     public void selectionChanged(FileEditorManagerEvent event) {
