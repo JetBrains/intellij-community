@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl;
 
-import com.intellij.ProjectTopics;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -37,7 +36,7 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
 
   public PsiModificationTrackerImpl(Project project) {
     final MessageBus bus = project.getMessageBus();
-    myPublisher = bus.syncPublisher(ProjectTopics.MODIFICATION_TRACKER);
+    myPublisher = bus.syncPublisher(TOPIC);
     bus.connect().subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
 
       public void enteredDumbMode() {

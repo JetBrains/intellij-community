@@ -17,6 +17,7 @@ package com.intellij.psi.util;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.util.messages.Topic;
 
 public interface PsiModificationTracker extends ModificationTracker {
   /**
@@ -36,6 +37,8 @@ public interface PsiModificationTracker extends ModificationTracker {
    * @see #getJavaStructureModificationCount()
    */
   Key JAVA_STRUCTURE_MODIFICATION_COUNT = Key.create("JAVA_STRUCTURE_MODIFICATION_COUNT");
+
+  Topic<Listener> TOPIC = new Topic<Listener>("modification tracker", Listener.class, Topic.BroadcastDirection.TO_PARENT);
 
   /**
    * Tracks any PSI modification.

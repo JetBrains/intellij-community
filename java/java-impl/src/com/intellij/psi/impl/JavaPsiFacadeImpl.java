@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl;
 
-import com.intellij.ProjectTopics;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadActionProcessor;
@@ -119,7 +118,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
     final PsiModificationTrackerImpl modificationTracker = (PsiModificationTrackerImpl)psiManager.getModificationTracker();
     psiManager.addTreeChangePreprocessor(new JavaCodeBlockModificationListener(modificationTracker));
 
-    bus.connect().subscribe(ProjectTopics.MODIFICATION_TRACKER, new PsiModificationTracker.Listener() {
+    bus.connect().subscribe(PsiModificationTracker.TOPIC, new PsiModificationTracker.Listener() {
       private long lastTimeSeen = -1L;
 
       public void modificationCountChanged() {
