@@ -67,6 +67,10 @@ public class IdeFocusManagerHeadless extends IdeFocusManager {
   }
 
   @Override
+  public void typeAheadUntil(ActionCallback done) {
+  }
+
+  @Override
   public void suspendKeyProcessingUntil(@NotNull ActionCallback done) {
   }
 

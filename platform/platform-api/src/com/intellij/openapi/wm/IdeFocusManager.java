@@ -47,10 +47,13 @@ public abstract class IdeFocusManager implements FocusRequestor {
 
   public abstract void doWhenFocusSettlesDown(@NotNull ExpirableRunnable runnable);
 
+
   @Nullable
   public abstract Component getFocusedDescendantFor(final Component comp);
 
   public abstract boolean dispatch(KeyEvent e);
+
+  public abstract void typeAheadUntil(ActionCallback done);
 
   public abstract void suspendKeyProcessingUntil(@NotNull ActionCallback done);
 

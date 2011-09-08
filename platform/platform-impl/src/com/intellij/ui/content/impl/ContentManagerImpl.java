@@ -109,6 +109,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   @Override
   public ActionCallback getReady(@NotNull Object requestor) {
     Content selected = getSelectedContent();
+    if (selected == null) return new ActionCallback.Done();
     BusyObject busyObject = selected.getBusyObject();
     return busyObject != null ? busyObject.getReady(requestor) : new ActionCallback.Done();
   }

@@ -98,6 +98,8 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
 
   private Set<FurtherRequestor> myValidFurtherRequestors = new HashSet<FurtherRequestor>();
 
+  private Set<ActionCallback> myTypeAheadRequestors = new HashSet<ActionCallback>();
+  
   private boolean canFlushIdleRequests() {
     Component focusOwner = getFocusOwner();
     return isFocusTransferReady()
@@ -446,65 +448,67 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     try {
       incFlushingRequests(1, currentModalityCount);
 
-      final KeyEvent[] events = myToDispatchOnDone.toArray(new KeyEvent[myToDispatchOnDone.size()]);
-      if (events.length > 0) {
+      if (myToDispatchOnDone.size() > 0 && myTypeAheadRequestors.size() == 0) {
+        final KeyEvent[] events = myToDispatchOnDone.toArray(new KeyEvent[myToDispatchOnDone.size()]);
+
         IdeEventQueue.getInstance().getKeyEventDispatcher().resetState();
-      }
 
-      for (int eachIndex = 0; eachIndex < events.length; eachIndex++) {
-        if (!isFocusTransferReady()) break;
+        for (int eachIndex = 0; eachIndex < events.length; eachIndex++) {
+          if (!isFocusTransferReady()) {
+            break;
+          }
 
-        KeyEvent each = events[eachIndex];
-        boolean toDispatch = false;
+          KeyEvent each = events[eachIndex];
+          boolean toDispatch = false;
 
-        Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-        if (owner == null) {
-          owner = JOptionPane.getRootFrame();
-        }
+          Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+          if (owner == null) {
+            owner = JOptionPane.getRootFrame();
+          }
 
-        boolean metaKey =
-          each.getKeyCode() == KeyEvent.VK_ALT ||
-          each.getKeyCode() == KeyEvent.VK_CONTROL ||
-          each.getKeyCode() == KeyEvent.VK_SHIFT ||
-          each.getKeyCode() == KeyEvent.VK_META;
+          boolean metaKey =
+            each.getKeyCode() == KeyEvent.VK_ALT ||
+            each.getKeyCode() == KeyEvent.VK_CONTROL ||
+            each.getKeyCode() == KeyEvent.VK_SHIFT ||
+            each.getKeyCode() == KeyEvent.VK_META;
 
-        if (!metaKey && (each.getID() == KeyEvent.KEY_RELEASED || each.getID() == KeyEvent.KEY_TYPED)) {
-          for (int i = 0; i < eachIndex; i++) {
-            final KeyEvent prev = events[i];
-            if (prev == null) continue;
+          if (!metaKey && (each.getID() == KeyEvent.KEY_RELEASED || each.getID() == KeyEvent.KEY_TYPED)) {
+            for (int i = 0; i < eachIndex; i++) {
+              final KeyEvent prev = events[i];
+              if (prev == null) continue;
 
-            if (prev.getID() == KeyEvent.KEY_PRESSED) {
-              if (prev.getKeyCode() == each.getKeyCode() || prev.getKeyChar() == each.getKeyChar()) {
-                toDispatch = true;
-                events[i] = null;
-                break;
+              if (prev.getID() == KeyEvent.KEY_PRESSED) {
+                if (prev.getKeyCode() == each.getKeyCode() || prev.getKeyChar() == each.getKeyChar()) {
+                  toDispatch = true;
+                  events[i] = null;
+                  break;
+                }
               }
             }
+          } else {
+            toDispatch = true;
           }
-        } else {
-          toDispatch = true;
-        }
 
-        myToDispatchOnDone.remove(each);
-        if (!toDispatch) {
-          continue;
-        }
+          myToDispatchOnDone.remove(each);
+          if (!toDispatch) {
+            continue;
+          }
 
 
-        KeyEvent keyEvent = new KeyEvent(owner, each.getID(), each.getWhen(), each.getModifiersEx(), each.getKeyCode(), each.getKeyChar(),
-                                         each.getKeyLocation());
+          KeyEvent keyEvent = new KeyEvent(owner, each.getID(), each.getWhen(), each.getModifiersEx(), each.getKeyCode(), each.getKeyChar(),
+                                           each.getKeyLocation());
 
 
-        if (owner != null && SwingUtilities.getWindowAncestor(owner) != null) {
-          IdeEventQueue.getInstance().dispatchEvent(keyEvent);
-        }
-        else {
-          myQueue._dispatchEvent(keyEvent, true);
+          if (owner != null && SwingUtilities.getWindowAncestor(owner) != null) {
+            IdeEventQueue.getInstance().dispatchEvent(keyEvent);
+          }
+          else {
+            myQueue._dispatchEvent(keyEvent, true);
+          }
         }
       }
 
-
-      if (isPendingKeyEventsRedispatched()) {
+      if (!isFocusBeingTransferred()) {
         boolean focusOk = getFocusOwner() != null;
         if (!focusOk && !myFlushWasDelayedToFixFocus) {
           IdeEventQueue.getInstance().fixStickyFocusedComponents(null);
@@ -609,7 +613,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
 
     if (isFlushingIdleRequests()) return false;
 
-    if (!isFocusTransferReady() || !isPendingKeyEventsRedispatched()) {
+    if (!isFocusTransferReady() || !isPendingKeyEventsRedispatched() || myTypeAheadRequestors.size() > 0) {
       for (FocusCommand each : myFocusRequests) {
         final KeyEventProcessor processor = each.getProcessor();
         if (processor != null) {
@@ -628,6 +632,22 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     else {
       return false;
     }
+  }
+
+  @Override
+  public void typeAheadUntil(final ActionCallback done) {
+    myTypeAheadRequestors.add(done);
+    done.notify(new ActionCallback.TimedOut(Registry.intValue("actionSystem.commandProcessingTimeout"),
+                                            "Typehead request blocked",
+                                            new Exception(),
+                                            true).doWhenProcessed(new Runnable() {
+      @Override
+      public void run() {
+        if (myTypeAheadRequestors.remove(done)) {
+          restartIdleAlarm();
+        }
+      }
+    }));
   }
 
   private boolean isFlushingIdleRequests() {
@@ -739,9 +759,9 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
         result = permOwner;
       }
       
-      //if (UIUtil.isMeaninglessFocusOwner(result)) {
-      //  result = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
-      //}
+      if (UIUtil.isMeaninglessFocusOwner(result)) {
+        result = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+      }
     }
 
     return result;

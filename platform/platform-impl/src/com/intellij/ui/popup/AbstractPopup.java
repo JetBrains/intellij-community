@@ -1067,8 +1067,23 @@ public class AbstractPopup implements JBPopup {
     resetWindow();
 
     if (myFinalRunnable != null) {
-      getFocusManager().doWhenFocusSettlesDown(myFinalRunnable);
-      myFinalRunnable = null;
+      final ActionCallback typeaheadDone = new ActionCallback();
+      Runnable runFinal = new Runnable() {
+        @Override
+        public void run() {
+          SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              typeaheadDone.setDone();
+            }
+          });
+          myFinalRunnable.run();
+          myFinalRunnable = null;
+        }
+      };
+
+      IdeFocusManager.getInstance(myProject).typeAheadUntil(typeaheadDone);
+      getFocusManager().doWhenFocusSettlesDown(runFinal);
     }
   }
 

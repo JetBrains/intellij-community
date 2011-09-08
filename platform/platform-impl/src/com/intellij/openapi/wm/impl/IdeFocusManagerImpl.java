@@ -70,6 +70,11 @@ public class IdeFocusManagerImpl extends IdeFocusManager {
   }
 
   @Override
+  public void typeAheadUntil(ActionCallback done) {
+    getGlobalInstance().typeAheadUntil(done);
+  }
+
+  @Override
   public void suspendKeyProcessingUntil(@NotNull ActionCallback done) {
     getGlobalInstance().suspendKeyProcessingUntil(done);
   }

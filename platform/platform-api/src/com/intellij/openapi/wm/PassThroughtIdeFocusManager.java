@@ -72,6 +72,10 @@ public class PassThroughtIdeFocusManager extends IdeFocusManager {
     return false;
   }
 
+  @Override
+  public void typeAheadUntil(ActionCallback done) {
+  }
+
   public ActionCallback requestDefaultFocus(boolean forced) {
     return new ActionCallback.Done();
   }
