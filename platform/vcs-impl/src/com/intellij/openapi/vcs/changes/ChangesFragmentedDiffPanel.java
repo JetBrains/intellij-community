@@ -539,7 +539,7 @@ public class ChangesFragmentedDiffPanel implements Disposable {
     }
   }
 
-  private class MyPreviousDiffAction extends AnAction {
+  private class MyPreviousDiffAction extends DumbAwareAction {
     private boolean myEnabled;
 
     private MyPreviousDiffAction() {
@@ -568,7 +568,7 @@ public class ChangesFragmentedDiffPanel implements Disposable {
     }
   }
 
-  private class MyNextDiffAction extends AnAction {
+  private class MyNextDiffAction extends DumbAwareAction {
     private boolean myEnabled;
     
     private MyNextDiffAction() {
