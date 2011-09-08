@@ -112,6 +112,19 @@ public class JavaCompletionData extends JavaAwareCompletionData{
 
   static final AndFilter START_SWITCH = new AndFilter(END_OF_BLOCK, new LeftNeighbour(
         new AndFilter(new TextFilter("{"), new ParentElementFilter(new ClassFilter(PsiSwitchStatement.class), 2))));
+  private static final OrFilter INSIDE_SWITCH = new OrFilter(START_SWITCH,
+                                                       new AndFilter(
+                                                         END_OF_BLOCK,
+                                                         new NotFilter(START_SWITCH),
+                                                         new OrFilter(
+                                                           new ParentElementFilter(new ClassFilter(PsiSwitchLabelStatement.class)),
+                                                           new LeftNeighbour(new OrFilter(
+                                                             new ParentElementFilter(new ClassFilter(PsiSwitchStatement.class), 2),
+                                                             new AndFilter(new TextFilter(";", ":"), new ParentElementFilter(
+                                                               new ClassFilter(PsiSwitchStatement.class), 3)),
+                                                             new AndFilter(new TextFilter("}"), new ParentElementFilter(
+                                                               new ClassFilter(PsiSwitchStatement.class), 4))
+                                                           )))));
 
   private static final ElementPattern<Object> SUPER_OR_THIS_PATTERN =
     and(JavaSmartCompletionContributor.INSIDE_EXPRESSION,
@@ -444,57 +457,12 @@ public class JavaCompletionData extends JavaAwareCompletionData{
     }
 
     {
-// break completion
-      final CompletionVariant variant = new CompletionVariant(new AndFilter(END_OF_BLOCK, new OrFilter(
-        new ScopeFilter(new ClassFilter(PsiSwitchStatement.class)),
-        new InsideElementFilter(new ClassFilter(PsiBlockStatement.class)))));
-
-      variant.includeScopeClass(PsiForStatement.class, false);
-      variant.includeScopeClass(PsiForeachStatement.class, false);
-      variant.includeScopeClass(PsiWhileStatement.class, false);
-      variant.includeScopeClass(PsiDoWhileStatement.class, false);
-      variant.includeScopeClass(PsiSwitchStatement.class, false);
-      variant.addCompletion(PsiKeyword.BREAK);
-      registerVariant(variant);
-    }
-    {
-// continue completion
-      final CompletionVariant variant = new CompletionVariant(new AndFilter(END_OF_BLOCK, new InsideElementFilter(new ClassFilter(PsiBlockStatement.class))));
-      variant.includeScopeClass(PsiForeachStatement.class, false);
-      variant.includeScopeClass(PsiForStatement.class, false);
-      variant.includeScopeClass(PsiWhileStatement.class, false);
-      variant.includeScopeClass(PsiDoWhileStatement.class, false);
-
-      variant.addCompletion(PsiKeyword.CONTINUE);
-      registerVariant(variant);
-    }
-
-    {
-      final CompletionVariant variant = new CompletionVariant(
-        new AndFilter(
-          END_OF_BLOCK,
-          new NotFilter(START_SWITCH),
-          new OrFilter(
-            new ParentElementFilter(new ClassFilter(PsiSwitchLabelStatement.class)),
-            new LeftNeighbour(new OrFilter(
-              new ParentElementFilter(new ClassFilter(PsiSwitchStatement.class), 2),
-              new AndFilter(new TextFilter(";", ":"),new ParentElementFilter(new ClassFilter(PsiSwitchStatement.class), 3)),
-              new AndFilter(new TextFilter("}"), new ParentElementFilter(new ClassFilter(PsiSwitchStatement.class), 4))
-              )))));
-      variant.includeScopeClass(PsiElement.class, false);
-      variant.addCompletion(PsiKeyword.CASE, TailType.SPACE);
-      variant.addCompletion(PsiKeyword.DEFAULT, TailType.CASE_COLON);
-      registerVariant(variant);
-    }
-
-    {
-      final CompletionVariant variant = new CompletionVariant(START_SWITCH);
+      final CompletionVariant variant = new CompletionVariant(INSIDE_SWITCH);
       variant.includeScopeClass(PsiElement.class, true);
       variant.addCompletion(PsiKeyword.CASE, TailType.SPACE);
       variant.addCompletion(PsiKeyword.DEFAULT, TailType.CASE_COLON);
       registerVariant(variant);
     }
-
   }
 
   private static void addPrimitiveTypes(CompletionVariant variant){
@@ -534,6 +502,10 @@ public class JavaCompletionData extends JavaAwareCompletionData{
       if (!psiElement().withSuperParent(2, PsiSwitchStatement.class).accepts(statement)) {
         result.addElement(createKeyword(position, PsiKeyword.FINAL));
       }
+    }
+    
+    if (isStatementPosition(position) && !INSIDE_SWITCH.isAcceptable(position, position)) {
+      addBreakContinue(result, position);
     }
 
     if (SUPER_OR_THIS_PATTERN.accepts(position)) {
@@ -624,6 +596,43 @@ public class JavaCompletionData extends JavaAwareCompletionData{
         });
       }
     }
+  }
+
+  private static void addBreakContinue(CompletionResultSet result, PsiElement position) {
+    PsiLoopStatement loop = PsiTreeUtil.getParentOfType(position, PsiLoopStatement.class);
+
+    LookupElement br = createKeyword(position, PsiKeyword.BREAK);
+    LookupElement cont = createKeyword(position, PsiKeyword.CONTINUE);
+    if (!psiElement().insideSequence(true, psiElement(PsiLabeledStatement.class),
+                                                  or(psiElement(PsiFile.class), psiElement(PsiMethod.class),
+                                                     psiElement(PsiClassInitializer.class))).accepts(position)) {
+      br = TailTypeDecorator.withTail(br, TailType.SEMICOLON);
+      cont = TailTypeDecorator.withTail(cont, TailType.SEMICOLON);
+    }
+
+    if (loop != null && new InsideElementFilter(new ClassFilter(PsiStatement.class)).isAcceptable(position, loop)) {
+      result.addElement(br);
+      result.addElement(cont);
+    }
+    if (psiElement().inside(PsiSwitchStatement.class).accepts(position)) {
+      result.addElement(br);
+    }
+  }
+
+  private static boolean isStatementPosition(PsiElement position) {
+    if (END_OF_BLOCK.isAcceptable(position, position)) {
+      return true;
+    }
+
+    if (psiElement().withParents(PsiReferenceExpression.class, PsiExpressionStatement.class, PsiIfStatement.class).accepts(position)) {
+      PsiElement stmt = position.getParent().getParent();
+      PsiIfStatement ifStatement = (PsiIfStatement)stmt.getParent();
+      if (ifStatement.getElseBranch() == stmt || ifStatement.getThenBranch() == stmt) {
+        return true;
+      }
+    }
+    
+    return false;
   }
 
   private static LookupElement createKeyword(PsiElement position, String keyword) {

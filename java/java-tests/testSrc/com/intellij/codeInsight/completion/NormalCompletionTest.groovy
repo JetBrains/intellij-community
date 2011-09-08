@@ -441,6 +441,8 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     doTest();
   }
 
+  public void testBreakInIfCondition() throws Throwable { doTest(); }
+
   public void testNoThisInComment() throws Throwable { doAntiTest() }
 
   public void testLastExpressionInFor() throws Throwable { doTest(); }
