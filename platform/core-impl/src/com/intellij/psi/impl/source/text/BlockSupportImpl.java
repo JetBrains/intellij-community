@@ -55,7 +55,7 @@ public class BlockSupportImpl extends BlockSupport {
   public BlockSupportImpl(Project project) {
     project.getMessageBus().connect().subscribe(DocumentBulkUpdateListener.TOPIC, new DocumentBulkUpdateListener.Adapter() {
       public void updateStarted(final Document doc) {
-        doc.putUserData(DO_NOT_REPARSE_INCREMENTALLY,  Boolean.TRUE);
+        doc.putUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY,  Boolean.TRUE);
       }
     });
   }
@@ -94,7 +94,7 @@ public class BlockSupportImpl extends BlockSupport {
 
     final int textLength = treeFileElement.getTextLength() + lengthShift;
 
-    if (treeFileElement.getElementType() instanceof ITemplateDataElementType || isTooDeep(file)) {
+    if (treeFileElement.getElementType() instanceof ITemplateDataElementType || BlockSupport.isTooDeep(file)) {
       // unable to perform incremental reparse for template data in JSP, or in exceptionally deep trees
       return makeFullParse(treeFileElement, newFileText, textLength, fileImpl, indicator);
     }
@@ -224,10 +224,10 @@ public class BlockSupportImpl extends BlockSupport {
     }
 
     try {
-      newRoot.putUserData(TREE_TO_BE_REPARSED, oldRoot);
+      newRoot.putUserData(BlockSupport.TREE_TO_BE_REPARSED, oldRoot);
       if (isReplaceWholeNode(fileImpl, newRoot)) {
         DiffLog treeChangeEvent = replaceElementWithEvents((CompositeElement)oldRoot, (CompositeElement)newRoot);
-        fileImpl.putUserData(TREE_DEPTH_LIMIT_EXCEEDED, Boolean.TRUE);
+        fileImpl.putUserData(BlockSupport.TREE_DEPTH_LIMIT_EXCEEDED, Boolean.TRUE);
 
         return treeChangeEvent;
       }
@@ -238,7 +238,7 @@ public class BlockSupportImpl extends BlockSupport {
       return e.getDiffLog();
     }
     finally {
-      newRoot.putUserData(TREE_TO_BE_REPARSED, null);
+      newRoot.putUserData(BlockSupport.TREE_TO_BE_REPARSED, null);
     }
 
     final ASTShallowComparator comparator = new ASTShallowComparator(indicator);
@@ -271,20 +271,20 @@ public class BlockSupportImpl extends BlockSupport {
   }
 
   private static boolean isReplaceWholeNode(@NotNull PsiFileImpl fileImpl, @NotNull ASTNode newRoot) throws ReparsedSuccessfullyException{
-    final Boolean data = fileImpl.getUserData(DO_NOT_REPARSE_INCREMENTALLY);
-    if (data != null) fileImpl.putUserData(DO_NOT_REPARSE_INCREMENTALLY, null);
+    final Boolean data = fileImpl.getUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY);
+    if (data != null) fileImpl.putUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY, null);
 
     boolean explicitlyMarkedDeep = Boolean.TRUE.equals(data);
 
-    if (explicitlyMarkedDeep || isTooDeep(fileImpl)) {
+    if (explicitlyMarkedDeep || BlockSupport.isTooDeep(fileImpl)) {
       return true;
     }
 
     final ASTNode childNode = newRoot.getFirstChildNode();  // maybe reparsed in PsiBuilderImpl and have thrown exception here
-    boolean childTooDeep = isTooDeep(childNode);
+    boolean childTooDeep = BlockSupport.isTooDeep(childNode);
     if (childTooDeep) {
-      childNode.putUserData(TREE_DEPTH_LIMIT_EXCEEDED, null);
-      fileImpl.putUserData(TREE_DEPTH_LIMIT_EXCEEDED, Boolean.TRUE);
+      childNode.putUserData(BlockSupport.TREE_DEPTH_LIMIT_EXCEEDED, null);
+      fileImpl.putUserData(BlockSupport.TREE_DEPTH_LIMIT_EXCEEDED, Boolean.TRUE);
     }
     return childTooDeep;
   }

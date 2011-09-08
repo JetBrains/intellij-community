@@ -63,7 +63,7 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
   @NotNull
   public PsiElement[] getChildren() {
     PsiElement psiChild = getFirstChild();
-    if (psiChild == null) return EMPTY_ARRAY;
+    if (psiChild == null) return PsiElement.EMPTY_ARRAY;
 
     List<PsiElement> result = new ArrayList<PsiElement>();
     while (psiChild != null) {
