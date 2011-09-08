@@ -156,6 +156,9 @@
   <applicationService serviceInterface="com.intellij.psi.impl.source.codeStyle.IndentHelper"
                       serviceImplementation="com.intellij.psi.impl.source.codeStyle.IndentHelperImpl"/>
 
+  <applicationService serviceInterface="com.intellij.lang.DefaultASTFactory"
+                      serviceImplementation="com.intellij.lang.DefaultASTFactoryImpl"/>
+
   <applicationService serviceInterface="com.intellij.conversion.ConversionService"
                       serviceImplementation="com.intellij.conversion.impl.ConversionServiceImpl"/>
 

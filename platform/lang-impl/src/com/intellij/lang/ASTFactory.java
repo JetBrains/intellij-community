@@ -15,6 +15,7 @@
  */
 package com.intellij.lang;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.CharTableImpl;
 import com.intellij.psi.impl.source.CodeFragmentElement;
@@ -30,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
  * @author max
  */
 public abstract class ASTFactory {
-  public static final DefaultFactory DEFAULT = new DefaultFactory();
+  public static final ASTFactory DEFAULT = (ASTFactory) ServiceManager.getService(DefaultASTFactory.class);
 
   private static final CharTable WHITESPACES = new CharTableImpl();
 
@@ -102,43 +103,5 @@ public abstract class ASTFactory {
     final PsiWhiteSpaceImpl w = new PsiWhiteSpaceImpl(WHITESPACES.intern(text));
     CodeEditUtil.setNodeGenerated(w, true);
     return w;
-  }
-
-  // default implementation
-
-  private static class DefaultFactory extends ASTFactory {
-    @Override
-    @NotNull
-    public LazyParseableElement createLazy(final ILazyParseableElementType type, final CharSequence text) {
-      if (type instanceof IFileElementType) {
-        return new FileElement(type, text);
-      }
-
-      return new LazyParseableElement(type, text);
-    }
-
-    @Override
-    @NotNull
-    public CompositeElement createComposite(final IElementType type) {
-      if (type instanceof IFileElementType) {
-        return new FileElement(type, null);
-      }
-
-      return new CompositeElement(type);
-    }
-
-    @Override
-    @NotNull
-    public LeafElement createLeaf(final IElementType type, final CharSequence text) {
-      final Language lang = type.getLanguage();
-      final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
-      if (parserDefinition != null) {
-        if (parserDefinition.getCommentTokens().contains(type)) {
-          return new PsiCommentImpl(type, text);
-        }
-      }
-
-      return new LeafPsiElement(type, text);
-    }
   }
 }
