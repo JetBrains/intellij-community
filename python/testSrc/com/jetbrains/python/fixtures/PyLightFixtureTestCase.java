@@ -129,7 +129,7 @@ public abstract class PyLightFixtureTestCase extends UsefulTestCase {
       ourPlatformPrefixInitialized = true;
       boolean isIDEA = true;
       try {
-        PyLightFixtureTestCase.class.getClassLoader().loadClass("com.intellij.openapi.components.impl.stores.IdeaProjectStoreImpl");
+        PyLightFixtureTestCase.class.getClassLoader().loadClass(IDEA_MARKER_CLASS);
       }
       catch (ClassNotFoundException e) {
         isIDEA = false;
