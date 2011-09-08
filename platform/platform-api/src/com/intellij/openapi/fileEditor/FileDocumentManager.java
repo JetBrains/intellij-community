@@ -53,16 +53,6 @@ public abstract class FileDocumentManager implements SavingRequestor {
   public abstract void addFileDocumentSynchronizationVetoer(@NotNull FileDocumentSynchronizationVetoListener vetoer);
   public abstract void removeFileDocumentSynchronizationVetoer(@NotNull FileDocumentSynchronizationVetoListener vetoer);
 
-  /**
-   * @deprecated Subscribe to {@link com.intellij.AppTopics#FILE_DOCUMENT_SYNC} on any level bus.
-   */
-  public abstract void addFileDocumentManagerListener(@NotNull FileDocumentManagerListener listener);
-
-  /**
-   * @deprecated Subscribe to {@link com.intellij.AppTopics#FILE_DOCUMENT_SYNC} on any level bus.
-   */
-  public abstract void removeFileDocumentManagerListener(@NotNull FileDocumentManagerListener listener);
-
   public abstract void reloadFromDisk(@NotNull Document document);
 
   @NotNull

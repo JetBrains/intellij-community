@@ -427,19 +427,6 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   private final Map<FileDocumentManagerListener, MessageBusConnection> myAdapters
     = new HashMap<FileDocumentManagerListener, MessageBusConnection>();
 
-  public void addFileDocumentManagerListener(@NotNull FileDocumentManagerListener listener) {
-    final MessageBusConnection connection = myBus.connect();
-    myAdapters.put(listener, connection);
-    connection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, listener);
-  }
-
-  public void removeFileDocumentManagerListener(@NotNull FileDocumentManagerListener listener) {
-    final MessageBusConnection connection = myAdapters.remove(listener);
-    if (connection != null) {
-      connection.disconnect();
-    }
-  }
-
   public void propertyChanged(final VirtualFilePropertyEvent event) {
     if (VirtualFile.PROP_WRITABLE.equals(event.getPropertyName())) {
       final VirtualFile file = event.getFile();
