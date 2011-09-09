@@ -20,11 +20,9 @@ import com.intellij.codeInsight.generation.PsiGenerationInfo;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMember;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
-import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
@@ -69,11 +67,6 @@ public class GroovyGenerationInfo<T extends PsiMember> extends PsiGenerationInfo
       if (!GenerateMembersUtil.isChildInRange(element, lBrace.getNextSibling(), rBrace)) {
         return null;
       }
-    }
-
-    final IElementType type = element.getNode().getElementType();
-    if (TokenSets.WHITE_SPACES_SET.contains(type)) {
-      return element.getNextSibling();
     }
 
     return element;
