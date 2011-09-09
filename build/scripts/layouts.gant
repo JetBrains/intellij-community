@@ -114,7 +114,14 @@ def layoutFull(String home, String targetDirectory) {
         module("notNull")
       }
 
+      jar("compile-server.jar") {
+        module("compile-server")
+      }
+
       fileset(dir: "$home/lib", includesfile: "${home}/lib/required_for_dist.txt")
+      dir("rt") {
+        fileset(dir: "${home}/lib/rt", includesfile: "${home}/lib/rt/required_for_dist.txt")
+      }
 
       fileset(dir: "$home/lib/src") {
         include(name: "trove4j_changes.txt")
