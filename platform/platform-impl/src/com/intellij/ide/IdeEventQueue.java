@@ -46,6 +46,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.plaf.basic.ComboPopup;
 import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
@@ -454,7 +455,7 @@ public class IdeEventQueue extends EventQueue {
 
     if (e instanceof MouseWheelEvent) {
       final MenuElement[] selectedPath = MenuSelectionManager.defaultManager().getSelectedPath();
-      if (selectedPath != null && selectedPath.length > 0) {
+      if (selectedPath != null && selectedPath.length > 0 && !(selectedPath[0] instanceof ComboPopup)) {
         ((MouseWheelEvent)e).consume();
         return;
       }
