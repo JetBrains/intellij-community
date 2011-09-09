@@ -109,6 +109,7 @@ public class CaughtExceptionImmediatelyRethrownInspection
                 final PsiStatement[] statements = codeBlock.getStatements();
                 if (statements.length == 0) {
                     tryStatement.delete();
+                  return;
                 }
                 final PsiElement containingElement = tryStatement.getParent();
                 final boolean keepBlock;
