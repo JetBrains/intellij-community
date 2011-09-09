@@ -16,6 +16,7 @@
 package com.intellij.psi.util.proximity;
 
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClass;
@@ -36,7 +37,8 @@ public class KnownElementWeigher extends ProximityWeigher {
       if (weigh != null) return weigh;
     }
 
-    if (!SdkOrLibraryWeigher.isJdkElement(element, location.getProject())) {
+    Project project = location.getProject();
+    if (project == null || !SdkOrLibraryWeigher.isJdkElement(element, project)) {
       return 0;
     }
 
