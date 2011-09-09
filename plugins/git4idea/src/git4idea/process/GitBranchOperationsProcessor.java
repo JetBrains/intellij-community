@@ -77,27 +77,32 @@ public final class GitBranchOperationsProcessor {
   public void checkoutNewBranch(@NotNull final String name) {
     new CommonBackgroundTask(myProject, "Checking out new branch " + name) {
       @Override public void execute(@NotNull ProgressIndicator indicator) {
-        checkoutNewBranchSync(name);
+        doCheckoutNewBranch(name);
       }
     }.runInBackground();
   }
 
-  private void checkoutNewBranchSync(@NotNull final String name) {
+  private void doCheckoutNewBranch(@NotNull final String name) {
     GitUnmergedFilesDetector unmergedDetector = new GitUnmergedFilesDetector();
     GitCommandResult result = Git.checkoutNewBranch(myRepository, name, null, unmergedDetector);
     if (result.success()) {
       updateRepository();
       notifySuccess(String.format("Branch <b><code>%s</code></b> was created", name));
     } else if (unmergedDetector.isUnmergedFilesDetected()) {
-      boolean allMerged = new GitConflictResolver(myProject, Collections.singleton(myRoot), new GitConflictResolver.Params()).merge();
-      if (!allMerged) {
-        showErrorMessage("Can't create new branch until all conflicts are resolved", Collections.<String>emptyList());
-      } else { // try again to check out
-        checkoutNewBranchSync(name);
+      GitConflictResolver gitConflictResolver = prepareConflictResolverForUnmergedFilesBeforeCheckout();
+      if (gitConflictResolver.merge()) { // try again to checkout
+        doCheckoutNewBranch(name);
       }
     } else { // other error
       showErrorMessage("Couldn't create new branch " + name, result.getErrorOutput());
     }
+  }
+
+  private GitConflictResolver prepareConflictResolverForUnmergedFilesBeforeCheckout() {
+    GitConflictResolver.Params params = new GitConflictResolver.Params().
+      setMergeDescription("The following files have unresolved conflicts. You need to resolve them before checking out.").
+      setErrorNotificationTitle("Can't create new branch");
+    return new GitConflictResolver(myProject, Collections.singleton(myRoot), params);
   }
 
   public void checkoutNewTrackingBranch(@NotNull String newBranchName, @NotNull String trackedBranchName) {
@@ -118,29 +123,39 @@ public final class GitBranchOperationsProcessor {
    */
   public void checkout(@NotNull final String reference) {
     new CommonBackgroundTask(myProject, "Checking out " + reference) {
-      @Override
-      public void execute(@NotNull ProgressIndicator indicator) {
-        final GitWouldBeOverwrittenByCheckoutDetector checkoutListener = new GitWouldBeOverwrittenByCheckoutDetector();
-
-        GitCommandResult result = Git.checkout(myRepository, reference, checkoutListener);
-        if (result.success()) {
-          refreshRoot();
-          updateRepository();
-          notifySuccess(String.format("Checked out <b><code>%s</code></b>", reference));
-        }
-        else if (checkoutListener.isWouldBeOverwrittenError()) {
-          List<Change> affectedChanges = getChangesAffectedByCheckout(checkoutListener.getAffectedFiles());
-          if (GitWouldBeOverwrittenByCheckoutDialog.showAndGetAnswer(myProject, affectedChanges)) {
-            smartCheckout(reference, indicator);
-          }
-        }
-        else {
-          showErrorMessage("Couldn't checkout " + reference, result.getErrorOutput());
-        }
+      @Override public void execute(@NotNull ProgressIndicator indicator) {
+        doCheckout(indicator, reference);
       }
     }.runInBackground();
   }
-  
+
+  private void doCheckout(@NotNull ProgressIndicator indicator, @NotNull String reference) {
+    final GitWouldBeOverwrittenByCheckoutDetector checkoutListener = new GitWouldBeOverwrittenByCheckoutDetector();
+    GitUnmergedFilesDetector unmergedDetector = new GitUnmergedFilesDetector();
+
+    GitCommandResult result = Git.checkout(myRepository, reference, checkoutListener, unmergedDetector);
+    if (result.success()) {
+      refreshRoot();
+      updateRepository();
+      notifySuccess(String.format("Checked out <b><code>%s</code></b>", reference));
+    }
+    else if (unmergedDetector.isUnmergedFilesDetected()) {
+      GitConflictResolver gitConflictResolver = prepareConflictResolverForUnmergedFilesBeforeCheckout();
+      if (gitConflictResolver.merge()) { // try again to checkout
+        doCheckout(indicator, reference);
+      }
+    }
+    else if (checkoutListener.isWouldBeOverwrittenError()) {
+      List<Change> affectedChanges = getChangesAffectedByCheckout(checkoutListener.getAffectedFiles());
+      if (GitWouldBeOverwrittenByCheckoutDialog.showAndGetAnswer(myProject, affectedChanges)) {
+        smartCheckout(reference, indicator);
+      }
+    }
+    else {
+      showErrorMessage("Couldn't checkout " + reference, result.getErrorOutput());
+    }
+  }
+
   // stash - checkout - unstash
   private void smartCheckout(@NotNull final String reference, @NotNull ProgressIndicator indicator) {
     final GitChangesSaver saver = configureSaver(reference, indicator);
@@ -214,7 +229,7 @@ public final class GitBranchOperationsProcessor {
    * Checks out or shows an error message.
    */
   private boolean checkoutOrNotify(String reference) {
-    GitCommandResult checkoutResult = Git.checkout(myRepository, reference, null);
+    GitCommandResult checkoutResult = Git.checkout(myRepository, reference);
     if (checkoutResult.success()) {
       return true;
     }
@@ -269,7 +284,8 @@ public final class GitBranchOperationsProcessor {
   
   private void showErrorMessage(@NotNull final String message, @NotNull final List<String> errorOutput) {
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override public void run() {
+      @Override
+      public void run() {
         Messages.showErrorDialog(myProject, StringUtil.join(errorOutput, "\n"), message);
       }
     });

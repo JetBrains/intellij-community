@@ -123,10 +123,10 @@ public class Git {
   /**
    * git checkout &lt;reference&gt;
    */
-  public static GitCommandResult checkout(@NotNull GitRepository repository, @NotNull String reference, @Nullable GitLineHandlerListener listener) {
+  public static GitCommandResult checkout(@NotNull GitRepository repository, @NotNull String reference, GitLineHandlerListener... listeners) {
     final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.CHECKOUT);
     h.addParameters(reference);
-    if (listener != null) {
+    for (GitLineHandlerListener listener : listeners) {
       h.addLineListener(listener);
     }
     return run(h);
