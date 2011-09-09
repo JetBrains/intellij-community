@@ -21,10 +21,12 @@ import com.intellij.lang.impl.PsiBuilderFactoryImpl;
 import com.intellij.mock.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -41,6 +43,7 @@ import com.intellij.psi.impl.PsiCachedValuesFactory;
 import com.intellij.psi.impl.PsiFileFactoryImpl;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.CachedValuesManagerImpl;
+import com.intellij.util.Function;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusFactory;
 import org.jetbrains.annotations.NonNls;
@@ -91,8 +94,14 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
     final MutablePicoContainer appContainer = getApplication().getPicoContainer();
     registerComponentInstance(appContainer, MessageBus.class, MessageBusFactory.newMessageBus(getApplication()));
     registerComponentInstance(appContainer, SchemesManagerFactory.class, new MockSchemesManagerFactory());
-    registerComponentInstance(appContainer, EditorFactory.class, new MockEditorFactory());
-    registerComponentInstance(appContainer, FileDocumentManager.class, new MockFileDocumentManagerImpl());
+    final MockEditorFactory editorFactory = new MockEditorFactory();
+    registerComponentInstance(appContainer, EditorFactory.class, editorFactory);
+    registerComponentInstance(appContainer, FileDocumentManager.class, new MockFileDocumentManagerImpl(new Function<CharSequence, Document>() {
+      @Override
+      public Document fun(CharSequence charSequence) {
+        return editorFactory.createDocument(charSequence);
+      }
+    }, FileDocumentManagerImpl.DOCUMENT_KEY));
     registerComponentInstance(appContainer, PsiDocumentManager.class, new MockPsiDocumentManager());
     myLanguage = myLanguage == null && myDefinitions != null && myDefinitions.length > 0? myDefinitions[0].getFileNodeType().getLanguage() : myLanguage;
     registerComponentInstance(appContainer, FileTypeManager.class, new MockFileTypeManager(new MockLanguageFileType(myLanguage, myFileExt)));
