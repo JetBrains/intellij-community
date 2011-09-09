@@ -24,6 +24,19 @@ class DjangoLineBreakpoint(LineBreakpoint):
         line = get_template_line(frame)
         return self.file == file and self.line == line
 
+
+def inherits(cls, *names):
+    print(cls.__name__)
+    if cls.__name__ in names:
+        return True
+    inherits_node = False
+    for base in inspect.getmro(cls):
+        if base.__name__ in names:
+            inherits_node = True
+            break
+    return inherits_node
+
+
 def is_django_render_call(frame):
     try:
         name = frame.f_code.co_name
@@ -35,23 +48,52 @@ def is_django_render_call(frame):
 
         cls = frame.f_locals['self'].__class__
 
-        inherits_node = False
-        for base in inspect.getmro(cls):
-            if base.__name__ == 'Node':
-                inherits_node = True
-                break
+        inherits_node = inherits(cls, 'Node')
 
         if not inherits_node:
             return False
 
         clsname = cls.__name__
         return clsname != 'TextNode' and clsname != 'NodeList'
-    except :
+    except:
         traceback.print_exc()
         return False
 
+
+def is_django_context_get_call(frame):
+    try:
+        if not DictContains(frame.f_locals, 'self'):
+            return False
+
+        cls = frame.f_locals['self'].__class__
+
+        return inherits(cls, 'BaseContext')
+    except:
+        traceback.print_exc()
+        return False
+
+
+def is_django_resolve_call(frame):
+    try:
+        name = frame.f_code.co_name
+        if name != '_resolve_lookup':
+            return False
+
+        if not DictContains(frame.f_locals, 'self'):
+            return False
+
+        cls = frame.f_locals['self'].__class__
+
+        clsname = cls.__name__
+        return clsname == 'Variable'
+    except:
+        traceback.print_exc()
+        return False
+
+
 def is_django_suspended(thread):
     return thread.additionalInfo.suspend_type == DJANGO_SUSPEND
+
 
 def suspend_django(py_db_frame, mainDebugger, thread, frame, cmd=CMD_SET_BREAK):
     frame = DjangoTemplateFrame(frame)
@@ -67,7 +109,6 @@ def suspend_django(py_db_frame, mainDebugger, thread, frame, cmd=CMD_SET_BREAK):
 
     pydevd_vars.addAdditionalFrameById(GetThreadId(thread), {id(frame): frame})
 
-
     py_db_frame.setSuspend(thread, cmd)
     thread.additionalInfo.suspend_type = DJANGO_SUSPEND
 
@@ -75,6 +116,7 @@ def suspend_django(py_db_frame, mainDebugger, thread, frame, cmd=CMD_SET_BREAK):
     thread.additionalInfo.line = frame.f_lineno
 
     return frame
+
 
 def find_django_render_frame(frame):
     while frame is not None and not is_django_render_call(frame):
