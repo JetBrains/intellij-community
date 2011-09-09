@@ -85,7 +85,7 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
       public void verify(PicoContainer container) throws PicoIntrospectionException {
       }
     });
-    myProject = disposeOnTearDown(new MockProject());
+    myProject = disposeOnTearDown(new MockProjectEx());
     myPsiManager = new MockPsiManager(myProject);
     myFileFactory = new PsiFileFactoryImpl(myPsiManager);
     final MutablePicoContainer appContainer = getApplication().getPicoContainer();
@@ -139,7 +139,7 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
     });
   }
 
-  public MockProject getProject() {
+  public MockProjectEx getProject() {
     return myProject;
   }
 

@@ -17,6 +17,7 @@ package com.intellij.testFramework;
 
 import com.intellij.mock.MockApplicationEx;
 import com.intellij.mock.MockProject;
+import com.intellij.mock.MockProjectEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.extensions.ExtensionPoint;
@@ -34,7 +35,7 @@ import java.lang.reflect.Modifier;
  * @author yole
  */
 public abstract class PlatformLiteFixture extends UsefulTestCase {
-  protected MockProject myProject;
+  protected MockProjectEx myProject;
 
   @Override
   protected void setUp() throws Exception {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,31 +15,25 @@
  */
 package com.intellij.mock;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.impl.stores.IProjectStore;
-import com.intellij.openapi.project.ex.ProjectEx;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.picocontainer.PicoContainer;
 
-public class MockProject extends MockComponentManager implements ProjectEx {
-  public MockProject() {
-    super(ApplicationManager.getApplication() != null ? ApplicationManager.getApplication().getPicoContainer() : null);
+/**
+ * @author yole
+ */
+public class MockProject extends MockComponentManager implements Project {
+  public MockProject(PicoContainer parent) {
+    super(parent);
   }
 
   @Override
   public boolean isDefault() {
     return false;
-  }
-
-  @Override
-  public void setProjectName(@NotNull String name) {
-  }
-
-  @Override
-  public void checkUnknownMacros(final boolean showDialog) {
   }
 
   @NotNull
@@ -51,26 +45,6 @@ public class MockProject extends MockComponentManager implements ProjectEx {
         return isDisposed();
       }
     };
-  }
-
-  @Override
-  @NotNull
-  public IProjectStore getStateStore() {
-    return new MockProjectStore();
-  }
-
-  @Override
-  public void init() {
-  }
-
-  @Override
-  public boolean isOptimiseTestLoadSpeed() {
-    return false;
-  }
-
-  @Override
-  public void setOptimiseTestLoadSpeed(final boolean optimiseTestLoadSpeed) {
-    throw new UnsupportedOperationException("Method setOptimiseTestLoadSpeed not implemented in " + getClass());
   }
 
   @Override
