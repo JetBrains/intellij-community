@@ -9,6 +9,17 @@
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
 
+    <!-- Annotations -->
+    <intentionAction>
+      <className>com.siyeh.ipp.annotation.ExpandToNormalAnnotationIntention</className>
+      <categoryKey>intention.category.annotations</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.siyeh.ipp.annotation.AnnotateOverriddenMethodsIntention</className>
+      <categoryKey>intention.category.annotations</categoryKey>
+    </intentionAction>
+
     <!-- Numbers -->
     <intentionAction>
       <className>com.siyeh.ipp.integer.ConvertIntegerToDecimalIntention</className>
@@ -397,10 +408,6 @@
     <intentionAction>
       <className>com.siyeh.ipp.asserttoif.IfToAssertionIntention</className>
       <categoryKey>intention.category.other</categoryKey>
-    </intentionAction>
-    <intentionAction>
-        <className>com.siyeh.ipp.annotation.ExpandToNormalAnnotationIntention</className>
-        <categoryKey>intention.category.other</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.siyeh.ipp.enumswitch.CreateEnumSwitchBranchesIntention</className>
