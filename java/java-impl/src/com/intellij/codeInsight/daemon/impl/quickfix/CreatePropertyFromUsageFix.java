@@ -29,6 +29,7 @@ import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PropertyUtil;
@@ -277,6 +278,20 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix {
             }
           }
         });
+      }
+
+      @Override
+      public void templateFinished(Template template, boolean brokenOff) {
+        PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+        final int offset = editor.getCaretModel().getOffset();
+        final PsiMethod generatedMethod = PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiMethod.class, false);
+        if (generatedMethod != null) {
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            public void run() {
+              CodeStyleManager.getInstance(project).reformat(generatedMethod);
+            }
+          });
+        }
       }
     });
   }
