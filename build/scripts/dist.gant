@@ -90,7 +90,7 @@ public def layoutAll(Map args, String home, String out) {
   layoutLinux(args, home, paths)
   layoutWin(args, home, paths)
 
-  layouts.layoutCore(home, paths.artifacts_core)
+  layouts.layout_core(home, paths.artifacts_core)
 }
 
 private def layoutWin(Map args, String home, Paths paths) {

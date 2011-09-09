@@ -415,7 +415,7 @@ def reorder(String home, String targetDirectory) {
   }
 }
 
-def layout_core(String target) {
+def layout_core(String home, String target) {
   layout(target) {
     jar("intellij-core.jar") {
       module("util")
@@ -427,6 +427,12 @@ def layout_core(String target) {
 
     jar("annotations.jar") {
       module("annotations")
+    }
+
+    fileset(dir: "$home/lib") {
+      include(name: "guava-r09.jar")
+      include(name: "picocontainer.jar")
+
     }
   }
 }
