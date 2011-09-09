@@ -1,14 +1,12 @@
 package com.intellij.mock;
 
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.FileViewProvider;
+import com.intellij.util.Function;
 import com.intellij.util.containers.WeakFactoryMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,14 +15,19 @@ import java.lang.ref.Reference;
 
 public class MockFileDocumentManagerImpl extends FileDocumentManager {
   private static final Key<VirtualFile> MOCK_VIRTUAL_FILE_KEY = Key.create("MockVirtualFile");
+  private final Function<CharSequence, Document> myFactory;
+  @Nullable private final Key<Reference<Document>> myCachedDocumentKey;
 
-  public VirtualFile myFile;
-  public FileViewProvider myViewProvider;
+  public MockFileDocumentManagerImpl(Function<CharSequence, Document> factory, @Nullable Key<Reference<Document>> cachedDocumentKey) {
+    myFactory = factory;
+    myCachedDocumentKey = cachedDocumentKey;
+  }
+
   private final WeakFactoryMap<VirtualFile,Document> myDocuments = new WeakFactoryMap<VirtualFile, Document>() {
     @Override
     protected Document create(final VirtualFile key) {
       CharSequence text = LoadTextUtil.loadText(key);
-      final Document document = EditorFactory.getInstance().createDocument(text);
+      final Document document = myFactory.fun(text);
       document.putUserData(MOCK_VIRTUAL_FILE_KEY, key);
       return document;
     }
@@ -37,8 +40,11 @@ public class MockFileDocumentManagerImpl extends FileDocumentManager {
 
   @Override
   public Document getCachedDocument(@NotNull VirtualFile file) {
-    Reference<Document> reference = file.getUserData(FileDocumentManagerImpl.DOCUMENT_KEY);
-    return reference != null ? reference.get() : null;
+    if (myCachedDocumentKey != null) {
+      Reference<Document> reference = file.getUserData(myCachedDocumentKey);
+      return reference != null ? reference.get() : null;
+    }
+    return null;
   }
 
   @Override
