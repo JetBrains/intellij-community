@@ -525,6 +525,7 @@
 
     <lang.commenter language="Mako" implementationClass="com.jetbrains.mako.MakoCommenter"/>
     <lang.braceMatcher language="Mako" implementationClass="com.jetbrains.mako.highlighting.MakoBraceMatcher"/>
+    <quoteHandler fileType="Mako" className="com.jetbrains.mako.editor.MakoQuoteHandler"/>
 
     <projectService serviceInterface="com.jetbrains.mako.TemplatesService"
                     serviceImplementation="com.jetbrains.mako.TemplatesService"/>
