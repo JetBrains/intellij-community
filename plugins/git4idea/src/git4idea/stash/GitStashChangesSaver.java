@@ -194,7 +194,7 @@ public class GitStashChangesSaver extends GitChangesSaver {
     @Override
     protected void notifyUnresolvedRemain() {
       GitVcs.IMPORTANT_ERROR_NOTIFICATION.createNotification("Local changes were restored with conflicts",
-                                                "Before update your uncommitted changes were saved to <a href='saver'>stash</a><br/>." +
+                                                "Your uncommitted changes were saved to <a href='saver'>stash</a>.<br/>" +
                                                 "Unstash is not complete, you have unresolved merges in your working tree<br/>" +
                                                 "<a href='resolve'>Resolve</a> conflicts and drop the stash.",
                                                 NotificationType.WARNING, new NotificationListener() {
