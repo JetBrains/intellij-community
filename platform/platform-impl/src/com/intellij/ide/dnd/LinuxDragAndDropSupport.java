@@ -42,6 +42,7 @@ import static com.intellij.ide.dnd.FileCopyPasteUtil.createDataFlavor;
 public class LinuxDragAndDropSupport {
   public static final DataFlavor uriListFlavor = createDataFlavor("text/uri-list", String.class);
   public static final DataFlavor gnomeFileListFlavor = createDataFlavor("x-special/gnome-copied-files", null, true);
+  public static final DataFlavor kdeCutMarkFlavor = createDataFlavor("application/x-kde-cutselection", null, true);
 
   private LinuxDragAndDropSupport() { }
 
@@ -99,6 +100,9 @@ public class LinuxDragAndDropSupport {
         return content.startsWith("cut\n");
       }
       catch (Exception ignored) { }
+    }
+    else if (transferable.isDataFlavorSupported(kdeCutMarkFlavor)) {
+      return true;
     }
 
     return false;

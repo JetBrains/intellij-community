@@ -121,6 +121,7 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<Trinity<Strin
 
     myTfFullPath = new JTextField();
     myTfFullPath.setEditable(false);
+    myTfFullPath.setOpaque(false);
     final Insets borderInsets = myTfFullPath.getBorder().getBorderInsets(myTfFullPath);
     myTfFullPath.setBorder(BorderFactory.createEmptyBorder(borderInsets.top, borderInsets.left, borderInsets.bottom, borderInsets.right));
     panel.add(myTfFullPath, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.SOUTHWEST, GridBagConstraints.HORIZONTAL, new Insets(8, 10, 8, 10), 0, 0));
