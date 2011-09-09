@@ -35,6 +35,8 @@ import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiFileFactoryImpl;
 import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.util.CachedValuesManagerImpl;
 import com.intellij.util.Function;
 import org.picocontainer.MutablePicoContainer;
 
@@ -80,6 +82,7 @@ public class CoreEnvironment {
     registerComponentInstance(projectContainer, PsiManager.class, psiManager);
 
     myProject.registerService(PsiFileFactory.class, new PsiFileFactoryImpl(psiManager));
+    myProject.registerService(CachedValuesManager.class, new CachedValuesManagerImpl(myProject, null));
   }
 
   public Project getProject() {
