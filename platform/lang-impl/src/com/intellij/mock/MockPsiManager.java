@@ -26,7 +26,6 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.psi.impl.file.impl.FileManager;
-import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.util.PsiModificationTracker;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +38,6 @@ public class MockPsiManager extends PsiManagerEx {
   private final Map<VirtualFile,PsiDirectory> myDirectories = new THashMap<VirtualFile, PsiDirectory>();
   private MockFileManager myMockFileManager;
   private PsiModificationTrackerImpl myPsiModificationTracker;
-  private ResolveCache myResolveCache;
 
   public MockPsiManager() {
     this(null);
@@ -137,14 +135,6 @@ public class MockPsiManager extends PsiManagerEx {
   @Override
   public void afterChange(boolean isPhysical) {
     throw new UnsupportedOperationException();
-  }
-
-  @NotNull
-  public ResolveCache getResolveCache() {
-    if (myResolveCache == null) {
-      myResolveCache = new ResolveCache(getProject().getMessageBus());
-    }
-    return myResolveCache;
   }
 
   public void registerRunnableToRunOnChange(@NotNull Runnable runnable) {

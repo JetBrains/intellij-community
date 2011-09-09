@@ -16,13 +16,10 @@
 package com.intellij.mock;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.PomModel;
-import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,11 +40,6 @@ public class MockProject extends MockComponentManager implements ProjectEx {
 
   @Override
   public void checkUnknownMacros(final boolean showDialog) {
-  }
-
-  @NotNull
-  public PomModel getModel() {
-    return ServiceManager.getService(this, PomModel.class);
   }
 
   @NotNull
@@ -143,9 +135,4 @@ public class MockProject extends MockComponentManager implements ProjectEx {
   @Override
   public void save() {
   }
-
-  public GlobalSearchScope getAllScope() {
-    return new MockGlobalSearchScope();
-  }
-
 }

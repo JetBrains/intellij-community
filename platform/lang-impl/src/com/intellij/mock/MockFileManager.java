@@ -16,10 +16,12 @@
 package com.intellij.mock;
 
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManager;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,10 +52,6 @@ public class MockFileManager implements FileManager {
     throw new UnsupportedOperationException("Method dispose is not yet implemented in " + getClass().getName());
   }
 
-  public void runStartupActivity() {
-    throw new UnsupportedOperationException("Method runStartupActivity is not yet implemented in " + getClass().getName());
-  }
-
   @Nullable
   public PsiFile findFile(@NotNull VirtualFile vFile) {
     return getCachedPsiFile(vFile);
@@ -75,16 +73,6 @@ public class MockFileManager implements FileManager {
     return provider.getPsi(provider.getBaseLanguage());
   }
 
-  @NotNull
-  public GlobalSearchScope getResolveScope(@NotNull PsiElement element) {
-    return new MockGlobalSearchScope();
-  }
-
-  @NotNull
-  public GlobalSearchScope getUseScope(@NotNull PsiElement element) {
-    return GlobalSearchScope.allScope(element.getProject());
-  }
-
   public void cleanupForNextTest() {
     myViewProviders.clear();
   }
@@ -104,5 +92,4 @@ public class MockFileManager implements FileManager {
   public List<PsiFile> getAllCachedFiles() {
     throw new UnsupportedOperationException("Method getAllCachedFiles is not yet implemented in " + getClass().getName());
   }
-
 }
