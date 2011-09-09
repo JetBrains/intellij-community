@@ -279,20 +279,19 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
       }
     };
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-    comboBox.setRenderer(new HtmlListCellRenderer<DirectoryChooser.ItemWrapper>(comboBox.getRenderer()){
+    comboBox.setRenderer(new ListCellRendererWrapper<DirectoryChooser.ItemWrapper>(comboBox.getRenderer()){
       @Override
-      protected void doCustomize(JList list,
-                                 DirectoryChooser.ItemWrapper itemWrapper,
-                                 int index,
-                                 boolean selected,
-                                 boolean hasFocus) {
+      public void customize(JList list,
+                            DirectoryChooser.ItemWrapper itemWrapper,
+                            int index,
+                            boolean selected,
+                            boolean hasFocus) {
         if (itemWrapper != null) {
           setIcon(itemWrapper.getIcon(fileIndex));
 
           final PsiDirectory directory = itemWrapper.getDirectory();
           final VirtualFile virtualFile = directory != null ? directory.getVirtualFile() : null;
-          append(virtualFile != null ? ProjectUtil.calcRelativeToProjectPath(virtualFile, myProject, true, true) : itemWrapper.getPresentableUrl());
-
+          setText(virtualFile != null ? ProjectUtil.calcRelativeToProjectPath(virtualFile, myProject, true, true) : itemWrapper.getPresentableUrl());
         } else {
           setText("Leave in same source root");
         }
@@ -352,7 +351,40 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     if (initialTargetDirectorySourceRoot == null) {
       items.add(null);
     }
-    comboBox.setModel(new CollectionComboBoxModel(items, initial != null || items.contains(null) || items.isEmpty() ? initial : items.get(0)));
+    final DirectoryChooser.ItemWrapper selection = initial != null || items.contains(null) || items.isEmpty() ? initial : items.get(0);
+    final ComboBoxModel model = comboBox.getModel();
+    if (model instanceof CollectionComboBoxModel) {
+      boolean sameModel = model.getSize() == items.size();
+      if (sameModel) {
+        for (int i = 0; i < items.size(); i++) {
+          final DirectoryChooser.ItemWrapper oldItem = (DirectoryChooser.ItemWrapper)model.getElementAt(i);
+          final DirectoryChooser.ItemWrapper itemWrapper = items.get(i);
+          if (!areItemsEquivalent(oldItem, itemWrapper)) {
+              sameModel = false;
+              break;
+          }
+        }
+      }
+      if (sameModel) {
+        if (areItemsEquivalent((DirectoryChooser.ItemWrapper)comboBox.getSelectedItem(), selection)) {
+          return;
+        }
+      }
+    }
+    comboBox.setModel(new CollectionComboBoxModel(items, selection));
+  }
+
+  private static boolean areItemsEquivalent(DirectoryChooser.ItemWrapper oItem, DirectoryChooser.ItemWrapper itemWrapper) {
+    if (oItem == null || itemWrapper == null) {
+      if (oItem != itemWrapper) {
+        return false;
+      }
+      return true;
+    }
+    if (oItem.getDirectory() != itemWrapper.getDirectory()) {
+      return false;
+    }
+    return true;
   }
 
   protected void doHelpAction() {
