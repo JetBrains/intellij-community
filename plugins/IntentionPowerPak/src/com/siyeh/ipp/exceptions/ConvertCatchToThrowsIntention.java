@@ -87,10 +87,10 @@ public class ConvertCatchToThrowsIntention extends Intention {
       if (tryBlock == null) {
         return;
       }
-      final PsiElement parent = tryStatement.getParent();
-      final PsiStatement[] statements = tryBlock.getStatements();
-      for (PsiStatement statement : statements) {
-        parent.addBefore(statement, tryStatement);
+      final PsiElement first = tryBlock.getFirstBodyElement();
+      final PsiElement last = tryBlock.getLastBodyElement();
+      if (first != null && last != null) {
+        tryStatement.getParent().addRangeAfter(first, last, tryStatement);
       }
       tryStatement.delete();
     }
