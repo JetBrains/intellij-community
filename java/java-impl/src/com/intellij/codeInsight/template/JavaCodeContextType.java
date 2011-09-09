@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
+import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NonNls;
@@ -100,6 +101,11 @@ public abstract class JavaCodeContextType extends TemplateContextType {
     }
   }
   public static class Expression extends JavaCodeContextType {
+    private static final ElementPattern<PsiElement> INFIX_OPERATOR = psiElement().afterLeaf(
+      psiElement().inside(
+        psiElement(PsiExpression.class).afterLeaf(
+          psiElement().withText("(").withParent(PsiIfStatement.class))));
+
     public Expression() {
       super("JAVA_EXPRESSION", "Expression", Generic.class);
     }
@@ -120,12 +126,7 @@ public abstract class JavaCodeContextType extends TemplateContextType {
       if (parent.getParent() instanceof PsiMethodCallExpression) {
         return false;
       }
-      if (
-        psiElement().afterLeaf(
-          psiElement().inside(
-            psiElement(PsiExpression.class).afterLeaf(
-              psiElement().withText("(").withParent(PsiIfStatement.class))))
-          .accepts(element)) {
+      if (INFIX_OPERATOR.accepts(element)) {
         return false;
       }
       return true;
