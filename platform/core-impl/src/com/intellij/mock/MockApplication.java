@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,47 +16,21 @@
 package com.intellij.mock;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationListener;
-import com.intellij.openapi.application.ModalityInvokator;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ex.ApplicationEx;
-import com.intellij.openapi.application.impl.ModalityStateEx;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
-import java.io.IOException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
-public class MockApplication extends MockComponentManager implements ApplicationEx {
+public class MockApplication extends MockComponentManager implements Application {
   private ModalityState MODALITY_STATE_NONE;
+
   public MockApplication() {
     super(null);
-  }
-
-  @NotNull
-  @Override
-  public String getName() {
-    return "mock";
-  }
-
-  @Override
-  public boolean holdsReadLock() {
-    return false;
-  }
-
-  @Override
-  public void load(String path) throws IOException, InvalidDataException {
   }
 
   @Override
@@ -75,15 +49,15 @@ public class MockApplication extends MockComponentManager implements Application
   }
 
   @Override
-  public void exit(boolean force) {
-  }
-
-  @Override
   public void assertReadAccessAllowed() {
   }
 
   @Override
   public void assertWriteAccessAllowed() {
+  }
+
+  @Override
+  public void assertIsDispatchThread() {
   }
 
   @Override
@@ -172,10 +146,6 @@ public class MockApplication extends MockComponentManager implements Application
   }
 
   @Override
-  public void assertIsDispatchThread() {
-  }
-
-  @Override
   public void addApplicationListener(@NotNull ApplicationListener listener) {
   }
 
@@ -188,59 +158,28 @@ public class MockApplication extends MockComponentManager implements Application
   }
 
   @Override
-  public void saveAll() {
+  public long getStartTime() {
+    return 0;
   }
 
   @Override
-  public void saveSettings() {
+  public long getIdleTime() {
+    return 0;
   }
 
+  @NotNull
   @Override
-  public void exit() {
+  public ModalityState getNoneModalityState() {
+    if (MODALITY_STATE_NONE == null) {
+      MODALITY_STATE_NONE = new ModalityState() {
+        @Override
+        public boolean dominates(@NotNull ModalityState anotherState) {
+          return false;
+        }
+      };
+    }
+    return MODALITY_STATE_NONE;
   }
-
-  @Override
-  public void doNotSave() {
-  }
-
-  @Override
-  public void doNotSave(boolean value) {
-  }
-
-  @Override
-  public boolean isDoNotSave() {
-    return false; 
-  }
-
-  @Override
-  public boolean runProcessWithProgressSynchronously(@NotNull final Runnable process, @NotNull final String progressTitle, final boolean canBeCanceled, @Nullable final Project project,
-                                                     final JComponent parentComponent) {
-    return false;
-  }
-
-  @Override
-  public boolean runProcessWithProgressSynchronously(@NotNull Runnable process,
-                                                     @NotNull String progressTitle,
-                                                     boolean canBeCanceled,
-                                                     @Nullable Project project,
-                                                     JComponent parentComponent,
-                                                     String cancelText) {
-    return false;
-  }
-
-  @Override
-  public boolean runProcessWithProgressSynchronously(@NotNull Runnable process,
-                                                     @NotNull String progressTitle,
-                                                     boolean canBeCanceled,
-                                                     Project project) {
-    return false;
-  }
-
-  @Override
-  public boolean isInModalProgressThread() {
-    return false;
-  }
-
 
   @Override
   public void invokeLater(@NotNull final Runnable runnable, @NotNull final Condition expired) {
@@ -268,30 +207,9 @@ public class MockApplication extends MockComponentManager implements Application
   public void invokeAndWait(@NotNull Runnable runnable, @NotNull ModalityState modalityState) {
   }
 
-  @Override
-  public long getStartTime() {
-    return 0;
-  }
-
-  @Override
-  public long getIdleTime() {
-    return 0;
-  }
-
-  @Override
-  public <T> T[] getExtensions(final ExtensionPointName<T> extensionPointName) {
-    return Extensions.getRootArea().getExtensionPoint(extensionPointName).getExtensions();
-  }
-
   @NotNull
   @Override
   public ModalityState getCurrentModalityState() {
-    throw new UnsupportedOperationException();
-  }
-
-  @NotNull
-  @Override
-  public ModalityState getModalityStateForComponent(@NotNull Component c) {
     throw new UnsupportedOperationException();
   }
 
@@ -302,34 +220,25 @@ public class MockApplication extends MockComponentManager implements Application
 
   @NotNull
   @Override
-  public ModalityState getDefaultModalityState() {
+  public ModalityState getModalityStateForComponent(@NotNull Component c) {
     throw new UnsupportedOperationException();
   }
 
   @NotNull
   @Override
-  public ModalityState getNoneModalityState() {
-    if (MODALITY_STATE_NONE == null) {
-      MODALITY_STATE_NONE = new ModalityStateEx(ArrayUtil.EMPTY_OBJECT_ARRAY);
-    }
-    return MODALITY_STATE_NONE;
+  public ModalityState getDefaultModalityState() {
+    throw new UnsupportedOperationException();
   }
 
   @Override
-  public void assertIsDispatchThread(@Nullable final JComponent component) {
+  public void exit() {
   }
 
   @Override
-  public void assertTimeConsuming() {
+  public void saveAll() {
   }
 
   @Override
-  public void runEdtSafeAction(@NotNull Runnable runnable) {
-    runnable.run();
-  }
-
-  @Override
-  public boolean tryRunReadAction(@NotNull Runnable runnable) {
-    return false;
+  public void saveSettings() {
   }
 }
