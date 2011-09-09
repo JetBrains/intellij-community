@@ -25,9 +25,13 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.LabeledComponent;
+import com.intellij.ui.ComponentWithAnchor;
 import com.intellij.ui.RawCommandLineEditor;
+import com.intellij.ui.components.JBLabel;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
 import org.jetbrains.idea.devkit.projectRoots.Sandbox;
@@ -42,13 +46,14 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
-public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfiguration> {
+public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfiguration> implements ComponentWithAnchor {
 
   private DefaultComboBoxModel myModulesModel = new DefaultComboBoxModel();
   private final JComboBox myModules = new JComboBox(myModulesModel);
-  private final JLabel myModuleLabel = new JLabel(DevKitBundle.message("run.configuration.classpath.from.module.choose"));
+  private final JBLabel myModuleLabel = new JBLabel(DevKitBundle.message("run.configuration.classpath.from.module.choose"));
   private final LabeledComponent<RawCommandLineEditor> myVMParameters = new LabeledComponent<RawCommandLineEditor>();
   private final LabeledComponent<RawCommandLineEditor> myProgramParameters = new LabeledComponent<RawCommandLineEditor>();
+  private JComponent anchor;
 
   @NonNls private final JCheckBox myShowLogs = new JCheckBox(DevKitBundle.message("show.smth", "idea.log"));
 
@@ -88,6 +93,21 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
         }
       }
     });
+
+    setAnchor(myModuleLabel);
+  }
+
+  @Override
+  public JComponent getAnchor() {
+    return anchor;
+  }
+
+  @Override
+  public void setAnchor(@Nullable JComponent anchor) {
+    this.anchor = anchor;
+    myModuleLabel.setAnchor(anchor);
+    myVMParameters.setAnchor(anchor);
+    myProgramParameters.setAnchor(anchor);
   }
 
   private static void setShow(PluginRunConfiguration prc, boolean show){
@@ -136,17 +156,15 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
     myVMParameters.setComponent(new RawCommandLineEditor());
     myVMParameters.getComponent().setDialogCaption(myVMParameters.getRawText());
     myVMParameters.setLabelLocation(BorderLayout.WEST);
-    myVMParameters.setAnchor(myProgramParameters.getLabel());
 
     myProgramParameters.setText(DevKitBundle.message("program.parameters"));
     myProgramParameters.setComponent(new RawCommandLineEditor());
     myProgramParameters.getComponent().setDialogCaption(myProgramParameters.getRawText());
     myProgramParameters.setLabelLocation(BorderLayout.WEST);
 
-    GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(5, 0, 5, 0), 0, 0);
+    GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP);
     wholePanel.add(myVMParameters, gc);
     wholePanel.add(myProgramParameters, gc);
-    wholePanel.add(myShowLogs, gc);
     gc.gridwidth = 1;
     gc.gridy = 3;
     gc.weightx = 0;
@@ -154,8 +172,12 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
     gc.weighty = 1;
     gc.gridx = 1;
     gc.weightx = 1;
-    gc.insets.left = 10;
     wholePanel.add(myModules, gc);
+    gc.gridx = 0;
+    gc.gridy = 4;
+    gc.gridwidth = 2;
+    
+    wholePanel.add(myShowLogs, gc);
     return wholePanel;
   }
 

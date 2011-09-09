@@ -34,6 +34,7 @@ import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -96,7 +97,7 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
         }
       }
 
-      myStepsPanel.setLayout(new GridLayout(stepsRows.size(), 1));
+      myStepsPanel.setLayout(new GridLayout(stepsRows.size(), 1, UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP));
       for (StepBeforeLaunchRow stepRow : stepsRows) {
         myStepsPanel.add(stepRow);
       }
