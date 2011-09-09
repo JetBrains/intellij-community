@@ -19,6 +19,9 @@
  */
 package com.intellij.util.ui;
 
+import com.intellij.ui.SeparatorComponent;
+import org.jetbrains.annotations.Nullable;
+
 import javax.swing.*;
 import java.awt.*;
 
@@ -55,6 +58,22 @@ public class FormBuilder {
       label.setLabelFor(component);
     }
 
+    return addTwoComponents(label, component, verticalSpace, false);
+  }
+
+  public FormBuilder addLabeledComponent(String labelText, JComponent component) {
+    return addLabeledComponent(labelText, component, 10);
+  }
+
+  public FormBuilder addSeparator(final int verticalSpace) {
+    return addTwoComponents(new SeparatorComponent(3, 0), new SeparatorComponent(3, 0), verticalSpace, true);
+  }
+
+  public FormBuilder addSeparator() {
+    return addSeparator(10);
+  }
+
+  public FormBuilder addTwoComponents(@Nullable JComponent component1, JComponent component2, final int verticalSpace, boolean fillFirstComponent) {
     GridBagConstraints c = new GridBagConstraints();
     int verticalInset = line > 0 ? verticalSpace : 0;
 
@@ -68,16 +87,16 @@ public class FormBuilder {
       c.anchor = GridBagConstraints.WEST;
       c.insets = new Insets(verticalInset, 0, 0, this.indent);
 
-      if (label != null) panel.add(label, c);
+      if (component1 != null) panel.add(component1, c);
 
       c.gridx = 0;
       c.gridy = line + 1;
       c.weightx = 1.0;
-      c.fill = component instanceof JComboBox ? GridBagConstraints.NONE : GridBagConstraints.HORIZONTAL;
+      c.fill = component2 instanceof JComboBox ? GridBagConstraints.NONE : GridBagConstraints.HORIZONTAL;
       c.anchor = GridBagConstraints.WEST;
       c.insets = new Insets(0, 0, 0, this.indent);
 
-      panel.add(component, c);
+      panel.add(component2, c);
 
       line += 2;
     }
@@ -86,26 +105,24 @@ public class FormBuilder {
       c.gridy = line;
       c.weightx = 0;
       c.anchor = ALIGN_LABELS_TO_RIGHT ? GridBagConstraints.EAST : GridBagConstraints.WEST;
-      c.insets = new Insets(verticalInset, 0, 0, this.indent);
+      c.insets = new Insets(verticalInset, 0, 0, fillFirstComponent ? 0 : this.indent);
 
-      if (label != null) panel.add(label, c);
+      if (fillFirstComponent) c.fill = GridBagConstraints.HORIZONTAL;
+
+      if (component1 != null) panel.add(component1, c);
 
       c.gridx = 1;
       c.gridy = line;
-      c.fill = component instanceof JComboBox ? GridBagConstraints.NONE : GridBagConstraints.HORIZONTAL;
+      c.fill = component2 instanceof JComboBox ? GridBagConstraints.NONE : GridBagConstraints.HORIZONTAL;
       c.anchor = GridBagConstraints.WEST;
       c.weightx = 1;
       c.insets = new Insets(verticalInset, 0, 0, 0);
-      panel.add(component, c);
+      panel.add(component2, c);
 
       line++;
     }
 
     return this;
-  }
-
-  public FormBuilder addLabeledComponent(String labelText, JComponent component) {
-    return addLabeledComponent(labelText, component, 10);
   }
 
   public JPanel getPanel() {

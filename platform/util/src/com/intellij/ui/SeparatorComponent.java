@@ -36,6 +36,12 @@ public class SeparatorComponent extends JComponent {
     setBorder(BorderFactory.createEmptyBorder(myVGap, 0, myVGap, 0));
   }
 
+  public SeparatorComponent(int aVerticalGap, int aHorizontalGap) {
+    myVGap = aVerticalGap;
+    myHGap = aHorizontalGap;
+    setBorder(BorderFactory.createEmptyBorder(myVGap, 0, myVGap, 0));
+  }
+
   public SeparatorComponent(int aVerticalGap, Color aColor, Color aShadowColor) {
     this(aVerticalGap, 1, aColor, aShadowColor);
   }
