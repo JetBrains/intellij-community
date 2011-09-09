@@ -22,27 +22,29 @@ import javax.swing.*;
  * in the control text.
  *
  * @author alex
+ * @author Konstantin Bulenkov
  * @since 5.1
  */
-public class DialogUtil {
+public class DialogUtil{
+
+  private DialogUtil() {}
 
   public static void registerMnemonic(AbstractButton button) {
     registerMnemonic(button, UIUtil.MNEMONIC);
   }
 
-  public static void registerMnemonic(AbstractButton button, char mn) {
-    String text = button.getText();
+  public static void registerMnemonic(final AbstractButton button, char mn) {
+    final String text = button.getText();
 
     if (text != null) {
-      StringBuffer realText = new StringBuffer();
+      final StringBuilder realText = new StringBuilder();
       char mnemonic = '\0';
       int index = -1;
       for (int i = 0; i < text.length(); i++) {
-        char ch = text.charAt(i);
+        final char ch = text.charAt(i);
         if (ch != mn) {
           realText.append(ch);
-        }
-        else if (i + 1 < text.length()) {
+        } else if (i + 1 < text.length()) {
           mnemonic = text.charAt(i + 1);
           index = realText.length();
         }
@@ -56,22 +58,26 @@ public class DialogUtil {
   }
 
   public static void registerMnemonic(JLabel label, JComponent target) {
+    registerMnemonic(label, target, UIUtil.MNEMONIC);
+  }
+
+  /**
+   * @param label label
+   * @param target target component
+   * @param mn mnemonic char
+   * @since 11.0
+   */
+  public static void registerMnemonic(JLabel label, JComponent target, char mn) {
     String text = label.getText();
     if (text != null) {
-      StringBuffer realText = new StringBuffer(text.length());
+      final StringBuilder realText = new StringBuilder(text.length());
       char mnemonic = '\0';
       int index = -1;
       for (int i = 0; i < text.length(); i++) {
         char ch = text.charAt(i);
-        if (ch != UIUtil.MNEMONIC) {
+        if (ch != mn  || i + 1 == text.length() || text.charAt(i + 1) == ' ') {
           realText.append(ch);
-        }
-        else if (i + 1 == text.length()) {
-          realText.append(ch);
-        } else if (text.charAt(i + 1) == ' '){
-          realText.append(ch);
-        }
-        else {
+        } else {
           mnemonic = text.charAt(i + 1);
           index = realText.length();
         }
@@ -86,5 +92,4 @@ public class DialogUtil {
       }
     }
   }
-
 }

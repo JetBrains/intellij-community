@@ -30,6 +30,7 @@ import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiDocumentManager;
@@ -44,6 +45,9 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.ui.JBListTable;
+import com.intellij.util.ui.JBTableRow;
+import com.intellij.util.ui.JBTableRowEditor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,6 +77,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
   private final boolean myAllowDelegation;
   protected EditorTextField myNameField;
   protected EditorTextField myReturnTypeField;
+  protected JBListTable myParametersList;
   protected TableView<ParameterTableModelItemBase<P>> myParametersTable;
   protected final ParameterTableModelBase<P> myParametersTableModel;
   private MethodSignatureComponent mySignatureArea;
@@ -159,14 +164,16 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
   }
 
   public JComponent getPreferredFocusedComponent() {
-    if (myParametersTableModel.getRowCount() > 0) {
-      final JTable table = myParametersTable.getComponent();
+    final JTable table = myParametersList == null ? myParametersTable : myParametersList.getTable();
+
+    if (table.getRowCount() > 0) {
       if (table.getColumnModel().getSelectedColumnCount() == 0) {
-        table.getSelectionModel().setSelectionInterval(0,0);
+        table.getSelectionModel().setSelectionInterval(0, 0);
         table.getColumnModel().getSelectionModel().setSelectionInterval(0, 0);
       }
       return table;
-    } else {
+    }
+    else {
       return myNameField == null ? super.getPreferredFocusedComponent() : myNameField;
     }
   }
@@ -264,7 +271,8 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
     final JPanel main;
     if (panels.isEmpty()) {
       main = panel;
-    } else {
+    }
+    else {
       final TabbedPaneWrapper tabbedPane = new TabbedPaneWrapper(getDisposable());
       tabbedPane.addTab(RefactoringBundle.message("parameters.border.title"), panel);
       for (Pair<String, JPanel> extraPanel : panels) {
@@ -277,7 +285,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
     bottom.add(optionsPanel, BorderLayout.NORTH);
     bottom.add(createSignaturePanel(), BorderLayout.SOUTH);
     main.add(bottom, BorderLayout.SOUTH);
-    main.setBorder(IdeBorderFactory.createEmptyBorder(5,0,0,0));
+    main.setBorder(IdeBorderFactory.createEmptyBorder(5, 0, 0, 0));
     return main;
   }
 
@@ -288,29 +296,30 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
       panel.add(myDelegationPanel, BorderLayout.WEST);
     }
 
-    myPropagateParamChangesButton = new AnActionButton(RefactoringBundle.message("changeSignature.propagate.parameters.title"), null, PlatformIcons.NEW_PARAMETER) {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        final Ref<CallerChooserBase<M>> chooser = new Ref<CallerChooserBase<M>>();
-        Consumer<Set<M>> callback = new Consumer<Set<M>>() {
-          @Override
-          public void consume(Set<M> callers) {
-            myMethodsToPropagateParameters = callers;
-            myParameterPropagationTreeToReuse = chooser.get().getTree();
+    myPropagateParamChangesButton =
+      new AnActionButton(RefactoringBundle.message("changeSignature.propagate.parameters.title"), null, PlatformIcons.NEW_PARAMETER) {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          final Ref<CallerChooserBase<M>> chooser = new Ref<CallerChooserBase<M>>();
+          Consumer<Set<M>> callback = new Consumer<Set<M>>() {
+            @Override
+            public void consume(Set<M> callers) {
+              myMethodsToPropagateParameters = callers;
+              myParameterPropagationTreeToReuse = chooser.get().getTree();
+            }
+          };
+          try {
+            chooser.set(
+              createCallerChooser(RefactoringBundle.message("changeSignature.parameter.caller.chooser"), myParameterPropagationTreeToReuse,
+                                  callback));
           }
-        };
-        try {
-          chooser.set(
-            createCallerChooser(RefactoringBundle.message("changeSignature.parameter.caller.chooser"), myParameterPropagationTreeToReuse,
-                                callback));
+          catch (ProcessCanceledException ex) {
+            // user cancelled initial callers search, don't show dialog
+            return;
+          }
+          chooser.get().show();
         }
-        catch (ProcessCanceledException ex) {
-          // user cancelled initial callers search, don't show dialog
-          return;
-        }
-        chooser.get().show();
-      }
-    };
+      };
 
     final JPanel result = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP));
     result.add(panel);
@@ -339,6 +348,11 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
     return "refactoring.ChangeSignatureDialog";
   }
 
+  protected boolean isListTableViewSupported() {
+    return false;
+  }
+
+
   protected JPanel createParametersPanel(boolean hasTabsInDialog) {
     myParametersTable = new TableView<ParameterTableModelItemBase<P>>(myParametersTableModel) {
       @Override
@@ -357,7 +371,8 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
             final TableCellEditor ed = myParametersTable.getCellEditor();
             if (ed != null) {
               Object editorValue = ed.getCellEditorValue();
-              myParametersTableModel.setValueAtWithoutUpdate(editorValue, myParametersTable.getSelectedRow(), myParametersTable.getSelectedColumn());
+              myParametersTableModel
+                .setValueAtWithoutUpdate(editorValue, myParametersTable.getSelectedRow(), myParametersTable.getSelectedColumn());
               updateSignature();
             }
           }
@@ -366,7 +381,8 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
         if (editor instanceof StringTableCellEditor) {
           final StringTableCellEditor ed = (StringTableCellEditor)editor;
           ed.addDocumentListener(listener);
-        } else if (editor instanceof CodeFragmentTableCellEditorBase) {
+        }
+        else if (editor instanceof CodeFragmentTableCellEditorBase) {
           ((CodeFragmentTableCellEditorBase)editor).addDocumentListener(listener);
         }
         return editor;
@@ -379,24 +395,70 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
     myParametersTable.setSurrendersFocusOnKeystroke(true);
     myPropagateParamChangesButton.setShortcut(CustomShortcutSet.fromString("alt G"));
 
-    final JPanel buttonsPanel = ToolbarDecorator.createDecorator(myParametersTable)
-      .addExtraAction(myPropagateParamChangesButton)
-      .createPanel();
+    if (Registry.is("change.signature.awesome.mode") && isListTableViewSupported()) {
+      myParametersList = new JBListTable(myParametersTable) {
+        @Override
+        protected JComponent getRowRenderer(JTable table, int row, boolean selected, boolean focused) {
+          final List<ParameterTableModelItemBase<P>> items = myParametersTable.getItems();
+          return getRowPresentation(items.get(row), selected, focused);
+        }
 
-    myPropagateParamChangesButton.setEnabled(false);
-    myPropagateParamChangesButton.setVisible(false);
-    myParametersTable.setStriped(true);
+        @Override
+        protected JBTableRowEditor getRowEditor(int row) {
+          final List<ParameterTableModelItemBase<P>> items = myParametersTable.getItems();
+          return getTableEditor(myParametersList.getTable(), items.get(row));
+        }
 
-    myParametersTableModel.addTableModelListener(
-      new TableModelListener() {
+        @Override
+        protected JBTableRow getRowAt(final int row) {
+          return new JBTableRow() {
+            @Override
+            public Object getValueAt(int column) {
+              return myInternalTable.getValueAt(row, column);
+            }
+          };
+        }
+      };
+      final JPanel buttonsPanel = ToolbarDecorator.createDecorator(myParametersList.getTable())
+        .addExtraAction(myPropagateParamChangesButton)
+        .createPanel();
+      myParametersList.getTable().getModel().addTableModelListener(new TableModelListener() {
         public void tableChanged(TableModelEvent e) {
           updateSignature();
         }
       }
-    );
+      );
+      return buttonsPanel;
+    }
+    else {
+      final JPanel buttonsPanel =
+        ToolbarDecorator.createDecorator(myParametersList == null ? myParametersTable : myParametersList.getTable())
+          .addExtraAction(myPropagateParamChangesButton)
+          .createPanel();
 
-    customizeParametersTable(myParametersTable);
-    return buttonsPanel;
+      myPropagateParamChangesButton.setEnabled(false);
+      myPropagateParamChangesButton.setVisible(false);
+      myParametersTable.setStriped(true);
+
+      myParametersTableModel.addTableModelListener(
+        new TableModelListener() {
+          public void tableChanged(TableModelEvent e) {
+            updateSignature();
+          }
+        }
+      );
+
+      customizeParametersTable(myParametersTable);
+      return buttonsPanel;
+    }
+  }
+
+  protected JBTableRowEditor getTableEditor(JTable table, ParameterTableModelItemBase<P> item) {
+    return null;
+  }
+
+  protected JComponent getRowPresentation(ParameterTableModelItemBase<P> item, boolean selected, boolean focused) {
+    return null;
   }
 
   protected void customizeParametersTable(TableView<ParameterTableModelItemBase<P>> table) {
@@ -419,7 +481,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
   }
 
   protected MethodSignatureComponent createSignaturePreviewComponent() {
-    return new MethodSignatureComponent(calculateSignature(), getProject(),getFileType());
+    return new MethodSignatureComponent(calculateSignature(), getProject(), getFileType());
   }
 
   protected void updateSignature() {

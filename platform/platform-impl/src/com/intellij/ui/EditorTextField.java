@@ -515,6 +515,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
       editor.getColorsScheme().setColor(EditorColors.SELECTION_BACKGROUND_COLOR, myRendererBg);
       editor.getColorsScheme().setColor(EditorColors.SELECTION_FOREGROUND_COLOR, myRendererFg);
       editor.getSelectionModel().setSelection(0, myDocument.getTextLength());
+      editor.setBackgroundColor(myRendererBg);
     }
 
     return editor;
