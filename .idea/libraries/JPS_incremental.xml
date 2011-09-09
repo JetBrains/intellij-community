@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="JPS-incremental">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/rt/jps-incremental/jps.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/rt/jps-incremental/gant-1.9.5_groovy-1.7.10.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/rt/jps-incremental/groovy-all-1.7.1.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/lib/rt/jps-incremental/src/jps-sources.zip!/" />
+    </SOURCES>
+  </library>
+</component>

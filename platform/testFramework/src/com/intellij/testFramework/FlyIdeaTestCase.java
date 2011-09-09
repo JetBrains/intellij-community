@@ -1,6 +1,6 @@
 package com.intellij.testFramework;
 
-import com.intellij.mock.MockApplication;
+import com.intellij.mock.MockApplicationEx;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -21,7 +21,7 @@ public abstract class FlyIdeaTestCase extends TestCase {
   @Override
   protected void setUp() throws Exception {
     final Application old = ApplicationManagerEx.getApplication();
-    MockApplication app = new MockApplication() {
+    MockApplicationEx app = new MockApplicationEx() {
       @Override
       public Future<?> executeOnPooledThread(@NotNull Runnable action) {
         return old != null ? old.executeOnPooledThread(action) : super.executeOnPooledThread(action);

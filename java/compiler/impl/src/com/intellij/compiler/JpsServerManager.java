@@ -25,11 +25,9 @@ import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.util.ShutDownTracker;
-import org.jetbrains.jps.Jps;
 import org.jetbrains.jpsservice.Client;
 import org.jetbrains.jpsservice.Server;
 
-import java.io.File;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
@@ -97,32 +95,32 @@ public class JpsServerManager {
     final GeneralCommandLine cmdLine = new GeneralCommandLine();
     cmdLine.setExePath(((JavaSdkType)projectJdk.getSdkType()).getVMExecutablePath(projectJdk));
 
-    final StringBuilder cp = new StringBuilder();
-    cp.append(getResourcePath(Server.class));
-    cp.append(File.pathSeparator).append(getResourcePath(com.google.protobuf.Message.class));
-    cp.append(File.pathSeparator).append(getResourcePath(org.jboss.netty.bootstrap.Bootstrap.class));
-    final String jpsJar = getResourcePath(Jps.class);
-    final File parentFile = new File(jpsJar).getParentFile();
-    final File[] files = parentFile.listFiles();
-    if (files != null) {
-      for (File file : files) {
-        final String name = file.getName();
-        final boolean shouldAdd =
-          name.endsWith("jar") &&
-          (name.startsWith("ant") ||
-           name.startsWith("jps") ||
-           name.startsWith("asm") ||
-           name.startsWith("gant")||
-           name.startsWith("groovy") ||
-           name.startsWith("javac2")
-          );
-        if (shouldAdd) {
-          cp.append(File.pathSeparator).append(file.getPath());
-        }
-      }
-    }
-    cmdLine.addParameter("-classpath");
-    cmdLine.addParameter(cp.toString());
+    //final StringBuilder cp = new StringBuilder();
+    //cp.append(getResourcePath(Server.class));
+    //cp.append(File.pathSeparator).append(getResourcePath(com.google.protobuf.Message.class));
+    //cp.append(File.pathSeparator).append(getResourcePath(org.jboss.netty.bootstrap.Bootstrap.class));
+    //final String jpsJar = getResourcePath(Jps.class);
+    //final File parentFile = new File(jpsJar).getParentFile();
+    //final File[] files = parentFile.listFiles();
+    //if (files != null) {
+    //  for (File file : files) {
+    //    final String name = file.getName();
+    //    final boolean shouldAdd =
+    //      name.endsWith("jar") &&
+    //      (name.startsWith("ant") ||
+    //       name.startsWith("jps") ||
+    //       name.startsWith("asm") ||
+    //       name.startsWith("gant")||
+    //       name.startsWith("groovy") ||
+    //       name.startsWith("javac2")
+    //      );
+    //    if (shouldAdd) {
+    //      cp.append(File.pathSeparator).append(file.getPath());
+    //    }
+    //  }
+    //}
+    //cmdLine.addParameter("-classpath");
+    //cmdLine.addParameter(cp.toString());
 
     cmdLine.addParameter("org.jetbrains.jpsservice.Server");
     cmdLine.addParameter(Integer.toString(port));

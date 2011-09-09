@@ -200,7 +200,7 @@ class CopyClassDialog extends DialogWrapper{
           } else {
             final Module module = ModuleUtil.findModuleForFile(myDefaultTargetDirectory.getVirtualFile(), myProject);
             if (module != null) {
-              myTargetDirectory = PackageUtil.findOrCreateDirectoryForPackage(module, packageName, myDefaultTargetDirectory, true);
+              myTargetDirectory = MoveClassesOrPackagesUtil.chooseDestinationPackage(myProject, packageName, myDefaultTargetDirectory);
             } else {
               errorString[0] = "No module found for directory \'" + myDefaultTargetDirectory.getVirtualFile().getPresentableUrl() + "\'";
             }

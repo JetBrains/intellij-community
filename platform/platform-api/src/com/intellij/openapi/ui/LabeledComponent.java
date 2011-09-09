@@ -20,7 +20,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ComponentWithAnchor;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.uiDesigner.core.AbstractLayout;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,7 +34,7 @@ public class LabeledComponent<Comp extends JComponent> extends JPanel implements
   private String myLabelConstraints = BorderLayout.NORTH;
 
   public LabeledComponent() {
-    super(new BorderLayout(AbstractLayout.DEFAULT_HGAP, AbstractLayout.DEFAULT_VGAP));
+    super(new BorderLayout(UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP));
     insertLabel();
   }
 

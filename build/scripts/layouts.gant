@@ -72,6 +72,9 @@ def layoutFull(String home, String targetDirectory) {
 
   def info = layout(targetDirectory) {
     dir("lib") {
+      dir("rt") {
+        fileset(dir: "${home}/lib/rt", includesfile: "${home}/lib/rt/required_for_dist.txt")
+      }
       jar("util.jar") { module("util") }
 
       jar("openapi.jar") {
@@ -112,6 +115,10 @@ def layoutFull(String home, String targetDirectory) {
         module("forms-compiler")
         module("forms_rt")
         module("notNull")
+      }
+
+      jar("compile-server.jar") {
+        module("compile-server")
       }
 
       fileset(dir: "$home/lib", includesfile: "${home}/lib/required_for_dist.txt")
@@ -404,6 +411,28 @@ def reorder(String home, String targetDirectory) {
         pathelement(location: util.output)
         pathelement(location: "$home/lib/jna.jar")
       }
+    }
+  }
+}
+
+def layout_core(String home, String target) {
+  layout(target) {
+    jar("intellij-core.jar") {
+      module("util")
+      module("core-api")
+      module("core-impl")
+      module("boot")
+      module("extensions")
+    }
+
+    jar("annotations.jar") {
+      module("annotations")
+    }
+
+    fileset(dir: "$home/lib") {
+      include(name: "guava-r09.jar")
+      include(name: "picocontainer.jar")
+
     }
   }
 }

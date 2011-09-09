@@ -204,6 +204,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
 
     setAnchor(myDir.getLabel());
     myAlternativeJREPanel.setAnchor(myModule.getLabel());
+    myCommonJavaParameters.setAnchor(myModule.getLabel());
   }
 
   public void applyEditorTo(final JUnitConfiguration configuration) {

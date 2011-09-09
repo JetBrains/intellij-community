@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.ComponentWithAnchor;
 import com.intellij.ui.SideBorder;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PairFunction;
@@ -113,6 +114,8 @@ public class UIUtil {
   private static final Color ACTIVE_HEADER_COLOR = new Color(160, 186, 213);
   private static final Color INACTIVE_HEADER_COLOR = new Color(128, 128, 128);
   private static final Color BORDER_COLOR = Color.LIGHT_GRAY;
+  public static final Color SEPARATOR_FOREGROUND_COLOR = new Color(200, 200, 200);
+  public static final Color SEPARATOR_BACKGROUND_COLOR = new Color(250, 250, 250);
 
   public static final int DEFAULT_HGAP = 10;
   public static final int DEFAULT_VGAP = 5;
@@ -2428,5 +2431,19 @@ public class UIUtil {
     return false;
   }
 
+  public static void mergeComponentsWithAnchor(ComponentWithAnchor c1,ComponentWithAnchor c2) {
+    if (c1.getAnchor() == null) {
+      c1.setAnchor(c2.getAnchor());
+    } else {
+      if (c2.getAnchor() == null) {
+        c2.setAnchor(c1.getAnchor());
+      } else {
+        JComponent anchor = c1.getAnchor().getPreferredSize().getWidth() > c2.getAnchor().getPreferredSize().getWidth() ?
+                            c1.getAnchor() : c2.getAnchor();
+        c2.setAnchor(anchor);
+        c1.setAnchor(anchor);
+      }
+    }
+  }
 }
 

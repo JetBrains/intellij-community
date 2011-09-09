@@ -13,6 +13,7 @@ class Paths {
   final distUnix
   final distMac
   final artifacts
+  final artifacts_core
 
   def Paths(String out) {
     sandbox = out
@@ -22,6 +23,7 @@ class Paths {
     distMac = "$sandbox/dist.mac.ce"
 
     artifacts = "$sandbox/artifacts"
+    artifacts_core = "$artifacts/core"
   }
 }
 
@@ -35,7 +37,7 @@ target(compile: "Compile project") {
   project.stage("Cleaning up sandbox folder")
   ant.delete(dir: paths.sandbox)
 
-  [paths.sandbox, paths.distWin, paths.distAll, paths.distUnix, paths.distMac, paths.artifacts].each {
+  [paths.sandbox, paths.distWin, paths.distAll, paths.distUnix, paths.distMac, paths.artifacts, paths.artifacts_core].each {
     ant.mkdir(dir: it)
   }
 
@@ -87,6 +89,8 @@ public def layoutAll(Map args, String home, String out) {
   layoutMac(args, home, paths)
   layoutLinux(args, home, paths)
   layoutWin(args, home, paths)
+
+  layouts.layout_core(home, paths.artifacts_core)
 }
 
 private def layoutWin(Map args, String home, Paths paths) {

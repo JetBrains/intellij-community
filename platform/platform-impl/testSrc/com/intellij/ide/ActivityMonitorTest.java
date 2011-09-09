@@ -16,6 +16,7 @@
 package com.intellij.ide;
 
 import com.intellij.mock.MockProject;
+import com.intellij.mock.MockProjectEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.BusyObject;
 import junit.framework.TestCase;
@@ -41,11 +42,11 @@ public class ActivityMonitorTest extends TestCase {
   public void testReady() {
     assertReady(null);
 
-    MockProject project1 = new MockProject();
+    MockProjectEx project1 = new MockProjectEx();
     assertReady(project1);
     assertFalse(myMonitor.hasObjectFor(project1));
 
-    MockProject project2 = new MockProject();
+    MockProjectEx project2 = new MockProjectEx();
     assertReady(project2);
     assertFalse(myMonitor.hasObjectFor(project2));
 

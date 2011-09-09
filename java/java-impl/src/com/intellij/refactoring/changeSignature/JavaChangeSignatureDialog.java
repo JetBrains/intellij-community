@@ -17,12 +17,14 @@ package com.intellij.refactoring.changeSignature;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -37,10 +39,7 @@ import com.intellij.refactoring.ui.VisibilityPanelBase;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.ui.AnActionButton;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.TableColumnAnimator;
-import com.intellij.ui.ToolbarDecorator;
+import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import com.intellij.ui.table.TableView;
 import com.intellij.ui.treeStructure.Tree;
@@ -48,6 +47,10 @@ import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.VisibilityUtil;
+import com.intellij.util.ui.DialogUtil;
+import com.intellij.util.ui.JBTableRow;
+import com.intellij.util.ui.JBTableRowEditor;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,6 +58,9 @@ import javax.swing.*;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableColumn;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -185,6 +191,147 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     final PsiParameterList parameterList = ((JavaMethodDescriptor)descriptor).getMethod().getParameterList();
     return new JavaParameterTableModel(parameterList, myDefaultValueContext, this);
   }
+
+  @Override
+  protected boolean isListTableViewSupported() {
+    return true;
+  }
+
+  @Override
+  protected JComponent getRowPresentation(ParameterTableModelItemBase<ParameterInfoImpl> item, boolean selected, boolean focused) {
+    final JPanel panel = new JPanel(new BorderLayout());
+    String text = item.parameter.getTypeText() + " " + item.parameter.getName();
+    final String defaultValue = item.parameter.getDefaultValue();
+    if (StringUtil.isNotEmpty(defaultValue)) {
+      text += " = " + defaultValue + ";";
+    }
+    if (item.parameter.isUseAnySingleVariable()) {
+      text += "  // use any var";
+    }
+    final EditorTextField field = new EditorTextField(text, getProject(), getFileType()) {
+      @Override
+      protected boolean shouldHaveBorder() {
+        return false;
+      }
+    };
+    if (selected) {
+      panel.setBackground(UIUtil.getTableSelectionBackground());
+      field.setAsRendererWithSelection(UIUtil.getTableSelectionBackground(), UIUtil.getTableSelectionForeground());
+    } else {
+      panel.setBackground(UIUtil.getTableBackground());
+    }
+    panel.add(field, BorderLayout.CENTER);
+    return panel;
+  }
+
+  @Override
+  protected JBTableRowEditor getTableEditor(final JTable t, final ParameterTableModelItemBase<ParameterInfoImpl> item) {
+    return new JBTableRowEditor() {
+      private EditorTextField myTypeEditor;
+      private EditorTextField myNameEditor;
+      private EditorTextField myDefaultValueEditor;
+      private JCheckBox myAnyVar;
+      
+      @Override
+      public void prepareEditor(JTable table, int row) {
+        setLayout(new BorderLayout());
+
+        final JPanel typePanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 4, 2, true, false));
+        final Document document = PsiDocumentManager.getInstance(getProject()).getDocument(item.typeCodeFragment);
+        myTypeEditor = new EditorTextField(document, getProject(), getFileType());
+        final JLabel typeLabel = new JLabel("&Type");
+        DialogUtil.registerMnemonic(typeLabel, myTypeEditor, '&');
+        typePanel.add(typeLabel);
+        typePanel.add(myTypeEditor);
+        typePanel.setPreferredSize(new Dimension(t.getWidth() / 3, -1));
+        add(typePanel, BorderLayout.WEST);
+
+        final JPanel namePanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 4, 2, true, false));
+        myNameEditor = new EditorTextField(item.parameter.getName(), getProject(), getFileType());
+        final JLabel nameLabel = new JLabel("&Name");
+        DialogUtil.registerMnemonic(nameLabel, myNameEditor, '&');
+        namePanel.add(nameLabel);
+        namePanel.add(myNameEditor);
+        add(namePanel, BorderLayout.CENTER);
+
+        if (!item.isEllipsisType() && item.parameter.getOldIndex() == -1) {
+          final JPanel additionalPanel = new JPanel(new BorderLayout());
+          final JPanel defaultValuePanel = new JPanel(new BorderLayout());
+          final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(item.defaultValueCodeFragment);
+          myDefaultValueEditor = new EditorTextField(doc, getProject(), getFileType());
+          ((PsiExpressionCodeFragment)item.defaultValueCodeFragment).setExpectedType(getRowType(item));
+          final JLabel defaultValueLabel = new JLabel("&Default value:");
+          myDefaultValueEditor.setPreferredSize(new Dimension(table.getWidth() / 3, -1));
+          DialogUtil.registerMnemonic(defaultValueLabel, myDefaultValueEditor, '&');
+          defaultValuePanel.add(defaultValueLabel, BorderLayout.WEST);
+          defaultValuePanel.add(myDefaultValueEditor, BorderLayout.CENTER);
+          additionalPanel.add(defaultValuePanel, BorderLayout.CENTER);
+
+          if (isGenerateDelegate()) {
+            myAnyVar = new JCheckBox("Use &Any Var");
+            DialogUtil.registerMnemonic(myAnyVar, '&');
+            myAnyVar.addActionListener(new ActionListener() {
+              @Override
+              public void actionPerformed(ActionEvent e) {
+                item.parameter.setUseAnySingleVariable(myAnyVar.isSelected());
+              }
+            });
+            additionalPanel.setPreferredSize(new Dimension(t.getWidth() / 3, -1));
+            additionalPanel.add(myAnyVar, BorderLayout.EAST);
+          }
+          add(additionalPanel, BorderLayout.EAST);
+        }        
+      }
+
+      @Override
+      public JBTableRow getValue() {
+        return new JBTableRow() {
+          @Override
+          public Object getValueAt(int column) {
+            switch (column) {
+              case 0: return item.typeCodeFragment;
+              case 1: return myNameEditor.getText().trim();
+              case 2: return item.defaultValueCodeFragment;
+              case 3: return myAnyVar != null && myAnyVar.isSelected();
+            }
+            return null;
+          }
+        };
+      }
+
+      @Override
+      public JComponent getPreferredFocusedComponent() {
+        return myTypeEditor;
+      }
+
+      @Override
+      public JComponent[] getFocusableComponents() {
+        final List<JComponent> focusable = new ArrayList<JComponent>();
+        focusable.add(myTypeEditor);
+        focusable.add(myNameEditor);
+        if (myDefaultValueEditor != null) {
+          focusable.add(myDefaultValueEditor);
+        }
+        if (myAnyVar != null) {
+          focusable.add(myAnyVar);
+        }
+        return focusable.toArray(new JComponent[focusable.size()]);
+      }
+    };
+  }
+  
+  @Nullable
+  private static PsiType getRowType(ParameterTableModelItemBase<ParameterInfoImpl> item) {
+    try {
+      return ((PsiTypeCodeFragment)item.typeCodeFragment).getType();
+    }
+    catch (PsiTypeCodeFragment.TypeSyntaxException e) {
+      return null;
+    }
+    catch (PsiTypeCodeFragment.NoTypeException e) {
+      return null;
+    }
+  }    
 
   @Override
   protected void customizeParametersTable(TableView<ParameterTableModelItemBase<ParameterInfoImpl>> table) {

@@ -17,14 +17,11 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.impl.source.tree.LeafElement;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +32,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.List;
 
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 
@@ -142,11 +138,6 @@ public class GrLiteralImpl extends GrExpressionImpl implements GrLiteral, PsiLan
       return new PsiMultiReference(references, this);
     }
     return null;
-  }
-
-  public List<Pair<PsiElement, TextRange>> getInjectedPsi() {
-    if (!(getValue() instanceof String)) return null;
-    return InjectedLanguageUtil.getInjectedPsiFiles(this);
   }
 
   @Override

@@ -210,12 +210,14 @@ public class PerformanceWatcher implements ApplicationComponent {
     OutputStreamWriter writer = new OutputStreamWriter(fos);
     try {
       final StackTraceElement[] edtStack = ThreadDumper.dumpThreadsToFile(myThreadMXBean, writer);
-      if (myStacktraceCommonPart == null) {
-        myStacktraceCommonPart = new ArrayList<StackTraceElement>();
-        Collections.addAll(myStacktraceCommonPart, edtStack);
-      }
-      else {
-        updateStacktraceCommonPart(edtStack);
+      if (edtStack != null) {
+        if (myStacktraceCommonPart == null) {
+          myStacktraceCommonPart = new ArrayList<StackTraceElement>();
+          Collections.addAll(myStacktraceCommonPart, edtStack);
+        }
+        else {
+          updateStacktraceCommonPart(edtStack);
+        }
       }
     }
     finally {

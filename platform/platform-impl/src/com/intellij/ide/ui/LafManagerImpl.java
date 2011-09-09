@@ -437,6 +437,15 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       updateUI(frame);
     }
     fireLookAndFeelChanged();
+    
+    fixSeparatorColor(uiDefaults);
+  }
+
+  private static void fixSeparatorColor(UIDefaults uiDefaults) {
+    if (UIUtil.isUnderAquaLookAndFeel()) {
+      uiDefaults.put("Separator.background", UIUtil.SEPARATOR_BACKGROUND_COLOR);
+      uiDefaults.put("Separator.foreground", UIUtil.SEPARATOR_FOREGROUND_COLOR);
+    }
   }
 
   /**

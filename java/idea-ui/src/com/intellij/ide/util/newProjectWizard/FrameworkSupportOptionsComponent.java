@@ -52,9 +52,7 @@ public class FrameworkSupportOptionsComponent {
     layout.setVerticalFill(true);
     myMainPanel = new JPanel(layout);
 
-    JComponent separator = SeparatorFactory.createSeparator(node.getTitle() + " Settings", null);
-    separator.setBorder(IdeBorderFactory.createEmptyBorder(0, 0, 5, 5));
-    myMainPanel.add(separator);
+    myMainPanel.setBorder(IdeBorderFactory.createTitledBorder(node.getTitle() + " Settings", false, true, true));
 
     final JComponent component = myConfigurable.getComponent();
     if (component != null) {

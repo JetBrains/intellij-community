@@ -47,7 +47,7 @@ public class DeferredIconImpl<T> implements DeferredIcon {
   private boolean myNeedReadAction;
   private boolean myDone;
 
-  private IconDisposer<T> myDisposer;
+  private IconListener<T> myEvalListener;
 
   public DeferredIconImpl(Icon baseIcon, T param, Function<T, Icon> evaluator) {
     this(baseIcon, param, true, evaluator);
@@ -109,14 +109,15 @@ public class DeferredIconImpl<T> implements DeferredIcon {
       JobUtil.submitToJobThread(Job.DEFAULT_PRIORITY, new Runnable() {
         public void run() {
           int oldWidth = myDelegateIcon.getIconWidth();
-          myDelegateIcon = evaluate();
+          final Icon result = evaluate();
+          myDelegateIcon = result;
 
           final boolean shouldRevalidate = Registry.is("ide.tree.deferredicon.invalidates.cache") && myDelegateIcon.getIconWidth() != oldWidth;
 
           //noinspection SSBasedInspection
           SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-              setDone();
+              setDone(result);
 
               Component actualTarget = target.get();
               if (SwingUtilities.getWindowAncestor(actualTarget) == null) {
@@ -157,9 +158,9 @@ public class DeferredIconImpl<T> implements DeferredIcon {
     }
   }
 
-  private void setDone() {
-    if (myDisposer != null) {
-      myDisposer.dispose(myParam);
+  private void setDone(Icon result) {
+    if (myEvalListener != null) {
+      myEvalListener.evalDone(myParam, result);
     }
 
     myDone = true;
@@ -271,15 +272,13 @@ public class DeferredIconImpl<T> implements DeferredIcon {
   }
 
 
-  public DeferredIconImpl setDisposer(IconDisposer<T> disposer) {
-    myDisposer = disposer;
+  public DeferredIconImpl setDoneListener(IconListener<T> disposer) {
+    myEvalListener = disposer;
     return this;
   }
 
-  public interface IconDisposer<T> {
-
-    void dispose(T key);
-
+  public interface IconListener<T> {
+    void evalDone(T key, Icon result);
   }
 
 }

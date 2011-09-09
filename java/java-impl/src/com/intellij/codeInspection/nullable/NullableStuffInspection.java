@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,13 +47,10 @@ import java.awt.event.ActionListener;
 import java.util.List;
 
 public class NullableStuffInspection extends BaseLocalInspectionTool {
-  @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_NULLABLE_METHOD_OVERRIDES_NOTNULL = true;
   @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_NOT_ANNOTATED_METHOD_OVERRIDES_NOTNULL = true;
   @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_NOTNULL_PARAMETER_OVERRIDES_NULLABLE = true;
-  @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_NOT_ANNOTATED_PARAMETER_OVERRIDES_NOTNULL = true;
   @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_NOT_ANNOTATED_GETTER = true;
-  @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_NOT_ANNOTATED_SETTER_PARAMETER = true;
-  @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true;
+  @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true; // remains for test
   @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_NULLS_PASSED_TO_NON_ANNOTATED_METHOD = true;
 
   @NotNull
@@ -135,7 +132,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
             assert parameters.length == 1 : setter.getText();
             final PsiParameter parameter = parameters[0];
             assert parameter != null : setter.getText();
-            if (REPORT_NOT_ANNOTATED_SETTER_PARAMETER && !AnnotationUtil.isAnnotated(parameter, manager.getAllAnnotations()) && !TypeConversionUtil.isPrimitiveAndNotNull(parameter.getType())) {
+            if (REPORT_NOT_ANNOTATED_GETTER && !AnnotationUtil.isAnnotated(parameter, manager.getAllAnnotations()) && !TypeConversionUtil.isPrimitiveAndNotNull(parameter.getType())) {
               final PsiIdentifier nameIdentifier1 = parameter.getNameIdentifier();
               assert nameIdentifier1 != null : parameter;
               holder.registerProblem(nameIdentifier1,
@@ -197,7 +194,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
                 if (!method.equals(parameter.getDeclarationScope())) {
                   return true;
                 }
-                if (REPORT_NOT_ANNOTATED_SETTER_PARAMETER && !AnnotationUtil.isAnnotated(parameter, manager.getAllAnnotations())) {
+                if (REPORT_NOT_ANNOTATED_GETTER && !AnnotationUtil.isAnnotated(parameter, manager.getAllAnnotations())) {
                   final PsiIdentifier nameIdentifier2 = parameter.getNameIdentifier();
                   assert nameIdentifier2 != null : parameter;
                   holder.registerProblem(nameIdentifier2, InspectionsBundle
@@ -310,7 +307,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
     for (MethodSignatureBackedByPsiMethod superMethodSignature : superMethodSignatures) {
       PsiMethod superMethod = superMethodSignature.getMethod();
       if (!reported_nullable_method_overrides_notnull
-          && REPORT_NULLABLE_METHOD_OVERRIDES_NOTNULL
+          && REPORT_NOTNULL_PARAMETER_OVERRIDES_NULLABLE
           && annotated.isDeclaredNullable
           && AnnotationUtil.isNotNull(superMethod)) {
         reported_nullable_method_overrides_notnull = true;
@@ -330,7 +327,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
                                InspectionsBundle.message("inspection.nullable.problems.method.overrides.NotNull"),
                                ProblemHighlightType.GENERIC_ERROR_OR_WARNING, createAnnotateMethodFix(defaultNotNull, annotationsToRemove));
       }
-      if (REPORT_NOTNULL_PARAMETER_OVERRIDES_NULLABLE || REPORT_NOT_ANNOTATED_PARAMETER_OVERRIDES_NOTNULL) {
+      if (REPORT_NOTNULL_PARAMETER_OVERRIDES_NULLABLE || REPORT_NOT_ANNOTATED_METHOD_OVERRIDES_NOTNULL) {
         PsiParameter[] superParameters = superMethod.getParameterList().getParameters();
         if (superParameters.length != parameters.length) {
           continue;
@@ -346,7 +343,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
                                    InspectionsBundle.message("inspection.nullable.problems.NotNull.parameter.overrides.Nullable"),
                                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
           }
-          if (!reported_not_annotated_parameter_overrides_notnull[i] && REPORT_NOT_ANNOTATED_PARAMETER_OVERRIDES_NOTNULL) {
+          if (!reported_not_annotated_parameter_overrides_notnull[i] && REPORT_NOT_ANNOTATED_METHOD_OVERRIDES_NOTNULL) {
             if (!AnnotationUtil.isAnnotated(parameter, nullableManager.getAllAnnotations()) &&
                 nullableManager.isNotNull(superParameter, false)) {
               reported_not_annotated_parameter_overrides_notnull[i] = true;
@@ -452,19 +449,15 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
 
     @NotNull
     public String getName() {
-      return InspectionsBundle.message("annotate.overridden.methods.as.notnull");
+      return InspectionsBundle.message("annotate.overridden.methods.as.notnull", ClassUtil.extractClassName(myAnnotation));
     }
   }
 
   private class OptionsPanel extends JPanel {
     private JCheckBox myNNParameterOverridesN;
     private JCheckBox myNAMethodOverridesNN;
-    private JCheckBox myNMethodOverridesNN;
-    private JCheckBox myNAParameterOverridesNN;
     private JPanel myPanel;
-    private JCheckBox myReportNotAnnotatedSetterParameter;
     private JCheckBox myReportNotAnnotatedGetter;
-    private JCheckBox myReportAnnotationNotPropagated;
     private JCheckBox myReportNullsPassedToNonAnnotatedParameter;
 
     private OptionsPanel() {
@@ -477,12 +470,8 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
         }
       };
       myNAMethodOverridesNN.addActionListener(actionListener);
-      myNMethodOverridesNN.addActionListener(actionListener);
       myNNParameterOverridesN.addActionListener(actionListener);
-      myNAParameterOverridesNN.addActionListener(actionListener);
-      myReportNotAnnotatedSetterParameter.addActionListener(actionListener);
       myReportNotAnnotatedGetter.addActionListener(actionListener);
-      myReportAnnotationNotPropagated.addActionListener(actionListener);
       myReportNullsPassedToNonAnnotatedParameter.addActionListener(actionListener);
       reset();
     }
@@ -490,22 +479,15 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
     private void reset() {
       myNNParameterOverridesN.setSelected(REPORT_NOTNULL_PARAMETER_OVERRIDES_NULLABLE);
       myNAMethodOverridesNN.setSelected(REPORT_NOT_ANNOTATED_METHOD_OVERRIDES_NOTNULL);
-      myNMethodOverridesNN.setSelected(REPORT_NULLABLE_METHOD_OVERRIDES_NOTNULL);
-      myNAParameterOverridesNN.setSelected(REPORT_NOT_ANNOTATED_PARAMETER_OVERRIDES_NOTNULL);
       myReportNotAnnotatedGetter.setSelected(REPORT_NOT_ANNOTATED_GETTER);
-      myReportNotAnnotatedSetterParameter.setSelected(REPORT_NOT_ANNOTATED_SETTER_PARAMETER);
-      myReportAnnotationNotPropagated.setSelected(REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS);
       myReportNullsPassedToNonAnnotatedParameter.setSelected(REPORT_NULLS_PASSED_TO_NON_ANNOTATED_METHOD);
     }
 
     private void apply() {
       REPORT_NOT_ANNOTATED_METHOD_OVERRIDES_NOTNULL = myNAMethodOverridesNN.isSelected();
       REPORT_NOTNULL_PARAMETER_OVERRIDES_NULLABLE = myNNParameterOverridesN.isSelected();
-      REPORT_NULLABLE_METHOD_OVERRIDES_NOTNULL = myNMethodOverridesNN.isSelected();
-      REPORT_NOT_ANNOTATED_PARAMETER_OVERRIDES_NOTNULL = myNAParameterOverridesNN.isSelected();
-      REPORT_NOT_ANNOTATED_SETTER_PARAMETER = myReportNotAnnotatedSetterParameter.isSelected();
       REPORT_NOT_ANNOTATED_GETTER = myReportNotAnnotatedGetter.isSelected();
-      REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = myReportAnnotationNotPropagated.isSelected();
+      REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = REPORT_NOT_ANNOTATED_METHOD_OVERRIDES_NOTNULL;
       REPORT_NULLS_PASSED_TO_NON_ANNOTATED_METHOD = myReportNullsPassedToNonAnnotatedParameter.isSelected();
     }
   }

@@ -184,6 +184,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
 
     setAnchor(outputDirectory.getLabel());
     alternateJDK.setAnchor(moduleClasspath.getLabel());
+    commonJavaParameters.setAnchor(moduleClasspath.getLabel());
   }
 
   private void evaluateModuleClassPath() {
