@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ import java.util.List;
  */
 public class AnnotateMethodFix implements LocalQuickFix {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.AnnotateMethodFix");
-  private final String myAnnotation;
+  protected final String myAnnotation;
   private final String[] myAnnotationsToRemove;
 
   public AnnotateMethodFix(final String fqn, String... annotationsToRemove) {
