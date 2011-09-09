@@ -381,9 +381,13 @@ public class CompleteReferenceExpression {
       if (!result.isStaticsOK() || !result.isAccessible()) return;
       if (mySkipPackages && result.getElement() instanceof PsiPackage) return;
 
+      final PsiElement element = result.getElement();
+      if (element instanceof PsiVariable && !myMatcher.prefixMatches(((PsiVariable)element).getName())) {
+        return;
+      }
+
       addCandidate(result);
 
-      final PsiElement element = result.getElement();
       if (element instanceof PsiMethod) {
         processProperty((PsiMethod)element, result);
       }
