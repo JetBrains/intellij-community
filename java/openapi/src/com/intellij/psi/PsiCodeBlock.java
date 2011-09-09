@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,8 @@ public interface PsiCodeBlock extends PsiElement, PsiModifiableCodeBlock {
   PsiCodeBlock[] EMPTY_ARRAY = new PsiCodeBlock[0];
 
   /**
-   * Returns the array of statements contained in the block.
+   * Returns the array of statements contained in the block.<br/>
+   * Please note that this method doesn't return comments which are not part of statements.
    *
    * @return the array of statements.
    */

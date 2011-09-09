@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.Set;
@@ -57,7 +58,9 @@ public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCode
   }
 
   public PsiElement getFirstBodyElement() {
-    final PsiElement nextSibling = getLBrace().getNextSibling();
+    final PsiJavaToken lBrace = getLBrace();
+    if (lBrace == null) return null;
+    final PsiElement nextSibling = lBrace.getNextSibling();
     return nextSibling == getRBrace() ? null : nextSibling;
   }
 
@@ -82,7 +85,8 @@ public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCode
   private volatile Set<String> myClassesSet = null;
   private volatile boolean myConflict = false;
 
-  // return Pair(classesset, localsSet) or null if there was conflict
+  // return Pair(classes, locals) or null if there was conflict
+  @Nullable
   private Pair<Set<String>, Set<String>> buildMaps() {
     Set<String> set1 = myClassesSet;
     Set<String> set2 = myVariablesSet;
@@ -223,7 +227,7 @@ public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCode
   }
 
   public boolean shouldChangeModificationCount(PsiElement place) {
-    PsiElement pparent = getParent();
-    return !(pparent instanceof PsiMethod || pparent instanceof PsiClassInitializer);
+    PsiElement parent = getParent();
+    return !(parent instanceof PsiMethod || parent instanceof PsiClassInitializer);
   }
 }
