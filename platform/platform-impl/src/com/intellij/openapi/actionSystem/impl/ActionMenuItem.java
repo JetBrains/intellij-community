@@ -23,10 +23,8 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.actionholder.ActionRef;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.SizedIcon;
 import com.intellij.ui.plaf.beg.BegMenuItemUI;
@@ -222,7 +220,7 @@ public class ActionMenuItem extends JMenuItem {
     }
 
     public void actionPerformed(final ActionEvent e) {
-      IdeFocusManager fm = IdeFocusManager.findInstanceByContext(myContext);
+      final IdeFocusManager fm = IdeFocusManager.findInstanceByContext(myContext);
       final ActionCallback typeahead = new ActionCallback();
       fm.typeAheadUntil(typeahead);
       fm.runOnOwnContext(myContext, new Runnable() {
@@ -241,12 +239,22 @@ public class ActionMenuItem extends JMenuItem {
               return;
             }
 
-            SwingUtilities.invokeLater(new Runnable() {
+            SimpleTimer.getInstance().setUp(new Runnable() {
               @Override
               public void run() {
-                typeahead.setDone();
+                SwingUtilities.invokeLater(new Runnable() {
+                  @Override
+                  public void run() {
+                    fm.doWhenFocusSettlesDown(new Runnable() {
+                      @Override
+                      public void run() {
+                        typeahead.setDone();
+                      }
+                    });
+                  }
+                });
               }
-            });
+            }, Registry.intValue("actionSystem.typeAheadTimeAfterPopupAction"));
 
             action.actionPerformed(event);
             actionManager.queueActionPerformedEvent(action, myContext, event);
