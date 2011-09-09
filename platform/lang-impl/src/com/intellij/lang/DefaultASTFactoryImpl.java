@@ -15,33 +15,13 @@
  */
 package com.intellij.lang;
 
-import com.intellij.psi.impl.source.tree.*;
+import com.intellij.core.CoreASTFactory;
+import com.intellij.psi.impl.source.tree.LeafElement;
+import com.intellij.psi.impl.source.tree.PsiCommentImpl;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.IFileElementType;
-import com.intellij.psi.tree.ILazyParseableElementType;
 import org.jetbrains.annotations.NotNull;
 
-public class DefaultASTFactoryImpl extends ASTFactory implements DefaultASTFactory {
-  @Override
-  @NotNull
-  public LazyParseableElement createLazy(final ILazyParseableElementType type, final CharSequence text) {
-    if (type instanceof IFileElementType) {
-      return new FileElement(type, text);
-    }
-
-    return new LazyParseableElement(type, text);
-  }
-
-  @Override
-  @NotNull
-  public CompositeElement createComposite(final IElementType type) {
-    if (type instanceof IFileElementType) {
-      return new FileElement(type, null);
-    }
-
-    return new CompositeElement(type);
-  }
-
+public class DefaultASTFactoryImpl extends CoreASTFactory implements DefaultASTFactory {
   @Override
   @NotNull
   public LeafElement createLeaf(final IElementType type, final CharSequence text) {
@@ -53,6 +33,6 @@ public class DefaultASTFactoryImpl extends ASTFactory implements DefaultASTFacto
       }
     }
 
-    return new LeafPsiElement(type, text);
+    return super.createLeaf(type, text);
   }
 }
