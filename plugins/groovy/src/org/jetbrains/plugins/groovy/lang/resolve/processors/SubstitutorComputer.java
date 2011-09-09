@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.resolve.processors;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.Nullable;
@@ -26,9 +27,11 @@ import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
@@ -70,7 +73,7 @@ public abstract class SubstitutorComputer {
     myAllVariants = allVariants;
     myPlace = place;
 
-    if (canBexExitPoint(place)) {
+    if (canBeExitPoint(place)) {
       myFlowOwner = ControlFlowUtils.findControlFlowOwner(place);
     }
     else {
@@ -78,7 +81,28 @@ public abstract class SubstitutorComputer {
     }
   }
 
-  private static boolean canBexExitPoint(PsiElement place) {
+  
+  @Nullable
+  protected PsiType inferContextType() {
+    PsiElement place = getPlaceToInferContext();
+
+    final PsiElement parent = place.getParent();
+    if (parent instanceof GrReturnStatement || exitsContains(place)) {
+      final GrMethod method = PsiTreeUtil.getParentOfType(parent, GrMethod.class, true, GrClosableBlock.class);
+      if (method != null) {
+        return method.getReturnType();
+      }
+    }
+    else if (parent instanceof GrAssignmentExpression && place.equals(((GrAssignmentExpression)parent).getRValue())) {
+      return ((GrAssignmentExpression)parent).getLValue().getType();
+    }
+    else if (parent instanceof GrVariable) {
+      return ((GrVariable)parent).getDeclaredType();
+    }
+    return null;
+  }
+
+  private static boolean canBeExitPoint(PsiElement place) {
     while (place != null) {
       if (place instanceof GrMethod || place instanceof GrClosableBlock || place instanceof GrClassInitializer) return true;
       if (place instanceof GrThrowStatement || place instanceof GrTypeDefinitionBody || place instanceof GroovyFile) return false;
@@ -193,27 +217,28 @@ public abstract class SubstitutorComputer {
                                           PsiType lType,
                                           PsiSubstitutor substitutor,
                                           PsiResolveHelper helper) {
-    if (myPlace != null) {
-      final PsiType inferred =
-        helper.getSubstitutionForTypeParameter(typeParameter, lType, getContextType(), false, LanguageLevel.HIGHEST);
-      if (inferred != PsiType.NULL) {
-        return substitutor.put(typeParameter, inferred);
-      }
+    if (myPlace == null) return substitutor;
+
+    final PsiType inferred = helper.getSubstitutionForTypeParameter(typeParameter, lType, inferContextType(), false, LanguageLevel.HIGHEST);
+    if (inferred != PsiType.NULL) {
+      return substitutor.put(typeParameter, inferred);
     }
     return substitutor;
   }
 
-  @Nullable
-  protected abstract PsiType getContextType();
+  /**
+   * should return place for which expected type will be inferred
+   * @see org.jetbrains.plugins.groovy.lang.resolve.processors.SubstitutorComputer#inferContextType()
+   */
+  protected abstract PsiElement getPlaceToInferContext();
 
-  private Set<GrStatement> myExitPoints;
-
-  protected boolean exitsContains(PsiElement call) {
+  private Set<PsiElement> myExitPoints;
+  protected boolean exitsContains(PsiElement place) {
     if (myFlowOwner == null) return false;
     if (myExitPoints == null) {
-      myExitPoints = new HashSet<GrStatement>();
+      myExitPoints = new HashSet<PsiElement>();
       myExitPoints.addAll(ControlFlowUtils.collectReturns(myFlowOwner));
     }
-    return myExitPoints.contains(call);
+    return myExitPoints.contains(place);
   }
 }

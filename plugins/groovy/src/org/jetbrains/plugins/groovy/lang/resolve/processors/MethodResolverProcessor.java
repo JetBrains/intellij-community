@@ -75,7 +75,12 @@ public class MethodResolverProcessor extends ResolverProcessor {
     myAllVariants = allVariants;
     myByShape = byShape;
 
-    mySubstitutorComputer = new MethodSubstitutorComputer(thisType, argumentTypes, typeArguments, allVariants, place);
+    mySubstitutorComputer = new SubstitutorComputer(thisType, argumentTypes, typeArguments, allVariants, place) {
+      @Override
+      protected PsiElement getPlaceToInferContext() {
+        return myPlace.getParent();
+      }
+    };
     myTypedContext = GppTypeConverter.hasTypedContext(myPlace);
   }
 

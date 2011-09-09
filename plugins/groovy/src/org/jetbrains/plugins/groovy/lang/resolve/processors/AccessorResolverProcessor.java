@@ -42,7 +42,12 @@ public class AccessorResolverProcessor extends ResolverProcessor {
                                    @NotNull PsiType[] typeArguments) {
     super(name, RESOLVE_KINDS_METHOD, place, PsiType.EMPTY_ARRAY);
     mySearchForGetter = searchForGetter;
-    mySubstitutorComputer = byShape ? null : new AccessorSubstitutorComputer(thisType, typeArguments, place);
+    mySubstitutorComputer = byShape ? null : new SubstitutorComputer(thisType, PsiType.EMPTY_ARRAY, typeArguments, false, place) {
+      @Override
+      protected PsiElement getPlaceToInferContext() {
+        return myPlace;
+      }
+    };
   }
 
   public boolean execute(PsiElement element, ResolveState state) {
