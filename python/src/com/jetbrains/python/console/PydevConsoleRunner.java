@@ -109,7 +109,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
                                               final Executor defaultExecutor,
                                               final RunContentDescriptor contentDescriptor) {
     AnAction backspaceHandlingAction = createBackspaceHandlingAction();
-    toolbarActions.add(backspaceHandlingAction);
+    //toolbarActions.add(backspaceHandlingAction);
     AnAction interruptAction = createInterruptAction();
     List<AnAction> actions = super.fillToolBarActions(toolbarActions, defaultExecutor, contentDescriptor);
     actions.add(backspaceHandlingAction);

@@ -1,4 +1,4 @@
-from django_debug import is_django_render_call, get_template_file_name, get_template_line, is_django_suspended, suspend_django
+from django_debug import is_django_render_call, get_template_file_name, get_template_line, is_django_suspended, suspend_django, is_django_resolve_call, is_django_context_get_call
 from django_debug import find_django_render_frame
 from django_frame import just_raised
 from django_frame import is_django_exception_break_context
@@ -194,11 +194,12 @@ class PyDBFrame:
         try:
             django_stop = False
             if info.pydev_step_cmd == CMD_STEP_INTO:
+                stop = event in ('line', 'return')
                 if is_django_suspended(thread):
-                    django_stop = event == 'call' and is_django_render_call(frame)
-                    stop = False
-                else:
-                    stop = event in ('line', 'return')
+                    #django_stop = event == 'call' and is_django_render_call(frame)
+                    stop = stop and is_django_resolve_call(frame.f_back) and not is_django_context_get_call(frame)
+                    if stop:
+                        info.pydev_django_resolve_frame = 1 #we remember that we've go into python code from django rendering frame
 
             elif info.pydev_step_cmd == CMD_STEP_OVER:
                 if is_django_suspended(thread):
@@ -206,7 +207,30 @@ class PyDBFrame:
 
                     stop = False
                 else:
+                    if event == 'return' and info.pydev_django_resolve_frame is not None and is_django_resolve_call(frame.f_back):
+                        #we return to Django suspend mode and should not stop before django rendering frame
+                        info.pydev_step_stop = info.pydev_django_resolve_frame
+                        info.pydev_django_resolve_frame = None
+                        thread.additionalInfo.suspend_type = DJANGO_SUSPEND
+
+
                     stop = info.pydev_step_stop is frame and event in ('line', 'return')
+
+            elif info.pydev_step_cmd == CMD_SMART_STEP_INTO:
+                stop = False
+                if info.pydev_smart_step_stop is frame:
+                    info.pydev_func_name = None
+                    info.pydev_smart_step_stop = None
+
+                if event == 'line' or event == 'exception':
+                    curr_func_name = frame.f_code.co_name
+
+                    #global context is set with an empty name
+                    if curr_func_name in ('?', '<module>') or curr_func_name is None:
+                        curr_func_name = ''
+
+                    if curr_func_name == info.pydev_func_name:
+                            stop = True
 
             elif info.pydev_step_cmd == CMD_STEP_RETURN:
                 stop = event == 'return' and info.pydev_step_stop is frame

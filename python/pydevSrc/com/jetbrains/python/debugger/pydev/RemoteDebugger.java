@@ -270,8 +270,8 @@ public class RemoteDebugger {
   }
 
   public void execute(@NotNull final AbstractCommand command) {
-    if (command instanceof ResumeCommand) {
-      final String threadId = ((ResumeCommand)command).getThreadId();
+    if (command instanceof ResumeOrStepCommand) {
+      final String threadId = ((ResumeOrStepCommand)command).getThreadId();
       clearTempVariables(threadId);
     }
 

@@ -7,7 +7,7 @@ import com.intellij.ultimate.PluginVerifier;
 import com.intellij.ultimate.UltimateVerifier;
 import com.jetbrains.pyqt.QtTranslationsFileType;
 import com.jetbrains.pyqt.QtUIFileType;
-import com.jetbrains.python.cython.CythonFileType;
+import com.jetbrains.cython.CythonFileType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 

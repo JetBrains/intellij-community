@@ -8,7 +8,6 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -86,9 +85,8 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
    */
   @NotNull
   public ResolveResult[] multiResolve(final boolean incompleteCode) {
-    final PsiManager manager = getElement().getManager();
-    if (USE_CACHE && manager instanceof PsiManagerImpl) {
-      final ResolveCache cache = ((PsiManagerImpl)manager).getResolveCache();
+    if (USE_CACHE) {
+      final ResolveCache cache = ResolveCache.getInstance(getElement().getProject());
       return cache.resolveWithCaching(this, CachingResolver.INSTANCE, false, incompleteCode);
     }
     else {

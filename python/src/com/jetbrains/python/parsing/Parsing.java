@@ -71,4 +71,10 @@ public class Parsing {
   protected void nextToken() {
     myBuilder.advanceLexer();
   }
+
+  protected static void buildTokenElement(IElementType type, PsiBuilder builder) {
+    final PsiBuilder.Marker marker = builder.mark();
+    builder.advanceLexer();
+    marker.done(type);
+  }
 }

@@ -26,6 +26,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XValueChildrenList;
+import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import com.jetbrains.django.util.DjangoUtil;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.django.DjangoExceptionBreakpointHandler;
@@ -64,6 +65,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   private boolean myClosing = false;
 
   private PyPositionConverter myPositionConverter;
+  private XSmartStepIntoHandler<?> mySmartStepIntoHandler;
 
   public PyDebugProcess(final @NotNull XDebugSession session,
                         @NotNull final ServerSocket serverSocket,
@@ -75,6 +77,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     myBreakpointHandlers = new XBreakpointHandler[]{new PyLineBreakpointHandler(this), new PyExceptionBreakpointHandler(this),
       new DjangoLineBreakpointHandler(this), new DjangoExceptionBreakpointHandler(this)};
     myEditorsProvider = new PyDebuggerEditorsProvider();
+    mySmartStepIntoHandler = new PySmartStepIntoHandler(this);
     myProcessHandler = processHandler;
     myExecutionConsole = executionConsole;
     if (myProcessHandler != null) {
@@ -133,6 +136,11 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   @NotNull
   public ExecutionConsole createConsole() {
     return myExecutionConsole;
+  }
+
+  @Override
+  public XSmartStepIntoHandler<?> getSmartStepIntoHandler() {
+    return mySmartStepIntoHandler;
   }
 
   @Override
@@ -228,17 +236,27 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
   @Override
   public void startStepOver() {
-    resume(ResumeCommand.Mode.STEP_OVER);
+    resumeOrStep(ResumeOrStepCommand.Mode.STEP_OVER);
   }
 
   @Override
   public void startStepInto() {
-    resume(ResumeCommand.Mode.STEP_INTO);
+    resumeOrStep(ResumeOrStepCommand.Mode.STEP_INTO);
   }
 
   @Override
   public void startStepOut() {
-    resume(ResumeCommand.Mode.STEP_OUT);
+    resumeOrStep(ResumeOrStepCommand.Mode.STEP_OUT);
+  }
+
+  public void startSmartStepInto(String functionName) {
+    dropFrameCaches();
+    if (isConnected()) {
+      for (PyThreadInfo suspendedThread : mySuspendedThreads) {
+        final SmartStepIntoCommand command = new SmartStepIntoCommand(myDebugger, suspendedThread.getId(), functionName);
+        myDebugger.execute(command);
+      }
+    }
   }
 
   @Override
@@ -248,7 +266,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
   @Override
   public void resume() {
-    resume(ResumeCommand.Mode.RESUME);
+    resumeOrStep(ResumeOrStepCommand.Mode.RESUME);
   }
 
   @Override
@@ -258,11 +276,11 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     }
   }
 
-  private void resume(final ResumeCommand.Mode mode) {
+  private void resumeOrStep(final ResumeOrStepCommand.Mode mode) {
     dropFrameCaches();
     if (isConnected()) {
       for (PyThreadInfo suspendedThread : mySuspendedThreads) {
-        final ResumeCommand command = new ResumeCommand(myDebugger, suspendedThread.getId(), mode);
+        final ResumeOrStepCommand command = new ResumeOrStepCommand(myDebugger, suspendedThread.getId(), mode);
         myDebugger.execute(command);
       }
     }
@@ -296,7 +314,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
       final SetBreakpointCommand command =
         new SetBreakpointCommand(myDebugger, type, pyPosition.getFile(), pyPosition.getLine());
       myDebugger.execute(command);  // set temp. breakpoint
-      resume(ResumeCommand.Mode.RESUME);
+      resumeOrStep(ResumeOrStepCommand.Mode.RESUME);
     }
   }
 
