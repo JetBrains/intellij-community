@@ -149,13 +149,16 @@ public class GitConflictResolver {
 
   /**
    * Shows notification that not all conflicts were resolved.
-   * @param roots Roots that were merged.
    */
   protected void notifyUnresolvedRemain() {
     notifyWarning(myParams.myErrorNotificationTitle,
                   "You have to <a href='resolve'>resolve</a> all conflicts first." + myParams.myErrorNotificationAdditionalDescription);
   }
-  
+
+  /**
+   * Shows notification that some conflicts were still not resolved - after user invoked the conflict resolver by pressing the link on the
+   * notification.
+   */
   private void notifyUnresolvedRemainAfterNotification() {
     notifyWarning("Not all conflicts resolved",
                   "You should <a href='resolve'>resolve</a> all conflicts before update. <br>" +
