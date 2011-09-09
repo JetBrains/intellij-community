@@ -35,6 +35,8 @@ public abstract class FocusCommand extends ActiveRunnable implements Expirable {
 
   private boolean myInvalidatesPendingFurtherRequestors = true;
 
+  private Expirable myExpirable;
+
   protected FocusCommand() {
     saveAllocation();
   }
@@ -75,7 +77,7 @@ public abstract class FocusCommand extends ActiveRunnable implements Expirable {
   }
 
   public boolean isExpired() {
-    return false;
+    return myExpirable != null && myExpirable.isExpired();
   }
 
   public boolean canExecuteOnInactiveApp() {
@@ -89,6 +91,11 @@ public abstract class FocusCommand extends ActiveRunnable implements Expirable {
 
   public boolean invalidatesRequestors() {
     return myInvalidatesPendingFurtherRequestors;
+  }
+
+  public FocusCommand setExpirable(Expirable expirable) {
+    myExpirable = expirable;
+    return this;
   }
 
   public FocusCommand setToInvalidateRequestors(boolean invalidatesPendingFurtherRequestors) {
