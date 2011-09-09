@@ -538,6 +538,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     return myCbSearchTextOccurences.isSelected();
   }
 
+  @Nullable
   private MoveDestination selectDestination() {
     final String packageName = getTargetPackage().trim();
     if (packageName.length() > 0 && !JavaPsiFacade.getInstance(myManager.getProject()).getNameHelper().isQualifiedName(packageName)) {
@@ -557,7 +558,13 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     if (selectedItem == null) {
       return new MultipleRootsMoveDestination(targetPackage);
     }
-    final VirtualFile selectedDestination = selectedItem.getDirectory().getVirtualFile();
+    final PsiDirectory selectedPsiDirectory = selectedItem.getDirectory();
+    VirtualFile selectedDestination = selectedPsiDirectory.getVirtualFile();
+    if (selectedPsiDirectory == myInitialTargetDirectory) {
+      selectedDestination =
+            MoveClassesOrPackagesUtil.chooseSourceRoot(targetPackage, getSourceRoots(), myInitialTargetDirectory);
+    }
+    if (selectedDestination == null) return null;
     return new AutocreatingSingleSourceRootMoveDestination(targetPackage, selectedDestination);
   }
 
