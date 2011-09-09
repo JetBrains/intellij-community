@@ -430,7 +430,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     return result;
   }
 
-  private static boolean isEnabled(@Nullable PsiFile file, int offset, @Nullable FileType fileType, TemplateContext context) {
+  private static Set<TemplateContextType> getDirectlyApplicableContextTypes(@Nullable PsiFile file, int offset, @Nullable FileType fileType) {
     LinkedHashSet<TemplateContextType> set = new LinkedHashSet<TemplateContextType>();
     LinkedList<TemplateContextType> contexts = buildOrderedContextTypes();
     for (TemplateContextType contextType : contexts) {
@@ -439,7 +439,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
       }
     }
 
-    removeBases: 
+    removeBases:
     while (true) {
       for (TemplateContextType type : set) {
         if (set.remove(type.getBaseContextType())) {
@@ -447,12 +447,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
         }
       }
 
-      for (TemplateContextType type : set) {
-        if (context.isEnabled(type)) {
-          return true;
-        }
-      }
-      return false;
+      return set;
     }
   }
 
@@ -486,17 +481,26 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
   }
 
   public static boolean isApplicable(PsiFile file, int offset, TemplateImpl template) {
-    TemplateContext context = template.getTemplateContext();
-    if (isEnabled(file, offset, null, context)) {
-      return true;
+    return isApplicable(template, getApplicableContextTypes(file, offset));
+  }
+
+  public static boolean isApplicable(TemplateImpl template, Set<TemplateContextType> contextTypes) {
+    for (TemplateContextType type : contextTypes) {
+      if (template.getTemplateContext().isEnabled(type)) {
+        return true;
+      }
     }
+    return false;
+  }
+
+  public static Set<TemplateContextType> getApplicableContextTypes(PsiFile file, int offset) {
+    Set<TemplateContextType> result = getDirectlyApplicableContextTypes(file, offset, null);
 
     Language baseLanguage = file.getViewProvider().getBaseLanguage();
-
     if (baseLanguage != file.getLanguage()) {
       PsiFile basePsi = file.getViewProvider().getPsi(baseLanguage);
-      if (basePsi != null && isEnabled(basePsi, offset, null, context)) {
-        return true;
+      if (basePsi != null) {
+        result.addAll(getDirectlyApplicableContextTypes(basePsi, offset, null));
       }
     }
 
@@ -504,9 +508,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     if (baseLanguageForBaseLanguage != null) {
       final LanguageFileType associatedFileType = baseLanguageForBaseLanguage.getAssociatedFileType();
       if (associatedFileType != null && associatedFileType != file.getFileType()) {
-        if (isEnabled(null, 0, associatedFileType, context)) {
-          return true;
-        }
+        result.addAll(getDirectlyApplicableContextTypes(null, 0, associatedFileType));
       }
     }
 
@@ -515,11 +517,11 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     if (offset > 0) {
       final Language prevLanguage = PsiUtilBase.getLanguageAtOffset(file, offset - 1);
       final PsiFile prevPsi = file.getViewProvider().getPsi(prevLanguage);
-      if (prevPsi != null && isEnabled(prevPsi, offset - 1, null, context)) {
-        return true;
+      if (prevPsi != null) {
+        result.addAll(getDirectlyApplicableContextTypes(prevPsi, offset - 1, null));
       }
     }
 
-    return false;
+    return result;
   }
 }

@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.project.impl;
 
-import com.intellij.AppTopics;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.highlighter.WorkspaceFileType;
 import com.intellij.ide.impl.ProjectUtil;
@@ -127,7 +126,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
         }
       }
     });
-    final ProjectManagerListener busPublisher = messageBus.syncPublisher(AppTopics.PROJECTS);
+    final ProjectManagerListener busPublisher = messageBus.syncPublisher(TOPIC);
 
     addProjectManagerListener(
       new ProjectManagerListener() {

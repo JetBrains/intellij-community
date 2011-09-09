@@ -16,7 +16,6 @@
 
 package com.intellij.ide.todo;
 
-import com.intellij.AppTopics;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -26,6 +25,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.fileTypes.FileTypeEvent;
 import com.intellij.openapi.fileTypes.FileTypeListener;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
@@ -102,7 +102,7 @@ public class TodoView implements PersistentStateComponent<Element>, Disposable {
     TodoConfiguration.getInstance().addPropertyChangeListener(myPropertyChangeListener,this);
 
     MessageBusConnection connection = myProject.getMessageBus().connect(this);
-    connection.subscribe(AppTopics.FILE_TYPES, new MyFileTypeListener());
+    connection.subscribe(FileTypeManager.TOPIC, new MyFileTypeListener());
   }
 
   public void loadState(Element element) {

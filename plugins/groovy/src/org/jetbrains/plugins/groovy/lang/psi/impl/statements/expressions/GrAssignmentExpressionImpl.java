@@ -135,7 +135,7 @@ public class GrAssignmentExpressionImpl extends GrExpressionImpl implements GrAs
   @NotNull
   @Override
   public GroovyResolveResult[] multiResolve(boolean incompleteCode) {
-    return (GroovyResolveResult[])getManager().getResolveCache().resolveWithCaching(this, RESOLVER, false, incompleteCode);
+    return (GroovyResolveResult[])ResolveCache.getInstance(getProject()).resolveWithCaching(this, RESOLVER, false, incompleteCode);
   }
 
   @Override

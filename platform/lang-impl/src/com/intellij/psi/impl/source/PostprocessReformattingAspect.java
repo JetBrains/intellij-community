@@ -499,7 +499,7 @@ public class PostprocessReformattingAspect implements PomModelAspect, Disposable
           if (!currentNodeGenerated && inGeneratedContext) {
             if (element.getElementType() == TokenType.WHITE_SPACE) return false;
             final int oldIndent = CodeEditUtil.getOldIndentation(element);
-            LOG.assertTrue(oldIndent >= 0, "for not generated items old indentation must be defined");
+            LOG.assertTrue(oldIndent >= 0, "for not generated items old indentation must be defined: element " + element);
             rangesToProcess.add(new ReindentTask(document.createRangeMarker(element.getTextRange()), oldIndent));
             inGeneratedContext = false;
           }

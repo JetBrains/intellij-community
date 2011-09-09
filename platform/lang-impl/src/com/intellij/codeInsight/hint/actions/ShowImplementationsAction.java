@@ -47,6 +47,7 @@ import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.ui.popup.PopupUpdateProcessor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.WeakReference;
 import java.util.*;
@@ -232,7 +233,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
   }
 
   private void updateInBackground(Editor editor,
-                                  PsiElement element,
+                                  @Nullable PsiElement element,
                                   ImplementationViewComponent component,
                                   String title,
                                   AbstractPopup popup) {
@@ -243,6 +244,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
       }
     }
 
+    if (element == null) return; //already found
     final ImplementationsUpdaterTask task = new ImplementationsUpdaterTask(element, editor, title);
     task.init(popup, component);
 

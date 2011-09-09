@@ -258,7 +258,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
       LOG.error("getManager() == null!");
       return null;
     }
-    ResolveResult[] results = manager.getResolveCache().resolveWithCaching(this, OurGenericsResolver.INSTANCE, true, incompleteCode);
+    ResolveResult[] results = ResolveCache.getInstance(getProject()).resolveWithCaching(this, OurGenericsResolver.INSTANCE, true, incompleteCode);
     return (JavaResolveResult[])results;
   }
 

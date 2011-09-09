@@ -26,7 +26,8 @@ import com.intellij.AppTopics;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
@@ -36,33 +37,15 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
-public class VetoSavingCommittingDocumentsAdapter implements ApplicationComponent, FileDocumentSynchronizationVetoListener {
-  private static final Object SAVE_DENIED = new Object();
+public class VetoSavingCommittingDocumentsAdapter implements ApplicationComponent {
+  static final Object SAVE_DENIED = new Object();
 
   private final FileDocumentManager myFileDocumentManager;
 
   public VetoSavingCommittingDocumentsAdapter(final FileDocumentManager fileDocumentManager) {
     myFileDocumentManager = fileDocumentManager;
-  }
-
-  public void beforeDocumentSaving(Document document) throws VetoDocumentSavingException {
-    final Object beingCommitted = document.getUserData(CommitHelper.DOCUMENT_BEING_COMMITTED_KEY);
-    if (beingCommitted == SAVE_DENIED) {
-      throw new VetoDocumentSavingException();
-    }
-    if (beingCommitted instanceof Project) {
-      boolean allowSave = showAllowSaveDialog((Project) beingCommitted, Collections.singletonList(document));
-      if (!allowSave) {
-        throw new VetoDocumentSavingException();
-      }
-    }
-  }
-
-
-  public void beforeFileContentReload(VirtualFile file, Document document) throws VetoDocumentReloadException {
   }
 
   @NonNls @NotNull
@@ -71,7 +54,6 @@ public class VetoSavingCommittingDocumentsAdapter implements ApplicationComponen
   }
 
   public void initComponent() {
-    myFileDocumentManager.addFileDocumentSynchronizationVetoer(this);
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerAdapter() {
       @Override
       public void beforeAllDocumentsSaving() {
@@ -96,10 +78,9 @@ public class VetoSavingCommittingDocumentsAdapter implements ApplicationComponen
   }
 
   public void disposeComponent() {
-    myFileDocumentManager.removeFileDocumentSynchronizationVetoer(this);
   }
 
-  private boolean showAllowSaveDialog(Project project, List<Document> documentsToWarn) {
+  boolean showAllowSaveDialog(Project project, List<Document> documentsToWarn) {
     StringBuilder messageBuilder = new StringBuilder("The following " + (documentsToWarn.size() == 1 ? "file is" : "files are") +
                                                      " currently being committed to the VCS. " +
                                                      "Saving now could cause inconsistent data to be committed.\n");
@@ -109,7 +90,7 @@ public class VetoSavingCommittingDocumentsAdapter implements ApplicationComponen
     }
     messageBuilder.append("Save the ").append(documentsToWarn.size() == 1 ? "file" : "files").append(" now?");
 
-    int rc = Messages.showOkCancelDialog(project, messageBuilder.toString(), "Save Files During Commit", "Save Now", "Postpone Save", 
+    int rc = Messages.showOkCancelDialog(project, messageBuilder.toString(), "Save Files During Commit", "Save Now", "Postpone Save",
                                          Messages.getQuestionIcon());
     return rc == 0;
   }

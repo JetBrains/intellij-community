@@ -17,6 +17,7 @@
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ExcludedFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.vfs.VirtualFile;

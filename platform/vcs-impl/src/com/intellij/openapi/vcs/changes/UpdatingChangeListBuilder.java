@@ -15,14 +15,15 @@
  */
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.roots.ExcludedFileIndex;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsKey;
-import com.intellij.openapi.vcs.impl.ExcludedFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,7 +48,7 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
     myDisposedGetter = disposedGetter;
     myIgnoredFilesComponent = ignoredFilesComponent;
     myGate = gate;
-    myIndex = ExcludedFileIndex.getInstance(changeListWorker.getProject());
+    myIndex = PeriodicalTasksCloser.getInstance().safeGetService(changeListWorker.getProject(), ExcludedFileIndex.class);
   }
 
   private void checkIfDisposed() {

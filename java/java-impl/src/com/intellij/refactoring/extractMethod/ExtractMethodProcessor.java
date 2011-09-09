@@ -576,7 +576,6 @@ public class ExtractMethodProcessor implements MatchProvider {
     myEditor.getCaretModel().moveToOffset(offset);
     myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     myEditor.getSelectionModel().removeSelection();
-    myEditor.getSelectionModel().removeSelection();
   }
 
   private void doExtract() throws IncorrectOperationException {

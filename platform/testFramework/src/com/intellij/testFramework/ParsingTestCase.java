@@ -97,6 +97,7 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
     myLanguage = myLanguage == null && myDefinitions != null && myDefinitions.length > 0? myDefinitions[0].getFileNodeType().getLanguage() : myLanguage;
     registerComponentInstance(appContainer, FileTypeManager.class, new MockFileTypeManager(new MockLanguageFileType(myLanguage, myFileExt)));
     registerApplicationService(PsiBuilderFactory.class, new PsiBuilderFactoryImpl());
+    registerApplicationService(DefaultASTFactory.class, new DefaultASTFactoryImpl());
     myProject.registerService(CachedValuesManager.class, new CachedValuesManagerImpl(myProject, new PsiCachedValuesFactory(myPsiManager)));
     myProject.registerService(PsiManager.class, myPsiManager);
     myProject.registerService(StartupManager.class, new StartupManagerImpl(myProject));

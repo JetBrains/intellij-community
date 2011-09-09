@@ -70,7 +70,8 @@ public class FileColorsModel implements Cloneable {
         assert scope != null : "There is no custom scope with name " + scopeName;
         final Color color = ColorUtil.getColor(scope.getClass());
         assert color != null : scope.getClass().getName() + " is not annotated with @Colored";
-        globalScopesColors.put(scopeName, ColorUtil.toHex(color));
+        final String colorName = FileColorManagerImpl.getColorName(color);
+        globalScopesColors.put(scopeName, colorName == null ? ColorUtil.toHex(color) : colorName);
       }
     }
     initGlobalScopes();
@@ -89,10 +90,12 @@ public class FileColorsModel implements Cloneable {
 
   private void initGlobalScopes() {
     for (String scopeName : globalScopes.keySet()) {
-      if (findConfiguration(scopeName, false) == null) {
-        final String color = PropertiesComponent.getInstance().getOrInit(globalScopes.get(scopeName), globalScopesColors.get(scopeName));
+      if (findConfiguration(scopeName, false) == null) {        
+        final String color = PropertiesComponent.getInstance().getOrInit(globalScopes.get(scopeName), globalScopesColors.get(scopeName));        
         if (color.length() != 0) {
-          myConfigurations.add(new FileColorConfiguration(scopeName, color));
+          final Color col = ColorUtil.fromHex(color, null);
+          final String name = col == null ? null : FileColorManagerImpl.getColorName(col);
+          myConfigurations.add(new FileColorConfiguration(scopeName, name == null ? color : name));
         }
       }
     }

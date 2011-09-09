@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.template;
 import com.intellij.codeInsight.template.EverywhereContextType;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
@@ -94,6 +95,11 @@ public abstract class GroovyTemplateContextType extends TemplateContextType {
     }
   }
   public static class Expression extends GroovyTemplateContextType {
+    private static final ElementPattern<PsiElement> INFIX_OPERATOR = psiElement().afterLeaf(
+      psiElement().inside(
+        psiElement(GrExpression.class).afterLeaf(
+          psiElement().withText("(").withParent(GrIfStatement.class))));
+
     public Expression() {
       super("GROOVY_EXPRESSION", "Expression", Generic.class);
     }
@@ -114,12 +120,7 @@ public abstract class GroovyTemplateContextType extends TemplateContextType {
       if (parent.getParent() instanceof GrCall) {
         return false;
       }
-      if (
-        psiElement().afterLeaf(
-          psiElement().inside(
-            psiElement(GrExpression.class).afterLeaf(
-              psiElement().withText("(").withParent(GrIfStatement.class))))
-          .accepts(element)) {
+      if (INFIX_OPERATOR.accepts(element)) {
         return false;
       }
       return true;

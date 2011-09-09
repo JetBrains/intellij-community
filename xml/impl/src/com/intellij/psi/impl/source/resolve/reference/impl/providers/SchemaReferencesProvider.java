@@ -29,7 +29,6 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.xml.SchemaPrefixReference;
 import com.intellij.psi.search.PsiElementProcessor;
@@ -280,14 +279,7 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
 
     @Nullable
     public PsiElement resolve() {
-      final PsiManager manager = getElement().getManager();
-      final PsiElement psiElement;
-
-      if(manager instanceof PsiManagerImpl){
-        psiElement = ((PsiManagerImpl)manager).getResolveCache().resolveWithCaching(this, MyResolver.INSTANCE, false, false);
-      } else {
-        psiElement = resolveInner();
-      }
+      final PsiElement psiElement = ResolveCache.getInstance(getElement().getProject()).resolveWithCaching(this, MyResolver.INSTANCE, false, false);
 
       return psiElement != PsiUtilBase.NULL_PSI_ELEMENT ? psiElement:null;
     }

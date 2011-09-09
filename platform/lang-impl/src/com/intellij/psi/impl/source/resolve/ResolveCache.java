@@ -17,8 +17,10 @@
 package com.intellij.psi.impl.source.resolve;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
@@ -46,6 +48,11 @@ public class ResolveCache {
   private final Map<PsiReference,Reference>[] myResolveMaps = new Map[4];
   private final AtomicInteger myClearCount = new AtomicInteger(0);
   private final RecursionGuard myGuard = RecursionManager.createGuard("resolveCache");
+
+  public static ResolveCache getInstance(Project project) {
+    ProgressIndicatorProvider.checkCanceled(); // We hope this method is being called often enough to cancel daemon processes smoothly
+    return ServiceManager.getService(project, ResolveCache.class);
+  }
 
   public interface AbstractResolver<TRef extends PsiReference,TResult> {
     TResult resolve(TRef ref, boolean incompleteCode);
@@ -104,7 +111,7 @@ public class ResolveCache {
                                                                @NotNull Map<? super TRef,Reference<TResult>>[] maps,
                                                                boolean needToPreventRecursion,
                                                                final boolean incompleteCode, boolean poly) {
-    ProgressManager.checkCanceled();
+    ProgressIndicatorProvider.checkCanceled();
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     int clearCountOnStart = myClearCount.intValue();

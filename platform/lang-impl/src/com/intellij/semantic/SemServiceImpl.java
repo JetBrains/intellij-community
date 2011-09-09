@@ -15,7 +15,6 @@
  */
 package com.intellij.semantic;
 
-import com.intellij.ProjectTopics;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -69,7 +68,7 @@ public class SemServiceImpl extends SemService{
   public SemServiceImpl(Project project, PsiManager psiManager) {
     myProject = project;
     final MessageBusConnection connection = project.getMessageBus().connect();
-    connection.subscribe(ProjectTopics.MODIFICATION_TRACKER, new PsiModificationTracker.Listener() {
+    connection.subscribe(PsiModificationTracker.TOPIC, new PsiModificationTracker.Listener() {
       public void modificationCountChanged() {
         if (!isInsideAtomicChange()) {
           clearCache();

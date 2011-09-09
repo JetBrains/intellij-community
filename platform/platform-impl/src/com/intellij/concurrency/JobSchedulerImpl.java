@@ -50,10 +50,6 @@ public class JobSchedulerImpl extends JobScheduler implements Disposable {
     return ourQueue.size();
   }
 
-  public <T> Job<T> createJob(String title, int priority) {
-    return new JobImpl<T>(priority, false);
-  }
-
   public void dispose() {
     ((ThreadPoolExecutor)getScheduler()).getQueue().clear();
   }

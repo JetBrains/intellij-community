@@ -82,7 +82,8 @@ public class ColorUtil {
     }
   }
 
-  public static Color fromHex(String str, Color defaultValue) {
+  @Nullable
+  public static Color fromHex(String str, @Nullable Color defaultValue) {
     try {
       return fromHex(str);
     } catch (Exception e) {

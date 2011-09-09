@@ -18,6 +18,7 @@ package com.intellij.openapi.project;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.ide.util.DelegatingProgressIndicator;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,7 +26,6 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.popup.BalloonHandler;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.wm.AppIconScheme;
@@ -42,6 +42,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -219,21 +220,10 @@ public class DumbServiceImpl extends DumbService {
   }
 
   @Override
-  public BalloonHandler showDumbModeNotification(final String message) {
-    final BalloonHandler emptyBalloonHandler = new BalloonHandler() {
-      public void hide() {
-      }
-    };
-    if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      return emptyBalloonHandler;
-    }
-
+  public void showDumbModeNotification(final String message) {
     final IdeFrame ideFrame = WindowManager.getInstance().getIdeFrame(myProject);
-    if (ideFrame == null) {
-      return emptyBalloonHandler;
-    }
     StatusBarEx statusBar = (StatusBarEx)ideFrame.getStatusBar();
-    return statusBar.notifyProgressByBalloon(MessageType.WARNING, message, null, null);
+    statusBar.notifyProgressByBalloon(MessageType.WARNING, message, null, null);
   }
 
   private static final Ref<CacheUpdateRunner> NULL_ACTION = new Ref<CacheUpdateRunner>(null);
@@ -253,6 +243,23 @@ public class DumbServiceImpl extends DumbService {
       }
     });
     semaphore.waitFor();
+  }
+
+  public JComponent wrapGently(@NotNull JComponent dumbUnawareContent, @NotNull Disposable parentDisposable) {
+    final DumbUnawareHider wrapper = new DumbUnawareHider(dumbUnawareContent);
+    wrapper.setContentVisible(!isDumb());
+    getProject().getMessageBus().connect(parentDisposable).subscribe(DUMB_MODE, new DumbModeListener() {
+
+      public void enteredDumbMode() {
+        wrapper.setContentVisible(false);
+      }
+
+      public void exitDumbMode() {
+        wrapper.setContentVisible(true);
+      }
+    });
+
+    return wrapper;
   }
 
   private class IndexUpdateRunnable implements Runnable {

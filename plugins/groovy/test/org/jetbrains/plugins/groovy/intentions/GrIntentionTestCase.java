@@ -35,7 +35,13 @@ public abstract class GrIntentionTestCase extends LightCodeInsightFixtureTestCas
       myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
     }
     else {
-      assertEquals("Count of enabled intentions: ", 0, list.size());
+      if (list.size() > 0) {
+        StringBuilder text = new StringBuilder("available intentions:");
+        for (IntentionAction intentionAction : list) {
+          text.append(intentionAction.getFamilyName()).append(", ");
+        }
+        fail(text.toString());
+      }
     }
   }
 }

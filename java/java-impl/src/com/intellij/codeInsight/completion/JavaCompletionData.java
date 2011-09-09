@@ -524,13 +524,7 @@ public class JavaCompletionData extends JavaAwareCompletionData{
 
     addPrimitiveTypes(result, position);
 
-    if (psiElement().afterLeaf(psiElement().withText(".").inside(PsiExpression.class).afterLeaf(or(
-      psiElement().withParent(psiElement().referencing(psiClass())),
-      psiElement().withText(string().oneOf("]", PsiKeyword.VOID)),
-      psiElement().withText(string().oneOf(PRIMITIVE_TYPES))
-    ))).accepts(position)) {
-      result.addElement(createKeyword(position, PsiKeyword.CLASS));
-    }
+    addClassLiteral(result, position);
 
     final ProcessingContext context = new ProcessingContext();
     if (psiElement().afterLeaf(
@@ -560,6 +554,19 @@ public class JavaCompletionData extends JavaAwareCompletionData{
           }
         });
       }
+    }
+  }
+
+  private static void addClassLiteral(CompletionResultSet result, PsiElement position) {
+    if (psiElement().afterLeaf(psiElement().withText(".").afterLeaf(
+      or(
+        psiElement().withParent(psiElement().referencing(psiClass())),
+        psiElement().withText(string().oneOf("]", PsiKeyword.VOID)),
+        psiElement().withText(string().oneOf(PRIMITIVE_TYPES))
+      ))).accepts(position) &&
+        !INSIDE_PARAMETER_LIST.accepts(position) &&
+        !(position.getContainingFile() instanceof PsiJavaCodeReferenceCodeFragment)) {
+      result.addElement(createKeyword(position, PsiKeyword.CLASS));
     }
   }
 

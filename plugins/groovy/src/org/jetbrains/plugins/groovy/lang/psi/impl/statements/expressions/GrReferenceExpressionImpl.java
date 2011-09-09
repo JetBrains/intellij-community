@@ -758,13 +758,13 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   }
 
   public GroovyResolveResult advancedResolve() {
-    ResolveResult[] results = getManager().getResolveCache().resolveWithCaching(this, POLY_RESOLVER, true, false);
+    ResolveResult[] results = ResolveCache.getInstance(getProject()).resolveWithCaching(this, POLY_RESOLVER, true, false);
     return results.length == 1 ? (GroovyResolveResult) results[0] : GroovyResolveResult.EMPTY_RESULT;
   }
 
   @NotNull
   public GroovyResolveResult[] multiResolve(boolean incomplete) {  //incomplete means we do not take arguments into consideration
-    final ResolveResult[] results = getManager().getResolveCache().resolveWithCaching(this, POLY_RESOLVER, true, incomplete);
+    final ResolveResult[] results = ResolveCache.getInstance(getProject()).resolveWithCaching(this, POLY_RESOLVER, true, incomplete);
     return results.length == 0 ? GroovyResolveResult.EMPTY_ARRAY :  (GroovyResolveResult[])results;
   }
 

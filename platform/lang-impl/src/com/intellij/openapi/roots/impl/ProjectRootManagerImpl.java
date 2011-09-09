@@ -16,7 +16,6 @@
 
 package com.intellij.openapi.roots.impl;
 
-import com.intellij.AppTopics;
 import com.intellij.ProjectTopics;
 import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.openapi.Disposable;
@@ -163,7 +162,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
                                 StartupManager startupManager) {
     myProject = (ProjectEx)project;
     myConnection = project.getMessageBus().connect(project);
-    myConnection.subscribe(AppTopics.FILE_TYPES, new FileTypeListener() {
+    myConnection.subscribe(FileTypeManager.TOPIC, new FileTypeListener() {
       public void beforeFileTypesChanged(FileTypeEvent event) {
         beforeRootsChange(true);
       }

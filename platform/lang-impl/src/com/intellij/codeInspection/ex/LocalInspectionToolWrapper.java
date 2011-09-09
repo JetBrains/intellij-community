@@ -136,7 +136,7 @@ public final class LocalInspectionToolWrapper extends DescriptorProviderInspecti
             view.getProvider().appendToolNodeContent(myToolNode,
                                                      (InspectionTreeNode)myToolNode.getParent(), context.getUIOptions().SHOW_STRUCTURE,
                                                      contents, problems, (DefaultTreeModel)view.getTree().getModel());
-            getContext().addView(view);
+            context.addView(view);
           }
         }
       });

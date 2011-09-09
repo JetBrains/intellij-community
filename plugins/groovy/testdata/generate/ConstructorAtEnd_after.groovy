@@ -6,4 +6,5 @@ class ConstructorAtEnd {
 
     ConstructorAtEnd() {<caret>
     }
+
 }

@@ -102,7 +102,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
 
   @Nullable
   public PsiElement resolve() {
-    ResolveResult[] results = getManager().getResolveCache().resolveWithCaching(this, RESOLVER, true, false);
+    ResolveResult[] results = ResolveCache.getInstance(getProject()).resolveWithCaching(this, RESOLVER, true, false);
     return results.length == 1 ? results[0].getElement() : null;
   }
 
@@ -519,13 +519,13 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
   private static final OurResolver RESOLVER = new OurResolver();
 
   public GroovyResolveResult advancedResolve() {
-    ResolveResult[] results = getManager().getResolveCache().resolveWithCaching(this, RESOLVER, true, false);
+    ResolveResult[] results = ResolveCache.getInstance(getProject()).resolveWithCaching(this, RESOLVER, true, false);
     return results.length == 1 ? (GroovyResolveResult) results[0] : GroovyResolveResult.EMPTY_RESULT;
   }
 
   @NotNull
   public GroovyResolveResult[] multiResolve(boolean incompleteCode) {
-    final ResolveResult[] results = getManager().getResolveCache().resolveWithCaching(this, RESOLVER, true, incompleteCode);
+    final ResolveResult[] results = ResolveCache.getInstance(getProject()).resolveWithCaching(this, RESOLVER, true, incompleteCode);
     if (results.length == 0) {
       return GroovyResolveResult.EMPTY_ARRAY;
     }

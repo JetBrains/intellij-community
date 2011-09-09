@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.patterns.PlatformPatterns;
@@ -28,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author peter
@@ -64,9 +66,11 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
   }
 
   private static List<TemplateImpl> listApplicableTemplates(PsiFile file, int offset) {
+    Set<TemplateContextType> contextTypes = TemplateManagerImpl.getApplicableContextTypes(file, offset);
+
     final ArrayList<TemplateImpl> result = CollectionFactory.arrayList();
     for (final TemplateImpl template : TemplateSettings.getInstance().getTemplates()) {
-      if (!template.isDeactivated() && !template.isSelectionTemplate() && TemplateManagerImpl.isApplicable(file, offset, template)) {
+      if (!template.isDeactivated() && !template.isSelectionTemplate() && TemplateManagerImpl.isApplicable(template, contextTypes)) {
         result.add(template);
       }
     }

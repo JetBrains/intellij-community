@@ -337,7 +337,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     final LinkedHashSet<PsiDirectory> targetDirectories = new LinkedHashSet<PsiDirectory>();
     final HashMap<PsiDirectory, String> pathsToCreate = new HashMap<PsiDirectory, String>();
     MoveClassesOrPackagesUtil.buildDirectoryList(new PackageWrapper(myManager, getTargetPackage()), sourceRoots, targetDirectories, pathsToCreate);
-    if (!forceIncludeAll && (targetDirectories.size() != pathsToCreate.size() || !targetDirectories.containsAll(pathsToCreate.keySet()))) {
+    if (!forceIncludeAll && targetDirectories.size() > pathsToCreate.size()) {
       targetDirectories.removeAll(pathsToCreate.keySet());
     }
     final ArrayList<DirectoryChooser.ItemWrapper> items = new ArrayList<DirectoryChooser.ItemWrapper>();
@@ -352,7 +352,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     if (initialTargetDirectorySourceRoot == null) {
       items.add(null);
     }
-    comboBox.setModel(new CollectionComboBoxModel(items, initial != null || items.contains(null) ? initial : items.get(0)));
+    comboBox.setModel(new CollectionComboBoxModel(items, initial != null || items.contains(null) || items.isEmpty() ? initial : items.get(0)));
   }
 
   protected void doHelpAction() {

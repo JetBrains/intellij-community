@@ -16,7 +16,6 @@
 package com.intellij.psi.impl.source.resolve.reference.impl;
 
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,11 +26,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class PsiPolyVariantCachingReference implements PsiPolyVariantReference {
   @NotNull
   public final ResolveResult[] multiResolve(boolean incompleteCode) {
-    final PsiManager manager = getElement().getManager();
-    if(manager instanceof PsiManagerImpl){
-      return ((PsiManagerImpl)manager).getResolveCache().resolveWithCaching(this, MyResolver.INSTANCE, true, incompleteCode);
-    }
-    return resolveInner(incompleteCode);
+    return ResolveCache.getInstance(getElement().getProject()).resolveWithCaching(this, MyResolver.INSTANCE, true, incompleteCode);
   }
 
   public PsiElement resolve() {

@@ -16,7 +16,6 @@
 
 package org.jetbrains.plugins.groovy.mvc.projectView;
 
-import com.intellij.ProjectTopics;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Editor;
@@ -98,7 +97,7 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
       }
     };
 
-    project.getMessageBus().connect(this).subscribe(ProjectTopics.MODIFICATION_TRACKER, new PsiModificationTracker.Listener() {
+    project.getMessageBus().connect(this).subscribe(PsiModificationTracker.TOPIC, new PsiModificationTracker.Listener() {
       public void modificationCountChanged() {
         if (getTree() != null && getTreeBuilder() != null) {
           updateFromRoot(true);

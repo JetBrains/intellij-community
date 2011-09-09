@@ -3,8 +3,6 @@ package com.intellij.mock;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
-import com.intellij.openapi.fileEditor.FileDocumentSynchronizationVetoListener;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
@@ -74,22 +72,6 @@ public class MockFileDocumentManagerImpl extends FileDocumentManager {
   @Override
   public boolean isFileModified(@NotNull VirtualFile file) {
     return false;
-  }
-
-  @Override
-  public void addFileDocumentSynchronizationVetoer(@NotNull FileDocumentSynchronizationVetoListener vetoer) {
-  }
-
-  @Override
-  public void removeFileDocumentSynchronizationVetoer(@NotNull FileDocumentSynchronizationVetoListener vetoer) {
-  }
-
-  @Override
-  public void addFileDocumentManagerListener(@NotNull FileDocumentManagerListener listener) {
-  }
-
-  @Override
-  public void removeFileDocumentManagerListener(@NotNull FileDocumentManagerListener listener) {
   }
 
   @Override

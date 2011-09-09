@@ -179,16 +179,16 @@ public class GrReferenceAdjuster {
            PsiTreeUtil.getParentOfType(ref, GrImportStatement.class) == null;
   }
 
-  private static boolean seemsToBeQualifiedClassName(@Nullable GrExpression qualifier) {
-    if (qualifier == null) return false;
-    while (qualifier instanceof GrReferenceExpression) {
-      final PsiElement nameElement = ((GrReferenceExpression)qualifier).getReferenceNameElement();
-      if (((GrReferenceExpression)qualifier).getTypeArguments().length > 0) return false;
+  public static boolean seemsToBeQualifiedClassName(@Nullable GrExpression expr) {
+    if (expr == null) return false;
+    while (expr instanceof GrReferenceExpression) {
+      final PsiElement nameElement = ((GrReferenceExpression)expr).getReferenceNameElement();
+      if (((GrReferenceExpression)expr).getTypeArguments().length > 0) return false;
       if (nameElement == null || nameElement.getNode().getElementType() != GroovyTokenTypes.mIDENT) return false;
-      IElementType dotType = ((GrReferenceExpression)qualifier).getDotTokenType();
+      IElementType dotType = ((GrReferenceExpression)expr).getDotTokenType();
       if (dotType != null && dotType != GroovyTokenTypes.mDOT) return false;
-      qualifier = ((GrReferenceExpression)qualifier).getQualifierExpression();
+      expr = ((GrReferenceExpression)expr).getQualifierExpression();
     }
-    return qualifier == null;
+    return expr == null;
   }
 }

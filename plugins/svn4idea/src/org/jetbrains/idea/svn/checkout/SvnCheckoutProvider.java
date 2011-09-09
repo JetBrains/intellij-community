@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.svn.checkout;
 
+import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -25,7 +26,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
-import com.intellij.openapi.vcs.impl.ExcludedFileIndex;
+import com.intellij.openapi.roots.ExcludedFileIndex;
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -226,7 +227,8 @@ public class SvnCheckoutProvider implements CheckoutProvider {
               final VirtualFile targetVf = SvnUtil.getVirtualFile(targetPath);
               if (targetVf == null) {
                 errorMessage.set("Can not find file: " + targetPath);
-              } else if (project.isDefault() || !ExcludedFileIndex.getInstance(project).isInContent(targetVf)) {
+              } else if (project.isDefault() || !PeriodicalTasksCloser.getInstance().safeGetService(project, ExcludedFileIndex.class)
+                .isInContent(targetVf)) {
                 // do not pay attention to ignored/excluded settings
                 client.doImport(target, url, message, null, !includeIgnored, false, depth);
               } else {

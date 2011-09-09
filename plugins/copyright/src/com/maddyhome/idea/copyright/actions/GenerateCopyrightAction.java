@@ -28,6 +28,7 @@ import com.intellij.psi.PsiFile;
 import com.maddyhome.idea.copyright.CopyrightManager;
 import com.maddyhome.idea.copyright.ui.CopyrightProjectConfigurable;
 import com.maddyhome.idea.copyright.util.FileTypeUtil;
+import org.jetbrains.annotations.Nullable;
 
 public class GenerateCopyrightAction extends AnAction
 {
@@ -42,18 +43,22 @@ public class GenerateCopyrightAction extends AnAction
             return;
         }
 
-        PsiFile file = LangDataKeys.PSI_FILE.getData(context);
-        if (file == null) {
-            Editor editor = PlatformDataKeys.EDITOR.getData(context);
-            if (editor != null)
-            {
-                file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-            }
+        PsiFile file = getFile(context, project);
+        if (file == null || !FileTypeUtil.isSupportedFile(file)) {
+          presentation.setEnabled(false);
         }
-        if (file == null || !FileTypeUtil.isSupportedFile(file))
-        {
-            presentation.setEnabled(false);
+    }
+
+    @Nullable
+    private static PsiFile getFile(DataContext context, Project project) {
+      PsiFile file = LangDataKeys.PSI_FILE.getData(context);
+      if (file == null) {
+        Editor editor = PlatformDataKeys.EDITOR.getData(context);
+        if (editor != null) {
+          file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
         }
+      }
+      return file;
     }
 
     public void actionPerformed(AnActionEvent event)
@@ -64,18 +69,9 @@ public class GenerateCopyrightAction extends AnAction
         Module module = LangDataKeys.MODULE.getData(context);
         PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-        Editor editor = PlatformDataKeys.EDITOR.getData(context);
 
-        PsiFile file = null;
-        if (editor != null)
-        {
-            file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-            if (file == null)
-            {
-                return;
-            }
-        }
-
+        PsiFile file = getFile(context, project);
+        assert file != null;
         if (CopyrightManager.getInstance(project).getCopyrightOptions(file) == null) {
           if (Messages.showOkCancelDialog(project, "No copyright configured for current file. Would you like to edit copyright settings?", "No copyright available", Messages.getQuestionIcon()) == DialogWrapper.OK_EXIT_CODE) {
             ShowSettingsUtil.getInstance().showSettingsDialog(project, new CopyrightProjectConfigurable(project));

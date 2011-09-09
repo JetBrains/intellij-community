@@ -65,6 +65,7 @@ class Foo extends Super {
         this.d = d
         this.e = e
     }
+
 }
 """
   }
@@ -90,7 +91,6 @@ class Super<E> {
 class X {}
 
 class Foo extends Super<X> {
-
     Foo(Collection<X> c) {
         super(c)
     }
@@ -113,6 +113,7 @@ class Test {
     def getFoo() {
         return foo
     }
+
 }'''
   }
 
@@ -131,6 +132,7 @@ class Test {
       int getFoo() {
           return foo
       }
+
   }'''
     }
 
@@ -149,6 +151,7 @@ class Test {
       static getFoo() {
           return foo
       }
+
   }'''
     }
 
@@ -175,6 +178,7 @@ class Test {
       @Nullable getFoo() {
           return foo
       }
+
   }'''
     }
 
@@ -194,6 +198,7 @@ class Test {
     void setFoo(def foo) {
         this.foo = foo
     }
+
 }'''
 
   }
@@ -214,6 +219,7 @@ class Test {
     void setFoo(int foo) {
         this.foo = foo
     }
+
 }'''
 
   }
@@ -235,6 +241,7 @@ class Test {
     static void setFoo(def foo) {
         Test.foo = foo
     }
+
 }'''
 
   }
@@ -263,6 +270,7 @@ class Test {
     void setFoo(@Nullable foo) {
         this.foo = foo
     }
+
 }'''
 
   }

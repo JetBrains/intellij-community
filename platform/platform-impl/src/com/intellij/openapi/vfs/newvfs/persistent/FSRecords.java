@@ -51,7 +51,7 @@ import java.util.concurrent.ScheduledFuture;
 public class FSRecords implements Forceable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.vfs.persistent.FSRecords");
 
-  private static final int VERSION = 12;
+  private static final int VERSION = 13;
 
   private static final int PARENT_OFFSET = 0;
   private static final int PARENT_SIZE = 4;

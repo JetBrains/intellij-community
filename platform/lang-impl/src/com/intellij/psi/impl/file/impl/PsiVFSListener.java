@@ -15,12 +15,16 @@
  */
 package com.intellij.psi.impl.file.impl;
 
+import com.intellij.AppTopics;
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeEvent;
+import com.intellij.openapi.fileTypes.FileTypeListener;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
@@ -63,6 +67,15 @@ public class PsiVFSListener extends VirtualFileAdapter {
       public void run() {
         myConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkVirtualFileListenerAdapter(PsiVFSListener.this));
         myConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new MyModuleRootListener());
+        myConnection.subscribe(FileTypeManager.TOPIC, new FileTypeListener() {
+          public void beforeFileTypesChanged(FileTypeEvent event) {}
+
+          public void fileTypesChanged(FileTypeEvent e) {
+            myFileManager.processFileTypesChanged();
+          }
+        });
+        myConnection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new MyFileDocumentManagerAdapter());
+        myFileManager.markInitialized();
       }
     });
   }
@@ -586,4 +599,18 @@ public class PsiVFSListener extends VirtualFileAdapter {
     }
   }
 
+  private class MyFileDocumentManagerAdapter extends FileDocumentManagerAdapter {
+    public void fileWithNoDocumentChanged(VirtualFile file) {
+      final PsiFile psiFile = myFileManager.getCachedPsiFileInner(file);
+      if (psiFile != null) {
+        ApplicationManager.getApplication().runWriteAction(
+          new ExternalChangeAction() {
+            public void run() {
+              myFileManager.reloadFromDisk(psiFile, true); // important to ignore document which might appear already!
+            }
+          }
+        );
+      }
+    }
+  }
 }

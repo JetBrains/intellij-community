@@ -15,7 +15,9 @@
  */
 package com.intellij.openapi.vcs.impl;
 
+import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ExcludedFileIndex;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -34,7 +36,7 @@ public class VcsRootIterator {
   public VcsRootIterator(final Project project, final AbstractVcs vcs) {
     final ProjectLevelVcsManager plVcsManager = ProjectLevelVcsManager.getInstance(project);
     myOtherVcsFolders = new HashMap<String, MyRootFilter>();
-    myExcludedFileIndex = ExcludedFileIndex.getInstance(project);
+    myExcludedFileIndex = PeriodicalTasksCloser.getInstance().safeGetService(project, ExcludedFileIndex.class);
 
     final VcsRoot[] allRoots = plVcsManager.getAllVcsRoots();
     final VirtualFile[] roots = plVcsManager.getRootsUnderVcs(vcs);
@@ -119,7 +121,7 @@ public class VcsRootIterator {
       final ProjectLevelVcsManager plVcsManager = ProjectLevelVcsManager.getInstance(project);
       final AbstractVcs vcs = plVcsManager.getVcsFor(root);
       myRootPresentFilter = (vcs == null) ? null : new MyRootFilter(root, vcs.getName());
-      myExcludedFileIndex = ExcludedFileIndex.getInstance(project);
+      myExcludedFileIndex = PeriodicalTasksCloser.getInstance().safeGetService(project, ExcludedFileIndex.class);
 
       myQueue = new LinkedList<VirtualFile>();
       myQueue.add(root);

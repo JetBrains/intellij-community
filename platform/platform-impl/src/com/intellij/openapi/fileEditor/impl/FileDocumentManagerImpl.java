@@ -34,6 +34,7 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.fileTypes.FileType;
@@ -52,10 +53,8 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.psi.ExternalChangeAction;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.UIBundle;
-import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.messages.MessageBus;
-import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -78,8 +77,6 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   private static final Key<VirtualFile> FILE_KEY = Key.create("FILE_KEY");
 
   private final Set<Document> myUnsavedDocuments = new ConcurrentHashSet<Document>();
-
-  private final EventDispatcher<FileDocumentSynchronizationVetoListener> myVetoDispatcher = EventDispatcher.create(FileDocumentSynchronizationVetoListener.class);
 
   private final VirtualFileManager myVirtualFileManager;
   private final MessageBus myBus;
@@ -291,13 +288,10 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
         if (!file.isValid()) return;
       }
 
-      try {
-        for (FileDocumentSynchronizationVetoListener listener : myVetoDispatcher.getListeners()) {
-          listener.beforeDocumentSaving(document);
+      for (FileDocumentSynchronizationVetoer vetoer : Extensions.getExtensions(FileDocumentSynchronizationVetoer.EP_NAME)) {
+        if (!vetoer.maySaveDocument(document)) {
+          return;
         }
-      }
-      catch (VetoDocumentSavingException e) {
-        return;
       }
 
       try {
@@ -416,30 +410,6 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     return doc != null && isDocumentUnsaved(doc) && doc.getModificationStamp() != file.getModificationStamp();
   }
 
-  public void addFileDocumentSynchronizationVetoer(@NotNull FileDocumentSynchronizationVetoListener vetoer) {
-    myVetoDispatcher.addListener(vetoer);
-  }
-
-  public void removeFileDocumentSynchronizationVetoer(@NotNull FileDocumentSynchronizationVetoListener vetoer) {
-    myVetoDispatcher.removeListener(vetoer);
-  }
-
-  private final Map<FileDocumentManagerListener, MessageBusConnection> myAdapters
-    = new HashMap<FileDocumentManagerListener, MessageBusConnection>();
-
-  public void addFileDocumentManagerListener(@NotNull FileDocumentManagerListener listener) {
-    final MessageBusConnection connection = myBus.connect();
-    myAdapters.put(listener, connection);
-    connection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, listener);
-  }
-
-  public void removeFileDocumentManagerListener(@NotNull FileDocumentManagerListener listener) {
-    final MessageBusConnection connection = myAdapters.remove(listener);
-    if (connection != null) {
-      connection.disconnect();
-    }
-  }
-
   public void propertyChanged(final VirtualFilePropertyEvent event) {
     if (VirtualFile.PROP_WRITABLE.equals(event.getPropertyName())) {
       final VirtualFile file = event.getFile();
@@ -513,14 +483,8 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   public void reloadFromDisk(@NotNull final Document document) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     final VirtualFile file = getFile(document);
-    try {
-      fireBeforeFileContentReload(file, document);
-    }
-    catch (VetoDocumentReloadException e) {
+    if (!fireBeforeFileContentReload(file, document)) {
       return;
-    }
-    catch (Exception e) {
-      LOG.error(e);
     }
 
     final Project project = ProjectLocator.getInstance().guessProjectForFile(file);
@@ -645,14 +609,15 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     }
   }
 
-  private void fireBeforeFileContentReload(final VirtualFile file, final Document document) throws VetoDocumentReloadException {
-    List<FileDocumentSynchronizationVetoListener> listeners = myVetoDispatcher.getListeners();
-    for (FileDocumentSynchronizationVetoListener listener : listeners) {
+  private boolean fireBeforeFileContentReload(final VirtualFile file, final Document document) {
+    for (FileDocumentSynchronizationVetoer vetoer : Extensions.getExtensions(FileDocumentSynchronizationVetoer.EP_NAME)) {
       try {
-        listener.beforeFileContentReload(file, document);
+        if (!vetoer.mayReloadFileContent(file, document)) {
+          return false;
+        }
       }
-      catch (AbstractMethodError e) {
-        // Do nothing. Some listener just does not implement this method yet.
+      catch (Exception e) {
+        LOG.error(e);
       }
     }
 
@@ -660,6 +625,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     for (FileDocumentManagerListener listener : getListeners()) {
       listener.beforeFileContentReload(file, document);
     }
+    return true;
   }
 
   private void fireFileContentLoaded(final VirtualFile file, final DocumentEx document) {

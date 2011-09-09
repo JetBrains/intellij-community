@@ -16,7 +16,6 @@
 
 package com.intellij.openapi.roots.impl;
 
-import com.intellij.AppTopics;
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -156,7 +155,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
   }
 
   private void subscribeToFileChanges() {
-    myConnection.subscribe(AppTopics.FILE_TYPES, new FileTypeListener() {
+    myConnection.subscribe(FileTypeManager.TOPIC, new FileTypeListener() {
       public void beforeFileTypesChanged(FileTypeEvent event) {
       }
 

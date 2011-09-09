@@ -57,11 +57,11 @@ public class FileColorManagerImpl extends FileColorManager implements Persistent
   static {
     ourDefaultColors = new LinkedHashMap<String, Color>();
     ourDefaultColors.put("Blue", new Color(215, 237, 243));
-    ourDefaultColors.put("Green", new Color(228, 241, 209));
+    ourDefaultColors.put("Green", new Color(231, 250, 219));
     ourDefaultColors.put("Orange", new Color(246, 224, 202));
     ourDefaultColors.put("Rose", new Color(242, 206, 202));
     ourDefaultColors.put("Violet", new Color(222, 213, 241));
-    ourDefaultColors.put("Yellow", new Color(247, 241, 203));
+    ourDefaultColors.put("Yellow", new Color(255, 255, 228));
   }
 
   public FileColorManagerImpl(@NotNull final Project project) {
@@ -216,6 +216,16 @@ public class FileColorManagerImpl extends FileColorManager implements Persistent
 
   public List<FileColorConfiguration> getSharedConfigurations() {
     return myModel.getSharedConfigurations();
+  }
+
+  @Nullable
+  public static String getColorName(Color color) {
+    for (String name : ourDefaultColors.keySet()) {
+      if (color.equals(ourDefaultColors.get(name))) {
+        return name;
+      }
+    }
+    return null;
   }
 
   @Nullable

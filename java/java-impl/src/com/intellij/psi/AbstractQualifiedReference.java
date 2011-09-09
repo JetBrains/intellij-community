@@ -63,7 +63,7 @@ public abstract class AbstractQualifiedReference<T extends AbstractQualifiedRefe
 
   @NotNull
   public final ResolveResult[] multiResolve(final boolean incompleteCode) {
-    return getManager().getResolveCache().resolveWithCaching(this, MY_RESOLVER, true, false);
+    return ResolveCache.getInstance(getProject()).resolveWithCaching(this, MY_RESOLVER, true, false);
   }
 
   @Nullable

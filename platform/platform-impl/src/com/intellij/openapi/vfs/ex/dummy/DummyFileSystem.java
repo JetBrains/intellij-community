@@ -15,10 +15,7 @@
  */
 package com.intellij.openapi.vfs.ex.dummy;
 
-import com.intellij.openapi.vfs.DeprecatedVirtualFileSystem;
-import com.intellij.openapi.vfs.VfsBundle;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +25,7 @@ import java.io.IOException;
 /**
  *
  */
-public class DummyFileSystem extends DeprecatedVirtualFileSystem {
+public class DummyFileSystem extends DeprecatedVirtualFileSystem implements NonPhysicalFileSystem {
   @NonNls public static final String PROTOCOL = "dummy";
   private VirtualFileDirectoryImpl myRoot;
 

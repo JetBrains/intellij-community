@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.util.Collection;
 import java.util.Collections;
@@ -80,6 +81,11 @@ public class LogMessageEx extends LogMessage {
     return new IdeaLoggingEvent(userMessage, new Throwable() {
       @Override
       public void printStackTrace(PrintWriter s) {
+        s.print(details);
+      }
+
+      @Override
+      public void printStackTrace(PrintStream s) {
         s.print(details);
       }
     }) {

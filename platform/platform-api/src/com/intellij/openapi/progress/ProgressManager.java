@@ -37,6 +37,11 @@ public abstract class ProgressManager {
       protected void doCheckCanceled() throws ProcessCanceledException {
         ProgressManager.ourInstance.doCheckCanceled();
       }
+
+      @Override
+      public NonCancelableSection startNonCancelableSection() {
+        return ProgressManager.ourInstance.startNonCancelableSection();
+      }
     };
   }
 

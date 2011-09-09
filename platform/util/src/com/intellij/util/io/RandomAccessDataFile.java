@@ -140,7 +140,7 @@ public class RandomAccessDataFile implements Forceable, Closeable {
   public String getUTF(long addr) {
     try {
       int len = getInt(addr);
-      byte[] bytes = new byte[ len ];
+      byte[] bytes = new byte[len];
       get(addr + 4, bytes, 0, len);
       return new String(bytes, "UTF-8");
     }
@@ -172,13 +172,19 @@ public class RandomAccessDataFile implements Forceable, Closeable {
     long res;
 
     try {
-      res = getRandomAccessFile().length();
+      RandomAccessFile file = getRandomAccessFile();
+      try {
+        synchronized (file) {
+          res = file.length();
+        }
+      }
+      finally {
+        releaseFile();
+      }
     }
     catch (IOException e) {
       return 0;
     }
-
-    releaseFile();
     return res;
   }
 
@@ -186,7 +192,7 @@ public class RandomAccessDataFile implements Forceable, Closeable {
     if (myIsDisposed) return;
     myPool.flushPages(this);
     ourCache.closeChannel(myFile);
-    
+
     myIsDisposed = true;
   }
 
@@ -232,6 +238,7 @@ public class RandomAccessDataFile implements Forceable, Closeable {
   public static long totalWriteBytes = 0;
 
   void loadPage(final Page page) {
+    assertNotDisposed();
     try {
       final RandomAccessFile file = getRandomAccessFile();
       try {
@@ -259,6 +266,7 @@ public class RandomAccessDataFile implements Forceable, Closeable {
   }
 
   void flushPage(final Page page, int start, int end) {
+    assertNotDisposed();
     try {
       flush(page.getBuf(), page.getOffset() + start, start, end - start);
     }

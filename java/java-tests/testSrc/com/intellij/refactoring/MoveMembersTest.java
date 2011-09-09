@@ -10,6 +10,7 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.refactoring.move.moveMembers.MockMoveMembersOptions;
 import com.intellij.refactoring.move.moveMembers.MoveMembersProcessor;
+import com.intellij.util.VisibilityUtil;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -80,6 +81,10 @@ public class MoveMembersTest extends MultiFileTestCase {
     doTest("pack1.A", "pack1.C", 0, 1);
   }
 
+  public void testEscalateVisibility() throws Exception {
+    doTest("pack1.A", "pack1.C", true, VisibilityUtil.ESCALATE_VISIBILITY, 0);
+  }
+
   public void testOtherPackageImport() throws Exception {
     doTest("pack1.ClassWithStaticMethod", "pack2.OtherClass", 1);
   }
@@ -119,17 +124,28 @@ public class MoveMembersTest extends MultiFileTestCase {
     doTest(sourceClassName, targetClassName, true, memberIndices);
   }
 
-  private void doTest(final String sourceClassName, final String targetClassName, final boolean lowercaseFirstLetter, final int... memberIndices)
+  private void doTest(final String sourceClassName,
+                      final String targetClassName,
+                      final boolean lowercaseFirstLetter,
+                      final int... memberIndices) throws Exception {
+    doTest(sourceClassName, targetClassName, lowercaseFirstLetter, null, memberIndices);
+  }
+
+  private void doTest(final String sourceClassName,
+                      final String targetClassName,
+                      final boolean lowercaseFirstLetter,
+                      final String defaultVisibility,
+                      final int... memberIndices)
     throws Exception {
     doTest(new PerformAction() {
       @Override
       public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
-        MoveMembersTest.this.performAction(sourceClassName, targetClassName, memberIndices);
+        MoveMembersTest.this.performAction(sourceClassName, targetClassName, memberIndices, defaultVisibility);
       }
     }, lowercaseFirstLetter);
   }
 
-  private void performAction(String sourceClassName, String targetClassName, int[] memberIndices) throws Exception {
+  private void performAction(String sourceClassName, String targetClassName, int[] memberIndices, final String visibility) throws Exception {
     PsiClass sourceClass = myJavaFacade.findClass(sourceClassName, ProjectScope.getProjectScope(myProject));
     assertNotNull("Class " + sourceClassName + " not found", sourceClass);
     PsiClass targetClass = myJavaFacade.findClass(targetClassName, ProjectScope.getProjectScope(myProject));
@@ -151,7 +167,7 @@ public class MoveMembersTest extends MultiFileTestCase {
     }
 
     MockMoveMembersOptions options = new MockMoveMembersOptions(targetClass.getQualifiedName(), memberSet);
-    options.setMemberVisibility(null);
+    options.setMemberVisibility(visibility);
     new MoveMembersProcessor(myProject, null, options).run();
     FileDocumentManager.getInstance().saveAllDocuments();
   }
