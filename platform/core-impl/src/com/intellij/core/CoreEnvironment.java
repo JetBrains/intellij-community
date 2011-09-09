@@ -20,6 +20,7 @@ import com.intellij.lang.impl.PsiBuilderFactoryImpl;
 import com.intellij.mock.MockApplication;
 import com.intellij.mock.MockFileDocumentManagerImpl;
 import com.intellij.mock.MockProject;
+import com.intellij.mock.MockReferenceProvidersRegistry;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationComponentLocator;
 import com.intellij.openapi.application.ApplicationManager;
@@ -35,6 +36,7 @@ import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiFileFactoryImpl;
 import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.CachedValuesManagerImpl;
 import com.intellij.util.Function;
@@ -76,6 +78,7 @@ public class CoreEnvironment {
 
     myApplication.registerService(DefaultASTFactory.class, new CoreASTFactory());
     myApplication.registerService(PsiBuilderFactory.class, new PsiBuilderFactoryImpl());
+    myApplication.registerService(ReferenceProvidersRegistry.class, new MockReferenceProvidersRegistry());
 
     final MutablePicoContainer projectContainer = myProject.getPicoContainer();
     PsiManagerImpl psiManager = new PsiManagerImpl(myProject, null, null, null, null);

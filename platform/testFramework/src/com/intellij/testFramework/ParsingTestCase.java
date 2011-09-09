@@ -41,6 +41,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiCachedValuesFactory;
 import com.intellij.psi.impl.PsiFileFactoryImpl;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistryImpl;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.CachedValuesManagerImpl;
 import com.intellij.util.Function;
@@ -107,6 +109,7 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
     registerComponentInstance(appContainer, FileTypeManager.class, new MockFileTypeManager(new MockLanguageFileType(myLanguage, myFileExt)));
     registerApplicationService(PsiBuilderFactory.class, new PsiBuilderFactoryImpl());
     registerApplicationService(DefaultASTFactory.class, new DefaultASTFactoryImpl());
+    registerApplicationService(ReferenceProvidersRegistry.class, new ReferenceProvidersRegistryImpl());
     myProject.registerService(CachedValuesManager.class, new CachedValuesManagerImpl(myProject, new PsiCachedValuesFactory(myPsiManager)));
     myProject.registerService(PsiManager.class, myPsiManager);
     myProject.registerService(StartupManager.class, new StartupManagerImpl(myProject));
