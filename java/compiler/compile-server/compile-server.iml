@@ -7,9 +7,9 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="Netty" level="project" />
-    <orderEntry type="library" name="protobuf" level="project" />
-    <orderEntry type="library" name="JPS-incremental" level="project" />
+    <orderEntry type="library" exported="" name="Netty" level="project" />
+    <orderEntry type="library" exported="" name="protobuf" level="project" />
+    <orderEntry type="library" exported="" name="JPS-incremental" level="project" />
     <orderEntry type="module" module-name="annotations" />
   </component>
 </module>
