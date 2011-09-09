@@ -197,7 +197,7 @@ public class PagePool {
     int count = 0;
 
     while (count < maxPagesToFlush) {
-      FinalizationRequest request = retreiveFinalizationRequest();
+      FinalizationRequest request = retrieveFinalizationRequest();
       if (request == null) {
         return true;
       }
@@ -268,7 +268,7 @@ public class PagePool {
   }
 
   @Nullable
-  private FinalizationRequest retreiveFinalizationRequest() {
+  private FinalizationRequest retrieveFinalizationRequest() {
     FinalizationRequest request = null;
     synchronized (lock) {
       if (!myFinalizationQueue.isEmpty()) {
