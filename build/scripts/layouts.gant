@@ -407,3 +407,19 @@ def reorder(String home, String targetDirectory) {
     }
   }
 }
+
+def layout_core(String target) {
+  layout(target) {
+    jar("intellij-core.jar") {
+      module("util")
+      module("core-api")
+      module("core-impl")
+      module("boot")
+      module("extensions")
+    }
+
+    jar("annotations.jar") {
+      module("annotations")
+    }
+  }
+}
