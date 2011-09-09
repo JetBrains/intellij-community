@@ -35,8 +35,7 @@ import git4idea.validators.GitRefNameValidator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * <p>
@@ -81,14 +80,20 @@ class GitBranchPopup  {
     popupGroup.addAction(new CurrentBranchAction(myRepository));
     popupGroup.addAction(new NewBranchActions(myProject, myRepository));
     popupGroup.addAction(new CheckoutRevisionActions(myProject, myRepository));
+
     popupGroup.addSeparator("Local Branches");
-    for (GitBranch localBranch : myRepository.getBranches().getLocalBranches()) {
+    List<GitBranch> localBranches = new ArrayList<GitBranch>(myRepository.getBranches().getLocalBranches());
+    Collections.sort(localBranches);
+    for (GitBranch localBranch : localBranches) {
       if (!localBranch.equals(myRepository.getCurrentBranch())) { // don't show current branch in the list
         popupGroup.add(new LocalBranchActions(myProject, myRepository, localBranch.getName()));
       }
     }
+
     popupGroup.addSeparator("Remote Branches");
-    for (GitBranch remoteBranch : myRepository.getBranches().getRemoteBranches()) {
+    List<GitBranch> remoteBranches = new ArrayList<GitBranch>(myRepository.getBranches().getRemoteBranches());
+    Collections.sort(remoteBranches);
+    for (GitBranch remoteBranch : remoteBranches) {
       popupGroup.add(new RemoteBranchActions(myProject, myRepository, remoteBranch.getName()));
     }
     popupGroup.addSeparator();
