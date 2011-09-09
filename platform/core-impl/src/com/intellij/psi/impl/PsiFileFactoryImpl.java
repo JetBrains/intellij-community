@@ -23,7 +23,7 @@ import com.intellij.lang.*;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -156,8 +156,7 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
 
   @NotNull
   public PsiFile createFileFromText(@NotNull String name, @NotNull String text){
-    FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-    FileType type = fileTypeManager.getFileTypeByFileName(name);
+    FileType type = FileTypeRegistry.getInstance().getFileTypeByFileName(name);
     if (type.isBinary()) {
       throw new RuntimeException("Cannot create binary files from text: name " + name + ", file type " + type);
     }
