@@ -1,0 +1,5 @@
+import java.util.concurrent.Semaphore
+
+def createSemaphore() {
+  new <spot>Semaphore</spot>();
+}

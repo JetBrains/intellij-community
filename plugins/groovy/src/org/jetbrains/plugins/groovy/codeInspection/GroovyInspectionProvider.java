@@ -120,6 +120,7 @@ public class GroovyInspectionProvider implements InspectionToolProvider, Applica
         GroovyNegatedConditionalInspection.class,
         GroovyNegatedIfInspection.class,
         GroovyResultOfIncrementOrDecrementUsedInspection.class,
+        UnnecessaryQualifiedReferenceInspection.class,
         GroovyEmptyStatementBodyInspection.class,
         GroovyPointlessBooleanInspection.class,
         GroovyPointlessArithmeticInspection.class,
