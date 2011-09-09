@@ -41,7 +41,7 @@ import java.util.Map;
  */
 public class AsmCodeGeneratorTest extends TestCase {
   private MyNestedFormLoader myNestedFormLoader;
-  private MyClassLoader myClassLoader;
+  private ClassLoader myClassLoader;
 
   @Override
   protected void setUp() throws Exception {
@@ -109,7 +109,7 @@ public class AsmCodeGeneratorTest extends TestCase {
     fos.close();
     */
 
-    return myClassLoader.doDefineClass(className, patchedData);
+    return ((MyClassLoader)myClassLoader).doDefineClass(className, patchedData);
   }
 
   private static byte[] getVerifiedPatchedData(final AsmCodeGenerator codeGenerator) {
@@ -325,7 +325,7 @@ public class AsmCodeGeneratorTest extends TestCase {
       File.separatorChar + "formEmbedding" + File.separatorChar + "Ideadev14081" + File.separatorChar;
     AsmCodeGenerator embeddedClassGenerator = initCodeGenerator("Embedded.form", "Embedded", testDataPath);
     byte[] embeddedPatchedData = getVerifiedPatchedData(embeddedClassGenerator);
-    myClassLoader.doDefineClass("Embedded", embeddedPatchedData);
+    ((MyClassLoader)myClassLoader).doDefineClass("Embedded", embeddedPatchedData);
     myNestedFormLoader.registerNestedForm("Embedded.form", testDataPath + "Embedded.form");
     AsmCodeGenerator mainClassGenerator = initCodeGenerator("Main.form", "Main", testDataPath);
     byte[] mainPatchedData = getVerifiedPatchedData(mainClassGenerator);
@@ -336,7 +336,7 @@ public class AsmCodeGeneratorTest extends TestCase {
     fos.close();
     */
 
-    final Class mainClass = myClassLoader.doDefineClass("Main", mainPatchedData);
+    final Class mainClass = ((MyClassLoader)myClassLoader).doDefineClass("Main", mainPatchedData);
     Object instance = mainClass.newInstance();
     assert instance != null : mainClass;
   }
