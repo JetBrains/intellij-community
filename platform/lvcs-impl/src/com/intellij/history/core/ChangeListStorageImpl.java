@@ -25,7 +25,6 @@ import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
@@ -37,10 +36,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
-import java.io.*;
+import java.io.DataInputStream;
+import java.io.File;
+import java.io.IOException;
 import java.text.DateFormat;
 import java.text.MessageFormat;
-import java.util.Arrays;
 
 public class ChangeListStorageImpl implements ChangeListStorage {
   private static final int VERSION = 5;
@@ -207,73 +207,18 @@ public class ChangeListStorageImpl implements ChangeListStorage {
     if (isCompletelyBroken) return;
 
     try {
-      int id = myStorage.createNextRecord();
-      byte[] writtenBytes = changeSetToBytes(changeSet);
-      assertCorrectlyWritten(writtenBytes);
-
-      AbstractStorage.StorageDataOutput out = myStorage.writeStream(id, true);
+      AbstractStorage.StorageDataOutput out = myStorage.writeStream(myStorage.createNextRecord(), true);
       try {
-        out.write(writtenBytes);
+        changeSet.write(out);
       }
       finally {
         out.close();
       }
       myStorage.setLastId(myLastId);
       myStorage.force();
-
-      // todo remove this when bug is found
-      Pair<Long, Integer> os = myStorage.getOffsetAndSize(id);
-      String message =
-        "Block was written: " + id + " offset: " + os.first + " size: " + os.second + " real bytes size: " + writtenBytes.length;
-      LocalHistoryLog.LOG
-        .info(message);
-      if (os.second != writtenBytes.length) throw new IOException("wrong space was allocated for the record!\n" + message);
-
-      // todo remove this when bug is found
-      if (ApplicationManagerEx.getApplicationEx().isInternal()) {
-        try {
-          byte[] readBytes = myStorage.readBytes(id);
-          assertCorrectlyWritten(readBytes);
-        }
-        catch (IOException e) {
-          handleError(e, "failed to check the just-written block: " + id);
-        }
-      }
     }
     catch (IOException e) {
       handleError(e, null);
-    }
-  }
-
-  private byte[] changeSetToBytes(ChangeSet changeSet) throws IOException {
-    ByteArrayOutputStream byteOS = new ByteArrayOutputStream();
-    DataOutputStream dataOS = new DataOutputStream(byteOS);
-    try {
-      changeSet.write(dataOS);
-    }
-    finally {
-      dataOS.close();
-    }
-    return byteOS.toByteArray();
-  }
-
-  private void assertCorrectlyWritten(byte[] writtenBytes) throws IOException {
-    ChangeSet read;
-    DataInputStream in = new DataInputStream(new ByteArrayInputStream(writtenBytes));
-    try {
-      read = new ChangeSet(in);
-    }
-    finally {
-      in.close();
-    }
-    byte[] readBytes = changeSetToBytes(read);
-    assertBytes(writtenBytes, readBytes);
-  }
-
-  private void assertBytes(byte[] writtenBytes, byte[] readBytes) throws IOException {
-    if (!Arrays.equals(writtenBytes, readBytes)) {
-      throw new IOException("bytes was written incorrectly. written: " + writtenBytes.length
-                            + " read: " + readBytes.length);
     }
   }
 
@@ -290,9 +235,6 @@ public class ChangeListStorageImpl implements ChangeListStorage {
 
       while (eachBlockId != 0) {
         processor.consume(doReadBlock(eachBlockId).changeSet);
-        // todo remove this when bug is found
-        Pair<Long, Integer> os = myStorage.getOffsetAndSize(eachBlockId);
-        LocalHistoryLog.LOG.info("Block was deleted: " + eachBlockId + " offset: " + os.first + " size: " + os.second);
         eachBlockId = doReadPrevSafely(eachBlockId, recursionGuard);
       }
       myStorage.deleteRecordsUpTo(firstObsoleteId);
