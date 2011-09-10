@@ -25,6 +25,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.tabs.impl.TabLabel;
 import com.intellij.util.Alarm;
 import com.intellij.util.Function;
 import com.intellij.util.ui.EmptyIcon;
@@ -94,7 +95,13 @@ public class DeferredIconImpl<T> implements DeferredIcon {
               target.set(box);
             }
             else {
-              target.set(c);
+              final Container tabLabel = SwingUtilities.getAncestorOfClass(TabLabel.class, c);
+              if(tabLabel != null) {
+                target.set(tabLabel);
+              }
+              else {
+                target.set(c);
+              }
             }
           }
         }
@@ -141,7 +148,11 @@ public class DeferredIconImpl<T> implements DeferredIcon {
               }
 
               if (c == actualTarget) {
-                c.repaint(x, y, getIconWidth(), getIconHeight());
+                if (c instanceof TabLabel) {
+                  ((TabLabel)c).repaintIcon(x, y, getIconWidth(), getIconHeight());
+                } else {
+                  c.repaint(x, y, getIconWidth(), getIconHeight());
+                }
               }
               else {
                 Rectangle rec = null;

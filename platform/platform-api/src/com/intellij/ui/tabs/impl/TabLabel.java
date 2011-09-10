@@ -29,8 +29,8 @@ import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.tabs.JBTabsPosition;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.UiDecorator;
+import com.intellij.util.PairConsumer;
 import com.intellij.util.ui.Centerizer;
-import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -148,7 +148,19 @@ public class TabLabel extends JPanel {
     }
   }
 
-  private void doPaint(Graphics g) {
+  public void repaintIcon(int x, int y, int width, int height) {
+    final Rectangle r = new Rectangle(x, y, width, height);
+    doTranslate(new PairConsumer<Integer, Integer>() {
+      @Override
+      public void consume(Integer x, Integer y) {
+        r.translate(x, y);
+      }
+    });
+    
+    repaint(r.x, r.y, r.width, r.height);
+  }
+  
+  public void doTranslate(PairConsumer<Integer, Integer> consumer) {
     final JBTabsPosition pos = myTabs.getTabsPosition();
 
     int dX = 0;
@@ -176,24 +188,32 @@ public class TabLabel extends JPanel {
         dYs = selected;
         break;
     }
-
+    
     if (!myTabs.isDropTarget(myInfo)) {
       if (myTabs.getSelectedInfo() != myInfo) {
-        g.translate(dX, dY);
+        consumer.consume(dX,  dY);
       } else {
-        g.translate(dXs, dYs);
+        consumer.consume(dXs,  dYs);
       }
     }
+  }
+
+  private void doPaint(final Graphics g) {
+    doTranslate(new PairConsumer<Integer, Integer>() {
+      @Override
+      public void consume(Integer x, Integer y) {
+        g.translate(x, y);
+      }
+    });
 
     super.paint(g);
 
-    if (!myTabs.isDropTarget(myInfo)) {
-      if (myTabs.getSelectedInfo() != myInfo) {
-        g.translate(-dX, -dY);
-      } else {
-        g.translate(-dXs, -dYs);
+    doTranslate(new PairConsumer<Integer, Integer>() {
+      @Override
+      public void consume(Integer x, Integer y) {
+        g.translate(-x, -y);
       }
-    }
+    });
   }
 
   private int getNonSelectedOffset() {
