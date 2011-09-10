@@ -1,15 +1,10 @@
 package org.jetbrains.jpsservice.impl;
 
-import org.codehaus.gant.GantBinding;
 import org.jboss.netty.channel.*;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.ether.ProjectWrapper;
-import org.jetbrains.jps.Project;
-import org.jetbrains.jps.listeners.BuildInfoPrinter;
 import org.jetbrains.jpsservice.JpsRemoteProto;
 import org.jetbrains.jpsservice.Server;
 
-import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -138,32 +133,32 @@ public class JpsServerMessageHandler extends SimpleChannelHandler {
         final Map<String,String> pathVars = new HashMap<String, String>(); // todo
         pathVars.put("MAVEN_REPOSITORY", "C:/Users/jeka/.m2/repository");
 
-        final ProjectWrapper proj = ProjectWrapper.load(new GantBinding(), myProjectPath, getStartupScript(), pathVars, myCompileType == JpsRemoteProto.Message.Request.CompilationRequest.Type.MAKE);
-
-        proj.getProject().getBuilder().setBuildInfoPrinter(new BuildInfoPrinter() {
-          public Object printProgressMessage(Project project, String message) {
-            Channels.write(myChannelContext.getChannel(), ProtoUtil.toMessage(mySessionId, ProtoUtil.createCompileProgressMessageResponse(message)));
-            return null;
-          }
-
-          public Object printCompilationErrors(Project project, String compilerName, String messages) {
-            Channels.write(myChannelContext.getChannel(), ProtoUtil.toMessage(mySessionId, ProtoUtil.createCompileErrorMessageResponse(messages, null, -1, -1)));
-            return null;
-          }
-        });
-
-        switch (myCompileType) {
-          case REBUILD:
-            proj.rebuild();
-            break;
-          case MAKE:
-            proj.makeModules(null, createMakeFlags());
-            break;
-          case CLEAN:
-            proj.clean();
-            break;
-        }
-        proj.save();
+        //final ProjectWrapper proj = ProjectWrapper.load(new GantBinding(), myProjectPath, getStartupScript(), pathVars, myCompileType == JpsRemoteProto.Message.Request.CompilationRequest.Type.MAKE);
+        //
+        //proj.getProject().getBuilder().setBuildInfoPrinter(new BuildInfoPrinter() {
+        //  public Object printProgressMessage(Project project, String message) {
+        //    Channels.write(myChannelContext.getChannel(), ProtoUtil.toMessage(mySessionId, ProtoUtil.createCompileProgressMessageResponse(message)));
+        //    return null;
+        //  }
+        //
+        //  public Object printCompilationErrors(Project project, String compilerName, String messages) {
+        //    Channels.write(myChannelContext.getChannel(), ProtoUtil.toMessage(mySessionId, ProtoUtil.createCompileErrorMessageResponse(messages, null, -1, -1)));
+        //    return null;
+        //  }
+        //});
+        //
+        //switch (myCompileType) {
+        //  case REBUILD:
+        //    proj.rebuild();
+        //    break;
+        //  case MAKE:
+        //    proj.makeModules(null, createMakeFlags());
+        //    break;
+        //  case CLEAN:
+        //    proj.clean();
+        //    break;
+        //}
+        //proj.save();
       }
       catch (Throwable e) {
         error = e;
@@ -212,25 +207,25 @@ public class JpsServerMessageHandler extends SimpleChannelHandler {
         "project.builder.useInProcessJavac = true";
     }
 
-    private ProjectWrapper.Flags createMakeFlags() {
-      return new ProjectWrapper.Flags() {
-        public boolean tests() {
-          return true;
-        }
-
-        public boolean incremental() {
-          return true;
-        }
-
-        public boolean force() {
-          return false;
-        }
-
-        public PrintStream logStream() {
-          return null; // todo
-        }
-      };
-    }
+    //private ProjectWrapper.Flags createMakeFlags() {
+    //  return new ProjectWrapper.Flags() {
+    //    public boolean tests() {
+    //      return true;
+    //    }
+    //
+    //    public boolean incremental() {
+    //      return true;
+    //    }
+    //
+    //    public boolean force() {
+    //      return false;
+    //    }
+    //
+    //    public PrintStream logStream() {
+    //      return null; // todo
+    //    }
+    //  };
+    //}
   }
 
 }
