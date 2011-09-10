@@ -35,8 +35,6 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="library" name="Netty" level="project" />
-    <orderEntry type="library" name="Protobuf" level="project" />
   </component>
 </module>
 
