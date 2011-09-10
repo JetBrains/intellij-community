@@ -462,7 +462,16 @@ public class EditorWindow {
       }
       else {
         Integer initialIndex = editor.getFile().getUserData(INITIAL_INDEX_KEY);
-        final int indexToInsert = initialIndex == null ? myTabbedPane.getSelectedIndex() + 1 : initialIndex;
+        int indexToInsert = 0;
+        if (initialIndex == null) {
+          int selectedIndex = myTabbedPane.getSelectedIndex();
+          if (selectedIndex >= 0) {
+            indexToInsert = UISettings.getInstance().ACTIVATE_RIGHT_EDITOR_ON_CLOSE ? selectedIndex : selectedIndex + 1; 
+          }
+        } else {
+          indexToInsert = initialIndex;
+        }
+        
         final VirtualFile file = editor.getFile();
         final Icon template = IconLoader.getIcon("/fileTypes/text.png");
         myTabbedPane.insertTab(file, new EmptyIcon(template.getIconWidth(), template.getIconHeight()), new TComp(this, editor), null, indexToInsert);
