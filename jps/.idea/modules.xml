@@ -7,6 +7,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/javaee/javaee.iml" filepath="$PROJECT_DIR$/plugins/javaee/javaee.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/jpa/jpa.iml" filepath="$PROJECT_DIR$/plugins/jpa/jpa.iml" />
       <module fileurl="file://$PROJECT_DIR$/jps.iml" filepath="$PROJECT_DIR$/jps.iml" />
+      <module fileurl="file://$PROJECT_DIR$/serverFacade/serverFacade.iml" filepath="$PROJECT_DIR$/serverFacade/serverFacade.iml" />
     </modules>
   </component>
 </project>
