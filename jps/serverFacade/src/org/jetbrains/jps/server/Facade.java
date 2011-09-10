@@ -3,11 +3,12 @@ package org.jetbrains.jps.server;
 import org.codehaus.gant.GantBinding;
 import org.jetbrains.ether.ProjectWrapper;
 import org.jetbrains.jps.Module;
+import org.jetbrains.jps.Project;
+import org.jetbrains.jps.listeners.BuildInfoPrinter;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -15,24 +16,8 @@ import java.util.Set;
  *         Date: 9/10/11
  */
 public class Facade {
-  static enum BuildType {
-    REBUILD, MAKE, CLEAN
-  }
 
-  public static class BuildParameters {
-    BuildType buildType = BuildType.MAKE;
-    Map<String,String> pathVariables;
-    boolean useInProcessJavac = true;
-
-    public BuildParameters() {
-    }
-
-    public BuildParameters(BuildType buildType) {
-      this.buildType = buildType;
-    }
-  }
-
-  public void startBuild(String projectPath, Set<String> modules, BuildParameters params) throws Throwable {
+  public void startBuild(String projectPath, Set<String> modules, final BuildParameters params, final MessagesConsumer consumer) throws Throwable {
     final ProjectWrapper proj = ProjectWrapper.load(new GantBinding(), projectPath, getStartupScript(params), params.pathVariables, params.buildType == BuildType.MAKE);
 
     List<Module> toCompile = null;
@@ -46,6 +31,18 @@ public class Facade {
         }
       }
     }
+
+    proj.getProject().getBuilder().setBuildInfoPrinter(new BuildInfoPrinter() {
+      public Object printProgressMessage(Project project, String message) {
+        consumer.consumeProgressMessage(message);
+        return null;
+      }
+
+      public Object printCompilationErrors(Project project, String compilerName, String messages) {
+        consumer.consumeCompilerMessage(compilerName, compilerName);
+        return null;
+      }
+    });
 
     switch (params.buildType) {
       case REBUILD:
