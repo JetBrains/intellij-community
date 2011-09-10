@@ -15,17 +15,32 @@
  */
 package com.intellij.uiDesigner.core;
 
+import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
+import com.intellij.uiDesigner.compiler.FormErrorInfo;
+import com.intellij.uiDesigner.compiler.NestedFormLoader;
+import com.intellij.uiDesigner.compiler.Utils;
+import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
+import com.intellij.uiDesigner.lw.LwRootContainer;
 import junit.framework.TestCase;
+import org.objectweb.asm.ClassWriter;
+
+import javax.swing.*;
+import javax.swing.border.EtchedBorder;
+import javax.swing.border.TitledBorder;
+import java.awt.*;
+import java.io.*;
+import java.lang.reflect.Field;
+import java.nio.charset.Charset;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author yole
  */
 public class AsmCodeGeneratorTest extends TestCase {
-  // todo: temp fix
-  public void testOk() throws Exception {
-  }
-
-/*  private MyNestedFormLoader myNestedFormLoader;
+  private MyNestedFormLoader myNestedFormLoader;
   private MyClassLoader myClassLoader;
 
   @Override
@@ -88,11 +103,11 @@ public class AsmCodeGeneratorTest extends TestCase {
 
     byte[] patchedData = getVerifiedPatchedData(codeGenerator);
 
-    *//*
+    /*
     FileOutputStream fos = new FileOutputStream("C:\\yole\\FormPreview27447\\MainPatched.class");
     fos.write(patchedData);
     fos.close();
-    *//*
+    */
 
     return myClassLoader.doDefineClass(className, patchedData);
   }
@@ -315,11 +330,11 @@ public class AsmCodeGeneratorTest extends TestCase {
     AsmCodeGenerator mainClassGenerator = initCodeGenerator("Main.form", "Main", testDataPath);
     byte[] mainPatchedData = getVerifiedPatchedData(mainClassGenerator);
 
-    *//*
+    /*
     FileOutputStream fos = new FileOutputStream("C:\\yole\\FormPreview27447\\MainPatched.class");
     fos.write(mainPatchedData);
     fos.close();
-    *//*
+    */
 
     final Class mainClass = myClassLoader.doDefineClass("Main", mainPatchedData);
     Object instance = mainClass.newInstance();
@@ -372,5 +387,5 @@ public class AsmCodeGeneratorTest extends TestCase {
     public String getClassToBindName(LwRootContainer container) {
       return container.getClassToBind();
     }
-  }*/
+  }
 }
