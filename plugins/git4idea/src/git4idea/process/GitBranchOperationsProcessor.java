@@ -83,12 +83,12 @@ public final class GitBranchOperationsProcessor {
   }
 
   private void doCheckoutNewBranch(@NotNull final String name) {
-    GitUnmergedFilesDetector unmergedDetector = new GitUnmergedFilesDetector();
+    GitSimpleEventDetector unmergedDetector = new GitSimpleEventDetector(GitSimpleEventDetector.Event.UNMERGED);
     GitCommandResult result = Git.checkoutNewBranch(myRepository, name, unmergedDetector);
     if (result.success()) {
       updateRepository();
       notifySuccess(String.format("Branch <b><code>%s</code></b> was created", name));
-    } else if (unmergedDetector.isUnmergedFilesDetected()) {
+    } else if (unmergedDetector.hasHappened()) {
       GitConflictResolver gitConflictResolver = prepareConflictResolverForUnmergedFilesBeforeCheckout();
       if (gitConflictResolver.merge()) { // try again to checkout
         doCheckoutNewBranch(name);
@@ -142,7 +142,7 @@ public final class GitBranchOperationsProcessor {
 
   private void doCheckout(@NotNull ProgressIndicator indicator, @NotNull String reference, @Nullable String newTrackingBranch) {
     final GitWouldBeOverwrittenByCheckoutDetector checkoutListener = new GitWouldBeOverwrittenByCheckoutDetector();
-    GitUnmergedFilesDetector unmergedDetector = new GitUnmergedFilesDetector();
+    GitSimpleEventDetector unmergedDetector = new GitSimpleEventDetector(GitSimpleEventDetector.Event.UNMERGED);
 
     GitCommandResult result = Git.checkout(myRepository, reference, newTrackingBranch, checkoutListener, unmergedDetector);
     if (result.success()) {
@@ -150,7 +150,7 @@ public final class GitBranchOperationsProcessor {
       updateRepository();
       notifySuccess(String.format("Checked out <b><code>%s</code></b>", reference));
     }
-    else if (unmergedDetector.isUnmergedFilesDetected()) {
+    else if (unmergedDetector.hasHappened()) {
       GitConflictResolver gitConflictResolver = prepareConflictResolverForUnmergedFilesBeforeCheckout();
       if (gitConflictResolver.merge()) { // try again to checkout
         doCheckout(indicator, reference, newTrackingBranch);

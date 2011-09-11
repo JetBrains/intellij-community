@@ -21,14 +21,30 @@ import git4idea.commands.GitLineHandlerListener;
 /**
  * @author Kirill Likhodedov
  */
-class GitUnmergedFilesDetector implements GitLineHandlerListener {
-  
-  private boolean myUnmergedFilesDetected;
-  
+class GitSimpleEventDetector implements GitLineHandlerListener {
+
+  private final Event myEvent;
+  private boolean myHappened;
+
+  enum Event {
+    UNMERGED("you need to resolve your current index first"),
+    BRANCH_NOT_FULLY_MERGED("is not fully merged");
+
+    private final String myDetectionString;
+
+    private Event(String detectionString) {
+      myDetectionString = detectionString;
+    }
+  }
+
+  GitSimpleEventDetector(Event event) {
+    myEvent = event;
+  }
+
   @Override
   public void onLineAvailable(String line, Key outputType) {
-    if (line.contains("you need to resolve your current index first")) {
-      myUnmergedFilesDetected = true;
+    if (line.contains(myEvent.myDetectionString)) {
+      myHappened = true;
     }
   }
 
@@ -40,8 +56,8 @@ class GitUnmergedFilesDetector implements GitLineHandlerListener {
   public void startFailed(Throwable exception) {
   }
 
-  public boolean isUnmergedFilesDetected() {
-    return myUnmergedFilesDetected;
+  boolean hasHappened() {
+    return myHappened;
   }
-}
 
+}
