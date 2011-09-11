@@ -84,7 +84,7 @@ public final class GitBranchOperationsProcessor {
 
   private void doCheckoutNewBranch(@NotNull final String name) {
     GitUnmergedFilesDetector unmergedDetector = new GitUnmergedFilesDetector();
-    GitCommandResult result = Git.checkoutNewBranch(myRepository, name, null, unmergedDetector);
+    GitCommandResult result = Git.checkoutNewBranch(myRepository, name, unmergedDetector);
     if (result.success()) {
       updateRepository();
       notifySuccess(String.format("Branch <b><code>%s</code></b> was created", name));
@@ -105,8 +105,15 @@ public final class GitBranchOperationsProcessor {
     return new GitConflictResolver(myProject, Collections.singleton(myRoot), params);
   }
 
+  /**
+   * Checks out remote branch as a new local branch.
+   * Provides the "smart checkout" procedure the same as in {@link #checkout(String)}.
+   *
+   * @param newBranchName     Name of new local branch.
+   * @param trackedBranchName Name of the remote branch being checked out.
+   */
   public void checkoutNewTrackingBranch(@NotNull String newBranchName, @NotNull String trackedBranchName) {
-    // TODO checkout & track => would be unmerged problem => smart checkout
+    commonCheckout(trackedBranchName, newBranchName);
   }
 
   /**
@@ -122,18 +129,22 @@ public final class GitBranchOperationsProcessor {
    * @param reference reference to be checked out.
    */
   public void checkout(@NotNull final String reference) {
+    commonCheckout(reference, null);
+  }
+
+  private void commonCheckout(@NotNull final String reference, @Nullable final String newTrackingBranch) {
     new CommonBackgroundTask(myProject, "Checking out " + reference) {
       @Override public void execute(@NotNull ProgressIndicator indicator) {
-        doCheckout(indicator, reference);
+        doCheckout(indicator, reference, newTrackingBranch);
       }
     }.runInBackground();
   }
 
-  private void doCheckout(@NotNull ProgressIndicator indicator, @NotNull String reference) {
+  private void doCheckout(@NotNull ProgressIndicator indicator, @NotNull String reference, @Nullable String newTrackingBranch) {
     final GitWouldBeOverwrittenByCheckoutDetector checkoutListener = new GitWouldBeOverwrittenByCheckoutDetector();
     GitUnmergedFilesDetector unmergedDetector = new GitUnmergedFilesDetector();
 
-    GitCommandResult result = Git.checkout(myRepository, reference, checkoutListener, unmergedDetector);
+    GitCommandResult result = Git.checkout(myRepository, reference, newTrackingBranch, checkoutListener, unmergedDetector);
     if (result.success()) {
       refreshRoot();
       updateRepository();
@@ -142,13 +153,13 @@ public final class GitBranchOperationsProcessor {
     else if (unmergedDetector.isUnmergedFilesDetected()) {
       GitConflictResolver gitConflictResolver = prepareConflictResolverForUnmergedFilesBeforeCheckout();
       if (gitConflictResolver.merge()) { // try again to checkout
-        doCheckout(indicator, reference);
+        doCheckout(indicator, reference, newTrackingBranch);
       }
     }
     else if (checkoutListener.isWouldBeOverwrittenError()) {
       List<Change> affectedChanges = getChangesAffectedByCheckout(checkoutListener.getAffectedFiles());
       if (GitWouldBeOverwrittenByCheckoutDialog.showAndGetAnswer(myProject, affectedChanges)) {
-        smartCheckout(reference, indicator);
+        smartCheckout(reference, newTrackingBranch, indicator);
       }
     }
     else {
@@ -157,14 +168,14 @@ public final class GitBranchOperationsProcessor {
   }
 
   // stash - checkout - unstash
-  private void smartCheckout(@NotNull final String reference, @NotNull ProgressIndicator indicator) {
+  private void smartCheckout(@NotNull final String reference, @Nullable final String newTrackingBranch, @NotNull ProgressIndicator indicator) {
     final GitChangesSaver saver = configureSaver(reference, indicator);
 
     GitComplexProcess.Operation checkoutOperation = new GitComplexProcess.Operation() {
       @Override public void run(ContinuationContext context) {
         if (saveOrNotify(saver)) {
           try {
-            checkoutOrNotify(reference);
+            checkoutOrNotify(reference, newTrackingBranch);
           } finally {
             saver.restoreLocalChanges(context);
           }
@@ -228,8 +239,8 @@ public final class GitBranchOperationsProcessor {
   /**
    * Checks out or shows an error message.
    */
-  private boolean checkoutOrNotify(String reference) {
-    GitCommandResult checkoutResult = Git.checkout(myRepository, reference);
+  private boolean checkoutOrNotify(@NotNull String reference, @Nullable String newTrackingBranch) {
+    GitCommandResult checkoutResult = Git.checkout(myRepository, reference, newTrackingBranch);
     if (checkoutResult.success()) {
       return true;
     }

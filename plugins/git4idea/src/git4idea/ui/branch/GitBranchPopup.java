@@ -325,14 +325,11 @@ class GitBranchPopup  {
 
       @Override
       public void actionPerformed(AnActionEvent e) {
-        // TODO Checkbox to auto-create in future, if the name is available - if not available the input dialog should be shown
-        // TODO when checkbox is set, the action name can transform to "checkout as <name>".
         final String name = Messages.showInputDialog(myProject, "Enter name of new branch", "Checkout remote branch", Messages.getQuestionIcon(),
                                                guessBranchName(), GitNewBranchNameValidator.newInstance(myRepository));
-        if (name == null) {
-          return;
+        if (name != null) {
+          new GitBranchOperationsProcessor(myProject, myRepository).checkoutNewTrackingBranch(name, myRemoteBranchName);
         }
-        new GitBranchOperationsProcessor(myProject, myRepository).checkoutNewTrackingBranch(name, myRemoteBranchName);
       }
 
       private String guessBranchName() {
