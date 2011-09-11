@@ -18,6 +18,8 @@ package com.intellij.refactoring.changeSignature;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -48,8 +50,8 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.ui.DialogUtil;
-import com.intellij.util.ui.JBTableRow;
-import com.intellij.util.ui.JBTableRowEditor;
+import com.intellij.util.ui.table.JBTableRow;
+import com.intellij.util.ui.table.JBTableRowEditor;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -200,7 +202,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
   @Override
   protected JComponent getRowPresentation(ParameterTableModelItemBase<ParameterInfoImpl> item, boolean selected, boolean focused) {
     final JPanel panel = new JPanel(new BorderLayout());
-    String text = item.parameter.getTypeText() + " " + item.parameter.getName();
+    String text = item.parameter.getTypeText() + "       " + item.parameter.getName();
     final String defaultValue = item.parameter.getDefaultValue();
     if (StringUtil.isNotEmpty(defaultValue)) {
       text += " = " + defaultValue + ";";
@@ -208,12 +210,15 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     if (item.parameter.isUseAnySingleVariable()) {
       text += "  // use any var";
     }
-    final EditorTextField field = new EditorTextField(text, getProject(), getFileType()) {
+    final EditorTextField field = new EditorTextField(" " + text, getProject(), getFileType()) {
       @Override
       protected boolean shouldHaveBorder() {
         return false;
       }
     };
+    final Font font = EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN);
+    field.setFont(font);
+
     if (selected) {
       panel.setBackground(UIUtil.getTableSelectionBackground());
       field.setAsRendererWithSelection(UIUtil.getTableSelectionBackground(), UIUtil.getTableSelectionForeground());
@@ -235,7 +240,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
       @Override
       public void prepareEditor(JTable table, int row) {
         setLayout(new BorderLayout());
-
+        //setBorder(new LineBorder(t.getSelectionBackground(), 1));
         final JPanel typePanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 4, 2, true, false));
         final Document document = PsiDocumentManager.getInstance(getProject()).getDocument(item.typeCodeFragment);
         myTypeEditor = new EditorTextField(document, getProject(), getFileType());
