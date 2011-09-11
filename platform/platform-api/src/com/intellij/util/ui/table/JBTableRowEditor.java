@@ -15,12 +15,23 @@
  */
 package com.intellij.util.ui.table;
 
+import com.intellij.openapi.wm.IdeFocusManager;
+
 import javax.swing.*;
 
 /**
  * @author Konstantin Bulenkov
  */
 public abstract class JBTableRowEditor extends JPanel {
+  @Override
+  public void addNotify() {
+    super.addNotify();
+    final JComponent c = getPreferredFocusedComponent();
+    if (c != null && c.isVisible()) {
+      IdeFocusManager.getGlobalInstance().requestFocus(c, true);
+    }
+  }
+
   public abstract void prepareEditor(JTable table, int row);
   public abstract JBTableRow getValue();
   public abstract JComponent getPreferredFocusedComponent();
