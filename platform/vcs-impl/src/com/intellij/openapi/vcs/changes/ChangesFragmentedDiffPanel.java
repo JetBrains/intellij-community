@@ -169,11 +169,13 @@ public class ChangesFragmentedDiffPanel implements Disposable {
   }
 
   private void highlightTodo(boolean left, List<Pair<TextRange, TextAttributes>> todoRanges) {
-    FragmentedDiffPanelState panelState = (FragmentedDiffPanelState)((DiffPanelImpl)getCurrentPanel()).getDiffPanelState();
+    FragmentedDiffPanelState panelState = (FragmentedDiffPanelState)((DiffPanelImpl)myHorizontal).getDiffPanelState();
+    FragmentedDiffPanelState panelState2 = (FragmentedDiffPanelState)((DiffPanelImpl)myVertical).getDiffPanelState();
     for (Pair<TextRange, TextAttributes> range : todoRanges) {
       TextAttributes second = range.getSecond().clone();
       second.setBackgroundColor(Color.red);
       panelState.addRangeHighlighter(left, range.getFirst().getStartOffset(), range.getFirst().getEndOffset(), second);
+      panelState2.addRangeHighlighter(left, range.getFirst().getStartOffset(), range.getFirst().getEndOffset(), second);
     }
   }
 
