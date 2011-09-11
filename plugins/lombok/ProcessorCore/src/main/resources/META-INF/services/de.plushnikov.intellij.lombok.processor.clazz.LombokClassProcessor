@@ -1,0 +1,12 @@
+de.plushnikov.intellij.lombok.processor.clazz.DataProcessor
+de.plushnikov.intellij.lombok.processor.clazz.AllArgsConstructorProcessor
+de.plushnikov.intellij.lombok.processor.clazz.NoArgsConstructorProcessor
+de.plushnikov.intellij.lombok.processor.clazz.RequiredArgsConstructorProcessor
+de.plushnikov.intellij.lombok.processor.clazz.EqualsAndHashCodeProcessor
+de.plushnikov.intellij.lombok.processor.clazz.GetterProcessor
+de.plushnikov.intellij.lombok.processor.clazz.SetterProcessor
+de.plushnikov.intellij.lombok.processor.clazz.ToStringProcessor
+de.plushnikov.intellij.lombok.processor.clazz.log.CommonsLogProcessor
+de.plushnikov.intellij.lombok.processor.clazz.log.Log4jProcessor
+de.plushnikov.intellij.lombok.processor.clazz.log.LogProcessor
+de.plushnikov.intellij.lombok.processor.clazz.log.Slf4jProcessor

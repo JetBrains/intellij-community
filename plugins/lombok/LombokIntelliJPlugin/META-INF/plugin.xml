@@ -1,0 +1,33 @@
+<idea-plugin version="2">
+    <name>Lombook Plugin</name>
+    <description>A plugin that adds first-class support for Project Lombok</description>
+    <version>0.1</version>
+    <vendor>Michail Plushnikov</vendor>
+    <idea-version since-build="8000"/>
+
+    <application-components>
+        <!-- Add your application components here -->
+        <component>
+            <implementation-class>de.plushnikov.intellij.plugin.LombokLoader</implementation-class>
+        </component>
+    </application-components>
+
+    <project-components>
+        <!-- Add your project components here -->
+    </project-components>
+
+    <actions>
+        <!-- Add your actions here -->
+    </actions>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <!-- Add your extensions here -->
+        <lang.psiAugmentProvider implementation="de.plushnikov.intellij.plugin.provider.LombokAugmentProvider"/>
+        <implicitUsageProvider implementation="de.plushnikov.intellij.plugin.provider.LombokImplicitUsageProvider"/>
+        <renameHandler implementation="de.plushnikov.intellij.plugin.handler.LombokElementRenameHandler" order="first"/>
+        <!--<refactoring.changeSignatureUsageProcessor implementation=""/>-->
+        <!--<refactoring.safeDeleteProcessor      -->
+        <!--<refactoring.moveHandler implementation="de.plushnikov.intellij.plugin.handler.LombokElementMoveHandler" order="first"/>-->
+    </extensions>
+
+</idea-plugin>
