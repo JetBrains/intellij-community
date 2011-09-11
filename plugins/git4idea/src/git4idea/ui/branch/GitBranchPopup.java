@@ -96,6 +96,7 @@ class GitBranchPopup  {
     for (GitBranch remoteBranch : remoteBranches) {
       popupGroup.add(new RemoteBranchActions(myProject, myRepository, remoteBranch.getName()));
     }
+    
     popupGroup.addSeparator();
     popupGroup.addAction(new ConfigureAction());
     return popupGroup;
@@ -146,6 +147,14 @@ class GitBranchPopup  {
       };
     }
 
+    @Override
+    public void update(AnActionEvent e) {
+      if (myRepository.isFresh()) {
+        e.getPresentation().setEnabled(false);
+        e.getPresentation().setDescription("Checkout of a new branch is not possible before the first commit.");
+      }
+    }
+
     private static class CheckoutNewBranchAction extends DumbAwareAction {
       private final Project myProject;
       private final GitRepository myRepository;
@@ -185,6 +194,14 @@ class GitBranchPopup  {
       String reference = Messages.showInputDialog(myProject, "Enter reference (branch, tag) name or commit hash", "Checkout", Messages.getQuestionIcon());
       if (reference != null) {
         new GitBranchOperationsProcessor(myProject, myRepository).checkout(reference);
+      }
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      if (myRepository.isFresh()) {
+        e.getPresentation().setEnabled(false);
+        e.getPresentation().setDescription("Checkout is not possible before the first commit.");
       }
     }
   }
