@@ -51,6 +51,25 @@ public abstract class JBListTable extends JPanel {
     };
     mainTable = new JBTable(model) {
       @Override
+      protected void processKeyEvent(KeyEvent e) {
+        if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+          editCellAt(getSelectedRow(), getSelectedColumn());
+        }
+        //todo[kb] JBTabsImpl breaks focus traversal policy. Need a workaround here
+        //else if (e.getKeyCode() == KeyEvent.VK_TAB) {
+        //  final KeyboardFocusManager keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+        //  if (e.isShiftDown()) {
+        //    keyboardFocusManager.focusPreviousComponent(this);
+        //  } else {
+        //    keyboardFocusManager.focusNextComponent(this);
+        //  }
+        //}
+        else {
+          super.processKeyEvent(e);
+        }
+      }
+
+      @Override
       public TableCellRenderer getCellRenderer(int row, int column) {
         return new DefaultTableCellRenderer() {
           @Override
