@@ -275,18 +275,21 @@ public final class GitBranchOperationsProcessor {
   }
 
   public void deleteBranch(final String branchName) {
-    Task.Backgroundable task = new Task.Backgroundable(myProject, "Deleting " + branchName) {
-      @Override public void run(@NotNull ProgressIndicator indicator) {
-        GitCommandResult result = Git.branchDelete(myRepository, branchName);
-        if (result.success()) {
-          updateRepository();
-          notifySuccess(String.format("Deleted branch <b><code>%s</code></b>", branchName));
-        } else {
-          showErrorMessage("Couldn't delete " + branchName, result.getErrorOutput());
-        }
+    new CommonBackgroundTask(myProject, "Deleting " + branchName) {
+      @Override public void execute(@NotNull ProgressIndicator indicator) {
+        doDelete(branchName);
       }
-    };
-    GitVcs.runInBackground(task);
+    }.runInBackground();
+  }
+
+  private void doDelete(String branchName) {
+    GitCommandResult result = Git.branchDelete(myRepository, branchName);
+    if (result.success()) {
+      updateRepository();
+      notifySuccess(String.format("Deleted branch <b><code>%s</code></b>", branchName));
+    } else {
+      showErrorMessage("Couldn't delete " + branchName, result.getErrorOutput());
+    }
   }
 
   private void updateRepository() {

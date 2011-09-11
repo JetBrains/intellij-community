@@ -229,7 +229,7 @@ class GitBranchPopup  {
       return new AnAction[] {
         new CheckoutAction(myProject, myRepository, myBranchName),
         //new StashAndCheckoutAction(myProject, myRepository, myBranchName),
-        //new DeleteAction(myProject, myRepository, myBranchName)
+        new DeleteAction(myProject, myRepository, myBranchName)
       };
     }
 
@@ -247,7 +247,6 @@ class GitBranchPopup  {
 
       @Override
       public void actionPerformed(AnActionEvent e) {
-        // TODO warn about local changes, propose to save, checkbox - don't ask again, just save.
         new GitBranchOperationsProcessor(myProject, myRepository).checkout(myBranchName);
       }
 
