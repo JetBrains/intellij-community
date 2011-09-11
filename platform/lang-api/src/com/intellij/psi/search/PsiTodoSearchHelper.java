@@ -52,6 +52,11 @@ public interface PsiTodoSearchHelper {
   @NotNull
   TodoItem[] findTodoItems(@NotNull PsiFile file, int startOffset, int endOffset);
 
+  @NotNull
+  TodoItem[] findTodoItemsLight(@NotNull PsiFile file);
+  @NotNull
+  TodoItem[] findTodoItemsLight(@NotNull PsiFile file, int startOffset, int endOffset);
+
   /**
    * Returns the number of to do items in the specified file.
    *

@@ -110,6 +110,18 @@ public class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
 
       @NotNull
       @Override
+      public TodoItem[] findTodoItemsLight(@NotNull PsiFile file) {
+        return findTodoItems(file);
+      }
+
+      @NotNull
+      @Override
+      public TodoItem[] findTodoItemsLight(@NotNull PsiFile file, int startOffset, int endOffset) {
+        return findTodoItems(file, startOffset, endOffset);
+      }
+
+      @NotNull
+      @Override
       public TodoItem[] findTodoItems(@NotNull PsiFile file, int startOffset, int endOffset) {
         final TodoItem[] todoItems = findTodoItems(file);
         if (todoItems.length == 0) {

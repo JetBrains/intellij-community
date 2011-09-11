@@ -101,6 +101,10 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       return EMPTY_TODO_ITEMS;
     }
 
+    return processTodoOccurences(startOffset, endOffset, occurrences);
+  }
+
+  private TodoItem[] processTodoOccurences(int startOffset, int endOffset, Collection<IndexPatternOccurrence> occurrences) {
     List<TodoItem> items = new ArrayList<TodoItem>(occurrences.size());
     TextRange textRange = new TextRange(startOffset, endOffset);
     final TodoItemsCreator todoItemsCreator = new TodoItemsCreator();
@@ -112,6 +116,25 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     }
 
     return items.toArray(new TodoItem[items.size()]);
+  }
+
+  @NotNull
+  @Override
+  public TodoItem[] findTodoItemsLight(@NotNull PsiFile file) {
+    return findTodoItemsLight(file, 0, file.getTextLength());
+  }
+
+  @NotNull
+  @Override
+  public TodoItem[] findTodoItemsLight(@NotNull PsiFile file, int startOffset, int endOffset) {
+    final Collection<IndexPatternOccurrence> occurrences =
+      LightIndexPatternSearch.SEARCH.createQuery(new IndexPatternSearch.SearchParameters(file, TodoIndexPatternProvider.getInstance())).findAll();
+
+    if (occurrences.isEmpty()) {
+      return EMPTY_TODO_ITEMS;
+    }
+
+    return processTodoOccurences(startOffset, endOffset, occurrences);
   }
 
   public int getTodoItemsCount(@NotNull PsiFile file) {

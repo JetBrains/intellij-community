@@ -17,6 +17,8 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.highlighter.FragmentedEditorHighlighter;
+import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.BeforeAfter;
 
@@ -41,6 +43,8 @@ public class PreparedFragmentedContent {
 
   private FragmentedEditorHighlighter myBeforeHighlighter;
   private FragmentedEditorHighlighter myAfterHighlighter;
+  private List<Pair<TextRange, TextAttributes>> myBeforeTodoRanges;
+  private List<Pair<TextRange, TextAttributes>> myAfterTodoRanges;
 
   public PreparedFragmentedContent(final FragmentedContent fragmentedContent) {
     oldConvertor = new LineNumberConvertor();
@@ -138,5 +142,21 @@ public class PreparedFragmentedContent {
 
   public boolean isEmpty() {
     return myLineRanges.isEmpty();
+  }
+
+  public void setAfterTodoRanges(List<Pair<TextRange, TextAttributes>> afterTodoRanges) {
+    myAfterTodoRanges = afterTodoRanges;
+  }
+
+  public List<Pair<TextRange, TextAttributes>> getBeforeTodoRanges() {
+    return myBeforeTodoRanges;
+  }
+
+  public List<Pair<TextRange, TextAttributes>> getAfterTodoRanges() {
+    return myAfterTodoRanges;
+  }
+
+  public void setBeforeTodoRanges(List<Pair<TextRange, TextAttributes>> beforeTodoRanges) {
+    myBeforeTodoRanges = beforeTodoRanges;
   }
 }

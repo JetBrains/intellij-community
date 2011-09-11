@@ -7,6 +7,9 @@ import com.intellij.openapi.diff.impl.fragments.FragmentHighlighterImpl;
 import com.intellij.openapi.diff.impl.fragments.LineFragment;
 import com.intellij.openapi.diff.impl.util.TextDiffTypeEnum;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.markup.HighlighterLayer;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.containers.MultiMap;
@@ -73,6 +76,16 @@ public class NumberedFragmentHighlighter extends FragmentHighlighterImpl {
       // draw border == true for range marker with highlighting and number be set anyway, even if range is empty
       myAppender2.highlightText(fragment, true, new FragmentNumberGutterIconRenderer(right.getFirst(), getColorAttributesKey(right.getSecond()), myAppender1.getEditor().getScrollPane()));
       myPreviousLineRight = lineRight;
+    }
+  }
+
+  public void addRangeHighlighter(final boolean left, int start, int end, final TextAttributes attributes) {
+    if (left) {
+      myAppender1.getEditor().getMarkupModel().addRangeHighlighter(start, end, HighlighterLayer.SELECTION - 3, attributes,
+                                                                   HighlighterTargetArea.EXACT_RANGE);
+    } else {
+      myAppender2.getEditor().getMarkupModel().addRangeHighlighter(start, end, HighlighterLayer.SELECTION - 3, attributes,
+                                                                         HighlighterTargetArea.EXACT_RANGE);
     }
   }
 

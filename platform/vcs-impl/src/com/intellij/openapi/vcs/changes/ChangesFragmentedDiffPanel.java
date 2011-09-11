@@ -31,6 +31,9 @@ import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.FragmentedEditorHighlighter;
+import com.intellij.openapi.editor.markup.HighlighterLayer;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
@@ -38,6 +41,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.ui.awt.RelativePoint;
@@ -155,7 +159,22 @@ public class ChangesFragmentedDiffPanel implements Disposable {
     if (ah != null) {
       ((EditorEx) ((DiffPanelImpl) currentPanel).getEditor2()).setHighlighter(ah);
     }
+    if (((DiffPanelImpl) currentPanel).getEditor1() != null) {
+      highlightTodo(true, fragmentedContent.getBeforeTodoRanges());
+    }
+    if (((DiffPanelImpl) currentPanel).getEditor2() != null) {
+      highlightTodo(false, fragmentedContent.getAfterTodoRanges());
+    }
     ensurePresentation();
+  }
+
+  private void highlightTodo(boolean left, List<Pair<TextRange, TextAttributes>> todoRanges) {
+    FragmentedDiffPanelState panelState = (FragmentedDiffPanelState)((DiffPanelImpl)getCurrentPanel()).getDiffPanelState();
+    for (Pair<TextRange, TextAttributes> range : todoRanges) {
+      TextAttributes second = range.getSecond().clone();
+      second.setBackgroundColor(Color.red);
+      panelState.addRangeHighlighter(left, range.getFirst().getStartOffset(), range.getFirst().getEndOffset(), second);
+    }
   }
 
   private String titleText(DiffPanelImpl diffPanel) {
