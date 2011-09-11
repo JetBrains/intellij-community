@@ -9,6 +9,8 @@ import com.intellij.psi.impl.light.LightMethod;
  */
 public class MyLightMethod extends LightMethod {
 
+  private final PsiMethod myMethod;
+
   public MyLightMethod(PsiManager manager, PsiMethod valuesMethod, PsiClass psiClass) {
     super(manager, valuesMethod, psiClass);
     myMethod = valuesMethod;
@@ -16,7 +18,7 @@ public class MyLightMethod extends LightMethod {
 
   public PsiElement getParent() {
     PsiElement result = super.getParent();
-    result = ((PsiElement) (null != result ? result : ((PsiElement) (getContainingClass()))));
+    result = null != result ? result : getContainingClass();
     return result;
   }
 
@@ -32,6 +34,4 @@ public class MyLightMethod extends LightMethod {
   public ASTNode getNode() {
     return myMethod.getNode();
   }
-
-  private final PsiMethod myMethod;
 }
