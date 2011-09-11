@@ -13,11 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util.ui;
+package com.intellij.util.ui.table;
+
+import com.intellij.openapi.wm.IdeFocusManager;
+
+import javax.swing.*;
 
 /**
  * @author Konstantin Bulenkov
  */
-public interface JBTableRow {
-  Object getValueAt(int column);
+public abstract class JBTableRowEditor extends JPanel {
+  @Override
+  public void addNotify() {
+    super.addNotify();
+    final JComponent c = getPreferredFocusedComponent();
+    if (c != null && c.isVisible()) {
+      IdeFocusManager.getGlobalInstance().requestFocus(c, true);
+    }
+  }
+
+  public abstract void prepareEditor(JTable table, int row);
+  public abstract JBTableRow getValue();
+  public abstract JComponent getPreferredFocusedComponent();
+  public abstract JComponent[] getFocusableComponents();
 }

@@ -13,16 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util.ui;
-
-import javax.swing.*;
+package com.intellij.util.ui.table;
 
 /**
  * @author Konstantin Bulenkov
  */
-public abstract class JBTableRowEditor extends JPanel {
-  public abstract void prepareEditor(JTable table, int row);
-  public abstract JBTableRow getValue();
-  public abstract JComponent getPreferredFocusedComponent();
-  public abstract JComponent[] getFocusableComponents();
+public interface JBTableRow {
+  Object getValueAt(int column);
 }

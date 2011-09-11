@@ -45,9 +45,9 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.ui.JBListTable;
-import com.intellij.util.ui.JBTableRow;
-import com.intellij.util.ui.JBTableRowEditor;
+import com.intellij.util.ui.table.JBListTable;
+import com.intellij.util.ui.table.JBTableRow;
+import com.intellij.util.ui.table.JBTableRowEditor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
