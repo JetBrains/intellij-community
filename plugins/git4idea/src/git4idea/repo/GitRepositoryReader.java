@@ -225,6 +225,9 @@ class GitRepositoryReader {
    */
   private Map<String, File> readLocalBranches() {
     final Map<String, File> branches = new HashMap<String, File>();
+    if (!myRefsHeadsDir.exists()) {
+      return branches;
+    }
     FileUtil.processFilesRecursively(myRefsHeadsDir, new Processor<File>() {
       @Override
       public boolean process(File file) {
@@ -287,6 +290,9 @@ class GitRepositoryReader {
    */
   private Set<GitBranch> readUnpackedRemoteBranches() {
     final Set<GitBranch> branches = new HashSet<GitBranch>();
+    if (!myRefsRemotesDir.exists()) {
+      return branches;
+    }
     FileUtil.processFilesRecursively(myRefsRemotesDir, new Processor<File>() {
       @Override
       public boolean process(File file) {
