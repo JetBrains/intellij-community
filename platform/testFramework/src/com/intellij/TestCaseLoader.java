@@ -113,6 +113,7 @@ public class TestCaseLoader {
     String s = "";
     for (String slowTestName : slowTestNames) {
       if (slowTestName.trim().length() == 0) continue;
+      if (blockedTests.contains(slowTestName)) continue;
       try {
         Class.forName(slowTestName);
       }
