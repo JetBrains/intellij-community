@@ -92,7 +92,7 @@ public abstract class PlaybackContext  {
       });
     } else {
       getRobot().waitForIdle();
-      runnable.run();
+      SwingUtilities.invokeLater(runnable);
     }
   }
 

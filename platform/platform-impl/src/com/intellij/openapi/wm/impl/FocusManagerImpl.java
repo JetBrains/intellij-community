@@ -99,7 +99,8 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   private Set<FurtherRequestor> myValidFurtherRequestors = new HashSet<FurtherRequestor>();
 
   private Set<ActionCallback> myTypeAheadRequestors = new HashSet<ActionCallback>();
-  
+  private UiActivityMonitor myActivityMonitor;
+
   private boolean canFlushIdleRequests() {
     Component focusOwner = getFocusOwner();
     return isFocusTransferReady()
@@ -120,6 +121,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   public FocusManagerImpl(WindowManager wm) {
     myApp = ApplicationManager.getApplication();
     myQueue = IdeEventQueue.getInstance();
+    myActivityMonitor = UiActivityMonitor.getInstance();
 
     myFocusedComponentAlaram = new EdtAlarm(this);
     myForcedFocusRequestsAlarm = new EdtAlarm(this);
@@ -181,7 +183,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     }
     final ActionCallback result = new ActionCallback();
 
-    UiActivityMonitor.getInstance().addActivity("focus");
+    myActivityMonitor.addActivity("focus");
     if (!forced) {
       if (!myFocusRequests.contains(command)) {
         myFocusRequests.add(command);
@@ -506,6 +508,10 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
             myQueue._dispatchEvent(keyEvent, true);
           }
         }
+        
+        if (myToDispatchOnDone.size() == 0 && myTypeAheadRequestors.size() == 0) {
+          myActivityMonitor.removeActivity("typeahead");
+        }
       }
 
       if (!isFocusBeingTransferred()) {
@@ -557,7 +563,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     }
     
     if (isFocusTransferReady()) {
-      UiActivityMonitor.getInstance().removeActivity("focus");
+      myActivityMonitor.removeActivity("focus");
     }
   }
 
@@ -619,12 +625,19 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
         if (processor != null) {
           final Boolean result = processor.dispatch(e, myKeyProcessorContext);
           if (result != null) {
-            return result.booleanValue();
+            if (result.booleanValue()) {
+              myActivityMonitor.addActivity("typeahead");
+              return true;
+            } else {
+              return false;
+            }
           }
         }
       }
 
       myToDispatchOnDone.add(e);
+      myActivityMonitor.addActivity("typeahead");
+      
       restartIdleAlarm();
 
       return true;

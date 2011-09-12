@@ -49,6 +49,7 @@ public class UiActivityMonitor implements ApplicationComponent {
       }
     });
     initBusyObjectFor(pm.getDefaultProject());
+
   }
 
   public BusyObject getBusy(@NotNull Project project) {
