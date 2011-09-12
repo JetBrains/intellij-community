@@ -247,6 +247,10 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
   public void testNonlocal() {  // PY-2289
     doTest3K();
   }
+  
+  public void testYield() {
+    doTest();
+  }
 
   private void doTest3K() {
     PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON30);

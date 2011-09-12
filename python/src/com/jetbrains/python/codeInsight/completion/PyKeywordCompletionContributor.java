@@ -48,15 +48,6 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
     return false;
   }
 
-  /**
-   * Matches if element is somewhere inside a loop, but not within a class or function inside that loop.
-   */
-  private static class InFunctionBodyFilter extends MatcherBasedFilter {
-    Matcher getMatcher() {
-      return SyntaxMatchers.IN_FUNCTION;
-    }
-  }
-
   private static class InDefinitionFilter extends MatcherBasedFilter {
     Matcher getMatcher() {
       return SyntaxMatchers.IN_DEFINITION;
@@ -301,8 +292,8 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
   private static final PsiElementPattern.Capture<PsiElement> IN_PARAM_LIST = psiElement().inside(PyParameterList.class);
   private static final PsiElementPattern.Capture<PsiElement> IN_ARG_LIST = psiElement().inside(PyArgumentList.class);
 
-
-  private static final FilterPattern IN_DEF_BODY = new FilterPattern(new InFunctionBodyFilter());
+  private static final PsiElementPattern.Capture<PsiElement> IN_DEF_BODY =
+    psiElement().inside(false, psiElement(PyFunction.class), psiElement(PyClass.class));
 
   private static final PsiElementPattern.Capture<PsiElement> IN_TRY_BODY =
     psiElement().inside(psiElement(PyStatementList.class).inside(psiElement(PyTryPart.class)));

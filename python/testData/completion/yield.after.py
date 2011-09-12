@@ -1,0 +1,2 @@
+def foo():
+    yield <caret>
