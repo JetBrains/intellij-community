@@ -16,7 +16,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonLanguage;
-import com.jetbrains.python.codeInsight.PySeeingOriginalCompletionContributor;
 import com.jetbrains.python.codeInsight.UnindentingInsertHandler;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NonNls;
@@ -36,17 +35,7 @@ import static com.intellij.patterns.StandardPatterns.or;
  * Date: Sep 8, 2008
  */
 @SuppressWarnings({"InstanceVariableOfConcreteClass"})
-public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionContributor {
-
-  private static boolean isEmptyOriginalFile(PsiElement context) {
-    final PsiFile originalFile = context.getContainingFile().getOriginalFile();
-    if (originalFile.getTextLength() == 0) {
-      // completion in empty file (PY-1845)
-      return true;
-    }
-    return false;
-  }
-
+public class PyKeywordCompletionContributor extends CompletionContributor {
   /**
    * Matches places where a keyword-based statement might be appropriate.
    */
@@ -61,11 +50,6 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
         final ASTNode ctxNode = context.getNode();
         if (ctxNode != null && PyTokenTypes.STRING_NODES.contains(ctxNode.getElementType())) return false; // no sense inside string
         PsiElement p = (PsiElement)element;
-        //int org_offset = p.getUserData(ORG_OFFSET); // saved by fillCompletionVariants()
-        p = p.getUserData(ORG_ELT); // saved by fillCompletionVariants().
-        if (p == null) {
-          return isEmptyOriginalFile(context);
-        }
         int first_offset = p.getTextOffset();
         // we must be a stmt ourselves, not a part of another stmt
         // try to climb to the stmt level with the same offset
@@ -86,7 +70,7 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
             if (prev.getLastChild() instanceof PsiErrorElement) {
               // prev stmt ends with an error. are we on the same line?
               PsiDocumentManager docMgr = PsiDocumentManager.getInstance(p.getProject());
-              Document doc = docMgr.getDocument(p.getContainingFile());
+              Document doc = docMgr.getDocument(p.getContainingFile().getOriginalFile());
               if (doc != null) {
                 if (doc.getLineNumber(prev.getTextRange().getEndOffset()) == doc.getLineNumber(first_offset)) {
                   return false; // same line
@@ -152,14 +136,10 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
     public boolean isAcceptable(Object what, PsiElement context) {
       if (!(what instanceof PsiElement)) return false;
       PsiElement p = (PsiElement)what;
-      p = p.getUserData(ORG_ELT); // saved by fillCompletionVariants().
-      if (p == null) {
-        return isEmptyOriginalFile(context);
-      }
-      else if (p instanceof PsiComment) return false; // just in case
+      if (p instanceof PsiComment) return false; // just in case
       int point = p.getTextOffset();
       PsiDocumentManager docMgr = PsiDocumentManager.getInstance(p.getProject());
-      Document doc = docMgr.getDocument(p.getContainingFile());
+      Document doc = docMgr.getDocument(p.getContainingFile().getOriginalFile());
       if (doc != null) {
         CharSequence chs = doc.getCharsSequence();
         char c;
