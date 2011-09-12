@@ -16,6 +16,8 @@
 package com.intellij.util.ui.tree;
 
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
@@ -456,7 +458,10 @@ public final class TreeUtil {
         tree.validate();
       }
     } else {
-      okToScroll = false;
+      Application app = ApplicationManager.getApplication();
+      if (app != null && app.isUnitTestMode()) {
+        okToScroll = false;
+      }
     }
 
     Runnable selectRunnable = new Runnable() {
