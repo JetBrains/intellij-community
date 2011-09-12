@@ -399,7 +399,6 @@ public class LocalDebugger implements Debugger {
   }
 
   public boolean ping() {
-    System.out.println(".");
     return true;
   }
 }
