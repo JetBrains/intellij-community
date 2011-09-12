@@ -63,11 +63,8 @@ public class CopyFilesOrDirectoriesHandler implements CopyHandlerDelegate {
       defaultTargetDirectory = getCommonParentDirectory(elements);
     }
     Project project = defaultTargetDirectory != null ? defaultTargetDirectory.getProject() : elements [0].getProject();
-    final Boolean showDirsChooser = defaultTargetDirectory.getCopyableUserData(CopyPasteDelegator.SHOW_CHOOSER_KEY);
-    if (showDirsChooser != null && showDirsChooser.booleanValue()) {
-      final PsiDirectoryContainer directoryContainer =
-        PsiDirectoryFactory.getInstance(project).getDirectoryContainer(defaultTargetDirectory);
-      defaultTargetDirectory = MoveFilesOrDirectoriesUtil.resolveToDirectory(project, directoryContainer);
+    if (defaultTargetDirectory != null) {
+      defaultTargetDirectory = resolveDirectory(defaultTargetDirectory);
       if (defaultTargetDirectory == null) return;
     }
 
@@ -288,5 +285,20 @@ public class CopyFilesOrDirectoriesHandler implements CopyHandlerDelegate {
       } else return true;
     }
     return false;
+  }
+
+  @Nullable
+  protected static PsiDirectory resolveDirectory(@NotNull PsiDirectory defaultTargetDirectory) {
+    final Project project = defaultTargetDirectory.getProject();
+    final Boolean showDirsChooser = defaultTargetDirectory.getCopyableUserData(CopyPasteDelegator.SHOW_CHOOSER_KEY);
+    if (showDirsChooser != null && showDirsChooser.booleanValue()) {
+      final PsiDirectoryContainer directoryContainer =
+        PsiDirectoryFactory.getInstance(project).getDirectoryContainer(defaultTargetDirectory);
+      if (directoryContainer == null) {
+        return defaultTargetDirectory;
+      }
+      return MoveFilesOrDirectoriesUtil.resolveToDirectory(project, directoryContainer);
+    }
+    return defaultTargetDirectory;
   }
 }
