@@ -26,7 +26,6 @@ import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
-import com.intellij.util.Function;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.dsl.GdslMembersHolderConsumer;
@@ -47,26 +46,14 @@ public class GdkMethodDslProvider implements GdslMembersProvider {
   private static final Key<CachedValue<Pair<Set<String>, MultiMap<String, PsiMethod>>>> METHOD_KEY = Key.create("Category methods");
 
   public void category(String className, GdslMembersHolderConsumer consumer) {
-    processCategoryMethods(className, consumer, new Function<PsiMethod, PsiMethod>() {
-      public PsiMethod fun(PsiMethod m) {
-        return new GrGdkMethodImpl(m, false);
-      }
-    });
+    processCategoryMethods(className, consumer, false);
   }
 
   public void category(String className, final boolean isStatic, GdslMembersHolderConsumer consumer) {
-    processCategoryMethods(className, consumer, new Function<PsiMethod, PsiMethod>() {
-      public PsiMethod fun(PsiMethod param) {
-        return new GrGdkMethodImpl(param, isStatic);
-      }
-    });
+    processCategoryMethods(className, consumer, isStatic);
   }
 
-  public void category(String className, Function<PsiMethod, PsiMethod> converter, GdslMembersHolderConsumer consumer) {
-    processCategoryMethods(className, consumer, converter);
-  }
-
-  public static void processCategoryMethods(final String className, final GdslMembersHolderConsumer consumer, final Function<PsiMethod, PsiMethod> converter) {
+  public static void processCategoryMethods(final String className, final GdslMembersHolderConsumer consumer, final boolean isStatic) {
     final GlobalSearchScope scope = consumer.getResolveScope();
     final PsiClass categoryClass = JavaPsiFacade.getInstance(consumer.getProject()).findClass(className, scope);
     if (categoryClass == null) {
@@ -77,7 +64,7 @@ public class GdkMethodDslProvider implements GdslMembersProvider {
       @NotNull
       @Override
       protected Pair<Set<String>, MultiMap<String, PsiMethod>> compute() {
-        return retrieveMethodMap(consumer.getProject(), scope, converter, categoryClass);
+        return retrieveMethodMap(consumer.getProject(), scope, isStatic, categoryClass);
       }
     };
 
@@ -109,7 +96,7 @@ public class GdkMethodDslProvider implements GdslMembersProvider {
 
   public static Pair<Set<String>, MultiMap<String, PsiMethod>> retrieveMethodMap(final Project project,
                                                               final GlobalSearchScope scope,
-                                                              final Function<PsiMethod, PsiMethod> converter,
+                                                              final boolean isStatic,
                                                               @NotNull final PsiClass categoryClass) {
     return CachedValuesManager.getManager(project)
       .getCachedValue(categoryClass, METHOD_KEY, new CachedValueProvider<Pair<Set<String>, MultiMap<String, PsiMethod>>>() {
@@ -124,7 +111,7 @@ public class GdkMethodDslProvider implements GdslMembersProvider {
             final PsiType parameterType = params[0].getType();
             PsiType targetType = TypesUtil.boxPrimitiveType(TypeConversionUtil.erasure(parameterType), manager, scope);
             methodNames.add(m.getName());
-            map.putValue(targetType.getCanonicalText(), converter.fun(m));
+            map.putValue(targetType.getCanonicalText(), new GrGdkMethodImpl(m, isStatic));
           }
           final ProjectRootManager rootManager = ProjectRootManager.getInstance(project);
           final VirtualFile vfile = categoryClass.getContainingFile().getVirtualFile();
