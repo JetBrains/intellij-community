@@ -74,12 +74,6 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
     }
   }
 
-  private static class InFinallyNoLoopFilter extends MatcherBasedFilter {
-    Matcher getMatcher() {
-      return SyntaxMatchers.IN_FINALLY_NO_LOOP;
-    }
-  }
-
   /**
    * Matches places where a keyword-based statement might be appropriate.
    */
@@ -352,8 +346,6 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
     psiElement().withChild(psiElement(PyTryPart.class)).withLastChild(StandardPatterns.not(psiElement(PyElsePart.class)))
   );
 
-  private static final FilterPattern IN_FINALLY_NO_LOOP = new FilterPattern(new InFinallyNoLoopFilter());
-
   private static final FilterPattern IN_BEGIN_STMT = new FilterPattern(new StatementFitFilter());
 
   /*
@@ -471,7 +463,6 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
       .andNot(AFTER_QUALIFIER)
       .andNot(IN_PARAM_LIST)
       .andNot(IN_ARG_LIST)
-      .andNot(IN_FINALLY_NO_LOOP)
       .andOr(IN_LOOP/*, AFTER_LOOP_NO_ELSE*/)
       ,
       new PyKeywordCompletionProvider(TailType.NONE, "continue")

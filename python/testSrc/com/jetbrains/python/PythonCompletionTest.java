@@ -293,6 +293,17 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
   public void testFinallyInExcept() {
     doTest();
   }
+  
+  public void testContinue() {
+    doTest();
+  }
+  
+  public void testNoContinueInFinally() {
+    final String testName = "completion/" + getTestName(true);
+    myFixture.configureByFile(testName + ".py");
+    myFixture.completeBasic();
+    assertFalse(myFixture.getLookupElementStrings().contains("continue"));
+  }
 
   public void testElseInCondExpr() {  // PY-2397
     doTest();
