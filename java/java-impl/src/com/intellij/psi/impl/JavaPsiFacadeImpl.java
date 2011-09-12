@@ -578,7 +578,10 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
           break;
 
         case CHILDREN_CHANGED:
-          processChange(event.getParent(), event.getParent(), null);
+          // general childrenChanged() event after each change
+          if (!event.isGenericChildrenChange()) {
+            processChange(event.getParent(), event.getParent(), null);
+          }
           break;
 
         case CHILD_MOVED:
