@@ -346,6 +346,9 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
     psiElement().withChild(psiElement(PyTryPart.class)).withLastChild(StandardPatterns.not(psiElement(PyElsePart.class)))
   );
 
+  private static final PsiElementPattern.Capture<PsiElement> IN_FINALLY_NO_LOOP =
+    psiElement().inside(false, psiElement(PyFinallyPart.class), or(psiElement(PyWhileStatement.class), psiElement(PyForStatement.class)));
+
   private static final FilterPattern IN_BEGIN_STMT = new FilterPattern(new StatementFitFilter());
 
   /*
@@ -463,6 +466,7 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
       .andNot(AFTER_QUALIFIER)
       .andNot(IN_PARAM_LIST)
       .andNot(IN_ARG_LIST)
+      .andNot(IN_FINALLY_NO_LOOP)
       .andOr(IN_LOOP/*, AFTER_LOOP_NO_ELSE*/)
       ,
       new PyKeywordCompletionProvider(TailType.NONE, "continue")
