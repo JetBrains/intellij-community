@@ -65,4 +65,25 @@ public class GrGdkMethodImpl extends LightMethodBuilder implements GrGdkMethod {
   public PsiTypeParameterList getTypeParameterList() {
     return myMethod.getTypeParameterList();
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof GrGdkMethodImpl)) return false;
+    if (!super.equals(o)) return false;
+
+    GrGdkMethodImpl that = (GrGdkMethodImpl)o;
+
+    if (myMethod != null ? !myMethod.equals(that.myMethod) : that.myMethod != null) return false;
+    if (hasModifierProperty(PsiModifier.STATIC) != that.hasModifierProperty(PsiModifier.STATIC)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = super.hashCode();
+    result = 31 * result + (myMethod != null ? myMethod.hashCode() : 0);
+    return result;
+  }
 }

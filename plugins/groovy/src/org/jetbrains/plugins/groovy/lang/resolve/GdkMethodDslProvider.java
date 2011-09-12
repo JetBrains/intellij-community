@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.lang.resolve;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.VolatileNotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -43,7 +42,7 @@ import java.util.Set;
  */
 @SuppressWarnings({"MethodMayBeStatic"})
 public class GdkMethodDslProvider implements GdslMembersProvider {
-  private static final Key<CachedValue<Pair<Set<String>, MultiMap<String, PsiMethod>>>> METHOD_KEY = Key.create("Category methods");
+  private static final Key<CachedValue<GdkMethodHolder>> METHOD_KEY = Key.create("Category methods");
 
   public void category(String className, GdslMembersHolderConsumer consumer) {
     processCategoryMethods(className, consumer, false);
@@ -60,10 +59,10 @@ public class GdkMethodDslProvider implements GdslMembersProvider {
       return;
     }
 
-    final VolatileNotNullLazyValue<Pair<Set<String>, MultiMap<String, PsiMethod>>> methodsMap = new VolatileNotNullLazyValue<Pair<Set<String>, MultiMap<String, PsiMethod>>>() {
+    final VolatileNotNullLazyValue<GdkMethodHolder> methodsMap = new VolatileNotNullLazyValue<GdkMethodHolder>() {
       @NotNull
       @Override
-      protected Pair<Set<String>, MultiMap<String, PsiMethod>> compute() {
+      protected GdkMethodHolder compute() {
         return retrieveMethodMap(consumer.getProject(), scope, isStatic, categoryClass);
       }
     };
@@ -72,55 +71,71 @@ public class GdkMethodDslProvider implements GdslMembersProvider {
 
       @Override
       public boolean processMembers(GroovyClassDescriptor descriptor, PsiScopeProcessor processor, ResolveState state) {
-        final PsiType psiType = descriptor.getPsiType();
-        if (psiType == null)  return true;
-
-        final Pair<Set<String>, MultiMap<String, PsiMethod>> pair = methodsMap.getValue();
-        NameHint nameHint = processor.getHint(NameHint.KEY);
-        if (nameHint != null && !pair.first.contains(nameHint.getName(state))) {
-          return true;
-        }
-
-        for (String superType : ResolveUtil.getAllSuperTypes(psiType, descriptor.getProject()).keySet()) {
-          for (PsiMethod method : pair.second.get(superType)) {
-            if (!processor.execute(method, state)) {
-              return false;
-            }
-          }
-        }
-
-        return true;
+        return methodsMap.getValue().processMethods(descriptor, processor, state);
       }
     });
   }
 
-  public static Pair<Set<String>, MultiMap<String, PsiMethod>> retrieveMethodMap(final Project project,
+  public static GdkMethodHolder retrieveMethodMap(final Project project,
                                                               final GlobalSearchScope scope,
                                                               final boolean isStatic,
                                                               @NotNull final PsiClass categoryClass) {
     return CachedValuesManager.getManager(project)
-      .getCachedValue(categoryClass, METHOD_KEY, new CachedValueProvider<Pair<Set<String>, MultiMap<String, PsiMethod>>>() {
+      .getCachedValue(categoryClass, METHOD_KEY, new CachedValueProvider<GdkMethodHolder>() {
         @Override
-        public Result<Pair<Set<String>, MultiMap<String, PsiMethod>>> compute() {
-          Set<String> methodNames = new HashSet<String>();
-          MultiMap<String, PsiMethod> map = new MultiMap<String, PsiMethod>();
-          PsiManager manager = PsiManager.getInstance(project);
-          for (PsiMethod m : categoryClass.getMethods()) {
-            final PsiParameter[] params = m.getParameterList().getParameters();
-            if (params.length == 0) continue;
-            final PsiType parameterType = params[0].getType();
-            PsiType targetType = TypesUtil.boxPrimitiveType(TypeConversionUtil.erasure(parameterType), manager, scope);
-            methodNames.add(m.getName());
-            map.putValue(targetType.getCanonicalText(), new GrGdkMethodImpl(m, isStatic));
-          }
+        public Result<GdkMethodHolder> compute() {
+          GdkMethodHolder result = new GdkMethodHolder(categoryClass, isStatic, scope);
+
           final ProjectRootManager rootManager = ProjectRootManager.getInstance(project);
           final VirtualFile vfile = categoryClass.getContainingFile().getVirtualFile();
           if (vfile != null && (rootManager.getFileIndex().isInLibraryClasses(vfile) || rootManager.getFileIndex().isInLibrarySource(vfile))) {
-            return Result.create(Pair.create(methodNames, map), rootManager);
+            return Result.create(result, rootManager);
           }
 
-          return Result.create(Pair.create(methodNames, map), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, rootManager);
+          return Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, rootManager);
         }
       }, false);
+  }
+  
+  private static class GdkMethodHolder {
+    private final Set<String> methodNames;
+    private final MultiMap<String, PsiMethod> map;
+
+    GdkMethodHolder(PsiClass categoryClass, boolean isStatic, GlobalSearchScope scope) {
+      Set<String> methodNames = new HashSet<String>();
+      MultiMap<String, PsiMethod> map = new MultiMap<String, PsiMethod>();
+      PsiManager manager = PsiManager.getInstance(categoryClass.getProject());
+      for (PsiMethod m : categoryClass.getMethods()) {
+        final PsiParameter[] params = m.getParameterList().getParameters();
+        if (params.length == 0) continue;
+        final PsiType parameterType = params[0].getType();
+        PsiType targetType = TypesUtil.boxPrimitiveType(TypeConversionUtil.erasure(parameterType), manager, scope);
+        methodNames.add(m.getName());
+        map.putValue(targetType.getCanonicalText(), new GrGdkMethodImpl(m, isStatic));
+      }
+      this.methodNames = methodNames;
+      this.map = map;
+    }
+
+    boolean processMethods(GroovyClassDescriptor descriptor, PsiScopeProcessor processor, ResolveState state) {
+      final PsiType psiType = descriptor.getPsiType();
+      if (psiType == null) return true;
+
+      NameHint nameHint = processor.getHint(NameHint.KEY);
+      if (nameHint != null && !methodNames.contains(nameHint.getName(state))) {
+        return true;
+      }
+
+      for (String superType : ResolveUtil.getAllSuperTypes(psiType, descriptor.getProject()).keySet()) {
+        for (PsiMethod method : map.get(superType)) {
+          if (!processor.execute(method, state)) {
+            return false;
+          }
+        }
+      }
+
+      return true;
+
+    }
   }
 }
