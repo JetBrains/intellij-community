@@ -6,6 +6,7 @@
 
 %include ../include/init.ijs
 %call contextMenu(Refactor|Extract Superclass)
-TestSuperclass
+TestSuperclass\n
+%call checkFocus(dialog=Analyze and Replace Usages)
 
 %endTest
