@@ -80,6 +80,7 @@ public final class VcsConfiguration implements PersistentStateComponent<Element>
   public String DEFAULT_PATCH_EXTENSION = PATCH;
   public boolean SHORT_DIFF_HORISONTALLY = true;
   public int SHORT_DIFF_EXTRA_LINES = 2;
+  public boolean SOFT_WRAPS_IN_SHORT_DIFF = true;
 
   public enum StandardOption {
     ADD(VcsBundle.message("vcs.command.name.add")),

@@ -35,6 +35,7 @@ import com.intellij.openapi.editor.highlighter.FragmentedEditorHighlighter;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
@@ -127,7 +128,6 @@ public class ChangesFragmentedDiffPanel implements Disposable {
     final JPanel oneMore = new JPanel(new BorderLayout());
     oneMore.add(wrapperDiffs, BorderLayout.NORTH);
 
-
     myCurrentHorizontal = myConfiguration.SHORT_DIFF_HORISONTALLY;
     myHorizontal = createPanel(true);
     myVertical = createPanel(false);
@@ -171,6 +171,19 @@ public class ChangesFragmentedDiffPanel implements Disposable {
       highlightTodo(false, fragmentedContent.getAfterTodoRanges());
     }
     ensurePresentation();
+    softWraps(myConfiguration.SOFT_WRAPS_IN_SHORT_DIFF);
+  }
+
+  private void softWraps(final boolean value) {
+    DiffPanel currentPanel = getCurrentPanel();
+    if (((DiffPanelImpl) currentPanel).getEditor1() != null) {
+      ((DiffPanelImpl) myHorizontal).getEditor1().getSettings().setUseSoftWraps(value);
+      ((DiffPanelImpl) myVertical).getEditor1().getSettings().setUseSoftWraps(value);
+    }
+    if (((DiffPanelImpl) currentPanel).getEditor2() != null) {
+      ((DiffPanelImpl) myHorizontal).getEditor2().getSettings().setUseSoftWraps(value);
+      ((DiffPanelImpl) myVertical).getEditor2().getSettings().setUseSoftWraps(value);
+    }
   }
 
   private void highlightTodo(boolean left, List<Pair<TextRange, TextAttributes>> todoRanges) {
@@ -410,6 +423,7 @@ public class ChangesFragmentedDiffPanel implements Disposable {
     private Component myParent;
     private AnAction myUsual;
     private AnAction myNumbered;
+    private final ChangesFragmentedDiffPanel.MyUseSoftWrapsAction mySoftWrapsAction;
 
     private PopupAction() {
       super("Settings", "Settings", IconLoader.getIcon("/general/secondaryGroup.png"));
@@ -429,6 +443,7 @@ public class ChangesFragmentedDiffPanel implements Disposable {
           ensurePresentation();
         }
       };
+      mySoftWrapsAction = new MyUseSoftWrapsAction(myConfiguration.SOFT_WRAPS_IN_SHORT_DIFF);
     }
 
     public void setParent(Component parent) {
@@ -440,6 +455,7 @@ public class ChangesFragmentedDiffPanel implements Disposable {
       final DefaultActionGroup dag = new DefaultActionGroup();
       dag.add(myUsual);
       dag.add(myNumbered);
+      dag.add(mySoftWrapsAction);
       final ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(null, dag, e.getDataContext(),
                                                                                        JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
                                                                                        false);
@@ -535,6 +551,32 @@ public class ChangesFragmentedDiffPanel implements Disposable {
     JLabel label = new JLabel(text);
     label.setFont(UIUtil.getLabelFont());
     return label;
+  }
+
+  private class MyUseSoftWrapsAction extends ToggleAction implements DumbAware {
+    private final Icon myIcon;
+
+    private MyUseSoftWrapsAction(boolean turned) {
+      super("Use soft wraps");
+      myIcon = IconLoader.findIcon("/actions/checked.png");
+    }
+
+    @Override
+    public boolean isSelected(AnActionEvent e) {
+      return myConfiguration.SOFT_WRAPS_IN_SHORT_DIFF;
+    }
+
+    @Override
+    public void setSelected(AnActionEvent e, boolean state) {
+      myConfiguration.SOFT_WRAPS_IN_SHORT_DIFF = state;
+      softWraps(myConfiguration.SOFT_WRAPS_IN_SHORT_DIFF);
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      super.update(e);
+      e.getPresentation().setIcon(myConfiguration.SOFT_WRAPS_IN_SHORT_DIFF ? myIcon : null);
+    }
   }
 
   private class MyChangeContextAction extends DumbAwareAction {
