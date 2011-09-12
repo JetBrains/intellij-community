@@ -40,6 +40,7 @@ public class CompilerWorkspaceConfiguration implements PersistentStateComponent<
   @Deprecated public boolean CLOSE_MESSAGE_VIEW_IF_SUCCESS = true;
   public boolean CLEAR_OUTPUT_DIRECTORY = true;
   public boolean ASSERT_NOT_NULL = true;
+  public boolean USE_COMPILE_SERVER = false;
 
   public static CompilerWorkspaceConfiguration getInstance(Project project) {
     return ServiceManager.getService(project, CompilerWorkspaceConfiguration.class);
