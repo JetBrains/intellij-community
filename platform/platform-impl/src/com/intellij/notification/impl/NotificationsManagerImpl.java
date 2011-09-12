@@ -25,6 +25,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
@@ -215,7 +216,9 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
     Window window = findWindowForBalloon(project);
     if (window instanceof IdeFrameImpl) {
       boolean sticky = NotificationDisplayType.STICKY_BALLOON == displayType;
-      ((IdeFrameImpl)window).getBalloonLayout().add(createBalloon(notification, false, !sticky, !sticky));
+      Balloon balloon = createBalloon(notification, false, !sticky, !sticky);
+      Disposer.register(project != null ? project : ApplicationManager.getApplication(), balloon);
+      ((IdeFrameImpl)window).getBalloonLayout().add(balloon);
     }
   }
 
