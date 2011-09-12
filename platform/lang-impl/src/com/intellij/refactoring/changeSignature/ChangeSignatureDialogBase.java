@@ -75,6 +75,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
 
   protected final D myMethod;
   private final boolean myAllowDelegation;
+  protected JPanel myNamePanel;
   protected EditorTextField myNameField;
   protected EditorTextField myReturnTypeField;
   protected JBListTable myParametersList;
@@ -184,13 +185,13 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
     JPanel panel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, -4, 0, true, false));
     final JPanel methodPanel = new JPanel(new BorderLayout());
     final JPanel typePanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 4, 2, true, false));
-    final JPanel namePanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 4, 2, true, false));
+    myNamePanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 4, 2, true, false));
 
     final JLabel nameLabel = new JLabel(RefactoringBundle.message("changeSignature.name.prompt"));
     myNameField = new EditorTextField(myMethod.getName());
     nameLabel.setLabelFor(myNameField);
-    namePanel.add(nameLabel);
-    namePanel.add(myNameField);
+    myNamePanel.add(nameLabel);
+    myNamePanel.add(myNameField);
     myNameField.setEnabled(myMethod.canChangeName());
     if (myMethod.canChangeName()) {
       myNameField.addDocumentListener(mySignatureUpdater);
@@ -223,7 +224,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
     }
     p.add(typePanel, BorderLayout.EAST);
     methodPanel.add(p, BorderLayout.WEST);
-    methodPanel.add(namePanel, BorderLayout.CENTER);
+    methodPanel.add(myNamePanel, BorderLayout.CENTER);
     panel.add(methodPanel);
 
     return panel;
@@ -471,13 +472,17 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
         myUpdateSignatureAlarm.cancelAllRequests();
         myUpdateSignatureAlarm.addRequest(new Runnable() {
           public void run() {
-            doUpdateSignature();
-            updatePropagateButtons();
+            updateSignatureAlarmFired();
           }
         }, 100);
       }
     };
     SwingUtilities.invokeLater(updateRunnable);
+  }
+
+  protected void updateSignatureAlarmFired() {
+    doUpdateSignature();
+    updatePropagateButtons();
   }
 
   private void doUpdateSignature() {
