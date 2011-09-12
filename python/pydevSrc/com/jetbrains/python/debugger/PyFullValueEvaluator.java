@@ -15,8 +15,7 @@ public class PyFullValueEvaluator extends XFullValueEvaluator {
    * @param debugProcess
    * @param expression
    */
-  protected PyFullValueEvaluator(@NotNull String linkText, IPyDebugProcess debugProcess, String expression) {
-    super(linkText);
+  protected PyFullValueEvaluator(IPyDebugProcess debugProcess, String expression) {
     myDebugProcess = debugProcess;
     myExpression = expression;
   }

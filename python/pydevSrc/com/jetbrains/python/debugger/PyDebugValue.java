@@ -116,8 +116,8 @@ public class PyDebugValue extends XNamedValue {
     String value = PyTypeHandler.format(this);
 
     if (value.length() >= MAX_VALUE) {
-      node.setFullValueEvaluator(new PyFullValueEvaluator("Show full value", myDebugProcess, myName));
-      value = value.substring(0, MAX_VALUE) + "...";
+      node.setFullValueEvaluator(new PyFullValueEvaluator(myDebugProcess, myName));
+      value = value.substring(0, MAX_VALUE);
     }
 
     node.setPresentation(getValueIcon(),  myType, value, myContainer);
