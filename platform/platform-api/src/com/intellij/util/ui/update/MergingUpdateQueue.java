@@ -447,7 +447,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   private void startActivity() {
     if (!myTrackUiActivity) return;
 
-    UiActivityMonitor.getInstance().addActivity(getActivityId());    
+    UiActivityMonitor.getInstance().addActivity(getActivityId(), getModalityState());
   }
 
   private void finishActivity() {

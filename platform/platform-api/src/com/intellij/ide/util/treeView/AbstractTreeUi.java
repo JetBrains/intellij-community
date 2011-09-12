@@ -4575,7 +4575,7 @@ public class AbstractTreeUi {
 
 
   public void addActivity() {
-    getActivityMonitor().addActivity(this);
+    getActivityMonitor().addActivity(this, getUpdater().getModalityState());
   }
 
   private UiActivityMonitor getActivityMonitor() {

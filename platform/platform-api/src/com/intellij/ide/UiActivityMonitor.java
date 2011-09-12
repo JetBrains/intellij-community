@@ -17,6 +17,7 @@ package com.intellij.ide;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -59,7 +60,11 @@ public class UiActivityMonitor implements ApplicationComponent {
   }
 
 
-  public void addActivity(@NotNull final Project project, final Object activity) {
+  public void addActivity(@NotNull final Project project, @NotNull final Object activity) {
+    addActivity(project, activity, ModalityState.any());
+  }
+
+  public void addActivity(@NotNull final Project project, @NotNull final Object activity, @NotNull final ModalityState effectiveModalityState) {
     invokeLaterIfNeeded(new MyRunnable() {
       @Override
       public void run(Throwable allocation) {
@@ -73,12 +78,12 @@ public class UiActivityMonitor implements ApplicationComponent {
           }
         }
 
-        _getBusy(project).addActivity(activity, allocation);
+        _getBusy(project).addActivity(activity, allocation, effectiveModalityState);
       }
     });
   }
 
-  public void removeActivity(@NotNull final Project project, final Object activity) {
+  public void removeActivity(@NotNull final Project project, @NotNull final Object activity) {
     invokeLaterIfNeeded(new MyRunnable() {
       @Override
       public void run(Throwable allocation) {
@@ -87,16 +92,20 @@ public class UiActivityMonitor implements ApplicationComponent {
     });
   }
 
-  public void addActivity(final Object activity) {
+  public void addActivity(@NotNull final Object activity) {
+    addActivity(activity, ModalityState.any());
+  }
+
+  public void addActivity(@NotNull final Object activity, @NotNull final ModalityState effectiveModalityState) {
     invokeLaterIfNeeded(new MyRunnable() {
       @Override
       public void run(Throwable allocation) {
-        _getBusy(null).addActivity(activity, allocation);
+        _getBusy(null).addActivity(activity, allocation, effectiveModalityState);
       }
     });
   }
 
-  public void removeActivity(final Object activity) {
+  public void removeActivity(@NotNull final Object activity) {
     invokeLaterIfNeeded(new MyRunnable() {
       @Override
       public void run(Throwable allocation) {
@@ -145,9 +154,34 @@ public class UiActivityMonitor implements ApplicationComponent {
     return "UiActivityMonitor";
   }
 
+  private static class ActivityInfo {
+    private Throwable myAllocation;
+    private ModalityState myEffectiveState;
+
+    private ActivityInfo(@Nullable Throwable allocation, @NotNull ModalityState effectiveState) {
+      myAllocation = allocation;
+      myEffectiveState = effectiveState;
+    }
+
+    @Nullable
+    public Throwable getAllocation() {
+      return myAllocation;
+    }
+
+    @NotNull
+    public ModalityState getEffectiveState() {
+      return myEffectiveState;
+    }
+  }
+
+  protected ModalityState getCurrentState() {
+    return ModalityState.current();
+  }
+
   private class BusyImpl extends BusyObject.Impl {
 
-    private Map<Object, Throwable> myActivities = new HashMap<Object, Throwable>();
+    private Map<Object, ActivityInfo> myActivities = new HashMap<Object, ActivityInfo>();
+
     private Set<Object> myQueuedToRemove = new HashSet<Object>();
 
     @Override
@@ -156,12 +190,22 @@ public class UiActivityMonitor implements ApplicationComponent {
     }
 
     boolean isOwnReady() {
-      return myActivities.size() == 0;
+      if (myActivities.size() == 0) return true;
+
+      final ModalityState current = getCurrentState();
+      for (Object each : myActivities.keySet()) {
+        final ActivityInfo info = myActivities.get(each);
+        if (!current.dominates(info.getEffectiveState())) {
+          return false;
+        }
+      }
+
+      return true;
     }
 
 
-    public void addActivity(Object activity, Throwable allocation) {
-      myActivities.put(activity, allocation);
+    public void addActivity(Object activity, Throwable allocation, ModalityState effectiveModalityState) {
+      myActivities.put(activity, new ActivityInfo(allocation, effectiveModalityState));
       myQueuedToRemove.remove(activity);
     }
 

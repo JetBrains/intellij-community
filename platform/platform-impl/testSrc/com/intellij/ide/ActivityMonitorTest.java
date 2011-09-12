@@ -15,12 +15,22 @@
  */
 package com.intellij.ide;
 
+import com.intellij.mock.MockApplication;
 import com.intellij.mock.MockProject;
 import com.intellij.mock.MockProjectEx;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.impl.ModalityStateEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.BusyObject;
 import junit.framework.TestCase;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -31,22 +41,43 @@ import org.jetbrains.annotations.Nullable;
  */
 public class ActivityMonitorTest extends TestCase {
 
-
   private UiActivityMonitor myMonitor;
+  private ModalityState myCurrentState;
 
   @Override
   protected void setUp() throws Exception {
+    myCurrentState = ModalityState.NON_MODAL;
+    final ModalityStateEx any = new ModalityStateEx();
+
+    ApplicationManagerEx.setApplication(new MockApplication() {
+      @NotNull
+      @Override
+      public ModalityState getCurrentModalityState() {
+        return myCurrentState;
+      }
+
+      @Override
+      public ModalityState getAnyModalityState() {
+        return any;
+      }
+
+    });
     myMonitor = new UiActivityMonitor();
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    ApplicationManagerEx.setApplication(null);
   }
 
   public void testReady() {
     assertReady(null);
 
-    MockProjectEx project1 = new MockProjectEx();
+    MockProject project1 = new MockProjectEx();
     assertReady(project1);
     assertFalse(myMonitor.hasObjectFor(project1));
 
-    MockProjectEx project2 = new MockProjectEx();
+    MockProject project2 = new MockProjectEx();
     assertReady(project2);
     assertFalse(myMonitor.hasObjectFor(project2));
 
@@ -57,12 +88,12 @@ public class ActivityMonitorTest extends TestCase {
     assertTrue(myMonitor.hasObjectFor(project2));
 
 
-    myMonitor.addActivity("global");
+    myMonitor.addActivity("global", ModalityState.any());
     assertBusy(null);
     assertBusy(project1);
     assertBusy(project2);
 
-    myMonitor.addActivity("global");
+    myMonitor.addActivity("global", ModalityState.any());
     assertBusy(null);
     assertBusy(project1);
     assertBusy(project2);
@@ -73,12 +104,12 @@ public class ActivityMonitorTest extends TestCase {
     assertReady(project2);
 
 
-    myMonitor.addActivity(project1, "p1");
+    myMonitor.addActivity(project1, "p1", ModalityState.any());
     assertBusy(null);
     assertBusy(project1);
     assertReady(project2);
 
-    myMonitor.addActivity("global");
+    myMonitor.addActivity("global", ModalityState.any());
     assertBusy(null);
     assertBusy(project1);
     assertBusy(project2);
@@ -93,7 +124,39 @@ public class ActivityMonitorTest extends TestCase {
     assertReady(project1);
     assertReady(project2);
   }
-  
+
+  public void testModalityState() {
+    assertReady(null);
+
+    myMonitor.addActivity("non_modal_1", ModalityState.NON_MODAL);
+    assertBusy(null);
+
+    myCurrentState = new ModalityStateEx(new Object[] {"dialog"});
+    assertReady(null);
+
+    myMonitor.addActivity("non_modal2", ModalityState.NON_MODAL);
+    assertReady(null);
+
+    myMonitor.addActivity("modal_1", new ModalityStateEx(new Object[] {"dialog"}));
+    assertBusy(null);
+
+    myMonitor.addActivity("modal_2", new ModalityStateEx(new Object[] {"dialog", "popup"}));
+    assertBusy(null);
+
+    myCurrentState = ModalityState.NON_MODAL;
+    assertBusy(null);
+  }
+
+  public void testModalityStateAny() {
+    assertReady(null);
+
+    myMonitor.addActivity("non_modal_1", ModalityState.any());
+    assertBusy(null);
+
+    myCurrentState = new ModalityStateEx(new Object[] {"dialog"});
+    assertBusy(null);
+  }
+
   private void assertReady(@Nullable Project key) {
     BusyObject.Impl busy = (BusyObject.Impl)(key != null ? myMonitor.getBusy(key) : myMonitor.getBusy());
     assertTrue(busy.isReady());
@@ -113,4 +176,5 @@ public class ActivityMonitorTest extends TestCase {
     BusyObject.Impl busy = (BusyObject.Impl)(key != null ? myMonitor.getBusy(key) : myMonitor.getBusy());
     assertFalse(busy.isReady());
   }
+
 }

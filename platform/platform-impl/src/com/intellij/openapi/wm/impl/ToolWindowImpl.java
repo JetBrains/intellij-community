@@ -19,6 +19,7 @@ import com.intellij.ide.UiActivityMonitor;
 import com.intellij.ide.impl.ContentManagerWatcher;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.BusyObject;
@@ -122,7 +123,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     final String activity = "toolWindow:" + getId();
-    UiActivityMonitor.getInstance().addActivity(myToolWindowManager.getProject(), activity);
+    UiActivityMonitor.getInstance().addActivity(myToolWindowManager.getProject(), activity, ModalityState.NON_MODAL);
 
     myToolWindowManager.activateToolWindow(myId, forced, autoFocusContents);
 

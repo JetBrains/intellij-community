@@ -19,6 +19,7 @@ package com.intellij.ide.util.treeView;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.ActionCallback;
@@ -83,6 +84,10 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
 
   public void setModalityStateComponent(JComponent c) {
     myUpdateQueue.setModalityStateComponent(c);
+  }
+
+  public ModalityState getModalityState() {
+    return myUpdateQueue.getModalityState();
   }
 
   public boolean hasNodesToUpdate() {
