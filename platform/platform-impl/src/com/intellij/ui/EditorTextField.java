@@ -82,6 +82,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
   private boolean myIsRendererWithSelection = false;
   private Color myRendererBg;
   private Color myRendererFg;
+  private int myPreferredWidth = -1;
 
   public EditorTextField() {
     this("");
@@ -620,6 +621,11 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     Dimension size = new Dimension(100, 20);
     if (myEditor != null) {
       final Dimension preferredSize = new Dimension(myEditor.getComponent().getPreferredSize());
+
+      if (myPreferredWidth != -1) {
+        preferredSize.width = myPreferredWidth;
+      }
+
       final Insets insets = getInsets();
       if (insets != null) {
         preferredSize.width += insets.left;
@@ -638,6 +644,10 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     }
 
     return size;
+  }
+
+  public void setPreferredWidth(int preferredWidth) {
+    myPreferredWidth = preferredWidth;
   }
 
   public Component getNextFocusableComponent() {

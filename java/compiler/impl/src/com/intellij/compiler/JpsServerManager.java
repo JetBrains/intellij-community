@@ -18,16 +18,22 @@ package com.intellij.compiler;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.OSProcessHandler;
-import com.intellij.execution.process.ProcessHandler;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.util.ShutDownTracker;
+import com.intellij.util.net.NetUtils;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jpsservice.Bootstrap;
 import org.jetbrains.jpsservice.Client;
-import org.jetbrains.jpsservice.Server;
 
+import java.io.File;
+import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
@@ -35,100 +41,121 @@ import java.util.concurrent.TimeUnit;
  * @author Eugene Zhuravlev
  *         Date: 9/6/11
  */
-public class JpsServerManager {
+public class JpsServerManager implements ApplicationComponent{
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.JpsServerManager");
+  private static final String COMPILE_SERVER_SYSTEM_ROOT = "compile-server";
+  private volatile Client myServerClient;
+  private volatile OSProcessHandler myProcessHandler;
 
-  public static void main(String[] args) {
-    ensureServerStarted();
+  public JpsServerManager() {
+    ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
+      @Override
+      public void run() {
+        shutdownServer(myServerClient, myProcessHandler);
+      }
+    });
   }
 
-  private static boolean ensureServerStarted() {
-    return Holder.ourServerProcess != null;
+  public static JpsServerManager getInstance() {
+    return ApplicationManager.getApplication().getComponent(JpsServerManager.class);
   }
 
-  private static class Holder {
-    private static Client ourServerClient;
-    private static ProcessHandler ourServerProcess;
+  @Nullable
+  public Client getClient() {
+    if (!ensureServerStarted()) {
+      return null;
+    }
+    return myServerClient;
+  }
 
-    static {
+  @Override
+  public void initComponent() {
+  }
+
+  @Override
+  public void disposeComponent() {
+    shutdownServer(myServerClient, myProcessHandler);
+  }
+
+  @NotNull
+  @Override
+  public String getComponentName() {
+    return "com.intellij.compiler.JpsServerManager";
+  }
+
+  private volatile boolean myStartupFailed = false;
+
+  private boolean ensureServerStarted() {
+    if (myProcessHandler != null) {
+      return true;
+    }
+    if (!myStartupFailed) {
       try {
-        final int port = Server.DEFAULT_SERVER_PORT;
+        final int port = NetUtils.findAvailableSocketPort();
         final Process process = launchServer(port);
         final OSProcessHandler processHandler = new OSProcessHandler(process, null);
         processHandler.startNotify();
-        final Client client = new Client();
-        client.connect("localhost", port);
+        myServerClient = new Client();
+        myServerClient.connect(NetUtils.getLocalHostString(), port);
 
-        ourServerProcess = processHandler;
-        ourServerClient = client;
-
-        ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
-          @Override
-          public void run() {
-            shutdownServer(client, processHandler);
-          }
-        });
+        myProcessHandler = processHandler;
+        return true;
       }
       catch (Throwable e) {
+        myStartupFailed = true;
         LOG.error(e); // todo
       }
     }
-  }
-
-  private static void shutdownServer(Client client, OSProcessHandler processHandler) {
-    try {
-      final Future future = client.sendShutdownRequest();
-      if (future != null) {
-        future.get(500, TimeUnit.MILLISECONDS);
-      }
-    }
-    catch (Throwable ignored) {
-      LOG.info(ignored);
-    }
-    finally {
-      processHandler.destroyProcess();
-    }
+    return false;
   }
 
   private static Process launchServer(int port) throws ExecutionException {
     final Sdk projectJdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
     final GeneralCommandLine cmdLine = new GeneralCommandLine();
     cmdLine.setExePath(((JavaSdkType)projectJdk.getSdkType()).getVMExecutablePath(projectJdk));
+    cmdLine.addParameter("-Xmx256m");
+    cmdLine.addParameter("-classpath");
 
-    //final StringBuilder cp = new StringBuilder();
-    //cp.append(getResourcePath(Server.class));
-    //cp.append(File.pathSeparator).append(getResourcePath(com.google.protobuf.Message.class));
-    //cp.append(File.pathSeparator).append(getResourcePath(org.jboss.netty.bootstrap.Bootstrap.class));
-    //final String jpsJar = getResourcePath(Jps.class);
-    //final File parentFile = new File(jpsJar).getParentFile();
-    //final File[] files = parentFile.listFiles();
-    //if (files != null) {
-    //  for (File file : files) {
-    //    final String name = file.getName();
-    //    final boolean shouldAdd =
-    //      name.endsWith("jar") &&
-    //      (name.startsWith("ant") ||
-    //       name.startsWith("jps") ||
-    //       name.startsWith("asm") ||
-    //       name.startsWith("gant")||
-    //       name.startsWith("groovy") ||
-    //       name.startsWith("javac2")
-    //      );
-    //    if (shouldAdd) {
-    //      cp.append(File.pathSeparator).append(file.getPath());
-    //    }
-    //  }
-    //}
-    //cmdLine.addParameter("-classpath");
-    //cmdLine.addParameter(cp.toString());
+    final List<File> cp = Bootstrap.buildServerProcessClasspath();
+    cmdLine.addParameter(classpathToString(cp));
 
     cmdLine.addParameter("org.jetbrains.jpsservice.Server");
     cmdLine.addParameter(Integer.toString(port));
+
+    final File workDirectory = new File(PathManager.getSystemPath(), COMPILE_SERVER_SYSTEM_ROOT);
+    workDirectory.mkdirs();
+    cmdLine.setWorkDirectory(workDirectory);
+
     return cmdLine.createProcess();
   }
 
-  private static String getResourcePath(Class aClass) {
-    return PathManager.getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class");
+  private static void shutdownServer(final Client client, final OSProcessHandler processHandler) {
+    try {
+      if (client != null) {
+        final Future future = client.sendShutdownRequest();
+        if (future != null) {
+          future.get(500, TimeUnit.MILLISECONDS);
+        }
+      }
+    }
+    catch (Throwable ignored) {
+      LOG.info(ignored);
+    }
+    finally {
+      if (processHandler != null) {
+        processHandler.destroyProcess();
+      }
+    }
   }
 
+  private static String classpathToString(List<File> cp) {
+    StringBuilder builder = new StringBuilder();
+    for (File file : cp) {
+      if (builder.length() > 0) {
+        builder.append(File.pathSeparator);
+      }
+      builder.append(file.getAbsolutePath());
+    }
+    return builder.toString();
+  }
 }

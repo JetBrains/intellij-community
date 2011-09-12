@@ -151,12 +151,10 @@ public class JpsServerMessageHandler extends SimpleChannelHandler {
 
           public void consumeCompilerMessage(String compilerName, String message) {
             Channels.write(
-              myChannelContext.getChannel(), ProtoUtil.toMessage(mySessionId, ProtoUtil.createCompileErrorMessageResponse(message, null, -1,
-                                                                                                                          -1))
+              myChannelContext.getChannel(), ProtoUtil.toMessage(mySessionId, ProtoUtil.createCompileErrorMessageResponse(message, null, -1, -1))
             );
           }
         });
-
       }
       catch (Throwable e) {
         error = e;

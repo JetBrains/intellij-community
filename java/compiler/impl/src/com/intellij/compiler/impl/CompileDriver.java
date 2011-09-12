@@ -86,9 +86,15 @@ import gnu.trove.TIntHashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jpsservice.Client;
+import org.jetbrains.jpsservice.JpsRemoteProto;
+import org.jetbrains.jpsservice.JpsServerResponseHandlerAdapter;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 public class CompileDriver {
   private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.logOnlyGroup("Compiler");
@@ -174,11 +180,15 @@ public class CompileDriver {
   }
 
   public void rebuild(CompileStatusNotification callback) {
-    doRebuild(callback, null, true, addAdditionalRoots(new ProjectCompileScope(myProject), ALL_EXCEPT_SOURCE_PROCESSING));
+    final ProjectCompileScope projectScope = new ProjectCompileScope(myProject);
+    final CompileScope compileScope = useCompileServer()? projectScope : addAdditionalRoots(projectScope, ALL_EXCEPT_SOURCE_PROCESSING);
+    doRebuild(callback, null, true, compileScope);
   }
 
   public void make(CompileScope scope, CompileStatusNotification callback) {
-    scope = addAdditionalRoots(scope, ALL_EXCEPT_SOURCE_PROCESSING);
+    if (!useCompileServer()) {
+      scope = addAdditionalRoots(scope, ALL_EXCEPT_SOURCE_PROCESSING);
+    }
     if (validateCompilerConfiguration(scope, false)) {
       startup(scope, false, false, callback, null, true);
     }
@@ -399,6 +409,59 @@ public class CompileDriver {
     }
   }
 
+  private boolean useCompileServer() {
+    return ApplicationManager.getApplication().isInternal() && CompilerWorkspaceConfiguration.getInstance(myProject).USE_COMPILE_SERVER;
+  }
+
+  private Future compileOnServer(final CompileContext compileContext, Collection<Module> modules, boolean isMake, @Nullable final CompileStatusNotification callback) {
+    final Client client = JpsServerManager.getInstance().getClient();
+    if (client == null) {
+      return null;
+    }
+    List<String> moduleNames = Collections.emptyList();
+    if (modules != null && modules.size() > 0) {
+      moduleNames = new ArrayList<String>(modules.size());
+      for (Module module : modules) {
+        moduleNames.add(module.getName());
+      }
+    }
+    compileContext.getProgressIndicator().setIndeterminate(true); // todo
+    return client.sendCompileRequest(myProject.getLocation(), moduleNames, !isMake, new JpsServerResponseHandlerAdapter() {
+      public void handleCompileMessage(JpsRemoteProto.Message.Response.CompileMessage compileResponse) {
+        final JpsRemoteProto.Message.Response.CompileMessage.Kind kind = compileResponse.getKind();
+        if (kind == JpsRemoteProto.Message.Response.CompileMessage.Kind.PROGRESS) {
+          compileContext.getProgressIndicator().setText(compileResponse.getText());
+        }
+        else {
+          final CompilerMessageCategory category = kind == JpsRemoteProto.Message.Response.CompileMessage.Kind.ERROR ? CompilerMessageCategory.ERROR
+                                                   : kind == JpsRemoteProto.Message.Response.CompileMessage.Kind.WARNING ? CompilerMessageCategory.WARNING : CompilerMessageCategory.INFORMATION;
+          compileContext.addMessage(category, compileResponse.getText(), compileResponse.getSourceFilePath(), compileResponse.getLine(), compileResponse.getColumn());
+          System.out.println(compileResponse.getText());
+        }
+      }
+
+      public void handleCommandResponse(JpsRemoteProto.Message.Response.CommandResponse response) {
+        compileContext.getProgressIndicator().setText(response.getDescription());
+      }
+
+      public void handleFailure(JpsRemoteProto.Message.Failure failure) {
+        compileContext.addMessage(CompilerMessageCategory.ERROR, failure.getDescription(), null, -1, -1);
+        final String trace = failure.getStacktrace();
+        if (trace != null) {
+          LOG.info(trace);
+          System.out.println(trace);
+        }
+      }
+
+      public void sessionTerminated() {
+        if (callback != null) {
+          callback.finished(false, compileContext.getMessageCount(CompilerMessageCategory.ERROR), compileContext.getMessageCount(CompilerMessageCategory.WARNING), compileContext);
+        }
+      }
+    });
+  }
+
+
   public static final Key<Long> COMPILATION_START_TIMESTAMP = Key.create("COMPILATION_START_TIMESTAMP");
 
   private void startup(final CompileScope scope,
@@ -408,65 +471,125 @@ public class CompileDriver {
                        final CompilerMessage message,
                        final boolean checkCachesVersion) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    final CompilerTask compileTask = new CompilerTask(myProject, CompilerWorkspaceConfiguration.getInstance(myProject).COMPILE_IN_BACKGROUND,
-                                                    forceCompile
-                                                    ? CompilerBundle.message("compiler.content.name.compile")
-                                                    : CompilerBundle.message("compiler.content.name.make"), ApplicationManager.getApplication().isUnitTestMode());
+
+    final boolean useServer = useCompileServer();
+
+    final String contentName =
+      forceCompile ? CompilerBundle.message("compiler.content.name.compile") : CompilerBundle.message("compiler.content.name.make");
+    final boolean compileInBackground = useServer? true : CompilerWorkspaceConfiguration.getInstance(myProject).COMPILE_IN_BACKGROUND;
+    final CompilerTask compileTask =
+      new CompilerTask(myProject, compileInBackground, contentName, ApplicationManager.getApplication().isUnitTestMode());
+
     StatusBar.Info.set("", myProject, "Compiler");
 
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     FileDocumentManager.getInstance().saveAllDocuments();
 
-    final DependencyCache dependencyCache = createDependencyCache();
+    final DependencyCache dependencyCache = useServer? null: createDependencyCache();
     final CompileContextImpl compileContext =
       new CompileContextImpl(myProject, compileTask, scope, dependencyCache, !isRebuild && !forceCompile, isRebuild);
     compileContext.putUserData(COMPILATION_START_TIMESTAMP, LocalTimeCounter.currentTime());
-    for (Map.Entry<Pair<IntermediateOutputCompiler, Module>, Pair<VirtualFile, VirtualFile>> entry : myGenerationCompilerModuleToOutputDirMap.entrySet()) {
-      final Pair<VirtualFile, VirtualFile> outputs = entry.getValue();
-      final Pair<IntermediateOutputCompiler, Module> key = entry.getKey();
-      final Module module = key.getSecond();
-      compileContext.assignModule(outputs.getFirst(), module, false, key.getFirst());
-      compileContext.assignModule(outputs.getSecond(), module, true, key.getFirst());
+
+    if (!useServer) {
+      for (Map.Entry<Pair<IntermediateOutputCompiler, Module>, Pair<VirtualFile, VirtualFile>> entry : myGenerationCompilerModuleToOutputDirMap.entrySet()) {
+        final Pair<VirtualFile, VirtualFile> outputs = entry.getValue();
+        final Pair<IntermediateOutputCompiler, Module> key = entry.getKey();
+        final Module module = key.getSecond();
+        compileContext.assignModule(outputs.getFirst(), module, false, key.getFirst());
+        compileContext.assignModule(outputs.getSecond(), module, true, key.getFirst());
+      }
+      attachAnnotationProcessorsOutputDirectories(compileContext);
     }
-    attachAnnotationProcessorsOutputDirectories(compileContext);
-    
-    compileTask.start(new Runnable() {
-      public void run() {
-        if (compileContext.getProgressIndicator().isCanceled()) {
-          if (callback != null) {
-            callback.finished(true, 0, 0, compileContext);
-          }
-          return;
-        }
-        long start = System.currentTimeMillis();
-        try {
-          if (myProject.isDisposed()) {
+
+    final Runnable compileWork;
+    if (useServer) {
+      compileWork = new Runnable() {
+        public void run() {
+          if (compileContext.getProgressIndicator().isCanceled()) {
+            if (callback != null) {
+              callback.finished(true, 0, 0, compileContext);
+            }
             return;
           }
-          LOG.info("COMPILATION STARTED");
-          if (message != null) {
-            compileContext.addMessage(message);
+          long start = System.currentTimeMillis();
+          try {
+            if (myProject.isDisposed()) {
+              return;
+            }
+            LOG.info("COMPILATION STARTED (JPS SERVER)");
+            if (message != null) {
+              compileContext.addMessage(message);
+            }
+            final Future future = compileOnServer(compileContext, Arrays.asList(compileContext.getCompileScope().getAffectedModules()), compileContext.isMake(), callback);
+            if (future != null) {
+              try {
+                future.get();
+              }
+              catch (InterruptedException e) {
+                LOG.error(e); // todo
+              }
+              catch (ExecutionException e) {
+                LOG.error(e); // todo
+              }
+            }
+            else {
+              callback.finished(false, compileContext.getMessageCount(CompilerMessageCategory.ERROR), compileContext.getMessageCount(CompilerMessageCategory.WARNING), compileContext);
+            }
           }
-          TranslatingCompilerFilesMonitor.getInstance().ensureInitializationCompleted(myProject, compileContext.getProgressIndicator());
-          doCompile(compileContext, isRebuild, forceCompile, callback, checkCachesVersion);
+          finally {
+            final long finish = System.currentTimeMillis();
+            CompilerUtil.logDuration(
+              "\tCOMPILATION FINISHED; Errors: " +
+              compileContext.getMessageCount(CompilerMessageCategory.ERROR) +
+              "; warnings: " +
+              compileContext.getMessageCount(CompilerMessageCategory.WARNING),
+              finish - start
+            );
+            CompilerCacheManager.getInstance(myProject).flushCaches();
+          }
         }
-        finally {
-          compileContext.commitZipFiles();
-          final long finish = System.currentTimeMillis();
-          CompilerUtil.logDuration(
-            "\tCOMPILATION FINISHED; Errors: " +
-            compileContext.getMessageCount(CompilerMessageCategory.ERROR) +
-            "; warnings: " +
-            compileContext.getMessageCount(CompilerMessageCategory.WARNING),
-            finish - start
-          );
-          CompilerCacheManager.getInstance(myProject).flushCaches();
-          //if (LOG.isDebugEnabled()) {
-          //  LOG.debug("COMPILATION FINISHED");
-          //}
+      };
+    }
+    else {
+      compileWork = new Runnable() {
+        public void run() {
+          if (compileContext.getProgressIndicator().isCanceled()) {
+            if (callback != null) {
+              callback.finished(true, 0, 0, compileContext);
+            }
+            return;
+          }
+          long start = System.currentTimeMillis();
+          try {
+            if (myProject.isDisposed()) {
+              return;
+            }
+            LOG.info("COMPILATION STARTED");
+            if (message != null) {
+              compileContext.addMessage(message);
+            }
+            TranslatingCompilerFilesMonitor.getInstance().ensureInitializationCompleted(myProject, compileContext.getProgressIndicator());
+            doCompile(compileContext, isRebuild, forceCompile, callback, checkCachesVersion);
+          }
+          finally {
+            compileContext.commitZipFiles();
+            final long finish = System.currentTimeMillis();
+            CompilerUtil.logDuration(
+              "\tCOMPILATION FINISHED; Errors: " +
+              compileContext.getMessageCount(CompilerMessageCategory.ERROR) +
+              "; warnings: " +
+              compileContext.getMessageCount(CompilerMessageCategory.WARNING),
+              finish - start
+            );
+            CompilerCacheManager.getInstance(myProject).flushCaches();
+            //if (LOG.isDebugEnabled()) {
+            //  LOG.debug("COMPILATION FINISHED");
+            //}
+          }
         }
-      }
-    }, new Runnable() {
+      };
+    }
+    compileTask.start(compileWork, new Runnable() {
       public void run() {
         if (isRebuild) {
           final int rv = Messages.showOkCancelDialog(
@@ -2014,6 +2137,9 @@ public class CompileDriver {
   }
 
   private boolean validateCompilerConfiguration(final CompileScope scope, boolean checkOutputAndSourceIntersection) {
+    if (useCompileServer()) {
+      return true;
+    }
     try {
       final Module[] scopeModules = scope.getAffectedModules()/*ModuleManager.getInstance(myProject).getModules()*/;
       final List<String> modulesWithoutOutputPathSpecified = new ArrayList<String>();

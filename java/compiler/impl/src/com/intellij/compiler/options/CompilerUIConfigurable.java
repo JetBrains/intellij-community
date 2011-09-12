@@ -20,6 +20,7 @@ import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.MalformedPatternException;
 import com.intellij.compiler.impl.TranslatingCompilerFilesMonitor;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -41,9 +42,11 @@ public class CompilerUIConfigurable implements SearchableConfigurable {
   private JCheckBox myCbAssertNotNull;
   private JLabel myPatternLegendLabel;
   private JCheckBox myCbAutoShowFirstError;
+  private JCheckBox myCbUseCompileServer;
 
   public CompilerUIConfigurable(final Project project) {
     myProject = project;
+    myCbUseCompileServer.setVisible(ApplicationManager.getApplication().isInternal());
   }
 
   public void reset() {
@@ -54,6 +57,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable {
     myCbAutoShowFirstError.setSelected(workspaceConfiguration.AUTO_SHOW_ERRORS_IN_EDITOR);
     myCbClearOutputDirectory.setSelected(workspaceConfiguration.CLEAR_OUTPUT_DIRECTORY);
     myCbAssertNotNull.setSelected(workspaceConfiguration.ASSERT_NOT_NULL);
+    myCbUseCompileServer.setSelected(workspaceConfiguration.USE_COMPILE_SERVER);
 
     configuration.convertPatterns();
 
@@ -79,6 +83,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable {
     workspaceConfiguration.AUTO_SHOW_ERRORS_IN_EDITOR = myCbAutoShowFirstError.isSelected();
     workspaceConfiguration.CLEAR_OUTPUT_DIRECTORY = myCbClearOutputDirectory.isSelected();
     workspaceConfiguration.ASSERT_NOT_NULL = myCbAssertNotNull.isSelected();
+    workspaceConfiguration.USE_COMPILE_SERVER = myCbUseCompileServer.isSelected();
 
     configuration.removeResourceFilePatterns();
     String extensionString = myResourcePatternsField.getText().trim();
@@ -125,6 +130,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable {
     isModified |= ComparingUtils.isModified(myCbCompileInBackground, workspaceConfiguration.COMPILE_IN_BACKGROUND);
     isModified |= ComparingUtils.isModified(myCbAutoShowFirstError, workspaceConfiguration.AUTO_SHOW_ERRORS_IN_EDITOR);
     isModified |= ComparingUtils.isModified(myCbAssertNotNull, workspaceConfiguration.ASSERT_NOT_NULL);
+    isModified |= ComparingUtils.isModified(myCbUseCompileServer, workspaceConfiguration.USE_COMPILE_SERVER);
 
     final CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
     isModified |= ComparingUtils.isModified(myCbClearOutputDirectory, workspaceConfiguration.CLEAR_OUTPUT_DIRECTORY);

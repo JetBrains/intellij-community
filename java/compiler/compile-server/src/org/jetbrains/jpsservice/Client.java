@@ -87,7 +87,7 @@ public class Client {
     };
   }
 
-  public Future sendCompileRequest(String projectId, List<String> modules, boolean rebuild, JpsServerResponseHandler handler) throws Throwable {
+  public Future sendCompileRequest(String projectId, List<String> modules, boolean rebuild, JpsServerResponseHandler handler) {
     if (myState.get() != State.CONNECTED) {
       return null;
     }
@@ -156,7 +156,7 @@ public class Client {
       }
     }
     // already connected
-    return false;
+    return true;
   }
 
   public void disconnect() {
