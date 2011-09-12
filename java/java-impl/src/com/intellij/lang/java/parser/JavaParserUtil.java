@@ -17,6 +17,7 @@ package com.intellij.lang.java.parser;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.lang.*;
+import com.intellij.lang.impl.PsiBuilderAdapter;
 import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.project.Project;
@@ -35,8 +36,6 @@ import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.diff.FlyweightCapableTreeStructure;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -335,133 +334,5 @@ public class JavaParserUtil {
         return condition.value(input) || super.eof();
       }
     };
-  }
-
-  public static class PsiBuilderAdapter implements PsiBuilder {
-    protected final PsiBuilder myDelegate;
-
-    public PsiBuilderAdapter(final PsiBuilder delegate) {
-      myDelegate = delegate;
-    }
-
-    @Override
-    public Project getProject() {
-      return myDelegate.getProject();
-    }
-
-    @Override
-    public CharSequence getOriginalText() {
-      return myDelegate.getOriginalText();
-    }
-
-    @Override
-    public void advanceLexer() {
-      myDelegate.advanceLexer();
-    }
-
-    @Override @Nullable
-    public IElementType getTokenType() {
-      return myDelegate.getTokenType();
-    }
-
-    @Override
-    public void setTokenTypeRemapper(final ITokenTypeRemapper remapper) {
-      myDelegate.setTokenTypeRemapper(remapper);
-    }
-
-    @Override
-    public void setWhitespaceSkippedCallback(WhitespaceSkippedCallback callback) {
-      myDelegate.setWhitespaceSkippedCallback(callback);
-    }
-
-    @Override
-    public void remapCurrentToken(IElementType type) {
-      myDelegate.remapCurrentToken(type);
-    }
-
-    @Override
-    public IElementType lookAhead(int steps) {
-      return myDelegate.lookAhead(steps);
-    }
-
-    @Override
-    public IElementType rawLookup(int steps) {
-      return myDelegate.rawLookup(steps);
-    }
-
-    @Override
-    public int rawTokenTypeStart(int steps) {
-      return myDelegate.rawTokenTypeStart(steps);
-    }
-
-    @Override @Nullable @NonNls
-    public String getTokenText() {
-      return myDelegate.getTokenText();
-    }
-
-    @Override
-    public int getCurrentOffset() {
-      return myDelegate.getCurrentOffset();
-    }
-
-    @Override
-    public Marker mark() {
-      return myDelegate.mark();
-    }
-
-    @Override
-    public void error(final String messageText) {
-      myDelegate.error(messageText);
-    }
-
-    @Override
-    public boolean eof() {
-      return myDelegate.eof();
-    }
-
-    @Override
-    public ASTNode getTreeBuilt() {
-      return myDelegate.getTreeBuilt();
-    }
-
-    @Override
-    public FlyweightCapableTreeStructure<LighterASTNode> getLightTree() {
-      return myDelegate.getLightTree();
-    }
-
-    @Override
-    public void setDebugMode(final boolean dbgMode) {
-      myDelegate.setDebugMode(dbgMode);
-    }
-
-    @Override
-    public void enforceCommentTokens(final TokenSet tokens) {
-      myDelegate.enforceCommentTokens(tokens);
-    }
-
-    @Override @Nullable
-    public LighterASTNode getLatestDoneMarker() {
-      return myDelegate.getLatestDoneMarker();
-    }
-
-    @Override @Nullable
-    public <T> T getUserData(@NotNull final Key<T> key) {
-      return myDelegate.getUserData(key);
-    }
-
-    @Override
-    public <T> void putUserData(@NotNull final Key<T> key, @Nullable final T value) {
-      myDelegate.putUserData(key, value);
-    }
-
-    @Override
-    public <T> T getUserDataUnprotected(@NotNull final Key<T> key) {
-      return myDelegate.getUserDataUnprotected(key);
-    }
-
-    @Override
-    public <T> void putUserDataUnprotected(@NotNull final Key<T> key, @Nullable final T value) {
-      myDelegate.putUserDataUnprotected(key, value);
-    }
   }
 }
