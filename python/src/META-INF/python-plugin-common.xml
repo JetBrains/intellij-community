@@ -523,9 +523,11 @@
     <lang.fileViewProviderFactory language="Mako"
                                   implementationClass="com.jetbrains.mako.MakoFileProviderFactory"/>
 
-    <lang.commenter language="Mako" implementationClass="com.jetbrains.mako.MakoCommenter"/>
+    <lang.commenter language="Mako" implementationClass="com.jetbrains.mako.editor.MakoCommenter"/>
     <lang.braceMatcher language="Mako" implementationClass="com.jetbrains.mako.highlighting.MakoBraceMatcher"/>
     <quoteHandler fileType="Mako" className="com.jetbrains.mako.editor.MakoQuoteHandler"/>
+    <completion.contributor language="Mako"
+                            implementationClass="com.jetbrains.mako.editor.MakoCompletionContributor"/>
 
     <typedHandler implementation="com.jetbrains.mako.editor.MakoBracesHandler"
                   id="MakoBracesHandler"/>
