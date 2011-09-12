@@ -55,6 +55,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
+
+  public static boolean PRINT_DEBUG_MESSAGES = false;
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.XmlTagInsertHandler");
   public static final XmlTagInsertHandler INSTANCE = new XmlTagInsertHandler();
 
@@ -78,6 +81,15 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
     context.setAddCompletionChar(false);
 
     final XmlElementDescriptor descriptor = tag.getDescriptor();
+    if (PRINT_DEBUG_MESSAGES) {
+      if (descriptor == null) {
+        System.out.println("Descriptor is null for tag " + tag.getName());
+      }
+      else {
+        System.out.println("Descriptor for tag " + tag.getName() + " is " + descriptor + " of type " + descriptor.getClass());
+      }
+    }
+
     if (XmlUtil.getTokenOfType(tag, XmlTokenType.XML_TAG_END) == null &&
         XmlUtil.getTokenOfType(tag, XmlTokenType.XML_EMPTY_ELEMENT_END) == null) {
 
@@ -134,6 +146,10 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
                                           final Project project,
                                           XmlElementDescriptor descriptor,
                                           XmlTag tag) {
+    if (PRINT_DEBUG_MESSAGES) {
+      System.out.println(tag.getName() + ": insertIncompleteTag");
+    }
+
     TemplateManager templateManager = TemplateManager.getInstance(project);
     Template template = templateManager.createTemplate("", "");
 
@@ -214,12 +230,30 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
 
     XmlAttributeDescriptor[] attributes = descriptor.getAttributesDescriptors(tag);
     StringBuilder indirectRequiredAttrs = null;
+
+    if (PRINT_DEBUG_MESSAGES) {
+      System.out.println((tag != null ? tag.getName() : "null") + ": addRequiredAttributes");
+    }
+
     if (WebEditorOptions.getInstance().isAutomaticallyInsertRequiredAttributes()) {
       final XmlExtension extension = XmlExtension.getExtension(containingFile);
+
+      if (PRINT_DEBUG_MESSAGES) {
+        System.out.println("Attributes count: " + attributes.length);
+      }
+
       for (XmlAttributeDescriptor attributeDecl : attributes) {
         String attributeName = attributeDecl.getName(tag);
 
+        if (PRINT_DEBUG_MESSAGES) {
+          System.out.println("Attribute " + attributeName);
+          System.out.println("Required: " + attributeDecl.isRequired());
+        }
+
         if (attributeDecl.isRequired() && (tag == null || tag.getAttributeValue(attributeName) == null)) {
+          if (PRINT_DEBUG_MESSAGES) {
+            System.out.println("Inside condition: " + attributeName);
+          }
           if (!notRequiredAttributes.contains(attributeName)) {
             if (!extension.isIndirectSyntax(attributeDecl)) {
               template.addTextSegment(" " + attributeName + "=\"");
