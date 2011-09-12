@@ -335,7 +335,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
         performInplaceIntroduce(operation);
       }
       else {
-        new OccurrencesChooser<PsiElement>(editor).showChooser(operation.getElement(), operation.getOccurrences(), new Pass<OccurrencesChooser.ReplaceChoice>() {
+        OccurrencesChooser.simpleChooser(editor).showChooser(operation.getElement(), operation.getOccurrences(), new Pass<OccurrencesChooser.ReplaceChoice>() {
           @Override
           public void pass(OccurrencesChooser.ReplaceChoice replaceChoice) {
             operation.setReplaceAll(replaceChoice == OccurrencesChooser.ReplaceChoice.ALL);
