@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -107,18 +108,24 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends DialogWrapper {
     if (canShowPreserveSourceRoots) {
       final Set<VirtualFile> sourceRoots = new HashSet<VirtualFile>();
       final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(directory.getProject()).getFileIndex();
+      final Module destinationModule = fileIndex.getModuleForFile(directory.getVirtualFile());
+      boolean sameModule = true;
       for (PsiElement element : elementsToMove) {
         if (element instanceof PsiPackage) {
           for (PsiDirectory psiDirectory : ((PsiPackage)element).getDirectories()) {
-            sourceRoots.add(fileIndex.getSourceRootForFile(psiDirectory.getVirtualFile()));
+            final VirtualFile virtualFile = psiDirectory.getVirtualFile();
+            sourceRoots.add(fileIndex.getSourceRootForFile(virtualFile));
+            sameModule &= destinationModule == fileIndex.getModuleForFile(virtualFile);
           }
         } else if (element instanceof PsiClass) {
           final VirtualFile virtualFile = element.getContainingFile().getVirtualFile();
           LOG.assertTrue(virtualFile != null);
           sourceRoots.add(fileIndex.getSourceRootForFile(virtualFile));
+          sameModule &= destinationModule == fileIndex.getModuleForFile(virtualFile);
         }
       }
       myPreserveSourceRoot.setVisible(sourceRoots.size() > 1);
+      myPreserveSourceRoot.setSelected(sameModule);
     }
     init();
   }
