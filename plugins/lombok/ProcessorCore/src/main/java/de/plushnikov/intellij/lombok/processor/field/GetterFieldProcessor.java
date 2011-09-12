@@ -38,7 +38,7 @@ public class GetterFieldProcessor extends AbstractLombokFieldProcessor {
       String fieldName = psiField.getName();
       PsiType psiType = psiField.getType();
       String typeName = psiType.getCanonicalText();
-      String getterName = TransformationsUtil.toGetterName(fieldName, psiType.equalsToText("boolean"));
+      String getterName = TransformationsUtil.toGetterName(fieldName, PsiType.BOOLEAN.equals(psiType));
 
       final PsiMethod valuesMethod = elementFactory.createMethodFromText(
           visibility + typeName + " " + getterName + "() { return this." + fieldName + ";}",

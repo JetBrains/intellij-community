@@ -37,7 +37,7 @@ public class SetterFieldProcessor extends AbstractLombokFieldProcessor {
       String fieldName = psiField.getName();
       PsiType psiType = psiField.getType();
       String typeName = psiType.getCanonicalText();
-      String setterName = TransformationsUtil.toSetterName(fieldName, psiType.equalsToText("boolean"));
+      String setterName = TransformationsUtil.toSetterName(fieldName, PsiType.BOOLEAN.equals(psiType));
 
       final PsiMethod valuesMethod = elementFactory.createMethodFromText(
           visibility + "void " + setterName + "(" + typeName + " " + fieldName + ") {this." + fieldName + "=" + fieldName + ";}",
