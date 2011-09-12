@@ -18,26 +18,24 @@ package org.jetbrains.plugins.groovy.template;
 import com.intellij.codeInsight.template.EverywhereContextType;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.patterns.ElementPattern;
+import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionData;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-
-import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
 /**
  * @author peter
@@ -95,10 +93,6 @@ public abstract class GroovyTemplateContextType extends TemplateContextType {
     }
   }
   public static class Expression extends GroovyTemplateContextType {
-    private static final ElementPattern<PsiElement> INFIX_OPERATOR = psiElement().afterLeaf(
-      psiElement().inside(
-        psiElement(GrExpression.class).afterLeaf(
-          psiElement().withText("(").withParent(GrIfStatement.class))));
 
     public Expression() {
       super("GROOVY_EXPRESSION", "Expression", Generic.class);
@@ -120,8 +114,13 @@ public abstract class GroovyTemplateContextType extends TemplateContextType {
       if (parent.getParent() instanceof GrCall) {
         return false;
       }
-      if (INFIX_OPERATOR.accepts(element)) {
-        return false;
+      ProcessingContext context = new ProcessingContext();
+      if (PlatformPatterns.psiElement().inside(GrExpression.class).afterLeaf(
+        PlatformPatterns.psiElement().inside(PlatformPatterns.psiElement(GrExpression.class).save("prevExpr"))).accepts(element, context)) {
+        PsiElement prevExpr = (PsiElement)context.get("prevExpr");
+        if (prevExpr.getTextRange().getEndOffset() <= element.getTextRange().getStartOffset()) {
+          return false;
+        }
       }
       return true;
     }
