@@ -1,6 +1,12 @@
 package de.plushnikov.intellij.lombok.processor.clazz;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
 import de.plushnikov.intellij.lombok.processor.field.GetterFieldProcessor;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;

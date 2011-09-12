@@ -1,7 +1,13 @@
 package de.plushnikov.intellij.lombok.processor.clazz;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
 import de.plushnikov.intellij.lombok.psi.MyLightMethod;
 import lombok.ToString;
 import org.jetbrains.annotations.NotNull;

@@ -1,7 +1,12 @@
 package de.plushnikov.intellij.plugin.provider;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import de.plushnikov.intellij.lombok.UserMapKeys;
 import de.plushnikov.intellij.lombok.processor.clazz.LombokClassProcessor;
@@ -9,7 +14,11 @@ import de.plushnikov.intellij.lombok.processor.field.LombokFieldProcessor;
 import de.plushnikov.intellij.plugin.core.GenericServiceLocator;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 
 /**
  * Provides support for lombok generated elements
