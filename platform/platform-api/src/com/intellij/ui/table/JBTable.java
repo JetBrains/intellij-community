@@ -392,6 +392,9 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       final JComponent c = (JComponent)result;
       c.setOpaque(true);
       c.setBackground(bg);
+      for (Component child : c.getComponents()) {
+        child.setBackground(bg);
+      }
     }
 
     if (!selected) return result;

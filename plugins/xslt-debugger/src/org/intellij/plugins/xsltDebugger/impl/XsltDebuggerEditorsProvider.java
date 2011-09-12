@@ -9,6 +9,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.evaluation.EvaluationMode;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import org.intellij.lang.xpath.XPathFileType;
 import org.intellij.plugins.xsltDebugger.BreakpointContext;
@@ -25,7 +26,10 @@ public class XsltDebuggerEditorsProvider extends XDebuggerEditorsProvider {
 
   @NotNull
   @Override
-  public Document createDocument(@NotNull Project project, @NotNull String text, @Nullable XSourcePosition sourcePosition) {
+  public Document createDocument(@NotNull Project project,
+                                 @NotNull String text,
+                                 @Nullable XSourcePosition sourcePosition,
+                                 @NotNull EvaluationMode mode) {
     final PsiFile psiFile = PsiFileFactory.getInstance(project)
       .createFileFromText("XPathExpr.xpath", XPathFileType.XPATH, text, LocalTimeCounter.currentTime(), true);
 

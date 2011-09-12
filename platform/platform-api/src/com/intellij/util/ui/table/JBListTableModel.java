@@ -13,7 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util.ui;
+package com.intellij.util.ui.table;
+
+import com.intellij.util.ui.EditableModel;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
@@ -41,7 +43,7 @@ public abstract class JBListTableModel extends AbstractTableModel implements Edi
 
   @Override
   public String getColumnName(int columnIndex) {
-    return "";
+    return null;
   }
 
 
@@ -58,14 +60,22 @@ public abstract class JBListTableModel extends AbstractTableModel implements Edi
   }
 
   @Override
-  public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+  public void setValueAt(Object value, int row, int column) {
+    for (int i = 0; i < myTable.getColumnCount(); i++) {
+      myTable.setValueAt(((JBTableRow)value).getValueAt(i), row, i);
+    }
+    fireTableCellUpdated(row, column);
   }
 
   @Override
   public void addRow() {
     final TableModel model = myTable.getModel();
+    final int count = myTable.getRowCount();
     if (model instanceof EditableModel) {
       ((EditableModel)model).addRow();
+    }
+    if (count < myTable.getRowCount()) {
+      fireTableRowsInserted(count, myTable.getRowCount() - 1);
     }
   }
 
@@ -75,6 +85,7 @@ public abstract class JBListTableModel extends AbstractTableModel implements Edi
     if (model instanceof EditableModel) {
       ((EditableModel)model).removeRow(index);
     }
+    fireTableRowsDeleted(index, index);
   }
 
   @Override
@@ -83,5 +94,6 @@ public abstract class JBListTableModel extends AbstractTableModel implements Edi
     if (model instanceof EditableModel) {
       ((EditableModel)model).exchangeRows(oldIndex, newIndex);
     }
+    fireTableRowsUpdated(Math.min(oldIndex, newIndex), Math.max(oldIndex, newIndex));
   }
 }

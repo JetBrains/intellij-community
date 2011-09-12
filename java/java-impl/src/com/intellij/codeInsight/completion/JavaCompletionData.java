@@ -572,7 +572,8 @@ public class JavaCompletionData extends JavaAwareCompletionData{
 
   private static void addPrimitiveTypes(CompletionResultSet result, PsiElement position) {
     boolean declaration = DECLARATION_START.isAcceptable(position, position) ||
-                          psiElement().withParents(PsiJavaCodeReferenceElement.class, PsiTypeElement.class, PsiMember.class).accepts(position);
+                          psiElement().withParents(PsiJavaCodeReferenceElement.class, PsiTypeElement.class, PsiMember.class).accepts(position) ||
+                          psiElement().withParents(PsiJavaCodeReferenceElement.class, PsiTypeElement.class, PsiClassLevelDeclarationStatement.class).accepts(position);
     if (START_FOR.accepts(position) ||
         INSIDE_PARAMETER_LIST.accepts(position) && !AFTER_DOT.accepts(position) ||
         VARIABLE_AFTER_FINAL.accepts(position) ||

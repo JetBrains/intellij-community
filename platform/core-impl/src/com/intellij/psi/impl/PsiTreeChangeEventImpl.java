@@ -22,6 +22,8 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiTreeChangeEvent;
 
 public class PsiTreeChangeEventImpl extends PsiTreeChangeEvent{
+  private boolean isGeneric;
+
   public enum PsiEventType {
     BEFORE_CHILD_ADDITION,
     CHILD_ADDED,
@@ -114,6 +116,10 @@ public class PsiTreeChangeEventImpl extends PsiTreeChangeEvent{
   // this is a generic event which is send after all events for concrete PSI changes in a file (e.g. childAdded(), childReplaced() etc).
   // this event means "something changed in the file", not the "this PSI element changed in the file"
   public boolean isGenericChildrenChange() {
-    return getParent() == getFile() && getOffset() == 0;
+    return isGeneric;
+  }
+
+  public void setGeneric(boolean generic) {
+    isGeneric = generic;
   }
 }

@@ -26,9 +26,8 @@ public interface HighlightVisitor {
   ExtensionPointName<HighlightVisitor> EP_HIGHLIGHT_VISITOR = new ExtensionPointName<HighlightVisitor>("com.intellij.highlightVisitor");
 
   boolean suitableForFile(@NotNull PsiFile file);
-  void visit(@NotNull PsiElement element, @NotNull HighlightInfoHolder holder);
-
-  boolean analyze(@NotNull Runnable action, final boolean updateWholeFile, @NotNull PsiFile file);
+  void visit(@NotNull PsiElement element);
+  boolean analyze(@NotNull PsiFile file, final boolean updateWholeFile, @NotNull HighlightInfoHolder holder, @NotNull Runnable action);
   @NotNull
   HighlightVisitor clone();
   int order();

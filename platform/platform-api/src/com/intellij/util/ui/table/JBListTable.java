@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util.ui;
+package com.intellij.util.ui.table;
 
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.ui.AbstractTableCellEditor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -24,8 +25,6 @@ import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.KeyEvent;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
@@ -49,6 +48,25 @@ public abstract class JBListTable extends JPanel {
       }
     };
     mainTable = new JBTable(model) {
+      @Override
+      protected void processKeyEvent(KeyEvent e) {
+        if (e.getKeyCode() == KeyEvent.VK_ENTER && e.getModifiers() == 0) {
+          editCellAt(getSelectedRow(), getSelectedColumn());
+        }
+        //todo[kb] JBTabsImpl breaks focus traversal policy. Need a workaround here
+        //else if (e.getKeyCode() == KeyEvent.VK_TAB) {
+        //  final KeyboardFocusManager keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+        //  if (e.isShiftDown()) {
+        //    keyboardFocusManager.focusPreviousComponent(this);
+        //  } else {
+        //    keyboardFocusManager.focusNextComponent(this);
+        //  }
+        //}
+        else {
+          super.processKeyEvent(e);
+        }
+      }
+
       @Override
       public TableCellRenderer getCellRenderer(int row, int column) {
         return new DefaultTableCellRenderer() {
@@ -82,49 +100,8 @@ public abstract class JBListTable extends JPanel {
         if (editor != null) {
           editor.prepareEditor(t, row);
           editor.setFocusCycleRoot(true);
-          final List<Component> focusableComponents = Arrays.<Component>asList(editor.getFocusableComponents());
-          editor.setFocusTraversalPolicy(new FocusTraversalPolicy() {
-            @Override
-            public Component getComponentAfter(Container aContainer, Component aComponent) {
-              int i = focusableComponents.indexOf(aComponent);
-              if (i != -1) {
-                i++;
-                if (i >= focusableComponents.size()) {
-                  i = 0;
-                }
-                return focusableComponents.get(i);
-              }
-              return null;
-            }
 
-            @Override
-            public Component getComponentBefore(Container aContainer, Component aComponent) {
-              int i = focusableComponents.indexOf(aComponent);
-              if (i != -1) {
-                i--;
-                if (i == -1) {
-                  i = focusableComponents.size() - 1;
-                }
-                return focusableComponents.get(i);
-              }
-              return null;
-            }
-
-            @Override
-            public Component getFirstComponent(Container aContainer) {
-              return focusableComponents.get(0);
-            }
-
-            @Override
-            public Component getLastComponent(Container aContainer) {
-              return focusableComponents.get(focusableComponents.size() - 1);
-            }
-
-            @Override
-            public Component getDefaultComponent(Container aContainer) {
-              return editor.getPreferredFocusedComponent();
-            }
-          });
+          editor.setFocusTraversalPolicy(new JBListTableFocusTraversalPolicy(editor));
 
           return new AbstractTableCellEditor() {
             JTable curTable = null;
@@ -152,11 +129,7 @@ public abstract class JBListTable extends JPanel {
           
                 @Override
                 public Object getCellEditorValue() {
-                  final JBTableRow value = editor.getValue();
-                  for (int i = 0; i < t.getColumnCount(); i++) {
-                    t.setValueAt(value.getValueAt(i), row, i);
-                  }
-                  return value;
+                  return editor.getValue();
                 }
 
             

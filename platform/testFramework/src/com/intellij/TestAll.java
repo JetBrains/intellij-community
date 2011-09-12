@@ -290,7 +290,7 @@ public class TestAll implements Test {
     return null;
   }
 
-  private static String[] getClassRoots() {
+  public static String[] getClassRoots() {
     String testRoots = System.getProperty("test.roots");
     if (testRoots != null) {
       System.out.println("Collecting tests from roots specified by test.roots property: " + testRoots);
@@ -325,22 +325,26 @@ public class TestAll implements Test {
     myTestCaseLoader.addFirstTest(Class.forName("_FirstInSuiteTest"));
     myTestCaseLoader.addLastTest(Class.forName("_LastInSuiteTest"));
 
+    fillTestCases(myTestCaseLoader, packageRoot, classRoots);
+  }
+
+  public static void fillTestCases(TestCaseLoader testCaseLoader, String packageRoot, String... classRoots) throws IOException {
     for (String classRoot : classRoots) {
-      int oldCount = myTestCaseLoader.getClasses().size();
+      int oldCount = testCaseLoader.getClasses().size();
       ClassFinder classFinder = new ClassFinder(new File(FileUtil.toSystemDependentName(classRoot)), packageRoot);
-      myTestCaseLoader.loadTestCases(classFinder.getClasses());
-      int newCount = myTestCaseLoader.getClasses().size();
+      testCaseLoader.loadTestCases(classFinder.getClasses());
+      int newCount = testCaseLoader.getClasses().size();
       if (newCount != oldCount) {
         System.out.println("Loaded " + (newCount - oldCount) + " tests from class root " + classRoot);
       }
     }
 
-    if (myTestCaseLoader.getClasses().size() == 1) {
-      myTestCaseLoader.clearClasses();
+    if (testCaseLoader.getClasses().size() == 1) {
+      testCaseLoader.clearClasses();
     }
 
-    log("Number of test classes found: " + myTestCaseLoader.getClasses().size());
-    myTestCaseLoader.checkClassesExist();
+    log("Number of test classes found: " + testCaseLoader.getClasses().size());
+    testCaseLoader.checkClassesExist();
   }
 
   private static void log(String message) {

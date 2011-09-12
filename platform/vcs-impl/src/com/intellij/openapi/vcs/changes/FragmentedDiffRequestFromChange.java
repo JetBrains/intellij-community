@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.highlighter.*;
 import com.intellij.openapi.editor.impl.DocumentImpl;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
@@ -68,7 +69,7 @@ public class FragmentedDiffRequestFromChange {
     return true;
   }
 
-  public PreparedFragmentedContent getRanges(Change change, int extraLines) throws VcsException {
+  public PreparedFragmentedContent getRanges(Change change) throws VcsException {
     final FilePath filePath = ChangesUtil.getFilePath(change);
 
     final RangesCalculator calculator = new RangesCalculator();
@@ -77,32 +78,10 @@ public class FragmentedDiffRequestFromChange {
     if (exception != null) {
       throw exception;
     }
-    final List<BeforeAfter<TextRange>> ranges = calculator.expand(extraLines);
+    List<BeforeAfter<TextRange>> ranges = calculator.getRanges();
     final PreparedFragmentedContent preparedFragmentedContent =
-      new PreparedFragmentedContent(new FragmentedContent(calculator.getOldDocument(), calculator.getDocument(), ranges));
-    if (! ranges.isEmpty()) {
-
-      EditorHighlighterFactory editorHighlighterFactory = EditorHighlighterFactory.getInstance();
-      final SyntaxHighlighter syntaxHighlighter = SyntaxHighlighter.PROVIDER.create(filePath.getFileType(), myProject, null);
-      final EditorHighlighter highlighter =
-        editorHighlighterFactory.createEditorHighlighter(syntaxHighlighter, EditorColorsManager.getInstance().getGlobalScheme());
-
-      highlighter.setEditor(new LightHighlighterClient(calculator.myOldDocument, myProject));
-      highlighter.setText(calculator.myOldDocument.getText());
-      HighlighterIterator iterator = highlighter.createIterator(ranges.get(0).getBefore().getStartOffset());
-      FragmentedEditorHighlighter beforeHighlighter =
-        new FragmentedEditorHighlighter(iterator, preparedFragmentedContent.getBeforeFragments());
-      preparedFragmentedContent.setBeforeHighlighter(beforeHighlighter);
-
-      final EditorHighlighter highlighter1 =
-        editorHighlighterFactory.createEditorHighlighter(syntaxHighlighter, EditorColorsManager.getInstance().getGlobalScheme());
-      highlighter1.setEditor(new LightHighlighterClient(calculator.myDocument, myProject));
-      highlighter1.setText(calculator.myDocument.getText());
-      HighlighterIterator iterator1 = highlighter1.createIterator(ranges.get(0).getAfter().getStartOffset());
-      FragmentedEditorHighlighter afterHighlighter =
-        new FragmentedEditorHighlighter(iterator1, preparedFragmentedContent.getAfterFragments());
-      preparedFragmentedContent.setAfterHighlighter(afterHighlighter);
-    }
+      new PreparedFragmentedContent(myProject, new FragmentedContent(calculator.getOldDocument(), calculator.getDocument(), ranges),
+                                    filePath.getName(), filePath.getFileType());
     return preparedFragmentedContent;
   }
 
@@ -157,9 +136,9 @@ public class FragmentedDiffRequestFromChange {
                 final TextRange oldRange = lineFragment.getRange(FragmentSide.SIDE1);
                 final TextRange newRange = lineFragment.getRange(FragmentSide.SIDE2);
                 myRanges.add(new BeforeAfter<TextRange>(new TextRange(myOldDocument.getLineNumber(oldRange.getStartOffset()),
-                                           myOldDocument.getLineNumber(oldRange.getEndOffset())),
+                                           myOldDocument.getLineNumber(correctRangeEnd(oldRange.getEndOffset(), myOldDocument))),
                                                         new TextRange(myDocument.getLineNumber(newRange.getStartOffset()),
-                                           myDocument.getLineNumber(newRange.getEndOffset()))));
+                                           myDocument.getLineNumber(correctRangeEnd(newRange.getEndOffset(), myDocument)))));
               }
             }
             cache.put(new Pair<Long, String>(myDocument.getModificationStamp(), convertedPath), new ArrayList<BeforeAfter<TextRange>>(myRanges));
@@ -173,39 +152,10 @@ public class FragmentedDiffRequestFromChange {
         }
       });
     }
-
-    public List<BeforeAfter<TextRange>> expand(final int lines) {
-      if (myRanges == null || myRanges.isEmpty()) return Collections.emptyList();
-      final List<BeforeAfter<TextRange>> shiftedRanges = new ArrayList<BeforeAfter<TextRange>>(myRanges.size());
-      final int oldLineCount = myOldDocument.getLineCount();
-      final int lineCount = myDocument.getLineCount();
-
-      for (BeforeAfter<TextRange> range : myRanges) {
-        final TextRange newBefore = expandRange(range.getBefore(), lines, oldLineCount);
-        final TextRange newAfter = expandRange(range.getAfter(), lines, lineCount);
-        shiftedRanges.add(new BeforeAfter<TextRange>(newBefore, newAfter));
-      }
-
-      // and zip
-      final List<BeforeAfter<TextRange>> zippedRanges = new ArrayList<BeforeAfter<TextRange>>(myRanges.size());
-      final ListIterator<BeforeAfter<TextRange>> iterator = shiftedRanges.listIterator();
-      BeforeAfter<TextRange> previous = iterator.next();
-      while (iterator.hasNext()) {
-        final BeforeAfter<TextRange> current = iterator.next();
-        if (previous.getBefore().intersects(current.getBefore()) || previous.getAfter().intersects(current.getAfter())) {
-          previous = new BeforeAfter<TextRange>(previous.getBefore().union(current.getBefore()),
-                                                previous.getAfter().union(current.getAfter()));
-        } else {
-          zippedRanges.add(previous);
-          previous = current;
-        }
-      }
-      zippedRanges.add(previous);
-      return zippedRanges;
-    }
-
-    private TextRange expandRange(final TextRange range, final int shift, final int size) {
-      return new TextRange(Math.max(0, (range.getStartOffset() - shift)), Math.max(0, Math.min(size - 1, range.getEndOffset() + shift)));
+    
+    private int correctRangeEnd(final int end, final Document document) {
+      if (end == 0) return end;
+      return "\n".equals(document.getText(new TextRange(end - 1, end))) ? end - 1 : end;
     }
 
     public List<BeforeAfter<TextRange>> getRanges() {

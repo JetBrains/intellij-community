@@ -16,12 +16,22 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.highlighter.FragmentedEditorHighlighter;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.highlighter.*;
+import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.util.BeforeAfter;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.ListIterator;
 
 /**
 * Created by IntelliJ IDEA.
@@ -30,19 +40,30 @@ import java.util.List;
 * Time: 1:19 PM
 */
 public class PreparedFragmentedContent {
-  private final LineNumberConvertor oldConvertor;
-  private final LineNumberConvertor newConvertor;
-  private final StringBuilder sbOld;
-  private final StringBuilder sbNew;
-  private final List<TextRange> myBeforeFragments;
-  private final List<TextRange> myAfterFragments;
-  private final List<BeforeAfter<Integer>> myLineRanges;
+  private LineNumberConvertor oldConvertor;
+  private LineNumberConvertor newConvertor;
+  private StringBuilder sbOld;
+  private StringBuilder sbNew;
+  private List<TextRange> myBeforeFragments;
+  private List<TextRange> myAfterFragments;
+  private List<BeforeAfter<Integer>> myLineRanges;
   private boolean myOneSide;
 
   private FragmentedEditorHighlighter myBeforeHighlighter;
   private FragmentedEditorHighlighter myAfterHighlighter;
+  private List<Pair<TextRange, TextAttributes>> myBeforeTodoRanges;
+  private List<Pair<TextRange, TextAttributes>> myAfterTodoRanges;
+  private final Project myProject;
+  private final FragmentedContent myFragmentedContent;
+  private final String myFileName;
+  private final FileType myFileType;
 
-  public PreparedFragmentedContent(final FragmentedContent fragmentedContent) {
+  public PreparedFragmentedContent(final Project project, final FragmentedContent fragmentedContent, final String fileName,
+                                   final FileType fileType) {
+    myProject = project;
+    myFragmentedContent = fragmentedContent;
+    myFileName = fileName;
+    myFileType = fileType;
     oldConvertor = new LineNumberConvertor();
     newConvertor = new LineNumberConvertor();
     sbOld = new StringBuilder();
@@ -53,11 +74,25 @@ public class PreparedFragmentedContent {
     fromFragmentedContent(fragmentedContent);
   }
 
+  public void recalculate() {
+    oldConvertor = new LineNumberConvertor();
+    newConvertor = new LineNumberConvertor();
+    sbOld = new StringBuilder();
+    sbNew = new StringBuilder();
+    myBeforeFragments = new ArrayList<TextRange>(myFragmentedContent.getSize());
+    myAfterFragments = new ArrayList<TextRange>(myFragmentedContent.getSize());
+    myLineRanges = new ArrayList<BeforeAfter<Integer>>();
+    fromFragmentedContent(myFragmentedContent);
+  }
+
   private void fromFragmentedContent(final FragmentedContent fragmentedContent) {
     myOneSide = fragmentedContent.isOneSide();
+    List<BeforeAfter<TextRange>> expandedRanges =
+      expand(fragmentedContent.getRanges(), VcsConfiguration.getInstance(myProject).SHORT_DIFF_EXTRA_LINES,
+             fragmentedContent.getBefore(), fragmentedContent.getAfter());
     // line starts
     BeforeAfter<Integer> lines = new BeforeAfter<Integer>(0,0);
-    for (BeforeAfter<TextRange> lineNumbers : fragmentedContent.getRanges()) {
+    for (BeforeAfter<TextRange> lineNumbers : expandedRanges) {
       myLineRanges.add(lines);
       oldConvertor.put(lines.getBefore(), lineNumbers.getBefore().getStartOffset());
       newConvertor.put(lines.getAfter(), lineNumbers.getAfter().getStartOffset());
@@ -86,6 +121,9 @@ public class PreparedFragmentedContent {
     }
     myLineRanges.add(new BeforeAfter<Integer>(lines.getBefore() == 0 ? 0 : lines.getBefore() - 1,
                                               lines.getAfter() == 0 ? 0 : lines.getAfter() - 1));
+
+    setHighlighters(fragmentedContent.getBefore(), fragmentedContent.getAfter(), expandedRanges);
+    setTodoHighlighting(fragmentedContent.getBefore(), fragmentedContent.getAfter());
   }
 
   public LineNumberConvertor getOldConvertor() {
@@ -138,5 +176,99 @@ public class PreparedFragmentedContent {
 
   public boolean isEmpty() {
     return myLineRanges.isEmpty();
+  }
+
+  public void setAfterTodoRanges(List<Pair<TextRange, TextAttributes>> afterTodoRanges) {
+    myAfterTodoRanges = afterTodoRanges;
+  }
+
+  public List<Pair<TextRange, TextAttributes>> getBeforeTodoRanges() {
+    return myBeforeTodoRanges;
+  }
+
+  public List<Pair<TextRange, TextAttributes>> getAfterTodoRanges() {
+    return myAfterTodoRanges;
+  }
+
+  public void setBeforeTodoRanges(List<Pair<TextRange, TextAttributes>> beforeTodoRanges) {
+    myBeforeTodoRanges = beforeTodoRanges;
+  }
+
+  public List<BeforeAfter<TextRange>> expand(List<BeforeAfter<TextRange>> myRanges, final int lines, final Document oldDocument,
+                                             final Document document) {
+    if (myRanges == null || myRanges.isEmpty()) return Collections.emptyList();
+    if (lines == -1) {
+      final List<BeforeAfter<TextRange>> shiftedRanges = new ArrayList<BeforeAfter<TextRange>>(1);
+      shiftedRanges.add(new BeforeAfter<TextRange>(new TextRange(0, oldDocument.getLineCount() - 1), new TextRange(0, document.getLineCount() - 1)));
+      return shiftedRanges;
+    }
+    final List<BeforeAfter<TextRange>> shiftedRanges = new ArrayList<BeforeAfter<TextRange>>(myRanges.size());
+    final int oldLineCount = oldDocument.getLineCount();
+    final int lineCount = document.getLineCount();
+
+    for (BeforeAfter<TextRange> range : myRanges) {
+      final TextRange newBefore = expandRange(range.getBefore(), lines, oldLineCount);
+      final TextRange newAfter = expandRange(range.getAfter(), lines, lineCount);
+      shiftedRanges.add(new BeforeAfter<TextRange>(newBefore, newAfter));
+    }
+
+    // and zip
+    final List<BeforeAfter<TextRange>> zippedRanges = new ArrayList<BeforeAfter<TextRange>>(myRanges.size());
+    final ListIterator<BeforeAfter<TextRange>> iterator = shiftedRanges.listIterator();
+    BeforeAfter<TextRange> previous = iterator.next();
+    while (iterator.hasNext()) {
+      final BeforeAfter<TextRange> current = iterator.next();
+      if (neighbourOrIntersect(previous.getBefore(), current.getBefore()) ||
+          neighbourOrIntersect(previous.getAfter(), current.getAfter())) {
+        previous = new BeforeAfter<TextRange>(previous.getBefore().union(current.getBefore()),
+                                              previous.getAfter().union(current.getAfter()));
+      } else {
+        zippedRanges.add(previous);
+        previous = current;
+      }
+    }
+    zippedRanges.add(previous);
+    return zippedRanges;
+  }
+
+  private boolean neighbourOrIntersect(final TextRange a, final TextRange b) {
+    return a.getEndOffset() + 1 == b.getStartOffset() || a.intersects(b);
+  }
+
+  private TextRange expandRange(final TextRange range, final int shift, final int size) {
+    return new TextRange(Math.max(0, (range.getStartOffset() - shift)), Math.max(0, Math.min(size - 1, range.getEndOffset() + shift)));
+  }
+
+  private void setHighlighters(final Document oldDocument, final Document document,
+                               List<BeforeAfter<TextRange>> ranges) {
+    EditorHighlighterFactory editorHighlighterFactory = EditorHighlighterFactory.getInstance();
+    final SyntaxHighlighter syntaxHighlighter = SyntaxHighlighter.PROVIDER.create(myFileType, myProject, null);
+    final EditorHighlighter highlighter =
+      editorHighlighterFactory.createEditorHighlighter(syntaxHighlighter, EditorColorsManager.getInstance().getGlobalScheme());
+
+    highlighter.setEditor(new LightHighlighterClient(oldDocument, myProject));
+    highlighter.setText(oldDocument.getText());
+    HighlighterIterator iterator = highlighter.createIterator(ranges.get(0).getBefore().getStartOffset());
+    FragmentedEditorHighlighter beforeHighlighter =
+      new FragmentedEditorHighlighter(iterator, getBeforeFragments());
+    setBeforeHighlighter(beforeHighlighter);
+
+    final EditorHighlighter highlighter1 =
+      editorHighlighterFactory.createEditorHighlighter(syntaxHighlighter, EditorColorsManager.getInstance().getGlobalScheme());
+    highlighter1.setEditor(new LightHighlighterClient(document, myProject));
+    highlighter1.setText(document.getText());
+    HighlighterIterator iterator1 = highlighter1.createIterator(ranges.get(0).getAfter().getStartOffset());
+    FragmentedEditorHighlighter afterHighlighter =
+      new FragmentedEditorHighlighter(iterator1, getAfterFragments());
+    setAfterHighlighter(afterHighlighter);
+  }
+
+  private void setTodoHighlighting(final Document oldDocument, final Document document) {
+    final List<Pair<TextRange,TextAttributes>> beforeTodoRanges = new TodoForRanges(myProject, myFileName, oldDocument.getText(), true,
+                                                getBeforeFragments()).execute();
+    final List<Pair<TextRange, TextAttributes>> afterTodoRanges = new TodoForRanges(myProject, myFileName, document.getText(), false,
+                                                getAfterFragments()).execute();
+    setBeforeTodoRanges(beforeTodoRanges);
+    setAfterTodoRanges(afterTodoRanges);
   }
 }

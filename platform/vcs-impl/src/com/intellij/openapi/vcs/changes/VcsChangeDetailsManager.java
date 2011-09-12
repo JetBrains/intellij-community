@@ -27,7 +27,6 @@ import com.intellij.openapi.diff.impl.DiffPanelImpl;
 import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffAction;
 import com.intellij.openapi.vcs.history.ShortVcsRevisionNumber;
@@ -40,7 +39,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -51,7 +49,6 @@ import java.util.Map;
  *         Time: 5:36 PM
  */
 public class VcsChangeDetailsManager {
-  private static final int extraLines = 2;
   private final Map<VcsKey, VcsChangeDetailsProvider> myProviderMap = new HashMap<VcsKey, VcsChangeDetailsProvider>();
   private final List<VcsChangeDetailsProvider> myDedicatedList;
   private final Project myProject;
@@ -139,6 +136,10 @@ public class VcsChangeDetailsManager {
     }
 
     @Override
+    protected void refreshPresentation() {
+    }
+
+    @Override
     protected ValueWithVcsException<List<BeforeAfter<DiffContent>>> loadImpl() throws VcsException {
       myChange = myChangeListManager.getChange(myFilePath);
       if (myChange == null) {
@@ -220,14 +221,21 @@ public class VcsChangeDetailsManager {
     private final FilePath myFilePath;
     private final ChangeListManager myChangeListManager;
     private final ChangesFragmentedDiffPanel myDiffPanel;
+    private final Project myProject;
 
     private FragmentedDiffDetailsPanel(Project project, BackgroundTaskQueue queue, final Change change) {
       super(project, "Loading change content", queue);
+      myProject = project;
       myFilePath = ChangesUtil.getFilePath(change);
       myRequestFromChange = new FragmentedDiffRequestFromChange(project);
       myChangeListManager = ChangeListManager.getInstance(project);
       myDiffPanel = new ChangesFragmentedDiffPanel(project, changeDescription(change));
       myDiffPanel.buildUi();
+    }
+
+    @Override
+    protected void refreshPresentation() {
+      myDiffPanel.refreshPresentation();
     }
 
     @Override
@@ -240,7 +248,7 @@ public class VcsChangeDetailsManager {
             return null;
           }
           myDiffPanel.setTitle(changeDescription(change));
-          return myRequestFromChange.getRanges(change, extraLines);
+          return myRequestFromChange.getRanges(change);
         }
       };
     }

@@ -10,7 +10,7 @@
     <orderEntry type="module" module-name="annotations" />
     <orderEntry type="library" name="protobuf" level="project" />
     <orderEntry type="library" name="Netty" level="project" />
-    <orderEntry type="library" name="JPS-incremental" level="project" />
+    <orderEntry type="library" name="JPS-facade" level="project" />
   </component>
 </module>
 

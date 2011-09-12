@@ -23,14 +23,19 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.gpp.GppClosureParameterTypeProvider;
+import org.jetbrains.plugins.groovy.gpp.GppTypeConverter;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.DominanceAwareMethod;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.*;
@@ -51,6 +56,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
   private final boolean myByShape;
   
   private final SubstitutorComputer mySubstitutorComputer;
+  private final boolean myTypedContext;
 
   public MethodResolverProcessor(String name, GroovyPsiElement place, boolean isConstructor, PsiType thisType, @Nullable PsiType[] argumentTypes, PsiType[] typeArguments) {
     this(name, place, isConstructor, thisType, argumentTypes, typeArguments, false, false);
@@ -70,6 +76,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
     myByShape = byShape;
 
     mySubstitutorComputer = new MethodSubstitutorComputer(thisType, argumentTypes, typeArguments, allVariants, place);
+    myTypedContext = GppTypeConverter.hasTypedContext(myPlace);
   }
 
 
@@ -176,12 +183,14 @@ public class MethodResolverProcessor extends ResolverProcessor {
                              GlobalSearchScope scope) {
     if (!method1.getName().equals(method2.getName())) return 0;
 
-    if (method2 instanceof DominanceAwareMethod && ((DominanceAwareMethod)method2).isMoreConcreteThan(substitutor2, method1, substitutor1, (GroovyPsiElement)myPlace)) {
-      return 1;
-    }
+    if (myTypedContext) {
+      if (isMoreConcreteThan(method2, substitutor2, method1, substitutor1, (GroovyPsiElement)myPlace)) {
+        return 1;
+      }
 
-    if (method1 instanceof DominanceAwareMethod && ((DominanceAwareMethod)method1).isMoreConcreteThan(substitutor1, method2, substitutor2, (GroovyPsiElement)myPlace)) {
-      return -1;
+      if (isMoreConcreteThan(method1, substitutor1, method2, substitutor2, (GroovyPsiElement)myPlace)) {
+        return -1;
+      }
     }
 
     if (dominated(method1, substitutor1, method2, substitutor2, scope)) {
@@ -193,6 +202,39 @@ public class MethodResolverProcessor extends ResolverProcessor {
 
     return 0;
   }
+  
+  private static boolean isMoreConcreteThan(PsiMethod method, @NotNull final PsiSubstitutor substitutor,
+                           @NotNull PsiMethod another,
+                           @NotNull PsiSubstitutor anotherSubstitutor,
+                           @NotNull GroovyPsiElement context) {
+    if (another instanceof GrGdkMethodImpl && another.getName().equals(method.getName())) {
+      final PsiParameter[] plusParameters = method.getParameterList().getParameters();
+      final PsiParameter[] defParameters = another.getParameterList().getParameters();
+
+      final PsiType[] paramTypes = new PsiType[plusParameters.length];
+      for (int i = 0; i < paramTypes.length; i++) {
+        paramTypes[i] = eliminateOneMethodInterfaces(plusParameters[i], defParameters, i);
+
+      }
+
+      final GrClosureSignature gdkSignature = GrClosureSignatureUtil.createSignature(another, anotherSubstitutor);
+      if (GrClosureSignatureUtil.isSignatureApplicable(gdkSignature, paramTypes, context)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static PsiType eliminateOneMethodInterfaces(PsiParameter plusParameter, PsiParameter[] gdkParameters, int i) {
+    PsiType type = plusParameter.getType();
+    if (i < gdkParameters.length &&
+        gdkParameters[i].getType().equalsToText(GroovyCommonClassNames.GROOVY_LANG_CLOSURE) &&
+        GppClosureParameterTypeProvider.findSingleAbstractMethodSignature(type) != null) {
+      return gdkParameters[i].getType();
+    }
+    return type;
+  }
+  
 
   private boolean dominated(PsiMethod method1,
                             PsiSubstitutor substitutor1,

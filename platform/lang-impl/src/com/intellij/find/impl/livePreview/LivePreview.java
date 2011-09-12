@@ -26,7 +26,10 @@ import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.markup.EffectType;
+import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
@@ -36,6 +39,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.Processor;
 import com.intellij.util.ui.PositionTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,6 +61,7 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
 
   private static final Key<Object> MARKER_USED = Key.create("LivePreview.MARKER_USED");
   private static final Object YES = new Object();
+  private static final Key<Object> SEARCH_MARKER = Key.create("LivePreview.SEARCH_MARKER");
 
   @Override
   public void selectionChanged(SelectionEvent e) {
@@ -192,22 +197,23 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
     LiveOccurrence cursor = mySearchResults.getCursor();
     Editor editor = mySearchResults.getEditor();
     if (cursor != null) {
-      ArrayList<RangeHighlighter> dummy = new ArrayList<RangeHighlighter>();
+      Set<RangeHighlighter> dummy = new HashSet<RangeHighlighter>();
       highlightRange(cursor.getPrimaryRange(), new TextAttributes(null, null, Color.BLACK, EffectType.ROUNDED_BOX, 0), dummy);
       if (!dummy.isEmpty()) {
-        myCursorHighlighter = dummy.get(0);
+        myCursorHighlighter = dummy.iterator().next();
       }
 
       if (!SearchResults.insideVisibleArea(editor, cursor.getPrimaryRange()) && scroll) {
         editor.getScrollingModel().scrollTo(editor.offsetToLogicalPosition(cursor.getPrimaryRange().getStartOffset()),
-                                              ScrollType.CENTER);
+                                            ScrollType.CENTER);
         editor.getScrollingModel().runActionOnScrollingFinished(new Runnable() {
           @Override
           public void run() {
             showReplacementPreview();
           }
         });
-      } else {
+      }
+      else {
         showReplacementPreview();
       }
     }
@@ -362,7 +368,7 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
   }
 
   @NotNull
-  private RangeHighlighter highlightRange(TextRange textRange, TextAttributes attributes, Collection<RangeHighlighter> highlighters) {
+  private RangeHighlighter highlightRange(TextRange textRange, TextAttributes attributes, Set<RangeHighlighter> highlighters) {
     if (myInSmartUpdate) {
       for (RangeHighlighter highlighter : myHighlighters) {
         if (highlighter.isValid() && highlighter.getStartOffset() == textRange.getStartOffset() && highlighter.getEndOffset() == textRange.getEndOffset()) {
@@ -383,21 +389,35 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
     return highlighter;
   }
 
-  private RangeHighlighter doHightlightRange(TextRange textRange, TextAttributes attributes, Collection<RangeHighlighter> highlighters) {
+  private RangeHighlighter doHightlightRange(TextRange textRange, TextAttributes attributes, Set<RangeHighlighter> highlighters) {
     HighlightManager highlightManager = HighlightManager.getInstance(mySearchResults.getProject());
     final ArrayList<RangeHighlighter> dummy = new ArrayList<RangeHighlighter>();
     highlightManager.addRangeHighlight(mySearchResults.getEditor(),
                                        textRange.getStartOffset(), textRange.getEndOffset(),
                                        attributes, false, dummy);
-
     final RangeHighlighter h = dummy.get(0);
-    for (RangeHighlighter highlighter : highlighters) {
-      if (h.getStartOffset() == highlighter.getStartOffset() && h.getEndOffset() == highlighter.getEndOffset() &&
-        h.getTextAttributes().equals(highlighter.getTextAttributes())) {
-        return h;
+
+    MarkupModelEx markupModel = (MarkupModelEx)mySearchResults.getEditor().getMarkupModel();
+    
+    final RangeHighlighter[] candidate = new RangeHighlighter[1];
+    
+    boolean notFound = markupModel.processRangeHighlightersOverlappingWith(h.getStartOffset(), h.getEndOffset(), new Processor<RangeHighlighterEx>() {
+      @Override
+      public boolean process(RangeHighlighterEx highlighter) {
+        TextAttributes textAttributes = highlighter.getTextAttributes();
+        if (highlighter.getUserData(SEARCH_MARKER) != null && textAttributes != null && textAttributes.equals(h.getTextAttributes())) {
+          candidate[0] = highlighter;
+          return false;
+        }
+        return true;
       }
+    });
+
+    if (!notFound && highlighters.contains(candidate[0])) {
+      return candidate[0];
     }
     highlighters.add(h);
+    h.putUserData(SEARCH_MARKER, YES);
     return h;
   }
 

@@ -69,7 +69,7 @@ public class TestCaseLoader {
     }
     if (excludedStream != null) {
       try {
-        myTestClassesFilter = TestClassesFilter.createOn(new InputStreamReader(excludedStream));
+        myTestClassesFilter = GroupBasedTestClassFilter.createOn(new InputStreamReader(excludedStream), myTestGroupName);
       }
       finally {
         try {
@@ -83,10 +83,10 @@ public class TestCaseLoader {
     else {
       String patterns = System.getProperty(TARGET_TEST_PATTERNS);
       if (patterns != null) {
-        myTestClassesFilter = new TestClassesFilter(StringUtil.split(patterns, ";"));
+        myTestClassesFilter = new PatternListTestClassFilter(StringUtil.split(patterns, ";"));
       }
       else {
-        myTestClassesFilter = TestClassesFilter.EMPTY_CLASSES_FILTER;
+        myTestClassesFilter = TestClassesFilter.ALL_CLASSES;
       }
     }
 
@@ -113,6 +113,7 @@ public class TestCaseLoader {
     String s = "";
     for (String slowTestName : slowTestNames) {
       if (slowTestName.trim().length() == 0) continue;
+      if (blockedTests.contains(slowTestName)) continue;
       try {
         Class.forName(slowTestName);
       }
@@ -173,7 +174,7 @@ public class TestCaseLoader {
    * Determine if we should exclude this test case.
    */
   private boolean shouldExcludeTestClass(Class testCaseClass) {
-    return !myTestClassesFilter.matches(testCaseClass.getName(), myTestGroupName) || isBombed(testCaseClass)
+    return !myTestClassesFilter.matches(testCaseClass.getName()) || isBombed(testCaseClass)
               || blockedTests.contains(testCaseClass.getName());
   }
 

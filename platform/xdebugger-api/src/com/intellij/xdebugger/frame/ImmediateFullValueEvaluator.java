@@ -23,6 +23,10 @@ import org.jetbrains.annotations.NotNull;
 public class ImmediateFullValueEvaluator extends XFullValueEvaluator {
   private String myFullValue;
 
+  public ImmediateFullValueEvaluator(@NotNull String fullValue) {
+    myFullValue = fullValue;
+  }
+
   public ImmediateFullValueEvaluator(@NotNull String linkText, @NotNull String fullValue) {
     super(linkText);
     myFullValue = fullValue;

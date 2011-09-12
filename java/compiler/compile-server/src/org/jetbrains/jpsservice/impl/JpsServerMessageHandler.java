@@ -1,19 +1,15 @@
 package org.jetbrains.jpsservice.impl;
 
-import org.codehaus.gant.GantBinding;
 import org.jboss.netty.channel.*;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.ether.ProjectWrapper;
-import org.jetbrains.jps.Project;
-import org.jetbrains.jps.listeners.BuildInfoPrinter;
+import org.jetbrains.jps.server.BuildParameters;
+import org.jetbrains.jps.server.BuildType;
+import org.jetbrains.jps.server.Facade;
+import org.jetbrains.jps.server.MessagesConsumer;
 import org.jetbrains.jpsservice.JpsRemoteProto;
 import org.jetbrains.jpsservice.Server;
 
-import java.io.PrintStream;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 
@@ -119,51 +115,48 @@ public class JpsServerMessageHandler extends SimpleChannelHandler {
     private final ChannelHandlerContext myChannelContext;
     private final JpsRemoteProto.Message.Request.CompilationRequest.Type myCompileType;
     private final String myProjectPath;
-    private final List<String> myModules;
+    private final Set<String> myModules;
 
     public CompilationTask(UUID sessionId, ChannelHandlerContext channelContext, JpsRemoteProto.Message.Request.CompilationRequest.Type compileType, String projectId, List<String> modules) {
       mySessionId = sessionId;
       myChannelContext = channelContext;
       myCompileType = compileType;
       myProjectPath = projectId;
-      myModules = modules;
+      myModules = new HashSet<String>(modules);
     }
 
     public void run() {
       Channels.write(myChannelContext.getChannel(), ProtoUtil.toMessage(mySessionId, ProtoUtil.createCommandAcceptedResponse("build started")));
       Throwable error = null;
       try {
-        final int size = myModules.size();
+        final BuildType buildType = convertCompileType(myCompileType);
+        if (buildType == null) {
+          throw new Exception("Unsupported build type: " + myCompileType);
+        }
 
         final Map<String,String> pathVars = new HashMap<String, String>(); // todo
         pathVars.put("MAVEN_REPOSITORY", "C:/Users/jeka/.m2/repository");
 
-        final ProjectWrapper proj = ProjectWrapper.load(new GantBinding(), myProjectPath, getStartupScript(), pathVars, myCompileType == JpsRemoteProto.Message.Request.CompilationRequest.Type.MAKE);
+        final BuildParameters params = new BuildParameters();
+        params.buildType = buildType;
+        params.pathVariables = pathVars;
+        params.useInProcessJavac = true;
 
-        proj.getProject().getBuilder().setBuildInfoPrinter(new BuildInfoPrinter() {
-          public Object printProgressMessage(Project project, String message) {
-            Channels.write(myChannelContext.getChannel(), ProtoUtil.toMessage(mySessionId, ProtoUtil.createCompileProgressMessageResponse(message)));
-            return null;
+        Facade.getInstance().startBuild(myProjectPath, myModules, params, new MessagesConsumer() {
+          public void consumeProgressMessage(String message) {
+            Channels.write(
+              myChannelContext.getChannel(), ProtoUtil.toMessage(mySessionId, ProtoUtil .createCompileProgressMessageResponse( message))
+            );
           }
 
-          public Object printCompilationErrors(Project project, String compilerName, String messages) {
-            Channels.write(myChannelContext.getChannel(), ProtoUtil.toMessage(mySessionId, ProtoUtil.createCompileErrorMessageResponse(messages, null, -1, -1)));
-            return null;
+          public void consumeCompilerMessage(String compilerName, String message) {
+            Channels.write(
+              myChannelContext.getChannel(), ProtoUtil.toMessage(mySessionId, ProtoUtil.createCompileErrorMessageResponse(message, null, -1,
+                                                                                                                          -1))
+            );
           }
         });
 
-        switch (myCompileType) {
-          case REBUILD:
-            proj.rebuild();
-            break;
-          case MAKE:
-            proj.makeModules(null, createMakeFlags());
-            break;
-          case CLEAN:
-            proj.clean();
-            break;
-        }
-        proj.save();
       }
       catch (Throwable e) {
         error = e;
@@ -181,56 +174,15 @@ public class JpsServerMessageHandler extends SimpleChannelHandler {
       }
     }
 
-    private String getStartupScript() {
-      return "import org.jetbrains.jps.*\n" +
-        "\n" +
-        //"project.createJavaSdk (\n" +
-        //"   \"IDEA jdk\", \n" +
-        //"   \"/home/db/develop/jetbrains/jdk1.6.0_22\", \n" +
-        //"   {      \n" +
-        //"     getDelegate ().classpath (\n" +
-        //"       \"/home/db/develop/jetbrains/jdk1.6.0_22/jre/lib/plugin.jar\",\n" +
-        //"       \"/home/db/develop/jetbrains/jdk1.6.0_22/jre/lib/charsets.jar\",\n" +
-        //"       \"/home/db/develop/jetbrains/jdk1.6.0_22/jre/lib/jce.jar\",\n" +
-        //"       \"/home/db/develop/jetbrains/jdk1.6.0_22/jre/lib/rt.jar\",\n" +
-        //"       \"/home/db/develop/jetbrains/jdk1.6.0_22/jre/lib/management-agent.jar\",\n" +
-        //"       \"/home/db/develop/jetbrains/jdk1.6.0_22/jre/lib/resources.jar\",\n" +
-        //"       \"/home/db/develop/jetbrains/jdk1.6.0_22/jre/lib/deploy.jar\",\n" +
-        //"       \"/home/db/develop/jetbrains/jdk1.6.0_22/jre/lib/jsse.jar\",\n" +
-        //"       \"/home/db/develop/jetbrains/jdk1.6.0_22/jre/lib/javaws.jar\",\n" +
-        //"       \"/home/db/develop/jetbrains/jdk1.6.0_22/jre/lib/alt-rt.jar\",\n" +
-        //"       \"/home/db/develop/jetbrains/jdk1.6.0_22/jre/lib/ext/sunpkcs11.jar\",\n" +
-        //"       \"/home/db/develop/jetbrains/jdk1.6.0_22/jre/lib/ext/dnsns.jar\",\n" +
-        //"       \"/home/db/develop/jetbrains/jdk1.6.0_22/jre/lib/ext/localedata.jar\",\n" +
-        //"       \"/home/db/develop/jetbrains/jdk1.6.0_22/jre/lib/ext/sunjce_provider.jar\",\n" +
-        //"       \"/home/db/develop/jetbrains/jdk1.6.0_22/lib/tools.jar\"\n" +
-        //"     )\n" +
-        //"   }\n" +
-        //")\n" +
-        //"\n" +
-        //"project.projectSdk = project.sdks [\"IDEA jdk\"]\n" +
-        "project.builder.useInProcessJavac = true";
+    private BuildType convertCompileType(JpsRemoteProto.Message.Request.CompilationRequest.Type compileType) {
+      switch (compileType) {
+        case CLEAN: return BuildType.CLEAN;
+        case MAKE: return BuildType.MAKE;
+        case REBUILD: return BuildType.REBUILD;
+      }
+      return null;
     }
 
-    private ProjectWrapper.Flags createMakeFlags() {
-      return new ProjectWrapper.Flags() {
-        public boolean tests() {
-          return true;
-        }
-
-        public boolean incremental() {
-          return true;
-        }
-
-        public boolean force() {
-          return false;
-        }
-
-        public PrintStream logStream() {
-          return null; // todo
-        }
-      };
-    }
   }
 
 }

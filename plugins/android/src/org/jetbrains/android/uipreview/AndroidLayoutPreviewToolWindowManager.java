@@ -18,6 +18,7 @@ import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
@@ -26,6 +27,7 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.containers.HashMap;
@@ -47,9 +49,12 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Map;
 
 /**
@@ -231,6 +236,7 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
   private void doRender(final AndroidFacet facet, String layoutXmlText) {
     BufferedImage image = null;
     RenderingErrorMessage errorMessage = null;
+    String warnMessage = null;
 
     final String imgPath = FileUtil.getTempDirectory() + "/androidLayoutPreview.png";
 
@@ -263,8 +269,10 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
       final float ydpi = deviceConfiguration.getDevice().getYDpi();
 
       synchronized (RENDERING_LOCK) {
+        final StringBuilder warnBuilder = new StringBuilder();
         if (target != null && theme != null &&
-            RenderUtil.renderLayout(myProject, layoutXmlText, imgPath, target, facet, config, xdpi, ydpi, theme)) {
+            RenderUtil.renderLayout(myProject, layoutXmlText, imgPath, target, facet, config, xdpi, ydpi, theme, warnBuilder)) {
+          warnMessage = warnBuilder.toString();
           final File input = new File(imgPath);
           image = ImageIO.read(input);
         }
@@ -272,10 +280,15 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
     }
     catch (RenderingException e) {
       LOG.debug(e);
-      final String message = e.getPresentableMessage();
-      errorMessage = new RenderingErrorMessage(message != null
-                                               ? message
-                                               : AndroidBundle.message("android.layout.preview.default.error.message"));
+      String message = e.getPresentableMessage();
+      message = message != null ? message : AndroidBundle.message("android.layout.preview.default.error.message");
+      final Throwable cause = e.getCause();
+      errorMessage = cause != null ? new RenderingErrorMessage(message + ' ', "Details", "", new Runnable() {
+        @Override
+        public void run() {
+          showStackStace(cause);
+        }
+      }) : new RenderingErrorMessage(message);
     }
     catch (IOException e) {
       LOG.info(e);
@@ -293,6 +306,7 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
     }
 
     final RenderingErrorMessage finalErrorMessage = errorMessage;
+    final String finalWarnMessage = warnMessage;
     final BufferedImage finalImage = image;
 
     if (!myRenderingQueue.isEmpty()) {
@@ -306,12 +320,47 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
           return;
         }
         myToolWindowForm.setErrorMessage(finalErrorMessage);
+        myToolWindowForm.setWarnMessage(finalWarnMessage);
         if (finalErrorMessage == null) {
           myToolWindowForm.setImage(finalImage);
         }
         myToolWindowForm.updatePreviewPanel();
       }
     });
+  }
+  
+  private void showStackStace(@NotNull Throwable t) {
+    final String stackTrace = getStackTrace(t);
+    final DialogWrapper wrapper = new DialogWrapper(myProject, false) {
+
+      {
+        init();
+      }
+
+      @Override
+      protected JComponent createCenterPanel() {
+        final JPanel panel = new JPanel(new BorderLayout());
+        final JTextArea textArea = new JTextArea(stackTrace);
+        textArea.setEditable(false);
+        panel.add(ScrollPaneFactory.createScrollPane(textArea));
+        return panel;
+      }
+    }; 
+    wrapper.setTitle("Stack trace");
+    wrapper.show();
+  }
+  
+  @NotNull
+  private static String getStackTrace(@NotNull Throwable t) {
+    final StringWriter stringWriter = new StringWriter();
+    final PrintWriter writer = new PrintWriter(stringWriter);
+    try {
+      t.printStackTrace(writer);
+      return stringWriter.toString();
+    }
+    finally {
+      writer.close();
+    }
   }
 
   @Nullable

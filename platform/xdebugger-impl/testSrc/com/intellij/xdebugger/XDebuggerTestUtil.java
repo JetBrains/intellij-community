@@ -35,8 +35,10 @@ import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -82,7 +84,8 @@ public class XDebuggerTestUtil {
     return collectStacks(null, session);
   }
 
-  public static List<XStackFrame> collectStacks(@Nullable XExecutionStack thread, @NotNull XDebugSession session) throws InterruptedException {
+  public static List<XStackFrame> collectStacks(@Nullable XExecutionStack thread, @NotNull XDebugSession session)
+    throws InterruptedException {
     return collectStacks(thread == null ? getActiveThread(session) : thread);
   }
 
@@ -141,7 +144,7 @@ public class XDebuggerTestUtil {
                                     @Nullable Boolean hasChildren) throws InterruptedException {
     XTestValueNode node = computePresentation(var);
 
-    Assert.assertEquals(name, node.myName);
+    if (name != null) Assert.assertEquals(name, node.myName);
     if (type != null) Assert.assertEquals(type, node.myType);
     if (value != null) Assert.assertEquals(value, node.myValue);
     if (hasChildren != null) Assert.assertEquals((boolean)hasChildren, node.myHasChildren);
@@ -151,11 +154,13 @@ public class XDebuggerTestUtil {
     assertVariable(var, name, null, value, null);
   }
 
-  public static void assertVariableValue(Collection<XValue> vars, @Nullable String name, @Nullable String value) throws InterruptedException {
+  public static void assertVariableValue(Collection<XValue> vars, @Nullable String name, @Nullable String value)
+    throws InterruptedException {
     assertVariableValue(findVar(vars, name), name, value);
   }
 
-  public static void assertVariableValueMatches(Collection<XValue> vars, @Nullable String name, String valuePattern) throws InterruptedException {
+  public static void assertVariableValueMatches(Collection<XValue> vars, @Nullable String name, String valuePattern)
+    throws InterruptedException {
     assertVariableValueMatches(findVar(vars, name), name, valuePattern);
   }
 
@@ -163,6 +168,40 @@ public class XDebuggerTestUtil {
     XTestValueNode node = computePresentation(var);
     Assert.assertEquals(name, node.myName);
     Assert.assertTrue(node.myValue, node.myValue.matches(valuePattern));
+  }
+
+  public static void assertVariableFullValue(XValue var, @Nullable String value) throws InterruptedException {
+    XTestValueNode node = computePresentation(var);
+    final String[] result = new String[1];
+
+    node.myFullValueEvaluator.startEvaluation(new XFullValueEvaluator.XFullValueEvaluationCallback() {
+      @Override
+      public void evaluated(@NotNull String fullValue) {
+        result[0] = fullValue;
+      }
+
+      @Override
+      public void evaluated(@NotNull String fullValue, @Nullable Font font) {
+        result[0] = fullValue;
+      }
+
+      @Override
+      public void errorOccurred(@NotNull String errorMessage) {
+        result[0] = errorMessage;
+      }
+
+      @Override
+      public boolean isObsolete() {
+        return false;
+      }
+    });
+
+    Assert.assertEquals(value, result[0]);
+  }
+
+  public static void assertVariableFullValue(Collection<XValue> vars, @Nullable String name, @Nullable String value)
+    throws InterruptedException {
+    assertVariableFullValue(findVar(vars, name), value);
   }
 
   public static void assertVariables(List<XValue> vars, String... names) throws InterruptedException {
@@ -195,8 +234,11 @@ public class XDebuggerTestUtil {
     return semaphore.tryAcquire(timeoutInMillis, TimeUnit.MILLISECONDS);
   }
 
-  public static void assertVariable(Collection<XValue> vars, String name, String type, String value, Boolean hasChildren)
-    throws InterruptedException {
+  public static void assertVariable(Collection<XValue> vars,
+                                    @Nullable String name,
+                                    @Nullable String type,
+                                    @Nullable String value,
+                                    @Nullable Boolean hasChildren) throws InterruptedException {
     assertVariable(findVar(vars, name), name, type, value, hasChildren);
   }
 
@@ -212,8 +254,8 @@ public class XDebuggerTestUtil {
   }
 
   public static <T extends XBreakpointType> XBreakpoint addBreakpoint(@NotNull final Project project,
-                                                               @NotNull final Class<T> exceptionType,
-                                                               @NotNull final XBreakpointProperties properties) {
+                                                                      @NotNull final Class<T> exceptionType,
+                                                                      @NotNull final XBreakpointProperties properties) {
     final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
     XBreakpointType[] types = XBreakpointUtil.getBreakpointTypes();
     final Ref<XBreakpoint> breakpoint = Ref.create(null);

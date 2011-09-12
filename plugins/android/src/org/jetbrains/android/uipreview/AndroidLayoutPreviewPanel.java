@@ -20,6 +20,7 @@ public class AndroidLayoutPreviewPanel extends JPanel {
   private static final double ZOOM_STEP = 1.25;
 
   private RenderingErrorMessage myErrorMessage;
+  private String myWarnMessage;
   private BufferedImage myImage;
 
   private final HyperlinkLabel myErrorLabel = new HyperlinkLabel("", Color.BLUE, getBackground(), Color.BLUE);
@@ -78,12 +79,21 @@ public class AndroidLayoutPreviewPanel extends JPanel {
     myErrorMessage = errorMessage;
   }
 
+  public void setWarnMessage(String warnMessage) {
+    myWarnMessage = warnMessage;
+  }
+
   public void update() {
     if (myErrorMessage != null) {
       myErrorLabel.setHyperlinkText(myErrorMessage.myBeforeLinkText,
                                     myErrorMessage.myLinkText,
                                     myErrorMessage.myAfterLinkText);
       myErrorLabel.setIcon(Messages.getErrorIcon());
+      myErrorLabel.setVisible(true);
+    }
+    else if (myWarnMessage != null && myWarnMessage.length() > 0) {
+      myErrorLabel.setHyperlinkText(myWarnMessage, "", "");
+      myErrorLabel.setIcon(Messages.getWarningIcon());
       myErrorLabel.setVisible(true);
     }
     else {

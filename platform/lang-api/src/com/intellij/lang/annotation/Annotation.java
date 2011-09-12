@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -378,6 +379,7 @@ public final class Annotation implements Segment {
     myGutterIconRenderer = gutterIconRenderer;
   }
 
+  @NonNls
   public String toString() {
     return "Annotation(" +
            "message='" + myMessage + "'" +

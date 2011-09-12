@@ -19,6 +19,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PlatformPatterns;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
@@ -36,8 +37,13 @@ public class PsiPackageRenameValidator implements RenameInputValidatorEx {
     if (FileTypeManager.getInstance().isFileIgnored(newName)) {
       return "Trying to create a package with ignored name, result will not be visible";
     }
-    if (newName.length() > 0 && !PsiDirectoryFactory.getInstance(project).isValidPackageName(newName)) {
-      return "Not a valid package name";
+    if (newName.length() > 0) {
+      if (!PsiDirectoryFactory.getInstance(project).isValidPackageName(newName)) {
+        return "Not a valid package name";
+      }
+      if (!JavaPsiFacade.getInstance(project).getNameHelper().isIdentifier(newName)) {
+        return "Not a valid identifier name";
+      }
     }
     return null;
   }

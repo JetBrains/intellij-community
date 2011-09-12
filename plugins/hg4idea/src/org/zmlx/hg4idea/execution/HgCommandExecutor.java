@@ -24,6 +24,7 @@ import org.zmlx.hg4idea.HgExecutableValidator;
 import org.zmlx.hg4idea.HgGlobalSettings;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.HgVcsMessages;
+import org.zmlx.hg4idea.util.HgEncodingUtil;
 import org.zmlx.hg4idea.util.HgErrorUtil;
 
 import javax.swing.*;
@@ -59,7 +60,7 @@ public final class HgCommandExecutor {
   private final HgExecutableValidator myValidator;
   private final HgVcs myVcs;
 
-  private Charset myCharset = Charset.defaultCharset();
+  private Charset myCharset = HgEncodingUtil.getDefaultCharset();
   private boolean myIsSilent = false;
   private boolean myShowOutput = false;
   private List<String> myOptions = DEFAULT_OPTIONS;

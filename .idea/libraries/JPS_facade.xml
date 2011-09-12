@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="JPS-facade">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/rt/jps-incremental/jps-facade.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

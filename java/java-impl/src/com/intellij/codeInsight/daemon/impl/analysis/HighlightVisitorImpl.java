@@ -22,7 +22,6 @@ import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.SetupJDKFix;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.progress.ProgressManager;
@@ -53,8 +52,6 @@ import java.util.Map;
 import java.util.Set;
 
 public class HighlightVisitorImpl extends JavaElementVisitor implements HighlightVisitor, DumbAware {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl");
-
   private final PsiResolveHelper myResolveHelper;
 
   private HighlightInfoHolder myHolder;
@@ -106,12 +103,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     return !InjectedLanguageManager.getInstance(file.getProject()).isInjectedFragment(file);
   }
 
-  public void visit(@NotNull PsiElement element, @NotNull HighlightInfoHolder holder) {
-    myHolder = holder;
-
-    if (LOG.isDebugEnabled()) {
-      LOG.assertTrue(element.isValid());
-    }
+  public void visit(@NotNull PsiElement element) {
     element.accept(this);
   }
 
@@ -123,8 +115,12 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     });
   }
 
-  public boolean analyze(@NotNull final Runnable action, final boolean updateWholeFile, @NotNull final PsiFile file) {
+  public boolean analyze(@NotNull final PsiFile file,
+                         final boolean updateWholeFile,
+                         @NotNull HighlightInfoHolder holder,
+                         @NotNull final Runnable action) {
     myFile = file;
+    myHolder = holder;
     boolean success = true;
     try {
       if (updateWholeFile) {
@@ -135,7 +131,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         myRefCountHolder = refCountHolder;
         Document document = PsiDocumentManager.getInstance(project).getDocument(file);
         TextRange dirtyScope = document == null ? file.getTextRange() : fileStatusMap.getFileDirtyScope(document, Pass.UPDATE_ALL);
-        success = refCountHolder.analyze(action, dirtyScope, file);
+        success = refCountHolder.analyze(file, dirtyScope, action);
       }
       else {
         myRefCountHolder = null;

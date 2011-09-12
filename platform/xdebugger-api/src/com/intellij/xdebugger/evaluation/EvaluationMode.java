@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.xdebugger.impl.evaluate;
+package com.intellij.xdebugger.evaluation;
 
 /**
  * @author nik
  */
-public enum EvaluationDialogMode {
+public enum EvaluationMode {
   EXPRESSION, CODE_FRAGMENT
 }

@@ -292,7 +292,7 @@ public class SearchResults implements DocumentListener {
     boolean justReplaced = next != null;
     boolean toPush = true;
     if (justReplaced || (toPush = !repairCursorFromStack())) {
-      if (!tryToRepairOldCursor(oldCursorRange)) {
+      if (justReplaced || !tryToRepairOldCursor(oldCursorRange)) {
         if (myFindModel != null) {
           if(oldCursorRange != null && !myFindModel.isGlobal()) {
             myCursor = firstOccurrenceAfterOffset(oldCursorRange.getEndOffset());

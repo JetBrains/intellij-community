@@ -17,10 +17,12 @@ package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.evaluation.EvaluationMode;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.impl.XDebuggerHistoryManager;
-import com.intellij.xdebugger.XSourcePosition;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -33,14 +35,19 @@ import java.util.List;
 public abstract class XDebuggerEditorBase {
   private final Project myProject;
   private final XDebuggerEditorsProvider myDebuggerEditorsProvider;
+  private final EvaluationMode myMode;
   @Nullable private final String myHistoryId;
   private final XSourcePosition mySourcePosition;
   private int myHistoryIndex;
 
-  protected XDebuggerEditorBase(final Project project, XDebuggerEditorsProvider debuggerEditorsProvider, @Nullable @NonNls String historyId,
+  protected XDebuggerEditorBase(final Project project,
+                                @NotNull XDebuggerEditorsProvider debuggerEditorsProvider,
+                                @NotNull EvaluationMode mode,
+                                @Nullable @NonNls String historyId,
                                 final @Nullable XSourcePosition sourcePosition) {
     myProject = project;
     myDebuggerEditorsProvider = debuggerEditorsProvider;
+    myMode = mode;
     myHistoryId = historyId;
     mySourcePosition = sourcePosition;
   }
@@ -92,7 +99,7 @@ public abstract class XDebuggerEditorBase {
   }
 
   protected Document createDocument(final String text) {
-    return getEditorsProvider().createDocument(getProject(), text, mySourcePosition);
+    return getEditorsProvider().createDocument(getProject(), text, mySourcePosition, myMode);
   }
 
   public boolean canGoBackward() {

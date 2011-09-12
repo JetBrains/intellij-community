@@ -23,6 +23,7 @@ import com.intellij.openapi.diff.impl.fragments.LineFragment;
 import com.intellij.openapi.diff.impl.processing.DiffPolicy;
 import com.intellij.openapi.diff.impl.processing.TextCompareProcessor;
 import com.intellij.openapi.diff.impl.splitter.LineBlocks;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.BeforeAfter;
@@ -72,6 +73,10 @@ public class FragmentedDiffPanelState extends DiffPanelState {
     }
     myFragmentList = FragmentListImpl.fromList(allLineFragments);
     return LineBlocks.fromLineFragments(allLineFragments);
+  }
+
+  public void addRangeHighlighter(final boolean left, int start, int end, final TextAttributes attributes) {
+    myFragmentHighlighter.addRangeHighlighter(left, start, end, attributes);
   }
 
   private void resetMarkup() {

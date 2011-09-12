@@ -55,6 +55,10 @@ public class RenderServiceFactory {
   private LayoutLibrary myLibrary;
   private FrameworkResources myResources;
 
+  public LayoutLibrary getLibrary() {
+    return myLibrary;
+  }
+
   @Nullable
   public static RenderServiceFactory create(@NotNull IAndroidTarget target,
                                             @NotNull Map<String, Map<String, Integer>> enumMap) throws RenderingException, IOException {

@@ -70,7 +70,7 @@ public abstract class HgChangesetsCommand {
     List<HgRevisionNumber> revisions = new ArrayList<HgRevisionNumber>(changesets.length);
     
     for(String changeset: changesets) {
-      String[] parts = StringUtils.split(changeset, HgChangesetUtil.ITEM_SEPARATOR, 4);
+      String[] parts = StringUtils.split(changeset, HgChangesetUtil.ITEM_SEPARATOR);
       if (parts.length == 4) {
         revisions.add(HgRevisionNumber.getInstance(parts[0], parts[1], parts[2], parts[3]));
       } else {

@@ -152,7 +152,7 @@
     </action>
 
     <action id="ViewImportPopups" class="com.intellij.openapi.editor.actions.ToggleShowImportPopupsAction">
-      <add-to-group group-id="ViewMenu" relative-to-action="EditorToggleShowLineNumbers" anchor="after"/>
+      <add-to-group group-id="EditorToggleActions"/>
     </action>
 
     <action id="ShowUsagesSettings" class="com.intellij.find.actions.ShowUsagesAction$ShowSettings"/>
@@ -174,7 +174,7 @@
       <separator/>
       <action id="CollapseSelection" class="com.intellij.codeInsight.folding.impl.actions.CollapseSelectionAction"/>
 
-      <add-to-group group-id="ViewMenu" relative-to-action="UIToggleActions" anchor="before"/>
+      <add-to-group group-id="ViewMenu" relative-to-action="EditorToggleActions" anchor="before"/>
     </group>
 
     <action id="RecentChanges" class="com.intellij.history.integration.ui.actions.RecentChangesAction">

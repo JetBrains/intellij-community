@@ -218,7 +218,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
       final int oldLength = containingFileByTree.getTextLength();
       boolean success = synchronizer.commitTransaction(document);
       if (success) {
-        BlockSupportImpl.sendAfterChildrenChangedEvent((PsiManagerImpl)PsiManager.getInstance(myProject), (PsiFileImpl)containingFileByTree, oldLength);
+        BlockSupportImpl.sendAfterChildrenChangedEvent((PsiManagerImpl)PsiManager.getInstance(myProject), (PsiFileImpl)containingFileByTree, oldLength, true);
       }
     }
 
@@ -231,7 +231,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     final PsiDocumentManagerImpl manager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myProject);
     final PsiToDocumentSynchronizer synchronizer = manager.getSynchronizer();
     final PsiElement changeScope = transaction.getChangeScope();
-    BlockSupportImpl.sendBeforeChildrenChangeEvent((PsiManagerImpl)PsiManager.getInstance(myProject), transaction.getChangeScope());
+    BlockSupportImpl.sendBeforeChildrenChangeEvent((PsiManagerImpl)PsiManager.getInstance(myProject), transaction.getChangeScope(), true);
     LOG.assertTrue(changeScope != null);
     final PsiFile containingFileByTree = getContainingFileByTree(changeScope);
 

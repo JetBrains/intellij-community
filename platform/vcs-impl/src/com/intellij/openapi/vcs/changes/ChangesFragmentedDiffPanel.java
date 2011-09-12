@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diff.DiffPanel;
 import com.intellij.openapi.diff.ShiftedSimpleContent;
 import com.intellij.openapi.diff.SimpleContent;
@@ -31,24 +32,31 @@ import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.FragmentedEditorHighlighter;
+import com.intellij.openapi.editor.markup.HighlighterLayer;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.BeforeAfter;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
+import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
@@ -104,6 +112,7 @@ public class ChangesFragmentedDiffPanel implements Disposable {
     DefaultActionGroup dag = new DefaultActionGroup();
     myPreviousDiff.copyShortcutFrom(ActionManager.getInstance().getAction("PreviousDiff"));
     myNextDiff.copyShortcutFrom(ActionManager.getInstance().getAction("NextDiff"));
+    dag.add(new MyChangeContextAction());
     dag.add(myPreviousDiff);
     dag.add(myNextDiff);
     myPreviousDiff.registerCustomShortcutSet(myPreviousDiff.getShortcutSet(), myPanel);
@@ -155,7 +164,23 @@ public class ChangesFragmentedDiffPanel implements Disposable {
     if (ah != null) {
       ((EditorEx) ((DiffPanelImpl) currentPanel).getEditor2()).setHighlighter(ah);
     }
+    if (((DiffPanelImpl) currentPanel).getEditor1() != null) {
+      highlightTodo(true, fragmentedContent.getBeforeTodoRanges());
+    }
+    if (((DiffPanelImpl) currentPanel).getEditor2() != null) {
+      highlightTodo(false, fragmentedContent.getAfterTodoRanges());
+    }
     ensurePresentation();
+  }
+
+  private void highlightTodo(boolean left, List<Pair<TextRange, TextAttributes>> todoRanges) {
+    FragmentedDiffPanelState panelState = (FragmentedDiffPanelState)((DiffPanelImpl)myHorizontal).getDiffPanelState();
+    FragmentedDiffPanelState panelState2 = (FragmentedDiffPanelState)((DiffPanelImpl)myVertical).getDiffPanelState();
+    for (Pair<TextRange, TextAttributes> range : todoRanges) {
+      TextAttributes second = range.getSecond().clone();
+      panelState.addRangeHighlighter(left, range.getFirst().getStartOffset(), range.getFirst().getEndOffset(), second);
+      panelState2.addRangeHighlighter(left, range.getFirst().getStartOffset(), range.getFirst().getEndOffset(), second);
+    }
   }
 
   private String titleText(DiffPanelImpl diffPanel) {
@@ -183,6 +208,13 @@ public class ChangesFragmentedDiffPanel implements Disposable {
     o.setRequestFocusOnNewContent(false);
     Disposer.register(this, diffPanel);
     return diffPanel;
+  }
+
+  public void refreshPresentation() {
+    if (myFragmentedContent != null) {
+      myFragmentedContent.recalculate();
+      refreshData(myFragmentedContent);
+    }
   }
 
   private static class MyScrollingHelper {
@@ -386,9 +418,7 @@ public class ChangesFragmentedDiffPanel implements Disposable {
         public void actionPerformed(AnActionEvent e) {
           boolean was = myConfiguration.SHORT_DIFF_HORISONTALLY;
           myConfiguration.SHORT_DIFF_HORISONTALLY = false;
-          if (was) {
-            ensurePresentation();
-          }
+          ensurePresentation();
         }
       };
       myNumbered = new AnAction("Left | Right") {
@@ -396,9 +426,7 @@ public class ChangesFragmentedDiffPanel implements Disposable {
         public void actionPerformed(AnActionEvent e) {
           boolean was = myConfiguration.SHORT_DIFF_HORISONTALLY;
           myConfiguration.SHORT_DIFF_HORISONTALLY = true;
-          if (! was) {
-            ensurePresentation();
-          }
+          ensurePresentation();
         }
       };
     }
@@ -488,6 +516,78 @@ public class ChangesFragmentedDiffPanel implements Disposable {
         }
       }
       return myLeftLines.size() - 1;
+    }
+  }
+
+  private final static int[] ourMarks = {1,2,4,8,-1};
+  public static final Hashtable<Integer,JLabel> LABELS = new Hashtable<Integer, JLabel>();
+  public static final int ALL_VALUE = 5;
+
+  static {
+    LABELS.put(1, markLabel("1"));
+    LABELS.put(2, markLabel("2"));
+    LABELS.put(3, markLabel("4"));
+    LABELS.put(4, markLabel("8"));
+    LABELS.put(ALL_VALUE, markLabel("All"));
+  }
+
+  private static JLabel markLabel(final String text) {
+    JLabel label = new JLabel(text);
+    label.setFont(UIUtil.getLabelFont());
+    return label;
+  }
+
+  private class MyChangeContextAction extends DumbAwareAction {
+    private MyChangeContextAction() {
+      super("More/Less Lines...", "More/Less Lines...", IconLoader.getIcon("/actions/expandall.png"));
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      JPanel result = new JPanel(new BorderLayout());
+      JLabel label = new JLabel("Lines around:");
+      label.setBorder(BorderFactory.createEmptyBorder(4, 4, 0, 0));
+      JPanel wrapper = new JPanel(new BorderLayout());
+      wrapper.add(label, BorderLayout.NORTH);
+      result.add(wrapper, BorderLayout.WEST);
+      final JSlider slider = new JSlider(JSlider.HORIZONTAL, 1, 5, 1);
+      slider.setMinorTickSpacing(1);
+      slider.setPaintTicks(true);
+      slider.setPaintTrack(true);
+      slider.setSnapToTicks(true);
+      UIUtil.setSliderIsFilled(slider, true);
+      slider.setPaintLabels(true);
+      slider.setLabelTable(LABELS);
+      result.add(slider, BorderLayout.CENTER);
+      final VcsConfiguration configuration = VcsConfiguration.getInstance(myProject);
+      for (int i = 0; i < ourMarks.length; i++) {
+        int mark = ourMarks[i];
+        if (mark == configuration.SHORT_DIFF_EXTRA_LINES) {
+          slider.setValue(i + 1);
+        }
+      }
+      JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(result, slider).createPopup();
+      popup.setFinalRunnable(new Runnable() {
+        @Override
+        public void run() {
+          int value = slider.getModel().getValue();
+          if (configuration.SHORT_DIFF_EXTRA_LINES != ourMarks[value - 1]) {
+            configuration.SHORT_DIFF_EXTRA_LINES = ourMarks[value - 1];
+            myFragmentedContent.recalculate();
+            refreshData(myFragmentedContent);
+          }
+        }
+      });
+      InputEvent inputEvent = e.getInputEvent();
+      if (inputEvent instanceof MouseEvent) {
+        int width = result.getPreferredSize().width;
+        MouseEvent inputEvent1 = (MouseEvent)inputEvent;
+        Point point1 = new Point(inputEvent1.getX() - width / 2, inputEvent1.getY());
+        RelativePoint point = new RelativePoint(inputEvent1.getComponent(), point1);
+        popup.show(point);
+      } else {
+        popup.showInBestPositionFor(e.getDataContext());
+      }
     }
   }
 

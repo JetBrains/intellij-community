@@ -18,6 +18,8 @@ package com.intellij.refactoring.changeSignature;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -48,9 +50,9 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.ui.DialogUtil;
-import com.intellij.util.ui.JBTableRow;
-import com.intellij.util.ui.JBTableRowEditor;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.table.JBTableRow;
+import com.intellij.util.ui.table.JBTableRowEditor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -169,11 +171,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     final JPanel panel = ToolbarDecorator.createDecorator(table).addExtraAction(myPropExceptionsButton).createPanel();
     panel.setBorder(IdeBorderFactory.createEmptyBorder(0));
 
-    myExceptionsModel.addTableModelListener(new TableModelListener() {
-      public void tableChanged(TableModelEvent e) {
-        JavaChangeSignatureDialog.this.updateSignature();
-      }
-    });
+    myExceptionsModel.addTableModelListener(mySignatureUpdater);
 
     final ArrayList<Pair<String, JPanel>> result = new ArrayList<Pair<String, JPanel>>();
     final String message = RefactoringBundle.message("changeSignature.exceptions.panel.border.title");
@@ -200,20 +198,25 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
   @Override
   protected JComponent getRowPresentation(ParameterTableModelItemBase<ParameterInfoImpl> item, boolean selected, boolean focused) {
     final JPanel panel = new JPanel(new BorderLayout());
-    String text = item.parameter.getTypeText() + " " + item.parameter.getName();
-    final String defaultValue = item.parameter.getDefaultValue();
+    final String typeText = item.typeCodeFragment.getText();
+    final String separator = StringUtil.repeatSymbol(' ', getTypesMaxLength() - typeText.length() + 1);
+    String text = typeText + separator + item.parameter.getName();
+    final String defaultValue = item.defaultValueCodeFragment.getText();
     if (StringUtil.isNotEmpty(defaultValue)) {
-      text += " = " + defaultValue + ";";
+      text += " // default value = " + defaultValue;
     }
     if (item.parameter.isUseAnySingleVariable()) {
-      text += "  // use any var";
+      text += "use any var";
     }
-    final EditorTextField field = new EditorTextField(text, getProject(), getFileType()) {
+    final EditorTextField field = new EditorTextField(" " + text, getProject(), getFileType()) {
       @Override
       protected boolean shouldHaveBorder() {
         return false;
       }
     };
+    final Font font = EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN);
+    field.setFont(font);
+
     if (selected) {
       panel.setBackground(UIUtil.getTableSelectionBackground());
       field.setAsRendererWithSelection(UIUtil.getTableSelectionBackground(), UIUtil.getTableSelectionForeground());
@@ -222,6 +225,15 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     }
     panel.add(field, BorderLayout.CENTER);
     return panel;
+  }
+
+  private int getTypesMaxLength() {
+    int len = 0;
+    for (ParameterTableModelItemBase<ParameterInfoImpl> item : myParametersTableModel.getItems()) {
+      final String text = item.typeCodeFragment == null ? null : item.typeCodeFragment.getText();
+      len = Math.max(len, text == null ? 0 : text.length());
+    }
+    return len;
   }
 
   @Override
@@ -235,12 +247,11 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
       @Override
       public void prepareEditor(JTable table, int row) {
         setLayout(new BorderLayout());
-
         final JPanel typePanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 4, 2, true, false));
         final Document document = PsiDocumentManager.getInstance(getProject()).getDocument(item.typeCodeFragment);
         myTypeEditor = new EditorTextField(document, getProject(), getFileType());
-        final JLabel typeLabel = new JLabel("&Type");
-        DialogUtil.registerMnemonic(typeLabel, myTypeEditor, '&');
+        myTypeEditor.addDocumentListener(mySignatureUpdater);
+        final JLabel typeLabel = new JLabel("Type");
         typePanel.add(typeLabel);
         typePanel.add(myTypeEditor);
         typePanel.setPreferredSize(new Dimension(t.getWidth() / 3, -1));
@@ -248,26 +259,24 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
 
         final JPanel namePanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 4, 2, true, false));
         myNameEditor = new EditorTextField(item.parameter.getName(), getProject(), getFileType());
-        final JLabel nameLabel = new JLabel("&Name");
-        DialogUtil.registerMnemonic(nameLabel, myNameEditor, '&');
+        myNameEditor.addDocumentListener(mySignatureUpdater);
+        final JLabel nameLabel = new JLabel("Name");
         namePanel.add(nameLabel);
         namePanel.add(myNameEditor);
         add(namePanel, BorderLayout.CENTER);
 
         if (!item.isEllipsisType() && item.parameter.getOldIndex() == -1) {
           final JPanel additionalPanel = new JPanel(new BorderLayout());
-          final JPanel defaultValuePanel = new JPanel(new BorderLayout());
+          final JPanel defaultValuePanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 4, 2, true, false));
           final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(item.defaultValueCodeFragment);
           myDefaultValueEditor = new EditorTextField(doc, getProject(), getFileType());
           ((PsiExpressionCodeFragment)item.defaultValueCodeFragment).setExpectedType(getRowType(item));
-          final JLabel defaultValueLabel = new JLabel("&Default value:");
-          myDefaultValueEditor.setPreferredSize(new Dimension(table.getWidth() / 3, -1));
-          DialogUtil.registerMnemonic(defaultValueLabel, myDefaultValueEditor, '&');
-          defaultValuePanel.add(defaultValueLabel, BorderLayout.WEST);
-          defaultValuePanel.add(myDefaultValueEditor, BorderLayout.CENTER);
+          final JLabel defaultValueLabel = new JLabel("Default value");
+          defaultValuePanel.add(defaultValueLabel);
+          defaultValuePanel.add(myDefaultValueEditor);
           additionalPanel.add(defaultValuePanel, BorderLayout.CENTER);
 
-          if (isGenerateDelegate()) {
+          if (!isGenerateDelegate()) {
             myAnyVar = new JCheckBox("Use &Any Var");
             DialogUtil.registerMnemonic(myAnyVar, '&');
             myAnyVar.addActionListener(new ActionListener() {
@@ -276,8 +285,10 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
                 item.parameter.setUseAnySingleVariable(myAnyVar.isSelected());
               }
             });
+            final JPanel anyVarPanel = new JPanel(new BorderLayout());
+            anyVarPanel.add(myAnyVar, BorderLayout.SOUTH);
+            additionalPanel.add(anyVarPanel, BorderLayout.EAST);
             additionalPanel.setPreferredSize(new Dimension(t.getWidth() / 3, -1));
-            additionalPanel.add(myAnyVar, BorderLayout.EAST);
           }
           add(additionalPanel, BorderLayout.EAST);
         }        
@@ -307,10 +318,10 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
       @Override
       public JComponent[] getFocusableComponents() {
         final List<JComponent> focusable = new ArrayList<JComponent>();
-        focusable.add(myTypeEditor);
-        focusable.add(myNameEditor);
+        focusable.add(myTypeEditor.getFocusTarget());
+        focusable.add(myNameEditor.getFocusTarget());
         if (myDefaultValueEditor != null) {
-          focusable.add(myDefaultValueEditor);
+          focusable.add(myDefaultValueEditor.getFocusTarget());
         }
         if (myAnyVar != null) {
           focusable.add(myAnyVar);
