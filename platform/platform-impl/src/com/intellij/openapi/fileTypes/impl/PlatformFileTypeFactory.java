@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PlatformFileTypeFactory extends FileTypeFactory {
   public void createFileTypes(final @NotNull FileTypeConsumer consumer) {
-    consumer.consume(new ArchiveFileType(), "zip;jar;war;ear;swc;egg");
+    consumer.consume(new ArchiveFileType(), "zip;jar;war;ear;swc;egg;apk");
     consumer.consume(PlainTextFileType.INSTANCE,
                      new ExtensionFileNameMatcher("txt"),
                      new ExtensionFileNameMatcher("sh"),
