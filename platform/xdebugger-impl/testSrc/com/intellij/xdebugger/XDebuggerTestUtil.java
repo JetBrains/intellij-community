@@ -35,8 +35,10 @@ import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -168,6 +170,40 @@ public class XDebuggerTestUtil {
     Assert.assertTrue(node.myValue, node.myValue.matches(valuePattern));
   }
 
+  public static void assertVariableFullValue(XValue var, @Nullable String value) throws InterruptedException {
+    XTestValueNode node = computePresentation(var);
+    final String[] result = new String[1];
+
+    node.myFullValueEvaluator.startEvaluation(new XFullValueEvaluator.XFullValueEvaluationCallback() {
+      @Override
+      public void evaluated(@NotNull String fullValue) {
+        result[0] = fullValue;
+      }
+
+      @Override
+      public void evaluated(@NotNull String fullValue, @Nullable Font font) {
+        result[0] = fullValue;
+      }
+
+      @Override
+      public void errorOccurred(@NotNull String errorMessage) {
+        result[0] = errorMessage;
+      }
+
+      @Override
+      public boolean isObsolete() {
+        return false;
+      }
+    });
+
+    Assert.assertEquals(value, result[0]);
+  }
+
+  public static void assertVariableFullValue(Collection<XValue> vars, @Nullable String name, @Nullable String value)
+    throws InterruptedException {
+    assertVariableFullValue(findVar(vars, name), value);
+  }
+
   public static void assertVariables(List<XValue> vars, String... names) throws InterruptedException {
     List<String> expectedNames = new ArrayList<String>(Arrays.asList(names));
 
@@ -202,8 +238,7 @@ public class XDebuggerTestUtil {
                                     @Nullable String name,
                                     @Nullable String type,
                                     @Nullable String value,
-                                    @Nullable Boolean hasChildren)
-    throws InterruptedException {
+                                    @Nullable Boolean hasChildren) throws InterruptedException {
     assertVariable(findVar(vars, name), name, type, value, hasChildren);
   }
 

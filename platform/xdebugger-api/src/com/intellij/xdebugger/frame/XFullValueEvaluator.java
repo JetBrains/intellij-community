@@ -16,6 +16,7 @@
 package com.intellij.xdebugger.frame;
 
 import com.intellij.xdebugger.Obsolescent;
+import com.intellij.xdebugger.XDebuggerBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,6 +35,10 @@ public abstract class XFullValueEvaluator {
   /**
    * @param linkText text of the link what will be appended to a variables tree node text
    */
+  protected XFullValueEvaluator() {
+    this(XDebuggerBundle.message("node.test.show.full.value"));
+  }
+
   protected XFullValueEvaluator(@NotNull String linkText) {
     myLinkText = linkText;
   }

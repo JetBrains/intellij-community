@@ -30,7 +30,10 @@ import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
-import com.intellij.xdebugger.impl.ui.tree.nodes.*;
+import com.intellij.xdebugger.impl.ui.tree.nodes.MessageTreeNode;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,6 +43,7 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -97,17 +101,15 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(final MouseEvent e) {
-        if (e.getClickCount() == 2) {
-          MessageTreeNode[] treeNodes = getSelectedNodes(MessageTreeNode.class, null);
-          if (treeNodes.length == 1) {
-            MessageTreeNode node = treeNodes[0];
-            if (node.isEllipsis()) {
-              TreeNode parent = node.getParent();
-              if (parent instanceof XValueContainerNode) {
-                ((XValueContainerNode)parent).startComputingChildren();
-              }
-            }
-          }
+        if (e.getClickCount() == 2) expandIfEllipsis();
+      }
+    });
+    addKeyListener(new KeyAdapter() {
+      @Override
+      public void keyPressed(KeyEvent e) {
+        int key = e.getKeyCode();
+        if (key == KeyEvent.VK_ENTER || key == KeyEvent.VK_SPACE || key == KeyEvent.VK_RIGHT) {
+          expandIfEllipsis();
         }
       }
     });
@@ -123,6 +125,19 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     };
     addMouseListener(myPopupHandler);
     registerShortcuts();
+  }
+
+  private void expandIfEllipsis() {
+    MessageTreeNode[] treeNodes = getSelectedNodes(MessageTreeNode.class, null);
+    if (treeNodes.length == 1) {
+      MessageTreeNode node = treeNodes[0];
+      if (node.isEllipsis()) {
+        TreeNode parent = node.getParent();
+        if (parent instanceof XValueContainerNode) {
+          ((XValueContainerNode)parent).startComputingChildren();
+        }
+      }
+    }
   }
 
   public void addTreeListener(@NotNull XDebuggerTreeListener listener) {

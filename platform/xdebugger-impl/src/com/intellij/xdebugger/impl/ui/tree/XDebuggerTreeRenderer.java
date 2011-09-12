@@ -37,7 +37,7 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
     node.getText().appendToComponent(this);
     final XDebuggerTreeNodeHyperlink link = node.getLink();
     if (link != null) {
-      append(link.getLinkText(), SimpleTextAttributes.LINK_ATTRIBUTES, link);
+      append(link.getLinkText(), SimpleTextAttributes.GRAY_ATTRIBUTES, link);
     }
     setIcon(node.getIcon());
   }

@@ -16,10 +16,12 @@ public class XTestValueNode implements XValueNode {
   public String myValue;
   public boolean myHasChildren;
 
+  public XFullValueEvaluator myFullValueEvaluator;
+
   private final Semaphore myFinished = new Semaphore(0);
 
 
-    @Override
+  @Override
     public void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String value, boolean hasChildren) {
       myType = type;
       myValue = value;
@@ -74,6 +76,7 @@ public class XTestValueNode implements XValueNode {
     }
 
   public void setFullValueEvaluator(@NotNull XFullValueEvaluator fullValueEvaluator) {
+    myFullValueEvaluator = fullValueEvaluator;
   }
 
   public boolean isObsolete() {
