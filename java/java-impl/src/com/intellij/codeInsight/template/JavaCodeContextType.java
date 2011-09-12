@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -97,7 +98,12 @@ public abstract class JavaCodeContextType extends TemplateContextType {
     }
 
     private static boolean isStatementContext(PsiElement element) {
-      return Expression.isExpressionContext(element) && element.getParent().getParent() instanceof PsiExpressionStatement;
+      if (!Expression.isExpressionContext(element)) {
+        return false;
+      }
+
+      PsiElement parent = element.getParent().getParent();
+      return parent instanceof PsiExpressionStatement || parent instanceof PsiTypeElement && parent.getParent() instanceof PsiVariable;
     }
   }
   public static class Expression extends JavaCodeContextType {
@@ -117,18 +123,24 @@ public abstract class JavaCodeContextType extends TemplateContextType {
 
     private static boolean isExpressionContext(PsiElement element) {
       final PsiElement parent = element.getParent();
-      if (!(parent instanceof PsiReferenceExpression)) {
+      if (!(parent instanceof PsiJavaCodeReferenceElement)) {
         return false;
       }
-      if (((PsiReferenceExpression)parent).isQualified()) {
+      if (((PsiJavaCodeReferenceElement)parent).isQualified()) {
         return false;
       }
       if (parent.getParent() instanceof PsiMethodCallExpression) {
         return false;
       }
-      if (INFIX_OPERATOR.accepts(element)) {
-        return false;
+
+      ProcessingContext context = new ProcessingContext();
+      if (psiElement().inside(PsiExpression.class).afterLeaf(psiElement().inside(psiElement(PsiExpression.class).save("prevExpr"))).accepts(element, context)) {
+        PsiExpression prevExpr = (PsiExpression)context.get("prevExpr");
+        if (prevExpr.getTextRange().getEndOffset() <= element.getTextRange().getStartOffset()) {
+          return false;
+        }
       }
+      
       return true;
     }
   }
