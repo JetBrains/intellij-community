@@ -22,6 +22,7 @@ import com.jetbrains.python.psi.patterns.Matcher;
 import com.jetbrains.python.psi.patterns.SyntaxMatchers;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import static com.intellij.patterns.StandardPatterns.or;
@@ -380,7 +381,7 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
 
   // ======
 
-  private static void putKeywords(@NonNls @NotNull String[] words, TailType tail, final CompletionResultSet result) {
+  private static void putKeywords(final CompletionResultSet result, TailType tail, @NonNls @NotNull String... words) {
     for (String s : words) {
       result.addElement(TailTypeDecorator.withTail(new PythonLookupElement(s, true, null), tail));
     }
@@ -414,10 +415,8 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
         protected void addCompletions(
           @NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result
         ) {
-          final @NonNls String[] pre_strings = {"def", "class", "for", "if", "while", "with"};
-          final @NonNls String[] colon_strings = {"try"};
-          putKeywords(pre_strings, PRE_COLON, result);
-          putKeywords(colon_strings, TailType.CASE_COLON, result);
+          putKeywords(result, PRE_COLON, "def", "class", "for", "if", "while", "with");
+          putKeywords(result, TailType.CASE_COLON, "try");
         }
       }
     );
@@ -441,10 +440,8 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
         protected void addCompletions(
           @NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result
         ) {
-          final @NonNls String[] space_strings = {"assert", "del", "exec", "from", "import", "raise"};
-          final @NonNls String[] just_strings = {"pass"};
-          putKeywords(space_strings, TailType.SPACE, result);
-          putKeywords(just_strings, TailType.NONE, result);
+          putKeywords(result, TailType.SPACE, "assert", "del", "exec", "from", "import", "raise");
+          putKeywords(result, TailType.NONE, "pass");
         }
       }
     );
@@ -513,14 +510,7 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
         //.andNot(RIGHT_AFTER_COLON)
       .andNot(AFTER_QUALIFIER).andNot(IN_STRING_LITERAL)
       ,
-      new CompletionProvider<CompletionParameters>() {
-        protected void addCompletions(
-          @NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result
-        ) {
-          putKeyword("elif", UnindentingInsertHandler.INSTANCE, PRE_COLON, result);
-        }
-      }
-    );
+      new PyKeywordCompletionProvider(PRE_COLON, UnindentingInsertHandler.INSTANCE, "elif"));
   }
 
   private void addWithinTry() {
@@ -552,14 +542,7 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
         //.andNot(RIGHT_AFTER_COLON)
       .andNot(AFTER_QUALIFIER).andNot(IN_STRING_LITERAL)
       ,
-      new CompletionProvider<CompletionParameters>() {
-        protected void addCompletions(
-          @NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result
-        ) {
-          putKeyword("else", UnindentingInsertHandler.INSTANCE, TailType.CASE_COLON, result);
-        }
-      }
-    );
+      new PyKeywordCompletionProvider(TailType.CASE_COLON, UnindentingInsertHandler.INSTANCE, "else"));
   }
 
   private void addInfixOperators() {
@@ -662,16 +645,7 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
                          psiElement().inside(psiElement(PyConditionalExpression.class))
                            .and(psiElement().afterLeaf("if")))
       ,
-      new CompletionProvider<CompletionParameters>() {
-        protected void addCompletions(@NotNull final CompletionParameters parameters,
-                                      final ProcessingContext context,
-                                      @NotNull final CompletionResultSet result
-        ) {
-          final @NonNls String[] space_strings = {"else"};
-          putKeywords(space_strings, TailType.SPACE, result);
-        }
-      }
-    );
+      new PyKeywordCompletionProvider(TailType.SPACE, "else"));
   }
 
   public PyKeywordCompletionContributor() {
@@ -695,19 +669,31 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
   private static class PyKeywordCompletionProvider extends CompletionProvider<CompletionParameters> {
     private final String[] myKeywords;
     private final TailType myTailType;
+    private final InsertHandler<PythonLookupElement> myInsertHandler;
 
     private PyKeywordCompletionProvider(String... keywords) {
       this(TailType.SPACE, keywords);
     }
 
     private PyKeywordCompletionProvider(TailType tailType, String... keywords) {
+      this(tailType, null, keywords);
+    }
+
+    private PyKeywordCompletionProvider(TailType tailType, @Nullable InsertHandler<PythonLookupElement> insertHandler, String... keywords) {
       myKeywords = keywords;
       myTailType = tailType;
+      myInsertHandler = insertHandler;
     }
 
     protected void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext context,
                                   @NotNull final CompletionResultSet result) {
-      putKeywords(myKeywords, myTailType, result);
+      for (String s : myKeywords) {
+        final PythonLookupElement element = new PythonLookupElement(s, true, null);
+        if (myInsertHandler != null) {
+          element.setHandler(myInsertHandler);
+        }
+        result.addElement(TailTypeDecorator.withTail(element, myTailType));
+      }
     }
   }
 }
