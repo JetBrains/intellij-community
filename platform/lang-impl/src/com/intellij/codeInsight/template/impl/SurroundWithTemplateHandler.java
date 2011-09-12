@@ -103,17 +103,13 @@ public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
   }
 
   public static ArrayList<TemplateImpl> getApplicableTemplates(Editor editor, PsiFile file, boolean selection) {
-    file = (PsiFile)file.copy();
-    final Document document = file.getViewProvider().getDocument();
-    assert document != null;
 
     int startOffset = editor.getCaretModel().getOffset();
     if (selection && editor.getSelectionModel().hasSelection()) {
       startOffset = editor.getSelectionModel().getSelectionStart();
-      document.deleteString(startOffset, editor.getSelectionModel().getSelectionEnd());
     }
-    document.insertString(startOffset, CompletionUtil.DUMMY_IDENTIFIER_TRIMMED);
-    PsiDocumentManager.getInstance(file.getProject()).commitDocument(document);
+
+    file = insertDummyIdentifier(editor, file);
 
     ArrayList<TemplateImpl> list = new ArrayList<TemplateImpl>();
     for (TemplateImpl template : TemplateSettings.getInstance().getTemplates()) {
@@ -124,5 +120,19 @@ public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
       }
     }
     return list;
+  }
+
+  public static PsiFile insertDummyIdentifier(Editor editor, PsiFile file) {
+    file = (PsiFile)file.copy();
+    final Document document = file.getViewProvider().getDocument();
+    assert document != null;
+    int offset = editor.getCaretModel().getOffset();
+    if (editor.getSelectionModel().hasSelection()) {
+      offset = editor.getSelectionModel().getSelectionStart();
+      document.deleteString(offset, editor.getSelectionModel().getSelectionEnd());
+    }
+    document.insertString(offset, CompletionUtil.DUMMY_IDENTIFIER_TRIMMED);
+    PsiDocumentManager.getInstance(file.getProject()).commitDocument(document);
+    return file;
   }
 }

@@ -25,18 +25,16 @@
 package com.intellij.codeInsight.template.actions;
 
 import com.intellij.codeInsight.template.TemplateContextType;
-import com.intellij.codeInsight.template.impl.LiveTemplatesConfigurable;
-import com.intellij.codeInsight.template.impl.TemplateImpl;
-import com.intellij.codeInsight.template.impl.TemplateListPanel;
-import com.intellij.codeInsight.template.impl.TemplateSettings;
+import com.intellij.codeInsight.template.impl.*;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -46,6 +44,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashMap;
 
 import java.util.Map;
+import java.util.Set;
 
 public class SaveAsTemplateAction extends AnAction {
 
@@ -115,8 +114,18 @@ public class SaveAsTemplateAction extends AnAction {
 
     final TemplateImpl template = new TemplateImpl(TemplateListPanel.ABBREVIATION, document.getText(), TemplateSettings.USER_GROUP_NAME);
 
-    for(TemplateContextType contextType: Extensions.getExtensions(TemplateContextType.EP_NAME)) {
-      template.getTemplateContext().setEnabled(contextType, contextType.isInContext(file, startOffset));
+    PsiFile copy;
+    AccessToken token = WriteAction.start();
+    try {
+      copy = SurroundWithTemplateHandler.insertDummyIdentifier(editor, file);
+    }
+    finally {
+      token.finish();
+    }
+    Set<TemplateContextType> applicable = TemplateManagerImpl.getApplicableContextTypes(copy, startOffset);
+
+    for(TemplateContextType contextType: TemplateManagerImpl.getAllContextTypes()) {
+      template.getTemplateContext().setEnabled(contextType, applicable.contains(contextType));
     }
 
     final LiveTemplatesConfigurable configurable = new LiveTemplatesConfigurable();

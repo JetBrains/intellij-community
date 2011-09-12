@@ -46,35 +46,32 @@ public class GroovyLiveTemplatesTest extends LightCodeInsightFixtureTestCase{
 
   public void testGroovyStatementContext() throws Exception {
     final TemplateImpl template = TemplateSettings.getInstance().getTemplate("inst", "other");
-    assertFalse(isApplicable("class Foo {{ if (a inst<caret>) }}", template));
-    assertTrue(isApplicable("class Foo {{ inst<caret> }}", template));
-    assertTrue(isApplicable("inst<caret>", template));
+    assertFalse(isApplicable("class Foo {{ if (a <caret>inst) }}", template));
+    assertTrue(isApplicable("class Foo {{ <caret>inst }}", template));
     assertTrue(isApplicable("<caret>inst", template));
-    assertFalse(isApplicable("class Foo {{ return (inst<caret>) }}", template));
+    assertFalse(isApplicable("class Foo {{ return (<caret>inst) }}", template));
     assertFalse(isApplicable("class Foo {{ return a <caret>inst) }}", template));
   }
 
   public void testGroovyExpressionContext() throws Exception {
     final TemplateImpl template = TemplateSettings.getInstance().getTemplate("lst", "other");
-    assertFalse(isApplicable("class Foo {{ if (a toar<caret>) }}", template));
-    assertTrue(isApplicable("class Foo {{ toar<caret> }}", template));
-    assertTrue(isApplicable("xxx<caret>", template));
+    assertFalse(isApplicable("class Foo {{ if (a <caret>toar) }}", template));
+    assertTrue(isApplicable("class Foo {{ <caret>xxx }}", template));
     assertTrue(isApplicable("<caret>xxx", template));
-    assertTrue(isApplicable("class Foo {{ return (toar<caret>) }}", template));
+    assertTrue(isApplicable("class Foo {{ return (<caret>aaa) }}", template));
     assertFalse(isApplicable("class Foo {{ return (xxx <caret>yyy) }}", template));
   }
 
   public void testGroovyDeclarationContext() throws Exception {
     final TemplateImpl template = TemplateSettings.getInstance().getTemplate("psvm", "other");
     assertFalse(isApplicable("class Foo {{ <caret>xxx }}", template));
-    assertFalse(isApplicable("class Foo {{ toar<caret> }}", template));
-    assertFalse(isApplicable("class Foo {{ if (a toar<caret>) }}", template));
-    assertFalse(isApplicable("class Foo {{ return (toar<caret>) }}", template));
-    assertTrue(isApplicable("class Foo { xxx<caret> }", template));
-    assertTrue(isApplicable("class Foo { xxx<caret> }", template));
-    assertFalse(isApplicable("class Foo { int xxx<caret> }", template));
-    assertTrue(isApplicable("class Foo {}\nxxx<caret>", template));
-    assertTrue(isApplicable("xxx<caret>", template));
+    assertFalse(isApplicable("class Foo {{ <caret>xxx }}", template));
+    assertFalse(isApplicable("class Foo {{ if (a <caret>xxx) }}", template));
+    assertFalse(isApplicable("class Foo {{ return (<caret>xxx) }}", template));
+    assertTrue(isApplicable("class Foo { <caret>xxx }", template));
+    assertFalse(isApplicable("class Foo { int <caret>xxx }", template));
+    assertTrue(isApplicable("class Foo {}\n<caret>xxx", template));
+    assertTrue(isApplicable("<caret>xxx", template));
   }
 
   private boolean isApplicable(String text, TemplateImpl inst) throws IOException {

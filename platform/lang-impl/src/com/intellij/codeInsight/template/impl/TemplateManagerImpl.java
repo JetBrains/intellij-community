@@ -514,11 +514,11 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
 
     // if we have, for example, a Ruby fragment in RHTML selected with its exact bounds, the file language and the base
     // language will be ERb, so we won't match HTML templates for it. but they're actually valid
-    if (offset > 0) {
-      final Language prevLanguage = PsiUtilBase.getLanguageAtOffset(file, offset - 1);
-      final PsiFile prevPsi = file.getViewProvider().getPsi(prevLanguage);
-      if (prevPsi != null) {
-        result.addAll(getDirectlyApplicableContextTypes(prevPsi, offset - 1, null));
+    Language languageAtOffset = PsiUtilBase.getLanguageAtOffset(file, offset);
+    if (languageAtOffset != file.getLanguage() && languageAtOffset != baseLanguage) {
+      PsiFile basePsi = file.getViewProvider().getPsi(languageAtOffset);
+      if (basePsi != null) {
+        result.addAll(getDirectlyApplicableContextTypes(basePsi, offset, null));
       }
     }
 
