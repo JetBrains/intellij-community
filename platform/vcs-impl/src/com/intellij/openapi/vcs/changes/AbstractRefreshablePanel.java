@@ -87,9 +87,13 @@ public abstract class AbstractRefreshablePanel<T> implements RefreshablePanel {
       myDetailsLoader.updateSelection(copy, false);
       myDetailsPanel.loading();
       myDetailsPanel.layout();
+    } else {
+      refreshPresentation();
     }
   }
-  
+
+  protected abstract void refreshPresentation();
+
   @CalledInBackground
   protected abstract T loadImpl() throws VcsException;
   @CalledInAwt
