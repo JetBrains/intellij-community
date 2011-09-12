@@ -16,7 +16,6 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.MessageBus;
 import org.apache.commons.lang.StringUtils;
@@ -26,6 +25,7 @@ import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.execution.HgCommandException;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
+import org.zmlx.hg4idea.util.HgEncodingUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -67,7 +67,7 @@ public class HgCommitCommand {
       parameters.add(hgFile.getRelativePath());
     }
     parameters.add("--encoding");
-    parameters.add(CharsetToolkit.UTF8);
+    parameters.add(HgEncodingUtil.getDefaultCharsetName());
 
     ensureSuccess(new HgCommandExecutor(myProject).executeInCurrentThread(myRoot, "commit", parameters));
     final MessageBus messageBus = myProject.getMessageBus();
@@ -80,7 +80,7 @@ public class HgCommitCommand {
     File tempFile = new File(systemDir, TEMP_FILE_NAME);
     
     try {
-      FileUtil.writeToFile(tempFile, myMessage);
+      FileUtil.writeToFile(tempFile, myMessage.getBytes(HgEncodingUtil.getDefaultCharset()));
     } catch (IOException e) {
       throw new VcsException("Couldn't prepare commit message", e);
     }
