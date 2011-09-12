@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.EditorComboBoxEditor;
 import com.intellij.ui.EditorComboBoxRenderer;
 import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.evaluation.EvaluationMode;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.impl.XDebuggerHistoryManager;
 import org.jetbrains.annotations.NonNls;
@@ -42,7 +43,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
 
   public XDebuggerExpressionComboBox(final @NotNull Project project, final @NotNull XDebuggerEditorsProvider debuggerEditorsProvider, final @Nullable @NonNls String historyId,
                                      final @Nullable XSourcePosition sourcePosition) {
-    super(project, debuggerEditorsProvider, historyId, sourcePosition);
+    super(project, debuggerEditorsProvider, EvaluationMode.EXPRESSION, historyId, sourcePosition);
     myDebuggerEditorsProvider = debuggerEditorsProvider;
     myComboBox = new ComboBox();
     myComboBox.setEditable(true);

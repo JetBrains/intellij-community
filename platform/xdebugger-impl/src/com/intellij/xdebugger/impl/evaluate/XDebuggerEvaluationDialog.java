@@ -25,6 +25,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.evaluation.EvaluationMode;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
@@ -50,7 +51,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
   private final XDebuggerEvaluator myEvaluator;
   private final XDebugSession mySession;
   private final XDebuggerEditorsProvider myEditorsProvider;
-  private EvaluationDialogMode myMode;
+  private EvaluationMode myMode;
   private final XSourcePosition mySourcePosition;
   private final SwitchModeAction mySwitchModeAction;
 
@@ -87,10 +88,10 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
       }
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_R, KeyEvent.ALT_DOWN_MASK)), getRootPane(), myDisposable);
 
-    EvaluationDialogMode mode = EvaluationDialogMode.EXPRESSION;
+    EvaluationMode mode = EvaluationMode.EXPRESSION;
     if (text.indexOf('\n') != -1) {
       if (myEvaluator.isCodeFragmentEvaluationSupported()) {
-        mode = EvaluationDialogMode.CODE_FRAGMENT;
+        mode = EvaluationMode.CODE_FRAGMENT;
       }
       else {
         text = StringUtil.replace(text, "\n", " ");
@@ -116,8 +117,8 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
   protected JButton createJButtonForAction(Action action) {
     final JButton button = super.createJButtonForAction(action);
     if (action == mySwitchModeAction) {
-      int width1 = new JButton(getSwitchButtonText(EvaluationDialogMode.EXPRESSION)).getPreferredSize().width;
-      int width2 = new JButton(getSwitchButtonText(EvaluationDialogMode.CODE_FRAGMENT)).getPreferredSize().width;
+      int width1 = new JButton(getSwitchButtonText(EvaluationMode.EXPRESSION)).getPreferredSize().width;
+      int width2 = new JButton(getSwitchButtonText(EvaluationMode.CODE_FRAGMENT)).getPreferredSize().width;
       final Dimension size = new Dimension(Math.max(width1, width2), button.getPreferredSize().height);
       button.setMinimumSize(size);
       button.setPreferredSize(size);
@@ -129,13 +130,13 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     return myInputComponent.getInputEditor().getText();
   }
 
-  private static String getSwitchButtonText(EvaluationDialogMode mode) {
-    return mode != EvaluationDialogMode.EXPRESSION
+  private static String getSwitchButtonText(EvaluationMode mode) {
+    return mode != EvaluationMode.EXPRESSION
            ? XDebuggerBundle.message("button.text.expression.mode")
            : XDebuggerBundle.message("button.text.code.fragment.mode");
   }
 
-  private void switchToMode(EvaluationDialogMode mode, String text) {
+  private void switchToMode(EvaluationMode mode, String text) {
     if (myMode == mode) return;
     myMode = mode;
 
@@ -151,9 +152,9 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     }
   }
 
-  private EvaluationInputComponent createInputComponent(EvaluationDialogMode mode, String text) {
+  private EvaluationInputComponent createInputComponent(EvaluationMode mode, String text) {
     final Project project = mySession.getProject();
-    if (mode == EvaluationDialogMode.EXPRESSION) {
+    if (mode == EvaluationMode.EXPRESSION) {
       return new ExpressionInputComponent(project, myEditorsProvider, mySourcePosition, text);
     }
     else {
@@ -191,12 +192,12 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
   private class SwitchModeAction extends AbstractAction {
     public void actionPerformed(ActionEvent e) {
       String text = myInputComponent.getInputEditor().getText();
-      if (myMode == EvaluationDialogMode.EXPRESSION) {
-        switchToMode(EvaluationDialogMode.CODE_FRAGMENT, text);
+      if (myMode == EvaluationMode.EXPRESSION) {
+        switchToMode(EvaluationMode.CODE_FRAGMENT, text);
       }
       else {
         if (text.indexOf('\n') != -1) text = "";
-        switchToMode(EvaluationDialogMode.EXPRESSION, text);
+        switchToMode(EvaluationMode.EXPRESSION, text);
       }
     }
   }

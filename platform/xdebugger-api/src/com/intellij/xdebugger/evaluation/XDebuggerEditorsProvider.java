@@ -30,7 +30,23 @@ public abstract class XDebuggerEditorsProvider {
   @NotNull
   public abstract FileType getFileType();
 
+  /**
+   * @deprecated use createDocument(Project,String,XSourcePosition,EvaluationMode) instead
+   * @return
+   */
   @NotNull
-  public abstract Document createDocument(@NotNull Project project, @NotNull String text, @Nullable XSourcePosition sourcePosition);
+  @Deprecated
+  @SuppressWarnings("MethodMayBeStatic")
+  public Document createDocument(@NotNull Project project, @NotNull String text, @Nullable XSourcePosition sourcePosition) {
+    throw new UnsupportedOperationException("This method should not be called");
+  }
+
+  @NotNull
+  public Document createDocument(@NotNull Project project,
+                                 @NotNull String text,
+                                 @Nullable XSourcePosition sourcePosition,
+                                 @NotNull EvaluationMode mode) {
+    return createDocument(project, text, sourcePosition);
+  }
 
 }

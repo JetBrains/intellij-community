@@ -15,11 +15,12 @@
  */
 package com.intellij.xdebugger.impl.ui;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.project.Project;
 import com.intellij.ui.EditorTextField;
 import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.evaluation.EvaluationMode;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +38,7 @@ public class XDebuggerMultilineEditor extends XDebuggerEditorBase {
                                    XDebuggerEditorsProvider debuggerEditorsProvider,
                                    @Nullable @NonNls String historyId,
                                    @Nullable XSourcePosition sourcePosition, @NotNull String text) {
-    super(project, debuggerEditorsProvider, historyId, sourcePosition);
+    super(project, debuggerEditorsProvider, EvaluationMode.CODE_FRAGMENT, historyId, sourcePosition);
     myEditorTextField = new EditorTextField(createDocument(text), project, debuggerEditorsProvider.getFileType()) {
       @Override
       protected EditorEx createEditor() {
