@@ -161,7 +161,7 @@ public abstract class TreeElementPattern<ParentType, T extends ParentType, Self 
           if (pattern.getCondition().accepts(element, context)) return true;
           element = getParent(element);
         }
-        return true;
+        return false;
       }
     });
   }
