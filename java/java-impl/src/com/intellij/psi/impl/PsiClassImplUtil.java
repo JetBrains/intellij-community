@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -784,26 +784,25 @@ public class PsiClassImplUtil {
   }
 
   public static PsiClass[] getInterfaces(PsiClass psiClass) {
-    final PsiClassType[] extendsListTypes = psiClass.getExtendsListTypes();
     if (psiClass.isInterface()) {
+      final PsiClassType[] extendsListTypes = psiClass.getExtendsListTypes();
       return resolveClassReferenceList(extendsListTypes, psiClass.getManager(), psiClass.getResolveScope(), false);
     }
 
     if (psiClass instanceof PsiAnonymousClass) {
       PsiClassType baseClassReference = ((PsiAnonymousClass)psiClass).getBaseClassType();
       PsiClass baseClass = baseClassReference.resolve();
-      if (baseClass != null && baseClass.isInterface()) return new PsiClass[]{baseClass};
-      return PsiClass.EMPTY_ARRAY;
+      return baseClass != null && baseClass.isInterface() ? new PsiClass[]{baseClass} : PsiClass.EMPTY_ARRAY;
     }
 
     final PsiClassType[] implementsListTypes = psiClass.getImplementsListTypes();
-
     return resolveClassReferenceList(implementsListTypes, psiClass.getManager(), psiClass.getResolveScope(), false);
   }
 
   private static PsiClass[] resolveClassReferenceList(final PsiClassType[] listOfTypes,
-                                                      final PsiManager manager, final GlobalSearchScope resolveScope, boolean includeObject)
-  {
+                                                      final PsiManager manager,
+                                                      final GlobalSearchScope resolveScope,
+                                                      boolean includeObject) {
     PsiClass objectClass = JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.Object", resolveScope);
     if (objectClass == null) includeObject = false;
     if (listOfTypes == null || listOfTypes.length == 0) {

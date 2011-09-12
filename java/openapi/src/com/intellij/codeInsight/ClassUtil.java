@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,11 +22,15 @@ package com.intellij.codeInsight;
 import com.intellij.psi.*;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Set;
 
 public class ClassUtil {
+  private ClassUtil() { }
+
+  @Nullable
   public static PsiMethod getAnyAbstractMethod(@NotNull PsiClass aClass) {
     PsiMethod methodToImplement = getAnyMethodToImplement(aClass);
     if (methodToImplement != null) {
@@ -40,7 +44,8 @@ public class ClassUtil {
     return null;
   }
 
-  public static PsiMethod getAnyMethodToImplement(PsiClass aClass) {
+  @Nullable
+  public static PsiMethod getAnyMethodToImplement(@NotNull PsiClass aClass) {
     Set<PsiMethod> alreadyImplemented = new THashSet<PsiMethod>();
     for (HierarchicalMethodSignature signatureHierarchical : aClass.getVisibleSignatures()) {
       for (PsiMethod superS : signatureHierarchical.getMethod().findSuperMethods()) {
@@ -73,8 +78,9 @@ public class ClassUtil {
     return checkPackageLocalInSuperClass(aClass);
   }
 
-  private static PsiMethod checkPackageLocalInSuperClass(PsiClass aClass) {
-    // super class can have package local sbstract methods not accessible for overriding
+  @Nullable
+  private static PsiMethod checkPackageLocalInSuperClass(@NotNull PsiClass aClass) {
+    // super class can have package local abstract methods not accessible for overriding
     PsiClass superClass = aClass.getSuperClass();
     if (superClass == null) return null;
     if ("java.lang.Object".equals(aClass.getQualifiedName())) return null;
