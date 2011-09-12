@@ -97,7 +97,7 @@ public class XsltStackFrame extends XStackFrame {
         super.computeChildren(node);
       }
     } catch (VMPausedException e) {
-      node.setErrorMessage("VM is paused");
+      node.setErrorMessage("Target VM is not responding");
     }
   }
 

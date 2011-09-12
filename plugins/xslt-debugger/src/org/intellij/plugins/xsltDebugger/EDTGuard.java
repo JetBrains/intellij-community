@@ -233,6 +233,7 @@ class EDTGuard implements InvocationHandler {
             ref.set(true);
           } finally {
             alarm2.cancelRequest(watchdog);
+            alarm.addRequest(this, 500);
           }
         }
       }

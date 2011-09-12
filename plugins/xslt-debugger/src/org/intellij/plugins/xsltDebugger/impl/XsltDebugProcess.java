@@ -4,6 +4,7 @@ import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.StatusBar;
@@ -16,6 +17,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XSuspendContext;
+import org.intellij.plugins.xsltDebugger.VMPausedException;
 import org.intellij.plugins.xsltDebugger.XsltDebuggerSession;
 import org.intellij.plugins.xsltDebugger.rt.engine.Breakpoint;
 import org.intellij.plugins.xsltDebugger.rt.engine.BreakpointManager;
@@ -133,6 +135,18 @@ public class XsltDebugProcess extends XDebugProcess implements Disposable {
   public void stop() {
     if (myDebuggerSession != null) {
       myDebuggerSession.stop();
+    }
+  }
+
+  @Override
+  public boolean checkCanPerformCommands() {
+    if (myDebuggerSession == null) return super.checkCanPerformCommands();
+
+    try {
+      return myDebuggerSession.getClient().ping();
+    } catch (VMPausedException e) {
+      getSession().reportMessage("Target VM is not responding", MessageType.WARNING);
+      return false;
     }
   }
 
