@@ -48,17 +48,6 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
     return false;
   }
 
-
-  /**
-   * Matches if element is somewhere inside a loop, but not within a class or function inside that loop.
-   */
-  private static class InLoopFilter extends MatcherBasedFilter {
-    Matcher getMatcher() {
-      return SyntaxMatchers.LOOP_CONTROL;
-    }
-  }
-
-
   /**
    * Matches if element is somewhere inside a loop, but not within a class or function inside that loop.
    */
@@ -289,7 +278,8 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
   private static final PsiElementPattern.Capture<PsiElement> IN_IF_BODY =
     psiElement().inside(psiElement(PyStatementList.class).inside(psiElement(PyIfPart.class)));
 
-  private static final FilterPattern IN_LOOP = new FilterPattern(new InLoopFilter());
+  private static final PsiElementPattern.Capture<PsiElement> IN_LOOP = 
+    psiElement().inside(false, psiElement(PyLoopStatement.class), or(psiElement(PyFunction.class), psiElement(PyClass.class)));
 
   // not exactly a beauty
   private static final PsiElementPattern.Capture<PsiElement> BEFORE_COND =
@@ -347,7 +337,7 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
   );
 
   private static final PsiElementPattern.Capture<PsiElement> IN_FINALLY_NO_LOOP =
-    psiElement().inside(false, psiElement(PyFinallyPart.class), or(psiElement(PyWhileStatement.class), psiElement(PyForStatement.class)));
+    psiElement().inside(false, psiElement(PyFinallyPart.class), psiElement(PyLoopStatement.class));
 
   private static final FilterPattern IN_BEGIN_STMT = new FilterPattern(new StatementFitFilter());
 
@@ -452,7 +442,7 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
       .andNot(AFTER_QUALIFIER)
       .andNot(IN_PARAM_LIST)
       .andNot(IN_ARG_LIST)
-      .andOr(IN_LOOP/*, AFTER_LOOP_NO_ELSE*/)
+      .and(IN_LOOP)
       ,
       new PyKeywordCompletionProvider(TailType.NONE, "break")
     );
@@ -467,7 +457,7 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
       .andNot(IN_PARAM_LIST)
       .andNot(IN_ARG_LIST)
       .andNot(IN_FINALLY_NO_LOOP)
-      .andOr(IN_LOOP/*, AFTER_LOOP_NO_ELSE*/)
+      .and(IN_LOOP)
       ,
       new PyKeywordCompletionProvider(TailType.NONE, "continue")
     );

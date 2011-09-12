@@ -68,6 +68,10 @@ public class PythonHighlightingTest extends PyLightFixtureTestCase {
   public void testAssignmentTargets3K() {
     doTest(LanguageLevel.PYTHON30, true, false);    
   }
+  
+  public void testBreakOutsideOfLoop() {
+    doTest();
+  }
 
   public void testReturnOutsideOfFunction() {
     doTest();
