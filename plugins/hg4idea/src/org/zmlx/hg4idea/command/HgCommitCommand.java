@@ -66,8 +66,6 @@ public class HgCommitCommand {
     for (HgFile hgFile : myFiles) {
       parameters.add(hgFile.getRelativePath());
     }
-    parameters.add("--encoding");
-    parameters.add(HgEncodingUtil.getDefaultCharsetName());
 
     ensureSuccess(new HgCommandExecutor(myProject).executeInCurrentThread(myRoot, "commit", parameters));
     final MessageBus messageBus = myProject.getMessageBus();
