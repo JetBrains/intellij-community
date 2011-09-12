@@ -121,13 +121,17 @@ public class EvaluateActionHandler extends DebuggerActionHandler {
       defaultExpression = new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, "");
     }
 
+    CodeFragmentKind kind = DebuggerSettings.EVALUATE_FRAGMENT.equals(dialogType) ? CodeFragmentKind.CODE_BLOCK : CodeFragmentKind.EXPRESSION;
+
     DebuggerSettings.getInstance().EVALUATION_DIALOG_TYPE = dialogType;
+    TextWithImportsImpl text = new TextWithImportsImpl(kind, defaultExpression.getText(), defaultExpression.getImports(), defaultExpression.getFileType());
+
     final DialogWrapper dialog;
     if(DebuggerSettings.EVALUATE_FRAGMENT.equals(dialogType)) {
-      dialog = new StatementEvaluationDialog(project, defaultExpression);
+      dialog = new StatementEvaluationDialog(project, text);
     }
     else {
-      dialog = new ExpressionEvaluationDialog(project, defaultExpression);
+      dialog = new ExpressionEvaluationDialog(project, text);
     }
 
     dialog.show();

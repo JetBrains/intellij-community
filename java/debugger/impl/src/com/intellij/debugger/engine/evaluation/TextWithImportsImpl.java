@@ -27,6 +27,7 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiExpressionCodeFragment;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public final class TextWithImportsImpl implements TextWithImports{
 
@@ -52,7 +53,7 @@ public final class TextWithImportsImpl implements TextWithImports{
     }
   }
 
-  public TextWithImportsImpl (CodeFragmentKind kind, @NotNull String text, @NotNull String imports, @NotNull FileType fileType) {
+  public TextWithImportsImpl (CodeFragmentKind kind, @NotNull String text, @NotNull String imports, @Nullable FileType fileType) {
     myKind = kind;
     myText = text;
     myImports = imports;
