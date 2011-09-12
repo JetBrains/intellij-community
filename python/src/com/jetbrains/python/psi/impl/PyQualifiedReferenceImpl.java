@@ -19,7 +19,6 @@ import com.intellij.util.indexing.FileBasedIndex;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.patterns.SyntaxMatchers;
 import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyClassNameIndexInsensitive;
@@ -54,7 +53,7 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
     PyType qualifierType = myContext.getTypeEvalContext().getType(qualifier);
     // is it a class-private name qualified by a different class?
     if (PyUtil.isClassPrivateName(referencedName) && qualifierType instanceof PyClassType) {
-      final List<? extends PsiElement> match = SyntaxMatchers.DEEP_IN_METHOD.search(qualifier);
+      final List<? extends PsiElement> match = PyUtil.searchForWrappingMethod(qualifier, true);
       if (match == null || (match.size() > 1 && ((PyClassType)qualifierType).getPyClass() != match.get(match.size() - 1))) {
         return Collections.emptyList();
       }

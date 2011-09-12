@@ -6,7 +6,6 @@ import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.patterns.SyntaxMatchers;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,7 +48,7 @@ public class PyMethodFirstArgAssignmentInspection extends PyInspection {
     @Nullable
     private static String extractFirstParamName(PyElement node) {
       // are we a method?
-      List<? extends PsiElement> place = SyntaxMatchers.DEEP_IN_METHOD.search(node);
+      List<? extends PsiElement> place = PyUtil.searchForWrappingMethod(node, true);
       if (place == null || place.size() < 2) return null;
       PyFunction method = (PyFunction)place.get(place.size()-2);
       //PyClass owner = (PyClass)place.get(place.size()-1);

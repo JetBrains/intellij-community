@@ -543,6 +543,37 @@ public class PyUtil {
     return false;
   }
 
+  /**
+   * Searhes for a method wrapping given element.
+   * @param start element presumably inside a method
+   * @param deep  if true, allow 'start' to be inside functions nested in a method; else, 'start' must be directly inside a method.
+   * @return if not 'deep', [0] is the method and [1] is the class; if 'deep', first several elements may be the nested functions,
+   * the last but one is the method, and the last is the class.
+   */
+  @Nullable
+  public static List<PsiElement> searchForWrappingMethod(PsiElement start, boolean deep) {
+    PsiElement seeker = start;
+    List<PsiElement> ret = new ArrayList<PsiElement>(2);
+    while (seeker != null) {
+       PyFunction func = PsiTreeUtil.getParentOfType(seeker, PyFunction.class, true, PyClass.class);
+       if (func != null) {
+        PyClass cls = func.getContainingClass();
+        if (cls != null) {
+          ret.add(func);
+          ret.add(cls);
+          return ret;
+        }
+        else if (deep) {
+          ret.add(func);
+          seeker = func;
+        }
+        else return null; // no immediate class
+      }
+      else return null; // no function
+    }
+    return null;
+  }
+
   public static class KnownDecoratorProviderHolder {
     public static PyKnownDecoratorProvider[] KNOWN_DECORATOR_PROVIDERS = Extensions.getExtensions(PyKnownDecoratorProvider.EP_NAME);
 
