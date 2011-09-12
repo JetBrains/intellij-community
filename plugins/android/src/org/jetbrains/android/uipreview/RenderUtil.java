@@ -19,7 +19,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.containers.HashMap;
 import org.jetbrains.android.dom.manifest.Application;
 import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.android.facet.AndroidFacet;
@@ -35,7 +34,7 @@ import org.xmlpull.v1.XmlPullParserException;
 import javax.imageio.ImageIO;
 import java.io.File;
 import java.io.IOException;
-import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Eugene.Kudelevsky
@@ -43,7 +42,6 @@ import java.util.Map;
 class RenderUtil {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.uipreview.RenderUtil");
 
-  private static final Map<String, RenderServiceFactory> ourCachedFactories = new HashMap<String, RenderServiceFactory>();
   private static final String DEFAULT_APP_LABEL = "Android application";
 
   private RenderUtil() {
@@ -57,7 +55,8 @@ class RenderUtil {
                                      @NotNull FolderConfiguration config,
                                      float xdpi,
                                      float ydpi,
-                                     @NotNull ThemeData theme)
+                                     @NotNull ThemeData theme,
+                                     StringBuilder warningBuilder)
     throws RenderingException, IOException, AndroidSdkNotConfiguredException {
     final Sdk sdk = ModuleRootManager.getInstance(facet.getModule()).getSdk();
     if (sdk == null || !(sdk.getSdkType() instanceof AndroidSdkType)) {
@@ -81,21 +80,17 @@ class RenderUtil {
       throw new RenderingException(AndroidBundle.message("android.layout.preview.cannot.load.library.error"));
     }
 
-    final ResourceRepository repository = new ResourceRepository(false) {
-      @Override
-      protected ResourceItem createResourceItem(String name) {
-        return new ResourceItem(name);
-      }
-    };
+    final ProjectResources projectResources = new ProjectResources();
 
     final VirtualFile[] resourceDirs = facet.getLocalResourceManager().getAllResourceDirs();
     final IAbstractFolder[] resFolders = toAbstractFolders(resourceDirs);
 
-    loadResources(repository, resFolders);
+    loadResources(projectResources, resFolders);
 
-    final ResourceResolver resources = factory.createResourceResolver(config, repository, theme.getName(), theme.isProjectTheme());
+    final ResourceResolver resolver = factory.createResourceResolver(config, projectResources, theme.getName(), theme.isProjectTheme());
     final int minSdkVersion = getMinSdkVersion(facet);
-    final RenderService renderService = factory.createService(resources, config, xdpi, ydpi, new ProjectCallback(), minSdkVersion);
+    final ProjectCallback callback = new ProjectCallback(factory.getLibrary(), facet.getModule(), projectResources);
+    final RenderService renderService = factory.createService(resolver, config, xdpi, ydpi, callback, minSdkVersion);
 
     final RenderSession session;
     try {
@@ -124,6 +119,36 @@ class RenderUtil {
 
     final String format = FileUtil.getExtension(imgPath);
     ImageIO.write(session.getImage(), format, new File(imgPath));
+
+    final Set<String> missingClasses = callback.getMissingClasses();
+    if (missingClasses.size() > 0) {
+      if (missingClasses.size() > 1) {
+        warningBuilder.append("Missing classes:\n");
+        for (String missingClass : missingClasses) {
+          warningBuilder.append("    ").append(missingClass).append('\n');
+        }
+      }
+      else {
+        warningBuilder.append("Missing class ").append(missingClasses.iterator().next()).append('\n');
+      }
+    }
+
+    final Set<String> brokenClasses = callback.getBrokenClasses();
+    if (brokenClasses.size() > 0) {
+      if (brokenClasses.size() > 1) {
+        warningBuilder.append("Unable to initialize:\n");
+        for (String brokenClass : brokenClasses) {
+          warningBuilder.append("    ").append(brokenClass).append('\n');
+        }
+      }
+      else {
+        warningBuilder.append("Unable to initialize ").append(brokenClasses.iterator().next());
+      }
+    }
+
+    if (warningBuilder.length() > 0 && warningBuilder.charAt(warningBuilder.length() - 1) == '\n') {
+      warningBuilder.deleteCharAt(warningBuilder.length() - 1);
+    }
 
     return true;
   }
