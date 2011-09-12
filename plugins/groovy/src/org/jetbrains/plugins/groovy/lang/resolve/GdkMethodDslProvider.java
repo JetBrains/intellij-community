@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.resolve;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.VolatileNotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -33,9 +34,6 @@ import org.jetbrains.plugins.groovy.dsl.dsltop.GdslMembersProvider;
 import org.jetbrains.plugins.groovy.dsl.holders.CustomMembersHolder;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl;
-
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * @author Maxim.Medvedev
@@ -98,23 +96,41 @@ public class GdkMethodDslProvider implements GdslMembersProvider {
   }
   
   private static class GdkMethodHolder {
-    private final Set<String> methodNames;
-    private final MultiMap<String, PsiMethod> map;
+    private final MultiMap<String, PsiMethod> originalMethodsByName;
+    private final NotNullLazyValue<MultiMap<String, PsiMethod>> originalMethodByType;
+    private final boolean myStatic;
+    private final GlobalSearchScope myScope;
+    private final PsiManager myPsiManager;
 
-    GdkMethodHolder(PsiClass categoryClass, boolean isStatic, GlobalSearchScope scope) {
-      Set<String> methodNames = new HashSet<String>();
-      MultiMap<String, PsiMethod> map = new MultiMap<String, PsiMethod>();
-      PsiManager manager = PsiManager.getInstance(categoryClass.getProject());
+    GdkMethodHolder(final PsiClass categoryClass, final boolean isStatic, final GlobalSearchScope scope) {
+      myStatic = isStatic;
+      myScope = scope;
+      final MultiMap<String, PsiMethod> byName = new MultiMap<String, PsiMethod>();
+      myPsiManager = PsiManager.getInstance(categoryClass.getProject());
       for (PsiMethod m : categoryClass.getMethods()) {
         final PsiParameter[] params = m.getParameterList().getParameters();
         if (params.length == 0) continue;
-        final PsiType parameterType = params[0].getType();
-        PsiType targetType = TypesUtil.boxPrimitiveType(TypeConversionUtil.erasure(parameterType), manager, scope);
-        methodNames.add(m.getName());
-        map.putValue(targetType.getCanonicalText(), new GrGdkMethodImpl(m, isStatic));
+        
+        byName.putValue(m.getName(), m);
       }
-      this.methodNames = methodNames;
-      this.map = map;
+      this.originalMethodsByName = byName;
+      this.originalMethodByType = new VolatileNotNullLazyValue<MultiMap<String, PsiMethod>>() {
+        @NotNull
+        @Override
+        protected MultiMap<String, PsiMethod> compute() {
+          MultiMap<String, PsiMethod> map = new MultiMap<String, PsiMethod>();
+          for (PsiMethod method : originalMethodsByName.values()) {
+            map.putValue(getCategoryTargetType(method).getCanonicalText(), method);
+            
+          }
+          return map;
+        }
+      };
+    }
+
+    private PsiType getCategoryTargetType(PsiMethod method) {
+      final PsiType parameterType = method.getParameterList().getParameters()[0].getType();
+      return TypesUtil.boxPrimitiveType(TypeConversionUtil.erasure(parameterType), myPsiManager, myScope);
     }
 
     boolean processMethods(GroovyClassDescriptor descriptor, PsiScopeProcessor processor, ResolveState state) {
@@ -122,13 +138,22 @@ public class GdkMethodDslProvider implements GdslMembersProvider {
       if (psiType == null) return true;
 
       NameHint nameHint = processor.getHint(NameHint.KEY);
-      if (nameHint != null && !methodNames.contains(nameHint.getName(state))) {
+      String name = nameHint == null ? null : nameHint.getName(state);
+      if (name != null) {
+        for (PsiMethod method : originalMethodsByName.get(name)) {
+          if (getCategoryTargetType(method).isAssignableFrom(psiType)) {
+            if (!processor.execute(new GrGdkMethodImpl(method, myStatic), state)) {
+              return false;
+            }
+          }
+        }
+
         return true;
       }
 
       for (String superType : ResolveUtil.getAllSuperTypes(psiType, descriptor.getProject()).keySet()) {
-        for (PsiMethod method : map.get(superType)) {
-          if (!processor.execute(method, state)) {
+        for (PsiMethod method : originalMethodByType.getValue().get(superType)) {
+          if (!processor.execute(new GrGdkMethodImpl(method, myStatic), state)) {
             return false;
           }
         }
