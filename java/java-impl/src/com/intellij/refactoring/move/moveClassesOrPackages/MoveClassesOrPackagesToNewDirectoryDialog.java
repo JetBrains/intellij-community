@@ -113,11 +113,9 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends DialogWrapper {
             sourceRoots.add(fileIndex.getSourceRootForFile(psiDirectory.getVirtualFile()));
           }
         } else if (element instanceof PsiClass) {
-          final PsiDirectory psiDirectory = element.getContainingFile().getContainingDirectory();
-          LOG.assertTrue(psiDirectory != null);
-          if (psiDirectory != null) {
-            sourceRoots.add(psiDirectory.getVirtualFile());
-          }
+          final VirtualFile virtualFile = element.getContainingFile().getVirtualFile();
+          LOG.assertTrue(virtualFile != null);
+          sourceRoots.add(fileIndex.getSourceRootForFile(virtualFile));
         }
       }
       myPreserveSourceRoot.setVisible(sourceRoots.size() > 1);
