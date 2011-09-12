@@ -254,7 +254,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
         final JLabel typeLabel = new JLabel("Type");
         typePanel.add(typeLabel);
         typePanel.add(myTypeEditor);
-        typePanel.setPreferredSize(new Dimension(t.getWidth() / 3, -1));
+        myTypeEditor.setPreferredWidth(t.getWidth() / 2);
         add(typePanel, BorderLayout.WEST);
 
         final JPanel namePanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 4, 2, true, false));
@@ -274,10 +274,11 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
           final JLabel defaultValueLabel = new JLabel("Default value");
           defaultValuePanel.add(defaultValueLabel);
           defaultValuePanel.add(myDefaultValueEditor);
-          additionalPanel.add(defaultValuePanel, BorderLayout.CENTER);
+          myDefaultValueEditor.setPreferredWidth(t.getWidth() / 2);
+          additionalPanel.add(defaultValuePanel, BorderLayout.WEST);
 
           if (!isGenerateDelegate()) {
-            myAnyVar = new JCheckBox("Use &Any Var");
+            myAnyVar = new JCheckBox("&Use Any Var");
             DialogUtil.registerMnemonic(myAnyVar, '&');
             myAnyVar.addActionListener(new ActionListener() {
               @Override
@@ -287,11 +288,11 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
             });
             final JPanel anyVarPanel = new JPanel(new BorderLayout());
             anyVarPanel.add(myAnyVar, BorderLayout.SOUTH);
-            additionalPanel.add(anyVarPanel, BorderLayout.EAST);
-            additionalPanel.setPreferredSize(new Dimension(t.getWidth() / 3, -1));
+            additionalPanel.add(anyVarPanel, BorderLayout.CENTER);
+            //additionalPanel.setPreferredSize(new Dimension(t.getWidth() / 3, -1));
+            add(additionalPanel, BorderLayout.SOUTH);
           }
-          add(additionalPanel, BorderLayout.EAST);
-        }        
+        }
       }
 
       @Override
