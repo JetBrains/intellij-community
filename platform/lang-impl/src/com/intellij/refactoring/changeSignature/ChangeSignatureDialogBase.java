@@ -80,6 +80,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
   protected JBListTable myParametersList;
   protected TableView<ParameterTableModelItemBase<P>> myParametersTable;
   protected final ParameterTableModelBase<P> myParametersTableModel;
+  protected final UpdateSignatureListener mySignatureUpdater = new UpdateSignatureListener();
   private MethodSignatureComponent mySignatureArea;
   private final Alarm myUpdateSignatureAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
@@ -185,12 +186,6 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
     final JPanel typePanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 4, 2, true, false));
     final JPanel namePanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 4, 2, true, false));
 
-    final DocumentListener documentListener = new DocumentAdapter() {
-      public void documentChanged(DocumentEvent event) {
-        updateSignature();
-      }
-    };
-
     final JLabel nameLabel = new JLabel(RefactoringBundle.message("changeSignature.name.prompt"));
     myNameField = new EditorTextField(myMethod.getName());
     nameLabel.setLabelFor(myNameField);
@@ -198,7 +193,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
     namePanel.add(myNameField);
     myNameField.setEnabled(myMethod.canChangeName());
     if (myMethod.canChangeName()) {
-      myNameField.addDocumentListener(documentListener);
+      myNameField.addDocumentListener(mySignatureUpdater);
     }
 
     createVisibilityPanel();
@@ -214,7 +209,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
 
       if (myMethod.canChangeReturnType() == MethodDescriptor.ReadWriteOption.ReadWrite) {
         typePanel.setPreferredSize(new Dimension(200, -1));
-        myReturnTypeField.addDocumentListener(documentListener);
+        myReturnTypeField.addDocumentListener(mySignatureUpdater);
       }
       else {
         myReturnTypeField.setEnabled(false);
@@ -329,12 +324,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
   protected JPanel createVisibilityPanel() {
     myVisibilityPanel = createVisibilityControl();
     myVisibilityPanel.setVisibility(myMethod.getVisibility());
-    myVisibilityPanel.addListener(new ChangeListener() {
-      @Override
-      public void stateChanged(ChangeEvent e) {
-        updateSignature();
-      }
-    });
+    myVisibilityPanel.addListener(mySignatureUpdater);
     return myVisibilityPanel;
   }
 
@@ -422,12 +412,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
       final JPanel buttonsPanel = ToolbarDecorator.createDecorator(myParametersList.getTable())
         .addExtraAction(myPropagateParamChangesButton)
         .createPanel();
-      myParametersList.getTable().getModel().addTableModelListener(new TableModelListener() {
-        public void tableChanged(TableModelEvent e) {
-          updateSignature();
-        }
-      }
-      );
+      myParametersList.getTable().getModel().addTableModelListener(mySignatureUpdater);
       return buttonsPanel;
     }
     else {
@@ -440,13 +425,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
       myPropagateParamChangesButton.setVisible(false);
       myParametersTable.setStriped(true);
 
-      myParametersTableModel.addTableModelListener(
-        new TableModelListener() {
-          public void tableChanged(TableModelEvent e) {
-            updateSignature();
-          }
-        }
-      );
+      myParametersTableModel.addTableModelListener(mySignatureUpdater);
 
       customizeParametersTable(myParametersTable);
       return buttonsPanel;
@@ -544,5 +523,31 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
   @Override
   protected String getHelpId() {
     return "refactoring.changeSignature";
+  }
+
+  class UpdateSignatureListener implements ChangeListener, DocumentListener, TableModelListener {
+    private void update() {
+      updateSignature();
+    }
+
+    @Override
+    public void stateChanged(ChangeEvent e) {
+      update();
+    }
+
+    @Override
+    public void documentChanged(DocumentEvent event) {
+      update();
+    }
+
+    @Override
+    public void tableChanged(TableModelEvent e) {
+      update();
+    }
+
+    //---ignored
+    @Override
+    public void beforeDocumentChange(DocumentEvent event) {
+    }
   }
 }
