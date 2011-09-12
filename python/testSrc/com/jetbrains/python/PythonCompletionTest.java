@@ -266,6 +266,10 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
     doTest();
   }
 
+  public void testElif() {
+    doTest();
+  }
+
   public void testElseInCondExpr() {  // PY-2397
     doTest();
   }
