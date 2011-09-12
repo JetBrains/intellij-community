@@ -17,7 +17,9 @@ import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.StringWriter;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
@@ -59,7 +61,7 @@ public final class ShellCommand {
       }
       Process process = processBuilder.start();
 
-      CapturingProcessHandler processHandler = new CapturingProcessHandler(process);
+      CapturingProcessHandler processHandler = new CapturingProcessHandler(process, charset);
       final ProcessOutput processOutput = processHandler.runProcess();
 
       int exitValue = processOutput.getExitCode();
