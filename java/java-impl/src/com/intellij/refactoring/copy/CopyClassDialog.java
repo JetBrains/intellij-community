@@ -29,6 +29,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -206,11 +207,16 @@ class CopyClassDialog extends DialogWrapper{
               }
             }.execute();
           } else {
-            final Module module = ModuleUtil.findModuleForFile(myDefaultTargetDirectory.getVirtualFile(), myProject);
-            if (module != null) {
-              myTargetDirectory = MoveClassesOrPackagesUtil.chooseDestinationPackage(myProject, packageName, myDefaultTargetDirectory);
+            final PsiPackage aPackage = myDefaultTargetDirectory != null ? JavaDirectoryService.getInstance().getPackage(myDefaultTargetDirectory) : null;
+            if (aPackage != null && Comparing.strEqual(aPackage.getQualifiedName(), packageName)) {
+              myTargetDirectory = myDefaultTargetDirectory;
             } else {
-              errorString[0] = "No module found for directory \'" + myDefaultTargetDirectory.getVirtualFile().getPresentableUrl() + "\'";
+              final Module module = ModuleUtil.findModuleForFile(myDefaultTargetDirectory.getVirtualFile(), myProject);
+              if (module != null) {
+                myTargetDirectory = MoveClassesOrPackagesUtil.chooseDestinationPackage(myProject, packageName, myDefaultTargetDirectory);
+              } else {
+                errorString[0] = "No module found for directory \'" + myDefaultTargetDirectory.getVirtualFile().getPresentableUrl() + "\'";
+              }
             }
           }
           if (myTargetDirectory == null) {
