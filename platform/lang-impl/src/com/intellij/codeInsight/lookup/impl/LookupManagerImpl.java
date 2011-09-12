@@ -221,9 +221,10 @@ public class LookupManagerImpl extends LookupManager {
     if (lookup != null) {
       lookup.hide();
       LOG.assertTrue(lookup.isLookupDisposed(), "Should be disposed");
-      if (myActiveLookup != null) {
+      LookupImpl lookup2 = myActiveLookup;
+      if (lookup2 != null) {
         lookup.hide();
-        LOG.error("Non-cleaned-up lookup: " + lookup.isLookupDisposed());
+        LOG.error("Non-cleaned-up lookup: " + lookup.isLookupDisposed() + "; " + lookup2.isLookupDisposed() + "; " + (lookup2 == lookup));
       }
     }
   }
