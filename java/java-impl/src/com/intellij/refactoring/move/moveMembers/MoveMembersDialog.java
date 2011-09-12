@@ -36,6 +36,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.classMembers.MemberInfoChange;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.ui.JavaVisibilityPanel;
+import com.intellij.refactoring.ui.MemberSelectionPanel;
 import com.intellij.refactoring.ui.MemberSelectionTable;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -141,15 +142,6 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
     return "#com.intellij.refactoring.move.moveMembers.MoveMembersDialog";
   }
 
-  private JTable createTable() {
-    myMemberInfoModel = new MyMemberInfoModel();
-    myTable = new MemberSelectionTable(myMemberInfos, null);
-    myTable.setMemberInfoModel(myMemberInfoModel);
-    myTable.addMemberInfoChangeListener(myMemberInfoModel);
-    myMemberInfoModel.memberInfoChanged(new MemberInfoChange<PsiMember, MemberInfo>(myMemberInfos));
-    return myTable;
-  }
-
   protected JComponent createNorthPanel() {
     JPanel panel = new JPanel(new BorderLayout());
 
@@ -190,16 +182,14 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
 
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new BorderLayout());
-    JTable table = createTable();
-    if (table.getRowCount() > 0) {
-      table.getSelectionModel().addSelectionInterval(0, 0);
-    }
-    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(table);
-    Border border = IdeBorderFactory.createTitledBorder(
-      RefactoringBundle.message("move.members.members.to.be.moved.border.title"), false, false, true);
-    scrollPane.setBorder(border);
-    scrollPane.setBackground(UIUtil.getPanelBackground());
-    panel.add(scrollPane, BorderLayout.CENTER);
+    final String title = RefactoringBundle.message("move.members.members.to.be.moved.border.title");
+    final MemberSelectionPanel selectionPanel = new MemberSelectionPanel(title, myMemberInfos, null);
+    myTable = selectionPanel.getTable();
+    myMemberInfoModel = new MyMemberInfoModel();
+    myMemberInfoModel.memberInfoChanged(new MemberInfoChange<PsiMember, MemberInfo>(myMemberInfos));
+    selectionPanel.getTable().setMemberInfoModel(myMemberInfoModel);
+    selectionPanel.getTable().addMemberInfoChangeListener(myMemberInfoModel);
+    panel.add(selectionPanel, BorderLayout.CENTER);
 
     myVisibilityPanel = new JavaVisibilityPanel(true, true);
     myVisibilityPanel.setVisibility(null);
@@ -262,7 +252,7 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
 
   @Override
   protected void canRun() throws ConfigurationException {
-    if (getTargetClassName().length() == 0) throw new ConfigurationException("Destination class name not found");
+    //if (getTargetClassName().length() == 0) throw new ConfigurationException("Destination class name not found");
   }
 
   private String validateInputData() {
