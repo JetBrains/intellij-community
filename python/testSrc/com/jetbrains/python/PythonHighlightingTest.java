@@ -88,6 +88,10 @@ public class PythonHighlightingTest extends PyLightFixtureTestCase {
   public void testYieldOutsideOfFunction() {
     doTest();
   }
+  
+  public void testImportStarAtTopLevel() {
+    doTest(true, false);
+  }
 
   public void testMalformedStringUnterminated() {
     doTest();
