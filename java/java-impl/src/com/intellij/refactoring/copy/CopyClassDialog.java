@@ -16,6 +16,7 @@
 package com.intellij.refactoring.copy;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.ide.CopyPasteDelegator;
 import com.intellij.ide.util.PackageUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
@@ -139,6 +140,13 @@ class CopyClassDialog extends DialogWrapper{
                                              isLibraryClass);
     if (isLibraryClass) {
       myCbMoveToAnotherSourceFolder.setSelected(true);
+    }
+    if (myDefaultTargetDirectory != null) {
+      final Boolean showDirsChooser = myDefaultTargetDirectory.getCopyableUserData(CopyPasteDelegator.SHOW_CHOOSER_KEY);
+      if (showDirsChooser != null && showDirsChooser.booleanValue()) {
+        myCbMoveToAnotherSourceFolder.setVisible(false);
+        myCbMoveToAnotherSourceFolder.setSelected(true);
+      }
     }
     gbConstraints.gridy = 3;
     gbConstraints.gridx = 0;

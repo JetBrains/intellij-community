@@ -23,6 +23,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDirectoryContainer;
 import com.intellij.psi.PsiElement;
@@ -38,6 +39,7 @@ import javax.swing.*;
 
 public abstract class CopyPasteDelegator implements CopyPasteSupport {
   private static final ExtensionPointName<PasteProvider> EP_NAME = ExtensionPointName.create("com.intellij.filePasteProvider");
+  public static final Key<Boolean> SHOW_CHOOSER_KEY = Key.create("show.dirs.chooser");
 
   private final Project myProject;
   private final JComponent myKeyReceiver;
@@ -130,6 +132,7 @@ public abstract class CopyPasteDelegator implements CopyPasteSupport {
       final boolean[] isCopied = new boolean[1];
       final PsiElement[] elements = PsiCopyPasteManager.getInstance().getElements(isCopied);
       if (elements == null) return false;
+      PsiDirectory targetDirectory = null;
       try {
         PsiElement target = LangDataKeys.PASTE_TARGET_PSI_ELEMENT.getData(dataContext);
         final Module module = LangDataKeys.MODULE.getData(dataContext);
@@ -140,9 +143,14 @@ public abstract class CopyPasteDelegator implements CopyPasteSupport {
           }
         }
         if (isCopied[0]) {
-          PsiDirectory targetDirectory = target instanceof PsiDirectory ? (PsiDirectory)target : null;
+          targetDirectory = target instanceof PsiDirectory ? (PsiDirectory)target : null;
           if (targetDirectory == null && target instanceof PsiDirectoryContainer) {
-            targetDirectory = MoveFilesOrDirectoriesUtil.resolveToDirectory(myProject, target);
+            final PsiDirectory[] directories = module == null ? ((PsiDirectoryContainer)target).getDirectories()
+                                                              : ((PsiDirectoryContainer)target).getDirectories(GlobalSearchScope.moduleScope(module));
+            if (directories.length > 0) {
+              targetDirectory = directories[0];
+              targetDirectory.putCopyableUserData(SHOW_CHOOSER_KEY, directories.length > 1);
+            }
           }
           if (CopyHandler.canCopy(elements)) {
             CopyHandler.doCopy(elements, targetDirectory);
@@ -161,6 +169,9 @@ public abstract class CopyPasteDelegator implements CopyPasteSupport {
       }
       finally {
         updateView();
+        if (targetDirectory != null) {
+          targetDirectory.putCopyableUserData(SHOW_CHOOSER_KEY, null);
+        }
       }
       return true;
     }
