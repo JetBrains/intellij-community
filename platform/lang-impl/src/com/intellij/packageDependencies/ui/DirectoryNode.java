@@ -155,7 +155,9 @@ public class DirectoryNode extends PackageDependenciesNode {
   @Nullable
   private PsiDirectory getPsiDirectory() {
     if (myDirectory == null) {
-      myDirectory = PsiManager.getInstance(myProject).findDirectory(myVDirectory);
+      if (myVDirectory.isValid()) {
+        myDirectory = PsiManager.getInstance(myProject).findDirectory(myVDirectory);
+      }
     }
     return myDirectory;
   }
