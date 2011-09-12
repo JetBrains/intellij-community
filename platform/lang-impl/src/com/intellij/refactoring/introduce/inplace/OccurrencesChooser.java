@@ -40,7 +40,10 @@ import java.util.List;
  * User: anna
  * Date: 10/14/10
  */
-public class OccurrencesChooser<T extends PsiElement> {
+// Please do not make this class concrete<PsiElement>.
+// This prevents languages with polyadic expressions or sequences
+// from reusing it, use simpleChooser instead.
+public abstract class OccurrencesChooser<T> {
   public static enum ReplaceChoice {
     NO("Replace this occurrence only"), NO_WRITE("Replace all occurrences but write"), ALL("Replace all {0} occurrences");
 
@@ -54,7 +57,15 @@ public class OccurrencesChooser<T extends PsiElement> {
       return myDescription;
     }
   }
-
+  
+  public static <T extends PsiElement> OccurrencesChooser<T> simpleChooser(Editor editor) {
+    return new OccurrencesChooser<T>(editor) {
+      @Override
+      protected TextRange getOccurrenceRange(T occurrence) {
+        return occurrence.getTextRange();
+      }
+    };
+  }
 
   private final Set<RangeHighlighter> myRangeHighlighters = new HashSet<RangeHighlighter>();
   private final Editor myEditor;
@@ -142,9 +153,7 @@ public class OccurrencesChooser<T extends PsiElement> {
       .createPopup().showInBestPositionFor(myEditor);
   }
 
-  protected TextRange getOccurrenceRange(T occurrence) {
-    return occurrence.getTextRange();
-  }
+  protected abstract TextRange getOccurrenceRange(T occurrence);
 
   private void dropHighlighters() {
     for (RangeHighlighter highlight : myRangeHighlighters) {
