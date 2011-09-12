@@ -17,6 +17,7 @@
 package com.intellij.refactoring.copy;
 
 import com.intellij.CommonBundle;
+import com.intellij.ide.CopyPasteDelegator;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -27,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil;
@@ -60,8 +62,12 @@ public class CopyFilesOrDirectoriesHandler implements CopyHandlerDelegate {
     if (defaultTargetDirectory == null) {
       defaultTargetDirectory = getCommonParentDirectory(elements);
     }
-
     Project project = defaultTargetDirectory != null ? defaultTargetDirectory.getProject() : elements [0].getProject();
+    if (defaultTargetDirectory != null) {
+      defaultTargetDirectory = resolveDirectory(defaultTargetDirectory);
+      if (defaultTargetDirectory == null) return;
+    }
+
     CopyFilesOrDirectoriesDialog dialog = new CopyFilesOrDirectoriesDialog(elements, defaultTargetDirectory, project, false);
     dialog.show();
     if (dialog.isOK()) {
@@ -279,5 +285,20 @@ public class CopyFilesOrDirectoriesHandler implements CopyHandlerDelegate {
       } else return true;
     }
     return false;
+  }
+
+  @Nullable
+  protected static PsiDirectory resolveDirectory(@NotNull PsiDirectory defaultTargetDirectory) {
+    final Project project = defaultTargetDirectory.getProject();
+    final Boolean showDirsChooser = defaultTargetDirectory.getCopyableUserData(CopyPasteDelegator.SHOW_CHOOSER_KEY);
+    if (showDirsChooser != null && showDirsChooser.booleanValue()) {
+      final PsiDirectoryContainer directoryContainer =
+        PsiDirectoryFactory.getInstance(project).getDirectoryContainer(defaultTargetDirectory);
+      if (directoryContainer == null) {
+        return defaultTargetDirectory;
+      }
+      return MoveFilesOrDirectoriesUtil.resolveToDirectory(project, directoryContainer);
+    }
+    return defaultTargetDirectory;
   }
 }

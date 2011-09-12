@@ -16,6 +16,7 @@
 package com.intellij.refactoring.copy;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.ide.CopyPasteDelegator;
 import com.intellij.ide.util.PackageUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
@@ -28,6 +29,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -140,6 +142,13 @@ class CopyClassDialog extends DialogWrapper{
     if (isLibraryClass) {
       myCbMoveToAnotherSourceFolder.setSelected(true);
     }
+    if (myDefaultTargetDirectory != null) {
+      final Boolean showDirsChooser = myDefaultTargetDirectory.getCopyableUserData(CopyPasteDelegator.SHOW_CHOOSER_KEY);
+      if (showDirsChooser != null && showDirsChooser.booleanValue()) {
+        myCbMoveToAnotherSourceFolder.setVisible(false);
+        myCbMoveToAnotherSourceFolder.setSelected(true);
+      }
+    }
     gbConstraints.gridy = 3;
     gbConstraints.gridx = 0;
     gbConstraints.gridwidth = 2;
@@ -198,11 +207,16 @@ class CopyClassDialog extends DialogWrapper{
               }
             }.execute();
           } else {
-            final Module module = ModuleUtil.findModuleForFile(myDefaultTargetDirectory.getVirtualFile(), myProject);
-            if (module != null) {
-              myTargetDirectory = MoveClassesOrPackagesUtil.chooseDestinationPackage(myProject, packageName, myDefaultTargetDirectory);
+            final PsiPackage aPackage = myDefaultTargetDirectory != null ? JavaDirectoryService.getInstance().getPackage(myDefaultTargetDirectory) : null;
+            if (aPackage != null && Comparing.strEqual(aPackage.getQualifiedName(), packageName)) {
+              myTargetDirectory = myDefaultTargetDirectory;
             } else {
-              errorString[0] = "No module found for directory \'" + myDefaultTargetDirectory.getVirtualFile().getPresentableUrl() + "\'";
+              final Module module = ModuleUtil.findModuleForFile(myDefaultTargetDirectory.getVirtualFile(), myProject);
+              if (module != null) {
+                myTargetDirectory = MoveClassesOrPackagesUtil.chooseDestinationPackage(myProject, packageName, myDefaultTargetDirectory);
+              } else {
+                errorString[0] = "No module found for directory \'" + myDefaultTargetDirectory.getVirtualFile().getPresentableUrl() + "\'";
+              }
             }
           }
           if (myTargetDirectory == null) {

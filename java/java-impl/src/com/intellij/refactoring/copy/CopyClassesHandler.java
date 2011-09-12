@@ -142,6 +142,8 @@ public class CopyClassesHandler implements CopyHandlerDelegate {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         targetDirectory = defaultTargetDirectory;
       } else {
+        defaultTargetDirectory = CopyFilesOrDirectoriesHandler.resolveDirectory(defaultTargetDirectory);
+        if (defaultTargetDirectory == null) return;
         final CopyFilesOrDirectoriesDialog dialog = new CopyFilesOrDirectoriesDialog(PsiUtilBase.toPsiFileArray(classes.keySet()),
                                                                                defaultTargetDirectory, project, false);
         dialog.show();

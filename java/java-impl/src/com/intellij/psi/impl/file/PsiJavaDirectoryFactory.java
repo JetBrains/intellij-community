@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
@@ -48,6 +49,12 @@ public class PsiJavaDirectoryFactory extends PsiDirectoryFactory {
       return "";
     }
     return presentable ? ProjectUtil.getLocationRelativeToUserHome(directory.getVirtualFile().getPresentableUrl()) : "";
+  }
+
+  @Nullable
+  @Override
+  public PsiDirectoryContainer getDirectoryContainer(@NotNull PsiDirectory directory) {
+    return JavaDirectoryService.getInstance().getPackage(directory);
   }
 
   @Override
