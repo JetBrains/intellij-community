@@ -288,10 +288,8 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
       .inside(PyWithStatement.class)
     );
 
-  private static final FilterPattern IN_COND_STMT = new FilterPattern(
-    new InSequenceFilter(psiElement(PyStatementList.class), psiElement(PyConditionalStatementPart.class))
-  );
-
+  private static final PsiElementPattern.Capture<PsiElement> IN_COND_STMT =
+    psiElement().inside(psiElement(PyStatementList.class).inside(psiElement(PyConditionalStatementPart.class)));
 
   private static final FilterPattern IN_IF_BODY = new FilterPattern(
     new InSequenceFilter(psiElement(PyStatementList.class), psiElement(PyIfPart.class))

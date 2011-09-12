@@ -58,24 +58,24 @@ public class UnindentingInsertHandler implements InsertHandler<PythonLookupEleme
 
     int last_offset = nonspace_offset + "finally".length(); // the longest of all
     if (last_offset > offset) last_offset = offset;
-    int local_length = last_offset - nonspace_offset;
+    int local_length = last_offset - nonspace_offset + 1;
     if (local_length > 0) {
       String piece = text.subSequence(nonspace_offset, last_offset+1).toString();
       final int else_len = "else".length();
       if (local_length >= else_len) {
-        if ((piece.startsWith("else") || piece.startsWith("elif")) && (piece.charAt(else_len) < 'a' || piece.charAt(else_len) < 'z')) {
+        if ((piece.startsWith("else") || piece.startsWith("elif")) && (else_len == piece.length() || piece.charAt(else_len) < 'a' || piece.charAt(else_len) > 'z')) {
           matcher = ELSE_MATCHER;
         }
       }
       final int except_len = "except".length();
       if (local_length >= except_len) {
-        if (piece.startsWith("except") && (piece.charAt(except_len) < 'a' || piece.charAt(except_len) < 'z')) {
+        if (piece.startsWith("except") && (except_len == piece.length() || piece.charAt(except_len) < 'a' || piece.charAt(except_len) > 'z')) {
           matcher = TRY_MATCHER;
         }
       }
       final int finally_len = "finally".length();
       if (local_length >= finally_len) {
-        if (piece.startsWith("finally") && (piece.charAt(finally_len) < 'a' || piece.charAt(finally_len) < 'z')) {
+        if (piece.startsWith("finally") && (finally_len == piece.length() || piece.charAt(finally_len) < 'a' || piece.charAt(finally_len) > 'z')) {
           matcher = TRY_MATCHER;
         }
       }
