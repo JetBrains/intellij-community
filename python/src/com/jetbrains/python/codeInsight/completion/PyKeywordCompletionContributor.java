@@ -16,10 +16,9 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonLanguage;
-import com.jetbrains.python.codeInsight.*;
+import com.jetbrains.python.codeInsight.PySeeingOriginalCompletionContributor;
+import com.jetbrains.python.codeInsight.UnindentingInsertHandler;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.patterns.Matcher;
-import com.jetbrains.python.psi.patterns.SyntaxMatchers;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,12 +45,6 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
       return true;
     }
     return false;
-  }
-
-  private static class InDefinitionFilter extends MatcherBasedFilter {
-    Matcher getMatcher() {
-      return SyntaxMatchers.IN_DEFINITION;
-    }
   }
 
   /**
@@ -301,8 +294,6 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
   private static final PsiElementPattern.Capture<PsiElement> IN_EXCEPT_BODY =
     psiElement().inside(psiElement(PyStatementList.class).inside(psiElement(PyExceptPart.class)));
 
-  private static final FilterPattern IN_DEFINITION = new FilterPattern(new InDefinitionFilter());
-
   private static final PsiElementPattern.Capture<PsiElement> AFTER_IF = afterStatement(psiElement(PyIfStatement.class));
   private static final PsiElementPattern.Capture<PsiElement> AFTER_TRY = afterStatement(psiElement(PyTryExceptStatement.class));
 
@@ -383,7 +374,6 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
         .andNot(IN_IMPORT_STMT)
         .andNot(IN_PARAM_LIST)
         .andNot(IN_ARG_LIST)
-        .andNot(IN_DEFINITION)
         .andNot(BEFORE_COND)
         .andNot(AFTER_QUALIFIER).andNot(IN_STRING_LITERAL)
       ,
@@ -405,7 +395,6 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
       .andNot(IN_IMPORT_STMT)
       .andNot(IN_PARAM_LIST)
       .andNot(IN_ARG_LIST)
-      .andNot(IN_DEFINITION)
       .andNot(BEFORE_COND)
       .andNot(AFTER_QUALIFIER);
 
@@ -529,7 +518,6 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
       .andNot(BEFORE_COND)
       .andNot(IN_IMPORT_STMT) // expressions there are not logical anyway
       .andNot(IN_PARAM_LIST)
-      .andNot(IN_DEFINITION)
       .andNot(AFTER_QUALIFIER).
         andNot(IN_STRING_LITERAL).and(IN_BEGIN_STMT)
       ,
@@ -544,7 +532,6 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
       .andNot(IN_COMMENT)
       .andNot(IN_IMPORT_STMT)
       .andNot(IN_PARAM_LIST)
-      .andNot(IN_DEFINITION)
       .andNot(AFTER_QUALIFIER).andNot(IN_STRING_LITERAL)
       ,
       new PyKeywordCompletionProvider("not", "lambda")
