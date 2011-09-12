@@ -327,8 +327,8 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
 
   private static final FilterPattern IN_DEFINITION = new FilterPattern(new InDefinitionFilter());
 
-  private static final FilterPattern AFTER_IF = new FilterPattern(new PrecededByFilter(psiElement(PyIfStatement.class)));
-  private static final FilterPattern AFTER_TRY = new FilterPattern(new PrecededByFilter(psiElement(PyTryExceptStatement.class)));
+  private static final PsiElementPattern.Capture<PsiElement> AFTER_IF = afterStatement(psiElement(PyIfStatement.class));
+  private static final PsiElementPattern.Capture<PsiElement> AFTER_TRY = afterStatement(psiElement(PyTryExceptStatement.class));
 
   private static final FilterPattern AFTER_LOOP_NO_ELSE = new FilterPattern(new PrecededByFilter(
     psiElement()
@@ -336,9 +336,14 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
       .withLastChild(StandardPatterns.not(psiElement(PyElsePart.class)))
   ));
 
-  private static final FilterPattern AFTER_COND_STMT_NO_ELSE = new FilterPattern(new PrecededByFilter(
-    psiElement().withChild(psiElement(PyConditionalStatementPart.class)).withLastChild(StandardPatterns.not(psiElement(PyElsePart.class)))
-  ));
+  private static final PsiElementPattern.Capture<PsiElement> AFTER_COND_STMT_NO_ELSE =
+    afterStatement(psiElement().withChild(psiElement(PyConditionalStatementPart.class))
+      .withLastChild(StandardPatterns.not(psiElement(PyElsePart.class))));
+
+  private static <T extends PsiElement> PsiElementPattern.Capture<PsiElement> afterStatement(final PsiElementPattern.Capture<T> statementPattern) {
+    return psiElement().atStartOf(psiElement(PyExpressionStatement.class)
+                                    .afterSiblingSkipping(psiElement().whitespaceCommentEmptyOrError(), statementPattern));
+  }
 
   private static final FilterPattern AFTER_TRY_NO_ELSE = new FilterPattern(new PrecededByFilter(
     psiElement().withChild(psiElement(PyTryPart.class)).withLastChild(StandardPatterns.not(psiElement(PyElsePart.class)))
