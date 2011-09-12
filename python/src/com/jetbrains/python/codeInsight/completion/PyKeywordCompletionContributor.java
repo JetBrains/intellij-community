@@ -330,11 +330,13 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
   private static final PsiElementPattern.Capture<PsiElement> AFTER_IF = afterStatement(psiElement(PyIfStatement.class));
   private static final PsiElementPattern.Capture<PsiElement> AFTER_TRY = afterStatement(psiElement(PyTryExceptStatement.class));
 
+  /*
   private static final FilterPattern AFTER_LOOP_NO_ELSE = new FilterPattern(new PrecededByFilter(
     psiElement()
       .withChild(StandardPatterns.or(psiElement(PyWhileStatement.class), psiElement(PyForStatement.class)))
       .withLastChild(StandardPatterns.not(psiElement(PyElsePart.class)))
   ));
+  */
 
   private static final PsiElementPattern.Capture<PsiElement> AFTER_COND_STMT_NO_ELSE =
     afterStatement(psiElement().withChild(psiElement(PyConditionalStatementPart.class))
@@ -345,14 +347,15 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
                                     .afterSiblingSkipping(psiElement().whitespaceCommentEmptyOrError(), statementPattern));
   }
 
-  private static final FilterPattern AFTER_TRY_NO_ELSE = new FilterPattern(new PrecededByFilter(
+  private static final PsiElementPattern.Capture<PsiElement> AFTER_TRY_NO_ELSE = afterStatement(
     psiElement().withChild(psiElement(PyTryPart.class)).withLastChild(StandardPatterns.not(psiElement(PyElsePart.class)))
-  ));
+  );
 
   private static final FilterPattern IN_FINALLY_NO_LOOP = new FilterPattern(new InFinallyNoLoopFilter());
 
   private static final FilterPattern IN_BEGIN_STMT = new FilterPattern(new StatementFitFilter());
 
+  /*
   private static final FilterPattern INSIDE_EXPR = new FilterPattern(new PrecededByFilter(
     psiElement(PyExpression.class)
   ));
@@ -360,6 +363,7 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
   private static final FilterPattern INSIDE_EXPR_AFTER_IF = new FilterPattern(new PrecededByFilter(
     psiElement(PyExpression.class).afterLeaf("if")
   ));
+  */
 
   private static final FilterPattern PY3K = new FilterPattern(new Py3kFilter());
 
@@ -456,7 +460,7 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
       .andNot(AFTER_QUALIFIER)
       .andNot(IN_PARAM_LIST)
       .andNot(IN_ARG_LIST)
-      .andOr(IN_LOOP, AFTER_LOOP_NO_ELSE)
+      .andOr(IN_LOOP/*, AFTER_LOOP_NO_ELSE*/)
       ,
       new PyKeywordCompletionProvider(TailType.NONE, "break")
     );
@@ -471,7 +475,7 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
       .andNot(IN_PARAM_LIST)
       .andNot(IN_ARG_LIST)
       .andNot(IN_FINALLY_NO_LOOP)
-      .andOr(IN_LOOP, AFTER_LOOP_NO_ELSE)
+      .andOr(IN_LOOP/*, AFTER_LOOP_NO_ELSE*/)
       ,
       new PyKeywordCompletionProvider(TailType.NONE, "continue")
     );
@@ -626,6 +630,7 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
 
   // FIXME: conditions must be severely reworked
 
+  /*
   private void addExprIf() {
     extend(
       CompletionType.BASIC, psiElement()
@@ -647,6 +652,7 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
       }
     );
   }
+  */
 
   private void addExprElse() {
     extend(

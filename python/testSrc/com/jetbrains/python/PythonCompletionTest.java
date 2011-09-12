@@ -269,6 +269,10 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
   public void testElseNotIndented() {
     doTest();
   }
+  
+  public void testElseInTryNotIndented() {
+    doTest();
+  }
 
   public void testElif() {
     doTest();
