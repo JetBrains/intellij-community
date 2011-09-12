@@ -694,6 +694,10 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     return myEditor;
   }
 
+  public JComponent getFocusTarget() {
+    return myEditor == null ? this : myEditor.getContentComponent();
+  }
+
   public Object getData(String dataId) {
     if (myEditor != null && myEditor.isRendererMode()) return null;
 
