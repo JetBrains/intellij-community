@@ -41,7 +41,7 @@ public class HighlightInfoHolder {
   private int myErrorCount;
   private final List<HighlightInfo> myInfos = new ArrayList<HighlightInfo>(5);
   private final AnnotationSession myAnnotationSession;
-  private EditorColorsScheme myCustomColorsScheme;
+  private final EditorColorsScheme myCustomColorsScheme;
 
   public HighlightInfoHolder(@NotNull final PsiFile contextFile,
                              @NotNull final HighlightInfoFilter... filters) {

@@ -38,52 +38,50 @@ public class XmlHighlightVisitorBasedInspection extends GlobalSimpleInspectionTo
   }
 
   @Override
-  public void checkFile(@NotNull PsiFile file,
+  public void checkFile(@NotNull final PsiFile file,
                         @NotNull final InspectionManager manager,
                         @NotNull ProblemsHolder problemsHolder,
                         @NotNull final GlobalInspectionContext globalContext,
                         @NotNull final ProblemDescriptionsProcessor problemDescriptionsProcessor) {
-    file.accept(new XmlRecursiveElementVisitor() {
-      final XmlHighlightVisitor highlightVisitor = new XmlHighlightVisitor();
-
-      HighlightInfoHolder myHolder;
-
+    HighlightInfoHolder myHolder = new HighlightInfoHolder(file, HighlightInfoFilter.EMPTY_ARRAY) {
       @Override
-      public void visitFile(final PsiFile file) {
-        myHolder = new HighlightInfoHolder(file, HighlightInfoFilter.EMPTY_ARRAY) {
-          @Override
-          public boolean add(@Nullable HighlightInfo info) {
-            if (info != null) {
-              ProblemHighlightType problemHighlightType = HighlightInfo.convertType(info.type);
-              GlobalInspectionUtil.createProblem(
-                file,
-                info.description,
-                problemHighlightType,
-                new TextRange(info.startOffset, info.endOffset),
-                manager,
-                problemDescriptionsProcessor,
-                globalContext
-              );
-            }
-            return true;
-          }
-        };
-        super.visitFile(file);
+      public boolean add(@Nullable HighlightInfo info) {
+        if (info != null) {
+          ProblemHighlightType problemHighlightType = HighlightInfo.convertType(info.type);
+          GlobalInspectionUtil.createProblem(
+            file,
+            info.description,
+            problemHighlightType,
+            new TextRange(info.startOffset, info.endOffset),
+            manager,
+            problemDescriptionsProcessor,
+            globalContext
+          );
+        }
+        return true;
       }
-
+    };
+    final XmlHighlightVisitor highlightVisitor = new XmlHighlightVisitor();
+    highlightVisitor.analyze(file, true, myHolder, new Runnable() {
       @Override
-      public void visitElement(PsiElement element) {
-        highlightVisitor.visit(element, myHolder);
-        super.visitElement(element);
+      public void run() {
+        file.accept(new XmlRecursiveElementVisitor() {
+          @Override
+          public void visitElement(PsiElement element) {
+            highlightVisitor.visit(element);
+            super.visitElement(element);
+          }
+        });
       }
     });
+
   }
 
   @Nls
   @NotNull
   @Override
   public String getGroupDisplayName() {
-    return "General";
+    return InspectionProfileEntry.GENERAL_GROUP_NAME;
   }
 
   @Nls

@@ -37,10 +37,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public class AnnotationHolderImpl extends SmartList<Annotation> implements AnnotationHolder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.AnnotationHolderImpl");
-  private AnnotationSession myAnnotationSession;
+  private final AnnotationSession myAnnotationSession;
 
-  AnnotationHolderImpl() {
-  }
   public AnnotationHolderImpl(@NotNull AnnotationSession session) {
     myAnnotationSession = session;
   }
@@ -146,19 +144,9 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
     return !isEmpty();
   }
 
-  void setSession(@NotNull AnnotationSession annotationSession) {
-    myAnnotationSession = annotationSession;
-  }
-
   @Override
   @NotNull("it's not null during highlighting")
   public AnnotationSession getCurrentAnnotationSession() {
     return myAnnotationSession;
-  }
-
-  @Override
-  public void clear() {
-    super.clear();
-    myAnnotationSession = null;
   }
 }

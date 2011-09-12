@@ -219,7 +219,7 @@ public class RefCountHolder {
     return false;
   }
 
-  public boolean analyze(Runnable analyze, final TextRange dirtyScope, final PsiFile file) {
+  public boolean analyze(@NotNull PsiFile file, TextRange dirtyScope, @NotNull Runnable analyze) {
     myState.compareAndSet(State.READY, State.VIRGIN);
     if (!myState.compareAndSet(State.VIRGIN, State.BEING_WRITTEN_BY_GHP)) {
       return false;

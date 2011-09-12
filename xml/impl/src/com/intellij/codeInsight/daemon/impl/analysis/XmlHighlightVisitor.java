@@ -46,7 +46,6 @@ import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
-import com.intellij.util.SmartList;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlExtension;
@@ -59,7 +58,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.text.MessageFormat;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.StringTokenizer;
 
@@ -90,8 +88,6 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
       return containingFile.getViewProvider().getBaseLanguage() != containingFile.getLanguage();
     }
   };
-  private List<HighlightInfo> myResult;
-
   private static boolean ourDoJaxpTesting;
 
   private static final TextAttributes NONEMPTY_TEXT_ATTRIBUTES = new TextAttributes() {
@@ -99,6 +95,10 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
       return false;
     }
   };
+  private HighlightInfoHolder myHolder;
+
+  public XmlHighlightVisitor() {
+  }
 
   private void addElementsForTag(XmlTag tag,
                                  String localizedMessage,
@@ -159,11 +159,11 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
   private void checkTag(XmlTag tag) {
     if (ourDoJaxpTesting) return;
 
-    if (myResult == null) {
+    if (!myHolder.hasErrorResults()) {
       checkTagByDescriptor(tag);
     }
 
-    if (myResult == null) {
+    if (!myHolder.hasErrorResults()) {
       if (!skipValidation(tag)) {
         final XmlElementDescriptor descriptor = tag.getDescriptor();
 
@@ -669,8 +669,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
   }
 
   private void addToResults(final HighlightInfo info) {
-    if (myResult == null) myResult = new SmartList<HighlightInfo>();
-    myResult.add(info);
+    myHolder.add(info);
   }
 
   public static void setDoJaxpTesting(boolean doJaxpTesting) {
@@ -724,20 +723,20 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     return file instanceof XmlFile;
   }
 
-  public void visit(@NotNull final PsiElement element, @NotNull final HighlightInfoHolder holder) {
+  public void visit(@NotNull final PsiElement element) {
     element.accept(this);
-
-    List<HighlightInfo> result = myResult;
-    holder.addAll(result);
-    myResult = null;
   }
 
-  public boolean analyze(@NotNull Runnable action, final boolean updateWholeFile, @NotNull final PsiFile file) {
+  public boolean analyze(@NotNull final PsiFile file,
+                         final boolean updateWholeFile,
+                         @NotNull HighlightInfoHolder holder,
+                         @NotNull Runnable action) {
+    myHolder = holder;
     try {
       action.run();
     }
     finally {
-      myResult = null;
+      myHolder = null;
     }
     return true;
   }

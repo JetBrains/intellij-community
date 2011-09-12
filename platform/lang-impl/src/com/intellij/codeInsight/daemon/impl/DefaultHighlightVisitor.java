@@ -47,7 +47,7 @@ import java.util.List;
  * @author yole
  */
 public class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
-  private final AnnotationHolderImpl myAnnotationHolder = new AnnotationHolderImpl();
+  private AnnotationHolderImpl myAnnotationHolder;
 
   public static final ExtensionPointName<HighlightErrorFilter> FILTER_EP_NAME = ExtensionPointName.create("com.intellij.highlightErrorFilter");
   private final HighlightErrorFilter[] myErrorFilters;
@@ -55,6 +55,7 @@ public class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
   private final boolean myHighlightErrorElements;
   private final boolean myRunAnnotators;
   private final DumbService myDumbService;
+  private HighlightInfoHolder myHolder;
 
   public DefaultHighlightVisitor(@NotNull Project project) {
     this(project, true, true);
@@ -71,16 +72,12 @@ public class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
     return true;
   }
 
-  public void visit(@NotNull PsiElement element, @NotNull HighlightInfoHolder holder) {
-    if (element instanceof PsiErrorElement) {
-      if (myHighlightErrorElements) visitErrorElement((PsiErrorElement)element, holder);
-    }
-    else {
-      if (myRunAnnotators) runAnnotators(element, holder, myAnnotationHolder);
-    }
-  }
-
-  public boolean analyze(@NotNull final Runnable action, final boolean updateWholeFile, @NotNull final PsiFile file) {
+  public boolean analyze(@NotNull final PsiFile file,
+                         final boolean updateWholeFile,
+                         @NotNull final HighlightInfoHolder holder,
+                         @NotNull final Runnable action) {
+    myHolder = holder;
+    myAnnotationHolder = new AnnotationHolderImpl(holder.getAnnotationSession());
     try {
       action.run();
     }
@@ -88,6 +85,21 @@ public class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
       myAnnotationHolder.clear();
     }
     return true;
+  }
+
+  public void visit(@NotNull PsiElement element) {
+    if (element instanceof PsiErrorElement) {
+      if (myHighlightErrorElements) visitErrorElement((PsiErrorElement)element);
+    }
+    else {
+      if (myRunAnnotators) runAnnotators(element);
+    }
+    if (myAnnotationHolder.hasAnnotations()) {
+      for (Annotation annotation : myAnnotationHolder) {
+        myHolder.add(HighlightInfo.fromAnnotation(annotation));
+      }
+      myAnnotationHolder.clear();
+    }
   }
 
   @NotNull
@@ -119,37 +131,25 @@ public class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
     });
   }
 
-  private void runAnnotators(PsiElement element, HighlightInfoHolder holder, AnnotationHolderImpl annotationHolder) {
+  private void runAnnotators(PsiElement element) {
     List<Annotator> annotators = cachedAnnotators.get(element.getLanguage());
     if (annotators.isEmpty()) return;
     final boolean dumb = myDumbService.isDumb();
-    annotationHolder.setSession(holder.getAnnotationSession());
 
-    try {
-      //noinspection ForLoopReplaceableByForEach
-      for (int i = 0; i < annotators.size(); i++) {
-        Annotator annotator = annotators.get(i);
-        if (dumb && !DumbService.isDumbAware(annotator)) {
-          continue;
-        }
-
-        ProgressManager.checkCanceled();
-
-        annotator.annotate(element, annotationHolder);
+    //noinspection ForLoopReplaceableByForEach
+    for (int i = 0; i < annotators.size(); i++) {
+      Annotator annotator = annotators.get(i);
+      if (dumb && !DumbService.isDumbAware(annotator)) {
+        continue;
       }
 
-      if (annotationHolder.hasAnnotations()) {
-        for (Annotation annotation : annotationHolder) {
-          holder.add(HighlightInfo.fromAnnotation(annotation));
-        }
-      }
-    }
-    finally {
-      annotationHolder.clear();
+      ProgressManager.checkCanceled();
+
+      annotator.annotate(element, myAnnotationHolder);
     }
   }
 
-  private void visitErrorElement(final PsiErrorElement element, HighlightInfoHolder myHolder) {
+  private void visitErrorElement(final PsiErrorElement element) {
     for(HighlightErrorFilter errorFilter: myErrorFilters) {
       if (!errorFilter.shouldHighlightErrorElement(element)) return;
     }

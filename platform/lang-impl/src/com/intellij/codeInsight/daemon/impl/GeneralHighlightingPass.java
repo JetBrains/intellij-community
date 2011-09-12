@@ -468,14 +468,14 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       HighlightVisitor[] filtered = filterVisitors(visitors, injectedPsi);
       final List<PsiElement> elements = CollectHighlightsUtil.getElementsInRange(injectedPsi, 0, injectedPsi.getTextLength());
       for (final HighlightVisitor hvisitor : filtered) {
-        hvisitor.analyze(new Runnable() {
+        hvisitor.analyze(injectedPsi, true, holder, new Runnable() {
           public void run() {
             for (PsiElement element : elements) {
               progress.checkCanceled();
-              hvisitor.visit(element, holder);
+              hvisitor.visit(element);
             }
           }
-        }, true, injectedPsi);
+        });
       }
     }
     finally {
@@ -543,7 +543,6 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     return new ArrayList<HighlightInfo>(myHighlights);
   }
 
-  private final Map<TextRange, RangeMarker> ranges2markersCache = new THashMap<TextRange, RangeMarker>();
   private void collectHighlights(@NotNull final List<PsiElement> elements1,
                                  @NotNull final Runnable after1,
                                  @NotNull final List<PsiElement> elements2,
@@ -580,7 +579,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
             for (final HighlightVisitor visitor : visitors) {
               try {
-                visitor.visit(element, holder);
+                visitor.visit(element);
               }
               catch (ProcessCanceledException e) {
                 throw e;
@@ -626,13 +625,102 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       }
     };
 
-    analyzeByVisitors(progress, visitors, action, 0);
+    analyzeByVisitors(progress, visitors, holder, 0, action);
   }
 
+  //private void collectHighlights(@NotNull final List<PsiElement> elements1,
+  //                               @NotNull final Runnable after1,
+  //                               @NotNull final List<PsiElement> elements2,
+  //                               @NotNull final ProgressIndicator progress,
+  //                               @NotNull final HighlightVisitor[] visitors,
+  //                               @NotNull final Set<HighlightInfo> gotHighlights,
+  //                               final boolean forceHighlightParents) {
+  //  final HighlightInfoHolder holder = createInfoHolder(myFile);
+  //
+  //  final int chunkSize = Math.max(1, (elements1.size()+elements2.size()) / 100); // one percent precision is enough
+  //
+  //  final Runnable action = new Runnable() {
+  //    public void run() {
+  //      //noinspection unchecked
+  //      boolean failed = false;
+  //      PsiNodeTask task = new PsiNodeTask(myFile){
+  //        @Override
+  //        protected boolean highlight(PsiElement element) {
+  //          holder.clear();
+  //
+  //          for (final HighlightVisitor visitor : visitors) {
+  //            try {
+  //              visitor.visit(element);
+  //            }
+  //            catch (ProcessCanceledException e) {
+  //              throw e;
+  //            }
+  //            catch (IndexNotReadyException e) {
+  //              throw e;
+  //            }
+  //            catch (WolfTheProblemSolverImpl.HaveGotErrorException e) {
+  //              throw e;
+  //            }
+  //            catch (Exception e) {
+  //                LOG.error(e);
+  //            }
+  //          }
+  //
+  //          //noinspection ForLoopReplaceableByForEach
+  //          for (int j = 0; j < holder.size(); j++) {
+  //            final HighlightInfo info = holder.get(j);
+  //            assert info != null;
+  //            // have to filter out already obtained highlights
+  //            if (!gotHighlights.add(info)) continue;
+  //            boolean isError = info.getSeverity() == HighlightSeverity.ERROR;
+  //            if (isError) {
+  //              if (!forceHighlightParents) {
+  //                skipParentsSet.add(element.getParent());
+  //              }
+  //              myErrorFound = true;
+  //            }
+  //            myTransferToEDTQueue.offer(Pair.create(info, progress));
+  //          }
+  //          return true;
+  //        }
+  //      };
+  //      JobSchedulerImpl.submitTask();
+  //      for (List<PsiElement> elements : new List[]{elements1, elements2}) {
+  //        int nextLimit = chunkSize;
+  //        for (int i = 0; i < elements.size(); i++) {
+  //          PsiElement element = elements.get(i);
+  //          progress.checkCanceled();
+  //
+  //          if (element != myFile && !skipParentsSet.isEmpty() && element.getFirstChild() != null && skipParentsSet.contains(element)) {
+  //            skipParentsSet.add(element.getParent());
+  //            continue;
+  //          }
+  //
+  //          if (element instanceof PsiErrorElement) {
+  //            myHasErrorElement = true;
+  //          }
+  //          kjlhkjh
+  //          if (i == nextLimit) {
+  //            advanceProgress(chunkSize);
+  //            nextLimit = i + chunkSize;
+  //          }
+  //
+  //        }
+  //        advanceProgress(elements.size() - (nextLimit-chunkSize));
+  //        if (elements == elements1) after1.run();
+  //      }
+  //    }
+  //  };
+  //
+  //  analyzeByVisitors(progress, visitors, holder, 0, action);
+  //}
+
+  private final Map<TextRange, RangeMarker> ranges2markersCache = new THashMap<TextRange, RangeMarker>();
   private final TransferToEDTQueue<Pair<HighlightInfo,ProgressIndicator>> myTransferToEDTQueue
     = new TransferToEDTQueue<Pair<HighlightInfo,ProgressIndicator>>("Apply highlighting results", new Processor<Pair<HighlightInfo,ProgressIndicator>>() {
     @Override
     public boolean process(Pair<HighlightInfo,ProgressIndicator> pair) {
+      ApplicationManager.getApplication().assertIsDispatchThread();
       ProgressIndicator indicator = pair.getSecond();
       if (indicator.isCanceled()) {
         return false;
@@ -646,17 +734,20 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     }
   }, myProject.getDisposed(), 200);
 
-  private void analyzeByVisitors(final ProgressIndicator progress, final HighlightVisitor[] visitors, final Runnable action, final int i) {
+  private void analyzeByVisitors(@NotNull final ProgressIndicator progress,
+                                 @NotNull final HighlightVisitor[] visitors,
+                                 @NotNull final HighlightInfoHolder holder,
+                                 final int i, @NotNull final Runnable action) {
     if (i == visitors.length) {
       action.run();
     }
     else {
-      if (!visitors[i].analyze(new Runnable() {
+      if (!visitors[i].analyze(myFile, myUpdateAll, holder, new Runnable() {
         @Override
         public void run() {
-          analyzeByVisitors(progress, visitors, action, i+1);
+          analyzeByVisitors(progress, visitors, holder, i+1, action);
         }
-      }, myUpdateAll, myFile)) {
+      })) {
         cancelAndRestartDaemonLater(progress, myProject, this);
       }
     }
