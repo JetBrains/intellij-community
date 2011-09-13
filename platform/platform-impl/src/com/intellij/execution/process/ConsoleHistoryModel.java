@@ -14,7 +14,7 @@ import java.util.List;
  */
 public class ConsoleHistoryModel implements ModificationTracker {
 
-  private int myHistoryCursor;
+  private int myHistoryCursor = -1;
   private final LinkedList<String> myHistory = new LinkedList<String>();
   private volatile long myModificationTracker;
 
