@@ -15,35 +15,26 @@
  */
 package com.intellij.refactoring.copy;
 
-import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.ide.CopyPasteDelegator;
-import com.intellij.ide.util.PackageUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.help.HelpManager;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil;
+import com.intellij.refactoring.move.moveClassesOrPackages.DestinationFolderComboBox;
 import com.intellij.refactoring.ui.PackageNameReferenceEditorCombo;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.ui.EditorTextField;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.RecentsManager;
 import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -58,16 +49,19 @@ class CopyClassDialog extends DialogWrapper{
   private EditorTextField myNameField;
   private final JLabel myPackageLabel = new JLabel();
   private ReferenceEditorComboWithBrowseButton myTfPackage;
-  private final PsiClass myClass2Copy;
   private final Project myProject;
   private PsiDirectory myTargetDirectory;
   private final boolean myDoClone;
   private final PsiDirectory myDefaultTargetDirectory;
-  private final JCheckBox myCbMoveToAnotherSourceFolder = new JCheckBox(RefactoringBundle.message("move.classes.move.to.another.source.folder"));
+  private final DestinationFolderComboBox myDestinationCB = new DestinationFolderComboBox() {
+    @Override
+    public String getTargetPackage() {
+      return myTfPackage.getText().trim();
+    }
+  };
 
   public CopyClassDialog(PsiClass aClass, PsiDirectory defaultTargetDirectory, Project project, boolean doClone) {
     super(project, true);
-    myClass2Copy = aClass;
     myProject = project;
     myDefaultTargetDirectory = defaultTargetDirectory;
     myDoClone = doClone;
@@ -75,6 +69,7 @@ class CopyClassDialog extends DialogWrapper{
                   RefactoringBundle.message("copy.class.copy.0.1", UsageViewUtil.getType(aClass), UsageViewUtil.getLongName(aClass));
     myInformationLabel.setText(text);
     init();
+    myDestinationCB.setData(myProject, myTfPackage, defaultTargetDirectory, ProjectRootManager.getInstance(myProject).getContentSourceRoots());
     myNameField.setText(UsageViewUtil.getShortName(aClass));
   }
 
@@ -130,31 +125,28 @@ class CopyClassDialog extends DialogWrapper{
     myPackageLabel.setLabelFor(myTfPackage);
 
     panel.add(myTfPackage, gbConstraints);
+
+    final JBLabel label = new JBLabel(RefactoringBundle.message("target.destination.folder"));
     if (myDoClone) {
       myTfPackage.setVisible(false);
       myPackageLabel.setVisible(false);
-      myCbMoveToAnotherSourceFolder.setVisible(false);
+      myDestinationCB.setVisible(false);
+      label.setVisible(false);
     }
 
-    final boolean isLibraryClass = !myClass2Copy.getManager().isInProject(myClass2Copy);
-    myCbMoveToAnotherSourceFolder.setEnabled(ProjectRootManager.getInstance(myProject).getContentSourceRoots().length > 1 ||
-                                             isLibraryClass);
-    if (isLibraryClass) {
-      myCbMoveToAnotherSourceFolder.setSelected(true);
-    }
-    if (myDefaultTargetDirectory != null) {
-      final Boolean showDirsChooser = myDefaultTargetDirectory.getCopyableUserData(CopyPasteDelegator.SHOW_CHOOSER_KEY);
-      if (showDirsChooser != null && showDirsChooser.booleanValue()) {
-        myCbMoveToAnotherSourceFolder.setVisible(false);
-        myCbMoveToAnotherSourceFolder.setSelected(true);
-      }
-    }
     gbConstraints.gridy = 3;
     gbConstraints.gridx = 0;
     gbConstraints.gridwidth = 2;
-    gbConstraints.anchor = GridBagConstraints.EAST;
+    gbConstraints.insets.top = 12;
+    gbConstraints.anchor = GridBagConstraints.WEST;
     gbConstraints.fill = GridBagConstraints.NONE;
-    panel.add(myCbMoveToAnotherSourceFolder, gbConstraints);
+    panel.add(label, gbConstraints);
+
+    gbConstraints.gridy = 4;
+    gbConstraints.gridx = 0;
+    gbConstraints.fill = GridBagConstraints.HORIZONTAL;
+    gbConstraints.insets.top = 4;
+    panel.add(myDestinationCB, gbConstraints);
 
     return panel;
   }
@@ -195,30 +187,15 @@ class CopyClassDialog extends DialogWrapper{
       }
       else if (!myDoClone) {
         try {
-          if (myCbMoveToAnotherSourceFolder.isSelected() && myCbMoveToAnotherSourceFolder.isEnabled()) {
-            final PackageWrapper targetPackage = new PackageWrapper(manager, packageName);
-            final VirtualFile sourceRoot = MoveClassesOrPackagesUtil
-              .chooseSourceRoot(targetPackage, ProjectRootManager.getInstance(myProject).getContentSourceRoots(), myDefaultTargetDirectory);
-            if (sourceRoot == null) return;
-            new WriteCommandAction(myProject, CodeInsightBundle.message("create.directory.command")){
-              @Override
-              protected void run(Result objectResult) throws Throwable {
-                myTargetDirectory = RefactoringUtil.createPackageDirectoryInSourceRoot(targetPackage, sourceRoot);
-              }
-            }.execute();
-          } else {
-            final PsiPackage aPackage = myDefaultTargetDirectory != null ? JavaDirectoryService.getInstance().getPackage(myDefaultTargetDirectory) : null;
-            if (aPackage != null && Comparing.strEqual(aPackage.getQualifiedName(), packageName)) {
-              myTargetDirectory = myDefaultTargetDirectory;
-            } else {
-              final Module module = ModuleUtil.findModuleForFile(myDefaultTargetDirectory.getVirtualFile(), myProject);
-              if (module != null) {
-                myTargetDirectory = MoveClassesOrPackagesUtil.chooseDestinationPackage(myProject, packageName, myDefaultTargetDirectory);
-              } else {
-                errorString[0] = "No module found for directory \'" + myDefaultTargetDirectory.getVirtualFile().getPresentableUrl() + "\'";
-              }
+          final PackageWrapper targetPackage = new PackageWrapper(manager, packageName);
+          final MoveDestination destination = myDestinationCB.selectDirectory(targetPackage, false);
+          if (destination == null) return;
+          myTargetDirectory = ApplicationManager.getApplication().runWriteAction(new Computable<PsiDirectory>() {
+            @Override
+            public PsiDirectory compute() {
+              return destination.getTargetDirectory(myDefaultTargetDirectory);
             }
-          }
+          });
           if (myTargetDirectory == null) {
             if (errorString[0] == null) {
               errorString[0] = ""; // message already reported by PackageUtil

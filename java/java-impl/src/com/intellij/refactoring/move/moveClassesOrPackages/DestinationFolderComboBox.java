@@ -26,15 +26,16 @@ import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.ComboBoxWithWidePopup;
-import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
+import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -48,6 +49,9 @@ import java.util.LinkedHashSet;
  * Date: 9/13/11
  */
 public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton {
+  private PsiDirectory myInitialTargetDirectory;
+  private VirtualFile[] mySourceRoots;
+
   public DestinationFolderComboBox() {
     super(new ComboBoxWithWidePopup());
   }
@@ -58,6 +62,8 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
                       final ReferenceEditorComboWithBrowseButton packageChooser,
                       final PsiDirectory initialTargetDirectory,
                       final VirtualFile[] sourceRoots) {
+    myInitialTargetDirectory = initialTargetDirectory;
+    mySourceRoots = sourceRoots;
     new ComboboxSpeedSearch(getComboBox()) {
       @Override
       protected String getElementText(Object element) {
@@ -122,6 +128,20 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
     setComboboxModel(getComboBox(), initialSourceRoot, fileIndex, sourceRoots, project, false);
   }
 
+  @Nullable
+  public MoveDestination selectDirectory(final PackageWrapper targetPackage, final boolean showChooserWhenDefault) {
+    final DirectoryChooser.ItemWrapper selectedItem = (DirectoryChooser.ItemWrapper)getComboBox().getSelectedItem();
+    if (selectedItem == null) {
+      return new MultipleRootsMoveDestination(targetPackage);
+    }
+    final PsiDirectory selectedPsiDirectory = selectedItem.getDirectory();
+    VirtualFile selectedDestination = selectedPsiDirectory.getVirtualFile();
+    if (showChooserWhenDefault && selectedDestination == myInitialTargetDirectory) {
+      selectedDestination = MoveClassesOrPackagesUtil.chooseSourceRoot(targetPackage, mySourceRoots, myInitialTargetDirectory);
+    }
+    if (selectedDestination == null) return null;
+    return new AutocreatingSingleSourceRootMoveDestination(targetPackage, selectedDestination);
+  }
 
   private void setComboboxModel(JComboBox comboBox, VirtualFile initialTargetDirectorySourceRoot,
                                 ProjectFileIndex fileIndex,

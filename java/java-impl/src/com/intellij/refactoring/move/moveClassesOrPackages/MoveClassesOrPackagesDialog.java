@@ -15,8 +15,6 @@
  */
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
-import com.intellij.ide.ui.ListCellRendererWrapper;
-import com.intellij.ide.util.DirectoryChooser;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -25,14 +23,9 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.help.HelpManager;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectUtil;
-import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.ui.ComboBoxWithWidePopup;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -59,9 +52,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashSet;
 
 public class MoveClassesOrPackagesDialog extends RefactoringDialog {
   @NonNls private static final String RECENTS_KEY = "MoveClassesOrPackagesDialog.RECENTS_KEY";
@@ -473,18 +463,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
       if (ret != 0) return null;
     }
 
-    final DirectoryChooser.ItemWrapper selectedItem = (DirectoryChooser.ItemWrapper)myDestinationFolderCB.getComboBox().getSelectedItem();
-    if (selectedItem == null) {
-      return new MultipleRootsMoveDestination(targetPackage);
-    }
-    final PsiDirectory selectedPsiDirectory = selectedItem.getDirectory();
-    VirtualFile selectedDestination = selectedPsiDirectory.getVirtualFile();
-    if (selectedPsiDirectory == myInitialTargetDirectory) {
-      selectedDestination =
-            MoveClassesOrPackagesUtil.chooseSourceRoot(targetPackage, getSourceRoots(), myInitialTargetDirectory);
-    }
-    if (selectedDestination == null) return null;
-    return new AutocreatingSingleSourceRootMoveDestination(targetPackage, selectedDestination);
+    return ((DestinationFolderComboBox)myDestinationFolderCB).selectDirectory(targetPackage, true);
   }
 
   private VirtualFile[] getSourceRoots() {

@@ -120,7 +120,7 @@
             </constraints>
             <properties>
               <labelFor value="36327"/>
-              <text value="Target &amp;destination folder:"/>
+              <text resource-bundle="messages/RefactoringBundle" key="target.destination.folder"/>
             </properties>
           </component>
           <component id="36327" class="com.intellij.ui.ComboboxWithBrowseButton" binding="myDestinationFolderCB" custom-create="true">
