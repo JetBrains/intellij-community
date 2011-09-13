@@ -22,14 +22,22 @@ import com.intellij.ide.util.PackageUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiManager;
+import com.intellij.refactoring.MoveDestination;
+import com.intellij.refactoring.PackageWrapper;
+import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.move.moveClassesOrPackages.DestinationFolderComboBox;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil;
 import com.intellij.refactoring.ui.PackageNameReferenceEditorCombo;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
@@ -37,6 +45,7 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.RecentsManager;
 import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -58,6 +67,12 @@ public class CreateClassDialog extends DialogWrapper {
   private final String myClassName;
   private final boolean myClassNameEditable;
   private final Module myModule;
+  private final DestinationFolderComboBox myDestinationCB = new DestinationFolderComboBox() {
+    @Override
+    public String getTargetPackage() {
+      return myPackageComponent.getText().trim();
+    }
+  };
   @NonNls private static final String RECENTS_KEY = "CreateClassDialog.RecentsKey";
 
   public CreateClassDialog(@NotNull Project project,
@@ -72,7 +87,8 @@ public class CreateClassDialog extends DialogWrapper {
     myModule = defaultModule;
     myClassName = targetClassName;
     myProject = project;
-    myPackageComponent = new PackageNameReferenceEditorCombo( targetPackageName != null ? targetPackageName : "", myProject, RECENTS_KEY, CodeInsightBundle.message("dialog.create.class.package.chooser.title"));
+    final String normalizedPackageName = targetPackageName != null ? targetPackageName : "";
+    myPackageComponent = new PackageNameReferenceEditorCombo(normalizedPackageName, myProject, RECENTS_KEY, CodeInsightBundle.message("dialog.create.class.package.chooser.title"));
     myPackageComponent.setTextFieldPreferredWidth(40);
 
     init();
@@ -86,6 +102,7 @@ public class CreateClassDialog extends DialogWrapper {
     }
 
     myTfClassName.setText(myClassName);
+    myDestinationCB.setData(myProject, myPackageComponent, getBaseDir(normalizedPackageName), ProjectRootManager.getInstance(myProject).getContentSourceRoots());
   }
 
   protected Action[] createActions() {
@@ -147,6 +164,20 @@ public class CreateClassDialog extends DialogWrapper {
     _panel.add(myPackageComponent, BorderLayout.CENTER);
     panel.add(_panel, gbConstraints);
 
+    gbConstraints.gridy = 3;
+    gbConstraints.gridx = 0;
+    gbConstraints.gridwidth = 2;
+    gbConstraints.insets.top = 12;
+    gbConstraints.anchor = GridBagConstraints.WEST;
+    gbConstraints.fill = GridBagConstraints.NONE;
+    panel.add(new JBLabel(RefactoringBundle.message("target.destination.folder")), gbConstraints);
+
+    gbConstraints.gridy = 4;
+    gbConstraints.gridx = 0;
+    gbConstraints.fill = GridBagConstraints.HORIZONTAL;
+    gbConstraints.insets.top = 4;
+    panel.add(myDestinationCB, gbConstraints);
+
     return panel;
   }
 
@@ -176,7 +207,15 @@ public class CreateClassDialog extends DialogWrapper {
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
         try {
-          myTargetDirectory = MoveClassesOrPackagesUtil.chooseDestinationPackage(myProject, packageName, getBaseDir(packageName));
+          final PackageWrapper targetPackage = new PackageWrapper(PsiManager.getInstance(myProject), packageName);
+          final MoveDestination destination = myDestinationCB.selectDirectory(targetPackage, false);
+          if (destination == null) return;
+          myTargetDirectory = ApplicationManager.getApplication().runWriteAction(new Computable<PsiDirectory>() {
+            @Override
+            public PsiDirectory compute() {
+              return destination.getTargetDirectory(getBaseDir(packageName));
+            }
+          });
           if (myTargetDirectory == null) {
             errorString[0] = ""; // message already reported by PackageUtil
             return;
