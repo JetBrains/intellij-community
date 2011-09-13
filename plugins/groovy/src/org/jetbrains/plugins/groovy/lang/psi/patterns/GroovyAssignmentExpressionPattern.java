@@ -17,10 +17,10 @@ package org.jetbrains.plugins.groovy.lang.psi.patterns;
 
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PatternCondition;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 
 public class GroovyAssignmentExpressionPattern extends GroovyExpressionPattern<GrAssignmentExpression, GroovyAssignmentExpressionPattern> {
   protected GroovyAssignmentExpressionPattern() {
@@ -43,10 +43,10 @@ public class GroovyAssignmentExpressionPattern extends GroovyExpressionPattern<G
     });
   }
 
-  public GroovyAssignmentExpressionPattern operation(final ElementPattern pattern) {
+  public GroovyAssignmentExpressionPattern operation(final IElementType pattern) {
     return with(new PatternCondition<GrAssignmentExpression>("operation") {
       public boolean accepts(@NotNull final GrAssignmentExpression psiBinaryExpression, final ProcessingContext context) {
-        return pattern.getCondition().accepts(psiBinaryExpression.getOperationToken(), context);
+        return pattern == psiBinaryExpression.getOperationToken();
       }
     });
   }
