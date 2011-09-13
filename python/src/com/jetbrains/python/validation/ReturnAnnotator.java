@@ -1,22 +1,18 @@
 package com.jetbrains.python.validation;
 
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.patterns.SyntaxMatchers;
-
-import java.util.List;
 
 /**
  * Highlights incorrect return statements: 'return' and 'yield' outside functions, returning values from generators;
  */
 public class ReturnAnnotator extends PyAnnotator {
   public void visitPyReturnStatement(final PyReturnStatement node) {
-    List<? extends PsiElement> found = SyntaxMatchers.IN_FUNCTION.search(node);
-    if (found == null) {
+    PyFunction function = PsiTreeUtil.getParentOfType(node, PyFunction.class, false, PyClass.class);
+    if (function == null) {
       getHolder().createErrorAnnotation(node, "'return' outside of function");
       return;
     }
-    PyFunction function = (PyFunction)found.get(0);
     if (node.getExpression() != null) {
       YieldVisitor visitor = new YieldVisitor();
       function.acceptChildren(visitor);
@@ -28,7 +24,7 @@ public class ReturnAnnotator extends PyAnnotator {
   }
 
   public void visitPyYieldExpression(final PyYieldExpression node) {
-    if (SyntaxMatchers.IN_FUNCTION.search(node) == null) {
+    if (PsiTreeUtil.getParentOfType(node, PyFunction.class, false, PyClass.class) == null) {
       getHolder().createErrorAnnotation(node, "'yield' outside of function");
     }
     /* this is now allowed in python 2.5

@@ -247,6 +247,10 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
   public void testNonlocal() {  // PY-2289
     doTest3K();
   }
+  
+  public void testYield() {
+    doTest();
+  }
 
   private void doTest3K() {
     PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON30);
@@ -260,6 +264,49 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
 
   public void testSuperMethod() {  // PY-170
     doTest();
+  }
+  
+  public void testElse() {
+    doTest();
+  }
+  
+  public void testElseNotIndented() {
+    doTest();
+  }
+  
+  public void testElseInTryNotIndented() {
+    doTest();
+  }
+
+  public void testElif() {
+    doTest();
+  }
+  
+  public void testElifNotIndented() {
+    doTest();
+  }
+
+  public void testExcept() {
+    doTest();
+  }
+
+  public void testExceptNotIndented() {
+    doTest();
+  }
+
+  public void testFinallyInExcept() {
+    doTest();
+  }
+  
+  public void testContinue() {
+    doTest();
+  }
+  
+  public void testNoContinueInFinally() {
+    final String testName = "completion/" + getTestName(true);
+    myFixture.configureByFile(testName + ".py");
+    myFixture.completeBasic();
+    assertFalse(myFixture.getLookupElementStrings().contains("continue"));
   }
 
   public void testElseInCondExpr() {  // PY-2397

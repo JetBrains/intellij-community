@@ -1,12 +1,10 @@
 package com.jetbrains.python.validation;
 
-import com.intellij.psi.PsiElement;
-import static com.jetbrains.python.PyBundle.message;
-import com.jetbrains.python.psi.PyBreakStatement;
-import com.jetbrains.python.psi.PyContinueStatement;
-import com.jetbrains.python.psi.patterns.SyntaxMatchers;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.psi.*;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
+import static com.jetbrains.python.PyBundle.message;
 
 /**
  * Annotates misplaced 'break' and 'continue'.
@@ -14,18 +12,22 @@ import java.util.List;
 public class BreakContinueAnnotator extends PyAnnotator {
   @Override
   public void visitPyBreakStatement(final PyBreakStatement node) {
-    if (SyntaxMatchers.LOOP_CONTROL.search(node) == null) {
+    if (getContainingLoop(node) == null) {
       getHolder().createErrorAnnotation(node, message("ANN.break.outside.loop"));
     }
   }
 
+  @Nullable
+  private static PyLoopStatement getContainingLoop(PyStatement node) {
+    return PsiTreeUtil.getParentOfType(node, PyLoopStatement.class, false, PyFunction.class, PyClass.class);
+  }
+
   @Override
   public void visitPyContinueStatement(final PyContinueStatement node) {
-    List<? extends PsiElement> match = SyntaxMatchers.LOOP_CONTROL.search(node);
-    if (match == null) {
+    if (getContainingLoop(node) == null) {
       getHolder().createErrorAnnotation(node, message("ANN.continue.outside.loop"));
     }
-    else if (SyntaxMatchers.IN_FINALLY_NO_LOOP.search(node) != null) {
+    else if (PsiTreeUtil.getParentOfType(node,  PyFinallyPart.class, false, PyLoopStatement.class) != null) {
       getHolder().createErrorAnnotation(node, message("ANN.cant.continue.in.finally"));
     }
   }

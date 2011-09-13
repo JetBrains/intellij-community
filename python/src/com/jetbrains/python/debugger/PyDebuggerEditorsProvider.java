@@ -6,6 +6,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.evaluation.EvaluationMode;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl;
@@ -24,7 +25,10 @@ public class PyDebuggerEditorsProvider extends XDebuggerEditorsProvider {
 
   @NotNull
   @Override
-  public Document createDocument(@NotNull final Project project, @NotNull String text, @Nullable final XSourcePosition sourcePosition) {
+  public Document createDocument(@NotNull final Project project,
+                                 @NotNull String text,
+                                 @Nullable final XSourcePosition sourcePosition,
+                                 @NotNull EvaluationMode mode) {
     text = text.trim();
     final PyExpressionCodeFragmentImpl fragment = new PyExpressionCodeFragmentImpl(project, "fragment.py", text, true);
 
