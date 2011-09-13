@@ -1,8 +1,8 @@
 <idea-plugin url="http://www.jetbrains.net/confluence/display/CONTEST/IntelliLang" version="2">
   <name>IntelliLang</name>
   <id>org.intellij.intelliLang</id>
-  <description><![CDATA[User configurable language injection support]]></description>
-
+  <vendor logo="/general/ijLogo.png">JetBrains</vendor>
+  <description><![CDATA[User configurable language injection support (originally developed by Sascha Weinreuter sascha.weinreuter@cit.de)]]></description>
   <version>8.0</version>
 
   <depends optional="true" config-file="intellilang-xpath-support.xml">XPathView</depends>
@@ -10,8 +10,6 @@
   <depends optional="true" config-file="intellilang-javaee-support.xml">com.intellij.javaee</depends>
   <depends optional="true" config-file="intellilang-xml-support.xml">com.intellij.modules.xml</depends>
   <depends optional="true" config-file="intellilang-js-support.xml">JavaScript</depends>
-
-  <vendor email="sascha.weinreuter@cit.de" logo="/org/intellij/plugins/intelliLang/icon_small.png">Sascha Weinreuter</vendor>
 
   <extensionPoints>
     <extensionPoint name="languageSupport"
