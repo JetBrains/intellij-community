@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.template;
 
 import com.intellij.codeInsight.completion.JavaCompletionData;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.highlighter.JavaFileHighlighter;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.editor.Document;
@@ -72,6 +73,7 @@ public abstract class JavaCodeContextType extends TemplateContextType {
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     final PsiElementFactory factory = psiFacade.getElementFactory();
     final JavaCodeFragment fragment = factory.createCodeBlockCodeFragment((String)text, psiFacade.findPackage(""), true);
+    DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(fragment, false);
     return PsiDocumentManager.getInstance(project).getDocument(fragment);
   }
   
