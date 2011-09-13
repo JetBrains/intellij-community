@@ -17,11 +17,11 @@ package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.codeinsight.RuntimeTypeEvaluator;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -197,36 +197,31 @@ public class DebuggerTreeNodeExpression {
   }
 
   public static PsiExpression castToRuntimeType(PsiExpression expression, Value value, PsiElement contextElement) throws EvaluateException {
-    if (value instanceof ObjectReference) {
-      return castToType(expression, ((ObjectReference)value).referenceType(), contextElement);
-    }
-    else {
+    if (!(value instanceof ObjectReference)) {
       return expression;
     }
-  }
-
-  private static PsiExpression castToType(PsiExpression expression, ReferenceType valueType, PsiElement contextElement) throws EvaluateException{
-    if (valueType != null) {
-      Project project = expression.getProject();
-
-      String typeName = DebuggerUtilsEx.getQualifiedClassName(valueType.name(), project);
-      PsiManager manager = PsiManager.getInstance(project);
-
-      typeName =  normalize(typeName, contextElement, project);
-
-      PsiElementFactory elementFactory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
-      try {
-        PsiParenthesizedExpression parenthExpression = (PsiParenthesizedExpression)elementFactory.createExpressionFromText(
-          "((" + typeName + ")expression)", null);
-        ((PsiTypeCastExpression)parenthExpression.getExpression()).getOperand().replace(expression);
-        return parenthExpression;
-      }
-      catch (IncorrectOperationException e) {
-        throw new EvaluateException(DebuggerBundle.message("error.invalid.type.name", typeName), e);
-      }
-    }
-    else {
+    
+    ReferenceType valueType = ((ObjectReference)value).referenceType();
+    if (valueType == null) {
       return expression;
+    }
+    
+    Project project = expression.getProject();
+
+    PsiClass type = RuntimeTypeEvaluator.getCastableRuntimeType(project, value);
+    if (type == null) {
+      return expression;
+    }
+
+    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
+    try {
+      PsiParenthesizedExpression parenthExpression = (PsiParenthesizedExpression)elementFactory.createExpressionFromText(
+        "((" + type.getQualifiedName() + ")expression)", null);
+      ((PsiTypeCastExpression)parenthExpression.getExpression()).getOperand().replace(expression);
+      return parenthExpression;
+    }
+    catch (IncorrectOperationException e) {
+      throw new EvaluateException(DebuggerBundle.message("error.invalid.type.name", type.getQualifiedName()), e);
     }
   }
 

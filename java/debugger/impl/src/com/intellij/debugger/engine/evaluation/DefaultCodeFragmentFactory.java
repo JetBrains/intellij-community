@@ -16,8 +16,8 @@
 package com.intellij.debugger.engine.evaluation;
 
 import com.intellij.codeInsight.completion.CompletionParameters;
-import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.completion.CompletionService;
+import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.codeinsight.RuntimeTypeEvaluator;
 import com.intellij.debugger.impl.DebuggerContextImpl;
@@ -29,7 +29,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.PairFunction;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.Nullable;
@@ -91,11 +90,11 @@ public class DefaultCodeFragmentFactory implements CodeFragmentFactory {
         if (debuggerSession != null) {
           final Semaphore semaphore = new Semaphore();
           semaphore.down();
-          final AtomicReference<String> nameRef = new AtomicReference<String>();
+          final AtomicReference<PsiClass> nameRef = new AtomicReference<PsiClass>();
           final RuntimeTypeEvaluator worker =
             new RuntimeTypeEvaluator(null, expression, debuggerContext, ProgressManager.getInstance().getProgressIndicator()) {
               @Override
-              protected void typeCalculationFinished(@Nullable String type) {
+              protected void typeCalculationFinished(@Nullable PsiClass type) {
                 nameRef.set(type);
                 semaphore.up();
               }
@@ -105,12 +104,9 @@ public class DefaultCodeFragmentFactory implements CodeFragmentFactory {
             ProgressManager.checkCanceled();
             if (semaphore.waitFor(20)) break;
           }
-          final String className = nameRef.get();
-          if (className != null) {
-            final PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(className, GlobalSearchScope.allScope(project));
-            if (psiClass != null) {
-              return JavaPsiFacade.getElementFactory(project).createType(psiClass);
-            }
+          final PsiClass psiClass = nameRef.get();
+          if (psiClass != null) {
+            return JavaPsiFacade.getElementFactory(project).createType(psiClass);
           }
         }
         return null;

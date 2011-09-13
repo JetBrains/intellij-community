@@ -25,7 +25,6 @@ import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.ui.DebuggerExpressionComboBox;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -43,7 +42,6 @@ import org.jetbrains.annotations.Nullable;
  * Time: 7:51:01 PM
  */
 public class JavaWithRuntimeCastSurrounder extends JavaExpressionSurrounder {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.codeinsight.SurroundWithRuntimeCastHandler");
 
   public String getTemplateDescription() {
     return CodeInsightBundle.message("surround.with.runtime.type.template");
@@ -81,7 +79,7 @@ public class JavaWithRuntimeCastSurrounder extends JavaExpressionSurrounder {
     }
 
     @Override
-    protected void typeCalculationFinished(@Nullable final String type) {
+    protected void typeCalculationFinished(@Nullable final PsiClass type) {
       if (type == null) {
         return;
       }
@@ -93,11 +91,9 @@ public class JavaWithRuntimeCastSurrounder extends JavaExpressionSurrounder {
           new WriteCommandAction(project, CodeInsightBundle.message("command.name.surround.with.runtime.cast")) {
             protected void run(Result result) throws Throwable {
               try {
-                LOG.assertTrue(type != null);
-
                 PsiElementFactory factory = JavaPsiFacade.getInstance(myElement.getProject()).getElementFactory();
                 PsiParenthesizedExpression parenth =
-                  (PsiParenthesizedExpression)factory.createExpressionFromText("((" + type + ")expr)", null);
+                  (PsiParenthesizedExpression)factory.createExpressionFromText("((" + type.getQualifiedName() + ")expr)", null);
                 PsiTypeCastExpression cast = (PsiTypeCastExpression)parenth.getExpression();
                 cast.getOperand().replace(myElement);
                 parenth = (PsiParenthesizedExpression)JavaCodeStyleManager.getInstance(project).shortenClassReferences(parenth);

@@ -15,38 +15,41 @@
  */
 package com.intellij.debugger.codeinsight;
 
-import com.intellij.debugger.ui.EditorEvaluationCommand;
-import com.intellij.debugger.impl.DebuggerContextImpl;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
-import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
-import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
-import com.intellij.debugger.engine.ContextUtil;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.EvaluatingComputable;
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.engine.ContextUtil;
+import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
+import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
+import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.ui.EditorEvaluationCommand;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.sun.jdi.ClassType;
+import com.sun.jdi.InterfaceType;
+import com.sun.jdi.Type;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
  */
-public abstract class RuntimeTypeEvaluator extends EditorEvaluationCommand<String> {
+public abstract class RuntimeTypeEvaluator extends EditorEvaluationCommand<PsiClass> {
   public RuntimeTypeEvaluator(@Nullable Editor editor, PsiElement expression, DebuggerContextImpl context, final ProgressIndicator indicator) {
     super(editor, expression, context, indicator);
   }
 
   public void threadAction() {
-    String type = null;
+    PsiClass type = null;
     try {
       type = evaluate();
     }
@@ -59,9 +62,10 @@ public abstract class RuntimeTypeEvaluator extends EditorEvaluationCommand<Strin
     }
   }
 
-  protected abstract void typeCalculationFinished(@Nullable String type);
+  protected abstract void typeCalculationFinished(@Nullable PsiClass type);
 
-  protected String evaluate(final EvaluationContextImpl evaluationContext) throws EvaluateException {
+  @Nullable
+  protected PsiClass evaluate(final EvaluationContextImpl evaluationContext) throws EvaluateException {
     final Project project = evaluationContext.getProject();
 
     ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(project, new EvaluatingComputable<ExpressionEvaluator>() {
@@ -72,14 +76,45 @@ public abstract class RuntimeTypeEvaluator extends EditorEvaluationCommand<Strin
 
     final Value value = evaluator.evaluate(evaluationContext);
     if(value != null){
-      return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-        public String compute() {
-          return DebuggerUtilsEx.getQualifiedClassName(value.type().name(), project);
-        }
-      });
+      return getCastableRuntimeType(project, value);
     }
-    else {
-      throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.surrounded.expression.null"));
+
+    throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.surrounded.expression.null"));
+  }
+
+  public static PsiClass getCastableRuntimeType(Project project, Value value) {
+    Type type = value.type();
+    PsiClass psiClass = findPsiClass(project, type);
+    if (psiClass != null) {
+      return psiClass;
+    }
+
+    if (type instanceof ClassType) {
+      ClassType superclass = ((ClassType)type).superclass();
+      if (superclass != null && !CommonClassNames.JAVA_LANG_OBJECT.equals(superclass.name())) {
+        psiClass = findPsiClass(project, superclass);
+        if (psiClass != null) {
+          return psiClass;
+        }
+      }
+
+      for (InterfaceType interfaceType : ((ClassType)type).interfaces()) {
+        psiClass = findPsiClass(project, interfaceType);
+        if (psiClass != null) {
+          return psiClass;
+        }
+      }
+    }
+    return null;
+  }
+
+  private static PsiClass findPsiClass(Project project, Type type) {
+    AccessToken token = ReadAction.start();
+    try {
+      return JavaPsiFacade.getInstance(project).findClass(type.name().replace('$', '.'), GlobalSearchScope.allScope(project));
+    }
+    finally {
+      token.finish();
     }
   }
 
