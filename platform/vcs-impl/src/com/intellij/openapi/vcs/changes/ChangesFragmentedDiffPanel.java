@@ -33,6 +33,7 @@ import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.FragmentedEditorHighlighter;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -68,6 +69,7 @@ import java.util.List;
 public class ChangesFragmentedDiffPanel implements Disposable {
   private final JPanel myPanel;
   private final Project myProject;
+  private final JComponent myParent;
   private PreparedFragmentedContent myFragmentedContent;
   private final String myFilePath;
   private final VcsConfiguration myConfiguration;
@@ -83,8 +85,9 @@ public class ChangesFragmentedDiffPanel implements Disposable {
   private final JLabel myTitleLabel;
   private ChangesFragmentedDiffPanel.PresentationState myPresentationState;
 
-  public ChangesFragmentedDiffPanel(final Project project, String filePath) {
+  public ChangesFragmentedDiffPanel(final Project project, String filePath, JComponent parent) {
     myProject = project;
+    myParent = parent;
     myConfiguration = VcsConfiguration.getInstance(myProject);
     myFilePath = filePath;
 
@@ -100,6 +103,8 @@ public class ChangesFragmentedDiffPanel implements Disposable {
     myPanel.removeAll();
     myHorizontal = null;
     myVertical = null;
+    myPreviousDiff.unregisterCustomShortcutSet(myParent);
+    myNextDiff.unregisterCustomShortcutSet(myParent);
   }
 
   public void buildUi() {
@@ -117,6 +122,7 @@ public class ChangesFragmentedDiffPanel implements Disposable {
     dag.add(myNextDiff);
     myPreviousDiff.registerCustomShortcutSet(myPreviousDiff.getShortcutSet(), myPanel);
     myNextDiff.registerCustomShortcutSet(myNextDiff.getShortcutSet(), myPanel);
+
     dag.add(new PopupAction());
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, dag, true);
     wrapper.add(toolbar.getComponent(), BorderLayout.EAST);
@@ -133,6 +139,9 @@ public class ChangesFragmentedDiffPanel implements Disposable {
 
     myPanel.add(myTopPanel, BorderLayout.NORTH);
     myPanel.add(getCurrentPanel().getComponent(), BorderLayout.CENTER);
+
+    myPreviousDiff.registerCustomShortcutSet(myPreviousDiff.getShortcutSet(), myParent);
+    myNextDiff.registerCustomShortcutSet(myNextDiff.getShortcutSet(), myParent);
   }
 
   public void setTitle(String filePath) {
@@ -222,7 +231,12 @@ public class ChangesFragmentedDiffPanel implements Disposable {
     Disposer.register(this, diffPanel);
     return diffPanel;
   }
-  
+
+  public void away() {
+    myPreviousDiff.unregisterCustomShortcutSet(myParent);
+    myNextDiff.unregisterCustomShortcutSet(myParent);
+  }
+
   private class PresentationState {
     private IgnoreSpaceEnum myIgnoreSpace;
     private boolean myHorizontal;
@@ -268,6 +282,8 @@ public class ChangesFragmentedDiffPanel implements Disposable {
       myFragmentedContent.recalculate();
       refreshData(myFragmentedContent);
     }
+    myPreviousDiff.registerCustomShortcutSet(myPreviousDiff.getShortcutSet(), myParent);
+    myNextDiff.registerCustomShortcutSet(myNextDiff.getShortcutSet(), myParent);
   }
 
   private static class MyScrollingHelper {

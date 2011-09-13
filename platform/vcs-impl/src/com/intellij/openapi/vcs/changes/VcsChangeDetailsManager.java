@@ -78,10 +78,10 @@ public class VcsChangeDetailsManager {
   }
 
   @Nullable
-  public RefreshablePanel getPanel(final Change change) {
+  public RefreshablePanel getPanel(final Change change, JComponent parent) {
     for (VcsChangeDetailsProvider convertor : myDedicatedList) {
       if (! convertor.canComment(change)) continue;
-      RefreshablePanel panel = convertor.comment(change);
+      RefreshablePanel panel = convertor.comment(change, parent);
       if (panel != null) {
         return panel;
       }
@@ -108,7 +108,7 @@ public class VcsChangeDetailsManager {
     }
 
     @Override
-    public RefreshablePanel comment(Change change) {
+    public RefreshablePanel comment(Change change, JComponent parent) {
       return new BinaryDiffDetailsPanel(myProject, myQueue, change);
     }
   }
@@ -190,6 +190,11 @@ public class VcsChangeDetailsManager {
     protected void disposeImpl() {
       Disposer.dispose(myPanel);
     }
+
+    @Override
+    public void away() {
+      //
+    }
   }
 
   private static JPanel noDifferences() {
@@ -211,8 +216,8 @@ public class VcsChangeDetailsManager {
     }
 
     @Override
-    public RefreshablePanel comment(Change change) {
-      return new FragmentedDiffDetailsPanel(myProject, myQueue, change);
+    public RefreshablePanel comment(Change change, JComponent parent) {
+      return new FragmentedDiffDetailsPanel(myProject, myQueue, change, parent);
     }
   }
 
@@ -223,13 +228,13 @@ public class VcsChangeDetailsManager {
     private final ChangesFragmentedDiffPanel myDiffPanel;
     private final Project myProject;
 
-    private FragmentedDiffDetailsPanel(Project project, BackgroundTaskQueue queue, final Change change) {
+    private FragmentedDiffDetailsPanel(Project project, BackgroundTaskQueue queue, final Change change, JComponent parent) {
       super(project, "Loading change content", queue);
       myProject = project;
       myFilePath = ChangesUtil.getFilePath(change);
       myRequestFromChange = new FragmentedDiffRequestFromChange(project);
       myChangeListManager = ChangeListManager.getInstance(project);
-      myDiffPanel = new ChangesFragmentedDiffPanel(project, changeDescription(change));
+      myDiffPanel = new ChangesFragmentedDiffPanel(project, changeDescription(change), parent);
       myDiffPanel.buildUi();
     }
 
@@ -276,6 +281,11 @@ public class VcsChangeDetailsManager {
     @Override
     protected void disposeImpl() {
       Disposer.dispose(myDiffPanel);
+    }
+
+    @Override
+    public void away() {
+      myDiffPanel.away();
     }
   }
 

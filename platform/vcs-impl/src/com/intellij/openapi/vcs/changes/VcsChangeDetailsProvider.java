@@ -31,5 +31,5 @@ public interface VcsChangeDetailsProvider {
   @CalledInAwt
   boolean canComment(final Change change);
   @CalledInAwt
-  RefreshablePanel comment(final Change change);
+  RefreshablePanel comment(final Change change, JComponent parent);
 }

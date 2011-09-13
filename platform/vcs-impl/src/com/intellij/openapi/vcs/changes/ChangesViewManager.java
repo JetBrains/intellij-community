@@ -126,6 +126,7 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
         return myView.getSelectedChanges();
       }
     }, vcsChangeDetailsManager);
+    myDiffDetails.setParent(myView);
     myDetailsUpdater = new ZipperUpdater(300, Alarm.ThreadToUse.SWING_THREAD, myProject);
     myUpdateDetails = new Runnable() {
       @Override

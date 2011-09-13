@@ -248,6 +248,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       myBrowser = browser;
       myBrowserExtender = browser.getExtender();
     }
+    myDiffDetails.setParent(myBrowser);
 
     final ZipperUpdater zipperUpdater = new ZipperUpdater(30, Alarm.ThreadToUse.SWING_THREAD, getDisposable());
     final Runnable refreshShortDiffDetails = new Runnable() {

@@ -50,6 +50,8 @@ public class ShortDiffDetails implements RefreshablePanel, Disposable {
   private PairConsumer<Change,RefreshablePanel> myDetailsConsumer;
   private final SLRUMap<FilePath,RefreshablePanel> myDetailsCache;
   private FilePath myCurrentFilePath;
+  private JComponent myParent;
+  private RefreshablePanel myCurrentPanel;
 
   public ShortDiffDetails(Project project, Getter<Change[]> master, final VcsChangeDetailsManager vcsChangeDetailsManager) {
     myMaster = master;
@@ -64,6 +66,10 @@ public class ShortDiffDetails implements RefreshablePanel, Disposable {
         }
       }
     };
+  }
+
+  public void setParent(JComponent parent) {
+    myParent = parent;
   }
 
   @Override
@@ -118,6 +124,11 @@ public class ShortDiffDetails implements RefreshablePanel, Disposable {
     return myDetailsPanel.getPanel();
   }
 
+  @Override
+  public void away() {
+    //
+  }
+
   private void ensureDetailsCreated() {
     if (myDetailsConsumer != null) return;
 
@@ -141,19 +152,24 @@ public class ShortDiffDetails implements RefreshablePanel, Disposable {
       public void consume(Change change, RefreshablePanel pair) {
         cacheConsumer.consume(change, pair);
         pair.refresh();
-        myDetailsPanel.data(pair.getPanel());
+        myCurrentPanel = pair;
+        myDetailsPanel.data(myCurrentPanel.getPanel());
         myDetailsPanel.layout();
       }
     };
     myDetailsLoader = new GenericDetailsLoader<Change, RefreshablePanel>(new Consumer<Change>() {
       @Override
       public void consume(Change change) {
+        if (myCurrentPanel != null) {
+          myCurrentPanel.away();
+        }
+
         final FilePath filePath = ChangesUtil.getFilePath(change);
         RefreshablePanel details = myDetailsCache.get(filePath);
         if (details != null) {
           myDetailsConsumer.consume(change, details);
         } else {
-          final RefreshablePanel detailsPanel = myVcsChangeDetailsManager.getPanel(change);
+          final RefreshablePanel detailsPanel = myVcsChangeDetailsManager.getPanel(change, myParent);
           if (detailsPanel != null) {
             try {
               myDetailsLoader.take(change, detailsPanel);

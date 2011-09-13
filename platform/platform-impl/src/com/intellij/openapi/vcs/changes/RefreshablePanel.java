@@ -13,4 +13,5 @@ public interface RefreshablePanel<T> extends Disposable {
   void dataChanged();
   void refresh();
   JPanel getPanel();
+  void away();
 }
