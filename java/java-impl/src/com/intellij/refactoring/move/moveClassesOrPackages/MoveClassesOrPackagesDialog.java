@@ -189,7 +189,12 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
       }
     };
 
-    myDestinationFolderCB = new ComboboxWithBrowseButton(new ComboBoxWithWidePopup());
+    myDestinationFolderCB = new DestinationFolderComboBox() {
+      @Override
+      public String getTargetPackage() {
+        return MoveClassesOrPackagesDialog.this.getTargetPackage();
+      }
+    };
   }
 
   private ReferenceEditorComboWithBrowseButton createPackageChooser() {
@@ -263,128 +268,10 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     myCbSearchInComments.setSelected(searchInComments);
     myCbSearchTextOccurences.setSelected(searchForTextOccurences);
 
+    ((DestinationFolderComboBox)myDestinationFolderCB).setData(myProject, myClassPackageChooser, myInitialTargetDirectory, getSourceRoots());
     UIUtil.setEnabled(myTargetPanel, getSourceRoots().length > 0 && isMoveToPackage() && !isTargetDirectoryFixed, true);
-    final JComboBox comboBox = myDestinationFolderCB.getComboBox();
-    new ComboboxSpeedSearch(comboBox){
-      @Override
-      protected String getElementText(Object element) {
-        if (element instanceof DirectoryChooser.ItemWrapper) {
-          final VirtualFile virtualFile = ((DirectoryChooser.ItemWrapper)element).getDirectory().getVirtualFile();
-          final Module module = ModuleUtil.findModuleForFile(virtualFile, myProject);
-          if (module != null) {
-            return module.getName();
-          }
-        }
-        return super.getElementText(element);
-      }
-    };
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-    comboBox.setRenderer(new ListCellRendererWrapper<DirectoryChooser.ItemWrapper>(comboBox.getRenderer()){
-      @Override
-      public void customize(JList list,
-                            DirectoryChooser.ItemWrapper itemWrapper,
-                            int index,
-                            boolean selected,
-                            boolean hasFocus) {
-        if (itemWrapper != null) {
-          setIcon(itemWrapper.getIcon(fileIndex));
-
-          final PsiDirectory directory = itemWrapper.getDirectory();
-          final VirtualFile virtualFile = directory != null ? directory.getVirtualFile() : null;
-          setText(virtualFile != null ? ProjectUtil.calcRelativeToProjectPath(virtualFile, myProject, true, true) : itemWrapper.getPresentableUrl());
-        } else {
-          setText("Leave in same source root");
-        }
-      }
-    });
-    final VirtualFile[] sourceRoots = getSourceRoots();
-    final VirtualFile initialSourceRoot = initialTargetDirectory != null ? fileIndex.getSourceRootForFile(initialTargetDirectory.getVirtualFile()) : null;
-    myDestinationFolderCB.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        VirtualFile root = MoveClassesOrPackagesUtil
-          .chooseSourceRoot(new PackageWrapper(myManager, getTargetPackage()), sourceRoots, initialTargetDirectory);
-        if (root == null) return;
-        final ComboBoxModel model = comboBox.getModel();
-        for (int i = 0; i < model.getSize(); i++) {
-          DirectoryChooser.ItemWrapper item = (DirectoryChooser.ItemWrapper)model.getElementAt(i);
-          if (fileIndex.getSourceRootForFile(item.getDirectory().getVirtualFile()) == root) {
-            comboBox.setSelectedItem(item);
-            return;
-          }
-        }
-        setComboboxModel(comboBox, root, fileIndex, sourceRoots, true);
-      }
-    });
-
-    myClassPackageChooser.getChildComponent().addDocumentListener(new DocumentAdapter() {
-      @Override
-      public void documentChanged(DocumentEvent e) {
-        setComboboxModel(comboBox, initialSourceRoot, fileIndex, sourceRoots, false);
-      }
-    });
-    setComboboxModel(comboBox, initialSourceRoot, fileIndex, sourceRoots, false);
-
     validateButtons();
     myHelpID = helpID;
-  }
-
-  private void setComboboxModel(JComboBox comboBox, VirtualFile initialTargetDirectorySourceRoot,
-                                ProjectFileIndex fileIndex,
-                                VirtualFile[] sourceRoots,
-                                boolean forceIncludeAll) {
-    final LinkedHashSet<PsiDirectory> targetDirectories = new LinkedHashSet<PsiDirectory>();
-    final HashMap<PsiDirectory, String> pathsToCreate = new HashMap<PsiDirectory, String>();
-    MoveClassesOrPackagesUtil.buildDirectoryList(new PackageWrapper(myManager, getTargetPackage()), sourceRoots, targetDirectories, pathsToCreate);
-    if (!forceIncludeAll && targetDirectories.size() > pathsToCreate.size()) {
-      targetDirectories.removeAll(pathsToCreate.keySet());
-    }
-    final ArrayList<DirectoryChooser.ItemWrapper> items = new ArrayList<DirectoryChooser.ItemWrapper>();
-    DirectoryChooser.ItemWrapper initial = null;
-    for (PsiDirectory targetDirectory : targetDirectories) {
-      DirectoryChooser.ItemWrapper itemWrapper = new DirectoryChooser.ItemWrapper(targetDirectory, pathsToCreate.get(targetDirectory));
-      items.add(itemWrapper);
-      if (fileIndex.getSourceRootForFile(targetDirectory.getVirtualFile()) == initialTargetDirectorySourceRoot) {
-        initial = itemWrapper;
-      }
-    }
-    if (initialTargetDirectorySourceRoot == null) {
-      items.add(null);
-    }
-    final DirectoryChooser.ItemWrapper selection = initial != null || items.contains(null) || items.isEmpty() ? initial : items.get(0);
-    final ComboBoxModel model = comboBox.getModel();
-    if (model instanceof CollectionComboBoxModel) {
-      boolean sameModel = model.getSize() == items.size();
-      if (sameModel) {
-        for (int i = 0; i < items.size(); i++) {
-          final DirectoryChooser.ItemWrapper oldItem = (DirectoryChooser.ItemWrapper)model.getElementAt(i);
-          final DirectoryChooser.ItemWrapper itemWrapper = items.get(i);
-          if (!areItemsEquivalent(oldItem, itemWrapper)) {
-              sameModel = false;
-              break;
-          }
-        }
-      }
-      if (sameModel) {
-        if (areItemsEquivalent((DirectoryChooser.ItemWrapper)comboBox.getSelectedItem(), selection)) {
-          return;
-        }
-      }
-    }
-    comboBox.setModel(new CollectionComboBoxModel(items, selection));
-  }
-
-  private static boolean areItemsEquivalent(DirectoryChooser.ItemWrapper oItem, DirectoryChooser.ItemWrapper itemWrapper) {
-    if (oItem == null || itemWrapper == null) {
-      if (oItem != itemWrapper) {
-        return false;
-      }
-      return true;
-    }
-    if (oItem.getDirectory() != itemWrapper.getDirectory()) {
-      return false;
-    }
-    return true;
   }
 
   protected void doHelpAction() {
