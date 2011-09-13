@@ -30,6 +30,7 @@ import com.intellij.psi.util.PsiMatcherImpl;
 import com.intellij.psi.util.PsiMatchers;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -541,6 +542,7 @@ public class HighlightControlFlowUtil {
     return null;
   }
 
+  @NotNull
   private static Collection<ControlFlowUtil.VariableInfo> getFinalVariableProblemsInBlock(Map<PsiElement,Collection<ControlFlowUtil.VariableInfo>> finalVarProblems, PsiElement codeBlock) {
     Collection<ControlFlowUtil.VariableInfo> codeBlockProblems = finalVarProblems.get(codeBlock);
     if (codeBlockProblems == null) {
