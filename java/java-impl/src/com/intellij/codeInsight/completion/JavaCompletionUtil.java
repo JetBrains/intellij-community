@@ -424,7 +424,7 @@ public class JavaCompletionUtil {
     final PsiType qualifierType = processor.getQualifierType();
     PsiType castedQualifierType = addQualifierCastingVariants(javaReference, processor, set, parameters);
 
-    boolean mayHighlight = qualifierType != null && (castedQualifierType == null || !qualifierType.isAssignableFrom(castedQualifierType));
+    boolean mayHighlight = qualifierType != null && (castedQualifierType == null || castedQualifierType.equals(qualifierType) || !qualifierType.isAssignableFrom(castedQualifierType));
 
     final boolean pkgContext = inSomePackage(element);
 
