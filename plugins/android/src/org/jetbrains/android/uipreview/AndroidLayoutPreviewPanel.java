@@ -1,15 +1,16 @@
  package org.jetbrains.android.uipreview;
 
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.VerticalFlowLayout;
-import com.intellij.ui.HyperlinkLabel;
-import org.jetbrains.annotations.Nullable;
+ import com.intellij.openapi.ui.Messages;
+ import com.intellij.openapi.ui.VerticalFlowLayout;
+ import com.intellij.ui.HyperlinkLabel;
+ import com.intellij.ui.components.JBLabel;
+ import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import javax.swing.event.HyperlinkEvent;
-import javax.swing.event.HyperlinkListener;
-import java.awt.*;
-import java.awt.image.BufferedImage;
+ import javax.swing.*;
+ import javax.swing.event.HyperlinkEvent;
+ import javax.swing.event.HyperlinkListener;
+ import java.awt.*;
+ import java.awt.image.BufferedImage;
 
 /**
  * @author Eugene.Kudelevsky
@@ -22,6 +23,7 @@ public class AndroidLayoutPreviewPanel extends JPanel {
   private RenderingErrorMessage myErrorMessage;
   private String myWarnMessage;
   private BufferedImage myImage;
+  private JBLabel myProgressLabel;
 
   private final HyperlinkLabel myErrorLabel = new HyperlinkLabel("", Color.BLUE, getBackground(), Color.BLUE);
 
@@ -60,13 +62,29 @@ public class AndroidLayoutPreviewPanel extends JPanel {
     });
     myErrorLabel.setOpaque(false);
 
+    myProgressLabel = new JBLabel("Rendering...");
+    myProgressLabel.setIcon(Messages.getInformationIcon());
+    myProgressLabel.setVisible(false);
+
     add(myErrorLabel);
+    add(myProgressLabel);
     add(new MyImagePanelWrapper());
   }
 
   public void setImage(@Nullable final BufferedImage image) {
     myImage = image;
     doRevalidate();
+  }
+
+  public void showProgress() {
+    myProgressLabel.setVisible(true);
+    myErrorLabel.setVisible(false);
+    myImagePanel.setVisible(false);
+  }
+
+  @Nullable
+  public BufferedImage getImage() {
+    return myImage;
   }
 
   private void doRevalidate() {
@@ -84,6 +102,8 @@ public class AndroidLayoutPreviewPanel extends JPanel {
   }
 
   public void update() {
+    myProgressLabel.setVisible(false);
+    myImagePanel.setVisible(true);
     if (myErrorMessage != null) {
       myErrorLabel.setHyperlinkText(myErrorMessage.myBeforeLinkText,
                                     myErrorMessage.myLinkText,

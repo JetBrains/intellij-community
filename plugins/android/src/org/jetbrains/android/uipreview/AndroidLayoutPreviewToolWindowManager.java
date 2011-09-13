@@ -5,6 +5,7 @@ import com.android.sdklib.IAndroidTarget;
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -119,7 +120,7 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
     if (myToolWindowForm != null) {
       final PsiFile file = event.getFile();
       if (file != null && myToolWindowForm.getFile() == file) {
-        render();
+        render(false);
       }
     }
   }
@@ -201,7 +202,7 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
         if (myToolWindowForm.getFile() != psiFile) {
           ApplicationManager.getApplication().saveAll();
           myToolWindowForm.setFile(psiFile);
-          render();
+          render(false);
         }
 
         myToolWindow.setAvailable(true, null);
@@ -210,7 +211,7 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
     });
   }
 
-  public void render() {
+  public void render(final boolean showProgress) {
     final PsiFile psiFile = myToolWindowForm.getFile();
     if (psiFile == null) {
       return;
@@ -223,6 +224,14 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
     myRenderingQueue.queue(new Update("render") {
       @Override
       public void run() {
+        if (showProgress || myToolWindowForm.getPreviewPanel().getImage() == null) {
+          ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+            @Override
+            public void run() {
+              myToolWindowForm.getPreviewPanel().showProgress();
+            }
+          }, ModalityState.defaultModalityState());
+        }
         doRender(facet, layoutXmlText);
       }
 
@@ -423,7 +432,7 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
 
       if (parent != null && ResourceManager.isResourceDirectory(parent, myProject)) {
         myToolWindowForm.updateLocales();
-        render();
+        render(false);
       }
     }
   }
@@ -457,7 +466,7 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
             myToolWindowForm.updateDevicesAndTargets(newPlatform);
             myToolWindowForm.updateThemes();
 
-            render();
+            render(true);
           }
         }
       }
