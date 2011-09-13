@@ -1,5 +1,6 @@
 package org.jetbrains.jps.server;
 
+import org.apache.tools.ant.BuildEvent;
 import org.codehaus.gant.GantBinding;
 import org.jetbrains.ether.ProjectWrapper;
 import org.jetbrains.jps.Module;
@@ -7,22 +8,39 @@ import org.jetbrains.jps.Project;
 import org.jetbrains.jps.listeners.BuildInfoPrinter;
 
 import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author Eugene Zhuravlev
  *         Date: 9/10/11
+ * @noinspection UnusedDeclaration
  */
 public class Facade {
+  private final Map<String, ProjectWrapper> myProjects = new HashMap<String, ProjectWrapper>();
+  private final Map<String, String> myPathVariables = new ConcurrentHashMap<String, String>();
+
+  public void setPathVariables(Map<String, String> vars) {
+    myPathVariables.clear();
+    myPathVariables.putAll(vars);
+  }
+
+  public void clearProjectCache(String projectPath) {
+    myProjects.remove(projectPath);
+  }
 
   public void startBuild(String projectPath, Set<String> modules, final BuildParameters params, final MessagesConsumer consumer) throws Throwable {
-    final ProjectWrapper proj = ProjectWrapper.load(new GantBinding(), projectPath, getStartupScript(params), params.pathVariables, params.buildType == BuildType.MAKE);
+    ProjectWrapper pw = myProjects.get(projectPath);
+    if (pw == null) {
+      pw = ProjectWrapper.load(new GantBinding(), projectPath, getStartupScript(), myPathVariables, true);
+      myProjects.put(projectPath, pw);
+    }
+
+    configureProject(pw, params, consumer);
 
     List<Module> toCompile = null;
     if (modules != null && modules.size() > 0) {
-      for (Module m : proj.getProject().getModules().values()) {
+      for (Module m : pw.getProject().getModules().values()) {
         if (modules.contains(m.getName())){
           if (toCompile == null) {
             toCompile = new ArrayList<Module>();
@@ -32,25 +50,13 @@ public class Facade {
       }
     }
 
-    proj.getProject().getBuilder().setBuildInfoPrinter(new BuildInfoPrinter() {
-      public Object printProgressMessage(Project project, String message) {
-        consumer.consumeProgressMessage(message);
-        return null;
-      }
-
-      public Object printCompilationErrors(Project project, String compilerName, String messages) {
-        consumer.consumeCompilerMessage(compilerName, compilerName);
-        return null;
-      }
-    });
-
     switch (params.buildType) {
       case REBUILD:
         if (toCompile == null || toCompile.isEmpty()) {
-          proj.rebuild();
+          pw.rebuild();
         }
         else {
-          proj.makeModules(toCompile, new ProjectWrapper.Flags() {
+          pw.makeModules(toCompile, new ProjectWrapper.Flags() {
             public boolean tests() {
               return true;
             }
@@ -71,7 +77,7 @@ public class Facade {
         break;
 
       case MAKE:
-        proj.makeModules(toCompile, new ProjectWrapper.Flags() {
+        pw.makeModules(toCompile, new ProjectWrapper.Flags() {
           public boolean tests() {
             return true;
           }
@@ -91,15 +97,53 @@ public class Facade {
         break;
 
       case CLEAN:
-        proj.clean();
+        pw.clean();
         break;
     }
-    proj.save();
+    pw.save();
   }
 
-  private String getStartupScript(BuildParameters params) {
-    return "import org.jetbrains.jps.*\n" +
-      "\n" +
+  private void configureProject(ProjectWrapper pw, BuildParameters params, final MessagesConsumer consumer) {
+    pw.getProject().getBuilder().setUseInProcessJavac(params.useInProcessJavac);
+    pw.getProject().getBuilder().setBuildInfoPrinter(new BuildInfoPrinter() {
+      public Object printProgressMessage(Project project, String message) {
+        consumer.consumeProgressMessage(message);
+        return null;
+      }
+
+      public Object printCompilationErrors(Project project, String compilerName, String messages) {
+        consumer.consumeCompilerMessage(compilerName, messages);
+        return null;
+      }
+    });
+    pw.getProject().getBinding().addBuildListener(new org.apache.tools.ant.BuildListener() {
+      public void buildStarted(BuildEvent buildEvent) {
+      }
+
+      public void buildFinished(BuildEvent buildEvent) {
+      }
+
+      public void targetStarted(BuildEvent buildEvent) {
+      }
+
+      public void targetFinished(BuildEvent buildEvent) {
+      }
+
+      public void taskStarted(BuildEvent buildEvent) {
+      }
+
+      public void taskFinished(BuildEvent buildEvent) {
+      }
+
+      public void messageLogged(BuildEvent buildEvent) {
+        consumer.consumeCompilerMessage("ANT", buildEvent.getMessage());
+      }
+    });
+  }
+
+  private String getStartupScript() {
+    return "import org.jetbrains.jps.*\n";
+      //"\n" +
       //"project.createJavaSdk (\n" +
       //"   \"IDEA jdk\", \n" +
       //"   \"/home/db/develop/jetbrains/jdk1.6.0_22\", \n" +
@@ -125,7 +169,6 @@ public class Facade {
       //")\n" +
       //"\n" +
       //"project.projectSdk = project.sdks [\"IDEA jdk\"]\n" +
-      "project.builder.useInProcessJavac = " + Boolean.valueOf(params.useInProcessJavac).toString();
   }
 
   private static class InstanceHolder {

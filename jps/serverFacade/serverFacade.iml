@@ -18,6 +18,7 @@
       </library>
     </orderEntry>
     <orderEntry type="library" name="Groovy" level="project" />
+    <orderEntry type="library" name="Ant" level="project" />
   </component>
 </module>
 
