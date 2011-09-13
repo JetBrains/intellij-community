@@ -32,7 +32,6 @@ import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -43,8 +42,7 @@ import java.util.List;
  * Date: 1/25/11
  */
 public class NullableNotNullDialog extends DialogWrapper {
-  @NonNls private static final String GENERAL_ADD_ICON_PATH = "/general/add.png";
-  private static final Icon ADD_ICON = IconLoader.getIcon(GENERAL_ADD_ICON_PATH);
+  private static final Icon ADD_ICON = IconLoader.getIcon("/general/add.png");
   private static final Icon REMOVE_ICON = IconLoader.getIcon("/general/remove.png");
   private static final Icon SAVE_ICON = IconLoader.getIcon("/ide/defaultProfile.png");
 
@@ -65,9 +63,10 @@ public class NullableNotNullDialog extends DialogWrapper {
     final NullableNotNullManager manager = NullableNotNullManager.getInstance(myProject);
     final Splitter splitter = new Splitter(true);
     myNullablePanel =
-      new AnnoPanel("Nullable", manager.getDefaultNullable(), manager.getNullables(), NullableNotNullManager.DEFAULT_NULLABLES);
+      new AnnoPanel("Nullable annotations", manager.getDefaultNullable(), manager.getNullables(), NullableNotNullManager.DEFAULT_NULLABLES);
     splitter.setFirstComponent(myNullablePanel);
-    myNotNullPanel = new AnnoPanel("NotNull", manager.getDefaultNotNull(), manager.getNotNulls(), NullableNotNullManager.DEFAULT_NOT_NULLS);
+    myNotNullPanel =
+      new AnnoPanel("NotNull annotations", manager.getDefaultNotNull(), manager.getNotNulls(), NullableNotNullManager.DEFAULT_NOT_NULLS);
     splitter.setSecondComponent(myNotNullPanel);
     splitter.setHonorComponentsMinimumSize(true);
     splitter.setPreferredSize(new Dimension(300, 400));
@@ -133,23 +132,31 @@ public class NullableNotNullDialog extends DialogWrapper {
         @Override
         public void update(AnActionEvent e) {
           final Object selectedValue = myList.getSelectedValue();
-          e.getPresentation().setEnabled(ArrayUtil.find(myDefaultAnns, selectedValue) == -1);
+          final boolean enabled = selectedValue != null && ArrayUtil.find(myDefaultAnns, selectedValue) == -1;
+          e.getPresentation().setEnabled(enabled);
         }
 
         @Override
         public void actionPerformed(AnActionEvent e) {
-          ((DefaultListModel)myList.getModel()).removeElement(myList.getSelectedValue());
+          final String selectedValue = (String)myList.getSelectedValue();
+          if (selectedValue == null) return;
+          if (myDefaultAnn.equals(selectedValue)) myDefaultAnn = myDefaultAnns[0];
+          ((DefaultListModel)myList.getModel()).removeElement(selectedValue);
         }
       });
       group.add(new AnAction("Make default", "Default", SAVE_ICON) {
         @Override
         public void update(AnActionEvent e) {
-          e.getPresentation().setEnabled(!Comparing.strEqual(myDefaultAnn, (String)myList.getSelectedValue()));
+          final String selectedValue = (String)myList.getSelectedValue();
+          final boolean enabled = selectedValue != null && !Comparing.strEqual(myDefaultAnn, selectedValue);
+          e.getPresentation().setEnabled(enabled);
         }
 
         @Override
         public void actionPerformed(AnActionEvent e) {
-          myDefaultAnn = (String)myList.getSelectedValue();
+          final String selectedValue = (String)myList.getSelectedValue();
+          if (selectedValue == null) return;
+          myDefaultAnn = selectedValue;
           final DefaultListModel model = (DefaultListModel)myList.getModel();
 
           // to show the new default value in the ui
