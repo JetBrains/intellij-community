@@ -42,6 +42,7 @@ public class AndroidLayoutPreviewToolWindowSettings implements PersistentStateCo
     private String myTheme;
     private String myLocaleLanguage;
     private String myLocaleRegion;
+    private boolean myVisible = true;
 
     public String getDevice() {
       return myDevice;
@@ -105,6 +106,14 @@ public class AndroidLayoutPreviewToolWindowSettings implements PersistentStateCo
 
     public void setLocaleRegion(String localeRegion) {
       myLocaleRegion = localeRegion;
+    }
+
+    public boolean isVisible() {
+      return myVisible;
+    }
+
+    public void setVisible(boolean visible) {
+      myVisible = visible;
     }
   }
 }
