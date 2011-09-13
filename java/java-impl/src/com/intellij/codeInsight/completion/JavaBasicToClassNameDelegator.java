@@ -43,7 +43,8 @@ public class JavaBasicToClassNameDelegator extends CompletionContributor {
     });
 
     if (empty.get()) {
-      JavaClassNameCompletionContributor.addAllClasses(parameters, JavaCompletionSorting.addJavaSorting(parameters, result), new Consumer<LookupElement>() {
+      JavaClassNameCompletionContributor.addAllClasses(parameters, JavaCompletionSorting.addJavaSorting(parameters, result),
+                                                       true, new Consumer<LookupElement>() {
         @Override
         public void consume(LookupElement element) {
           JavaPsiClassReferenceElement classElement = element.as(JavaPsiClassReferenceElement.CLASS_CONDITION_KEY);

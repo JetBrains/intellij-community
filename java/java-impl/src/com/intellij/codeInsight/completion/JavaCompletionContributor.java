@@ -238,7 +238,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     if (!isClassNamePossible(parameters.getPosition()) || !mayStartClassName(result, parameters.isRelaxedMatching())) return;
 
     if (mayShowAllClasses(parameters)) {
-      JavaClassNameCompletionContributor.addAllClasses(parameters, result, new Consumer<LookupElement>() {
+      JavaClassNameCompletionContributor.addAllClasses(parameters, result, parameters.getInvocationCount() <= 2, new Consumer<LookupElement>() {
         @Override
         public void consume(LookupElement element) {
           if (!inheritors.alreadyProcessed(element)) {
