@@ -757,13 +757,17 @@ public class ExpressionParser {
       expr.rollbackTo();
       return null;
     }
+    PsiBuilder.Marker afterType = builder.mark();
     builder.advanceLexer();
 
-    if (builder.getTokenType() != JavaTokenType.CLASS_KEYWORD) {
-      expr.rollbackTo();
-      return null;
+    if (builder.getTokenType() == JavaTokenType.CLASS_KEYWORD) {
+      afterType.drop();
+      builder.advanceLexer();
     }
-    builder.advanceLexer();
+    else {
+      afterType.rollbackTo();
+      builder.error(".class expected");
+    }
 
     expr.done(JavaElementType.CLASS_OBJECT_ACCESS_EXPRESSION);
     return expr;

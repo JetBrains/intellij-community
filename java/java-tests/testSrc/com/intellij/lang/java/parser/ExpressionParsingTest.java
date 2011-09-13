@@ -117,4 +117,6 @@ public class ExpressionParsingTest extends JavaParsingTestCase {
   public void testSuperMethodCallTypeParameterList() { doTest(true); }
 
   public void testPrimitiveClassObjectAccess() { doTest(true); }
+  public void testPrimitiveClassObjectAccessError() { doTest(true); }
+  public void testPrimitiveArrayClassObjectAccessError() { doTest(true); }
 }

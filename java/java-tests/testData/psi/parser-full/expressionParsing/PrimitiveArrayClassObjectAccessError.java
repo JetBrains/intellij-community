@@ -1,0 +1,5 @@
+class C {
+  {
+    int[].cla;
+  }
+}
