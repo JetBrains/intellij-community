@@ -24,6 +24,18 @@ public class CythonParsingTest extends ParsingTestCase {
     doTest();
   }
 
+  public void testVariables() {
+    doTest();
+  }
+
+  public void testExpressions() {
+    doTest();
+  }
+
+  public void testFunctions() {
+    doTest();
+  }
+
   public void doTest() {
     doTest(true);
   }

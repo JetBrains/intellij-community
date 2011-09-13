@@ -13,6 +13,7 @@ import static com.jetbrains.python.PyBundle.message;
  */
 public class FunctionParsing extends Parsing {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.parsing.FunctionParsing");
+  private static final IElementType FUNCTION_TYPE = PyElementTypes.FUNCTION_DECLARATION;
 
   public FunctionParsing(ParsingContext context) {
     super(context);
@@ -24,6 +25,10 @@ public class FunctionParsing extends Parsing {
     parseFunctionInnards(functionMarker);
   }
 
+  protected IElementType getFunctionType() {
+    return FUNCTION_TYPE;
+  }
+
   protected void parseFunctionInnards(PsiBuilder.Marker functionMarker) {
     myBuilder.advanceLexer();
     if (myBuilder.getTokenType() == PyTokenTypes.IDENTIFIER) {
@@ -32,8 +37,13 @@ public class FunctionParsing extends Parsing {
     else {
       myBuilder.error(message("PARSE.expected.func.name"));
     }
-
     parseParameterList();
+    parseReturnTypeAnnotation();
+    checkMatches(PyTokenTypes.COLON, message("PARSE.expected.colon"));
+    getStatementParser().parseSuite(functionMarker, getFunctionType());
+  }
+
+  public void parseReturnTypeAnnotation() {
     if (myContext.getLanguageLevel().isPy3K() && myBuilder.getTokenType() == PyTokenTypes.MINUS) {
       PsiBuilder.Marker maybeReturnAnnotation = myBuilder.mark();
       nextToken();
@@ -47,8 +57,6 @@ public class FunctionParsing extends Parsing {
         maybeReturnAnnotation.rollbackTo();
       }
     }
-    checkMatches(PyTokenTypes.COLON, message("PARSE.expected.colon"));
-    getStatementParser().parseSuite(functionMarker, PyElementTypes.FUNCTION_DECLARATION);
   }
 
   public void parseDecoratedDeclaration() {
@@ -82,11 +90,11 @@ public class FunctionParsing extends Parsing {
       myBuilder.error(message("PARSE.expected.@.or.def"));
       PsiBuilder.Marker parameterList = myBuilder.mark(); // To have non-empty parameters list at all the time.
       parameterList.done(PyElementTypes.PARAMETER_LIST);
-      decoratorStartMarker.done(PyElementTypes.FUNCTION_DECLARATION);
+      decoratorStartMarker.done(getFunctionType());
     }
   }
 
-  private void parseParameterList() {
+  public void parseParameterList() {
     final PsiBuilder.Marker parameterList;
     if (myBuilder.getTokenType() != PyTokenTypes.LPAR) {
       myBuilder.error(message("PARSE.expected.lpar"));
@@ -118,57 +126,11 @@ public class FunctionParsing extends Parsing {
           break;
         }
       }
-
       if (myBuilder.getTokenType() == PyTokenTypes.LPAR) {
         parseParameterSubList();
         continue;
       }
-
-      final PsiBuilder.Marker parameter = myBuilder.mark();
-      boolean isStarParameter = false;
-      if (myBuilder.getTokenType() == PyTokenTypes.MULT) {
-        myBuilder.advanceLexer();
-        if (myContext.getLanguageLevel().isPy3K() &&
-            (myBuilder.getTokenType() == PyTokenTypes.COMMA) || myBuilder.getTokenType() == endToken) {
-          parameter.done(PyElementTypes.SINGLE_STAR_PARAMETER);
-          continue;
-        }
-        isStarParameter = true;
-      }
-      else if (myBuilder.getTokenType() == PyTokenTypes.EXP) {
-        myBuilder.advanceLexer();
-        isStarParameter = true;
-      }
-      if (matchToken(PyTokenTypes.IDENTIFIER)) {
-        if (!isLambda && myContext.getLanguageLevel().isPy3K() && atToken(PyTokenTypes.COLON)) {
-          PsiBuilder.Marker annotationMarker = myBuilder.mark();
-          nextToken();
-          if (!getExpressionParser().parseSingleExpression(false)) {
-            myBuilder.error(message("PARSE.expected.expression"));
-          }
-          annotationMarker.done(PyElementTypes.ANNOTATION);
-        }
-        if (!isStarParameter && matchToken(PyTokenTypes.EQ)) {
-          if (!getExpressionParser().parseSingleExpression(false)) {
-            PsiBuilder.Marker invalidElements = myBuilder.mark();
-            while(!atAnyOfTokens(endToken, PyTokenTypes.LINE_BREAK, PyTokenTypes.COMMA, null)) {
-              nextToken();
-            }
-            invalidElements.error(message("PARSE.expected.expression"));
-          }
-        }
-        parameter.done(PyElementTypes.NAMED_PARAMETER);
-      }
-      else {
-        parameter.rollbackTo();
-        if (atToken(endToken)) {
-          break;
-        }
-        PsiBuilder.Marker invalidElements = myBuilder.mark();
-        while (!atToken(endToken) && !atToken(PyTokenTypes.LINE_BREAK) && !atToken(PyTokenTypes.COMMA) && !atToken(null)) {
-          nextToken();
-        }
-        invalidElements.error(message("PARSE.expected.formal.param.name"));
+      if (!parseParameter(endToken, isLambda)) {
         break;
       }
     }
@@ -182,6 +144,57 @@ public class FunctionParsing extends Parsing {
     if (myBuilder.getTokenType() == endToken && endToken == PyTokenTypes.COLON) {
       myBuilder.advanceLexer();
     }
+  }
+
+  protected boolean parseParameter(IElementType endToken, boolean isLambda) {
+    final PsiBuilder.Marker parameter = myBuilder.mark();
+    boolean isStarParameter = false;
+    if (myBuilder.getTokenType() == PyTokenTypes.MULT) {
+      myBuilder.advanceLexer();
+      if (myContext.getLanguageLevel().isPy3K() &&
+          (myBuilder.getTokenType() == PyTokenTypes.COMMA) || myBuilder.getTokenType() == endToken) {
+        parameter.done(PyElementTypes.SINGLE_STAR_PARAMETER);
+        return true;
+      }
+      isStarParameter = true;
+    }
+    else if (myBuilder.getTokenType() == PyTokenTypes.EXP) {
+      myBuilder.advanceLexer();
+      isStarParameter = true;
+    }
+    if (matchToken(PyTokenTypes.IDENTIFIER)) {
+      if (!isLambda && myContext.getLanguageLevel().isPy3K() && atToken(PyTokenTypes.COLON)) {
+        PsiBuilder.Marker annotationMarker = myBuilder.mark();
+        nextToken();
+        if (!getExpressionParser().parseSingleExpression(false)) {
+          myBuilder.error(message("PARSE.expected.expression"));
+        }
+        annotationMarker.done(PyElementTypes.ANNOTATION);
+      }
+      if (!isStarParameter && matchToken(PyTokenTypes.EQ)) {
+        if (!getExpressionParser().parseSingleExpression(false)) {
+          PsiBuilder.Marker invalidElements = myBuilder.mark();
+          while(!atAnyOfTokens(endToken, PyTokenTypes.LINE_BREAK, PyTokenTypes.COMMA, null)) {
+            nextToken();
+          }
+          invalidElements.error(message("PARSE.expected.expression"));
+        }
+      }
+      parameter.done(PyElementTypes.NAMED_PARAMETER);
+    }
+    else {
+      parameter.rollbackTo();
+      if (atToken(endToken)) {
+        return false;
+      }
+      PsiBuilder.Marker invalidElements = myBuilder.mark();
+      while (!atToken(endToken) && !atToken(PyTokenTypes.LINE_BREAK) && !atToken(PyTokenTypes.COMMA) && !atToken(null)) {
+        nextToken();
+      }
+      invalidElements.error(message("PARSE.expected.formal.param.name"));
+      return false;
+    }
+    return true;
   }
 
   private void parseParameterSubList() {

@@ -20,7 +20,11 @@ import java.io.IOException;
  */
 public class PyFunctionElementType extends PyStubElementType<PyFunctionStub, PyFunction> {
   public PyFunctionElementType() {
-    super("FUNCTION_DECLARATION");
+    this("FUNCTION_DECLARATION");
+  }
+
+  public PyFunctionElementType(String debugName) {
+    super(debugName);
   }
 
   public PsiElement createElement(final ASTNode node) {

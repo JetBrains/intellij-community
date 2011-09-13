@@ -5,6 +5,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
@@ -32,7 +33,11 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
   }
 
   public PyNamedParameterImpl(final PyNamedParameterStub stub) {
-    super(stub, PyElementTypes.NAMED_PARAMETER);
+    this(stub, PyElementTypes.NAMED_PARAMETER);
+  }
+
+  public PyNamedParameterImpl(final PyNamedParameterStub stub, IStubElementType nodeType) {
+    super(stub, nodeType);
   }
 
   @Nullable
@@ -49,7 +54,7 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
   }
 
   @Nullable
-  private ASTNode getNameIdentifierNode() {
+  protected ASTNode getNameIdentifierNode() {
     return getNode().findChildByType(PyTokenTypes.IDENTIFIER);
   }
 

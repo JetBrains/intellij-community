@@ -840,7 +840,7 @@ public class ExpressionParsing extends Parsing {
     return true;
   }
 
-  private boolean parseUnaryExpression(boolean isTargetExpression) {
+  protected boolean parseUnaryExpression(boolean isTargetExpression) {
     final IElementType tokenType = myBuilder.getTokenType();
     if (PyTokenTypes.UNARY_OPERATIONS.contains(tokenType)) {
       final PsiBuilder.Marker expr = myBuilder.mark();

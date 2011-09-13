@@ -757,6 +757,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
       }
     }
   }
+
   public IElementType filter(final IElementType source, final int start, final int end, final CharSequence text) {
     if (
       (myExpectAsKeyword || myContext.getLanguageLevel().hasWithStatement()) &&

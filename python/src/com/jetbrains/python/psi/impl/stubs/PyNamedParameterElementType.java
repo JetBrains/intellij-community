@@ -22,7 +22,11 @@ public class PyNamedParameterElementType extends PyStubElementType<PyNamedParame
   private static final int HAS_DEFAULT_VALUE = 4;
 
   public PyNamedParameterElementType() {
-    super("NAMED_PARAMETER");
+    this("NAMED_PARAMETER");
+  }
+
+  public PyNamedParameterElementType(String debugName) {
+    super(debugName);
   }
 
   public PyNamedParameter createPsi(final PyNamedParameterStub stub) {
