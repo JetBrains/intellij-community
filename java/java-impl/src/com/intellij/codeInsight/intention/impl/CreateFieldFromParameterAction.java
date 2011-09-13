@@ -218,6 +218,8 @@ public class CreateFieldFromParameterAction implements IntentionAction {
           final NullableNotNullManager manager = NullableNotNullManager.getInstance(project);
           if (manager.isNullable(myParameter, false)) {
             modifierList.addAfter(factory.createAnnotationFromText("@" + manager.getDefaultNullable(), field), null);
+          } else if (isFinal && manager.isNotNull(myParameter, false)) {
+            modifierList.addAfter(factory.createAnnotationFromText("@" + manager.getDefaultNotNull(), field), null);
           }
 
           PsiCodeBlock methodBody = method.getBody();
