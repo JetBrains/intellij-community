@@ -34,10 +34,10 @@ import com.intellij.openapi.editor.actions.ContentChooser;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringHash;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.util.io.SafeFileOutputStream;
 import com.thoughtworks.xstream.io.HierarchicalStreamReader;
 import com.thoughtworks.xstream.io.xml.XppReader;
 import org.jetbrains.annotations.NotNull;
@@ -108,10 +108,17 @@ public class ConsoleHistoryController {
           saveHistory();
         }
       });
-      loadHistory();
+      String consoleContent = loadHistory();
+      if (consoleContent != null) {
+        setConsoleText(consoleContent, false, false);
+      }
     }
     configureActions();
-    myLastSaveStamp = myModel.getModificationCount();
+    myLastSaveStamp = getCurrentTimeStamp();
+  }
+
+  private long getCurrentTimeStamp() {
+    return myModel.getModificationCount() + myConsole.getEditorDocument().getModificationStamp();
   }
 
   private void configureActions() {
@@ -135,27 +142,28 @@ public class ConsoleHistoryController {
   }
 
 
-  private void loadHistory() {
+  @Nullable
+  private String loadHistory() {
     final File file = getFile();
-    if (!file.exists()) return;
+    if (!file.exists()) return null;
     HierarchicalStreamReader xmlReader = null;
     try {
       xmlReader = new XppReader(new FileReader(file));
-      loadHistory(xmlReader);
+      return loadHistory(xmlReader);
     }
     catch (Exception ex) {
       LOG.error(ex);
+      return null;
     }
     finally {
       if (xmlReader != null) {
         xmlReader.close();
       }
     }
-
   }
 
   private void saveHistory() {
-    if (myLastSaveStamp == myModel.getModificationCount()) return;
+    if (myLastSaveStamp == getCurrentTimeStamp()) return;
 
     final File file = getFile();
     final File dir = file.getParentFile();
@@ -163,8 +171,8 @@ public class ConsoleHistoryController {
       LOG.error("failed to create folder: "+dir.getAbsolutePath());
       return;
     }
-    final File tmpFile = new File(dir, file.getName()+".tmp");
-    FileOutputStream os = null;
+
+    OutputStream os = null;
     try {
       final XmlSerializer serializer = XmlPullParserFactory.newInstance().newSerializer();
       try {
@@ -173,11 +181,8 @@ public class ConsoleHistoryController {
       catch (Exception e) {
         // not recognized
       }
-      serializer.setOutput(new PrintWriter(os = new FileOutputStream(tmpFile)));
+      serializer.setOutput(new PrintWriter(os = new SafeFileOutputStream(file)));
       saveHistory(serializer);
-      file.delete();
-      FileUtil.rename(tmpFile, file);
-      myLastSaveStamp = myModel.getModificationCount();
     }
     catch (Exception ex) {
       LOG.error(ex);
@@ -189,8 +194,9 @@ public class ConsoleHistoryController {
       catch (Exception e) {
         // nothing
       }
-      cleanupOldFiles(dir);
     }
+    myLastSaveStamp = getCurrentTimeStamp();
+    cleanupOldFiles(dir);
   }
 
   private static void cleanupOldFiles(final File dir) {
@@ -215,7 +221,7 @@ public class ConsoleHistoryController {
     return myBrowseHistory;
   }
 
-  protected void actionTriggered(final String command, final boolean storeUserText) {
+  protected void setConsoleText(final String command, final boolean storeUserText, final boolean scrollToEnd) {
     final Editor editor = myConsole.getCurrentEditor();
     final Document document = editor.getDocument();
     new WriteCommandAction(myConsole.getProject(), myConsole.getFile()) {
@@ -224,7 +230,7 @@ public class ConsoleHistoryController {
           myUserValue = document.getText();
         }
         document.setText(StringUtil.notNullize(command));
-        editor.getCaretModel().moveToOffset(document.getTextLength());
+        editor.getCaretModel().moveToOffset(scrollToEnd? document.getTextLength() : 0);
         editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       }
     }.execute();
@@ -243,7 +249,7 @@ public class ConsoleHistoryController {
     public void actionPerformed(final AnActionEvent e) {
       final String command;
       command = myNext ? myModel.getHistoryNext() : StringUtil.notNullize(myModel.getHistoryPrev(), StringUtil.notNullize(myUserValue));
-      actionTriggered(command, myNext && myModel.getHistoryCursor() == 0);
+      setConsoleText(command, myNext && myModel.getHistoryCursor() == 0, true);
     }
 
     @Override
@@ -272,23 +278,28 @@ public class ConsoleHistoryController {
   }
 
 
-  private void loadHistory(final HierarchicalStreamReader in) {
-    if (!in.getNodeName().equals("console-history")) return;
+  @Nullable
+  private String loadHistory(final HierarchicalStreamReader in) {
+    if (!in.getNodeName().equals("console-history")) return null;
     final String id = in.getAttribute("id");
-    if (!myId.equals(id)) return;
+    if (!myId.equals(id)) return null;
     final ArrayList<String> entries = new ArrayList<String>();
+    String consoleContent = null;
     while (in.hasMoreChildren()) {
       in.moveDown();
       if ("history-entry".equals(in.getNodeName())) {
         entries.add(in.getValue());
+      }
+      else if ("console-content".equals(in.getNodeName())) {
+        consoleContent = in.getValue();
       }
       in.moveUp();
     }
     for (ListIterator<String> iterator = entries.listIterator(entries.size()); iterator.hasPrevious(); ) {
       final String entry = iterator.previous();
       myModel.addToHistory(entry);
-
     }
+    return consoleContent;
   }
 
   private void saveHistory(final XmlSerializer out) throws IOException {
@@ -299,6 +310,12 @@ public class ConsoleHistoryController {
       out.startTag(null, "history-entry");
       out.text(s);
       out.endTag(null, "history-entry");
+    }
+    String current = myConsole.getEditorDocument().getText();
+    if (StringUtil.isNotEmpty(current)) {
+      out.startTag(null, "console-content");
+      out.text(current);
+      out.endTag(null, "console-content");
     }
     out.endTag(null, "console-history");
     out.endDocument();
@@ -332,7 +349,7 @@ public class ConsoleHistoryController {
       };
       chooser.show();
       if (chooser.isOK()) {
-        actionTriggered(myModel.getHistory().get(chooser.getSelectedIndex()), false);
+        setConsoleText(myModel.getHistory().get(chooser.getSelectedIndex()), false, true);
       }
     }
   }
