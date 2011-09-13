@@ -21,7 +21,6 @@ import com.intellij.codeInsight.template.SmartCompletionContextType;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.patterns.ElementPattern;
-import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.getters.ClassLiteralGetter;
 import com.intellij.psi.filters.getters.JavaMembersGetter;
@@ -36,7 +35,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
-import static com.intellij.patterns.PsiJavaPatterns.psiClass;
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
 /**
@@ -63,10 +61,7 @@ public class BasicExpressionCompletionContributor {
                                             final Consumer<LookupElement> result,
                                             PrefixMatcher matcher) {
     final PsiElement element = parameters.getPosition();
-    if (PsiJavaPatterns.psiElement().afterLeaf(
-      PsiJavaPatterns.psiElement().withText(".").afterLeaf(
-        PsiJavaPatterns.psiElement().withParent(
-          PsiJavaPatterns.psiElement().referencing(psiClass())))).accepts(element)) {
+    if (JavaCompletionData.isAfterTypeDot(element)) {
       addKeyword(result, element, PsiKeyword.CLASS);
       addKeyword(result, element, PsiKeyword.THIS);
 

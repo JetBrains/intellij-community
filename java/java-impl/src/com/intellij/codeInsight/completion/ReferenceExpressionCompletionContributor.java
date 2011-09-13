@@ -109,6 +109,7 @@ public class ReferenceExpressionCompletionContributor {
       public void run() {
         final PsiElement element = parameters.getPosition();
         if (JavaSmartCompletionContributor.INSIDE_TYPECAST_EXPRESSION.accepts(element)) return;
+        if (JavaCompletionData.isAfterPrimitiveOrArrayType(element)) return;
 
         final int offset = parameters.getParameters().getOffset();
         final PsiReference reference = element.getContainingFile().findReferenceAt(offset);

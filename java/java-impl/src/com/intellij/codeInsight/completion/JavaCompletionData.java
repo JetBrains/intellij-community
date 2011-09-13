@@ -35,7 +35,6 @@ import com.intellij.psi.filters.getters.JavaMembersGetter;
 import com.intellij.psi.filters.position.*;
 import com.intellij.psi.filters.types.TypeCodeFragmentIsVoidEnabledFilter;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClassLevelDeclarationStatement;
-import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.jsp.JspElementType;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -530,7 +529,9 @@ public class JavaCompletionData extends JavaAwareCompletionData{
 
     addPrimitiveTypes(result, position);
 
-    addClassLiteral(result, position);
+    if (isAfterTypeDot(position)) {
+      result.addElement(createKeyword(position, PsiKeyword.CLASS));
+    }
 
     final ProcessingContext context = new ProcessingContext();
     if (psiElement().afterLeaf(
@@ -564,33 +565,19 @@ public class JavaCompletionData extends JavaAwareCompletionData{
   }
 
   static boolean isAfterPrimitiveOrArrayType(PsiElement element) {
-    element = PsiTreeUtil.prevVisibleLeaf(element);
-    if (element == null || !element.textMatches(".")) return false;
-
-    boolean array = false;
-    while (true) {
-      element = PsiTreeUtil.prevVisibleLeaf(element);
-      if (element == null) return false;
-      if (element.textMatches("]")) {
-        array = true;
-        element = PsiTreeUtil.prevVisibleLeaf(element);
-        if (element == null || !element.textMatches("[")) return false;
-      } else {
-        break;
-      }
-    }
-    return psiElement().withElementType(ElementType.PRIMITIVE_TYPE_BIT_SET).accepts(element) || array && CLASS_REFERENCE.accepts(element);
+    return psiElement().withParent(
+      psiReferenceExpression().withFirstChild(
+        psiElement(PsiClassObjectAccessExpression.class).withLastChild(
+          not(psiElement().withText(PsiKeyword.CLASS))))).accepts(element);
   }
 
-  private static void addClassLiteral(CompletionResultSet result, PsiElement position) {
+  static boolean isAfterTypeDot(PsiElement position) {
     if (INSIDE_PARAMETER_LIST.accepts(position) || position.getContainingFile() instanceof PsiJavaCodeReferenceCodeFragment) {
-      return;
+      return false;
     }
 
-    if (psiElement().afterLeaf(psiElement().withText(".").afterLeaf(CLASS_REFERENCE)).accepts(position) ||
-        isAfterPrimitiveOrArrayType(position)) {
-      result.addElement(createKeyword(position, PsiKeyword.CLASS));
-    }
+    return psiElement().afterLeaf(psiElement().withText(".").afterLeaf(CLASS_REFERENCE)).accepts(position) ||
+           isAfterPrimitiveOrArrayType(position);
   }
 
   private static void addPrimitiveTypes(CompletionResultSet result, PsiElement position) {
