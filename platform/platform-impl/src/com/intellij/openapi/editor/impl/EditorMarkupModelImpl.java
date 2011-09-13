@@ -42,7 +42,6 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.ProperTextRange;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
@@ -78,6 +77,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   private final List<ErrorStripeListener> myErrorMarkerListeners = new ArrayList<ErrorStripeListener>();
   private ErrorStripeListener[] myCachedErrorMarkerListeners = null;
 
+  private boolean dimensionsAreValid;
   private int myEditorScrollbarTop = -1;
   private int myEditorTargetHeight = -1;
   private int myEditorSourceHeight = -1;
@@ -115,6 +115,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     int editorScrollbarBottom = scrollBar.getIncScrollButtonHeight();
     myEditorTargetHeight = scrollBarHeight - myEditorScrollbarTop - editorScrollbarBottom;
     myEditorSourceHeight = myEditor.getPreferredHeight();
+
+    dimensionsAreValid = scrollBarHeight != 0;
   }
 
   public void repaintTrafficLightIcon() {
@@ -155,7 +157,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     int y = e.getY();
 
     for (RangeHighlighter each : highlighters) {
-      ProperTextRange range = offsetToYPosition(each.getStartOffset(), each.getEndOffset());
+      ProperTextRange range = offsetsToYPositions(each.getStartOffset(), each.getEndOffset());
       int eachStartY = range.getStartOffset();
       int eachEndY = range.getEndOffset();
       int eachY = eachStartY + (eachEndY - eachStartY) / 2;
@@ -182,7 +184,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     RangeHighlighter nearestMarker = null;
     int yPos = 0;
     for (RangeHighlighter highlighter : highlighters) {
-      final int newYPos = offsetToYPosition(highlighter.getStartOffset(), highlighter.getEndOffset()).getStartOffset();
+      final int newYPos = offsetsToYPositions(highlighter.getStartOffset(), highlighter.getEndOffset()).getStartOffset();
 
       if (nearestMarker == null || Math.abs(yPos - e.getY()) > Math.abs(newYPos - e.getY())) {
         nearestMarker = highlighter;
@@ -200,7 +202,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     markupModel.processRangeHighlightersOverlappingWith(startOffset, endOffset, new Processor<RangeHighlighterEx>() {
       public boolean process(RangeHighlighterEx highlighter) {
         if (highlighter.getErrorStripeMarkColor() != null) {
-          ProperTextRange range = offsetToYPosition(highlighter.getStartOffset(), highlighter.getEndOffset());
+          ProperTextRange range = offsetsToYPositions(highlighter.getStartOffset(), highlighter.getEndOffset());
           if (range.getStartOffset() >= y - getMinHeight() * 2 &&
               range.getEndOffset() <= y + getMinHeight() * 2) {
             nearest.add(highlighter);
@@ -293,7 +295,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   void repaint(int startOffset, int endOffset) {
     markDirtied(startOffset, endOffset);
 
-    ProperTextRange range = offsetToYPosition(startOffset, endOffset);
+    ProperTextRange range = offsetsToYPositions(startOffset, endOffset);
 
     myEditor.getVerticalScrollBar().repaint(0, range.getStartOffset(), PREFERRED_WIDTH, range.getLength() + getMinHeight());
   }
@@ -402,7 +404,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         ((ApplicationImpl)ApplicationManager.getApplication()).editorPaintStart();
 
         try {
-          myDirtyYPositions = myDirtyYPositions.intersection(docRange);
+          ProperTextRange intersection = myDirtyYPositions.intersection(docRange);
+          myDirtyYPositions = intersection;
           if (myDirtyYPositions == null) myDirtyYPositions = docRange;
           repaint(imageGraphics, componentBounds.width, ERROR_ICON_WIDTH - 1, myDirtyYPositions);
           myDirtyYPositions = null;
@@ -467,7 +470,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
           List<PositionedStripe> stripes = isThin ? thinStripes : wideStripes;
           Queue<PositionedStripe> ends = isThin ? thinEnds : wideEnds;
 
-          ProperTextRange range = offsetToYPosition(highlighter.getStartOffset(), highlighter.getEndOffset());
+          ProperTextRange range = offsetsToYPositions(highlighter.getStartOffset(), highlighter.getEndOffset());
           final int ys = range.getStartOffset();
           int ye = range.getEndOffset();
           if (ye - ys < getMinHeight()) ye = ys + getMinHeight();
@@ -716,17 +719,20 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   }
 
   public void markDirtied(int startOffset, int endOffset) {
-    ProperTextRange pos = offsetToYPosition(startOffset, endOffset);
+    ProperTextRange pos = offsetsToYPositions(startOffset, endOffset);
+    ProperTextRange adj = new ProperTextRange(Math.max(0, pos.getStartOffset() - myEditor.getLineHeight()), myEditorScrollbarTop + myEditorTargetHeight == 0 ? pos.getEndOffset() + myEditor.getLineHeight() : Math.min(myEditorScrollbarTop + myEditorTargetHeight, pos.getEndOffset() + myEditor.getLineHeight()));
+
     if (myDirtyYPositions == null) {
-      myDirtyYPositions = pos;
+      myDirtyYPositions = adj;
     }
     else {
-      myDirtyYPositions = myDirtyYPositions.union(pos);
+      myDirtyYPositions = myDirtyYPositions.union(adj);
     }
 
-    myEditorScrollbarTop = -1;
-    myEditorSourceHeight = -1;
-    myEditorTargetHeight = -1;
+    myEditorScrollbarTop = 0;
+    myEditorSourceHeight = 0;
+    myEditorTargetHeight = 0;
+    dimensionsAreValid = false;
   }
 
   public void setMinMarkHeight(final int minMarkHeight) {
@@ -790,8 +796,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
   }
 
-  private ProperTextRange offsetToYPosition(int start, int end) {
-    if (myEditorScrollbarTop == -1 || myEditorTargetHeight == -1) {
+  private ProperTextRange offsetsToYPositions(int start, int end) {
+    if (!dimensionsAreValid) {
       recalcEditorDimensions();
     }
     Document document = myEditor.getDocument();
@@ -808,7 +814,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
 
     int endY;
-    if (document.getLineNumber(start) == document.getLineNumber(end)) {
+    if (start == end || document.getLineNumber(start) == document.getLineNumber(end)) {
       endY = startY; // both offsets are on the same line, no need to recalc Y position
     }
     else {
@@ -825,7 +831,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   }
 
   private int yPositionToOffset(int y, boolean beginLine) {
-    if (myEditorScrollbarTop == -1 || myEditorTargetHeight == -1) {
+    if (!dimensionsAreValid) {
       recalcEditorDimensions();
     }
     final int safeY = Math.max(0, y - myEditorScrollbarTop);
