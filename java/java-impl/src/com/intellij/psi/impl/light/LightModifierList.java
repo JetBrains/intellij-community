@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,14 +26,19 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
-public class LightModifierList extends LightElement implements PsiModifierList{
+public class LightModifierList extends LightElement implements PsiModifierList {
   private final Set<String> myModifiers;
 
-  public LightModifierList(PsiManager manager){
+  public LightModifierList(PsiModifierListOwner modifierListOwner) {
+    this(modifierListOwner.getManager());
+    copyModifiers(modifierListOwner.getModifierList());
+  }
+
+  public LightModifierList(PsiManager manager) {
     this(manager, StdLanguages.JAVA);
   }
 
-  public LightModifierList(PsiManager manager, final Language language, String... modifiers){
+  public LightModifierList(PsiManager manager, final Language language, String... modifiers) {
     super(manager, language);
     myModifiers = CollectionFactory.newTroveSet(modifiers);
   }
@@ -42,11 +47,20 @@ public class LightModifierList extends LightElement implements PsiModifierList{
     myModifiers.add(modifier);
   }
 
+  public void copyModifiers(PsiModifierList modifierList) {
+    if (modifierList == null) return;
+    for (@Modifier String modifier : PsiModifier.MODIFIERS) {
+      if (modifierList.hasExplicitModifier(modifier)) {
+        addModifier(modifier);
+      }
+    }
+  }
+
   public void clearModifiers() {
     myModifiers.clear();
   }
 
-  public boolean hasModifierProperty(@NotNull String name){
+  public boolean hasModifierProperty(@NotNull String name) {
     return myModifiers.contains(name);
   }
 
@@ -54,11 +68,11 @@ public class LightModifierList extends LightElement implements PsiModifierList{
     return myModifiers.contains(name);
   }
 
-  public void setModifierProperty(@NotNull String name, boolean value) throws IncorrectOperationException{
+  public void setModifierProperty(@NotNull String name, boolean value) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
-  public void checkSetModifierProperty(@NotNull String name, boolean value) throws IncorrectOperationException{
+  public void checkSetModifierProperty(@NotNull String name, boolean value) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
@@ -79,10 +93,10 @@ public class LightModifierList extends LightElement implements PsiModifierList{
 
   @NotNull
   public PsiAnnotation addAnnotation(@NotNull @NonNls String qualifiedName) {
-    throw new UnsupportedOperationException("Method addAnnotation is not yet implemented in " + getClass().getName());
+    throw new IncorrectOperationException();
   }
 
-  public void accept(@NotNull PsiElementVisitor visitor){
+  public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitModifierList(this);
     }
@@ -91,12 +105,11 @@ public class LightModifierList extends LightElement implements PsiModifierList{
     }
   }
 
-  public String toString(){
+  public String toString() {
     return "PsiModifierList";
   }
 
   public String[] getModifiers() {
     return ArrayUtil.toStringArray(myModifiers);
   }
-
 }

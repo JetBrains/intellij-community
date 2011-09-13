@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,8 @@
  */
 package com.intellij.psi.impl.light;
 
+import com.intellij.lang.StdLanguages;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
@@ -41,8 +41,12 @@ public class LightMethod extends LightElement implements PsiMethod {
   private final PsiMethod myMethod;
   private final PsiClass myContainingClass;
 
+  public LightMethod(PsiMethod method, PsiClass containingClass) {
+    this(method.getManager(), method, containingClass);
+  }
+
   public LightMethod(PsiManager manager, PsiMethod method, PsiClass containingClass) {
-    super(manager, StdFileTypes.JAVA.getLanguage());
+    super(manager, StdLanguages.JAVA);
     myMethod = method;
     myContainingClass = containingClass;
   }
@@ -154,6 +158,7 @@ public class LightMethod extends LightElement implements PsiMethod {
     return myMethod.findSuperMethodSignaturesIncludingStatic(checkAccess);
   }
 
+  @SuppressWarnings("deprecation")
   public PsiMethod findDeepestSuperMethod() {
     return myMethod.findDeepestSuperMethod();
   }
@@ -216,6 +221,7 @@ public class LightMethod extends LightElement implements PsiMethod {
   public PsiMethodReceiver getMethodReceiver() {
     return null;
   }
+
   public PsiType getReturnTypeNoResolve() {
     return getReturnType();
   }
