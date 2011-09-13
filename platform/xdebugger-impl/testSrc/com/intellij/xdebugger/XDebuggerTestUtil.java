@@ -167,7 +167,7 @@ public class XDebuggerTestUtil {
   public static void assertVariableValueMatches(XValue var, String name, String valuePattern) throws InterruptedException {
     XTestValueNode node = computePresentation(var);
     Assert.assertEquals(name, node.myName);
-    Assert.assertTrue(node.myValue, node.myValue.matches(valuePattern));
+    Assert.assertTrue("Expected value" + valuePattern + " Actual value: " + node.myValue, node.myValue.matches(valuePattern));
   }
 
   public static void assertVariableFullValue(XValue var, @Nullable String value) throws InterruptedException {
