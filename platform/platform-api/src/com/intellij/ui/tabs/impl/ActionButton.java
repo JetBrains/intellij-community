@@ -26,6 +26,7 @@ import com.intellij.ui.tabs.TabInfo;
 import com.intellij.util.ui.TimedDeadzone;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
@@ -49,12 +50,21 @@ class ActionButton extends IconButton implements ActionListener {
     myAction = action;
     myPlace = place;
 
-    myButton = new InplaceButton(this, this, pass, deadzone);
+    myButton = new InplaceButton(this, this, pass, deadzone) {
+      @Override
+      protected void doRepaintComponent(Component c) {
+        repaintComponent(c);
+      }
+    };
     myButton.setVisible(false);
   }
 
   public InplaceButton getComponent() {
     return myButton;
+  }
+  
+  protected void repaintComponent(Component c) {
+    c.repaint();
   }
 
   public void setMouseDeadZone(TimedDeadzone.Length deadZone) {

@@ -111,7 +111,7 @@ public class UISettings implements PersistentStateComponent<UISettings>, Exporta
 
   private void tweakPlatformDefaults() {
     // TODO: Make it pluggable
-    if ("CIDR".equalsIgnoreCase(System.getProperty("idea.platform.prefix"))) {
+    if (PlatformUtils.isCidr()) {
       HIDE_TOOL_STRIPES = true;
       SHOW_MAIN_TOOLBAR = false;
       SHOW_ICONS_IN_MENUS = false;

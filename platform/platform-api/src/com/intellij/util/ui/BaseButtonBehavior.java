@@ -60,7 +60,7 @@ public abstract class BaseButtonBehavior {
 
   private void setHovered(boolean hovered) {
     myHovered = hovered;
-    myComponent.repaint();
+    repaintComponent();
   }
 
   public final boolean isPressedByMouse() {
@@ -69,7 +69,7 @@ public abstract class BaseButtonBehavior {
 
   private void setPressedByMouse(boolean pressedByMouse) {
     myPressedByMouse = pressedByMouse;
-    myComponent.repaint();
+    repaintComponent();
   }
 
   public final boolean isSelected() {
@@ -89,7 +89,11 @@ public abstract class BaseButtonBehavior {
   }
 
   protected void repaintComponent() {
-    myComponent.repaint();
+    repaint(myComponent);
+  }
+  
+  protected void repaint(Component c) {
+    c.repaint();
   }
 
   private class MyMouseListener extends MouseAdapter {

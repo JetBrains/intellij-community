@@ -129,6 +129,8 @@ public interface JBTabs extends SwitchProvider {
 
   boolean isEmptyVisible();
 
+  int getInterTabSpaceLength();
+
   interface SelectionChangeHandler {
     ActionCallback execute(final TabInfo info, final boolean requestFocus, ActiveRunnable doChangeSelection);
   }

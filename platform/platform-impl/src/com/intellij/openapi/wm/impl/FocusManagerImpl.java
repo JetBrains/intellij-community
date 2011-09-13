@@ -684,7 +684,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
 
     myTypeAheadRequestors.add(done);
     done.notify(new ActionCallback.TimedOut(Registry.intValue("actionSystem.commandProcessingTimeout"),
-                                            "Typehead request blocked",
+                                            "Typeahead request blocked",
                                             new Exception(),
                                             true).doWhenProcessed(new Runnable() {
       @Override

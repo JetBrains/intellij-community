@@ -40,7 +40,13 @@ import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 
 public class TabLabel extends JPanel {
-  private final SimpleColoredComponent myLabel = new SimpleColoredComponent();
+  private final SimpleColoredComponent myLabel = new SimpleColoredComponent() {
+    @Override
+    protected boolean shouldDrawMacShadow() {
+      return SystemInfo.isMac;
+    }
+  };
+  
   private final LayeredIcon myIcon;
   private Icon myOverlayedIcon;
 
@@ -221,7 +227,7 @@ public class TabLabel extends JPanel {
   }
 
   private int getSelectedOffset() {
-    return 1;
+    return myTabs.getPresentation().getTabsPosition() == JBTabsPosition.top ? 2 : 1;
   }
 
   @Override
@@ -325,6 +331,7 @@ public class TabLabel extends JPanel {
   public void apply(UiDecorator.UiDecoration decoration) {
     if (decoration.getLabelFont() != null) {
       setFont(decoration.getLabelFont());
+      myLabel.setFont(decoration.getLabelFont());
     }
 
     Insets insets = decoration.getLabelInsets();
@@ -469,7 +476,7 @@ public class TabLabel extends JPanel {
 
   public void toggleShowActions(boolean show) {
     if (myActionPanel != null) {
-      myActionPanel.toggleShowActtions(show);
+      myActionPanel.toggleShowActions(show);
     }
   }
 

@@ -68,6 +68,11 @@ public class InplaceButton extends JComponent implements ActiveComponent {
       }
 
       @Override
+      protected void repaint(Component c) {
+        doRepaintComponent(c);
+      }
+
+      @Override
       protected void pass(final MouseEvent e) {
         if (me != null) {
           me.pass(e);
@@ -83,6 +88,10 @@ public class InplaceButton extends JComponent implements ActiveComponent {
     setHoveringEnabled(true);
   }
 
+  protected void doRepaintComponent(Component c) {
+    c.repaint();
+  }
+  
   public void setMouseDeadzone(final TimedDeadzone.Length deadZone) {
     myBehavior.setMouseDeadzone(deadZone);
   }

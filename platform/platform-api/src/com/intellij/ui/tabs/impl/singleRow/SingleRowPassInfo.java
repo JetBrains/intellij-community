@@ -22,15 +22,16 @@ import com.intellij.ui.tabs.impl.LayoutPassInfo;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.List;
 
 public class SingleRowPassInfo extends LayoutPassInfo {
-  final Dimension laayoutSize;
+  final Dimension layoutSize;
   int contentCount;
   int position;
   int requiredLength;
   int toFitLength;
-  public final java.util.List<TabInfo> toLayout;
-  public final java.util.List<TabInfo> toDrop;
+  public final List<TabInfo> toLayout;
+  public final List<TabInfo> toDrop;
   int moreRectAxisSize;
   public Rectangle moreRect;
 
@@ -52,10 +53,10 @@ public class SingleRowPassInfo extends LayoutPassInfo {
   public Rectangle tabRectangle;
 
 
-  public SingleRowPassInfo(SingleRowLayout layout, java.util.List<TabInfo> visibleInfos) {
+  public SingleRowPassInfo(SingleRowLayout layout, List<TabInfo> visibleInfos) {
     super(visibleInfos);
     myTabs = layout.myTabs;
-    laayoutSize = layout.myTabs.getSize();
+    layoutSize = layout.myTabs.getSize();
     contentCount = myTabs.getTabCount();
     toLayout = new ArrayList<TabInfo>();
     toDrop = new ArrayList<TabInfo>();

@@ -107,7 +107,7 @@ class DragHelper extends MouseDragHelper {
     myDragRec.x -= myHoldDelta.width;
     myDragRec.y -= myHoldDelta.height;
 
-    final Rectangle headerRec = myTabs.myLastLayoutPass.getHeaderRectangle();
+    final Rectangle headerRec = myTabs.getLastLayoutPass().getHeaderRectangle();
     ScreenUtil.moveToFit(myDragRec, headerRec, null);
 
     int deadZoneX = 0;

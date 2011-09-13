@@ -106,7 +106,7 @@ public class JBTabsImpl extends JComponent
 
 
   private TabLayout myLayout = mySingleRowLayout;
-  LayoutPassInfo myLastLayoutPass;
+  private LayoutPassInfo myLastLayoutPass;
   private TabInfo myLastPaintedSelection;
 
   public boolean myForcedRelayout;
@@ -503,6 +503,15 @@ public class JBTabsImpl extends JComponent
     mySingleRowLayout.myMorePopup = new JPopupMenu();
     for (final TabInfo each : myVisibleInfos) {
       final JCheckBoxMenuItem item = new JCheckBoxMenuItem(each.getText());
+      Color color = UIManager.getColor("MenuItem.background");
+      if (color != null) {
+        if (mySingleRowLayout.myLastSingRowLayout.toDrop.contains(each)) {
+          color = new Color((int) (color.getRed() * 0.85f), (int) (color.getGreen() * 0.85f), (int) (color.getBlue() * 0.85f));
+        }
+
+        item.setBackground(color);
+      }
+      
       mySingleRowLayout.myMorePopup.add(item);
       if (getSelectedInfo() == each) {
         item.setSelected(true);
@@ -1435,11 +1444,11 @@ public class JBTabsImpl extends JComponent
   }
 
 
-  private int getArcSize() {
+  protected int getArcSize() {
     return 4;
   }
 
-  private int getEdgeArcSize() {
+  protected int getEdgeArcSize() {
     return 3;
   }
 
@@ -1447,7 +1456,10 @@ public class JBTabsImpl extends JComponent
     return 15;
   }
 
-
+  protected JBTabsPosition getPosition() {
+    return myPosition;
+  }
+  
   protected void paintComponent(final Graphics g) {
     super.paintComponent(g);
 
@@ -1505,7 +1517,7 @@ public class JBTabsImpl extends JComponent
     config.restore();
   }
 
-  private Color getActiveTabColor(final Color c) {
+  protected Color getActiveTabColor(final Color c) {
     final TabInfo info = getSelectedInfo();
     if (info == null) {
       return c;
@@ -1515,7 +1527,7 @@ public class JBTabsImpl extends JComponent
     return tabColor == null ? c : tabColor;
   }
 
-  private void paintSelectionAndBorder(Graphics2D g2d) {
+  protected void paintSelectionAndBorder(Graphics2D g2d) {
     if (mySelectedInfo == null) return;
 
     final ShapeInfo shapeInfo = computeSelectedLabelShape();
@@ -1592,7 +1604,7 @@ public class JBTabsImpl extends JComponent
     paintBorder(g2d, shapeInfo, borderColor);
   }
 
-  private ShapeInfo computeSelectedLabelShape() {
+  protected ShapeInfo computeSelectedLabelShape() {
     final ShapeInfo shape = new ShapeInfo();
 
     shape.path = getEffectiveLayout().createShapeTransform(getSize());
@@ -1670,7 +1682,7 @@ public class JBTabsImpl extends JComponent
     return shape;
   }
 
-  private TabLabel getSelectedLabel() {
+  protected TabLabel getSelectedLabel() {
     return myInfo2Label.get(getSelectedInfo());
   }
 
@@ -1688,7 +1700,7 @@ public class JBTabsImpl extends JComponent
   }
 
 
-  private void paintFirstGhost(Graphics2D g2d) {
+  protected void paintFirstGhost(Graphics2D g2d) {
     final ShapeTransform path = getEffectiveLayout().createShapeTransform(mySingleRowLayout.myLastSingRowLayout.firstGhost);
 
     int topX = path.getX() + path.deltaX(getCurveArc());
@@ -1731,7 +1743,11 @@ public class JBTabsImpl extends JComponent
     g2d.drawLine(bottomX - path.deltaX(1), topY + path.deltaY(getArcSize()), bottomX - path.deltaX(1), bottomY - path.deltaY(1));
   }
 
-  private void paintLastGhost(Graphics2D g2d) {
+  protected SingleRowLayout getSingleRowLayout() {
+    return mySingleRowLayout;
+  }
+  
+  protected void paintLastGhost(Graphics2D g2d) {
     final ShapeTransform path = getEffectiveLayout().createShapeTransform(mySingleRowLayout.myLastSingRowLayout.lastGhost);
 
     int topX = path.getX() - path.deltaX(getArcSize());
@@ -1757,20 +1773,24 @@ public class JBTabsImpl extends JComponent
     g2d.drawLine(topX, topY + path.deltaY(1), bottomX - path.deltaX(getCurveArc()), topY + path.deltaY(1));
   }
 
-  private int getCurveArc() {
+  protected int getCurveArc() {
     return 2;
   }
 
-  private Color getBoundsColor() {
+  protected Color getBoundsColor() {
     return Color.gray;
   }
 
-  private Color getRightBlockColor() {
+  protected Color getRightBlockColor() {
     return Color.lightGray;
   }
 
-  private Color getTopBlickColor() {
+  protected Color getTopBlickColor() {
     return Color.white;
+  }
+  
+  protected boolean shouldPaintFocus() {
+    return myPaintFocus;
   }
 
   private void paintNonSelectedTabs(final Graphics2D g2d, final boolean leftGhostExists, final boolean rightGhostExists) {
@@ -1817,7 +1837,8 @@ public class JBTabsImpl extends JComponent
         img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         Graphics2D imgG2d = img.createGraphics();
         imgG2d.addRenderingHints(g2d.getRenderingHints());
-        doPaintInactictive(imgG2d, leftGhostExists, label, new Rectangle(imageInsets, 0, label.getWidth(), label.getHeight()), rightGhostExists);
+        doPaintInactive(imgG2d, leftGhostExists, label, new Rectangle(imageInsets, 0, label.getWidth(), label.getHeight()),
+                        rightGhostExists);
         imgG2d.dispose();
       }
 
@@ -1825,7 +1846,7 @@ public class JBTabsImpl extends JComponent
 
       label.setInactiveStateImage(img);
     } else {
-      doPaintInactictive(g2d, leftGhostExists, label, label.getBounds(), rightGhostExists);
+      doPaintInactive(g2d, leftGhostExists, label, label.getBounds(), rightGhostExists);
       label.setInactiveStateImage(null);
     }
   }
@@ -1834,7 +1855,31 @@ public class JBTabsImpl extends JComponent
     return Registry.is("ide.tabbedPane.bufferedPaint") && myUseBufferedPaint;
   }
 
-  private void doPaintInactictive(Graphics2D g2d, boolean leftGhostExists, TabLabel label, Rectangle effectiveBounds, boolean rightGhostExists) {
+  protected List<TabInfo> getVisibleInfos() {
+    return myVisibleInfos;
+  }
+  
+  protected LayoutPassInfo getLastLayoutPass() {
+    return myLastLayoutPass;
+  }
+  
+  protected TabLabel getInfoForLabel(TabInfo info) {
+    return myInfo2Label.get(info);
+  }
+  
+  protected TableLayout getTableLayout() {
+    return myTableLayout;
+  }
+  
+  protected DragHelper getDragHelper() {
+    return myDragHelper;
+  }
+  
+  protected void doPaintInactive(Graphics2D g2d,
+                                 boolean leftGhostExists,
+                                 TabLabel label,
+                                 Rectangle effectiveBounds,
+                                 boolean rightGhostExists) {
     int tabIndex = myVisibleInfos.indexOf(label.getInfo());
 
     final int arc = getArcSize();
@@ -1955,8 +2000,7 @@ public class JBTabsImpl extends JComponent
     return 2;
   }
 
-  private void paintBorder(Graphics2D g2d, ShapeInfo shape, final Color borderColor) {
-
+  protected void paintBorder(Graphics2D g2d, ShapeInfo shape, final Color borderColor) {
     final ShapeTransform shaper = shape.path.copy().reset();
 
     final Insets paintBorder = shape.path.transformInsets(myBorder.getEffectiveBorder());
@@ -3078,6 +3122,11 @@ public class JBTabsImpl extends JComponent
   @Override
   public boolean isEmptyVisible() {
     return myVisibleInfos.isEmpty();
+  }
+
+  @Override
+  public int getInterTabSpaceLength() {
+    return 0;
   }
 
   @Override

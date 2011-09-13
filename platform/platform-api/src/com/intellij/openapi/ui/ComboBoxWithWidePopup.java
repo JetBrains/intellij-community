@@ -93,17 +93,12 @@ public class ComboBoxWithWidePopup extends JComboBox {
   }
 
   private class AdjustingListCellRenderer implements ListCellRenderer {
-    JLabel myTempLabel;
     private final ListCellRenderer myOldRenderer;
     private final ComboBoxWithWidePopup myComboBox;
 
     public AdjustingListCellRenderer(ComboBoxWithWidePopup comboBox, ListCellRenderer oldRenderer) {
       myComboBox = comboBox;
       myOldRenderer = oldRenderer;
-      myTempLabel = new JLabel();
-      if (oldRenderer instanceof JComponent) {
-        myTempLabel.setFont(((JComponent)oldRenderer).getFont());
-      }
     }
 
     @Override

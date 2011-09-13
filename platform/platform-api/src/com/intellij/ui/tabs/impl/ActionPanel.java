@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.util.Pass;
+import com.intellij.ui.InplaceButton;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.tabs.TabInfo;
 
@@ -46,15 +47,32 @@ class ActionPanel extends NonOpaquePanel {
     myGroup = tabInfo.getTabLabelActions() != null ? tabInfo.getTabLabelActions() : new DefaultActionGroup();
     AnAction[] children = myGroup.getChildren(null);
 
-    final NonOpaquePanel wrapper = new NonOpaquePanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
-    wrapper.add(Box.createHorizontalStrut(myGap));
+    final NonOpaquePanel wrapper = new NonOpaquePanel(new BorderLayout());
+    wrapper.add(Box.createHorizontalStrut(myGap), BorderLayout.WEST);
+    NonOpaquePanel inner = new NonOpaquePanel();
+    inner.setLayout(new BoxLayout(inner, BoxLayout.X_AXIS));
+    wrapper.add(inner, BorderLayout.CENTER);
     for (AnAction each : children) {
-      ActionButton eachButton = new ActionButton(myTabs, tabInfo, each, tabInfo.getTabActionPlace(), pass, tabs.getTabActionsMouseDeadzone());
+      ActionButton eachButton = new ActionButton(myTabs, tabInfo, each, tabInfo.getTabActionPlace(), pass, tabs.getTabActionsMouseDeadzone()) {
+        @Override
+        protected void repaintComponent(final Component c) {
+          TabLabel tabLabel = (TabLabel) SwingUtilities.getAncestorOfClass(TabLabel.class, c);
+          if (tabLabel != null) {
+            Point point = SwingUtilities.convertPoint(c, new Point(0, 0), tabLabel);
+            Dimension d = c.getSize();
+            tabLabel.repaint(point.x, point.y, d.width, d.height);
+          } else {
+            super.repaintComponent(c);
+          }
+        }
+      };
+      
       myButtons.add(eachButton);
-      wrapper.add(eachButton.getComponent());
+      InplaceButton component = eachButton.getComponent();
+      inner.add(component);
+      inner.add(Box.createHorizontalStrut(2));
     }
 
-    setLayout(new GridBagLayout());
     add(wrapper);
   }
 
@@ -80,7 +98,7 @@ class ActionPanel extends NonOpaquePanel {
     }
   }
 
-  public void toggleShowActtions(final boolean show) {
+  public void toggleShowActions(final boolean show) {
     for (Iterator<ActionButton> iterator = myButtons.iterator(); iterator.hasNext();) {
       ActionButton each = iterator.next();
       each.toggleShowActions(show);

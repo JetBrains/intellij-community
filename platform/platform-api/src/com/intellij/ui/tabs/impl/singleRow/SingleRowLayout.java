@@ -15,7 +15,6 @@
  */
 package com.intellij.ui.tabs.impl.singleRow;
 
-import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.impl.*;
 
@@ -100,7 +99,7 @@ public class SingleRowLayout extends TabLayout {
     if (!myTabs.myForcedRelayout &&
         myLastSingRowLayout != null &&
         myLastSingRowLayout.contentCount == myTabs.getTabCount() &&
-        myLastSingRowLayout.laayoutSize.equals(myTabs.getSize())) {
+        myLastSingRowLayout.layoutSize.equals(myTabs.getSize())) {
       for (TabInfo each : data.myVisibleInfos) {
         final TabLabel eachLabel = myTabs.myInfo2Label.get(each);
         if (!eachLabel.isValid()) {
@@ -187,7 +186,7 @@ public class SingleRowLayout extends TabLayout {
     if (data.firstGhostVisible || myTabs.isGhostsAlwaysVisible()) {
       data.firstGhost = getStrategy().getLayoutRec(data.position, fixedPosition, myTabs.getGhostTabLength(), getStrategy().getFixedFitLength(data));
       myTabs.layout(myLeftGhost, data.firstGhost);
-      data.position += getStrategy().getLengthIncrement(data.firstGhost.getSize());
+      data.position += getStrategy().getLengthIncrement(data.firstGhost.getSize()) + myTabs.getInterTabSpaceLength();
     }
 
     int deltaToFit = 0;
@@ -238,11 +237,12 @@ public class SingleRowLayout extends TabLayout {
     data.toFitLength = getStrategy().getToFitLength(data);
 
     if (myTabs.isGhostsAlwaysVisible()) {
-      data.toFitLength -= myTabs.getGhostTabLength() * 2;
+      data.toFitLength -= myTabs.getGhostTabLength() * 2 + (myTabs.getInterTabSpaceLength() * 2);
     }
                                 
     for (TabInfo eachInfo : data.myVisibleInfos) {
-      data.requiredLength += getStrategy().getLengthIncrement(myTabs.myInfo2Label.get(eachInfo).getPreferredSize());
+      data.requiredLength += getStrategy().getLengthIncrement(myTabs.myInfo2Label.get(eachInfo).getPreferredSize()) + myTabs
+        .getInterTabSpaceLength();
       data.toLayout.add(eachInfo);
     }
 

@@ -102,7 +102,7 @@ public abstract class SingleRowLayoutStrategy {
     }
 
     public int getMaxPosition(final Rectangle bounds) {
-      return (int)bounds.getMaxX();
+      return (int)bounds.getMaxX() + myTabs.getInterTabSpaceLength();
     }
 
     public int getFixedFitLength(final SingleRowPassInfo data) {
@@ -317,11 +317,11 @@ public abstract class SingleRowLayoutStrategy {
     }
 
     public int getFixedPosition(SingleRowPassInfo data) {
-      return data.laayoutSize.width - myTabs.myHeaderFitSize.width - data.insets.right;
+      return data.layoutSize.width - myTabs.myHeaderFitSize.width - data.insets.right;
     }
 
     public Rectangle getMoreRect(SingleRowPassInfo data) {
-      return new Rectangle(data.laayoutSize.width - myTabs.myHeaderFitSize.width,
+      return new Rectangle(data.layoutSize.width - myTabs.myHeaderFitSize.width,
                         myTabs.getHeight() - data.insets.bottom - data.moreRectAxisSize - 1,
                         myTabs.myHeaderFitSize.width - 1,
                         data.moreRectAxisSize - 1);
