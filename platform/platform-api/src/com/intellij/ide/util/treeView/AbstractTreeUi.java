@@ -1330,6 +1330,10 @@ public class AbstractTreeUi {
                   }
                 }
 
+                if (!canInitiateNewActivity()) {
+                  throw new ProcessCanceledException();
+                }
+
                 final Object element = getElementFor(node);
                 addNodeAction(element, new NodeAction() {
                   public void onReady(final DefaultMutableTreeNode node) {

@@ -210,24 +210,24 @@ public class MockApplication extends MockComponentManager implements Application
   @NotNull
   @Override
   public ModalityState getCurrentModalityState() {
-    throw new UnsupportedOperationException();
+    return getNoneModalityState();
   }
 
   @Override
   public ModalityState getAnyModalityState() {
-    throw new UnsupportedOperationException();
+    return getNoneModalityState();
   }
 
   @NotNull
   @Override
   public ModalityState getModalityStateForComponent(@NotNull Component c) {
-    throw new UnsupportedOperationException();
+    return getNoneModalityState();
   }
 
   @NotNull
   @Override
   public ModalityState getDefaultModalityState() {
-    throw new UnsupportedOperationException();
+    return getNoneModalityState();
   }
 
   @Override
