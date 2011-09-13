@@ -50,7 +50,7 @@ public class ProjectWindowActionGroup extends DefaultActionGroup {
   }
 
   public boolean isEnabled() {
-    return latest.getPrevious() != latest;
+    return latest != null && latest.getPrevious() != latest;
   }
 
   @Override
