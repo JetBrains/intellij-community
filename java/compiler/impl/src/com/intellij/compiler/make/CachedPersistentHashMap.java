@@ -53,21 +53,23 @@ public class CachedPersistentHashMap<Key, Value> extends PersistentHashMap<Key, 
     return false;
   }
 
-  public synchronized void put(Key key, Value value) throws IOException {
+  @Override
+  protected void doPut(Key key, Value value) throws IOException {
     myCache.remove(key);
-    super.put(key, value);
+    super.doPut(key, value);
   }
 
-  public synchronized void appendData(Key key, ValueDataAppender appender) throws IOException {
+  @Override
+  protected void doAppendData(Key key, ValueDataAppender appender) throws IOException {
     myCache.remove(key);
-    super.appendData(key, appender);
+    super.doAppendData(key, appender);
   }
 
   @Nullable
-  public synchronized Value get(Key key) throws IOException {
+  protected Value doGet(Key key) throws IOException {
     Value value = myCache.get(key);
     if (value == null) {
-      value = super.get(key);
+      value = super.doGet(key);
       if (value != null) {
         myCache.put(key, value);
       }
@@ -75,26 +77,30 @@ public class CachedPersistentHashMap<Key, Value> extends PersistentHashMap<Key, 
     return value;
   }
 
-  public synchronized boolean containsMapping(Key key) throws IOException {
+  @Override
+  protected boolean doContainsMapping(Key key) throws IOException {
     final Value value = myCache.get(key);
-    return value != null || super.containsMapping(key);
+    return value != null || super.doContainsMapping(key);
   }
 
-  public synchronized void remove(Key key) throws IOException {
+  @Override
+  protected void doRemove(Key key) throws IOException {
     myCache.remove(key);
     super.remove(key);
   }
 
-  public synchronized void force() {
+  @Override
+  protected void doForce() {
     try {
       clearCache();
     }
     finally {
-      super.force();
+      super.doForce();
     }
   }
 
-  public synchronized void close() throws IOException {
+  @Override
+  protected void doClose() throws IOException {
     try {
       clearCache();
     }

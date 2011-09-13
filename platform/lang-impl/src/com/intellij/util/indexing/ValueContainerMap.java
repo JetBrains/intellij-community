@@ -27,37 +27,39 @@ public class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, ValueC
   }
 
   @Override
-  public synchronized void put(Key key, ValueContainer<Value> container) throws IOException {
-    ChangeTrackingValueContainer<Value> valueContainer = (ChangeTrackingValueContainer<Value>)container;
-    if (!valueContainer.needsCompacting()) {
-      final BufferExposingByteArrayOutputStream bytes = new BufferExposingByteArrayOutputStream();
-      //noinspection IOResourceOpenedButNotSafelyClosed
-      final DataOutputStream _out = new DataOutputStream(bytes);
-      final TIntHashSet set = valueContainer.getInvalidated();
-      if (set.size() > 0) {
-        for (int inputId : set.toArray()) {
-          ValueContainerExternalizer.saveInvalidateCommand(_out, inputId);
+  protected void doPut(Key key, ValueContainer<Value> container) throws IOException {
+    synchronized (myEnumerator) {
+      ChangeTrackingValueContainer<Value> valueContainer = (ChangeTrackingValueContainer<Value>)container;
+      if (!valueContainer.needsCompacting()) {
+        final BufferExposingByteArrayOutputStream bytes = new BufferExposingByteArrayOutputStream();
+        //noinspection IOResourceOpenedButNotSafelyClosed
+        final DataOutputStream _out = new DataOutputStream(bytes);
+        final TIntHashSet set = valueContainer.getInvalidated();
+        if (set.size() > 0) {
+          for (int inputId : set.toArray()) {
+            ValueContainerExternalizer.saveInvalidateCommand(_out, inputId);
+          }
         }
-      }
-      final ValueContainer<Value> toRemove = valueContainer.getRemovedDelta();
-      if (toRemove.size() > 0) {
-        myValueContainerExternalizer.saveAsRemoved(_out, toRemove);
-      }
-
-      final ValueContainer<Value> toAppend = valueContainer.getAddedDelta();
-      if (toAppend.size() > 0) {
-        myValueContainerExternalizer.save(_out, toAppend);
-      }
-
-      appendData(key, new PersistentHashMap.ValueDataAppender() {
-        public void append(final DataOutput out) throws IOException {
-          out.write(bytes.getInternalBuffer(), 0, bytes.size());
+        final ValueContainer<Value> toRemove = valueContainer.getRemovedDelta();
+        if (toRemove.size() > 0) {
+          myValueContainerExternalizer.saveAsRemoved(_out, toRemove);
         }
-      });
-    }
-    else {
-      // rewrite the value container for defragmentation
-      super.put(key, valueContainer);
+
+        final ValueContainer<Value> toAppend = valueContainer.getAddedDelta();
+        if (toAppend.size() > 0) {
+          myValueContainerExternalizer.save(_out, toAppend);
+        }
+
+        appendData(key, new PersistentHashMap.ValueDataAppender() {
+          public void append(final DataOutput out) throws IOException {
+            out.write(bytes.getInternalBuffer(), 0, bytes.size());
+          }
+        });
+      }
+      else {
+        // rewrite the value container for defragmentation
+        super.doPut(key, valueContainer);
+      }
     }
   }
 

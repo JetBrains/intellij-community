@@ -522,33 +522,33 @@ public class FileBasedIndex implements ApplicationComponent {
     ) {
 
       @Override
-      public synchronized Collection<K> get(Integer integer) throws IOException {
+      protected Collection<K> doGet(Integer integer) throws IOException {
         if (isBufferingMode.get()) {
           final Collection<K> collection = tempMap.get(integer);
           if (collection != null) {
             return collection;
           }
         }
-        return super.get(integer);
+        return super.doGet(integer);
       }
 
       @Override
-      public synchronized void put(Integer integer, Collection<K> ks) throws IOException {
+      protected void doPut(Integer integer, Collection<K> ks) throws IOException {
         if (isBufferingMode.get()) {
           tempMap.put(integer, ks == null? Collections.<K>emptySet() : ks);
         }
         else {
-          super.put(integer, ks);
+          super.doPut(integer, ks);
         }
       }
 
       @Override
-      public synchronized void remove(Integer integer) throws IOException {
+      protected void doRemove(Integer integer) throws IOException {
         if (isBufferingMode.get()) {
           tempMap.put(integer, Collections.<K>emptySet());
         }
         else {
-          super.remove(integer);
+          super.doRemove(integer);
         }
       }
     };
