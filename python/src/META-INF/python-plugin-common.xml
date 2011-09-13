@@ -535,6 +535,11 @@
 
     <projectService serviceInterface="com.jetbrains.mako.TemplatesService"
                     serviceImplementation="com.jetbrains.mako.TemplatesService"/>
+
+    <!-- Jinja2 -->
+    <editorHighlighterProvider filetype="Jinja2" implementationClass="com.jetbrains.jinja2.highlighting.Jinja2EditorHighlighterProvider"/>
+    <lang.syntaxHighlighterFactory key="Jinja2" implementationClass="com.jetbrains.jinja2.highlighting.Jinja2HighlighterFactory"/>
+
   </extensions>
 
   <extensionPoints>
