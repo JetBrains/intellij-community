@@ -202,7 +202,7 @@ public abstract class JBListTable extends JPanel {
               myTable.setRowHeight(myRow, currentHeight);
             }
           });
-          sleep(30);
+          sleep(15);
         }
       }
       catch (InterruptedException e) {        
