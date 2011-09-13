@@ -52,7 +52,7 @@ public class VFSTestFrameworkListener extends VirtualFileAdapter {
                                         },
                                         null,
                                         2000);
-    if (output.isTimeout() || output.getExitCode() != 0 || !output.getStderr().isEmpty()) {
+    if (output.getExitCode() != 0 || !output.getStderr().isEmpty()) {
       return false;
     }
     return true;
