@@ -51,7 +51,10 @@ public abstract class JBListTable extends JPanel {
       @Override
       protected void processKeyEvent(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_ENTER && e.getModifiers() == 0) {
-          editCellAt(getSelectedRow(), getSelectedColumn());
+          if (!isEditing() && e.getID() == KeyEvent.KEY_PRESSED) {
+            editCellAt(getSelectedRow(), getSelectedColumn());
+          }
+          e.consume();
         }
         //todo[kb] JBTabsImpl breaks focus traversal policy. Need a workaround here
         //else if (e.getKeyCode() == KeyEvent.VK_TAB) {
