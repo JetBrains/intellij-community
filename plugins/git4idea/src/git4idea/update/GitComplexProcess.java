@@ -15,7 +15,7 @@
  */
 package git4idea.update;
 
-import com.intellij.ide.GeneralSettings;
+import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
@@ -50,20 +50,16 @@ public class GitComplexProcess {
   private final Operation myOperation;
 
   private final String myFreezeReason;
-  private final GeneralSettings myGeneralSettings;
   private final ProjectManagerEx myProjectManager;
   private final GitRepositoryManager myRepositoryManager;
   private final ChangeListManager myChangeListManager;
-
-  private final boolean mySaveOnFrameDeactivation;
-  private final boolean mySyncOnFrameDeactivation;
 
   private final TaskDescriptor BLOCK = new TaskDescriptor("", Where.AWT) {
     @Override public void run(ContinuationContext context) {
       myProjectManager.blockReloadingProjectOnExternalChanges();
       FileDocumentManager.getInstance().saveAllDocuments();
-      myGeneralSettings.setSaveOnFrameDeactivation(false);
-      myGeneralSettings.setSyncOnFrameActivation(false);
+      SaveAndSyncHandler.getInstance().blockSaveOnFrameDeactivation();
+      SaveAndSyncHandler.getInstance().blockSyncOnFrameActivation();
     }
   };
 
@@ -82,8 +78,8 @@ public class GitComplexProcess {
   private final TaskDescriptor UNBLOCK = new TaskDescriptor("", Where.AWT) {
     @Override public void run(ContinuationContext context) {
       myProjectManager.unblockReloadingProjectOnExternalChanges();
-      myGeneralSettings.setSaveOnFrameDeactivation(mySaveOnFrameDeactivation);
-      myGeneralSettings.setSyncOnFrameActivation(mySyncOnFrameDeactivation);
+      SaveAndSyncHandler.getInstance().unblockSaveOnFrameDeactivation();
+      SaveAndSyncHandler.getInstance().unblockSyncOnFrameActivation();
     }
 
     @Override public boolean isHaveMagicCure() {
@@ -103,13 +99,9 @@ public class GitComplexProcess {
     myOperation = operation;
     myFreezeReason = "Local changes are not available until Git " + myTitle + " is finished.";
 
-    myGeneralSettings = GeneralSettings.getInstance();
     myProjectManager = ProjectManagerEx.getInstanceEx();
     myRepositoryManager = GitRepositoryManager.getInstance(project);
     myChangeListManager = ChangeListManager.getInstance(myProject);
-
-    mySaveOnFrameDeactivation = myGeneralSettings.isSaveOnFrameDeactivation();
-    mySyncOnFrameDeactivation = myGeneralSettings.isSyncOnFrameActivation();
 
     // define tasks that need information from constructor
 

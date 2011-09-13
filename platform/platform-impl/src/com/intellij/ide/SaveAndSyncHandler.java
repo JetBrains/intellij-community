@@ -34,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Anton Katilin
@@ -44,6 +45,13 @@ public class SaveAndSyncHandler implements ApplicationComponent {
   private final Runnable myIdleListener;
   private final PropertyChangeListener myGeneralSettingsListener;
   private final ProgressManager myProgressManager;
+  
+  private final AtomicInteger myBlockSaveOnFrameDeactivationCount = new AtomicInteger();
+  private final AtomicInteger myBlockSyncOnFrameActivationCount = new AtomicInteger();
+
+  public static SaveAndSyncHandler getInstance(){
+    return ApplicationManager.getApplication().getComponent(SaveAndSyncHandler.class);
+  }
 
   public SaveAndSyncHandler(final FrameStateManager frameStateManager,
                             final FileDocumentManager fileDocumentManager,
@@ -109,13 +117,13 @@ public class SaveAndSyncHandler implements ApplicationComponent {
   }
 
   // made public for tests
-  public static void saveProjectsAndDocuments() {
+  public void saveProjectsAndDocuments() {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: save()");
     }
     if (ApplicationManager.getApplication().isDisposed()) return;
     
-    if (GeneralSettings.getInstance().isSaveOnFrameDeactivation()) {
+    if (myBlockSaveOnFrameDeactivationCount.get() == 0 && GeneralSettings.getInstance().isSaveOnFrameDeactivation()) {
       FileDocumentManager.getInstance().saveAllDocuments();
 
       Project[] openProjects = ProjectManagerEx.getInstanceEx().getOpenProjects();
@@ -158,8 +166,8 @@ public class SaveAndSyncHandler implements ApplicationComponent {
     }
   }
 
-  public static void maybeRefresh(ModalityState modalityState) {
-    if (GeneralSettings.getInstance().isSyncOnFrameActivation()) {
+  public void maybeRefresh(ModalityState modalityState) {
+    if (myBlockSyncOnFrameActivationCount.get() == 0 && GeneralSettings.getInstance().isSyncOnFrameActivation()) {
       if (LOG.isDebugEnabled()) {
         LOG.debug("refresh VFS");
       }
@@ -181,5 +189,21 @@ public class SaveAndSyncHandler implements ApplicationComponent {
     }
 
     session.launch();
+  }
+  
+  public void blockSaveOnFrameDeactivation() {
+    myBlockSaveOnFrameDeactivationCount.incrementAndGet();
+  }
+
+  public void unblockSaveOnFrameDeactivation() {
+    myBlockSaveOnFrameDeactivationCount.decrementAndGet();
+  }
+
+  public void blockSyncOnFrameActivation() {
+    myBlockSyncOnFrameActivationCount.incrementAndGet();
+  }
+  
+  public void unblockSyncOnFrameActivation() {
+    myBlockSyncOnFrameActivationCount.decrementAndGet();
   }
 }

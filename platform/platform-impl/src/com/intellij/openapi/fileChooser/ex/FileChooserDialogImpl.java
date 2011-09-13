@@ -218,7 +218,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
       .subscribe(ApplicationActivationListener.TOPIC, new ApplicationActivationListener() {
         @Override
         public void applicationActivated(IdeFrame ideFrame) {
-          SaveAndSyncHandler.maybeRefresh(ModalityState.current());
+          SaveAndSyncHandler.getInstance().maybeRefresh(ModalityState.current());
         }
 
         @Override
