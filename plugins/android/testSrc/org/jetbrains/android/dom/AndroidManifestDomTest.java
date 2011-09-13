@@ -162,4 +162,8 @@ public class AndroidManifestDomTest extends AndroidDomTest {
   public void testIntentsCompletion2() throws Throwable {
     doTestCompletion();
   }
+
+  public void _testCompletionInManifestTag() throws Throwable {
+    doTestCompletion();
+  }
 }
