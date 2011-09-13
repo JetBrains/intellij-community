@@ -23,8 +23,10 @@ import com.android.ide.common.resources.IntArrayWrapper;
 import com.android.resources.ResourceType;
 import com.android.sdklib.SdkConstants;
 import com.android.util.Pair;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.Computable;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.android.dom.manifest.Manifest;
@@ -327,7 +329,13 @@ class ProjectCallback extends LegacyCallback implements IProjectCallback {
 
   private void loadAndParseRClass() {
     try {
-      final String className = getRClassName(myModule);
+      final String className = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+        @Nullable
+        @Override
+        public String compute() {
+          return getRClassName(myModule);
+        }
+      });
       if (className == null) {
         LOG.info("loadAndParseRClass: failed to find manifest package for project %1$s");
         return;
