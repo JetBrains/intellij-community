@@ -43,7 +43,14 @@ public class ElementCompletionTest extends HighlightingTestBase {
   }
 
   public void testElementCompletion3() throws Throwable {
-    WebEditorOptions.getInstance().setAutomaticallyInsertRequiredAttributes(false);
-    doTestCompletion("element-completion-3", "xml");
+    final WebEditorOptions options = WebEditorOptions.getInstance();
+    final boolean oldValue = options.isAutomaticallyInsertRequiredAttributes();
+    try {
+      options.setAutomaticallyInsertRequiredAttributes(false);
+      doTestCompletion("element-completion-3", "xml");
+    }
+    finally {
+      options.setAutomaticallyInsertRequiredAttributes(oldValue);
+    }
   }
 }
