@@ -86,7 +86,7 @@ public class CachedPersistentHashMap<Key, Value> extends PersistentHashMap<Key, 
   @Override
   protected void doRemove(Key key) throws IOException {
     myCache.remove(key);
-    super.remove(key);
+    super.doRemove(key);
   }
 
   @Override
@@ -105,7 +105,7 @@ public class CachedPersistentHashMap<Key, Value> extends PersistentHashMap<Key, 
       clearCache();
     }
     finally {
-      super.close();
+      super.doClose();
     }
   }
 
