@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.PsiElementProcessor;
@@ -821,6 +822,13 @@ public class PsiTreeUtil {
   public static PsiElement prevLeaf(@NotNull final PsiElement element, final boolean skipEmptyElements) {
     PsiElement prevLeaf = prevLeaf(element);
     while (skipEmptyElements && prevLeaf != null && prevLeaf.getTextLength() == 0) prevLeaf = prevLeaf(prevLeaf);
+    return prevLeaf;
+  }
+
+  @Nullable
+  public static PsiElement prevVisibleLeaf(@NotNull final PsiElement element) {
+    PsiElement prevLeaf = prevLeaf(element, true);
+    while (prevLeaf != null && StringUtil.isEmptyOrSpaces(prevLeaf.getText())) prevLeaf = prevLeaf(prevLeaf, true);
     return prevLeaf;
   }
 

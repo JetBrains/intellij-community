@@ -996,6 +996,8 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   public void testStaticInnerExtendingOuter() throws Exception { doTest() }
   public void testPrimitiveClass() throws Exception { doTest() }
   public void testPrimitiveArrayClass() throws Exception { doTest() }
+  public void testPrimitiveArrayOnlyClass() throws Exception { doAntiTest() }
+  public void testPrimitiveArrayInAnno() throws Exception { doTest() }
 
   public void testSaxParserCommonPrefix() throws Exception {
     myFixture.addClass("public class SAXParser {}")

@@ -22,7 +22,10 @@ import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
-import com.intellij.patterns.*;
+import com.intellij.patterns.ElementPattern;
+import com.intellij.patterns.PsiElementPattern;
+import com.intellij.patterns.PsiJavaElementPattern;
+import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.classes.EnumOrAnnotationTypeFilter;
@@ -32,6 +35,7 @@ import com.intellij.psi.filters.getters.JavaMembersGetter;
 import com.intellij.psi.filters.position.*;
 import com.intellij.psi.filters.types.TypeCodeFragmentIsVoidEnabledFilter;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClassLevelDeclarationStatement;
+import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.jsp.JspElementType;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -152,6 +156,8 @@ public class JavaCompletionData extends JavaAwareCompletionData{
     new ScopeFilter(new ClassFilter(JspClassLevelDeclarationStatement.class)));
   public static final ElementPattern<PsiElement> START_FOR =
     psiElement().afterLeaf(psiElement().withText("(").afterLeaf("for")).withParents(PsiJavaCodeReferenceElement.class, PsiExpressionStatement.class, PsiForStatement.class);
+  private static final PsiJavaElementPattern.Capture<PsiElement> CLASS_REFERENCE =
+    psiElement().withParent(psiElement().referencing(psiClass()));
 
   public JavaCompletionData(){
     declareCompletionSpaces();
@@ -557,15 +563,32 @@ public class JavaCompletionData extends JavaAwareCompletionData{
     }
   }
 
+  static boolean isAfterPrimitiveOrArrayType(PsiElement element) {
+    element = PsiTreeUtil.prevVisibleLeaf(element);
+    if (element == null || !element.textMatches(".")) return false;
+
+    boolean array = false;
+    while (true) {
+      element = PsiTreeUtil.prevVisibleLeaf(element);
+      if (element == null) return false;
+      if (element.textMatches("]")) {
+        array = true;
+        element = PsiTreeUtil.prevVisibleLeaf(element);
+        if (element == null || !element.textMatches("[")) return false;
+      } else {
+        break;
+      }
+    }
+    return psiElement().withElementType(ElementType.PRIMITIVE_TYPE_BIT_SET).accepts(element) || array && CLASS_REFERENCE.accepts(element);
+  }
+
   private static void addClassLiteral(CompletionResultSet result, PsiElement position) {
-    if (psiElement().afterLeaf(psiElement().withText(".").afterLeaf(
-      or(
-        psiElement().withParent(psiElement().referencing(psiClass())),
-        psiElement().withText(string().oneOf("]", PsiKeyword.VOID)),
-        psiElement().withText(string().oneOf(PRIMITIVE_TYPES))
-      ))).accepts(position) &&
-        !INSIDE_PARAMETER_LIST.accepts(position) &&
-        !(position.getContainingFile() instanceof PsiJavaCodeReferenceCodeFragment)) {
+    if (INSIDE_PARAMETER_LIST.accepts(position) || position.getContainingFile() instanceof PsiJavaCodeReferenceCodeFragment) {
+      return;
+    }
+
+    if (psiElement().afterLeaf(psiElement().withText(".").afterLeaf(CLASS_REFERENCE)).accepts(position) ||
+        isAfterPrimitiveOrArrayType(position)) {
       result.addElement(createKeyword(position, PsiKeyword.CLASS));
     }
   }
