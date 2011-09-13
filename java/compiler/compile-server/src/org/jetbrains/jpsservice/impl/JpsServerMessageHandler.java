@@ -18,12 +18,12 @@ import java.util.concurrent.ExecutorService;
  *         Date: 8/11/11
  */
 public class JpsServerMessageHandler extends SimpleChannelHandler {
-  private ConcurrentHashMap<String, String> myBuildsInProgress = new ConcurrentHashMap<String, String>();
-  private final ExecutorService myBuildsExecutorService;
+  private final ConcurrentHashMap<String, CompilationTask> myBuildsInProgress = new ConcurrentHashMap<String, CompilationTask>();
+  private final ExecutorService myBuildsExecutor;
   private final Server myServer;
 
-  public JpsServerMessageHandler(ExecutorService buildsExecutorService, Server server) {
-    myBuildsExecutorService = buildsExecutorService;
+  public JpsServerMessageHandler(ExecutorService buildsExecutor, Server server) {
+    myBuildsExecutor = buildsExecutor;
     myServer = server;
   }
 
@@ -31,78 +31,86 @@ public class JpsServerMessageHandler extends SimpleChannelHandler {
     final JpsRemoteProto.Message message = (JpsRemoteProto.Message)e.getMessage();
     final UUID sessionId = ProtoUtil.fromProtoUUID(message.getSessionId());
 
-    JpsRemoteProto.Message responseMessage = null;
-    boolean shutdown = false;
+    JpsRemoteProto.Message reply = null;
 
     if (message.getMessageType() != JpsRemoteProto.Message.Type.REQUEST) {
-      responseMessage = ProtoUtil.toMessage(sessionId, ProtoUtil.createFailure("Cannot handle message " + message.toString()));
+      reply = ProtoUtil.toMessage(sessionId, ProtoUtil.createFailure("Cannot handle message " + message.toString()));
     }
     else if (!message.hasRequest()) {
-      responseMessage = ProtoUtil.toMessage(sessionId, ProtoUtil.createFailure("No request in message: " + message.toString()));
+      reply = ProtoUtil.toMessage(sessionId, ProtoUtil.createFailure("No request in message: " + message.toString()));
     }
     else {
       final JpsRemoteProto.Message.Request request = message.getRequest();
       final JpsRemoteProto.Message.Request.Type requestType = request.getRequestType();
-      if (requestType == JpsRemoteProto.Message.Request.Type.COMPILE_REQUEST) {
-        final JpsRemoteProto.Message.Response response = startBuild(sessionId, ctx, request.getCompileRequest());
-        if (response != null) {
-          responseMessage = ProtoUtil.toMessage(sessionId, response);
-        }
-      }
-      else if (requestType == JpsRemoteProto.Message.Request.Type.SHUTDOWN_COMMAND){
-        shutdown = true;
-        responseMessage = ProtoUtil.toMessage(sessionId, ProtoUtil.createCommandAcceptedResponse(null));
-      }
-      else {
-        responseMessage = ProtoUtil.toMessage(sessionId, ProtoUtil.createFailure("Unknown request: " + message));
+      switch (requestType) {
+        case COMPILE_REQUEST :
+          reply = startBuild(sessionId, ctx, request.getCompileRequest());
+          break;
+
+        case SETUP_COMMAND:
+          final Map<String, String> data = new HashMap<String, String>();
+          final JpsRemoteProto.Message.Request.SetupCommand setupCommand = request.getSetupCommand();
+          for (JpsRemoteProto.Message.Request.SetupCommand.PathVariable variable : setupCommand.getPathVariableList()) {
+            data.put(variable.getName(), variable.getValue());
+          }
+          Facade.getInstance().setPathVariables(data);
+          reply = ProtoUtil.toMessage(sessionId, ProtoUtil.createCommandCompletedEvent(null));
+          break;
+
+        case SHUTDOWN_COMMAND :
+          // todo pay attention to policy
+          myBuildsExecutor.submit(new Runnable() {
+            public void run() {
+              myServer.stop();
+            }
+          });
+          break;
+
+        default:
+          reply = ProtoUtil.toMessage(sessionId, ProtoUtil.createFailure("Unknown request: " + message));
       }
     }
-    if (responseMessage != null) {
-      final ChannelFuture future = Channels.write(ctx.getChannel(), responseMessage);
-      if (shutdown) {
-        future.addListener(new ChannelFutureListener() {
-          public void operationComplete(ChannelFuture future) throws Exception {
-            // todo pay attention to policy
-            myBuildsExecutorService.submit(new Runnable() {
-              public void run() {
-                myServer.stop();
-              }
-            });
-          }
-        });
-      }
+    if (reply != null) {
+      Channels.write(ctx.getChannel(), reply);
     }
   }
 
   @Nullable
-  private JpsRemoteProto.Message.Response startBuild(UUID sessionId, final ChannelHandlerContext channelContext, JpsRemoteProto.Message.Request.CompilationRequest compileRequest) {
+  private JpsRemoteProto.Message startBuild(UUID sessionId, final ChannelHandlerContext channelContext, JpsRemoteProto.Message.Request.CompilationRequest compileRequest) {
     if (!compileRequest.hasProjectId()) {
-      return ProtoUtil.createCommandRejectedResponse("No project specified");
+      return ProtoUtil.toMessage(sessionId, ProtoUtil.createFailure("No project specified"));
     }
 
     final String projectId = compileRequest.getProjectId();
-    final JpsRemoteProto.Message.Request.CompilationRequest.Type commandType = compileRequest.getCommandType();
+    final JpsRemoteProto.Message.Request.CompilationRequest.Type compileType = compileRequest.getCommandType();
 
-    if (commandType == JpsRemoteProto.Message.Request.CompilationRequest.Type.CLEAN ||
-        commandType == JpsRemoteProto.Message.Request.CompilationRequest.Type.MAKE ||
-        commandType == JpsRemoteProto.Message.Request.CompilationRequest.Type.REBUILD) {
-      if (myBuildsInProgress.putIfAbsent(projectId, "") != null) {
-        return ProtoUtil.createCommandRejectedResponse("Project is being compiled already");
+    switch (compileType) {
+      case CLEAN:
+      case MAKE:
+      case REBUILD: {
+        final CompilationTask task = new CompilationTask(sessionId, channelContext, projectId, compileRequest.getModuleNameList());
+        if (myBuildsInProgress.putIfAbsent(projectId, task) == null) {
+          task.getBuildParams().buildType = convertCompileType(compileType);
+          task.getBuildParams().useInProcessJavac = true;
+          myBuildsExecutor.submit(task);
+        }
+        else {
+          return ProtoUtil.toMessage(sessionId, ProtoUtil.createFailure("Project is being compiled already"));
+        }
+        return null;
       }
-      myBuildsExecutorService.submit(new CompilationTask(sessionId, channelContext, commandType, projectId, compileRequest.getModuleNameList()));
-      return null; // the rest will be handled asynchronously
-    }
 
-    if (commandType == JpsRemoteProto.Message.Request.CompilationRequest.Type.CANCEL) {
-      final String projectInProgress = myBuildsInProgress.remove(projectId);
-      if (projectInProgress == null) {
-        return ProtoUtil.createCommandRejectedResponse("Build for requested project is not running");
+      case CANCEL: {
+        final CompilationTask task = myBuildsInProgress.get(projectId);
+        if (task != null && task.getSessionId() == sessionId) {
+          task.cancel();
+        }
+        return null;
       }
-      // todo: perform cancel
-      return ProtoUtil.createBuildCanceledResponse(projectId);
-    }
 
-    return ProtoUtil.createCommandRejectedResponse("Unsupported command: '" + commandType + "'");
+      default:
+        return ProtoUtil.toMessage(sessionId, ProtoUtil.createFailure("Unsupported command: '" + compileType + "'"));
+    }
   }
 
   public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
@@ -113,45 +121,42 @@ public class JpsServerMessageHandler extends SimpleChannelHandler {
 
     private final UUID mySessionId;
     private final ChannelHandlerContext myChannelContext;
-    private final JpsRemoteProto.Message.Request.CompilationRequest.Type myCompileType;
     private final String myProjectPath;
     private final Set<String> myModules;
+    private final BuildParameters myParams;
 
-    public CompilationTask(UUID sessionId, ChannelHandlerContext channelContext, JpsRemoteProto.Message.Request.CompilationRequest.Type compileType, String projectId, List<String> modules) {
+    public CompilationTask(UUID sessionId, ChannelHandlerContext channelContext, String projectId, List<String> modules) {
       mySessionId = sessionId;
       myChannelContext = channelContext;
-      myCompileType = compileType;
       myProjectPath = projectId;
       myModules = new HashSet<String>(modules);
+      myParams = new BuildParameters();
+    }
+
+    public BuildParameters getBuildParams() {
+      return myParams;
+    }
+
+    public UUID getSessionId() {
+      return mySessionId;
     }
 
     public void run() {
-      Channels.write(myChannelContext.getChannel(), ProtoUtil.toMessage(mySessionId, ProtoUtil.createCommandAcceptedResponse("build started")));
+      Channels.write(myChannelContext.getChannel(), ProtoUtil.toMessage(mySessionId, ProtoUtil.createBuildStartedEvent("build started")));
       Throwable error = null;
       try {
-        final BuildType buildType = convertCompileType(myCompileType);
-        if (buildType == null) {
-          throw new Exception("Unsupported build type: " + myCompileType);
-        }
-
-        final Map<String,String> pathVars = new HashMap<String, String>(); // todo
-        pathVars.put("MAVEN_REPOSITORY", "C:/Users/jeka/.m2/repository");
-
-        final BuildParameters params = new BuildParameters();
-        params.buildType = buildType;
-        params.pathVariables = pathVars;
-        params.useInProcessJavac = true;
-
-        Facade.getInstance().startBuild(myProjectPath, myModules, params, new MessagesConsumer() {
+        Facade.getInstance().startBuild(myProjectPath, myModules, myParams, new MessagesConsumer() {
           public void consumeProgressMessage(String message) {
             Channels.write(
-              myChannelContext.getChannel(), ProtoUtil.toMessage(mySessionId, ProtoUtil .createCompileProgressMessageResponse( message))
+              myChannelContext.getChannel(), ProtoUtil.toMessage(mySessionId, ProtoUtil.createCompileProgressMessageResponse(message))
             );
           }
 
           public void consumeCompilerMessage(String compilerName, String message) {
+            final JpsRemoteProto.Message.Response.CompileMessage.Kind kind =
+              message.contains("error:")? JpsRemoteProto.Message.Response.CompileMessage.Kind.ERROR : JpsRemoteProto.Message.Response.CompileMessage.Kind.INFO;
             Channels.write(
-              myChannelContext.getChannel(), ProtoUtil.toMessage(mySessionId, ProtoUtil.createCompileErrorMessageResponse(message, null, -1, -1))
+              myChannelContext.getChannel(), ProtoUtil.toMessage(mySessionId, ProtoUtil.createCompileMessageResponse(kind, message, null, -1, -1))
             );
           }
         });
@@ -162,7 +167,7 @@ public class JpsServerMessageHandler extends SimpleChannelHandler {
       finally {
         final JpsRemoteProto.Message lastMessage = error != null?
                   ProtoUtil.toMessage(mySessionId, ProtoUtil.createFailure("build failed: ", error)) :
-                  ProtoUtil.toMessage(mySessionId, ProtoUtil.createBuildCompletedResponse("build completed"));
+                  ProtoUtil.toMessage(mySessionId, ProtoUtil.createBuildCompletedEvent("build completed"));
 
         Channels.write(myChannelContext.getChannel(), lastMessage).addListener(new ChannelFutureListener() {
           public void operationComplete(ChannelFuture future) throws Exception {
@@ -172,15 +177,17 @@ public class JpsServerMessageHandler extends SimpleChannelHandler {
       }
     }
 
-    private BuildType convertCompileType(JpsRemoteProto.Message.Request.CompilationRequest.Type compileType) {
-      switch (compileType) {
-        case CLEAN: return BuildType.CLEAN;
-        case MAKE: return BuildType.MAKE;
-        case REBUILD: return BuildType.REBUILD;
-      }
-      return null;
+    public void cancel() {
+      // todo
     }
-
   }
 
+  private static BuildType convertCompileType(JpsRemoteProto.Message.Request.CompilationRequest.Type compileType) {
+    switch (compileType) {
+      case CLEAN: return BuildType.CLEAN;
+      case MAKE: return BuildType.MAKE;
+      case REBUILD: return BuildType.REBUILD;
+    }
+    return null;
+  }
 }

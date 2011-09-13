@@ -7,6 +7,7 @@ import org.jboss.netty.handler.codec.protobuf.ProtobufDecoder;
 import org.jboss.netty.handler.codec.protobuf.ProtobufEncoder;
 import org.jboss.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import org.jboss.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jpsservice.impl.JpsClientMessageHandler;
 import org.jetbrains.jpsservice.impl.ProtoUtil;
@@ -14,9 +15,10 @@ import org.jetbrains.jpsservice.impl.ProtoUtil;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -48,13 +50,13 @@ public class Client {
 
             protected JpsServerResponseHandler getHandler(UUID sessionId) {
               final RequestFuture future = myHandlers.get(sessionId);
-              return future != null? future.myHandler : null;
+              return future != null? future.getHandler() : null;
             }
 
             protected void terminateSession(UUID sessionId) {
               final RequestFuture future = myHandlers.remove(sessionId);
               if (future != null) {
-                final JpsServerResponseHandler handler = future.myHandler;
+                final JpsServerResponseHandler handler = future.getHandler();
                 try {
                   if (handler != null) {
                     try {
@@ -87,9 +89,10 @@ public class Client {
     };
   }
 
-  public Future sendCompileRequest(String projectId, List<String> modules, boolean rebuild, JpsServerResponseHandler handler) {
+  @NotNull
+  public RequestFuture sendCompileRequest(String projectId, List<String> modules, boolean rebuild, JpsServerResponseHandler handler) throws Exception{
     if (myState.get() != State.CONNECTED) {
-      return null;
+      throw new Exception("Client not connected");
     }
     return sendRequest(
       rebuild? ProtoUtil.createRebuildRequest(projectId, modules) : ProtoUtil.createMakeRequest(projectId, modules),
@@ -97,30 +100,44 @@ public class Client {
     );
   }
 
-  @Nullable
-  public Future sendShutdownRequest() throws Throwable {
+  @NotNull
+  public RequestFuture sendShutdownRequest() throws Exception {
     if (myState.get() != State.CONNECTED) {
-      return null;
+      throw new Exception("Client not connected");
     }
     return sendRequest(ProtoUtil.createShutdownRequest(true), null);
   }
 
-  private Future sendRequest(JpsRemoteProto.Message.Request request, @Nullable JpsServerResponseHandler handler) {
+  @NotNull
+  public RequestFuture sendSetupRequest(final Map<String, String> pathVariables) throws Exception {
+    if (myState.get() != State.CONNECTED) {
+      throw new Exception("Client not connected");
+    }
+    return sendRequest(ProtoUtil.createSetupRequest(pathVariables), null);
+  }
+
+  private RequestFuture sendRequest(JpsRemoteProto.Message.Request request, @Nullable JpsServerResponseHandler handler) {
     final UUID sessionUUID = UUID.randomUUID();
     final RequestFuture requestFuture = new RequestFuture(handler);
     myHandlers.put(sessionUUID, requestFuture);
-    boolean success = false;
+    boolean writeSuccess = false;
     try {
       final ChannelFuture future = Channels.write(myConnectFuture.getChannel(), ProtoUtil.toMessage(sessionUUID, request));
       future.awaitUninterruptibly();
-      success = future.isSuccess();
-      return success? requestFuture : null;
+      writeSuccess = future.isSuccess();
+      return requestFuture;
     }
     finally {
-      if (!success) {
-        requestFuture.setDone();
-        myHandlers.remove(sessionUUID);
-        handler.sessionTerminated();
+      if (!writeSuccess) {
+        try {
+          myHandlers.remove(sessionUUID);
+          if (handler != null) {
+            handler.sessionTerminated();
+          }
+        }
+        finally {
+          requestFuture.setDone();
+        }
       }
     }
   }
@@ -182,48 +199,5 @@ public class Client {
 
   public boolean isConnected() {
     return myState.get() == State.CONNECTED;
-  }
-
-  private static class RequestFuture implements Future {
-    private final Semaphore mySemaphore = new Semaphore(1);
-    private final AtomicBoolean myDone = new AtomicBoolean(false);
-    private final JpsServerResponseHandler myHandler;
-
-    public RequestFuture(JpsServerResponseHandler handler) {
-      myHandler = handler;
-      mySemaphore.acquireUninterruptibly();
-    }
-
-    public void setDone() {
-      if (!myDone.getAndSet(true)) {
-        mySemaphore.release();
-      }
-    }
-
-    public boolean cancel(boolean mayInterruptIfRunning) {
-      return false;
-    }
-
-    public boolean isCancelled() {
-      return false;
-    }
-
-    public boolean isDone() {
-      return myDone.get();
-    }
-
-    public Object get() throws InterruptedException, ExecutionException {
-      while (!isDone()) {
-        mySemaphore.tryAcquire(100L, TimeUnit.MILLISECONDS);
-      }
-      return null;
-    }
-
-    public Object get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-      if (!isDone()) {
-        mySemaphore.tryAcquire(timeout, unit);
-      }
-      return null;
-    }
   }
 }

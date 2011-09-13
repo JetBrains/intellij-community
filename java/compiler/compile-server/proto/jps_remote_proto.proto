@@ -26,6 +26,8 @@ message Message {
     enum Type {
       COMPILE_REQUEST = 1;
       SHUTDOWN_COMMAND = 2;
+      SETUP_COMMAND = 3;
+      RELOAD_PROJECT_COMMAND = 4;
     }
 
     message CompilationRequest {
@@ -37,7 +39,7 @@ message Message {
       }
       required Type command_type = 1;
       optional string project_id = 2;
-      repeated string module_name = 4;
+      repeated string module_name = 3;
     }
 
     message ShutdownCommand {
@@ -48,25 +50,39 @@ message Message {
       required ShutdownPolicy shutdownPolicy = 1;
     }
 
+    message SetupCommand {
+      message PathVariable {
+        required string name = 1;
+        required string value = 2;
+      }
+      repeated PathVariable path_variable = 1;
+    }
+
+    message ReloadProjectCommand {
+      repeated string project_id = 1;
+    }
+
     required Type request_type = 1;
     optional CompilationRequest compile_request = 2;
     optional ShutdownCommand shutdown_command = 3;
+    optional SetupCommand setup_command = 4;
+    optional ReloadProjectCommand reload_project_command = 5;
   }
 
   message Response {
     enum Type {
-      COMMAND_RESPONSE = 1;
+      BUILD_EVENT = 1;
       COMPILE_MESSAGE = 2;
     }
 
-    message CommandResponse {
+    message BuildEvent {
       enum Type {
-        COMMAND_ACCEPTED = 1;
-        COMMAND_REJECTED = 2;
-        BUILD_COMPLETED = 3;
-        BUILD_CANCELED = 4;
+        BUILD_STARTED = 1;
+        BUILD_COMPLETED = 2;
+        BUILD_CANCELED = 3;
+        COMMAND_COMPLETED = 4;
       }
-      required Type command_type = 1;
+      required Type event_type = 1;
       optional string description = 2;
     }
 
@@ -85,7 +101,7 @@ message Message {
     }
 
     required Type response_type = 1;
-    optional CommandResponse command_response = 2;
+    optional BuildEvent build_event = 2;
     optional CompileMessage compile_message = 3;
   }
 

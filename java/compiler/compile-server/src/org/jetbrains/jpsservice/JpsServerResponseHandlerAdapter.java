@@ -9,7 +9,8 @@ public class JpsServerResponseHandlerAdapter implements JpsServerResponseHandler
   public void handleCompileMessage(JpsRemoteProto.Message.Response.CompileMessage compileResponse) {
   }
 
-  public void handleCommandResponse(JpsRemoteProto.Message.Response.CommandResponse response) {
+  public boolean handleBuildEvent(JpsRemoteProto.Message.Response.BuildEvent response) {
+    return false;
   }
 
   public void handleFailure(JpsRemoteProto.Message.Failure failure) {

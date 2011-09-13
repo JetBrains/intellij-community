@@ -8,11 +8,10 @@ public interface JpsServerResponseHandler {
   void handleCompileMessage(JpsRemoteProto.Message.Response.CompileMessage compileResponse);
 
   /**
-   *
-   * @param response
-   * @return false
+   * @param event
+   * @return true if session should be terminated, false otherwise
    */
-  void handleCommandResponse(JpsRemoteProto.Message.Response.CommandResponse response);
+  boolean handleBuildEvent(JpsRemoteProto.Message.Response.BuildEvent event);
 
   void handleFailure(JpsRemoteProto.Message.Failure failure);
 

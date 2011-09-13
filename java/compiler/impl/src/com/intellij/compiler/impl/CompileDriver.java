@@ -181,7 +181,7 @@ public class CompileDriver {
 
   public void rebuild(CompileStatusNotification callback) {
     final ProjectCompileScope projectScope = new ProjectCompileScope(myProject);
-    final CompileScope compileScope = useCompileServer()? projectScope : addAdditionalRoots(projectScope, ALL_EXCEPT_SOURCE_PROCESSING);
+    final CompileScope compileScope = useCompileServer() ? projectScope : addAdditionalRoots(projectScope, ALL_EXCEPT_SOURCE_PROCESSING);
     doRebuild(callback, null, true, compileScope);
   }
 
@@ -409,11 +409,8 @@ public class CompileDriver {
     }
   }
 
-  private boolean useCompileServer() {
-    return ApplicationManager.getApplication().isInternal() && CompilerWorkspaceConfiguration.getInstance(myProject).USE_COMPILE_SERVER;
-  }
-
-  private Future compileOnServer(final CompileContext compileContext, Collection<Module> modules, boolean isMake, @Nullable final CompileStatusNotification callback) {
+  private Future compileOnServer(final CompileContext compileContext, Collection<Module> modules, boolean isMake, @Nullable final CompileStatusNotification callback)
+    throws Exception {
     final Client client = JpsServerManager.getInstance().getClient();
     if (client == null) {
       return null;
@@ -427,21 +424,36 @@ public class CompileDriver {
     }
     compileContext.getProgressIndicator().setIndeterminate(true); // todo
     return client.sendCompileRequest(myProject.getLocation(), moduleNames, !isMake, new JpsServerResponseHandlerAdapter() {
-      public void handleCompileMessage(JpsRemoteProto.Message.Response.CompileMessage compileResponse) {
-        final JpsRemoteProto.Message.Response.CompileMessage.Kind kind = compileResponse.getKind();
+
+      public void handleCompileMessage(JpsRemoteProto.Message.Response.CompileMessage compilerMessage) {
+        final JpsRemoteProto.Message.Response.CompileMessage.Kind kind = compilerMessage.getKind();
+        //System.out.println(compilerMessage.getText());
         if (kind == JpsRemoteProto.Message.Response.CompileMessage.Kind.PROGRESS) {
-          compileContext.getProgressIndicator().setText(compileResponse.getText());
+          compileContext.getProgressIndicator().setText(compilerMessage.getText());
         }
         else {
           final CompilerMessageCategory category = kind == JpsRemoteProto.Message.Response.CompileMessage.Kind.ERROR ? CompilerMessageCategory.ERROR
                                                    : kind == JpsRemoteProto.Message.Response.CompileMessage.Kind.WARNING ? CompilerMessageCategory.WARNING : CompilerMessageCategory.INFORMATION;
-          compileContext.addMessage(category, compileResponse.getText(), compileResponse.getSourceFilePath(), compileResponse.getLine(), compileResponse.getColumn());
-          System.out.println(compileResponse.getText());
+          compileContext.addMessage(category, compilerMessage.getText(), compilerMessage.getSourceFilePath(), compilerMessage.getLine(),
+                                    compilerMessage.getColumn());
         }
       }
 
-      public void handleCommandResponse(JpsRemoteProto.Message.Response.CommandResponse response) {
-        compileContext.getProgressIndicator().setText(response.getDescription());
+      @Override
+      public boolean handleBuildEvent(JpsRemoteProto.Message.Response.BuildEvent event) {
+        final JpsRemoteProto.Message.Response.BuildEvent.Type eventType = event.getEventType();
+        switch (eventType) {
+          case BUILD_STARTED:
+            compileContext.getProgressIndicator().setText("Compilation started");
+            break;
+          case BUILD_COMPLETED:
+            compileContext.getProgressIndicator().setText("Compilation completed");
+            break;
+          case BUILD_CANCELED:
+            compileContext.getProgressIndicator().setText("Compilation cancelled");
+            break;
+        }
+        return eventType == JpsRemoteProto.Message.Response.BuildEvent.Type.BUILD_COMPLETED || eventType == JpsRemoteProto.Message.Response.BuildEvent.Type.BUILD_CANCELED;
       }
 
       public void handleFailure(JpsRemoteProto.Message.Failure failure) {
@@ -535,6 +547,10 @@ public class CompileDriver {
             else {
               callback.finished(false, compileContext.getMessageCount(CompilerMessageCategory.ERROR), compileContext.getMessageCount(CompilerMessageCategory.WARNING), compileContext);
             }
+          }
+          catch (Exception e) {
+            LOG.error(e); // todo
+            callback.finished(false, compileContext.getMessageCount(CompilerMessageCategory.ERROR), compileContext.getMessageCount(CompilerMessageCategory.WARNING), compileContext);
           }
           finally {
             final long finish = System.currentTimeMillis();
@@ -2323,6 +2339,10 @@ public class CompileDriver {
       LOG.info(e);
       return false;
     }
+  }
+
+  private boolean useCompileServer() {
+    return CompilerWorkspaceConfiguration.getInstance(myProject).useCompileServer();
   }
 
   private void showCyclicModulesHaveDifferentLanguageLevel(Module[] modulesInChunk) {

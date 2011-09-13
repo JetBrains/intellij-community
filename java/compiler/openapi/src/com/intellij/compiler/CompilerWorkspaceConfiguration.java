@@ -19,6 +19,7 @@
  */
 package com.intellij.compiler;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
@@ -52,5 +53,9 @@ public class CompilerWorkspaceConfiguration implements PersistentStateComponent<
 
   public void loadState(CompilerWorkspaceConfiguration state) {
     XmlSerializerUtil.copyBean(state, this);
+  }
+
+  public boolean useCompileServer() {
+    return USE_COMPILE_SERVER && ApplicationManager.getApplication().isInternal();
   }
 }

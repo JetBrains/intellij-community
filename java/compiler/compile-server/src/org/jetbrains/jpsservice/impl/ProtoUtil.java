@@ -7,6 +7,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -46,20 +47,14 @@ public class ProtoUtil {
   }
 
   public static JpsRemoteProto.Message.Request createCompileRequest(final JpsRemoteProto.Message.Request.CompilationRequest.Type command, String project, Collection<String> modules) {
-    final JpsRemoteProto.Message.Request.CompilationRequest.Builder builder = JpsRemoteProto.Message.Request.CompilationRequest.newBuilder().setCommandType(command);
+    final JpsRemoteProto.Message.Request.CompilationRequest.Builder builder = JpsRemoteProto.Message.Request.CompilationRequest.newBuilder().setCommandType(
+      command);
     builder.setProjectId(project);
     if (modules.size() > 0) {
       builder.addAllModuleName(modules);
     }
-    return JpsRemoteProto.Message.Request.newBuilder().setRequestType(JpsRemoteProto.Message.Request.Type.COMPILE_REQUEST).setCompileRequest(builder.build()).build();
-  }
-
-  public static JpsRemoteProto.Message.UUID toProtoUUID(UUID requestId) {
-    return JpsRemoteProto.Message.UUID.newBuilder().setMostSigBits(requestId.getMostSignificantBits()).setLeastSigBits(requestId.getLeastSignificantBits()).build();
-  }
-
-  public static UUID fromProtoUUID(JpsRemoteProto.Message.UUID uuid) {
-    return new UUID(uuid.getMostSigBits(), uuid.getLeastSigBits());
+    return JpsRemoteProto.Message.Request.newBuilder().setRequestType(JpsRemoteProto.Message.Request.Type.COMPILE_REQUEST).setCompileRequest(
+      builder.build()).build();
   }
 
   public static JpsRemoteProto.Message.Request createShutdownRequest(boolean cancelRunningBuilds) {
@@ -70,28 +65,53 @@ public class ProtoUtil {
     return JpsRemoteProto.Message.Request.newBuilder().setRequestType(JpsRemoteProto.Message.Request.Type.SHUTDOWN_COMMAND).setShutdownCommand(builder.build()).build();
   }
 
-  public static JpsRemoteProto.Message.Response createCommandAcceptedResponse(@Nullable String description) {
-    return createCommandResponse(JpsRemoteProto.Message.Response.CommandResponse.Type.COMMAND_ACCEPTED, description);
+  public static JpsRemoteProto.Message.Request createReloadProjectRequest(Collection<String> projects) {
+    final JpsRemoteProto.Message.Request.ReloadProjectCommand.Builder builder = JpsRemoteProto.Message.Request.ReloadProjectCommand.newBuilder();
+    builder.addAllProjectId(projects);
+    return JpsRemoteProto.Message.Request.newBuilder().setRequestType(JpsRemoteProto.Message.Request.Type.RELOAD_PROJECT_COMMAND).setReloadProjectCommand(builder.build()).build();
   }
 
-  public static JpsRemoteProto.Message.Response createCommandRejectedResponse(@Nullable String description) {
-    return createCommandResponse(JpsRemoteProto.Message.Response.CommandResponse.Type.COMMAND_REJECTED, description);
+  public static JpsRemoteProto.Message.Request createSetupRequest(final Map<String, String> pathVars) {
+    final JpsRemoteProto.Message.Request.SetupCommand.Builder cmdBuilder = JpsRemoteProto.Message.Request.SetupCommand.newBuilder();
+
+    if (pathVars.size() > 0) {
+      final JpsRemoteProto.Message.Request.SetupCommand.PathVariable.Builder pathVarBuilder =
+        JpsRemoteProto.Message.Request.SetupCommand.PathVariable.newBuilder();
+
+      for (Map.Entry<String, String> entry : pathVars.entrySet()) {
+        final String var = entry.getKey();
+        final String value = entry.getValue();
+        if (var != null && value != null) {
+          cmdBuilder.addPathVariable(pathVarBuilder.setName(var).setValue(value).build());
+        }
+      }
+    }
+
+    return JpsRemoteProto.Message.Request.newBuilder().setRequestType(JpsRemoteProto.Message.Request.Type.SETUP_COMMAND).setSetupCommand(cmdBuilder.build()).build();
   }
 
-  public static JpsRemoteProto.Message.Response createBuildCompletedResponse(@Nullable String description) {
-    return createCommandResponse(JpsRemoteProto.Message.Response.CommandResponse.Type.BUILD_COMPLETED, description);
+  public static JpsRemoteProto.Message.Response createBuildStartedEvent(@Nullable String description) {
+    return createBuildEvent(JpsRemoteProto.Message.Response.BuildEvent.Type.BUILD_STARTED, description);
   }
 
-  public static JpsRemoteProto.Message.Response createBuildCanceledResponse(@Nullable String description) {
-    return createCommandResponse(JpsRemoteProto.Message.Response.CommandResponse.Type.BUILD_CANCELED, description);
+  public static JpsRemoteProto.Message.Response createBuildCompletedEvent(@Nullable String description) {
+    return createBuildEvent(JpsRemoteProto.Message.Response.BuildEvent.Type.BUILD_COMPLETED, description);
   }
 
-  public static JpsRemoteProto.Message.Response createCommandResponse(final JpsRemoteProto.Message.Response.CommandResponse.Type type, @Nullable String description) {
-    final JpsRemoteProto.Message.Response.CommandResponse.Builder builder = JpsRemoteProto.Message.Response.CommandResponse.newBuilder().setCommandType(type);
+  public static JpsRemoteProto.Message.Response createBuildCanceledEvent(@Nullable String description) {
+    return createBuildEvent(JpsRemoteProto.Message.Response.BuildEvent.Type.BUILD_CANCELED, description);
+  }
+
+  public static JpsRemoteProto.Message.Response createCommandCompletedEvent(@Nullable String description) {
+    return createBuildEvent(JpsRemoteProto.Message.Response.BuildEvent.Type.COMMAND_COMPLETED, description);
+  }
+
+  public static JpsRemoteProto.Message.Response createBuildEvent(final JpsRemoteProto.Message.Response.BuildEvent.Type type, @Nullable String description) {
+    final JpsRemoteProto.Message.Response.BuildEvent.Builder builder = JpsRemoteProto.Message.Response.BuildEvent.newBuilder().setEventType(type);
     if (description != null) {
       builder.setDescription(description);
     }
-    return JpsRemoteProto.Message.Response.newBuilder().setResponseType(JpsRemoteProto.Message.Response.Type.COMMAND_RESPONSE).setCommandResponse(builder.build()).build();
+    return JpsRemoteProto.Message.Response.newBuilder().setResponseType(JpsRemoteProto.Message.Response.Type.BUILD_EVENT).setBuildEvent(builder.build()).build();
   }
 
   public static JpsRemoteProto.Message.Response createCompileInfoMessageResponse(String text, String path) {
@@ -138,4 +158,13 @@ public class ProtoUtil {
   public static JpsRemoteProto.Message toMessage(final UUID sessionId, JpsRemoteProto.Message.Failure failure) {
     return JpsRemoteProto.Message.newBuilder().setSessionId(toProtoUUID(sessionId)).setMessageType(JpsRemoteProto.Message.Type.FAILURE).setFailure(failure).build();
   }
+
+  public static JpsRemoteProto.Message.UUID toProtoUUID(UUID requestId) {
+    return JpsRemoteProto.Message.UUID.newBuilder().setMostSigBits(requestId.getMostSignificantBits()).setLeastSigBits(requestId.getLeastSignificantBits()).build();
+  }
+
+  public static UUID fromProtoUUID(JpsRemoteProto.Message.UUID uuid) {
+    return new UUID(uuid.getMostSigBits(), uuid.getLeastSigBits());
+  }
+
 }

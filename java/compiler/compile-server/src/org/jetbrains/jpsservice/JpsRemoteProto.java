@@ -716,6 +716,8 @@ public final class JpsRemoteProto {
           implements com.google.protobuf.Internal.EnumLite {
         COMPILE_REQUEST(0, 1),
         SHUTDOWN_COMMAND(1, 2),
+        SETUP_COMMAND(2, 3),
+        RELOAD_PROJECT_COMMAND(3, 4),
         ;
         
         
@@ -725,6 +727,8 @@ public final class JpsRemoteProto {
           switch (value) {
             case 1: return COMPILE_REQUEST;
             case 2: return SHUTDOWN_COMMAND;
+            case 3: return SETUP_COMMAND;
+            case 4: return RELOAD_PROJECT_COMMAND;
             default: return null;
           }
         }
@@ -825,8 +829,8 @@ public final class JpsRemoteProto {
         public boolean hasProjectId() { return hasProjectId; }
         public java.lang.String getProjectId() { return projectId_; }
         
-        // repeated string module_name = 4;
-        public static final int MODULE_NAME_FIELD_NUMBER = 4;
+        // repeated string module_name = 3;
+        public static final int MODULE_NAME_FIELD_NUMBER = 3;
         private java.util.List<java.lang.String> moduleName_ =
           java.util.Collections.emptyList();
         public java.util.List<java.lang.String> getModuleNameList() {
@@ -855,7 +859,7 @@ public final class JpsRemoteProto {
             output.writeString(2, getProjectId());
           }
           for (java.lang.String element : getModuleNameList()) {
-            output.writeString(4, element);
+            output.writeString(3, element);
           }
         }
         
@@ -1072,7 +1076,7 @@ public final class JpsRemoteProto {
                   setProjectId(input.readString());
                   break;
                 }
-                case 34: {
+                case 26: {
                   addModuleName(input.readString());
                   break;
                 }
@@ -1123,7 +1127,7 @@ public final class JpsRemoteProto {
             return this;
           }
           
-          // repeated string module_name = 4;
+          // repeated string module_name = 3;
           public java.util.List<java.lang.String> getModuleNameList() {
             return java.util.Collections.unmodifiableList(result.moduleName_);
           }
@@ -1475,6 +1479,898 @@ public final class JpsRemoteProto {
         // @@protoc_insertion_point(class_scope:org.jetbrains.jpsservice.Message.Request.ShutdownCommand)
       }
       
+      public static final class SetupCommand extends
+          com.google.protobuf.GeneratedMessageLite {
+        // Use SetupCommand.newBuilder() to construct.
+        private SetupCommand() {
+          initFields();
+        }
+        private SetupCommand(boolean noInit) {}
+        
+        private static final SetupCommand defaultInstance;
+        public static SetupCommand getDefaultInstance() {
+          return defaultInstance;
+        }
+        
+        public SetupCommand getDefaultInstanceForType() {
+          return defaultInstance;
+        }
+        
+        public static final class PathVariable extends
+            com.google.protobuf.GeneratedMessageLite {
+          // Use PathVariable.newBuilder() to construct.
+          private PathVariable() {
+            initFields();
+          }
+          private PathVariable(boolean noInit) {}
+          
+          private static final PathVariable defaultInstance;
+          public static PathVariable getDefaultInstance() {
+            return defaultInstance;
+          }
+          
+          public PathVariable getDefaultInstanceForType() {
+            return defaultInstance;
+          }
+          
+          // required string name = 1;
+          public static final int NAME_FIELD_NUMBER = 1;
+          private boolean hasName;
+          private java.lang.String name_ = "";
+          public boolean hasName() { return hasName; }
+          public java.lang.String getName() { return name_; }
+          
+          // required string value = 2;
+          public static final int VALUE_FIELD_NUMBER = 2;
+          private boolean hasValue;
+          private java.lang.String value_ = "";
+          public boolean hasValue() { return hasValue; }
+          public java.lang.String getValue() { return value_; }
+          
+          private void initFields() {
+          }
+          public final boolean isInitialized() {
+            if (!hasName) return false;
+            if (!hasValue) return false;
+            return true;
+          }
+          
+          public void writeTo(com.google.protobuf.CodedOutputStream output)
+                              throws java.io.IOException {
+            getSerializedSize();
+            if (hasName()) {
+              output.writeString(1, getName());
+            }
+            if (hasValue()) {
+              output.writeString(2, getValue());
+            }
+          }
+          
+          private int memoizedSerializedSize = -1;
+          public int getSerializedSize() {
+            int size = memoizedSerializedSize;
+            if (size != -1) return size;
+          
+            size = 0;
+            if (hasName()) {
+              size += com.google.protobuf.CodedOutputStream
+                .computeStringSize(1, getName());
+            }
+            if (hasValue()) {
+              size += com.google.protobuf.CodedOutputStream
+                .computeStringSize(2, getValue());
+            }
+            memoizedSerializedSize = size;
+            return size;
+          }
+          
+          public static org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.PathVariable parseFrom(
+              com.google.protobuf.ByteString data)
+              throws com.google.protobuf.InvalidProtocolBufferException {
+            return newBuilder().mergeFrom(data).buildParsed();
+          }
+          public static org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.PathVariable parseFrom(
+              com.google.protobuf.ByteString data,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
+            return newBuilder().mergeFrom(data, extensionRegistry)
+                     .buildParsed();
+          }
+          public static org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.PathVariable parseFrom(byte[] data)
+              throws com.google.protobuf.InvalidProtocolBufferException {
+            return newBuilder().mergeFrom(data).buildParsed();
+          }
+          public static org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.PathVariable parseFrom(
+              byte[] data,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
+            return newBuilder().mergeFrom(data, extensionRegistry)
+                     .buildParsed();
+          }
+          public static org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.PathVariable parseFrom(java.io.InputStream input)
+              throws java.io.IOException {
+            return newBuilder().mergeFrom(input).buildParsed();
+          }
+          public static org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.PathVariable parseFrom(
+              java.io.InputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws java.io.IOException {
+            return newBuilder().mergeFrom(input, extensionRegistry)
+                     .buildParsed();
+          }
+          public static org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.PathVariable parseDelimitedFrom(java.io.InputStream input)
+              throws java.io.IOException {
+            Builder builder = newBuilder();
+            if (builder.mergeDelimitedFrom(input)) {
+              return builder.buildParsed();
+            } else {
+              return null;
+            }
+          }
+          public static org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.PathVariable parseDelimitedFrom(
+              java.io.InputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws java.io.IOException {
+            Builder builder = newBuilder();
+            if (builder.mergeDelimitedFrom(input, extensionRegistry)) {
+              return builder.buildParsed();
+            } else {
+              return null;
+            }
+          }
+          public static org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.PathVariable parseFrom(
+              com.google.protobuf.CodedInputStream input)
+              throws java.io.IOException {
+            return newBuilder().mergeFrom(input).buildParsed();
+          }
+          public static org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.PathVariable parseFrom(
+              com.google.protobuf.CodedInputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws java.io.IOException {
+            return newBuilder().mergeFrom(input, extensionRegistry)
+                     .buildParsed();
+          }
+          
+          public static Builder newBuilder() { return Builder.create(); }
+          public Builder newBuilderForType() { return newBuilder(); }
+          public static Builder newBuilder(org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.PathVariable prototype) {
+            return newBuilder().mergeFrom(prototype);
+          }
+          public Builder toBuilder() { return newBuilder(this); }
+          
+          public static final class Builder extends
+              com.google.protobuf.GeneratedMessageLite.Builder<
+                org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.PathVariable, Builder> {
+            private org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.PathVariable result;
+            
+            // Construct using org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.PathVariable.newBuilder()
+            private Builder() {}
+            
+            private static Builder create() {
+              Builder builder = new Builder();
+              builder.result = new org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.PathVariable();
+              return builder;
+            }
+            
+            protected org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.PathVariable internalGetResult() {
+              return result;
+            }
+            
+            public Builder clear() {
+              if (result == null) {
+                throw new IllegalStateException(
+                  "Cannot call clear() after build().");
+              }
+              result = new org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.PathVariable();
+              return this;
+            }
+            
+            public Builder clone() {
+              return create().mergeFrom(result);
+            }
+            
+            public org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.PathVariable getDefaultInstanceForType() {
+              return org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.PathVariable.getDefaultInstance();
+            }
+            
+            public boolean isInitialized() {
+              return result.isInitialized();
+            }
+            public org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.PathVariable build() {
+              if (result != null && !isInitialized()) {
+                throw newUninitializedMessageException(result);
+              }
+              return buildPartial();
+            }
+            
+            private org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.PathVariable buildParsed()
+                throws com.google.protobuf.InvalidProtocolBufferException {
+              if (!isInitialized()) {
+                throw newUninitializedMessageException(
+                  result).asInvalidProtocolBufferException();
+              }
+              return buildPartial();
+            }
+            
+            public org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.PathVariable buildPartial() {
+              if (result == null) {
+                throw new IllegalStateException(
+                  "build() has already been called on this Builder.");
+              }
+              org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.PathVariable returnMe = result;
+              result = null;
+              return returnMe;
+            }
+            
+            public Builder mergeFrom(org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.PathVariable other) {
+              if (other == org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.PathVariable.getDefaultInstance()) return this;
+              if (other.hasName()) {
+                setName(other.getName());
+              }
+              if (other.hasValue()) {
+                setValue(other.getValue());
+              }
+              return this;
+            }
+            
+            public Builder mergeFrom(
+                com.google.protobuf.CodedInputStream input,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                throws java.io.IOException {
+              while (true) {
+                int tag = input.readTag();
+                switch (tag) {
+                  case 0:
+                    return this;
+                  default: {
+                    if (!parseUnknownField(input, extensionRegistry, tag)) {
+                      return this;
+                    }
+                    break;
+                  }
+                  case 10: {
+                    setName(input.readString());
+                    break;
+                  }
+                  case 18: {
+                    setValue(input.readString());
+                    break;
+                  }
+                }
+              }
+            }
+            
+            
+            // required string name = 1;
+            public boolean hasName() {
+              return result.hasName();
+            }
+            public java.lang.String getName() {
+              return result.getName();
+            }
+            public Builder setName(java.lang.String value) {
+              if (value == null) {
+    throw new NullPointerException();
+  }
+  result.hasName = true;
+              result.name_ = value;
+              return this;
+            }
+            public Builder clearName() {
+              result.hasName = false;
+              result.name_ = getDefaultInstance().getName();
+              return this;
+            }
+            
+            // required string value = 2;
+            public boolean hasValue() {
+              return result.hasValue();
+            }
+            public java.lang.String getValue() {
+              return result.getValue();
+            }
+            public Builder setValue(java.lang.String value) {
+              if (value == null) {
+    throw new NullPointerException();
+  }
+  result.hasValue = true;
+              result.value_ = value;
+              return this;
+            }
+            public Builder clearValue() {
+              result.hasValue = false;
+              result.value_ = getDefaultInstance().getValue();
+              return this;
+            }
+            
+            // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.Request.SetupCommand.PathVariable)
+          }
+          
+          static {
+            defaultInstance = new PathVariable(true);
+            org.jetbrains.jpsservice.JpsRemoteProto.internalForceInit();
+            defaultInstance.initFields();
+          }
+          
+          // @@protoc_insertion_point(class_scope:org.jetbrains.jpsservice.Message.Request.SetupCommand.PathVariable)
+        }
+        
+        // repeated .org.jetbrains.jpsservice.Message.Request.SetupCommand.PathVariable path_variable = 1;
+        public static final int PATH_VARIABLE_FIELD_NUMBER = 1;
+        private java.util.List<org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.PathVariable> pathVariable_ =
+          java.util.Collections.emptyList();
+        public java.util.List<org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.PathVariable> getPathVariableList() {
+          return pathVariable_;
+        }
+        public int getPathVariableCount() { return pathVariable_.size(); }
+        public org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.PathVariable getPathVariable(int index) {
+          return pathVariable_.get(index);
+        }
+        
+        private void initFields() {
+        }
+        public final boolean isInitialized() {
+          for (org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.PathVariable element : getPathVariableList()) {
+            if (!element.isInitialized()) return false;
+          }
+          return true;
+        }
+        
+        public void writeTo(com.google.protobuf.CodedOutputStream output)
+                            throws java.io.IOException {
+          getSerializedSize();
+          for (org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.PathVariable element : getPathVariableList()) {
+            output.writeMessage(1, element);
+          }
+        }
+        
+        private int memoizedSerializedSize = -1;
+        public int getSerializedSize() {
+          int size = memoizedSerializedSize;
+          if (size != -1) return size;
+        
+          size = 0;
+          for (org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.PathVariable element : getPathVariableList()) {
+            size += com.google.protobuf.CodedOutputStream
+              .computeMessageSize(1, element);
+          }
+          memoizedSerializedSize = size;
+          return size;
+        }
+        
+        public static org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand parseFrom(
+            com.google.protobuf.ByteString data)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return newBuilder().mergeFrom(data).buildParsed();
+        }
+        public static org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand parseFrom(
+            com.google.protobuf.ByteString data,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return newBuilder().mergeFrom(data, extensionRegistry)
+                   .buildParsed();
+        }
+        public static org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand parseFrom(byte[] data)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return newBuilder().mergeFrom(data).buildParsed();
+        }
+        public static org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand parseFrom(
+            byte[] data,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return newBuilder().mergeFrom(data, extensionRegistry)
+                   .buildParsed();
+        }
+        public static org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand parseFrom(java.io.InputStream input)
+            throws java.io.IOException {
+          return newBuilder().mergeFrom(input).buildParsed();
+        }
+        public static org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand parseFrom(
+            java.io.InputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+          return newBuilder().mergeFrom(input, extensionRegistry)
+                   .buildParsed();
+        }
+        public static org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand parseDelimitedFrom(java.io.InputStream input)
+            throws java.io.IOException {
+          Builder builder = newBuilder();
+          if (builder.mergeDelimitedFrom(input)) {
+            return builder.buildParsed();
+          } else {
+            return null;
+          }
+        }
+        public static org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand parseDelimitedFrom(
+            java.io.InputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+          Builder builder = newBuilder();
+          if (builder.mergeDelimitedFrom(input, extensionRegistry)) {
+            return builder.buildParsed();
+          } else {
+            return null;
+          }
+        }
+        public static org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand parseFrom(
+            com.google.protobuf.CodedInputStream input)
+            throws java.io.IOException {
+          return newBuilder().mergeFrom(input).buildParsed();
+        }
+        public static org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand parseFrom(
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+          return newBuilder().mergeFrom(input, extensionRegistry)
+                   .buildParsed();
+        }
+        
+        public static Builder newBuilder() { return Builder.create(); }
+        public Builder newBuilderForType() { return newBuilder(); }
+        public static Builder newBuilder(org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand prototype) {
+          return newBuilder().mergeFrom(prototype);
+        }
+        public Builder toBuilder() { return newBuilder(this); }
+        
+        public static final class Builder extends
+            com.google.protobuf.GeneratedMessageLite.Builder<
+              org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand, Builder> {
+          private org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand result;
+          
+          // Construct using org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.newBuilder()
+          private Builder() {}
+          
+          private static Builder create() {
+            Builder builder = new Builder();
+            builder.result = new org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand();
+            return builder;
+          }
+          
+          protected org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand internalGetResult() {
+            return result;
+          }
+          
+          public Builder clear() {
+            if (result == null) {
+              throw new IllegalStateException(
+                "Cannot call clear() after build().");
+            }
+            result = new org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand();
+            return this;
+          }
+          
+          public Builder clone() {
+            return create().mergeFrom(result);
+          }
+          
+          public org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand getDefaultInstanceForType() {
+            return org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.getDefaultInstance();
+          }
+          
+          public boolean isInitialized() {
+            return result.isInitialized();
+          }
+          public org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand build() {
+            if (result != null && !isInitialized()) {
+              throw newUninitializedMessageException(result);
+            }
+            return buildPartial();
+          }
+          
+          private org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand buildParsed()
+              throws com.google.protobuf.InvalidProtocolBufferException {
+            if (!isInitialized()) {
+              throw newUninitializedMessageException(
+                result).asInvalidProtocolBufferException();
+            }
+            return buildPartial();
+          }
+          
+          public org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand buildPartial() {
+            if (result == null) {
+              throw new IllegalStateException(
+                "build() has already been called on this Builder.");
+            }
+            if (result.pathVariable_ != java.util.Collections.EMPTY_LIST) {
+              result.pathVariable_ =
+                java.util.Collections.unmodifiableList(result.pathVariable_);
+            }
+            org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand returnMe = result;
+            result = null;
+            return returnMe;
+          }
+          
+          public Builder mergeFrom(org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand other) {
+            if (other == org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.getDefaultInstance()) return this;
+            if (!other.pathVariable_.isEmpty()) {
+              if (result.pathVariable_.isEmpty()) {
+                result.pathVariable_ = new java.util.ArrayList<org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.PathVariable>();
+              }
+              result.pathVariable_.addAll(other.pathVariable_);
+            }
+            return this;
+          }
+          
+          public Builder mergeFrom(
+              com.google.protobuf.CodedInputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws java.io.IOException {
+            while (true) {
+              int tag = input.readTag();
+              switch (tag) {
+                case 0:
+                  return this;
+                default: {
+                  if (!parseUnknownField(input, extensionRegistry, tag)) {
+                    return this;
+                  }
+                  break;
+                }
+                case 10: {
+                  org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.PathVariable.Builder subBuilder = org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.PathVariable.newBuilder();
+                  input.readMessage(subBuilder, extensionRegistry);
+                  addPathVariable(subBuilder.buildPartial());
+                  break;
+                }
+              }
+            }
+          }
+          
+          
+          // repeated .org.jetbrains.jpsservice.Message.Request.SetupCommand.PathVariable path_variable = 1;
+          public java.util.List<org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.PathVariable> getPathVariableList() {
+            return java.util.Collections.unmodifiableList(result.pathVariable_);
+          }
+          public int getPathVariableCount() {
+            return result.getPathVariableCount();
+          }
+          public org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.PathVariable getPathVariable(int index) {
+            return result.getPathVariable(index);
+          }
+          public Builder setPathVariable(int index, org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.PathVariable value) {
+            if (value == null) {
+              throw new NullPointerException();
+            }
+            result.pathVariable_.set(index, value);
+            return this;
+          }
+          public Builder setPathVariable(int index, org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.PathVariable.Builder builderForValue) {
+            result.pathVariable_.set(index, builderForValue.build());
+            return this;
+          }
+          public Builder addPathVariable(org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.PathVariable value) {
+            if (value == null) {
+              throw new NullPointerException();
+            }
+            if (result.pathVariable_.isEmpty()) {
+              result.pathVariable_ = new java.util.ArrayList<org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.PathVariable>();
+            }
+            result.pathVariable_.add(value);
+            return this;
+          }
+          public Builder addPathVariable(org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.PathVariable.Builder builderForValue) {
+            if (result.pathVariable_.isEmpty()) {
+              result.pathVariable_ = new java.util.ArrayList<org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.PathVariable>();
+            }
+            result.pathVariable_.add(builderForValue.build());
+            return this;
+          }
+          public Builder addAllPathVariable(
+              java.lang.Iterable<? extends org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.PathVariable> values) {
+            if (result.pathVariable_.isEmpty()) {
+              result.pathVariable_ = new java.util.ArrayList<org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.PathVariable>();
+            }
+            super.addAll(values, result.pathVariable_);
+            return this;
+          }
+          public Builder clearPathVariable() {
+            result.pathVariable_ = java.util.Collections.emptyList();
+            return this;
+          }
+          
+          // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.Request.SetupCommand)
+        }
+        
+        static {
+          defaultInstance = new SetupCommand(true);
+          org.jetbrains.jpsservice.JpsRemoteProto.internalForceInit();
+          defaultInstance.initFields();
+        }
+        
+        // @@protoc_insertion_point(class_scope:org.jetbrains.jpsservice.Message.Request.SetupCommand)
+      }
+      
+      public static final class ReloadProjectCommand extends
+          com.google.protobuf.GeneratedMessageLite {
+        // Use ReloadProjectCommand.newBuilder() to construct.
+        private ReloadProjectCommand() {
+          initFields();
+        }
+        private ReloadProjectCommand(boolean noInit) {}
+        
+        private static final ReloadProjectCommand defaultInstance;
+        public static ReloadProjectCommand getDefaultInstance() {
+          return defaultInstance;
+        }
+        
+        public ReloadProjectCommand getDefaultInstanceForType() {
+          return defaultInstance;
+        }
+        
+        // repeated string project_id = 1;
+        public static final int PROJECT_ID_FIELD_NUMBER = 1;
+        private java.util.List<java.lang.String> projectId_ =
+          java.util.Collections.emptyList();
+        public java.util.List<java.lang.String> getProjectIdList() {
+          return projectId_;
+        }
+        public int getProjectIdCount() { return projectId_.size(); }
+        public java.lang.String getProjectId(int index) {
+          return projectId_.get(index);
+        }
+        
+        private void initFields() {
+        }
+        public final boolean isInitialized() {
+          return true;
+        }
+        
+        public void writeTo(com.google.protobuf.CodedOutputStream output)
+                            throws java.io.IOException {
+          getSerializedSize();
+          for (java.lang.String element : getProjectIdList()) {
+            output.writeString(1, element);
+          }
+        }
+        
+        private int memoizedSerializedSize = -1;
+        public int getSerializedSize() {
+          int size = memoizedSerializedSize;
+          if (size != -1) return size;
+        
+          size = 0;
+          {
+            int dataSize = 0;
+            for (java.lang.String element : getProjectIdList()) {
+              dataSize += com.google.protobuf.CodedOutputStream
+                .computeStringSizeNoTag(element);
+            }
+            size += dataSize;
+            size += 1 * getProjectIdList().size();
+          }
+          memoizedSerializedSize = size;
+          return size;
+        }
+        
+        public static org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.ReloadProjectCommand parseFrom(
+            com.google.protobuf.ByteString data)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return newBuilder().mergeFrom(data).buildParsed();
+        }
+        public static org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.ReloadProjectCommand parseFrom(
+            com.google.protobuf.ByteString data,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return newBuilder().mergeFrom(data, extensionRegistry)
+                   .buildParsed();
+        }
+        public static org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.ReloadProjectCommand parseFrom(byte[] data)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return newBuilder().mergeFrom(data).buildParsed();
+        }
+        public static org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.ReloadProjectCommand parseFrom(
+            byte[] data,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return newBuilder().mergeFrom(data, extensionRegistry)
+                   .buildParsed();
+        }
+        public static org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.ReloadProjectCommand parseFrom(java.io.InputStream input)
+            throws java.io.IOException {
+          return newBuilder().mergeFrom(input).buildParsed();
+        }
+        public static org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.ReloadProjectCommand parseFrom(
+            java.io.InputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+          return newBuilder().mergeFrom(input, extensionRegistry)
+                   .buildParsed();
+        }
+        public static org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.ReloadProjectCommand parseDelimitedFrom(java.io.InputStream input)
+            throws java.io.IOException {
+          Builder builder = newBuilder();
+          if (builder.mergeDelimitedFrom(input)) {
+            return builder.buildParsed();
+          } else {
+            return null;
+          }
+        }
+        public static org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.ReloadProjectCommand parseDelimitedFrom(
+            java.io.InputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+          Builder builder = newBuilder();
+          if (builder.mergeDelimitedFrom(input, extensionRegistry)) {
+            return builder.buildParsed();
+          } else {
+            return null;
+          }
+        }
+        public static org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.ReloadProjectCommand parseFrom(
+            com.google.protobuf.CodedInputStream input)
+            throws java.io.IOException {
+          return newBuilder().mergeFrom(input).buildParsed();
+        }
+        public static org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.ReloadProjectCommand parseFrom(
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+          return newBuilder().mergeFrom(input, extensionRegistry)
+                   .buildParsed();
+        }
+        
+        public static Builder newBuilder() { return Builder.create(); }
+        public Builder newBuilderForType() { return newBuilder(); }
+        public static Builder newBuilder(org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.ReloadProjectCommand prototype) {
+          return newBuilder().mergeFrom(prototype);
+        }
+        public Builder toBuilder() { return newBuilder(this); }
+        
+        public static final class Builder extends
+            com.google.protobuf.GeneratedMessageLite.Builder<
+              org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.ReloadProjectCommand, Builder> {
+          private org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.ReloadProjectCommand result;
+          
+          // Construct using org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.ReloadProjectCommand.newBuilder()
+          private Builder() {}
+          
+          private static Builder create() {
+            Builder builder = new Builder();
+            builder.result = new org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.ReloadProjectCommand();
+            return builder;
+          }
+          
+          protected org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.ReloadProjectCommand internalGetResult() {
+            return result;
+          }
+          
+          public Builder clear() {
+            if (result == null) {
+              throw new IllegalStateException(
+                "Cannot call clear() after build().");
+            }
+            result = new org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.ReloadProjectCommand();
+            return this;
+          }
+          
+          public Builder clone() {
+            return create().mergeFrom(result);
+          }
+          
+          public org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.ReloadProjectCommand getDefaultInstanceForType() {
+            return org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.ReloadProjectCommand.getDefaultInstance();
+          }
+          
+          public boolean isInitialized() {
+            return result.isInitialized();
+          }
+          public org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.ReloadProjectCommand build() {
+            if (result != null && !isInitialized()) {
+              throw newUninitializedMessageException(result);
+            }
+            return buildPartial();
+          }
+          
+          private org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.ReloadProjectCommand buildParsed()
+              throws com.google.protobuf.InvalidProtocolBufferException {
+            if (!isInitialized()) {
+              throw newUninitializedMessageException(
+                result).asInvalidProtocolBufferException();
+            }
+            return buildPartial();
+          }
+          
+          public org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.ReloadProjectCommand buildPartial() {
+            if (result == null) {
+              throw new IllegalStateException(
+                "build() has already been called on this Builder.");
+            }
+            if (result.projectId_ != java.util.Collections.EMPTY_LIST) {
+              result.projectId_ =
+                java.util.Collections.unmodifiableList(result.projectId_);
+            }
+            org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.ReloadProjectCommand returnMe = result;
+            result = null;
+            return returnMe;
+          }
+          
+          public Builder mergeFrom(org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.ReloadProjectCommand other) {
+            if (other == org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.ReloadProjectCommand.getDefaultInstance()) return this;
+            if (!other.projectId_.isEmpty()) {
+              if (result.projectId_.isEmpty()) {
+                result.projectId_ = new java.util.ArrayList<java.lang.String>();
+              }
+              result.projectId_.addAll(other.projectId_);
+            }
+            return this;
+          }
+          
+          public Builder mergeFrom(
+              com.google.protobuf.CodedInputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws java.io.IOException {
+            while (true) {
+              int tag = input.readTag();
+              switch (tag) {
+                case 0:
+                  return this;
+                default: {
+                  if (!parseUnknownField(input, extensionRegistry, tag)) {
+                    return this;
+                  }
+                  break;
+                }
+                case 10: {
+                  addProjectId(input.readString());
+                  break;
+                }
+              }
+            }
+          }
+          
+          
+          // repeated string project_id = 1;
+          public java.util.List<java.lang.String> getProjectIdList() {
+            return java.util.Collections.unmodifiableList(result.projectId_);
+          }
+          public int getProjectIdCount() {
+            return result.getProjectIdCount();
+          }
+          public java.lang.String getProjectId(int index) {
+            return result.getProjectId(index);
+          }
+          public Builder setProjectId(int index, java.lang.String value) {
+            if (value == null) {
+    throw new NullPointerException();
+  }
+  result.projectId_.set(index, value);
+            return this;
+          }
+          public Builder addProjectId(java.lang.String value) {
+            if (value == null) {
+    throw new NullPointerException();
+  }
+  if (result.projectId_.isEmpty()) {
+              result.projectId_ = new java.util.ArrayList<java.lang.String>();
+            }
+            result.projectId_.add(value);
+            return this;
+          }
+          public Builder addAllProjectId(
+              java.lang.Iterable<? extends java.lang.String> values) {
+            if (result.projectId_.isEmpty()) {
+              result.projectId_ = new java.util.ArrayList<java.lang.String>();
+            }
+            super.addAll(values, result.projectId_);
+            return this;
+          }
+          public Builder clearProjectId() {
+            result.projectId_ = java.util.Collections.emptyList();
+            return this;
+          }
+          
+          // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.Request.ReloadProjectCommand)
+        }
+        
+        static {
+          defaultInstance = new ReloadProjectCommand(true);
+          org.jetbrains.jpsservice.JpsRemoteProto.internalForceInit();
+          defaultInstance.initFields();
+        }
+        
+        // @@protoc_insertion_point(class_scope:org.jetbrains.jpsservice.Message.Request.ReloadProjectCommand)
+      }
+      
       // required .org.jetbrains.jpsservice.Message.Request.Type request_type = 1;
       public static final int REQUEST_TYPE_FIELD_NUMBER = 1;
       private boolean hasRequestType;
@@ -1496,10 +2392,26 @@ public final class JpsRemoteProto {
       public boolean hasShutdownCommand() { return hasShutdownCommand; }
       public org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.ShutdownCommand getShutdownCommand() { return shutdownCommand_; }
       
+      // optional .org.jetbrains.jpsservice.Message.Request.SetupCommand setup_command = 4;
+      public static final int SETUP_COMMAND_FIELD_NUMBER = 4;
+      private boolean hasSetupCommand;
+      private org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand setupCommand_;
+      public boolean hasSetupCommand() { return hasSetupCommand; }
+      public org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand getSetupCommand() { return setupCommand_; }
+      
+      // optional .org.jetbrains.jpsservice.Message.Request.ReloadProjectCommand reload_project_command = 5;
+      public static final int RELOAD_PROJECT_COMMAND_FIELD_NUMBER = 5;
+      private boolean hasReloadProjectCommand;
+      private org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.ReloadProjectCommand reloadProjectCommand_;
+      public boolean hasReloadProjectCommand() { return hasReloadProjectCommand; }
+      public org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.ReloadProjectCommand getReloadProjectCommand() { return reloadProjectCommand_; }
+      
       private void initFields() {
         requestType_ = org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.Type.COMPILE_REQUEST;
         compileRequest_ = org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.CompilationRequest.getDefaultInstance();
         shutdownCommand_ = org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.ShutdownCommand.getDefaultInstance();
+        setupCommand_ = org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.getDefaultInstance();
+        reloadProjectCommand_ = org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.ReloadProjectCommand.getDefaultInstance();
       }
       public final boolean isInitialized() {
         if (!hasRequestType) return false;
@@ -1508,6 +2420,9 @@ public final class JpsRemoteProto {
         }
         if (hasShutdownCommand()) {
           if (!getShutdownCommand().isInitialized()) return false;
+        }
+        if (hasSetupCommand()) {
+          if (!getSetupCommand().isInitialized()) return false;
         }
         return true;
       }
@@ -1523,6 +2438,12 @@ public final class JpsRemoteProto {
         }
         if (hasShutdownCommand()) {
           output.writeMessage(3, getShutdownCommand());
+        }
+        if (hasSetupCommand()) {
+          output.writeMessage(4, getSetupCommand());
+        }
+        if (hasReloadProjectCommand()) {
+          output.writeMessage(5, getReloadProjectCommand());
         }
       }
       
@@ -1543,6 +2464,14 @@ public final class JpsRemoteProto {
         if (hasShutdownCommand()) {
           size += com.google.protobuf.CodedOutputStream
             .computeMessageSize(3, getShutdownCommand());
+        }
+        if (hasSetupCommand()) {
+          size += com.google.protobuf.CodedOutputStream
+            .computeMessageSize(4, getSetupCommand());
+        }
+        if (hasReloadProjectCommand()) {
+          size += com.google.protobuf.CodedOutputStream
+            .computeMessageSize(5, getReloadProjectCommand());
         }
         memoizedSerializedSize = size;
         return size;
@@ -1697,6 +2626,12 @@ public final class JpsRemoteProto {
           if (other.hasShutdownCommand()) {
             mergeShutdownCommand(other.getShutdownCommand());
           }
+          if (other.hasSetupCommand()) {
+            mergeSetupCommand(other.getSetupCommand());
+          }
+          if (other.hasReloadProjectCommand()) {
+            mergeReloadProjectCommand(other.getReloadProjectCommand());
+          }
           return this;
         }
         
@@ -1739,6 +2674,24 @@ public final class JpsRemoteProto {
                 }
                 input.readMessage(subBuilder, extensionRegistry);
                 setShutdownCommand(subBuilder.buildPartial());
+                break;
+              }
+              case 34: {
+                org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.Builder subBuilder = org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.newBuilder();
+                if (hasSetupCommand()) {
+                  subBuilder.mergeFrom(getSetupCommand());
+                }
+                input.readMessage(subBuilder, extensionRegistry);
+                setSetupCommand(subBuilder.buildPartial());
+                break;
+              }
+              case 42: {
+                org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.ReloadProjectCommand.Builder subBuilder = org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.ReloadProjectCommand.newBuilder();
+                if (hasReloadProjectCommand()) {
+                  subBuilder.mergeFrom(getReloadProjectCommand());
+                }
+                input.readMessage(subBuilder, extensionRegistry);
+                setReloadProjectCommand(subBuilder.buildPartial());
                 break;
               }
             }
@@ -1841,6 +2794,80 @@ public final class JpsRemoteProto {
           return this;
         }
         
+        // optional .org.jetbrains.jpsservice.Message.Request.SetupCommand setup_command = 4;
+        public boolean hasSetupCommand() {
+          return result.hasSetupCommand();
+        }
+        public org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand getSetupCommand() {
+          return result.getSetupCommand();
+        }
+        public Builder setSetupCommand(org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand value) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          result.hasSetupCommand = true;
+          result.setupCommand_ = value;
+          return this;
+        }
+        public Builder setSetupCommand(org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.Builder builderForValue) {
+          result.hasSetupCommand = true;
+          result.setupCommand_ = builderForValue.build();
+          return this;
+        }
+        public Builder mergeSetupCommand(org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand value) {
+          if (result.hasSetupCommand() &&
+              result.setupCommand_ != org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.getDefaultInstance()) {
+            result.setupCommand_ =
+              org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.newBuilder(result.setupCommand_).mergeFrom(value).buildPartial();
+          } else {
+            result.setupCommand_ = value;
+          }
+          result.hasSetupCommand = true;
+          return this;
+        }
+        public Builder clearSetupCommand() {
+          result.hasSetupCommand = false;
+          result.setupCommand_ = org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.SetupCommand.getDefaultInstance();
+          return this;
+        }
+        
+        // optional .org.jetbrains.jpsservice.Message.Request.ReloadProjectCommand reload_project_command = 5;
+        public boolean hasReloadProjectCommand() {
+          return result.hasReloadProjectCommand();
+        }
+        public org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.ReloadProjectCommand getReloadProjectCommand() {
+          return result.getReloadProjectCommand();
+        }
+        public Builder setReloadProjectCommand(org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.ReloadProjectCommand value) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          result.hasReloadProjectCommand = true;
+          result.reloadProjectCommand_ = value;
+          return this;
+        }
+        public Builder setReloadProjectCommand(org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.ReloadProjectCommand.Builder builderForValue) {
+          result.hasReloadProjectCommand = true;
+          result.reloadProjectCommand_ = builderForValue.build();
+          return this;
+        }
+        public Builder mergeReloadProjectCommand(org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.ReloadProjectCommand value) {
+          if (result.hasReloadProjectCommand() &&
+              result.reloadProjectCommand_ != org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.ReloadProjectCommand.getDefaultInstance()) {
+            result.reloadProjectCommand_ =
+              org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.ReloadProjectCommand.newBuilder(result.reloadProjectCommand_).mergeFrom(value).buildPartial();
+          } else {
+            result.reloadProjectCommand_ = value;
+          }
+          result.hasReloadProjectCommand = true;
+          return this;
+        }
+        public Builder clearReloadProjectCommand() {
+          result.hasReloadProjectCommand = false;
+          result.reloadProjectCommand_ = org.jetbrains.jpsservice.JpsRemoteProto.Message.Request.ReloadProjectCommand.getDefaultInstance();
+          return this;
+        }
+        
         // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.Request)
       }
       
@@ -1872,7 +2899,7 @@ public final class JpsRemoteProto {
       
       public enum Type
           implements com.google.protobuf.Internal.EnumLite {
-        COMMAND_RESPONSE(0, 1),
+        BUILD_EVENT(0, 1),
         COMPILE_MESSAGE(1, 2),
         ;
         
@@ -1881,7 +2908,7 @@ public final class JpsRemoteProto {
         
         public static Type valueOf(int value) {
           switch (value) {
-            case 1: return COMMAND_RESPONSE;
+            case 1: return BUILD_EVENT;
             case 2: return COMPILE_MESSAGE;
             default: return null;
           }
@@ -1909,29 +2936,29 @@ public final class JpsRemoteProto {
         // @@protoc_insertion_point(enum_scope:org.jetbrains.jpsservice.Message.Response.Type)
       }
       
-      public static final class CommandResponse extends
+      public static final class BuildEvent extends
           com.google.protobuf.GeneratedMessageLite {
-        // Use CommandResponse.newBuilder() to construct.
-        private CommandResponse() {
+        // Use BuildEvent.newBuilder() to construct.
+        private BuildEvent() {
           initFields();
         }
-        private CommandResponse(boolean noInit) {}
+        private BuildEvent(boolean noInit) {}
         
-        private static final CommandResponse defaultInstance;
-        public static CommandResponse getDefaultInstance() {
+        private static final BuildEvent defaultInstance;
+        public static BuildEvent getDefaultInstance() {
           return defaultInstance;
         }
         
-        public CommandResponse getDefaultInstanceForType() {
+        public BuildEvent getDefaultInstanceForType() {
           return defaultInstance;
         }
         
         public enum Type
             implements com.google.protobuf.Internal.EnumLite {
-          COMMAND_ACCEPTED(0, 1),
-          COMMAND_REJECTED(1, 2),
-          BUILD_COMPLETED(2, 3),
-          BUILD_CANCELED(3, 4),
+          BUILD_STARTED(0, 1),
+          BUILD_COMPLETED(1, 2),
+          BUILD_CANCELED(2, 3),
+          COMMAND_COMPLETED(3, 4),
           ;
           
           
@@ -1939,10 +2966,10 @@ public final class JpsRemoteProto {
           
           public static Type valueOf(int value) {
             switch (value) {
-              case 1: return COMMAND_ACCEPTED;
-              case 2: return COMMAND_REJECTED;
-              case 3: return BUILD_COMPLETED;
-              case 4: return BUILD_CANCELED;
+              case 1: return BUILD_STARTED;
+              case 2: return BUILD_COMPLETED;
+              case 3: return BUILD_CANCELED;
+              case 4: return COMMAND_COMPLETED;
               default: return null;
             }
           }
@@ -1966,15 +2993,15 @@ public final class JpsRemoteProto {
             this.value = value;
           }
           
-          // @@protoc_insertion_point(enum_scope:org.jetbrains.jpsservice.Message.Response.CommandResponse.Type)
+          // @@protoc_insertion_point(enum_scope:org.jetbrains.jpsservice.Message.Response.BuildEvent.Type)
         }
         
-        // required .org.jetbrains.jpsservice.Message.Response.CommandResponse.Type command_type = 1;
-        public static final int COMMAND_TYPE_FIELD_NUMBER = 1;
-        private boolean hasCommandType;
-        private org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.CommandResponse.Type commandType_;
-        public boolean hasCommandType() { return hasCommandType; }
-        public org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.CommandResponse.Type getCommandType() { return commandType_; }
+        // required .org.jetbrains.jpsservice.Message.Response.BuildEvent.Type event_type = 1;
+        public static final int EVENT_TYPE_FIELD_NUMBER = 1;
+        private boolean hasEventType;
+        private org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.BuildEvent.Type eventType_;
+        public boolean hasEventType() { return hasEventType; }
+        public org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.BuildEvent.Type getEventType() { return eventType_; }
         
         // optional string description = 2;
         public static final int DESCRIPTION_FIELD_NUMBER = 2;
@@ -1984,18 +3011,18 @@ public final class JpsRemoteProto {
         public java.lang.String getDescription() { return description_; }
         
         private void initFields() {
-          commandType_ = org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.CommandResponse.Type.COMMAND_ACCEPTED;
+          eventType_ = org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.BuildEvent.Type.BUILD_STARTED;
         }
         public final boolean isInitialized() {
-          if (!hasCommandType) return false;
+          if (!hasEventType) return false;
           return true;
         }
         
         public void writeTo(com.google.protobuf.CodedOutputStream output)
                             throws java.io.IOException {
           getSerializedSize();
-          if (hasCommandType()) {
-            output.writeEnum(1, getCommandType().getNumber());
+          if (hasEventType()) {
+            output.writeEnum(1, getEventType().getNumber());
           }
           if (hasDescription()) {
             output.writeString(2, getDescription());
@@ -2008,9 +3035,9 @@ public final class JpsRemoteProto {
           if (size != -1) return size;
         
           size = 0;
-          if (hasCommandType()) {
+          if (hasEventType()) {
             size += com.google.protobuf.CodedOutputStream
-              .computeEnumSize(1, getCommandType().getNumber());
+              .computeEnumSize(1, getEventType().getNumber());
           }
           if (hasDescription()) {
             size += com.google.protobuf.CodedOutputStream
@@ -2020,41 +3047,41 @@ public final class JpsRemoteProto {
           return size;
         }
         
-        public static org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.CommandResponse parseFrom(
+        public static org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.BuildEvent parseFrom(
             com.google.protobuf.ByteString data)
             throws com.google.protobuf.InvalidProtocolBufferException {
           return newBuilder().mergeFrom(data).buildParsed();
         }
-        public static org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.CommandResponse parseFrom(
+        public static org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.BuildEvent parseFrom(
             com.google.protobuf.ByteString data,
             com.google.protobuf.ExtensionRegistryLite extensionRegistry)
             throws com.google.protobuf.InvalidProtocolBufferException {
           return newBuilder().mergeFrom(data, extensionRegistry)
                    .buildParsed();
         }
-        public static org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.CommandResponse parseFrom(byte[] data)
+        public static org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.BuildEvent parseFrom(byte[] data)
             throws com.google.protobuf.InvalidProtocolBufferException {
           return newBuilder().mergeFrom(data).buildParsed();
         }
-        public static org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.CommandResponse parseFrom(
+        public static org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.BuildEvent parseFrom(
             byte[] data,
             com.google.protobuf.ExtensionRegistryLite extensionRegistry)
             throws com.google.protobuf.InvalidProtocolBufferException {
           return newBuilder().mergeFrom(data, extensionRegistry)
                    .buildParsed();
         }
-        public static org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.CommandResponse parseFrom(java.io.InputStream input)
+        public static org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.BuildEvent parseFrom(java.io.InputStream input)
             throws java.io.IOException {
           return newBuilder().mergeFrom(input).buildParsed();
         }
-        public static org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.CommandResponse parseFrom(
+        public static org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.BuildEvent parseFrom(
             java.io.InputStream input,
             com.google.protobuf.ExtensionRegistryLite extensionRegistry)
             throws java.io.IOException {
           return newBuilder().mergeFrom(input, extensionRegistry)
                    .buildParsed();
         }
-        public static org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.CommandResponse parseDelimitedFrom(java.io.InputStream input)
+        public static org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.BuildEvent parseDelimitedFrom(java.io.InputStream input)
             throws java.io.IOException {
           Builder builder = newBuilder();
           if (builder.mergeDelimitedFrom(input)) {
@@ -2063,7 +3090,7 @@ public final class JpsRemoteProto {
             return null;
           }
         }
-        public static org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.CommandResponse parseDelimitedFrom(
+        public static org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.BuildEvent parseDelimitedFrom(
             java.io.InputStream input,
             com.google.protobuf.ExtensionRegistryLite extensionRegistry)
             throws java.io.IOException {
@@ -2074,12 +3101,12 @@ public final class JpsRemoteProto {
             return null;
           }
         }
-        public static org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.CommandResponse parseFrom(
+        public static org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.BuildEvent parseFrom(
             com.google.protobuf.CodedInputStream input)
             throws java.io.IOException {
           return newBuilder().mergeFrom(input).buildParsed();
         }
-        public static org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.CommandResponse parseFrom(
+        public static org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.BuildEvent parseFrom(
             com.google.protobuf.CodedInputStream input,
             com.google.protobuf.ExtensionRegistryLite extensionRegistry)
             throws java.io.IOException {
@@ -2089,26 +3116,26 @@ public final class JpsRemoteProto {
         
         public static Builder newBuilder() { return Builder.create(); }
         public Builder newBuilderForType() { return newBuilder(); }
-        public static Builder newBuilder(org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.CommandResponse prototype) {
+        public static Builder newBuilder(org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.BuildEvent prototype) {
           return newBuilder().mergeFrom(prototype);
         }
         public Builder toBuilder() { return newBuilder(this); }
         
         public static final class Builder extends
             com.google.protobuf.GeneratedMessageLite.Builder<
-              org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.CommandResponse, Builder> {
-          private org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.CommandResponse result;
+              org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.BuildEvent, Builder> {
+          private org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.BuildEvent result;
           
-          // Construct using org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.CommandResponse.newBuilder()
+          // Construct using org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.BuildEvent.newBuilder()
           private Builder() {}
           
           private static Builder create() {
             Builder builder = new Builder();
-            builder.result = new org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.CommandResponse();
+            builder.result = new org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.BuildEvent();
             return builder;
           }
           
-          protected org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.CommandResponse internalGetResult() {
+          protected org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.BuildEvent internalGetResult() {
             return result;
           }
           
@@ -2117,7 +3144,7 @@ public final class JpsRemoteProto {
               throw new IllegalStateException(
                 "Cannot call clear() after build().");
             }
-            result = new org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.CommandResponse();
+            result = new org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.BuildEvent();
             return this;
           }
           
@@ -2125,21 +3152,21 @@ public final class JpsRemoteProto {
             return create().mergeFrom(result);
           }
           
-          public org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.CommandResponse getDefaultInstanceForType() {
-            return org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.CommandResponse.getDefaultInstance();
+          public org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.BuildEvent getDefaultInstanceForType() {
+            return org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.BuildEvent.getDefaultInstance();
           }
           
           public boolean isInitialized() {
             return result.isInitialized();
           }
-          public org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.CommandResponse build() {
+          public org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.BuildEvent build() {
             if (result != null && !isInitialized()) {
               throw newUninitializedMessageException(result);
             }
             return buildPartial();
           }
           
-          private org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.CommandResponse buildParsed()
+          private org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.BuildEvent buildParsed()
               throws com.google.protobuf.InvalidProtocolBufferException {
             if (!isInitialized()) {
               throw newUninitializedMessageException(
@@ -2148,20 +3175,20 @@ public final class JpsRemoteProto {
             return buildPartial();
           }
           
-          public org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.CommandResponse buildPartial() {
+          public org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.BuildEvent buildPartial() {
             if (result == null) {
               throw new IllegalStateException(
                 "build() has already been called on this Builder.");
             }
-            org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.CommandResponse returnMe = result;
+            org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.BuildEvent returnMe = result;
             result = null;
             return returnMe;
           }
           
-          public Builder mergeFrom(org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.CommandResponse other) {
-            if (other == org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.CommandResponse.getDefaultInstance()) return this;
-            if (other.hasCommandType()) {
-              setCommandType(other.getCommandType());
+          public Builder mergeFrom(org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.BuildEvent other) {
+            if (other == org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.BuildEvent.getDefaultInstance()) return this;
+            if (other.hasEventType()) {
+              setEventType(other.getEventType());
             }
             if (other.hasDescription()) {
               setDescription(other.getDescription());
@@ -2186,9 +3213,9 @@ public final class JpsRemoteProto {
                 }
                 case 8: {
                   int rawValue = input.readEnum();
-                  org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.CommandResponse.Type value = org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.CommandResponse.Type.valueOf(rawValue);
+                  org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.BuildEvent.Type value = org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.BuildEvent.Type.valueOf(rawValue);
                   if (value != null) {
-                    setCommandType(value);
+                    setEventType(value);
                   }
                   break;
                 }
@@ -2201,24 +3228,24 @@ public final class JpsRemoteProto {
           }
           
           
-          // required .org.jetbrains.jpsservice.Message.Response.CommandResponse.Type command_type = 1;
-          public boolean hasCommandType() {
-            return result.hasCommandType();
+          // required .org.jetbrains.jpsservice.Message.Response.BuildEvent.Type event_type = 1;
+          public boolean hasEventType() {
+            return result.hasEventType();
           }
-          public org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.CommandResponse.Type getCommandType() {
-            return result.getCommandType();
+          public org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.BuildEvent.Type getEventType() {
+            return result.getEventType();
           }
-          public Builder setCommandType(org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.CommandResponse.Type value) {
+          public Builder setEventType(org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.BuildEvent.Type value) {
             if (value == null) {
               throw new NullPointerException();
             }
-            result.hasCommandType = true;
-            result.commandType_ = value;
+            result.hasEventType = true;
+            result.eventType_ = value;
             return this;
           }
-          public Builder clearCommandType() {
-            result.hasCommandType = false;
-            result.commandType_ = org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.CommandResponse.Type.COMMAND_ACCEPTED;
+          public Builder clearEventType() {
+            result.hasEventType = false;
+            result.eventType_ = org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.BuildEvent.Type.BUILD_STARTED;
             return this;
           }
           
@@ -2243,16 +3270,16 @@ public final class JpsRemoteProto {
             return this;
           }
           
-          // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.Response.CommandResponse)
+          // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.Response.BuildEvent)
         }
         
         static {
-          defaultInstance = new CommandResponse(true);
+          defaultInstance = new BuildEvent(true);
           org.jetbrains.jpsservice.JpsRemoteProto.internalForceInit();
           defaultInstance.initFields();
         }
         
-        // @@protoc_insertion_point(class_scope:org.jetbrains.jpsservice.Message.Response.CommandResponse)
+        // @@protoc_insertion_point(class_scope:org.jetbrains.jpsservice.Message.Response.BuildEvent)
       }
       
       public static final class CompileMessage extends
@@ -2728,12 +3755,12 @@ public final class JpsRemoteProto {
       public boolean hasResponseType() { return hasResponseType; }
       public org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.Type getResponseType() { return responseType_; }
       
-      // optional .org.jetbrains.jpsservice.Message.Response.CommandResponse command_response = 2;
-      public static final int COMMAND_RESPONSE_FIELD_NUMBER = 2;
-      private boolean hasCommandResponse;
-      private org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.CommandResponse commandResponse_;
-      public boolean hasCommandResponse() { return hasCommandResponse; }
-      public org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.CommandResponse getCommandResponse() { return commandResponse_; }
+      // optional .org.jetbrains.jpsservice.Message.Response.BuildEvent build_event = 2;
+      public static final int BUILD_EVENT_FIELD_NUMBER = 2;
+      private boolean hasBuildEvent;
+      private org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.BuildEvent buildEvent_;
+      public boolean hasBuildEvent() { return hasBuildEvent; }
+      public org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.BuildEvent getBuildEvent() { return buildEvent_; }
       
       // optional .org.jetbrains.jpsservice.Message.Response.CompileMessage compile_message = 3;
       public static final int COMPILE_MESSAGE_FIELD_NUMBER = 3;
@@ -2743,14 +3770,14 @@ public final class JpsRemoteProto {
       public org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.CompileMessage getCompileMessage() { return compileMessage_; }
       
       private void initFields() {
-        responseType_ = org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.Type.COMMAND_RESPONSE;
-        commandResponse_ = org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.CommandResponse.getDefaultInstance();
+        responseType_ = org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.Type.BUILD_EVENT;
+        buildEvent_ = org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.BuildEvent.getDefaultInstance();
         compileMessage_ = org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.CompileMessage.getDefaultInstance();
       }
       public final boolean isInitialized() {
         if (!hasResponseType) return false;
-        if (hasCommandResponse()) {
-          if (!getCommandResponse().isInitialized()) return false;
+        if (hasBuildEvent()) {
+          if (!getBuildEvent().isInitialized()) return false;
         }
         if (hasCompileMessage()) {
           if (!getCompileMessage().isInitialized()) return false;
@@ -2764,8 +3791,8 @@ public final class JpsRemoteProto {
         if (hasResponseType()) {
           output.writeEnum(1, getResponseType().getNumber());
         }
-        if (hasCommandResponse()) {
-          output.writeMessage(2, getCommandResponse());
+        if (hasBuildEvent()) {
+          output.writeMessage(2, getBuildEvent());
         }
         if (hasCompileMessage()) {
           output.writeMessage(3, getCompileMessage());
@@ -2782,9 +3809,9 @@ public final class JpsRemoteProto {
           size += com.google.protobuf.CodedOutputStream
             .computeEnumSize(1, getResponseType().getNumber());
         }
-        if (hasCommandResponse()) {
+        if (hasBuildEvent()) {
           size += com.google.protobuf.CodedOutputStream
-            .computeMessageSize(2, getCommandResponse());
+            .computeMessageSize(2, getBuildEvent());
         }
         if (hasCompileMessage()) {
           size += com.google.protobuf.CodedOutputStream
@@ -2937,8 +3964,8 @@ public final class JpsRemoteProto {
           if (other.hasResponseType()) {
             setResponseType(other.getResponseType());
           }
-          if (other.hasCommandResponse()) {
-            mergeCommandResponse(other.getCommandResponse());
+          if (other.hasBuildEvent()) {
+            mergeBuildEvent(other.getBuildEvent());
           }
           if (other.hasCompileMessage()) {
             mergeCompileMessage(other.getCompileMessage());
@@ -2970,12 +3997,12 @@ public final class JpsRemoteProto {
                 break;
               }
               case 18: {
-                org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.CommandResponse.Builder subBuilder = org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.CommandResponse.newBuilder();
-                if (hasCommandResponse()) {
-                  subBuilder.mergeFrom(getCommandResponse());
+                org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.BuildEvent.Builder subBuilder = org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.BuildEvent.newBuilder();
+                if (hasBuildEvent()) {
+                  subBuilder.mergeFrom(getBuildEvent());
                 }
                 input.readMessage(subBuilder, extensionRegistry);
-                setCommandResponse(subBuilder.buildPartial());
+                setBuildEvent(subBuilder.buildPartial());
                 break;
               }
               case 26: {
@@ -3009,44 +4036,44 @@ public final class JpsRemoteProto {
         }
         public Builder clearResponseType() {
           result.hasResponseType = false;
-          result.responseType_ = org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.Type.COMMAND_RESPONSE;
+          result.responseType_ = org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.Type.BUILD_EVENT;
           return this;
         }
         
-        // optional .org.jetbrains.jpsservice.Message.Response.CommandResponse command_response = 2;
-        public boolean hasCommandResponse() {
-          return result.hasCommandResponse();
+        // optional .org.jetbrains.jpsservice.Message.Response.BuildEvent build_event = 2;
+        public boolean hasBuildEvent() {
+          return result.hasBuildEvent();
         }
-        public org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.CommandResponse getCommandResponse() {
-          return result.getCommandResponse();
+        public org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.BuildEvent getBuildEvent() {
+          return result.getBuildEvent();
         }
-        public Builder setCommandResponse(org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.CommandResponse value) {
+        public Builder setBuildEvent(org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.BuildEvent value) {
           if (value == null) {
             throw new NullPointerException();
           }
-          result.hasCommandResponse = true;
-          result.commandResponse_ = value;
+          result.hasBuildEvent = true;
+          result.buildEvent_ = value;
           return this;
         }
-        public Builder setCommandResponse(org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.CommandResponse.Builder builderForValue) {
-          result.hasCommandResponse = true;
-          result.commandResponse_ = builderForValue.build();
+        public Builder setBuildEvent(org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.BuildEvent.Builder builderForValue) {
+          result.hasBuildEvent = true;
+          result.buildEvent_ = builderForValue.build();
           return this;
         }
-        public Builder mergeCommandResponse(org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.CommandResponse value) {
-          if (result.hasCommandResponse() &&
-              result.commandResponse_ != org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.CommandResponse.getDefaultInstance()) {
-            result.commandResponse_ =
-              org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.CommandResponse.newBuilder(result.commandResponse_).mergeFrom(value).buildPartial();
+        public Builder mergeBuildEvent(org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.BuildEvent value) {
+          if (result.hasBuildEvent() &&
+              result.buildEvent_ != org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.BuildEvent.getDefaultInstance()) {
+            result.buildEvent_ =
+              org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.BuildEvent.newBuilder(result.buildEvent_).mergeFrom(value).buildPartial();
           } else {
-            result.commandResponse_ = value;
+            result.buildEvent_ = value;
           }
-          result.hasCommandResponse = true;
+          result.hasBuildEvent = true;
           return this;
         }
-        public Builder clearCommandResponse() {
-          result.hasCommandResponse = false;
-          result.commandResponse_ = org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.CommandResponse.getDefaultInstance();
+        public Builder clearBuildEvent() {
+          result.hasBuildEvent = false;
+          result.buildEvent_ = org.jetbrains.jpsservice.JpsRemoteProto.Message.Response.BuildEvent.getDefaultInstance();
           return this;
         }
         

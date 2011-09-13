@@ -19,6 +19,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -33,7 +34,9 @@ import org.jetbrains.jpsservice.Bootstrap;
 import org.jetbrains.jpsservice.Client;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
@@ -96,7 +99,17 @@ public class JpsServerManager implements ApplicationComponent{
         final OSProcessHandler processHandler = new OSProcessHandler(process, null);
         processHandler.startNotify();
         myServerClient = new Client();
-        myServerClient.connect(NetUtils.getLocalHostString(), port);
+
+        if (myServerClient.connect(NetUtils.getLocalHostString(), port)) {
+
+          final PathMacros pathVars = PathMacros.getInstance();
+          final Map<String, String> data = new HashMap<String, String>();
+          for (String name : pathVars.getAllMacroNames()) {
+            data.put(name, pathVars.getValue(name));
+          }
+          myServerClient.sendSetupRequest(data);
+
+        }
 
         myProcessHandler = processHandler;
         return true;

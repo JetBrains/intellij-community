@@ -71,14 +71,17 @@ public class Server {
 
   public static void main(String[] args) {
     int port = DEFAULT_SERVER_PORT;
+
     if (args.length > 0) {
       try {
         port = Integer.parseInt(args[0]);
       }
       catch (NumberFormatException e) {
-        System.out.println("Error parsing port, using default ("+port+"): " + e.getMessage());
+        System.out.println("Error parsing port: " + e.getMessage());
+        System.exit(-1);
       }
     }
+
     final Server server = new Server();
     server.start(port);
     Runtime.getRuntime().addShutdownHook(new Thread("Shutdown hook thread") {

@@ -23,6 +23,7 @@ public abstract class JpsClientMessageHandler extends SimpleChannelHandler{
 
     final JpsServerResponseHandler handler = getHandler(sessionId);
     if (handler == null) {
+      terminateSession(sessionId);
       return; // discard message
     }
 
@@ -36,19 +37,23 @@ public abstract class JpsClientMessageHandler extends SimpleChannelHandler{
       else if (messageType == JpsRemoteProto.Message.Type.RESPONSE) {
         final JpsRemoteProto.Message.Response response = message.getResponse();
         final JpsRemoteProto.Message.Response.Type responseType = response.getResponseType();
-        if (responseType == JpsRemoteProto.Message.Response.Type.COMMAND_RESPONSE) {
-          final JpsRemoteProto.Message.Response.CommandResponse commandResponse = response.getCommandResponse();
-          terminateSession = commandResponse.getCommandType() != JpsRemoteProto.Message.Response.CommandResponse.Type.COMMAND_ACCEPTED;
-          handler.handleCommandResponse(commandResponse);
-        }
-        else if (responseType == JpsRemoteProto.Message.Response.Type.COMPILE_MESSAGE) {
-          handler.handleCompileMessage(response.getCompileMessage());
-        }
-        else {
-          throw new Exception("Unknown response: " + response);
+        switch (responseType) {
+          case BUILD_EVENT: {
+            terminateSession = handler.handleBuildEvent(response.getBuildEvent());
+          }
+          break;
+
+          case COMPILE_MESSAGE:
+            handler.handleCompileMessage(response.getCompileMessage());
+            break;
+
+          default:
+            terminateSession = true;
+            throw new Exception("Unknown response: " + response);
         }
       }
       else {
+        terminateSession = true;
         throw new Exception("Unknown message received: " + message);
       }
     }
