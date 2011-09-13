@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.ex.SweepProcessor;
 import com.intellij.openapi.util.Segment;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -109,7 +110,7 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
     return node;
   }
   private String errMsg(RMNode node) {
-    final StringBuilder msg = new StringBuilder();
+    @NonNls final StringBuilder msg = new StringBuilder();
     final AtomicInteger alive = new AtomicInteger();
     node.processAliveKeys(new Processor<Object>() {
       @Override

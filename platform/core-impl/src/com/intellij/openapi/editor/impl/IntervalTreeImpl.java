@@ -23,6 +23,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.WalkingState;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TLongHashSet;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.ReferenceQueue;
@@ -314,9 +315,10 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
   private boolean process(final IntervalNode<T> root, final Processor<? super T> processor, final int modCountBefore) {
     if (root == null) return true;
 
-    return WalkingState.processAll(root, INTERVAL_TREE_GUIDE_INSTANCE, new Processor<IntervalNode>() {
+    WalkingState.TreeGuide<IntervalNode<T>> guide = getGuide();
+    return WalkingState.processAll(root, guide, new Processor<IntervalNode<T>>() {
       @Override
-      public boolean process(IntervalNode node) {
+      public boolean process(IntervalNode<T> node) {
         if (!node.processAliveKeys(processor)) return false;
         if (modCount != modCountBefore) throw new ConcurrentModificationException();
         return true;
@@ -676,8 +678,8 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
       TLongHashSet ids = new TLongHashSet(keySize);
       checkMax(getRoot(), 0, assertInvalid, allValid, keyCounter, nodeCounter, ids, true);
       if (assertInvalid) {
-        assert nodeSize() == nodeCounter[0] : "node size: "+ nodeSize() +"; actual: "+nodeCounter;
-        assert keySize == keyCounter[0] : "key size: "+ keySize +"; actual: "+keyCounter;
+        assert nodeSize() == nodeCounter[0] : "node size: "+ nodeSize() +"; actual: "+nodeCounter[0];
+        assert keySize == keyCounter[0] : "key size: "+ keySize +"; actual: "+keyCounter[0];
         assert keySize >= nodeSize() : keySize + "; "+nodeSize();
       }
       return allValid.get();
@@ -1145,35 +1147,48 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     printSorted(root.getRight());
   }
 
-  void reportInvalidation(T markerEx, Object reason) {
+  void reportInvalidation(T markerEx, @NonNls Object reason) {
   }
 
-  private static class IntervalTreeGuide implements WalkingState.TreeGuide<IntervalNode> {
+  private static class IntervalTreeGuide<T extends MutableInterval> implements WalkingState.TreeGuide<IntervalNode<T>> {
     @Override
-    public IntervalNode getNextSibling(@NotNull IntervalNode element) {
-      IntervalNode parent = element.getParent();
+    public IntervalNode<T> getNextSibling(@NotNull IntervalNode<T> element) {
+      IntervalNode<T> parent = element.getParent();
       if (parent == null) return null;
       return parent.getLeft() == element ? parent.getRight() : null;
     }
 
     @Override
-    public IntervalNode getPrevSibling(@NotNull IntervalNode element) {
-      IntervalNode parent = element.getParent();
+    public IntervalNode<T> getPrevSibling(@NotNull IntervalNode<T> element) {
+      IntervalNode<T> parent = element.getParent();
       if (parent == null) return null;
       return parent.getRight() == element ? parent.getLeft() : null;
     }
 
     @Override
-    public IntervalNode getFirstChild(@NotNull IntervalNode element) {
-      IntervalNode left = element.getLeft();
+    public IntervalNode<T> getFirstChild(@NotNull IntervalNode<T> element) {
+      IntervalNode<T> left = element.getLeft();
       return left == null ? element.getRight() : left;
     }
 
     @Override
-    public IntervalNode getParent(@NotNull IntervalNode element) {
+    public IntervalNode<T> getParent(@NotNull IntervalNode<T> element) {
       return element.getParent();
     }
   }
 
-  private final IntervalTreeGuide INTERVAL_TREE_GUIDE_INSTANCE = new IntervalTreeGuide();
+  private static final IntervalTreeGuide INTERVAL_TREE_GUIDE_INSTANCE = new IntervalTreeGuide();
+  private static <T extends MutableInterval> WalkingState.TreeGuide<IntervalNode<T>> getGuide() {
+    //noinspection unchecked
+    return (WalkingState.TreeGuide)INTERVAL_TREE_GUIDE_INSTANCE;
+  }
+
+
+  public int maxHeight() {
+    return maxHeight(root);
+  }
+
+  private int maxHeight(Node<T> root) {
+    return root == null ? 0 : 1 + Math.max(maxHeight(root.left), maxHeight(root.right));
+  }
 }
