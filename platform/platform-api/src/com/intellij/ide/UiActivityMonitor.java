@@ -31,252 +31,28 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
-public class UiActivityMonitor implements ApplicationComponent {
+public abstract class UiActivityMonitor implements ApplicationComponent {
 
-  private Map<Object, BusyImpl> myObjects = new HashMap<Object, BusyImpl>();
+  public abstract BusyObject getBusy(@NotNull Project project);
 
-  public UiActivityMonitor() {
-    myObjects.put(null, new BusyObjectGlobalImpl());
-  }
+  public abstract BusyObject getBusy();
 
-  @Override
-  public void initComponent() {
-    ProjectManager pm = ProjectManager.getInstance();
-    pm.addProjectManagerListener(new ProjectManagerAdapter() {
-      @Override
-      public void projectClosed(Project project) {
-        myObjects.remove(project);
-      }
-    });
-    initBusyObjectFor(pm.getDefaultProject());
+  public abstract void addActivity(@NotNull Project project, @NotNull Object activity);
 
-  }
+  public abstract void addActivity(@NotNull Project project, @NotNull Object activity, @NotNull ModalityState effectiveModalityState);
 
-  public BusyObject getBusy(@NotNull Project project) {
-    return _getBusy(project);
-  }
+  public abstract void addActivity(@NotNull Object activity);
 
-  public BusyObject getBusy() {
-    return _getBusy(null);
-  }
+  public abstract void addActivity(@NotNull Object activity, @NotNull ModalityState effectiveModalityState);
 
+  public abstract void removeActivity(@NotNull Project project, @NotNull Object activity);
 
-  public void addActivity(@NotNull final Project project, @NotNull final Object activity) {
-    addActivity(project, activity, ModalityState.any());
-  }
+  public abstract void removeActivity(@NotNull Object activity);
 
-  public void addActivity(@NotNull final Project project, @NotNull final Object activity, @NotNull final ModalityState effectiveModalityState) {
-    invokeLaterIfNeeded(new MyRunnable() {
-      @Override
-      public void run(Throwable allocation) {
-        if (!hasObjectFor(project)) {
-          Project[] open = ProjectManager.getInstance().getOpenProjects();
-          for (Project each : open) {
-            if (each == project) {
-              initBusyObjectFor(project);
-              break;
-            }
-          }
-        }
-
-        _getBusy(project).addActivity(activity, allocation, effectiveModalityState);
-      }
-    });
-  }
-
-  public void removeActivity(@NotNull final Project project, @NotNull final Object activity) {
-    invokeLaterIfNeeded(new MyRunnable() {
-      @Override
-      public void run(Throwable allocation) {
-        _getBusy(project).removeActivity(activity);
-      }
-    });
-  }
-
-  public void addActivity(@NotNull final Object activity) {
-    addActivity(activity, ModalityState.any());
-  }
-
-  public void addActivity(@NotNull final Object activity, @NotNull final ModalityState effectiveModalityState) {
-    invokeLaterIfNeeded(new MyRunnable() {
-      @Override
-      public void run(Throwable allocation) {
-        _getBusy(null).addActivity(activity, allocation, effectiveModalityState);
-      }
-    });
-  }
-
-  public void removeActivity(@NotNull final Object activity) {
-    invokeLaterIfNeeded(new MyRunnable() {
-      @Override
-      public void run(Throwable allocation) {
-        _getBusy(null).removeActivity(activity);
-      }
-    });
-  }
-
-  private BusyImpl _getBusy(@Nullable Object key) {
-    BusyImpl object = myObjects.get(key);
-    return object != null ? object : getGlobalBusy();
-  }
-  
-  void initBusyObjectFor(@Nullable Object key) {
-    BusyImpl object = new BusyImpl();
-    myObjects.put(key, object);
-  }
-  
-  boolean hasObjectFor(Project project) {
-    return myObjects.containsKey(project);
-  }
-
-  private BusyObjectGlobalImpl getGlobalBusy() {
-    return (BusyObjectGlobalImpl)myObjects.get(null);
-  }
-
-  public void clear() {
-    for (Object eachObject : myObjects.keySet()) {
-      myObjects.get(eachObject).clear();
-    }
-  }
-
+  public abstract void clear();
 
   public static UiActivityMonitor getInstance() {
     return ApplicationManager.getApplication().getComponent(UiActivityMonitor.class);
   }
-  
-  @Override
-  public void disposeComponent() {
-    myObjects.clear();
-  }
 
-  @NotNull
-  @Override
-  public String getComponentName() {
-    return "UiActivityMonitor";
-  }
-
-  private static class ActivityInfo {
-    private Throwable myAllocation;
-    private ModalityState myEffectiveState;
-
-    private ActivityInfo(@Nullable Throwable allocation, @NotNull ModalityState effectiveState) {
-      myAllocation = allocation;
-      myEffectiveState = effectiveState;
-    }
-
-    @Nullable
-    public Throwable getAllocation() {
-      return myAllocation;
-    }
-
-    @NotNull
-    public ModalityState getEffectiveState() {
-      return myEffectiveState;
-    }
-  }
-
-  protected ModalityState getCurrentState() {
-    return ModalityState.current();
-  }
-
-  private class BusyImpl extends BusyObject.Impl {
-
-    private Map<Object, ActivityInfo> myActivities = new HashMap<Object, ActivityInfo>();
-
-    private Set<Object> myQueuedToRemove = new HashSet<Object>();
-
-    @Override
-    public boolean isReady() {
-      return isOwnReady() && getGlobalBusy().isOwnReady();
-    }
-
-    boolean isOwnReady() {
-      if (myActivities.size() == 0) return true;
-
-      final ModalityState current = getCurrentState();
-      for (Object each : myActivities.keySet()) {
-        final ActivityInfo info = myActivities.get(each);
-        if (!current.dominates(info.getEffectiveState())) {
-          return false;
-        }
-      }
-
-      return true;
-    }
-
-
-    public void addActivity(Object activity, Throwable allocation, ModalityState effectiveModalityState) {
-      myActivities.put(activity, new ActivityInfo(allocation, effectiveModalityState));
-      myQueuedToRemove.remove(activity);
-    }
-
-    public void removeActivity(final Object activity) {
-      if (!myActivities.containsKey(activity)) return;
-
-      myQueuedToRemove.add(activity);
-
-      Runnable runnable = new Runnable() {
-        @Override
-        public void run() {
-          if (!myQueuedToRemove.contains(activity)) return;
-
-          myQueuedToRemove.remove(activity);
-          myActivities.remove(activity);
-          onReady();
-        }
-      };
-      if (isUnitTestMode()) {
-        runnable.run();
-      } else {
-        SwingUtilities.invokeLater(runnable);
-      }
-    }
-
-    public void clear() {
-      Object[] activities = myActivities.keySet().toArray(new Object[myActivities.size()]);
-      for (Object each : activities) {
-        removeActivity(each);
-      }
-    }
-  }
-
-  private class BusyObjectGlobalImpl extends BusyImpl {
-
-    @Override
-    public boolean isReady() {
-      Iterator<Object> iterator = myObjects.keySet().iterator();
-      while (iterator.hasNext()) {
-        Object eachKey = iterator.next();
-        BusyImpl busy = myObjects.get(eachKey);
-        if (busy == this) continue;
-        if (!busy.isOwnReady()) return false;
-      }
-
-      return isOwnReady();
-    }
-  }
-
-  private void invokeLaterIfNeeded(final MyRunnable runnable) {
-    final Throwable allocation = Registry.is("ide.debugMode") ? new Exception() : null;
-    
-    if (isUnitTestMode()) {
-      runnable.run(allocation);
-    } else {
-      UIUtil.invokeLaterIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          runnable.run(allocation);
-        }
-      });
-    }
-  }
-  
-  private interface MyRunnable {
-    public abstract void run(Throwable allocation);
-  } 
-  
-  private boolean isUnitTestMode() {
-      Application app = ApplicationManager.getApplication();
-      return app == null || app.isUnitTestMode();
-  }
 }

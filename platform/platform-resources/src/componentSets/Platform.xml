@@ -74,7 +74,8 @@
     </component>
 
     <component>
-      <implementation-class>com.intellij.ide.UiActivityMonitor</implementation-class>
+      <interface-class>com.intellij.ide.UiActivityMonitor</interface-class>
+      <implementation-class>com.intellij.ide.UiActivityMonitorImpl</implementation-class>
     </component>
 
     <component>

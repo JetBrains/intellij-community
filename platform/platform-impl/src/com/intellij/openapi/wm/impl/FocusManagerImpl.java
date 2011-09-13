@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.ActionCallback;
@@ -51,6 +52,9 @@ import java.util.*;
 import java.util.List;
 
 public class FocusManagerImpl extends IdeFocusManager implements Disposable {
+
+  private static final String FOCUS = "focus";
+  private static final String TYPEAHEAD = "typeahead";
 
   private final Application myApp;
 
@@ -183,7 +187,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     }
     final ActionCallback result = new ActionCallback();
 
-    myActivityMonitor.addActivity("focus");
+    myActivityMonitor.addActivity(FOCUS, ModalityState.any());
     if (!forced) {
       if (!myFocusRequests.contains(command)) {
         myFocusRequests.add(command);
@@ -220,6 +224,13 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   }
 
   private void _requestFocus(final FocusCommand command, final boolean forced, final ActionCallback result) {
+    result.doWhenProcessed(new Runnable() {
+      @Override
+      public void run() {
+        maybeRemoveFocusActivity();
+      }
+    });
+    
     if (checkForRejectOrByPass(command, forced, result)) return;
 
     setCommand(command);
@@ -286,6 +297,12 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
         }
       }
     });
+  }
+
+  private void maybeRemoveFocusActivity() {
+    if (isFocusTransferReady()) {
+      myActivityMonitor.removeActivity(FOCUS);
+    }
   }
 
   private boolean checkForRejectOrByPass(final FocusCommand cmd, final boolean forced, final ActionCallback result) {
@@ -510,7 +527,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
         }
         
         if (myToDispatchOnDone.size() == 0 && myTypeAheadRequestors.size() == 0) {
-          myActivityMonitor.removeActivity("typeahead");
+          myActivityMonitor.removeActivity(TYPEAHEAD);
         }
       }
 
@@ -534,6 +551,8 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
       if (!isIdleQueueEmpty()) {
         restartIdleAlarm();
       }
+
+      maybeRemoveFocusActivity();
     }
   }
 
@@ -562,9 +581,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
       }
     }
     
-    if (isFocusTransferReady()) {
-      myActivityMonitor.removeActivity("focus");
-    }
+    maybeRemoveFocusActivity();
   }
 
   private static void flushRequest(Runnable each) {
@@ -626,7 +643,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
           final Boolean result = processor.dispatch(e, myKeyProcessorContext);
           if (result != null) {
             if (result.booleanValue()) {
-              myActivityMonitor.addActivity("typeahead");
+              myActivityMonitor.addActivity(TYPEAHEAD, ModalityState.any());
               return true;
             } else {
               return false;
@@ -636,7 +653,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
       }
 
       myToDispatchOnDone.add(e);
-      myActivityMonitor.addActivity("typeahead");
+      myActivityMonitor.addActivity(TYPEAHEAD, ModalityState.any());
       
       restartIdleAlarm();
 

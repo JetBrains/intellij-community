@@ -212,6 +212,7 @@ public class AbstractTreeUi {
     myBuilder = builder;
     myTree = tree;
     myTreeModel = treeModel;
+    myActivityMonitor = UiActivityMonitor.getInstance();
     addModelListenerToDianoseAccessOutsideEdt();
     TREE_NODE_WRAPPER = getBuilder().createSearchingTreeNodeWrapper();
     myTree.setModel(myTreeModel);
@@ -4579,24 +4580,15 @@ public class AbstractTreeUi {
 
 
   public void addActivity() {
-    getActivityMonitor().addActivity(this, getUpdater().getModalityState());
-  }
-
-  private UiActivityMonitor getActivityMonitor() {
-    if (myActivityMonitor == null) {
-      UiActivityMonitor appMonitor = UiActivityMonitor.getInstance();
-      if (appMonitor != null) {
-        myActivityMonitor = appMonitor;
-      } else {
-        myActivityMonitor = new UiActivityMonitor();
-      }
+    if (myActivityMonitor != null) {
+      myActivityMonitor.addActivity(this, getUpdater().getModalityState());
     }
-
-    return myActivityMonitor;
   }
 
   public void removeActivity() {
-    getActivityMonitor().removeActivity(this);
+    if (myActivityMonitor != null) {
+      myActivityMonitor.removeActivity(this);
+    }
   }
 
   private void _addNodeAction(Object element, NodeAction action, Map<Object, List<NodeAction>> map) {

@@ -27,11 +27,6 @@ import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
 /**
  * Created by IntelliJ IDEA.
  * User: kirillk
@@ -41,7 +36,7 @@ import java.util.List;
  */
 public class ActivityMonitorTest extends TestCase {
 
-  private UiActivityMonitor myMonitor;
+  private UiActivityMonitorImpl myMonitor;
   private ModalityState myCurrentState;
 
   @Override
@@ -62,7 +57,7 @@ public class ActivityMonitorTest extends TestCase {
       }
 
     });
-    myMonitor = new UiActivityMonitor();
+    myMonitor = new UiActivityMonitorImpl();
   }
 
   @Override
