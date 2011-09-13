@@ -566,29 +566,53 @@ public class ChangesFragmentedDiffPanel implements Disposable {
   private int getCurrentLogicalLineIdx(final boolean forward) {
     assert ! myLeftLines.isEmpty();
 
-    final Editor editor = ((DiffPanelImpl) getCurrentPanel()).getEditor1();
-    Point location = editor.getScrollingModel().getVisibleArea().getLocation();
-    LogicalPosition lp = editor.xyToLogicalPosition(location);
-    int line = lp.line;
+    BeforeAfter<Integer> editorLines = getEditorLines();
     if (forward) {
+      Integer line = editorLines.getAfter();
       if (line >= myLeftLines.get(myLeftLines.size() - 1)) {
         return myLeftLines.size() - 1;
       }
       for (int i = myLeftLines.size() - 1; i >= 0; i--) {
         Integer integer = myLeftLines.get(i);
-        if (integer <= line) return i + 1;
+        if (integer <= line) return i;
       }
       return 0;
     } else {
+      Integer line = editorLines.getBefore();
       if (line <= myLeftLines.get(0)) return 0;
       for (int i = 0; i < myLeftLines.size(); i++) {
         Integer integer = myLeftLines.get(i);
-        if (integer > line) {
+        if (integer >= line) {
           return i;
         }
       }
       return myLeftLines.size() - 1;
     }
+  }
+
+  private BeforeAfter<Integer> getEditorLines() {
+    final Editor editor = ((DiffPanelImpl) getCurrentPanel()).getEditor1();
+    Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
+    final int offset = editor.getScrollingModel().getVerticalScrollOffset();
+
+    int leftPixels = offset % editor.getLineHeight();
+
+    final Point start = visibleArea.getLocation();
+    final LogicalPosition startLp = editor.xyToLogicalPosition(start);
+    final Point location = new Point(start.x + visibleArea.width, start.y + visibleArea.height);
+    final LogicalPosition lp = editor.xyToLogicalPosition(location);
+
+    int curStartLine = startLp.line == (editor.getDocument().getLineCount() - 1) ? startLp.line : (startLp.line + 1);
+    int cutEndLine = lp.line == 0 ? 0 : lp.line - 1;
+
+    boolean commonPartOk = leftPixels == 0 || startLp.line == lp.line;
+    return new BeforeAfter<Integer>(commonPartOk && startLp.softWrapLinesOnCurrentLogicalLine == 0 ? startLp.line : curStartLine,
+                                    commonPartOk && lp.softWrapLinesOnCurrentLogicalLine == 0 ? lp.line : cutEndLine);
+    /*if (leftPixels == 0 || startLp.line == lp.line) {
+      return new BeforeAfter<Integer>(startLp.line, lp.line);
+    } else {
+      return new BeforeAfter<Integer>(curStartLine, cutEndLine);
+    }*/
   }
 
   private final static int[] ourMarks = {1,2,4,8,-1};
@@ -704,7 +728,7 @@ public class ChangesFragmentedDiffPanel implements Disposable {
 
       DiffPanelImpl panel = (DiffPanelImpl) getCurrentPanel();
       panel.getSideView(FragmentSide.SIDE1).scrollToFirstDiff(myLeftLines.get(nextLineIdx));
-      panel.getSideView(FragmentSide.SIDE2).scrollToFirstDiff(myRightLines.get(rightIndex));
+      //panel.getSideView(FragmentSide.SIDE2).scrollToFirstDiff(myRightLines.get(rightIndex));
     }
 
     public void setEnabled(boolean enabled) {
@@ -733,7 +757,7 @@ public class ChangesFragmentedDiffPanel implements Disposable {
 
       DiffPanelImpl panel = (DiffPanelImpl) getCurrentPanel();
       panel.getSideView(FragmentSide.SIDE1).scrollToFirstDiff(myLeftLines.get(nextLineIdx));
-      panel.getSideView(FragmentSide.SIDE2).scrollToFirstDiff(myRightLines.get(rightIndex));
+      //panel.getSideView(FragmentSide.SIDE2).scrollToFirstDiff(myRightLines.get(rightIndex));
     }
 
     public void setEnabled(boolean enabled) {
