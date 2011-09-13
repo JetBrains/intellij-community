@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -32,7 +33,7 @@ public class PyBlock implements ASTBlock {
   private final Indent _indent;
   private final ASTNode _node;
   private final Wrap _wrap;
-  private final CodeStyleSettings mySettings;
+  private final CommonCodeStyleSettings mySettings;
   private List<PyBlock> _subBlocks = null;
   private Alignment myChildAlignment;
   private static final boolean DUMP_FORMATTING_BLOCKS = false;
@@ -58,7 +59,7 @@ public class PyBlock implements ASTBlock {
                  final Alignment alignment,
                  final Indent indent,
                  final Wrap wrap,
-                 final CodeStyleSettings settings) {
+                 final CommonCodeStyleSettings settings) {
     _alignment = alignment;
     _indent = indent;
     _node = node;
@@ -457,7 +458,7 @@ public class PyBlock implements ASTBlock {
   }
 
   private PyCodeStyleSettings getPySettings() {
-    return mySettings.getCustomSettings(PyCodeStyleSettings.class);
+    return mySettings.getRootSettings().getCustomSettings(PyCodeStyleSettings.class);
   }
 
   private Spacing getBlankLinesForOption(final int option) {
@@ -536,7 +537,8 @@ public class PyBlock implements ASTBlock {
     // delegation sometimes causes NPEs in formatter core, so we calculate the
     // correct indent manually.
     if (statementListsBelow > 0) { // was 1... strange
-      int indent = mySettings.getIndentSize(PythonFileType.INSTANCE);
+      @SuppressWarnings("ConstantConditions")
+      int indent = mySettings.getIndentOptions().INDENT_SIZE;
       return new ChildAttributes(Indent.getSpaceIndent(indent * statementListsBelow), null);
     }
 

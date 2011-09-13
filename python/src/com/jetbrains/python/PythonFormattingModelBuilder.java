@@ -22,7 +22,8 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilder, Cus
       System.out.println("AST tree for " + element.getContainingFile().getName() + ":");
       printAST(fileNode, 0);
     }
-    final PyBlock block = new PyBlock(element.getNode(), null, Indent.getNoneIndent(), null, settings);
+    final PyBlock block =
+      new PyBlock(element.getNode(), null, Indent.getNoneIndent(), null, settings.getCommonSettings(PythonLanguage.getInstance()));
     if (DUMP_FORMATTING_AST) {
       FormattingModelDumper.dumpFormattingModel(block, 2, System.out);
     }

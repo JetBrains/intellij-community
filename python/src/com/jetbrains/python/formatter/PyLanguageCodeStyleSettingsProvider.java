@@ -1,8 +1,11 @@
 package com.jetbrains.python.formatter;
 
+import com.intellij.application.options.IndentOptionsEditor;
+import com.intellij.application.options.SmartIndentOptionsEditor;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.DisplayPriority;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.util.PlatformUtils;
@@ -26,6 +29,7 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
     if (settingsType == SettingsType.SPACING_SETTINGS) return SPACING_SETTINGS_PREVIEW;
     if (settingsType == SettingsType.BLANK_LINES_SETTINGS) return BLANK_LINES_SETTINGS_PREVIEW;
     if (settingsType == SettingsType.WRAPPING_AND_BRACES_SETTINGS) return WRAP_SETTINGS_PREVIEW;
+    if (settingsType == SettingsType.INDENT_SETTINGS) return INDENT_SETTINGS_PREVIEW;
     return "";
   }
 
@@ -78,10 +82,24 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
   }
 
   @Override
+  public IndentOptionsEditor getIndentOptionsEditor() {
+    return new SmartIndentOptionsEditor();
+  }
+
+  @Override
+  public CommonCodeStyleSettings getDefaultCommonSettings() {
+    CommonCodeStyleSettings defaultSettings = new CommonCodeStyleSettings(PythonLanguage.getInstance());
+    CommonCodeStyleSettings.IndentOptions indentOptions = defaultSettings.initIndentOptions();
+    indentOptions.INDENT_SIZE = 4;
+    return defaultSettings; 
+  }
+
+  @Override
   public DisplayPriority getDisplayPriority() {
     return PlatformUtils.isPyCharm() ? DisplayPriority.KEY_LANGUAGE_SETTINGS : DisplayPriority.LANGUAGE_SETTINGS;
   }
 
+  @SuppressWarnings("FieldCanBeLocal")
   private static String SPACING_SETTINGS_PREVIEW = "def settings_preview(argument, key=value):\n" +
                                                    "    dict = {1:'a', 2:'b', 3:'c'}\n" +
                                                    "    x = dict[1]\n" +
@@ -89,16 +107,20 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
                                                    "    if expr == 0 or abs(expr) < 0: print('weird'); return\n" +
                                                    "    settings_preview(key=1)";
 
+  @SuppressWarnings("FieldCanBeLocal")
   private static String BLANK_LINES_SETTINGS_PREVIEW = "import os\n" +
                                                        "class C(object):\n" +
                                                        "    x = 1\n" +
                                                        "    def foo(self):\n" +
                                                        "        pass";
-
+  @SuppressWarnings("FieldCanBeLocal")
   private static String WRAP_SETTINGS_PREVIEW = "long_expression = component_one + component_two + component_three + component_four + component_five + component_six\n\n" +
                                                 "def xyzzy(long_parameter_1,\n" +
                                                 "long_parameter_2):\n" +
                                                 "    pass\n\n" +
                                                 "xyzzy('long_string_constant1',\n" +
                                                 "    'long_string_constant2')";
+  @SuppressWarnings("FieldCanBeLocal")
+  private static String INDENT_SETTINGS_PREVIEW = "def foo():\n" +
+                                                  "    print 'bar'";
 }

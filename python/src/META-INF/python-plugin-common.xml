@@ -67,8 +67,6 @@
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PyVariableNameIndex"/>
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PyInstanceAttributeIndex"/>
 
-    <fileTypeIndentOptionsProvider implementation="com.jetbrains.python.formatter.PyIndentOptionsProvider"/>
-
     <bundledColorSchemesProvider implementation="com.jetbrains.python.PythonBundledColorSchemeProvider"/>
 
     <declarationRangeHandler key="com.jetbrains.python.psi.PyClass"
