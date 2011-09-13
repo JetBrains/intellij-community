@@ -105,6 +105,11 @@ public class IdeFocusManagerImpl extends IdeFocusManager {
   }
 
   @Override
+  public void setTypeaheadEnabled(boolean enabled) {
+    getGlobalInstance().setTypeaheadEnabled(enabled);
+  }
+
+  @Override
   public Component getFocusOwner() {
     return getGlobalInstance().getFocusOwner();
   }

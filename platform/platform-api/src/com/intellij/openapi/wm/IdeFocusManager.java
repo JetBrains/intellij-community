@@ -69,6 +69,8 @@ public abstract class IdeFocusManager implements FocusRequestor {
 
   public abstract void revalidateFocus(@NotNull ExpirableRunnable runnable);
 
+  public abstract void setTypeaheadEnabled(boolean enabled);
+
   public static IdeFocusManager getInstance(@Nullable Project project) {
     if (project == null) return getGlobalInstance();
 

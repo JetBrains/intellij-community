@@ -105,6 +105,10 @@ public class PassThroughtIdeFocusManager extends IdeFocusManager {
   }
 
   @Override
+  public void setTypeaheadEnabled(boolean enabled) {
+  }
+
+  @Override
   public Component getFocusOwner() {
     return KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
   }

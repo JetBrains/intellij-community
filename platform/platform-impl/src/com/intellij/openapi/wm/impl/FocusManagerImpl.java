@@ -104,6 +104,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
 
   private Set<ActionCallback> myTypeAheadRequestors = new HashSet<ActionCallback>();
   private UiActivityMonitor myActivityMonitor;
+  private boolean myTypeaheadEnabled = true;
 
   private boolean canFlushIdleRequests() {
     Component focusOwner = getFocusOwner();
@@ -467,6 +468,11 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     try {
       incFlushingRequests(1, currentModalityCount);
 
+       if (!isTypeaheadEnabled()) {
+         myToDispatchOnDone.clear();
+         myTypeAheadRequestors.clear();
+       }
+
       if (myToDispatchOnDone.size() > 0 && myTypeAheadRequestors.size() == 0) {
         final KeyEvent[] events = myToDispatchOnDone.toArray(new KeyEvent[myToDispatchOnDone.size()]);
 
@@ -632,8 +638,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   }
 
   public boolean dispatch(KeyEvent e) {
-    if (!Registry.is("actionSystem.fixLostTyping")) return false;
-
+    if (!isTypeaheadEnabled()) return false;
     if (isFlushingIdleRequests()) return false;
 
     if (!isFocusTransferReady() || !isPendingKeyEventsRedispatched() || myTypeAheadRequestors.size() > 0) {
@@ -665,7 +670,18 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   }
 
   @Override
+  public void setTypeaheadEnabled(boolean enabled) {
+    myTypeaheadEnabled = enabled;
+  }
+
+  private boolean isTypeaheadEnabled() {
+    return Registry.is("actionSystem.fixLostTyping") && myTypeaheadEnabled;
+  }
+
+  @Override
   public void typeAheadUntil(final ActionCallback done) {
+    if (!isTypeaheadEnabled()) return;
+
     myTypeAheadRequestors.add(done);
     done.notify(new ActionCallback.TimedOut(Registry.intValue("actionSystem.commandProcessingTimeout"),
                                             "Typehead request blocked",
