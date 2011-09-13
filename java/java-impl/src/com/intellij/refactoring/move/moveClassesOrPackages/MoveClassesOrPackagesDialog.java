@@ -27,6 +27,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.ProjectScope;
@@ -258,7 +259,13 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     myCbSearchInComments.setSelected(searchInComments);
     myCbSearchTextOccurences.setSelected(searchForTextOccurences);
 
-    ((DestinationFolderComboBox)myDestinationFolderCB).setData(myProject, myClassPackageChooser, myInitialTargetDirectory, getSourceRoots());
+    ((DestinationFolderComboBox)myDestinationFolderCB).setData(myProject, myClassPackageChooser, myInitialTargetDirectory, getSourceRoots(),
+                                                               new Pass<String>() {
+                                                                 @Override
+                                                                 public void pass(String s) {
+                                                                   setErrorText(s);
+                                                                 }
+                                                               });
     UIUtil.setEnabled(myTargetPanel, getSourceRoots().length > 0 && isMoveToPackage() && !isTargetDirectoryFixed, true);
     validateButtons();
     myHelpID = helpID;

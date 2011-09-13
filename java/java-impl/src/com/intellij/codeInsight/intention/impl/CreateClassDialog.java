@@ -30,6 +30,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiDirectory;
@@ -72,6 +73,16 @@ public class CreateClassDialog extends DialogWrapper {
     public String getTargetPackage() {
       return myPackageComponent.getText().trim();
     }
+
+    @Override
+    protected boolean reportBaseInTestSelectionInSource() {
+      return CreateClassDialog.this.reportBaseInTestSelectionInSource();
+    }
+
+    @Override
+    protected boolean reportBaseInSourceSelectionInTest() {
+      return CreateClassDialog.this.reportBaseInSourceSelectionInTest();
+    }
   };
   @NonNls private static final String RECENTS_KEY = "CreateClassDialog.RecentsKey";
 
@@ -102,7 +113,20 @@ public class CreateClassDialog extends DialogWrapper {
     }
 
     myTfClassName.setText(myClassName);
-    myDestinationCB.setData(myProject, myPackageComponent, getBaseDir(normalizedPackageName), ProjectRootManager.getInstance(myProject).getContentSourceRoots());
+    myDestinationCB.setData(myProject, myPackageComponent, getBaseDir(normalizedPackageName), ProjectRootManager.getInstance(myProject).getContentSourceRoots(), new Pass<String>() {
+      @Override
+      public void pass(String s) {
+        setErrorText(s);
+      }
+    });
+  }
+
+  protected boolean reportBaseInTestSelectionInSource() {
+    return false;
+  }
+
+  protected boolean reportBaseInSourceSelectionInTest() {
+    return false;
   }
 
   protected Action[] createActions() {

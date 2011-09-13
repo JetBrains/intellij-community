@@ -26,6 +26,7 @@ import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.ComboBoxWithWidePopup;
+import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
@@ -58,10 +59,19 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
 
   public abstract String getTargetPackage();
 
+  protected boolean reportBaseInTestSelectionInSource() {
+    return false;
+  }
+
+  protected boolean reportBaseInSourceSelectionInTest() {
+    return false;
+  }
+
   public void setData(final Project project,
                       final ReferenceEditorComboWithBrowseButton packageChooser,
                       final PsiDirectory initialTargetDirectory,
-                      final VirtualFile[] sourceRoots) {
+                      final VirtualFile[] sourceRoots,
+                      final Pass<String> pass) {
     myInitialTargetDirectory = initialTargetDirectory;
     mySourceRoots = sourceRoots;
     new ComboboxSpeedSearch(getComboBox()) {
@@ -115,17 +125,23 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
             return;
           }
         }
-        setComboboxModel(getComboBox(), root, fileIndex, sourceRoots, project, true);
+        setComboboxModel(getComboBox(), root, fileIndex, sourceRoots, project, true, pass);
       }
     });
 
     packageChooser.getChildComponent().addDocumentListener(new DocumentAdapter() {
       @Override
       public void documentChanged(DocumentEvent e) {
-        setComboboxModel(getComboBox(), initialSourceRoot, fileIndex, sourceRoots, project, false);
+        setComboboxModel(getComboBox(), initialSourceRoot, fileIndex, sourceRoots, project, false, pass);
       }
     });
-    setComboboxModel(getComboBox(), initialSourceRoot, fileIndex, sourceRoots, project, false);
+    setComboboxModel(getComboBox(), initialSourceRoot, fileIndex, sourceRoots, project, false, pass);
+    getComboBox().addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        updateErrorMessage(pass, fileIndex, getComboBox().getSelectedItem());
+      }
+    });
   }
 
   @Nullable
@@ -143,11 +159,30 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
     return new AutocreatingSingleSourceRootMoveDestination(targetPackage, selectedDestination);
   }
 
+  private void updateErrorMessage(Pass<String> updateErrorMessage, ProjectFileIndex fileIndex, Object selectedItem) {
+    updateErrorMessage.pass(null);
+    if (myInitialTargetDirectory != null && selectedItem instanceof DirectoryChooser.ItemWrapper) {
+      final PsiDirectory directory = ((DirectoryChooser.ItemWrapper)selectedItem).getDirectory();
+      final boolean isSelectionInTestSourceContent = fileIndex.isInTestSourceContent(directory.getVirtualFile());
+      final boolean inTestSourceContent = fileIndex.isInTestSourceContent(myInitialTargetDirectory.getVirtualFile());
+      if (isSelectionInTestSourceContent != inTestSourceContent) {
+        if (inTestSourceContent && reportBaseInTestSelectionInSource()) {
+          updateErrorMessage.pass("Source root is selected while the test root is expected");
+        }
+
+        if (isSelectionInTestSourceContent && reportBaseInSourceSelectionInTest()) {
+          updateErrorMessage.pass("Test root is selected while the source root is expected");
+        }
+      }
+    }
+  }
+
   private void setComboboxModel(JComboBox comboBox, VirtualFile initialTargetDirectorySourceRoot,
                                 ProjectFileIndex fileIndex,
                                 VirtualFile[] sourceRoots,
                                 Project project,
-                                boolean forceIncludeAll) {
+                                boolean forceIncludeAll,
+                                Pass<String> updateErrorMessage) {
     final LinkedHashSet<PsiDirectory> targetDirectories = new LinkedHashSet<PsiDirectory>();
     final HashMap<PsiDirectory, String> pathsToCreate = new HashMap<PsiDirectory, String>();
     MoveClassesOrPackagesUtil
@@ -187,6 +222,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
         }
       }
     }
+    updateErrorMessage(updateErrorMessage, fileIndex, selection);
     comboBox.setModel(new CollectionComboBoxModel(items, selection));
   }
 

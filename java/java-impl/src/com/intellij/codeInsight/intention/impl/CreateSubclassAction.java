@@ -144,6 +144,11 @@ public class CreateSubclassAction extends BaseIntentionAction {
       protected PsiDirectory getBaseDir(String packageName) {
         return sourceDir;
       }
+
+      @Override
+      protected boolean reportBaseInTestSelectionInSource() {
+        return true;
+      }
     };
     dialog.show();
     if (!dialog.isOK()) return null;

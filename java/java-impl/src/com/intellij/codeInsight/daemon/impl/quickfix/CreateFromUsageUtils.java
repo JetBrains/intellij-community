@@ -296,7 +296,12 @@ public class CreateFromUsageUtils {
       Project project = manager.getProject();
       String title = QuickFixBundle.message("create.class.title", StringUtil.capitalize(classKind.getDescription()));
 
-      CreateClassDialog dialog = new CreateClassDialog(project, title, name, aPackage.getQualifiedName(), classKind, false, module);
+      CreateClassDialog dialog = new CreateClassDialog(project, title, name, aPackage.getQualifiedName(), classKind, false, module){
+        @Override
+        protected boolean reportBaseInSourceSelectionInTest() {
+          return true;
+        }
+      };
       dialog.show();
       if (dialog.getExitCode() != DialogWrapper.OK_EXIT_CODE) return null;
 
