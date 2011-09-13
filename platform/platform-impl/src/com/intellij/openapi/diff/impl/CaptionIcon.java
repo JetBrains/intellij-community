@@ -22,15 +22,16 @@ import java.awt.*;
 import java.awt.geom.Rectangle2D;
 
 public class CaptionIcon implements Icon {
+  private final Component mySomeComponent;
   private final Form myForm;
   private final boolean myWithContinuation;
   private final boolean myEmphasize;
   private final Color myBgrnd;
-  private final Font myFont;
+  private Font myFont;
   private final String myText;
 
-  private final int myHeight;
-  private final int myWidth;
+  private int myHeight;
+  private int myWidth;
   private Font myPlusFont;
   private int myAddWidth;
 
@@ -39,21 +40,31 @@ public class CaptionIcon implements Icon {
     myBgrnd = bgrnd;
     myFont = font;
     myText = text;
+    mySomeComponent = someComponent;
     myForm = form;
     myWithContinuation = withContionuation;
     myEmphasize = emphasize;
 
-    final FontMetrics fm = someComponent.getFontMetrics(myFont);
-    final Rectangle2D bounds = fm.getStringBounds(text, someComponent.getGraphics());
+    fontBasedCalculations();
+  }
+
+  private void fontBasedCalculations() {
+    final FontMetrics fm = mySomeComponent.getFontMetrics(myFont);
+    final Rectangle2D bounds = fm.getStringBounds(myText, mySomeComponent.getGraphics());
     final double height = bounds.getHeight() - fm.getMaxDescent();  // +-
     myPlusFont = myFont.deriveFont(Font.BOLD);
-    if (withContionuation) {
-      myAddWidth = someComponent.getFontMetrics(myPlusFont).stringWidth(" +");
+    if (myWithContinuation) {
+      myAddWidth = mySomeComponent.getFontMetrics(myPlusFont).stringWidth(" +");
     } else {
       myAddWidth = 0;
     }
     myHeight = (int) height + 4;
     myWidth = (int) bounds.getWidth() + 4 + myAddWidth;
+  }
+
+  public void setFont(Font font) {
+    myFont = font;
+    fontBasedCalculations();
   }
 
   public int getIconHeight() {

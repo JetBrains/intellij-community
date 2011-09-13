@@ -7,13 +7,14 @@ import com.intellij.openapi.diff.impl.fragments.FragmentHighlighterImpl;
 import com.intellij.openapi.diff.impl.fragments.LineFragment;
 import com.intellij.openapi.diff.impl.util.TextDiffTypeEnum;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.editor.markup.HighlighterLayer;
-import com.intellij.openapi.editor.markup.HighlighterTargetArea;
-import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.containers.MultiMap;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.*;
 
 /**
@@ -27,6 +28,7 @@ public class NumberedFragmentHighlighter extends FragmentHighlighterImpl {
   private final Map<Integer, Pair<String, TextDiffTypeEnum>> myRightPrecalculated;
   private int myPreviousLineLeft;
   private int myPreviousLineRight;
+  private NumberedFragmentHighlighter.MyPropertyChangeListener myPropertyChangeListener;
 
   public NumberedFragmentHighlighter(DiffMarkup appender1, DiffMarkup appender2, boolean drawNumber) {
     super(appender1, appender2);
@@ -35,6 +37,27 @@ public class NumberedFragmentHighlighter extends FragmentHighlighterImpl {
     myRightPrecalculated = new HashMap<Integer, Pair<String, TextDiffTypeEnum>>();
     myPreviousLineLeft = -1;
     myPreviousLineRight = -1;
+  }
+
+  private class MyPropertyChangeListener implements PropertyChangeListener {
+    @Override
+    public void propertyChange(PropertyChangeEvent evt) {
+      if (!EditorEx.PROP_FONT_SIZE.equals(evt.getPropertyName())) return;
+      if (evt.getOldValue().equals(evt.getNewValue())) return;
+      RangeHighlighter[] allHighlighters = myAppender1.getEditor().getMarkupModel().getAllHighlighters();
+      resetFont(allHighlighters);
+      RangeHighlighter[] allHighlighters2 = myAppender2.getEditor().getMarkupModel().getAllHighlighters();
+      resetFont(allHighlighters2);
+    }
+
+    private void resetFont(RangeHighlighter[] allHighlighters) {
+      for (RangeHighlighter highlighter : allHighlighters) {
+        GutterIconRenderer renderer = highlighter.getGutterIconRenderer();
+        if (renderer instanceof FragmentNumberGutterIconRenderer) {
+          ((FragmentNumberGutterIconRenderer)renderer).resetFont(myAppender1.getEditor());
+        }
+      }
+    }
   }
 
   private TextAttributesKey getColorAttributesKey(final TextDiffTypeEnum textDiffTypeEnum) {
@@ -65,7 +88,7 @@ public class NumberedFragmentHighlighter extends FragmentHighlighterImpl {
       myAppender1.highlightText(fragment, drawBorder, null);
     } else {
       // draw border == true for range marker with highlighting and number be set anyway, even if range is empty
-      myAppender1.highlightText(fragment, true, new FragmentNumberGutterIconRenderer(left.getFirst(), getColorAttributesKey(left.getSecond()), myAppender1.getEditor().getScrollPane()));
+      myAppender1.highlightText(fragment, true, new FragmentNumberGutterIconRenderer(left.getFirst(), getColorAttributesKey(left.getSecond()), myAppender1.getEditor().getScrollPane(), myAppender1.getEditor()));
       myPreviousLineLeft = lineLeft;
     }
 
@@ -74,7 +97,8 @@ public class NumberedFragmentHighlighter extends FragmentHighlighterImpl {
       myAppender2.highlightText(fragment, drawBorder, null);
     } else {
       // draw border == true for range marker with highlighting and number be set anyway, even if range is empty
-      myAppender2.highlightText(fragment, true, new FragmentNumberGutterIconRenderer(right.getFirst(), getColorAttributesKey(right.getSecond()), myAppender1.getEditor().getScrollPane()));
+      myAppender2.highlightText(fragment, true, new FragmentNumberGutterIconRenderer(right.getFirst(), getColorAttributesKey(right.getSecond()), myAppender1.getEditor().getScrollPane(),
+                                                                                     myAppender1.getEditor()));
       myPreviousLineRight = lineRight;
     }
   }
@@ -97,6 +121,10 @@ public class NumberedFragmentHighlighter extends FragmentHighlighterImpl {
   }
 
   public void precalculateNumbers(List<LineFragment> lines) {
+    if (myPropertyChangeListener == null) {
+      myPropertyChangeListener = new MyPropertyChangeListener();
+      myAppender1.getEditor().addPropertyChangeListener(myPropertyChangeListener);
+    }
     final MultiMap<Integer, Pair<Integer, TextDiffTypeEnum>> leftMap = new MultiMap<Integer, Pair<Integer, TextDiffTypeEnum>>();
     final MultiMap<Integer, Pair<Integer, TextDiffTypeEnum>> rightMap = new MultiMap<Integer, Pair<Integer, TextDiffTypeEnum>>();
     
