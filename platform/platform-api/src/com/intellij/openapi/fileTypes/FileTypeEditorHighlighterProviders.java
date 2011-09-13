@@ -33,7 +33,7 @@ public class FileTypeEditorHighlighterProviders extends FileTypeExtension<Editor
   public static final FileTypeEditorHighlighterProviders INSTANCE = new FileTypeEditorHighlighterProviders();
 
   private FileTypeEditorHighlighterProviders() {
-    super("com.intellij.editorHighlighter");
+    super("com.intellij.editorHighlighterProvider");
   }
 
   @Override
