@@ -94,6 +94,7 @@ public class RngDocumentationProvider implements DocumentationProvider {
   }
 
   private static String makeDocumentation(StringBuilder sb) {
+    if (sb == null) return null;
     if (!sb.toString().startsWith("<html>")) {
       sb.insert(0, "<html>");
       sb.append("</html>");
