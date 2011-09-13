@@ -21,6 +21,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.impl.IgnoreSpaceEnum;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
@@ -81,6 +82,7 @@ public final class VcsConfiguration implements PersistentStateComponent<Element>
   public boolean SHORT_DIFF_HORISONTALLY = true;
   public int SHORT_DIFF_EXTRA_LINES = 2;
   public boolean SOFT_WRAPS_IN_SHORT_DIFF = true;
+  public IgnoreSpaceEnum SHORT_DIFF_IGNORE_SPACE = IgnoreSpaceEnum.NO;
 
   public enum StandardOption {
     ADD(VcsBundle.message("vcs.command.name.add")),

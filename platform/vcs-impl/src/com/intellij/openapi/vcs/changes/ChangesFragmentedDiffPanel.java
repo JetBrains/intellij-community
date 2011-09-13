@@ -24,6 +24,7 @@ import com.intellij.openapi.diff.SimpleContent;
 import com.intellij.openapi.diff.ex.DiffPanelEx;
 import com.intellij.openapi.diff.ex.DiffPanelOptions;
 import com.intellij.openapi.diff.impl.DiffPanelImpl;
+import com.intellij.openapi.diff.impl.IgnoreSpaceEnum;
 import com.intellij.openapi.diff.impl.highlighting.DiffPanelState;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.diff.impl.highlighting.FragmentedDiffPanelState;
@@ -42,10 +43,7 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.BeforeAfter;
@@ -83,6 +81,7 @@ public class ChangesFragmentedDiffPanel implements Disposable {
   private final MyNextDiffAction myNextDiff;
   private final MyPreviousDiffAction myPreviousDiff;
   private final JLabel myTitleLabel;
+  private ChangesFragmentedDiffPanel.PresentationState myPresentationState;
 
   public ChangesFragmentedDiffPanel(final Project project, String filePath) {
     myProject = project;
@@ -141,6 +140,7 @@ public class ChangesFragmentedDiffPanel implements Disposable {
   }
 
   public void refreshData(final PreparedFragmentedContent fragmentedContent) {
+    myPresentationState = new PresentationState();
     myFragmentedContent = fragmentedContent;
 
     boolean navigationEnabled = !myFragmentedContent.isOneSide();
@@ -148,7 +148,7 @@ public class ChangesFragmentedDiffPanel implements Disposable {
     myPreviousDiff.setEnabled(navigationEnabled);
 
     adjustPanelData((DiffPanelImpl)myHorizontal);
-    adjustPanelData((DiffPanelImpl) myVertical);
+    adjustPanelData((DiffPanelImpl)myVertical);
 
     DiffPanel currentPanel = getCurrentPanel();
     FragmentedDiffPanelState state = (FragmentedDiffPanelState)((DiffPanelImpl)currentPanel).getDiffPanelState();
@@ -222,9 +222,49 @@ public class ChangesFragmentedDiffPanel implements Disposable {
     Disposer.register(this, diffPanel);
     return diffPanel;
   }
+  
+  private class PresentationState {
+    private IgnoreSpaceEnum myIgnoreSpace;
+    private boolean myHorizontal;
+    private int myContextLines;
+    private boolean mySoftWraps;
+
+    private PresentationState() {
+      myIgnoreSpace = myConfiguration.SHORT_DIFF_IGNORE_SPACE;
+      myHorizontal = ChangesFragmentedDiffPanel.this.myCurrentHorizontal;
+      myContextLines = myConfiguration.SHORT_DIFF_EXTRA_LINES;
+      mySoftWraps = myConfiguration.SOFT_WRAPS_IN_SHORT_DIFF;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      PresentationState that = (PresentationState)o;
+
+      if (myContextLines != that.myContextLines) return false;
+      if (myHorizontal != that.myHorizontal) return false;
+      if (mySoftWraps != that.mySoftWraps) return false;
+      if (myIgnoreSpace != that.myIgnoreSpace) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = myIgnoreSpace != null ? myIgnoreSpace.hashCode() : 0;
+      result = 31 * result + (myHorizontal ? 1 : 0);
+      result = 31 * result + myContextLines;
+      result = 31 * result + (mySoftWraps ? 1 : 0);
+      return result;
+    }
+  }
 
   public void refreshPresentation() {
-    if (myFragmentedContent != null) {
+    // 1. vertical 2. number of lines 3. soft wraps (4. ignore spaces)
+    PresentationState current = new PresentationState();
+    if (myFragmentedContent != null && ! Comparing.equal(myPresentationState, current)) {
       myFragmentedContent.recalculate();
       refreshData(myFragmentedContent);
     }
