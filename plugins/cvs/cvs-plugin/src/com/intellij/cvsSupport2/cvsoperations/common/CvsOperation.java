@@ -16,7 +16,7 @@
 package com.intellij.cvsSupport2.cvsoperations.common;
 
 import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
-import com.intellij.cvsSupport2.connections.CvsRootProvider;
+import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
 import com.intellij.cvsSupport2.errorHandling.CannotFindCvsRootException;
 import com.intellij.openapi.vcs.VcsException;
@@ -26,7 +26,10 @@ import org.netbeans.lib.cvsclient.command.CommandAbortedException;
 import org.netbeans.lib.cvsclient.command.GlobalOptions;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 public abstract class CvsOperation {
   private final static String[] ourKnownToCvs = {"CVSIGNORE",
@@ -82,7 +85,7 @@ public abstract class CvsOperation {
 
   public abstract void execute(CvsExecutionEnvironment executionEnvironment, boolean underReadAction) throws VcsException, CommandAbortedException;
 
-  public abstract void appendSelfCvsRootProvider(@NotNull final Collection<CvsRootProvider> roots) throws CannotFindCvsRootException;
+  public abstract void appendSelfCvsRootProvider(@NotNull final Collection<CvsEnvironment> roots) throws CannotFindCvsRootException;
 
   public void addFinishAction(Runnable action) {
     myFinishActions.add(action);
@@ -110,12 +113,12 @@ public abstract class CvsOperation {
       return 1;
     }
 
-    int result = 0;
     File[] subFiles = file.listFiles();
     if (subFiles == null) {
       subFiles = new File[0];
     }
 
+    int result = 0;
     for (File subFile : subFiles) {
       result += calculateFilesIn(subFile);
     }

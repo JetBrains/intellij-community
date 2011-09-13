@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,13 @@
  */
 package com.intellij.cvsSupport2;
 
-import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
-import com.intellij.cvsSupport2.cvsExecution.ModalityContextImpl;
 import com.intellij.cvsSupport2.cvsoperations.common.CvsExecutionEnvironment;
 import com.intellij.cvsSupport2.cvsoperations.common.PostCvsActivity;
 import com.intellij.cvsSupport2.cvsoperations.cvsErrors.ErrorProcessor;
 import com.intellij.cvsSupport2.cvsoperations.cvsLog.LocalPathIndifferentLogOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsMessages.CvsMessagesAdapter;
 import com.intellij.cvsSupport2.history.CvsRevisionNumber;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -41,14 +40,16 @@ import java.util.List;
 
 public abstract class StickyHeadGetter {
   protected final String myStickyData;
+  private final Project myProject;
 
-  protected StickyHeadGetter(final String stickyData) {
+  protected StickyHeadGetter(final String stickyData, Project project) {
     myStickyData = stickyData;
+    myProject = project;
   }
 
   public static class MyStickyBranchHeadGetter extends StickyHeadGetter {
-    public MyStickyBranchHeadGetter(final String headRevision) {
-      super(headRevision);
+    public MyStickyBranchHeadGetter(final String headRevision, Project project) {
+      super(headRevision, project);
     }
 
     @Override
@@ -75,8 +76,8 @@ public abstract class StickyHeadGetter {
   }
 
   public static class MyStickyTagGetter extends StickyHeadGetter {
-    public MyStickyTagGetter(final String stickyData) {
-      super(stickyData);
+    public MyStickyTagGetter(final String stickyData, Project project) {
+      super(stickyData, project);
     }
 
     @Override
@@ -89,8 +90,8 @@ public abstract class StickyHeadGetter {
     private final Date myStickyDate;
     private final String myTagStart;
 
-    public MyStickyDateGetter(String stickyData, final Date stickyDate, final String currentRevision) {
-      super(stickyData);
+    public MyStickyDateGetter(String stickyData, final Date stickyDate, final String currentRevision, Project project) {
+      super(stickyData, project);
       myStickyDate = stickyDate;
       myTagStart = getTagStart(currentRevision);
     }
@@ -121,10 +122,11 @@ public abstract class StickyHeadGetter {
   public abstract String getHead(final VirtualFile parent, final String name);
 
   @Nullable
-  protected String getBranchHeadRevision(final VirtualFile parent, final String name, final Convertor<CvsRevisionNumber, Boolean> chooser) {
+  protected String getBranchHeadRevision(final VirtualFile parent,
+                                       final String name,
+                                       final Convertor<CvsRevisionNumber, Boolean> chooser) {
     final LocalPathIndifferentLogOperation operation = new LocalPathIndifferentLogOperation(new File(parent.getPath(), name));
     final Ref<Boolean> logSuccess = new Ref<Boolean>(Boolean.TRUE);
-    final ModalityContext context = ModalityContextImpl.NON_MODAL;
     final CvsExecutionEnvironment cvsExecutionEnvironment = new CvsExecutionEnvironment(new CvsMessagesAdapter(),
       CvsExecutionEnvironment.DUMMY_STOPPER, new ErrorProcessor() {
       public void addError(VcsException ex) {
@@ -132,10 +134,10 @@ public abstract class StickyHeadGetter {
       }
       public void addWarning(VcsException ex) {
       }
-      public List getErrors() {
+      public List<VcsException> getErrors() {
         return null;
       }
-    }, context, PostCvsActivity.DEAF);
+    }, PostCvsActivity.DEAF, myProject);
     try {
       // should already be logged in
       //operation.login(context);

@@ -16,7 +16,7 @@
 package com.intellij.cvsSupport2.cvsoperations.common;
 
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
-import com.intellij.cvsSupport2.connections.CvsRootProvider;
+import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.cvsoperations.cvsAdd.AddFileOperation;
 import com.intellij.cvsSupport2.errorHandling.CannotFindCvsRootException;
 import com.intellij.openapi.vcs.VcsException;
@@ -40,7 +40,7 @@ public class CompositeOperation extends CvsOperation {
   }
 
   @Override
-  public void appendSelfCvsRootProvider(@NotNull final Collection<CvsRootProvider> roots) throws CannotFindCvsRootException {
+  public void appendSelfCvsRootProvider(@NotNull final Collection<CvsEnvironment> roots) throws CannotFindCvsRootException {
     for (CvsOperation operation : mySubOperations) {
       operation.appendSelfCvsRootProvider(roots);
     }

@@ -17,6 +17,7 @@ package com.intellij.cvsSupport2.cvshandlers;
 
 import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.cvsoperations.cvsErrors.ErrorMessagesProcessor;
+import com.intellij.cvsSupport2.cvsoperations.cvsMessages.CvsCompositeListener;
 import com.intellij.cvsSupport2.cvsoperations.cvsMessages.CvsListenerWithProgress;
 import com.intellij.cvsSupport2.cvsoperations.cvsMessages.CvsMessagesAdapter;
 import com.intellij.cvsSupport2.cvsoperations.cvsMessages.CvsMessagesListener;
@@ -37,9 +38,6 @@ public abstract class CvsHandler extends CvsMessagesAdapter{
 
   @NonNls private static final String NULL_HANDLER_NAME = "Null";
   public static final CvsHandler NULL = new CvsHandler(NULL_HANDLER_NAME, FileSetToBeUpdated.EMPTY) {
-    protected void addCvsListener(CvsMessagesListener listener) {}
-
-    protected void removeCvsListener(CvsMessagesListener listener) {}
 
     protected int getFilesToProcessCount() {
       return 0;
@@ -49,7 +47,7 @@ public abstract class CvsHandler extends CvsMessagesAdapter{
       return true;
     }
 
-    public boolean login(ModalityContext executor) {
+    public boolean login(Project project, ModalityContext executor) {
       return false;
     }
   };
@@ -57,6 +55,7 @@ public abstract class CvsHandler extends CvsMessagesAdapter{
   public static final int UNKNOWN_COUNT = -1;
 
   protected final List<VcsException> myErrors = new ArrayList<VcsException>();
+  protected final CvsCompositeListener myCompositeListener = new CvsCompositeListener();
   protected ErrorMessagesProcessor myErrorMessageProcessor = new ErrorMessagesProcessor(myErrors);
   private int myFilesToProcess = -1;
   private int myProcessedFiles = 0;
@@ -71,12 +70,16 @@ public abstract class CvsHandler extends CvsMessagesAdapter{
     myFiles = files;
   }
 
-  public void internalRun(ModalityContext executor, final boolean runInReadAction) {
+  public void internalRun(Project project, ModalityContext executor, final boolean runInReadAction) {
   }
 
-  protected abstract void addCvsListener(CvsMessagesListener listener);
+  public void addCvsListener(CvsMessagesListener listener) {
+    myCompositeListener.addCvsListener(listener);
+  }
 
-  protected abstract void removeCvsListener(CvsMessagesListener listener);
+  public void removeCvsListener(CvsMessagesListener listener) {
+    myCompositeListener.removeCvsListener(listener);
+  }
 
   public String getTitle() {
     return myTitle;
@@ -87,7 +90,7 @@ public abstract class CvsHandler extends CvsMessagesAdapter{
   }
 
   public List<VcsException> getErrorsExceptAborted() {
-    List<VcsException> result = new ArrayList<VcsException>();
+    final List<VcsException> result = new ArrayList<VcsException>();
     for(VcsException ex: myErrorMessageProcessor.getErrors()) {
       if (!(ex.getCause() instanceof CommandAbortedException)) {
         result.add(ex);
@@ -136,15 +139,15 @@ public abstract class CvsHandler extends CvsMessagesAdapter{
     return true;
   }
 
-  public void run(final ModalityContext executor) {
+  public void run(Project project, final ModalityContext executor) {
     initializeListeners();
     try {
-      internalRun(executor, runInReadThread());
+      internalRun(project, executor, runInReadThread());
     } finally {
       cleanupListeners();
     }
     if (isCanceled())  throw new ProcessCanceledException();
-    ProgressIndicator progress = getProgress();
+    final ProgressIndicator progress = getProgress();
     if (progress != null) {
       if (progress.isCanceled()) throw new ProcessCanceledException();
     }
@@ -179,7 +182,7 @@ public abstract class CvsHandler extends CvsMessagesAdapter{
 
   public void beforeLogin() {}
 
-  public abstract boolean login(ModalityContext executor);
+  public abstract boolean login(Project project, ModalityContext executor);
 
   public FileSetToBeUpdated getFiles() {
     return myFiles;

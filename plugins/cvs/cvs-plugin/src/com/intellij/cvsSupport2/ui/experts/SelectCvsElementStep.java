@@ -71,7 +71,7 @@ public class SelectCvsElementStep extends WizardStep {
 
   private boolean isLogged(final CvsRootConfiguration selectedConfiguration) {
     final Ref<Boolean> errors = new Ref<Boolean>();
-    final LoginPerformer.MyProjectKnown performer = new LoginPerformer.MyProjectKnown(
+    final LoginPerformer performer = new LoginPerformer(
       myProject, Collections.<CvsEnvironment>singletonList(selectedConfiguration),
       new Consumer<VcsException>() {
         public void consume(VcsException e) {
