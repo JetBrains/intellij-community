@@ -23,9 +23,9 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Nikolay Matveev
  */
-public class RunConfigurationTypeUsagesCollector extends AbstractRunConfigurationTypeUsagesCollector {
+public class TemporaryRunConfigurationTypeUsagesCollector extends AbstractRunConfigurationTypeUsagesCollector {
 
-  private static final GroupDescriptor GROUP_ID = GroupDescriptor.create("run-configuration-type");
+  private static final GroupDescriptor GROUP_ID = GroupDescriptor.create("run-configuration-type-temporary");
 
   @NotNull
   @Override
@@ -35,6 +35,6 @@ public class RunConfigurationTypeUsagesCollector extends AbstractRunConfiguratio
 
   @Override
   protected boolean isApplicable(@NotNull RunManager runManager, @NotNull RunConfiguration runConfiguration) {
-    return !runManager.isTemporary(runConfiguration);
+    return runManager.isTemporary(runConfiguration);
   }
 }
