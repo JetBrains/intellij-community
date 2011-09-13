@@ -20,7 +20,6 @@ import com.intellij.cvsSupport2.CvsResultEx;
 import com.intellij.cvsSupport2.connections.*;
 import com.intellij.cvsSupport2.connections.login.CvsLoginWorker;
 import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
-import com.intellij.cvsSupport2.cvsExecution.ModalityContextImpl;
 import com.intellij.cvsSupport2.cvsoperations.common.CvsExecutionEnvironment;
 import com.intellij.cvsSupport2.cvsoperations.common.PostCvsActivity;
 import com.intellij.cvsSupport2.cvsoperations.cvsContent.GetModulesListOperation;
@@ -36,6 +35,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.VcsException;
 import org.netbeans.lib.cvsclient.CvsRoot;
@@ -156,8 +156,9 @@ public class CvsRootConfiguration extends AbstractConfiguration implements CvsEn
     final ErrorMessagesProcessor errorProcessor = new ErrorMessagesProcessor();
     final CvsExecutionEnvironment cvsExecutionEnvironment = new CvsExecutionEnvironment(errorProcessor,
                                                                                         CvsExecutionEnvironment.DUMMY_STOPPER,
-                                                                                        errorProcessor, new ModalityContextImpl(true),
-                                                                                        PostCvsActivity.DEAF);
+                                                                                        errorProcessor,
+                                                                                        PostCvsActivity.DEAF,
+                                                                                        ProjectManager.getInstance().getDefaultProject());
 
     final CvsResult result = new CvsResultEx();
     try {

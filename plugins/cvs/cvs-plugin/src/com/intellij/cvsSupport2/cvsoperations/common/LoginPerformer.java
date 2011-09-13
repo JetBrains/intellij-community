@@ -17,21 +17,16 @@ package com.intellij.cvsSupport2.cvsoperations.common;
 
 import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
-import com.intellij.cvsSupport2.connections.CvsRootProvider;
 import com.intellij.cvsSupport2.connections.login.CvsLoginWorker;
 import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.errorHandling.CvsException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.ThreeState;
-import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 
 import java.net.ConnectException;
@@ -40,12 +35,14 @@ import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.util.Collection;
 
-public abstract class LoginPerformer<T extends CvsEnvironment> {
-  private final Collection<T> myRoots;
+public class LoginPerformer {
+  private final Project myProject;
+  private final Collection<CvsEnvironment> myRoots;
   private final Consumer<VcsException> myExceptionConsumer;
   private boolean myForceCheck;
 
-  public LoginPerformer(Collection<T> roots, Consumer<VcsException> exceptionConsumer) {
+  public LoginPerformer(final Project project, Collection<CvsEnvironment> roots, Consumer<VcsException> exceptionConsumer) {
+    myProject = project;
     myRoots = roots;
     myExceptionConsumer = exceptionConsumer;
     myForceCheck = false;
@@ -55,20 +52,16 @@ public abstract class LoginPerformer<T extends CvsEnvironment> {
     myForceCheck = forceCheck;
   }
 
-  @Nullable
-  protected abstract Project getProject(T root);
-
   public boolean loginAll(final ModalityContext executor) {
     return loginAll(executor, true);
   }
 
   public boolean loginAll(final ModalityContext executor, final boolean goOffline) {
-    for (T root : myRoots) {
-      final Project project = getProject(root);
-      final CvsLoginWorker worker = root.getLoginWorker(executor, project);
+    for (CvsEnvironment root : myRoots) {
+      final CvsLoginWorker worker = root.getLoginWorker(executor, myProject);
 
       try {
-        final ThreeState checkResult = checkLoginWorker(worker, executor, project, myForceCheck);
+        final ThreeState checkResult = checkLoginWorker(worker, executor, myProject, myForceCheck);
         if (! ThreeState.YES.equals(checkResult)) {
           if (ThreeState.UNSURE.equals(checkResult)) {
             if (goOffline) {
@@ -79,7 +72,7 @@ public abstract class LoginPerformer<T extends CvsEnvironment> {
           return false;
         }
       } catch (AuthenticationException e) {
-        reportException(project, e);
+        reportException(myProject, e);
         return false;
       }
     }
@@ -124,38 +117,6 @@ public abstract class LoginPerformer<T extends CvsEnvironment> {
         return ThreeState.UNSURE; // canceled
       }
       forceCheck = true;
-    }
-  }
-
-  public static class MyProjectKnown extends LoginPerformer<CvsEnvironment> {
-    private final Project myProject;
-
-    public MyProjectKnown(final Project project, final Collection<CvsEnvironment> roots, final Consumer<VcsException> exceptionConsumer) {
-      super(roots, exceptionConsumer);
-      myProject = project;
-    }
-
-    @Override
-    protected Project getProject(CvsEnvironment root) {
-      return myProject;
-    }
-  }
-
-  public static class MyForRootProvider extends LoginPerformer<CvsRootProvider> {
-    private final ProjectLocator myProjectLocator;
-    private final LocalFileSystem myLfs;
-
-    public MyForRootProvider(Collection<CvsRootProvider> roots, Consumer<VcsException> exceptionConsumer) {
-      super(roots, exceptionConsumer);
-      myProjectLocator = ProjectLocator.getInstance();
-      myLfs = LocalFileSystem.getInstance();
-    }
-
-    @Nullable
-    @Override
-    protected Project getProject(CvsRootProvider root) {
-      final VirtualFile vf = root.getLocalRoot() == null ? null : myLfs.findFileByIoFile(root.getLocalRoot());
-      return (vf == null) ? null : myProjectLocator.guessProjectForFile(vf);
     }
   }
 }

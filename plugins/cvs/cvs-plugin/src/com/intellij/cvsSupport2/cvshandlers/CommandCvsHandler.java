@@ -22,7 +22,6 @@ import com.intellij.cvsSupport2.actions.update.UpdateSettings;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.config.CvsConfiguration;
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
-import com.intellij.cvsSupport2.connections.CvsRootProvider;
 import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.cvsoperations.common.*;
 import com.intellij.cvsSupport2.cvsoperations.cvsAdd.AddFilesOperation;
@@ -71,7 +70,7 @@ import java.util.*;
 /**
  * @author lesya
  */
-public class CommandCvsHandler extends AbstractCvsHandler {
+public class CommandCvsHandler extends CvsHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler");
 
   protected final CvsOperation myCvsOperation;
@@ -81,10 +80,6 @@ public class CommandCvsHandler extends AbstractCvsHandler {
   private final boolean myCanBeCanceled;
   protected boolean myIsCanceled = false;
   private PerformInBackgroundOption myBackgroundOption;
-
-  public boolean login(ModalityContext executor) {
-    return loginAll(executor);
-  }
 
   public CommandCvsHandler(String title, CvsOperation cvsOperation, boolean canBeCanceled) {
     this(title, cvsOperation, FileSetToBeUpdated.EMPTY, canBeCanceled);
@@ -110,6 +105,10 @@ public class CommandCvsHandler extends AbstractCvsHandler {
                            final PerformInBackgroundOption backgroundOption) {
     this(title, operation, files);
     myBackgroundOption = backgroundOption;
+  }
+
+  public boolean login(Project project, ModalityContext executor) {
+    return loginAll(project, executor);
   }
 
   public boolean canBeCanceled() {
@@ -314,8 +313,8 @@ public class CommandCvsHandler extends AbstractCvsHandler {
     return myIsCanceled;
   }
 
-  private boolean loginAll(final ModalityContext executor) {
-    final Set<CvsRootProvider> allRoots = new HashSet<CvsRootProvider>();
+  private boolean loginAll(Project project, final ModalityContext executor) {
+    final Set<CvsEnvironment> allRoots = new HashSet<CvsEnvironment>();
     try {
       myCvsOperation.appendSelfCvsRootProvider(allRoots);
       for (CvsOperation postActivity : myPostActivities) {
@@ -327,7 +326,7 @@ public class CommandCvsHandler extends AbstractCvsHandler {
       return false;
     }
 
-    final LoginPerformer.MyForRootProvider performer = new LoginPerformer.MyForRootProvider(allRoots, new Consumer<VcsException>() {
+    final LoginPerformer performer = new LoginPerformer(project, allRoots, new Consumer<VcsException>() {
       public void consume(VcsException e) {
         myErrors.add(e);
       }
@@ -335,14 +334,15 @@ public class CommandCvsHandler extends AbstractCvsHandler {
     return performer.loginAll(executor);
   }
 
-  public void internalRun(final ModalityContext executor, final boolean runInReadAction) {
-    if (! login(executor)) return;
+  @Override
+  public void internalRun(Project project, final ModalityContext executor, final boolean runInReadAction) {
+    if (! login(project, executor)) return;
 
     final CvsExecutionEnvironment executionEnvironment = new CvsExecutionEnvironment(myCompositeListener,
                                                                                      getProgressListener(),
                                                                                      myErrorMessageProcessor,
-                                                                                     executor,
-                                                                                     getPostActivityHandler());
+                                                                                     getPostActivityHandler(),
+                                                                                     project);
     if (! runOperation(executionEnvironment, runInReadAction, myCvsOperation)) return;
     onOperationFinished(executor);
 
@@ -405,7 +405,7 @@ public class CommandCvsHandler extends AbstractCvsHandler {
   }
 
   public static CvsHandler createGetFileFromRepositoryHandler(CvsLightweightFile[] cvsLightweightFiles, boolean makeNewFilesReadOnly) {
-    final CompositeOperation compositeOperaton = new CompositeOperation();
+    final CompositeOperation compositeOperation = new CompositeOperation();
     final CvsEntriesManager entriesManager = CvsEntriesManager.getInstance();
     for (CvsLightweightFile cvsLightweightFile : cvsLightweightFiles) {
       final File root = cvsLightweightFile.getRoot();
@@ -422,10 +422,10 @@ public class CommandCvsHandler extends AbstractCvsHandler {
                                                                                           alternativeCheckoutPath,
                                                                                           true,
                                                                                           null);
-      compositeOperaton.addOperation(checkoutFileOperation);
+      compositeOperation.addOperation(checkoutFileOperation);
     }
 
-    return new CommandCvsHandler(CvsBundle.message("action.name.get.file.from.repository"), compositeOperaton, FileSetToBeUpdated.allFiles(), true);
+    return new CommandCvsHandler(CvsBundle.message("action.name.get.file.from.repository"), compositeOperation, FileSetToBeUpdated.allFiles(), true);
 
   }
 

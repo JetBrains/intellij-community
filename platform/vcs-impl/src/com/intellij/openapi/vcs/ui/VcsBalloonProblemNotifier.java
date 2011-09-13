@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Shows a notification balloon over one of version control related tool windows: Changes View or Version Control View.
@@ -35,22 +36,22 @@ public class VcsBalloonProblemNotifier implements Runnable {
   private final MessageType myMessageType;
   private final boolean myShowOverChangesView;
 
-  public VcsBalloonProblemNotifier(final Project project, final String message, final MessageType messageType) {
+  public VcsBalloonProblemNotifier(@NotNull final Project project, final String message, final MessageType messageType) {
     this(project, message, messageType, true);
   }
 
-  public VcsBalloonProblemNotifier(final Project project, final String message, final MessageType messageType, boolean showOverChangesView) {
+  public VcsBalloonProblemNotifier(@NotNull final Project project, final String message, final MessageType messageType, boolean showOverChangesView) {
     myProject = project;
     myMessage = message;
     myMessageType = messageType;
     myShowOverChangesView = showOverChangesView;
   }
 
-  public static void showOverChangesView(final Project project, final String message, final MessageType type) {
+  public static void showOverChangesView(@NotNull final Project project, final String message, final MessageType type) {
     show(project, message, type, true);
   }
 
-  public static void showOverVersionControlView(final Project project, final String message, final MessageType type) {
+  public static void showOverVersionControlView(@NotNull final Project project, final String message, final MessageType type) {
     show(project, message, type, false);
   }
 

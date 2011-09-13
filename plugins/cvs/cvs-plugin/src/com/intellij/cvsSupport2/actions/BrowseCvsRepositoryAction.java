@@ -17,19 +17,18 @@ package com.intellij.cvsSupport2.actions;
 
 import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsContext;
-import com.intellij.cvsSupport2.actions.cvsContext.CvsContextWrapper;
 import com.intellij.cvsSupport2.config.CvsRootConfiguration;
 import com.intellij.cvsSupport2.config.ui.SelectCvsConfigurationDialog;
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.cvsBrowser.ui.BrowserPanel;
 import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.cvsExecution.ModalityContextImpl;
-import com.intellij.cvsSupport2.cvshandlers.AbstractCvsHandler;
 import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
 import com.intellij.cvsSupport2.cvshandlers.FileSetToBeUpdated;
 import com.intellij.cvsSupport2.cvsoperations.common.LoginPerformer;
 import com.intellij.cvsSupport2.ui.CvsTabbedWindow;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.DumbAware;
@@ -54,9 +53,8 @@ public class BrowseCvsRepositoryAction extends AbstractAction implements DumbAwa
   }
 
   public void update(AnActionEvent e) {
-    Presentation presentation = e.getPresentation();
-    VcsContext context = CvsContextWrapper.createInstance(e);
-    boolean projectExists = context.getProject() != null;
+    final Presentation presentation = e.getPresentation();
+    final boolean projectExists = e.getData(PlatformDataKeys.PROJECT) != null;
     presentation.setVisible(projectExists);
     presentation.setEnabled(projectExists);
   }
@@ -66,14 +64,12 @@ public class BrowseCvsRepositoryAction extends AbstractAction implements DumbAwa
   }
 
   protected CvsHandler getCvsHandler(CvsContext context) {
-    SelectCvsConfigurationDialog selectCvsConfigurationDialog = new SelectCvsConfigurationDialog(context.getProject());
+    final SelectCvsConfigurationDialog selectCvsConfigurationDialog = new SelectCvsConfigurationDialog(context.getProject());
     selectCvsConfigurationDialog.show();
-
     if (!selectCvsConfigurationDialog.isOK()) return CvsHandler.NULL;
 
     mySelectedConfiguration = selectCvsConfigurationDialog.getSelectedConfiguration();
-
-    return new MyCvsHandler(context.getProject());
+    return new MyCvsHandler();
   }
 
   protected void onActionPerformed(CvsContext context,
@@ -104,12 +100,10 @@ public class BrowseCvsRepositoryAction extends AbstractAction implements DumbAwa
     }
   }
 
-  private class MyCvsHandler extends AbstractCvsHandler {
-    private final Project myProject;
+  private class MyCvsHandler extends CvsHandler {
 
-    public MyCvsHandler(Project project) {
+    public MyCvsHandler() {
       super(TITLE, FileSetToBeUpdated.EMPTY);
-      myProject = project;
     }
 
     public boolean isCanceled() {
@@ -120,18 +114,18 @@ public class BrowseCvsRepositoryAction extends AbstractAction implements DumbAwa
       return 0;
     }
 
-    public boolean login(ModalityContext executor) {
-      return loginImpl(myProject, executor, new Consumer<VcsException>() {
-                                            public void consume(VcsException e) {
-                                              myErrors.add(e);
-                                            }
-                                          });
+    public boolean login(Project project, ModalityContext executor) {
+      return loginImpl(project, executor, new Consumer<VcsException>() {
+        public void consume(VcsException e) {
+          myErrors.add(e);
+        }
+      });
     }
   }
 
   private boolean loginImpl(final Project project, final ModalityContext executor, final Consumer<VcsException> exceptionConsumer) {
-    final LoginPerformer.MyProjectKnown performer =
-      new LoginPerformer.MyProjectKnown(project, Collections.<CvsEnvironment>singletonList(mySelectedConfiguration), exceptionConsumer);
+    final LoginPerformer performer =
+      new LoginPerformer(project, Collections.<CvsEnvironment>singletonList(mySelectedConfiguration), exceptionConsumer);
     try {
       return performer.loginAll(executor, false);
     } catch (Exception e) {

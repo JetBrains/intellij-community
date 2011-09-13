@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -138,7 +138,7 @@ public class CvsOperationExecutor {
 
           setText(CvsBundle.message("progress.text.preparing.for.action", handler.getTitle()));
 
-          handler.run(myExecutor);
+          handler.run(myProject, myExecutor);
           if (myResult.finishedUnsuccessfully(true, handler)) return;
 
         }
@@ -156,9 +156,9 @@ public class CvsOperationExecutor {
       myExecutor.runInDispatchThread(finish, myProject);
     }
     else {
-      PerformInBackgroundOption backgroundOption = handler.getBackgroundOption(myProject);
+      final PerformInBackgroundOption backgroundOption = handler.getBackgroundOption(myProject);
       if (backgroundOption != null) {
-        Task.Backgroundable task = new Task.Backgroundable(myProject, handler.getTitle(), handler.canBeCanceled(), backgroundOption) {
+        final Task.Backgroundable task = new Task.Backgroundable(myProject, handler.getTitle(), handler.canBeCanceled(), backgroundOption) {
           public void run(@NotNull final ProgressIndicator indicator) {
             cvsAction.run();
           }

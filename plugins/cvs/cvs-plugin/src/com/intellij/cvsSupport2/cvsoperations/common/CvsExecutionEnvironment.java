@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,15 @@
  */
 package com.intellij.cvsSupport2.cvsoperations.common;
 
-import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.cvsoperations.cvsErrors.ErrorProcessor;
 import com.intellij.cvsSupport2.cvsoperations.cvsMessages.CvsMessagesListener;
 import com.intellij.cvsSupport2.javacvsImpl.io.ReadWriteStatistics;
+import com.intellij.openapi.project.Project;
 import org.netbeans.lib.cvsclient.ICvsCommandStopper;
 
 /**
  * author: lesya
  */
-
-
-
-
 public class CvsExecutionEnvironment {
 
   public final static ICvsCommandStopper DUMMY_STOPPER = new ICvsCommandStopper() {
@@ -46,20 +42,20 @@ public class CvsExecutionEnvironment {
   private final CvsMessagesListener myListener;
   private final ICvsCommandStopper myCommandStopper;
   private final ErrorProcessor myErrorProcessor;
-  private final ModalityContext myExecutor;
   private final PostCvsActivity myPostCvsActivity;
+  private final Project myProject;
   private ReadWriteStatistics myReadWriteStatistics;
 
   public CvsExecutionEnvironment(CvsMessagesListener listener,
                                  ICvsCommandStopper commandStopper,
                                  ErrorProcessor errorProcessor,
-                                 ModalityContext executor,
-                                 PostCvsActivity postCvsActivity) {
+                                 PostCvsActivity postCvsActivity,
+                                 Project project) {
     myListener = listener;
     myCommandStopper = commandStopper;
     myErrorProcessor = errorProcessor;
-    myExecutor = executor;
     myPostCvsActivity = postCvsActivity;
+    myProject = project;
   }
 
   public CvsMessagesListener getCvsMessagesListener() {
@@ -72,8 +68,8 @@ public class CvsExecutionEnvironment {
 
   public ErrorProcessor getErrorProcessor() { return myErrorProcessor; }
 
-  public ModalityContext getExecutor(){
-    return myExecutor;
+  public Project getProject() {
+    return myProject;
   }
 
   public PostCvsActivity getPostCvsActivity() {

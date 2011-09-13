@@ -19,6 +19,7 @@ import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
+import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.connections.CvsRootProvider;
 import com.intellij.cvsSupport2.connections.pserver.PServerCvsSettings;
 import com.intellij.cvsSupport2.cvsExecution.ModalityContextImpl;
@@ -120,7 +121,7 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
   }
 
   @Override
-  public void appendSelfCvsRootProvider(@NotNull Collection<CvsRootProvider> roots) throws CannotFindCvsRootException {
+  public void appendSelfCvsRootProvider(@NotNull Collection<CvsEnvironment> roots) throws CannotFindCvsRootException {
     roots.addAll(getAllCvsRoots());
   }
 
@@ -271,8 +272,8 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
         if (! root.isOffline()) {
           ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
             public void run() {
-              final LoginPerformer.MyForRootProvider performer =
-                new LoginPerformer.MyForRootProvider(Collections.singletonList(root), new Consumer<VcsException>() {
+              final LoginPerformer performer =
+                new LoginPerformer(executionEnvironment.getProject(), Collections.<CvsEnvironment>singletonList(root), new Consumer<VcsException>() {
                   public void consume(VcsException e) {
                     LOG.info(e);
                   }
