@@ -18,13 +18,16 @@ import com.intellij.codeInsight.completion.SkipAutopopupInStrings;
 import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.gpp.GppTypeConverter;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
  * @author peter
@@ -68,6 +71,20 @@ public class GroovyCompletionConfidence extends CompletionConfidence {
   @NotNull
   @Override
   public ThreeState shouldSkipAutopopup(@Nullable PsiElement contextElement, @NotNull PsiFile psiFile, int offset) {
-    return new SkipAutopopupInStrings().shouldSkipAutopopup(contextElement, psiFile, offset);
+    if (PsiUtil.isLeafElementOfType(contextElement, TokenSets.STRING_LITERALS)) {
+      @SuppressWarnings("ConstantConditions")
+      PsiElement parent = contextElement.getParent();
+      if (parent != null) {
+        for (PsiReference reference : parent.getReferences()) {
+          if (!reference.isSoft() && reference.getRangeInElement().shiftRight(parent.getTextOffset()).containsOffset(offset)) {
+            return ThreeState.NO;
+          }
+        }
+      }
+
+      return ThreeState.YES;
+    }
+
+    return ThreeState.UNSURE;
   }
 }
