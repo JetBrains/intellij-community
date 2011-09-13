@@ -23,7 +23,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ModalityStateEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.BusyObject;
-import junit.framework.TestCase;
+import com.intellij.testFramework.UsefulTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,13 +34,13 @@ import org.jetbrains.annotations.Nullable;
  * Time: 10:04 AM
  * To change this template use File | Settings | File Templates.
  */
-public class ActivityMonitorTest extends TestCase {
-
+public class ActivityMonitorTest extends UsefulTestCase {
   private UiActivityMonitorImpl myMonitor;
   private ModalityState myCurrentState;
 
   @Override
   protected void setUp() throws Exception {
+    super.setUp();
     myCurrentState = ModalityState.NON_MODAL;
     final ModalityStateEx any = new ModalityStateEx();
 
@@ -56,13 +56,9 @@ public class ActivityMonitorTest extends TestCase {
         return any;
       }
 
-    });
+    },getTestRootDisposable());
     myMonitor = new UiActivityMonitorImpl();
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    ApplicationManagerEx.setApplication(null);
+    disposeOnTearDown(myMonitor);
   }
 
   public void testReady() {
