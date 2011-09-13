@@ -78,7 +78,7 @@ public class ChooseItemReplaceAction extends EditorAction {
     final int end = editor.getCaretModel().getOffset();
     final int start = lookup.getLookupStart();
     final String prefix = !lookup.getItems().isEmpty() ? editor.getDocument().getText(TextRange.create(start, end)) : ListTemplatesHandler.getPrefix(editor.getDocument(), end);
-    final TemplateImpl template = LiveTemplateCompletionContributor.findApplicableTemplate(file, end, prefix);
+    final TemplateImpl template = LiveTemplateCompletionContributor.findApplicableTemplate(file, start, prefix);
     return template != null && shortcutChar == TemplateSettings.getInstance().getShortcutChar(template);
   }
 
