@@ -315,7 +315,12 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     for (ModuleLoadingErrorDescription error : errors) {
       final Module module = myModuleModel.myPathToModule.remove(FileUtil.toSystemIndependentName(error.getModulePath().getPath()));
       if (module != null) {
-        Disposer.dispose(module);
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            Disposer.dispose(module);
+          }
+        });
       }
     }
 
