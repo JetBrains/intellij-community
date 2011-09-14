@@ -154,10 +154,10 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   public String[] list(@NotNull final VirtualFile file) {
     if (file.getParent() == null) {
       final File[] roots = File.listRoots();
-      if (roots.length == 1 && roots[0].getName().length() == 0) {
+      if (roots.length == 1 && roots[0].getName().isEmpty()) {
         return roots[0].list();
       }
-      if ("".equals(file.getName())) {
+      if (file.getName().isEmpty()) {
         // return drive letter names for the 'fake' root on windows
         final String[] names = new String[roots.length];
         for (int i = 0; i < names.length; i++) {
