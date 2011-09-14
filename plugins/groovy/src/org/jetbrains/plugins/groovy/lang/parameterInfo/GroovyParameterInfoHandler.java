@@ -51,10 +51,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author ven
@@ -157,6 +154,9 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
             ContainerUtil.findAll(ResolveUtil.getMethodCandidates(type, "call", place, PsiUtil.getArgumentTypes(place, true)), condition));
         }
       }
+    }
+    else {
+      elementToShow.addAll(Arrays.asList(variants));
     }
     context.setItemsToShow(ArrayUtil.toObjectArray(elementToShow));
     context.showHint(place, place.getTextRange().getStartOffset(), this);
