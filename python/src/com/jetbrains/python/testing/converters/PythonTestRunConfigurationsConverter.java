@@ -36,7 +36,7 @@ public class PythonTestRunConfigurationsConverter extends ConversionProcessor<Ru
       final String confType = element.getAttributeValue("type");
       final String factoryName = ourTypeToFactoryNameMap.get(confType);
       if (factoryName != null) {
-        element.setAttribute("type", PythonTestConfigurationType.ID);
+        element.setAttribute("type", PythonTestConfigurationType.getInstance().getId());
         element.setAttribute("factoryName", factoryName);
       }
     }
