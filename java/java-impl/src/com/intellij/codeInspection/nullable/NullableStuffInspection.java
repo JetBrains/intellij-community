@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.nullable;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.NullableNotNullDialog;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
@@ -23,7 +24,10 @@ import com.intellij.codeInsight.intention.impl.AddNotNullAnnotationFix;
 import com.intellij.codeInsight.intention.impl.AddNullableAnnotationFix;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -463,6 +467,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
     private JPanel myPanel;
     private JCheckBox myReportNotAnnotatedGetter;
     private JCheckBox myReportNullsPassedToNonAnnotatedParameter;
+    private JButton myConfigureAnnotationsButton;
 
     private OptionsPanel() {
       super(new BorderLayout());
@@ -477,6 +482,15 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
       myNNParameterOverridesN.addActionListener(actionListener);
       myReportNotAnnotatedGetter.addActionListener(actionListener);
       myReportNullsPassedToNonAnnotatedParameter.addActionListener(actionListener);
+      myConfigureAnnotationsButton.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(OptionsPanel.this));
+          if (project == null) project = ProjectManager.getInstance().getDefaultProject();
+          final NullableNotNullDialog dialog = new NullableNotNullDialog(project);
+          dialog.show();
+        }
+      });
       reset();
     }
 

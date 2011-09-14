@@ -438,7 +438,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
       gc.gridy = 0;
       add(mySuggestNullables, gc);
 
-      final JButton configureAnnotations = new JButton("Configure annotations");
+      final JButton configureAnnotations = new JButton(InspectionsBundle.message("configure.annotations.option"));
       configureAnnotations.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
