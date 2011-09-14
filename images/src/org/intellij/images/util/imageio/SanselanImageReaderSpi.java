@@ -49,6 +49,10 @@ public class SanselanImageReaderSpi extends ImageReaderSpi {
     imageFormats.removeAll(Arrays.asList(ImageFormat.IMAGE_FORMAT_UNKNOWN,
                                          ImageFormat.IMAGE_FORMAT_JPEG));
 
+    // tiff reader seems to be broken
+    imageFormats.removeAll(Arrays.asList(ImageFormat.IMAGE_FORMAT_UNKNOWN,
+                                         ImageFormat.IMAGE_FORMAT_TIFF));
+
     names = new String[imageFormats.size() * 2];
     suffixes = new String[imageFormats.size()];
     MIMETypes = new String[imageFormats.size()];
