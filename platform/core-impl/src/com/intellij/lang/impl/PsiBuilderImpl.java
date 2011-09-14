@@ -589,6 +589,9 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   @Nullable
   @Override
   public IElementType lookAhead(int steps) {
+    if (eof()) {    // ensure we skip over whitespace if it's needed
+      return null;
+    }
     int cur = myCurrentLexeme;
 
     while (steps > 0) {
