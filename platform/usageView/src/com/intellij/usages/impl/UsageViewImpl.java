@@ -71,6 +71,9 @@ import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author max
@@ -618,6 +621,9 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   }
 
   private void doReRun() {
+    final AtomicInteger tooManyUsages = new AtomicInteger();
+    final CountDownLatch waitWhileUserClick = new CountDownLatch(1);
+    final AtomicInteger usageCountWithoutDefinition = new AtomicInteger(0);
     ProgressManager.getInstance().run(new Task.Backgroundable(myProject, UsageViewManagerImpl.getProgressTitle(myPresentation)) {
       public void run(@NotNull final ProgressIndicator indicator) {
         setSearchInProgress(true);
@@ -629,9 +635,9 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
         usageSearcher.generate(new Processor<Usage>() {
           public boolean process(final Usage usage) {
             if (usageViewManager.searchHasBeenCancelled()) return false;
-            if (!com.intellij.usages.UsageViewManager.isSelfUsage(usage, myTargets)) {
-              appendUsageLater(usage);
-            }
+            ((UsageViewManagerImpl)usageViewManager).appendUsageWhenNotTooMany(usage, myTargets, UsageViewImpl.this,
+                                                                               indicator, tooManyUsages, waitWhileUserClick,
+                                                                               usageCountWithoutDefinition);
             ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
             return indicator == null || !indicator.isCanceled();
           }
