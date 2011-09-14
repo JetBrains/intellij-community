@@ -562,7 +562,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     ourCaretBlinkingCommand.setBlinkCaret(mySettings.isBlinkCaret());
     ourCaretBlinkingCommand.setBlinkPeriod(mySettings.getCaretBlinkPeriod());
     mySizeContainer.reset();
-    myFoldingModel.refreshSettings();
     myFoldingModel.rebuild();
 
     if (softWrapsUsedBefore ^ mySoftWrapModel.isSoftWrappingEnabled()) {
@@ -576,6 +575,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       ((MyColorSchemeDelegate)scheme).updateGlobalScheme();
     }
     myHighlighter.setColorScheme(myScheme);
+    myFoldingModel.refreshSettings();
 
     myGutterComponent.reinitSettings();
     myGutterComponent.revalidate();

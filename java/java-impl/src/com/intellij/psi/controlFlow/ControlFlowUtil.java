@@ -1100,6 +1100,7 @@ public class ControlFlowUtil {
       return newList;
     }
 
+    @NotNull
     public List<VariableInfo> getList() {
       return list;
     }
@@ -1263,13 +1264,13 @@ public class ControlFlowUtil {
     return visitor.getResult().intValue();
   }
 
-  public static Collection<VariableInfo> getInitializedTwice(final ControlFlow flow) {
-    InitializedTwiceClientVisitor visitor = new InitializedTwiceClientVisitor(flow, 0);
-    depthFirstSearch(flow, visitor);
-    return visitor.getResult();
+  @NotNull
+  public static Collection<VariableInfo> getInitializedTwice(@NotNull ControlFlow flow) {
+    return getInitializedTwice(flow, 0, flow.getSize());
   }
 
-  public static Collection<VariableInfo> getInitializedTwice(final ControlFlow flow, int startOffset, int endOffset) {
+  @NotNull
+  public static Collection<VariableInfo> getInitializedTwice(@NotNull ControlFlow flow, int startOffset, int endOffset) {
     InitializedTwiceClientVisitor visitor = new InitializedTwiceClientVisitor(flow, startOffset);
     depthFirstSearch(flow, visitor, startOffset, endOffset);
     return visitor.getResult();
@@ -1282,7 +1283,7 @@ public class ControlFlowUtil {
     private final ControlFlow myFlow;
     private final int myStartOffset;
 
-    public InitializedTwiceClientVisitor(ControlFlow flow, final int startOffset) {
+    public InitializedTwiceClientVisitor(@NotNull ControlFlow flow, final int startOffset) {
       myFlow = flow;
       myStartOffset = startOffset;
       writtenVariables = new CopyOnWriteList[myFlow.getSize() + 1];
@@ -1341,6 +1342,7 @@ public class ControlFlowUtil {
       merge(offset, writeTwiceVars, writtenTwiceVariables);
     }
 
+    @NotNull
     public Collection<VariableInfo> getResult() {
       CopyOnWriteList writtenTwiceVariable = writtenTwiceVariables[myStartOffset];
       if (writtenTwiceVariable == null) return Collections.emptyList();

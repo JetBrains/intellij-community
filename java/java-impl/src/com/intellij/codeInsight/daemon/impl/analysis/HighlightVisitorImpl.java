@@ -1000,7 +1000,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkVariableInitializerType(variable));
   }
 
-  private boolean isReassigned(PsiVariable variable) {
+  private boolean isReassigned(@NotNull PsiVariable variable) {
     try {
       boolean reassigned;
       if (variable instanceof PsiParameter) {

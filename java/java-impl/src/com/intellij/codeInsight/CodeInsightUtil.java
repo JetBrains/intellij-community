@@ -38,6 +38,7 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.Consumer;
 import com.intellij.util.FilteredQuery;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
@@ -253,10 +254,25 @@ public class CodeInsightUtil {
 
   public static Set<PsiType> addSubtypes(PsiType psiType, final PsiElement context,
                                          final boolean getRawSubtypes, Condition<String> shortNameCondition) {
+    final Set<PsiType> result = new HashSet<PsiType>();
+    processSubTypes(psiType, context, getRawSubtypes, shortNameCondition, new Consumer<PsiType>() {
+      @Override
+      public void consume(PsiType psiType) {
+        result.add(psiType);
+      }
+    });
+    return result;
+  }
+
+  public static void processSubTypes(PsiType psiType,
+                                     final PsiElement context,
+                                     boolean getRawSubtypes,
+                                     Condition<String> shortNameCondition,
+                                     Consumer<PsiType> consumer) {
     int arrayDim = psiType.getArrayDimensions();
 
     psiType = psiType.getDeepComponentType();
-    if (!(psiType instanceof PsiClassType)) return Collections.emptySet();
+    if (!(psiType instanceof PsiClassType)) return;
 
 
     final PsiClassType baseType = (PsiClassType)psiType;
@@ -268,9 +284,8 @@ public class CodeInsightUtil {
       });
     final PsiClass baseClass = baseResult.getElement();
     final PsiSubstitutor baseSubstitutor = baseResult.getSubstitutor();
-    if(baseClass == null) return Collections.emptySet();
+    if(baseClass == null) return;
 
-    Set<PsiType> result = new HashSet<PsiType>();
     final GlobalSearchScope scope = ApplicationManager.getApplication().runReadAction(new Computable<GlobalSearchScope>() {
       public GlobalSearchScope compute() {
         return context.getResolveScope();
@@ -284,14 +299,13 @@ public class CodeInsightUtil {
       }
     });
 
-    query.forEach(createInheritorsProcessor(context, baseType, arrayDim, getRawSubtypes, result, baseClass, baseSubstitutor));
-    return result;
+    query.forEach(createInheritorsProcessor(context, baseType, arrayDim, getRawSubtypes, consumer, baseClass, baseSubstitutor));
   }
 
   public static Processor<PsiClass> createInheritorsProcessor(final PsiElement context, final PsiClassType baseType,
                                                                final int arrayDim,
                                                                final boolean getRawSubtypes,
-                                                               final Set<PsiType> result, @NotNull final PsiClass baseClass, final PsiSubstitutor baseSubstitutor) {
+                                                               final Consumer<PsiType> result, @NotNull final PsiClass baseClass, final PsiSubstitutor baseSubstitutor) {
     final PsiManager manager = context.getManager();
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
     final PsiResolveHelper resolveHelper = facade.getResolveHelper();
@@ -315,7 +329,7 @@ public class CodeInsightUtil {
             PsiSubstitutor superSubstitutor = TypeConversionUtil.getClassSubstitutor(baseClass, inheritor, PsiSubstitutor.EMPTY);
             if (superSubstitutor == null) return true;
             if (getRawSubtypes) {
-              result.add(createType(inheritor, facade.getElementFactory().createRawSubstitutor(inheritor), arrayDim));
+              result.consume(createType(inheritor, facade.getElementFactory().createRawSubstitutor(inheritor), arrayDim));
               return true;
             }
 
@@ -335,7 +349,7 @@ public class CodeInsightUtil {
                                                                                      PsiUtil.getLanguageLevel(context));
                 if (PsiType.NULL.equals(substitution) || substitution instanceof PsiWildcardType) continue;
                 if (substitution == null) {
-                  result.add(createType(inheritor, facade.getElementFactory().createRawSubstitutor(inheritor), arrayDim));
+                  result.consume(createType(inheritor, facade.getElementFactory().createRawSubstitutor(inheritor), arrayDim));
                   return true;
                 }
                 inheritorSubstitutor = inheritorSubstitutor.put(inheritorParameter, substitution);
@@ -345,7 +359,7 @@ public class CodeInsightUtil {
 
             PsiType toAdd = createType(inheritor, inheritorSubstitutor, arrayDim);
             if (baseType.isAssignableFrom(toAdd)) {
-              result.add(toAdd);
+              result.consume(toAdd);
             }
             return true;
           }

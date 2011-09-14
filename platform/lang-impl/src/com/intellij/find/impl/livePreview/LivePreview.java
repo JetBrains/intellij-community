@@ -389,33 +389,41 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
     return highlighter;
   }
 
-  private RangeHighlighter doHightlightRange(TextRange textRange, TextAttributes attributes, Set<RangeHighlighter> highlighters) {
+  private RangeHighlighter doHightlightRange(TextRange textRange, final TextAttributes attributes, Set<RangeHighlighter> highlighters) {
     HighlightManager highlightManager = HighlightManager.getInstance(mySearchResults.getProject());
-    final ArrayList<RangeHighlighter> dummy = new ArrayList<RangeHighlighter>();
-    highlightManager.addRangeHighlight(mySearchResults.getEditor(),
-                                       textRange.getStartOffset(), textRange.getEndOffset(),
-                                       attributes, false, dummy);
-    final RangeHighlighter h = dummy.get(0);
 
     MarkupModelEx markupModel = (MarkupModelEx)mySearchResults.getEditor().getMarkupModel();
     
     final RangeHighlighter[] candidate = new RangeHighlighter[1];
     
-    boolean notFound = markupModel.processRangeHighlightersOverlappingWith(h.getStartOffset(), h.getEndOffset(), new Processor<RangeHighlighterEx>() {
-      @Override
-      public boolean process(RangeHighlighterEx highlighter) {
-        TextAttributes textAttributes = highlighter.getTextAttributes();
-        if (highlighter.getUserData(SEARCH_MARKER) != null && textAttributes != null && textAttributes.equals(h.getTextAttributes())) {
-          candidate[0] = highlighter;
-          return false;
+    boolean notFound = markupModel.processRangeHighlightersOverlappingWith(
+      textRange.getStartOffset(), textRange.getEndOffset(),
+      new Processor<RangeHighlighterEx>() {
+        @Override
+        public boolean process(RangeHighlighterEx highlighter) {
+          TextAttributes textAttributes =
+            highlighter.getTextAttributes();
+          if (highlighter.getUserData(SEARCH_MARKER) != null &&
+              textAttributes != null &&
+              textAttributes.equals(attributes)) {
+            candidate[0] = highlighter;
+            return false;
+          }
+          return true;
         }
-        return true;
-      }
-    });
+      });
 
     if (!notFound && highlighters.contains(candidate[0])) {
       return candidate[0];
     }
+    final ArrayList<RangeHighlighter> dummy = new ArrayList<RangeHighlighter>();
+    highlightManager.addRangeHighlight(mySearchResults.getEditor(),
+                                       textRange.getStartOffset(),
+                                       textRange.getEndOffset(),
+                                       attributes,
+                                       false,
+                                       dummy);
+    final RangeHighlighter h = dummy.get(0);
     highlighters.add(h);
     h.putUserData(SEARCH_MARKER, YES);
     return h;

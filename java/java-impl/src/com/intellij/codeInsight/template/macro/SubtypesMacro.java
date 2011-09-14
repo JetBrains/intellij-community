@@ -24,7 +24,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiType;
-import com.intellij.util.containers.HashSet;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashSet;
@@ -57,15 +57,17 @@ public class SubtypesMacro implements Macro {
     Result paramResult = params[0].calculateQuickResult(context);
     if (paramResult instanceof PsiTypeResult) {
       final PsiType type = ((PsiTypeResult)paramResult).getType();
-      Set<PsiType> types = new HashSet<PsiType>();
-      types.add(type);
       final PsiFile file = PsiDocumentManager.getInstance(context.getProject()).getPsiFile(context.getEditor().getDocument());
       final PsiElement element = file.findElementAt(context.getStartOffset());
-      types.addAll(CodeInsightUtil.addSubtypes(type, element, false, Condition.TRUE));
+
       final Set<LookupElement> set = new LinkedHashSet<LookupElement>();
-      for (PsiType t: types) {
-        JavaTemplateUtil.addTypeLookupItem(set, t);
-      }
+      JavaTemplateUtil.addTypeLookupItem(set, type);
+      CodeInsightUtil.processSubTypes(type, element, false, Condition.TRUE, new Consumer<PsiType>() {
+        @Override
+        public void consume(PsiType psiType) {
+          JavaTemplateUtil.addTypeLookupItem(set, psiType);
+        }
+      });
       return set.toArray(new LookupElement[set.size()]);
     }
     return LookupElement.EMPTY_ARRAY;

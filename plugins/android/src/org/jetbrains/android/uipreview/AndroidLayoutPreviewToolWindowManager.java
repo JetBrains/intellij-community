@@ -26,6 +26,8 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
+import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.ui.ScrollPaneFactory;
@@ -138,6 +140,17 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
     myToolWindow = ToolWindowManager.getInstance(myProject)
       .registerToolWindow(AndroidBundle.message("android.layout.preview.tool.window.title"), false, ToolWindowAnchor.RIGHT, myProject,
                           true);
+
+    ((ToolWindowManagerEx)ToolWindowManager.getInstance(myProject)).addToolWindowManagerListener(new ToolWindowManagerAdapter() {
+      @Override
+      public void stateChanged() {
+        if (myToolWindow.isAvailable()) {
+          final boolean visible = myToolWindow.isVisible();
+          AndroidLayoutPreviewToolWindowSettings.getInstance(myProject).getState().setVisible(visible);
+        }
+      }
+    });
+
     final JPanel contentPanel = myToolWindowForm.getContentPanel();
     final ContentManager contentManager = myToolWindow.getContentManager();
     final Content content = contentManager.getFactory().createContent(contentPanel, null, false);
@@ -206,7 +219,10 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
         }
 
         myToolWindow.setAvailable(true, null);
-        myToolWindow.show(null);
+        final boolean visible = AndroidLayoutPreviewToolWindowSettings.getInstance(myProject).getState().isVisible();
+        if (visible) {
+          myToolWindow.show(null);
+        }
       }
     });
   }

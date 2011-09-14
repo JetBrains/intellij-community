@@ -191,7 +191,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     for (GotoDeclarationHandler handler : Extensions.getExtensions(GotoDeclarationHandler.EP_NAME)) {
       try {
         PsiElement[] result = handler.getGotoDeclarationTargets(elementAt);
-        if (result != null) {
+        if (result != null && result.length > 0) {
           return result;
         }
       }

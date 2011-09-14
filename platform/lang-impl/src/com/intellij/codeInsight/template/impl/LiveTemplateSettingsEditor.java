@@ -411,8 +411,15 @@ public class LiveTemplateSettingsEditor extends JPanel {
   }
 
   private void updateHighlighter() {
-    TemplateContext templateContext = new TemplateContext();
-    TemplateEditorUtil.setHighlighter(myTemplateEditor, templateContext);
+    for (TemplateContextType contextType : myContext.keySet()) {
+      final Boolean enabled = myContext.get(contextType);
+      if (enabled != null && enabled.booleanValue()) {
+        TemplateContext contextByType = new TemplateContext();
+        contextByType.setEnabled(contextType, true);
+        TemplateEditorUtil.setHighlighter(myTemplateEditor, contextByType);
+        break;
+      }
+    }
     ((EditorEx) myTemplateEditor).repaint(0, myTemplateEditor.getDocument().getTextLength());
   }
 

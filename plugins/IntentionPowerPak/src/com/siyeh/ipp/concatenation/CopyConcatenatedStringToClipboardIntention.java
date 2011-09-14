@@ -37,52 +37,36 @@ public class CopyConcatenatedStringToClipboardIntention extends Intention {
     @Override
     protected void processIntention(@NotNull PsiElement element)
             throws IncorrectOperationException {
-        if (!(element instanceof PsiBinaryExpression)) {
+        if (!(element instanceof PsiPolyadicExpression)) {
             return;
         }
-        PsiBinaryExpression concatenationExpression =
-                (PsiBinaryExpression) element;
-        PsiElement parent = concatenationExpression.getParent();
-        while (parent instanceof PsiBinaryExpression) {
-            final PsiBinaryExpression binaryExpression =
-                    (PsiBinaryExpression) parent;
-            final IElementType tokenType =
-                    binaryExpression.getOperationTokenType();
-            if (tokenType != JavaTokenType.PLUS) {
-                break;
-            }
-            final PsiType type = binaryExpression.getType();
-            if (type == null || !type.equalsToText("java.lang.String")) {
-                break;
-            }
-            concatenationExpression = binaryExpression;
-            parent = concatenationExpression.getParent();
-        }
+      PsiPolyadicExpression concatenationExpression =
+        (PsiPolyadicExpression) element;
+      final IElementType tokenType =
+        concatenationExpression.getOperationTokenType();
+      if (tokenType != JavaTokenType.PLUS) {
+        return;
+      }
+      final PsiType type = concatenationExpression.getType();
+      if (type == null || !type.equalsToText("java.lang.String")) {
+        return;
+      }
         final StringBuilder text = new StringBuilder();
         buildConcatenationText(concatenationExpression, text);
         final Transferable contents = new StringSelection(text.toString());
         CopyPasteManager.getInstance().setContents(contents);
     }
 
-    private static void buildConcatenationText(PsiExpression expression,
+    private static void buildConcatenationText(PsiPolyadicExpression expression,
                                                StringBuilder out) {
-        if (expression instanceof PsiBinaryExpression) {
-            final PsiBinaryExpression binaryExpression =
-                    (PsiBinaryExpression) expression;
-            final PsiExpression lhs = binaryExpression.getLOperand();
-            buildConcatenationText(lhs, out);
-            final PsiExpression rhs = binaryExpression.getROperand();
-            if (rhs != null) {
-                buildConcatenationText(rhs, out);
-            }
+      for (PsiExpression operand : expression.getOperands()) {
+        final Object value =
+                ExpressionUtils.computeConstantExpression(operand);
+        if (value == null) {
+            out.append('?');
         } else {
-            final Object value =
-                    ExpressionUtils.computeConstantExpression(expression);
-            if (value == null) {
-                out.append('?');
-            } else {
-                out.append(value.toString());
-            }
+            out.append(value.toString());
         }
+      }
     }
 }
