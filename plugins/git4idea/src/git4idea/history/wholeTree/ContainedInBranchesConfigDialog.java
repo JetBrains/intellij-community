@@ -41,12 +41,14 @@ public class ContainedInBranchesConfigDialog extends DialogWrapper {
   private CheckBoxList myRemoteBranches;
   private final Project myProject;
   private boolean myChanged;
+  private JRadioButton myHighlight;
+  private JRadioButton myFilter;
 
   public ContainedInBranchesConfigDialog(final Project project, final Collection<String> localBranches,
                                          Collection<String> remoteBranches, final String currentLocal, final String currentRemote) {
     super(project, true);
     myProject = project;
-    setTitle("Configure branches to check reachability for");
+    setTitle("Configure branches presentation");
     initUi(project, localBranches, remoteBranches, currentLocal, currentRemote);
     Disposer.register(myProject, getDisposable());
     init();
@@ -66,7 +68,21 @@ public class ContainedInBranchesConfigDialog extends DialogWrapper {
     myRemoteBranches = new MyCheckBoxList(currentRemote);
 
     gb.gridwidth = 2;
-    myPanel.add(new JLabel("Selected branches that will be used to check whether commit is reachable from (contained in)."), gb);
+    JLabel label = new JLabel("Select branches for \"Contained in branches\" field:");
+    label.setBorder(BorderFactory.createEmptyBorder(0,0,2,0));
+    myPanel.add(label, gb);
+
+    final ButtonGroup bg = new ButtonGroup();
+    myHighlight = new JRadioButton("Highlight them");
+    myFilter = new JRadioButton("Filter others out");
+    bg.add(myHighlight);
+    bg.add(myFilter);
+    gb.gridwidth = 1;
+    gb.gridx = 0;
+    ++ gb.gridy; 
+    myPanel.add(myHighlight, gb);
+    ++ gb.gridy;
+    myPanel.add(myFilter, gb);
 
     gb.insets.top = 10;
     gb.gridwidth = 1;
@@ -90,6 +106,9 @@ public class ContainedInBranchesConfigDialog extends DialogWrapper {
     final GitLogSettings gitLogSettings = GitLogSettings.getInstance(project);
     setItems(localBranches, gitLogSettings.getLocalBranchesCopy(), myLocalBranches);
     setItems(remoteBranches, gitLogSettings.getRemoteBranchesCopy(), myRemoteBranches);
+
+    myHighlight.setSelected(gitLogSettings.isHighlight());
+    myFilter.setSelected(! gitLogSettings.isHighlight());
 
     new ListSpeedSearch(myLocalBranches);
     new ListSpeedSearch(myRemoteBranches);
@@ -144,7 +163,9 @@ public class ContainedInBranchesConfigDialog extends DialogWrapper {
     final GitLogSettings gitLogSettings = GitLogSettings.getInstance(myProject);
     final ArrayList<String> local = gatherSelected((DefaultListModel)myLocalBranches.getModel());
     final ArrayList<String> remote = gatherSelected((DefaultListModel)myRemoteBranches.getModel());
-    if (gitLogSettings.setIfChanged(local, remote)) {
+    boolean hightlightChanged = gitLogSettings.isHighlight() != myHighlight.isSelected();
+    gitLogSettings.setHighlight(myHighlight.isSelected());
+    if (gitLogSettings.setIfChanged(local, remote) || hightlightChanged) {
       myChanged = true;
     }
     super.doOKAction();

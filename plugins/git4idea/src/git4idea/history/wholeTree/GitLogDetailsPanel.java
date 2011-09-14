@@ -17,8 +17,10 @@ package git4idea.history.wholeTree;
 
 import com.intellij.openapi.diff.impl.CaptionIcon;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.components.JBScrollPane;
@@ -33,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
+import java.util.*;
 
 /**
  * @author irengrig
@@ -75,23 +78,26 @@ public class GitLogDetailsPanel {
     myJEditorPane.addHyperlinkListener(new BrowserHyperlinkListener() {
       @Override
       public void hyperlinkUpdate(HyperlinkEvent e) {
-        /*if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED && CONFIGURE_BRANCHES.equals(e.getDescription())) {
+        if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED && CONFIGURE_BRANCHES.equals(e.getDescription())) {
           if (myRoot == null) return;
           final SymbolicRefs symbolicRefs = refsProvider.convert(myRoot);
           if (symbolicRefs == null) return;
           final TreeSet<String> localBranches = symbolicRefs.getLocalBranches();
           if (localBranches == null || localBranches.isEmpty()) {
             VcsBalloonProblemNotifier.showOverChangesView(myProject, "Branches is not loaded yet", MessageType.WARNING);
+            return;
           }
           final ContainedInBranchesConfigDialog dialog =
             new ContainedInBranchesConfigDialog(myProject, localBranches, symbolicRefs.getRemoteBranches(),
                                                 symbolicRefs.getCurrentName(), symbolicRefs.getTrackedRemoteName());
           dialog.show();
           if (dialog.isChanged()) {
-            detailsCache.clearBranches();
+            //detailsCache.clearBranches();
+            myPresentationData.branchesPresentation();
+            changeDetailsText();
           }
           return;
-        }*/
+        }
         super.hyperlinkUpdate(e);
       }
     });
@@ -214,6 +220,7 @@ public class GitLogDetailsPanel {
     private final Project myProject;
     private final DetailsCache myDetailsCache;
     private final HtmlHighlighter myHighlighter;
+    private java.util.List<String> myBranchesList;
 
     private MyPresentationData(final Project project, final DetailsCache detailsCache, final HtmlHighlighter highlighter) {
       myProject = project;
@@ -248,22 +255,42 @@ public class GitLogDetailsPanel {
         .append(DateFormatUtil.formatPrettyDateTime(c.getDate())).append(
         "</td></tr>" + "<tr valign=\"top\"><td><i>Description:</i></td><td><b>")
         .append(comment).append("</b></td></tr>");
-      sb.append("<tr valign=\"top\"><td><i>Contained in branches:</i></td><td>");
+      sb.append("<tr valign=\"top\"><td><i>Contained in branches:</i><br/><a href=\"" + CONFIGURE_BRANCHES + "\">Configure</a></td><td>");
       myStartPattern = sb.toString();
     }
 
     public void setBranches(final java.util.List<String> branches) {
+      myBranchesList = branches;
+      branchesPresentation();
+    }
+
+    public void branchesPresentation() {
+      final GitLogSettings settings = GitLogSettings.getInstance(myProject);
+      final Set<String> locals = settings.getLocalBranchesCopy();
+      final Set<String> remotes = settings.getRemoteBranchesCopy();
+
       final StringBuilder sb = new StringBuilder();
-      if (branches != null && (! branches.isEmpty())) {
-        for (int i = 0; i < branches.size(); i++) {
-          String s = branches.get(i);
-          sb.append(s);
-          if (i + 1 < branches.size()) {
+      if (myBranchesList != null && (! myBranchesList.isEmpty())) {
+        for (int i = 0; i < myBranchesList.size(); i++) {
+          String s = myBranchesList.get(i);
+          final boolean contained = locals.contains(s) || remotes.contains(s);
+          if ((contained || settings.isHighlight()) && sb.length() > 0) {
             sb.append(", ");
+          }
+          if (contained) {
+            if (settings.isHighlight()) {
+              sb.append("<b>").append(s).append("</b>");
+            } else {
+              sb.append(s);
+            }
+          } else {
+            if (settings.isHighlight()) {
+              sb.append(s);
+            }
           }
         }
         myBranches = sb.toString();
-      } else if (branches != null && branches.isEmpty()) {
+      } else if (myBranchesList != null && myBranchesList.isEmpty()) {
         myBranches = "<font color=gray>&lt;no branches&gt;</font><br/>";
       } else {
         myBranches = "<font color=gray>Loading...</font><br/>";

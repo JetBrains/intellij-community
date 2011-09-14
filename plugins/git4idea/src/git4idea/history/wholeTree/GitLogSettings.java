@@ -55,6 +55,8 @@ public class GitLogSettings implements PersistentStateComponent<GitLogSettings.M
   public static class MyState {
     public List<String> myContainedLocalBranches = new ArrayList<String>();
     public List<String> myContainedRemoteBranches = new ArrayList<String>();
+    // false => filter
+    public boolean myHighlight = true;
   }
 
   @Override
@@ -96,5 +98,13 @@ public class GitLogSettings implements PersistentStateComponent<GitLogSettings.M
   public void setRemote(final List<String> branches) {
     Collections.sort(branches);
     myState.myContainedRemoteBranches = branches;
+  }
+
+  public boolean isHighlight() {
+    return myState.myHighlight;
+  }
+
+  public void setHighlight(final boolean value) {
+    myState.myHighlight = value;
   }
 }
