@@ -18,8 +18,9 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.light.*;
+import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.impl.light.LightModifierList;
+import com.intellij.psi.impl.light.LightParameterListBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
@@ -65,7 +66,7 @@ public class GrAccessorMethodImpl extends LightMethodBuilder implements GrAccess
       addParameter(myProperty.getName(), type);
     }
 
-    setReturnType(myIsSetter ? PsiType.VOID : myProperty.getType());
+    setMethodReturnType(myIsSetter ? PsiType.VOID : myProperty.getType());
 
     addModifier(PsiModifier.PUBLIC);
     if (myProperty.hasModifierProperty(PsiModifier.STATIC)) {

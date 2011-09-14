@@ -46,6 +46,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListImpl;
 
@@ -158,6 +159,11 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod {
   @Override
   public String[] getNamedParametersArray() {
     return myNamedParametersArray;
+  }
+
+  @Override
+  public GrReflectedMethod[] getReflectedMethods() {
+    return GrReflectedMethod.EMPTY_ARRAY;
   }
 
   public GrLightMethodBuilder addModifier(String modifier) {

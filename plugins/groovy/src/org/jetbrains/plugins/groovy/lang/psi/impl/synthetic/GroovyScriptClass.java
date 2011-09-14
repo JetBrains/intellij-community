@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementBase;
@@ -69,12 +68,12 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner, Sy
     myFile = file;
     myMainMethod = new LightMethodBuilder(getManager(), GroovyFileType.GROOVY_LANGUAGE, "main").
       setContainingClass(this).
-      setReturnType(PsiType.VOID).
+      setMethodReturnType(PsiType.VOID).
       addParameter("args", new PsiArrayType(PsiType.getJavaLangString(getManager(), getResolveScope()))).
       addModifiers(PsiModifier.PUBLIC, PsiModifier.STATIC);
     myRunMethod = new LightMethodBuilder(getManager(), GroovyFileType.GROOVY_LANGUAGE, "run").
       setContainingClass(this).
-      setReturnType(PsiType.getJavaLangObject(getManager(), getResolveScope())).
+      setMethodReturnType(PsiType.getJavaLangObject(getManager(), getResolveScope())).
       addModifier(PsiModifier.PUBLIC);
 
     myModifierList = new LightModifierList(myManager, Collections.singleton(PsiModifier.PUBLIC));
@@ -212,7 +211,7 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner, Sy
 
   @NotNull
   public PsiMethod[] getMethods() {
-    GrMethod[] methods = myFile.getTopLevelMethods();
+    GrMethod[] methods = myFile.getMethods();
     PsiMethod[] result = new PsiMethod[methods.length + 2];
     result[0] = myMainMethod;
     result[1] = myRunMethod;
@@ -441,6 +440,7 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner, Sy
     };
   }
 
+  @Nullable
   public PsiElement getOriginalElement() {
     return PsiImplUtil.getOriginalElement(this, myFile);
   }

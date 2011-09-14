@@ -656,7 +656,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   @Override
   public GrConstructorInvocation createConstructorInvocation(String text, @Nullable PsiElement context) {
     GroovyFile file = createGroovyFile("class Foo{ def Foo(){" + text + "}}", false, context);
-    return ((GrConstructor)file.getClasses()[0].getConstructors()[0]).getChainingConstructorInvocation();
+    return PsiImplUtil.getChainingConstructorInvocation((GrConstructor)file.getClasses()[0].getConstructors()[0]);
   }
 
   @Override

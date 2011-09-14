@@ -18,6 +18,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterLi
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
@@ -200,7 +201,9 @@ public class DynamicMemberUtils {
       Set<String> existingMethods = new HashSet<String>();
 
       for (PsiMethod psiMethod : psiClass.getMethods()) {
-        if (!(psiMethod instanceof GrAccessorMethod) && !existingMethods.add(psiMethod.getText())) {
+        if (!(psiMethod instanceof GrAccessorMethod) &&
+            !(psiMethod instanceof GrReflectedMethod) &&
+            !existingMethods.add(psiMethod.getText())) {
           throw new RuntimeException("Duplicated field in dynamic class: " + psiClass.getName() + ":" + psiMethod.getText());
         }
       }

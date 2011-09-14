@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,18 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members;
 
-/**
- @author ven
- */
-public interface GrConstructor extends GrMethod {
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 
+/**
+ * @author Max Medvedev
+ */
+public interface GrReflectedMethod extends GrMethod {
+  GrReflectedMethod[] EMPTY_ARRAY = new GrReflectedMethod[0];
+
+  @NotNull
+  GrMethod getBaseMethod();
+
+  @NotNull
+  GrParameter[] getSkippedParameters();
 }

@@ -64,7 +64,7 @@ public class NonCodeMembersHolder implements CustomMembersHolder {
       if (Boolean.TRUE.equals(prop.get("constructor"))) {
         method.setConstructor(true);
       } else {
-        method.setReturnType(convertToPsiType(String.valueOf(prop.get("type")), place));
+        method.setMethodReturnType(convertToPsiType(String.valueOf(prop.get("type")), place));
       }
 
       final Object params = prop.get("params");

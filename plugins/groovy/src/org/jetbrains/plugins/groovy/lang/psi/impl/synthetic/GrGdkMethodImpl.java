@@ -43,7 +43,7 @@ public class GrGdkMethodImpl extends LightMethodBuilder implements GrGdkMethod {
       addParameter(originalParameters[i]);
     }
 
-    setReturnType(method.getReturnType());
+    setMethodReturnType(method.getReturnType());
     setBaseIcon(GroovyIcons.METHOD);
     setMethodKind("GrGdkMethod");
     setNavigationElement(method);

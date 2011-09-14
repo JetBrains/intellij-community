@@ -56,6 +56,8 @@ public interface GroovyFileBase extends PsiFile, GrVariableDeclarationOwner, GrS
 
   GrMethod[] getTopLevelMethods();
 
+  GrMethod[] getMethods();
+
   GrVariableDeclaration[] getTopLevelVariableDeclarations();
 
   GrTopStatement[] getTopStatements();

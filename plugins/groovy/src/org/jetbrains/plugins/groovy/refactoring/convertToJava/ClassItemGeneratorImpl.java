@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
@@ -46,7 +47,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
 
 import java.util.*;
 
-import static org.jetbrains.plugins.groovy.refactoring.convertToJava.GenerationUtil.*;
+import static org.jetbrains.plugins.groovy.refactoring.convertToJava.GenerationUtil.writeType;
+import static org.jetbrains.plugins.groovy.refactoring.convertToJava.GenerationUtil.writeTypeParameters;
 
 /**
  * @author Maxim.Medvedev
@@ -87,12 +89,12 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
   }
 
   @Override
-  public void writeConstructor(StringBuilder text, GrConstructor constructor, int skipParams, boolean isEnum) {
-    writeMethod(text, constructor, skipParams);
+  public void writeConstructor(StringBuilder text, GrConstructor constructor, boolean isEnum) {
+    writeMethod(text, constructor);
   }
 
   @Override
-  public void writeMethod(StringBuilder builder, PsiMethod method, int skipOptional) {
+  public void writeMethod(StringBuilder builder, PsiMethod method) {
     if (method == null) return;
     String name = method.getName();
 
@@ -125,16 +127,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
     if (method instanceof GroovyPsiElement) {
       context.searchForLocalVarsToWrap((GroovyPsiElement)method);
     }
-    final ArrayList<GrParameter> actualParams;
-    if (method instanceof GrMethod) {
-      actualParams = getActualParams((GrMethod)method, skipOptional);
-      GenerationUtil.writeParameterList(builder, actualParams.toArray(new GrParameter[actualParams.size()]), classNameProvider, context);
-    }
-    else {
-      LOG.assertTrue(skipOptional == 0);
-      GenerationUtil.writeParameterList(builder, method.getParameterList().getParameters(), classNameProvider, context);
-      actualParams = null;
-    }
+    GenerationUtil.writeParameterList(builder, method.getParameterList().getParameters(), classNameProvider, context);
 
     if (method instanceof GrAnnotationMethod) {
       GrDefaultAnnotationValue defaultAnnotationValue = ((GrAnnotationMethod)method).getDefaultAnnotationValue();
@@ -153,11 +146,11 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
     if (!isAbstract) {
       /************* body **********/
       if (method instanceof GrMethod) {
-        if (skipOptional == 0) {
-          new CodeBlockGenerator(builder, context.extend()).generateMethodBody((GrMethod)method);
+        if (method instanceof GrReflectedMethod && ((GrReflectedMethod)method).getSkippedParameters().length > 0) {
+          builder.append("{\n").append(generateDelegateCall((GrReflectedMethod)method)).append("\n}\n");
         }
         else {
-          builder.append("{\n").append(generateDelegateCall((GrMethod)method, actualParams)).append("\n}\n");
+          new CodeBlockGenerator(builder, context.extend()).generateMethodBody((GrMethod)method);
         }
       }
       else if (method instanceof GrAccessorMethod) {
@@ -180,8 +173,16 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
     }
   }
 
-  private StringBuilder generateDelegateCall(GrMethod method, ArrayList<GrParameter> actualParams) {
-    final GrParameter[] parameters = method.getParameterList().getParameters();
+  private StringBuilder generateDelegateCall(GrReflectedMethod method) {
+    final GrParameter[] actualParams = method.getParameterList().getParameters();
+
+    final GrParameter[] parameters = method.getBaseMethod().getParameters();
+
+    Set<String> actual = new HashSet<String>(actualParams.length);
+    for (GrParameter param : actualParams) {
+      actual.add(param.getName());
+    }
+    
     StringBuilder builder = new StringBuilder();
     if (method.isConstructor()) {
       builder.append("this");
@@ -194,7 +195,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
     }
     builder.append('(');
     for (GrParameter parameter : parameters) {
-      if (actualParams.contains(parameter)) {
+      if (actual.contains(parameter.getName())) {
         builder.append(parameter.getName());
       }
       else {

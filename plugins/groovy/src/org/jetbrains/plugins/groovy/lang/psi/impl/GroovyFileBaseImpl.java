@@ -38,15 +38,28 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ControlFlowBuilder;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * @author ilyas
  */
 public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFileBase, GrControlFlowOwner {
+
+  private GrMethod[] myMethods = null;
+
+  @Override
+  public void subtreeChanged() {
+    super.subtreeChanged();
+    myMethods = null;
+  }
 
   protected GroovyFileBaseImpl(FileViewProvider viewProvider, @NotNull Language language) {
     super(viewProvider, language);
@@ -86,6 +99,27 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
     }
 
     return calcTreeElement().getChildrenAsPsiElements(GroovyElementTypes.METHOD_DEFINITION, GrMethod.ARRAY_FACTORY);
+  }
+
+  @Override
+  public GrMethod[] getMethods() {
+    if (myMethods == null) {
+      List<GrMethod> result = new ArrayList<GrMethod>();
+      
+      GrMethod[] methods = getTopLevelMethods();
+      for (GrMethod method : methods) {
+        final GrReflectedMethod[] reflectedMethods = method.getReflectedMethods();
+        if (reflectedMethods.length > 0) {
+          result.addAll(Arrays.asList(reflectedMethods));
+        }
+        else {
+          result.add(method);
+        }
+      }
+
+      myMethods = result.toArray(new GrMethod[result.size()]);
+    }
+    return myMethods;
   }
 
   public GrVariableDeclaration[] getTopLevelVariableDeclarations() {

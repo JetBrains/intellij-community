@@ -35,10 +35,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstantList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrFieldImpl;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -48,7 +48,8 @@ import java.util.List;
  * @author: Dmitry.Krasilschikov, ilyas
  */
 public abstract class GrTypeDefinitionBodyBase extends GrStubElementBase<EmptyStub> implements GrTypeDefinitionBody {
-  private GrField[] myFields;
+  private GrField[] myFields = null;
+  private PsiMethod[] myMethods = null;
 
   public GrTypeDefinitionBodyBase(@NotNull ASTNode node) {
     super(node);
@@ -66,6 +67,7 @@ public abstract class GrTypeDefinitionBodyBase extends GrStubElementBase<EmptySt
   public void subtreeChanged() {
     super.subtreeChanged();
     myFields = null;
+    myMethods = null;
     for (GrField field : getFields()) {
       field.clearCaches();
     }
@@ -100,22 +102,33 @@ public abstract class GrTypeDefinitionBodyBase extends GrStubElementBase<EmptySt
     return getStubOrPsiChildren(GroovyElementTypes.METHOD_DEFS, GrMethod.ARRAY_FACTORY);
   }
 
-  public List<PsiMethod> getMethods() {
-    PsiMethod[] groovyMethods = getGroovyMethods();
-    GrField[] fields = getFields();
-    if (fields.length == 0) return Arrays.asList(groovyMethods);
-    List<PsiMethod> result = new ArrayList<PsiMethod>();
-    ContainerUtil.addAll(result, groovyMethods);
-    for (GrField field : fields) {
-      if (field.isProperty()) {
+  public PsiMethod[] getMethods() {
+    if (myMethods == null) {
+      GrMethod[] groovyMethods = getGroovyMethods();
+      GrField[] fields = getFields();
+
+      List<PsiMethod> result = new ArrayList<PsiMethod>();
+      for (GrMethod method : groovyMethods) {
+        final GrReflectedMethod[] reflectedMethods = method.getReflectedMethods();
+        if (reflectedMethods.length > 0) {
+          result.addAll(Arrays.asList(reflectedMethods));
+        }
+        else {
+          result.add(method);
+        }
+      }
+
+      for (GrField field : fields) {
+        if (!field.isProperty()) continue;
+
         PsiMethod[] getters = field.getGetters();
         if (getters.length > 0) ContainerUtil.addAll(result, getters);
         PsiMethod setter = field.getSetter();
         if (setter != null) result.add(setter);
       }
+      myMethods = result.toArray(new PsiMethod[result.size()]);
     }
-
-    return result;
+    return myMethods;
   }
 
   public GrMembersDeclaration[] getMemberDeclarations() {

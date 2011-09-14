@@ -159,17 +159,17 @@ public class LightMethodBuilder extends LightElement implements PsiMethod {
     return myReturnType == null ? null : myReturnType.compute();
   }
 
-  public LightMethodBuilder setReturnType(Computable<PsiType> returnType) {
+  public LightMethodBuilder setMethodReturnType(Computable<PsiType> returnType) {
     myReturnType = returnType;
     return this;
   }
 
-  public LightMethodBuilder setReturnType(PsiType returnType) {
-    return setReturnType(new Computable.PredefinedValueComputable<PsiType>(returnType));
+  public LightMethodBuilder setMethodReturnType(PsiType returnType) {
+    return setMethodReturnType(new Computable.PredefinedValueComputable<PsiType>(returnType));
   }
 
-  public LightMethodBuilder setReturnType(@NotNull final String returnType) {
-    return setReturnType(new Computable.NotNullCachedComputable<PsiType>() {
+  public LightMethodBuilder setMethodReturnType(@NotNull final String returnType) {
+    return setMethodReturnType(new Computable.NotNullCachedComputable<PsiType>() {
       @NotNull
       @Override
       protected PsiType internalCompute() {

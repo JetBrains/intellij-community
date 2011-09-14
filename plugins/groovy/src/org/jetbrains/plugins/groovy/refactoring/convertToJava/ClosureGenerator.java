@@ -31,6 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
 
 import java.util.Collection;
@@ -60,8 +61,19 @@ public class ClosureGenerator {
     builder.append(owner).append(", ").append(owner).append(") {\n");
 
     generateClosureMainMethod(closure);
+
+    final ClassItemGeneratorImpl generator = new ClassItemGeneratorImpl(context);
     final GrMethod method = generateClosureMethod(closure);
-    ClassGenerator.writeAllSignaturesOfMethod(builder, method, new ClassItemGeneratorImpl(context), false);
+    final GrReflectedMethod[] reflectedMethods = method.getReflectedMethods();
+
+    if (reflectedMethods.length > 0) {
+      for (GrReflectedMethod reflectedMethod : reflectedMethods) {
+        if (reflectedMethod.getSkippedParameters().length > 0) {
+          generator.writeMethod(builder, reflectedMethod);
+          builder.append('\n');
+        }
+      }
+    }
     builder.append('}');
   }
 

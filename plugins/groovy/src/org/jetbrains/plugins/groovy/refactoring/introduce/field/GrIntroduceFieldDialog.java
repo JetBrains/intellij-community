@@ -41,6 +41,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrConstructor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
@@ -220,12 +221,12 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
     if (!method.isConstructor()) return false;
     final PsiMethod[] constructors = clazz.getConstructors();
     if (constructors.length == 1) return true;
-    final GrConstructorInvocation invocation = ((GrConstructor)method).getChainingConstructorInvocation();
+    final GrConstructorInvocation invocation = PsiImplUtil.getChainingConstructorInvocation((GrConstructor)method);
     if (invocation != null && invocation.isThisCall()) return false;
 
     for (PsiMethod constructor : constructors) {
       if (constructor == method) continue;
-      final GrConstructorInvocation inv = ((GrConstructor)constructor).getChainingConstructorInvocation();
+      final GrConstructorInvocation inv = PsiImplUtil.getChainingConstructorInvocation((GrConstructor)constructor);
       if (inv == null || inv.isSuperCall()) return false;
     }
     return true;

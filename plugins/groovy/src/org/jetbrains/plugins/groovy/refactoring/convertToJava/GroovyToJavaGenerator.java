@@ -20,7 +20,9 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -140,11 +142,11 @@ public class GroovyToJavaGenerator {
 
     final ClassItemGenerator generator = new StubGenerator(new StubClassNameProvider(Collections.<VirtualFile>emptySet()));
     final StringBuilder buffer = new StringBuilder();
-    if (method instanceof GrConstructor) {
-      generator.writeConstructor(buffer, (GrConstructor)method, 0, false);
+    if (method.isConstructor()) {
+      generator.writeConstructor(buffer, (GrConstructor)method, false);
     }
     else {
-      generator.writeMethod(buffer, method, 0);
+      generator.writeMethod(buffer, method);
     }
     return buffer.toString();
   }

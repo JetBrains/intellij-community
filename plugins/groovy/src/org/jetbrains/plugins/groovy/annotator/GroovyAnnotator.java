@@ -84,7 +84,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrRegex;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
@@ -336,8 +335,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     checkTypeDefinition(myHolder, typeDefinition);
     checkTypeDefinitionModifiers(myHolder, typeDefinition);
 
-    final GrTypeDefinitionBody body = typeDefinition.getBody();
-    if (body != null) checkDuplicateMethod(body.getGroovyMethods(), myHolder);
+    checkDuplicateMethod(typeDefinition.getMethods(), myHolder);
     checkImplementedMethodsOfClass(myHolder, typeDefinition);
     checkConstructors(myHolder, typeDefinition);
     highligtClassReference(myHolder, typeDefinition.getNameIdentifierGroovy());
@@ -388,7 +386,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
         }
 
         if (!hasImplicitDefConstructor && (defConstructor == null || !PsiUtil.isAccessible(typeDefinition, defConstructor))) {
-          holder.createErrorAnnotation(getMethodHeaderTextRange((GrMethod)method),
+          holder.createErrorAnnotation(getMethodHeaderTextRange(method),
                                        GroovyBundle.message("there.is.no.default.constructor.available.in.class.0", qName));
         }
       }
@@ -448,7 +446,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       if (constructor != null) {
         PsiMethod circleStart = constructor;
         do {
-          holder.createErrorAnnotation(getMethodHeaderTextRange((GrMethod)constructor),
+          holder.createErrorAnnotation(getMethodHeaderTextRange(constructor),
                                        GroovyBundle.message("recursive.constructor.invocation"));
           constructor = nodes.get(constructor);
         }
@@ -457,11 +455,15 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     }
   }
 
-  private static TextRange getMethodHeaderTextRange(GrMethod method) {
-    final GrModifierList modifierList = method.getModifierList();
-    final GrParameterList parameterList = method.getParameterList();
+  private static TextRange getMethodHeaderTextRange(PsiMethod method) {
+    final PsiModifierList modifierList = method.getModifierList();
+    final PsiParameterList parameterList = method.getParameterList();
 
-    int startOffset = modifierList.getTextRange().getStartOffset();
+    final TextRange textRange = modifierList.getTextRange();
+    if (textRange==null) {
+      System.out.println(method.getClass() + ":" + method.getText());
+    }
+    int startOffset = textRange.getStartOffset();
     int endOffset = parameterList.getTextRange().getEndOffset() + 1;
 
     return new TextRange(startOffset, endOffset);
@@ -914,7 +916,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   public void visitForInClause(GrForInClause forInClause) {
     final GrVariable var = forInClause.getDeclaredVariable();
     if (var == null) return;
-    final GrModifierList modifierList = ((GrModifierList)var.getModifierList());
+    final GrModifierList modifierList = var.getModifierList();
     if (modifierList == null) return;
     final PsiElement[] modifiers = modifierList.getModifiers();
     for (PsiElement modifier : modifiers) {
@@ -928,17 +930,10 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
 
   @Override
   public void visitFile(GroovyFileBase file) {
-    if (!file.isScript()) return;
-
-    List<GrMethod> methods = new ArrayList<GrMethod>();
-
-    for (GrTopLevelDefinition topLevelDefinition : file.getTopLevelDefinitions()) {
-      if (topLevelDefinition instanceof GrMethod) {
-        methods.add(((GrMethod)topLevelDefinition));
-      }
+    final PsiClass scriptClass = file.getScriptClass();
+    if (scriptClass != null) {
+      checkDuplicateMethod(scriptClass.getMethods(), myHolder);
     }
-
-    checkDuplicateMethod(methods.toArray(new GrMethod[methods.size()]), myHolder);
   }
 
   @Override
@@ -1294,17 +1289,17 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     }
   }
 
-  private static void checkDuplicateMethod(GrMethod[] methods, AnnotationHolder holder) {
-    MultiMap<MethodSignature, GrMethod> map = GrClosureSignatureUtil.findMethodSignatures(methods);
+  private static void checkDuplicateMethod(PsiMethod[] methods, AnnotationHolder holder) {
+    MultiMap<MethodSignature, PsiMethod> map = GrClosureSignatureUtil.findMethodSignatures(methods);
     processMethodDuplicates(map, holder);
   }
 
-  protected static void processMethodDuplicates(MultiMap<MethodSignature, GrMethod> map, AnnotationHolder holder) {
+  protected static void processMethodDuplicates(MultiMap<MethodSignature, PsiMethod> map, AnnotationHolder holder) {
     for (MethodSignature signature : map.keySet()) {
-      Collection<GrMethod> methods = map.get(signature);
+      Collection<PsiMethod> methods = map.get(signature);
       if (methods.size() > 1) {
         String signaturePresentation = GroovyPresentationUtil.getSignaturePresentation(signature);
-        for (GrMethod method : methods) {
+        for (PsiMethod method : methods) {
           //noinspection ConstantConditions
           holder.createErrorAnnotation(getMethodHeaderTextRange(method), GroovyBundle
             .message("method.duplicate", signaturePresentation, method.getContainingClass().getName()));

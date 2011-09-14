@@ -34,12 +34,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierL
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumConstantInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrConstructor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 import java.util.*;
@@ -70,6 +69,7 @@ public class StubGenerator implements ClassItemGenerator {
     this.classNameProvider = classNameProvider;
   }
 
+  @Override
   public void writeEnumConstant(StringBuilder text, GrEnumConstant enumConstant) {
     text.append(enumConstant.getName());
     PsiMethod constructor = enumConstant.resolveMethod();
@@ -83,7 +83,7 @@ public class StubGenerator implements ClassItemGenerator {
     if (initializer != null) {
       text.append("{\n");
       for (PsiMethod method : initializer.getMethods()) {
-        writeMethod(text, method, 0);
+        writeMethod(text, method);
       }
       text.append('}');
     }
@@ -105,7 +105,8 @@ public class StubGenerator implements ClassItemGenerator {
   }
 
 
-  public void writeConstructor(final StringBuilder text, final GrConstructor constructor, int skipOptional, boolean isEnum) {
+  @Override
+  public void writeConstructor(final StringBuilder text, final GrConstructor constructor, boolean isEnum) {
     if (!isEnum) {
       text.append("public ");
       //writeModifiers(text, constructor.getModifierList(), JAVA_MODIFIERS);
@@ -116,8 +117,7 @@ public class StubGenerator implements ClassItemGenerator {
     text.append(constructor.getName());
 
     /************* parameters **********/
-    final ArrayList<GrParameter> actual = GenerationUtil.getActualParams(constructor, skipOptional);
-    GenerationUtil.writeParameterList(text, actual.toArray(new GrParameter[actual.size()]), classNameProvider, null);
+    GenerationUtil.writeParameterList(text, constructor.getParameters(), classNameProvider, null);
 
     final Set<String> throwsTypes = collectThrowsTypes(constructor, new THashSet<PsiMethod>());
     if (!throwsTypes.isEmpty()) {
@@ -127,7 +127,7 @@ public class StubGenerator implements ClassItemGenerator {
     /************* body **********/
 
     text.append("{\n");
-    final GrConstructorInvocation invocation = constructor.getChainingConstructorInvocation();
+    final GrConstructorInvocation invocation = PsiImplUtil.getChainingConstructorInvocation(constructor);
     if (invocation != null) {
       final GroovyResolveResult resolveResult = resolveChainingConstructor(constructor);
       if (resolveResult != null) {
@@ -168,7 +168,8 @@ public class StubGenerator implements ClassItemGenerator {
     return result;
   }
 
-  public void writeMethod(StringBuilder text, PsiMethod method, final int skipOptional) {
+  @Override
+  public void writeMethod(StringBuilder text, PsiMethod method) {
     if (method == null) return;
     String name = method.getName();
     if (!JavaPsiFacade.getInstance(method.getProject()).getNameHelper().isIdentifier(name)) {
@@ -209,14 +210,7 @@ public class StubGenerator implements ClassItemGenerator {
     text.append(name);
 
 
-    if (method instanceof GrMethod) {
-      final ArrayList<GrParameter> actualParams = GenerationUtil.getActualParams(((GrMethod)method), skipOptional);
-      GenerationUtil.writeParameterList(text, actualParams.toArray(new GrParameter[actualParams.size()]), classNameProvider, null);
-    }
-    else {
-      LOG.assertTrue(skipOptional==0);
-      GenerationUtil.writeParameterList(text, method.getParameterList().getParameters(), classNameProvider, null);
-    }
+    GenerationUtil.writeParameterList(text, method.getParameterList().getParameters(), classNameProvider, null);
 
     writeThrowsList(text, method);
 
@@ -240,7 +234,7 @@ public class StubGenerator implements ClassItemGenerator {
 
   @Nullable
   private static GroovyResolveResult resolveChainingConstructor(GrConstructor constructor) {
-    final GrConstructorInvocation constructorInvocation = constructor.getChainingConstructorInvocation();
+    final GrConstructorInvocation constructorInvocation = PsiImplUtil.getChainingConstructorInvocation(constructor);
     if (constructorInvocation == null) {
       return null;
     }
@@ -266,6 +260,7 @@ public class StubGenerator implements ClassItemGenerator {
     return null;
   }
 
+  @Override
   public Collection<PsiMethod> collectMethods(PsiClass typeDefinition, boolean classDef) {
     List<PsiMethod> methods = new ArrayList<PsiMethod>();
     ContainerUtil.addAll(methods, typeDefinition.getMethods());
@@ -330,7 +325,7 @@ public class StubGenerator implements ClassItemGenerator {
     for (PsiParameter parameter : method.getParameterList().getParameters()) {
       builder.addParameter(StringUtil.notNullize(parameter.getName()), substitutor.substitute(parameter.getType()));
     }
-    builder.setReturnType(substitutor.substitute(method.getReturnType()));
+    builder.setMethodReturnType(substitutor.substitute(method.getReturnType()));
     for (String modifier : STUB_MODIFIERS) {
       if (method.hasModifierProperty(modifier)) {
         builder.addModifier(modifier);
@@ -339,6 +334,7 @@ public class StubGenerator implements ClassItemGenerator {
     return builder;
   }
 
+  @Override
   public void writeVariableDeclarations(StringBuilder text, GrVariableDeclaration variableDeclaration) {
     GrTypeElement typeElement = variableDeclaration.getTypeElementGroovy();
 

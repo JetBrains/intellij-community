@@ -27,9 +27,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierL
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListImpl;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class GrLightModifierList extends LightElement implements GrModifierList {
 
   private int myModifiers;
+  private final List<GrAnnotation> myAnnotations = new ArrayList<GrAnnotation>();
 
   private final PsiElement myParent;
 
@@ -87,7 +91,7 @@ public class GrLightModifierList extends LightElement implements GrModifierList 
 
   @NotNull
   public GrAnnotation[] getAnnotations() {
-    return GrAnnotation.EMPTY_ARRAY;
+    return myAnnotations.toArray(new GrAnnotation[myAnnotations.size()]);
   }
 
   @NotNull
@@ -101,7 +105,9 @@ public class GrLightModifierList extends LightElement implements GrModifierList 
 
   @NotNull
   public PsiAnnotation addAnnotation(@NotNull @NonNls String qualifiedName) {
-    throw new IncorrectOperationException("Method addAnnotation is not yet implemented in " + getClass().getName());
+    final GrLightAnnotation annotation = new GrLightAnnotation(getManager(), getLanguage(), qualifiedName, this);
+    myAnnotations.add(annotation);
+    return annotation;
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {

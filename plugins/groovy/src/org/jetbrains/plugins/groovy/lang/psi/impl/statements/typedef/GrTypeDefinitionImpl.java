@@ -74,10 +74,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.AstTransformContributor;
 import org.jetbrains.plugins.groovy.util.LightCacheKey;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author ilyas
@@ -87,7 +84,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
   private static final LightCacheKey<List<GrField>> AST_TRANSFORM_FIELD = LightCacheKey.createByJavaModificationCount();
 
   private volatile PsiClass[] myInnerClasses;
-  private volatile List<PsiMethod> myMethods;
+  private volatile PsiMethod[] myMethods;
   private volatile GrMethod[] myGroovyMethods;
   private volatile GrMethod[] myConstructors;
 
@@ -372,20 +369,20 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
 
   @NotNull
   public PsiMethod[] getMethods() {
-    List<PsiMethod> cached = myMethods;
+    PsiMethod[] cached = myMethods;
     if (cached == null) {
       GrTypeDefinitionBody body = getBody();
       if (body != null) {
         cached = body.getMethods();
       }
       else {
-        cached = Collections.emptyList();
+        cached = PsiMethod.EMPTY_ARRAY;
       }
 
       myMethods = cached;
     }
 
-    List<PsiMethod> result = new ArrayList<PsiMethod>(cached);
+    List<PsiMethod> result = new ArrayList<PsiMethod>(Arrays.asList(cached));
     AstTransformContributor.runContributorsForMethods(this, result);
 
     for (GrField field : getSyntheticFields()) {

@@ -32,7 +32,7 @@ class AntBuilderMethod extends LightMethodBuilder implements GrBuilderMethod {
     setBaseIcon(GantIcons.ANT_TASK);
     addParameter(new GrLightParameter("singleArg", stringType, this).setOptional(true));
     addParameter(new GrLightParameter("body", closureType, this).setOptional(true));
-    setReturnType(new Computable<PsiType>() {
+    setMethodReturnType(new Computable<PsiType>() {
       @Override
       public PsiType compute() {
         return PsiType.getJavaLangObject(getManager(), getResolveScope());

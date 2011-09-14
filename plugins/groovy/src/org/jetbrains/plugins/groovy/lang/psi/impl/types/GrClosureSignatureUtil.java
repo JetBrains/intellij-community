@@ -38,6 +38,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCurriedClosureSignature;
@@ -581,25 +582,13 @@ public class GrClosureSignatureUtil {
     return generateAllMethodSignaturesByClosureSignature(name, signature, typeParameters, substitutor);
   }
 
-  public static <Method extends PsiMethod> MultiMap<MethodSignature, Method> findMethodSignatures(Method[] methods) {
-    List<Pair<MethodSignature, Method>> signatures = new ArrayList<Pair<MethodSignature, Method>>();
-    for (Method method : methods) {
-      List<MethodSignature> current;
-      if (method instanceof GrMethod) {
-        current = generateAllSignaturesForMethod((GrMethod)method, PsiSubstitutor.EMPTY);
-      }
-      else {
-        current = Collections.singletonList(method.getSignature(PsiSubstitutor.EMPTY));
-      }
-      for (MethodSignature signature : current) {
-        signatures.add(new Pair<MethodSignature, Method>(signature, method));
-      }
+  public static MultiMap<MethodSignature, PsiMethod> findMethodSignatures(PsiMethod[] methods) {
+    MultiMap<MethodSignature, PsiMethod> map = new MultiMap<MethodSignature, PsiMethod>();
+    for (PsiMethod method : methods) {
+      final PsiMethod actual = method instanceof GrReflectedMethod ? ((GrReflectedMethod)method).getBaseMethod() : method;
+      map.putValue(method.getSignature(PsiSubstitutor.EMPTY), actual);
     }
 
-    MultiMap<MethodSignature, Method> map = new MultiMap<MethodSignature, Method>();
-    for (Pair<MethodSignature, Method> pair : signatures) {
-      map.putValue(pair.first, pair.second);
-    }
     return map;
   }
 

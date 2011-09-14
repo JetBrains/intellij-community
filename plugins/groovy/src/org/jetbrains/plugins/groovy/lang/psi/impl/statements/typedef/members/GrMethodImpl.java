@@ -40,5 +40,4 @@ public class GrMethodImpl extends GrMethodBaseImpl implements GrMethod {
     return "Method";
   }
 
-
 }

@@ -28,8 +28,8 @@ import java.util.Collection;
  */
 public interface ClassItemGenerator {
   void writeEnumConstant(StringBuilder text, GrEnumConstant constant);
-  void writeConstructor(StringBuilder text, GrConstructor constructor, final int skipOptional, boolean isEnum);
-  void writeMethod(StringBuilder text, PsiMethod method, final int skipOptional);
+  void writeConstructor(StringBuilder text, GrConstructor constructor, boolean isEnum);
+  void writeMethod(StringBuilder text, PsiMethod method);
   void writeVariableDeclarations(StringBuilder text, GrVariableDeclaration variableDeclaration);
 
   Collection<PsiMethod> collectMethods(PsiClass typeDefinition, boolean classDef);

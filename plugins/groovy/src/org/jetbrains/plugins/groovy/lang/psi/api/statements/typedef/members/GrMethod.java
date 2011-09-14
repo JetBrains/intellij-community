@@ -16,7 +16,6 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members;
 
-import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import com.intellij.util.ArrayFactory;
@@ -84,4 +83,6 @@ public interface GrMethod extends GrMembersDeclaration, GrNamedElement, PsiMetho
 
   @NotNull
   String[] getNamedParametersArray();
+
+  GrReflectedMethod[] getReflectedMethods();
 }

@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
@@ -26,8 +27,7 @@ import com.intellij.psi.presentation.java.JavaPresentationUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
-import com.intellij.psi.util.MethodSignature;
-import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
+import com.intellij.psi.util.*;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.*;
 import org.jetbrains.annotations.NonNls;
@@ -40,7 +40,10 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GrDocCommentUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.psi.*;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrNamedArgumentSearchVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
@@ -50,6 +53,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterLi
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
@@ -58,6 +62,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrReflectedMethodImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrMethodStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.MethodTypeInferencer;
@@ -70,6 +75,8 @@ import java.util.List;
  * @author ilyas
  */
 public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> implements GrMethod, StubBasedPsiElement<GrMethodStub> {
+
+  private Key<CachedValue<GrReflectedMethod[]>> CACHED_REFLECTED_METHODS_KEY = Key.create("Cached reflected methods");
 
   protected GrMethodBaseImpl(final GrMethodStub stub, IStubElementType nodeType) {
     super(stub, nodeType);
@@ -206,7 +213,6 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
 
       return PsiType.getJavaLangObject(method.getManager(), method.getResolveScope());
     }
-
   };
 
   @Nullable
@@ -242,10 +248,10 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
     GrTypeElement newTypeElement = GroovyPsiElementFactory.getInstance(getProject()).createTypeElement(newReturnType);
     if (typeElement == null) {
       GrModifierList list = getModifierList();
-      newTypeElement =  (GrTypeElement)addAfter(newTypeElement, list);
+      newTypeElement = (GrTypeElement)addAfter(newTypeElement, list);
     }
     else {
-      newTypeElement= (GrTypeElement)typeElement.replace(newTypeElement);
+      newTypeElement = (GrTypeElement)typeElement.replace(newTypeElement);
     }
 
     newTypeElement.accept(new GroovyRecursiveElementVisitor() {
@@ -447,7 +453,6 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
   }
 
 
-
   public void delete() throws IncorrectOperationException {
     PsiElement parent = getParent();
     if (parent instanceof GroovyFileImpl || parent instanceof GrTypeDefinitionBody) {
@@ -488,6 +493,7 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
   public PsiMethodReceiver getMethodReceiver() {
     return null;
   }
+
   public PsiType getReturnTypeNoResolve() {
     throw new UnsupportedOperationException();
   }
@@ -495,5 +501,20 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
   @Override
   public boolean isEquivalentTo(PsiElement another) {
     return PsiClassImplUtil.isMethodEquivalentTo(this, another);
+  }
+
+  @Override
+  public GrReflectedMethod[] getReflectedMethods() {
+    CachedValue<GrReflectedMethod[]> cached = getUserData(CACHED_REFLECTED_METHODS_KEY);
+    if (cached == null) {
+      cached = CachedValuesManager.getManager(getProject()).createCachedValue(new CachedValueProvider<GrReflectedMethod[]>() {
+        @Override
+        public Result<GrReflectedMethod[]> compute() {
+          return Result.create(GrReflectedMethodImpl.createReflectedMethods(GrMethodBaseImpl.this), GrMethodBaseImpl.this);
+        }
+      });
+    }
+
+    return cached.getValue();
   }
 }

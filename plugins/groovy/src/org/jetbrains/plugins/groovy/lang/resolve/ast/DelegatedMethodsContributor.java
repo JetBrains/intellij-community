@@ -18,7 +18,8 @@ package org.jetbrains.plugins.groovy.lang.resolve.ast;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethodBuilder;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.GroovyIcons;
@@ -29,9 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.AstTransformContributor;
 
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 
 /**
  * @author Max Medvedev
@@ -53,7 +52,7 @@ public class DelegatedMethodsContributor extends AstTransformContributor {
       if (psiClass == null) continue;
 
       final boolean deprecated = shouldDelegateDeprecated(delegate);
-      final List<PsiMethod> methods = getMethodsFromClassWithoutAST(psiClass);
+      final PsiMethod[] methods = getMethodsFromClassWithoutAST(psiClass);
 
       for (PsiMethod method : methods) {
         if (method.isConstructor()) continue;
@@ -63,12 +62,12 @@ public class DelegatedMethodsContributor extends AstTransformContributor {
     }
   }
 
-  private static List<PsiMethod> getMethodsFromClassWithoutAST(PsiClass psiClass) {
+  private static PsiMethod[] getMethodsFromClassWithoutAST(PsiClass psiClass) {
     if (psiClass instanceof GrTypeDefinition) {
-      return ((GrTypeDefinition)psiClass).getBody().getMethods();
+      return ((GrTypeDefinition)psiClass).getGroovyMethods();
     }
     else {
-      return Arrays.asList(psiClass.getMethods());
+      return psiClass.getMethods();
     }
   }
 
@@ -93,7 +92,7 @@ public class DelegatedMethodsContributor extends AstTransformContributor {
   private static PsiMethod generateDelegateMethod(PsiMethod method, PsiClass clazz, PsiSubstitutor substitutor) {
     final LightMethodBuilder builder = new LightMethodBuilder(clazz.getManager(), GroovyFileType.GROOVY_LANGUAGE, method.getName());
     builder.setContainingClass(clazz);
-    builder.setReturnType(substitutor.substitute(method.getReturnType()));
+    builder.setMethodReturnType(substitutor.substitute(method.getReturnType()));
     builder.setNavigationElement(method);
     builder.addModifier(PsiModifier.PUBLIC);
     final PsiParameter[] originalParameters = method.getParameterList().getParameters();

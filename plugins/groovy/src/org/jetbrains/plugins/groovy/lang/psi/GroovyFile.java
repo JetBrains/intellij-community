@@ -49,4 +49,5 @@ public interface GroovyFile extends GroovyFileBase {
 
   @Nullable
   PsiType getInferredScriptReturnType();
+
 }

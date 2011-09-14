@@ -38,6 +38,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrCo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstantList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
@@ -197,7 +198,7 @@ public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceF
       constructors = new PsiMethod[]{(PsiMethod)added};
     }
     for (PsiMethod constructor : constructors) {
-      final GrConstructorInvocation invocation = ((GrConstructor)constructor).getChainingConstructorInvocation();
+      final GrConstructorInvocation invocation = PsiImplUtil.getChainingConstructorInvocation((GrConstructor)constructor);
       if (invocation != null && invocation.isThisCall()) continue;
       final PsiElement anchor = findAnchor(context, settings, (GrConstructor)constructor);
 

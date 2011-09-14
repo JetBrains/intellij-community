@@ -18,11 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members;
 
 import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrConstructor;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrMethodStub;
 
@@ -46,17 +42,4 @@ public class GrConstructorImpl extends GrMethodBaseImpl implements GrConstructor
     return true;
   }
 
-  @Nullable
-  public GrConstructorInvocation getChainingConstructorInvocation() {
-    GrOpenBlock body = getBlock();
-    if (body == null) return null;
-
-    GrStatement[] statements = body.getStatements();
-
-    if (statements.length > 0 && statements[0] instanceof GrConstructorInvocation) {
-      return (GrConstructorInvocation) statements[0];
-    }
-
-    return null;
-  }
 }

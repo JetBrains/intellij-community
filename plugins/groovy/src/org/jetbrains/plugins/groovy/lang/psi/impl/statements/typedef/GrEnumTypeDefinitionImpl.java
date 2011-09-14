@@ -138,18 +138,18 @@ public class GrEnumTypeDefinitionImpl extends GrTypeDefinitionImpl implements Gr
                                              "values",
                                              new LightParameterListBuilder(manager, GROOVY_LANGUAGE),
                                              new LightModifierList(manager, GROOVY_LANGUAGE, "public", "static")
-      ).setReturnType(factory.createTypeFromText(CommonClassNames.JAVA_UTIL_COLLECTION + "<" + getName() + ">", this)).setContainingClass(this);
+      ).setMethodReturnType(factory.createTypeFromText(CommonClassNames.JAVA_UTIL_COLLECTION + "<" + getName() + ">", this)).setContainingClass(this);
 
       defMethods[1] = new LightMethodBuilder(manager, GROOVY_LANGUAGE,
                                              "next",
                                              new LightParameterListBuilder(manager, GROOVY_LANGUAGE),
                                              new LightModifierList(manager, GROOVY_LANGUAGE, "public")
-      ).setReturnType(factory.createType(this)).setContainingClass(this);
+      ).setMethodReturnType(factory.createType(this)).setContainingClass(this);
       defMethods[2] = new LightMethodBuilder(manager, GROOVY_LANGUAGE,
                                              "previous",
                                              new LightParameterListBuilder(manager, GROOVY_LANGUAGE),
                                              new LightModifierList(manager, GROOVY_LANGUAGE, "public")
-      ).setReturnType(factory.createType(this)).setContainingClass(this);
+      ).setMethodReturnType(factory.createType(this)).setContainingClass(this);
     }
     return defMethods;
   }

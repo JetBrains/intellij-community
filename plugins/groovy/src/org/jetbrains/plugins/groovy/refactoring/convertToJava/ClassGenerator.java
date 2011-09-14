@@ -180,10 +180,11 @@ public class ClassGenerator {
       if (!shouldBeGenerated(method)) continue;
 
       if (method instanceof GrConstructor) {
-        writeAllSignaturesOfConstructor(text, (GrConstructor)method, classItemGenerator, aClass.isEnum());
+        classItemGenerator.writeConstructor(text, (GrConstructor)method, aClass.isEnum());
       }
       else {
-        writeAllSignaturesOfMethod(text, method, classItemGenerator, true);
+        classItemGenerator.writeMethod(text, method);
+        text.append('\n');
       }
     }
   }
@@ -200,35 +201,6 @@ public class ClassGenerator {
       }
     }
     return true;
-  }
-
-
-  public static void writeAllSignaturesOfMethod(StringBuilder builder,
-                                                PsiMethod method,
-                                                ClassItemGenerator generator,
-                                                boolean genMainMethod) {
-    if (!(method instanceof GrMethod)) {
-      generator.writeMethod(builder, method, 0);
-      builder.append('\n');
-      return;
-    }
-
-    int count = getOptionalParameterCount((GrMethod)method);
-
-    final int start = genMainMethod ? 0 : 1;
-    for (int i = start; i <= count; i++) {
-      generator.writeMethod(builder, method, i);
-      builder.append('\n');
-    }
-  }
-
-  public static void writeAllSignaturesOfConstructor(StringBuilder builder, GrConstructor constructor, ClassItemGenerator generator, boolean isEnum) {
-
-    int count = getOptionalParameterCount(constructor);
-
-    for (int i = 0; i <= count; i++) {
-      generator.writeConstructor(builder, constructor, i, isEnum);
-    }
   }
 
 
