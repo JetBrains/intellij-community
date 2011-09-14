@@ -530,7 +530,7 @@ public class OverrideImplementUtil {
     if (candidates.isEmpty() && secondary.isEmpty()) return null;
 
     final PsiMethodMember[] onlyPrimary = convertToMethodMembers(candidates);
-    final PsiMethodMember[] all = ArrayUtil.mergeArrays(onlyPrimary, convertToMethodMembers(secondary), PsiMethodMember.class);
+    final PsiMethodMember[] all = ArrayUtil.mergeArrays(onlyPrimary, convertToMethodMembers(secondary));
 
     final String toMerge = PropertiesComponent.getInstance(project).getValue(PROP_COMBINED_OVERRIDE_IMPLEMENT);
     final Ref<Boolean> merge = Ref.create(!"false".equals(toMerge));

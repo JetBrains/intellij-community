@@ -243,7 +243,7 @@ public class RngNsDescriptor implements XmlNSDescriptor, Validator {
       final PsiElementProcessor.CollectElements<XmlFile> processor = new PsiElementProcessor.CollectElements<XmlFile>();
       RelaxIncludeIndex.processForwardDependencies(myFile, processor);
       if (processor.getCollection().size() > 0) {
-        return ArrayUtil.mergeArrays(a, processor.toArray(), Object.class);
+        return ArrayUtil.mergeArrays(a, processor.toArray());
       } else {
         return a;
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,8 +48,7 @@ public class RelaxedHtmlFromSchemaElementDescriptor extends XmlElementDescriptor
   public XmlElementDescriptor[] getElementsDescriptors(final XmlTag context) {
     return ArrayUtil.mergeArrays(
       super.getElementsDescriptors(context),
-      HtmlUtil.getCustomTagDescriptors(context), 
-      XmlElementDescriptor.class
+      HtmlUtil.getCustomTagDescriptors(context)
     );
   }
 
@@ -75,7 +74,7 @@ public class RelaxedHtmlFromSchemaElementDescriptor extends XmlElementDescriptor
       return descriptors;
     }
     for (XmlAttributeDescriptorsProvider provider: Extensions.getExtensions(XmlAttributeDescriptorsProvider.EP_NAME)) {
-      descriptors = ArrayUtil.mergeArrays(descriptors, provider.getAttributeDescriptors(context), XmlAttributeDescriptor.class);
+      descriptors = ArrayUtil.mergeArrays(descriptors, provider.getAttributeDescriptors(context));
     }
     return descriptors;
   }

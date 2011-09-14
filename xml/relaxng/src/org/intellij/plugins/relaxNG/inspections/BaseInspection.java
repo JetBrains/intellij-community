@@ -109,7 +109,7 @@ public abstract class BaseInspection extends XmlSuppressableInspectionTool {
                   return super.isAvailable(project, editor, element) && getTarget(element).getText().startsWith("grammar ");
                 }
               }
-      }, getXmlOnlySuppressions(element), SuppressIntentionAction.class);
+      }, getXmlOnlySuppressions(element));
     } else {
       return super.getSuppressActions(element);
     }

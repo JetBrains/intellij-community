@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,13 +60,13 @@ public class PathListReferenceProvider extends PsiReferenceProviderBase {
       if (nextPos == -1) {
         PsiReference[] refs =
           createReferences(element, s.substring(pos + 1), pos + offset + 1, false);
-        result = ArrayUtil.mergeArrays(result, refs, PsiReference.class);
+        result = ArrayUtil.mergeArrays(result, refs);
         break;
       }
       else {
         PsiReference[] refs =
           createReferences(element, s.substring(pos + 1, nextPos), pos + offset + 1, false);
-        result = ArrayUtil.mergeArrays(result, refs, PsiReference.class);
+        result = ArrayUtil.mergeArrays(result, refs);
         pos = nextPos;
       }
     }

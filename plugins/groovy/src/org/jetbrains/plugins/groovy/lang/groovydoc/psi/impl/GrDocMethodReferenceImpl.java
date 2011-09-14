@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMethodParams;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMethodReference;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 
@@ -103,7 +102,7 @@ public class GrDocMethodReferenceImpl extends GrDocMemberReferenceImpl implement
       MethodResolverProcessor constructorProcessor = new MethodResolverProcessor(name, this, true, thisType, parameterTypes, PsiType.EMPTY_ARRAY);
       resolved.processDeclarations(processor, ResolveState.initial(), resolved, this);
       resolved.processDeclarations(constructorProcessor, ResolveState.initial(), resolved, this);
-      return ArrayUtil.mergeArrays(processor.getCandidates(), constructorProcessor.getCandidates(), GroovyResolveResult.class);
+      return ArrayUtil.mergeArrays(processor.getCandidates(), constructorProcessor.getCandidates());
     }
     return new ResolveResult[0];
   }

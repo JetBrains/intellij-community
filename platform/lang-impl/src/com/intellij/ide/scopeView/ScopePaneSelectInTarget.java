@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ public class ScopePaneSelectInTarget extends ProjectViewSelectInTarget {
     PsiFile file = (PsiFile) fileSystemItem;
     NamedScopesHolder scopesHolder = DependencyValidationManager.getInstance(myProject);
     NamedScope[] allScopes = scopesHolder.getScopes();
-    allScopes = ArrayUtil.mergeArrays(allScopes, NamedScopeManager.getInstance(myProject).getScopes(), NamedScope.class);
+    allScopes = ArrayUtil.mergeArrays(allScopes, NamedScopeManager.getInstance(myProject).getScopes());
     for (NamedScope scope : allScopes) {
       PackageSet packageSet = scope.getValue();
       if (packageSet != null && packageSet.contains(file, scopesHolder)) return true;

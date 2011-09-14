@@ -285,7 +285,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
       });
 
       final Module[] modules = ModuleManager.getInstance(project).getModules();
-      myModule.setModel(new DefaultComboBoxModel(ArrayUtil.mergeArrays(new Object[]{"<default>"}, modules, Object.class)));
+      myModule.setModel(new DefaultComboBoxModel(ArrayUtil.mergeArrays(new Object[]{"<default>"}, modules)));
       myModule.setRenderer(new ListCellRendererWrapper(myModule) {
         @Override
         public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {

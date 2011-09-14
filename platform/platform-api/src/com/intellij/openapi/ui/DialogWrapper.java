@@ -382,11 +382,11 @@ public abstract class DialogWrapper {
           if (okNdx >= 0 && okNdx != actions.length - 1) {
             actions = ArrayUtil.append(ArrayUtil.remove(actions, getOKAction()), getOKAction());
           }
-          
+
           // move cancel action to the left
           int cancelNdx = ArrayUtil.indexOf(actions, getCancelAction());
           if (cancelNdx > 0) {
-            actions = ArrayUtil.join(new Action[] {getCancelAction()}, ArrayUtil.remove(actions, getCancelAction()));
+            actions = ArrayUtil.mergeArrays(new Action[] {getCancelAction()}, ArrayUtil.remove(actions, getCancelAction()));
           }
 
           if (!hasFocusedAction(actions)) {
@@ -396,7 +396,7 @@ public abstract class DialogWrapper {
             }
           }
         }
-        
+
         JPanel buttonsPanel = createButtons(actions, buttons);
         lrButtonsPanel.add(buttonsPanel,
                            new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE, insets, 0,

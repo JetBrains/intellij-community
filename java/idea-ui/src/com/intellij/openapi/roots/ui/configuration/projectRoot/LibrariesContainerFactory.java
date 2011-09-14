@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -140,11 +140,11 @@ public class LibrariesContainerFactory {
       Library[] libraries = getLibraries(LibraryLevel.GLOBAL);
       Library[] projectLibraries = getLibraries(LibraryLevel.PROJECT);
       if (projectLibraries.length > 0) {
-        libraries = ArrayUtil.mergeArrays(libraries, projectLibraries, Library.class);
+        libraries = ArrayUtil.mergeArrays(libraries, projectLibraries);
       }
       Library[] moduleLibraries = getLibraries(LibraryLevel.MODULE);
       if (moduleLibraries.length > 0) {
-        libraries = ArrayUtil.mergeArrays(libraries, moduleLibraries, Library.class);
+        libraries = ArrayUtil.mergeArrays(libraries, moduleLibraries);
       }
       return libraries;
     }

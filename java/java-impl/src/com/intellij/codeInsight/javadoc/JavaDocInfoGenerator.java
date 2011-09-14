@@ -1289,7 +1289,7 @@ public class JavaDocInfoGenerator {
     PsiDocTag[] tags1 = comment.findTagsByName(THROWS_KEYWORD);
     PsiDocTag[] tags2 = comment.findTagsByName("exception");
 
-    return ArrayUtil.mergeArrays(tags1, tags2, PsiDocTag.class);
+    return ArrayUtil.mergeArrays(tags1, tags2);
   }
 
   private static boolean areWeakEqual(String one, String two) {
