@@ -137,15 +137,15 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
 
   private void initToolWindow() {
     myToolWindowForm = new AndroidLayoutPreviewToolWindowForm(myProject, this);
-    myToolWindow = ToolWindowManager.getInstance(myProject)
-      .registerToolWindow(AndroidBundle.message("android.layout.preview.tool.window.title"), false, ToolWindowAnchor.RIGHT, myProject,
-                          true);
+    final String toolWindowId = AndroidBundle.message("android.layout.preview.tool.window.title");
+    myToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow(toolWindowId, false, ToolWindowAnchor.RIGHT, myProject,true);
 
     ((ToolWindowManagerEx)ToolWindowManager.getInstance(myProject)).addToolWindowManagerListener(new ToolWindowManagerAdapter() {
       @Override
       public void stateChanged() {
-        if (myToolWindow.isAvailable()) {
-          final boolean visible = myToolWindow.isVisible();
+        final ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(toolWindowId);
+        if (window != null && window.isAvailable()) {
+          final boolean visible = window.isVisible();
           AndroidLayoutPreviewToolWindowSettings.getInstance(myProject).getState().setVisible(visible);
         }
       }
@@ -235,7 +235,9 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
 
     final String layoutXmlText = psiFile.getText();
     final AndroidFacet facet = AndroidFacet.getInstance(psiFile);
-    assert facet != null;
+    if (facet == null) {
+      return;
+    }
 
     myRenderingQueue.queue(new Update("render") {
       @Override
