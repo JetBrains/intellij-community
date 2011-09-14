@@ -40,6 +40,8 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -278,7 +280,8 @@ public abstract class DeviceConfiguratorPanel extends JPanel {
 
   private void updateLists() {
     Object qualifier = myAvailableQualifiersList.getSelectedValue();
-    myAvailableQualifiersList.setModel(new CollectionListModel(myAvailableQualifiersConfig.getQualifiers()));
+    final ResourceQualifier[] availableQualifiers = filterUnsupportedQualifiers(myAvailableQualifiersConfig.getQualifiers());
+    myAvailableQualifiersList.setModel(new CollectionListModel(availableQualifiers));
     myAvailableQualifiersList.setSelectedValue(qualifier, true);
 
     if (myAvailableQualifiersList.getSelectedValue() == null && myAvailableQualifiersList.getItemsCount() > 0) {
@@ -286,12 +289,23 @@ public abstract class DeviceConfiguratorPanel extends JPanel {
     }
 
     qualifier = myChosenQualifiersList.getSelectedValue();
-    myChosenQualifiersList.setModel(new CollectionListModel(myChosenQualifiersConfig.getQualifiers()));
+    final ResourceQualifier[] chosenQualifiers = filterUnsupportedQualifiers(myChosenQualifiersConfig.getQualifiers());
+    myChosenQualifiersList.setModel(new CollectionListModel(chosenQualifiers));
     myChosenQualifiersList.setSelectedValue(qualifier, true);
 
     if (myChosenQualifiersList.getSelectedValue() == null && myChosenQualifiersList.getItemsCount() > 0) {
       myChosenQualifiersList.setSelectedIndex(0);
     }
+  }
+
+  private ResourceQualifier[] filterUnsupportedQualifiers(ResourceQualifier[] qualifiers) {
+    final List<ResourceQualifier> result = new ArrayList<ResourceQualifier>();
+    for (ResourceQualifier qualifier : qualifiers) {
+      if (myEditors.containsKey(qualifier.getShortName())) {
+        result.add(qualifier);
+      }
+    }
+    return result.toArray(new ResourceQualifier[result.size()]);
   }
 
   public FolderConfiguration getConfiguration() {
