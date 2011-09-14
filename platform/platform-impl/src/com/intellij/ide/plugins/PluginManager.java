@@ -204,7 +204,7 @@ public class PluginManager {
     }
   }
 
-  private static void initializePlugins(StartupProgress progress) {
+  private static void initializePlugins(@Nullable StartupProgress progress) {
     configureExtensions();
     
     final IdeaPluginDescriptorImpl[] pluginDescriptors = loadDescriptors(progress);
@@ -271,7 +271,9 @@ public class PluginManager {
       }
 
       pluginDescriptor.registerExtensions();
-      progress.showProgress("", 0.5f + (i++/(float )result.size()) * 0.25f);
+      if (progress != null) {
+        progress.showProgress("", 0.5f + (i++ / (float)result.size()) * 0.25f);
+      }
     }
 
     ourPlugins = pluginDescriptors;
