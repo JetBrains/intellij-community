@@ -49,6 +49,7 @@ public class AbstractTreeBuilder implements Disposable {
                              @Nullable Comparator<NodeDescriptor> comparator) {
     this(tree, treeModel, treeStructure, comparator, DEFAULT_UPDATE_INACTIVE);
   }
+
   public AbstractTreeBuilder(JTree tree,
                              DefaultTreeModel treeModel,
                              AbstractTreeStructure treeStructure,
@@ -62,7 +63,10 @@ public class AbstractTreeBuilder implements Disposable {
   }
 
 
-  protected void init(final JTree tree, final DefaultTreeModel treeModel, final AbstractTreeStructure treeStructure, final @Nullable Comparator<NodeDescriptor> comparator,
+  protected void init(final JTree tree,
+                      final DefaultTreeModel treeModel,
+                      final AbstractTreeStructure treeStructure,
+                      final @Nullable Comparator<NodeDescriptor> comparator,
                       final boolean updateIfInactive) {
 
     tree.putClientProperty(TREE_BUILDER, new WeakReference(this));
@@ -80,19 +84,19 @@ public class AbstractTreeBuilder implements Disposable {
   public final void select(final Object element) {
     if (isDisposed()) return;
 
-    getUi().userSelect(new Object[] {element}, null, false, true);
+    getUi().userSelect(new Object[]{element}, null, false, true);
   }
 
   public final void select(final Object element, @Nullable final Runnable onDone) {
     if (isDisposed()) return;
 
-    getUi().userSelect(new Object[] {element}, new UserRunnable(onDone), false, true);
+    getUi().userSelect(new Object[]{element}, new UserRunnable(onDone), false, true);
   }
 
   public final void select(final Object element, @Nullable final Runnable onDone, boolean addToSelection) {
     if (isDisposed()) return;
 
-    getUi().userSelect(new Object[] {element}, new UserRunnable(onDone), addToSelection, true);
+    getUi().userSelect(new Object[]{element}, new UserRunnable(onDone), addToSelection, true);
   }
 
   public final void select(final Object[] elements, @Nullable final Runnable onDone) {
@@ -138,6 +142,7 @@ public class AbstractTreeBuilder implements Disposable {
     return this;
   }
 
+  @Nullable
   protected AbstractTreeUpdater createUpdater() {
     if (isDisposed()) return null;
 
@@ -146,6 +151,7 @@ public class AbstractTreeBuilder implements Disposable {
     return updater;
   }
 
+  @Nullable
   protected final AbstractTreeUpdater getUpdater() {
     if (isDisposed()) return null;
 
@@ -155,7 +161,8 @@ public class AbstractTreeBuilder implements Disposable {
   public final boolean addSubtreeToUpdateByElement(Object element) {
     if (isDisposed()) return false;
 
-    return getUpdater().addSubtreeToUpdateByElement(element);
+    AbstractTreeUpdater updater = getUpdater();
+    return updater != null && updater.addSubtreeToUpdateByElement(element);
   }
 
   public final void addSubtreeToUpdate(DefaultMutableTreeNode node) {
@@ -170,6 +177,7 @@ public class AbstractTreeBuilder implements Disposable {
     getUi().addSubtreeToUpdate(node, afterUpdate);
   }
 
+  @Nullable
   public final DefaultMutableTreeNode getRootNode() {
     if (isDisposed()) return null;
 
@@ -183,10 +191,10 @@ public class AbstractTreeBuilder implements Disposable {
   }
 
   /**
-  * node descriptor getElement contract is as follows:
-  * 1.TreeStructure always returns & recieves "treestructure" element returned by getTreeStructureElement
-  * 2.Paths contain "model" element returned by getElement
-  */
+   * node descriptor getElement contract is as follows:
+   * 1.TreeStructure always returns & recieves "treestructure" element returned by getTreeStructureElement
+   * 2.Paths contain "model" element returned by getElement
+   */
 
   protected Object getTreeStructureElement(NodeDescriptor nodeDescriptor) {
     return nodeDescriptor.getElement();
@@ -207,12 +215,14 @@ public class AbstractTreeBuilder implements Disposable {
     return true;
   }
 
+  @Nullable
   public final JTree getTree() {
     if (isDisposed()) return null;
 
     return getUi().getTree();
   }
 
+  @Nullable
   public final AbstractTreeStructure getTreeStructure() {
     if (isDisposed()) return null;
 
@@ -225,20 +235,18 @@ public class AbstractTreeBuilder implements Disposable {
     getUi().setTreeStructure(structure);
   }
 
-  /**
-   * @deprecated
-   * @see #queueUpdateFrom
-   */
-  public void updateFromRoot() {
-    queueUpdate();
+  @Nullable
+  public Object getRootElement() {
+    AbstractTreeStructure structure = getTreeStructure();
+    return structure == null ? null : structure.getRootElement();
   }
 
   /**
-   * @deprecated
    * @see #queueUpdateFrom
+   * @deprecated
    */
-  protected ActionCallback updateFromRootCB() {
-   return queueUpdate();
+  public void updateFromRoot() {
+    queueUpdate();
   }
 
   public void initRootNode() {
@@ -247,18 +255,31 @@ public class AbstractTreeBuilder implements Disposable {
     getUi().initRootNode();
   }
 
+  /**
+   * @see #queueUpdateFrom
+   * @deprecated
+   */
+  @NotNull
+  protected ActionCallback updateFromRootCB() {
+    return queueUpdate();
+  }
+
+  @NotNull
   public final ActionCallback queueUpdate() {
     return queueUpdate(true);
   }
 
+  @NotNull
   public final ActionCallback queueUpdate(boolean withStructure) {
-    return queueUpdateFrom(getTreeStructure().getRootElement(), true, withStructure);
+    return queueUpdateFrom(getRootElement(), true, withStructure);
   }
 
+  @NotNull
   public final ActionCallback queueUpdateFrom(final Object element, final boolean forceResort) {
     return queueUpdateFrom(element, forceResort, true);
   }
 
+  @NotNull
   public ActionCallback queueUpdateFrom(final Object element, final boolean forceResort, final boolean updateStructure) {
     if (getUi() == null) return new ActionCallback.Rejected();
 
@@ -285,8 +306,8 @@ public class AbstractTreeBuilder implements Disposable {
   }
 
   /**
-   * @deprecated
    * @param element
+   * @deprecated
    */
   public void buildNodeForElement(Object element) {
     if (isDisposed()) return;
@@ -295,9 +316,9 @@ public class AbstractTreeBuilder implements Disposable {
   }
 
   /**
-   * @deprecated
    * @param element
    * @return
+   * @deprecated
    */
   @Nullable
   public DefaultMutableTreeNode getNodeForElement(Object element) {
@@ -326,13 +347,12 @@ public class AbstractTreeBuilder implements Disposable {
   protected boolean isAutoExpandNode(final NodeDescriptor nodeDescriptor) {
     if (isDisposed()) return false;
 
-    return getTreeStructure().getRootElement() == getTreeStructureElement(nodeDescriptor);
+    return getRootElement() == getTreeStructureElement(nodeDescriptor);
   }
 
   protected boolean isAlwaysShowPlus(final NodeDescriptor descriptor) {
     return false;
   }
-
 
 
   protected boolean isSmartExpand() {
@@ -344,8 +364,8 @@ public class AbstractTreeBuilder implements Disposable {
   }
 
   /**
-   * @deprecated
    * @param node
+   * @deprecated
    */
   public final void updateSubtree(final DefaultMutableTreeNode node) {
     if (isDisposed()) return;
@@ -366,8 +386,8 @@ public class AbstractTreeBuilder implements Disposable {
   }
 
   /**
-   * @deprecated
    * @param path
+   * @deprecated
    */
   public final void buildNodeForPath(final Object[] path) {
     if (isDisposed()) return;
@@ -378,12 +398,14 @@ public class AbstractTreeBuilder implements Disposable {
   /**
    * @deprecated
    */
+  @Nullable
   public final DefaultMutableTreeNode getNodeForPath(final Object[] path) {
     if (isDisposed()) return null;
 
     return getUi().getNodeForPath(path);
   }
 
+  @Nullable
   protected Object findNodeByElement(final Object element) {
     if (isDisposed()) return null;
 
@@ -403,7 +425,8 @@ public class AbstractTreeBuilder implements Disposable {
 
     if (myUi.isPassthroughMode()) {
       onDone.run();
-    } else {
+    }
+    else {
       UIUtil.invokeLaterIfNeeded(onDone);
     }
   }
@@ -413,7 +436,8 @@ public class AbstractTreeBuilder implements Disposable {
 
     if (myUi.isPassthroughMode()) {
       runnable.run();
-    } else {
+    }
+    else {
       SwingUtilities.invokeLater(runnable);
     }
   }
@@ -436,7 +460,8 @@ public class AbstractTreeBuilder implements Disposable {
           runnable.run();
         }
       });
-    } else {
+    }
+    else {
       runnable.run();
     }
   }
@@ -446,7 +471,8 @@ public class AbstractTreeBuilder implements Disposable {
 
     if (myUi.isPassthroughMode()) {
       runnable.run();
-    } else {
+    }
+    else {
       UIUtil.invokeLaterIfNeeded(runnable);
     }
   }
@@ -494,7 +520,10 @@ public class AbstractTreeBuilder implements Disposable {
   public AsyncResult<Object> revalidateElement(Object element) {
     if (isDisposed()) return new AsyncResult.Rejected<Object>();
 
-    return getTreeStructure().revalidateElement(element);
+    AbstractTreeStructure structure = getTreeStructure();
+    if (structure == null) return new AsyncResult.Rejected<Object>();
+
+    return structure.revalidateElement(element);
   }
 
   public static class AbstractTreeNodeWrapper extends AbstractTreeNode<Object> {
@@ -528,13 +557,16 @@ public class AbstractTreeBuilder implements Disposable {
   protected boolean updateNodeDescriptor(final NodeDescriptor descriptor) {
     if (isDisposed()) return false;
 
-    return getUi().doUpdateNodeDescriptor(descriptor);
+    AbstractTreeUi ui = getUi();
+    return ui != null && ui.doUpdateNodeDescriptor(descriptor);
   }
 
+  @Nullable
   public final DefaultTreeModel getTreeModel() {
     if (isDisposed()) return null;
 
-    return (DefaultTreeModel)getTree().getModel();
+    JTree tree = getTree();
+    return tree == null ? null : (DefaultTreeModel)tree.getModel();
   }
 
   @NotNull
@@ -551,7 +583,7 @@ public class AbstractTreeBuilder implements Disposable {
       Object each = transformElement(o);
       if (elementClass.isInstance(each)) {
         //noinspection unchecked
-        result.add((T) each);
+        result.add((T)each);
       }
     }
     return result;
@@ -575,7 +607,7 @@ public class AbstractTreeBuilder implements Disposable {
 
   @Nullable
   public final <T> Object accept(Class nodeClass, TreeVisitor<T> visitor) {
-    return accept(nodeClass, getTreeStructure().getRootElement(), visitor);
+    return accept(nodeClass, getRootElement(), visitor);
   }
 
   @Nullable
@@ -635,7 +667,8 @@ public class AbstractTreeBuilder implements Disposable {
         AbstractTreeUi ui = getUi();
         if (ui != null) {
           ui.executeUserRunnable(myRunnable);
-        } else {
+        }
+        else {
           myRunnable.run();
         }
       }
@@ -650,5 +683,4 @@ public class AbstractTreeBuilder implements Disposable {
   private void assertDisposed() {
     assert !isDisposed();
   }
-
 }

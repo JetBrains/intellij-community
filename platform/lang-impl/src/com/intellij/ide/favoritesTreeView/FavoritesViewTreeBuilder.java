@@ -118,6 +118,7 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
     updateFromRootCB();
   }
 
+  @NotNull
   public ActionCallback updateFromRootCB() {
     ((FavoritesTreeStructure)getTreeStructure()).rootsChanged();
     if (isDisposed()) return new ActionCallback.Done();
