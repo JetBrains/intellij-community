@@ -58,7 +58,7 @@ import java.util.List;
  */
 public class GrLightMethodBuilder extends LightElement implements GrMethod {
   private String myName;
-  private PsiType myReturnType;
+  private PsiType myReturnType = PsiType.VOID;
   private final GrModifierList myModifierList;
   private GrParameterList myParameterList;
   private Icon myBaseIcon;
