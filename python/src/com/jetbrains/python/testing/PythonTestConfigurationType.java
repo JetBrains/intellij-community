@@ -17,7 +17,7 @@ import javax.swing.*;
  * User : catherine
  */
 public class PythonTestConfigurationType implements ConfigurationType {
-  public static final String ID = "PythonTestConfigurationType";
+  public static final String ID = "tests";
 
   public final PythonDocTestConfigurationFactory PY_DOCTEST_FACTORY = new PythonDocTestConfigurationFactory(this);
   public final PythonUnitTestConfigurationFactory PY_UNITTEST_FACTORY = new PythonUnitTestConfigurationFactory(this);
