@@ -39,6 +39,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.sun.jdi.*;
 import com.sun.jdi.event.Event;
@@ -561,5 +562,63 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       default:
         return DebuggerBundle.message("status.thread.undefined");
     }
+  }
+
+  //ToDo:[lex] find common implementation
+  public static void findAllSupertypes(final Type type, final Collection<ReferenceType> typeNames) {
+    if (type instanceof ClassType) {
+      ClassType classType = (ClassType)type;
+      ClassType superclassType = classType.superclass();
+      if (superclassType != null) {
+        typeNames.add(superclassType);
+        findAllSupertypes(superclassType, typeNames);
+      }
+      List<InterfaceType> ifaces = classType.allInterfaces();
+      for (Iterator<InterfaceType> it = ifaces.iterator(); it.hasNext();) {
+        InterfaceType iface = it.next();
+        typeNames.add(iface);
+        findAllSupertypes(iface, typeNames);
+      }
+    }
+    if (type instanceof InterfaceType) {
+      List<InterfaceType> ifaces = ((InterfaceType)type).superinterfaces();
+      for (Iterator<InterfaceType> it = ifaces.iterator(); it.hasNext();) {
+        InterfaceType iface = it.next();
+        typeNames.add(iface);
+        findAllSupertypes(iface, typeNames);
+      }
+    }
+  }
+
+  public static String getQualifiedClassName(final String jdiName, final Project project) {
+    final String name= ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      public String compute() {
+        String name = jdiName;
+        int startFrom = 0;
+        final PsiManager psiManager = PsiManager.getInstance(project);
+        while (true) {
+          final int separator = name.indexOf('$', startFrom);
+          if(separator < 0) {
+            break;
+          }
+          final String qualifiedName = name.substring(0, separator);
+          final PsiClass psiClass =
+            JavaPsiFacade.getInstance(psiManager.getProject()).findClass(qualifiedName, GlobalSearchScope.allScope(project));
+          if(psiClass != null) {
+            int tail = separator + 1;
+            while(tail < name.length() && Character.isDigit(name.charAt(tail))) tail ++;
+            name = qualifiedName + "." + name.substring(tail);
+          }
+          startFrom = separator + 1;
+        }
+        return name;
+      }
+    });
+
+    if(jdiName.equals(name)) {
+      return jdiName.replace('$', '.');
+    }
+    
+    return name;
   }
 }
