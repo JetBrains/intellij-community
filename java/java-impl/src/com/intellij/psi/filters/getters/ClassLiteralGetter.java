@@ -63,18 +63,21 @@ public class ClassLiteralGetter {
     }
   }
 
-  private static void addInheritorClassLiterals(PsiFile context,
+  private static void addInheritorClassLiterals(final PsiFile context,
                                                 Condition<String> shortNameCondition,
                                                 final PsiType classParameter,
-                                                Consumer<LookupElement> result, PrefixMatcher matcher) {
+                                                final Consumer<LookupElement> result, PrefixMatcher matcher) {
     final String canonicalText = classParameter.getCanonicalText();
     if (CommonClassNames.JAVA_LANG_OBJECT.equals(canonicalText) && StringUtil.isEmpty(matcher.getPrefix())) {
       return;
     }
 
-    for (final PsiType type : CodeInsightUtil.addSubtypes(classParameter, context, true, shortNameCondition)) {
-      addClassLiteralLookupElement(type, result, context);
-    }
+    CodeInsightUtil.processSubTypes(classParameter, context, true, shortNameCondition, new Consumer<PsiType>() {
+      @Override
+      public void consume(PsiType type) {
+        addClassLiteralLookupElement(type, result, context);
+      }
+    });
   }
 
   private static void addClassLiteralLookupElement(@Nullable final PsiType type, final Consumer<LookupElement> resultSet, final PsiFile context) {

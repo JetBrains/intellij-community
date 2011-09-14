@@ -66,6 +66,19 @@ public class ClassLiteralLookupElement extends LookupElement implements TypedLoo
   }
 
   @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof ClassLiteralLookupElement)) return false;
+
+    return myCanonicalText.equals(((ClassLiteralLookupElement)o).myCanonicalText);
+  }
+
+  @Override
+  public int hashCode() {
+    return myCanonicalText.hashCode();
+  }
+
+  @Override
   public void handleInsert(InsertionContext context) {
     final Document document = context.getEditor().getDocument();
     document.replaceString(context.getStartOffset(), context.getTailOffset(), myCanonicalText + DOT_CLASS);
