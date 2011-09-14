@@ -290,4 +290,8 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
     enableInspectionTool(new UnusedDeclarationInspection());
     doTest(true, false);
   }
+
+  public void testSuperBound() throws Exception {
+    doTest(false, false);
+  }
 }
