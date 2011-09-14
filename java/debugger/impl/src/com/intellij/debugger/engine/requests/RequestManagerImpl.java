@@ -155,7 +155,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
       request.addCountFilter(requestor.COUNT_FILTER);
     }
 
-    if (requestor.CLASS_FILTERS_ENABLED) {
+    if (requestor.CLASS_FILTERS_ENABLED && !(request instanceof BreakpointRequest) /*no built-in class filters support for breakpoint requests*/ ) {
       ClassFilter[] classFilters = requestor.getClassFilters();
       for (final ClassFilter filter : classFilters) {
         if (!filter.isEnabled()) {

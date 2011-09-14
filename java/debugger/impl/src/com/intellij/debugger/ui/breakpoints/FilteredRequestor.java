@@ -22,6 +22,7 @@ package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.*;
 import com.intellij.debugger.engine.ContextUtil;
+import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
@@ -151,16 +152,19 @@ public abstract class FilteredRequestor implements LocatableEventRequestor, JDOM
 
   public boolean evaluateCondition(final EvaluationContextImpl context, LocatableEvent event) throws EvaluateException {
     if(COUNT_FILTER_ENABLED) {
-      context.getDebugProcess().getVirtualMachineProxy().suspend();
-      context.getDebugProcess().getRequestsManager().deleteRequest(this);
-      ((Breakpoint)this).createRequest(context.getDebugProcess());
-      context.getDebugProcess().getVirtualMachineProxy().resume();
+      final DebugProcessImpl debugProcess = context.getDebugProcess();
+      debugProcess.getVirtualMachineProxy().suspend();
+      debugProcess.getRequestsManager().deleteRequest(this);
+      ((Breakpoint)this).createRequest(debugProcess);
+      debugProcess.getVirtualMachineProxy().resume();
     }
     if (INSTANCE_FILTERS_ENABLED) {
       Value value = context.getThisObject();
       if (value != null) {  // non-static
         ObjectReference reference = (ObjectReference)value;
-        if(!hasObjectID(reference.uniqueID())) return false;
+        if(!hasObjectID(reference.uniqueID())) {
+          return false;
+        }
       }
     }
 
@@ -179,7 +183,7 @@ public abstract class FilteredRequestor implements LocatableEventRequestor, JDOM
             return EvaluatorBuilderImpl.getInstance().build(getCondition(), contextPsiElement, contextSourcePosition);
           }
         });
-        Value value = evaluator.evaluate(context);
+        final Value value = evaluator.evaluate(context);
         if (!(value instanceof BooleanValue)) {
           throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.boolean.expected"));
         }
