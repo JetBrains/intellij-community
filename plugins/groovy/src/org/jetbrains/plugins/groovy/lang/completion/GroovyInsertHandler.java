@@ -42,8 +42,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-import java.util.Arrays;
-
 /**
  * @author ven
  */
@@ -107,16 +105,7 @@ public class GroovyInsertHandler implements InsertHandler<LookupElement> {
       return;
     }
 
-    if (obj instanceof String) {
-      Editor editor = context.getEditor();
-      Document document = editor.getDocument();
-      if (context.getCompletionChar() == Lookup.REPLACE_SELECT_CHAR) {
-        handleOverwrite(editor.getCaretModel().getOffset(), document);
-      }
-      else if (context.getCompletionChar() == ' ') {
-        context.setAddCompletionChar(false);
-      }
-    } else if (obj instanceof PsiClass) {
+    if (obj instanceof PsiClass) {
       final PsiClass clazz = (PsiClass)obj;
       Editor editor = context.getEditor();
       Document document = editor.getDocument();
@@ -151,8 +140,6 @@ public class GroovyInsertHandler implements InsertHandler<LookupElement> {
     if (obj instanceof PsiPackage) {
       AutoPopupController.getInstance(context.getProject()).scheduleAutoPopup(context.getEditor(), null);
     }
-
-    addTailType(item).processTail(context.getEditor(), context.getTailOffset());
   }
 
   private static void handleOverwrite(final int offset, final Document document) {
@@ -162,18 +149,4 @@ public class GroovyInsertHandler implements InsertHandler<LookupElement> {
     document.deleteString(offset, i);
   }
 
-  private static TailType addTailType(LookupElement item) {
-    if ("default".equals(item.toString())) {
-      return TailType.CASE_COLON;
-    }
-    @NonNls String[] withSpace =
-      {"private", "public", "protected", "static", "transient", "abstract", "native", "volatile", "strictfp", "boolean", "byte", "char",
-        "short", "int", "float", "long", "double", "void", "new", "try", "while", "with", "switch", "for", "return", "throw", "throws",
-        "assert", "synchronized", "package", "class", "interface", "enum", "extends", "implements", "case", "catch", "finally", "else",
-        "instanceof", "import", "final", "def"};
-    if (Arrays.asList(withSpace).contains(item.toString())) {
-      return TailType.SPACE;
-    }
-    return TailType.NONE;
-  }
 }

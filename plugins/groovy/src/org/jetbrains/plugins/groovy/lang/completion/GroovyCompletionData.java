@@ -20,6 +20,7 @@ package org.jetbrains.plugins.groovy.lang.completion;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.CompletionResultSet;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.lang.ASTNode;
@@ -29,6 +30,7 @@ import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocInlinedTag;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -71,10 +73,10 @@ public class GroovyCompletionData {
     PsiElement parent = position.getParent();
     if (!PlatformPatterns.psiElement().afterLeaf(".", ".&").accepts(position)) {
       if (suggestPackage(position)) {
-        result.addElement(keyword(PsiKeyword.PACKAGE));
+        result.addElement(keyword(PsiKeyword.PACKAGE, TailType.SPACE));
       }
       if (suggestImport(position)) {
-        result.addElement(keyword(PsiKeyword.IMPORT));
+        result.addElement(keyword(PsiKeyword.IMPORT, TailType.SPACE));
       }
 
       addTypeDefinitionKeywords(result, position);
@@ -82,38 +84,38 @@ public class GroovyCompletionData {
       registerControlCompletion(position, result);
 
       if (parent instanceof GrExpression && !(parent instanceof GrLiteral)) {
-        addKeywords(result, PsiKeyword.TRUE, PsiKeyword.FALSE, PsiKeyword.NULL, PsiKeyword.SUPER, PsiKeyword.NEW, PsiKeyword.THIS, "as");
+        addKeywords(result, false, PsiKeyword.TRUE, PsiKeyword.FALSE, PsiKeyword.NULL, PsiKeyword.SUPER, PsiKeyword.NEW, PsiKeyword.THIS, "as");
       }
 
       if (isInfixOperatorPosition(position)) {
-        addKeywords(result, "in", PsiKeyword.INSTANCEOF);
+        addKeywords(result, true, "in", PsiKeyword.INSTANCEOF);
       } else if (suggestThrows(position)) {
-        addKeywords(result, PsiKeyword.THROWS);
+        addKeywords(result, true, PsiKeyword.THROWS);
       } else if (suggestPrimitiveTypes(position)) {
-        addKeywords(result, BUILT_IN_TYPES);
+        addKeywords(result, true, BUILT_IN_TYPES);
       }
 
       if (psiElement(GrReferenceExpression.class).inside(or(psiElement(GrWhileStatement.class), psiElement(GrForStatement.class))).accepts(parent)) {
-        addKeywords(result, PsiKeyword.BREAK, PsiKeyword.CONTINUE);
+        addKeywords(result, false, PsiKeyword.BREAK, PsiKeyword.CONTINUE);
       }
       else if (psiElement(GrReferenceExpression.class).inside(GrCaseSection.class).accepts(parent)) {
-        addKeywords(result, PsiKeyword.BREAK);
+        addKeywords(result, false, PsiKeyword.BREAK);
       }
 
       if (psiElement().withSuperParent(2, GrImportStatement.class).accepts(position)) {
         if (psiElement().afterLeaf(PsiKeyword.IMPORT).accepts(position)) {
-          addKeywords(result, PsiKeyword.STATIC);
+          addKeywords(result, true, PsiKeyword.STATIC);
         }
       } else {
         if (suggestModifiers(position)) {
-          addKeywords(result, MODIFIERS);
+          addKeywords(result, true, MODIFIERS);
         }
         if (psiElement().afterLeaf(MODIFIERS).accepts(position) ||
             GroovyCompletionUtil.isInTypeDefinitionBody(position) && GroovyCompletionUtil.isNewStatement(position, true)) {
-          addKeywords(result, PsiKeyword.SYNCHRONIZED);
+          addKeywords(result, true, PsiKeyword.SYNCHRONIZED);
         }
         if (suggestFinalDef(position)) {
-          addKeywords(result, PsiKeyword.FINAL, "def");
+          addKeywords(result, true, PsiKeyword.FINAL, "def");
         }
       }
     }
@@ -121,10 +123,10 @@ public class GroovyCompletionData {
 
   private static void addTypeDefinitionKeywords(CompletionResultSet result, PsiElement position) {
     if (suggestClassInterfaceEnum(position)) {
-      addKeywords(result, PsiKeyword.CLASS, PsiKeyword.INTERFACE, PsiKeyword.ENUM);
+      addKeywords(result, true, PsiKeyword.CLASS, PsiKeyword.INTERFACE, PsiKeyword.ENUM);
     }
     if (afterAtInType(position)) {
-      result.addElement(keyword(PsiKeyword.INTERFACE));
+      result.addElement(keyword(PsiKeyword.INTERFACE, TailType.SPACE));
     }
   }
 
@@ -156,38 +158,39 @@ public class GroovyCompletionData {
       }
     }
     if (ext) {
-      result.addElement(keyword("extends"));
+      result.addElement(keyword(PsiKeyword.EXTENDS, TailType.SPACE));
     }
     if (impl) {
-      result.addElement(keyword("implements"));
+      result.addElement(keyword(PsiKeyword.IMPLEMENTS, TailType.SPACE));
     }
   }
 
-  public static void addKeywords(CompletionResultSet result, String... keywords) {
+  public static void addKeywords(CompletionResultSet result, boolean space, String... keywords) {
     for (String s : keywords) {
-      result.addElement(keyword(s));
+      result.addElement(keyword(s, space ? TailType.SPACE : TailType.NONE));
     }
   }
 
-  private static TailTypeDecorator<LookupElementBuilder> keyword(final String keyword) {
-    return TailTypeDecorator
-      .withTail(LookupElementBuilder.create(keyword).setBold().setInsertHandler(GroovyInsertHandler.INSTANCE), TailType.SPACE);
+  private static LookupElement keyword(final String keyword, @NotNull TailType tail) {
+    LookupElementBuilder element = LookupElementBuilder.create(keyword).setBold();
+    return tail != TailType.NONE ? TailTypeDecorator.withTail(element, tail) : element;
   }
 
   private static void registerControlCompletion(PsiElement context, CompletionResultSet result) {
     String[] controlKeywords = {"try", "while", "with", "switch", "for", "return", "throw", "assert", "synchronized",};
 
     if (isControlStructure(context)) {
-      addKeywords(result, controlKeywords);
+      addKeywords(result, true, controlKeywords);
     }
     if (inCaseSection(context)) {
-      addKeywords(result, "case", "default");
+      result.addElement(keyword("case", TailType.SPACE));
+      result.addElement(keyword("default", TailType.CASE_COLON));
     }
     if (afterTry(context)) {
-      addKeywords(result, "catch", "finally");
+      addKeywords(result, true, "catch", "finally");
     }
     if (afterIfOrElse(context)) {
-      addKeywords(result, "else");
+      addKeywords(result, true, "else");
     }
   }
 
