@@ -95,7 +95,7 @@ public class PluginManager {
 
 
   public static long startupStart;
-  public static final float PLUGINS_PROGRESS_MAX_VALUE = 0.8f;
+  public static final float PLUGINS_PROGRESS_MAX_VALUE = 0.5f;
 
   public static class Facade extends PluginsFacade {
     public IdeaPluginDescriptor getPlugin(PluginId id) {
@@ -254,6 +254,7 @@ public class PluginManager {
       ourId2Index.put(result.get(i).getPluginId(), i);
     }
 
+    int i = 0;
     for (final IdeaPluginDescriptorImpl pluginDescriptor : result) {
       if (pluginDescriptor.getPluginId().getIdString().equals(CORE_PLUGIN_ID) || pluginDescriptor.isUseCoreClassLoader()) {
         pluginDescriptor.setLoader(parentLoader, true);
@@ -270,6 +271,7 @@ public class PluginManager {
       }
 
       pluginDescriptor.registerExtensions();
+      progress.showProgress("", 0.5f + (i++/(float )result.size()) * 0.25f);
     }
 
     ourPlugins = pluginDescriptors;
@@ -548,9 +550,6 @@ public class PluginManager {
 
     loadDescriptorsFromProperty(result);
 
-    if (!fromSources && progress != null) {
-      progress.showProgress("Loading core...", PLUGINS_PROGRESS_MAX_VALUE);
-    }
     loadDescriptorsFromClassPath(result, fromSources ? progress : null);
 
     IdeaPluginDescriptorImpl[] pluginDescriptors = result.toArray(new IdeaPluginDescriptorImpl[result.size()]);

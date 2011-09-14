@@ -380,23 +380,19 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   private void loadApplicationComponents() {
     PluginManager.initPlugins(mySplash);
     final IdeaPluginDescriptor[] plugins = PluginManager.getPlugins();
-    int pluginCount = 0;
-    for (IdeaPluginDescriptor plugin : plugins) {
-      if (!PluginManager.shouldSkipPlugin(plugin)) pluginCount++;
-    }
-    int i = 0;
     for (IdeaPluginDescriptor plugin : plugins) {
       if (PluginManager.shouldSkipPlugin(plugin)) continue;
-      if (mySplash != null) {
-        final float p = (float)++i / pluginCount;
-        final float progress = p + (1 - p) * PluginManager.PLUGINS_PROGRESS_MAX_VALUE;
-        mySplash.showProgress(plugin.getName(), progress);
-      }
       loadComponentsConfiguration(plugin.getAppComponents(), plugin, false);
     }
+  }
+
+  @Override
+  protected synchronized Object createComponent(Class componentInterface) {
+    Object component = super.createComponent(componentInterface);
     if (mySplash != null) {
-      mySplash.showProgress("Loading project...", 1.0f);
+      mySplash.showProgress("", (float)(0.75f + myComponentsRegistry.getPercentageOfComponentsLoaded() * 0.25f));
     }
+    return component;
   }
 
   protected MutablePicoContainer createPicoContainer() {

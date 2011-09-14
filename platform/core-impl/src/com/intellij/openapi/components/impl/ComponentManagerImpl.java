@@ -67,7 +67,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   private final ComponentManagerConfigurator myConfigurator = new ComponentManagerConfigurator(this);
   private final ComponentManager myParentComponentManager;
   private Boolean myHeadless;
-  private ComponentsRegistry myComponentsRegistry = new ComponentsRegistry();
+  protected ComponentsRegistry myComponentsRegistry = new ComponentsRegistry();
   private final Condition myDisposedCondition = new Condition() {
     public boolean value(final Object o) {
       return isDisposed();
@@ -395,7 +395,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return LOG.isDebugEnabled();
   }
 
-  private class ComponentsRegistry {
+  protected class ComponentsRegistry {
     private final Map<Class, Object> myInterfaceToLockMap = new HashMap<Class, Object>();
     private final Map<Class, Class> myInterfaceToClassMap = new HashMap<Class, Class>();
     private final ArrayList<Class> myComponentInterfaces = new ArrayList<Class>(); // keeps order of component's registration
