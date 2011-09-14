@@ -28,6 +28,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.PositionUtil;
+import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -238,31 +239,32 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
 
   public boolean evaluateCondition(EvaluationContextImpl context, LocatableEvent event) throws EvaluateException {
     if(CLASS_FILTERS_ENABLED){
-      Value value = context.getThisObject();
-      ObjectReference thisObject = (ObjectReference)value;
-      if(thisObject == null) {
-        return false;
+      String className = null;
+      final ObjectReference thisObject = (ObjectReference)context.getThisObject();
+      if(thisObject != null) {
+        className = thisObject.referenceType().name();
       }
-      String name = DebuggerUtilsEx.getQualifiedClassName(thisObject.referenceType().name(), getProject());
-      if(name == null) {
-        return false;
-      }
-      ClassFilter [] filters = getClassFilters();
-      boolean matches = false;
-      for (ClassFilter classFilter : filters) {
-        if (classFilter.isEnabled() && classFilter.matches(name)) {
-          matches = true;
-          break;
+      else {
+        final StackFrameProxyImpl frame = context.getFrameProxy();
+        if (frame != null) {
+          className = frame.location().declaringType().name();
         }
       }
-      if(!matches) {
-        return false;
-      }
-
-      ClassFilter [] ifilters = getClassExclusionFilters();
-      for (ClassFilter classFilter : ifilters) {
-        if (classFilter.isEnabled() && classFilter.matches(name)) {
+      if (className != null) {
+        boolean matches = false;
+        for (ClassFilter classFilter : getClassFilters()) {
+          if (classFilter.isEnabled() && classFilter.matches(className)) {
+            matches = true;
+            break;
+          }
+        }
+        if(!matches) {
           return false;
+        }
+        for (ClassFilter classFilter : getClassExclusionFilters()) {
+          if (classFilter.isEnabled() && classFilter.matches(className)) {
+            return false;
+          }
         }
       }
     }
