@@ -40,6 +40,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.*;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.*;
+import com.intellij.ui.table.JBTable;
 import com.intellij.ui.table.TableView;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
@@ -166,7 +167,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
   }
 
   public JComponent getPreferredFocusedComponent() {
-    final JTable table = myParametersList == null ? myParametersTable : myParametersList.getTable();
+    final JTable table = getTableComponent();
 
     if (table.getRowCount() > 0) {
       if (table.getColumnModel().getSelectedColumnCount() == 0) {
@@ -178,6 +179,10 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
     else {
       return myNameField == null ? super.getPreferredFocusedComponent() : myNameField;
     }
+  }
+
+  protected JBTable getTableComponent() {
+    return myParametersList == null ? myParametersTable : myParametersList.getTable();
   }
 
 
@@ -418,7 +423,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
     }
     else {
       final JPanel buttonsPanel =
-        ToolbarDecorator.createDecorator(myParametersList == null ? myParametersTable : myParametersList.getTable())
+        ToolbarDecorator.createDecorator(getTableComponent())
           .addExtraAction(myPropagateParamChangesButton)
           .createPanel();
 
