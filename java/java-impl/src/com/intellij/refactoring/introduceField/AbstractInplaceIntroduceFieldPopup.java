@@ -16,8 +16,10 @@
 package com.intellij.refactoring.introduceField;
 
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduceParameter.AbstractJavaInplaceIntroducer;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.occurrences.OccurrenceManager;
@@ -35,6 +37,7 @@ public abstract class AbstractInplaceIntroduceFieldPopup extends AbstractJavaInp
   private int myAnchorIdxIfAll = -1;
 
   private final SmartPointerManager mySmartPointerManager;
+  protected RangeMarker myFieldRangeStart;
 
   public AbstractInplaceIntroduceFieldPopup(Project project,
                                             Editor editor,
@@ -86,5 +89,20 @@ public abstract class AbstractInplaceIntroduceFieldPopup extends AbstractJavaInp
     else {
       return myAnchorElementIfAll != null ? myAnchorElementIfAll.getElement() : null;
     }
+  }
+
+  @Override
+  protected PsiVariable getVariable() {
+    if (myFieldRangeStart == null) return null;
+    if (!myParentClass.isValid()) return null;
+    PsiElement element = myParentClass.getContainingFile().findElementAt(myFieldRangeStart.getStartOffset());
+    if (element instanceof PsiWhiteSpace) {
+      element = PsiTreeUtil.skipSiblingsForward(element, PsiWhiteSpace.class);
+    }
+    if (element instanceof PsiField) return (PsiVariable)element;
+    final PsiField field = PsiTreeUtil.getParentOfType(element, PsiField.class, false);
+    if (field != null) return field;
+    element = PsiTreeUtil.skipSiblingsBackward(element, PsiWhiteSpace.class);
+    return PsiTreeUtil.getParentOfType(element, PsiField.class, false);
   }
 }

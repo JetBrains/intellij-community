@@ -124,9 +124,6 @@ public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceField
   }
 
 
-  private RangeMarker myFieldRangeStart;
-
-
   @Override
   protected PsiVariable createFieldToStartTemplateOn(final String[] names, final PsiType psiType) {
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myProject);
@@ -173,16 +170,6 @@ public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceField
   protected void saveSettings(PsiVariable psiVariable) {
     super.saveSettings(psiVariable);
     JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_VISIBILITY = getSelectedVisibility();
-  }
-
-  @Override
-  protected PsiVariable getVariable() {
-    if (myFieldRangeStart == null) return null;
-    PsiElement element = myParentClass.getContainingFile().findElementAt(myFieldRangeStart.getStartOffset());
-    if (element instanceof PsiWhiteSpace) {
-      element = PsiTreeUtil.skipSiblingsForward(element, PsiWhiteSpace.class);
-    }
-    return PsiTreeUtil.getParentOfType(element, PsiField.class, false);
   }
 
   @Override

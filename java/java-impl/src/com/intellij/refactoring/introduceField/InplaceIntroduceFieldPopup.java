@@ -136,10 +136,8 @@ public class InplaceIntroduceFieldPopup extends AbstractInplaceIntroduceFieldPop
     myIntroduceFieldPanel.setVisibility(visibility);
   }
 
-  private RangeMarker myFieldRangeStart;
 
-
-    @Override
+  @Override
     public boolean isReplaceAllOccurrences() {
       return myIntroduceFieldPanel.isReplaceAllOccurrences();
     }
@@ -181,20 +179,6 @@ public class InplaceIntroduceFieldPopup extends AbstractInplaceIntroduceFieldPop
   @Override
     protected String getCommandName() {
       return IntroduceFieldHandler.REFACTORING_NAME;
-    }
-
-    @Override
-    protected PsiVariable getVariable() {
-      if (myFieldRangeStart == null) return null;
-      PsiElement element = myParentClass.getContainingFile().findElementAt(myFieldRangeStart.getStartOffset());
-      if (element instanceof PsiWhiteSpace) {
-        element = PsiTreeUtil.skipSiblingsForward(element, PsiWhiteSpace.class);
-      }
-      if (element instanceof PsiField) return (PsiVariable)element;
-      final PsiField field = PsiTreeUtil.getParentOfType(element, PsiField.class, false);
-      if (field != null) return field;
-      element = PsiTreeUtil.skipSiblingsBackward(element, PsiWhiteSpace.class);
-      return PsiTreeUtil.getParentOfType(element, PsiField.class, false);
     }
 
   public BaseExpressionToFieldHandler.InitializationPlace getInitializerPlace() {
