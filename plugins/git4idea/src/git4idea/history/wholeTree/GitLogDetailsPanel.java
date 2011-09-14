@@ -57,8 +57,10 @@ public class GitLogDetailsPanel {
   private final HtmlHighlighter myHtmlHighlighter;
   private JEditorPane myJEditorPane;
   private VirtualFile myRoot;
+  private final Convertor<VirtualFile, SymbolicRefs> myRefsProvider;
 
   public GitLogDetailsPanel(final Project myProject, final DetailsCache detailsCache, final Convertor<VirtualFile, SymbolicRefs> refsProvider) {
+    myRefsProvider = refsProvider;
     myPanel = new JPanel(new CardLayout());
     myPanel.add(UIVcsUtil.errorPanel("Nothing selected", false), NOTHING_SELECTED);
     myPanel.add(UIVcsUtil.errorPanel("Loading...", false), LOADING);
@@ -174,13 +176,13 @@ public class GitLogDetailsPanel {
       myMarksPanel.add(new JLabel(new CaptionIcon(GitLogUI.Colors.local, font, s, myMarksPanel, CaptionIcon.Form.SQUARE, false,
                                        s.equals(currentBranch))));
     }
+    final String remoteName = myRefsProvider.convert(myRoot).getTrackedRemoteName();
     for (String s : commit.getRemoteBranches()) {
       myMarksPanel.add(new JLabel(new CaptionIcon(GitLogUI.Colors.remote, font, s, myMarksPanel, CaptionIcon.Form.SQUARE, false,
-                                       s.equals(currentBranch))));
+                                       s.equals(remoteName))));
     }
     for (String s : commit.getTags()) {
-      myMarksPanel.add(new JLabel(new CaptionIcon(GitLogUI.Colors.tag, font, s, myMarksPanel, CaptionIcon.Form.ROUNDED, false,
-                                       s.equals(currentBranch))));
+      myMarksPanel.add(new JLabel(new CaptionIcon(GitLogUI.Colors.tag, font, s, myMarksPanel, CaptionIcon.Form.ROUNDED, false, false)));
     }
   }
 

@@ -119,7 +119,10 @@ public class LowLevelAccessImpl implements LowLevelAccess {
     }
     refs.setCurrent(current);
     if (current != null) {
-      refs.setTrackedRemote(current.getTrackedRemoteName(myProject, myRoot));
+      GitBranch tracked = current.tracked(myProject, myRoot);
+      String fullName = tracked.getFullName();
+      fullName = fullName.startsWith(GitBranch.REFS_REMOTES_PREFIX) ? fullName.substring(GitBranch.REFS_REMOTES_PREFIX.length()) : fullName;
+      refs.setTrackedRemote(fullName);
     }
     refs.setUsername(GitConfigUtil.getValue(myProject, myRoot, GitConfigUtil.USER_NAME));
     // todo

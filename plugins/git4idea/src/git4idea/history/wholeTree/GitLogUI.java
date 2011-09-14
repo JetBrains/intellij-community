@@ -1005,34 +1005,41 @@ public class GitLogUI implements Disposable {
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       myCurrentWidth = 0;
       if (value instanceof GitCommit) {
+        myPanel.removeAll();
         final GitCommit commit = (GitCommit)value;
+
         final int localSize = commit.getLocalBranches() == null ? 0 : commit.getLocalBranches().size();
         final int remoteSize = commit.getRemoteBranches() == null ? 0 : commit.getRemoteBranches().size();
         final int tagsSize = commit.getTags().size();
 
         if (localSize + remoteSize > 0) {
-          final String branch = localSize == 0 ? (commit.getRemoteBranches().get(0)) : commit.getLocalBranches().get(0);
+          final CommitI commitI = myTableModel.getCommitAt(row);
+          final List<Trinity<String, Boolean, Color>> display = getBranchesToDisplay(commit, commitI);
+          boolean containsHead = commit.getTags().contains("HEAD");
 
-          Icon icon = myBranchMap.get(branch);
-          if (icon == null) {
-            final boolean plus = localSize + remoteSize + tagsSize > 1;
-            final Color color = localSize == 0 ? Colors.remote : Colors.local;
-            icon = new CaptionIcon(color, table.getFont().deriveFont((float) table.getFont().getSize() - 1), branch, table,
-                                   CaptionIcon.Form.SQUARE, plus, branch.equals(commit.getCurrentBranch()));
-            myBranchMap.put(branch, icon);
+          final boolean plus = localSize + remoteSize + tagsSize > (display.size() + (containsHead ? 1 : 0));
+          for (int i = 0; i < display.size(); i++) {
+            final Trinity<String, Boolean, Color> trinity = display.get(i);
+            boolean withContionuation = containsHead ? false : (plus && (i == display.size() - 1));
+            String key = trinity.getFirst() + (withContionuation ? "@" : "");
+            Icon icon = myBranchMap.get(key);
+            if (icon == null) {
+              icon = new CaptionIcon(trinity.getThird(), table.getFont().deriveFont((float) table.getFont().getSize() - 1),
+                                     trinity.getFirst(), table, CaptionIcon.Form.SQUARE,
+                                     withContionuation, trinity.getSecond());
+              myBranchMap.put(key, icon);
+            }
+            addOneIcon(table, value, isSelected, hasFocus, row, column, icon);
           }
-          addOneIcon(table, value, isSelected, hasFocus, row, column, icon);
+          if (tagsSize > 0 && containsHead) {
+            addTagIcon(table, value, isSelected, hasFocus, row, column, "HEAD", plus);
+          }
+
           return myPanel;
         }
         if ((localSize + remoteSize == 0) && (tagsSize > 0)) {
           final String tag = commit.getTags().get(0);
-          Icon icon = myTagMap.get(tag);
-          if (icon == null) {
-            icon = new CaptionIcon(Colors.tag, table.getFont().deriveFont((float) table.getFont().getSize() - 1),
-                                   tag, table, CaptionIcon.Form.ROUNDED, tagsSize > 1, false);
-            myTagMap.put(tag, icon);
-          }
-          addOneIcon(table, value, isSelected, hasFocus, row, column, icon);
+          addTagIcon(table, value, isSelected, hasFocus, row, column, tag, tagsSize > 1);
           return myPanel;
         }
       }
@@ -1040,9 +1047,43 @@ public class GitLogUI implements Disposable {
       return myInner;
     }
 
+    private void addTagIcon(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column, String tag, final boolean plus) {
+      String key = tag + (plus ? "@" : "");
+      Icon icon = myTagMap.get(key);
+      if (icon == null) {
+        icon = new CaptionIcon(Colors.tag, table.getFont().deriveFont((float) table.getFont().getSize() - 1),
+                               tag, table, CaptionIcon.Form.ROUNDED, plus, false);
+        myTagMap.put(key, icon);
+      }
+      addOneIcon(table, value, isSelected, hasFocus, row, column, icon);
+    }
+
+    private List<Trinity<String, Boolean, Color>> getBranchesToDisplay(final GitCommit commit, final CommitI commitI) {
+      final List<Trinity<String, Boolean, Color>> result = new ArrayList<Trinity<String, Boolean, Color>>();
+
+      final List<String> localBranches = commit.getLocalBranches();
+      final SymbolicRefs symbolicRefs = myRefs.get(commitI.selectRepository(myRootsUnderVcs));
+      final String currentName = symbolicRefs.getCurrentName();
+      final String trackedRemoteName = symbolicRefs.getTrackedRemoteName();
+      
+      if (currentName != null && localBranches.contains(currentName)) {
+        result.add(new Trinity<String, Boolean, Color>(currentName, true, Colors.local));
+      }
+      final List<String> remoteBranches = commit.getRemoteBranches();
+      if (trackedRemoteName != null && remoteBranches.contains(trackedRemoteName)) {
+        result.add(new Trinity<String, Boolean, Color>(trackedRemoteName, true, Colors.remote));
+      }
+      if (result.isEmpty()) {
+        boolean remote = localBranches.isEmpty();
+        result.add(new Trinity<String, Boolean, Color>(remote ? (remoteBranches.get(0)) : localBranches.get(0), false,
+                                                       remote ? Colors.remote : Colors.local));
+      }
+      return result;
+    }
+
     private void addOneIcon(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column, Icon icon) {
       myCurrentWidth = icon.getIconWidth();
-      myPanel.removeAll();
+      //myPanel.removeAll();
       //myPanel.setBackground(getLogicBackground(isSelected, row));
       myPanel.add(new JLabel(icon));
       myInner.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
