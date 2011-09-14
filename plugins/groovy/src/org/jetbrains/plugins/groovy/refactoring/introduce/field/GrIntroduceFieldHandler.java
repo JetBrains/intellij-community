@@ -34,7 +34,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrConstructor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstantList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -198,11 +197,11 @@ public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceF
       constructors = new PsiMethod[]{(PsiMethod)added};
     }
     for (PsiMethod constructor : constructors) {
-      final GrConstructorInvocation invocation = PsiImplUtil.getChainingConstructorInvocation((GrConstructor)constructor);
+      final GrConstructorInvocation invocation = PsiImplUtil.getChainingConstructorInvocation((GrMethod)constructor);
       if (invocation != null && invocation.isThisCall()) continue;
-      final PsiElement anchor = findAnchor(context, settings, (GrConstructor)constructor);
+      final PsiElement anchor = findAnchor(context, settings, (GrMethod)constructor);
 
-      generateAssignment(context, settings, field, (GrStatement)anchor, ((GrConstructor)constructor).getBlock());
+      generateAssignment(context, settings, field, (GrStatement)anchor, ((GrMethod)constructor).getBlock());
     }
   }
 
@@ -233,7 +232,7 @@ public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceF
   }
 
   @Nullable
-  private static PsiElement findAnchor(GrIntroduceContext context, GrIntroduceFieldSettings settings, final GrConstructor constructor) {
+  private static PsiElement findAnchor(GrIntroduceContext context, GrIntroduceFieldSettings settings, final GrMethod constructor) {
     final List<PsiElement> elements = ContainerUtil.findAll(context.occurrences, new Condition<PsiElement>() {
       @Override
       public boolean value(PsiElement element) {

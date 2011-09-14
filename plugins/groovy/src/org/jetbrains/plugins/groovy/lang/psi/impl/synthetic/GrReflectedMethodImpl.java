@@ -31,7 +31,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrConstructor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
@@ -211,7 +210,6 @@ public class GrReflectedMethodImpl extends LightMethodBuilder implements GrRefle
   public static GrReflectedMethod[] createReflectedMethods(GrMethod method) {
     if (method instanceof LightElement) return GrReflectedMethod.EMPTY_ARRAY;
 
-    if (method instanceof GrConstructor) return GrReflectedConstructorImpl.createReflectedMethods((GrConstructor)method);
     final GrParameter[] parameters = method.getParameters();
     int count = 0;
     for (GrParameter parameter : parameters) {

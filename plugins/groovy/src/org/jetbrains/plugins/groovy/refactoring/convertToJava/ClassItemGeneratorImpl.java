@@ -89,7 +89,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
   }
 
   @Override
-  public void writeConstructor(StringBuilder text, GrConstructor constructor, boolean isEnum) {
+  public void writeConstructor(StringBuilder text, PsiMethod constructor, boolean isEnum) {
     writeMethod(text, constructor);
   }
 

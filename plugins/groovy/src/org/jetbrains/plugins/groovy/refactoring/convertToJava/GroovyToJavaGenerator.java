@@ -30,7 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GrClassSubstitutor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrConstructor;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 
 import java.util.*;
@@ -143,7 +143,7 @@ public class GroovyToJavaGenerator {
     final ClassItemGenerator generator = new StubGenerator(new StubClassNameProvider(Collections.<VirtualFile>emptySet()));
     final StringBuilder buffer = new StringBuilder();
     if (method.isConstructor()) {
-      generator.writeConstructor(buffer, (GrConstructor)method, false);
+      generator.writeConstructor(buffer, (GrMethod)method, false);
     }
     else {
       generator.writeMethod(buffer, method);

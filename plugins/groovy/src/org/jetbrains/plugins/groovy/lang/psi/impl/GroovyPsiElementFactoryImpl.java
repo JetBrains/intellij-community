@@ -50,7 +50,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrConstructor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
@@ -377,7 +376,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     return createReferenceExpressionFromText("a" + newDot + "b").getDotToken();
   }
 
-  public GrConstructor createConstructorFromText(@NotNull String constructorName,
+  public GrMethod createConstructorFromText(@NotNull String constructorName,
                                                      @Nullable String[] paramTypes,
                                                      String[] paramNames,
                                                      String body,
@@ -386,14 +385,12 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     return createConstructorFromText(constructorName, text, context);
   }
 
-  public GrConstructor createConstructorFromText(String constructorName, String text, @Nullable PsiElement context) {
+  public GrMethod createConstructorFromText(String constructorName, String text, @Nullable PsiElement context) {
     GroovyFileImpl file = createDummyFile("class " + constructorName + "{" + text + "}");
     file.setContext(context);
     GrTopLevelDefinition definition = file.getTopLevelDefinitions()[0];
     assert definition != null && definition instanceof GrClassDefinition;
-    final PsiMethod constructor = ((GrClassDefinition) definition).getMethods()[0];
-    assert constructor instanceof GrConstructor;
-    return ((GrConstructor) constructor);
+    return ((GrClassDefinition) definition).getGroovyMethods()[0];
   }
 
   @Override
@@ -656,7 +653,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   @Override
   public GrConstructorInvocation createConstructorInvocation(String text, @Nullable PsiElement context) {
     GroovyFile file = createGroovyFile("class Foo{ def Foo(){" + text + "}}", false, context);
-    return PsiImplUtil.getChainingConstructorInvocation((GrConstructor)file.getClasses()[0].getConstructors()[0]);
+    return PsiImplUtil.getChainingConstructorInvocation((GrMethod)file.getClasses()[0].getConstructors()[0]);
   }
 
   @Override

@@ -57,7 +57,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrConstructor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
@@ -501,8 +500,10 @@ public class PsiImplUtil {
   }
 
   @Nullable
-  public static GrConstructorInvocation getChainingConstructorInvocation(GrConstructor constructor) {
+  public static GrConstructorInvocation getChainingConstructorInvocation(GrMethod constructor) {
     if (constructor instanceof GrReflectedMethod && ((GrReflectedMethod)constructor).getSkippedParameters().length > 0) return null;
+
+    LOG.assertTrue(constructor.isConstructor());
 
     GrOpenBlock body = constructor.getBlock();
     if (body == null) return null;

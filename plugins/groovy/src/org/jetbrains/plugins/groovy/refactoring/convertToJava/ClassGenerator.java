@@ -22,7 +22,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaratio
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrConstructor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -179,8 +178,8 @@ public class ClassGenerator {
     for (PsiMethod method : methods) {
       if (!shouldBeGenerated(method)) continue;
 
-      if (method instanceof GrConstructor) {
-        classItemGenerator.writeConstructor(text, (GrConstructor)method, aClass.isEnum());
+      if (method.isConstructor()) {
+        classItemGenerator.writeConstructor(text, method, aClass.isEnum());
       }
       else {
         classItemGenerator.writeMethod(text, method);

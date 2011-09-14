@@ -1151,10 +1151,10 @@ public class PsiUtil {
     final GrControlFlowOwner controlFlowOwner = ControlFlowUtils.findControlFlowOwner(expr);
     if (controlFlowOwner instanceof GrOpenBlock) {
       final PsiElement controlFlowOwnerParent = controlFlowOwner.getParent();
-      if (controlFlowOwnerParent instanceof GrConstructor) {
+      if (controlFlowOwnerParent instanceof GrMethod && ((GrMethod)controlFlowOwnerParent).isConstructor()) {
         return false;
-      } else if (controlFlowOwnerParent instanceof PsiMethod &&
-          ((PsiMethod)controlFlowOwnerParent).getReturnType() == PsiType.VOID) {
+      }
+      else if (controlFlowOwnerParent instanceof PsiMethod && ((PsiMethod)controlFlowOwnerParent).getReturnType() == PsiType.VOID) {
         return false;
       }
     }

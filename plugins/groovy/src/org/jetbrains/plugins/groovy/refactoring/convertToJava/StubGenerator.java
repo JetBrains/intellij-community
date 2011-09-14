@@ -35,8 +35,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocat
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumConstantInitializer;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrConstructor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -106,7 +106,9 @@ public class StubGenerator implements ClassItemGenerator {
 
 
   @Override
-  public void writeConstructor(final StringBuilder text, final GrConstructor constructor, boolean isEnum) {
+  public void writeConstructor(final StringBuilder text, final PsiMethod constructor, boolean isEnum) {
+    LOG.assertTrue(constructor.isConstructor());
+
     if (!isEnum) {
       text.append("public ");
       //writeModifiers(text, constructor.getModifierList(), JAVA_MODIFIERS);
@@ -117,7 +119,7 @@ public class StubGenerator implements ClassItemGenerator {
     text.append(constructor.getName());
 
     /************* parameters **********/
-    GenerationUtil.writeParameterList(text, constructor.getParameters(), classNameProvider, null);
+    GenerationUtil.writeParameterList(text, constructor.getParameterList().getParameters(), classNameProvider, null);
 
     final Set<String> throwsTypes = collectThrowsTypes(constructor, new THashSet<PsiMethod>());
     if (!throwsTypes.isEmpty()) {
@@ -127,21 +129,26 @@ public class StubGenerator implements ClassItemGenerator {
     /************* body **********/
 
     text.append("{\n");
-    final GrConstructorInvocation invocation = PsiImplUtil.getChainingConstructorInvocation(constructor);
-    if (invocation != null) {
-      final GroovyResolveResult resolveResult = resolveChainingConstructor(constructor);
-      if (resolveResult != null) {
-        text.append(invocation.isSuperCall() ? "super(" : "this(");
-        writeStubConstructorInvocation(text, (PsiMethod)resolveResult.getElement(), resolveResult.getSubstitutor(), invocation);
-        text.append(");");
+    if (constructor instanceof GrMethod) {
+      final GrConstructorInvocation invocation = PsiImplUtil.getChainingConstructorInvocation((GrMethod)constructor);
+      if (invocation != null) {
+        final GroovyResolveResult resolveResult = resolveChainingConstructor((GrMethod)constructor);
+        if (resolveResult != null) {
+          text.append(invocation.isSuperCall() ? "super(" : "this(");
+          writeStubConstructorInvocation(text, (PsiMethod)resolveResult.getElement(), resolveResult.getSubstitutor(), invocation);
+          text.append(");");
+        }
       }
     }
 
     text.append("\n}\n");
   }
 
-  private Set<String> collectThrowsTypes(GrConstructor constructor, Set<PsiMethod> visited) {
-    final GroovyResolveResult resolveResult = resolveChainingConstructor(constructor);
+  private Set<String> collectThrowsTypes(PsiMethod constructor, Set<PsiMethod> visited) {
+    LOG.assertTrue(constructor.isConstructor());
+
+    final GroovyResolveResult resolveResult = constructor instanceof GrMethod ? resolveChainingConstructor((GrMethod)constructor) : null;
+    
     if (resolveResult == null) {
       return Collections.emptySet();
     }
@@ -162,8 +169,9 @@ public class StubGenerator implements ClassItemGenerator {
       result.add(builder.toString());
     }
 
-    if (chainedConstructor instanceof GrConstructor) {
-      result.addAll(collectThrowsTypes((GrConstructor)chainedConstructor, visited));
+    if (chainedConstructor instanceof GrMethod) {
+      LOG.assertTrue(chainedConstructor.isConstructor());
+      result.addAll(collectThrowsTypes(chainedConstructor, visited));
     }
     return result;
   }
@@ -233,7 +241,9 @@ public class StubGenerator implements ClassItemGenerator {
   }
 
   @Nullable
-  private static GroovyResolveResult resolveChainingConstructor(GrConstructor constructor) {
+  private static GroovyResolveResult resolveChainingConstructor(GrMethod constructor) {
+    LOG.assertTrue(constructor.isConstructor());
+
     final GrConstructorInvocation constructorInvocation = PsiImplUtil.getChainingConstructorInvocation(constructor);
     if (constructorInvocation == null) {
       return null;

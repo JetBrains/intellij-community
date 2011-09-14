@@ -17,17 +17,16 @@
 package org.jetbrains.plugins.groovy.annotator.inspections;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrConstructor;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -69,9 +68,7 @@ public class GroovySingletonAnnotationInspection extends BaseInspection {
         PsiMethod[] methods = typeDefinition.getMethods();
         for (PsiMethod method : methods) {
           if (method.isConstructor()) {
-            assert method instanceof GrConstructor;
-
-            GrModifierList modifierList = ((GrConstructor)method).getModifierList();
+            PsiModifierList modifierList = method.getModifierList();
 
             if (modifierList.hasModifierProperty(PsiModifier.PUBLIC)) {
               registerClassError(typeDefinition);

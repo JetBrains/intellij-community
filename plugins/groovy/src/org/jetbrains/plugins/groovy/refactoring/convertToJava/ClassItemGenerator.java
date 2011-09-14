@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrConstructor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 
 import java.util.Collection;
@@ -28,7 +27,7 @@ import java.util.Collection;
  */
 public interface ClassItemGenerator {
   void writeEnumConstant(StringBuilder text, GrEnumConstant constant);
-  void writeConstructor(StringBuilder text, GrConstructor constructor, boolean isEnum);
+  void writeConstructor(StringBuilder text, PsiMethod constructor, boolean isEnum);
   void writeMethod(StringBuilder text, PsiMethod method);
   void writeVariableDeclarations(StringBuilder text, GrVariableDeclaration variableDeclaration);
 

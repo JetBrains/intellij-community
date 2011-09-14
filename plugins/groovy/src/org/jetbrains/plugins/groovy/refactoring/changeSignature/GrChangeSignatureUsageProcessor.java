@@ -63,7 +63,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCa
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrConstructor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
@@ -368,7 +367,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
   private static void processClassUsage(GrTypeDefinition psiClass, JavaChangeInfo changeInfo) {
     String name = psiClass.getName();
 
-    GrConstructor constructor = GroovyPsiElementFactory.getInstance(psiClass.getProject())
+    GrMethod constructor = GroovyPsiElementFactory.getInstance(psiClass.getProject())
       .createConstructorFromText(name, ArrayUtil.EMPTY_STRING_ARRAY, ArrayUtil.EMPTY_STRING_ARRAY, "{}", null);
 
     GrModifierList list = constructor.getModifierList();
@@ -378,7 +377,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
       list.setModifierProperty(GrModifier.DEF, true);
     }
 
-    constructor = (GrConstructor)psiClass.add(constructor);
+    constructor = (GrMethod)psiClass.add(constructor);
     processConstructor(constructor, changeInfo);
   }
 
