@@ -526,6 +526,8 @@
     <quoteHandler fileType="Mako" className="com.jetbrains.mako.editor.MakoQuoteHandler"/>
     <completion.contributor language="Mako"
                             implementationClass="com.jetbrains.mako.editor.MakoCompletionContributor"/>
+    <completion.contributor language="Mako"
+                            implementationClass="com.jetbrains.mako.editor.MakoFunctionsCompletionContributor"/>
 
     <typedHandler implementation="com.jetbrains.mako.editor.MakoBracesHandler"
                   id="MakoBracesHandler"/>
