@@ -469,7 +469,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
       }
       final NavBarItem item = getItem(index);
 
-      myNodePopup = new NavBarPopup(this, siblings, 0);
+      myNodePopup = new NavBarPopup(this, siblings, index < myModel.size() - 1 ? objects.indexOf(myModel.getElement(index + 1)) : 0);
       if (item != null && item.isShowing()) {
         myNodePopup.show(item);
       }
