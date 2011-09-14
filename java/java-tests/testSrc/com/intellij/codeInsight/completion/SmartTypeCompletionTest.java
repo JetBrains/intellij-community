@@ -953,6 +953,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   public void testSiblingOfAStaticallyImportedField() throws Throwable { doTest(); }
   public void testPrimitiveArrayClassInMethod() throws Throwable { doTest(); }
   public void testPrimitiveClassInAnno() throws Throwable { doTest(); }
+  public void testNewInnerClassOfSuper() throws Throwable { doTest(); }
 
   public void testInferFromCall() throws Throwable {
     doTest();

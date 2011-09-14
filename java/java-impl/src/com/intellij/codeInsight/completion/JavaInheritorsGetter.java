@@ -17,6 +17,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.ExpectedTypeInfo;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightClassUtil;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.util.Condition;
 import com.intellij.pom.java.LanguageLevel;
@@ -116,11 +117,7 @@ public class JavaInheritorsGetter extends CompletionProvider<CompletionParameter
     final PsiClass psiClass = PsiUtil.resolveClassInType(type);
     if (psiClass == null) return null;
 
-    final PsiClass parentClass = psiClass.getContainingClass();
-    if (parentClass != null && !psiClass.hasModifierProperty(PsiModifier.STATIC) &&
-        !PsiTreeUtil.isAncestor(parentClass, parameters.getPosition(), false) &&
-        !(parentClass.getContainingFile().equals(parameters.getOriginalFile()) &&
-          parentClass.getTextRange().contains(parameters.getOffset()))) {
+    if (HighlightClassUtil.checkCreateInnerClassFromStaticContext(parameters.getPosition(), null, psiClass) != null) {
       return null;
     }
 

@@ -792,6 +792,7 @@ public class HighlightClassUtil {
   @Nullable
   public static HighlightInfo checkCreateInnerClassFromStaticContext(PsiNewExpression expression) {
     PsiType type = expression.getType();
+    PsiExpression qualifier = expression.getQualifier();
     if (type == null || type instanceof PsiArrayType || type instanceof PsiPrimitiveType) return null;
     PsiClass aClass = PsiUtil.resolveClassInType(type);
     if (aClass == null) return null;
@@ -800,23 +801,26 @@ public class HighlightClassUtil {
       if (aClass == null) return null;
     }
 
+    return checkCreateInnerClassFromStaticContext(expression, qualifier, aClass);
+  }
+
+  public static HighlightInfo checkCreateInnerClassFromStaticContext(PsiElement element, @Nullable PsiExpression qualifier, PsiClass aClass) {
     if (!PsiUtil.isInnerClass(aClass)) return null;
     PsiClass outerClass = aClass.getContainingClass();
     if (outerClass == null) return null;
 
     PsiElement placeToSearchEnclosingFrom;
-    PsiExpression qualifier = expression.getQualifier();
     if (qualifier != null) {
       PsiType qtype = qualifier.getType();
       placeToSearchEnclosingFrom = PsiUtil.resolveClassInType(qtype);
     }
     else {
-      placeToSearchEnclosingFrom = expression;
+      placeToSearchEnclosingFrom = element;
     }
 
     if (outerClass instanceof JspClass
         || hasEnclosingInstanceInScope(outerClass, placeToSearchEnclosingFrom, true)) return null;
-    return reportIllegalEnclosingUsage(placeToSearchEnclosingFrom, aClass, outerClass, expression);
+    return reportIllegalEnclosingUsage(placeToSearchEnclosingFrom, aClass, outerClass, element);
   }
 
   public static HighlightInfo checkSuperQualifierType(@NotNull Project project, @NotNull PsiMethodCallExpression superCall) {
