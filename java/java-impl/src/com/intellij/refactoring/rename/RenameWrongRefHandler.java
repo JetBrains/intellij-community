@@ -17,22 +17,15 @@
 package com.intellij.refactoring.rename;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.RenameWrongRefFix;
-import com.intellij.lang.LanguageRefactoringSupport;
-import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class RenameWrongRefHandler implements RenameHandler {
 
@@ -42,8 +35,12 @@ public class RenameWrongRefHandler implements RenameHandler {
     final PsiFile file = LangDataKeys.PSI_FILE.getData(dataContext);
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (editor == null || file == null || project == null) return false;
+    return isAvailable(project, editor, file);
+  }
+
+  public static boolean isAvailable(Project project, Editor editor, PsiFile file) {
     final PsiReference reference = file.findReferenceAt(editor.getCaretModel().getOffset());
-    return reference instanceof PsiReferenceExpression && new RenameWrongRefFix((PsiReferenceExpression)reference).isAvailable(project, editor, file);
+    return reference instanceof PsiReferenceExpression && new RenameWrongRefFix((PsiReferenceExpression)reference, true).isAvailable(project, editor, file);
   }
 
   public final boolean isRenaming(final DataContext dataContext) {

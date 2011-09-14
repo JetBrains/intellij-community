@@ -30,7 +30,6 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.template.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
@@ -48,9 +47,15 @@ public class RenameWrongRefFix implements IntentionAction {
   private final PsiReferenceExpression myRefExpr;
   @NonNls private static final String INPUT_VARIABLE_NAME = "INPUTVAR";
   @NonNls private static final String OTHER_VARIABLE_NAME = "OTHERVAR";
+  private final boolean myUnresolvedOnly;
 
   public RenameWrongRefFix(PsiReferenceExpression refExpr) {
+    this(refExpr, false);
+  }
+
+  public RenameWrongRefFix(PsiReferenceExpression refExpr, final boolean unresolvedOnly) {
     myRefExpr = refExpr;
+    myUnresolvedOnly = unresolvedOnly;
   }
 
   @NotNull
@@ -74,7 +79,7 @@ public class RenameWrongRefFix implements IntentionAction {
       return false;
     }
 
-    return !CreateFromUsageUtils.isValidReference(myRefExpr, false) && CreateFromUsageUtils.collectExpressions(myRefExpr, PsiMember.class, PsiFile.class).length > 0;
+    return !CreateFromUsageUtils.isValidReference(myRefExpr, myUnresolvedOnly);
   }
 
   private class ReferenceNameExpression extends Expression {

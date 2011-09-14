@@ -12,6 +12,7 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.rename.RenameProcessor;
+import com.intellij.refactoring.rename.RenameWrongRefHandler;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import org.jetbrains.annotations.NonNls;
 
@@ -58,6 +59,12 @@ public class RenameFieldTest extends LightCodeInsightTestCase {
 
   public void testNonNormalizedFields() throws Exception { // IDEADEV-34344
     doTest("newField", "java");
+  }
+
+  public void testRenameWrongRefDisabled() {
+    String suffix = getTestName(false);
+    configureByFile("/refactoring/renameField/before" + suffix + ".java");
+    assertFalse(RenameWrongRefHandler.isAvailable(getProject(), getEditor(), getFile()));
   }
 
   protected static void perform(String newName) {
