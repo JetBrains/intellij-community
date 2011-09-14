@@ -911,7 +911,22 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
     }
   }
 
-  private void collectThemesFromManifest(AndroidFacet facet, List<ThemeData> resultList, Set<ThemeData> addedThemes, boolean fromProject) {
+  private void collectThemesFromManifest(final AndroidFacet facet,
+                                         final List<ThemeData> resultList,
+                                         final Set<ThemeData> addedThemes,
+                                         final boolean fromProject) {
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
+      public void run() {
+        doCollectThemesFromManifest(facet, resultList, addedThemes, fromProject);
+      }
+    });
+  }
+
+  private void doCollectThemesFromManifest(AndroidFacet facet,
+                                           List<ThemeData> resultList,
+                                           Set<ThemeData> addedThemes,
+                                           boolean fromProject) {
     final Manifest manifest = facet.getManifest();
     if (manifest == null) {
       return;
