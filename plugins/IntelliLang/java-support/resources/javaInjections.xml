@@ -352,4 +352,11 @@
     <display-name>Spring JDBC (org.springframework.jdbc.objectюUpdatableSqlQuery.UpdatableSqlQuery)</display-name>
     <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("UpdatableSqlQuery").withParameters("javax.sql.DataSource", "java.lang.String").definedInClass("org.springframework.jdbc.object.UpdatableSqlQuery"))]]></place>
   </injection>
+
+  <!-- SpringData JPA -->
+  <injection language="JPAQL" injector-id="java">
+    <display-name>SprinData JPA Query(org.springframework.data.jpa.repository)</display-name>
+    <place><![CDATA[psiMethod().withName("value").withParameters().definedInClass("org.springframework.data.jpa.repository.Query")]]></place>
+    <place><![CDATA[psiMethod().withName("countQuery").withParameters().definedInClass("org.springframework.data.jpa.repository.Query")]]></place>
+  </injection>
 </component>
