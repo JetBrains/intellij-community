@@ -26,7 +26,6 @@ class DjangoLineBreakpoint(LineBreakpoint):
 
 
 def inherits(cls, *names):
-    print(cls.__name__)
     if cls.__name__ in names:
         return True
     inherits_node = False
