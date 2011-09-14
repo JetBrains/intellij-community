@@ -468,7 +468,7 @@ public class MacJBTabs extends JBTabsImpl {
     boolean first = getLastLayoutPass().getPreviousFor(selected) == null;
     boolean last = getLastLayoutPass().getNextFor(selected) == null;
     
-    if (first) {
+    if (first && !isGhostsAlwaysVisible()) {
       shape.path.moveTo(shape.labelLeftX + getArcSize(), shape.labelBottomY);
     }
     else {
