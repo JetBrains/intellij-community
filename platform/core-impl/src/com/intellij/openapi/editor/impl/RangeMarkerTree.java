@@ -147,7 +147,7 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
   }
 
   @Override
-  protected void setNode(@NotNull T key, IntervalNode intervalNode) {
+  protected void setNode(@NotNull T key, IntervalNode<T> intervalNode) {
     ((RangeMarkerImpl)key).myNode = (RMNode)intervalNode;
   }
 
@@ -176,19 +176,18 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
   }
 
   private void updateMarkersOnChange(DocumentEvent e) {
-    long start = System.currentTimeMillis();
     try {
       l.writeLock().lock();
       if (size() == 0) return;
       checkMax(true);
 
       modCount++;
-      List<IntervalNode> affected = new SmartList<IntervalNode>();
+      List<IntervalNode<T>> affected = new SmartList<IntervalNode<T>>();
       collectAffectedMarkersAndShiftSubtrees(getRoot(), e, affected);
       checkMax(false);
 
       if (!affected.isEmpty()) {
-        for (IntervalNode node : affected) {
+        for (IntervalNode<T> node : affected) {
           // assumption: interval.getEndOffset() will never be accessed during remove()
           int startOffset = node.intervalStart();
           int endOffset = node.intervalEnd();
@@ -203,7 +202,7 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
           assert node.intervalEnd() == endOffset;
         }
         checkMax(true);
-        for (IntervalNode node : affected) {
+        for (IntervalNode<T> node : affected) {
           List<Getable<T>> keys = node.intervals;
           if (keys.isEmpty()) continue; // collected away
 
@@ -242,17 +241,16 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
       }
       checkMax(true);
 
-      IntervalNode root = getRoot();
+      IntervalNode<T> root = getRoot();
       assert root == null || root.maxEnd + root.delta <= myDocument.getTextLength();
     }
     finally {
       l.writeLock().unlock();
-      long finish = System.currentTimeMillis();
     }
   }
 
   // returns true if all deltas involved are still 0
-  private boolean collectAffectedMarkersAndShiftSubtrees(IntervalNode root, @NotNull DocumentEvent e, @NotNull List<IntervalNode> affected) {
+  private boolean collectAffectedMarkersAndShiftSubtrees(IntervalNode<T> root, @NotNull DocumentEvent e, @NotNull List<IntervalNode<T>> affected) {
     if (root == null) return true;
     boolean norm = pushDelta(root);
 
@@ -274,7 +272,7 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
       int lengthDelta = e.getNewLength() - e.getOldLength();
       int newD = root.changeDelta(lengthDelta);
       norm &= newD == 0;
-      IntervalNode left = root.getLeft();
+      IntervalNode<T> left = root.getLeft();
       if (left != null) {
         int newL = left.changeDelta(-lengthDelta);
         norm &= newL == 0;

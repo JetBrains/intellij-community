@@ -28,7 +28,7 @@ import java.awt.*;
  * Implementation of the markup element for the editor and document.
  * @author max
  */
-class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx, Getable<RangeHighlighterImpl> {
+class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx, Getable<RangeHighlighterEx> {
   private final RangeHighlighterData data;
 
   RangeHighlighterImpl(@NotNull MarkupModel model,
