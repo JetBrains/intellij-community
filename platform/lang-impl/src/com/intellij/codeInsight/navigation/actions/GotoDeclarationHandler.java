@@ -26,6 +26,12 @@ import org.jetbrains.annotations.Nullable;
 public interface GotoDeclarationHandler {
   ExtensionPointName<GotoDeclarationHandler> EP_NAME = ExtensionPointName.create("com.intellij.gotoDeclarationHandler");
 
+  /**
+   * Provides an array of target declarations for given {@code sourceElement}.
+   *
+   * @param sourceElement input psiElement
+   * @return all target declarations as an array of  {@code PsiElement} or null if none was found
+   */
   @Nullable
   PsiElement[] getGotoDeclarationTargets(PsiElement sourceElement);
 }
