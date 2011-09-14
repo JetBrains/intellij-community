@@ -117,7 +117,11 @@ public class EventLog implements Notifications {
     String mainText = notification.getTitle();
     boolean showMore = false;
     if (StringUtil.isNotEmpty(content)) {
-      if (content.startsWith("<") && !content.startsWith("<a ") && !content.startsWith("<p>")) {
+      if (content.startsWith("<p>")) {
+        content = content.substring("<p>".length());
+      }
+
+      if (content.startsWith("<") && !content.startsWith("<a ")) {
         showMore = true;
       }
       else {
