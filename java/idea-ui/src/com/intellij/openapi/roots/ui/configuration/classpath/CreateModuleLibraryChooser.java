@@ -171,6 +171,8 @@ public class CreateModuleLibraryChooser implements ClasspathElementChooser<Libra
     chooserDescriptor.putUserData(LangDataKeys.MODULE_CONTEXT, myModule);
 
     final VirtualFile[] files = FileChooser.chooseFiles(myParentComponent, chooserDescriptor);
+    if (files.length == 0) return;
+
     List<LibraryRootsComponentDescriptor> suitableDescriptors = new ArrayList<LibraryRootsComponentDescriptor>();
     for (Pair<LibraryRootsComponentDescriptor, FileChooserDescriptor> pair : descriptors) {
       if (acceptAll(pair.getSecond(), files)) {
