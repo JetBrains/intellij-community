@@ -97,6 +97,10 @@ public class AndroidValueResourcesTest extends AndroidDomTest {
     doTestHighlighting("styles10.xml");
   }
 
+  public void testStylesAttrNameWithoutPrefix() throws Throwable {
+    doTestCompletion();
+  }
+
   public void testMoreTypes() throws Throwable {
     doTestHighlighting("moreTypes.xml");
   }

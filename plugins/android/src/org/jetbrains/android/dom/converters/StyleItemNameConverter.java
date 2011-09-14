@@ -16,6 +16,8 @@
 
 package org.jetbrains.android.dom.converters;
 
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.ResolvingConverter;
 import org.jetbrains.android.dom.attrs.AttributeDefinitions;
@@ -51,6 +53,16 @@ public class StyleItemNameConverter extends ResolvingConverter<String> {
       }
     }
     return result;
+  }
+
+  @Override
+  public LookupElement createLookupElement(String s) {
+    final String prefix = "android:";
+    if (s == null || !s.startsWith(prefix)) {
+      return null;
+    }
+    final String attributeName = s.substring(prefix.length());
+    return LookupElementBuilder.create(s).addLookupString(attributeName);
   }
 
   @Override
