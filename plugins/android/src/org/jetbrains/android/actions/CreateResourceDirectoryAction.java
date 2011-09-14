@@ -17,6 +17,8 @@ import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+
 /**
  * @author Eugene.Kudelevsky
  */
@@ -73,7 +75,7 @@ public class CreateResourceDirectoryAction extends CreateElementActionBase {
   @Nullable
   @Override
   protected String getActionName(PsiDirectory directory, String newName) {
-    return null;
+    return AndroidBundle.message("new.resource.dir.action.name", directory.getName() + File.separator + newName);
   }
 
   @Override

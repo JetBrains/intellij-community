@@ -23,12 +23,13 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
@@ -38,16 +39,13 @@ import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Eugene.Kudelevsky
- * Date: Aug 22, 2009
- * Time: 7:43:22 PM
- * To change this template use File | Settings | File Templates.
+ * @author Eugene.Kudelevsky
  */
 public class CreateResourceFileAction extends CreateElementActionBase {
   private final Map<String, CreateTypedResourceFileAction> mySubactions = new HashMap<String, CreateTypedResourceFileAction>();
@@ -167,6 +165,13 @@ public class CreateResourceFileAction extends CreateElementActionBase {
   @Nullable
   @Override
   protected String getActionName(PsiDirectory directory, String newName) {
-    return null;
+    return doGetActionName(directory, newName);
+  }
+
+  static String doGetActionName(PsiDirectory directory, String newName) {
+    if (FileUtil.getExtension(newName).length() == 0) {
+      newName += ".xml";
+    }
+    return AndroidBundle.message("new.resource.action.name", directory.getName() + File.separator + newName);
   }
 }

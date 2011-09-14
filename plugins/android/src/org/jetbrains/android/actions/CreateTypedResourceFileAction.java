@@ -48,11 +48,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Properties;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Eugene.Kudelevsky
- * Date: Aug 20, 2009
- * Time: 9:36:33 PM
- * To change this template use File | Settings | File Templates.
+ * @author Eugene.Kudelevsky
  */
 public class CreateTypedResourceFileAction extends CreateElementActionBase {
   private static final String ROOT_TAG_PROPERTY = "ROOT_TAG";
@@ -123,11 +119,6 @@ public class CreateTypedResourceFileAction extends CreateElementActionBase {
             CaretModel caretModel = editor.getCaretModel();
             caretModel.moveToOffset(rootTag.getTextOffset() + 1);
             XmlTagInplaceRenamer.rename(editor, rootTag);
-            /*ApplicationManager.getApplication().invokeLater(new Runnable() {
-              public void run() {
-                invokeCompletion(project, editor, file);
-              }
-            });*/
           }
         }
       }
@@ -145,35 +136,6 @@ public class CreateTypedResourceFileAction extends CreateElementActionBase {
     return AndroidFileTemplateProvider.RESOURCE_FILE_TEMPLATE;
   }
 
-  /* private void invokeCompletion(Project project, final Editor editor, XmlFile file) {
-      new CodeCompletionHandlerBase(CompletionType.BASIC).invokeCompletion(project, editor, file, 1);
-      CompletionProgressIndicator indicator = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
-      if (indicator != null) {
-        final LookupImpl lookup = indicator.getLookup();
-        lookup.setAdditionalPrefix(myDefaultRootTag);
-        lookup.addLookupListener(new LookupAdapter() {
-          boolean prefixCanceled;
-
-          @Override
-          public void itemSelected(LookupEvent event) {
-            TemplateManagerImpl.getTemplateState(editor).gotoEnd();
-          }
-
-          @Override
-          public void currentItemChanged(LookupEvent event) {
-            if (!prefixCanceled) {
-              prefixCanceled = true;
-              lookup.setAdditionalPrefix("");
-            }
-          }
-
-          @Override
-          public void lookupCanceled(LookupEvent event) {
-          }
-        });
-      }
-    }
-  */
   @Override
   protected boolean isAvailable(DataContext context) {
     if (!super.isAvailable(context)) return false;
@@ -201,7 +163,7 @@ public class CreateTypedResourceFileAction extends CreateElementActionBase {
   @Nullable
   @Override
   protected String getActionName(PsiDirectory directory, String newName) {
-    return null;
+    return CreateResourceFileAction.doGetActionName(directory, newName);
   }
 
   @Override
