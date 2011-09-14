@@ -121,10 +121,25 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
   private static final String COMMIT_MESSAGE_TITLE = VcsBundle.message("label.selected.revision.commit.message");
   @NonNls private static final String VCS_HISTORY_ACTIONS_GROUP = "VcsHistoryActionsGroup";
 
+  private final Map<VcsRevisionNumber, Integer> myRevisionsOrder;
+
+  private final Comparator<VcsFileRevision> myRevisionsInOrderComparator = new Comparator<VcsFileRevision>() {
+    @Override
+    public int compare(VcsFileRevision o1, VcsFileRevision o2) {
+      // descending
+      return Comparing.compare(myRevisionsOrder.get(o2.getRevisionNumber()), myRevisionsOrder.get(o1.getRevisionNumber()));
+    }
+  };
+
   private final DualViewColumnInfo REVISION =
     new VcsColumnInfo<VcsRevisionNumber>(VcsBundle.message("column.name.revision.version")) {
       protected VcsRevisionNumber getDataOf(VcsFileRevision object) {
         return object.getRevisionNumber();
+      }
+
+      @Override
+      public Comparator<VcsFileRevision> getComparator() {
+        return myRevisionsInOrderComparator;
       }
 
       public String valueOf(VcsFileRevision object) {
@@ -333,6 +348,9 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     myComments.setBackground(UIUtil.getComboBoxDisabledBackground());
     myComments.addHyperlinkListener(new BrowserHyperlinkListener());
 
+    myRevisionsOrder = new HashMap<VcsRevisionNumber, Integer>();
+    refreshRevisionsOrder();
+
     replaceTransferable();
 
     myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
@@ -490,6 +508,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
 
   private void refresh(final VcsHistorySession session) {
     myHistorySession = session;
+    refreshRevisionsOrder();
     HistoryAsTreeProvider treeHistoryProvider = session.getHistoryAsTreeProvider();
 
     if (treeHistoryProvider != null) {
@@ -1571,6 +1590,17 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     public void update(AnActionEvent e) {
       super.update(e);
       e.getPresentation().setEnabled(! myInRefresh);
+    }
+  }
+
+  private void refreshRevisionsOrder() {
+    final List<VcsFileRevision> list = myHistorySession.getRevisionList();
+    myRevisionsOrder.clear();
+
+    int cnt = 0;
+    for (VcsFileRevision revision : list) {
+      myRevisionsOrder.put(revision.getRevisionNumber(), cnt);
+      ++ cnt;
     }
   }
 }
