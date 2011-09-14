@@ -521,7 +521,7 @@ public class JavaCompletionData extends JavaAwareCompletionData{
       not(psiElement().afterLeaf("."))
     );
     if (exprKeywords.accepts(position)) {
-      result.addElement(createKeyword(position, PsiKeyword.NEW));
+      result.addElement(TailTypeDecorator.withTail(createKeyword(position, PsiKeyword.NEW), TailType.SPACE));
       result.addElement(createKeyword(position, PsiKeyword.NULL));
       result.addElement(createKeyword(position, PsiKeyword.TRUE));
       result.addElement(createKeyword(position, PsiKeyword.FALSE));
