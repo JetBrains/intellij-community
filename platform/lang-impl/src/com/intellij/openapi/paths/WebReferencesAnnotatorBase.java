@@ -110,13 +110,17 @@ public abstract class WebReferencesAnnotatorBase extends ExternalAnnotator<WebRe
     final HttpClient client = new HttpClient();
     client.setTimeout(3000);
     client.setConnectionTimeout(3000);
-    final GetMethod method = new GetMethod(url);
     try {
+      final GetMethod method = new GetMethod(url);
       return client.executeMethod(method) == HttpStatus.SC_OK;
     }
     catch (IOException e) {
       LOG.info(e);
-      return false;
+      return true;
+    }
+    catch (IllegalArgumentException e) {
+      LOG.debug(e);
+      return true;
     }
   }
 
