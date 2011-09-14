@@ -50,6 +50,8 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.util.ui.update.Activatable;
+import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -79,6 +81,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
   private static final String ENTER = CodeInsightBundle.message("template.shortcut.enter");
   private final Map<TemplateOptionalProcessor, Boolean> myOptions;
   private final Map<TemplateContextType, Boolean> myContext;
+  private JBPopup myContextPopup;
 
   public LiveTemplateSettingsEditor(TemplateImpl template,
                                     final String defaultShortcut,
@@ -110,6 +113,14 @@ public class LiveTemplateSettingsEditor extends JPanel {
     };
     myKeyField.getDocument().addDocumentListener(listener);
     myDescription.getDocument().addDocumentListener(listener);
+
+    new UiNotifyConnector(this, new Activatable.Adapter() {
+      @Override
+      public void hideNotify() {
+        disposeContextPopup();
+      }
+    });
+
   }
 
   public TemplateImpl getTemplate() {
@@ -308,24 +319,28 @@ public class LiveTemplateSettingsEditor extends JPanel {
     };
 
     change.addMouseListener(new MouseAdapter() {
-      private JBPopup myPopup;
       @Override
       public void mouseClicked(MouseEvent e) {
-        if (myPopup != null && myPopup.isVisible()) {
-          myPopup.cancel();
-          myPopup = null;
-          return;
-        }
+        if (disposeContextPopup()) return;
 
         JPanel content = createPopupContextPanel(updateLabel);
-        myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(content, null).setResizable(true).createPopup();
-        myPopup.show(new RelativePoint(change, new Point(change.getWidth() , -content.getPreferredSize().height - 10)));
+        myContextPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(content, null).setResizable(true).createPopup();
+        myContextPopup.show(new RelativePoint(change, new Point(change.getWidth() , -content.getPreferredSize().height - 10)));
       }
     });
 
     updateLabel.run();
 
     return panel;
+  }
+
+  private boolean disposeContextPopup() {
+    if (myContextPopup != null && myContextPopup.isVisible()) {
+      myContextPopup.cancel();
+      myContextPopup = null;
+      return true;
+    }
+    return false;
   }
 
   private JPanel createPopupContextPanel(final Runnable onChange) {
