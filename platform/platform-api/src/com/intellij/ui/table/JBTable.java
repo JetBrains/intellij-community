@@ -355,7 +355,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       add(editorComp);
       editorComp.validate();
 
-      editorComp.requestFocusInWindow();
+      IdeFocusManager.findInstanceByComponent(this).requestFocus(editorComp, false);
 
       setCellEditor(editor);
       setEditingRow(row);
