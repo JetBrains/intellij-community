@@ -19,6 +19,7 @@ import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CharTailType;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.TailTypes;
+import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.openapi.diagnostic.Logger;
@@ -82,7 +83,7 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
 
   private static void handleParentheses(final boolean hasParams, final boolean needParenth, TailType tailType, InsertionContext context, InsertHandlerState myState){
     final Document document = context.getEditor().getDocument();
-    boolean insertRightParenth = tailType != TailType.SMART_COMPLETION;
+    boolean insertRightParenth = context.getCompletionChar() != Lookup.COMPLETE_STATEMENT_SELECT_CHAR;
 
     if (needParenth){
       if (context.getOffsetMap().getOffset(JavaCompletionUtil.LPAREN_OFFSET) >= 0 && context.getOffsetMap().getOffset(JavaCompletionUtil.ARG_LIST_END_OFFSET) >= 0){

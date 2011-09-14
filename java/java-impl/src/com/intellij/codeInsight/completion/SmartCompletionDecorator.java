@@ -49,7 +49,7 @@ public class SmartCompletionDecorator extends TailTypeDecorator<LookupElement> {
 
   protected TailType computeTailType(InsertionContext context) {
     if (context.getCompletionChar() == Lookup.COMPLETE_STATEMENT_SELECT_CHAR) {
-      return TailType.SMART_COMPLETION;
+      return TailType.NONE;
     }
 
     if (LookupItem.getDefaultTailType(context.getCompletionChar()) != null) {

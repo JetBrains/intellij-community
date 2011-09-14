@@ -7,6 +7,7 @@ import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileTypes.StdFileTypes
 import com.intellij.psi.CommonClassNames
@@ -944,6 +945,12 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     configure()
     myFixture.complete(CompletionType.BASIC, 2)
     type '\n'
+    checkResult()
+  }
+
+  public void testKeywordSmartEnter() {
+    configure()
+    myFixture.performEditorAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_COMPLETE_STATEMENT)
     checkResult()
   }
 

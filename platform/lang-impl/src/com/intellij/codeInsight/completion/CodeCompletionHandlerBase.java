@@ -20,6 +20,8 @@ import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler;
+import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessor;
+import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessors;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -622,7 +624,8 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         assert context.getTailOffset() >= 0 : "stale tailOffset";
 
         item.handleInsert(context);
-        PostprocessReformattingAspect.getInstance(indicator.getProject()).doPostponedFormatting();
+        Project project = indicator.getProject();
+        PostprocessReformattingAspect.getInstance(project).doPostponedFormatting();
 
         if (context.shouldAddCompletionChar()) {
           int tailOffset = context.getTailOffset();
@@ -632,8 +635,18 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
           } else {
             editor.getCaretModel().moveToOffset(tailOffset);
           }
-          DataContext dataContext = DataManager.getInstance().getDataContext(editor.getContentComponent());
-          EditorActionManager.getInstance().getTypedAction().getHandler().execute(editor, completionChar, dataContext);
+          if (context.getCompletionChar() == Lookup.COMPLETE_STATEMENT_SELECT_CHAR) {
+            final Language language = PsiUtilBase.getLanguageInEditor(editor, project);
+            final List<SmartEnterProcessor> processors = SmartEnterProcessors.INSTANCE.forKey(language);
+            if (processors.size() > 0) {
+              for (SmartEnterProcessor processor : processors) {
+                processor.process(project, editor, indicator.getParameters().getOriginalFile());
+              }
+            }
+          } else {
+            DataContext dataContext = DataManager.getInstance().getDataContext(editor.getContentComponent());
+            EditorActionManager.getInstance().getTypedAction().getHandler().execute(editor, completionChar, dataContext);
+          }
         }
         context.stopWatching();
         editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
@@ -736,7 +749,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       super(indicator.getOffsetMap(), completionChar, items.toArray(new LookupElement[items.size()]),
             indicator.getParameters().getOriginalFile(), editor,
             completionChar != Lookup.AUTO_INSERT_SELECT_CHAR && completionChar != Lookup.REPLACE_SELECT_CHAR &&
-            completionChar != Lookup.NORMAL_SELECT_CHAR && completionChar != Lookup.COMPLETE_STATEMENT_SELECT_CHAR);
+            completionChar != Lookup.NORMAL_SELECT_CHAR);
     }
 
     @Override

@@ -76,7 +76,9 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
 
     if (tag == null) return;
 
-    context.setAddCompletionChar(false);
+    if (context.getCompletionChar() != Lookup.COMPLETE_STATEMENT_SELECT_CHAR) {
+      context.setAddCompletionChar(false);
+    }
 
     final XmlElementDescriptor descriptor = tag.getDescriptor();
 
