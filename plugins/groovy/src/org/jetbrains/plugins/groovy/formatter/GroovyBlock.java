@@ -63,17 +63,17 @@ public class GroovyBlock implements Block, GroovyElementTypes, ASTBlock {
   final protected Indent myIndent;
   final protected Wrap myWrap;
   final protected CodeStyleSettings mySettings;
-  final protected Map<GrBinaryExpression, Alignment> myInnerAlignments;
+  final protected Map<PsiElement, Alignment> myInnerAlignments;
 
 
   protected List<Block> mySubBlocks = null;
 
   public GroovyBlock(@NotNull final ASTNode node, @Nullable final Alignment alignment, @NotNull final Indent indent, @Nullable final Wrap wrap, final CodeStyleSettings settings) {
-    this(node, alignment, indent, wrap, settings, Collections.<GrBinaryExpression, Alignment>emptyMap());
+    this(node, alignment, indent, wrap, settings, Collections.<PsiElement, Alignment>emptyMap());
   }
 
   public GroovyBlock(@NotNull final ASTNode node, @Nullable final Alignment alignment, @NotNull final Indent indent, @Nullable final Wrap wrap, final CodeStyleSettings settings,
-                     @NotNull Map<GrBinaryExpression, Alignment> innerAlignments) {
+                     @NotNull Map<PsiElement, Alignment> innerAlignments) {
     myNode = node;
     myAlignment = alignment;
     myIndent = indent;

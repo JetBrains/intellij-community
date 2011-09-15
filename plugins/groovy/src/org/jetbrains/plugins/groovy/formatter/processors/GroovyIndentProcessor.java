@@ -136,6 +136,10 @@ public abstract class GroovyIndentProcessor implements GroovyElementTypes {
       return Indent.getSpaceIndent(GDOC_COMMENT_INDENT);
     }
 
+    if (child.getPsi() instanceof GrVariable && psiParent instanceof GrVariableDeclaration) {
+      return Indent.getContinuationWithoutFirstIndent();
+    }
+
     return Indent.getNoneIndent();
   }
 

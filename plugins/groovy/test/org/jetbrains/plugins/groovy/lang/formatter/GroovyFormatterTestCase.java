@@ -30,8 +30,6 @@ import com.intellij.util.IncorrectOperationException;
 import junit.framework.Assert;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
-import java.io.IOException;
-
 /**
  * @author peter
  */
@@ -77,12 +75,12 @@ public abstract class GroovyFormatterTestCase extends LightCodeInsightFixtureTes
     myTempSettings = null;
   }
 
-  protected void checkFormatting(String fileText, String expected) throws Throwable {
+  protected void checkFormatting(String fileText, String expected) {
     myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, fileText);
     checkFormatting(expected);
   }
 
-  protected void checkFormatting(String expected) throws IOException {
+  protected void checkFormatting(String expected) {
     CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
       @Override
       public void run() {

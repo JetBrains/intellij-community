@@ -1,0 +1,11 @@
+public class FormattingTest {
+
+    int start = 1
+    double end = 2
+}
+-----
+public class FormattingTest {
+
+  int start = 1
+  double end = 2
+}
