@@ -16,6 +16,7 @@
 package com.intellij.openapi.diff.impl.patch.formove;
 
 import com.intellij.openapi.diff.impl.patch.PatchEP;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -34,12 +35,12 @@ public class TestPatchEP implements PatchEP {
   }
 
   @Override
-  public CharSequence provideContent(@NotNull String path) {
+  public CharSequence provideContent(Project project, @NotNull String path) {
     return ourContent + path;
   }
 
   @Override
-  public void consumeContent(@NotNull String path, @NotNull CharSequence content) {
+  public void consumeContent(Project project, @NotNull String path, @NotNull CharSequence content) {
     assert (ourContent + path).equals(content.toString());
   }
 }

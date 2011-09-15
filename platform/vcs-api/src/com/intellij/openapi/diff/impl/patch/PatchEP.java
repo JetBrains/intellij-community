@@ -16,6 +16,7 @@
 package com.intellij.openapi.diff.impl.patch;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,12 +30,14 @@ public interface PatchEP {
   @NotNull
   String getName();
   /**
+   * @param project
    * @param path - before path, if exist, otherwise after path
    */
   @Nullable
-  CharSequence provideContent(@NotNull final String path);
+  CharSequence provideContent(Project project, @NotNull final String path);
   /**
+   * @param project
    * @param path - before path, if exist, otherwise after path
    */
-  void consumeContent(@NotNull final String path, @NotNull final CharSequence content);
+  void consumeContent(Project project, @NotNull final String path, @NotNull final CharSequence content);
 }

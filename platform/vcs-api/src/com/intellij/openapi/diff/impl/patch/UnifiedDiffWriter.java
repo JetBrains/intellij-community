@@ -47,10 +47,10 @@ public class UnifiedDiffWriter {
 
   public static void write(Project project, Collection<FilePatch> patches, Writer writer, final String lineSeparator) throws IOException {
     final PatchEP[] extensions = project == null ? new PatchEP[0] : Extensions.getExtensions(PatchEP.EP_NAME, project);
-    write(patches, writer, lineSeparator, extensions);
+    write(project, patches, writer, lineSeparator, extensions);
   }
 
-  public static void write(Collection<FilePatch> patches, Writer writer, final String lineSeparator,
+  public static void write(Project project, Collection<FilePatch> patches, Writer writer, final String lineSeparator,
                            final PatchEP[] extensions) throws IOException {
     for(FilePatch filePatch: patches) {
       if (!(filePatch instanceof TextFilePatch)) continue;
@@ -58,7 +58,7 @@ public class UnifiedDiffWriter {
       final String path = patch.getBeforeName() == null ? patch.getAfterName() : patch.getBeforeName();
       final Map<String , CharSequence> additionalMap = new HashMap<String, CharSequence>();
       for (PatchEP extension : extensions) {
-        final CharSequence charSequence = extension.provideContent(path);
+        final CharSequence charSequence = extension.provideContent(project, path);
         if (! StringUtil.isEmpty(charSequence)) {
           additionalMap.put(extension.getName(), charSequence);
         }

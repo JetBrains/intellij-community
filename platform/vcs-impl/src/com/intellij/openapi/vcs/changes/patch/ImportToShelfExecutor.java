@@ -135,12 +135,12 @@ public class ImportToShelfExecutor implements ApplyPatchExecutor {
     }
 
     @Override
-    public CharSequence provideContent(@NotNull String path) {
+    public CharSequence provideContent(Project project, @NotNull String path) {
       return myMap.get(path);
     }
 
     @Override
-    public void consumeContent(@NotNull String path, @NotNull CharSequence content) {
+    public void consumeContent(Project project, @NotNull String path, @NotNull CharSequence content) {
       throw new UnsupportedOperationException();
     }
   }

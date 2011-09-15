@@ -90,7 +90,7 @@ public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor {
           for (PatchEP extension : extensions) {
             final CharSequence charSequence = innerMap.get(extension.getName());
             if (charSequence != null) {
-              extension.consumeContent(path, charSequence);
+              extension.consumeContent(project, path, charSequence);
             }
           }
         }
