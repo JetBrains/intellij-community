@@ -32,7 +32,7 @@ import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeUtil;
-import com.intellij.psi.stubs.StubUpdatingIndex;
+import com.intellij.psi.stubs.StubTreeLoader;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtil;
@@ -185,7 +185,7 @@ public class JavaParserUtil {
       text = chameleon.getChars();
     }
     else {
-      text = psi.getUserData(StubUpdatingIndex.FILE_TEXT_CONTENT_KEY);
+      text = psi.getUserData(StubTreeLoader.FILE_TEXT_CONTENT_KEY);
       if (text == null) text = chameleon.getChars();
     }
 

@@ -17,12 +17,15 @@ package com.intellij.psi.stubs;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 
 /**
  * @author yole
  */
 public abstract class StubTreeLoader {
+  public static final Key<CharSequence> FILE_TEXT_CONTENT_KEY = Key.create("file text content cached by stub indexer");
+
   public static StubTreeLoader getInstance() {
     return ServiceManager.getService(StubTreeLoader.class);
   }

@@ -49,8 +49,6 @@ import java.util.concurrent.Callable;
 public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtension<Integer, SerializedStubTree, FileContent> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.StubUpdatingIndex");
 
-  public static final Key<CharSequence> FILE_TEXT_CONTENT_KEY = Key.create("file text content cached by stub indexer");
-
   public static final ID<Integer, SerializedStubTree> INDEX_ID = ID.create("Stubs");
 
   private static final int VERSION = 20;
@@ -158,7 +156,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
 
         PsiFile psi = inputData.getPsiFile();
         CharSequence contentAsText = inputData.getContentAsText();
-        psi.putUserData(FILE_TEXT_CONTENT_KEY, contentAsText);
+        psi.putUserData(StubTreeLoader.FILE_TEXT_CONTENT_KEY, contentAsText);
 
         try {
           if (type instanceof IStubFileElementType) {
@@ -172,7 +170,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
           }
         }
         finally {
-          psi.putUserData(FILE_TEXT_CONTENT_KEY, null);
+          psi.putUserData(StubTreeLoader.FILE_TEXT_CONTENT_KEY, null);
         }
       }
 
