@@ -15,10 +15,14 @@
  */
 package com.intellij.uiDesigner.propertyInspector.editors.string;
 
+import com.intellij.ide.DataManager;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SpeedSearchBase;
@@ -35,6 +39,7 @@ import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
@@ -105,15 +110,25 @@ public final class KeyChooserDialog extends DialogWrapper{
     });
 
     // Calculate width for "Key" columns
+    final Project projectGuess = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(parent));
+    final Dimension size = DimensionService.getInstance().getSize(getDimensionServiceKey(), projectGuess);
     final FontMetrics metrics = myTable.getFontMetrics(myTable.getFont());
-    int width = 0;
+    int minWidth = 200;
+    int maxWidth = size.width / 2;
+    if (minWidth > maxWidth) {
+      minWidth = maxWidth;
+    }
+    int width = minWidth;
     for(int i = myPairs.size() - 1; i >= 0; i--){
       final Pair<String, String> pair = myPairs.get(i);
       width = Math.max(width, metrics.stringWidth(pair.getFirst()));
     }
-    width += 30;
+    width += 20;
     width = Math.max(width, metrics.stringWidth(myModel.getColumnName(0)));
-    final TableColumn keyColumn = myTable.getColumnModel().getColumn(0);
+    width = Math.max(width, minWidth);
+    width = Math.min(width, maxWidth);
+    final TableColumnModel columnModel = myTable.getColumnModel();
+    final TableColumn keyColumn = columnModel.getColumn(0);
     keyColumn.setMaxWidth(width);
     keyColumn.setMinWidth(width);
     final TableCellRenderer defaultRenderer = myTable.getDefaultRenderer(String.class);
