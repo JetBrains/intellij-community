@@ -278,8 +278,9 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
 
 
   public String getDisplayName() {
-    final int lineNumber = (getHighlighter().getDocument().getLineNumber(getHighlighter().getStartOffset()) + 1);
-    if(isValid()) {
+    final RangeHighlighter highlighter = getHighlighter();
+    if(highlighter.isValid() && isValid()) {
+      final int lineNumber = (highlighter.getDocument().getLineNumber(highlighter.getStartOffset()) + 1);
       final String className = getClassName();
       final boolean hasClassInfo = className != null && className.length() > 0;
       final boolean hasMethodInfo = myMethodName != null && myMethodName.length() > 0;
