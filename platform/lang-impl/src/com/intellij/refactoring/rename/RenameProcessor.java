@@ -29,12 +29,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
-import com.intellij.psi.PsiCompiledElement;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.copy.CopyFilesOrDirectoriesHandler;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.rename.naming.AutomaticRenamer;
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
@@ -300,9 +299,19 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   }
 
   public void performRefactoring(UsageInfo[] usages) {
+    final int[] choice = myAllRenames.size() > 1 ? new int[]{-1} : null;
     String message = null;
     try {
-      for (Map.Entry<PsiElement, String> entry : myAllRenames.entrySet()) {
+      for (Iterator<Map.Entry<PsiElement, String>> iterator = myAllRenames.entrySet().iterator(); iterator.hasNext(); ) {
+        Map.Entry<PsiElement, String> entry = iterator.next();
+        if (entry.getKey() instanceof PsiFile) {
+          final PsiFile file = (PsiFile)entry.getKey();
+          final PsiDirectory containingDirectory = file.getContainingDirectory();
+          if (CopyFilesOrDirectoriesHandler.checkFileExist(containingDirectory, choice, file, entry.getValue())) {
+            iterator.remove();
+            continue;
+          }
+        }
         RenameUtil.checkRename(entry.getKey(), entry.getValue());
       }
     }
