@@ -84,8 +84,8 @@ public class PythonAllTestsSuite {
     PyDeprecationTest.class,
     PythonHighlightingLexerTest.class,
     PyOldStyleClassInspectionTest.class,
-    DjangoTemplateParserTest.class,
-    Jinja2ParserTest.class
+    Jinja2ParserTest.class,
+    DjangoTemplateParserTest.class
   };
 
   public static TestSuite suite() {
