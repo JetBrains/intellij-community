@@ -744,6 +744,11 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     assertStringItems 'final', 'finalize'
   }
 
+  public void testOnlyClassesInExtends() throws Throwable {
+    configure()
+    assertStringItems 'Inner'
+  }
+
   public void testPrimitiveTypesInForLoop() throws Throwable { doPrimitiveTypeTest() }
   public void testPrimitiveTypesInForLoop2() throws Throwable { doPrimitiveTypeTest() }
   public void testPrimitiveTypesInForLoop3() throws Throwable { doPrimitiveTypeTest() }

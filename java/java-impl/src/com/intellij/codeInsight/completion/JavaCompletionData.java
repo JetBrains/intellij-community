@@ -156,7 +156,7 @@ public class JavaCompletionData extends JavaAwareCompletionData{
   public static final ElementPattern<PsiElement> START_FOR =
     psiElement().afterLeaf(psiElement().withText("(").afterLeaf("for")).withParents(PsiJavaCodeReferenceElement.class, PsiExpressionStatement.class, PsiForStatement.class);
   private static final PsiJavaElementPattern.Capture<PsiElement> CLASS_REFERENCE =
-    psiElement().withParent(psiElement().referencing(psiClass()));
+    psiElement().withParent(psiReferenceExpression().referencing(psiClass()));
 
   public JavaCompletionData(){
     declareCompletionSpaces();
