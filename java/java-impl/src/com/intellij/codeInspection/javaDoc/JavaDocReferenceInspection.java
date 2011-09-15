@@ -112,7 +112,7 @@ public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
 
       @Override public void visitDocTag(PsiDocTag tag) {
         super.visitDocTag(tag);
-        final JavadocManager javadocManager = JavaPsiFacade.getInstance(tag.getProject()).getJavadocManager();
+        final JavadocManager javadocManager = JavadocManager.SERVICE.getInstance(tag.getProject());
         final JavadocTagInfo info = javadocManager.getTagInfo(tag.getName());
         if (info == null || !info.isInline()) {
           visitRefInDocTag(tag, javadocManager, context, problems, manager, onTheFly);
@@ -121,7 +121,7 @@ public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
 
       @Override public void visitInlineDocTag(PsiInlineDocTag tag) {
         super.visitInlineDocTag(tag);
-        final JavadocManager javadocManager = JavaPsiFacade.getInstance(tag.getProject()).getJavadocManager();
+        final JavadocManager javadocManager = JavadocManager.SERVICE.getInstance(tag.getProject());
         visitRefInDocTag(tag, javadocManager, context, problems, manager, onTheFly);
       }
 

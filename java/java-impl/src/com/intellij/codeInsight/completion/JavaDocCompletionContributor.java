@@ -125,7 +125,7 @@ public class JavaDocCompletionContributor extends CompletionContributor {
       final PsiElement parent = comment.getContext();
       final boolean isInline = position.getContext() instanceof PsiInlineDocTag;
 
-      final JavadocManager manager = JavaPsiFacade.getInstance(position.getProject()).getJavadocManager();
+      final JavadocManager manager = JavadocManager.SERVICE.getInstance(position.getProject());
       final JavadocTagInfo[] infos = manager.getTagInfos(parent);
       for (JavadocTagInfo info : infos) {
         if (info.getName().equals(SuppressionUtil.SUPPRESS_INSPECTIONS_TAG_NAME)) continue;

@@ -15,14 +15,25 @@
  */
 package com.intellij.psi.javadoc;
 
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author mike
  */
 public interface JavadocManager {
+  class SERVICE {
+    private SERVICE() {
+    }
+
+    public static JavadocManager getInstance(Project project) {
+      return ServiceManager.getService(project, JavadocManager.class);
+    }
+  }
+  
   @NotNull
   JavadocTagInfo[] getTagInfos(PsiElement context);
 

@@ -38,13 +38,11 @@ import com.intellij.psi.impl.migration.PsiMigrationImpl;
 import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.JavaDummyHolder;
 import com.intellij.psi.impl.source.JavaDummyHolderFactory;
-import com.intellij.psi.impl.source.javadoc.JavadocManagerImpl;
 import com.intellij.psi.impl.source.jsp.jspXml.JspDirective;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.resolve.PsiResolveHelperImpl;
 import com.intellij.psi.impl.source.tree.JavaChangeUtilSupport;
 import com.intellij.psi.impl.source.tree.JavaElementType;
-import com.intellij.psi.javadoc.JavadocManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -72,7 +70,6 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
   private final PsiElementFinder[] myElementFinders;
   private PsiShortNamesCache myShortNamesCache;
   private final PsiResolveHelper myResolveHelper;
-  private final JavadocManager myJavadocManager;
   private final PsiNameHelper myNameHelper;
   private final PsiConstantEvaluationHelper myConstantEvaluationHelper;
   private final ConcurrentMap<String, PsiPackage> myPackageCache = new ConcurrentHashMap<String, PsiPackage>();
@@ -88,7 +85,6 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
                            MessageBus bus) {
     myProject = project;
     myResolveHelper = new PsiResolveHelperImpl(PsiManager.getInstance(project));
-    myJavadocManager = new JavadocManagerImpl(project);
     myNameHelper = new PsiNameHelperImpl(this);
     myConstantEvaluationHelper = new PsiConstantEvaluationHelperImpl();
 
@@ -297,11 +293,6 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
     LOG.assertTrue(myCurrentMigration == null);
     myCurrentMigration = new PsiMigrationImpl(this, (PsiManagerImpl)PsiManager.getInstance(myProject));
     return myCurrentMigration;
-  }
-
-  @NotNull
-  public JavadocManager getJavadocManager() {
-    return myJavadocManager;
   }
 
   @NotNull
