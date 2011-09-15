@@ -204,7 +204,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
       myFileProcessor.savePathFile(
         new CompoundShelfFileProcessor.ContentProvider(){
             public void writeContentTo(final Writer writer) throws IOException {
-              UnifiedDiffWriter.write(patches, writer, "\n", patchTransitExtensions);
+              UnifiedDiffWriter.write(myProject, patches, writer, "\n", patchTransitExtensions);
             }
           },
           patchPath);
