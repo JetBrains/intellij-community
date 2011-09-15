@@ -17,21 +17,13 @@ package com.intellij.psi.impl.source.parsing;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.lang.ASTFactory;
-import com.intellij.lexer.FilterLexer;
-import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.LexerPosition;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.CharTable;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @deprecated old Java parser is deprecated in favor of PSI builder-based one (see com.intellij.lang.java.parser.*) (to remove in IDEA 11).
@@ -45,57 +37,10 @@ public class Parsing  {
     myContext = context;
   }
 
-  @Nullable
-  public static CompositeElement parseJavaCodeReferenceText(PsiManager manager, @NotNull CharSequence buffer, CharTable table) {
-    return (CompositeElement)parseJavaCodeReferenceText(manager, buffer, 0, buffer.length(), table, false);
-  }
-
-  //Since we are to parse greedily (up to the end) in case eatAll=true,
-  //  we are not guaranteed to return reference actually
-  @Nullable
-  public static TreeElement parseJavaCodeReferenceText(PsiManager manager,
-                                                       CharSequence buffer,
-                                                       int startOffset,
-                                                       int endOffset,
-                                                       CharTable table,
-                                                       boolean eatAll) {
-    Lexer originalLexer = new JavaLexer(LanguageLevelProjectExtension.getInstance(manager.getProject()).getLanguageLevel());
-    FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET));
-    lexer.start(buffer, startOffset, endOffset);
-
-    JavaParsingContext context = new JavaParsingContext(table, LanguageLevelProjectExtension.getInstance(manager.getProject()).getLanguageLevel());
-    CompositeElement ref = context.getStatementParsing().parseJavaCodeReference(lexer, false, true, false, false);
-    final FileElement dummyRoot = DummyHolderFactory.createHolder(manager, null, table).getTreeElement();
-    if (ref == null) {
-      if (!eatAll) return null;
-    } else {
-      dummyRoot.rawAddChildren(ref);
-    }
-
-    if (lexer.getTokenType() != null) {
-      if (!eatAll) return null;
-      final CompositeElement errorElement = Factory.createErrorElement(JavaErrorMessages.message("unexpected.tokens"));
-      while (lexer.getTokenType() != null) {
-        final TreeElement token = ParseUtil.createTokenElement(lexer, context.getCharTable());
-        errorElement.rawAddChildren(token);
-        lexer.advance();
-      }
-      dummyRoot.rawAddChildren(errorElement);
-    }
-
-    ParseUtil.insertMissingTokens(dummyRoot, originalLexer, startOffset, endOffset, -1, WhiteSpaceAndCommentsProcessor.INSTANCE, context);
-    return dummyRoot.getFirstChildNode();
-  }
-
   public CompositeElement parseJavaCodeReference(Lexer lexer, boolean allowIncomplete, final boolean parseParameterList,
-                                                 boolean parseAnnotations, boolean parseNewExpression) {
+                                                 boolean parseNewExpression) {
     CompositeElement refElement = ASTFactory.composite(JavaElementType.JAVA_CODE_REFERENCE);
-    LexerPosition beforeAnnos = lexer.getCurrentPosition();
-    if (parseAnnotations) {
-      parseAnnotationListTo(lexer, refElement);
-    }
     if (lexer.getTokenType() != JavaTokenType.IDENTIFIER) {
-      if (parseAnnotations) lexer.restore(beforeAnnos);
       return null;
     }
 
@@ -186,21 +131,6 @@ public class Parsing  {
     }
   }
 
-  public static CompositeElement parseTypeText(PsiManager manager, CharSequence buffer, int startOffset, int endOffset, CharTable table) {
-    Lexer originalLexer = new JavaLexer(LanguageLevelProjectExtension.getInstance(manager.getProject()).getLanguageLevel());
-    FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET));
-    lexer.start(buffer, startOffset, endOffset);
-    final JavaParsingContext context = new JavaParsingContext(table, LanguageLevelProjectExtension.getInstance(manager.getProject()).getLanguageLevel());
-    CompositeElement type = context.getStatementParsing().parseTypeWithEllipsis(lexer);
-    if (type == null) return null;
-    if (lexer.getTokenType() != null) return null;
-    final FileElement dummyRoot = DummyHolderFactory.createHolder(manager, null, table).getTreeElement();
-    dummyRoot.rawAddChildren(type);
-
-    ParseUtil.insertMissingTokens(dummyRoot, originalLexer, startOffset, endOffset, -1, WhiteSpaceAndCommentsProcessor.INSTANCE, context);
-    return type;
-  }
-
   public CompositeElement parseTypeWithEllipsis(Lexer lexer, boolean eatLastDot, boolean allowWildcard) {
     CompositeElement type = parseType(lexer, eatLastDot, allowWildcard, false);
     if (type == null) return null;
@@ -215,21 +145,9 @@ public class Parsing  {
     return type;
 
   }
-  public CompositeElement parseTypeWithEllipsis(Lexer lexer) {
-    return parseTypeWithEllipsis(lexer, true, true);
-  }
 
   public CompositeElement parseType(Lexer lexer){
     return parseType(lexer, true, true, false);
-  }
-
-  protected void parseAnnotationListTo(@NotNull Lexer lexer, @Nullable CompositeElement element) {
-    IElementType tokenType = lexer.getTokenType();
-    while (tokenType == JavaTokenType.AT) {
-      CompositeElement anno = myContext.getDeclarationParsing().parseAnnotation(lexer);
-      if (element != null) element.rawAddChildren(anno);
-      tokenType = lexer.getTokenType();
-    }
   }
 
   public CompositeElement parseType(Lexer lexer, boolean eatLastDot, boolean allowWildcard, boolean allowDiamonds){
@@ -239,7 +157,6 @@ public class Parsing  {
     }
 
     CompositeElement type = ASTFactory.composite(JavaElementType.TYPE);
-    if (areTypeAnnotationsSupported()) parseAnnotationListTo(lexer, type);
     tokenType = lexer.getTokenType();
     TreeElement refElement;
     if (ElementType.PRIMITIVE_TYPE_BIT_SET.contains(tokenType)){
@@ -247,7 +164,7 @@ public class Parsing  {
       lexer.advance();
     }
     else if (tokenType == JavaTokenType.IDENTIFIER){
-      refElement = parseJavaCodeReference(lexer, eatLastDot, true, false, allowDiamonds);
+      refElement = parseJavaCodeReference(lexer, eatLastDot, true, allowDiamonds);
     }
     else if (allowWildcard && lexer.getTokenType() == JavaTokenType.QUEST) {
       return parseWildcardType(lexer);
@@ -265,7 +182,6 @@ public class Parsing  {
     CompositeElement arrayTypeElement = ASTFactory.composite(JavaElementType.TYPE);
 
     while(true) {
-      if (areTypeAnnotationsSupported()) parseAnnotationListTo(lexer, arrayTypeElement);
       if (lexer.getTokenType() != JavaTokenType.LBRACKET) {
         if (arrayTypeElement.getFirstChildNode() != null) {
           type.rawAddChildren(arrayTypeElement.getFirstChildNode());
@@ -304,10 +220,6 @@ public class Parsing  {
     return myContext.getLanguageLevel().isAtLeast(LanguageLevel.JDK_1_7);
   }
 
-  protected boolean areTypeAnnotationsSupported() {
-    return myContext.getLanguageLevel().isAtLeast(LanguageLevel.JDK_1_8);
-  }
-
   private CompositeElement parseWildcardType(Lexer lexer) {
     LOG.assertTrue(lexer.getTokenType() == JavaTokenType.QUEST);
     CompositeElement type = ASTFactory.composite(JavaElementType.TYPE);
@@ -326,50 +238,4 @@ public class Parsing  {
     }
     return type;
   }
-
-  public static TreeElement parseTypeText(PsiManager manager,
-                                          Lexer lexer,
-                                          CharSequence buffer,
-                                          int startOffset,
-                                          int endOffset,
-                                          int state,
-                                          CharTable table) {
-    if (lexer == null){
-      lexer = new JavaLexer(LanguageLevelProjectExtension.getInstance(manager.getProject()).getLanguageLevel());
-    }
-    FilterLexer filterLexer = new FilterLexer(lexer, new FilterLexer.SetFilter(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET));
-    if (state < 0) filterLexer.start(buffer, startOffset, endOffset);
-    else filterLexer.start(buffer, startOffset, endOffset, state);
-    final JavaParsingContext context = new JavaParsingContext(table,
-                                                              LanguageLevelProjectExtension.getInstance(manager.getProject()).getLanguageLevel());
-    final FileElement dummyRoot = DummyHolderFactory.createHolder(manager, null, context.getCharTable()).getTreeElement();
-    final CompositeElement root = context.getStatementParsing().parseType(filterLexer);
-
-    if (root != null) {
-      dummyRoot.rawAddChildren(root);
-    }
-
-    if (filterLexer.getTokenType() == JavaTokenType.ELLIPSIS) {
-      dummyRoot.rawAddChildren(ParseUtil.createTokenElement(filterLexer, context.getCharTable()));
-      filterLexer.advance();
-    }
-
-    if (filterLexer.getTokenType() != null) {
-      final CompositeElement errorElement = Factory.createErrorElement(JavaErrorMessages.message("unexpected.tokens"));
-      while (filterLexer.getTokenType() != null) {
-        final TreeElement token = ParseUtil.createTokenElement(lexer, context.getCharTable());
-        errorElement.rawAddChildren(token);
-        filterLexer.advance();
-      }
-      dummyRoot.rawAddChildren(errorElement);
-    }
-
-    ParseUtil.insertMissingTokens(
-      dummyRoot,
-      lexer,
-      startOffset,
-      endOffset, state,
-      WhiteSpaceAndCommentsProcessor.INSTANCE, context);
-    return dummyRoot.getFirstChildNode();
- }
 }
