@@ -899,34 +899,6 @@ public class RefactoringUtil {
     }
   }
 
-  public static void bindToElementViaStaticImport(final PsiClass qualifierClass, final String staticName, final PsiImportList importList)
-    throws IncorrectOperationException {
-    final String qualifiedName  = qualifierClass.getQualifiedName();
-    final List<PsiJavaCodeReferenceElement> refs = getImportsFromClass(importList, qualifiedName);
-    if (refs.size() < CodeStyleSettingsManager.getSettings(qualifierClass.getProject()).NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND) {
-      importList.add(JavaPsiFacade.getInstance(qualifierClass.getProject()).getElementFactory().createImportStaticStatement(qualifierClass, staticName));
-    } else {
-      for (PsiJavaCodeReferenceElement ref : refs) {
-        final PsiImportStaticStatement importStatement = PsiTreeUtil.getParentOfType(ref, PsiImportStaticStatement.class);
-        if (importStatement != null) {
-          importStatement.delete();
-        }
-      }
-      importList.add(JavaPsiFacade.getInstance(qualifierClass.getProject()).getElementFactory().createImportStaticStatement(qualifierClass, "*"));
-    }
-  }
-
-  public static List<PsiJavaCodeReferenceElement> getImportsFromClass(@NotNull PsiImportList importList, String className){
-    final List<PsiJavaCodeReferenceElement> array = new ArrayList<PsiJavaCodeReferenceElement>();
-    for (PsiImportStaticStatement staticStatement : importList.getImportStaticStatements()) {
-      final PsiClass psiClass = staticStatement.resolveTargetClass();
-      if (psiClass != null && Comparing.strEqual(psiClass.getQualifiedName(), className)) {
-        array.add(staticStatement.getImportReference());
-      }
-    }
-    return array;
-  }
-
   @Nullable
   public static PsiMethod getChainedConstructor(PsiMethod constructor) {
     final PsiCodeBlock constructorBody = constructor.getBody();
