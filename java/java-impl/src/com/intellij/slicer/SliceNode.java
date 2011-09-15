@@ -17,11 +17,13 @@ package com.intellij.slicer;
 
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.ui.DuplicateNodeRenderer;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.util.ArrayUtil;
@@ -181,7 +183,11 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
   }
 
   public boolean isValid() {
-    return getValue().isValid();
+    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+      public Boolean compute() {
+        return getValue().isValid();
+      }
+    });
   }
 
   public boolean expandOnDoubleClick() {
