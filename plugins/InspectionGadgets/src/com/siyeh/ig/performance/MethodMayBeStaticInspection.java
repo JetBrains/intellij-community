@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,9 +31,10 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.ChangeModifierFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public class MethodMayBeStaticInspection extends BaseInspection {
 
@@ -102,11 +103,12 @@ public class MethodMayBeStaticInspection extends BaseInspection {
                 return;
             }
             final ExtensionsArea rootArea = Extensions.getRootArea();
-            final ExtensionPoint<Condition<PsiElement>> extensionPoint = rootArea.getExtensionPoint(
-                    "com.intellij.cantBeStatic");
-            final Condition<PsiElement>[] addins = extensionPoint.getExtensions();
+            final ExtensionPoint<Condition<PsiElement>> extensionPoint =
+                    rootArea.getExtensionPoint("com.intellij.cantBeStatic");
+            final Condition<PsiElement>[] addins =
+                    extensionPoint.getExtensions();
             for (Condition<PsiElement> addin : addins) {
-              if (addin.value(method)) {
+                if (addin.value(method)) {
                     return;
                 }
             }
@@ -120,7 +122,9 @@ public class MethodMayBeStaticInspection extends BaseInspection {
                     !method.hasModifierProperty(PsiModifier.PRIVATE)){
                 return;
             }
-           
+            if (isExcluded(method)) {
+                return;
+            }
             final Query<MethodSignatureBackedByPsiMethod> superMethodQuery =
                     SuperMethodsSearch.search(method, null, true, false);
             if (superMethodQuery.findFirst() != null) {
@@ -136,6 +140,86 @@ public class MethodMayBeStaticInspection extends BaseInspection {
                 return;
             }
             registerMethodError(method);
+        }
+
+        private boolean isExcluded(PsiMethod method) {
+            @NonNls final String name = method.getName();
+            if ("writeObject".equals(name)) {
+                if (!method.hasModifierProperty(PsiModifier.PRIVATE)) {
+                    return false;
+                }
+                final PsiReferenceList throwsList = method.getThrowsList();
+                final PsiClassType[] thrownTypes =
+                        throwsList.getReferencedTypes();
+                if (thrownTypes.length != 1) {
+                    return false;
+                }
+                if (!thrownTypes[0].equalsToText("java.io.IOException")) {
+                    return false;
+                }
+                final PsiType returnType = method.getReturnType();
+                if (!PsiType.VOID.equals(returnType)) {
+                    return false;
+                }
+                final PsiParameterList parameterList =
+                        method.getParameterList();
+                if (parameterList.getParametersCount() != 1) {
+                    return false;
+                }
+                final PsiParameter parameter = parameterList.getParameters()[0];
+                final PsiType type = parameter.getType();
+                return type.equalsToText("java.io.ObjectOutputStream");
+            }
+            if ("readObject".equals(name)) {
+                if (!method.hasModifierProperty(PsiModifier.PRIVATE)) {
+                    return false;
+                }
+                final PsiReferenceList throwsList = method.getThrowsList();
+                final PsiClassType[] thrownTypes =
+                        throwsList.getReferencedTypes();
+                if (thrownTypes.length != 2) {
+                    return false;
+                }
+                if (!thrownTypes[0].equalsToText("java.io.IOException") ||
+                        !thrownTypes[1].equalsToText(
+                                "java.lang.ClassNotFoundException")) {
+                    return false;
+                }
+                final PsiType returnType = method.getReturnType();
+                if (!PsiType.VOID.equals(returnType)) {
+                    return false;
+                }
+                final PsiParameterList parameterList =
+                        method.getParameterList();
+                if (parameterList.getParametersCount() != 1) {
+                    return false;
+                }
+                final PsiParameter parameter = parameterList.getParameters()[0];
+                final PsiType type = parameter.getType();
+                return type.equalsToText("java.io.ObjectInputStream");
+            }
+            if ("writeReplace".equals(name) ||
+                    "readResolve".equals(name)) {
+                final PsiReferenceList throwsList = method.getThrowsList();
+                final PsiClassType[] thrownTypes =
+                        throwsList.getReferencedTypes();
+                if (thrownTypes.length != 1) {
+                    return false;
+                }
+                if (!thrownTypes[0].equalsToText(
+                        "java.io.ObjectStreamException")) {
+                    return false;
+                }
+                final PsiType returnType = method.getReturnType();
+                if (returnType == null ||
+                        !returnType.equalsToText("java.lang.Object")) {
+                    return false;
+                }
+                final PsiParameterList parameterList =
+                        method.getParameterList();
+                return parameterList.getParametersCount() == 0;
+            }
+            return false;
         }
     }
 }
