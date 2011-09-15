@@ -30,6 +30,7 @@ import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiCodeFragment;
@@ -46,6 +47,7 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.table.JBListTable;
 import com.intellij.util.ui.table.JBTableRow;
 import com.intellij.util.ui.table.JBTableRowEditor;
@@ -458,11 +460,37 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
     mySignatureArea.addFocusListener(new FocusAdapter() {
       @Override
       public void focusGained(FocusEvent e) {
-        IdeFocusManager.findInstance().requestFocus(getContentPane().getFocusCycleRootAncestor(), true);
+        Container root = findTraversalRoot(getContentPane());
+
+        if (root != null) {
+          Component c = root.getFocusTraversalPolicy().getComponentAfter(root, mySignatureArea);
+          if (c != null) {
+            IdeFocusManager.findInstance().requestFocus(c, true);
+          }
+        }
       }
     });
     updateSignature();
     return panel;
+  }
+  
+  private static Container findTraversalRoot(Container container) {
+    Container current = KeyboardFocusManager.getCurrentKeyboardFocusManager().getCurrentFocusCycleRoot();
+    Container root;
+    
+    if (current == container) {
+      root = container;
+    } else {
+      root = container.getFocusCycleRootAncestor();
+      if (root == null) {
+        root = container;
+      }
+    }
+    
+    if (root != current) {
+      KeyboardFocusManager.getCurrentKeyboardFocusManager().setGlobalCurrentFocusCycleRoot(root);
+    }
+    return root;
   }
 
   protected MethodSignatureComponent createSignaturePreviewComponent() {

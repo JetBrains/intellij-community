@@ -61,14 +61,17 @@ public abstract class JBListTable extends JPanel {
           e.consume();
         }
         //todo[kb] JBTabsImpl breaks focus traversal policy. Need a workaround here
-        //else if (e.getKeyCode() == KeyEvent.VK_TAB) {
-        //  final KeyboardFocusManager keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-        //  if (e.isShiftDown()) {
-        //    keyboardFocusManager.focusPreviousComponent(this);
-        //  } else {
-        //    keyboardFocusManager.focusNextComponent(this);
-        //  }
-        //}
+        else if (e.getKeyCode() == KeyEvent.VK_TAB) {
+          if (e.getID() == KeyEvent.KEY_PRESSED) {
+            final KeyboardFocusManager keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+            if (e.isShiftDown()) {
+              keyboardFocusManager.focusPreviousComponent(this);
+            } else {
+              keyboardFocusManager.focusNextComponent(this);
+            }
+          }
+          e.consume();
+        }
         else {
           super.processKeyEvent(e);
         }
