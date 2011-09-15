@@ -47,7 +47,7 @@ import java.util.HashMap;
 /**
  * @author max
  */
-public class LocalInspectionToolWrapper extends DescriptorProviderInspection {
+public final class LocalInspectionToolWrapper extends DescriptorProviderInspection {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.LocalInspectionToolWrapper");
 
   @NotNull private final LocalInspectionTool myTool;
