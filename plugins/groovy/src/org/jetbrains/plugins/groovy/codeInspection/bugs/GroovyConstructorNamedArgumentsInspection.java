@@ -143,7 +143,7 @@ public class GroovyConstructorNamedArgumentsInspection extends BaseInspection {
               fixes.add(new DynamicPropertyFix(label, (PsiClass)element));
             }
 
-            registerError(label, GroovyBundle.message("no.such.property", label.getName()), fixes.toArray(),
+            registerError(label, GroovyBundle.message("no.such.property", label.getName()), fixes.toArray(new LocalQuickFix[fixes.size()]),
                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
           }
         }
