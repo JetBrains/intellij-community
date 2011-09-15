@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
@@ -97,12 +98,20 @@ public class GroovyImportOptimizer implements ImportOptimizer {
         return;
       }
 
+      Map<String, String> annotations = new HashMap<String, String>();
+      
       // Getting aliased imports
       GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(myFile.getProject());
       ArrayList<GrImportStatement> aliased = new ArrayList<GrImportStatement>();
       for (GrImportStatement oldImport : oldImports) {
         if (oldImport.isAliasedImport() && usedImports.contains(oldImport)) {
           aliased.add(factory.createImportStatementFromText(oldImport.getText()));
+        } else {
+          String importReference = getImportReferenceText(oldImport);
+          GrModifierList annotationList = oldImport.getAnnotationList();
+          if (importReference != null && annotationList != null) {
+            annotations.put(importReference, annotationList.getText());
+          }
         }
       }
 
@@ -116,6 +125,12 @@ public class GroovyImportOptimizer implements ImportOptimizer {
         myFile.addImport(aliasedImport);
       }
       for (GrImportStatement newImport : newImports) {
+        String imported = getImportReferenceText(newImport);
+        String annos = annotations.get(imported);
+        if (imported != null && StringUtil.isNotEmpty(annos)) {
+          newImport = factory.createImportStatementFromText(annos + " " + newImport.getText());
+        }
+        
         myFile.addImport(newImport);
       }
 
@@ -124,6 +139,14 @@ public class GroovyImportOptimizer implements ImportOptimizer {
       for (GrImportStatement importStatement : oldImports) {
         myFile.removeImport(importStatement);
       }
+    }
+
+    @Nullable String getImportReferenceText(GrImportStatement statement) {
+      GrCodeReferenceElement importReference = statement.getImportReference();
+      if (importReference != null) {
+        return statement.getText().substring(importReference.getStartOffsetInParent());
+      }
+      return null;
     }
 
     public List<GrImportStatement> findUnusedImports(final Set<String> importedClasses,
