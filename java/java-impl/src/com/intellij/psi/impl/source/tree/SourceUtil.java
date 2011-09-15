@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.tree.IElementType;
@@ -33,11 +34,11 @@ public class SourceUtil {
   private SourceUtil() { }
 
   public static String getTextSkipWhiteSpaceAndComments(final ASTNode element) {
-    return AstBufferUtil.getTextSkippingTokens(element, StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET);
+    return AstBufferUtil.getTextSkippingTokens(element, PsiImplUtil.WHITESPACE_AND_COMMENTS);
   }
 
   public static String getTextSkipWhiteSpaceAndComments(final LighterAST tree, final LighterASTNode node) {
-    return LightTreeUtil.toFilteredString(tree, node, StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET);
+    return LightTreeUtil.toFilteredString(tree, node, PsiImplUtil.WHITESPACE_AND_COMMENTS);
   }
 
   public static TreeElement addParenthToReplacedChild(final IElementType parenthType, TreeElement newChild, PsiManager manager) {

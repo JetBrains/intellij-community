@@ -26,10 +26,7 @@ import com.intellij.psi.impl.file.impl.ResolveScopeManagerImpl;
 import com.intellij.psi.impl.light.LightClassReference;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
-import com.intellij.psi.impl.source.tree.CompositeElement;
-import com.intellij.psi.impl.source.tree.ElementType;
-import com.intellij.psi.impl.source.tree.JavaDocElementType;
-import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -40,6 +37,7 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PackageScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -55,6 +53,8 @@ import java.util.List;
 
 public class PsiImplUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiImplUtil");
+
+  public static final TokenSet WHITESPACE_AND_COMMENTS = TokenSet.orSet(ElementType.WHITE_SPACE_BIT_SET, ElementType.JAVA_COMMENT_BIT_SET);
 
   private PsiImplUtil() {
   }
@@ -446,6 +446,14 @@ public class PsiImplUtil {
     ParamWriteProcessor processor = new ParamWriteProcessor();
     ReferencesSearch.search(parameter, new LocalSearchScope(parameter.getDeclarationScope()), true).forEach(processor);
     return processor.isWriteRefFound();
+  }
+
+  public static ASTNode skipWhitespaceAndComments(final ASTNode node) {
+    return TreeUtil.skipElements(node, WHITESPACE_AND_COMMENTS);
+  }
+
+  public static ASTNode skipWhitespaceAndCommentsBack(final ASTNode node) {
+    return TreeUtil.skipElementsBack(node, WHITESPACE_AND_COMMENTS);
   }
 
   private static class ParamWriteProcessor implements Processor<PsiReference> {

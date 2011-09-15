@@ -17,6 +17,7 @@
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
@@ -26,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Adds or removes comma
+ *
  * @author ven
  */
 public abstract class PsiCommaSeparatedListImpl extends CompositePsiElement implements Constants {
@@ -68,12 +70,12 @@ public abstract class PsiCommaSeparatedListImpl extends CompositePsiElement impl
 
   public void deleteChildInternal(@NotNull ASTNode child) {
     if (myTypesOfElements.contains(child.getElementType())) {
-      ASTNode next = TreeUtil.skipElements(child.getTreeNext(), StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET);
+      ASTNode next = PsiImplUtil.skipWhitespaceAndComments(child.getTreeNext());
       if (next != null && next.getElementType() == COMMA) {
         deleteChildInternal(next);
       }
       else {
-        ASTNode prev = TreeUtil.skipElementsBack(child.getTreePrev(), StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET);
+        ASTNode prev = PsiImplUtil.skipWhitespaceAndCommentsBack(child.getTreePrev());
         if (prev != null && prev.getElementType() == COMMA) {
           deleteChildInternal(prev);
         }

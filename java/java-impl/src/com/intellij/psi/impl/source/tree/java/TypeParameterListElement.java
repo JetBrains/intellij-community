@@ -18,6 +18,7 @@ package com.intellij.psi.impl.source.tree.java;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
@@ -104,12 +105,12 @@ public class TypeParameterListElement extends CompositeElement {
 
   public void deleteChildInternal(@NotNull final ASTNode child) {
     if (child.getElementType() == JavaElementType.TYPE_PARAMETER){
-      final ASTNode next = TreeUtil.skipElements(child.getTreeNext(), StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET);
+      final ASTNode next = PsiImplUtil.skipWhitespaceAndComments(child.getTreeNext());
       if (next != null && next.getElementType() == JavaTokenType.COMMA){
         deleteChildInternal(next);
       }
       else{
-        final ASTNode prev = TreeUtil.skipElementsBack(child.getTreePrev(), StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET);
+        final ASTNode prev = PsiImplUtil.skipWhitespaceAndCommentsBack(child.getTreePrev());
         if (prev != null && prev.getElementType() == JavaTokenType.COMMA){
           deleteChildInternal(prev);
         }
@@ -118,7 +119,7 @@ public class TypeParameterListElement extends CompositeElement {
     super.deleteChildInternal(child);
     if (child.getElementType() == JavaElementType.TYPE_PARAMETER) {
       final ASTNode lt = findChildByRole(ChildRole.LT_IN_TYPE_LIST);
-      final ASTNode next = TreeUtil.skipElements(lt.getTreeNext(), StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET);
+      final ASTNode next = PsiImplUtil.skipWhitespaceAndComments(lt.getTreeNext());
       if (next != null && next.getElementType() == JavaTokenType.GT) {
         deleteChildInternal(lt);
         deleteChildInternal(next);

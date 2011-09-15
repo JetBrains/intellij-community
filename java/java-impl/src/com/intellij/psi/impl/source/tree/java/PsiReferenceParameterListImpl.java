@@ -144,12 +144,12 @@ public class PsiReferenceParameterListImpl extends CompositePsiElement implement
 
   public void deleteChildInternal(@NotNull ASTNode child) {
     if (child.getElementType() == JavaElementType.TYPE){
-      ASTNode next = TreeUtil.skipElements(child.getTreeNext(), StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET);
+      ASTNode next = PsiImplUtil.skipWhitespaceAndComments(child.getTreeNext());
       if (next != null && next.getElementType() == JavaTokenType.COMMA){
         deleteChildInternal(next);
       }
       else{
-        ASTNode prev = TreeUtil.skipElementsBack(child.getTreePrev(), StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET);
+        ASTNode prev = PsiImplUtil.skipWhitespaceAndCommentsBack(child.getTreePrev());
         if (prev != null && prev.getElementType() == JavaTokenType.COMMA){
           deleteChildInternal(prev);
         }

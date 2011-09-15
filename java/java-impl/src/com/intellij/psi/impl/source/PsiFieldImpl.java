@@ -366,9 +366,9 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
     PsiElement modifierList = getModifierList();
     ASTNode field = SourceTreeToPsiMap.psiElementToTree(type.getParent());
     while(true){
-      ASTNode comma = TreeUtil.skipElements(field.getTreeNext(), StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET);
+      ASTNode comma = PsiImplUtil.skipWhitespaceAndComments(field.getTreeNext());
       if (comma == null || comma.getElementType() != JavaTokenType.COMMA) break;
-      ASTNode nextField = TreeUtil.skipElements(comma.getTreeNext(), StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET);
+      ASTNode nextField = PsiImplUtil.skipWhitespaceAndComments(comma.getTreeNext());
       if (nextField == null || nextField.getElementType() != JavaElementType.FIELD) break;
 
       TreeElement semicolon = Factory.createSingleLeafElement(JavaTokenType.SEMICOLON, ";", 0, 1, null, getManager());

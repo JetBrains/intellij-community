@@ -20,6 +20,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.GeneratedMarkerVisitor;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.PsiTypeElementImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.tree.IElementType;
@@ -106,13 +107,13 @@ public class JavaSharedImplUtil {
     int arrayCount = 0;
     ASTNode element = name;
     while (element != null) {
-      element = TreeUtil.skipElements(element.getTreeNext(), StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET);
+      element = PsiImplUtil.skipWhitespaceAndComments(element.getTreeNext());
       if (element == null || element.getElementType() != JavaTokenType.LBRACKET) break;
       if (firstBracket == null) firstBracket = element;
       lastBracket = element;
       arrayCount++;
 
-      element = TreeUtil.skipElements(element.getTreeNext(), StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET);
+      element = PsiImplUtil.skipWhitespaceAndComments(element.getTreeNext());
       if (element == null || element.getElementType() != JavaTokenType.RBRACKET) break;
       lastBracket = element;
     }
@@ -127,7 +128,6 @@ public class JavaSharedImplUtil {
       }
 
       CompositeElement newType = (CompositeElement)type.clone();
-      final CharTable treeCharTable = SharedImplUtil.findCharTableByTree(type);
       for (int i = 0; i < arrayCount; i++) {
         CompositeElement newType1 = ASTFactory.composite(JavaElementType.TYPE);
         newType1.rawAddChildren(newType);
