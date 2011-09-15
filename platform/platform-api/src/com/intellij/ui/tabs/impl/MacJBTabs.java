@@ -372,7 +372,7 @@ public class MacJBTabs extends JBTabsImpl {
     g2d.setColor(borderColor);
 
     if (!isHideTabs()) {
-      g2d.setColor(new Color(120, 120, 120));
+      g2d.setColor(new Color(130, 130, 130));
       g2d.draw(shapeInfo.path.getShape());
     }
 
