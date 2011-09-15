@@ -20,7 +20,6 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.mvc.MvcFramework;
-import org.jetbrains.plugins.groovy.mvc.MvcModuleStructureSynchronizer;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
 
 import java.io.File;
@@ -132,7 +131,7 @@ public class MvcTargetDialogCompletionUtils {
 
     MvcFramework.addAvailableSystemScripts(result, module);
 
-    MvcFramework framework = MvcModuleStructureSynchronizer.getFramework(module);
+    MvcFramework framework = MvcFramework.getInstance(module);
     if (framework != null) {
       final VirtualFile root = framework.findAppRoot(module);
       if (root != null) {

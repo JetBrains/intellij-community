@@ -46,7 +46,7 @@ public abstract class MvcActionBase extends DumbAwareAction {
         }
       }
 
-      MvcFramework framework = MvcModuleStructureSynchronizer.getFramework(module);
+      MvcFramework framework = MvcFramework.getInstance(module);
       if (framework != null) {
         return Pair.create(framework, module);
       }
@@ -59,7 +59,7 @@ public abstract class MvcActionBase extends DumbAwareAction {
 
     Pair<MvcFramework, Module> result = null;
     for (Module mod : ModuleManager.getInstance(project).getModules()) {
-      final MvcFramework framework = MvcModuleStructureSynchronizer.getFramework(mod);
+      final MvcFramework framework = MvcFramework.getInstance(mod);
       if (framework != null) {
         if (result != null) {
           return null;

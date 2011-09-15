@@ -71,7 +71,7 @@ public class MvcRunTargetDialog extends DialogWrapper {
 
     List<Module> mvcModules = new ArrayList<Module>();
     for (Module module : ModuleManager.getInstance(myModule.getProject()).getModules()) {
-      if (module == myModule || MvcModuleStructureSynchronizer.getFramework(module) != null) {
+      if (module == myModule || MvcFramework.getInstance(module) != null) {
         mvcModules.add(module);
       }
     }

@@ -30,7 +30,6 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.CompilerModuleExtension;
@@ -601,6 +600,30 @@ public abstract class MvcFramework {
     if (res.length() == 0) return null;
 
     return res;
+  }
+
+  @Nullable
+  public static MvcFramework getInstance(@Nullable Module module) {
+    if (module == null) {
+      return null;
+    }
+
+    for (final MvcFramework framework : EP_NAME.getExtensions()) {
+      if (framework.hasSupport(module)) {
+        return framework;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public static MvcFramework getInstanceBySdk(@NotNull Module module) {
+    for (final MvcFramework framework : EP_NAME.getExtensions()) {
+      if (framework.getSdkRoot(module) != null) {
+        return framework;
+      }
+    }
+    return null;
   }
 
 }

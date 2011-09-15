@@ -112,7 +112,7 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
 
           if (!MvcConsole.isUpdatingVfsByConsoleProcess(module)) return;
 
-          final MvcFramework framework = getFramework(module);
+          final MvcFramework framework = MvcFramework.getInstance(module);
           if (framework == null) return;
 
           if (framework.isToReformatOnCreation(file) || file.isDirectory()) {
@@ -232,30 +232,6 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
     return Collections.emptyList();
   }
 
-  @Nullable
-  public static MvcFramework getFramework(@Nullable Module module) {
-    if (module == null) {
-      return null;
-    }
-
-    for (final MvcFramework framework : MvcFramework.EP_NAME.getExtensions()) {
-      if (framework.hasSupport(module)) {
-        return framework;
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  public static MvcFramework getFrameworkByFrameworkSdk(@NotNull Module module) {
-    for (final MvcFramework framework : MvcFramework.EP_NAME.getExtensions()) {
-      if (framework.getSdkRoot(module) != null) {
-        return framework;
-      }
-    }
-    return null;
-  }
-
   @TestOnly
   public static void forceUpdateProject(Project project) {
     project.getComponent(MvcModuleStructureSynchronizer.class).runActions();
@@ -280,8 +256,8 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
         for (Module module : determineModuleBySyncActionObject(pair.first)) {
           if (!module.isDisposed()) {
             final MvcFramework framework = (pair.second == SyncAction.CreateAppStructureIfNeeded)
-                                           ? getFrameworkByFrameworkSdk(module)
-                                           : getFramework(module);
+                                           ? MvcFramework.getInstanceBySdk(module)
+                                           : MvcFramework.getInstance(module);
 
             if (framework != null && !framework.isAuxModule(module)) {
               rawActions.add(Trinity.create(module, pair.second, framework));
