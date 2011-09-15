@@ -54,6 +54,14 @@ public class ProjectWrapper {
             this.stream = flags.logStream();
         }
 
+        public void logFilePaths(PrintStream stream, Collection<StringCache.S> paths) {
+            List<String> strings = new ArrayList<String>(paths.size());
+            for (StringCache.S path : paths) {
+              strings.add(PathUtil.toSystemIndependentPath(path.toString()));
+            }
+            logMany(stream, strings);
+        }
+
         public <T> void logMany(final PrintStream stream, final Collection<T> list) {
             final String[] a = new String[list.size()];
             int i = 0;
@@ -1136,7 +1144,7 @@ public class ProjectWrapper {
                         @Override
                         public void log(PrintStream stream) {
                             stream.println("Cleaning output files:");
-                            logMany(stream, outputFiles);
+                            logFilePaths(stream, outputFiles);
                             stream.println("End of files");
                         }
                     }.log();
@@ -1151,7 +1159,7 @@ public class ProjectWrapper {
                     @Override
                     public void log(PrintStream stream) {
                         stream.println("Compiling files:");
-                        logMany(stream, filesToCompile);
+                        logFilePaths(stream, filesToCompile);
                         stream.println("End of files");
                     }
                 }.log();
