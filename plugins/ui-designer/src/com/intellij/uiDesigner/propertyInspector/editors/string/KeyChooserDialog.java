@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,10 +22,10 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SpeedSearchBase;
+import com.intellij.ui.table.JBTable;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.StringDescriptor;
-import com.intellij.util.ui.Table;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -33,12 +33,13 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -57,7 +58,7 @@ public final class KeyChooserDialog extends DialogWrapper{
   private ArrayList<Pair<String, String>> myPairs;
   private final JComponent myCenterPanel;
   /** Table with key/value pairs */
-  private final Table myTable;
+  private final JTable myTable;
   @NonNls private static final String NULL = "null";
   private final MyTableModel myModel;
   private final GuiEditor myEditor;
@@ -66,9 +67,9 @@ public final class KeyChooserDialog extends DialogWrapper{
 
   /**
    * @param bundle resource bundle to be shown.
-   *@param bundleName name of the resource bundle to be shown. We need this
+   * @param bundleName name of the resource bundle to be shown. We need this
    * name to create StringDescriptor in {@link #getDescriptor()} method.
-   *@param keyToPreselect describes row that should be selected in the
+   * @param keyToPreselect describes row that should be selected in the
    * @param parent the parent component for the dialog.
    */
   public KeyChooserDialog(
@@ -91,7 +92,7 @@ public final class KeyChooserDialog extends DialogWrapper{
 
     // Create UI
     myModel = new MyTableModel();
-    myTable = new Table(myModel);
+    myTable = new JBTable(myModel);
     myTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     new MySpeedSearch(myTable);
     myCenterPanel = ScrollPaneFactory.createScrollPane(myTable);
@@ -115,7 +116,11 @@ public final class KeyChooserDialog extends DialogWrapper{
     final TableColumn keyColumn = myTable.getColumnModel().getColumn(0);
     keyColumn.setMaxWidth(width);
     keyColumn.setMinWidth(width);
-
+    final TableCellRenderer defaultRenderer = myTable.getDefaultRenderer(String.class);
+    if (defaultRenderer instanceof JComponent) {
+      final JComponent component = (JComponent)defaultRenderer;
+      component.putClientProperty("html.disable", Boolean.TRUE);
+    }
     selectKey(keyToPreselect);
 
     init();
@@ -252,11 +257,11 @@ public final class KeyChooserDialog extends DialogWrapper{
     }
   }
 
-  private class MySpeedSearch extends SpeedSearchBase<Table> {
+  private class MySpeedSearch extends SpeedSearchBase<JTable> {
     private TObjectIntHashMap<Object> myElements;
     private Object[] myElementsArray;
 
-    public MySpeedSearch(final Table component) {
+    public MySpeedSearch(final JTable component) {
       super(component);
     }
 
