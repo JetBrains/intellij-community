@@ -51,7 +51,6 @@ import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapHelper;
 import com.intellij.openapi.editor.markup.*;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.options.FontSize;
@@ -134,8 +133,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private final EditorGutterComponentImpl myGutterComponent;
 
   static {
-    @SuppressWarnings({"UnusedDeclaration"})
-    ComplementaryFontsRegistry registry; // load costly font info
+    ComplementaryFontsRegistry.getFontAbleToDisplay(' ', 0,0,""); // load costly font info
   }
 
   private final CommandProcessor myCommandProcessor;
@@ -1328,22 +1326,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     int startOffsetToUse = startOffset;
-    int endOffsetToUse = endOffset;
+    int endOffsetToUse = Math.min(endOffset, myDocument.getTextLength());
     assertIsDispatchThread();
 
-    if (endOffsetToUse > myDocument.getTextLength()) {
-      endOffsetToUse = myDocument.getTextLength();
-    }
-    
-    for (EditorRepaintStrategy repaintStrategy : Extensions.getExtensions(EditorRepaintStrategy.EP_NAME)) {
-      final TextRange range = repaintStrategy.adjustHighlighterRegion(this, startOffsetToUse, endOffsetToUse);
-      if (range == null) {
-        return;
-      }
-      startOffsetToUse = range.getStartOffset();
-      endOffsetToUse = range.getEndOffset();
-    }
-    
     // We do repaint in case of equal offsets because there is a possible case that there is a soft wrap at the same offset and
     // it does occupy particular amount of visual space that may be necessary to repaint.
     if (startOffsetToUse <= endOffsetToUse) {
@@ -4114,7 +4099,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           return insets.bottom + incrButtonValue.getHeight();
         }
         catch (Exception exc) {
-          throw new IllegalStateException(exc.getMessage());
+          throw new IllegalStateException(exc);
         }
       }
       else if (APPLE_LAF_AQUA_SCROLL_BAR_UI_CLASS.equals(barUI.getClass().getName())) {
