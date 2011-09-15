@@ -25,14 +25,17 @@ import java.util.Set;
 class EnumSwitchPredicate implements PsiElementPredicate{
 
     public boolean satisfiedBy(PsiElement element){
+        if (element instanceof PsiWhiteSpace) {
+          PsiElement prevSibling = element.getPrevSibling();
+          if (prevSibling instanceof PsiSwitchStatement && ErrorUtil.containsError(prevSibling)) {
+            element = prevSibling;
+          }
+        }
         if(!(element instanceof PsiSwitchStatement)){
             return false;
         }
         final PsiSwitchStatement switchStatement = (PsiSwitchStatement) element;
         final PsiCodeBlock body = switchStatement.getBody();
-        if(body == null){
-            return false;
-        }
         final PsiExpression expression = switchStatement.getExpression();
         if(expression == null){
             return false;
@@ -54,21 +57,23 @@ class EnumSwitchPredicate implements PsiElementPredicate{
                 enumElements.add(fieldName);
             }
         }
-        final PsiStatement[] statements = body.getStatements();
-        for(PsiStatement statement : statements){
-            if(statement instanceof PsiSwitchLabelStatement){
-                final PsiSwitchLabelStatement labelStatement =
-                        (PsiSwitchLabelStatement) statement;
-                final PsiExpression value = labelStatement.getCaseValue();
-                if(value != null){
-                    final String valueText = value.getText();
-                    enumElements.remove(valueText);
+        if (body != null) {
+            final PsiStatement[] statements = body.getStatements();
+            for(PsiStatement statement : statements){
+                if(statement instanceof PsiSwitchLabelStatement){
+                    final PsiSwitchLabelStatement labelStatement =
+                            (PsiSwitchLabelStatement) statement;
+                    final PsiExpression value = labelStatement.getCaseValue();
+                    if(value != null){
+                        final String valueText = value.getText();
+                        enumElements.remove(valueText);
+                    }
                 }
             }
         }
         if (enumElements.isEmpty()) {
             return false;
         }
-        return !ErrorUtil.containsError(element);
+        return true;
     }
 }
