@@ -1,15 +1,14 @@
 package com.intellij.structuralsearch.impl.matcher.handlers;
 
+import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.javadoc.PsiDocTagValue;
+import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
-import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
-
-import java.util.regex.Pattern;
-import java.util.regex.Matcher;
-
 import org.jetbrains.annotations.NonNls;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Handler for doc nodes
@@ -62,7 +61,7 @@ public class DocDataHandler extends MatchingHandler {
       text1 += nextSibling.getText();
 
       nextSibling = nextSibling.getNextSibling();
-      if (nextSibling instanceof PsiDocToken && ((PsiDocToken)nextSibling).getTokenType() == PsiDocToken.DOC_COMMENT_DATA) {
+      if (nextSibling instanceof PsiDocToken && ((PsiDocToken)nextSibling).getTokenType() == JavaDocTokenType.DOC_COMMENT_DATA) {
         text1 += nextSibling.getText();
       }
     }

@@ -1,6 +1,7 @@
 package com.intellij.structuralsearch.impl.matcher.iterators;
 
 import com.intellij.dupLocator.iterators.NodeIterator;
+import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.javadoc.PsiDocToken;
@@ -14,7 +15,7 @@ import java.util.ArrayList;
 public class DocValuesIterator extends NodeIterator {
   private int index;
   private final ArrayList<PsiElement> tokens = new ArrayList<PsiElement>(2);
-  private static final IElementType tokenType =PsiDocToken.DOC_COMMENT_DATA;
+  private static final IElementType tokenType = JavaDocTokenType.DOC_COMMENT_DATA;
 
   public DocValuesIterator(PsiElement start) {
     for(PsiElement e = start; e != null; e = e.getNextSibling()) {
