@@ -135,7 +135,8 @@ public class DelegateFieldProcessor extends AbstractLombokFieldProcessor {
       builder.append(')');
       builder.append("{ }");
 
-      return new MyLightMethod(manager, elementFactory.createMethodFromText(builder.toString(), psiClass), psiClass);
+      PsiMethod delegateMethod = elementFactory.createMethodFromText(builder.toString(), psiClass);
+      return prepareMethod(manager, delegateMethod, psiClass, psiMethod);
     } finally {
       StringBuilderSpinAllocator.dispose(builder);
     }

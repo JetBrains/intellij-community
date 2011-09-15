@@ -8,7 +8,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
-import de.plushnikov.intellij.lombok.psi.MyLightMethod;
 import lombok.EqualsAndHashCode;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,21 +30,23 @@ public class EqualsAndHashCodeProcessor extends AbstractLombokClassProcessor {
     PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
 
     PsiMethod equalsMethod = createEqualsMethod(psiClass, elementFactory);
-    target.add((Psi) new MyLightMethod(manager, equalsMethod, psiClass));
+    target.add((Psi) prepareMethod(manager, equalsMethod, psiClass, psiAnnotation));
 
     PsiMethod hashcodeMethod = createHashCodeMethod(psiClass, elementFactory);
-    target.add((Psi) new MyLightMethod(manager, hashcodeMethod, psiClass));
+    target.add((Psi) prepareMethod(manager, hashcodeMethod, psiClass, psiAnnotation));
 
     return true;
   }
 
-  private PsiMethod createEqualsMethod(PsiClass psiClass, PsiElementFactory elementFactory) {
+  @NotNull
+  private PsiMethod createEqualsMethod(@NotNull PsiClass psiClass, @NotNull PsiElementFactory elementFactory) {
     return elementFactory.createMethodFromText(
         "public boolean equals(Object o) { return super.equals(o); }",
         psiClass);
   }
 
-  private PsiMethod createHashCodeMethod(PsiClass psiClass, PsiElementFactory elementFactory) {
+  @NotNull
+  private PsiMethod createHashCodeMethod(@NotNull PsiClass psiClass, @NotNull PsiElementFactory elementFactory) {
     return elementFactory.createMethodFromText(
         "public int hashCode() { return super.hashCode(); }",
         psiClass);

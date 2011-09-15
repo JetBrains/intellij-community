@@ -10,7 +10,6 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
 import de.plushnikov.intellij.lombok.processor.LombokProcessorUtil;
-import de.plushnikov.intellij.lombok.psi.MyLightMethod;
 import lombok.NoArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,7 +35,7 @@ public class NoArgsConstructorProcessor extends AbstractConstructorClassProcesso
     final String visibility = LombokProcessorUtil.getAccessVisibity(psiAnnotation);
     if (null != visibility) {
       PsiMethod constructorMethod = createConstructorMethod(visibility, Collections.<PsiField>emptyList(), psiClass, elementFactory);
-      target.add((Psi) new MyLightMethod(manager, constructorMethod, psiClass));
+      target.add((Psi) prepareMethod(manager, constructorMethod, psiClass, psiAnnotation));
     }
     return true;
   }

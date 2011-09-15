@@ -12,7 +12,6 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import com.intellij.util.StringBuilderSpinAllocator;
 import de.plushnikov.intellij.lombok.processor.LombokProcessorUtil;
-import de.plushnikov.intellij.lombok.psi.MyLightMethod;
 import lombok.Setter;
 import lombok.handlers.TransformationsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -66,9 +65,8 @@ public class SetterFieldProcessor extends AbstractLombokFieldProcessor {
       builder.append("(").append(psiFieldType.getCanonicalText()).append(' ').append(fieldName).append(')');
       builder.append("{ this.").append(fieldName).append(" = ").append(fieldName).append("; }");
 
-      MyLightMethod result = new MyLightMethod(manager, elementFactory.createMethodFromText(builder.toString(), psiClass), psiClass);
-      result.setNavigationElement(psiField);
-      return result;
+      PsiMethod setterMethod = elementFactory.createMethodFromText(builder.toString(), psiClass);
+      return prepareMethod(manager, setterMethod, psiClass, psiField);
 
     } finally {
       StringBuilderSpinAllocator.dispose(builder);

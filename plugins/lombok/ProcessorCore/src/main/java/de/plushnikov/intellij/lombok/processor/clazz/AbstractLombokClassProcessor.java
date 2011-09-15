@@ -2,6 +2,12 @@ package de.plushnikov.intellij.lombok.processor.clazz;
 
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.impl.light.LightMethod;
+import de.plushnikov.intellij.lombok.psi.MyLightMethod;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,4 +30,11 @@ public abstract class AbstractLombokClassProcessor implements LombokClassProcess
         && type.isAssignableFrom(supportedClass);
 
   }
+
+  protected LightMethod prepareMethod(@NotNull PsiManager manager, @NotNull PsiMethod method, @NotNull PsiClass psiClass, @NotNull PsiElement psiNavigationTarget) {
+    LightMethod lightMethod = new MyLightMethod(manager, method, psiClass);
+    lightMethod.setNavigationElement(psiNavigationTarget);
+    return lightMethod;
+  }
+
 }

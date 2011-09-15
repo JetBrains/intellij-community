@@ -8,7 +8,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
-import de.plushnikov.intellij.lombok.psi.MyLightMethod;
 import lombok.ToString;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,11 +30,12 @@ public class ToStringProcessor extends AbstractLombokClassProcessor {
     PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
 
     PsiMethod toStringMethod = createToStringMethod(psiClass, elementFactory);
-    target.add((Psi) new MyLightMethod(manager, toStringMethod, psiClass));
+    target.add((Psi) prepareMethod(manager, toStringMethod, psiClass, psiAnnotation));
     return true;
   }
 
-  private PsiMethod createToStringMethod(PsiClass psiClass, PsiElementFactory elementFactory) {
+  @NotNull
+  private PsiMethod createToStringMethod(@NotNull PsiClass psiClass, @NotNull PsiElementFactory elementFactory) {
     return elementFactory.createMethodFromText(
         "public java.lang.String toString() { return super.toString();}",
         psiClass);

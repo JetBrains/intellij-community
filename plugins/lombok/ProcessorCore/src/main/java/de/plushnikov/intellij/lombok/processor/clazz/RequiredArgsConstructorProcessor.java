@@ -13,7 +13,6 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
 import de.plushnikov.intellij.lombok.processor.LombokProcessorUtil;
-import de.plushnikov.intellij.lombok.psi.MyLightMethod;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +43,7 @@ public class RequiredArgsConstructorProcessor extends AbstractConstructorClassPr
       Collection<PsiField> allReqFields = getRequiredFields(psiClass);
 
       PsiMethod constructorMethod = createConstructorMethod(visibility, allReqFields, psiClass, elementFactory);
-      target.add((Psi) new MyLightMethod(manager, constructorMethod, psiClass));
+      target.add((Psi) prepareMethod(manager, constructorMethod, psiClass, psiAnnotation));
     }
     return true;
   }
