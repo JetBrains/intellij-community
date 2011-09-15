@@ -209,7 +209,7 @@ public class LookupManagerImpl extends LookupManager {
       for (final LookupElement item : items) {
         myActiveLookup.addItem(item, matcher);
       }
-      myActiveLookup.refreshUi();
+      myActiveLookup.refreshUi(true);
     } else {
       alarm.cancelAllRequests(); // no items -> no doc
     }

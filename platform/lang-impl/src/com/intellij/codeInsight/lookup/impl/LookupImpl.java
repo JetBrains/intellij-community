@@ -265,9 +265,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     for (final LookupElement item : items) {
       addItem(item, itemMatcher(item));
     }
-    checkReused();
-    updateList();
-    ensureSelectionVisible();
+    refreshUi(true);
   }
 
   public void addItem(LookupElement item, PrefixMatcher matcher) {
@@ -329,13 +327,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   }
 
   void appendPrefix(char c) {
-    //todo this checkReused + refreshUi clears the lookup which fails testChoosingItemDuringCopyCommit
-    checkReused();
     checkValid();
     myAdditionalPrefix += c;
     myInitialPrefix = null;
     myFrozenItems.clear();
-    refreshUi();
+    refreshUi(false);
     ensureSelectionVisible();
   }
 
@@ -366,7 +362,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     myInitialPrefix = null;
     myFrozenItems.clear();
     if (!myReused) {
-      refreshUi();
+      refreshUi(false);
       ensureSelectionVisible();
     }
 
@@ -1151,7 +1147,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
         myEditor.getCaretModel().moveToOffset(start + newPrefix.length());
       }
     });
-    refreshUi();
+    refreshUi(true);
   }
 
   @Nullable
@@ -1280,8 +1276,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     return index;
   }
 
-  public void refreshUi() {
-    final boolean reused = checkReused();
+  public void refreshUi(boolean mayCheckReused) {
+    final boolean reused = mayCheckReused && checkReused();
 
     boolean selectionVisible = isSelectionVisible();
 
