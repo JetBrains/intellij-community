@@ -172,7 +172,7 @@ public class ConvertJavadocInspection extends BaseJavaLocalInspectionTool {
           if (element instanceof PsiWhiteSpace) continue;
           if (!(element instanceof PsiDocToken)) return;
           PsiDocToken docToken = (PsiDocToken)element;
-          if (docToken.getTokenType() == PsiDocToken.DOC_COMMENT_DATA && docToken.getText().trim().length() > 0) {
+          if (docToken.getTokenType() == JavaDocTokenType.DOC_COMMENT_DATA && docToken.getText().trim().length() > 0) {
             return;
           }
         }
