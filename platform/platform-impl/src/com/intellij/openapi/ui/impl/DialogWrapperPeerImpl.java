@@ -479,7 +479,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
     private final WeakReference<DialogWrapper> myDialogWrapper;
     /**
      * Initial size of the dialog. When the dialog is being closed and
-     * current size of the dialog is not equals to the initial sizethen the
+     * current size of the dialog is not equals to the initial size then the
      * current (changed) size is stored in the <code>DimensionService</code>.
      */
     private Dimension myInitialSize;
@@ -492,6 +492,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
     private final WeakReference<Project> myProject;
     private ActionCallback myFocusedCallback;
     private ActionCallback myTypeAheadDone;
+    private MyComponentListener myComponentListener;
 
     public MyDialog(Dialog owner, DialogWrapper dialogWrapper, Project project, ActionCallback focused, ActionCallback typeAheadDone) {
       super(owner);
@@ -521,6 +522,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
       setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
       myWindowListener = new MyWindowListener();
       addWindowListener(myWindowListener);
+
+      myComponentListener = new MyComponentListener();
+      addComponentListener(myComponentListener);
     }
 
     public JDialog getWindow() {
@@ -575,6 +579,11 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
     public void setBounds(Rectangle r) {
       ScreenUtil.fitToScreen(r);
       super.setBounds(r);
+    }
+
+    @Override
+    public Dimension getMinimumSize() {
+      return getPreferredSize();
     }
 
     protected JRootPane createRootPane() {
@@ -732,6 +741,11 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
         myWindowListener.saveSize();
         removeWindowListener(myWindowListener);
         myWindowListener = null;
+      }
+
+      if (myComponentListener != null) {
+        removeComponentListener(myComponentListener);
+        myComponentListener = null;
       }
 
       if (myFocusTrackback != null && !(myFocusTrackback.isSheduledForRestore() || myFocusTrackback.isWillBeSheduledForRestore())) {
@@ -905,6 +919,33 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
               exc.printStackTrace();
             }
           }
+        }
+      }
+    }
+
+    private class MyComponentListener extends ComponentAdapter {
+      @SuppressWarnings({"RefusedBequest"})
+      public void componentResized(ComponentEvent e) {
+        final JRootPane pane = getRootPane();
+        if (pane == null) return;
+        final Dimension minSize = pane.getMinimumSize();
+        final Dimension size = pane.getSize();
+        final Dimension winSize = getSize();
+        if (minSize.width > size.width) {
+          winSize.width += minSize.width - size.width;
+        }
+        if (minSize.height > size.height) {
+          winSize.height += minSize.height - size.height;
+        }
+
+        if (!winSize.equals(getSize())) {
+          SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+              if (isShowing()) {
+                setSize(winSize);
+              }
+            }
+          });
         }
       }
     }
