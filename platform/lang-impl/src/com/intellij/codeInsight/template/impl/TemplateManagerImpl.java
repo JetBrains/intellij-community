@@ -430,6 +430,15 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     return result;
   }
 
+  private static List<TemplateContextType> getBases(TemplateContextType type) {
+    ArrayList<TemplateContextType> list = new ArrayList<TemplateContextType>();
+    while (true) {
+      type = type.getBaseContextType();
+      if (type == null) return list;
+      list.add(type);
+    }
+  }
+
   private static Set<TemplateContextType> getDirectlyApplicableContextTypes(@Nullable PsiFile file, int offset, @Nullable FileType fileType) {
     LinkedHashSet<TemplateContextType> set = new LinkedHashSet<TemplateContextType>();
     LinkedList<TemplateContextType> contexts = buildOrderedContextTypes();
@@ -442,7 +451,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     removeBases:
     while (true) {
       for (TemplateContextType type : set) {
-        if (set.remove(type.getBaseContextType())) {
+        if (set.removeAll(getBases(type))) {
           continue removeBases;
         }
       }
