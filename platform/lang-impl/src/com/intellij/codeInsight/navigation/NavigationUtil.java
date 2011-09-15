@@ -101,11 +101,11 @@ public final class NavigationUtil {
     return builder.setItemChoosenCallback(runnable).createPopup();
   }
 
-  public static void activateFileWithPsiElement(@NotNull PsiElement elt) {
-    activateFileWithPsiElement(elt, true);
+  public static boolean activateFileWithPsiElement(@NotNull PsiElement elt) {
+    return activateFileWithPsiElement(elt, true);
   }
 
-  public static void activateFileWithPsiElement(@NotNull PsiElement elt, boolean searchForOpen) {
+  public static boolean activateFileWithPsiElement(@NotNull PsiElement elt, boolean searchForOpen) {
     boolean openAsNative = false;
     if (elt instanceof PsiFile) {
       VirtualFile virtualFile = ((PsiFile)elt).getVirtualFile();
@@ -122,9 +122,11 @@ public final class NavigationUtil {
 
     if (openAsNative || !activatePsiElementIfOpen(elt, searchForOpen)) {
       ((NavigationItem)elt).navigate(true);
+      return true;
     }
 
     elt.putUserData(FileEditorManager.USE_CURRENT_WINDOW, null);
+    return false;
   }
 
 
