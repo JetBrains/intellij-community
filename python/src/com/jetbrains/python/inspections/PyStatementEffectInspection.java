@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.actions.StatementEffectDocstringQuickFix;
 import com.jetbrains.python.actions.StatementEffectFunctionCallQuickFix;
 import com.jetbrains.python.actions.StatementEffectIntroduceVariableQuickFix;
 import com.jetbrains.python.console.PydevConsoleRunner;
@@ -64,8 +65,22 @@ public class PyStatementEffectInspection extends PyInspection {
           return;
         }
       }
+      if (checkStringLiteral(expression))
+        return;
       registerProblem(expression, "Statement seems to have no effect",
                       new StatementEffectIntroduceVariableQuickFix(expression));
+    }
+
+    private boolean checkStringLiteral(PyExpression expression) {
+      if (expression instanceof PyStringLiteralExpression) {
+        PyDocStringOwner parent = PsiTreeUtil.getParentOfType(expression, PyFunction.class, PyClass.class);
+        if (parent != null) {
+          registerProblem(expression, "Docstring seems to be misplaced",
+                      new StatementEffectDocstringQuickFix());
+          return true;
+        }
+      }
+      return false;
     }
 
     private boolean hasEffect(@Nullable PyExpression expression) {

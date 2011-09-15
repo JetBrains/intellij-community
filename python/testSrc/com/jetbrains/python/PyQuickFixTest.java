@@ -287,6 +287,11 @@ public class PyQuickFixTest extends PyLightFixtureTestCase {
                      PyBundle.message("QFIX.remove.decorator"), true, true);
   }
 
+  public void testMoveDocstring() {                      //PY-4398
+    doInspectionTest("MoveDocstring.py", PyStatementEffectInspection.class,
+                     PyBundle.message("QFIX.statement.effect.move.docstring"), true, true);
+  }
+
   public void testSetFunctionToLiteral() {                      //PY-3120
     setLanguageLevel(LanguageLevel.PYTHON27);
     doInspectionTest("SetFunctionToLiteral.py", PySetFunctionToLiteralInspection.class,
