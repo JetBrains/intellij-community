@@ -145,6 +145,16 @@ public class PythonHighlightingLexerTest extends PyLexerTestCase {
                       "Py:SINGLE_QUOTED_STRING");
   }
 
+  public void testNotDocstring() { // PY-4481
+      doTest(LanguageLevel.PYTHON27, "d = {\n" +
+                                     " 'abc': 'def',\n" +
+                                     " 'ghi': 'jkl'\n" +
+                                     " }",
+             "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:LBRACE", "Py:LINE_BREAK", "Py:SPACE", "Py:SINGLE_QUOTED_STRING",
+             "Py:COLON", "Py:SPACE", "Py:SINGLE_QUOTED_STRING", "Py:COMMA", "Py:LINE_BREAK", "Py:SPACE", "Py:SINGLE_QUOTED_STRING",
+             "Py:COLON", "Py:SPACE", "Py:SINGLE_QUOTED_STRING", "Py:LINE_BREAK", "Py:SPACE", "Py:RBRACE");
+    }
+
   private static void doTest(LanguageLevel languageLevel, String text, String... expectedTokens) {
     doLexerTest(text, new PythonHighlightingLexer(languageLevel), expectedTokens);
   }
