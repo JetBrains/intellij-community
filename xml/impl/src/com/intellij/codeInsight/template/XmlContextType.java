@@ -16,7 +16,12 @@
 package com.intellij.codeInsight.template;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.lang.Language;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilBase;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -26,4 +31,13 @@ public class XmlContextType extends FileTypeBasedContextType {
     super("XML", CodeInsightBundle.message("dialog.edit.template.checkbox.xml"), StdFileTypes.XML);
   }
 
+  @Override
+  public boolean isInContext(@NotNull PsiFile file, int offset) {
+    return super.isInContext(file, offset) && !isEmbeddedContent(file, offset);
+  }
+
+  public static boolean isEmbeddedContent(@NotNull final PsiFile file, final int offset) {
+    Language languageAtOffset = PsiUtilBase.getLanguageAtOffset(file, offset);
+    return !(languageAtOffset.isKindOf(XMLLanguage.INSTANCE) || languageAtOffset instanceof XMLLanguage);
+  }
 }
