@@ -28,7 +28,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
@@ -93,7 +93,7 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
   @Override
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
     PsiElement[] elements = new PsiElement[myFilesToMove.size()];
-    final PsiFile[] classes = PsiUtilBase.toPsiFileArray(myFilesToMove.keySet());
+    final PsiFile[] classes = PsiUtilCore.toPsiFileArray(myFilesToMove.keySet());
     System.arraycopy(classes, 0, elements, 0, classes.length);
     return new MoveMultipleElementsViewDescriptor(elements, getTargetName());
   }

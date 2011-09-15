@@ -25,7 +25,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
@@ -182,7 +182,7 @@ public class ExtractManagedDependenciesAction extends BaseRefactoringAction {
         }
       }
 
-      return PsiUtilBase.toPsiFileArray(files);
+      return PsiUtilCore.toPsiFileArray(files);
     }
 
 

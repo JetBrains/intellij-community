@@ -350,4 +350,10 @@ public class PsiUtilCore {
     final FileViewProvider viewProvider = containingFile.getViewProvider();
     return viewProvider.getPsi(viewProvider.getBaseLanguage());
   }
+
+  @NotNull
+  public static PsiFile[] toPsiFileArray(@NotNull Collection<? extends PsiFile> collection) {
+    if (collection.isEmpty()) return PsiFile.EMPTY_ARRAY;
+    return collection.toArray(new PsiFile[collection.size()]);
+  }
 }

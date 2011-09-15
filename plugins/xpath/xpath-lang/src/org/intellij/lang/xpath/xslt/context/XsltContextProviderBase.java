@@ -202,7 +202,7 @@ public abstract class XsltContextProviderBase extends ContextProvider {
       }
     });
 
-    return PsiUtilBase.toPsiFileArray(files);
+    return PsiUtilCore.toPsiFileArray(files);
   }
 
   @Nullable

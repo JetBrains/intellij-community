@@ -317,12 +317,6 @@ public class PsiUtilBase extends PsiUtilCore {
     return null;
   }
 
-  @NotNull
-  public static PsiFile[] toPsiFileArray(@NotNull Collection<? extends PsiFile> collection) {
-    if (collection.isEmpty()) return PsiFile.EMPTY_ARRAY;
-    return collection.toArray(new PsiFile[collection.size()]);
-  }
-
   public static boolean isSymLink(@NotNull final PsiFileSystemItem element) {
     final VirtualFile virtualFile = element.getVirtualFile();
     return virtualFile != null && virtualFile.isSymLink();

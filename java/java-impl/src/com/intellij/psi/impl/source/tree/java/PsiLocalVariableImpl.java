@@ -38,7 +38,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
@@ -320,7 +320,7 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
           }
         });
 
-        return new LocalSearchScope(PsiUtilBase.toPsiFileArray(allIncluded));
+        return new LocalSearchScope(PsiUtilCore.toPsiFileArray(allIncluded));
       }
     }
 

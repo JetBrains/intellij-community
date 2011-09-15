@@ -20,7 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.uiDesigner.binding.FormClassIndex;
 
 import java.util.Collection;
@@ -64,7 +64,7 @@ public class Form implements Navigatable {
   }
 
   public PsiFile[] getFormFiles() {
-    return PsiUtilBase.toPsiFileArray(myFormFiles);
+    return PsiUtilCore.toPsiFileArray(myFormFiles);
   }
 
   public void navigate(boolean requestFocus) {

@@ -30,7 +30,7 @@ import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -88,7 +88,7 @@ public class UpdateCopyrightCheckinHandlerFactory extends CheckinHandlerFactory 
             psiFiles.add(psiFile);
           }
         }
-        return PsiUtilBase.toPsiFileArray(psiFiles);
+        return PsiUtilCore.toPsiFileArray(psiFiles);
       }
     };
   }
