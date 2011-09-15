@@ -2,9 +2,11 @@ package com.jetbrains.python.psi.impl.stubs;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
+import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyFromImportStatement;
 import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.impl.PyFromImportStatementImpl;
@@ -18,7 +20,11 @@ import java.io.IOException;
  */
 public class PyFromImportStatementElementType extends PyStubElementType<PyFromImportStatementStub, PyFromImportStatement> {
   public PyFromImportStatementElementType() {
-    super("FROM_IMPORT_STATEMENT");
+    this("FROM_IMPORT_STATEMENT");
+  }
+
+  public PyFromImportStatementElementType(String debugName) {
+    super(debugName);
   }
 
   @Override
@@ -33,7 +39,8 @@ public class PyFromImportStatementElementType extends PyStubElementType<PyFromIm
 
   @Override
   public PyFromImportStatementStub createStub(PyFromImportStatement psi, StubElement parentStub) {
-    return new PyFromImportStatementStubImpl(psi.getImportSourceQName(), psi.isStarImport(), psi.getRelativeLevel(), parentStub);
+    return new PyFromImportStatementStubImpl(psi.getImportSourceQName(), psi.isStarImport(), psi.getRelativeLevel(), parentStub,
+                                             getStubElementType());
   }
 
   public void serialize(PyFromImportStatementStub stub, StubOutputStream dataStream) throws IOException {
@@ -47,6 +54,10 @@ public class PyFromImportStatementElementType extends PyStubElementType<PyFromIm
     PyQualifiedName qName = PyQualifiedName.deserialize(dataStream);
     boolean isStarImport = dataStream.readBoolean();
     int relativeLevel = dataStream.readVarInt();
-    return new PyFromImportStatementStubImpl(qName, isStarImport, relativeLevel, parentStub);
+    return new PyFromImportStatementStubImpl(qName, isStarImport, relativeLevel, parentStub, getStubElementType());
+  }
+
+  protected IStubElementType getStubElementType() {
+    return PyElementTypes.FROM_IMPORT_STATEMENT;
   }
 }

@@ -4,6 +4,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.ArrayFactory;
 import com.jetbrains.python.PyElementTypes;
@@ -22,7 +23,11 @@ public class PyImportStatementImpl extends PyBaseElementImpl<PyImportStatementSt
   }
 
   public PyImportStatementImpl(PyImportStatementStub stub) {
-    super(stub, PyElementTypes.IMPORT_STATEMENT);
+    this(stub, PyElementTypes.IMPORT_STATEMENT);
+  }
+
+  public PyImportStatementImpl(PyImportStatementStub stub, IStubElementType nodeType) {
+    super(stub, nodeType);
   }
 
   @Override
