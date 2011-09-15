@@ -1,5 +1,7 @@
 package com.jetbrains.python;
 
+import com.jetbrains.django.lang.template.DjangoTemplateParserTest;
+import com.jetbrains.jinja2.Jinja2ParserTest;
 import com.jetbrains.python.codeInsight.PyCompletionPatternsTest;
 import com.jetbrains.python.inspections.*;
 import com.jetbrains.python.refactoring.*;
@@ -81,7 +83,9 @@ public class PythonAllTestsSuite {
     PyUnusedImportTest.class,
     PyDeprecationTest.class,
     PythonHighlightingLexerTest.class,
-    PyOldStyleClassInspectionTest.class
+    PyOldStyleClassInspectionTest.class,
+    DjangoTemplateParserTest.class,
+    Jinja2ParserTest.class
   };
 
   public static TestSuite suite() {
