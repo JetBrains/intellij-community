@@ -74,7 +74,7 @@ public class RelaxedHtmlFromSchemaElementDescriptor extends XmlElementDescriptor
       return descriptors;
     }
     for (XmlAttributeDescriptorsProvider provider: Extensions.getExtensions(XmlAttributeDescriptorsProvider.EP_NAME)) {
-      descriptors = ArrayUtil.mergeArrays(descriptors, provider.getAttributeDescriptors(context));
+      descriptors = ArrayUtil.mergeArrays(descriptors, provider.getAttributeDescriptors(context), XmlAttributeDescriptor.ARRAY_FACTORY);
     }
     return descriptors;
   }
