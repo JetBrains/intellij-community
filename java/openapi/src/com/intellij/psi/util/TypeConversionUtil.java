@@ -17,7 +17,7 @@ package com.intellij.psi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.ProjectRootModificationTracker;
 import com.intellij.openapi.util.Key;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -802,7 +802,7 @@ public class TypeConversionUtil {
               }
             });
           }
-          return Result.create(set, ProjectRootManager.getInstance(project));
+          return Result.create(set, ProjectRootModificationTracker.getInstance(project));
         }
       }, false));
     }
