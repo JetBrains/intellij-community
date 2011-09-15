@@ -39,10 +39,12 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PackageScope;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PairFunction;
+import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -438,5 +440,27 @@ public class PsiImplUtil {
                                                      @NotNull String namePrefix,
                                                      @NotNull PairFunction<Project, String, PsiAnnotation> annotationCreator) {
     return annotationCreator.fun(value.getProject(), "@A(" + namePrefix + value.getText() + ")").getParameterList().getAttributes()[0];
+  }
+
+  public static boolean isAssigned(final PsiParameter parameter) {
+    ParamWriteProcessor processor = new ParamWriteProcessor();
+    ReferencesSearch.search(parameter, new LocalSearchScope(parameter.getDeclarationScope()), true).forEach(processor);
+    return processor.isWriteRefFound();
+  }
+
+  private static class ParamWriteProcessor implements Processor<PsiReference> {
+    private volatile boolean myIsWriteRefFound = false;
+    public boolean process(PsiReference reference) {
+      final PsiElement element = reference.getElement();
+      if (element instanceof PsiReferenceExpression && PsiUtil.isAccessedForWriting((PsiExpression)element)) {
+        myIsWriteRefFound = true;
+        return false;
+      }
+      return true;
+    }
+
+    public boolean isWriteRefFound() {
+      return myIsWriteRefFound;
+    }
   }
 }

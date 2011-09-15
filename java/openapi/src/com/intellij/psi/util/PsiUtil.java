@@ -654,28 +654,6 @@ public final class PsiUtil extends PsiUtilCore {
            : Collections.singletonList(typeElement);
   }
 
-  private static class ParamWriteProcessor implements Processor<PsiReference> {
-    private volatile boolean myIsWriteRefFound = false;
-    public boolean process(PsiReference reference) {
-      final PsiElement element = reference.getElement();
-      if (element instanceof PsiReferenceExpression && isAccessedForWriting((PsiExpression)element)) {
-        myIsWriteRefFound = true;
-        return false;
-      }
-      return true;
-    }
-
-    public boolean isWriteRefFound() {
-      return myIsWriteRefFound;
-    }
-  }
-
-  public static boolean isAssigned(final PsiParameter parameter) {
-    ParamWriteProcessor processor = new ParamWriteProcessor();
-    ReferencesSearch.search(parameter, new LocalSearchScope(parameter.getDeclarationScope()), true).forEach(processor);
-    return processor.isWriteRefFound();
-  }
-
   public static void checkIsIdentifier(PsiManager manager, String text) throws IncorrectOperationException{
     if (!JavaPsiFacade.getInstance(manager.getProject()).getNameHelper().isIdentifier(text)){
       throw new IncorrectOperationException(PsiBundle.message("0.is.not.an.identifier", text) );

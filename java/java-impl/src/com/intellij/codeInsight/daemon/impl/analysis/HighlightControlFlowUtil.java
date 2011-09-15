@@ -25,6 +25,7 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiMatcherImpl;
 import com.intellij.psi.util.PsiMatchers;
@@ -433,7 +434,7 @@ public class HighlightControlFlowUtil {
     }
     else if (variable instanceof PsiParameter) {
       final PsiParameter parameter = (PsiParameter)variable;
-      return PsiUtil.isAssigned(parameter);
+      return PsiImplUtil.isAssigned(parameter);
     }
     else {
       return false;
