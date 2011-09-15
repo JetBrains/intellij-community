@@ -841,4 +841,8 @@ class X {
   public void testSortOrder0() {
     doVariantableTest 'se', 'setMetaClass', 'setProperty', 'setSe'
   }
+
+  public void testPrimitiveCastOverwrite() {
+    checkCompletion 'byte v1 = (by<caret>te) 0', '\t', 'byte v1 = (byte<caret>) 0'
+  }
 }

@@ -25,9 +25,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.lang.ASTNode;
 import com.intellij.patterns.PlatformPatterns;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiErrorElement;
-import com.intellij.psi.PsiKeyword;
+import com.intellij.psi.*;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -92,7 +90,11 @@ public class GroovyCompletionData {
       } else if (suggestThrows(position)) {
         addKeywords(result, true, PsiKeyword.THROWS);
       } else if (suggestPrimitiveTypes(position)) {
-        addKeywords(result, true, BUILT_IN_TYPES);
+        boolean inCast = psiElement()
+          .afterLeaf(psiElement().withText("(").withParent(psiElement(GrParenthesizedExpression.class, GrTypeCastExpression.class)))
+          .accepts(position);
+
+        addKeywords(result, !inCast, BUILT_IN_TYPES);
       }
 
       if (psiElement(GrReferenceExpression.class).inside(or(psiElement(GrWhileStatement.class), psiElement(GrForStatement.class))).accepts(parent)) {

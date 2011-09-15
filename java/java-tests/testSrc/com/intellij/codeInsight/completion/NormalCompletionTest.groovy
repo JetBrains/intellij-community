@@ -853,6 +853,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testMethodParameterAnnotationClass() throws Throwable { doTest(); }
+  public void testPrimitiveCastOverwrite() throws Throwable { doTest '\t' }
 
   public void testVoidMethodsInNonVoidContext() throws Throwable {
     configure()

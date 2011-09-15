@@ -353,17 +353,6 @@ public class JavaCompletionData extends JavaAwareCompletionData{
       registerVariant(variant);
     }
 
-// Completion in cast expressions
-    {
-      final CompletionVariant variant = new CompletionVariant(PsiMethod.class, new LeftNeighbour(new AndFilter(
-        new TextFilter("("),
-        new ParentElementFilter(new OrFilter(
-          new ClassFilter(PsiParenthesizedExpression.class),
-          new ClassFilter(PsiTypeCastExpression.class))))));
-      addPrimitiveTypes(variant, CompletionVariant.DEFAULT_TAIL_TYPE);
-      registerVariant(variant);
-    }
-
     {
 // instanceof keyword
       final ElementFilter position = INSTANCEOF_PLACE;
@@ -581,15 +570,27 @@ public class JavaCompletionData extends JavaAwareCompletionData{
   }
 
   private static void addPrimitiveTypes(CompletionResultSet result, PsiElement position) {
+    new LeftNeighbour(new AndFilter(
+            new TextFilter("("),
+            new ParentElementFilter(new OrFilter(
+              new ClassFilter(PsiParenthesizedExpression.class),
+              new ClassFilter(PsiTypeCastExpression.class)))));
+
+    boolean inCast = psiElement()
+      .afterLeaf(psiElement().withText("(").withParent(psiElement(PsiParenthesizedExpression.class, PsiTypeCastExpression.class)))
+      .accepts(position);
+
     boolean declaration = DECLARATION_START.isAcceptable(position, position) ||
                           psiElement().withParents(PsiJavaCodeReferenceElement.class, PsiTypeElement.class, PsiMember.class).accepts(position) ||
                           psiElement().withParents(PsiJavaCodeReferenceElement.class, PsiTypeElement.class, PsiClassLevelDeclarationStatement.class).accepts(position);
     if (START_FOR.accepts(position) ||
         INSIDE_PARAMETER_LIST.accepts(position) && !AFTER_DOT.accepts(position) ||
         VARIABLE_AFTER_FINAL.accepts(position) ||
+        inCast ||
         declaration) {
       for (String primitiveType : PRIMITIVE_TYPES) {
-        result.addElement(new OverrideableSpace(createKeyword(position, primitiveType)));
+        LookupElement keyword = createKeyword(position, primitiveType);
+        result.addElement(inCast ? keyword : new OverrideableSpace(keyword));
       }
     }
     if (declaration) {
