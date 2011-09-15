@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,12 +21,7 @@ import org.jetbrains.annotations.Nullable;
  * Represents a Java literal expression.
  */
 public interface PsiLiteralExpression extends PsiExpression, PsiLiteral {
-  /**
-   * Returns the description of the error which occurred when parsing the value of the
-   * literal expression.
-   *
-   * @return the error description, or null if no error occurred when parsing.
-   */
+  /** @deprecated (to remove in IDEA 12) */
   @Nullable
   String getParsingError();
 }

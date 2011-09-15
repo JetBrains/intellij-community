@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,7 @@
  */
 package com.intellij.psi.impl.source.tree.java;
 
-import com.intellij.codeInsight.daemon.JavaErrorMessages;
-import com.intellij.codeInsight.daemon.impl.analysis.IncreaseLanguageLevelFix;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.IntentionProvider;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.ResolveScopeManager;
@@ -29,37 +24,25 @@ import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.injected.StringLiteralEscaper;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.text.LiteralFormatUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-
 public class PsiLiteralExpressionImpl
        extends ExpressionPsiElement
-       implements PsiLiteralExpression, PsiLanguageInjectionHost, ContributedReferenceHost, IntentionProvider {
+       implements PsiLiteralExpression, PsiLanguageInjectionHost, ContributedReferenceHost {
   @NonNls private static final String QUOT = "&quot;";
-  @NonNls private static final String HEX_PREFIX = "0x";
-  @NonNls private static final String HEX_PREFIX2 = "0X";
-  @NonNls private static final String LONG_HEX_EMPTY = "0xl";
-  @NonNls private static final String BIN_PREFIX = "0b";
-  @NonNls private static final String BIN_PREFIX2 = "0B";
-  @NonNls private static final String LONG_BIN_EMPTY = "0bl";
 
-  @NonNls private static final String _2_IN_63 = Long.toString(-1L << 63).substring(1);
-  @NonNls private static final String _2_IN_31 = Long.toString(-1L << 31).substring(1);
-  @NonNls private static final String _2_IN_63_L = _2_IN_63 + "l";
-
-  private static final TokenSet INTEGER_LITERALS = TokenSet.create(JavaTokenType.INTEGER_LITERAL, JavaTokenType.LONG_LITERAL);
-  private static final TokenSet REAL_LITERALS = TokenSet.create(JavaTokenType.FLOAT_LITERAL, JavaTokenType.DOUBLE_LITERAL);
-  private static final TokenSet NUMERIC_LITERALS = TokenSet.orSet(INTEGER_LITERALS, REAL_LITERALS);
+  @NonNls public static final String HEX_PREFIX = "0x";
+  @NonNls public static final String BIN_PREFIX = "0b";
+  @NonNls public static final String _2_IN_31 = Long.toString(-1L << 31).substring(1);
+  @NonNls public static final String _2_IN_63 = Long.toString(-1L << 63).substring(1);
+  public static final TokenSet INTEGER_LITERALS = TokenSet.create(JavaTokenType.INTEGER_LITERAL, JavaTokenType.LONG_LITERAL);
+  public static final TokenSet REAL_LITERALS = TokenSet.create(JavaTokenType.FLOAT_LITERAL, JavaTokenType.DOUBLE_LITERAL);
+  public static final TokenSet NUMERIC_LITERALS = TokenSet.orSet(INTEGER_LITERALS, REAL_LITERALS);
 
   public PsiLiteralExpressionImpl() {
     super(JavaElementType.LITERAL_EXPRESSION);
@@ -105,17 +88,17 @@ public class PsiLiteralExpressionImpl
   public Object getValue() {
     final TreeElement literal = getFirstChildNode();
     final IElementType type = literal.getElementType();
-    String text = getCanonicalText();
+    String text = NUMERIC_LITERALS.contains(type) ? getCanonicalText().toLowerCase() : getCanonicalText();
     final int textLength = text.length();
 
     if (type == JavaTokenType.INTEGER_LITERAL) {
       try {
-        if (text.startsWith(HEX_PREFIX) || text.startsWith(HEX_PREFIX2)) {
+        if (text.startsWith(HEX_PREFIX)) {
           // should fit in 32 bits
           final long value = parseDigits(text.substring(2), 4, 32);
           return Integer.valueOf((int)value);
         }
-        if (text.startsWith(BIN_PREFIX) || text.startsWith(BIN_PREFIX2)) {
+        if (text.startsWith(BIN_PREFIX)) {
           // should fit in 32 bits
           final long value = parseDigits(text.substring(2), 1, 32);
           return Integer.valueOf((int)value);
@@ -139,10 +122,10 @@ public class PsiLiteralExpressionImpl
         text = text.substring(0, textLength - 1);
       }
       try {
-        if (text.startsWith(HEX_PREFIX) || text.startsWith(HEX_PREFIX2)) {
+        if (text.startsWith(HEX_PREFIX)) {
           return parseDigits(text.substring(2), 4, 64);
         }
-        if (text.startsWith(BIN_PREFIX) || text.startsWith(BIN_PREFIX2)) {
+        if (text.startsWith(BIN_PREFIX)) {
           return parseDigits(text.substring(2), 1, 64);
         }
         if (StringUtil.startsWithChar(text, '0')) {
@@ -233,156 +216,7 @@ public class PsiLiteralExpressionImpl
   }
 
   public String getParsingError() {
-    final Object value = getValue();
-    final TreeElement literal = getFirstChildNode();
-    final IElementType type = literal.getElementType();
-    String text = NUMERIC_LITERALS.contains(type) ? literal.getText().toLowerCase() : literal.getText();
-    final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(this);
-
-    if (REAL_LITERALS.contains(type)) {
-      if (text.startsWith(HEX_PREFIX) && !languageLevel.isAtLeast(LanguageLevel.JDK_1_5)) {
-        return JavaErrorMessages.message("hex.FP.literals.not.supported");
-      }
-    }
-    if (INTEGER_LITERALS.contains(type)) {
-      if (text.startsWith(BIN_PREFIX) && !languageLevel.isAtLeast(LanguageLevel.JDK_1_7)) {
-        return JavaErrorMessages.message("binary.literals.not.supported");
-      }
-    }
-    if (NUMERIC_LITERALS.contains(type)) {
-      if (text.contains("_") && !languageLevel.isAtLeast(LanguageLevel.JDK_1_7)) {
-        return JavaErrorMessages.message("underscores.in.literals.not.supported");
-      }
-    }
-
-    if (type == JavaTokenType.INTEGER_LITERAL) {
-      //literal 2147483648 may appear only as the operand of the unary negation operator -.
-      if (!(text.equals(_2_IN_31)
-            && getParent() instanceof PsiPrefixExpression
-            && ((PsiPrefixExpression)getParent()).getOperationTokenType() == JavaTokenType.MINUS)) {
-        if (text.equals(HEX_PREFIX)) {
-          return JavaErrorMessages.message("hexadecimal.numbers.must.contain.at.least.one.hexadecimal.digit");
-        }
-        if (text.equals(BIN_PREFIX)) {
-          return JavaErrorMessages.message("binary.numbers.must.contain.at.least.one.hexadecimal.digit");
-        }
-        if (value == null || text.equals(_2_IN_31)) {
-          return JavaErrorMessages.message("integer.number.too.large");
-        }
-      }
-    }
-    else if (type == JavaTokenType.LONG_LITERAL) {
-      //literal 9223372036854775808L may appear only as the operand of the unary negation operator -.
-      if (!(text.equals(_2_IN_63_L)
-            && getParent() instanceof PsiPrefixExpression
-            && ((PsiPrefixExpression)getParent()).getOperationTokenType() == JavaTokenType.MINUS)) {
-        if (text.equals(LONG_HEX_EMPTY)) {
-          return JavaErrorMessages.message("hexadecimal.numbers.must.contain.at.least.one.hexadecimal.digit");
-        }
-        if (text.equals(LONG_BIN_EMPTY)) {
-          return JavaErrorMessages.message("binary.numbers.must.contain.at.least.one.hexadecimal.digit");
-        }
-        if (value == null || text.equals(_2_IN_63_L)) {
-          return JavaErrorMessages.message("long.number.too.large");
-        }
-      }
-    }
-    else if (type == JavaTokenType.FLOAT_LITERAL || type == JavaTokenType.DOUBLE_LITERAL) {
-      if (value == null) {
-        return JavaErrorMessages.message("malformed.floating.point.literal");
-      }
-    }
-    else if (type == JavaTokenType.TRUE_KEYWORD || type == JavaTokenType.FALSE_KEYWORD || type == JavaTokenType.NULL_KEYWORD) {
-      return null;
-    }
-    else if (type == JavaTokenType.CHARACTER_LITERAL) {
-      if (value == null) {
-        if (!StringUtil.startsWithChar(text, '\'')) return null;
-        if (StringUtil.endsWithChar(text, '\'')) {
-          if (text.length() == 1) return JavaErrorMessages.message("illegal.line.end.in.character.literal");
-          text = text.substring(1, text.length() - 1);
-        }
-        else {
-          return JavaErrorMessages.message("illegal.line.end.in.character.literal");
-        }
-        StringBuilder chars = new StringBuilder();
-        boolean success = parseStringCharacters(text, chars, null);
-        if (!success) return JavaErrorMessages.message("illegal.escape.character.in.character.literal");
-        if (chars.length() > 1) {
-          return JavaErrorMessages.message("too.many.characters.in.character.literal");
-        }
-        else if (chars.length() == 0) return JavaErrorMessages.message("empty.character.literal");
-      }
-    }
-    else if (type == JavaTokenType.STRING_LITERAL) {
-      if (value == null) {
-        for (final PsiElement element : getChildren()) {
-          if (element instanceof OuterLanguageElement) {
-            return null;
-          }
-        }
-
-        if (!StringUtil.startsWithChar(text, '\"')) return null;
-        if (StringUtil.endsWithChar(text, '\"')) {
-          if (text.length() == 1) return JavaErrorMessages.message("illegal.line.end.in.string.literal");
-          text = text.substring(1, text.length() - 1);
-        }
-        else {
-          return JavaErrorMessages.message("illegal.line.end.in.string.literal");
-        }
-        StringBuilder chars = new StringBuilder();
-        boolean success = parseStringCharacters(text, chars, null);
-        if (!success) return JavaErrorMessages.message("illegal.escape.character.in.string.literal");
-      }
-    }
-
-    if (value instanceof Float) {
-      final Float number = (Float)value;
-      if (number.isInfinite()) return JavaErrorMessages.message("floating.point.number.too.large");
-      if (number.floatValue() == 0 && !isFPZero()) return JavaErrorMessages.message("floating.point.number.too.small");
-    }
-    else if (value instanceof Double) {
-      final Double number = (Double)value;
-      if (number.isInfinite()) return JavaErrorMessages.message("floating.point.number.too.large");
-      if (number.doubleValue() == 0 && !isFPZero()) return JavaErrorMessages.message("floating.point.number.too.small");
-    }
-
     return null;
-  }
-
-  @NotNull
-  @Override
-  public Collection<? extends IntentionAction> getIntentions() {
-    final TreeElement literal = getFirstChildNode();
-    final String text = literal.getText().toLowerCase();
-    final IElementType type = literal.getElementType();
-    final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(this);
-
-    if (REAL_LITERALS.contains(type)) {
-      if (!languageLevel.isAtLeast(LanguageLevel.JDK_1_5) && text.startsWith(HEX_PREFIX)) {
-        return Arrays.asList(new IncreaseLanguageLevelFix(LanguageLevel.JDK_1_5));
-      }
-    }
-    if (NUMERIC_LITERALS.contains(type)) {
-      if (!languageLevel.isAtLeast(LanguageLevel.JDK_1_7) && (text.startsWith(BIN_PREFIX) || text.contains("_"))) {
-        return Arrays.asList(new IncreaseLanguageLevelFix(LanguageLevel.JDK_1_7));
-      }
-    }
-
-    return Collections.emptyList();
-  }
-
-  /**
-   * @return true if floating point literal consists of zeros only
-   */
-  private boolean isFPZero() {
-    final String text = getFirstChildNode().getText();
-    for(int i = 0; i < text.length(); i++){
-      final char c = text.charAt(i);
-      if (Character.isDigit(c) && c != '0') return false;
-      if (Character.toUpperCase(c) == 'E') break;
-    }
-    return true;
   }
 
   @Nullable
