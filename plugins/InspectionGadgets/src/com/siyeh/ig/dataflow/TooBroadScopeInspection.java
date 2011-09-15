@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,10 +34,11 @@ import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.HighlightUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.Collection;
 
 public class TooBroadScopeInspection extends BaseInspection
@@ -146,7 +147,7 @@ public class TooBroadScopeInspection extends BaseInspection
                         PsiTreeUtil.getParentOfType(variable,
                                 PsiCodeBlock.class, PsiForStatement.class);
                 assert variableScope != null;
-                commonParent = ScopeUtils.moveOutOfLoops(
+                commonParent = ScopeUtils.moveOutOfLoopsAndClasses(
                         commonParent, variableScope);
                 if (commonParent == null)
                 {
@@ -228,7 +229,7 @@ public class TooBroadScopeInspection extends BaseInspection
             }
             final String comment = getCommentText(variable);
             final PsiType type = variable.getType();
-            final String statementText;
+            @NonNls final String statementText;
             final String typeText = type.getCanonicalText();
             if (initializer == null)
             {
@@ -495,7 +496,8 @@ public class TooBroadScopeInspection extends BaseInspection
             if (initializer != null)
             {
                 commonParent =
-                        ScopeUtils.moveOutOfLoops(commonParent, variableScope);
+                        ScopeUtils.moveOutOfLoopsAndClasses(commonParent,
+                                variableScope);
                 if (commonParent == null)
                 {
                     return;

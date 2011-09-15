@@ -78,4 +78,17 @@ public class TooBroadScope
         separator = variableUsedAsArgument(separator);
         return null;
     }
+
+    void doNotNarrowInsideAnonymousClass() {
+        final int[] counter = new int[1];
+        Runnable runnable = new Runnable()
+        {
+            public void run()
+            {
+                counter[0] += 1;
+                System.out.println("counter = " + counter);
+            }
+        };
+        runnable.run();
+    }
 }

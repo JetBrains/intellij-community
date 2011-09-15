@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,9 +50,9 @@ class ScopeUtils
 
     @Nullable
     public static PsiElement getChildWhichContainsElement(
-            @NotNull PsiElement ancestor, @NotNull PsiElement descendant)
+            @NotNull PsiElement ancestor, @NotNull PsiElement element)
     {
-        PsiElement child = descendant;
+        PsiElement child = element;
         PsiElement parent = child.getParent();
         while (!parent.equals(ancestor))
         {
@@ -67,9 +67,10 @@ class ScopeUtils
     }
 
     @Nullable
-    public static PsiElement getCommonParent(@NotNull PsiElement[] referenceElements)
+    public static PsiElement getCommonParent(
+            @NotNull PsiElement[] referenceElements)
     {
-	    Arrays.sort(referenceElements, PsiElementOrderComparator.getInstance());
+        Arrays.sort(referenceElements, PsiElementOrderComparator.getInstance());
         PsiElement commonParent = null;
         for (PsiElement referenceElement : referenceElements)
         {
@@ -173,9 +174,8 @@ class ScopeUtils
     }
 
     @Nullable
-    public static PsiElement moveOutOfLoops(@NotNull PsiElement scope,
-                                            @NotNull PsiElement maxScope)
-    {
+    public static PsiElement moveOutOfLoopsAndClasses(
+            @NotNull PsiElement scope, @NotNull PsiElement maxScope) {
         PsiElement result = maxScope;
         if (result instanceof PsiLoopStatement)
         {
@@ -185,7 +185,8 @@ class ScopeUtils
         {
             final PsiElement element =
                     getChildWhichContainsElement(result, scope);
-            if (element == null || element instanceof PsiLoopStatement)
+            if (element == null || element instanceof PsiLoopStatement
+                    || element instanceof PsiClass)
             {
                 while (result != null && !(result instanceof PsiCodeBlock))
                 {
