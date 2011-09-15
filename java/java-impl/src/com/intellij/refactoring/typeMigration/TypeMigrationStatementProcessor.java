@@ -344,20 +344,28 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
   }
 
   @Override
-  public void visitBinaryExpression(final PsiBinaryExpression expression) {
-    super.visitBinaryExpression(expression);
-    final PsiExpression lOperand = expression.getLOperand();
-    final TypeView left = new TypeView(lOperand);
-    final PsiExpression rOperand = expression.getROperand();
-    if (rOperand == null) return;
-    final TypeView right = new TypeView(rOperand);
-    if (!TypeConversionUtil.isBinaryOperatorApplicable(expression.getOperationTokenType(), left.getType(), right.getType(), false)) {
-      if (left.isChanged()) {
-        findConversionOrFail(expression, lOperand, left.getTypePair());
+  public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+    super.visitPolyadicExpression(expression);
+    final PsiExpression[] operands = expression.getOperands();
+    if (operands.length == 0) return;
+    final IElementType operationTokenType = expression.getOperationTokenType();
+
+    PsiExpression lOperand = operands[0];
+    TypeView left = new TypeView(lOperand);
+    for(int i = 1; i < operands.length; i++) {
+      final PsiExpression rOperand = operands[i];
+      if (rOperand == null) return;
+      final TypeView right = new TypeView(rOperand);
+      if (!TypeConversionUtil.isBinaryOperatorApplicable(operationTokenType, left.getType(), right.getType(), false)) {
+        if (left.isChanged()) {
+          findConversionOrFail(expression, lOperand, left.getTypePair());
+        }
+        if (right.isChanged()) {
+          findConversionOrFail(expression, rOperand, right.getTypePair());
+        }
       }
-      if (right.isChanged()) {
-        findConversionOrFail(expression, rOperand, right.getTypePair());
-      }
+      lOperand = rOperand;
+      left = right;
     }
   }
 
