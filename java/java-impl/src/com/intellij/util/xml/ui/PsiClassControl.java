@@ -22,11 +22,12 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.PsiCodeFragmentImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.EditorTextField;
+import com.intellij.ui.JavaReferenceEditorUtil;
 import com.intellij.ui.ReferenceEditorWithBrowseButton;
 import com.intellij.ui.UIBundle;
-import com.intellij.ui.JavaReferenceEditorUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.ExtendClass;
 import com.intellij.util.xml.GenericDomValue;
@@ -60,7 +61,7 @@ public class PsiClassControl extends EditorTextFieldControl<PsiClassPanel> {
     ReferenceEditorWithBrowseButton editor = JavaReferenceEditorUtil
         .createReferenceEditorWithBrowseButton(null, "", PsiManager.getInstance(project), true);
     Document document = editor.getChildComponent().getDocument();
-    JavaCodeFragment fragment = (JavaCodeFragment)PsiDocumentManager.getInstance(project).getPsiFile(document);
+    PsiCodeFragmentImpl fragment = (PsiCodeFragmentImpl) PsiDocumentManager.getInstance(project).getPsiFile(document);
     assert fragment != null;
     fragment.setIntentionActionsFilter(IntentionFilterOwner.IntentionActionsFilter.EVERYTHING_AVAILABLE);
     fragment.putUserData(ModuleUtil.KEY_MODULE, getDomWrapper().getExistingDomElement().getModule());
