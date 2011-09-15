@@ -16,10 +16,10 @@ import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiParameterList;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.impl.light.LightMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.StringBuilderSpinAllocator;
 import de.plushnikov.intellij.lombok.MethodUtils;
-import de.plushnikov.intellij.lombok.psi.MyLightMethod;
 import lombok.Delegate;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,7 +69,7 @@ public class DelegateFieldProcessor extends AbstractLombokFieldProcessor {
 
         final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
         for (PsiMethod psiMethod : methodsToDelegate) {
-          MyLightMethod myLightMethod = generateDelegateMethod(psiClass, manager, elementFactory, psiMethod, fieldClassSubstitutor);
+          LightMethod myLightMethod = generateDelegateMethod(psiClass, manager, elementFactory, psiMethod, fieldClassSubstitutor);
           target.add((Psi) myLightMethod);
         }
 
@@ -113,7 +113,7 @@ public class DelegateFieldProcessor extends AbstractLombokFieldProcessor {
   }
 
   @NotNull
-  private MyLightMethod generateDelegateMethod(@NotNull PsiClass psiClass, @NotNull PsiManager manager, @NotNull PsiElementFactory elementFactory, @NotNull PsiMethod psiMethod, @Nullable PsiSubstitutor psiSubstitutor) {
+  private LightMethod generateDelegateMethod(@NotNull PsiClass psiClass, @NotNull PsiManager manager, @NotNull PsiElementFactory elementFactory, @NotNull PsiMethod psiMethod, @Nullable PsiSubstitutor psiSubstitutor) {
     final StringBuilder builder = StringBuilderSpinAllocator.alloc();
     try {
       builder.append(PsiModifier.PUBLIC);
