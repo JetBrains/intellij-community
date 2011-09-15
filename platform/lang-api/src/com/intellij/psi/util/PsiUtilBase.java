@@ -94,16 +94,6 @@ public class PsiUtilBase extends PsiUtilCore {
     return elt.getLanguage();
   }
 
-  @Nullable
-  public static PsiFile getTemplateLanguageFile(final PsiElement element) {
-    if (element == null) return null;
-    final PsiFile containingFile = element.getContainingFile();
-    if (containingFile == null) return null;
-
-    final FileViewProvider viewProvider = containingFile.getViewProvider();
-    return viewProvider.getPsi(viewProvider.getBaseLanguage());
-  }
-
   /** @return name for element using element structure info
    */
   @Nullable

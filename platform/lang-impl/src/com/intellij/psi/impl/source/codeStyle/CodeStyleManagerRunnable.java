@@ -29,7 +29,7 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.DocumentBasedFormattingModel;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,7 +68,7 @@ abstract class CodeStyleManagerRunnable<T> {
       }
     }
 
-    final PsiFile templateFile = PsiUtilBase.getTemplateLanguageFile(file);
+    final PsiFile templateFile = PsiUtilCore.getTemplateLanguageFile(file);
     if (templateFile != null) {
       file = templateFile;
       document = documentManager.getDocument(templateFile);

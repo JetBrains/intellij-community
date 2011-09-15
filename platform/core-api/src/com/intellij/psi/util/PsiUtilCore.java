@@ -340,4 +340,14 @@ public class PsiUtilCore {
     }
     return elt;
   }
+
+  @Nullable
+  public static PsiFile getTemplateLanguageFile(final PsiElement element) {
+    if (element == null) return null;
+    final PsiFile containingFile = element.getContainingFile();
+    if (containingFile == null) return null;
+
+    final FileViewProvider viewProvider = containingFile.getViewProvider();
+    return viewProvider.getPsi(viewProvider.getBaseLanguage());
+  }
 }
