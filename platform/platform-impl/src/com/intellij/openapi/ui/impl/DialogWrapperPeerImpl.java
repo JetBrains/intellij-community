@@ -581,11 +581,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
       super.setBounds(r);
     }
 
-    @Override
-    public Dimension getMinimumSize() {
-      return getPreferredSize();
-    }
-
     protected JRootPane createRootPane() {
       return new DialogRootPane();
     }
