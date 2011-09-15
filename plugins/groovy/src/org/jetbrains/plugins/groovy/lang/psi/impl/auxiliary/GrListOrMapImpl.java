@@ -22,11 +22,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.findUsages.LiteralConstructorReference;
-import org.jetbrains.plugins.groovy.gpp.GppTypeConverter;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -35,12 +35,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaratio
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCastExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.ArrayList;
@@ -126,21 +126,22 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
 
   @Override
   public PsiReference getReference() {
-    if (!(getParent() instanceof GrSafeCastExpression) && !GppTypeConverter.hasTypedContext(this)) {
-      return null;
-    }
-
     final PsiClassType conversionType = LiteralConstructorReference.getTargetConversionType(this);
-    if (conversionType != null) {
-      final PsiType ownType = getType();
-      if (ownType != null && conversionType.isAssignableFrom(ownType)) {
-        return null;
-      }
+    if (conversionType == null) return null;
 
-      return new LiteralConstructorReference(this, conversionType);
+    PsiType ownType = getType();
+    if (ownType instanceof PsiClassType) {
+      ownType = ((PsiClassType)ownType).rawType();
+    }
+    if (ownType != null && TypesUtil.isAssignable(conversionType.rawType(), ownType, this, false)) return null;
+
+    final PsiClass resolved = conversionType.resolve();
+    if (resolved != null) {
+      if (InheritanceUtil.isInheritor(resolved, CommonClassNames.JAVA_UTIL_SET)) return null;
+      if (InheritanceUtil.isInheritor(resolved, CommonClassNames.JAVA_UTIL_LIST)) return null;
     }
 
-    return null;
+    return new LiteralConstructorReference(this, conversionType);
   }
 
   private static class MyTypesCalculator implements Function<GrListOrMapImpl, PsiType> {

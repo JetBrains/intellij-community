@@ -31,9 +31,11 @@ import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
+import org.jetbrains.plugins.groovy.findUsages.LiteralConstructorReference;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -141,7 +143,9 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
       ControlFlowUtils.visitAllExitPoints(block, new ControlFlowUtils.ExitPointVisitor() {
         @Override
         public boolean visitExitPoint(Instruction instruction, @Nullable GrExpression returnValue) {
-          if (returnValue != null && !(returnValue.getParent() instanceof GrReturnStatement)) {
+          if (returnValue != null &&
+              !(returnValue.getParent() instanceof GrReturnStatement) &&
+              !isNewInstanceInitialingByTuple(returnValue)) {
             checkAssignability(expectedType, returnValue, returnValue);
           }
           return true;
@@ -157,6 +161,8 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
       if (method == null) return;
 
       final GrExpression value = returnStatement.getReturnValue();
+      if (isNewInstanceInitialingByTuple(value)) return;
+      
       final PsiType expectedType = method.getReturnType();
       if (value == null || expectedType == null) return;
       checkAssignability(expectedType, value, returnStatement);
@@ -189,8 +195,13 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
         }
         return;
       }
-      if (lValue instanceof GrReferenceExpression &&
-          ((GrReferenceExpression)lValue).resolve() instanceof GrReferenceExpression) { //lvalue is not-declared variable
+      if (lValue instanceof GrReferenceExpression && ((GrReferenceExpression)lValue).resolve() instanceof GrReferenceExpression) {
+          //lvalue is not-declared variable
+        return;
+      }
+
+      if (isNewInstanceInitialingByTuple(rValue)) {
+        // new instance initializing e.g.: X x; x = [1, 2]
         return;
       }
       if (lValue instanceof GrIndexProperty) return;
@@ -209,8 +220,15 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
 
       PsiType rType = initializer.getType();
       if (rType == null) return;
+      if (isNewInstanceInitialingByTuple(initializer)) {
+        return;
+      }
 
       checkAssignability(varType, initializer, initializer);
+    }
+
+    private static boolean isNewInstanceInitialingByTuple(GrExpression initializer) {
+      return initializer instanceof GrListOrMap && initializer.getReference() instanceof LiteralConstructorReference;
     }
 
     @Override
@@ -224,17 +242,17 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
       checkConstructorCall(newExpression, refElement);
     }
 
-    private void checkConstructorCall(GrConstructorCall newExpression, GroovyPsiElement refElement) {
-      final GrArgumentList argList = newExpression.getArgumentList();
+    private void checkConstructorCall(GrConstructorCall constructorCall, GroovyPsiElement refElement) {
+      final GrArgumentList argList = constructorCall.getArgumentList();
 
-      final GroovyResolveResult constructorResolveResult = newExpression.resolveConstructorGenerics();
+      final GroovyResolveResult constructorResolveResult = constructorCall.resolveConstructorGenerics();
       final PsiElement constructor = constructorResolveResult.getElement();
 
       if (constructor != null) {
         checkConstructorApplicability(constructorResolveResult, refElement);
       }
       else {
-        final GroovyResolveResult[] results = newExpression.multiResolveConstructor();
+        final GroovyResolveResult[] results = constructorCall.multiResolveConstructor();
         if (results.length > 0) {
           for (GroovyResolveResult result : results) {
             PsiElement resolved = result.getElement();
@@ -243,14 +261,95 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
             }
           }
 
-          String message = GroovyBundle.message("method.call.is.ambiguous");
-          PsiElement elementToHighlight = argList;
-          if (elementToHighlight == null || elementToHighlight.getTextLength() == 0) elementToHighlight = refElement;
-          registerError(elementToHighlight, message);
+          registerError(getElementToHighlight(refElement, argList), GroovyBundle.message("method.call.is.ambiguous"));
+        }
+        else {
+          final GrExpression[] expressionArguments = constructorCall.getExpressionArguments();
+          final GrClosableBlock[] closureArguments = constructorCall.getClosureArguments();
+          if (expressionArguments.length + closureArguments.length > 0) {
+            final GroovyResolveResult[] resolveResults = constructorCall.multiResolveClass();
+            if (resolveResults.length == 1) {
+              final PsiElement element = resolveResults[1].getElement();
+              if (element instanceof PsiClass) {
+                registerError(getElementToHighlight(refElement, argList),
+                              GroovyBundle.message("cannot.apply.default.constructor", ((PsiClass)element).getName()));
+              }
+            }
+          }
         }
       }
 
-      checkNamedArgumentsType(newExpression);
+      checkNamedArgumentsType(constructorCall);
+    }
+
+    private static PsiElement getElementToHighlight(PsiElement refElement, GrArgumentList argList) {
+      PsiElement elementToHighlight = argList;
+      if (elementToHighlight == null || elementToHighlight.getTextLength() == 0) elementToHighlight = refElement;
+      return elementToHighlight;
+    }
+
+    @Override
+    public void visitListOrMap(GrListOrMap listOrMap) {
+      super.visitListOrMap(listOrMap);
+
+      final PsiReference reference = listOrMap.getReference();
+      if (!(reference instanceof LiteralConstructorReference)) return;
+
+      final GroovyResolveResult[] results = ((LiteralConstructorReference)reference).multiResolve(false);
+      LOG.assertTrue(results.length > 0);
+
+      if (results.length == 1) {
+        final GroovyResolveResult result = results[0];
+        final PsiElement element = result.getElement();
+        if (element instanceof PsiClass) {
+          if (!listOrMap.isMap()) {
+            registerError(listOrMap, GroovyBundle.message("cannot.apply.default.constructor", ((PsiClass)element).getName()));
+          }
+        }
+        else if (element instanceof PsiMethod && ((PsiMethod)element).isConstructor()){
+          checkLiteralConstructorApplicability(result, listOrMap);
+        }
+      }
+      else {
+        for (GroovyResolveResult result : results) {
+          PsiElement resolved = result.getElement();
+          if (resolved instanceof PsiMethod) {
+            if (!checkLiteralConstructorApplicability(result, listOrMap)) return;
+          }
+          registerError(listOrMap, GroovyBundle.message("constructor.call.is.ambiguous"));
+        }
+      }
+    }
+
+    private boolean checkLiteralConstructorApplicability(GroovyResolveResult result, GrListOrMap listOrMap) {
+      final PsiElement element = result.getElement();
+      LOG.assertTrue(element instanceof PsiMethod && ((PsiMethod)element).isConstructor());
+      final PsiMethod constructor = (PsiMethod)element;
+
+      final GrExpression[] exprArgs;
+      final GrNamedArgument[] namedArgs;
+      if (listOrMap.isMap()) {
+        exprArgs = GrExpression.EMPTY_ARRAY;
+        namedArgs = listOrMap.getNamedArguments();
+      }
+      else {
+        exprArgs = listOrMap.getInitializers();
+        namedArgs = GrNamedArgument.EMPTY_ARRAY;
+      }
+
+      if (exprArgs.length == 0 && !PsiUtil.isConstructorHasRequiredParameters(constructor)) return true;
+
+      PsiType[] argumentTypes = PsiUtil.getArgumentTypes(namedArgs, exprArgs, GrClosableBlock.EMPTY_ARRAY, false, null);
+      if (listOrMap.isMap() && namedArgs.length == 0) {
+        argumentTypes = new PsiType[]{listOrMap.getType()};
+      }
+
+      if (PsiUtil.isApplicable(argumentTypes, constructor, result.getSubstitutor(), GdkMethodUtil.isInUseScope(result), listOrMap, false)) {
+        return true;
+      }
+
+      highlightInapplicableMethodUsage(result, listOrMap, constructor, argumentTypes);
+      return false;
     }
 
     private  boolean checkConstructorApplicability(GroovyResolveResult constructorResolveResult, GroovyPsiElement place) {
@@ -308,10 +407,8 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
             }
           }
 
-          String message = GroovyBundle.message("method.call.is.ambiguous");
-          PsiElement elementToHighlight = PsiUtil.getArgumentsList(referenceExpression);
-          if (elementToHighlight == null || elementToHighlight.getTextLength() == 0) elementToHighlight = referenceExpression;
-          registerError(elementToHighlight, message);
+          registerError(getElementToHighlight(referenceExpression, PsiUtil.getArgumentsList(referenceExpression)),
+                        GroovyBundle.message("method.call.is.ambiguous"));
         }
       }
     }
@@ -389,12 +486,14 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
       final PsiElementFactory factory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
       final PsiClassType containingType = factory.createType(containingClass, methodResolveResult.getSubstitutor());
       final String canonicalText = containingType.getInternalCanonicalText();
-      String message = GroovyBundle.message("cannot.apply.method1", method.getName(), canonicalText, typesString);
-      PsiElement elementToHighlight = PsiUtil.getArgumentsList(place);
-      if (elementToHighlight == null || elementToHighlight.getTextRange().getLength() == 0) {
-        elementToHighlight = place;
+      String message;
+      if (method.isConstructor()) {
+        message = GroovyBundle.message("cannot.apply.constructor", method.getName(), canonicalText, typesString);
       }
-      registerError(elementToHighlight, message);
+      else {
+        message = GroovyBundle.message("cannot.apply.method1", method.getName(), canonicalText, typesString);
+      }
+      registerError(getElementToHighlight(place, PsiUtil.getArgumentsList(place)), message);
     }
 
 

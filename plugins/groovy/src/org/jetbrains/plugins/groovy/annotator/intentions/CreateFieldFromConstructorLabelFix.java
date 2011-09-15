@@ -15,13 +15,15 @@
  */
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
-import com.intellij.openapi.editor.Editor;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiType;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -32,24 +34,23 @@ import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
 /**
  * @author Maxim.Medvedev
  */
-public class CreateFieldFromConstructorLabelFix extends CreateFieldFix {
+public class CreateFieldFromConstructorLabelFix extends GroovyFix {
+  private final CreateFieldFix myFix;
   private final GrNamedArgument myNamedArgument;
 
   public CreateFieldFromConstructorLabelFix(GrMemberOwner targetClass, GrNamedArgument namedArgument) {
-    super(targetClass);
+    myFix = new CreateFieldFix(targetClass);
     myNamedArgument = namedArgument;
   }
 
   @Nullable
-  @Override
-  protected String getFieldName() {
+  private String getFieldName() {
     final GrArgumentLabel label = myNamedArgument.getLabel();
     assert label != null;
     return label.getName();
   }
 
-  @Override
-  protected TypeConstraint[] calculateTypeConstrains() {
+  private TypeConstraint[] calculateTypeConstrains() {
     final GrExpression expression = myNamedArgument.getExpression();
     PsiType type = null;
     if (expression != null) {
@@ -63,12 +64,14 @@ public class CreateFieldFromConstructorLabelFix extends CreateFieldFix {
     }
   }
 
+  @NotNull
   @Override
-  protected String[] generateModifiers() {
-    return ArrayUtil.EMPTY_STRING_ARRAY;
+  public String getName() {
+    return GroovyBundle.message("create.field.from.usage", getFieldName());
   }
 
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return super.isAvailable(project, editor, file) && myNamedArgument.isValid();
+  @Override
+  protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    myFix.doFix(project, ArrayUtil.EMPTY_STRING_ARRAY, getFieldName(), calculateTypeConstrains());
   }
 }

@@ -8,4 +8,4 @@ class Person4 {
 }
 
 println new Person4('mrhaki', ['Groovy', 'Java'])
-println new Person4<warning descr="Ambiguous constructor call"><warning descr="'Person4' in 'Person4' cannot be applied to '(java.lang.String, [java.lang.String, java.lang.String], java.lang.Boolean)'">('mrhaki', ['Groovy', 'Java'], true)</warning></warning>
+println new Person4<warning descr="Constructor 'Person4' in 'Person4' cannot be applied to '(java.lang.String, [java.lang.String, java.lang.String], java.lang.Boolean)'">('mrhaki', ['Groovy', 'Java'], true)</warning>

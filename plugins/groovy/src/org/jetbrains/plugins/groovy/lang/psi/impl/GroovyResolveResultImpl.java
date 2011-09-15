@@ -15,10 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrClassSubstitutor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -41,20 +38,25 @@ public class GroovyResolveResultImpl implements GroovyResolveResult {
   }
 
   public GroovyResolveResultImpl(PsiElement element,
-                                 GroovyPsiElement context,
+                                 @Nullable GroovyPsiElement context,
                                  PsiSubstitutor substitutor,
                                  boolean isAccessible,
                                  boolean staticsOK) {
     this(element, context, substitutor, isAccessible, staticsOK, false);
   }
 
+  public GroovyResolveResultImpl(PsiClassType.ClassResolveResult classResolveResult) {
+    this(classResolveResult.getElement(), null, classResolveResult.getSubstitutor(), classResolveResult.isAccessible(),
+         classResolveResult.isStaticsScopeCorrect());
+  }
+
   public GroovyResolveResultImpl(PsiElement element,
-                                 GroovyPsiElement context,
+                                 GroovyPsiElement resolveContext,
                                  PsiSubstitutor substitutor,
                                  boolean isAccessible,
                                  boolean staticsOK,
                                  boolean isInvokedOnProperty) {
-    myCurrentFileResolveContext = context;
+    myCurrentFileResolveContext = resolveContext;
     myElement = element instanceof PsiClass? GrClassSubstitutor.getSubstitutedClass((PsiClass)element) : element;
     myIsAccessible = isAccessible;
     mySubstitutor = substitutor;

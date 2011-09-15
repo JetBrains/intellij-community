@@ -36,7 +36,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -53,7 +52,6 @@ import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicMethodFi
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicPropertyFix;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.extensions.GroovyUnresolvedHighlightFilter;
-import org.jetbrains.plugins.groovy.findUsages.LiteralConstructorReference;
 import org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter;
 import org.jetbrains.plugins.groovy.lang.documentation.GroovyPresentationUtil;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocFieldReference;
@@ -93,7 +91,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
@@ -611,16 +608,6 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       if (endToken != null && endToken.getNode().getElementType() == GroovyTokenTypes.mRBRACK) {
         myHolder.createInfoAnnotation(endToken, null).setTextAttributes(DefaultHighlighter.LITERAL_CONVERSION);
       }
-
-      if (constructorReference instanceof LiteralConstructorReference) {
-        final LiteralConstructorReference ref = (LiteralConstructorReference)constructorReference;
-        if (!ref.isConstructorCallCorrect()) {
-          final String className = ref.getConstructedClassType().getPresentableText();
-          final GrNamedArgument superArg = listOrMap.findNamedArgument("super");
-          PsiElement toHighlight = superArg != null ? superArg.getExpression() : null;
-          myHolder.createWarningAnnotation(toHighlight == null ? listOrMap : toHighlight, "Cannot find constructor of '" + className + "'");
-        }
-      }
     }
 
     checkNamedArgs(listOrMap.getNamedArguments(), false);
@@ -708,55 +695,6 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       }
     }
 
-    final GroovyResolveResult constructorResolveResult = newExpression.resolveConstructorGenerics();
-    final PsiElement constructor = constructorResolveResult.getElement();
-    if (constructor != null) {
-      final GrArgumentList argList = newExpression.getArgumentList();
-      if (argList != null &&
-          argList.getExpressionArguments().length == 0 &&
-          !PsiUtil.isConstructorHasRequiredParameters((PsiMethod)constructor)) {
-        checkDefaultMapConstructor(myHolder, argList, constructor);
-      }
-
-/*      if (!constructorResolveResult.isAccessible()) {
-        String message = GroovyBundle.message("cannot.access", PsiFormatUtil.formatMethod((PsiMethod)constructor, PsiSubstitutor.EMPTY,
-                                                                                          PsiFormatUtil.SHOW_NAME |
-                                                                                          PsiFormatUtil.SHOW_TYPE |
-                                                                                          PsiFormatUtil.TYPE_AFTER |
-                                                                                          PsiFormatUtil.SHOW_PARAMETERS,
-                                                                                          PsiFormatUtil.SHOW_TYPE
-        ));
-        final Annotation annotation = myHolder.createWarningAnnotation(getElementToHighlight(refElement), message);
-        registerAccessFix(annotation, refElement, ((PsiMember)constructor));
-      }*/
-
-    }
-    else {
-      final GroovyResolveResult[] results = newExpression.multiResolveConstructor();
-      final GrArgumentList argList = newExpression.getArgumentList();
-      PsiElement toHighlight = argList != null ? argList : getElementToHighlight(refElement);
-
-      if (results.length > 0) {
-        String message = GroovyBundle.message("ambiguous.constructor.call");
-        myHolder.createWarningAnnotation(toHighlight, message);
-      }
-      else {
-        if (element instanceof PsiClass) {
-          //default constructor invocation
-          PsiType[] argumentTypes = PsiUtil.getArgumentTypes(refElement, true);
-          if (argumentTypes == null ||
-              argumentTypes.length == 0 ||
-              (argumentTypes.length == 1 &&
-               InheritanceUtil.isInheritor(argumentTypes[0], CommonClassNames.JAVA_UTIL_MAP))) {
-            checkDefaultMapConstructor(myHolder, argList, element);
-          }
-          else {
-            String message = GroovyBundle.message("cannot.find.default.constructor", ((PsiClass)element).getName());
-            myHolder.createWarningAnnotation(toHighlight, message);
-          }
-        }
-      }
-    }
   }
 
   private static void checkDiamonds(GrCodeReferenceElement refElement, AnnotationHolder holder) {
@@ -806,7 +744,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
           //default constructor invocation
           PsiType[] argumentTypes = PsiUtil.getArgumentTypes(invocation.getThisOrSuperKeyword(), true);
           if (argumentTypes != null && argumentTypes.length > 0) {
-            String message = GroovyBundle.message("cannot.find.default.constructor", clazz.getName());
+            String message = GroovyBundle.message("cannot.apply.default.constructor", clazz.getName());
             myHolder.createWarningAnnotation(argList, message);
           }
         }
@@ -1602,49 +1540,11 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   }
 
   @NotNull
-  private static PsiElement getElementToHighlight(@NotNull GrReferenceElement refElement) {
+  public static PsiElement getElementToHighlight(@NotNull GrReferenceElement refElement) {
     final PsiElement refNameElement = refElement.getReferenceNameElement();
     return refNameElement != null ? refNameElement : refElement;
   }
 
-  private static void checkDefaultMapConstructor(AnnotationHolder holder, GrArgumentList argList, PsiElement element) {
-    if (argList != null) {
-      final GrNamedArgument[] args = argList.getNamedArguments();
-      for (GrNamedArgument arg : args) {
-        final GrArgumentLabel label = arg.getLabel();
-        if (label == null) continue;
-        if (label.getName() == null) {
-          final PsiElement nameElement = label.getNameElement();
-          if (nameElement instanceof GrExpression) {
-            final PsiType stringType = TypesUtil.createType(CommonClassNames.JAVA_LANG_STRING, arg);
-            final PsiType argType = ((GrExpression)nameElement).getType();
-            if (argType != null && !TypesUtil.isAssignable(stringType, argType, arg)) {
-              holder.createWarningAnnotation(nameElement, GroovyBundle.message("property.name.expected"));
-            }
-          }
-          else {
-            holder.createWarningAnnotation(nameElement, GroovyBundle.message("property.name.expected"));
-          }
-        }
-        else {
-          final PsiElement resolved = label.resolve();
-          if (resolved == null) {
-            final Annotation annotation = holder.createWarningAnnotation(label, GroovyBundle.message("no.such.property", label.getName()));
-
-            if (element instanceof PsiMember && !(element instanceof PsiClass)) {
-              element = ((PsiMember)element).getContainingClass();
-            }
-            if (element instanceof GrMemberOwner) {
-              annotation.registerFix(new CreateFieldFromConstructorLabelFix((GrMemberOwner)element, label.getNamedArgument()));
-            }
-            if (element instanceof PsiClass) {
-              annotation.registerFix(new DynamicPropertyFix(label, (PsiClass)element));
-            }
-          }
-        }
-      }
-    }
-  }
 
 
   private static void registerAddImportFixes(GrReferenceElement refElement, Annotation annotation) {

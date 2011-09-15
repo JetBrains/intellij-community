@@ -1,9 +1,9 @@
 package org.jetbrains.plugins.groovy.lang
 
+import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
-import com.intellij.psi.JavaPsiFacade
 
 /**
  * @author peter
@@ -36,7 +36,7 @@ class LiteralConstructorUsagesTest extends LightCodeInsightFixtureTestCase {
 Foo untyped() { [] }
 @Typed Foo bar() { [] }
 """
-    assertEquals(3, ReferencesSearch.search(foo.constructors[0]).findAll().size())
+    assertEquals(4, ReferencesSearch.search(foo.constructors[0]).findAll().size())
   }
 
   public void testList_Cast() throws Exception {

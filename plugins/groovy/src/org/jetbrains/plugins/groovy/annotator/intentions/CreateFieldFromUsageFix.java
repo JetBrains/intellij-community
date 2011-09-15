@@ -15,11 +15,13 @@
  */
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiModifier;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
@@ -32,17 +34,13 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 /**
  * @author ven
  */
-public class CreateFieldFromUsageFix extends CreateFieldFix {
+public class CreateFieldFromUsageFix implements IntentionAction {
+  private final CreateFieldFix myFix;
   private final GrReferenceExpression myRefExpression;
 
   public CreateFieldFromUsageFix(GrReferenceExpression refExpression, GrMemberOwner targetClass) {
-    super(targetClass);
+    myFix = new CreateFieldFix(targetClass);
     myRefExpression = refExpression;
-  }
-
-  @Nullable
-  protected String getFieldName() {
-    return myRefExpression.getReferenceName();
   }
 
   @NotNull
@@ -51,18 +49,37 @@ public class CreateFieldFromUsageFix extends CreateFieldFix {
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return super.isAvailable(project, editor, file) && myRefExpression.isValid();
+    return myFix.isAvailable() && myRefExpression.isValid();
   }
 
-  protected String[] generateModifiers() {
-    if (myRefExpression != null && PsiUtil.isInStaticContext(myRefExpression, getTargetClass())) {
+  @Nullable
+  private String getFieldName() {
+    return myRefExpression.getReferenceName();
+  }
+
+  private String[] generateModifiers() {
+    if (myRefExpression != null && PsiUtil.isInStaticContext(myRefExpression, myFix.getTargetClass())) {
       return new String[]{PsiModifier.STATIC};
     }
     return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
-  protected TypeConstraint[] calculateTypeConstrains() {
+  private TypeConstraint[] calculateTypeConstrains() {
     return GroovyExpectedTypesProvider.calculateTypeConstraints(myRefExpression);
+  }
 
+  @NotNull
+    public String getText() {
+      return GroovyBundle.message("create.field.from.usage", getFieldName());
+    }
+
+  @Override
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    myFix.doFix(project, generateModifiers(), getFieldName(), calculateTypeConstrains());
+  }
+
+  @Override
+  public boolean startInWriteAction() {
+    return true;
   }
 }
