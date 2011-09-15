@@ -9,6 +9,7 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.impl.light.LightFieldBuilder;
 import de.plushnikov.intellij.lombok.processor.clazz.AbstractLombokClassProcessor;
 import org.jetbrains.annotations.NotNull;
@@ -35,9 +36,10 @@ public abstract class AbstractLogProcessor extends AbstractLombokClassProcessor 
     PsiManager manager = psiClass.getContainingFile().getManager();
 
     PsiType psiLoggerType = JavaPsiFacade.getElementFactory(project).createTypeFromText(loggerType, psiClass);
-    LightFieldBuilder loggerField = new LightFieldBuilder(manager, loggerName, psiLoggerType)
+    LightElement loggerField = new LightFieldBuilder(manager, loggerName, psiLoggerType)
         .setContainingClass(psiClass)
-        .setModifiers(PsiModifier.FINAL, PsiModifier.STATIC, PsiModifier.PUBLIC);
+        .setModifiers(PsiModifier.FINAL, PsiModifier.STATIC, PsiModifier.PUBLIC)
+        .setNavigationElement(psiAnnotation);
 
     target.add((Psi) loggerField);
 

@@ -23,7 +23,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <!-- Add your extensions here -->
     <lang.psiAugmentProvider implementation="de.plushnikov.intellij.plugin.provider.LombokAugmentProvider"/>
-    <implicitUsageProvider implementation="de.plushnikov.intellij.plugin.provider.LombokImplicitUsageProvider"/>
+    <!--<implicitUsageProvider implementation="de.plushnikov.intellij.plugin.provider.LombokImplicitUsageProvider"/>-->
     <renameHandler implementation="de.plushnikov.intellij.plugin.handler.LombokElementRenameHandler" order="first"/>
     <!--<refactoring.changeSignatureUsageProcessor implementation=""/>-->
     <!--<refactoring.safeDeleteProcessor      -->

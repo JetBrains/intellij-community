@@ -37,15 +37,15 @@ public class LombokProcessorUtil {
   @Nullable
   public static String convertAcessLevelToJavaString(String value) {
     if (null == value || value.isEmpty() || value.endsWith("AccessLevel.PUBLIC"))
-      return PsiModifier.PUBLIC + ' ';
+      return PsiModifier.PUBLIC;
     if (value.endsWith("AccessLevel.MODULE"))
       return "";
     if (value.endsWith("AccessLevel.PROTECTED"))
-      return PsiModifier.PROTECTED + ' ';
+      return PsiModifier.PROTECTED;
     if (value.endsWith("AccessLevel.PACKAGE"))
       return "";
     if (value.endsWith("AccessLevel.PRIVATE"))
-      return PsiModifier.PRIVATE + ' ';
+      return PsiModifier.PRIVATE;
     if (value.endsWith("AccessLevel.NONE"))
       return null;
     else

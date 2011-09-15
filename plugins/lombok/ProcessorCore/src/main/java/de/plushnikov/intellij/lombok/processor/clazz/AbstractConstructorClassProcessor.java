@@ -44,10 +44,13 @@ public abstract class AbstractConstructorClassProcessor extends AbstractLombokCl
 
 
   @NotNull
-  protected PsiMethod createConstructorMethod(@NotNull String visibility, @NotNull Collection<PsiField> params, @NotNull PsiClass psiClass, @NotNull PsiElementFactory elementFactory) {
+  protected PsiMethod createConstructorMethod(@NotNull String methodVisibility, @NotNull Collection<PsiField> params, @NotNull PsiClass psiClass, @NotNull PsiElementFactory elementFactory) {
     final StringBuilder builder = StringBuilderSpinAllocator.alloc();
     try {
-      builder.append(visibility);
+      builder.append(methodVisibility);
+      if (builder.length() > 0) {
+        builder.append(' ');
+      }
       builder.append(psiClass.getName());
       builder.append('(');
       if (!params.isEmpty()) {
