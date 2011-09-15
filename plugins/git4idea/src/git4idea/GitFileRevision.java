@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Throwable2Computable;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
+import com.intellij.openapi.vcs.history.VcsFileRevisionDvcsSpecific;
 import com.intellij.openapi.vcs.history.VcsFileRevisionEx;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.ContentRevisionCache;
@@ -37,7 +38,7 @@ import java.util.Date;
 /**
  * Git file revision
  */
-public class GitFileRevision extends VcsFileRevisionEx implements Comparable<VcsFileRevision> {
+public class GitFileRevision extends VcsFileRevisionEx implements Comparable<VcsFileRevision>, VcsFileRevisionDvcsSpecific {
   /**
    * encoding to be used for binary output
    */
@@ -48,9 +49,10 @@ public class GitFileRevision extends VcsFileRevisionEx implements Comparable<Vcs
   private final String message;
   private final Project project;
   private final String branch;
+  private final Date myAuthorTime;
 
   public GitFileRevision(@NotNull Project project, @NotNull FilePath path, @NotNull GitRevisionNumber revision) {
-    this(project, path, revision, null, null, null);
+    this(project, path, revision, null, null, null, null);
   }
 
   public GitFileRevision(@NotNull Project project,
@@ -58,13 +60,14 @@ public class GitFileRevision extends VcsFileRevisionEx implements Comparable<Vcs
                          @NotNull GitRevisionNumber revision,
                          @Nullable Pair<Pair<String, String>, Pair<String, String>> authorAndCommitter,
                          @Nullable String message,
-                         @Nullable String branch) {
+                         @Nullable String branch, final Date authorTime) {
     this.project = project;
     this.path = path;
     this.revision = revision;
     this.authorAndCommitter = authorAndCommitter;
     this.message = message;
     this.branch = branch;
+    myAuthorTime = authorTime;
   }
 
   /**
@@ -80,6 +83,11 @@ public class GitFileRevision extends VcsFileRevisionEx implements Comparable<Vcs
 
   public Date getRevisionDate() {
     return revision.getTimestamp();
+  }
+
+  @Override
+  public Date getDateForRevisionsOrdering() {
+    return myAuthorTime;
   }
 
   public String getAuthor() {

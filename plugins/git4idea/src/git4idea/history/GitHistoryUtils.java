@@ -287,7 +287,7 @@ public class GitHistoryUtils {
     path = getLastCommitName(project, path);
     final VirtualFile finalRoot = (root == null ? GitUtil.getGitRoot(path) : root);
     final GitLogParser logParser = new GitLogParser(project, HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_EMAIL, COMMITTER_NAME, COMMITTER_EMAIL, PARENTS,
-                                                    SUBJECT, BODY, RAW_BODY);
+                                                    SUBJECT, BODY, RAW_BODY, AUTHOR_TIME);
     logParser.parseStatusBeforeName(false);
 
     final AtomicReference<String> firstCommit = new AtomicReference<String>("HEAD");
@@ -324,7 +324,7 @@ public class GitHistoryUtils {
 
           final Pair<String, String> authorPair = Pair.create(record.getAuthorName(), record.getAuthorEmail());
           final Pair<String, String> committerPair = record.getCommitterName() == null ? null : Pair.create(record.getCommitterName(), record.getCommitterEmail());
-          consumer.consume(new GitFileRevision(project, revisionPath, revision, Pair.create(authorPair, committerPair), message, null));
+          consumer.consume(new GitFileRevision(project, revisionPath, revision, Pair.create(authorPair, committerPair), message, null, new Date(record.getAuthorTimeStamp() * 1000)));
         } catch (VcsException e) {
           exceptionConsumer.consume(e);
         }
@@ -720,6 +720,30 @@ public class GitHistoryUtils {
       rc.add(gitCommit);
     }
     return rc;
+    } catch (VcsException e) {
+      throw e;
+    }
+  }
+
+  public static long getAuthorTime(Project project, FilePath path, final String commitsId) throws VcsException {
+    // adjust path using change manager
+    path = getLastCommitName(project, path);
+    final VirtualFile root = GitUtil.getGitRoot(path);
+    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.SHOW);
+    GitLogParser parser = new GitLogParser(project, AUTHOR_TIME);
+    h.setNoSSH(true);
+    h.setStdoutSuppressed(true);
+    h.addParameters("--name-status", parser.getPretty(), "--encoding=UTF-8");
+    parser.parseStatusBeforeName(true);
+    h.addParameters(commitsId);
+
+    String output;
+    try {
+      output = h.run();
+
+      GitLogRecord logRecord = parser.parseOneRecord(output);
+      return logRecord.getAuthorTimeStamp() * 1000;
+
     } catch (VcsException e) {
       throw e;
     }

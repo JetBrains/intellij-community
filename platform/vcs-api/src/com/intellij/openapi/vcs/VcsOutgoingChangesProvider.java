@@ -31,5 +31,6 @@ public interface VcsOutgoingChangesProvider <T extends CommittedChangeList> exte
   @Nullable
   VcsRevisionNumber getMergeBaseNumber(final VirtualFile anyFileUnderRoot) throws VcsException;
   Collection<Change> filterLocalChangesBasedOnLocalCommits(final Collection<Change> localChanges, final VirtualFile vcsRoot) throws VcsException;
-  Date getRevisionDate(final VcsRevisionNumber revision);
+  @Nullable
+  Date getRevisionDate(final VcsRevisionNumber revision, FilePath file);
 }

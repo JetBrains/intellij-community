@@ -148,7 +148,7 @@ public class IdeaTextPatchBuilder {
   @Nullable
   private static AirContentRevision convertRevision(@Nullable final ContentRevision cr, final VcsOutgoingChangesProvider provider) {
     if (cr == null) return null;
-    final Date date = provider.getRevisionDate(cr.getRevisionNumber());
+    final Date date = provider.getRevisionDate(cr.getRevisionNumber(), cr.getFile());
     final Long ts = date == null ? null : date.getTime();
     return convertRevisionToAir(cr, ts);
   }

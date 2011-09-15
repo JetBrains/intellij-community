@@ -165,7 +165,14 @@ public class GitOutgoingChangesProvider implements VcsOutgoingChangesProvider<Co
     return result;
   }*/
 
-  public Date getRevisionDate(VcsRevisionNumber revision) {
-    return revision instanceof GitRevisionNumber ? ((GitRevisionNumber) revision).getTimestamp() : null;
+  @Nullable
+  public Date getRevisionDate(VcsRevisionNumber revision, FilePath file) {
+    if (VcsRevisionNumber.NULL.equals(revision)) return null;
+    try {
+      return new Date(GitHistoryUtils.getAuthorTime(myProject, file, revision.asString()));
+    }
+    catch (VcsException e) {
+      return null;
+    }
   }
 }
