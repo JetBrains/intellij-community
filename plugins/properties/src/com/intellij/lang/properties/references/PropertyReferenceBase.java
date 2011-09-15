@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.pom.references.PomService;
 import com.intellij.psi.*;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
@@ -156,7 +157,6 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
   }
 
   public boolean isReferenceTo(PsiElement element) {
-    if(!(element instanceof IProperty)) return false;
     for (ResolveResult result : multiResolve(false)) {
       final PsiElement el = result.getElement();
       if (el != null && el.isEquivalentTo(element)) return true;
@@ -212,7 +212,19 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
         return Comparing.compare(name1, name2);
       }
     });
-    return PsiElementResolveResult.createResults(ContainerUtil.map2Array(properties, PsiElement.class, MAPPER));
+    return getResolveResults(properties);
+  }
+
+  protected static ResolveResult[] getResolveResults(List<IProperty> properties) {
+    if (properties.isEmpty()) return ResolveResult.EMPTY_ARRAY;
+
+    final ResolveResult[] results = new ResolveResult[properties.size()];
+    for (int i = 0; i < properties.size(); i++) {
+      IProperty property = properties.get(i);
+      results[i] = new PsiElementResolveResult(property instanceof PsiElement ? (PsiElement)property : PomService.convertToPsi(
+                        (PsiTarget)property));
+    }
+    return results;
   }
 
   @Nullable

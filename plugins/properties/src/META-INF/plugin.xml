@@ -58,6 +58,7 @@
     <fileBasedIndex implementation="com.intellij.lang.properties.xml.XmlPropertiesIndex"/>
     <standardResource url="http://java.sun.com/dtd/properties.dtd" path="schemas/properties.dtd"/>
     <iconProvider implementation="com.intellij.lang.properties.xml.XmlPropertiesIconProvider"/>
+    <psi.referenceContributor language="XML" implementation="com.intellij.lang.properties.xml.XmlPropertiesReferenceContributor"/>
   </extensions>
 
   <project-components>

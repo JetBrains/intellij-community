@@ -2,8 +2,10 @@ package com.intellij.lang.properties.xml;
 
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.pom.PomRenameableTarget;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiInvalidElementAccessException;
+import com.intellij.psi.PsiTarget;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
@@ -16,7 +18,7 @@ import javax.swing.*;
  * @author Dmitry Avdeev
  *         Date: 7/26/11
  */
-public class XmlProperty implements IProperty {
+public class XmlProperty implements IProperty, PomRenameableTarget, PsiTarget {
 
   private final XmlTag myTag;
   private final XmlPropertiesFile myPropertiesFile;
@@ -32,8 +34,13 @@ public class XmlProperty implements IProperty {
   }
 
   @Override
-  public PsiElement setName(String name) {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+  public boolean isWritable() {
+    return myTag.isWritable();
+  }
+
+  @Override
+  public PsiElement setName(@NotNull String name) {
+    return myTag.setAttribute("key", name);
   }
 
   @Override
@@ -94,5 +101,16 @@ public class XmlProperty implements IProperty {
   @Override
   public Icon getIcon(int flags) {
     return PlatformIcons.PROPERTY_ICON;
+  }
+
+  @Override
+  public boolean isValid() {
+    return myTag.isValid();
+  }
+
+  @NotNull
+  @Override
+  public PsiElement getNavigationElement() {
+    return getPsiElement();
   }
 }
