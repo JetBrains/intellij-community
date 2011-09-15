@@ -970,7 +970,7 @@ public class TypeConversionUtil {
   }
 
   private static String classInfo(PsiClass aClass) {
-    return aClass.getQualifiedName() + "(" + aClass.getClass().getName() + "; " + PsiUtilBase.getVirtualFile(aClass) + ");\n";
+    return aClass.getQualifiedName() + "(" + aClass.getClass().getName() + "; " + PsiUtilCore.getVirtualFile(aClass) + ");\n";
   }
 
   @NotNull
