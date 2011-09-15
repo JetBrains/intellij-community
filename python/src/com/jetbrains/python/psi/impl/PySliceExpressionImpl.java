@@ -3,6 +3,7 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PySliceExpression;
 import com.jetbrains.python.psi.PySliceItem;
@@ -24,7 +25,7 @@ public class PySliceExpressionImpl extends PyElementImpl implements PySliceExpre
   }
 
   public PyExpression getOperand() {
-    return childToPsiNotNull(PyElementTypes.EXPRESSIONS, 0);
+    return childToPsiNotNull(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens(), 0);
   }
 
   @Nullable

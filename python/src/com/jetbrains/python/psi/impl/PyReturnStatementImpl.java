@@ -1,6 +1,7 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import org.jetbrains.annotations.Nullable;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyElementVisitor;
@@ -21,6 +22,6 @@ public class PyReturnStatementImpl extends PyElementImpl implements PyReturnStat
 
   @Nullable
   public PyExpression getExpression() {
-    return childToPsi(PyElementTypes.EXPRESSIONS, 0);
+    return childToPsi(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens(), 0);
   }
 }

@@ -1,5 +1,6 @@
 package com.jetbrains.python.psi.impl;
 
+import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.PyConditionalStatementPart;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExpression;
@@ -16,7 +17,7 @@ public abstract class PyConditionalStatementPartImpl extends PyStatementPartImpl
   }
 
   public PyExpression getCondition() {
-    ASTNode n = getNode().findChildByType(PyElementTypes.EXPRESSIONS);
+    ASTNode n = getNode().findChildByType(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens());
     if (n != null) {
       return (PyExpression)n.getPsi();
     }

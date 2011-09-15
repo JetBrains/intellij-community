@@ -5,6 +5,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.stubs.PyTupleParameterStub;
 import org.jetbrains.annotations.NonNls;
@@ -32,7 +33,7 @@ public class PyTupleParameterImpl extends PyPresentableElementImpl<PyTupleParame
   }
 
   public PyExpression getDefaultValue() {
-    ASTNode[] nodes = getNode().getChildren(PyElementTypes.EXPRESSIONS);
+    ASTNode[] nodes = getNode().getChildren(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens());
     if (nodes.length > 0) {
       return (PyExpression)nodes[0].getPsi();
     }

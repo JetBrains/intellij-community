@@ -2,6 +2,7 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyYieldExpression;
@@ -23,7 +24,7 @@ public class PyYieldExpressionImpl extends PyElementImpl implements PyYieldExpre
 
   @Override
   public PyExpression getExpression() {
-    return childToPsi(PyElementTypes.EXPRESSIONS, 0);
+    return childToPsi(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens(), 0);
   }
 
   @Override

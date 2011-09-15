@@ -5,6 +5,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +29,7 @@ public abstract class PyComprehensionElementImpl extends PyElementImpl implement
    */
   @Nullable
   public PyExpression getResultExpression() {
-    ASTNode[] exprs = getNode().getChildren(PyElementTypes.EXPRESSIONS);
+    ASTNode[] exprs = getNode().getChildren(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens());
     return exprs.length == 0 ? null : (PyExpression)exprs[0].getPsi();
   }
 
@@ -113,7 +114,7 @@ public abstract class PyComprehensionElementImpl extends PyElementImpl implement
     do {
       node = node.getTreeNext();
     }
-    while (node != null && !PyElementTypes.EXPRESSIONS.contains(node.getElementType()));
+    while (node != null && !PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens().contains(node.getElementType()));
     return node;
   }
 

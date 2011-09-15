@@ -5,7 +5,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
@@ -14,7 +13,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.PythonFileType;
+import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -134,7 +133,8 @@ public class PyBlock implements ASTBlock {
         childAlignment = getAlignmentForChildren();
       }
     }
-    else if (parentType == PyElementTypes.BINARY_EXPRESSION && PyElementTypes.EXPRESSIONS.contains(childType)) {
+    else if (parentType == PyElementTypes.BINARY_EXPRESSION &&
+             PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens().contains(childType)) {
       childAlignment = getAlignmentForChildren();
     }
     if (parentType == PyElementTypes.LIST_LITERAL_EXPRESSION) {
@@ -475,7 +475,7 @@ public class PyBlock implements ASTBlock {
   }
 
   private static boolean isStatementOrDeclaration(final IElementType type) {
-    return PyElementTypes.STATEMENTS.contains(type) ||
+    return PythonDialectsTokenSetProvider.INSTANCE.getStatementTokens().contains(type) ||
            type == PyElementTypes.CLASS_DECLARATION ||
            type == PyElementTypes.FUNCTION_DECLARATION;
   }

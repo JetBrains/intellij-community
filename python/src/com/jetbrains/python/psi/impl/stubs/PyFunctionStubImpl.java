@@ -1,9 +1,9 @@
 package com.jetbrains.python.psi.impl.stubs;
 
+import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.io.StringRef;
-import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
 import org.jetbrains.annotations.Nullable;
@@ -14,8 +14,8 @@ public class PyFunctionStubImpl extends StubBase<PyFunction> implements PyFuncti
   private final StringRef myDeprecationMessage;
 
   public PyFunctionStubImpl(final String name, final String returnTypeFromDocString, @Nullable final StringRef deprecationMessage,
-                            final StubElement parent) {
-    super(parent, PyElementTypes.FUNCTION_DECLARATION);
+                            final StubElement parent, IStubElementType stubElementType) {
+    super(parent, stubElementType);
     myName = name;
     myReturnTypeFromDocString = returnTypeFromDocString;
     myDeprecationMessage = deprecationMessage;

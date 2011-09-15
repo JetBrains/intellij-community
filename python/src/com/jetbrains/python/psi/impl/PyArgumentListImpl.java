@@ -8,6 +8,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +28,7 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
 
   @NotNull
   public PyExpression[] getArguments() {
-    return childrenToPsi(PyElementTypes.EXPRESSIONS, PyExpression.EMPTY_ARRAY);
+    return childrenToPsi(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens(), PyExpression.EMPTY_ARRAY);
   }
 
   @Nullable
@@ -101,7 +102,7 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
     else {
       ASTNode before = PyUtil.getNextNonWhitespace(pars[0]);
       ASTNode anchorBefore;
-      if (before != null && elementPrecedesElementsOfType(before, PyElementTypes.EXPRESSIONS)) {
+      if (before != null && elementPrecedesElementsOfType(before, PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens())) {
         ASTNode comma = PyElementGenerator.getInstance(getProject()).createComma();
         node.addChild(comma, before);
         anchorBefore = comma;
@@ -185,7 +186,7 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
         break;
 
       }
-      else if (PyElementTypes.EXPRESSIONS.contains(type)) {
+      else if (PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens().contains(type)) {
         // 2: After some argument followed by comma: after comma, add element, add comma
         // 3: After some argument not followed by comma: add comma, add element
         addArgumentNode(argument, node, true);

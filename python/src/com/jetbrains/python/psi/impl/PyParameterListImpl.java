@@ -2,6 +2,7 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.stubs.IStubElementType;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.stubs.PyParameterListStub;
@@ -18,7 +19,11 @@ public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> 
   }
 
   public PyParameterListImpl(final PyParameterListStub stub) {
-    super(stub, PyElementTypes.PARAMETER_LIST);
+    this(stub, PyElementTypes.PARAMETER_LIST);
+  }
+
+  public PyParameterListImpl(final PyParameterListStub stub, IStubElementType nodeType) {
+    super(stub, nodeType);
   }
 
   @Override

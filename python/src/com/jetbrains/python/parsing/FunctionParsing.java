@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.psi.PyElementType;
 
 import static com.jetbrains.python.PyBundle.message;
 
@@ -14,6 +15,7 @@ import static com.jetbrains.python.PyBundle.message;
 public class FunctionParsing extends Parsing {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.parsing.FunctionParsing");
   private static final IElementType FUNCTION_TYPE = PyElementTypes.FUNCTION_DECLARATION;
+  private static final IElementType PARAMETER_LIST_TYPE = PyElementTypes.PARAMETER_LIST;
 
   public FunctionParsing(ParsingContext context) {
     super(context);
@@ -27,6 +29,10 @@ public class FunctionParsing extends Parsing {
 
   protected IElementType getFunctionType() {
     return FUNCTION_TYPE;
+  }
+
+  protected IElementType getParameterListType() {
+    return PARAMETER_LIST_TYPE;
   }
 
   protected void parseFunctionInnards(PsiBuilder.Marker functionMarker) {
@@ -89,7 +95,7 @@ public class FunctionParsing extends Parsing {
     else {
       myBuilder.error(message("PARSE.expected.@.or.def"));
       PsiBuilder.Marker parameterList = myBuilder.mark(); // To have non-empty parameters list at all the time.
-      parameterList.done(PyElementTypes.PARAMETER_LIST);
+      parameterList.done(getParameterListType());
       decoratorStartMarker.done(getFunctionType());
     }
   }
@@ -99,7 +105,7 @@ public class FunctionParsing extends Parsing {
     if (myBuilder.getTokenType() != PyTokenTypes.LPAR) {
       myBuilder.error(message("PARSE.expected.lpar"));
       parameterList = myBuilder.mark(); // To have non-empty parameters list at all the time.
-      parameterList.done(PyElementTypes.PARAMETER_LIST);
+      parameterList.done(getParameterListType());
       return;
     }
     parseParameterListContents(PyTokenTypes.RPAR, true, false);
@@ -139,7 +145,7 @@ public class FunctionParsing extends Parsing {
       myBuilder.advanceLexer();
     }
 
-    parameterList.done(PyElementTypes.PARAMETER_LIST);
+    parameterList.done(getParameterListType());
 
     if (myBuilder.getTokenType() == endToken && endToken == PyTokenTypes.COLON) {
       myBuilder.advanceLexer();
