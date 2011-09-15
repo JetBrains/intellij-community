@@ -231,8 +231,8 @@ public class CodeInsightUtil {
         @Override
         public int compare(PsiElement o1, PsiElement o2) {
           if (o1 instanceof PsiDiamondTypeElementImpl && o2 instanceof PsiDiamondTypeElementImpl) {
-            final PsiDiamondType.DiamondInferenceResult thisInferenceResult = new PsiDiamondType(o1.getManager(), (PsiTypeElement)o1).resolveInferredTypes();
-            final PsiDiamondType.DiamondInferenceResult otherInferenceResult = new PsiDiamondType(o2.getManager(), (PsiTypeElement)o2).resolveInferredTypes();
+            final PsiDiamondType.DiamondInferenceResult thisInferenceResult = new PsiDiamondTypeImpl(o1.getManager(), (PsiTypeElement)o1).resolveInferredTypes();
+            final PsiDiamondType.DiamondInferenceResult otherInferenceResult = new PsiDiamondTypeImpl(o2.getManager(), (PsiTypeElement)o2).resolveInferredTypes();
             return thisInferenceResult.equals(otherInferenceResult) ? 0 : 1;
           }
           return 0;

@@ -131,7 +131,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
         continue;
       }
       else if (elementType == JavaElementType.DIAMOND_TYPE) {
-        cachedType = new PsiDiamondType(getManager(), this);
+        cachedType = new PsiDiamondTypeImpl(getManager(), this);
         break;
       }
       else {
