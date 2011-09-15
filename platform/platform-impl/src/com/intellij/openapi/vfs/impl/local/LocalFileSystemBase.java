@@ -150,6 +150,11 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     return convertToIOFile(file).canWrite();
   }
 
+  @Override
+  public boolean isSymLink(@NotNull final VirtualFile file) {
+    return SymLinkUtil.isSymLink(file.getPath());
+  }
+
   @NotNull
   public String[] list(@NotNull final VirtualFile file) {
     if (file.getParent() == null) {

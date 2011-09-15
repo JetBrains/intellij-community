@@ -41,6 +41,8 @@ public interface FileSystemInterface {
   boolean isWritable(@NotNull VirtualFile file);
   void setWritable(@NotNull VirtualFile file, boolean writableFlag) throws IOException;
 
+  boolean isSymLink(@NotNull VirtualFile file);
+
   VirtualFile createChildDirectory(@Nullable Object requestor, @NotNull VirtualFile parent, @NotNull String dir) throws IOException;
   VirtualFile createChildFile(@Nullable Object requestor, @NotNull VirtualFile parent, @NotNull String file) throws IOException;
 

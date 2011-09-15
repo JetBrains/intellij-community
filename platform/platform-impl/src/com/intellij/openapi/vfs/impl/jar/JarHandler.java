@@ -348,6 +348,11 @@ public class JarHandler implements FileSystemInterface {
     throwReadOnly();
   }
 
+  @Override
+  public boolean isSymLink(@NotNull VirtualFile file) {
+    return false;
+  }
+
   @SuppressWarnings({"ConstantConditions"})
   public VirtualFile createChildDirectory(final Object requestor, final VirtualFile parent, final String dir) throws IOException {
     throwReadOnly();
