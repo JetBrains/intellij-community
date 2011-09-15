@@ -15,8 +15,10 @@
  */
 package com.intellij.util.ui.table;
 
+import com.intellij.ui.EditorTextField;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.AbstractTableCellEditor;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -25,6 +27,8 @@ import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.util.*;
+import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
@@ -102,6 +106,7 @@ public abstract class JBListTable extends JPanel {
         final JBTableRowEditor editor = getRowEditor(row);
         if (editor != null) {
           editor.prepareEditor(t, row);
+          installPaddingAndBordersForEditors(editor);
           editor.setFocusCycleRoot(true);
 
           editor.setFocusTraversalPolicy(new JBListTableFocusTraversalPolicy(editor));
@@ -158,6 +163,14 @@ public abstract class JBListTable extends JPanel {
       }
     };
     mainTable.setStriped(true);
+  }
+
+  private void installPaddingAndBordersForEditors(JBTableRowEditor editor) {
+    final List<EditorTextField> editors = UIUtil.findComponentsOfType(editor, EditorTextField.class);
+    for (EditorTextField textField : editors) {
+      textField.putClientProperty("JComboBox.isTableCellEditor", Boolean.FALSE);
+      textField.putClientProperty("JBListTable.isTableCellEditor", Boolean.TRUE);
+    }
   }
 
   public final JBTable getTable() {
