@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl.source;
 
-import com.intellij.codeInsight.daemon.impl.analysis.AnnotationsHighlightUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
@@ -24,6 +23,7 @@ import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.tree.java.PsiAnnotationImpl;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -156,7 +156,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     PsiModifierList list = ((PsiModifierListOwner)member).getModifierList();
     PsiAnnotation[] gluedAnnotations = list == null ? PsiAnnotation.EMPTY_ARRAY : list.getAnnotations();
     for (PsiAnnotation anno : gluedAnnotations) {
-      if (AnnotationsHighlightUtil.isAnnotationApplicableTo(anno, false, "TYPE_USE")) {
+      if (PsiAnnotationImpl.isAnnotationApplicableTo(anno, false, "TYPE_USE")) {
         typeAnnotations.add(anno);
       }
     }

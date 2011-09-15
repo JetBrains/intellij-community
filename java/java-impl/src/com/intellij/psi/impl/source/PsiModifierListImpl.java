@@ -29,6 +29,7 @@ import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.impl.source.tree.java.PsiAnnotationImpl;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -284,7 +285,7 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
     final String[] fields = AnnotationsHighlightUtil.getApplicableElementTypeFields(this);
     List<PsiAnnotation> filtered = ContainerUtil.findAll(getAnnotations(), new Condition<PsiAnnotation>() {
       public boolean value(PsiAnnotation annotation) {
-        return AnnotationsHighlightUtil.isAnnotationApplicableTo(annotation, true, fields);
+        return PsiAnnotationImpl.isAnnotationApplicableTo(annotation, true, fields);
       }
     });
 

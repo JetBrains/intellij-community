@@ -19,7 +19,6 @@
  */
 package com.intellij.psi.impl.java.stubs.impl;
 
-import com.intellij.codeInsight.daemon.impl.analysis.AnnotationsHighlightUtil;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
@@ -70,7 +69,7 @@ public class PsiFieldStubImpl extends StubBase<PsiField> implements PsiFieldStub
       if (!(child instanceof PsiAnnotationStub)) continue;
       PsiAnnotationStub annotationStub = (PsiAnnotationStub)child;
       PsiAnnotationImpl annotation = (PsiAnnotationImpl)annotationStub.getTreeElement().getPsi();
-      if (AnnotationsHighlightUtil.isAnnotationApplicableTo(annotation, true, "TYPE_USE")) {
+      if (PsiAnnotationImpl.isAnnotationApplicableTo(annotation, true, "TYPE_USE")) {
         typeInfo.addAnnotation(annotationStub);
       }
     }
