@@ -1,9 +1,8 @@
 package org.jetbrains.jps.artifacts
 
 import org.jetbrains.jps.Project
-import org.jetbrains.jps.Library
 
-/**
+ /**
  * @author nik
  */
 abstract class LayoutElement {
@@ -56,5 +55,13 @@ class ModuleOutputElement extends LayoutElement {
 
   def build(Project project) {
     project.binding.module.call(moduleName)
+  }
+}
+
+class ModuleTestOutputElement extends LayoutElement {
+  String moduleName
+
+  def build(Project project) {
+    project.binding.moduleTests.call(moduleName)
   }
 }

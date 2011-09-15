@@ -1,6 +1,7 @@
 package org.jetbrains.jps.idea
 
 import org.jetbrains.jps.MacroExpander
+import org.jetbrains.jps.PathUtil
 
 /**
  * @author nik
@@ -11,7 +12,7 @@ public class ProjectMacroExpander implements MacroExpander {
 
   ProjectMacroExpander(Map<String, String> pathVariables, String projectBasePath) {
     this.pathVariables = pathVariables
-    this.projectBasePath = projectBasePath
+    this.projectBasePath = PathUtil.toSystemIndependentPath(projectBasePath)
   }
 
   @Override
@@ -19,8 +20,8 @@ public class ProjectMacroExpander implements MacroExpander {
     if (path == null) return path
     path = path.replace("\$PROJECT_DIR\$", projectBasePath)
     pathVariables.each { name, value ->
-      path = path.replace("\$${name}\$", value);
+      path = path.replace("\$${name}\$", value)
     }
-    return path.replace("/", File.separator);
+    return path
   }
 }

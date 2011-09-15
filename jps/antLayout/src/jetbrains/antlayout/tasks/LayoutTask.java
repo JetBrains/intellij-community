@@ -41,6 +41,10 @@ public class LayoutTask extends Task {
         containers.add(new FileSetContainer(module));
     }
 
+    public void addModuleTests(IdeaModuleTests module) {
+        containers.add(new FileSetContainer(module));
+    }
+
     public void addFileset(FileSet fileSet) {
         containers.add(new FileSetContainer(fileSet));
     }

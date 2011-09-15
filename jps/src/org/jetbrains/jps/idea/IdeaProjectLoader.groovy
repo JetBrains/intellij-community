@@ -2,7 +2,6 @@ package org.jetbrains.jps.idea
 
 import org.jetbrains.jps.artifacts.Artifact
 import org.jetbrains.jps.*
-import org.jetbrains.jps.builders.GroovyStubGenerator
 
 /**
  * @author max
@@ -93,6 +92,7 @@ public class IdeaProjectLoader {
     loadModules(getComponent(root, "ProjectModuleManager"))
     loadProjectLibraries(getComponent(root, "libraryTable"))
     loadArtifacts(getComponent(root, "ArtifactManager"))
+    loadRunConfigurations(getComponent(root, "ProjectRunConfigurationManager"))
   }
 
   def loadFromDirectoryBased(File dir) {
@@ -128,6 +128,16 @@ public class IdeaProjectLoader {
         if (file.isFile()) {
           def artifactsComponent = new XmlParser(false, false).parse(file)
           loadArtifacts(artifactsComponent)
+        }
+      }
+    }
+
+    def runConfFolder = new File(dir, "runConfigurations")
+    if (runConfFolder.isDirectory()) {
+      runConfFolder.eachFile {File file ->
+        if (file.isFile()) {
+          def runConfManager = new XmlParser(false, false).parse(file);
+          loadRunConfigurations(runConfManager);
         }
       }
     }
@@ -201,6 +211,16 @@ public class IdeaProjectLoader {
       def options = artifactLoader.loadOptions(artifactTag, artifactName)
       def artifact = new Artifact(name: artifactName, rootElement: root, outputPath: outputPath, properties: options);
       project.artifacts[artifact.name] = artifact;
+    }
+  }
+
+  def loadRunConfigurations(Node runConfManager) {
+    if (runConfManager == null) return;
+
+    runConfManager.configuration.each {Node confTag ->
+      def name = confTag.'@name';
+      RunConfiguration runConf = new RunConfiguration(project, projectMacroExpander, confTag);
+      project.runConfigurations[name] = runConf;
     }
   }
 
@@ -379,8 +399,8 @@ public class IdeaProjectLoader {
             if (projectOutputPath == null) {
               project.error("Module '$currentModuleName' uses output path inherited from project but project output path is not specified")
             }
-            currentModule.outputPath = new File(new File(projectOutputPath, "production"), currentModuleName).absolutePath
-            currentModule.testOutputPath = new File(new File(projectOutputPath, "test"), currentModuleName).absolutePath
+            currentModule.outputPath = PathUtil.toSystemIndependentPath(new File(new File(projectOutputPath, "production"), currentModuleName).absolutePath)
+            currentModule.testOutputPath = PathUtil.toSystemIndependentPath(new File(new File(projectOutputPath, "test"), currentModuleName).absolutePath)
           }
           else {
             currentModule.outputPath = moduleMacroExpander.expandMacros(IdeaProjectLoadingUtil.pathFromUrl(componentTag.output[0]?.@url))

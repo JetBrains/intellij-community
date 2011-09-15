@@ -1,5 +1,7 @@
 package org.jetbrains.jps.gwt;
 
+import groovy.util.XmlParser;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,7 +30,9 @@ public class GwtModulesSearcher {
       for (File child : files) {
         final String name = child.getName();
         if (child.isFile() && name.endsWith(GWT_XML_SUFFIX)) {
-          result.add(packageName + name.substring(0, name.length() - GWT_XML_SUFFIX.length()));
+          if (GwtModuleUtil.hasEntryPoints(child)) {
+            result.add(packageName + name.substring(0, name.length() - GWT_XML_SUFFIX.length()));
+          }
         }
         else {
           collectGwtModules(child, packageName + name + ".", result);

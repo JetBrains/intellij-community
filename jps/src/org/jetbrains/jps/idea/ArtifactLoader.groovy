@@ -48,7 +48,7 @@ class ArtifactLoader {
         def jarPath = macroExpander.expandMacros(tag."@path")
         String pathInJar = tag."@path-in-jar"
         if (pathInJar == null) pathInJar = "/"
-        if (!new File(pathInJar).exists()) {
+        if (!new File(jarPath).exists()) {
           project.warning("Error in '$artifactName' artifact: file '$jarPath' doesn't exist")
         }
         return new ExtractedDirectoryElement(jarPath: jarPath, pathInJar: pathInJar)
@@ -58,6 +58,12 @@ class ArtifactLoader {
           project.error("Unknown module '$name' in '$artifactName' artifact")
         }
         return new ModuleOutputElement(moduleName: name);
+      case "module-test-output":
+        def name = tag."@name"
+        if (project.modules[name] == null) {
+          project.error("Unknown module '$name' in '$artifactName' artifact")
+        }
+        return new ModuleTestOutputElement(moduleName: name);
       case "library":
         return new LibraryFilesElement(libraryLevel: tag."@level", libraryName: tag."@name", moduleName: tag."@module-name");
     }

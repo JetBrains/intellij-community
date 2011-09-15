@@ -60,6 +60,10 @@ public abstract class Container extends Content {
         children.add(new FileSetContainer(module));
     }
 
+    public void addModuleTests(IdeaModuleTests module) {
+        children.add(new FileSetContainer(module));
+    }
+
     public List<Content> getChildren() {
         return children;
     }
@@ -99,6 +103,9 @@ public abstract class Container extends Content {
     protected static LayoutFileSet createCopy(FileSet set) {
         if (set instanceof IdeaModule) {
             return new IdeaModule((IdeaModule) set);
+        }
+        if (set instanceof IdeaModuleTests) {
+            return new IdeaModuleTests((IdeaModuleTests) set);
         }
         if (set instanceof ZipFileSet) {
             return new LayoutFileSet((ZipFileSet) set.clone());
