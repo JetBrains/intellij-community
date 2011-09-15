@@ -16,7 +16,6 @@
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.AnnotationsHighlightUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -120,7 +119,7 @@ public class PsiAnnotationImpl extends JavaStubPsiElement<PsiAnnotationStub> imp
     }
     if (parent instanceof PsiMethodReceiver || parent instanceof PsiTypeParameter) return (PsiAnnotationOwner)parent;
     PsiElement member = parent.getParent();
-    String[] elementTypeFields = AnnotationsHighlightUtil.getApplicableElementTypeFields(member);
+    String[] elementTypeFields = getApplicableElementTypeFields(member);
     if (elementTypeFields == null) return null;
     if (parent instanceof PsiAnnotationOwner
         && isAnnotationApplicableTo(this, true, elementTypeFields)) return (PsiAnnotationOwner)parent;
@@ -190,5 +189,45 @@ public class PsiAnnotationImpl extends JavaStubPsiElement<PsiAnnotationStub> imp
       }
     }
     return false;
+  }
+
+  public static String[] getApplicableElementTypeFields(PsiElement owner) {
+    if (owner instanceof PsiClass) {
+      PsiClass aClass = (PsiClass)owner;
+      if (aClass.isAnnotationType()) {
+        return new String[]{"ANNOTATION_TYPE", "TYPE"};
+      }
+      else if (aClass instanceof PsiTypeParameter) {
+        return new String[]{"TYPE_PARAMETER"};
+      }
+      else {
+        return new String[]{"TYPE"};
+      }
+    }
+    if (owner instanceof PsiMethod) {
+      if (((PsiMethod)owner).isConstructor()) {
+        return new String[]{"CONSTRUCTOR"};
+      }
+      else {
+        return new String[]{"METHOD"};
+      }
+    }
+    if (owner instanceof PsiField) {
+      return new String[]{"FIELD"};
+    }
+    if (owner instanceof PsiParameter) {
+      return new String[]{"PARAMETER"};
+    }
+    if (owner instanceof PsiLocalVariable) {
+      return new String[]{"LOCAL_VARIABLE"};
+    }
+    if (owner instanceof PsiPackageStatement) {
+      return new String[]{"PACKAGE"};
+    }
+    if (owner instanceof PsiTypeElement) {
+      return new String[]{"TYPE_USE"};
+    }
+
+    return null;
   }
 }

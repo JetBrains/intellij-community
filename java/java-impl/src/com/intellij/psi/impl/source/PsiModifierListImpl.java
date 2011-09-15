@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl.source;
 
-import com.intellij.codeInsight.daemon.impl.analysis.AnnotationsHighlightUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
@@ -282,7 +281,7 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
 
   @NotNull
   public PsiAnnotation[] getApplicableAnnotations() {
-    final String[] fields = AnnotationsHighlightUtil.getApplicableElementTypeFields(this);
+    final String[] fields = PsiAnnotationImpl.getApplicableElementTypeFields(this);
     List<PsiAnnotation> filtered = ContainerUtil.findAll(getAnnotations(), new Condition<PsiAnnotation>() {
       public boolean value(PsiAnnotation annotation) {
         return PsiAnnotationImpl.isAnnotationApplicableTo(annotation, true, fields);

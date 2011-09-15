@@ -235,7 +235,7 @@ public class AnnotationsHighlightUtil {
     PsiAnnotationOwner owner = annotation.getOwner();
     if (!(owner instanceof PsiModifierList || owner instanceof PsiTypeElement || owner instanceof PsiMethodReceiver || owner instanceof PsiTypeParameter)) return null;
     PsiElement member = ((PsiElement)owner).getParent();
-    String[] elementTypeFields = getApplicableElementTypeFields(owner instanceof PsiModifierList ? member : (PsiElement)owner);
+    String[] elementTypeFields = PsiAnnotationImpl.getApplicableElementTypeFields(owner instanceof PsiModifierList ? member : (PsiElement)owner);
     if (PsiAnnotationImpl.isAnnotationApplicableTo(annotation, false, elementTypeFields)) return null;
     PsiJavaCodeReferenceElement nameRef = annotation.getNameReferenceElement();
     String description = JavaErrorMessages.message("annotation.not.applicable",
@@ -244,46 +244,6 @@ public class AnnotationsHighlightUtil {
     final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, nameRef, description);
     QuickFixAction.registerQuickFixAction(highlightInfo, new DeleteNotApplicableAnnotationAction(annotation));
     return highlightInfo;
-  }
-
-  public static String[] getApplicableElementTypeFields(PsiElement owner) {
-    if (owner instanceof PsiClass) {
-      PsiClass aClass = (PsiClass)owner;
-      if (aClass.isAnnotationType()) {
-        return new String[]{"ANNOTATION_TYPE", "TYPE"};
-      }
-      else if (aClass instanceof PsiTypeParameter) {
-        return new String[]{"TYPE_PARAMETER"};
-      }
-      else {
-        return new String[]{"TYPE"};
-      }
-    }
-    if (owner instanceof PsiMethod) {
-      if (((PsiMethod)owner).isConstructor()) {
-        return new String[]{"CONSTRUCTOR"};
-      }
-      else {
-        return new String[]{"METHOD"};
-      }
-    }
-    if (owner instanceof PsiField) {
-      return new String[]{"FIELD"};
-    }
-    if (owner instanceof PsiParameter) {
-      return new String[]{"PARAMETER"};
-    }
-    if (owner instanceof PsiLocalVariable) {
-      return new String[]{"LOCAL_VARIABLE"};
-    }
-    if (owner instanceof PsiPackageStatement) {
-      return new String[]{"PACKAGE"};
-    }
-    if (owner instanceof PsiTypeElement) {
-      return new String[]{"TYPE_USE"};
-    }
-
-    return null;
   }
 
   private static PsiField[] getFields(final PsiClass elementTypeClass, @NonNls final String... names) {
