@@ -24,6 +24,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -46,6 +47,10 @@ public class PropertiesUtil {
 
   public static boolean isPropertiesFile(VirtualFile file, Project project) {
     return getPropertiesFile(PsiManager.getInstance(project).findFile(file)) != null;
+  }
+
+  public static boolean isPropertiesFile(PsiFile file) {
+    return getPropertiesFile(file) != null;
   }
 
   @Nullable
@@ -127,7 +132,7 @@ public class PropertiesUtil {
 
   @Nullable
   public static String getFullName(final PropertiesFile psiFile) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+    return ApplicationManager.getApplication().runReadAction(new NullableComputable<String>() {
       public String compute() {
         PsiDirectory directory = psiFile.getParent();
         String packageQualifiedName = getPackageQualifiedName(directory);

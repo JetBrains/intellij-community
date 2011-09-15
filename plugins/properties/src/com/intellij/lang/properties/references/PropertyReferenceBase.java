@@ -251,6 +251,10 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
         addVariantsFromFile(propFile, variants);
       }
     }
+    return getVariants(variants);
+  }
+
+  protected static Object[] getVariants(Set<Object> variants) {
     return ContainerUtil.mapNotNull(variants, new NullableFunction<Object, LookupElement>() {
       @Override
       public LookupElement fun(Object o) {
