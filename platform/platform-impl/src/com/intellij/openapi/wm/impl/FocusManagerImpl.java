@@ -183,6 +183,8 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
 
   @NotNull
   public ActionCallback requestFocus(@NotNull final FocusCommand command, final boolean forced) {
+    assertDispatchThread();
+
     if (isInternalMode) {
       recordCommand(command, new Throwable(), forced);
     }
@@ -602,6 +604,8 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   }
 
   public boolean isFocusTransferReady() {
+    assertDispatchThread();
+
     if (myRunContext != null) return true;
 
     invalidateFocusRequestsQueue();
@@ -741,6 +745,8 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   }
 
   public void suspendKeyProcessingUntil(@NotNull final ActionCallback done) {
+    assertDispatchThread();
+
     requestFocus(new FocusCommand(done) {
       public ActionCallback run() {
         return done;
@@ -749,6 +755,8 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   }
 
   public Expirable getTimestamp(final boolean trackOnlyForcedCommands) {
+    assertDispatchThread();
+
     return new Expirable() {
       long myOwnStamp = trackOnlyForcedCommands ? myForcedCmdTimestamp : myCmdTimestamp;
 
@@ -760,6 +768,8 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
 
   @Override
   public FocusRequestor getFurtherRequestor() {
+    assertDispatchThread();
+
     FurtherRequestor requestor = new FurtherRequestor(this, getTimestamp(true));
     myValidFurtherRequestors.add(requestor);
     revalidateFurtherRequestors();
@@ -789,6 +799,8 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
 
   @Override
   public Component getFocusOwner() {
+    assertDispatchThread();
+
     Component result = null;
     if (myRunContext != null) {
       result = (Component)myRunContext.getData(PlatformDataKeys.CONTEXT_COMPONENT.getName());
@@ -815,6 +827,8 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
 
   @Override
   public void runOnOwnContext(DataContext context, Runnable runnable) {
+    assertDispatchThread();
+
     myRunContext = context;
     try {
       runnable.run();
@@ -825,12 +839,16 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
 
   @Override
   public Component getLastFocusedFor(IdeFrame frame) {
+    assertDispatchThread();
+
     WeakReference<Component> ref = myLastFocused.get(frame);
     return ref != null ? ref.get() : null;
   }
 
   @Override
   public void toFront(JComponent c) {
+    assertDispatchThread();
+
     if (c == null) return;
 
     final Window window = UIUtil.getParentOfType(Window.class, c);
@@ -1017,5 +1035,9 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   @Override
   public boolean isFocusTransferEnabled() {
     return myApp.isActive() || !Registry.is("actionSystem.suspendFocusTransferIfApplicationInactive");
+  }
+
+  private void assertDispatchThread() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
   }
 }
