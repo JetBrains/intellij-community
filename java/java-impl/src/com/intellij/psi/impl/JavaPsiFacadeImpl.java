@@ -74,7 +74,6 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
   private final PsiResolveHelper myResolveHelper;
   private final JavadocManager myJavadocManager;
   private final PsiNameHelper myNameHelper;
-  private final PsiElementFactory myElementFactory;
   private final PsiConstantEvaluationHelper myConstantEvaluationHelper;
   private final ConcurrentMap<String, PsiPackage> myPackageCache = new ConcurrentHashMap<String, PsiPackage>();
   private final Project myProject;
@@ -92,7 +91,6 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
     myJavadocManager = new JavadocManagerImpl(project);
     myNameHelper = new PsiNameHelperImpl(this);
     myConstantEvaluationHelper = new PsiConstantEvaluationHelperImpl();
-    myElementFactory = new PsiElementFactoryImpl(psiManager);
 
     List<PsiElementFinder> elementFinders = new ArrayList<PsiElementFinder>();
     elementFinders.add(new PsiElementFinderImpl());
@@ -547,7 +545,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
 
   @NotNull
   public PsiElementFactory getElementFactory() {
-    return myElementFactory;
+    return PsiElementFactory.SERVICE.getInstance(myProject);
   }
 
   public void setAssertOnFileLoadingFilter(final VirtualFileFilter filter) {
