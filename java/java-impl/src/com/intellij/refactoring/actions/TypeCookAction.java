@@ -17,9 +17,9 @@ package com.intellij.refactoring.actions;
 
 import com.intellij.ide.DataManager;
 import com.intellij.lang.Language;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringActionHandler;
@@ -32,7 +32,7 @@ public class TypeCookAction extends BaseRefactoringAction {
   }
 
   public boolean isAvailableForLanguage(Language language) {
-    return language.equals(StdFileTypes.JAVA.getLanguage());
+    return language.equals(JavaLanguage.INSTANCE);
   }
 
   public boolean isEnabledOnElements(PsiElement[] elements) {

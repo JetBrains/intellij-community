@@ -23,7 +23,7 @@ import com.intellij.extapi.psi.StubBasedPsiElementBase;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
@@ -54,7 +54,7 @@ public abstract class JavaStubPsiElement<T extends StubElement> extends StubBase
 
   @NotNull
   public Language getLanguage() {
-    return StdLanguages.JAVA;
+    return JavaLanguage.INSTANCE;
   }
 
   public PsiElement getParent() {

@@ -15,7 +15,7 @@
  */
 package com.intellij.psi.impl.light;
 
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
@@ -46,7 +46,7 @@ public class LightMethod extends LightElement implements PsiMethod {
   }
 
   public LightMethod(PsiManager manager, PsiMethod method, PsiClass containingClass) {
-    super(manager, StdLanguages.JAVA);
+    super(manager, JavaLanguage.INSTANCE);
     myMethod = method;
     myContainingClass = containingClass;
   }

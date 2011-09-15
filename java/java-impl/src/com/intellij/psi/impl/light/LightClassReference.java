@@ -15,8 +15,8 @@
  */
 package com.intellij.psi.impl.light;
 
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -36,7 +36,7 @@ public class LightClassReference extends LightElement implements PsiJavaCodeRefe
   private LightReferenceParameterList myParameterList;
 
   private LightClassReference(@NotNull PsiManager manager, @NotNull @NonNls String text, @NotNull @NonNls String className, PsiSubstitutor substitutor, @NotNull GlobalSearchScope resolveScope) {
-    super(manager, StdFileTypes.JAVA.getLanguage());
+    super(manager, JavaLanguage.INSTANCE);
     myText = text;
     myClassName = className;
     myResolveScope = resolveScope;
@@ -51,7 +51,7 @@ public class LightClassReference extends LightElement implements PsiJavaCodeRefe
   }
 
   public LightClassReference(@NotNull PsiManager manager, @NotNull @NonNls String text, @NotNull @NonNls String className, PsiSubstitutor substitutor, PsiElement context) {
-    super(manager, StdFileTypes.JAVA.getLanguage());
+    super(manager, JavaLanguage.INSTANCE);
     myText = text;
     myClassName = className;
     mySubstitutor = substitutor;
@@ -66,7 +66,7 @@ public class LightClassReference extends LightElement implements PsiJavaCodeRefe
   }
 
   public LightClassReference(@NotNull PsiManager manager, @NotNull @NonNls String text, @NotNull PsiClass refClass, PsiSubstitutor substitutor) {
-    super(manager, StdFileTypes.JAVA.getLanguage());
+    super(manager, JavaLanguage.INSTANCE);
     myText = text;
     myRefClass = refClass;
 

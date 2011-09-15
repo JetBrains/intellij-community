@@ -16,7 +16,7 @@
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
@@ -55,7 +55,7 @@ public interface JavaDocElementType {
 
   class JavaDocLazyElementType extends ILazyParseableElementType {
     private JavaDocLazyElementType(@NonNls final String debugName) {
-      super(debugName, StdLanguages.JAVA);
+      super(debugName, JavaLanguage.INSTANCE);
     }
 
     @Override
@@ -95,7 +95,7 @@ public interface JavaDocElementType {
     }
   };
 
-  ILazyParseableElementType DOC_COMMENT = new IReparseableElementType("DOC_COMMENT", StdLanguages.JAVA) {
+  ILazyParseableElementType DOC_COMMENT = new IReparseableElementType("DOC_COMMENT", JavaLanguage.INSTANCE) {
     @Override
     public ASTNode createNode(final CharSequence text) {
       return new PsiDocCommentImpl(text);

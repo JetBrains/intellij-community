@@ -18,7 +18,7 @@ package com.intellij.psi.impl.compiled;
 import com.intellij.ide.caches.FileContent;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.FileASTNode;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -288,7 +288,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
 
         String fileName = (classes.length > 0 ? classes[0].getName(): virtualFile.getNameWithoutExtension()) + "." + ext;
         PsiManager manager = getManager();
-        PsiFile mirror = PsiFileFactory.getInstance(manager.getProject()).createFileFromText(fileName, StdLanguages.JAVA, text, false, false);
+        PsiFile mirror = PsiFileFactory.getInstance(manager.getProject()).createFileFromText(fileName, JavaLanguage.INSTANCE, text, false, false);
         final ASTNode mirrorTreeElement = SourceTreeToPsiMap.psiElementToTree(mirror);
 
         //IMPORTANT: do not take lock too early - FileDocumentManager.getInstance().saveToString() can run write action...

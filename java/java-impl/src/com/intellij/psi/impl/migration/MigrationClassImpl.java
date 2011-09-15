@@ -15,8 +15,8 @@
  */
 package com.intellij.psi.impl.migration;
 
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.InheritanceImplUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
@@ -43,7 +43,7 @@ public class MigrationClassImpl extends LightElement implements PsiClass{
   private final PsiMigrationImpl myMigration;
 
   MigrationClassImpl(PsiMigrationImpl migration, String qualifiedName) {
-    super(migration.getManager(), StdFileTypes.JAVA.getLanguage());
+    super(migration.getManager(), JavaLanguage.INSTANCE);
     myMigration = migration;
     myQualifiedName = qualifiedName;
     myName = PsiNameHelper.getShortClassName(myQualifiedName);

@@ -21,10 +21,10 @@ import com.intellij.ide.projectView.impl.PackageViewPane;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.ide.projectView.impl.nodes.PackageElement;
 import com.intellij.lang.Language;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.GlobalUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.*;
@@ -174,7 +174,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
 
   @NotNull
   public Language getLanguage() {
-    return StdFileTypes.JAVA.getLanguage();
+    return JavaLanguage.INSTANCE;
   }
 
   public boolean isValid() {

@@ -25,7 +25,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixActionRegistrarImpl
 import com.intellij.codeInsight.daemon.quickFix.CreateClassOrPackageFix;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
@@ -392,7 +392,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
 
       if (containingFile instanceof PsiJavaFile) {
         if (containingFile instanceof JspFile) {
-          containingFile = containingFile.getViewProvider().getPsi(StdLanguages.JAVA);
+          containingFile = containingFile.getViewProvider().getPsi(JavaLanguage.INSTANCE);
           if (containingFile == null) return JavaResolveResult.EMPTY;
         }
 
