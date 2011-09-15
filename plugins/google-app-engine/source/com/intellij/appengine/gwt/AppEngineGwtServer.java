@@ -42,7 +42,7 @@ public class AppEngineGwtServer extends GwtDevModeServer {
 
     //actually these jars are added by AppEngine dev server automatically. But they need to be added to classpath before gwt-dev.jar, because
     // otherwise wrong jsp compiler version will be used (see IDEA-63068)
-    for (File jar : ArrayUtil.mergeArrays(sdk.getLibraries(), sdk.getJspLibraries(), File.class)) {
+    for (File jar : ArrayUtil.mergeArrays(sdk.getLibraries(), sdk.getJspLibraries())) {
       parameters.getClassPath().addFirst(FileUtil.toSystemIndependentName(jar.getAbsolutePath()));
     }
 
