@@ -161,6 +161,32 @@ class Bar {{ abcmethod1()<caret> }}"""
     assertOrderedEquals myFixture.lookupElementStrings, "abcmethod", "abcmethod1"
   }
 
+  public void testMethodFromTheSameClass() {
+    myFixture.configureByText("a.java", """
+class A {
+  static void foo() {}
+
+  static void goo() {
+    f<caret>
+  }
+}
+""")
+    def element = myFixture.complete(CompletionType.CLASS_NAME)[0]
+    def presentation = new LookupElementPresentation()
+    element.renderElement(presentation)
+    assert 'foo' == presentation.itemText
+    myFixture.type '\n'
+    myFixture.checkResult '''
+class A {
+  static void foo() {}
+
+  static void goo() {
+    foo();<caret>
+  }
+}
+'''
+  }
+
   private void doTest(String input, boolean importStatic, String output) {
     myFixture.configureByText("a.java", input)
 

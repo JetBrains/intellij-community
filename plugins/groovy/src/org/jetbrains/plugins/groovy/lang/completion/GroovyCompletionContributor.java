@@ -242,7 +242,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
 
         if (StringUtil.isEmpty(result.getPrefixMatcher().getPrefix())) return;
 
-        completeStaticMembers(position).processStaticMethodsGlobally(result);
+        completeStaticMembers(parameters).processStaticMethodsGlobally(result);
       }
     });
 
@@ -448,7 +448,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
     });
 
     if (qualifier == null) {
-      completeStaticMembers(position).processMembersOfRegisteredClasses(null, new PairConsumer<PsiMember, PsiClass>() {
+      completeStaticMembers(parameters).processMembersOfRegisteredClasses(null, new PairConsumer<PsiMember, PsiClass>() {
         @Override
         public void consume(PsiMember member, PsiClass psiClass) {
           if (member instanceof GrAccessorMethod) {
@@ -485,11 +485,14 @@ public class GroovyCompletionContributor extends CompletionContributor {
     }
   }
 
-  private static StaticMemberProcessor completeStaticMembers(PsiElement position) {
+  private static StaticMemberProcessor completeStaticMembers(CompletionParameters parameters) {
+    final PsiElement position = parameters.getPosition();
+    final PsiElement originalPosition = parameters.getOriginalPosition();
     final StaticMemberProcessor processor = new StaticMemberProcessor(position) {
       @NotNull
       @Override
       protected LookupElement createLookupElement(@NotNull PsiMember member, @NotNull PsiClass containingClass, boolean shouldImport) {
+        shouldImport |= originalPosition != null && PsiTreeUtil.isAncestor(containingClass, originalPosition, false);
         return createGlobalMemberElement(member, containingClass, shouldImport);
       }
 
@@ -497,6 +500,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
       protected LookupElement createLookupElement(@NotNull List<PsiMethod> overloads,
                                                   @NotNull PsiClass containingClass,
                                                   boolean shouldImport) {
+        shouldImport |= originalPosition != null && PsiTreeUtil.isAncestor(containingClass, originalPosition, false);
         return new JavaGlobalMemberLookupElement(overloads, containingClass, QUALIFIED_METHOD_INSERT_HANDLER, STATIC_IMPORT_INSERT_HANDLER,
                                                  shouldImport);
       }
@@ -539,7 +543,6 @@ public class GroovyCompletionContributor extends CompletionContributor {
     return new JavaGlobalMemberLookupElement(member, containingClass, QUALIFIED_METHOD_INSERT_HANDLER, STATIC_IMPORT_INSERT_HANDLER, shouldImport);
   }
 
-  private static final String DUMMY_IDENTIFIER_TRIMMED_DECAPITALIZED = "intelliJIdeaRulezzz";
   private static final String DUMMY_IDENTIFIER_DECAPITALIZED = "intelliJIdeaRulezzz ";
 
   public void beforeCompletion(@NotNull final CompletionInitializationContext context) {

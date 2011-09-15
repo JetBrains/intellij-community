@@ -268,5 +268,29 @@ Zoooo<caret>x""")
     assertOneElement(myFixture.completeBasic())
   }
 
+  public void testMethodFromTheSameClass() {
+    myFixture.configureByText("a.groovy", """
+class A {
+  static void foo() {}
+
+  static void goo() {
+    f<caret>
+  }
+}
+""")
+    assert 'foo' == renderElement(myFixture.complete(CompletionType.CLASS_NAME)[0]).itemText
+    myFixture.type '\n'
+    myFixture.checkResult '''
+class A {
+  static void foo() {}
+
+  static void goo() {
+    foo()<caret>
+  }
+}
+'''
+  }
+
+
 
 }
