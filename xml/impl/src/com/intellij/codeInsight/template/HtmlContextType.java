@@ -34,7 +34,7 @@ public class HtmlContextType extends FileTypeBasedContextType {
 
   @Override
   public boolean isInContext(@NotNull PsiFile file, int offset) {
-    return isMyLanguage(file.getLanguage());
+    return isMyLanguage(file.getLanguage()) && !XmlContextType.isEmbeddedContent(file, offset);
   }
 
   static boolean isMyLanguage(Language language) {
