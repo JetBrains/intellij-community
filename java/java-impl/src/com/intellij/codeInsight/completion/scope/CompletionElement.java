@@ -16,7 +16,7 @@
 package com.intellij.codeInsight.completion.scope;
 
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilBase;
 
 /**
  * Created by IntelliJ IDEA.
@@ -64,7 +64,7 @@ public class CompletionElement{
       return field.getContainingClass().getQualifiedName() + "#" + s;
     }
     else if(myElement instanceof PsiElement){
-      name = PsiUtil.getName((PsiElement)myElement);
+      name = PsiUtilBase.getName((PsiElement)myElement);
     }
     else{
       name = "";

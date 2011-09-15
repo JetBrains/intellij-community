@@ -749,7 +749,7 @@ public class HighlightMethodUtil {
         && !method.hasModifierProperty(PsiModifier.NATIVE)
         && aClass != null
         && !aClass.isInterface()
-        && !PsiUtilBase.hasErrorElementChild(method)) {
+        && !PsiUtilCore.hasErrorElementChild(method)) {
       int start = method.getModifierList().getTextRange().getStartOffset();
       int end = method.getTextRange().getEndOffset();
 
@@ -773,7 +773,7 @@ public class HighlightMethodUtil {
         && aClass != null
         && !aClass.hasModifierProperty(PsiModifier.ABSTRACT)
         && !aClass.isEnum()
-        && !PsiUtilBase.hasErrorElementChild(method)) {
+        && !PsiUtilCore.hasErrorElementChild(method)) {
       errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
                                                       elementToHighlight,
                                                       JavaErrorMessages.message("abstract.method.in.non.abstract.class"));

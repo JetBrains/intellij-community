@@ -27,7 +27,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.html.HtmlFileImpl;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.xml.util.XmlUtil;
@@ -68,7 +68,7 @@ public class HTMLParserDefinition implements ParserDefinition {
 
   @NotNull
   public PsiElement createElement(ASTNode node) {
-    return PsiUtilBase.NULL_PSI_ELEMENT;
+    return PsiUtilCore.NULL_PSI_ELEMENT;
   }
 
   public PsiFile createFile(FileViewProvider viewProvider) {

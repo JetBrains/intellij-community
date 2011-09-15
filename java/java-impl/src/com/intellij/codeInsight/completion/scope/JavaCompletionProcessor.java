@@ -30,6 +30,7 @@ import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -228,7 +229,7 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
   }
 
   public boolean satisfies(@NotNull PsiElement element, @NotNull ResolveState state) {
-    final String name = PsiUtil.getName(element);
+    final String name = PsiUtilBase.getName(element);
     if (StringUtil.isNotEmpty(name) && (myMatcher == null || myMatcher.value(name))) {
       if (myFilter.isClassAcceptable(element.getClass()) && myFilter.isAcceptable(new CandidateInfo(element, state.get(PsiSubstitutor.KEY)), myElement)) {
         return true;

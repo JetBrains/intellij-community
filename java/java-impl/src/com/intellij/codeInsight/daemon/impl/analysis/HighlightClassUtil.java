@@ -63,7 +63,7 @@ public class HighlightClassUtil {
   static HighlightInfo checkAbstractInstantiation(PsiJavaCodeReferenceElement ref, PsiElement resolved) {
     PsiElement parent = ref.getParent();
     HighlightInfo highlightInfo = null;
-    if (parent instanceof PsiNewExpression && !PsiUtilBase.hasErrorElementChild(parent)) {
+    if (parent instanceof PsiNewExpression && !PsiUtilCore.hasErrorElementChild(parent)) {
       if (((PsiNewExpression)parent).getType() instanceof PsiArrayType) return null;
       if (resolved instanceof PsiClass) {
         highlightInfo = checkInstantiationOfAbstractClass((PsiClass)resolved, ref);
@@ -71,7 +71,7 @@ public class HighlightClassUtil {
     }
     else if (parent instanceof PsiAnonymousClass
              && parent.getParent() instanceof PsiNewExpression
-             && !PsiUtilBase.hasErrorElementChild(parent.getParent())) {
+             && !PsiUtilCore.hasErrorElementChild(parent.getParent())) {
       PsiAnonymousClass aClass = (PsiAnonymousClass)parent;
       highlightInfo = checkClassWithAbstractMethods(aClass, ref.getTextRange());
     }
@@ -258,7 +258,7 @@ public class HighlightClassUtil {
       return null;
     }
     PsiField field = (PsiField)keyword.getParent().getParent();
-    if (PsiUtilBase.hasErrorElementChild(field)) return null;
+    if (PsiUtilCore.hasErrorElementChild(field)) return null;
     // except compile time constants
     if (PsiUtil.isCompileTimeConstant(field)) {
       return null;
@@ -279,7 +279,7 @@ public class HighlightClassUtil {
       return null;
     }
     PsiMethod method = (PsiMethod)keyword.getParent().getParent();
-    if (PsiUtilBase.hasErrorElementChild(method)) return null;
+    if (PsiUtilCore.hasErrorElementChild(method)) return null;
     HighlightInfo errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
                                                                   keyword,
                                                                   STATIC_DECLARATION_IN_INNER_CLASS);
@@ -296,7 +296,7 @@ public class HighlightClassUtil {
       return null;
     }
     PsiClassInitializer initializer = (PsiClassInitializer)keyword.getParent().getParent();
-    if (PsiUtilBase.hasErrorElementChild(initializer)) return null;
+    if (PsiUtilCore.hasErrorElementChild(initializer)) return null;
     HighlightInfo errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
                                                                   keyword,
                                                                   STATIC_DECLARATION_IN_INNER_CLASS);
@@ -332,7 +332,7 @@ public class HighlightClassUtil {
       return null;
     }
     PsiClass aClass = (PsiClass)keyword.getParent();
-    if (PsiUtilBase.hasErrorElementChild(aClass)) return null;
+    if (PsiUtilCore.hasErrorElementChild(aClass)) return null;
     // highlight 'static' keyword if any, or class or interface if not
     PsiElement context = null;
     PsiModifierList modifierList = aClass.getModifierList();

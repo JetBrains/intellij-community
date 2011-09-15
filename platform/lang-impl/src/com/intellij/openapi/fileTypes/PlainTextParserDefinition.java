@@ -33,7 +33,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PsiPlainTextFileImpl;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 
 public class PlainTextParserDefinition implements ParserDefinition {
@@ -75,7 +75,7 @@ public class PlainTextParserDefinition implements ParserDefinition {
 
   @NotNull
   public PsiElement createElement(ASTNode node) {
-    return PsiUtilBase.NULL_PSI_ELEMENT;
+    return PsiUtilCore.NULL_PSI_ELEMENT;
   }
 
   public PsiFile createFile(FileViewProvider viewProvider) {

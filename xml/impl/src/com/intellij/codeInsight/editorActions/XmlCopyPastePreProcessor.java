@@ -26,7 +26,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.impl.source.xml.behavior.EncodeEachSymbolPolicy;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlElementType;
@@ -49,7 +49,7 @@ public class XmlCopyPastePreProcessor implements CopyPastePreProcessor {
     final Document document = editor.getDocument();
     PsiDocumentManager.getInstance(project).commitDocument(document);
     int caretOffset = editor.getCaretModel().getOffset();
-    PsiElement element = PsiUtilBase.getElementAtOffset(file, caretOffset);
+    PsiElement element = PsiUtilCore.getElementAtOffset(file, caretOffset);
 
     ASTNode node = element.getNode();
     if (node != null) {

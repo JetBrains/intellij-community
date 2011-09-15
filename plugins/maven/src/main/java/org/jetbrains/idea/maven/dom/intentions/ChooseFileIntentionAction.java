@@ -28,7 +28,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.DomElement;
@@ -90,7 +90,7 @@ public class ChooseFileIntentionAction implements IntentionAction {
   }
 
   private MavenDomDependency getDependency(PsiFile file, Editor editor) {
-    PsiElement el = PsiUtilBase.getElementAtOffset(file, editor.getCaretModel().getOffset());
+    PsiElement el = PsiUtilCore.getElementAtOffset(file, editor.getCaretModel().getOffset());
 
     XmlTag tag = PsiTreeUtil.getParentOfType(el, XmlTag.class, false);
     if (tag == null) return null;
