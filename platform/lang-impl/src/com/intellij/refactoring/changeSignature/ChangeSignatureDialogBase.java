@@ -393,7 +393,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
     myParametersTable.setSurrendersFocusOnKeystroke(true);
     myPropagateParamChangesButton.setShortcut(CustomShortcutSet.fromString("alt G"));
 
-    if (Registry.is("change.signature.awesome.mode") && isListTableViewSupported()) {
+    if (isAwesomeMode() && isListTableViewSupported()) {
       myParametersList = new JBListTable(myParametersTable) {
         @Override
         protected JComponent getRowRenderer(JTable table, int row, boolean selected, boolean focused) {
@@ -438,6 +438,10 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
       customizeParametersTable(myParametersTable);
       return buttonsPanel;
     }
+  }
+
+  protected boolean isAwesomeMode() {
+    return Registry.is("change.signature.awesome.mode");
   }
 
   protected JBTableRowEditor getTableEditor(JTable table, ParameterTableModelItemBase<P> item) {
