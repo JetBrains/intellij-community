@@ -29,7 +29,7 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.CharTable;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -77,7 +77,7 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
         array.add(child.getPsi());
       }
     }
-    return PsiUtilBase.toPsiElementArray(array);
+    return PsiUtilCore.toPsiElementArray(array);
   }
 
   @NotNull
