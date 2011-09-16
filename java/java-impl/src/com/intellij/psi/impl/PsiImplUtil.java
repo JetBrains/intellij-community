@@ -287,10 +287,7 @@ public class PsiImplUtil {
   @Nullable
   public static ASTNode findDocComment(@NotNull CompositeElement element) {
     TreeElement node = element.getFirstChildNode();
-    while (node != null &&
-           (ElementType.WHITE_SPACE_BIT_SET.contains(node.getElementType()) ||
-            node.getElementType() == JavaTokenType.C_STYLE_COMMENT ||
-            node.getElementType() == JavaTokenType.END_OF_LINE_COMMENT)) {
+    while (node != null && (isWhitespaceOrComment(node) && !(node.getPsi() instanceof PsiDocComment))) {
       node = node.getTreeNext();
     }
 
@@ -459,10 +456,15 @@ public class PsiImplUtil {
 
   @Nullable
   public static ASTNode skipWhitespaceAndComments(final ASTNode node) {
+    return skipWhitespaceCommentsAndTokens(node, TokenSet.EMPTY);
+  }
+
+  @Nullable
+  public static ASTNode skipWhitespaceCommentsAndTokens(final ASTNode node, TokenSet alsoSkip) {
     ASTNode element = node;
     while (true) {
       if (element == null) return null;
-      if (!isWhitespaceOrComment(element)) break;
+      if (!isWhitespaceOrComment(element) || alsoSkip.contains(element.getElementType())) break;
       element = element.getTreeNext();
     }
     return element;
