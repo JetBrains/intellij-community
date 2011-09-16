@@ -74,7 +74,7 @@ public class PyStatementEffectInspection extends PyInspection {
     private boolean checkStringLiteral(PyExpression expression) {
       if (expression instanceof PyStringLiteralExpression) {
         PyDocStringOwner parent = PsiTreeUtil.getParentOfType(expression, PyFunction.class, PyClass.class);
-        if (parent != null) {
+        if (parent != null && parent.getDocStringExpression() == null) {
           registerProblem(expression, "Docstring seems to be misplaced",
                       new StatementEffectDocstringQuickFix());
           return true;
