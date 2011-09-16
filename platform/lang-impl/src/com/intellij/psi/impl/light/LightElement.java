@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,9 +27,6 @@ import com.intellij.psi.impl.PsiElementBase;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-/**
- *
- */
 public abstract class LightElement extends PsiElementBase {
   protected final PsiManager myManager;
   private final Language myLanguage;
@@ -45,38 +42,38 @@ public abstract class LightElement extends PsiElementBase {
     return myLanguage;
   }
 
-  public PsiManager getManager(){
+  public PsiManager getManager() {
     return myManager;
   }
 
-  public PsiElement getParent(){
+  public PsiElement getParent() {
     return null;
   }
 
   @NotNull
-  public PsiElement[] getChildren(){
+  public PsiElement[] getChildren() {
     return PsiElement.EMPTY_ARRAY;
   }
 
-  public PsiFile getContainingFile(){
+  public PsiFile getContainingFile() {
     return null;
   }
 
-  public TextRange getTextRange(){
+  public TextRange getTextRange() {
     return null;
   }
 
-  public int getStartOffsetInParent(){
+  public int getStartOffsetInParent() {
     return -1;
   }
 
-  public final int getTextLength(){
+  public final int getTextLength() {
     String text = getText();
     return text != null ? text.length() : 0;
   }
 
   @NotNull
-  public char[] textToCharArray(){
+  public char[] textToCharArray() {
     return getText().toCharArray();
   }
 
@@ -92,7 +89,7 @@ public abstract class LightElement extends PsiElementBase {
     return null;
   }
 
-  public int getTextOffset(){
+  public int getTextOffset() {
     return -1;
   }
 
@@ -105,7 +102,7 @@ public abstract class LightElement extends PsiElementBase {
     return true;
   }
 
-  public boolean isWritable(){
+  public boolean isWritable() {
     return false;
   }
 
@@ -115,31 +112,31 @@ public abstract class LightElement extends PsiElementBase {
 
   public abstract String toString();
 
-  public void checkAdd(@NotNull PsiElement element) throws IncorrectOperationException{
+  public void checkAdd(@NotNull PsiElement element) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
-  public PsiElement add(@NotNull PsiElement element) throws IncorrectOperationException{
+  public PsiElement add(@NotNull PsiElement element) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
-  public PsiElement addBefore(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException{
+  public PsiElement addBefore(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
-  public PsiElement addAfter(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException{
+  public PsiElement addAfter(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
-  public void delete() throws IncorrectOperationException{
+  public void delete() throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
-  public void checkDelete() throws IncorrectOperationException{
+  public void checkDelete() throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
-  public PsiElement replace(@NotNull PsiElement newElement) throws IncorrectOperationException{
+  public PsiElement replace(@NotNull PsiElement newElement) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
@@ -166,9 +163,8 @@ public abstract class LightElement extends PsiElementBase {
   public PsiElement getNavigationElement() {
     return myNavigationElement;
   }
-  public LightElement setNavigationElement(PsiElement navigationElement) {
+
+  public void setNavigationElement(@NotNull PsiElement navigationElement) {
     myNavigationElement = navigationElement;
-    return this;
   }
-  
 }
