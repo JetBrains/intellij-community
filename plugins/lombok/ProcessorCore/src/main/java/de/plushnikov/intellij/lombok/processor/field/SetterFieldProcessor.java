@@ -17,6 +17,7 @@ import lombok.Setter;
 import lombok.handlers.TransformationsUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -65,7 +66,11 @@ public class SetterFieldProcessor extends AbstractLombokFieldProcessor {
       builder.append(PsiType.VOID.getCanonicalText());
       builder.append(' ');
       builder.append(methodName);
-      builder.append("(").append(psiFieldType.getCanonicalText()).append(' ').append(fieldName).append(')');
+
+      final Collection<String> annotationsToCopy = collectAnnotationsToCopy(psiField);
+      final String annotationsString = buildAnnotationsString(annotationsToCopy);
+
+      builder.append("(").append(annotationsString).append(psiFieldType.getCanonicalText()).append(' ').append(fieldName).append(')');
       builder.append("{ this.").append(fieldName).append(" = ").append(fieldName).append("; }");
 
       PsiMethod setterMethod = elementFactory.createMethodFromText(builder.toString(), psiClass);

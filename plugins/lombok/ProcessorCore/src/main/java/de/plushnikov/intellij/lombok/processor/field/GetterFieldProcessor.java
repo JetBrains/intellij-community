@@ -17,6 +17,7 @@ import lombok.Getter;
 import lombok.handlers.TransformationsUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -59,10 +60,14 @@ public class GetterFieldProcessor extends AbstractLombokFieldProcessor {
       final PsiType psiReturnType = psiField.getType();
       String methodName = TransformationsUtil.toGetterName(fieldName, PsiType.BOOLEAN.equals(psiReturnType));
 
+      final Collection<String> annotationsToCopy = collectAnnotationsToCopy(psiField);
+      final String annotationsString = buildAnnotationsString(annotationsToCopy);
+
       builder.append(methodVisibility);
       if (builder.length() > 0) {
         builder.append(' ');
       }
+      builder.append(annotationsString);
       builder.append(psiReturnType.getCanonicalText());
       builder.append(' ');
       builder.append(methodName);
