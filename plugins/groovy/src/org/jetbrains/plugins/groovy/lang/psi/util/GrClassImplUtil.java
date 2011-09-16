@@ -16,13 +16,17 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -34,7 +38,6 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrReferenceList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
@@ -335,7 +338,7 @@ public class GrClassImplUtil {
     }
 
     final GrTypeDefinitionBody body = grType.getBody();
-    if (body != null && !isSuperClassReferenceResolving(grType, lastParent)) {
+    if (body != null) {
       if (classHint == null || classHint.shouldProcess(ClassHint.ResolveKind.CLASS)) {
         for (CandidateInfo info : CollectClassMembersUtil.getAllInnerClasses(grType, false).values()) {
           final PsiClass innerClass = (PsiClass)info.getElement();
@@ -355,12 +358,6 @@ public class GrClassImplUtil {
 
     return true;
   }
-
-  private static boolean isSuperClassReferenceResolving(GrTypeDefinition grType, PsiElement lastParent) {
-    return lastParent instanceof GrReferenceList ||
-           grType.isAnonymous() && lastParent == ((GrAnonymousClassDefinition)grType).getBaseClassReferenceGroovy();
-  }
-
 
   private static boolean isSameDeclaration(PsiElement place, PsiElement element) {
     if (element instanceof GrAccessorMethod) element = ((GrAccessorMethod)element).getProperty();
