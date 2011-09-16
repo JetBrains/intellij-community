@@ -90,6 +90,14 @@ public class GroovyCompletionTest extends GroovyCompletionTestBase {
     doVariantableTest("hahaha", "hohoho");
   }
 
+  public void testUnfinishedMethodTypeParameter() throws Throwable {
+    doVariantableTest("MyParameter", "MySecondParameter");
+  }
+
+  public void testUnfinishedMethodTypeParameter2() throws Throwable {
+    doVariantableTest("MyParameter", "MySecondParameter");
+  }
+
   public void testInstanceofHelpsDetermineType() throws Throwable {
     doBasicTest();
   }

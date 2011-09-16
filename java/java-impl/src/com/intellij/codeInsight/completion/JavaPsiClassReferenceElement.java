@@ -74,7 +74,11 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> {
 
     final JavaPsiClassReferenceElement that = (JavaPsiClassReferenceElement)o;
 
-    return Comparing.equal(myQualifiedName, that.myQualifiedName);
+    if (myQualifiedName != null) {
+      return myQualifiedName.equals(that.myQualifiedName);
+    }
+
+    return Comparing.equal(myClass, that.myClass);
   }
 
   public String getQualifiedName() {

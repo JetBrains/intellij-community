@@ -61,6 +61,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAc
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.inline.InlineMethodConflictSolver;
@@ -287,6 +289,8 @@ public class GroovyCompletionContributor extends CompletionContributor {
 
         suggestVariableNames(position, result);
 
+        addUnfinishedMethodTypeParameters(position, result);
+
         final PsiElement parent = position.getParent();
         if (parent instanceof GrReferenceElement) {
           GrReferenceElement reference = (GrReferenceElement)parent;
@@ -339,6 +343,25 @@ public class GroovyCompletionContributor extends CompletionContributor {
 
   }
 
+  private static void addUnfinishedMethodTypeParameters(PsiElement position, CompletionResultSet result) {
+    final ProcessingContext context = new ProcessingContext();
+    if (PsiJavaPatterns.psiElement().inside(
+      PsiJavaPatterns.psiElement(GrTypeElement.class).afterLeaf(
+        PsiJavaPatterns.psiElement().withText(">").withParent(
+          PsiJavaPatterns.psiElement(GrTypeParameterList.class).withParent(PsiErrorElement.class).save("typeParameterList")))).accepts(
+      position, context)) {
+      final GrTypeParameterList list = (GrTypeParameterList)context.get("typeParameterList");
+      PsiElement current = list.getParent().getParent();
+      if (current instanceof PsiField) {
+        current = current.getParent();
+      }
+      if (current instanceof GrTypeDefinitionBody) {
+        for (PsiTypeParameter typeParameter : list.getTypeParameters()) {
+          result.addElement(new JavaPsiClassReferenceElement(typeParameter));
+        }
+      }
+    }
+  }
 
   @Override
   public void fillCompletionVariants(CompletionParameters parameters, CompletionResultSet result) {

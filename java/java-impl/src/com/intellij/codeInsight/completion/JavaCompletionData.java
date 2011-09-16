@@ -522,21 +522,7 @@ public class JavaCompletionData extends JavaAwareCompletionData{
       result.addElement(createKeyword(position, PsiKeyword.CLASS));
     }
 
-    final ProcessingContext context = new ProcessingContext();
-    if (psiElement().afterLeaf(
-      psiElement().withText(">").withParent(
-        psiElement(PsiTypeParameterList.class).withParent(PsiErrorElement.class).save("typeParameterList"))).accepts(position, context)) {
-      final PsiTypeParameterList list = (PsiTypeParameterList)context.get("typeParameterList");
-      PsiElement current = list.getParent().getParent();
-      if (current instanceof PsiField) {
-        current = current.getParent();
-      }
-      if (current instanceof PsiClass) {
-        for (PsiTypeParameter typeParameter : list.getTypeParameters()) {
-          result.addElement(new JavaPsiClassReferenceElement(typeParameter));
-        }
-      }
-    }
+    addUnfinishedMethodTypeParameters(position, result);
 
     if (JavaSmartCompletionContributor.INSIDE_EXPRESSION.accepts(position) &&
         !BasicExpressionCompletionContributor.AFTER_DOT.accepts(position) &&
@@ -549,6 +535,25 @@ public class JavaCompletionData extends JavaAwareCompletionData{
             result.addElement(element);
           }
         });
+      }
+    }
+  }
+
+  private static void addUnfinishedMethodTypeParameters(PsiElement position, CompletionResultSet result) {
+    final ProcessingContext context = new ProcessingContext();
+    if (psiElement().inside(
+      psiElement(PsiTypeElement.class).afterLeaf(
+        psiElement().withText(">").withParent(
+          psiElement(PsiTypeParameterList.class).withParent(PsiErrorElement.class).save("typeParameterList")))).accepts(position, context)) {
+      final PsiTypeParameterList list = (PsiTypeParameterList)context.get("typeParameterList");
+      PsiElement current = list.getParent().getParent();
+      if (current instanceof PsiField) {
+        current = current.getParent();
+      }
+      if (current instanceof PsiClass) {
+        for (PsiTypeParameter typeParameter : list.getTypeParameters()) {
+          result.addElement(new JavaPsiClassReferenceElement(typeParameter));
+        }
       }
     }
   }
