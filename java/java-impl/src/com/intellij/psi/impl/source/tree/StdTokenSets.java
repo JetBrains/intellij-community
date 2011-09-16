@@ -15,7 +15,7 @@
  */
 package com.intellij.psi.impl.source.tree;
 
-import com.intellij.psi.jsp.JspElementType;
+import com.intellij.psi.jsp.JspTokenType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.XmlElementType;
 
@@ -24,7 +24,7 @@ import com.intellij.psi.xml.XmlElementType;
  */
 public interface StdTokenSets {
   TokenSet COMMENT_BIT_SET = TokenSet.orSet(
-    ElementType.JAVA_COMMENT_BIT_SET, TokenSet.create(JspElementType.JSP_COMMENT, XmlElementType.XML_COMMENT));
+    ElementType.JAVA_COMMENT_BIT_SET, TokenSet.create(JspTokenType.JSP_COMMENT, XmlElementType.XML_COMMENT));
 
   TokenSet WHITE_SPACE_OR_COMMENT_BIT_SET = TokenSet.orSet(
     ElementType.WHITE_SPACE_BIT_SET, ElementType.JAVA_COMMENT_BIT_SET);

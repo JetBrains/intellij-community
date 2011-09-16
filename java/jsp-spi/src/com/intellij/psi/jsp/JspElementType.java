@@ -21,7 +21,7 @@ import com.intellij.psi.tree.IElementType;
  * @author peter
  * todo[r.sh] replace usages with JspElementTypeEx in implementation modules
  */
-public interface JspElementType extends JspTokenType {
+public interface JspElementType {
   enum Kind {
     HOLDER_TEMPLATE_DATA, JSP_TEMPLATE_EXPRESSION, HOLDER_METHOD, JSP_TEMPLATE_STATEMENT, JSP_CLASS_LEVEL_DECLARATION_STATEMENT,
     JSP_CODE_BLOCK, JSP_WHILE_STATEMENT, JSP_BLOCK_STATEMENT, JSP_CLASS, JSP_METHOD_CALL, JSP_EXPRESSION, JSP_SCRIPTLET
