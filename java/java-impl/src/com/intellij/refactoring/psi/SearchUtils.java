@@ -19,6 +19,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
@@ -54,7 +55,7 @@ public class SearchUtils{
     }
 
     public static Iterable<PsiReference> findAllReferences(PsiElement element){
-        return findAllReferences(element, element.getUseScope());
+        return findAllReferences(element, PsiSearchHelper.SERVICE.getInstance(element.getProject()).getUseScope(element));
     }
 
     public static Iterable<PsiMethod> findOverridingMethods(PsiMethod method){
