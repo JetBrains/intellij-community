@@ -29,12 +29,10 @@ public class DataProcessor extends AbstractLombokClassProcessor {
     super(CLASS_NAME, PsiMethod.class);
   }
 
-  public <Psi extends PsiElement> boolean process(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<Psi> target) {
-    boolean result = true;
+  public <Psi extends PsiElement> void process(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<Psi> target) {
     for (LombokClassProcessor processor : internProcessors) {
-      result &= processor.process(psiClass, psiAnnotation, target);
+      processor.process(psiClass, psiAnnotation, target);
     }
-    return result;
   }
 
 }

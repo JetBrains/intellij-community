@@ -24,7 +24,7 @@ public class EqualsAndHashCodeProcessor extends AbstractLombokClassProcessor {
     super(CLASS_NAME, PsiMethod.class);
   }
 
-  public <Psi extends PsiElement> boolean process(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<Psi> target) {
+  public <Psi extends PsiElement> void process(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<Psi> target) {
     Project project = psiClass.getProject();
     PsiManager manager = psiClass.getContainingFile().getManager();
     PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
@@ -36,8 +36,6 @@ public class EqualsAndHashCodeProcessor extends AbstractLombokClassProcessor {
     target.add((Psi) prepareMethod(manager, hashcodeMethod, psiClass, psiAnnotation));
 
     //TODO add read usage for fields UserMapKeys.addReadUsageFor(psiField);
-
-    return true;
   }
 
   @NotNull

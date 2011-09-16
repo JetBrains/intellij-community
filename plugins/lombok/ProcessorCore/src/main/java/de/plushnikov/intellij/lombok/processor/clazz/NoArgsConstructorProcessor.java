@@ -27,7 +27,7 @@ public class NoArgsConstructorProcessor extends AbstractConstructorClassProcesso
     super(CLASS_NAME, PsiMethod.class);
   }
 
-  public <Psi extends PsiElement> boolean process(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<Psi> target) {
+  public <Psi extends PsiElement> void process(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<Psi> target) {
     Project project = psiClass.getProject();
     PsiManager manager = psiClass.getContainingFile().getManager();
     PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
@@ -37,7 +37,6 @@ public class NoArgsConstructorProcessor extends AbstractConstructorClassProcesso
       PsiMethod constructorMethod = createConstructorMethod(visibility, Collections.<PsiField>emptyList(), psiClass, elementFactory);
       target.add((Psi) prepareMethod(manager, constructorMethod, psiClass, psiAnnotation));
     }
-    return true;
   }
 
 }

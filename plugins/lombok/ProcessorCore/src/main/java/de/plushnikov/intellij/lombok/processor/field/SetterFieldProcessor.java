@@ -32,9 +32,7 @@ public class SetterFieldProcessor extends AbstractLombokFieldProcessor {
     super(CLASS_NAME, PsiMethod.class);
   }
 
-  public <Psi extends PsiElement> boolean process(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull List<Psi> target) {
-    boolean result = false;
-
+  public <Psi extends PsiElement> void process(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull List<Psi> target) {
     final String methodVisibity = LombokProcessorUtil.getMethodVisibity(psiAnnotation);
     if (null != methodVisibity) {
       Project project = psiField.getProject();
@@ -44,9 +42,7 @@ public class SetterFieldProcessor extends AbstractLombokFieldProcessor {
 
       target.add((Psi) createSetterMethod(psiField, methodVisibity, psiClass, manager, elementFactory));
       UserMapKeys.addWriteUsageFor(psiField);
-      result = true;
     }
-    return result;
   }
 
   private PsiMethod createSetterMethod(PsiField psiField, String methodVisibility, PsiClass psiClass, PsiManager manager, PsiElementFactory elementFactory) {

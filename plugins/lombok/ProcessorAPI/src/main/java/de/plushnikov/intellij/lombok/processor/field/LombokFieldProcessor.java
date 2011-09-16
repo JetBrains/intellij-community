@@ -15,5 +15,5 @@ public interface LombokFieldProcessor {
 
   public abstract <Psi extends PsiElement> boolean acceptAnnotation(@Nullable String qualifiedName, @NotNull Class<Psi> type);
 
-  public abstract <Psi extends PsiElement> boolean process(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull List<Psi> target);
+  public abstract <Psi extends PsiElement> void process(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull List<Psi> target);
 }

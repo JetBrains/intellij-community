@@ -44,12 +44,10 @@ public class DelegateFieldProcessor extends AbstractLombokFieldProcessor {
     super(CLASS_NAME, PsiMethod.class);
   }
 
-  public <Psi extends PsiElement> boolean process(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull List<Psi> target) {
-    boolean result = false;
-
+  public <Psi extends PsiElement> void process(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull List<Psi> target) {
     final PsiClass psiClass = psiField.getContainingClass();
     if (null == psiClass) {
-      return result;
+      return;
     }
 
     final Project project = psiField.getProject();
@@ -75,12 +73,9 @@ public class DelegateFieldProcessor extends AbstractLombokFieldProcessor {
             target.add((Psi) myLightMethod);
           }
           UserMapKeys.addGeneralUsageFor(psiField);
-
-          result = true;
         }
       }
     }
-    return result;
   }
 
   private Collection<PsiMethod> collectAllMethods(@NotNull PsiClass rootClass, @NotNull PsiClass objectClass) {

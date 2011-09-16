@@ -25,8 +25,7 @@ public class SetterProcessor extends AbstractLombokClassProcessor {
     super(CLASS_NAME, PsiMethod.class);
   }
 
-  public <Psi extends PsiElement> boolean process(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<Psi> target) {
-    boolean result = false;
+  public <Psi extends PsiElement> void process(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<Psi> target) {
     for (PsiField psiField : psiClass.getFields()) {
       boolean createSetter = true;
       PsiModifierList modifierList = psiField.getModifierList();
@@ -39,8 +38,6 @@ public class SetterProcessor extends AbstractLombokClassProcessor {
         fieldProcessor.process(psiField, psiAnnotation, target);
       }
     }
-
-    return result;
   }
 
   private boolean hasFieldProcessorAnnotation(PsiModifierList modifierList) {
