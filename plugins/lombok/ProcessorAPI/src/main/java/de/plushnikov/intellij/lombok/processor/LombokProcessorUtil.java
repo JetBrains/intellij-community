@@ -2,7 +2,7 @@ package de.plushnikov.intellij.lombok.processor;
 
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiAnnotationParameterList;
-import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.PsiNameValuePair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,15 +37,15 @@ public class LombokProcessorUtil {
   @Nullable
   public static String convertAcessLevelToJavaString(String value) {
     if (null == value || value.isEmpty() || value.endsWith("AccessLevel.PUBLIC"))
-      return PsiModifier.PUBLIC;
+      return PsiKeyword.PUBLIC;
     if (value.endsWith("AccessLevel.MODULE"))
       return "";
     if (value.endsWith("AccessLevel.PROTECTED"))
-      return PsiModifier.PROTECTED;
+      return PsiKeyword.PROTECTED;
     if (value.endsWith("AccessLevel.PACKAGE"))
       return "";
     if (value.endsWith("AccessLevel.PRIVATE"))
-      return PsiModifier.PRIVATE;
+      return PsiKeyword.PRIVATE;
     if (value.endsWith("AccessLevel.NONE"))
       return null;
     else
