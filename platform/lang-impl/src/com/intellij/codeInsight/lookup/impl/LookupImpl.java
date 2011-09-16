@@ -141,6 +141,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     super(new JPanel(new BorderLayout()));
     setForceShowAsPopup(true);
     setCancelOnClickOutside(false);
+    setResizable(true);
     myProject = project;
     myEditor = editor;
 
@@ -170,7 +171,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     
     getComponent().add(myLayeredPane, BorderLayout.CENTER);
 
-    myLayeredPane.mainPanel.add(myScrollPane, BorderLayout.NORTH);
+    myLayeredPane.mainPanel.add(myScrollPane, BorderLayout.CENTER);
     myScrollPane.setBorder(null);
 
     myAdComponent = new Advertiser();
@@ -1356,6 +1357,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
         @Override
         public void componentResized(ComponentEvent e) {
           mainPanel.setSize(getSize());
+          mainPanel.validate();
           layoutStatusIcons();
           layoutHint();
 
@@ -1366,22 +1368,22 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     }
 
     private void layoutStatusIcons() {
-      final Dimension iconSize = myProcessIcon.getPreferredSize();
-      myIconPanel.setBounds(getWidth() - iconSize.width, 0, iconSize.width, iconSize.height);
-
-      final Dimension sortSize = mySortingLabel.getPreferredSize();
-      final Point sbLocation = SwingUtilities.convertPoint(myScrollPane.getVerticalScrollBar(), 0, 0, myLayeredPane);
-
       int adHeight = myAdComponent.getAdComponent().getPreferredSize().height;
-      final int sortHeight = Math.max(adHeight, mySortingLabel.getPreferredSize().height);
-      mySortingLabel.setBounds(sbLocation.x, getHeight() - sortHeight, sortSize.width, sortHeight);
-
       Dimension buttonSize = adHeight > 0 ? new Dimension(0, 0) : new Dimension(relevanceSortIcon.getIconWidth(), relevanceSortIcon.getIconHeight());
       myScrollBarIncreaseButton.setPreferredSize(buttonSize);
       myScrollBarIncreaseButton.setMinimumSize(buttonSize);
       myScrollBarIncreaseButton.setMaximumSize(buttonSize);
       myScrollPane.getVerticalScrollBar().revalidate();
       myScrollPane.getVerticalScrollBar().repaint();
+
+      final Dimension iconSize = myProcessIcon.getPreferredSize();
+      myIconPanel.setBounds(getWidth() - iconSize.width, 0, iconSize.width, iconSize.height);
+
+      final Dimension sortSize = mySortingLabel.getPreferredSize();
+      final Point sbLocation = SwingUtilities.convertPoint(myScrollPane.getVerticalScrollBar(), 0, 0, myLayeredPane);
+
+      final int sortHeight = Math.max(adHeight, mySortingLabel.getPreferredSize().height);
+      mySortingLabel.setBounds(sbLocation.x, getHeight() - sortHeight, sortSize.width, sortHeight);
     }
 
     void layoutHint() {
