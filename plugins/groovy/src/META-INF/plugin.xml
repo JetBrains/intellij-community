@@ -608,7 +608,8 @@
     <applicationService serviceImplementation="org.jetbrains.plugins.groovy.mvc.MvcRunTargetHistoryService"
                     serviceInterface="org.jetbrains.plugins.groovy.mvc.MvcRunTargetHistoryService"/>
 
-    <debugger.positionManagerFactory implementation="org.jetbrains.plugins.groovy.debugger.GroovyPositionManagerFactory"/>
+    <debugger.positionManagerFactory id="groovyPositionManager" implementation="org.jetbrains.plugins.groovy.debugger.GroovyPositionManagerFactory"/>
+    <debugger.positionManagerFactory order="after groovyPositionManager" implementation="org.jetbrains.plugins.groovy.springloaded.SpringLoadedPositionManagerFactory"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.debugger">
