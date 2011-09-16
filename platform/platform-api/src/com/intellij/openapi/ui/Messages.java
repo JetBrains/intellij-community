@@ -117,7 +117,7 @@ public class Messages {
 
     if (canShowMacSheetPanel()) {
       return MacMessages.getInstance()
-        .showMessageDialog(title, message, null, options, false, WindowManager.getInstance().suggestParentWindow(project), null);
+        .showMessageDialog(title, message, options, false, WindowManager.getInstance().suggestParentWindow(project), defaultOptionIndex, defaultOptionIndex, null);
     }
 
     MessageDialog dialog = new MessageDialog(project, message, title, options, defaultOptionIndex, -1, icon, doNotAskOption, false);
@@ -134,9 +134,9 @@ public class Messages {
       return ourTestImplementation.show(message);
     }
 
-    if (canShowMacSheetPanel()) {
+    if (canShowMacSheetPanel() && moreInfo == null) {
       return MacMessages.getInstance()
-        .showMessageDialog(title, message, moreInfo, options, false, WindowManager.getInstance().suggestParentWindow(project), null);
+        .showMessageDialog(title, message, options, false, WindowManager.getInstance().suggestParentWindow(project), defaultOptionIndex, focusedOptionIndex, null);
     }
 
     MessageDialog dialog = new MoreInfoMessageDialog(project, message, title, moreInfo, options, defaultOptionIndex, focusedOptionIndex, icon);
@@ -156,7 +156,7 @@ public class Messages {
     else {
       if (canShowMacSheetPanel()) {
         return MacMessages.getInstance()
-          .showMessageDialog(title, message, null, options, false, SwingUtilities.getWindowAncestor(parent), null);
+          .showMessageDialog(title, message, options, false, SwingUtilities.getWindowAncestor(parent), defaultOptionIndex, defaultOptionIndex, null);
       }
   
       MessageDialog dialog = new MessageDialog(parent, message, title, options, defaultOptionIndex, defaultOptionIndex, icon, false);
@@ -171,8 +171,7 @@ public class Messages {
     }
     else {
       if (canShowMacSheetPanel()) {
-        return MacMessages.getInstance()
-          .showMessageDialog(title, message, null, options, false, null, doNotAskOption);
+        return MacMessages.getInstance().showMessageDialog(title, message, options, false, null, defaultOptionIndex, focusedOptionIndex, doNotAskOption);
       }
   
       //what's it? if (application.isUnitTestMode()) throw new RuntimeException(message);
