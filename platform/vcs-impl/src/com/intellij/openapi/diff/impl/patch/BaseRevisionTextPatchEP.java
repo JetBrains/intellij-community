@@ -15,11 +15,8 @@
  */
 package com.intellij.openapi.diff.impl.patch;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
@@ -27,13 +24,9 @@ import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.CommitContext;
-import com.intellij.util.WaitFor;
-import com.intellij.util.WaitForProgressToShow;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.io.File;
-import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -67,7 +60,7 @@ public class BaseRevisionTextPatchEP implements PatchEP {
   }
 
   @Override
-  public CharSequence provideContent(Project project, @NotNull String path, CommitContext commitContext) {
+  public CharSequence provideContent(@NotNull String path, CommitContext commitContext) {
     if (commitContext == null) return null;
     if (Boolean.TRUE.equals(commitContext.getUserData(ourPutBaseRevisionTextKey))) {
       final File file = new File(myBaseDir, path);
@@ -88,12 +81,11 @@ public class BaseRevisionTextPatchEP implements PatchEP {
   }
 
   @Override
-  public void consumeContent(Project project, @NotNull String path, @NotNull CharSequence content, CommitContext commitContext) {
+  public void consumeContent(@NotNull String path, @NotNull CharSequence content, CommitContext commitContext) {
   }
 
   @Override
-  public void consumeContentBeforePatchApplied(Project project,
-                                               @NotNull String path,
+  public void consumeContentBeforePatchApplied(@NotNull String path,
                                                @NotNull CharSequence content,
                                                CommitContext commitContext) {
     Map<String, String> map = commitContext.getUserData(ourStoredTexts);

@@ -61,7 +61,7 @@ public class UnifiedDiffWriter {
       final String path = patch.getBeforeName() == null ? patch.getAfterName() : patch.getBeforeName();
       final Map<String , CharSequence> additionalMap = new HashMap<String, CharSequence>();
       for (PatchEP extension : extensions) {
-        final CharSequence charSequence = extension.provideContent(project, path, commitContext);
+        final CharSequence charSequence = extension.provideContent(path, commitContext);
         if (! StringUtil.isEmpty(charSequence)) {
           additionalMap.put(extension.getName(), charSequence);
         }

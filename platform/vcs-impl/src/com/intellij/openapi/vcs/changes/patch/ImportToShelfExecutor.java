@@ -136,18 +136,17 @@ public class ImportToShelfExecutor implements ApplyPatchExecutor {
     }
 
     @Override
-    public CharSequence provideContent(Project project, @NotNull String path, CommitContext commitContext) {
+    public CharSequence provideContent(@NotNull String path, CommitContext commitContext) {
       return myMap.get(path);
     }
 
     @Override
-    public void consumeContent(Project project, @NotNull String path, @NotNull CharSequence content, CommitContext commitContext) {
+    public void consumeContent(@NotNull String path, @NotNull CharSequence content, CommitContext commitContext) {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    public void consumeContentBeforePatchApplied(Project project,
-                                                 @NotNull String path,
+    public void consumeContentBeforePatchApplied(@NotNull String path,
                                                  @NotNull CharSequence content,
                                                  CommitContext commitContext) {
       throw new UnsupportedOperationException();

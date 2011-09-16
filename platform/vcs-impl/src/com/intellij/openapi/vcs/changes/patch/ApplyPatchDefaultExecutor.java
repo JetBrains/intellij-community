@@ -87,7 +87,7 @@ public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor {
     applyAdditionalInfoImpl(project, additionalInfo, commitContext, new Consumer<InfoGroup>() {
       @Override
       public void consume(InfoGroup infoGroup) {
-        infoGroup.myPatchEP.consumeContentBeforePatchApplied(project, infoGroup.myPath, infoGroup.myContent, infoGroup.myCommitContext);
+        infoGroup.myPatchEP.consumeContentBeforePatchApplied(infoGroup.myPath, infoGroup.myContent, infoGroup.myCommitContext);
       }
     });
   }
@@ -98,7 +98,7 @@ public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor {
     applyAdditionalInfoImpl(project, additionalInfo, commitContext, new Consumer<InfoGroup>() {
       @Override
       public void consume(InfoGroup infoGroup) {
-        infoGroup.myPatchEP.consumeContent(project, infoGroup.myPath, infoGroup.myContent, infoGroup.myCommitContext);
+        infoGroup.myPatchEP.consumeContent(infoGroup.myPath, infoGroup.myContent, infoGroup.myCommitContext);
       }
     });
   }

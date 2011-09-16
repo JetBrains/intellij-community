@@ -16,7 +16,6 @@
 package com.intellij.openapi.diff.impl.patch.formove;
 
 import com.intellij.openapi.diff.impl.patch.PatchEP;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,18 +35,17 @@ public class TestPatchEP implements PatchEP {
   }
 
   @Override
-  public CharSequence provideContent(Project project, @NotNull String path, CommitContext commitContext) {
+  public CharSequence provideContent(@NotNull String path, CommitContext commitContext) {
     return ourContent + path;
   }
 
   @Override
-  public void consumeContent(Project project, @NotNull String path, @NotNull CharSequence content, CommitContext commitContext) {
+  public void consumeContent(@NotNull String path, @NotNull CharSequence content, CommitContext commitContext) {
     assert (ourContent + path).equals(content.toString());
   }
 
   @Override
-  public void consumeContentBeforePatchApplied(Project project,
-                                               @NotNull String path,
+  public void consumeContentBeforePatchApplied(@NotNull String path,
                                                @NotNull CharSequence content,
                                                CommitContext commitContext) {
   }

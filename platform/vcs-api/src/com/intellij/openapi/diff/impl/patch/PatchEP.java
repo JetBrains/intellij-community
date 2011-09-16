@@ -31,22 +31,21 @@ public interface PatchEP {
   @NotNull
   String getName();
   /**
-   * @param project
    * @param path - before path, if exist, otherwise after path
    * @param commitContext
    */
   @Nullable
-  CharSequence provideContent(Project project, @NotNull final String path, CommitContext commitContext);
+  CharSequence provideContent(@NotNull final String path, CommitContext commitContext);
   /**
-   * @param project
    * @param path - before path, if exist, otherwise after path
    * @param commitContext
    */
-  void consumeContent(Project project, @NotNull final String path, @NotNull final CharSequence content, CommitContext commitContext);
+  void consumeContent(@NotNull final String path, @NotNull final CharSequence content, CommitContext commitContext);
   /**
-   * @param project
    * @param path - before path, if exist, otherwise after path
    * @param commitContext
    */
-  void consumeContentBeforePatchApplied(Project project, @NotNull final String path, @NotNull final CharSequence content, CommitContext commitContext);
+  void consumeContentBeforePatchApplied(@NotNull final String path,
+                                        @NotNull final CharSequence content,
+                                        CommitContext commitContext);
 }
