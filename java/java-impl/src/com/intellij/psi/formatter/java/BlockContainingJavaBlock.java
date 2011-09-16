@@ -18,6 +18,7 @@ package com.intellij.psi.formatter.java;
 import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiStatement;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.source.tree.ElementType;
@@ -175,7 +176,7 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
 
   private static boolean isSimpleStatement(final ASTNode child) {
     if (child.getElementType() == JavaElementType.BLOCK_STATEMENT) return false;
-    if (!ElementType.STATEMENT_BIT_SET.contains(child.getElementType())) return false;
+    if (!(child.getPsi() instanceof PsiStatement)) return false;
     return isStatement(child, child.getTreeParent());
   }
 

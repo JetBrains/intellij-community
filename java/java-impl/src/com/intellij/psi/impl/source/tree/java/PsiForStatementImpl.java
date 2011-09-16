@@ -18,6 +18,7 @@ package com.intellij.psi.impl.source.tree.java;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.ChildRole;
@@ -74,7 +75,7 @@ public class PsiForStatementImpl extends CompositePsiElement implements PsiForSt
         return findChildByType(LPARENTH);
 
       case ChildRole.FOR_INITIALIZATION:
-        final ASTNode initialization = findChildByType(STATEMENT_BIT_SET);
+        final ASTNode initialization = PsiImplUtil.findStatementChild(this);
         // should be inside parens
         ASTNode paren = findChildByRole(ChildRole.LPARENTH);
         for(ASTNode child = paren; child != null; child = child.getTreeNext()){
@@ -93,7 +94,7 @@ public class PsiForStatementImpl extends CompositePsiElement implements PsiForSt
       {
         ASTNode semicolon = findChildByRole(ChildRole.FOR_SEMICOLON);
         for(ASTNode child = semicolon; child != null; child = child.getTreeNext()){
-          if (STATEMENT_BIT_SET.contains(child.getElementType())) {
+          if (child.getPsi() instanceof PsiStatement) {
             return child;
           }
           if (child.getElementType() == RPARENTH) break;
@@ -108,7 +109,7 @@ public class PsiForStatementImpl extends CompositePsiElement implements PsiForSt
       {
         ASTNode rparenth = findChildByRole(ChildRole.RPARENTH);
         for(ASTNode child = rparenth; child != null; child = child.getTreeNext()){
-          if (STATEMENT_BIT_SET.contains(child.getElementType())) {
+          if (child.getPsi() instanceof PsiStatement) {
             return child;
           }
         }
@@ -136,7 +137,7 @@ public class PsiForStatementImpl extends CompositePsiElement implements PsiForSt
       if (EXPRESSION_BIT_SET.contains(child.getElementType())) {
         return ChildRole.CONDITION;
       }
-      else if (STATEMENT_BIT_SET.contains(child.getElementType())) {
+      else if (child.getPsi() instanceof PsiStatement) {
         int role = getChildRole(child, ChildRole.FOR_INITIALIZATION);
         if (role != ChildRoleBase.NONE) return role;
         role = getChildRole(child, ChildRole.FOR_UPDATE);

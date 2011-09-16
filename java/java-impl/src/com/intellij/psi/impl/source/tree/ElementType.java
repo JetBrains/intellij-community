@@ -71,10 +71,6 @@ public interface ElementType extends JavaTokenType, JavaDocTokenType,
     CONTINUE_STATEMENT, RETURN_STATEMENT, THROW_STATEMENT, SYNCHRONIZED_STATEMENT,
     TRY_STATEMENT, LABELED_STATEMENT, ASSERT_STATEMENT
   );
-  TokenSet JSP_SYNTHETIC_STATEMENTS = TokenSet.create(
-    JspElementType.JSP_WHILE_STATEMENT, JspElementType.JSP_BLOCK_STATEMENT, JspElementType.JSP_EXPRESSION,
-    JspElementType.JSP_TEMPLATE_STATEMENT, JspElementType.JSP_CLASS_LEVEL_DECLARATION_STATEMENT);
-  TokenSet STATEMENT_BIT_SET = TokenSet.orSet(JAVA_STATEMENT_BIT_SET, JSP_SYNTHETIC_STATEMENTS);
 
   TokenSet TYPES_BIT_SET = TokenSet.create(TYPE);
   PsiElementArrayConstructor<PsiTypeElement> PSI_TYPE_ELEMENT_ARRAY_CONSTRUCTOR = new PsiElementArrayConstructor<PsiTypeElement>() {

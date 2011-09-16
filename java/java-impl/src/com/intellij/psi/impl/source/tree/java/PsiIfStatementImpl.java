@@ -18,6 +18,7 @@ package com.intellij.psi.impl.source.tree.java;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.ElementType;
@@ -120,7 +121,7 @@ public class PsiIfStatementImpl extends CompositePsiElement implements PsiIfStat
         return findChildByType(RPARENTH);
 
       case ChildRole.THEN_BRANCH:
-        return findChildByType(STATEMENT_BIT_SET);
+        return PsiImplUtil.findStatementChild(this);
 
       case ChildRole.ELSE_KEYWORD:
         return findChildByType(ELSE_KEYWORD);
@@ -130,7 +131,7 @@ public class PsiIfStatementImpl extends CompositePsiElement implements PsiIfStat
           ASTNode elseKeyword = findChildByRole(ChildRole.ELSE_KEYWORD);
           if (elseKeyword == null) return null;
           for(ASTNode child = elseKeyword.getTreeNext(); child != null; child = child.getTreeNext()){
-            if (STATEMENT_BIT_SET.contains(child.getElementType())) return child;
+            if (child.getPsi() instanceof PsiStatement) return child;
           }
           return null;
         }
@@ -156,7 +157,7 @@ public class PsiIfStatementImpl extends CompositePsiElement implements PsiIfStat
       if (ElementType.EXPRESSION_BIT_SET.contains(child.getElementType())) {
         return ChildRole.CONDITION;
       }
-      else if (ElementType.STATEMENT_BIT_SET.contains(child.getElementType())) {
+      else if (child.getPsi() instanceof PsiStatement) {
         if (findChildByRoleAsPsiElement(ChildRole.THEN_BRANCH) == child) {
           return ChildRole.THEN_BRANCH;
         }

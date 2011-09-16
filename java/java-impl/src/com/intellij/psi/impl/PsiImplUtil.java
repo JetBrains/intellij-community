@@ -16,6 +16,7 @@
 package com.intellij.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -23,6 +24,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.impl.light.LightClassReference;
+import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.impl.source.tree.*;
@@ -463,6 +465,42 @@ public class PsiImplUtil {
 
   public static ASTNode skipWhitespaceAndCommentsBack(final ASTNode node) {
     return TreeUtil.skipElementsBack(node, WHITESPACE_AND_COMMENTS);
+  }
+
+  @Nullable
+  public static ASTNode findStatementChild(CompositePsiElement statement) {
+    if (DebugUtil.CHECK_INSIDE_ATOMIC_ACTION_ENABLED){
+      ApplicationManager.getApplication().assertReadAccessAllowed();
+    }
+    for(ASTNode element = statement.getFirstChildNode(); element != null; element = element.getTreeNext()){
+      if (element.getPsi() instanceof PsiStatement) return element;
+    }
+    return null;
+  }
+
+  public static PsiStatement[] getChildStatements(CompositeElement psiCodeBlock) {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+    // no lock is needed because all chameleons are expanded already
+    int count = 0;
+    for (ASTNode child1 = psiCodeBlock.getFirstChildNode(); child1 != null; child1 = child1.getTreeNext()) {
+      if (child1.getPsi() instanceof PsiStatement) {
+        count++;
+      }
+    }
+
+    PsiStatement[] result = Constants.PSI_STATEMENT_ARRAY_CONSTRUCTOR.newPsiElementArray(count);
+    if (count == 0) {
+      return result;
+    }
+    int idx = 0;
+    for (ASTNode child = psiCodeBlock.getFirstChildNode(); child != null && idx < count; child = child.getTreeNext()) {
+      if (child.getPsi() instanceof PsiStatement) {
+        PsiStatement element = (PsiStatement)child.getPsi();
+        LOG.assertTrue(element != null, child);
+        result[idx++] = element;
+      }
+    }
+    return result;
   }
 
   private static class ParamWriteProcessor implements Processor<PsiReference> {

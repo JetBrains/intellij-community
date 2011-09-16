@@ -20,7 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.Constants;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.jsp.jspJava.JspExpressionStatement;
 import com.intellij.psi.impl.source.jsp.jspJava.JspTemplateStatement;
 import com.intellij.psi.impl.source.tree.*;
@@ -54,7 +54,7 @@ public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCode
 
   @NotNull
   public PsiStatement[] getStatements() {
-    return getChildrenAsPsiElements(ElementType.STATEMENT_BIT_SET, Constants.PSI_STATEMENT_ARRAY_CONSTRUCTOR);
+    return PsiImplUtil.getChildStatements(this);
   }
 
   public PsiElement getFirstBodyElement() {
@@ -178,9 +178,6 @@ public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCode
       return getChildRole(child, ChildRole.RBRACE);
     }
     else {
-      if (ElementType.STATEMENT_BIT_SET.contains(child.getElementType())) {
-        return ChildRole.STATEMENT_IN_BLOCK;
-      }
       return ChildRoleBase.NONE;
     }
   }

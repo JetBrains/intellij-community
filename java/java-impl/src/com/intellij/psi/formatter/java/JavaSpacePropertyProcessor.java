@@ -17,7 +17,7 @@ package com.intellij.psi.formatter.java;
 
 import com.intellij.formatting.Spacing;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
@@ -39,7 +39,6 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ConcurrentHashMap;
@@ -72,8 +71,8 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
 
     final PsiElement myChild1Psi1 = myChild1.getPsi();
     final PsiElement myChild1Psi2 = myChild2.getPsi();
-    if (myChild1Psi1 == null || myChild1Psi1.getLanguage() != StdLanguages.JAVA ||
-        myChild1Psi2 == null || myChild1Psi2.getLanguage() != StdLanguages.JAVA) {
+    if (myChild1Psi1 == null || myChild1Psi1.getLanguage() != JavaLanguage.INSTANCE ||
+        myChild1Psi2 == null || myChild1Psi2.getLanguage() != JavaLanguage.INSTANCE) {
       return;
     }
 
@@ -701,24 +700,26 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   }
 
   @Override public void visitCodeFragment(JavaCodeFragment codeFragment) {
-    final TokenSet statementBitSet = ElementType.STATEMENT_BIT_SET;
-    if (statementBitSet.contains(myChild1.getElementType()) && statementBitSet.contains(myChild2.getElementType())) {
+    if (myChild1.getPsi() instanceof PsiStatement && myChild2.getPsi() instanceof PsiStatement) {
       myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
     }
   }
 
   private void processCodeBlock(final boolean keepInOneLine, final TextRange textRange) {
+    final boolean lhsStatement = myChild1.getPsi() instanceof PsiStatement;
+    final boolean rhsStatement = myChild2.getPsi() instanceof PsiStatement;
+
     if (myParent instanceof JspCodeBlock) {
       myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
     }
 
-    else if (myRole1 == ChildRoleBase.NONE || myRole2 == ChildRoleBase.NONE) {
+    else if ((myRole1 == ChildRoleBase.NONE && !lhsStatement) || (myRole2 == ChildRoleBase.NONE && !rhsStatement)) {
       final IElementType firstElementType = myChild1.getElementType();
       if (
         firstElementType == JavaTokenType.END_OF_LINE_COMMENT
         ||
         firstElementType == JavaTokenType.C_STYLE_COMMENT) {
-        myResult = Spacing.createDependentLFSpacing(0, 1, myParent.getTextRange(), 
+        myResult = Spacing.createDependentLFSpacing(0, 1, myParent.getTextRange(),
                                                     mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
       }
       else {
@@ -762,7 +763,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
       myResult = getSpaceBeforeLBrace(mySettings.SPACE_BEFORE_SWITCH_LBRACE, mySettings.BRACE_STYLE, null, false, true);
 
     }
-    else if (myRole1 == ChildRole.STATEMENT_IN_BLOCK && myRole2 == ChildRole.STATEMENT_IN_BLOCK) {
+    else if (lhsStatement && rhsStatement) {
       int minSpaces = 0;
       int minLineFeeds = 1;
       if (mySettings.KEEP_MULTIPLE_EXPRESSIONS_IN_ONE_LINE) {
