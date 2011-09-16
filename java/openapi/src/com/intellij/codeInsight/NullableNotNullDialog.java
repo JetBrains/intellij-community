@@ -18,37 +18,37 @@ package com.intellij.codeInsight;
 import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.TitledSeparator;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.util.List;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * User: anna
  * Date: 1/25/11
  */
 public class NullableNotNullDialog extends DialogWrapper {
-  private static final Icon ADD_ICON = IconLoader.getIcon("/general/add.png");
-  private static final Icon REMOVE_ICON = IconLoader.getIcon("/general/remove.png");
-  private static final Icon SAVE_ICON = IconLoader.getIcon("/ide/defaultProfile.png");
+  private static final Icon SELECT_ICON = IconLoader.getIcon("/actions/checked.png");
+  private static final Icon SELECTED_ICON = IconLoader.getIcon("/diff/currentLine.png");
 
   private final Project myProject;
-  private AnnoPanel myNullablePanel;
-  private AnnoPanel myNotNullPanel;
+  private AnnotationsPanel myNullablePanel;
+  private AnnotationsPanel myNotNullPanel;
 
   public NullableNotNullDialog(Project project) {
     super(project, true);
@@ -63,11 +63,11 @@ public class NullableNotNullDialog extends DialogWrapper {
     final NullableNotNullManager manager = NullableNotNullManager.getInstance(myProject);
     final Splitter splitter = new Splitter(true);
     myNullablePanel =
-      new AnnoPanel("Nullable annotations", manager.getDefaultNullable(), manager.getNullables(), NullableNotNullManager.DEFAULT_NULLABLES);
-    splitter.setFirstComponent(myNullablePanel);
+      new AnnotationsPanel("Nullable", manager.getDefaultNullable(), manager.getNullables(), NullableNotNullManager.DEFAULT_NULLABLES);
+    splitter.setFirstComponent(myNullablePanel.getComponent());
     myNotNullPanel =
-      new AnnoPanel("NotNull annotations", manager.getDefaultNotNull(), manager.getNotNulls(), NullableNotNullManager.DEFAULT_NOT_NULLS);
-    splitter.setSecondComponent(myNotNullPanel);
+      new AnnotationsPanel("NotNull", manager.getDefaultNotNull(), manager.getNotNulls(), NullableNotNullManager.DEFAULT_NOT_NULLS);
+    splitter.setSecondComponent(myNotNullPanel.getComponent());
     splitter.setHonorComponentsMinimumSize(true);
     splitter.setPreferredSize(new Dimension(300, 400));
     return splitter;
@@ -77,127 +77,145 @@ public class NullableNotNullDialog extends DialogWrapper {
   protected void doOKAction() {
     final NullableNotNullManager manager = NullableNotNullManager.getInstance(myProject);
 
-    manager.setNotNulls(myNotNullPanel.getAnns());
-    manager.setDefaultNotNull(myNotNullPanel.getDefaultAnn());
+    manager.setNotNulls(myNotNullPanel.getAnnotations());
+    manager.setDefaultNotNull(myNotNullPanel.getDefaultAnnotation());
 
-    manager.setNullables(myNullablePanel.getAnns());
-    manager.setDefaultNullable(myNullablePanel.getDefaultAnn());
+    manager.setNullables(myNullablePanel.getAnnotations());
+    manager.setDefaultNullable(myNullablePanel.getDefaultAnnotation());
 
     super.doOKAction();
   }
 
-  private class AnnoPanel extends JPanel {
-    private String myDefaultAnn;
-    private final String[] myDefaultAnns;
+  private class AnnotationsPanel {
+    private String myDefaultAnnotation;
+    private final Set<String> myDefaultAnnotations;
     private final JBList myList;
+    private final JPanel myComponent;
 
-    private AnnoPanel(final String title, final String defaultAnn, final List<String> anns, final String[] defaultAnns) {
-      super(new GridBagLayout());
-      myDefaultAnn = defaultAnn;
-      myDefaultAnns = defaultAnns;
-      myList = new JBList(anns);
-      myList.setCellRenderer(new DefaultListCellRenderer(){
+    private AnnotationsPanel(final String name, final String defaultAnnotation,
+                             final Collection<String> annotations, final String[] defaultAnnotations) {
+      myDefaultAnnotation = defaultAnnotation;
+      myDefaultAnnotations = new HashSet(Arrays.asList(defaultAnnotations));
+      myList = new JBList(annotations);
+      myList.setCellRenderer(new ColoredListCellRenderer() {
         @Override
-        public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-          final Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-          if (Comparing.strEqual((String)value, myDefaultAnn)) {
-            setIcon(IconLoader.getIcon("/diff/currentLine.png"));
-            setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
-          }
-          else {
+        protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+          append((String)value, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+          if (value.equals(myDefaultAnnotation)) {
+            setIcon(SELECTED_ICON);
+          } else {
             setIcon(EmptyIcon.ICON_16);
           }
-          setText((String)value);
-          return component;
+          //if (myDefaultAnnotations.contains(value)) {
+          //  append(" (built in)", SimpleTextAttributes.GRAY_ATTRIBUTES);
+          //}
+        }
+      });
+
+      final AnActionButton selectButton =
+        new AnActionButton("Select annotation used for code generation", SELECT_ICON) {
+          @Override
+          public void actionPerformed(AnActionEvent e) {
+            final String selectedValue = (String)myList.getSelectedValue();
+            if (selectedValue == null) return;
+            myDefaultAnnotation = selectedValue;
+            final DefaultListModel model = (DefaultListModel)myList.getModel();
+
+            // to show the new default value in the ui
+            model.setElementAt(myList.getSelectedValue(), myList.getSelectedIndex());
+          }
+
+          @Override
+          public void updateButton(AnActionEvent e) {
+            final String selectedValue = (String)myList.getSelectedValue();
+            final boolean enabled = selectedValue != null && !selectedValue.equals(myDefaultAnnotation);
+            if (!enabled) {
+              e.getPresentation().setEnabled(enabled);
+            }
+          }
+        };
+
+      final ToolbarDecorator toolbarDecorator = ToolbarDecorator.createDecorator(myList).disableUpDownActions()
+        .setAddAction(new AnActionButtonRunnable() {
+          @Override
+          public void run(AnActionButton anActionButton) {
+            chooseAnnotation(name, myList);
+          }
+        })
+        .setRemoveAction(new AnActionButtonRunnable() {
+          @Override
+          public void run(AnActionButton anActionButton) {
+            final String selectedValue = (String)myList.getSelectedValue();
+            if (selectedValue == null) return;
+            if (myDefaultAnnotation.equals(selectedValue)) myDefaultAnnotation = (String)myList.getModel().getElementAt(0);
+
+            ((DefaultListModel)myList.getModel()).removeElement(selectedValue);
+          }
+        })
+        .addExtraAction(selectButton);
+      final JPanel panel = toolbarDecorator.createPanel();
+      myComponent = new JPanel(new BorderLayout());
+      myComponent.setBorder(IdeBorderFactory.createTitledBorder(name + " annotations", true, false, true, new Insets(10, 0, 0, 0)));
+      myComponent.add(panel);
+      final AnActionButton removeButton = ToolbarDecorator.findRemoveButton(myComponent);
+      myList.addListSelectionListener(new ListSelectionListener() {
+        @Override
+        public void valueChanged(ListSelectionEvent e) {
+          if (e.getValueIsAdjusting()) return;
+          final String selectedValue = (String)myList.getSelectedValue();
+          if (myDefaultAnnotations.contains(selectedValue)) {
+            SwingUtilities.invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                removeButton.setEnabled(false);
+              }
+            });
+          }
         }
       });
       myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-      myList.setSelectedValue(defaultAnn, true);
-      final DefaultActionGroup group = new DefaultActionGroup();
-      group.add(new AnAction("Add", "Add", ADD_ICON) {
-        {
-          registerCustomShortcutSet(CommonShortcuts.INSERT, myList);
-        }
-
-        @Override
-        public void actionPerformed(AnActionEvent e) {
-          chooseAnnotation(title, myList, null);
-        }
-      });
-      group.add(new AnAction("Delete", "Delete", REMOVE_ICON) {
-        {
-          registerCustomShortcutSet(CommonShortcuts.DELETE, myList);
-        }
-
-        @Override
-        public void update(AnActionEvent e) {
-          final Object selectedValue = myList.getSelectedValue();
-          final boolean enabled = selectedValue != null && ArrayUtil.find(myDefaultAnns, selectedValue) == -1;
-          e.getPresentation().setEnabled(enabled);
-        }
-
-        @Override
-        public void actionPerformed(AnActionEvent e) {
-          final String selectedValue = (String)myList.getSelectedValue();
-          if (selectedValue == null) return;
-          if (myDefaultAnn.equals(selectedValue)) myDefaultAnn = myDefaultAnns[0];
-          ((DefaultListModel)myList.getModel()).removeElement(selectedValue);
-        }
-      });
-      group.add(new AnAction("Make default", "Default", SAVE_ICON) {
-        @Override
-        public void update(AnActionEvent e) {
-          final String selectedValue = (String)myList.getSelectedValue();
-          final boolean enabled = selectedValue != null && !Comparing.strEqual(myDefaultAnn, selectedValue);
-          e.getPresentation().setEnabled(enabled);
-        }
-
-        @Override
-        public void actionPerformed(AnActionEvent e) {
-          final String selectedValue = (String)myList.getSelectedValue();
-          if (selectedValue == null) return;
-          myDefaultAnn = selectedValue;
-          final DefaultListModel model = (DefaultListModel)myList.getModel();
-
-          // to show the new default value in the ui
-          model.setElementAt(myList.getSelectedValue(), myList.getSelectedIndex());
-        }
-      });
-      GridBagConstraints gc = new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(5,0,0,0), 0, 0);
-      add(new TitledSeparator(title), gc);
-      gc.gridy++;
-      gc.insets.top = 0;
-      add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent(), gc);
-      gc.gridy++;
-      gc.weighty = 1;
-      gc.fill = GridBagConstraints.BOTH;
-      final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myList);
-      scrollPane.setMinimumSize(new Dimension(250, 100));
-      add(scrollPane, gc);
+      myList.setSelectedValue(myDefaultAnnotation, true);
     }
 
-    private void chooseAnnotation(String title, JBList list, PsiClass initial) {
+    private void chooseAnnotation(String title, JBList list) {
       final TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject)
-        .createNoInnerClassesScopeChooser("Choose " + title, GlobalSearchScope.allScope(myProject), new ClassFilter() {
+        .createNoInnerClassesScopeChooser("Choose " + title + " annotation", GlobalSearchScope.allScope(myProject), new ClassFilter() {
           @Override
           public boolean isAccepted(PsiClass aClass) {
             return aClass.isAnnotationType();
           }
-        }, initial);
+        }, null);
       chooser.showDialog();
       final PsiClass selected = chooser.getSelected();
-      if (selected != null) {
-        final String qualifiedName = selected.getQualifiedName();
-        ((DefaultListModel)list.getModel()).addElement(qualifiedName);
+      if (selected == null) {
+        return;
+      }
+      final String qualifiedName = selected.getQualifiedName();
+      final DefaultListModel model = (DefaultListModel)list.getModel();
+      final int index = model.indexOf(qualifiedName);
+      if (index < 0) {
+        model.addElement(qualifiedName);
+      } else {
+        myList.setSelectedIndex(index);
       }
     }
 
-    public String getDefaultAnn() {
-      return myDefaultAnn;
+    public JComponent getComponent() {
+      return myComponent;
     }
 
-    public Object[] getAnns() {
-      return ((DefaultListModel)myList.getModel()).toArray();
+    public String getDefaultAnnotation() {
+      return myDefaultAnnotation;
+    }
+
+    public String[] getAnnotations() {
+      final ListModel model = myList.getModel();
+      final int size = model.getSize();
+      final String[] result = new String[size];
+      for (int i = 0; i < size; i++) {
+        result[i] = (String)model.getElementAt(i);
+      }
+      return result;
     }
   }
 }
