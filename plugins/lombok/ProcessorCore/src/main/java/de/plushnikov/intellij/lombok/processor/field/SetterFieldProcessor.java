@@ -11,6 +11,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import com.intellij.util.StringBuilderSpinAllocator;
+import de.plushnikov.intellij.lombok.UserMapKeys;
 import de.plushnikov.intellij.lombok.processor.LombokProcessorUtil;
 import lombok.Setter;
 import lombok.handlers.TransformationsUtil;
@@ -42,9 +43,9 @@ public class SetterFieldProcessor extends AbstractLombokFieldProcessor {
       PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
 
       target.add((Psi) createSetterMethod(psiField, methodVisibity, psiClass, manager, elementFactory));
+      UserMapKeys.addWriteUsageFor(psiField);
       result = true;
     }
-    //psiField.putUserData(UserMapKeys.WRITE_KEY, result);
     return result;
   }
 

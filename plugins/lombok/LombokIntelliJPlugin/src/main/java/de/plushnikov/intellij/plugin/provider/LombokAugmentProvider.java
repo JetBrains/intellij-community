@@ -68,10 +68,17 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
       processPsiClassAnnotations(result, psiClass, type);
     } else if (type.isAssignableFrom(PsiMethod.class)) {
       LOG.info("collect methods of class: " + psiClass.getQualifiedName());
+      cleanAttributeUsage(psiClass);
       processPsiClassAnnotations(result, psiClass, type);
       processPsiClassFieldAnnotation(result, psiClass, type);
     }
     return result;
+  }
+
+  protected void cleanAttributeUsage(PsiClass psiClass) {
+    for (PsiField psiField : psiClass.getFields()) {
+      UserMapKeys.removeAllUsagesFrom(psiField);
+    }
   }
 
   private <Psi extends PsiElement> void processPsiClassAnnotations(@NotNull List<Psi> result, @NotNull PsiClass psiClass, @NotNull Class<Psi> type) {
@@ -86,14 +93,12 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
     LOG.info("Processing class annotations END: " + psiClass.getQualifiedName());
   }
 
-  private <Psi extends PsiElement> boolean processClassAnnotation(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull List<Psi> result, @NotNull Class<Psi> type) {
-    boolean processed = false;
+  private <Psi extends PsiElement> void processClassAnnotation(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull List<Psi> result, @NotNull Class<Psi> type) {
     for (LombokClassProcessor classProcessor : allClassHandlers) {
       if (classProcessor.acceptAnnotation(psiAnnotation.getQualifiedName(), type)) {
-        processed |= classProcessor.process(psiClass, psiAnnotation, result);
+        classProcessor.process(psiClass, psiAnnotation, result);
       }
     }
-    return processed;
   }
 
   protected <Psi extends PsiElement> void processPsiClassFieldAnnotation(@NotNull List<Psi> result, @NotNull PsiClass psiClass, @NotNull Class<Psi> type) {
@@ -108,28 +113,18 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
   protected <Psi extends PsiElement> void processField(@NotNull List<Psi> result, @NotNull PsiField psiField, @NotNull Class<Psi> type) {
     final PsiModifierList modifierList = psiField.getModifierList();
     if (modifierList != null) {
-      boolean processed = false;
-
       for (PsiAnnotation psiAnnotation : modifierList.getAnnotations()) {
-        processed |= processFieldAnnotation(psiAnnotation, psiField, result, type);
-      }
-
-      psiField.putUserData(UserMapKeys.USAGE_KEY, processed);
-      if (!processed) {
-        psiField.putUserData(UserMapKeys.READ_KEY, false);
-        psiField.putUserData(UserMapKeys.WRITE_KEY, false);
+        processFieldAnnotation(psiAnnotation, psiField, result, type);
       }
     }
   }
 
-  private <Psi extends PsiElement> boolean processFieldAnnotation(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiField psiField, @NotNull List<Psi> result, @NotNull Class<Psi> type) {
-    boolean processed = false;
+  private <Psi extends PsiElement> void processFieldAnnotation(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiField psiField, @NotNull List<Psi> result, @NotNull Class<Psi> type) {
     for (LombokFieldProcessor fieldProcessor : allFieldHandlers) {
       if (fieldProcessor.acceptAnnotation(psiAnnotation.getQualifiedName(), type)) {
-        processed |= fieldProcessor.process(psiField, psiAnnotation, result);
+        fieldProcessor.process(psiField, psiAnnotation, result);
       }
     }
-    return processed;
   }
 
 }

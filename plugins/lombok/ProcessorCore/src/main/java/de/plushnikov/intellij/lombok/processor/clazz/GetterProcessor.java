@@ -34,8 +34,9 @@ public class GetterProcessor extends AbstractLombokClassProcessor {
         createSetter = !modifierList.hasModifierProperty(PsiModifier.STATIC);
         createSetter &= !hasFieldProcessorAnnotation(modifierList);
       }
-      if (createSetter)
+      if (createSetter) {
         fieldProcessor.process(psiField, psiAnnotation, target);
+      }
     }
 
     return result;

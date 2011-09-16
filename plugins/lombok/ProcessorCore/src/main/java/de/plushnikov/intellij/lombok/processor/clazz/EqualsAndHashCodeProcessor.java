@@ -35,6 +35,8 @@ public class EqualsAndHashCodeProcessor extends AbstractLombokClassProcessor {
     PsiMethod hashcodeMethod = createHashCodeMethod(psiClass, elementFactory);
     target.add((Psi) prepareMethod(manager, hashcodeMethod, psiClass, psiAnnotation));
 
+    //TODO add read usage for fields UserMapKeys.addReadUsageFor(psiField);
+
     return true;
   }
 

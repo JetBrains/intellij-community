@@ -20,6 +20,7 @@ import com.intellij.psi.impl.light.LightMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.StringBuilderSpinAllocator;
 import de.plushnikov.intellij.lombok.MethodUtils;
+import de.plushnikov.intellij.lombok.UserMapKeys;
 import lombok.Delegate;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,13 +68,16 @@ public class DelegateFieldProcessor extends AbstractLombokFieldProcessor {
       if (null != fieldClass && null != objectClass) {
         final Collection<PsiMethod> methodsToDelegate = collectAllMethods(fieldClass, objectClass);
 
-        final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
-        for (PsiMethod psiMethod : methodsToDelegate) {
-          LightMethod myLightMethod = generateDelegateMethod(psiClass, manager, elementFactory, psiMethod, fieldClassSubstitutor);
-          target.add((Psi) myLightMethod);
-        }
+        if (!methodsToDelegate.isEmpty()) {
+          final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+          for (PsiMethod psiMethod : methodsToDelegate) {
+            LightMethod myLightMethod = generateDelegateMethod(psiClass, manager, elementFactory, psiMethod, fieldClassSubstitutor);
+            target.add((Psi) myLightMethod);
+          }
+          UserMapKeys.addGeneralUsageFor(psiField);
 
-        result = !methodsToDelegate.isEmpty();
+          result = true;
+        }
       }
     }
     return result;

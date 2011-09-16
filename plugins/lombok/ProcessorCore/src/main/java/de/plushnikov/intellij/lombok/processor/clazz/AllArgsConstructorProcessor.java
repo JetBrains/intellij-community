@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
+import de.plushnikov.intellij.lombok.UserMapKeys;
 import de.plushnikov.intellij.lombok.processor.LombokProcessorUtil;
 import lombok.AllArgsConstructor;
 import org.jetbrains.annotations.NotNull;
@@ -38,6 +39,10 @@ public class AllArgsConstructorProcessor extends AbstractConstructorClassProcess
 
       PsiMethod constructorMethod = createConstructorMethod(visibility, allNotInitializedNotStaticFields, psiClass, elementFactory);
       target.add((Psi) prepareMethod(manager, constructorMethod, psiClass, psiAnnotation));
+
+      for (PsiField psiField : allNotInitializedNotStaticFields) {
+        UserMapKeys.addWriteUsageFor(psiField);
+      }
     }
     return true;
   }

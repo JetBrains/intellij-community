@@ -10,7 +10,7 @@
     <orderEntry type="jdk" jdkName="IDEA IC-107.587" jdkType="IDEA JDK" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="ProcessorAPI" />
-    <orderEntry type="module" module-name="ProcessorCore" />
+    <orderEntry type="module" module-name="ProcessorCore" scope="RUNTIME" />
   </component>
 </module>
 

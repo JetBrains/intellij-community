@@ -31,6 +31,7 @@ public class ToStringProcessor extends AbstractLombokClassProcessor {
 
     PsiMethod toStringMethod = createToStringMethod(psiClass, elementFactory);
     target.add((Psi) prepareMethod(manager, toStringMethod, psiClass, psiAnnotation));
+    //TODO add read usage for fields UserMapKeys.addReadUsageFor(psiField);
     return true;
   }
 

@@ -12,7 +12,7 @@ public class LombokImplicitUsageProvider implements ImplicitUsageProvider {
   @Override
   public boolean isImplicitUsage(PsiElement element) {
     final Boolean userData = element.getUserData(UserMapKeys.USAGE_KEY);
-    return null != userData && userData;
+    return (null != userData && userData) || isImplicitRead(element) || isImplicitWrite(element);
   }
 
   @Override

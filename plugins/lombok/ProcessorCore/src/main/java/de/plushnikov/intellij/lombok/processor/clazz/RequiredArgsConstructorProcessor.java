@@ -12,6 +12,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
+import de.plushnikov.intellij.lombok.UserMapKeys;
 import de.plushnikov.intellij.lombok.processor.LombokProcessorUtil;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -44,6 +45,10 @@ public class RequiredArgsConstructorProcessor extends AbstractConstructorClassPr
 
       PsiMethod constructorMethod = createConstructorMethod(visibility, allReqFields, psiClass, elementFactory);
       target.add((Psi) prepareMethod(manager, constructorMethod, psiClass, psiAnnotation));
+
+      for (PsiField psiField : allReqFields) {
+        UserMapKeys.addWriteUsageFor(psiField);
+      }
     }
     return true;
   }
