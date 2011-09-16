@@ -44,7 +44,7 @@ public class DelegateFieldProcessor extends AbstractLombokFieldProcessor {
     super(CLASS_NAME, PsiMethod.class);
   }
 
-  public <Psi extends PsiElement> void process(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull List<Psi> target) {
+  public <Psi extends PsiElement> void process(@NotNull PsiField psiField, @NotNull PsiMethod[] classMethods, @NotNull PsiAnnotation psiAnnotation, @NotNull List<Psi> target) {
     final PsiClass psiClass = psiField.getContainingClass();
     if (null == psiClass) {
       return;

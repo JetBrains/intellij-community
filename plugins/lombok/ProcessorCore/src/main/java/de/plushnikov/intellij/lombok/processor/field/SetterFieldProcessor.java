@@ -32,7 +32,7 @@ public class SetterFieldProcessor extends AbstractLombokFieldProcessor {
     super(CLASS_NAME, PsiMethod.class);
   }
 
-  public <Psi extends PsiElement> void process(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull List<Psi> target) {
+  public <Psi extends PsiElement> void process(@NotNull PsiField psiField, @NotNull PsiMethod[] classMethods, @NotNull PsiAnnotation psiAnnotation, @NotNull List<Psi> target) {
     final String methodVisibity = LombokProcessorUtil.getMethodVisibity(psiAnnotation);
     if (null != methodVisibity) {
       Project project = psiField.getProject();
@@ -40,8 +40,14 @@ public class SetterFieldProcessor extends AbstractLombokFieldProcessor {
       PsiManager manager = psiField.getContainingFile().getManager();
       PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
 
-      target.add((Psi) createSetterMethod(psiField, methodVisibity, psiClass, manager, elementFactory));
-      UserMapKeys.addWriteUsageFor(psiField);
+      PsiMethod setterMethod = createSetterMethod(psiField, methodVisibity, psiClass, manager, elementFactory);
+      if (!hasMethodByName(classMethods, setterMethod)) {
+        target.add((Psi) setterMethod);
+        UserMapKeys.addWriteUsageFor(psiField);
+      } else {
+        //TODO create warning in code
+        //Not generating methodName(): A method with that name already exists
+      }
     }
   }
 

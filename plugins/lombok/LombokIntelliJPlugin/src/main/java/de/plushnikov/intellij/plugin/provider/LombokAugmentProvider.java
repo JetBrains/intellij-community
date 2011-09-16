@@ -8,6 +8,8 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.augment.PsiAugmentProvider;
+import com.intellij.psi.impl.source.Constants;
+import com.intellij.psi.impl.source.PsiClassImpl;
 import de.plushnikov.intellij.lombok.UserMapKeys;
 import de.plushnikov.intellij.lombok.processor.clazz.LombokClassProcessor;
 import de.plushnikov.intellij.lombok.processor.field.LombokFieldProcessor;
@@ -58,16 +60,30 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
     final PsiClass psiClass = (PsiClass) element;
     LOG.info("Called for class: " + psiClass.getQualifiedName() + " type: " + type.getName());
 
+    final PsiMethod[] classMethods = collectClassMethodsIntern((PsiClassImpl) psiClass);
     if (type.isAssignableFrom(PsiField.class)) {
       LOG.info("collect field of class: " + psiClass.getQualifiedName());
-      processPsiClassAnnotations(result, psiClass, type);
+      processPsiClassAnnotations(result, psiClass, classMethods, type);
+
     } else if (type.isAssignableFrom(PsiMethod.class)) {
       LOG.info("collect methods of class: " + psiClass.getQualifiedName());
+
       cleanAttributeUsage(psiClass);
-      processPsiClassAnnotations(result, psiClass, type);
-      processPsiClassFieldAnnotation(result, psiClass, type);
+      processPsiClassAnnotations(result, psiClass, classMethods, type);
+      processPsiClassFieldAnnotation(result, psiClass, classMethods, type);
     }
     return result;
+  }
+
+  /**
+   * Workaround to get all of original Methods of the psiClass.
+   * Normal call to psiClass.getMethods() is impossible because of incorrect cache implementation of IntelliJ Idea
+   *
+   * @param psiClass psiClass to collect all of methods from
+   * @return all intern methods of the class
+   */
+  private PsiMethod[] collectClassMethodsIntern(@NotNull PsiClassImpl psiClass) {
+    return psiClass.getStubOrPsiChildren(Constants.METHOD_BIT_SET, PsiMethod.ARRAY_FACTORY);
   }
 
   protected void cleanAttributeUsage(PsiClass psiClass) {
@@ -76,48 +92,48 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
     }
   }
 
-  private <Psi extends PsiElement> void processPsiClassAnnotations(@NotNull List<Psi> result, @NotNull PsiClass psiClass, @NotNull Class<Psi> type) {
+  private <Psi extends PsiElement> void processPsiClassAnnotations(@NotNull List<Psi> result, @NotNull PsiClass psiClass, @NotNull PsiMethod[] classMethods, @NotNull Class<Psi> type) {
     LOG.info("Processing class annotations BEGINN: " + psiClass.getQualifiedName());
 
     final PsiModifierList modifierList = psiClass.getModifierList();
     if (modifierList != null) {
       for (PsiAnnotation psiAnnotation : modifierList.getAnnotations()) {
-        processClassAnnotation(psiAnnotation, psiClass, result, type);
+        processClassAnnotation(psiAnnotation, psiClass, classMethods, result, type);
       }
     }
     LOG.info("Processing class annotations END: " + psiClass.getQualifiedName());
   }
 
-  private <Psi extends PsiElement> void processClassAnnotation(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull List<Psi> result, @NotNull Class<Psi> type) {
+  private <Psi extends PsiElement> void processClassAnnotation(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull PsiMethod[] classMethods, @NotNull List<Psi> result, @NotNull Class<Psi> type) {
     for (LombokClassProcessor classProcessor : allClassHandlers) {
       if (classProcessor.acceptAnnotation(psiAnnotation, type)) {
-        classProcessor.process(psiClass, psiAnnotation, result);
+        classProcessor.process(psiClass, classMethods, psiAnnotation, result);
       }
     }
   }
 
-  protected <Psi extends PsiElement> void processPsiClassFieldAnnotation(@NotNull List<Psi> result, @NotNull PsiClass psiClass, @NotNull Class<Psi> type) {
+  protected <Psi extends PsiElement> void processPsiClassFieldAnnotation(@NotNull List<Psi> result, @NotNull PsiClass psiClass, @NotNull PsiMethod[] classMethods, @NotNull Class<Psi> type) {
     LOG.info("Processing field annotations BEGINN: " + psiClass.getQualifiedName());
 
     for (PsiField psiField : psiClass.getFields()) {
-      processField(result, psiField, type);
+      processField(result, psiField, classMethods, type);
     }
     LOG.info("Processing field annotations END: " + psiClass.getQualifiedName());
   }
 
-  protected <Psi extends PsiElement> void processField(@NotNull List<Psi> result, @NotNull PsiField psiField, @NotNull Class<Psi> type) {
+  protected <Psi extends PsiElement> void processField(@NotNull List<Psi> result, @NotNull PsiField psiField, @NotNull PsiMethod[] classMethods, @NotNull Class<Psi> type) {
     final PsiModifierList modifierList = psiField.getModifierList();
     if (modifierList != null) {
       for (PsiAnnotation psiAnnotation : modifierList.getAnnotations()) {
-        processFieldAnnotation(psiAnnotation, psiField, result, type);
+        processFieldAnnotation(psiAnnotation, psiField, classMethods, result, type);
       }
     }
   }
 
-  private <Psi extends PsiElement> void processFieldAnnotation(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiField psiField, @NotNull List<Psi> result, @NotNull Class<Psi> type) {
+  private <Psi extends PsiElement> void processFieldAnnotation(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiField psiField, @NotNull PsiMethod[] classMethods, @NotNull List<Psi> result, @NotNull Class<Psi> type) {
     for (LombokFieldProcessor fieldProcessor : allFieldHandlers) {
       if (fieldProcessor.acceptAnnotation(psiAnnotation, type)) {
-        fieldProcessor.process(psiField, psiAnnotation, result);
+        fieldProcessor.process(psiField, classMethods, psiAnnotation, result);
       }
     }
   }

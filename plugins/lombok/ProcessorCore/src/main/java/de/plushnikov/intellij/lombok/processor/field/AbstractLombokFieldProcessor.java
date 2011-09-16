@@ -34,4 +34,15 @@ public abstract class AbstractLombokFieldProcessor implements LombokFieldProcess
     lightMethod.setNavigationElement(psiNavigationTarget);
     return lightMethod;
   }
+
+  protected boolean hasMethodByName(@NotNull PsiMethod[] classMethods, @NotNull PsiMethod psiMethod) {
+    boolean hasMethod = false;
+    for (PsiMethod classMethod : classMethods) {
+      if (classMethod.getName().equals(psiMethod.getName())) {
+        hasMethod = true;
+        break;
+      }
+    }
+    return hasMethod;
+  }
 }
