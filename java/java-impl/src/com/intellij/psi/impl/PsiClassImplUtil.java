@@ -255,12 +255,14 @@ public class PsiClassImplUtil {
   }
 
   private static class ClassIconRequest {
-    public PsiClass psiClass;
-    public int flags;
+    public final PsiClass psiClass;
+    public final int flags;
+    public final Icon symbolIcon;
 
-    private ClassIconRequest(PsiClass psiClass, int flags) {
+    private ClassIconRequest(PsiClass psiClass, int flags, Icon symbolIcon) {
       this.psiClass = psiClass;
       this.flags = flags;
+      this.symbolIcon = symbolIcon;
     }
 
     @Override
@@ -289,21 +291,29 @@ public class PsiClassImplUtil {
       if (!r.psiClass.isValid() || r.psiClass.getProject().isDisposed()) return null;
 
       final boolean isLocked = (r.flags & Iconable.ICON_FLAG_READ_STATUS) != 0 && !r.psiClass.isWritable();
-      Icon symbolIcon = ElementPresentationUtil.getClassIconOfKind(r.psiClass, ElementPresentationUtil.getClassKind(r.psiClass));
+      Icon symbolIcon = r.symbolIcon != null
+                        ? r.symbolIcon
+                        : ElementPresentationUtil.getClassIconOfKind(r.psiClass, ElementPresentationUtil.getClassKind(r.psiClass));
       RowIcon baseIcon = ElementBase.createLayeredIcon(symbolIcon, ElementPresentationUtil.getFlags(r.psiClass, isLocked));
       return ElementPresentationUtil.addVisibilityIcon(r.psiClass, r.flags, baseIcon);
     }
   };
 
   public static Icon getClassIcon(final int flags, final PsiClass aClass) {
+    return getClassIcon(flags, aClass, null);
+  }
+
+  public static Icon getClassIcon(int flags, PsiClass aClass, @Nullable Icon symbolIcon) {
     Icon base = Iconable.LastComputedIcon.get(aClass, flags);
     if (base == null) {
-      Icon symbolIcon = ElementPresentationUtil.getClassIconOfKind(aClass, ElementPresentationUtil.getBasicClassKind(aClass));
+      if (symbolIcon == null) {
+        symbolIcon = ElementPresentationUtil.getClassIconOfKind(aClass, ElementPresentationUtil.getBasicClassKind(aClass));
+      }
       RowIcon baseIcon = ElementBase.createLayeredIcon(symbolIcon, 0);
       base = ElementPresentationUtil.addVisibilityIcon(aClass, flags, baseIcon);
     }
 
-    return IconDeferrer.getInstance().defer(base, new ClassIconRequest(aClass, flags), FULL_ICON_EVALUATOR);
+    return IconDeferrer.getInstance().defer(base, new ClassIconRequest(aClass, flags, symbolIcon), FULL_ICON_EVALUATOR);
   }
 
   public static SearchScope getClassUseScope(final PsiClass aClass) {

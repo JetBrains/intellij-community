@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.jsp;
+package com.intellij.psi;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.ServerPageFile;
-import com.intellij.psi.xml.XmlTag;
-
-public interface JspFile extends BaseJspFile, ServerPageFile {
-  JspFile[] EMPTY_ARRAY = new JspFile[0];
-
-  XmlTag[] getDirectiveTagsInContext(JspDirectiveKind directiveKind);
-  PsiClass getJavaClass();
+/**
+ * @author yole
+ */
+public interface ServerPageFile extends PsiFile {
 }

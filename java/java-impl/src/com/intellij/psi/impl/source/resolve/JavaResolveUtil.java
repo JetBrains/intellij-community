@@ -20,6 +20,7 @@
 package com.intellij.psi.impl.source.resolve;
 
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.InheritanceUtil;
@@ -73,7 +74,7 @@ public class JavaResolveUtil {
         if (visibility == JavaCodeFragment.VisibilityChecker.Visibility.NOT_VISIBLE) return false;
       }
     }
-    else if (placeFile instanceof XmlFile && !JspPsiUtil.isInJspFile(placeFile)) return true;
+    else if (placeFile instanceof XmlFile && !PsiImplUtil.isInServerPage(placeFile)) return true;
     // We don't care about access rights in javadoc
     if (isInJavaDoc(place)) return true;
 
@@ -84,8 +85,8 @@ public class JavaResolveUtil {
 
     int effectiveAccessLevel = PsiUtil.getAccessLevel(modifierList);
     PsiFile file = placeFile == null ? null : FileContextUtil.getContextFile(placeFile); //TODO: implementation method!!!!
-    if (JspPsiUtil.isInJspFile(file) && JspPsiUtil.isInJspFile(member.getContainingFile())) return true;
-    if (file instanceof XmlFile && !JspPsiUtil.isInJspFile(file)) return true;
+    if (PsiImplUtil.isInServerPage(file) && PsiImplUtil.isInServerPage(member.getContainingFile())) return true;
+    if (file instanceof XmlFile && !PsiImplUtil.isInServerPage(file)) return true;
     if (effectiveAccessLevel == PsiUtil.ACCESS_LEVEL_PUBLIC) {
       return true;
     }

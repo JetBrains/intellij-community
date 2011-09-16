@@ -22,7 +22,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
-import com.intellij.psi.impl.file.impl.ResolveScopeManagerImpl;
 import com.intellij.psi.impl.light.LightClassReference;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
@@ -40,6 +39,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PairFunction;
 import com.intellij.util.Processor;
@@ -351,9 +351,9 @@ public class PsiImplUtil {
 
   @NotNull
   public static SearchScope getMemberUseScope(@NotNull PsiMember member) {
-    final GlobalSearchScope maximalUseScope = ResolveScopeManagerImpl.getElementUseScope(member);
+    final GlobalSearchScope maximalUseScope = ResolveScopeManager.getElementUseScope(member);
     PsiFile file = member.getContainingFile();
-    if (JspPsiUtil.isInJspFile(file)) return maximalUseScope;
+    if (isInServerPage(file)) return maximalUseScope;
 
     PsiClass aClass = member.getContainingClass();
     if (aClass instanceof PsiAnonymousClass) {
@@ -384,6 +384,15 @@ public class PsiImplUtil {
 
       return maximalUseScope;
     }
+  }
+
+  public static boolean isInServerPage(@Nullable final PsiElement element) {
+    return getServerPageFile(element) != null;
+  }
+
+  public static ServerPageFile getServerPageFile(final PsiElement element) {
+    final PsiFile psiFile = PsiUtilCore.getTemplateLanguageFile(element);
+    return psiFile instanceof ServerPageFile ? (ServerPageFile)psiFile : null;
   }
 
   public static PsiElement setName(@NotNull PsiElement element, @NotNull String name) throws IncorrectOperationException {
