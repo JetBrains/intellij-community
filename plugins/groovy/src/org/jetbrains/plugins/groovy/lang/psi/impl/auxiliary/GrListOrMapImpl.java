@@ -52,7 +52,7 @@ import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mCOMMA;
  * @author ilyas
  */
 public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
-  private static final TokenSet MAP_LITERAL_TOKEN_SET = TokenSet.create(GroovyElementTypes.ARGUMENT, GroovyTokenTypes.mCOLON);
+  private static final TokenSet MAP_LITERAL_TOKEN_SET = TokenSet.create(GroovyElementTypes.NAMED_ARGUMENT, GroovyTokenTypes.mCOLON);
   private static final Function<GrListOrMapImpl, PsiType> TYPES_CALCULATOR = new MyTypesCalculator();
 
   public GrListOrMapImpl(@NotNull ASTNode node) {

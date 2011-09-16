@@ -33,6 +33,5 @@ public interface GrExpression extends GrStatement, GrAnnotationMemberValue {
   @Nullable
   PsiType getNominalType();
 
-  GrExpression replaceWithExpression(GrExpression expression,
-                                     boolean removeUnnecessaryParentheses);
+  GrExpression replaceWithExpression(GrExpression expression, boolean removeUnnecessaryParentheses);
 }
