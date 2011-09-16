@@ -190,9 +190,8 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
 
     private static PsiClassType getTupleType(GrExpression[] initializers, GrListOrMap listOrMap) {
       PsiType[] result = new PsiType[initializers.length];
-      boolean isLValue = PsiUtil.isLValue(listOrMap);
       for (int i = 0; i < result.length; i++) {
-        result[i] = isLValue ? initializers[i].getNominalType() : initializers[i].getType();
+        result[i] = initializers[i].getType();
       }
       return new GrTupleType(result, JavaPsiFacade.getInstance(listOrMap.getProject()), listOrMap.getResolveScope());
     }

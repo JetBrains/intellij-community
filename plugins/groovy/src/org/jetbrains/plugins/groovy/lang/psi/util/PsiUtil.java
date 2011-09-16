@@ -225,9 +225,10 @@ public class PsiUtil {
 
   @NotNull
   public static PsiType[] getArgumentTypes(GrNamedArgument[] namedArgs,
-                                            GrExpression[] expressions,
-                                            GrClosableBlock[] closures,
-                                            boolean nullAsBottom, @Nullable GrExpression stopAt) {
+                                           GrExpression[] expressions,
+                                           GrClosableBlock[] closures,
+                                           boolean nullAsBottom,
+                                           @Nullable GrExpression stopAt) {
     List<PsiType> result = new ArrayList<PsiType>();
 
     if (namedArgs.length > 0) {
@@ -542,15 +543,6 @@ public class PsiUtil {
   public static boolean mightBeLValue(GrExpression expr) {
     if (expr instanceof GrParenthesizedExpression) return mightBeLValue(((GrParenthesizedExpression)expr).getOperand());
 
-    if (expr instanceof GrListOrMap) {
-      GrListOrMap listOrMap = (GrListOrMap)expr;
-      if (listOrMap.isMap()) return false;
-      GrExpression[] initializers = listOrMap.getInitializers();
-      for (GrExpression initializer : initializers) {
-        if (!mightBeLValue(initializer)) return false;
-      }
-      return true;
-    }
     if (expr instanceof GrTupleExpression) return true;
     if (expr instanceof GrReferenceExpression || expr instanceof GrIndexProperty) return true;
 
