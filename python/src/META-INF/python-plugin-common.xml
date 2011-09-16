@@ -508,6 +508,7 @@
     <lang.substitutor language="TEXT" implementationClass="com.jetbrains.rest.RestLanguageSubstitutor"/>
     <configurationType implementation="com.jetbrains.rest.run.RestRunConfigurationType"/>
     <configurationProducer implementation="com.jetbrains.rest.run.docutils.DocutilsConfigurationProducer"/>
+    <configurationProducer implementation="com.jetbrains.rest.run.sphinx.SphinxConfigurationProducer"/>
 
     <!-- Mako files -->
     <lang.substitutor language="HTML" implementationClass="com.jetbrains.mako.TemplateLanguageSubstitutor"/>
