@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.impl.source.jsp.jspJava;
-
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiSyntheticClass;
-import com.intellij.psi.SyntheticElement;
-import com.intellij.psi.jsp.JspFile;
+package com.intellij.psi;
 
 /**
- * @author peter
+ * @author yole
  */
-public interface JspClass extends PsiSyntheticClass {
-  JspHolderMethod getHolderMethod();
-
-  JspFile getJspxFile();
+public interface PsiSyntheticClass extends PsiClass, SyntheticElement {
 }
