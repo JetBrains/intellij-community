@@ -43,7 +43,7 @@ public class GetterFieldProcessor extends AbstractLombokFieldProcessor {
       PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
 
       PsiMethod getterMethod = createGetterMethod(psiField, methodVisibity, psiClass, manager, elementFactory);
-      if (!hasMethodByName(classMethods, getterMethod)) {
+      if (!hasMethodByName(classMethods, getterMethod)) {//TODO check all getter Names
         target.add((Psi) getterMethod);
         UserMapKeys.addReadUsageFor(psiField);
       } else {

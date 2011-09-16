@@ -42,7 +42,7 @@ public class SetterFieldProcessor extends AbstractLombokFieldProcessor {
       PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
 
       PsiMethod setterMethod = createSetterMethod(psiField, methodVisibity, psiClass, manager, elementFactory);
-      if (!hasMethodByName(classMethods, setterMethod)) {
+      if (!hasMethodByName(classMethods, setterMethod)) {//TODO check all setter Names
         target.add((Psi) setterMethod);
         UserMapKeys.addWriteUsageFor(psiField);
       } else {
