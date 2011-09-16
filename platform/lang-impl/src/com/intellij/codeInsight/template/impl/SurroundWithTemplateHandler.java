@@ -24,6 +24,7 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.template.CustomLiveTemplate;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -122,16 +123,21 @@ public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
     return list;
   }
 
-  public static PsiFile insertDummyIdentifier(Editor editor, PsiFile file) {
+  public static PsiFile insertDummyIdentifier(final Editor editor, PsiFile file) {
     file = (PsiFile)file.copy();
     final Document document = file.getViewProvider().getDocument();
     assert document != null;
-    int offset = editor.getCaretModel().getOffset();
-    if (editor.getSelectionModel().hasSelection()) {
-      offset = editor.getSelectionModel().getSelectionStart();
-      document.deleteString(offset, editor.getSelectionModel().getSelectionEnd());
-    }
-    document.insertString(offset, CompletionUtil.DUMMY_IDENTIFIER_TRIMMED);
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        int offset = editor.getCaretModel().getOffset();
+        if (editor.getSelectionModel().hasSelection()) {
+          offset = editor.getSelectionModel().getSelectionStart();
+          document.deleteString(offset, editor.getSelectionModel().getSelectionEnd());
+        }
+        document.insertString(offset, CompletionUtil.DUMMY_IDENTIFIER_TRIMMED);
+      }
+    });
+
     PsiDocumentManager.getInstance(file.getProject()).commitDocument(document);
     return file;
   }
