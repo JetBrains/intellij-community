@@ -73,7 +73,6 @@ public class CreatePatchFromChangesAction extends AnAction implements DumbAware 
     project = project == null ? ProjectManager.getInstance().getDefaultProject() : project;
     final CreatePatchCommitExecutor executor = CreatePatchCommitExecutor.getInstance(project);
     CommitSession commitSession = executor.createCommitSession(new CommitContext());
-    // todo here should be a separate logic written, to check base revision etc etc
     DialogWrapper sessionDialog = new SessionDialog(executor.getActionText(),
                                                     project,
                                                     commitSession,
