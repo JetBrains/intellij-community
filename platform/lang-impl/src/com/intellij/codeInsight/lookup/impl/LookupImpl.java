@@ -90,7 +90,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   private static final int MAX_PREFERRED_COUNT = 5;
 
   private static final LookupItem EMPTY_LOOKUP_ITEM = LookupItem.fromString("preselect");
-  private static final int LOOKUP_HEIGHT = Integer.getInteger("idea.lookup.height", 11).intValue();
   private static final Icon relevanceSortIcon = IconLoader.getIcon("/ide/lookupRelevance.png");
   private static final Icon lexiSortIcon = IconLoader.getIcon("/ide/lookupAlphanumeric.png");
 
@@ -442,7 +441,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     updateListHeight(listModel);
 
     if (!model.isEmpty()) {
-      myList.setFixedCellWidth(Math.max(myLookupTextWidth + myCellRenderer.getIconIndent(), myAdComponent.getAdComponent().getPreferredSize().width));
+      int listWidth = Math.min(myLookupTextWidth + myCellRenderer.getIconIndent(), UISettings.getInstance().MAX_LOOKUP_LIST_WIDTH);
+      myList.setFixedCellWidth(Math.max(listWidth, myAdComponent.getAdComponent().getPreferredSize().width));
 
       LookupElement first = model.iterator().next();
       if (isFocused() && (!(isExactPrefixItem(first, true) || isExactPrefixItem(first, false)) || mySelectionTouched)) {
@@ -528,7 +528,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   private void updateListHeight(ListModel model) {
     myList.setFixedCellHeight(myCellRenderer.getListCellRendererComponent(myList, model.getElementAt(0), 0, false, false).getPreferredSize().height);
 
-    myList.setVisibleRowCount(Math.min(model.getSize(), LOOKUP_HEIGHT));
+    myList.setVisibleRowCount(Math.min(model.getSize(), UISettings.getInstance().MAX_LOOKUP_ITEM_COUNT));
   }
 
   private void addEmptyItem(DefaultListModel model) {
@@ -1356,8 +1356,16 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
         @Override
         public void componentResized(ComponentEvent e) {
-          mainPanel.setSize(getSize());
+          Dimension size = getSize();
+          mainPanel.setSize(size);
           mainPanel.validate();
+
+          UISettings.getInstance().MAX_LOOKUP_LIST_WIDTH = Math.max(300, myScrollPane.getViewport().getWidth());
+          int visibleRowCount = myList.getLastVisibleIndex() - myList.getFirstVisibleIndex() + 1;
+          if (visibleRowCount != myList.getModel().getSize()) {
+            UISettings.getInstance().MAX_LOOKUP_ITEM_COUNT = Math.max(5, visibleRowCount);
+          }
+
           layoutStatusIcons();
           layoutHint();
 

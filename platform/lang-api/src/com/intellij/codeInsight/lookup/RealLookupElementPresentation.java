@@ -35,7 +35,7 @@ public class RealLookupElementPresentation extends LookupElementPresentation {
     result += getStringWidth(presentation.getTailText(), normalMetrics);
     final String typeText = presentation.getTypeText();
     if (StringUtil.isNotEmpty(typeText)) {
-      result += getStringWidth("XXX", normalMetrics); //3 spaces for nice tail-type separation
+      result += getStringWidth("W", normalMetrics); // nice tail-type separation
       result += getStringWidth(typeText, normalMetrics);
     }
     result += getStringWidth("W", boldMetrics); //for unforeseen Swing size adjustments
