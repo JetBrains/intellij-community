@@ -1,10 +1,8 @@
 package com.jetbrains.python.codeInsight.completion;
 
 import com.intellij.codeInsight.AutoPopupController;
-import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
-import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -37,9 +35,6 @@ public class PyClassInsertHandler implements InsertHandler<LookupElement> {
       else {
         editor.getCaretModel().moveToOffset(offset+2);
       }
-    }
-    else if (context.getCompletionChar() == Lookup.COMPLETE_STATEMENT_SELECT_CHAR) {
-      TailType.SMART_COMPLETION.processTail(editor, context.getTailOffset());
     }
   }
 }

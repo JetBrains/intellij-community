@@ -510,9 +510,9 @@
     <configurationProducer implementation="com.jetbrains.rest.run.docutils.DocutilsConfigurationProducer"/>
 
     <!-- Mako files -->
-    <lang.substitutor language="HTML" implementationClass="com.jetbrains.mako.MakoLanguageSubstitutor"/>
-    <lang.substitutor language="XHTML" implementationClass="com.jetbrains.mako.MakoLanguageSubstitutor"/>
-    <lang.substitutor language="XML" implementationClass="com.jetbrains.mako.MakoLanguageSubstitutor"/>
+    <lang.substitutor language="HTML" implementationClass="com.jetbrains.mako.TemplateLanguageSubstitutor"/>
+    <lang.substitutor language="XHTML" implementationClass="com.jetbrains.mako.TemplateLanguageSubstitutor"/>
+    <lang.substitutor language="XML" implementationClass="com.jetbrains.mako.TemplateLanguageSubstitutor"/>
 
     <colorSettingsPage implementation="com.jetbrains.mako.highlighting.MakoColorsPage"/>
     <lang.syntaxHighlighterFactory key="Mako"
@@ -526,6 +526,8 @@
     <quoteHandler fileType="Mako" className="com.jetbrains.mako.editor.MakoQuoteHandler"/>
     <completion.contributor language="Mako"
                             implementationClass="com.jetbrains.mako.editor.MakoCompletionContributor"/>
+    <completion.contributor language="Mako"
+                            implementationClass="com.jetbrains.mako.editor.MakoFunctionsCompletionContributor"/>
 
     <typedHandler implementation="com.jetbrains.mako.editor.MakoBracesHandler"
                   id="MakoBracesHandler"/>
@@ -533,6 +535,14 @@
 
     <projectService serviceInterface="com.jetbrains.mako.TemplatesService"
                     serviceImplementation="com.jetbrains.mako.TemplatesService"/>
+
+    <!-- Jinja2 -->
+    <editorHighlighterProvider filetype="Jinja2" implementationClass="com.jetbrains.jinja2.highlighting.Jinja2EditorHighlighterProvider"/>
+    <lang.syntaxHighlighterFactory key="Jinja2" implementationClass="com.jetbrains.jinja2.highlighting.Jinja2HighlighterFactory"/>
+    <lang.parserDefinition language="Jinja2"
+                           implementationClass="com.jetbrains.jinja2.parsing.Jinja2ParserDefinition"/>
+    <lang.fileViewProviderFactory language="Jinja2"
+                                  implementationClass="com.jetbrains.jinja2.Jinja2FileViewProviderFactory"/>
   </extensions>
 
   <extensionPoints>

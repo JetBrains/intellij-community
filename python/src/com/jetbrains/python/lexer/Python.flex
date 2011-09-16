@@ -171,7 +171,8 @@ return yylength()-i-1;
 "}"                   { return PyTokenTypes.RBRACE; }
 "@"                   { return PyTokenTypes.AT; }
 ","                   { return PyTokenTypes.COMMA; }
-":"                   { yybegin(PENDING_DOCSTRING); return PyTokenTypes.COLON; }
+":"                   { return PyTokenTypes.COLON; }
+":"(\ )*"\n"          { yypushback(yylength()-1); yybegin(PENDING_DOCSTRING); return PyTokenTypes.COLON; }
 "."                   { return PyTokenTypes.DOT; }
 "`"                   { return PyTokenTypes.TICK; }
 "="                   { return PyTokenTypes.EQ; }

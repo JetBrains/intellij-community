@@ -4,10 +4,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.actions.PyDefaultArgumentQuickFix;
-import com.jetbrains.python.psi.PyDictLiteralExpression;
-import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyListLiteralExpression;
-import com.jetbrains.python.psi.PyNamedParameter;
+import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,6 +37,11 @@ public class PyDefaultArgumentInspection extends PyInspection {
       if (defaultValue != null) {
         if (defaultValue instanceof PyListLiteralExpression || defaultValue instanceof PyDictLiteralExpression) {
           registerProblem(defaultValue, "Default argument value is mutable", new PyDefaultArgumentQuickFix());
+        }
+        if (defaultValue instanceof PyCallExpression) {
+          PyExpression callee = ((PyCallExpression)defaultValue).getCallee();
+          if (callee != null && "dict".equals(callee.getText()))
+            registerProblem(defaultValue, "Default argument value is mutable", new PyDefaultArgumentQuickFix());
         }
       }
     }
