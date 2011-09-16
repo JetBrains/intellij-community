@@ -33,6 +33,7 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspxImportStatement;
 import com.intellij.psi.impl.source.resolve.ResolveClassUtil;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReference;
 import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.JavaJspElementType;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.jsp.JspSpiUtil;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -721,7 +722,7 @@ public class ImportHelper{
           }
           IElementType elementType = node.getElementType();
           if (elementType != null &&!ElementType.IMPORT_STATEMENT_BASE_BIT_SET.contains(elementType)
-            && !ElementType.WHITE_SPACE_BIT_SET.contains(elementType))
+            && !JavaJspElementType.WHITE_SPACE_BIT_SET.contains(elementType))
           {
             comments.add(element);
           }

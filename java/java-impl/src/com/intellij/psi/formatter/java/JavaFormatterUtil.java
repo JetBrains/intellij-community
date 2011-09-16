@@ -18,8 +18,8 @@ package com.intellij.psi.formatter.java;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiExpressionList;
-import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.impl.source.tree.JavaJspElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,7 +57,7 @@ public class JavaFormatterUtil {
 
     ASTNode lbrace = expressionList.getFirstChildNode();
     ASTNode firstArg = lbrace.getTreeNext();
-    if (firstArg != null && ElementType.WHITE_SPACE_BIT_SET.contains(firstArg.getElementType())) {
+    if (firstArg != null && JavaJspElementType.WHITE_SPACE_BIT_SET.contains(firstArg.getElementType())) {
       firstArg = firstArg.getTreeNext();
     }
     

@@ -19,13 +19,10 @@ import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.impl.source.PsiElementArrayConstructor;
-import com.intellij.psi.jsp.JspElementType;
 import com.intellij.psi.tree.TokenSet;
 
 public interface ElementType extends JavaTokenType, JavaDocTokenType,
                                      JavaElementType, JavaDocElementType {
-  TokenSet WHITE_SPACE_BIT_SET = TokenSet.create(WHITE_SPACE,
-                                                 JspElementType.JSP_TEMPLATE_EXPRESSION);
 
   TokenSet JAVA_WHITESPACE_BIT_SET = TokenSet.create(WHITE_SPACE);
 

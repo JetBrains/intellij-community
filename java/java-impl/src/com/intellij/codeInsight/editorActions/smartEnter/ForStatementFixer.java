@@ -21,7 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.JavaJspElementType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -103,7 +103,7 @@ public class ForStatementFixer implements Fixer {
            element != null && element != forStatement.getRParenth() && element.getParent() == forStatement;
            element = element.getNextSibling()) {
         final ASTNode node = element.getNode();
-        if (node != null && ElementType.WHITE_SPACE_BIT_SET.contains(node.getElementType()) && element.getTextLength() > 0) {
+        if (node != null && JavaJspElementType.WHITE_SPACE_BIT_SET.contains(node.getElementType()) && element.getTextLength() > 0) {
           offset++;
           break;
         }

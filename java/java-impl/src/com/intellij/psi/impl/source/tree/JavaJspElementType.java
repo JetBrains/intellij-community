@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,14 @@
  */
 package com.intellij.psi.impl.source.tree;
 
-import com.intellij.psi.jsp.JspTokenType;
+import com.intellij.psi.TokenType;
+import com.intellij.psi.jsp.JspElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.xml.XmlElementType;
 
 /**
- * @author mike
+ * @author yole
  */
-public interface StdTokenSets {
-  TokenSet COMMENT_BIT_SET = TokenSet.orSet(
-    ElementType.JAVA_COMMENT_BIT_SET, TokenSet.create(JspTokenType.JSP_COMMENT, XmlElementType.XML_COMMENT));
-
-  TokenSet WHITE_SPACE_OR_COMMENT_BIT_SET = TokenSet.orSet(
-    JavaJspElementType.WHITE_SPACE_BIT_SET, ElementType.JAVA_COMMENT_BIT_SET);
+public interface JavaJspElementType {
+  TokenSet WHITE_SPACE_BIT_SET = TokenSet.create(TokenType.WHITE_SPACE,
+                                                 JspElementType.JSP_TEMPLATE_EXPRESSION);
 }

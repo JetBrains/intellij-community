@@ -22,6 +22,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.JavaJspElementType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -169,7 +170,7 @@ public class SurroundWithUtil {
     }
 
     ASTNode commentWsText = node.getTreePrev();
-    if (commentWsText == null || !ElementType.WHITE_SPACE_BIT_SET.contains(commentWsText.getElementType())) {
+    if (commentWsText == null || !JavaJspElementType.WHITE_SPACE_BIT_SET.contains(commentWsText.getElementType())) {
       return;
     }
 
@@ -201,7 +202,7 @@ public class SurroundWithUtil {
         continue;
       }
 
-      if (ElementType.WHITE_SPACE_BIT_SET.contains(childNode.getElementType())) {
+      if (JavaJspElementType.WHITE_SPACE_BIT_SET.contains(childNode.getElementType())) {
         codeBlockWsElement = codeBlockChild;
         codeBlockWsNode = childNode;
         break;

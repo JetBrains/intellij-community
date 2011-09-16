@@ -156,7 +156,8 @@ public class JavaSharedImplUtil {
       final CharTable charTable = SharedImplUtil.findCharTableByTree(variableElement);
       eq = Factory.createSingleLeafElement(JavaTokenType.EQ, "=", 0, 1, charTable, variable.getManager());
       PsiElement element = variable.getNameIdentifier();
-      final ASTNode node = TreeUtil.skipElements(element.getNode().getTreeNext(), TokenSet.orSet(ElementType.WHITE_SPACE_BIT_SET, TokenSet.create(JavaTokenType.LBRACKET, JavaTokenType.RBRACKET)));
+      final ASTNode node = PsiImplUtil.skipWhitespaceCommentsAndTokens(element.getNode().getTreeNext(),
+                                                                       TokenSet.create(JavaTokenType.LBRACKET, JavaTokenType.RBRACKET));
       variableElement.addInternal((TreeElement)eq, eq, node, Boolean.TRUE);
       eq = variableElement.findChildByRole(ChildRole.INITIALIZER_EQ);
     }

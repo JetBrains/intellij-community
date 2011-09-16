@@ -67,7 +67,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
    * @see CodeStyleSettings#ALIGN_GROUP_FIELD_DECLARATIONS
    */
   private static final AlignmentInColumnsConfig ALIGNMENT_IN_COLUMNS_CONFIG = new AlignmentInColumnsConfig(
-    TokenSet.create(JavaTokenType.IDENTIFIER), ElementType.WHITE_SPACE_BIT_SET, ElementType.JAVA_COMMENT_BIT_SET,
+    TokenSet.create(JavaTokenType.IDENTIFIER), JavaJspElementType.WHITE_SPACE_BIT_SET, ElementType.JAVA_COMMENT_BIT_SET,
     TokenSet.create(JavaTokenType.EQ), TokenSet.create(JavaElementType.FIELD));
 
   /**
@@ -1464,7 +1464,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     }
 
     ASTNode prev = node.getTreePrev();
-    return prev == null || !ElementType.WHITE_SPACE_BIT_SET.contains(prev.getElementType())
+    return prev == null || !JavaJspElementType.WHITE_SPACE_BIT_SET.contains(prev.getElementType())
            || StringUtil.countNewLines(prev.getChars()) <= 1;
   }
 
