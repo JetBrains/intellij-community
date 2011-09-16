@@ -23,6 +23,8 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.meta.PsiMetaData;
+import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -355,5 +357,22 @@ public class PsiUtilCore {
   public static PsiFile[] toPsiFileArray(@NotNull Collection<? extends PsiFile> collection) {
     if (collection.isEmpty()) return PsiFile.EMPTY_ARRAY;
     return collection.toArray(new PsiFile[collection.size()]);
+  }
+
+  /** @return name for element using element structure info
+   */
+  @Nullable
+  public static String getName(PsiElement element) {
+    String name = null;
+    if (element instanceof PsiMetaOwner) {
+      final PsiMetaData data = ((PsiMetaOwner) element).getMetaData();
+      if (data != null) {
+        name = data.getName(element);
+      }
+    }
+    if (name == null && element instanceof PsiNamedElement) {
+      name = ((PsiNamedElement) element).getName();
+    }
+    return name;
   }
 }

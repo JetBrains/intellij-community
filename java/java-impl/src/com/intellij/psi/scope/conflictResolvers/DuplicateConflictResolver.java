@@ -19,7 +19,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.PsiConflictResolver;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.HashMap;
 
 import java.util.List;
@@ -47,7 +47,7 @@ public class DuplicateConflictResolver implements PsiConflictResolver{
         key = ((PsiMethod)element).getSignature(info.getSubstitutor());
       }
       else {
-        key = PsiUtilBase.getName(element);
+        key = PsiUtilCore.getName(element);
       }
 
       if (!uniqueItems.containsKey(key)) {

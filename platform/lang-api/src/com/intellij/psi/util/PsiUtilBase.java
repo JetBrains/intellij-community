@@ -37,14 +37,11 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.psi.*;
-import com.intellij.psi.meta.PsiMetaData;
-import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Collection;
 
 public class PsiUtilBase extends PsiUtilCore {
 
@@ -92,23 +89,6 @@ public class PsiUtilBase extends PsiUtilCore {
     }
 
     return elt.getLanguage();
-  }
-
-  /** @return name for element using element structure info
-   */
-  @Nullable
-  public static String getName(PsiElement element) {
-    String name = null;
-    if (element instanceof PsiMetaOwner) {
-      final PsiMetaData data = ((PsiMetaOwner) element).getMetaData();
-      if (data != null) {
-        name = data.getName(element);
-      }
-    }
-    if (name == null && element instanceof PsiNamedElement) {
-      name = ((PsiNamedElement) element).getName();
-    }
-    return name;
   }
 
   public static boolean isUnderPsiRoot(PsiFile root, PsiElement element) {

@@ -18,7 +18,7 @@ package com.intellij.codeInsight.lookup;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.meta.PsiMetaData;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.SizedIcon;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.EmptyIcon;
@@ -116,7 +116,7 @@ public class DefaultLookupItemRenderer extends LookupElementRenderer<LookupItem>
     if (o instanceof PsiElement) {
       final PsiElement element = (PsiElement)o;
       if (element.isValid()) {
-        name = PsiUtilBase.getName(element);
+        name = PsiUtilCore.getName(element);
       }
     }
     else if (o instanceof PsiMetaData) {
