@@ -78,11 +78,13 @@ public class JavadocParsing extends Parsing {
       dummyRoot.rawAddChildren(element);
     }
     while(lexer.getTokenType() != null){
-      dummyRoot.rawAddChildren(ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
+      dummyRoot.rawAddChildren(ParseUtilBase.createTokenElement(lexer, myContext.getCharTable()));
       lexer.advance();
     }
 
-    ParseUtil.insertMissingTokens(dummyRoot, originalLexer, 0, myBuffer.length(), 0, WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
+    final MissingTokenInserter inserter = new MissingTokenInserter(dummyRoot, originalLexer, 0, myBuffer.length(), 0,
+                                                                   WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
+    inserter.invoke();
     return dummyRoot.getFirstChildNode();
   }
 
@@ -106,7 +108,10 @@ public class JavadocParsing extends Parsing {
       }
     }
 
-    ParseUtil.insertMissingTokens(dummyRoot, originalLexer, startOffset, endOffset, -1, new JDTokenProcessor(this), myContext);
+    int state = -1;
+    final MissingTokenInserter inserter = new MissingTokenInserter(dummyRoot, originalLexer, startOffset, endOffset, state,
+                                                                   new JDTokenProcessor(this), myContext);
+    inserter.invoke();
     return dummyRoot.getFirstChildNode();
   }
 

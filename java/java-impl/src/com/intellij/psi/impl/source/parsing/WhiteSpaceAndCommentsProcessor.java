@@ -60,7 +60,7 @@ public class WhiteSpaceAndCommentsProcessor implements TokenProcessor {
   }
 
   protected TreeElement createToken(final Lexer lexer, final ParsingContext context) {
-    return ParseUtil.createTokenElement(lexer, context.getCharTable());
+    return ParseUtilBase.createTokenElement(lexer, context.getCharTable());
   }
 
   public boolean isTokenValid(IElementType tokenType) {
