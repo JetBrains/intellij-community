@@ -616,7 +616,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   private void highlightNamedArgs(GrNamedArgument[] namedArguments) {
     for (GrNamedArgument namedArgument : namedArguments) {
       final GrArgumentLabel label = namedArgument.getLabel();
-      if (label != null && label.getExpression() == null) {
+      if (label != null && label.getExpression() == null && label.getNameElement().getNode().getElementType() != GroovyTokenTypes.mSTAR) {
         myHolder.createInfoAnnotation(label, null).setTextAttributes(DefaultHighlighter.MAP_KEY);
       }
     }
