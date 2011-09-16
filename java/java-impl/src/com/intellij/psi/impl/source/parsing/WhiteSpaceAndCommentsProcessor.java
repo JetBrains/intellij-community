@@ -30,7 +30,7 @@ public class WhiteSpaceAndCommentsProcessor implements TokenProcessor {
   private final TokenSet myWhitespaceSet;
 
   public WhiteSpaceAndCommentsProcessor() {
-    this(TokenSet.orSet(ElementType.WHITE_SPACE_BIT_SET, ElementType.JAVA_COMMENT_BIT_SET));
+    this(TokenSet.orSet(ElementType.JAVA_WHITESPACE_BIT_SET, ElementType.JAVA_COMMENT_BIT_SET));
   }
 
   public WhiteSpaceAndCommentsProcessor(TokenSet whitespaceSet) {
