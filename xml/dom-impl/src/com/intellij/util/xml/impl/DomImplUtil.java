@@ -16,19 +16,19 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.xml.*;
-import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
+import com.intellij.xml.util.XmlUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -184,10 +184,9 @@ public class DomImplUtil {
                                                                                                              !localName1.equals(qName));
   }
 
-  @NotNull 
+  @NotNull
   public static XmlFileHeader getXmlFileHeader(final PsiFile file) {
-    final VirtualFile virtualFile = file.getVirtualFile();
-    if (virtualFile instanceof LightVirtualFile && file instanceof XmlFile && FileDocumentManager.getInstance().getCachedDocument(virtualFile) == null) {
+    if (file instanceof XmlFile && file.getNode().isParsed()) {
       final XmlDocument document = ((XmlFile)file).getDocument();
       if (document != null) {
         String publicId = null;
@@ -198,12 +197,24 @@ public class DomImplUtil {
           if (doctype != null) {
             publicId = doctype.getPublicId();
             systemId = doctype.getSystemId();
+            if (systemId == null) {
+              systemId = doctype.getDtdUri();
+            }
           }
         }
 
         final XmlTag tag = document.getRootTag();
         if (tag != null) {
-          return new XmlFileHeader(tag.getLocalName(), tag.getNamespace(), publicId, systemId);
+          String localName = tag.getLocalName();
+          if (StringUtil.isNotEmpty(localName)) {
+            if (tag.getPrevSibling() instanceof PsiErrorElement) {
+              return XmlFileHeader.EMPTY;
+            }
+
+            String psiNs = tag.getNamespace();
+            return new XmlFileHeader(localName, psiNs == XmlUtil.EMPTY_URI || Comparing.equal(psiNs, systemId) ? null : psiNs, publicId,
+                                     systemId);
+          }
         }
       }
       return XmlFileHeader.EMPTY;

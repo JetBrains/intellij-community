@@ -163,7 +163,7 @@ public class AndroidManifestDomTest extends AndroidDomTest {
     doTestCompletion();
   }
 
-  public void _testCompletionInManifestTag() throws Throwable {
+  public void testCompletionInManifestTag() throws Throwable {
     doTestCompletion();
   }
 }
