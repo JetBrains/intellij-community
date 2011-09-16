@@ -16,8 +16,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
-
 /**
  * @author yole
  */
@@ -51,13 +49,13 @@ public class PyTestConfigurationEditor extends SettingsEditor<PyTestRunConfigura
   protected void resetEditorFrom(PyTestRunConfiguration s) {
     AbstractPythonRunConfiguration.copyParams(s, myCommonOptionsForm);
     myKeywordsTextField.setText(s.getKeywords());
-    myTestScriptTextField.setText(toSystemIndependentName(s.getTestToRun()));
+    myTestScriptTextField.setText(s.getTestToRun());
     myParamsTextField.setText(s.getParams());
   }
 
   protected void applyEditorTo(PyTestRunConfiguration s) throws ConfigurationException {
     AbstractPythonRunConfiguration.copyParams(myCommonOptionsForm, s);
-    s.setTestToRun(toSystemIndependentName(myTestScriptTextField.getText().trim()));
+    s.setTestToRun(myTestScriptTextField.getText().trim());
     s.setKeywords(myKeywordsTextField.getText().trim());
     s.setParams(myParamsTextField.getText().trim());
   }
