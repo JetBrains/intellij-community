@@ -113,17 +113,10 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
     }
 
     for (Map.Entry<String, GroovyNamedArgumentProvider.ArgumentDescriptor> entry : map.entrySet()) {
-      LookupElement lookup = LookupElementBuilder.create(entry.getKey(), entry.getKey())
+      LookupElement lookup = LookupElementBuilder.create(entry.getValue(), entry.getKey())
         .setIcon(GroovyIcons.DYNAMIC)
         .setInsertHandler(NamedArgumentInsertHandler.INSTANCE)
         .setTailText(":");
-
-      if (entry.getValue().isShowFirst()) {
-        lookup = PrioritizedLookupElement.withPriority(lookup, 1);
-      }
-      else {
-        lookup = PrioritizedLookupElement.withPriority(lookup, -1);
-      }
 
       result.addElement(lookup);
     }
