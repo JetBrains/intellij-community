@@ -195,10 +195,10 @@ class Bar {
   Bar(String s) {}
 }
 
-Foo f = [['a']]
+Foo f = [new Bar('a')]
 Foo f2 = ['super':['super':'a']]
 """
-    assertEquals 2, MethodReferencesSearch.search(JavaPsiFacade.getInstance(project).findClass("Bar").constructors[0]).findAll().size()
+    assertEquals 1, MethodReferencesSearch.search(JavaPsiFacade.getInstance(project).findClass("Bar").constructors[0]).findAll().size()
   }
 
   public void testCannibalisticConstructor() throws Exception {
@@ -206,7 +206,7 @@ Foo f2 = ['super':['super':'a']]
       class Foo {
         Foo(Foo... children) {}
       }
-      Foo f = [['a']]
+      Foo f = [new Foo('a')]
     """
     assertEquals 2, MethodReferencesSearch.search(JavaPsiFacade.getInstance(project).findClass("Foo").constructors[0]).findAll().size()
   }
