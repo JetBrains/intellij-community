@@ -16,13 +16,12 @@
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.impl.source.jsp.jspJava.JspExpressionStatement;
-import com.intellij.psi.impl.source.jsp.jspJava.JspTemplateStatement;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.ElementClassHint;
@@ -139,19 +138,24 @@ public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCode
     }
 
     if (before == Boolean.TRUE) {
-      while (anchor instanceof JspExpressionStatement || anchor instanceof JspTemplateStatement) {
+      while (isNonJavaStatement(anchor)) {
         anchor = anchor.getTreePrev();
         before = Boolean.FALSE;
       }
     }
     else if (before == Boolean.FALSE) {
-      while (anchor instanceof JspExpressionStatement || anchor instanceof JspTemplateStatement) {
+      while (isNonJavaStatement(anchor)) {
         anchor = anchor.getTreeNext();
         before = Boolean.TRUE;
       }
     }
 
     return super.addInternal(first, last, anchor, before);
+  }
+
+  private static boolean isNonJavaStatement(ASTNode anchor) {
+    final PsiElement psi = anchor.getPsi();
+    return psi instanceof PsiStatement && psi.getLanguage() != JavaLanguage.INSTANCE;
   }
 
   public ASTNode findChildByRole(int role) {
