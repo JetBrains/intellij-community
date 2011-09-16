@@ -269,4 +269,6 @@ public abstract class ProjectLevelVcsManager {
   public abstract VcsHistoryCache getVcsHistoryCache();
   public abstract ContentRevisionCache getContentRevisionCache();
   public abstract boolean isFileInContent(final VirtualFile vf);
+
+  public abstract boolean dvcsUsedInProject();
 }

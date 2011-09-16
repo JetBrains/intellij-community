@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
@@ -42,8 +43,6 @@ import java.util.List;
  * Time: 5:30 PM
  */
 public class SelectFilesToAddTextsToPatchDialog extends DialogWrapper {
-  public final static long ourMaximumSize = 500 * 1000;
-
   private final Set<String> myBigFiles;
   private final ChangesBrowser myBrowser;
   private JLabel myWarningText;
@@ -90,7 +89,8 @@ public class SelectFilesToAddTextsToPatchDialog extends DialogWrapper {
         String path = ChangesUtil.getFilePath(change).getPath();
         if (myBigFiles.contains(path)) {
           component.append(" ");
-          component.append("File size is bigger than " + ourMaximumSize + " bytes", SimpleTextAttributes.ERROR_ATTRIBUTES);
+          component.append("File size is bigger than " + VcsConfiguration.ourMaximumFileForBaseRevisionSize / 1000 + "K",
+                           SimpleTextAttributes.ERROR_ATTRIBUTES);
         }
       }
       @Override
@@ -121,7 +121,7 @@ public class SelectFilesToAddTextsToPatchDialog extends DialogWrapper {
       if (beforeRevision != null) {
         try {
           String content = beforeRevision.getContent();
-          if (content.length() > ourMaximumSize) {
+          if (content.length() > VcsConfiguration.ourMaximumFileForBaseRevisionSize) {
             exclude.add(change);
           }
         }

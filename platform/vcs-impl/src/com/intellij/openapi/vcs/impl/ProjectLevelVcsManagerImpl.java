@@ -751,6 +751,17 @@ public void addMessageToConsoleWindow(final String message, final TextAttributes
                             hasExplicitMapping(vf) || isInDirectoryBasedRoot(vf)) && ! myExcludedIndex.isExcludedFile(vf);
   }
 
+  @Override
+  public boolean dvcsUsedInProject() {
+    AbstractVcs[] allActiveVcss = getAllActiveVcss();
+    for (AbstractVcs activeVcs : allActiveVcss) {
+      if (VcsType.distibuted.equals(activeVcs.getType())) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   private boolean isInDirectoryBasedRoot(final VirtualFile file) {
     if (file == null) return false;
     final StorageScheme storageScheme = ((ProjectEx) myProject).getStateStore().getStorageScheme();

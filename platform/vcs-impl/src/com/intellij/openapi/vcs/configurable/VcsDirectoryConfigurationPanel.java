@@ -21,10 +21,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.VcsDirectoryMapping;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.impl.VcsDescriptor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
@@ -62,6 +59,15 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
 
   private final MyDirectoryRenderer myDirectoryRenderer;
   private final ColumnInfo<VcsDirectoryMapping, VcsDirectoryMapping> DIRECTORY;
+  private JCheckBox myBaseRevisionTexts;
+  private ListTableModel<VcsDirectoryMapping> myModel;
+  private JButton myAddButton;
+  private JButton myEditButton;
+  private JButton myRemoveButton;
+  private final Map<String, VcsDescriptor> myAllVcss;
+  private VcsContentAnnotationConfigurable myRecentlyChangedConfigurable;
+  private final boolean myIsDisabled;
+  private final VcsConfiguration myVcsConfiguration;
 
   private static class MyDirectoryRenderer extends ColoredTableCellRenderer {
     private final Project myProject;
@@ -153,16 +159,10 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
       };
     }
   };
-  private ListTableModel<VcsDirectoryMapping> myModel;
-  private JButton myAddButton;
-  private JButton myEditButton;
-  private JButton myRemoveButton;
-  private final Map<String, VcsDescriptor> myAllVcss;
-  private VcsContentAnnotationConfigurable myRecentlyChangedConfigurable;
-  private final boolean myIsDisabled;
 
   public VcsDirectoryConfigurationPanel(final Project project) {
     myProject = project;
+    myVcsConfiguration = VcsConfiguration.getInstance(myProject);
     myProjectMessage = VcsDirectoryMapping.PROJECT_CONSTANT + " - " + VcsMappingConfigurationDialog.getProjectMessage(myProject).replace('\n', ' ');
     myIsDisabled = myProject.isDefault();
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
@@ -173,6 +173,7 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
     }
 
     myDirectoryMappingTable = new TableView<VcsDirectoryMapping>();
+    myBaseRevisionTexts = new JCheckBox("Store on shelf base revision texts for files under DVCS");
     initPanel();
     myDirectoryRenderer = new MyDirectoryRenderer(myProject);
     DIRECTORY = new ColumnInfo<VcsDirectoryMapping, VcsDirectoryMapping>(VcsBundle.message("column.info.configure.vcses.directory")) {
@@ -225,6 +226,7 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
     myDirectoryMappingTable.setModel(myModel);
 
     myRecentlyChangedConfigurable.reset();
+    myBaseRevisionTexts.setSelected(myVcsConfiguration.INCLUDE_TEXT_INTO_SHELF);
   }
 
   private void updateButtons() {
@@ -320,10 +322,23 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
     myRecentlyChangedConfigurable = new VcsContentAnnotationConfigurable(myProject);
     final JLabel label = new JLabel(myProjectMessage);
     label.setForeground(UIUtil.getInactiveTextColor());
-    label.setBorder(BorderFactory.createEmptyBorder(2,0,2,0));
-    //label.setUI(new MultiLabelUI());
+    label.setBorder(BorderFactory.createEmptyBorder(2, 0, 2, 0));
     wrapper.add(label, BorderLayout.CENTER);
-    wrapper.add(myRecentlyChangedConfigurable.createComponent(), BorderLayout.SOUTH);
+    final JLabel noteLabel = new JLabel("File texts bigger than " + VcsConfiguration.ourMaximumFileForBaseRevisionSize / 1000 + "K are not stored");
+    noteLabel.setForeground(UIUtil.getInactiveTextColor());
+    final JPanel twoPanel = new JPanel(new BorderLayout());
+    twoPanel.add(myBaseRevisionTexts, BorderLayout.NORTH);
+    twoPanel.add(noteLabel, BorderLayout.SOUTH);
+    final JPanel wr2 = new JPanel(new BorderLayout());
+    wr2.add(twoPanel, BorderLayout.WEST);
+
+    myBaseRevisionTexts.setBorder(BorderFactory.createEmptyBorder(5,5,0,0));
+    noteLabel.setBorder(BorderFactory.createEmptyBorder(0,5,5,0));
+
+    final JPanel wr3 = new JPanel(new BorderLayout());
+    wr3.add(wr2, BorderLayout.NORTH);
+    wr3.add(myRecentlyChangedConfigurable.createComponent(), BorderLayout.SOUTH);
+    wrapper.add(wr3, BorderLayout.SOUTH);
     panel.add(wrapper, BorderLayout.SOUTH);
     return panel;
   }
@@ -335,11 +350,13 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
   public void apply() throws ConfigurationException {
     myVcsManager.setDirectoryMappings(myModel.getItems());
     myRecentlyChangedConfigurable.apply();
+    myVcsConfiguration.INCLUDE_TEXT_INTO_SHELF = myBaseRevisionTexts.isSelected();
     initializeModel();
   }
 
   public boolean isModified() {
     if (myRecentlyChangedConfigurable.isModified()) return true;
+    if (myVcsConfiguration.INCLUDE_TEXT_INTO_SHELF != myBaseRevisionTexts.isSelected()) return true;
     return !myModel.getItems().equals(myVcsManager.getDirectoryMappings());
   }
 

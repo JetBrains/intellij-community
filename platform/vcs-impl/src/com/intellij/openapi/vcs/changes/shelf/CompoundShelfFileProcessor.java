@@ -206,11 +206,11 @@ public class CompoundShelfFileProcessor {
     void writeContentTo(Writer writer, CommitContext commitContext) throws IOException;
   }
 
-  public void savePathFile(ContentProvider contentProvider, final File patchPath) throws IOException {
+  public void savePathFile(ContentProvider contentProvider, final File patchPath, CommitContext commitContext) throws IOException {
 
     OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(patchPath));
     try {
-      contentProvider.writeContentTo(writer, null);
+      contentProvider.writeContentTo(writer, commitContext);
     }
     finally {
       writer.close();

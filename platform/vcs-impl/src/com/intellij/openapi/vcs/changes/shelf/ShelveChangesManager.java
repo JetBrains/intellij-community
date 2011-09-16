@@ -46,6 +46,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.continuation.*;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Topic;
@@ -149,10 +150,6 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     return Collections.unmodifiableList(myShelvedChangeLists);
   }
 
-  /*public ShelvedChangeList shelveChanges(final Collection<Change> changes, final String commitMessage, final Runnable callAfterReverted) throws IOException, VcsException {
-
-  }*/
-
   public ShelvedChangeList shelveChanges(final Collection<Change> changes, final String commitMessage, final boolean rollback) throws IOException, VcsException {
     final List<Change> textChanges = new ArrayList<Change>();
     final List<ShelvedBinaryFile> binaryFiles = new ArrayList<ShelvedBinaryFile>();
@@ -175,13 +172,15 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
       final List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(myProject, textChanges, myProject.getBaseDir().getPresentableUrl(), false);
       ProgressManager.checkCanceled();
 
+      CommitContext commitContext = new CommitContext();
+      baseRevisionsOfDvcsIntoContext(textChanges, commitContext);
       myFileProcessor.savePathFile(
         new CompoundShelfFileProcessor.ContentProvider(){
             public void writeContentTo(final Writer writer, CommitContext commitContext) throws IOException {
               UnifiedDiffWriter.write(myProject, patches, writer, "\n", commitContext);
             }
           },
-          patchPath);
+          patchPath, commitContext);
 
       changeList = new ShelvedChangeList(patchPath.toString(), commitMessage.replace('\n', ' '), binaryFiles);
       myShelvedChangeLists.add(changeList);
@@ -198,6 +197,25 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     return changeList;
   }
 
+  private void baseRevisionsOfDvcsIntoContext(List<Change> textChanges, CommitContext commitContext) {
+    ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
+    if (vcsManager.dvcsUsedInProject() && VcsConfiguration.getInstance(myProject).INCLUDE_TEXT_INTO_SHELF) {
+      final Set<Change> big = SelectFilesToAddTextsToPatchDialog.getBig(textChanges);
+      final ArrayList<FilePath> toKeep = new ArrayList<FilePath>();
+      for (Change change : textChanges) {
+        if (change.getBeforeRevision() == null || change.getAfterRevision() == null) continue;
+        if (big.contains(change)) continue;
+        FilePath filePath = ChangesUtil.getFilePath(change);
+        final AbstractVcs vcs = vcsManager.getVcsFor(filePath);
+        if (vcs != null && VcsType.distibuted.equals(vcs.getType())) {
+          toKeep.add(filePath);
+        }
+      }
+      commitContext.putUserData(BaseRevisionTextPatchEP.ourPutBaseRevisionTextKey, true);
+      commitContext.putUserData(BaseRevisionTextPatchEP.ourBaseRevisionPaths, toKeep);
+    }
+  }
+
   public ShelvedChangeList importFilePatches(final String fileName, final List<FilePatch> patches, final PatchEP[] patchTransitExtensions) throws IOException {
     try {
       final File patchPath = getPatchPath(fileName);
@@ -207,7 +225,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
               UnifiedDiffWriter.write(myProject, patches, writer, "\n", patchTransitExtensions, commitContext);
             }
           },
-          patchPath);
+          patchPath, null);
 
       final ShelvedChangeList changeList = new ShelvedChangeList(patchPath.toString(), fileName.replace('\n', ' '), new SmartList<ShelvedBinaryFile>());
       myShelvedChangeLists.add(changeList);
