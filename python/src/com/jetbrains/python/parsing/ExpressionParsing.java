@@ -52,12 +52,7 @@ public class ExpressionParsing extends Parsing {
       return true;
     }
     else if (PyTokenTypes.STRING_NODES.contains(firstToken)) {
-      final PsiBuilder.Marker marker = myBuilder.mark();
-      while (PyTokenTypes.STRING_NODES.contains(myBuilder.getTokenType())) {
-        myBuilder.advanceLexer();
-      }
-      marker.done(PyElementTypes.STRING_LITERAL_EXPRESSION);
-      return true;
+      return parseStringLiteralExpression();
     }
     else if (firstToken == PyTokenTypes.LPAR) {
       parseParenthesizedExpression(isTargetExpression);
@@ -83,6 +78,19 @@ public class ExpressionParsing extends Parsing {
         return true;
       }
       maybeEllipsis.rollbackTo();
+    }
+    return false;
+  }
+
+  public boolean parseStringLiteralExpression() {
+    final PsiBuilder builder = myContext.getBuilder();
+    if (PyTokenTypes.STRING_NODES.contains(builder.getTokenType())) {
+      final PsiBuilder.Marker marker = builder.mark();
+      while (PyTokenTypes.STRING_NODES.contains(builder.getTokenType())) {
+        nextToken();
+      }
+      marker.done(PyElementTypes.STRING_LITERAL_EXPRESSION);
+      return true;
     }
     return false;
   }

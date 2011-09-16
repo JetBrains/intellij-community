@@ -54,6 +54,10 @@ public class CythonParsingTest extends ParsingTestCase {
     doTest();
   }
 
+  public void testExternBlocks() {
+    doTest();
+  }
+
   public void doTest() {
     doTest(true);
   }
