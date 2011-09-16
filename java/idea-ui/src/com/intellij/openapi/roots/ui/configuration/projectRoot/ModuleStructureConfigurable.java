@@ -50,6 +50,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.LibraryPro
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ModuleProjectStructureElement;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureDaemonAnalyzer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
+import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.NamedConfigurable;
@@ -64,6 +65,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.navigation.Place;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
+import com.intellij.util.PathUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -783,27 +785,23 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
       final NamedConfigurable namedConfigurable = getSelectedConfugurable();
       if (namedConfigurable instanceof ModuleConfigurable) {
         try {
+          final ModuleEditor moduleEditor = ((ModuleConfigurable)namedConfigurable).getModuleEditor();
           final String modulePresentation = IdeBundle.message("project.new.wizard.module.identification");
-          final NamePathComponent component = new NamePathComponent(IdeBundle.message("label.project.name"), IdeBundle.message(
-            "label.component.file.location", StringUtil.capitalize(modulePresentation)), IdeBundle.message(
-            "title.select.project.file.directory", modulePresentation), IdeBundle.message("description.select.project.file.directory",
-                                                                                          StringUtil.capitalize(modulePresentation)), true, false);
-          final DialogWrapper copyModuleDialog = new DialogWrapper(myTree, false) {
-            {
-              setTitle(ProjectBundle.message("copy.module.dialog.title"));
-              init();
-            }
+          final NamePathComponent component = new NamePathComponent(IdeBundle.message("label.module.name"), IdeBundle.message("label.component.file.location", StringUtil.capitalize(modulePresentation)), IdeBundle.message("title.select.project.file.directory", modulePresentation),
+                                                                    IdeBundle.message("description.select.project.file.directory", StringUtil.capitalize(modulePresentation)), true,
+                                                                    false);
+          final Module originalModule = moduleEditor.getModule();
+          if (originalModule != null) {
+            component.setPath(PathUtil.getParentPath(originalModule.getModuleFilePath()));
+          }
 
-            public JComponent getPreferredFocusedComponent() {
-              return component.getNameComponent();
-            }
-
-            @Nullable
-            protected JComponent createCenterPanel() {
-              return component;
-            }
-
-            protected void doOKAction() {
+          final DialogBuilder dialogBuilder = new DialogBuilder(myTree);
+          dialogBuilder.setTitle(ProjectBundle.message("copy.module.dialog.title"));
+          dialogBuilder.setCenterPanel(component);
+          dialogBuilder.setPreferedFocusComponent(component.getNameComponent());
+          dialogBuilder.setOkOperation(new Runnable() {
+            @Override
+            public void run() {
               if (component.getNameValue().length() == 0) {
                 Messages.showErrorDialog(ProjectBundle.message("enter.module.copy.name.error.message"), CommonBundle.message("title.error"));
                 return;
@@ -815,16 +813,17 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
                 return;
               }
               if (!ProjectWizardUtil
-                 .createDirectoryIfNotExists(IdeBundle.message("directory.project.file.directory", modulePresentation), component.getPath(), true)) {
+                 .createDirectoryIfNotExists(IdeBundle.message("directory.project.file.directory", modulePresentation), component.getPath(),
+                                             true)) {
                 Messages.showErrorDialog(ProjectBundle.message("path.0.is.invalid.error.message", component.getPath()), CommonBundle.message("title.error"));
                  return;
               }
-              super.doOKAction();
+              dialogBuilder.getDialogWrapper().close(DialogWrapper.OK_EXIT_CODE);
             }
-          };
-          copyModuleDialog.show();
-          if (!copyModuleDialog.isOK()) return;
-          final ModifiableRootModel rootModel = ((ModuleConfigurable)namedConfigurable).getModuleEditor().getModifiableRootModel();
+          });
+          if (dialogBuilder.show() != DialogWrapper.OK_EXIT_CODE) return;
+
+          final ModifiableRootModel rootModel = moduleEditor.getModifiableRootModel();
           final String path = component.getPath();
           final ModuleBuilder builder = new ModuleBuilder() {
             public void setupRootModel(final ModifiableRootModel modifiableRootModel) throws ConfigurationException {
