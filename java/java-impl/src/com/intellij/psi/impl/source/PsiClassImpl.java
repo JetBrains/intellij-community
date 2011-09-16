@@ -26,8 +26,6 @@ import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
 import com.intellij.psi.impl.light.LightMethod;
-import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
-import com.intellij.psi.impl.source.jsp.jspJava.JspClassLevelDeclarationStatement;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
@@ -238,8 +236,8 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
 
     PsiElement parent = getParent();
 
-    if (parent instanceof JspClassLevelDeclarationStatement) {
-      return PsiTreeUtil.getParentOfType(this, JspClass.class);
+    if (parent instanceof PsiClassLevelDeclarationStatement) {
+      return PsiTreeUtil.getParentOfType(this, PsiSyntheticClass.class);
     }
 
     return parent instanceof PsiClass ? (PsiClass)parent : null;
