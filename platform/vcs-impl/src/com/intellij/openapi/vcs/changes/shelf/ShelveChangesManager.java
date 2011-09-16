@@ -177,8 +177,8 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
 
       myFileProcessor.savePathFile(
         new CompoundShelfFileProcessor.ContentProvider(){
-            public void writeContentTo(final Writer writer) throws IOException {
-              UnifiedDiffWriter.write(myProject, patches, writer, "\n");
+            public void writeContentTo(final Writer writer, CommitContext commitContext) throws IOException {
+              UnifiedDiffWriter.write(myProject, patches, writer, "\n", commitContext);
             }
           },
           patchPath);
@@ -203,8 +203,8 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
       final File patchPath = getPatchPath(fileName);
       myFileProcessor.savePathFile(
         new CompoundShelfFileProcessor.ContentProvider(){
-            public void writeContentTo(final Writer writer) throws IOException {
-              UnifiedDiffWriter.write(myProject, patches, writer, "\n", patchTransitExtensions);
+            public void writeContentTo(final Writer writer, CommitContext commitContext) throws IOException {
+              UnifiedDiffWriter.write(myProject, patches, writer, "\n", patchTransitExtensions, commitContext);
             }
           },
           patchPath);
@@ -484,12 +484,15 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     return false;
   }
 
-  private static void writePatchesToFile(final Project project, final String path, final List<FilePatch> remainingPatches) {
+  private static void writePatchesToFile(final Project project,
+                                         final String path,
+                                         final List<FilePatch> remainingPatches,
+                                         CommitContext commitContext) {
     OutputStreamWriter writer;
     try {
       writer = new OutputStreamWriter(new FileOutputStream(path));
       try {
-        UnifiedDiffWriter.write(project, remainingPatches, writer, "\n");
+        UnifiedDiffWriter.write(project, remainingPatches, writer, "\n", commitContext);
       }
       finally {
         writer.close();
@@ -514,7 +517,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
                                                              new ArrayList<ShelvedBinaryFile>(changeList.getBinaryFiles()));
     listCopy.DATE = (changeList.DATE == null) ? null : new Date(changeList.DATE.getTime());
 
-    writePatchesToFile(myProject, changeList.PATH, remainingPatches);
+    writePatchesToFile(myProject, changeList.PATH, remainingPatches, null);
 
     changeList.getBinaryFiles().retainAll(remainingBinaries);
     changeList.clearLoadedChanges();
@@ -569,7 +572,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
         for (ShelvedChange change : listCopy.getChanges()) {
           patches.add(change.loadFilePatch());
         }
-        writePatchesToFile(myProject, listCopy.PATH, patches);
+        writePatchesToFile(myProject, listCopy.PATH, patches, null);
       }
       catch (IOException e) {
         LOG.info(e);

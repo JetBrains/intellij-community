@@ -19,6 +19,7 @@ import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.UnifiedDiffWriter;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.changes.CommitContext;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -35,11 +36,11 @@ public class PatchWriter {
   private PatchWriter() {
   }
 
-  public static void writePatches(final Project project, String fileName, List<FilePatch> patches) throws IOException {
+  public static void writePatches(final Project project, String fileName, List<FilePatch> patches, CommitContext commitContext) throws IOException {
     Writer writer = new OutputStreamWriter(new FileOutputStream(fileName));
     try {
       final String lineSeparator = CodeStyleFacade.getInstance(project).getLineSeparator();
-      UnifiedDiffWriter.write(project, patches, writer, lineSeparator);
+      UnifiedDiffWriter.write(project, patches, writer, lineSeparator, commitContext);
     }
     finally {
       writer.close();

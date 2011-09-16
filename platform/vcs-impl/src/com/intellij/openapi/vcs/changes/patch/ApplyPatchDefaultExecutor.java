@@ -24,10 +24,12 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vcs.ObjectsConvertor;
+import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.TransparentlyFailedValue;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
@@ -61,6 +63,9 @@ public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor {
                     String fileName,
                     TransparentlyFailedValue<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
     final Collection<PatchApplier> appliers = new LinkedList<PatchApplier>();
+    final CommitContext commitContext = new CommitContext();
+    applyAdditionalInfoBefore(myProject, additionalInfo, commitContext);
+
     for (VirtualFile base : patchGroups.keySet()) {
       final PatchApplier patchApplier =
         new PatchApplier<BinaryFilePatch>(myProject, base, ObjectsConvertor.convert(patchGroups.get(base),
@@ -73,11 +78,34 @@ public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor {
     }
     PatchApplier.executePatchGroup(appliers);
 
-    applyAdditionalInfo(myProject, additionalInfo);
+    applyAdditionalInfo(myProject, additionalInfo, commitContext);
   }
 
-  public static void applyAdditionalInfo(final Project project,
-                                          TransparentlyFailedValue<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
+  private static void applyAdditionalInfoBefore(final Project project,
+                                         TransparentlyFailedValue<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo,
+                                         CommitContext commitContext) {
+    applyAdditionalInfoImpl(project, additionalInfo, commitContext, new Consumer<InfoGroup>() {
+      @Override
+      public void consume(InfoGroup infoGroup) {
+        infoGroup.myPatchEP.consumeContentBeforePatchApplied(project, infoGroup.myPath, infoGroup.myContent, infoGroup.myCommitContext);
+      }
+    });
+  }
+
+  private static void applyAdditionalInfo(final Project project,
+                                         TransparentlyFailedValue<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo,
+                                         CommitContext commitContext) {
+    applyAdditionalInfoImpl(project, additionalInfo, commitContext, new Consumer<InfoGroup>() {
+      @Override
+      public void consume(InfoGroup infoGroup) {
+        infoGroup.myPatchEP.consumeContent(project, infoGroup.myPath, infoGroup.myContent, infoGroup.myCommitContext);
+      }
+    });
+  }
+
+  public static void applyAdditionalInfoImpl(final Project project,
+                                         TransparentlyFailedValue<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo,
+                                         CommitContext commitContext, final Consumer<InfoGroup> worker) {
     final PatchEP[] extensions = Extensions.getExtensions(PatchEP.EP_NAME, project);
     if (extensions == null && extensions.length == 0) return;
     if (additionalInfo != null) {
@@ -90,7 +118,7 @@ public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor {
           for (PatchEP extension : extensions) {
             final CharSequence charSequence = innerMap.get(extension.getName());
             if (charSequence != null) {
-              extension.consumeContent(project, path, charSequence);
+              worker.consume(new InfoGroup(extension, path, charSequence, commitContext));
             }
           }
         }
@@ -99,6 +127,20 @@ public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor {
         VcsBalloonProblemNotifier
           .showOverChangesView(project, "Can not apply additional patch info: " + e.getMessage(), MessageType.ERROR);
       }
+    }
+  }
+  
+  private static class InfoGroup {
+    private PatchEP myPatchEP;
+    private String myPath;
+    private CharSequence myContent;
+    private CommitContext myCommitContext;
+
+    private InfoGroup(PatchEP patchEP, String path, CharSequence content, CommitContext commitContext) {
+      myPatchEP = patchEP;
+      myPath = path;
+      myContent = content;
+      myCommitContext = commitContext;
     }
   }
 

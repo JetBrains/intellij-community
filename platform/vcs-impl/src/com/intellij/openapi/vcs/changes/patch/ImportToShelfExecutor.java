@@ -26,6 +26,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.TransparentlyFailedValue;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
@@ -135,12 +136,20 @@ public class ImportToShelfExecutor implements ApplyPatchExecutor {
     }
 
     @Override
-    public CharSequence provideContent(Project project, @NotNull String path) {
+    public CharSequence provideContent(Project project, @NotNull String path, CommitContext commitContext) {
       return myMap.get(path);
     }
 
     @Override
-    public void consumeContent(Project project, @NotNull String path, @NotNull CharSequence content) {
+    public void consumeContent(Project project, @NotNull String path, @NotNull CharSequence content, CommitContext commitContext) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void consumeContentBeforePatchApplied(Project project,
+                                                 @NotNull String path,
+                                                 @NotNull CharSequence content,
+                                                 CommitContext commitContext) {
       throw new UnsupportedOperationException();
     }
   }

@@ -347,7 +347,7 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
     return myDiffAction;
   }
 
-  protected static enum MyUseCase {
+  public static enum MyUseCase {
     LOCAL_CHANGES,
     COMMITTED_CHANGES
   }

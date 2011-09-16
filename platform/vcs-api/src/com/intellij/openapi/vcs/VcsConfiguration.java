@@ -83,6 +83,8 @@ public final class VcsConfiguration implements PersistentStateComponent<Element>
   public int SHORT_DIFF_EXTRA_LINES = 2;
   public boolean SOFT_WRAPS_IN_SHORT_DIFF = true;
   public IgnoreSpaceEnum SHORT_DIFF_IGNORE_SPACE = IgnoreSpaceEnum.NO;
+  // asked only for non-DVCS
+  public boolean INCLUDE_TEXT_INTO_PATCH = false;
 
   public enum StandardOption {
     ADD(VcsBundle.message("vcs.command.name.add")),

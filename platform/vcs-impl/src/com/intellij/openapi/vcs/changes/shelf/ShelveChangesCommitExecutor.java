@@ -52,7 +52,7 @@ public class ShelveChangesCommitExecutor implements CommitExecutorWithHelp {
   }
 
   @NotNull
-  public CommitSession createCommitSession() {
+  public CommitSession createCommitSession(CommitContext commitContext) {
     return new ShelveChangesCommitSession();
   }
 

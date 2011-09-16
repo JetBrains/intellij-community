@@ -22,6 +22,7 @@ package com.maddyhome.idea.copyright.actions;
 
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
+import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory;
@@ -43,7 +44,7 @@ import java.util.List;
 
 public class UpdateCopyrightCheckinHandlerFactory extends CheckinHandlerFactory  {
   @NotNull
-  public CheckinHandler createHandler(final CheckinProjectPanel panel) {
+  public CheckinHandler createHandler(final CheckinProjectPanel panel, CommitContext commitContext) {
     return new CheckinHandler() {
       @Override
       public RefreshableOnComponent getBeforeCheckinConfigurationPanel() {

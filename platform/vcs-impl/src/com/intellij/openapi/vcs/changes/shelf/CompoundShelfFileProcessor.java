@@ -22,6 +22,7 @@ import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.StreamProvider;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.util.containers.ContainerUtil;
 
 import java.io.*;
@@ -202,14 +203,14 @@ public class CompoundShelfFileProcessor {
   }
 
   public interface ContentProvider {
-    void writeContentTo(Writer writer) throws IOException;
+    void writeContentTo(Writer writer, CommitContext commitContext) throws IOException;
   }
 
   public void savePathFile(ContentProvider contentProvider, final File patchPath) throws IOException {
 
     OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(patchPath));
     try {
-      contentProvider.writeContentTo(writer);
+      contentProvider.writeContentTo(writer, null);
     }
     finally {
       writer.close();
