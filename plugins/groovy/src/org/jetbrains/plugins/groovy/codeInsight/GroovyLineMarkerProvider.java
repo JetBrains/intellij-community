@@ -138,7 +138,7 @@ public class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
       PsiElementProcessor.CollectElementsWithLimit<PsiMethod> processor = new PsiElementProcessor.CollectElementsWithLimit<PsiMethod>(5);
 
       for (GrAccessorMethod method : accessors) {
-        OverridingMethodsSearch.search(method, method.getUseScope(), true).forEach(new PsiElementProcessorAdapter<PsiMethod>(processor));
+        OverridingMethodsSearch.search(method, true).forEach(new PsiElementProcessorAdapter<PsiMethod>(processor));
       }
       if (processor.isOverflow()) {
         return DaemonBundle.message("method.is.overridden.too.many");
@@ -171,7 +171,7 @@ public class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
       if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
         public void run() {
           for (GrAccessorMethod method : GroovyPropertyUtils.getFieldAccessors(field)) {
-            OverridingMethodsSearch.search(method, method.getUseScope(), true).forEach(collectProcessor);
+            OverridingMethodsSearch.search(method, true).forEach(collectProcessor);
           }
         }
       }, "Searching for overriding methods", true, field.getProject(), (JComponent)e.getComponent())) {

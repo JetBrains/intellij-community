@@ -137,7 +137,7 @@ public class SystemBuilder {
       keyParameter = parameter;
     }
 
-    final PsiMethod[] overriders = OverridingMethodsSearch.search(keyMethod, keyMethod.getUseScope(), true).toArray(PsiMethod.EMPTY_ARRAY);
+    final PsiMethod[] overriders = OverridingMethodsSearch.search(keyMethod, true).toArray(PsiMethod.EMPTY_ARRAY);
 
     for (final PsiMethod overrider : overriders) {
       final PsiElement e = parameter != null ? overrider.getParameterList().getParameters()[index] : overrider;

@@ -59,7 +59,7 @@ public class SearchUtils{
     }
 
     public static Iterable<PsiMethod> findOverridingMethods(PsiMethod method){
-        return new ArrayIterable<PsiMethod>(OverridingMethodsSearch.search(method, method.getUseScope(), true).toArray(new PsiMethod[0]));
+        return new ArrayIterable<PsiMethod>(OverridingMethodsSearch.search(method, true).toArray(new PsiMethod[0]));
        // return OverridingMethodsSearch.search(method, method.getUseScope(), true).findAll();
     }
 

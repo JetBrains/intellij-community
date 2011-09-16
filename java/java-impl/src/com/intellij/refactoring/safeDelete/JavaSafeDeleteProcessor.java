@@ -399,7 +399,7 @@ public class JavaSafeDeleteProcessor implements SafeDeleteProcessorDelegate {
       return findConstructorUsages(psiMethod, references, usages, allElementsToDelete);
     }
     final PsiMethod[] overridingMethods =
-            removeDeletedMethods(OverridingMethodsSearch.search(psiMethod, psiMethod.getUseScope(), true).toArray(PsiMethod.EMPTY_ARRAY),
+            removeDeletedMethods(OverridingMethodsSearch.search(psiMethod, true).toArray(PsiMethod.EMPTY_ARRAY),
                                  allElementsToDelete);
 
     for (PsiReference reference : references) {

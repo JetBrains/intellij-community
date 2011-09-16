@@ -15,7 +15,7 @@
  */
 package com.intellij.refactoring.changeSignature;
 
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
@@ -96,7 +96,7 @@ class JavaChangeSignatureUsageSearcher {
   }
 
   private void detectLocalsCollisionsInMethod(final PsiMethod method, final ArrayList<UsageInfo> result, boolean isOriginal) {
-    if (!StdLanguages.JAVA.equals(method.getLanguage())) return;
+    if (!JavaLanguage.INSTANCE.equals(method.getLanguage())) return;
 
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     final Set<PsiParameter> deletedOrRenamedParameters = new HashSet<PsiParameter>();
@@ -147,7 +147,7 @@ class JavaChangeSignatureUsageSearcher {
   }
 
   private void findParametersUsage(final PsiMethod method, ArrayList<UsageInfo> result, PsiMethod[] overriders) {
-    if (StdLanguages.JAVA.equals(myChangeInfo.getLanguage())) {
+    if (JavaLanguage.INSTANCE.equals(myChangeInfo.getLanguage())) {
       PsiParameter[] parameters = method.getParameterList().getParameters();
       for (ParameterInfo info : myChangeInfo.getNewParameters()) {
         if (info.getOldIndex() >= 0) {
@@ -187,7 +187,7 @@ class JavaChangeSignatureUsageSearcher {
                                                         boolean isOriginal) {
 
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(method.getProject());
-    PsiMethod[] overridingMethods = OverridingMethodsSearch.search(method, method.getUseScope(), true).toArray(PsiMethod.EMPTY_ARRAY);
+    PsiMethod[] overridingMethods = OverridingMethodsSearch.search(method, true).toArray(PsiMethod.EMPTY_ARRAY);
 
     for (PsiMethod overridingMethod : overridingMethods) {
       result.add(new OverriderUsageInfo(overridingMethod, method, isOriginal, isToModifyArgs, isToThrowExceptions));
@@ -219,7 +219,7 @@ class JavaChangeSignatureUsageSearcher {
           result.add(new UsageInfo(element));
         }
         else if (element instanceof PsiMethod && ((PsiMethod)element).isConstructor()) {
-          if (StdLanguages.JAVA.equals(element.getLanguage())) {
+          if (JavaLanguage.INSTANCE.equals(element.getLanguage())) {
             DefaultConstructorImplicitUsageInfo implicitUsageInfo =
               new DefaultConstructorImplicitUsageInfo((PsiMethod)element, ((PsiMethod)element).getContainingClass(), method);
             result.add(implicitUsageInfo);
@@ -228,7 +228,7 @@ class JavaChangeSignatureUsageSearcher {
         else if (element instanceof PsiClass) {
           LOG.assertTrue(method.isConstructor());
           final PsiClass psiClass = (PsiClass)element;
-          if (StdLanguages.JAVA.equals(psiClass.getLanguage())) {
+          if (JavaLanguage.INSTANCE.equals(psiClass.getLanguage())) {
             if (myChangeInfo instanceof JavaChangeInfoImpl) {
               if (shouldPropagateToNonPhysicalMethod(method, result, psiClass,
                                                      ((JavaChangeInfoImpl)myChangeInfo).propagateParametersMethods)) {

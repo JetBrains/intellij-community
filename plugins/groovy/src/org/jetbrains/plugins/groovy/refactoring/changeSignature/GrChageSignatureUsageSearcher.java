@@ -183,7 +183,7 @@ class GrChageSignatureUsageSearcher {
                                                         boolean isOriginal) {
 
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(method.getProject());
-    PsiMethod[] overridingMethods = OverridingMethodsSearch.search(method, method.getUseScope(), true).toArray(PsiMethod.EMPTY_ARRAY);
+    PsiMethod[] overridingMethods = OverridingMethodsSearch.search(method, true).toArray(PsiMethod.EMPTY_ARRAY);
 
     for (PsiMethod overridingMethod : overridingMethods) {
       if (GroovyFileType.GROOVY_LANGUAGE.equals(overridingMethod.getLanguage())) {

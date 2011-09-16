@@ -170,7 +170,7 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
       usages.add(new AppendAccessorsUsageInfo(existingClass, myGenerateAccessors, paramsNeedingGetters, paramsNeedingSetters, parameters));
     }
 
-    final PsiMethod[] overridingMethods = OverridingMethodsSearch.search(method, method.getUseScope(), true).toArray(PsiMethod.EMPTY_ARRAY);
+    final PsiMethod[] overridingMethods = OverridingMethodsSearch.search(method, true).toArray(PsiMethod.EMPTY_ARRAY);
     for (PsiMethod siblingMethod : overridingMethods) {
       findUsagesForMethod(siblingMethod, usages, false);
     }

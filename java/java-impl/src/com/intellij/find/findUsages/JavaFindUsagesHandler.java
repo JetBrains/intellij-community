@@ -113,7 +113,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
 
   private static PsiElement[] getParameterElementsToSearch(final PsiParameter parameter) {
     final PsiMethod method = (PsiMethod)parameter.getDeclarationScope();
-    PsiMethod[] overrides = OverridingMethodsSearch.search(method, method.getUseScope(), true).toArray(PsiMethod.EMPTY_ARRAY);
+    PsiMethod[] overrides = OverridingMethodsSearch.search(method, true).toArray(PsiMethod.EMPTY_ARRAY);
     for (int i = 0; i < overrides.length; i++) {
       overrides[i] = (PsiMethod)overrides[i].getNavigationElement();
     }
