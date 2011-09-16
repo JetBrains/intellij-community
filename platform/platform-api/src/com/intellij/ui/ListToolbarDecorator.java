@@ -16,6 +16,8 @@
 package com.intellij.ui;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 
 /**
  * @author Konstantin Bulenkov
@@ -27,6 +29,12 @@ class ListToolbarDecorator extends ToolbarDecorator {
     myList = list;
     myAddActionEnabled = myRemoveActionEnabled = myUpActionEnabled = myDownActionEnabled = true;
     createActions();
+    myList.addListSelectionListener(new ListSelectionListener() {
+      @Override
+      public void valueChanged(ListSelectionEvent e) {
+        updateButtons();
+      }
+    });
   }
 
   private void createActions() {
