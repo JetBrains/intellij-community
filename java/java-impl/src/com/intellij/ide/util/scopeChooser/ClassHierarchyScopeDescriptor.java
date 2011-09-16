@@ -62,7 +62,7 @@ public class ClassHierarchyScopeDescriptor extends ScopeDescriptor {
       List<PsiElement> classesToSearch = new LinkedList<PsiElement>();
       classesToSearch.add(aClass);
 
-      classesToSearch.addAll(ClassInheritorsSearch.search(aClass, aClass.getUseScope(), true).findAll());
+      classesToSearch.addAll(ClassInheritorsSearch.search(aClass, true).findAll());
 
       myCachedScope = new LocalSearchScope(PsiUtilBase.toPsiElementArray(classesToSearch),
                                            IdeBundle.message("scope.hierarchy", ClassPresentationUtil.getNameForClass(aClass, true)));

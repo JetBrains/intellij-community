@@ -225,7 +225,7 @@ public class GuessManagerImpl extends GuessManager {
 
     PsiManager manager = PsiManager.getInstance(myProject);
     PsiElementProcessor.CollectElementsWithLimit<PsiClass> processor = new PsiElementProcessor.CollectElementsWithLimit<PsiClass>(5);
-    ClassInheritorsSearch.search(refClass, refClass.getUseScope(), true).forEach(new PsiElementProcessorAdapter<PsiClass>(processor));
+    ClassInheritorsSearch.search(refClass, true).forEach(new PsiElementProcessorAdapter<PsiClass>(processor));
     if (processor.isOverflow()) return;
 
     for (PsiClass derivedClass : processor.getCollection()) {

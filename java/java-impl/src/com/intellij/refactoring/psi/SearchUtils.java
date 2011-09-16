@@ -63,7 +63,7 @@ public class SearchUtils{
     }
 
     public static Iterable<PsiClass> findClassInheritors(PsiClass aClass, boolean deep){
-        return new ArrayIterable<PsiClass>(ClassInheritorsSearch.search(aClass, aClass.getUseScope(), deep).toArray(new PsiClass[0]));
+        return new ArrayIterable<PsiClass>(ClassInheritorsSearch.search(aClass, deep).toArray(new PsiClass[0]));
        // return ClassInheritorsSearch.search(aClass, deep);
     }
 

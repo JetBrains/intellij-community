@@ -149,7 +149,7 @@ public class MarkerType {
       if (!(parent instanceof PsiClass)) return null;
       PsiClass aClass = (PsiClass)parent;
       PsiElementProcessor.CollectElementsWithLimit<PsiClass> processor = new PsiElementProcessor.CollectElementsWithLimit<PsiClass>(5, new THashSet<PsiClass>());
-      ClassInheritorsSearch.search(aClass, aClass.getUseScope(), true).forEach(new PsiElementProcessorAdapter<PsiClass>(processor));
+      ClassInheritorsSearch.search(aClass, true).forEach(new PsiElementProcessorAdapter<PsiClass>(processor));
 
       if (processor.isOverflow()) {
         return aClass.isInterface()
@@ -183,7 +183,7 @@ public class MarkerType {
       final PsiElementProcessor.CollectElementsWithLimit<PsiClass> collectProcessor = new PsiElementProcessor.CollectElementsWithLimit<PsiClass>(2, new THashSet<PsiClass>());
       if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
         public void run() {
-          ClassInheritorsSearch.search(aClass, aClass.getUseScope(), true).forEach(new PsiElementProcessorAdapter<PsiClass>(collectProcessor));
+          ClassInheritorsSearch.search(aClass, true).forEach(new PsiElementProcessorAdapter<PsiClass>(collectProcessor));
         }
       }, SEARCHING_FOR_OVERRIDDEN_METHODS, true, aClass.getProject(), (JComponent)e.getComponent())) {
         return;

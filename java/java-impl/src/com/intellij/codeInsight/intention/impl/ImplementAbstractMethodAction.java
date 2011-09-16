@@ -70,7 +70,7 @@ public class ImplementAbstractMethodAction extends BaseIntentionAction {
           }
         }
       }
-      ClassInheritorsSearch.search(containingClass, containingClass.getUseScope(), false).forEach(new PsiElementProcessorAdapter<PsiClass>(
+      ClassInheritorsSearch.search(containingClass, false).forEach(new PsiElementProcessorAdapter<PsiClass>(
         processor));
       return isAvailable(processor);
     }

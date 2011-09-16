@@ -76,7 +76,7 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
 
   @NotNull
   protected UsageInfo[] findUsages() {
-    final PsiClass[] inheritors = ClassInheritorsSearch.search(myClass, myClass.getUseScope(), false).toArray(PsiClass.EMPTY_ARRAY);
+    final PsiClass[] inheritors = ClassInheritorsSearch.search(myClass, false).toArray(PsiClass.EMPTY_ARRAY);
     UsageInfo[] usages = new UsageInfo[inheritors.length];
     for (int i = 0; i < inheritors.length; i++) {
       usages[i] = new UsageInfo(inheritors[i]);
