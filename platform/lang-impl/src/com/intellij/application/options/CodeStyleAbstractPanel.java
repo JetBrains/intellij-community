@@ -18,10 +18,8 @@ package com.intellij.application.options;
 import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
 import com.intellij.application.options.codeStyle.LanguageSelector;
 import com.intellij.codeStyle.CodeStyleFacade;
-import com.intellij.ide.DataManager;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -35,7 +33,7 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -183,7 +181,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
 
     int currOffs = myEditor.getScrollingModel().getVerticalScrollOffset();
 
-    final Project finalProject = getCurrentProject();
+    final Project finalProject = ProjectUtil.guessCurrentProject(getPanel());
     CommandProcessor.getInstance().executeCommand(finalProject, new Runnable() {
       public void run() {
         replaceText(finalProject);
@@ -197,7 +195,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
 
   private int getAdjustedRightMargin() {
     int result = getRightMargin();
-    return result > 0 ? result : CodeStyleFacade.getInstance(getCurrentProject()).getRightMargin();
+    return result > 0 ? result : CodeStyleFacade.getInstance(ProjectUtil.guessCurrentProject(getPanel())).getRightMargin();
   }
 
   protected abstract int getRightMargin();
@@ -292,19 +290,6 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
   protected PsiFile doReformat(final Project project, final PsiFile psiFile) {
     CodeStyleManager.getInstance(project).reformat(psiFile);
     return psiFile;
-  }
-
-  protected Project getCurrentProject() {
-    Project project = null;
-    Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-    if (openProjects.length > 0) project = openProjects[0];
-    if (project == null) {
-      project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(getPanel()));
-    }
-    if (project == null) {
-      project = ProjectManager.getInstance().getDefaultProject();
-    }
-    return project;
   }
 
   private void highlightChanges(Document beforeReformat) {
@@ -593,7 +578,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
   }
   
   public final void applyPredefinedSettings(@NotNull PredefinedCodeStyle codeStyle) {
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getCurrentProject()).clone();
+    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(ProjectUtil.guessCurrentProject(getPanel())).clone();
     codeStyle.apply(settings);
     reset(settings);
     onSomethingChanged();    

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.diff.impl.external;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffManager;
 import com.intellij.openapi.diff.DiffPanel;
@@ -26,10 +27,7 @@ import com.intellij.openapi.diff.impl.mergeTool.MergeTool;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.MarkupEditorFilter;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.util.config.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -120,6 +118,13 @@ public class DiffManagerImpl extends DiffManager implements JDOMExternalizable {
     return new DiffPanelImpl(window, project, true, true);
   }
 
+  @Override
+  public DiffPanel createDiffPanel(Window window, Project project, @NotNull Disposable parentDisposable) {
+    DiffPanel diffPanel = createDiffPanel(window, project);
+    Disposer.register(parentDisposable, diffPanel);
+    return diffPanel;
+  }
+
   public static DiffManagerImpl getInstanceEx() {
     return (DiffManagerImpl)DiffManager.getInstance();
   }
@@ -151,10 +156,10 @@ public class DiffManagerImpl extends DiffManager implements JDOMExternalizable {
 
   public AbstractProperty.AbstractPropertyContainer getProperties() { return myProperties; }
 
-  public static DiffPanel createDiffPanel(DiffRequest data, Window window) {
+  static DiffPanel createDiffPanel(DiffRequest data, Window window, @NotNull Disposable parentDisposable) {
     DiffPanel diffPanel = null;
     try {
-      diffPanel = DiffManager.getInstance().createDiffPanel(window, data.getProject());
+      diffPanel = DiffManager.getInstance().createDiffPanel(window, data.getProject(), parentDisposable);
       int contentCount = data.getContents().length;
       LOG.assertTrue(contentCount == 2, String.valueOf(contentCount));
       LOG.assertTrue(data.getContentTitles().length == contentCount);
@@ -162,7 +167,9 @@ public class DiffManagerImpl extends DiffManager implements JDOMExternalizable {
       return diffPanel;
     }
     catch (RuntimeException e) {
-      if (diffPanel != null) diffPanel.dispose();
+      if (diffPanel != null) {
+        Disposer.dispose(diffPanel);
+      }
       throw e;
     }
   }

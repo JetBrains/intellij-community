@@ -128,7 +128,7 @@ public class VcsChangeDetailsManager {
       myRequestFromChange = new BinaryDiffRequestFromChange(myProject);
       myChangeListManager = ChangeListManager.getInstance(myProject);
 
-      myPanel = DiffManager.getInstance().createDiffPanel(null, myProject);
+      myPanel = DiffManager.getInstance().createDiffPanel(null, myProject,this);
       myPanel.enableToolbar(false);
       myPanel.removeStatusBar();
       DiffPanelOptions o = ((DiffPanelEx)myPanel).getOptions();
@@ -188,7 +188,6 @@ public class VcsChangeDetailsManager {
 
     @Override
     protected void disposeImpl() {
-      Disposer.dispose(myPanel);
     }
 
     @Override

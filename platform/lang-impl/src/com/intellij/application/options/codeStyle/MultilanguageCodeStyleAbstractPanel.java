@@ -28,6 +28,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeEditorHighlighterProviders;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -168,7 +169,8 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
   @Nullable
   protected EditorHighlighter createHighlighter(final EditorColorsScheme scheme) {
     FileType fileType = getFileType();
-    return FileTypeEditorHighlighterProviders.INSTANCE.forFileType(fileType).getEditorHighlighter(getCurrentProject(), fileType, null, scheme);
+    return FileTypeEditorHighlighterProviders.INSTANCE.forFileType(fileType).getEditorHighlighter(
+      ProjectUtil.guessCurrentProject(getPanel()), fileType, null, scheme);
   }
 
 

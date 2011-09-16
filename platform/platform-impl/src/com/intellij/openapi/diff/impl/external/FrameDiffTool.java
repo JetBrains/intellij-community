@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.diff.impl.external;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
@@ -22,13 +23,15 @@ import com.intellij.openapi.diff.*;
 import com.intellij.openapi.diff.impl.ComparisonPolicy;
 import com.intellij.openapi.diff.impl.DiffPanelImpl;
 import com.intellij.openapi.diff.impl.DiffUtil;
-import com.intellij.openapi.ui.FrameWrapper;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.ui.DialogBuilder;
+import com.intellij.openapi.ui.FrameWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -45,10 +48,9 @@ class FrameDiffTool implements DiffTool {
     boolean shouldOpenDialog = shouldOpenDialog(hints);
     if (shouldOpenDialog) {
       final DialogBuilder builder = new DialogBuilder(request.getProject());
-      DiffPanelImpl diffPanel = createDiffPanelIfShouldShow(request, builder.getWindow());
+      DiffPanelImpl diffPanel = createDiffPanelIfShouldShow(request, builder.getWindow(), builder);
       if (diffPanel == null) return;
       builder.setCenterPanel(diffPanel.getComponent());
-      builder.addDisposable(diffPanel);
       builder.setPreferedFocusComponent(diffPanel.getPreferredFocusedComponent());
       builder.removeAllActions();
       builder.setTitle(request.getWindowTitle());
@@ -61,9 +63,10 @@ class FrameDiffTool implements DiffTool {
       }.registerCustomShortcutSet(new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts("CloseContent")),
                                   diffPanel.getComponent());
       showDiffDialog(builder, hints);
-    } else {
+    }
+    else {
       final FrameWrapper frameWrapper = new FrameWrapper(request.getProject(), request.getGroupKey());
-      DiffPanelImpl diffPanel = createDiffPanelIfShouldShow(request, frameWrapper.getFrame());
+      DiffPanelImpl diffPanel = createDiffPanelIfShouldShow(request, frameWrapper.getFrame(), frameWrapper);
       if (diffPanel == null) return;
       frameWrapper.setTitle(request.getWindowTitle());
       DiffUtil.initDiffFrame(frameWrapper, diffPanel);
@@ -80,10 +83,10 @@ class FrameDiffTool implements DiffTool {
   }
 
   @Nullable
-  private static DiffPanelImpl createDiffPanelIfShouldShow(DiffRequest request, Window window) {
-    DiffPanelImpl diffPanel = (DiffPanelImpl)DiffManagerImpl.createDiffPanel(request, window);
+  private static DiffPanelImpl createDiffPanelIfShouldShow(DiffRequest request, Window window, @NotNull Disposable parentDisposable) {
+    DiffPanelImpl diffPanel = (DiffPanelImpl)DiffManagerImpl.createDiffPanel(request, window, parentDisposable);
     if (checkNoDifferenceAndNotify(diffPanel, request, window)) {
-      diffPanel.dispose();
+      Disposer.dispose(diffPanel);
       diffPanel = null;
     }
     return diffPanel;
@@ -106,11 +109,12 @@ class FrameDiffTool implements DiffTool {
       if (!Comparing.equal(manager.getComparisonPolicy(), ComparisonPolicy.DEFAULT)) {
         ComparisonPolicy oldPolicy = manager.getComparisonPolicy();
         manager.setComparisonPolicy(ComparisonPolicy.DEFAULT);
-        DiffPanel maybeDiffPanel = DiffManagerImpl.createDiffPanel(data, window);
+        Disposable parentDisposable = Disposer.newDisposable();
+        DiffPanel maybeDiffPanel = DiffManagerImpl.createDiffPanel(data, window, parentDisposable);
         manager.setComparisonPolicy(oldPolicy);
 
         boolean hasDiffs = maybeDiffPanel.hasDifferences();
-        maybeDiffPanel.dispose();
+        Disposer.dispose(parentDisposable);
 
         if (hasDiffs) return false;
       }
@@ -131,11 +135,9 @@ class FrameDiffTool implements DiffTool {
       MessagesEx.error(data.getProject(), e.getMessage()).showNow();
       return false;
     }
-    String message;
-    if (Arrays.equals(bytes1, bytes2))
-      message = DiffBundle.message("diff.contents.are.identical.message.text");
-    else
-      message = DiffBundle.message("diff.contents.have.differences.only.in.line.separators.message.text");
+    String message = Arrays.equals(bytes1, bytes2)
+                     ? DiffBundle.message("diff.contents.are.identical.message.text")
+                     : DiffBundle.message("diff.contents.have.differences.only.in.line.separators.message.text");
     Messages.showInfoMessage(data.getProject(), message, DiffBundle.message("no.differences.dialog.title"));
     return false;
     //return Messages.showDialog(data.getProject(), message + "\nShow diff anyway?", "No Differences", new String[]{"Yes", "No"}, 1,

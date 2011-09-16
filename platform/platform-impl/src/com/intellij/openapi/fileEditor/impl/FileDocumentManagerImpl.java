@@ -537,14 +537,13 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
         request.setContentTitles(UIBundle.message("file.cache.conflict.diff.content.file.system.content"),
                                  UIBundle.message("file.cache.conflict.diff.content.memory.content"));
         DialogBuilder diffBuilder = new DialogBuilder(project);
-        DiffPanelImpl diffPanel = (DiffPanelImpl)DiffManager.getInstance().createDiffPanel(diffBuilder.getWindow(), project);
+        DiffPanelImpl diffPanel = (DiffPanelImpl)DiffManager.getInstance().createDiffPanel(diffBuilder.getWindow(), project,diffBuilder);
         diffPanel.getOptions().setShowSourcePolicy(DiffPanelOptions.ShowSourcePolicy.DONT_SHOW);
         diffBuilder.setCenterPanel(diffPanel.getComponent());
         diffPanel.setDiffRequest(request);
         diffBuilder.addOkAction().setText(UIBundle.message("file.cache.conflict.save.changes.button"));
         diffBuilder.addCancelAction();
         diffBuilder.setTitle(windowtitle);
-        diffBuilder.addDisposable(diffPanel);
         if (diffBuilder.show() == DialogWrapper.OK_EXIT_CODE) {
           builder.getDialogWrapper().close(DialogWrapper.CANCEL_EXIT_CODE);
         }

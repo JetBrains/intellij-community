@@ -26,6 +26,7 @@ import com.intellij.openapi.diff.DiffPanel;
 import com.intellij.openapi.diff.ex.DiffPanelEx;
 import com.intellij.openapi.diff.ex.DiffPanelOptions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ExcludingTraversalPolicy;
@@ -46,22 +47,15 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
   }
 
   @Override
-  public void dispose() {
-    myDiffPanel.dispose();
-    super.dispose();
-  }
-
-  @Override
   protected FileHistoryDialogModel createModel(LocalHistoryFacade vcs) {
     return new EntireFileHistoryDialogModel(myProject, myGateway, vcs, myFile);
   }
 
   @Override
   protected Pair<JComponent, Dimension> createDiffPanel(JPanel root, ExcludingTraversalPolicy traversalPolicy) {
-    myDiffPanel = DiffManager.getInstance().createDiffPanel(getFrame(), myProject);
+    myDiffPanel = DiffManager.getInstance().createDiffPanel(getFrame(), myProject,this);
     DiffPanelOptions o = ((DiffPanelEx)myDiffPanel).getOptions();
     o.setRequestFocusOnNewContent(false);
-
     return Pair.create((JComponent)myDiffPanel.getComponent(), null);
   }
 

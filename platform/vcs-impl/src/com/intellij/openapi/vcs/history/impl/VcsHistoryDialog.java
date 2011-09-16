@@ -69,14 +69,14 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
   private final DiffPanel myDiffPanel;
   private final Project myProject;
 
-  private final static ColumnInfo REVISION = new ColumnInfo(VcsBundle.message("column.name.revision.version")) {
+  private static final ColumnInfo REVISION = new ColumnInfo(VcsBundle.message("column.name.revision.version")) {
     public Object valueOf(Object object) {
       return ((VcsFileRevision)object).getRevisionNumber();
     }
 
   };
 
-  private final static ColumnInfo DATE = new ColumnInfo(VcsBundle.message("column.name.revision.list.date")) {
+  private static final ColumnInfo DATE = new ColumnInfo(VcsBundle.message("column.name.revision.list.date")) {
     public Object valueOf(Object object) {
       Date date = ((VcsFileRevision)object).getRevisionDate();
       if (date == null) return "";
@@ -85,21 +85,21 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
 
   };
 
-  private final static ColumnInfo MESSAGE = new ColumnInfo(VcsBundle.message("column.name.revision.list.message")) {
+  private static final ColumnInfo MESSAGE = new ColumnInfo(VcsBundle.message("column.name.revision.list.message")) {
     public Object valueOf(Object object) {
       return ((VcsFileRevision)object).getCommitMessage();
     }
 
   };
 
-  private final static ColumnInfo AUTHOR = new ColumnInfo(VcsBundle.message("column.name.revision.list.author")) {
+  private static final ColumnInfo AUTHOR = new ColumnInfo(VcsBundle.message("column.name.revision.list.author")) {
     public Object valueOf(Object object) {
       return ((VcsFileRevision)object).getAuthor();
     }
 
   };
 
-  private final static ColumnInfo[] COLUMNS = new ColumnInfo[]{REVISION, DATE, AUTHOR, MESSAGE};
+  private static final ColumnInfo[] COLUMNS = new ColumnInfo[]{REVISION, DATE, AUTHOR, MESSAGE};
 
   private final TableView myList;
   protected final List<VcsFileRevision> myRevisions;
@@ -139,7 +139,7 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
 
     myList.getEmptyText().setText(VcsBundle.message("history.empty"));
 
-    myDiffPanel = DiffManager.getInstance().createDiffPanel(getWindow(), myProject);
+    myDiffPanel = DiffManager.getInstance().createDiffPanel(getWindow(), myProject,getDisposable());
 
     myRevisions.addAll(session.getRevisionList());
     final VcsRevisionNumber currentRevisionNumber = session.getCurrentRevisionNumber();
@@ -315,7 +315,6 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
 
   public synchronized void dispose() {
     myIsDisposed = true;
-    myDiffPanel.dispose();
     super.dispose();
   }
 
