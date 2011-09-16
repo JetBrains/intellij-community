@@ -172,7 +172,7 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
     if (first == last && first.getElementType() == DOC_TAG) {
       if (anchor == null) {
         anchor = getLastChildNode(); // this is a '*/'
-        final ASTNode prevBeforeWS = TreeUtil.skipElementsBack(anchor.getTreePrev(), WHITE_SPACE_BIT_SET);
+        final ASTNode prevBeforeWS = TreeUtil.skipElementsBack(anchor.getTreePrev(), ElementType.JAVA_WHITESPACE_BIT_SET);
         if (prevBeforeWS != null) {
           anchor = prevBeforeWS;
           before = Boolean.FALSE;
@@ -223,7 +223,7 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
       current = current.getTreePrev();
     }
     if (current != null && current.getElementType() == DOC_COMMENT_LEADING_ASTERISKS) {
-      final ASTNode prevWhiteSpace = TreeUtil.skipElementsBack(current.getTreePrev(), WHITE_SPACE_BIT_SET);
+      final ASTNode prevWhiteSpace = TreeUtil.skipElementsBack(current.getTreePrev(), ElementType.JAVA_WHITESPACE_BIT_SET);
       ASTNode toBeDeleted = prevWhiteSpace.getTreeNext();
       while (toBeDeleted != null) {
         ASTNode next = toBeDeleted.getTreeNext();
