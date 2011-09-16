@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.PsiGenerationInfo;
@@ -141,17 +142,9 @@ class ConstructorInsertHandler implements InsertHandler<LookupElementDecorator<L
       }
     }
 
-    int identifierEnd = context.getTailOffset();
-
     JavaCompletionUtil.insertParentheses(context, delegate, false, hasParams, forAnonymous);
 
-    if (context.getCompletionChar() == '<') {
-      context.getDocument().insertString(identifierEnd, "<>");
-      context.setAddCompletionChar(false);
-      context.getEditor().getCaretModel().moveToOffset(identifierEnd + 1);
-    }
-
-    return hasParams;
+    return true;
   }
 
   private static Runnable generateAnonymousBody(final Editor editor, final PsiFile file) {

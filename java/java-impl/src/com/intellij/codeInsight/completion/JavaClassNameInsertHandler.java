@@ -85,11 +85,14 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
 
     OffsetKey refEnd = context.trackOffset(context.getTailOffset(), false);
 
-    boolean fillTypeArgs = false;
+    boolean fillTypeArgs = context.getCompletionChar() == '<';
+    if (fillTypeArgs) {
+      context.setAddCompletionChar(false);
+    }
+    
     if (shouldInsertParentheses(psiClass, position)) {
       if (ConstructorInsertHandler.insertParentheses(context, item, psiClass, false)) {
-        fillTypeArgs = psiClass.hasTypeParameters() && PsiUtil.getLanguageLevel(file).isAtLeast(LanguageLevel.JDK_1_5);
-        AutoPopupController.getInstance(project).autoPopupParameterInfo(editor, null);
+        fillTypeArgs |= psiClass.hasTypeParameters() && PsiUtil.getLanguageLevel(file).isAtLeast(LanguageLevel.JDK_1_5);
       }
     }
     else if (insertingAnnotationWithParameters(context, item)) {
