@@ -56,8 +56,6 @@ import java.util.List;
 public class PsiImplUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiImplUtil");
 
-  public static final TokenSet WHITESPACE_AND_COMMENTS = TokenSet.orSet(ElementType.WHITE_SPACE_BIT_SET, ElementType.JAVA_COMMENT_BIT_SET);
-
   private PsiImplUtil() {
   }
 
@@ -459,12 +457,40 @@ public class PsiImplUtil {
     return processor.isWriteRefFound();
   }
 
+  @Nullable
   public static ASTNode skipWhitespaceAndComments(final ASTNode node) {
-    return TreeUtil.skipElements(node, WHITESPACE_AND_COMMENTS);
+    ASTNode element = node;
+    while (true) {
+      if (element == null) return null;
+      if (!isWhitespaceOrComment(element)) break;
+      element = element.getTreeNext();
+    }
+    return element;
   }
 
+  public static boolean isWhitespaceOrComment(ASTNode element) {
+    return element.getPsi() instanceof PsiWhiteSpace || element.getPsi() instanceof PsiComment;
+  }
+
+  @Nullable
   public static ASTNode skipWhitespaceAndCommentsBack(final ASTNode node) {
-    return TreeUtil.skipElementsBack(node, WHITESPACE_AND_COMMENTS);
+    if (node == null) return null;
+    if (!isWhitespaceOrComment(node)) return node;
+
+    ASTNode parent = node.getTreeParent();
+    ASTNode prev = node;
+    while (prev instanceof CompositeElement) {
+      if (!isWhitespaceOrComment(prev)) return prev;
+      prev = prev.getTreePrev();
+    }
+    if (prev == null) return null;
+    ASTNode firstChildNode = parent.getFirstChildNode();
+    ASTNode lastRelevant = null;
+    while (firstChildNode != prev) {
+      if (!isWhitespaceOrComment(firstChildNode)) lastRelevant = firstChildNode;
+      firstChildNode = firstChildNode.getTreeNext();
+    }
+    return lastRelevant;
   }
 
   @Nullable

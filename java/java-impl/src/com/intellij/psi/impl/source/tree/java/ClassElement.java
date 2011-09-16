@@ -84,7 +84,7 @@ public class ClassElement extends CompositeElement implements Constants {
         ASTNode semicolonPlace = findEnumConstantListDelimiterPlace();
         boolean commentsOrWhiteSpaces = true;
         for (ASTNode child = first; child != null; child = child.getTreeNext()) {
-          if (!PsiImplUtil.WHITESPACE_AND_COMMENTS.contains(child.getElementType())) {
+          if (!PsiImplUtil.isWhitespaceOrComment(child)) {
             commentsOrWhiteSpaces = false;
             break;
           }
@@ -312,7 +312,7 @@ public class ClassElement extends CompositeElement implements Constants {
     if (first == null) return null;
     for (ASTNode child = first.getTreeNext(); child != null; child = child.getTreeNext()) {
       final IElementType childType = child.getElementType();
-      if (PsiImplUtil.WHITESPACE_AND_COMMENTS.contains(childType) || childType == ERROR_ELEMENT || childType == ENUM_CONSTANT) {
+      if (PsiImplUtil.isWhitespaceOrComment(child) || childType == ERROR_ELEMENT || childType == ENUM_CONSTANT) {
       }
       else if (childType == COMMA) {
       }

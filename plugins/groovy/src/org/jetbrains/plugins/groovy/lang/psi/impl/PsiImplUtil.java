@@ -460,7 +460,7 @@ public class PsiImplUtil {
   }
 
   public static String getTextSkipWhiteSpaceAndComments(ASTNode node) {
-    return AstBufferUtil.getTextSkippingTokens(node, TokenSets.WHITE_SPACES_OR_COMMENTS);
+    return AstBufferUtil.getTextSkippingWhitespaceComments(node);
   }
 
   @Nullable
