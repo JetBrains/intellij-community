@@ -15,15 +15,17 @@
  */
 package com.intellij.psi.impl;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.impl.source.codeStyle.ImportHelper;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 
@@ -72,5 +74,12 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
     });
 
     return original != null ? original : psiClass;
+  }
+
+  @Override
+  public ASTNode getDefaultImportAnchor(PsiImportList list, PsiImportStatementBase statement) {
+    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(list.getProject());
+    ImportHelper importHelper = new ImportHelper(settings);
+    return importHelper.getDefaultAnchor(list, statement);
   }
 }

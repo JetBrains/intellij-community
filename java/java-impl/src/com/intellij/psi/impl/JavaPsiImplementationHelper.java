@@ -15,9 +15,12 @@
  */
 package com.intellij.psi.impl;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiImportList;
+import com.intellij.psi.PsiImportStatementBase;
 
 /**
  * @author yole
@@ -26,6 +29,8 @@ public abstract class JavaPsiImplementationHelper {
   public static JavaPsiImplementationHelper getInstance(Project project) {
     return ServiceManager.getService(project, JavaPsiImplementationHelper.class);
   }
-  
+
   public abstract PsiClass getOriginalClass(PsiClass psiClass);
+
+  public abstract ASTNode getDefaultImportAnchor(PsiImportList list, PsiImportStatementBase statement);
 }
