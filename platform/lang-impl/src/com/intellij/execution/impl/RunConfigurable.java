@@ -38,6 +38,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.config.StorageAccessors;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
@@ -67,7 +68,6 @@ class RunConfigurable extends BaseConfigurable {
   @NonNls private static final String GENERAL_ADD_ICON_PATH = "/general/add.png";
   private static final Icon ADD_ICON = IconLoader.getIcon(GENERAL_ADD_ICON_PATH);
   private static final Icon REMOVE_ICON = IconLoader.getIcon("/general/remove.png");
-  private static final Icon COPY_ICON = IconLoader.getIcon("/actions/copy.png");
   private static final Icon SAVE_ICON = IconLoader.getIcon("/runConfigurations/saveTempConfig.png");
   @NonNls private static final String EDIT_DEFAULTS_ICON_PATH = "/general/ideOptions.png";
   private static final Icon EDIT_DEFAULTS_ICON = IconLoader.getIcon(EDIT_DEFAULTS_ICON_PATH);
@@ -968,7 +968,7 @@ class RunConfigurable extends BaseConfigurable {
     public MyCopyAction() {
       super(ExecutionBundle.message("copy.configuration.action.name"),
             ExecutionBundle.message("copy.configuration.action.name"),
-            COPY_ICON);
+            PlatformIcons.COPY_ICON);
 
       final AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_DUPLICATE);
       registerCustomShortcutSet(action.getShortcutSet(), myTree);

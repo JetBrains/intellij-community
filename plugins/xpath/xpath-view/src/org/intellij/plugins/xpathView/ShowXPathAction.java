@@ -26,7 +26,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -37,6 +36,7 @@ import com.intellij.ui.HintHint;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.util.PlatformIcons;
 import org.intellij.plugins.xpathView.support.XPathSupport;
 import org.intellij.plugins.xpathView.util.HighlighterUtil;
 
@@ -116,7 +116,7 @@ public class ShowXPathAction extends XPathAction {
         p.add(label, BorderLayout.CENTER);
 
 
-        InplaceButton copy = new InplaceButton(ActionsBundle.message("action.EditorCopy.text"), IconLoader.getIcon("/actions/copy.png"), new ActionListener() {
+        InplaceButton copy = new InplaceButton(ActionsBundle.message("action.EditorCopy.text"), PlatformIcons.COPY_ICON, new ActionListener() {
           @Override
           public void actionPerformed(ActionEvent e) {
             CopyPasteManager.getInstance().setContents(new StringSelection(path));
