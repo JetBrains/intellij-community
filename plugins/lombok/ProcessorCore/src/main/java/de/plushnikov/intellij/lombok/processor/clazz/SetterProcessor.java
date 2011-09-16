@@ -43,10 +43,8 @@ public class SetterProcessor extends AbstractLombokClassProcessor {
   private boolean hasFieldProcessorAnnotation(PsiModifierList modifierList) {
     boolean hasSetterAnnotation = false;
     for (PsiAnnotation fieldAnnotation : modifierList.getAnnotations()) {
-      String qualifiedName = fieldAnnotation.getQualifiedName();
-      hasSetterAnnotation |= fieldProcessor.acceptAnnotation(qualifiedName, PsiMethod.class);
+      hasSetterAnnotation |= fieldProcessor.acceptAnnotation(fieldAnnotation, PsiMethod.class);
     }
-
     return hasSetterAnnotation;
   }
 

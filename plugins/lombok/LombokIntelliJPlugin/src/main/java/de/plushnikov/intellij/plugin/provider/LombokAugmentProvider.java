@@ -45,11 +45,6 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
    * find all fields in a given  "element" for which a getter should be added;
    * and return a PsiMethod implementation for each such field
    * (for Lombok I think LightMethod instances should be used, see PsiClassImpl code for example)
-   *
-   * @param element
-   * @param type
-   * @param <Psi>
-   * @return
    */
   @NotNull
   @Override
@@ -95,7 +90,7 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
 
   private <Psi extends PsiElement> void processClassAnnotation(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull List<Psi> result, @NotNull Class<Psi> type) {
     for (LombokClassProcessor classProcessor : allClassHandlers) {
-      if (classProcessor.acceptAnnotation(psiAnnotation.getQualifiedName(), type)) {
+      if (classProcessor.acceptAnnotation(psiAnnotation, type)) {
         classProcessor.process(psiClass, psiAnnotation, result);
       }
     }
@@ -121,7 +116,7 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
 
   private <Psi extends PsiElement> void processFieldAnnotation(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiField psiField, @NotNull List<Psi> result, @NotNull Class<Psi> type) {
     for (LombokFieldProcessor fieldProcessor : allFieldHandlers) {
-      if (fieldProcessor.acceptAnnotation(psiAnnotation.getQualifiedName(), type)) {
+      if (fieldProcessor.acceptAnnotation(psiAnnotation, type)) {
         fieldProcessor.process(psiField, psiAnnotation, result);
       }
     }
