@@ -22,6 +22,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
@@ -521,12 +522,31 @@ public class GitHistoryUtils {
     return rc;
   }
 
+  public static List<GitCommit> history(final Project project, @NotNull VirtualFile root, String... parameters) throws VcsException {
+    final List<GitCommit> commits = new ArrayList<GitCommit>();
+    final Semaphore semaphore = new Semaphore();
+    semaphore.down();
+    historyWithLinks(project, new FilePathImpl(root), null, new AsynchConsumer<GitCommit>() {
+      @Override
+      public void finished() {
+        semaphore.up();
+      }
+
+      @Override
+      public void consume(GitCommit gitCommit) {
+        commits.add(gitCommit);
+      }
+    }, null, null, parameters);
+    semaphore.waitFor();
+    return commits;
+  }
+
   public static void historyWithLinks(final Project project,
                                       FilePath path,
-                                      final SymbolicRefs refs,
-                                      final AsynchConsumer<GitCommit> gitCommitConsumer,
-                                      final Getter<Boolean> isCanceled,
-                                      Collection<VirtualFile> paths, final String... parameters) throws VcsException {
+                                      @Nullable final SymbolicRefs refs,
+                                      @NotNull final AsynchConsumer<GitCommit> gitCommitConsumer,
+                                      @Nullable final Getter<Boolean> isCanceled,
+                                      @Nullable Collection<VirtualFile> paths, final String... parameters) throws VcsException {
     // adjust path using change manager
     path = getLastCommitName(project, path);
     final VirtualFile root = GitUtil.getGitRoot(path);

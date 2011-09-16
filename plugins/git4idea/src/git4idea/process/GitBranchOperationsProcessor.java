@@ -35,8 +35,11 @@ import com.intellij.util.continuation.ContinuationContext;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
 import git4idea.Git;
+import git4idea.GitExecutionException;
 import git4idea.GitVcs;
 import git4idea.commands.GitCommandResult;
+import git4idea.history.GitHistoryUtils;
+import git4idea.history.browser.GitCommit;
 import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
 import git4idea.stash.GitChangesSaver;
@@ -45,6 +48,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static git4idea.ui.GitUIUtil.notifyError;
 
@@ -282,13 +286,77 @@ public final class GitBranchOperationsProcessor {
     }.runInBackground();
   }
 
-  private void doDelete(String branchName) {
-    GitCommandResult result = Git.branchDelete(myRepository, branchName);
+  private void doDelete(final String branchName) {
+    GitSimpleEventDetector notFullyMergedDetector = new GitSimpleEventDetector(GitSimpleEventDetector.Event.BRANCH_NOT_FULLY_MERGED);
+    GitCommandResult result = Git.branchDelete(myRepository, branchName, false, notFullyMergedDetector);
     if (result.success()) {
-      updateRepository();
-      notifySuccess(String.format("Deleted branch <b><code>%s</code></b>", branchName));
+      notifyBranchDeleteSuccess(branchName);
+    } else if (notFullyMergedDetector.hasHappened()) {
+      boolean forceDelete = showNotFullyMergedDialog(branchName);
+      if (forceDelete) {
+        doForceDelete(branchName);
+      }
     } else {
       showErrorMessage("Couldn't delete " + branchName, result.getErrorOutput());
+    }
+  }
+
+  /**
+   * Shows a dialog "the branch is not fully merged" with the list of commits.
+   * User may still want to force delete the branch.
+   * @return true if the branch should be force deleted.
+   */
+  private boolean showNotFullyMergedDialog(@NotNull final String branchName) {
+    final List<String> mergedToBranches = getMergedToBranches(branchName);
+
+    final List<GitCommit> history;
+    try {
+      history = GitHistoryUtils.history(myProject, myRepository.getRoot(), ".." + branchName);
+    } catch (VcsException e) {
+      // this is critical, because we need to show the list of unmerged commits, and it shouldn't happen => inform user and developer
+      throw new GitExecutionException("Couldn't get [git log .." + branchName + "] on repository [" + myRepository.getRoot() + "]", e);
+    }
+
+    final AtomicBoolean forceDelete = new AtomicBoolean();
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override public void run() {
+        forceDelete.set(GitBranchIsNotFullyMergedDialog.showAndGetAnswer(myProject, history, myRepository, branchName, mergedToBranches));
+      }
+    });
+    return forceDelete.get();
+  }
+
+  /**
+   * Branches which the given branch is merged to ({@code git branch --merged},
+   * except the given branch itself.
+   */
+  private List<String> getMergedToBranches(String branchName) {
+    List<String> mergedToBranches = new ArrayList<String>();
+    GitCommandResult result = Git.mergedToBranches(myRepository, branchName);
+    if (result.success()) {
+      for (String mergedBranch : result.getOutput()) {
+        if (!mergedBranch.trim().equals(branchName)) {
+          mergedToBranches.add(mergedBranch);
+        }
+      }
+    } else {
+      // it is not critical - so we just log the error
+      LOG.info("Failed to get [git branch --merged] for branch [" + branchName + "]. " + result);
+    }
+    return mergedToBranches;
+  }
+
+  private void notifyBranchDeleteSuccess(String branchName) {
+    updateRepository();
+    notifySuccess(String.format("Deleted branch <b><code>%s</code></b>", branchName));
+  }
+
+  private void doForceDelete(@NotNull String branchName) {
+    GitCommandResult res = Git.branchDelete(myRepository, branchName, true);
+    if (res.success()) {
+      notifyBranchDeleteSuccess(branchName);
+    } else {
+      showErrorMessage("Couldn't delete " + branchName, res.getErrorOutput());
     }
   }
 

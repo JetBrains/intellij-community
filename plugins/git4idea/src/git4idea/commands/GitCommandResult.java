@@ -17,6 +17,7 @@ package git4idea.commands;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -29,11 +30,13 @@ public class GitCommandResult {
   private final boolean mySuccess;
   private final int myExitCode;               // non-zero exit code doesn't necessarily mean an error
   private final List<String> myErrorOutput;
-  
-  public GitCommandResult(boolean success, int exitCode, @NotNull List<String> errorOutput) {
+  private final List<String> myOutput;
+
+  public GitCommandResult(boolean success, int exitCode, @NotNull List<String> errorOutput, List<String> output) {
     myExitCode = exitCode;
     mySuccess = success;
     myErrorOutput = errorOutput;
+    myOutput = output;
   }
 
   /**
@@ -48,6 +51,15 @@ public class GitCommandResult {
    */
   @NotNull
   public List<String> getErrorOutput() {
-    return myErrorOutput;
+    return new ArrayList<String>(myErrorOutput);
+  }
+
+  public List<String> getOutput() {
+    return new ArrayList<String>(myOutput);
+  }
+
+  @Override
+  public String toString() {
+    return String.format("{%d} %s", myExitCode, myErrorOutput);
   }
 }

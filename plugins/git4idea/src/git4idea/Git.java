@@ -24,7 +24,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.commands.*;
-import git4idea.commands.GitCommandResult;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -127,7 +126,7 @@ public class Git {
   public static GitCommandResult checkout(@NotNull GitRepository repository,
                                           @NotNull String reference,
                                           @Nullable String newTrackingBranch,
-                                          GitLineHandlerListener... listeners) {
+                                          @NotNull GitLineHandlerListener... listeners) {
     final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.CHECKOUT);
     if (newTrackingBranch == null) { // simply checkout
       h.addParameters(reference);
@@ -155,11 +154,27 @@ public class Git {
   }
 
   /**
-   * git checkout -d &lt;reference&gt;
+   * {@code git branch -d <reference>} or {@code git branch -D <reference>}
    */
-  public static GitCommandResult branchDelete(@NotNull GitRepository repository, @NotNull String branchName) {
+  public static GitCommandResult branchDelete(@NotNull GitRepository repository,
+                                              @NotNull String branchName,
+                                              boolean force,
+                                              @NotNull GitLineHandlerListener... listeners) {
     final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.BRANCH);
-    h.addParameters("-d");
+    h.addParameters(force ? "-D" : "-d");
+    h.addParameters(branchName);
+    for (GitLineHandlerListener listener : listeners) {
+      h.addLineListener(listener);
+    }
+    return run(h);
+  }
+
+  /**
+   * {@code git branch --merged <branchName>}
+   */
+  public static GitCommandResult mergedToBranches(@NotNull GitRepository repository, @NotNull String branchName) {
+    final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.BRANCH);
+    h.addParameters("--merged");
     h.addParameters(branchName);
     return run(h);
   }
@@ -171,6 +186,7 @@ public class Git {
     handler.setNoSSH(true);
 
     final List<String> errorOutput = new ArrayList<String>();
+    final List<String> output = new ArrayList<String>();
     final AtomicInteger exitCode = new AtomicInteger();
     final AtomicBoolean startFailed = new AtomicBoolean();
     
@@ -178,6 +194,8 @@ public class Git {
       @Override public void onLineAvailable(String line, Key outputType) {
         if (isError(line)) {
           errorOutput.add(line);
+        } else {
+          output.add(line);
         }
       }
 
@@ -194,7 +212,7 @@ public class Git {
     
     handler.runInCurrentThread(null);
     final boolean success = !startFailed.get() && errorOutput.isEmpty() && (handler.isIgnoredErrorCode(exitCode.get()) || exitCode.get() == 0);
-    return new GitCommandResult(success, exitCode.get(), errorOutput);
+    return new GitCommandResult(success, exitCode.get(), errorOutput, output);
   }
   
   /**
