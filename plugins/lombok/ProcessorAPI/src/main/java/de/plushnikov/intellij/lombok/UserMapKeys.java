@@ -4,6 +4,8 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
+
 public class UserMapKeys {
 
   private static final String LOMBOK_HAS_IMPLICIT_USAGE_PROPERTY = "lombok.hasImplicitUsage";
@@ -36,5 +38,11 @@ public class UserMapKeys {
 
   public static void addWriteUsageFor(@NotNull UserDataHolder element) {
     element.putUserData(WRITE_KEY, Boolean.TRUE);
+  }
+
+  public static void addReadUsageFor(@NotNull Collection<? extends UserDataHolder> elements) {
+    for (UserDataHolder element : elements) {
+      addReadUsageFor(element);
+    }
   }
 }

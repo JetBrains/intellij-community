@@ -4,11 +4,16 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.impl.light.LightMethod;
 import de.plushnikov.intellij.lombok.psi.MyLightMethod;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.Collection;
 
 /**
  * Base lombok processor class
@@ -49,14 +54,74 @@ public class AbstractLombokProcessor implements LombokProcessor {
     return lightMethod;
   }
 
-  protected boolean hasMethodByName(@NotNull PsiMethod[] classMethods, @NotNull PsiMethod psiMethod) {
+  protected boolean hasMethodByName(@NotNull PsiMethod[] classMethods, @NotNull String methodName) {
     boolean hasMethod = false;
     for (PsiMethod classMethod : classMethods) {
-      if (classMethod.getName().equals(psiMethod.getName())) {
+      if (classMethod.getName().equals(methodName)) {
         hasMethod = true;
         break;
       }
     }
     return hasMethod;
+  }
+
+  protected boolean hasMethodByName(@NotNull PsiMethod[] classMethods, String... methodNames) {
+    boolean hasMethod = false;
+    for (String methodName : methodNames) {
+      if (hasMethodByName(classMethods, methodName)) {
+        hasMethod = true;
+        break;
+      }
+    }
+    return hasMethod;
+  }
+
+  protected boolean hasMethodByName(@NotNull PsiMethod[] classMethods, @NotNull Collection<String> methodNames) {
+    boolean hasMethod = false;
+    for (String methodName : methodNames) {
+      if (hasMethodByName(classMethods, methodName)) {
+        hasMethod = true;
+        break;
+      }
+    }
+    return hasMethod;
+  }
+
+  @NotNull
+  protected Collection<PsiField> filterFieldsByModifiers(@NotNull PsiField[] psiFields, String... modifiers) {
+    Collection<PsiField> filterdFields = new ArrayList<PsiField>(psiFields.length);
+    for (PsiField psiField : psiFields) {
+      boolean addField = true;
+
+      PsiModifierList modifierList = psiField.getModifierList();
+      if (null != modifierList) {
+        for (String modifier : modifiers) {
+          addField &= !modifierList.hasModifierProperty(modifier);
+        }
+      }
+
+      if (addField) {
+        filterdFields.add(psiField);
+      }
+    }
+    return filterdFields;
+  }
+
+  @NotNull
+  protected Collection<PsiField> filterFieldsByNames(@NotNull PsiField[] psiFields, String... fieldNames) {
+    Collection<PsiField> filterdFields = new ArrayList<PsiField>(psiFields.length);
+    for (PsiField psiField : psiFields) {
+      boolean addField = true;
+
+      final String psiFieldName = psiField.getName();
+      for (String fieldName : fieldNames) {
+        addField &= !psiFieldName.equals(fieldName);
+      }
+
+      if (addField) {
+        filterdFields.add(psiField);
+      }
+    }
+    return filterdFields;
   }
 }
