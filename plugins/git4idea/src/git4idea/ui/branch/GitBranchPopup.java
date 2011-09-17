@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidatorEx;
@@ -128,7 +129,7 @@ class GitBranchPopup  {
    * "New branch" item which allows to checkout new branch. 
    * For a gentle confirmation the "Create & checkout" action is a sub-action of this ActionGroup.
    */
-  private static class NewBranchActions extends ActionGroup {
+  private static class NewBranchActions extends ActionGroup implements DumbAware {
     private final Project myProject;
     private final GitRepository myRepository;
 
