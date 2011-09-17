@@ -11,10 +11,18 @@ import de.plushnikov.intellij.lombok.psi.MyLightMethod;
 import org.jetbrains.annotations.NotNull;
 
 /**
+ * Base lombok processor class
+ *
  * @author Plushnikov Michail
  */
 public class AbstractLombokProcessor implements LombokProcessor {
+  /**
+   * Anntotation qualified name this processor supports
+   */
   private final String supportedAnnotation;
+  /**
+   * Kind of output elements this processor supports
+   */
   private final Class supportedClass;
 
   /**

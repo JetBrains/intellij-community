@@ -18,6 +18,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 /**
+ * Base lombok processor class for logger processing
+ *
  * @author Plushnikov Michail
  */
 public abstract class AbstractLogProcessor extends AbstractLombokClassProcessor {

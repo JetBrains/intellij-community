@@ -13,6 +13,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 /**
+ * Base lombok processor class for constructor processing
+ *
  * @author Plushnikov Michail
  */
 public abstract class AbstractConstructorClassProcessor extends AbstractLombokClassProcessor {

@@ -13,6 +13,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 /**
+ * Base lombok processor class for field annotations
+ *
  * @author Plushnikov Michail
  */
 public abstract class AbstractLombokFieldProcessor extends AbstractLombokProcessor implements LombokFieldProcessor {
