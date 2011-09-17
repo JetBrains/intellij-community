@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>de.plushnikov.lombok-intellij-plugin</groupId>
+  <artifactId>parent</artifactId>
+  <version>0.1-SNAPSHOT</version>
+  <packaging>pom</packaging>
+
+  <name>Parent for IntelliJ IDEA Lombok plugin</name>
+  <description>A parent pom for IntelliJ Idea Lombok plugin</description>
+  <url>http://code.google.com/p/lombok-intellij-plugin/</url>
+
+  <scm>
+    <connection>scm:svn:http://lombok-intellij-plugin.googlecode.com/svn/trunk</connection>
+    <developerConnection>scm:svn:https://lombok-intellij-plugin.googlecode.com/svn/trunk</developerConnection>
+    <url>http://code.google.com/p/lombok-intellij-plugin/source/browse/</url>
+  </scm>
+  <issueManagement>
+    <system>Google Code</system>
+    <url>http://code.google.com/p/lombok-intellij-plugin/issues/list</url>
+  </issueManagement>
+  <organization>
+    <name>Michail Plushnikov</name>
+    <url>http://code.google.com/p/lombok-intellij-plugin</url>
+  </organization>
+  <licenses>
+    <license>
+      <name>New BSD License</name>
+      <url>http://www.opensource.org/licenses/bsd-license.php</url>
+    </license>
+  </licenses>
+  <developers>
+    <developer>
+      <id>1</id>
+      <name>Michail Plushnikov</name>
+      <email>plushnikov@web.de</email>
+      <roles>
+        <role>Founder</role>
+        <role>Developer</role>
+      </roles>
+      <timezone>+1</timezone>
+    </developer>
+  </developers>
+
+  <profiles>
+    <profile>
+      <id>mpl</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <properties>
+        <idea.version>10.5.2</idea.version>
+        <idea.home>C:/Program Files (x86)/JetBrains/IntelliJ IDEA Community Edition ${idea.version}</idea.home>
+      </properties>
+    </profile>
+  </profiles>
+
+  <properties>
+    <!-- maven.build.timestamp since 2.1.0-M1 -->
+    <maven.min.version>2.1.0</maven.min.version>
+    <!-- Idea requires JDK 1.6 -->
+    <jdk.min.version>1.6</jdk.min.version>
+
+    <idea.build>8000</idea.build>
+
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <maven.build.timestamp.format>yyyyMMddHHmm</maven.build.timestamp.format>
+
+    <!-- Workaround for http://jira.codehaus.org/browse/MRESOURCES-99 -->
+    <plugin.timestamp>${maven.build.timestamp}</plugin.timestamp>
+    <plugin.vendor>${project.organization.name}</plugin.vendor>
+    <plugin.vendor.url>${project.organization.url}</plugin.vendor.url>
+    <plugin.vendor.email>michail@plushnikov.de</plugin.vendor.email>
+  </properties>
+
+  <prerequisites>
+    <maven>${maven.min.version}</maven>
+  </prerequisites>
+
+  <modules>
+    <module>LombokIntelliJPlugin</module>
+    <module>ProcessorAPI</module>
+    <module>ProcessorCore</module>
+  </modules>
+
+  <dependencyManagement>
+    <dependencies>
+      <!-- === IntelliJ IDEA === -->
+      <dependency>
+        <groupId>com.intellij.idea</groupId>
+        <artifactId>openapi</artifactId>
+        <version>${idea.version}</version>
+        <scope>system</scope>
+        <systemPath>${idea.home}/lib/openapi.jar</systemPath>
+      </dependency>
+      <dependency>
+        <groupId>com.intellij.idea</groupId>
+        <artifactId>util</artifactId>
+        <version>${idea.version}</version>
+        <scope>system</scope>
+        <systemPath>${idea.home}/lib/util.jar</systemPath>
+      </dependency>
+
+      <dependency>
+        <groupId>com.intellij.idea</groupId>
+        <artifactId>extensions</artifactId>
+        <version>${idea.version}</version>
+        <scope>system</scope>
+        <systemPath>${idea.home}/lib/extensions.jar</systemPath>
+      </dependency>
+
+      <dependency>
+        <groupId>com.intellij.idea</groupId>
+        <artifactId>annotations</artifactId>
+        <version>${idea.version}</version>
+        <scope>system</scope>
+        <systemPath>${idea.home}/lib/annotations.jar</systemPath>
+      </dependency>
+
+      <dependency>
+        <groupId>com.intellij.idea</groupId>
+        <artifactId>idea</artifactId>
+        <version>${idea.version}</version>
+        <scope>system</scope>
+        <systemPath>${idea.home}/lib/idea.jar</systemPath>
+      </dependency>
+      <dependency>
+        <groupId>com.intellij.idea</groupId>
+        <artifactId>bootstrap</artifactId>
+        <version>${idea.version}</version>
+        <scope>system</scope>
+        <systemPath>${idea.home}/lib/bootstrap.jar</systemPath>
+      </dependency>
+
+      <dependency>
+        <groupId>gnu.trove</groupId>
+        <artifactId>trove</artifactId>
+        <version>${idea.version}</version>
+        <scope>system</scope>
+        <systemPath>${idea.home}/lib/trove4j.jar</systemPath>
+      </dependency>
+      <dependency>
+        <groupId>org.picocontainer</groupId>
+        <artifactId>picocontainer</artifactId>
+        <version>${idea.version}</version>
+        <scope>system</scope>
+        <systemPath>${idea.home}/lib/picocontainer.jar</systemPath>
+      </dependency>
+
+      <dependency>
+        <groupId>junit</groupId>
+        <artifactId>junit</artifactId>
+        <version>4.8.2</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>log4j</groupId>
+        <artifactId>log4j</artifactId>
+        <version>1.2.16</version>
+        <scope>test</scope>
+      </dependency>
+
+      <dependency>
+        <groupId>org.jdom</groupId>
+        <artifactId>jdom</artifactId>
+        <version>${idea.version}</version>
+        <scope>system</scope>
+        <systemPath>${idea.home}/lib/jdom.jar</systemPath>
+      </dependency>
+      <!--<dependency>-->
+        <!--<groupId>org.jdom</groupId>-->
+        <!--<artifactId>jdom</artifactId>-->
+        <!--<version>1.1</version>-->
+      <!--</dependency>-->
+    </dependencies>
+  </dependencyManagement>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>2.3.2</version>
+          <configuration>
+            <source>1.6</source>
+            <target>1.6</target>
+          </configuration>
+        </plugin>
+        <plugin>
+          <artifactId>maven-assembly-plugin</artifactId>
+          <version>2.2.1</version>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
+</project>

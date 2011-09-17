@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>de.plushnikov.lombok-intellij-plugin</groupId>
+    <artifactId>parent</artifactId>
+    <version>0.1-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>processor-api</artifactId>
+  <name>Lombok processor api modul for IntelliJ IDEA plugin</name>
+  <description>Base api for all of Lombok processors for IntelliJ IDEA</description>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.intellij.idea</groupId>
+      <artifactId>openapi</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.intellij.idea</groupId>
+      <artifactId>util</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.intellij.idea</groupId>
+      <artifactId>annotations</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.intellij.idea</groupId>
+      <artifactId>idea</artifactId>
+    </dependency>
+  </dependencies>
+</project>
