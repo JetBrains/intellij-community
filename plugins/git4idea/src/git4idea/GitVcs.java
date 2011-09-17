@@ -493,6 +493,9 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
    */
   @Nullable
   public GitVersion getVersion() {
+    if (myVersion == null) {
+      checkVersion();
+    }
     return myVersion;
   }
 
