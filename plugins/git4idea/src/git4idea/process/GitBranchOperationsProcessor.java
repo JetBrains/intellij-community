@@ -43,6 +43,7 @@ import git4idea.history.browser.GitCommit;
 import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
 import git4idea.stash.GitChangesSaver;
+import git4idea.ui.branch.GitCompareBranchesDialog;
 import git4idea.update.GitComplexProcess;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -358,6 +359,29 @@ public final class GitBranchOperationsProcessor {
     } else {
       showErrorMessage("Couldn't delete " + branchName, res.getErrorOutput());
     }
+  }
+
+  /**
+   * Compares the HEAD with the specified branch - shows a dialog with the differences.
+   * @param branchName name of the branch to compare with.
+   */
+  public void compare(@NotNull final String branchName) {
+    final List<GitCommit> headToBranch;
+    final List<GitCommit> branchToHead;
+    try {
+      headToBranch = GitHistoryUtils.history(myProject, myRepository.getRoot(), ".." + branchName);
+      branchToHead = GitHistoryUtils.history(myProject, myRepository.getRoot(), branchName + "..");
+    }
+    catch (VcsException e) {
+      // we treat it as critical and report an error
+      throw new GitExecutionException("Couldn't get [git log .." + branchName + "] on repository [" + myRepository.getRoot() + "]", e);
+    }
+
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override public void run() {
+        new GitCompareBranchesDialog(myRepository, branchName, headToBranch, branchToHead).show();
+      }
+    });
   }
 
   private void updateRepository() {

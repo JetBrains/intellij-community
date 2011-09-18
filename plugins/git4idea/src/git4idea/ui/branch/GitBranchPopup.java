@@ -191,7 +191,7 @@ class GitBranchPopup  {
 
     @Override public void actionPerformed(AnActionEvent e) {
       // TODO autocomplete branches, tags.
-      // on type check ref validity, on OK check ref existance.
+      // on type check ref validity, on OK check ref existence.
       String reference = Messages.showInputDialog(myProject, "Enter reference (branch, tag) name or commit hash", "Checkout", Messages.getQuestionIcon());
       if (reference != null) {
         new GitBranchOperationsProcessor(myProject, myRepository).checkout(reference);
@@ -229,6 +229,7 @@ class GitBranchPopup  {
     public AnAction[] getChildren(@Nullable AnActionEvent e) {
       return new AnAction[] {
         new CheckoutAction(myProject, myRepository, myBranchName),
+        new CompareAction(myProject, myRepository, myBranchName),
         //new StashAndCheckoutAction(myProject, myRepository, myBranchName),
         new DeleteAction(myProject, myRepository, myBranchName)
       };
@@ -308,6 +309,7 @@ class GitBranchPopup  {
     public AnAction[] getChildren(@Nullable AnActionEvent e) {
       return new AnAction[] {
         new CheckoutRemoteBranchAction(myProject, myRepository, myBranchName),
+        new CompareAction(myProject, myRepository, myBranchName),
       };
     }
 
@@ -341,13 +343,33 @@ class GitBranchPopup  {
     }
 
   }
+  
+  private static class CompareAction extends DumbAwareAction {
+
+    private final Project myProject;
+    private final GitRepository myRepository;
+    private final String myBranchName;
+
+    public CompareAction(Project project, GitRepository repository, String branchName) {
+      super("Compare");
+      myProject = project;
+      myRepository = repository;
+      this.myBranchName = branchName;
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      new GitBranchOperationsProcessor(myProject, myRepository).compare(myBranchName);
+    }
+
+  }
 
   /**
    * "Configure" opens a dialog to configure branches in the repository, i.e. set up tracked branches, fetch/push branches, etc.
    */
   private static class ConfigureAction extends DumbAwareAction {
     public ConfigureAction() {
-      super("Configure", null, IconLoader.getIcon("/general/ideOptions.png"));
+      super("Configure", null, IconLoader.getIcon("/general/ideOptions.png")); // TODO description
     }
 
     @Override public void actionPerformed(AnActionEvent e) {

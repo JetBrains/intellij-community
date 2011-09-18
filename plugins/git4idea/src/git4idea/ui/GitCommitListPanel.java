@@ -71,8 +71,11 @@ public class GitCommitListPanel extends JPanel implements TypeSafeDataProvider {
   public void addListSelectionListener(final @NotNull Consumer<GitCommit> listener) {
     myTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(final ListSelectionEvent e) {
-        int i = e.getFirstIndex();
-        listener.consume(myCommits.get(i));
+        ListSelectionModel lsm = (ListSelectionModel)e.getSource();
+        int i = lsm.getMaxSelectionIndex();
+        if (i >= 0) {
+          listener.consume(myCommits.get(i));
+        }
       }
     });
   }
@@ -100,6 +103,10 @@ public class GitCommitListPanel extends JPanel implements TypeSafeDataProvider {
   @NotNull
   public JComponent getPreferredFocusComponent() {
     return myTable;
+  }
+
+  public void clearSelection() {
+    myTable.clearSelection();
   }
 
   private static class GitCommitListTableModel extends AbstractTableModel {

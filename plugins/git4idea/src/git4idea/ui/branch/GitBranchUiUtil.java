@@ -47,6 +47,22 @@ class GitBranchUiUtil {
   }
 
   /**
+   * Returns current branch name (if on branch) or current revision otherwise.
+   * For fresh repository returns an empty string.
+   */
+  @NotNull
+  static String getBranchNameOrRev(@NotNull GitRepository repository) {
+    if (repository.isOnBranch()) {
+      GitBranch currentBranch = repository.getCurrentBranch();
+      assert currentBranch != null;
+      return currentBranch.getName();
+    } else {
+      String currentRevision = repository.getCurrentRevision();
+      return currentRevision != null ? currentRevision : "";
+    }
+  }
+
+  /**
    * Returns the text that is displaying current branch.
    * In the simple case it is just the branch name, but in detached HEAD state it displays the hash or "rebasing master".
    */
