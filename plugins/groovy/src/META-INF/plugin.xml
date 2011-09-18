@@ -255,6 +255,7 @@
 
     <typeHierarchyProvider language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.GroovyTypeHierarchyProvider"/>
 
+    <lang.unwrapDescriptor language="Groovy" implementationClass="org.jetbrains.plugins.groovy.unwrap.GroovyUnwrapDescriptor" />
 
     <lang.elementManipulator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral"
                              implementationClass="org.jetbrains.plugins.groovy.lang.resolve.GroovyStringLiteralManipulator"/>
