@@ -82,6 +82,10 @@
     </dependencies>
   </dependencyManagement>
 
+  <properties>
+    <skipTests>true</skipTests>
+  </properties>
+
   <build>
     <defaultGoal>install</defaultGoal>
 
@@ -112,8 +116,7 @@
               <goal>single</goal>
             </goals>
             <configuration>
-              <!-- Should be uploaded only to dist -->
-              <attach>false</attach>
+              <attach>true</attach>
               <descriptors>
                 <descriptor>src/main/assembly/idea-plugin-assembly.xml</descriptor>
               </descriptors>
@@ -121,6 +124,31 @@
           </execution>
         </executions>
       </plugin>
+      <!--<plugin>-->
+      <!--<groupId>org.projectlombok</groupId>-->
+      <!--<artifactId>lombok-maven-plugin</artifactId>-->
+      <!--<executions>-->
+      <!--<execution>-->
+      <!--<phase>generate-test-sources</phase>-->
+      <!--<goals>-->
+      <!--<goal>testDelombok</goal>-->
+      <!--</goals>-->
+      <!--<configuration>-->
+      <!--<sourceDirectory>${project.basedir}/src/test/resources/data/lombok</sourceDirectory>-->
+      <!--<outputDirectory>${project.basedir}/src/test/resources/data/delombok</outputDirectory>-->
+      <!--</configuration>-->
+      <!--</execution>-->
+      <!--</executions>-->
+      <!--<dependencies>-->
+      <!--<dependency>-->
+      <!--<groupId>sun.jdk</groupId>-->
+      <!--<artifactId>tools</artifactId>-->
+      <!--<version>1.6</version>-->
+      <!--<scope>system</scope>-->
+      <!--<systemPath>${java.home}/../lib/tools.jar</systemPath>-->
+      <!--</dependency>-->
+      <!--</dependencies>-->
+      <!--</plugin>-->
     </plugins>
   </build>
 </project>
