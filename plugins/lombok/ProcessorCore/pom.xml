@@ -24,8 +24,12 @@
       <artifactId>openapi</artifactId>
     </dependency>
     <dependency>
-        <groupId>com.intellij.idea</groupId>
-        <artifactId>util</artifactId>
+      <groupId>com.intellij.idea</groupId>
+      <artifactId>idea</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.intellij.idea</groupId>
+      <artifactId>util</artifactId>
     </dependency>
     <dependency>
       <groupId>com.intellij.idea</groupId>
