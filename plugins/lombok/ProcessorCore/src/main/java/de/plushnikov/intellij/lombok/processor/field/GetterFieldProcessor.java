@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
 import com.intellij.util.StringBuilderSpinAllocator;
 import de.plushnikov.intellij.lombok.UserMapKeys;
@@ -67,6 +68,9 @@ public class GetterFieldProcessor extends AbstractLombokFieldProcessor {
       builder.append(methodVisibility);
       if (builder.length() > 0) {
         builder.append(' ');
+      }
+      if (psiField.hasModifierProperty(PsiModifier.STATIC)) {
+        builder.append(PsiModifier.STATIC).append(' ');
       }
       builder.append(annotationsString);
       builder.append(psiReturnType.getCanonicalText());

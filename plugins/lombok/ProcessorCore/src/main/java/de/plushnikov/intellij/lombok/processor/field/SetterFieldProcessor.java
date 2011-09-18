@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
 import com.intellij.util.StringBuilderSpinAllocator;
 import de.plushnikov.intellij.lombok.UserMapKeys;
@@ -34,6 +35,12 @@ public class SetterFieldProcessor extends AbstractLombokFieldProcessor {
   }
 
   public <Psi extends PsiElement> void process(@NotNull PsiField psiField, @NotNull PsiMethod[] classMethods, @NotNull PsiAnnotation psiAnnotation, @NotNull List<Psi> target) {
+    if (psiField.hasModifierProperty(PsiModifier.FINAL)) {
+      // TODO create warning in code
+      // Not generated setter method: Field ist final
+      return;
+    }
+
     final String methodVisibity = LombokProcessorUtil.getMethodVisibity(psiAnnotation);
     if (null != methodVisibity) {
       Project project = psiField.getProject();
@@ -63,6 +70,9 @@ public class SetterFieldProcessor extends AbstractLombokFieldProcessor {
       builder.append(methodVisibility);
       if (builder.length() > 0) {
         builder.append(' ');
+      }
+      if (psiField.hasModifierProperty(PsiModifier.STATIC)) {
+        builder.append(PsiModifier.STATIC).append(' ');
       }
       builder.append(PsiType.VOID.getCanonicalText());
       builder.append(' ');
