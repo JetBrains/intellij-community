@@ -49,7 +49,7 @@ public class ToStringProcessor extends AbstractLombokClassProcessor {
   @NotNull
   private PsiMethod createToStringMethod(@NotNull PsiClass psiClass, @NotNull PsiElementFactory elementFactory) {
     return elementFactory.createMethodFromText(
-        "public java.lang.String " + METHOD_NAME + "() { return super.toString(); }",
+        "@java.lang.Override public java.lang.String " + METHOD_NAME + "() { return super.toString(); }",
         psiClass);
   }
 

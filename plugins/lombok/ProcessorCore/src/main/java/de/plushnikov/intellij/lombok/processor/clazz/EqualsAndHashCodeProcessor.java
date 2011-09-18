@@ -53,14 +53,14 @@ public class EqualsAndHashCodeProcessor extends AbstractLombokClassProcessor {
   @NotNull
   private PsiMethod createEqualsMethod(@NotNull PsiClass psiClass, @NotNull PsiElementFactory elementFactory) {
     return elementFactory.createMethodFromText(
-        "public boolean " + EQUALS_METHOD_NAME + "(Object o) { return super.equals(o); }",
+        "@java.lang.Override public boolean " + EQUALS_METHOD_NAME + "(Object o) { return super.equals(o); }",
         psiClass);
   }
 
   @NotNull
   private PsiMethod createHashCodeMethod(@NotNull PsiClass psiClass, @NotNull PsiElementFactory elementFactory) {
     return elementFactory.createMethodFromText(
-        "public int " + HASH_CODE_METHOD_NAME + "() { return super.hashCode(); }",
+        "@java.lang.Override public int " + HASH_CODE_METHOD_NAME + "() { return super.hashCode(); }",
         psiClass);
   }
 
