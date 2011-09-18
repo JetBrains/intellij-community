@@ -26,7 +26,7 @@ public abstract class AbstractLogProcessor extends AbstractLombokClassProcessor 
 
   private final static String loggerName = "log";
   private final String loggerType;
-  private final String loggerInitializer;
+  private final String loggerInitializer;//TODO add Initializer support
 
   protected AbstractLogProcessor(@NotNull String supportedAnnotation, @NotNull String loggerType, @NotNull String loggerInitializer) {
     super(supportedAnnotation, PsiField.class);
@@ -35,17 +35,33 @@ public abstract class AbstractLogProcessor extends AbstractLombokClassProcessor 
   }
 
   public <Psi extends PsiElement> void process(@NotNull PsiClass psiClass, @NotNull PsiMethod[] classMethods, @NotNull PsiAnnotation psiAnnotation, @NotNull List<Psi> target) {
-    Project project = psiClass.getProject();
-    PsiManager manager = psiClass.getContainingFile().getManager();
+    if (!hasFieldByName(psiClass, loggerName)) {
+      Project project = psiClass.getProject();
+      PsiManager manager = psiClass.getContainingFile().getManager();
 
-    PsiType psiLoggerType = JavaPsiFacade.getElementFactory(project).createTypeFromText(loggerType, psiClass);
-    LightElement loggerField = new MyLightFieldBuilder(manager, loggerName, psiLoggerType)
-        .setHasInitializer(true)
-        .setContainingClass(psiClass)
-        .setModifiers(PsiModifier.FINAL, PsiModifier.STATIC, PsiModifier.PUBLIC)
-        .setNavigationElement(psiAnnotation);
+      PsiType psiLoggerType = JavaPsiFacade.getElementFactory(project).createTypeFromText(loggerType, psiClass);
+      LightElement loggerField = new MyLightFieldBuilder(manager, loggerName, psiLoggerType)
+          .setHasInitializer(true)
+          .setContainingClass(psiClass)
+          .setModifiers(PsiModifier.FINAL, PsiModifier.STATIC, PsiModifier.PUBLIC)
+          .setNavigationElement(psiAnnotation);
 
-    target.add((Psi) loggerField);
+      target.add((Psi) loggerField);
+    } else {
+      //TODO create warning in code
+      //Not generating fieldName(): A field with that name already exists
+    }
   }
 
+  protected boolean hasFieldByName(@NotNull PsiClass psiClass, String... fieldNames) {
+    final PsiField[] psiFields = collectClassFieldsIntern(psiClass);
+    for (PsiField psiField : psiFields) {
+      for (String fieldName : fieldNames) {
+        if (psiField.getName().equals(fieldName)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
 }
