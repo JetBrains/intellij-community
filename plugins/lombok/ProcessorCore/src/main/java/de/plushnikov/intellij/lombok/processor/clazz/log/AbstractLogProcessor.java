@@ -35,6 +35,11 @@ public abstract class AbstractLogProcessor extends AbstractLombokClassProcessor 
   }
 
   public <Psi extends PsiElement> void process(@NotNull PsiClass psiClass, @NotNull PsiMethod[] classMethods, @NotNull PsiAnnotation psiAnnotation, @NotNull List<Psi> target) {
+    if (psiClass.isInterface() || psiClass.isAnnotationType()) {
+      //TODO create warning in code
+      //Logger Injection is not possible on interface or annotation types
+      return;
+    }
     if (!hasFieldByName(psiClass, loggerName)) {
       Project project = psiClass.getProject();
       PsiManager manager = psiClass.getContainingFile().getManager();
@@ -43,7 +48,7 @@ public abstract class AbstractLogProcessor extends AbstractLombokClassProcessor 
       LightElement loggerField = new MyLightFieldBuilder(manager, loggerName, psiLoggerType)
           .setHasInitializer(true)
           .setContainingClass(psiClass)
-          .setModifiers(PsiModifier.FINAL, PsiModifier.STATIC, PsiModifier.PUBLIC)
+          .setModifiers(PsiModifier.FINAL, PsiModifier.STATIC, PsiModifier.PRIVATE)
           .setNavigationElement(psiAnnotation);
 
       target.add((Psi) loggerField);
