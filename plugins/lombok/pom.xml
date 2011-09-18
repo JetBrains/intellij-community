@@ -62,7 +62,20 @@
     <!-- Idea requires JDK 1.6 -->
     <jdk.min.version>1.6</jdk.min.version>
 
-    <idea.build>8000</idea.build>
+    <!--The build numbers of recent IDEA versions are:-->
+    <!--8.0 - 80.00-->
+    <!--9.0 - 93.13-->
+    <!--9.0.1 - 93.94-->
+    <!--9.0.2 - 95.66-->
+    <!--9.0.3 - 95.429-->
+    <!--9.0.4 - 95.627-->
+    <!--10.0 - 99.18-->
+    <!--10.0.1 - 99.32-->
+    <!--10.0.2 - 103.72-->
+    <!--10.0.3 - 103.255-->
+    <!--10.5 - 107.105-->
+    <!--10.5.1 - 107.322-->
+    <idea.build>99.18</idea.build>
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -87,6 +100,13 @@
 
   <dependencyManagement>
     <dependencies>
+      <dependency>
+        <groupId>org.projectlombok</groupId>
+        <artifactId>lombok</artifactId>
+        <version>0.10</version>
+        <scope>provided</scope>
+      </dependency>
+
       <!-- === IntelliJ IDEA === -->
       <dependency>
         <groupId>com.intellij.idea</groupId>
@@ -169,11 +189,6 @@
         <scope>system</scope>
         <systemPath>${idea.home}/lib/jdom.jar</systemPath>
       </dependency>
-      <!--<dependency>-->
-        <!--<groupId>org.jdom</groupId>-->
-        <!--<artifactId>jdom</artifactId>-->
-        <!--<version>1.1</version>-->
-      <!--</dependency>-->
     </dependencies>
   </dependencyManagement>
 
@@ -191,6 +206,11 @@
         <plugin>
           <artifactId>maven-assembly-plugin</artifactId>
           <version>2.2.1</version>
+        </plugin>
+        <plugin>
+          <groupId>org.projectlombok</groupId>
+          <artifactId>lombok-maven-plugin</artifactId>
+          <version>0.10.0.2</version>
         </plugin>
       </plugins>
     </pluginManagement>

@@ -1,9 +1,10 @@
 <idea-plugin version="2">
   <name>Lombook Plugin</name>
   <description>A plugin that adds first-class support for Project Lombok</description>
+  <vendor email="lombokplugin@plushnikov.de">Michail Plushnikov</vendor>
   <version>0.1</version>
-  <vendor>Michail Plushnikov</vendor>
-  <idea-version since-build="8000"/>
+
+  <idea-version since-build="99.18"/>
 
   <application-components>
     <!-- Add your application components here -->
