@@ -53,6 +53,7 @@ public abstract class AbstractConstructorClassProcessor extends AbstractLombokCl
       if (builder.length() > 0) {
         builder.append(' ');
       }
+      //TODO append @java.beans.ConstructorProperties({"x"}) annotation
       builder.append(psiClass.getName());
       builder.append('(');
       if (!params.isEmpty()) {
