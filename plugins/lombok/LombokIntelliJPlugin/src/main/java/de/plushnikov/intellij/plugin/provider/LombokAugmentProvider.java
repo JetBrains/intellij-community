@@ -81,7 +81,9 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
    *
    * @param psiClass psiClass to collect all of methods from
    * @return all intern methods of the class
+   * @deprecated
    */
+  @Deprecated
   private PsiMethod[] collectClassMethodsIntern(@NotNull PsiClassImpl psiClass) {
     return psiClass.getStubOrPsiChildren(Constants.METHOD_BIT_SET, PsiMethod.ARRAY_FACTORY);
   }
