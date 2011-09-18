@@ -90,6 +90,19 @@
               </execution>
             </executions>
           </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-gpg-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>sign-artifacts</id>
+                <phase>verify</phase>
+                <goals>
+                  <goal>sign</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
         </plugins>
       </build>
     </profile>
@@ -270,6 +283,10 @@
           <version>2.2.1</version>
         </plugin>
         <plugin>
+          <artifactId>maven-gpg-plugin</artifactId>
+          <version>1.4</version>
+        </plugin>
+        <plugin>
           <groupId>org.projectlombok</groupId>
           <artifactId>lombok-maven-plugin</artifactId>
           <version>0.10.0.2</version>
@@ -282,13 +299,13 @@
     <repository>
       <id>Sonatype-releases</id>
       <name>Sonatype Staging Repository</name>
-      <url>http://oss.sonatype.org/content/groups/staging</url>
+      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
       <uniqueVersion>false</uniqueVersion>
     </repository>
     <snapshotRepository>
       <id>Sonatype-snapshots</id>
       <name>Sonatype Snapshot Repository</name>
-      <url>http://oss.sonatype.org/content/repositories/snapshots</url>
+      <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
     </snapshotRepository>
   </distributionManagement>
 </project>
