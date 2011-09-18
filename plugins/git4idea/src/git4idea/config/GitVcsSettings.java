@@ -47,7 +47,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
   private SshExecutable mySshExecutable = DEFAULT_SSH; // IDEA SSH should be used instead of native SSH.
   private UpdateChangesPolicy myUpdateChangesPolicy = UpdateChangesPolicy.STASH; // The policy that specifies how files are saved before update or rebase
   private UpdateType myUpdateType = UpdateType.BRANCH_DEFAULT; // The type of update operation to perform
-  private ConversionPolicy myLineSeparatorsConversion = ConversionPolicy.CONVERT; // The crlf conversion policy
+  private ConversionPolicy myLineSeparatorsConversion = ConversionPolicy.ASK; // The crlf conversion policy
   private UpdateChangesPolicy myPushActiveBranchesRebaseSavePolicy = UpdateChangesPolicy.STASH; // The policy used in push active branches dialog
 
   public GitVcsSettings(GitVcsApplicationSettings appSettings) {
