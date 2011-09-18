@@ -43,8 +43,7 @@ public class AbstractLombokProcessor implements LombokProcessor {
 
   public <Psi extends PsiElement> boolean acceptAnnotation(@NotNull PsiAnnotation psiAnnotation, @NotNull Class<Psi> type) {
     final String annotationName = StringUtil.notNullize(psiAnnotation.getQualifiedName()).trim();
-    return (supportedAnnotation.equals(annotationName) || supportedAnnotation.endsWith(annotationName)) &&
-        (type.isAssignableFrom(supportedClass));
+    return supportedAnnotation.equals(annotationName) && (type.isAssignableFrom(supportedClass));
   }
 
   @NotNull
