@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
@@ -44,6 +45,7 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
   private JCheckBox mavenHomeOverrideCheckBox;
   private JCheckBox settingsOverrideCheckBox;
   private JCheckBox localRepositoryOverrideCheckBox;
+  private JBLabel myFakeLabel;
   private JComponent anchor;
 
   private final PathOverrider mavenHomeOverrider;
@@ -141,6 +143,7 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
     mavenHomeComponent.setAnchor(anchor);
     settingsFileComponent.setAnchor(anchor);
     localRepositoryComponent.setAnchor(anchor);
+    myFakeLabel.setAnchor(anchor);
   }
 
   private static abstract class PathProvider {
