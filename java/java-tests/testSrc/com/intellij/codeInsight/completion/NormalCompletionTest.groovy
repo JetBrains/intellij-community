@@ -928,6 +928,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   public void testMethodParameterTypeDot() throws Throwable { doAntiTest() }
   public void testNewGenericClass() throws Throwable { doTest('\n') }
   public void testNewGenericInterface() throws Throwable { doTest() }
+  public void testEnumPrivateFinal() throws Throwable { doTest() }
 
   public void testUnfinishedMethodTypeParameter() throws Throwable {
     configure()

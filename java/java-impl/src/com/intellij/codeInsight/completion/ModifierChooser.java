@@ -99,7 +99,7 @@ scopes:
               boolean containModifierFlag = false;
               if (list != null) {
                 for (@Modifier String keyword : keywords) {
-                  if (list.hasModifierProperty(keyword)) {
+                  if (list.hasExplicitModifier(keyword)) {
                     containModifierFlag = true;
                     break;
                   }
