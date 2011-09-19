@@ -34,7 +34,8 @@ public class XDebuggerHistoryManager {
   }
 
   public void addRecentExpression(@NotNull @NonNls String id, @NotNull String expression) {
-    if (expression.trim().length() == 0) return;
+    final String trimmedExpression = expression.trim();
+    if (trimmedExpression.length() == 0) return;
 
     LinkedList<String> list = myRecentExpressions.get(id);
     if (list == null) {
@@ -44,8 +45,8 @@ public class XDebuggerHistoryManager {
     if (list.size() == MAX_RECENT_EXPRESSIONS) {
       list.removeLast();
     }
-    list.remove(expression);
-    list.addFirst(expression);
+    list.remove(trimmedExpression);
+    list.addFirst(trimmedExpression);
   }
 
   public List<String> getRecentExpressions(@NonNls String id) {
