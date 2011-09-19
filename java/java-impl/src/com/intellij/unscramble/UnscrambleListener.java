@@ -16,8 +16,10 @@
 package com.intellij.unscramble;
 
 import com.intellij.Patches;
+import com.intellij.ide.ClipboardSynchronizer;
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.Alarm;
 
@@ -32,6 +34,8 @@ public class UnscrambleListener extends ApplicationAdapter {
 
   @Override
   public void applicationActivated(final IdeFrame ideFrame) {
+    if (SystemInfo.isMac && ClipboardSynchronizer.useAlternativeSync()) return;
+    
     final Runnable processClipboard = new Runnable() {
       @Override
       public void run() {
@@ -59,6 +63,8 @@ public class UnscrambleListener extends ApplicationAdapter {
 
   @Override
   public void applicationDeactivated(IdeFrame ideFrame) {
+    if (SystemInfo.isMac && ClipboardSynchronizer.useAlternativeSync()) return;
+    
     stacktrace = AnalyzeStacktraceUtil.getTextInClipboard();
   }
 
