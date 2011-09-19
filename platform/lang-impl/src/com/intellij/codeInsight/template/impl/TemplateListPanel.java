@@ -160,8 +160,8 @@ public class TemplateListPanel extends JPanel implements Disposable {
 
     for (TemplateGroup templateGroup : templateGroups) {
       for (TemplateImpl template : templateGroup.getElements()) {
-        template.applyOptions(getOptions(template));
-        template.applyContext(getContext(template));
+        template.applyOptions(getTemplateOptions(template));
+        template.applyContext(getTemplateContext(template));
       }
     }
     TemplateSettings templateSettings = TemplateSettings.getInstance();
@@ -407,10 +407,6 @@ public class TemplateListPanel extends JPanel implements Disposable {
     registerTemplate(template);
   }
 
-  private Map<TemplateOptionalProcessor, Boolean> getOptions(final TemplateImpl template) {
-    return getTemplateOptions(template);
-  }
-
   @Nullable
   private DefaultMutableTreeNode getNode(final int row) {
     JTree tree = myTree;
@@ -467,15 +463,11 @@ public class TemplateListPanel extends JPanel implements Disposable {
     LOG.assertTrue(orTemplate != null);
     TemplateImpl template = orTemplate.copy();
     template.setKey(ABBREVIATION);
-    myTemplateOptions.put(getKey(template), getOptions(orTemplate));
-    myTemplateContext.put(getKey(template), getContext(orTemplate));
+    myTemplateOptions.put(getKey(template), new HashMap<TemplateOptionalProcessor, Boolean>(getTemplateOptions(orTemplate)));
+    myTemplateContext.put(getKey(template), new HashMap<TemplateContextType, Boolean>(getTemplateContext(orTemplate)));
     registerTemplate(template);
 
     updateTemplateDetails(true);
-  }
-
-  private Map<TemplateContextType, Boolean> getContext(final TemplateImpl template) {
-    return getTemplateContext(template);
   }
 
   private int getSelectedIndex() {
@@ -838,7 +830,8 @@ public class TemplateListPanel extends JPanel implements Disposable {
         if (myCurrentTemplateEditor != null) {
           myCurrentTemplateEditor.dispose();
         }
-        createTemplateEditor(newTemplate, (String)myExpandByCombo.getSelectedItem(), getOptions(newTemplate), getContext(newTemplate));
+        createTemplateEditor(newTemplate, (String)myExpandByCombo.getSelectedItem(), getTemplateOptions(newTemplate),
+                             getTemplateContext(newTemplate));
         if (focusKey) {
           myCurrentTemplateEditor.focusKey();
         }
