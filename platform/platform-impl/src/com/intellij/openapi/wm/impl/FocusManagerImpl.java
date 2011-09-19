@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.FocusTrackback;
-import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -801,7 +800,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
 
   @Override
   public Component getFocusOwner() {
-    assertDispatchThread();
+    //assertDispatchThread();  // todo: uncomment after IDEA 11 EAP
 
     Component result = null;
     if (myRunContext != null) {
