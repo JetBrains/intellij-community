@@ -307,7 +307,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
         if (entry.getKey() instanceof PsiFile) {
           final PsiFile file = (PsiFile)entry.getKey();
           final PsiDirectory containingDirectory = file.getContainingDirectory();
-          if (CopyFilesOrDirectoriesHandler.checkFileExist(containingDirectory, choice, file, entry.getValue())) {
+          if (CopyFilesOrDirectoriesHandler.checkFileExist(containingDirectory, choice, file, entry.getValue(), "Rename")) {
             iterator.remove();
             continue;
           }

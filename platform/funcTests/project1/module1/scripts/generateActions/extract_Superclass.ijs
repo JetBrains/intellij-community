@@ -1,12 +1,15 @@
-%startTest Create superclass
+%startTest Create superclass from popup menu
 
-%%include ../include/project1Init.ijs
-%%action GotoClass
-%%PsiManager\n
-
-%include ../include/init.ijs
+%include ../include/project1Init.ijs
+%action GotoClass
+FileEditorManager\n
+%call checkFocus(editorTab=FileEditorManager.java)
 %call contextMenu(Refactor|Extract Superclass)
 TestSuperclass\n
-%call checkFocus(dialog=Analyze and Replace Usages)
+%call waitForDialog(Analyze and Replace Usages)
+%[space]
+%call waitForDialog(Use Interface Where Possible)
+%[space]
+%call checkFocus(editorTab=FileEditorManager.java)
 
 %endTest

@@ -247,19 +247,25 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
 
     super.stop();
 
-    if (myDialog != null) {
-      myDialog.hide();
-      if (myDialog.wasShown()) {
-        myFocusTrackback.restoreFocus();
-      }
-      else {
-        myFocusTrackback.consume();
-      }
-    }
 
-    myStoppedAlready = true;
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        if (myDialog != null) {
+          myDialog.hide();
+          if (myDialog.wasShown()) {
+            myFocusTrackback.restoreFocus();
+          }
+          else {
+            myFocusTrackback.consume();
+          }
+        }
 
-    Disposer.dispose(this);
+        myStoppedAlready = true;
+
+        Disposer.dispose(ProgressWindow.this);
+      }
+    });
 
     SwingUtilities.invokeLater(EmptyRunnable.INSTANCE); // Just to give blocking dispatching a chance to go out.
   }

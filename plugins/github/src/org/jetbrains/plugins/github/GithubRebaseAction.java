@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -124,15 +125,15 @@ public class GithubRebaseAction extends DumbAwareAction {
       final String parentRepoUrl = "git://github.com/" + parentRepoSuffix;
 
       // Check that corresponding remote branch is configured for the fork origin repo
-      boolean remoteForParentSeen = false;
+      final Ref<String> remoteForForkParentRepo = new Ref<String>();
       for (GitRemote gitRemote : gitRemotes) {
         final String fetchUrl = gitRemote.fetchUrl();
         if (fetchUrl.endsWith(parent + ".git")) {
-          remoteForParentSeen = true;
+          remoteForForkParentRepo.set(gitRemote.name());
           break;
         }
       }
-      if (!remoteForParentSeen){
+      if (remoteForForkParentRepo.isNull()){
         final int result = Messages.showYesNoDialog(project, "It is necessary to have '" +
                                                              parentRepoUrl +
                                                              "' as a configured remote. Add remote?", "Github Rebase",
@@ -149,8 +150,9 @@ public class GithubRebaseAction extends DumbAwareAction {
               final GitSimpleHandler addRemoteHandler = new GitSimpleHandler(project, root, GitCommand.REMOTE);
               addRemoteHandler.setNoSSH(true);
               addRemoteHandler.setSilent(true);
-              final String remoteName = parent.substring(0, parent.lastIndexOf('/'));
-              addRemoteHandler.addParameters("add", remoteName, parentRepoUrl);
+
+              remoteForForkParentRepo.set("upstream");
+              addRemoteHandler.addParameters("add", remoteForForkParentRepo.get(), parentRepoUrl);
               addRemoteHandler.run();
               if (addRemoteHandler.getExitCode() != 0) {
                 showErrorMessageInEDT(project, "Failed to add GitHub remote: '" + parentRepoUrl + "'");
@@ -180,7 +182,7 @@ public class GithubRebaseAction extends DumbAwareAction {
 
       BasicAction.saveAll();
       final GithubRebase action = (GithubRebase) ActionManager.getInstance().getAction("Github.Rebase.Internal");
-      action.setRebaseOrigin(parent);
+      action.setRebaseOrigin(remoteForForkParentRepo.get());
       final AnActionEvent actionEvent =
         new AnActionEvent(e.getInputEvent(), e.getDataContext(), e.getPlace(), e.getPresentation(), e.getActionManager(), e.getModifiers());
       action.actionPerformed(actionEvent);

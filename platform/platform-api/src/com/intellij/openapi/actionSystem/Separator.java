@@ -16,6 +16,7 @@
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.project.DumbAware;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents a separator.
@@ -28,7 +29,7 @@ public final class Separator extends AnAction implements DumbAware {
   public Separator() {
   }
 
-  public Separator(String text) {
+  public Separator(@Nullable final String text) {
     myText = text;
   }
 

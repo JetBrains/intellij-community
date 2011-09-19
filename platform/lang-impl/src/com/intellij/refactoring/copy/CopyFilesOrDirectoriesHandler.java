@@ -234,7 +234,7 @@ public class CopyFilesOrDirectoriesHandler implements CopyHandlerDelegate {
     if (elementToCopy instanceof PsiFile) {
       PsiFile file = (PsiFile)elementToCopy;
       String name = newName == null ? file.getName() : newName;
-      if (checkFileExist(targetDirectory, choice, file, name)) return null;
+      if (checkFileExist(targetDirectory, choice, file, name, "Copy")) return null;
       return targetDirectory.copyFileFrom(name, file);
     }
     else if (elementToCopy instanceof PsiDirectory) {
@@ -267,12 +267,12 @@ public class CopyFilesOrDirectoriesHandler implements CopyHandlerDelegate {
     }
   }
 
-  public static boolean checkFileExist(PsiDirectory targetDirectory, int[] choice, PsiFile file, String name) {
+  public static boolean checkFileExist(PsiDirectory targetDirectory, int[] choice, PsiFile file, String name, final String title) {
     final PsiFile existing = targetDirectory.findFile(name);
-    if (existing!=null) {
+    if (existing != null && !existing.equals(file)) {
       int selection = choice == null || choice[0] == -1 ? Messages.showDialog(
         String.format("File '%s' already exists in directory '%s'", name, targetDirectory.getVirtualFile().getPath()),
-        "Copy",
+        title,
         choice == null ? new String[]{"Overwrite", "Skip"}
                        : new String[]{"Overwrite", "Skip", "Overwrite for all", "Skip for all"}, 0, Messages.getQuestionIcon())
                                            : choice[0];

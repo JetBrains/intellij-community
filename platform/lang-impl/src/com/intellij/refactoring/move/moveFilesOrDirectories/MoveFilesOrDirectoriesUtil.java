@@ -146,7 +146,7 @@ public class MoveFilesOrDirectoriesUtil {
                   final boolean fileExist = ApplicationManager.getApplication().runWriteAction(new Computable<Boolean>() {
                     @Override
                     public Boolean compute() {
-                     return CopyFilesOrDirectoriesHandler.checkFileExist(targetDirectory, choice, file, file.getName());
+                     return CopyFilesOrDirectoriesHandler.checkFileExist(targetDirectory, choice, file, file.getName(), "Move");
                     }
                   });
                   if (fileExist) continue;

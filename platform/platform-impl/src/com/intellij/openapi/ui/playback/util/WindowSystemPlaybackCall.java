@@ -24,6 +24,9 @@ import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.AsyncResult;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.SimpleTimer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ToolWindow;
@@ -34,8 +37,10 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
+import java.awt.event.AWTEventListener;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
+import java.awt.event.WindowEvent;
 import java.util.*;
 
 public class WindowSystemPlaybackCall {
@@ -63,6 +68,46 @@ public class WindowSystemPlaybackCall {
         result.setDone(text.toString());
       }
     });
+
+    return result;
+  }
+
+
+  public static AsyncResult<String> waitForDialog(final PlaybackContext context, final String title) {
+    final AsyncResult<String> result = new AsyncResult<String>();
+
+    final Ref<AWTEventListener> listener = new Ref<AWTEventListener>();
+    listener.set(new AWTEventListener() {
+      @Override
+      public void eventDispatched(AWTEvent event) {
+        if (event.getID() == WindowEvent.WINDOW_ACTIVATED) {
+          final Window wnd = ((WindowEvent)event).getWindow();
+          if (wnd instanceof JDialog) {
+            if (title.equals(((JDialog)wnd).getTitle())) {
+              Toolkit.getDefaultToolkit().removeAWTEventListener(listener.get());
+              SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                  getUiReady(context).notify(result);
+                }
+              });
+            }
+          }
+        }
+      }
+    });
+
+    Toolkit.getDefaultToolkit().addAWTEventListener(listener.get(), WindowEvent.WINDOW_EVENT_MASK);
+
+    SimpleTimer.getInstance().setUp(new Runnable() {
+      @Override
+      public void run() {
+        Toolkit.getDefaultToolkit().removeAWTEventListener(listener.get());
+        if (!result.isProcessed()) {
+          result.setRejected("Timed out waiting for window: " + title);
+        }
+      }
+    }, Registry.intValue("actionSystem.commandProcessingTimeout"));
 
     return result;
   }
