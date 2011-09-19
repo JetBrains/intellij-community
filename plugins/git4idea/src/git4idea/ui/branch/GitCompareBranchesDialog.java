@@ -114,7 +114,7 @@ public class GitCompareBranchesDialog extends DialogWrapper {
     String firstBranch = forward ? currentBranch : myBranchName;
     String secondBranch = forward ? myBranchName : currentBranch;
     return String.format("<html>Commits that exist in <code><b>%s</b></code> but don't exist in <code><b>%s</b></code> (<code>git log %s..%s</code>):</html>",
-                         firstBranch, secondBranch, firstBranch, secondBranch);
+                         secondBranch, firstBranch, firstBranch, secondBranch);
   }
 
   /**
