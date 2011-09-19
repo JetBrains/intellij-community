@@ -1159,9 +1159,10 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
   }
 
   private void preloadActionGroup(final ActionGroup group) {
-    final AnAction[] children = ApplicationManager.getApplication().runReadAction(new Computable<AnAction[]>() {
+    final Application application = ApplicationManager.getApplication();
+    final AnAction[] children = application.runReadAction(new Computable<AnAction[]>() {
       public AnAction[] compute() {
-        if (ApplicationManager.getApplication().isDisposed()) {
+        if (application.isDisposed()) {
           return AnAction.EMPTY_ARRAY;
         }
 
