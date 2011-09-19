@@ -21,10 +21,15 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Set;
 
 /**
  * Base class and extension point for code style settings shared between multiple languages
@@ -201,5 +206,80 @@ public abstract class LanguageCodeStyleSettingsProvider {
   public IndentOptionsEditor getIndentOptionsEditor() {
     return null;
   }
+  
+  public Set<String> getSupportedFields() {
+    SupportedFieldCollector fieldCollector = new SupportedFieldCollector();
+    fieldCollector.collectFields();
+    return fieldCollector.getCollectedFields();
+  }
+  
+  private final class SupportedFieldCollector implements CodeStyleSettingsCustomizable {
+    private Set<String> myCollectedFields = new HashSet<String>();
+    private SettingsType myCurrSettingsType;
+    
+    public void collectFields() {
+      for (SettingsType settingsType : SettingsType.values()) {
+        myCurrSettingsType = settingsType;
+        LanguageCodeStyleSettingsProvider.this.customizeSettings(this, settingsType);
+      }
+    }
+
+    @Override
+    public void showAllStandardOptions() {
+      switch (myCurrSettingsType) {
+        case BLANK_LINES_SETTINGS:
+          for (BlankLinesOption blankLinesOption : BlankLinesOption.values()) {
+            myCollectedFields.add(blankLinesOption.name());
+          }
+          break;
+        case SPACING_SETTINGS:
+          for (SpacingOption spacingOption : SpacingOption.values()) {
+            myCollectedFields.add(spacingOption.name());
+          }
+          break;
+        case WRAPPING_AND_BRACES_SETTINGS:
+          for (WrappingOrBraceOption wrappingOrBraceOption : WrappingOrBraceOption.values()) {
+            myCollectedFields.add(wrappingOrBraceOption.name());
+          }
+          break;
+        default:
+          // ignore
+      }
+    }
+
+    @Override
+    public void showStandardOptions(String... optionNames) {
+      myCollectedFields.addAll(Arrays.asList(optionNames));
+    }
+
+    @Override
+    public void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass,
+                                 String fieldName,
+                                 String title,
+                                 @Nullable String groupName,
+                                 Object... options) {
+      myCollectedFields.add(fieldName);
+    }
+
+    @Override
+    public void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass,
+                                 String fieldName,
+                                 String title,
+                                 @Nullable String groupName,
+                                 @Nullable OptionAnchor anchor,
+                                 @Nullable String anchorFieldName,
+                                 Object... options) {
+      myCollectedFields.add(fieldName);
+    }
+
+    @Override
+    public void renameStandardOption(String fieldName, String newTitle) {
+      // Ignore
+    }
+    
+    public Set<String> getCollectedFields() {
+      return myCollectedFields;
+    }
+  } 
 
 }
