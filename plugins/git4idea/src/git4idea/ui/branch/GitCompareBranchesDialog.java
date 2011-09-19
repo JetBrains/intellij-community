@@ -77,7 +77,7 @@ public class GitCompareBranchesDialog extends DialogWrapper {
     JPanel htb = layoutCommitListPanel(currentBranch, true);
     JPanel bth = layoutCommitListPanel(currentBranch, false);
 
-    Splitter lists = new Splitter(true, calcProportion());
+    Splitter lists = new Splitter(true, 0.5f);
     lists.setFirstComponent(htb);
     lists.setSecondComponent(bth);
 
@@ -115,24 +115,6 @@ public class GitCompareBranchesDialog extends DialogWrapper {
     String secondBranch = forward ? myBranchName : currentBranch;
     return String.format("<html>Commits that exist in <code><b>%s</b></code> but don't exist in <code><b>%s</b></code> (<code>git log %s..%s</code>):</html>",
                          secondBranch, firstBranch, firstBranch, secondBranch);
-  }
-
-  /**
-   * Calculates the splitter proportion.
-   * We don't want to have much empty space, when there is a few commits, with a scrollpane for other list with many.
-   * @return Splitter proportion between upper (HEAD..branch) and lower (branch..HEAD) commit lists.
-   */
-  private float calcProportion() {
-    int totalSize = myBranchToHead.size() + myHeadToBranch.size();
-    float prop = ((float)myHeadToBranch.size()) / ((float)totalSize);
-
-    // but don't make less than 30% to leave at least a few lines.
-    if (prop < 0.3f) {
-      return 0.3f;
-    } else if (prop > 0.7f) {
-      return 0.7f;
-    }
-    return prop;
   }
 
   @Override
