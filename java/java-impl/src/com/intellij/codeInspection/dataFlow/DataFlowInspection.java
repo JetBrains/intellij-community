@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,6 @@ import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -417,7 +416,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
       gc.anchor = GridBagConstraints.NORTHWEST;
 
       mySuggestNullables = new JCheckBox(
-        InspectionsBundle.message("inspection.data.flow.nullable.quickfix.option", ApplicationNamesInfo.getInstance().getProductName()));
+        InspectionsBundle.message("inspection.data.flow.nullable.quickfix.option"));
       mySuggestNullables.setSelected(SUGGEST_NULLABLE_ANNOTATIONS);
       mySuggestNullables.getModel().addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent e) {
@@ -426,7 +425,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
       });
 
       myDontReportTrueAsserts = new JCheckBox(
-        InspectionsBundle.message("inspection.data.flow.true.asserts.option", ApplicationNamesInfo.getInstance().getProductName()));
+        InspectionsBundle.message("inspection.data.flow.true.asserts.option"));
       myDontReportTrueAsserts.setSelected(DONT_REPORT_TRUE_ASSERT_STATEMENTS);
       myDontReportTrueAsserts.getModel().addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent e) {
