@@ -400,8 +400,8 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testClassLiteralInAnno1() throws Throwable { doTest(); }
 
-  public void testExplicitWildcardParam() throws Throwable { doTest(); }
-  
+  public void testMeaninglessExplicitWildcardParam() throws Throwable { doTest(); }
+
   public void testExplicitWildcardArrayParam() throws Throwable { doTest(); }
 
   public void testCatchInAnonymous() throws Throwable { doTest(); }
