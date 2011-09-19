@@ -8,7 +8,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.ComponentWithAnchor;
+import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBLabel;
 
@@ -18,7 +18,7 @@ import java.awt.*;
 /**
  * @author yole
  */
-public class PythonRunConfigurationForm implements PythonRunConfigurationParams, ComponentWithAnchor {
+public class PythonRunConfigurationForm implements PythonRunConfigurationParams, PanelWithAnchor {
   private JPanel myRootPanel;
   private TextFieldWithBrowseButton myScriptTextField;
   private RawCommandLineEditor myScriptParametersTextField;

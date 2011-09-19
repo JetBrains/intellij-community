@@ -6,7 +6,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.ui.ComponentWithAnchor;
+import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.components.JBLabel;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.run.AbstractPyCommonOptionsForm;
@@ -19,7 +19,7 @@ import javax.swing.*;
 /**
  * @author yole
  */
-public class PyTestConfigurationEditor extends SettingsEditor<PyTestRunConfiguration> implements ComponentWithAnchor {
+public class PyTestConfigurationEditor extends SettingsEditor<PyTestRunConfiguration> implements PanelWithAnchor {
   private JPanel myMainPanel;
   private JPanel myCommonOptionsPlaceholder;
   private JTextField myKeywordsTextField;

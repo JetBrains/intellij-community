@@ -5,7 +5,7 @@ import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.ui.ComponentWithAnchor;
+import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.components.JBLabel;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.run.AbstractPyCommonOptionsForm;
@@ -24,7 +24,7 @@ import static com.jetbrains.python.testing.unittest.PythonUnitTestRunConfigurati
 /**
  * @author Leonid Shalupov
  */
-public class PythonTestRunConfigurationForm implements AbstractPythonTestRunConfigurationParams, ComponentWithAnchor {
+public class PythonTestRunConfigurationForm implements AbstractPythonTestRunConfigurationParams, PanelWithAnchor {
   private JPanel myRootPanel;
   private LabeledComponent myTestClassComponent;
   private LabeledComponent myTestMethodComponent;
