@@ -27,7 +27,7 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesAlphaComparator;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ComboboxSpeedSearch;
-import com.intellij.ui.ComponentWithAnchor;
+import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.FieldPanel;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBLabel;
@@ -39,7 +39,7 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRunConfiguration> implements ComponentWithAnchor {
+public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRunConfiguration> implements PanelWithAnchor {
   private DefaultComboBoxModel myModulesModel;
   private JComboBox myModulesBox;
   private JPanel myMainPanel;

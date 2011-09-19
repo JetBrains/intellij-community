@@ -48,7 +48,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.ui.ComponentWithAnchor;
+import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.EditorTextFieldWithBrowseButton;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.TextFieldCompletionProvider;
@@ -69,7 +69,7 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Map;
 
-public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguration> implements ComponentWithAnchor {
+public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguration> implements PanelWithAnchor {
   //private static final Logger LOGGER = Logger.getInstance("TestNG Runner");
   private final Project project;
 

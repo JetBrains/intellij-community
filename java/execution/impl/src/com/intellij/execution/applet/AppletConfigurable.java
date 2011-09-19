@@ -27,7 +27,7 @@ import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.EditorTextFieldWithBrowseButton;
-import com.intellij.ui.ComponentWithAnchor;
+import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLabel;
@@ -46,7 +46,7 @@ import java.util.*;
 import java.util.List;
 
 public class AppletConfigurable extends SettingsEditor<AppletConfiguration> implements CheckableRunConfigurationEditor<AppletConfiguration>,
-                                                                                       ComponentWithAnchor {
+                                                                                       PanelWithAnchor {
   private JPanel myWholePanel;
   private JRadioButton myMainClass;
   private JRadioButton myURL;

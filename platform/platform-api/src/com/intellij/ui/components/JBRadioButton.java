@@ -1,6 +1,6 @@
 package com.intellij.ui.components;
 
-import com.intellij.ui.ComponentWithAnchor;
+import com.intellij.ui.AnchorableComponent;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -9,7 +9,7 @@ import java.awt.*;
 /**
  * @author evgeny.zakrevsky
  */
-public class JBRadioButton extends JRadioButton implements ComponentWithAnchor {
+public class JBRadioButton extends JRadioButton implements AnchorableComponent {
   private JComponent anchor;
 
   public JBRadioButton() {

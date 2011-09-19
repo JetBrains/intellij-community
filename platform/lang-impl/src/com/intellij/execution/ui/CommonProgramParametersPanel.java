@@ -32,7 +32,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.ComponentWithAnchor;
+import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
@@ -44,7 +44,7 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CommonProgramParametersPanel extends JPanel implements ComponentWithAnchor {
+public class CommonProgramParametersPanel extends JPanel implements PanelWithAnchor {
   private static final Icon ICON = IconLoader.getIcon("/runConfigurations/variables.png");
 
   private LabeledComponent<RawCommandLineEditor> myProgramParametersComponent;
