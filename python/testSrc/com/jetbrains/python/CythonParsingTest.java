@@ -62,6 +62,10 @@ public class CythonParsingTest extends ParsingTestCase {
     doTest();
   }
 
+  public void testEnums() {
+    doTest();
+  }
+
   public void doTest() {
     doTest(true);
   }
