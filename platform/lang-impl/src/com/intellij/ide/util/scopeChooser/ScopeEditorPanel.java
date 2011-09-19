@@ -280,6 +280,19 @@ public class ScopeEditorPanel {
     return false;
   }
 
+  boolean isButtonEnabled(boolean rec) {
+    final TreePath[] paths = myPackageTree.getSelectionPaths();
+    if (paths != null) {
+      for (TreePath path : paths) {
+        final PackageDependenciesNode node = (PackageDependenciesNode)path.getLastPathComponent();
+        if (PatternDialectProvider.getInstance(DependencyUISettings.getInstance().SCOPE_TYPE).createPackageSet(node, rec) != null) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   private void excludeSelected(boolean recurse) {
     final ArrayList<PackageSet> selected = getSelectedSets(recurse);
     if (selected == null || selected.isEmpty()) return;
@@ -493,6 +506,11 @@ public class ScopeEditorPanel {
       public void actionPerformed(AnActionEvent e) {
         includeSelected(true);
       }
+
+      @Override
+      public void update(AnActionEvent e) {
+        e.getPresentation().setEnabled(isButtonEnabled(true));
+      }
     });
 
     actionGroup.add(new AnAction(IdeBundle.message("button.exclude")) {
@@ -505,6 +523,11 @@ public class ScopeEditorPanel {
       @Override
       public void actionPerformed(AnActionEvent e) {
         excludeSelected(true);
+      }
+
+      @Override
+      public void update(AnActionEvent e) {
+        e.getPresentation().setEnabled(isButtonEnabled(true));
       }
     });
 
