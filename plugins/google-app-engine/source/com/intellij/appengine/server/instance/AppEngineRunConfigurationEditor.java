@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.impl.run.BuildArtifactsBeforeRunTaskProvider;
-import com.intellij.ui.ComponentWithAnchor;
+import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBLabel;
 import org.jetbrains.annotations.NotNull;
@@ -20,7 +20,7 @@ import java.awt.event.ActionListener;
 /**
  * @author nik
  */
-public class AppEngineRunConfigurationEditor extends SettingsEditor<CommonModel> implements ComponentWithAnchor {
+public class AppEngineRunConfigurationEditor extends SettingsEditor<CommonModel> implements PanelWithAnchor {
   private JPanel myMainPanel;
   private JComboBox myArtifactComboBox;
   private JTextField myPortField;
