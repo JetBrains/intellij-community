@@ -31,7 +31,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
@@ -39,7 +38,6 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.extractInterface.ExtractClassUtil;
 import com.intellij.refactoring.lang.ElementsHandler;
 import com.intellij.refactoring.memberPullUp.PullUpConflictsUtil;
-import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
@@ -142,15 +140,8 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
         conflicts.putAllValues(PullUpConflictsUtil.checkConflicts(infos, mySubclass, superClass, targetPackage, targetDirectory, dialog.getContainmentVerifier(), false));
       }
     }, "Detecting possible conflicts...", true, myProject)) return false;
-
-    if (!conflicts.isEmpty()) {
-      ConflictsDialog conflictsDialog = new ConflictsDialog(myProject, conflicts);
-      conflictsDialog.show();
-      final boolean ok = conflictsDialog.isOK();
-      if (!ok && conflictsDialog.isShowConflicts()) dialog.close(DialogWrapper.CANCEL_EXIT_CODE);
-      return ok;
-    }
-    return true;
+    ExtractSuperClassUtil.checkSuperAccessible(targetDirectory, conflicts, mySubclass);
+    return ExtractSuperClassUtil.showConflicts(dialog, conflicts, myProject);
   }
 
   // invoked inside Command and Atomic action

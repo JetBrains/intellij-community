@@ -23,8 +23,13 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
@@ -37,6 +42,7 @@ import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
 public class ExtractInterfaceHandler implements RefactoringActionHandler, ElementsHandler {
@@ -83,7 +89,9 @@ public class ExtractInterfaceHandler implements RefactoringActionHandler, Elemen
     final ExtractInterfaceDialog dialog = new ExtractInterfaceDialog(myProject, myClass);
     dialog.show();
     if (!dialog.isOK() || !dialog.isExtractSuperclass()) return;
-
+    final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+    ExtractSuperClassUtil.checkSuperAccessible(dialog.getTargetDirectory(), conflicts, myClass);
+    if (!ExtractSuperClassUtil.showConflicts(dialog, conflicts, myProject)) return;
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
