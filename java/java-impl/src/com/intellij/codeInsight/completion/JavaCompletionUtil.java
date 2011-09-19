@@ -417,7 +417,11 @@ public class JavaCompletionUtil {
         return matcher.prefixMatches(s);
       }
     };
-    final JavaCompletionProcessor processor = new JavaCompletionProcessor(element, elementFilter, checkAccess, parameters.getInvocationCount() <= 1, nameCondition);
+
+    PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
+    boolean checkInitialized = parameters.getInvocationCount() <= 1 && call != null && PsiKeyword.SUPER.equals(call.getMethodExpression().getText());
+    
+    final JavaCompletionProcessor processor = new JavaCompletionProcessor(element, elementFilter, checkAccess, checkInitialized, nameCondition);
     javaReference.processVariants(processor);
     final Collection<CompletionElement> plainResults = processor.getResults();
 

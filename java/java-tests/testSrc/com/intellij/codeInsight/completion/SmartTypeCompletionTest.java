@@ -446,7 +446,11 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   public void testNoSecondMethodTypeArguments() throws Throwable { doTest(Lookup.REPLACE_SELECT_CHAR); }
 
   public void testNoFieldsInSuperConstructorCall() throws Throwable { doTest(); }
-  public void testNoUninitializedFieldsInConstructor() throws Throwable { doTest(); }
+
+  public void testNoUninitializedFieldsInConstructor() throws Throwable {
+    configureByTestName();
+    assertStringItems("aac", "aab");
+  }
   public void testFieldsSetInAnotherConstructor() throws Throwable { doTest(); }
   public void testFieldsSetAbove() throws Throwable { doTest(); }
 

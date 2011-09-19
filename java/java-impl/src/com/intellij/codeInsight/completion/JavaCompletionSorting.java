@@ -59,7 +59,7 @@ public class JavaCompletionSorting {
 
     List<LookupElementWeigher> afterNegativeStats = new ArrayList<LookupElementWeigher>();
     ContainerUtil.addIfNotNull(afterNegativeStats, smart ? new PreferDefaultTypeWeigher(expectedTypes, parameters) : preferStatics(position));
-    afterNegativeStats.add(new PreferLocalVariablesLiteralsAndAnnoMethodsWeigher(type));
+    afterNegativeStats.add(new PreferLocalVariablesLiteralsAndAnnoMethodsWeigher(type, position));
     ContainerUtil.addIfNotNull(afterNegativeStats, recursion(parameters, expectedTypes));
     if (!smart && !afterNew) {
       afterNegativeStats.add(new PreferExpected(false, expectedTypes));

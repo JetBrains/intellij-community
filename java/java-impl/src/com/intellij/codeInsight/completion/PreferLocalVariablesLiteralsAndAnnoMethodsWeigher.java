@@ -15,20 +15,25 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementWeigher;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Set;
 
 /**
  * @author peter
 */
 public class PreferLocalVariablesLiteralsAndAnnoMethodsWeigher extends LookupElementWeigher {
   private final CompletionType myCompletionType;
+  private final Set<PsiField> myNonInitializedFields;
 
-  public PreferLocalVariablesLiteralsAndAnnoMethodsWeigher(CompletionType completionType) {
+  public PreferLocalVariablesLiteralsAndAnnoMethodsWeigher(CompletionType completionType, PsiElement position) {
     super("local");
     myCompletionType = completionType;
+    myNonInitializedFields = JavaCompletionProcessor.getNonInitializedFields(position);
   }
 
   enum MyResult {
@@ -37,6 +42,7 @@ public class PreferLocalVariablesLiteralsAndAnnoMethodsWeigher extends LookupEle
     localOrParameter,
     superMethodParameters,
     normal,
+    nonInitialized,
     classLiteral,
     className,
   }
@@ -75,6 +81,10 @@ public class PreferLocalVariablesLiteralsAndAnnoMethodsWeigher extends LookupEle
 
       if (object instanceof PsiClass) {
         return MyResult.className;
+      }
+
+      if (object instanceof PsiField && myNonInitializedFields.contains(object)) {
+        return MyResult.nonInitialized;
       }
     }
 

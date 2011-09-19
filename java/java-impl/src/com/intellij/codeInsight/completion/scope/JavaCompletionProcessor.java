@@ -121,7 +121,7 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
     return false;
   }
 
-  private static Set<PsiField> getNonInitializedFields(PsiElement element) {
+  public static Set<PsiField> getNonInitializedFields(PsiElement element) {
     final PsiStatement statement = PsiTreeUtil.getParentOfType(element, PsiStatement.class);
     final PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class, true, PsiClass.class);
     if (statement == null || method == null || !method.isConstructor()) {
