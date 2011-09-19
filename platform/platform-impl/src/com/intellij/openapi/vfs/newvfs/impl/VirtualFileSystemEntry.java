@@ -422,8 +422,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @Override
   public boolean isSymLink() {
-    final NewVirtualFileSystem fs = getFileSystem();
-    return fs instanceof LocalFileSystem && ((LocalFileSystem)fs).isSymLink(this);
+    return ourPersistence.isSymLink(this);
   }
 
   @Override

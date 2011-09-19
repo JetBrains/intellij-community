@@ -25,7 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.commands.*;
-import git4idea.merge.GitMergeConflictResolver;
+import git4idea.merge.GitConflictResolver;
 import git4idea.ui.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -171,8 +171,7 @@ public class GitRebaser {
   private boolean handleRebaseFailure(final VirtualFile root, final GitLineHandler h, GitRebaseProblemDetector rebaseConflictDetector) {
     if (rebaseConflictDetector.isMergeConflict()) {
       LOG.info("handleRebaseFailure merge conflict");
-      return new GitMergeConflictResolver(myProject, true, "Merge conflicts detected. Resolve them before continuing rebase.",
-                                              "Can't continue rebase", "Then you may <b>continue rebase</b>. <br/> You also may <b>abort rebase</b> to restore the original branch and stop rebasing.") {
+      return new GitConflictResolver(myProject, Collections.singleton(root), makeParamsForRebaseConflict()) {
         @Override protected boolean proceedIfNothingToMerge() {
           return continueRebase(root, "--continue");
         }
@@ -180,7 +179,7 @@ public class GitRebaser {
         @Override protected boolean proceedAfterAllMerged() {
           return continueRebase(root, "--continue");
         }
-      }.merge(Collections.singleton(root));
+      }.merge();
     } else if (rebaseConflictDetector.isNoChangeError()) {
       LOG.info("handleRebaseFailure no change");
       mySkippedCommits.add(GitRebaseUtils.getCurrentRebaseCommit(root));
@@ -190,6 +189,15 @@ public class GitRebaser {
       GitUIUtil.notifyImportantError(myProject, "Error rebasing", GitUIUtil.stringifyErrors(h.errors()));
       return false;
     }
+  }
+
+  private static GitConflictResolver.Params makeParamsForRebaseConflict() {
+    return new GitConflictResolver.Params().
+      setReverse(true).
+      setErrorNotificationTitle("Can't continue rebase").
+      setMergeDescription("Merge conflicts detected. Resolve them before continuing rebase.").
+      setErrorNotificationAdditionalDescription("Then you may <b>continue rebase</b>. <br/> " +
+                                                "You also may <b>abort rebase</b> to restore the original branch and stop rebasing.");
   }
 
   /**

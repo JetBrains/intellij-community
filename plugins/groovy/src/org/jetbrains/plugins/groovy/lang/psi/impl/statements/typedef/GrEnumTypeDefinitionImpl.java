@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -105,7 +105,7 @@ public class GrEnumTypeDefinitionImpl extends GrTypeDefinitionImpl implements Gr
     GrEnumConstant[] enumConstants = getEnumConstants();
     if (bodyFields.length == 0) return enumConstants;
     if (enumConstants.length == 0) return bodyFields;
-    return ArrayUtil.mergeArrays(bodyFields, enumConstants, GrField.class);
+    return ArrayUtil.mergeArrays(bodyFields, enumConstants);
   }
 
   @Override

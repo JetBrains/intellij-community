@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>A.java</file>
+    <line>28</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Method may be 'static'</problem_class>
+    <description>Method &lt;code&gt;g()&lt;/code&gt; may be 'static' #loc</description>
+  </problem>
+
+</problems>

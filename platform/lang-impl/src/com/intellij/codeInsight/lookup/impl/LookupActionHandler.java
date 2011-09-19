@@ -25,7 +25,6 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -51,9 +50,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
 
   public void execute(Editor editor, DataContext dataContext){
     LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
-    if (lookup == null ||
-        !lookup.isVisible() && !ApplicationManager.getApplication().isUnitTestMode() ||
-        myRequireFocusedLookup && !lookup.isFocused()) {
+    if (lookup == null || !lookup.isShown() || myRequireFocusedLookup && !lookup.isFocused()) {
       Project project = editor.getProject();
       if (project != null) {
         LookupManager.getInstance(project).hideActiveLookup();
@@ -87,7 +84,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
       if (!lookup.isFocused()) {
         lookup.setFocused(true);
         lookup.getList().setSelectedIndex(0);
-        lookup.refreshUi();
+        lookup.refreshUi(false);
       } else {
         ListScrollingUtil.moveDown(lookup.getList(), 0);
       }
@@ -149,7 +146,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
 
         lookup.setFocused(true);
         lookup.getList().setSelectedIndex(0);
-        lookup.refreshUi();
+        lookup.refreshUi(false);
       }
       ListScrollingUtil.moveUp(lookup.getList(), 0);
       return true;

@@ -213,7 +213,7 @@ public class XsltSymbolIndex extends FileBasedIndexExtension<String, XsltSymbolI
                             final XmlTag[] v = root.findSubTags("variable", XsltSupport.XSLT_NS);
                             final XmlTag[] p = root.findSubTags("param", XsltSupport.XSLT_NS);
                             final XmlTag[] t = root.findSubTags("template", XsltSupport.XSLT_NS);
-                            tags = ArrayUtil.mergeArrays(ArrayUtil.mergeArrays(v, p, XmlTag.class), t, XmlTag.class);
+                            tags = ArrayUtil.mergeArrays(ArrayUtil.mergeArrays(v, p), t);
                         } else {
                             tags = root.findSubTags(kind.name().toLowerCase(), XsltSupport.XSLT_NS);
                         }

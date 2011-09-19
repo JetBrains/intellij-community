@@ -103,6 +103,8 @@ public class OptimizeImportsTest extends LightCodeInsightFixtureTestCase {
     doTest();
   }
 
+  public void testPreserveImportAnnotations() throws Throwable { doTest(); }
+
   public void testUtilListMasked() throws Throwable {
     myFixture.addClass("package java.awt; public class List {}");
     doTest();

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs;
 
+import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
@@ -26,7 +27,7 @@ import java.awt.*;
 public class CheckRemoteStatusCheckinHandlerFactory extends CheckinHandlerFactory {
   @NotNull
   @Override
-  public CheckinHandler createHandler(final CheckinProjectPanel panel) {
+  public CheckinHandler createHandler(final CheckinProjectPanel panel, CommitContext commitContext) {
     return new MyCheckinHandler(panel);
   }
 

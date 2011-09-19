@@ -15,6 +15,7 @@
  */
 package org.zmlx.hg4idea.provider.commit;
 
+import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
 import com.intellij.openapi.vcs.changes.CommitSession;
 import org.jetbrains.annotations.Nls;
@@ -36,7 +37,7 @@ public class HgCommitAndPushExecutor implements CommitExecutor {
   }
 
   @NotNull
-  public CommitSession createCommitSession() {
+  public CommitSession createCommitSession(CommitContext commitContext) {
     myCheckinEnvironment.setNextCommitIsPushed(true);
     return CommitSession.VCS_COMMIT;
   }

@@ -43,6 +43,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.table.JBListTable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -523,7 +524,9 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
   }
 
   protected void updateBorder(@NotNull final EditorEx editor) {
-    if (editor.isOneLineMode() && (!Boolean.TRUE.equals(getClientProperty("JComboBox.isTableCellEditor")) && SwingUtilities.getAncestorOfClass(JTable.class, this) == null)) {
+    if (editor.isOneLineMode()
+        && (!Boolean.TRUE.equals(getClientProperty("JComboBox.isTableCellEditor"))
+            && (SwingUtilities.getAncestorOfClass(JTable.class, this) == null || Boolean.TRUE.equals(getClientProperty("JBListTable.isTableCellEditor"))))) {
       final Container parent = getParent();
       if (parent instanceof JTable || parent instanceof CellRendererPane) return;
 

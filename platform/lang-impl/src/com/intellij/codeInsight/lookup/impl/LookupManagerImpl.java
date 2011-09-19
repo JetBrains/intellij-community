@@ -185,17 +185,19 @@ public class LookupManagerImpl extends LookupManager {
       }
 
       private void lookupClosed() {
+        ApplicationManager.getApplication().assertIsDispatchThread();
+
         alarm.cancelAllRequests();
         if (daemonCodeAnalyzer != null) {
           daemonCodeAnalyzer.setUpdateByTimerEnabled(previousUpdate);
         }
-        if (myActiveLookup == null) return;
-        LOG.assertTrue(myActiveLookup.isLookupDisposed());
-        myActiveLookup.removeLookupListener(this);
-        Lookup lookup = myActiveLookup;
-        ApplicationManager.getApplication().assertIsDispatchThread();
+        LookupImpl lookup = myActiveLookup;
+        if (lookup == null) return;
+
+        LOG.assertTrue(lookup.isLookupDisposed());
         myActiveLookup = null;
         myActiveLookupEditor = null;
+        lookup.removeLookupListener(this);
         myPropertyChangeSupport.firePropertyChange(PROP_ACTIVE_LOOKUP, lookup, null);
 
         Disposer.dispose(connector);
@@ -207,7 +209,7 @@ public class LookupManagerImpl extends LookupManager {
       for (final LookupElement item : items) {
         myActiveLookup.addItem(item, matcher);
       }
-      myActiveLookup.refreshUi();
+      myActiveLookup.refreshUi(true);
     } else {
       alarm.cancelAllRequests(); // no items -> no doc
     }
@@ -224,7 +226,7 @@ public class LookupManagerImpl extends LookupManager {
       LookupImpl lookup2 = myActiveLookup;
       if (lookup2 != null) {
         lookup.hide();
-        LOG.error("Non-cleaned-up lookup: " + lookup.isLookupDisposed() + "; " + lookup2.isLookupDisposed() + "; " + (lookup2 == lookup));
+        LOG.error("Non-cleaned-up lookup: " + lookup.isLookupDisposed() + "; " + lookup2.isLookupDisposed() + "; " + (lookup2 == lookup) + "; listeners=" + lookup.myListeners);
       }
     }
   }

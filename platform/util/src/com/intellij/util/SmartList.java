@@ -16,6 +16,7 @@
 package com.intellij.util;
 
 import com.intellij.util.containers.EmptyIterator;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -31,7 +32,7 @@ public class SmartList<E> extends AbstractList<E> {
     add(elem);
   }
 
-  public SmartList(Collection<? extends E> c) {
+  public SmartList(@NotNull Collection<? extends E> c) {
     addAll(c);
   }
 
@@ -65,7 +66,9 @@ public class SmartList<E> extends AbstractList<E> {
         if (newCapacity < minCapacity) {
           newCapacity = minCapacity;
         }
-        myElem = array = Arrays.copyOf(array, newCapacity);
+        Object[] oldArray = array;
+        myElem = array = new Object[newCapacity];
+        System.arraycopy(oldArray, 0, array, 0, oldCapacity);
       }
       array[mySize] = e;
     }
@@ -99,6 +102,7 @@ public class SmartList<E> extends AbstractList<E> {
       oldValue = (E)array[index];
       array[index] = element;
     }
+    modCount++;
     return oldValue;
   }
 
@@ -166,14 +170,9 @@ public class SmartList<E> extends AbstractList<E> {
     }
   }
 
-  public boolean isEmpty() {
-    return mySize == 0;
-  }
-
-  public void sort(Comparator<? super E> comparator) {
+  public void sort(@NotNull Comparator<? super E> comparator) {
     if (mySize >= 2) {
-      E[] array = (E[])myElem;
-      Arrays.sort(array, 0, mySize, comparator);
+      Arrays.sort((E[])myElem, 0, mySize, comparator);
     }
   }
 

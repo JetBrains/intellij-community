@@ -47,14 +47,20 @@ public final class GitBranchesCollection {
     myLocalBranches = localBranches;
   }
 
+  /**
+   * @return the copy of local branches set.
+   */
   @NotNull
   public Set<GitBranch> getLocalBranches() {
-    return myLocalBranches;
+    return new HashSet<GitBranch>(myLocalBranches);
   }
 
+  /**
+   * @return the copy of remote branches set.
+   */
   @NotNull
   public Set<GitBranch> getRemoteBranches() {
-    return myRemoteBranches;
+    return new HashSet<GitBranch>(myRemoteBranches);
   }
 
   /**

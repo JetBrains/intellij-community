@@ -51,8 +51,9 @@ public abstract class MacMessages {
    * 
    * Please, note that Cancel is supposed to be the last button!
    */
-  public abstract int showMessageDialog(String title, String message, @Nullable String moreInfo, String[] buttons, boolean errorStyle,
-                                @Nullable Window window, @Nullable DialogWrapper.DoNotAskOption doNotAskDialogOption);
+  public abstract int showMessageDialog(String title, String message, String[] buttons, boolean errorStyle,
+                                @Nullable Window window, int defaultOptionIndex, int focusedOptionIndex, 
+                                @Nullable DialogWrapper.DoNotAskOption doNotAskDialogOption);
 
   public abstract void showOkMessageDialog(String title, String message, String okText, @Nullable Window window);
 

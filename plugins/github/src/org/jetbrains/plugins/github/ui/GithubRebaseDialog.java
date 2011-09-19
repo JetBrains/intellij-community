@@ -16,10 +16,13 @@
 package org.jetbrains.plugins.github.ui;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitBranch;
 import git4idea.rebase.GitRebaseDialog;
 import git4idea.ui.GitUIUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,14 +38,13 @@ public class GithubRebaseDialog extends GitRebaseDialog {
     super(project, roots, defaultRoot);
   }
 
-  public void configure(final String parent) {
+  public void configure(final String originName) {
     setTitle("Rebase GitHub");
 
     myShowRemoteBranchesCheckBox.setSelected(true);
     myShowRemoteBranchesCheckBox.getParent().remove(myShowRemoteBranchesCheckBox);
     myGitRootComboBox.setEnabled(false);
     myLocalBranches.clear();
-    final String originName = parent.substring(0, parent.lastIndexOf('/'));
     final ArrayList<GitBranch> remoteCopy = new ArrayList<GitBranch>();
     remoteCopy.addAll(myRemoteBranches);
     myRemoteBranches.clear();
@@ -55,14 +57,41 @@ public class GithubRebaseDialog extends GitRebaseDialog {
     updateOntoFrom();
 
     // Preselect remote master
-    final String preselected = "/" + originName + "/master";
+    GitBranch remoteBranch = null;
+    String currentLocalBranchName = null;
+    try {
+      final GitBranch currentBranch = GitBranch.current(myProject, gitRoot());
+      if (currentBranch != null) {
+        currentLocalBranchName = currentBranch.getName();
+      }
+    }
+    catch (VcsException e) {
+      // Do noting;
+    }
+
+    if (currentLocalBranchName != null) {
+      // try to find corresponding remote branch
+      remoteBranch = findBranch("/" + originName + "/" + currentLocalBranchName);
+    }
+    if (remoteBranch == null) {
+      //  else use master
+      remoteBranch = findBranch("/" + originName + "/master");
+    }
+
+    if (remoteBranch != null) {
+      myOntoComboBox.setSelectedItem(remoteBranch);
+      GitUIUtil.getTextField(myOntoComboBox).setText(remoteBranch.getFullName());
+    }
+  }
+
+  @Nullable
+  private GitBranch findBranch(@NotNull String preselected) {
     for (GitBranch remoteBranch : myRemoteBranches) {
       final String branchFullName = remoteBranch.getFullName();
       if (branchFullName.endsWith(preselected)){
-        myOntoComboBox.setSelectedItem(remoteBranch);
-        GitUIUtil.getTextField(myOntoComboBox).setText(branchFullName);
-        break;
+        return remoteBranch;
       }
     }
+    return null;
   }
 }

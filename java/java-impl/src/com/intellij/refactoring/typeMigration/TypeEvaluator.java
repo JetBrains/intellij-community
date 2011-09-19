@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -146,12 +147,14 @@ public class TypeEvaluator {
         return PsiImplUtil.normalizeWildcardTypeByPosition(createMethodSubstitution(parameters, actualParms, method, call, resolveResult.getSubstitutor(), false).substitute(evaluateType(call.getMethodExpression())), expr);
       }
     }
-    else if (expr instanceof PsiBinaryExpression) {
-      final PsiExpression lOperand = ((PsiBinaryExpression)expr).getLOperand();
-      final PsiExpression rOperand = ((PsiBinaryExpression)expr).getROperand();
-      return TypeConversionUtil.calcTypeForBinaryExpression(evaluateType(lOperand), evaluateType(rOperand),
-                                                            ((PsiBinaryExpression)expr).getOperationTokenType(),
-                                                            true);
+    else if (expr instanceof PsiPolyadicExpression) {
+      final PsiExpression[] operands = ((PsiPolyadicExpression)expr).getOperands();
+      final IElementType sign = ((PsiPolyadicExpression)expr).getOperationTokenType();
+      PsiType lType = operands.length > 0 ? evaluateType(operands[0]) : null;
+      for (int i = 1; i < operands.length; i++) {
+        lType = TypeConversionUtil.calcTypeForBinaryExpression(lType, evaluateType(operands[i]), sign, true);
+      }
+      return lType;
     }
     else if (expr instanceof PsiPostfixExpression) {
       return evaluateType(((PsiPostfixExpression)expr).getOperand());

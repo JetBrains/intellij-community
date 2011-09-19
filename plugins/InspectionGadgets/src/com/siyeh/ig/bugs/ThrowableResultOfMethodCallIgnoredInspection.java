@@ -65,7 +65,8 @@ public class ThrowableResultOfMethodCallIgnoredInspection
                 parent = parent.getParent();
             }
             if (parent instanceof PsiReturnStatement ||
-                    parent instanceof PsiThrowStatement) {
+                    parent instanceof PsiThrowStatement ||
+                    parent instanceof PsiExpressionList) {
                 return;
             }
             if (!TypeUtils.expressionHasTypeOrSubtype(expression,

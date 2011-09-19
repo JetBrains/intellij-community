@@ -54,7 +54,7 @@ import com.intellij.util.containers.ComparatorDelegate;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
 import git4idea.annotate.GitAnnotationProvider;
-import git4idea.branch.GitBranchWidget;
+import git4idea.ui.branch.GitBranchWidget;
 import git4idea.history.wholeTree.GitCommitsSequentialIndex;
 import git4idea.history.wholeTree.GitCommitsSequentially;
 import git4idea.status.GitChangeProvider;
@@ -493,6 +493,9 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
    */
   @Nullable
   public GitVersion getVersion() {
+    if (myVersion == null) {
+      checkVersion();
+    }
     return myVersion;
   }
 

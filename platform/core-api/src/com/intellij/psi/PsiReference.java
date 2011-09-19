@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.util.TextRange;
+import com.intellij.util.ArrayFactory;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,6 +40,13 @@ public interface PsiReference {
    * The empty array of PSI references which can be reused to avoid unnecessary allocations.
    */
   PsiReference[] EMPTY_ARRAY = new PsiReference[0];
+
+  ArrayFactory<PsiReference> ARRAY_FACTORY = new ArrayFactory<PsiReference>() {
+    @Override
+    public PsiReference[] create(final int count) {
+      return count == 0 ? EMPTY_ARRAY : new PsiReference[count];
+    }
+  };
 
   /**
    * Returns the underlying (referencing) element of the reference.

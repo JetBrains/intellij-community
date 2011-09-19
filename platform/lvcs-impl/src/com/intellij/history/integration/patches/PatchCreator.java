@@ -22,6 +22,7 @@ import com.intellij.openapi.diff.impl.patch.UnifiedDiffWriter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 
 import java.io.FileOutputStream;
@@ -31,17 +32,17 @@ import java.io.Writer;
 import java.util.List;
 
 public class PatchCreator {
-  public static void create(Project p, List<Change> changes, String filePath, boolean isReverse)
+  public static void create(Project p, List<Change> changes, String filePath, boolean isReverse, CommitContext commitContext)
     throws IOException, VcsException {
     List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(p, changes, p.getBaseDir().getPath(), isReverse);
-    writeFilePatches(p, filePath, patches);
+    writeFilePatches(p, filePath, patches, commitContext);
   }
 
-  public static void writeFilePatches(Project p, String filePath, List<FilePatch> patches) throws IOException {
+  public static void writeFilePatches(Project p, String filePath, List<FilePatch> patches, CommitContext commitContext) throws IOException {
     Writer writer = new OutputStreamWriter(new FileOutputStream(filePath));
     try {
       String lineSeparator = CodeStyleSettingsManager.getInstance(p).getCurrentSettings().getLineSeparator();
-      UnifiedDiffWriter.write(p, patches, writer, lineSeparator);
+      UnifiedDiffWriter.write(p, patches, writer, lineSeparator, commitContext);
     }
     finally {
       writer.close();

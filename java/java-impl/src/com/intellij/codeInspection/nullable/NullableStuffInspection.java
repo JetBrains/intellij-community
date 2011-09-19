@@ -85,7 +85,12 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
             if (psiExpression.getType() == PsiType.NULL) {
               final PsiParameter parameter = parameters[i];
               if (!AnnotationUtil.isNullable(parameter) && !AnnotationUtil.isNotNull(parameter)) {
-                holder.registerProblem(psiExpression, "Null is passed to parameter which is not yet @Nullable", new MyAddNullableAnnotationFix(parameter));
+                final PsiClass annotationsClass =
+                  JavaPsiFacade.getInstance(holder.getProject()).findClass(NullableNotNullManager.getInstance(holder.getProject()).getDefaultNullable(),
+                                                                           psiMethod.getResolveScope());
+                if (annotationsClass != null) {
+                  holder.registerProblem(psiExpression, "Null is passed to parameter which is not yet @Nullable", new MyAddNullableAnnotationFix(parameter));
+                }
               }
             }
           }

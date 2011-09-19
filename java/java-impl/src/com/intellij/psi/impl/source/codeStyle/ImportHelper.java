@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -673,7 +673,7 @@ public class ImportHelper{
     final JspFile jspFile = JspPsiUtil.getJspFile(file);
     collectNamesToImport(names, comments, file, jspFile);
     if (jspFile != null) {
-      PsiFile[] files = ArrayUtil.mergeArrays(JspSpiUtil.getIncludingFiles(jspFile), JspSpiUtil.getIncludedFiles(jspFile), PsiFile.class);
+      PsiFile[] files = ArrayUtil.mergeArrays(JspSpiUtil.getIncludingFiles(jspFile), JspSpiUtil.getIncludedFiles(jspFile));
       for (PsiFile includingFile : files) {
         final PsiFile javaRoot = includingFile.getViewProvider().getPsi(StdLanguages.JAVA);
         if (javaRoot instanceof PsiJavaFile && file != javaRoot) {

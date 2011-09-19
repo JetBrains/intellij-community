@@ -19,7 +19,10 @@
  */
 package com.intellij.openapi.project;
 
+import com.intellij.ide.DataManager;
 import com.intellij.ide.highlighter.InternalFileType;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
@@ -36,6 +39,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.io.File;
 
 public class ProjectUtil {
@@ -133,5 +137,20 @@ public class ProjectUtil {
                                                  final FileType fileType) {
     if (fileType instanceof InternalFileType) return true;
     return file.getPath().contains("/"+ DIRECTORY_BASED_PROJECT_DIR +"/");
+  }
+
+  @NotNull
+  public static Project guessCurrentProject(JComponent component) {
+    Project project = null;
+    Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+    if (openProjects.length > 0) project = openProjects[0];
+    if (project == null) {
+      DataContext dataContext = component == null ? DataManager.getInstance().getDataContext() : DataManager.getInstance().getDataContext(component);
+      project = PlatformDataKeys.PROJECT.getData(dataContext);
+    }
+    if (project == null) {
+      project = ProjectManager.getInstance().getDefaultProject();
+    }
+    return project;
   }
 }

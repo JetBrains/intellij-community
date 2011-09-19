@@ -32,10 +32,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLock;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.FreeThreadedFileViewProvider;
-import com.intellij.psi.impl.source.DummyHolder;
-import com.intellij.psi.impl.source.DummyHolderFactory;
-import com.intellij.psi.impl.source.PsiElementArrayConstructor;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.*;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -104,26 +101,20 @@ public class CompositeElement extends TreeElement {
 
   public void clearCaches() {
     if (ASSERT_THREADING) {
-      PsiElement wrapper = myWrapper;
-      FileElement fileElement = null;
-      PsiFile psiFile = null;
       boolean ok = ApplicationManager.getApplication().isWriteAccessAllowed() ||
                    Thread.holdsLock(START_OFFSET_LOCK) ||
-                   (fileElement = TreeUtil.getFileElement(this)) == null ||
-                   wrapper != null && !wrapper.isPhysical() ||
-                   (psiFile = (PsiFile)fileElement.getPsi()) == null ||
-                   psiFile instanceof DummyHolder ||
-                   psiFile.getViewProvider() instanceof FreeThreadedFileViewProvider ||
-                   !psiFile.isPhysical();
+                   isNonPhysicalOrInjected();
       if (!ok) {
+        FileElement fileElement;
+        PsiFile psiFile;
         LOG.error("Threading assertion. " +
                   " Under write: " + ApplicationManager.getApplication().isWriteAccessAllowed() +
                   "; Thread.holdsLock(START_OFFSET_LOCK): " + Thread.holdsLock(START_OFFSET_LOCK) +
                   "; Thread.holdsLock(PsiLock.LOCK): " + Thread.holdsLock(PsiLock.LOCK) +
-                  "; wrapper: " + wrapper +
-                  "; wrapper.isPhysical(): " + (wrapper != null && wrapper.isPhysical()) +
-                  "; fileElement: " +fileElement +
-                  "; psiFile: " + psiFile +
+                  "; wrapper: " + myWrapper +
+                  "; wrapper.isPhysical(): " + (myWrapper != null && myWrapper.isPhysical()) +
+                  "; fileElement: " +(fileElement = TreeUtil.getFileElement(this))+
+                  "; psiFile: " + (psiFile = fileElement == null ? null : (PsiFile)fileElement.getPsi()) +
                   "; psiFile.getViewProvider(): " + (psiFile == null ? null : psiFile.getViewProvider()) +
                   "; psiFile.isPhysical(): " + (psiFile != null && psiFile.isPhysical())
         );
@@ -135,6 +126,20 @@ public class CompositeElement extends TreeElement {
     myHC = -1;
 
     clearRelativeOffsets(rawFirstChild());
+  }
+
+  private boolean isNonPhysicalOrInjected() {
+    FileElement fileElement = TreeUtil.getFileElement(this);
+    if (fileElement == null || fileElement instanceof DummyHolderElement) return true;
+    if (fileElement.getTreeParent() != null) return true; // dummy holder
+    PsiElement wrapper = this instanceof PsiElement ? (PsiElement)this : myWrapper;
+    if (wrapper == null) return true;
+    PsiFile psiFile = wrapper.getContainingFile();
+    return
+      psiFile ==  null ||
+      psiFile instanceof DummyHolder ||
+      psiFile.getViewProvider() instanceof FreeThreadedFileViewProvider ||
+      !psiFile.isPhysical();
   }
 
   public void acceptTree(TreeElementVisitor visitor) {

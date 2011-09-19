@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.TemplateManager;
@@ -25,13 +24,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.editor.template.expressions.ChooseTypeExpression;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
@@ -42,7 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
 /**
  * @author Maxim.Medvedev
  */
-public abstract class CreateFieldFix implements IntentionAction {
+public class CreateFieldFix  {
   private final GrMemberOwner myTargetClass;
 
   protected GrMemberOwner getTargetClass() {
@@ -53,35 +48,19 @@ public abstract class CreateFieldFix implements IntentionAction {
     myTargetClass = targetClass;
   }
 
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable() {
     return myTargetClass.isValid();
   }
 
-  @NotNull
-  public String getText() {
-    return GroovyBundle.message("create.field.from.usage", getFieldName());
-  }
-
-  @NotNull
-  public String getFamilyName() {
-    return GroovyBundle.message("create.from.usage.family.name");
-  }
-
-  @Nullable
-  protected abstract String getFieldName();
-
-
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    PsiClassType type =
-      JavaPsiFacade.getInstance(project).getElementFactory().createTypeByFQClassName("Object", GlobalSearchScope.allScope(project));
-    String[] modifiers = generateModifiers();
-    GrVariableDeclaration fieldDecl = GroovyPsiElementFactory.getInstance(project).createFieldDeclaration(modifiers, getFieldName(), null, type);
-    fieldDecl = myTargetClass.addMemberDeclaration(fieldDecl, null);
+  protected void doFix(Project project, String[] modifiers, String fieldName, TypeConstraint[] typeConstraints) throws IncorrectOperationException {
+    PsiClassType type = JavaPsiFacade.getElementFactory(project).createTypeByFQClassName("Object", GlobalSearchScope.allScope(project));
+    GrVariableDeclaration fieldDecl =
+      GroovyPsiElementFactory.getInstance(project).createFieldDeclaration(modifiers, fieldName, null, type);
+    fieldDecl = (GrVariableDeclaration)myTargetClass.add(fieldDecl);
     GrTypeElement typeElement = fieldDecl.getTypeElementGroovy();
     assert typeElement != null;
 
-    TypeConstraint[] constraints = calculateTypeConstrains();
-    ChooseTypeExpression expr = new ChooseTypeExpression(constraints, PsiManager.getInstance(project));
+    ChooseTypeExpression expr = new ChooseTypeExpression(typeConstraints, PsiManager.getInstance(project));
     TemplateBuilderImpl builder = new TemplateBuilderImpl(fieldDecl);
     builder.replaceElement(typeElement, expr);
     fieldDecl = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(fieldDecl);
@@ -97,13 +76,5 @@ public abstract class CreateFieldFix implements IntentionAction {
 
     TemplateManager manager = TemplateManager.getInstance(project);
     manager.startTemplate(newEditor, template);
-  }
-
-  protected abstract TypeConstraint[] calculateTypeConstrains();
-
-  protected abstract String[] generateModifiers();
-
-  public boolean startInWriteAction() {
-    return true;
   }
 }

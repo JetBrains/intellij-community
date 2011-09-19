@@ -744,6 +744,11 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     assertStringItems 'final', 'finalize'
   }
 
+  public void testOnlyClassesInExtends() throws Throwable {
+    configure()
+    assertStringItems 'Inner'
+  }
+
   public void testPrimitiveTypesInForLoop() throws Throwable { doPrimitiveTypeTest() }
   public void testPrimitiveTypesInForLoop2() throws Throwable { doPrimitiveTypeTest() }
   public void testPrimitiveTypesInForLoop3() throws Throwable { doPrimitiveTypeTest() }
@@ -848,6 +853,9 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testMethodParameterAnnotationClass() throws Throwable { doTest(); }
+  public void testPrimitiveCastOverwrite() throws Throwable { doTest '\t' }
+  public void testClassReferenceInFor() throws Throwable { doTest ' ' }
+  public void testClassReferenceInFor2() throws Throwable { doTest ' ' }
 
   public void testVoidMethodsInNonVoidContext() throws Throwable {
     configure()
@@ -908,6 +916,16 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testMethodParameterTypeDot() throws Throwable { doAntiTest() }
   public void testNewGenericClass() throws Throwable { doTest('\n') }
+  public void testNewGenericInterface() throws Throwable { doTest() }
+
+  public void testUnfinishedMethodTypeParameter() throws Throwable {
+    configure()
+    assertStringItems("MyParameter", "MySecondParameter")
+  }
+  public void testUnfinishedMethodTypeParameter2() throws Throwable {
+    configure()
+    assertStringItems("MyParameter", "MySecondParameter")
+  }
 
   public void testSuperProtectedMethod() throws Throwable {
     myFixture.addClass """package foo;

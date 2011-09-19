@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -39,6 +40,7 @@ public class MappingsToRoots {
     myProject = project;
   }
 
+  @NotNull
   public VirtualFile[] getRootsUnderVcs(final AbstractVcs vcs) {
     List<VirtualFile> result = myMappings.getMappingsAsFilesUnderVcs(vcs);
 

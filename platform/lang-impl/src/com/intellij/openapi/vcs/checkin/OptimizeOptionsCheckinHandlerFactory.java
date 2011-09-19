@@ -17,6 +17,7 @@
 package com.intellij.openapi.vcs.checkin;
 
 import com.intellij.openapi.vcs.CheckinProjectPanel;
+import com.intellij.openapi.vcs.changes.CommitContext;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -24,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class OptimizeOptionsCheckinHandlerFactory extends CheckinHandlerFactory {
   @NotNull
-  public CheckinHandler createHandler(final CheckinProjectPanel panel) {
+  public CheckinHandler createHandler(final CheckinProjectPanel panel, CommitContext commitContext) {
     return new OptimizeImportsBeforeCheckinHandler(panel.getProject(), panel);
   }
 }

@@ -15,8 +15,11 @@
  */
 package com.intellij.util;
 
+import com.intellij.util.containers.EmptyIterator;
 import junit.framework.TestCase;
 
+import java.util.ConcurrentModificationException;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -24,8 +27,7 @@ import java.util.List;
  */
 public class SmartListTest extends TestCase {
   public void testEmpty() {
-    List<Integer> l = new SmartList<Integer>();
-    assertEquals(0, l.size());
+    assertEquals(0, new SmartList<Integer>().size());
   }
 
   public void testOneElement() {
@@ -56,15 +58,79 @@ public class SmartListTest extends TestCase {
   }
 
   public void testFourElement() {
-    List<Integer> l = new SmartList<Integer>();
-    l.add(new Integer(1));
-    l.add(new Integer(2));
-    l.add(new Integer(3));
-    l.add(new Integer(4));
+    SmartList<Integer> l = new SmartList<Integer>();
+    int modCount = 0;
+    assertEquals(modCount, l.getModificationCount());
+    l.add(new Integer(1)); assertEquals(++modCount, l.getModificationCount());
+    l.add(new Integer(2)); assertEquals(++modCount, l.getModificationCount());
+    l.add(new Integer(3)); assertEquals(++modCount, l.getModificationCount());
+    l.add(new Integer(4)); assertEquals(++modCount, l.getModificationCount());
     assertEquals(4, l.size());
     assertEquals(1, l.get(0).intValue());
     assertEquals(2, l.get(1).intValue());
     assertEquals(3, l.get(2).intValue());
     assertEquals(4, l.get(3).intValue());
+    assertEquals(modCount, l.getModificationCount());
+
+    l.remove(2);
+    assertEquals(3, l.size());
+    assertEquals(++modCount, l.getModificationCount());
+    assertEquals("[1, 2, 4]", l.toString());
+
+    l.set(2, 3);
+    assertEquals(3, l.size());
+    assertEquals(++modCount, l.getModificationCount());
+    assertEquals("[1, 2, 3]", l.toString());
+
+    l.clear();
+    assertEquals(0, l.size());
+    assertEquals(++modCount, l.getModificationCount());
+    assertEquals("[]", l.toString());
+
+    boolean thrown = false;
+    try {
+      l.set(1, 3);
+    }
+    catch (IndexOutOfBoundsException e) {
+      thrown = true;
+    }
+    assertTrue("IndexOutOfBoundsException must be thrown", thrown);
+
+    l.clear();
+    assertEquals(0, l.size());
+    assertEquals(++modCount, l.getModificationCount());
+    assertEquals("[]", l.toString());
+
+    Iterator<Integer> iterator = l.iterator();
+    assertSame(EmptyIterator.getInstance(), iterator);
+    assertFalse(iterator.hasNext());
+
+    l.add(-2);
+    iterator = l.iterator();
+    assertNotSame(EmptyIterator.getInstance(), iterator);
+    assertTrue(iterator.hasNext());
+    assertEquals(-2, iterator.next().intValue());
+    assertFalse(iterator.hasNext());
+
+    thrown = false;
+    try {
+      l.get(1);
+    }
+    catch (IndexOutOfBoundsException e) {
+      thrown = true;
+    }
+    assertTrue("IndexOutOfBoundsException must be thrown", thrown);
+
+    l.addAll(l);
+    assertEquals(2, l.size());
+    assertEquals("[-2, -2]", l.toString());
+    thrown = false;
+    try {
+      l.addAll(l);
+    }
+    catch (ConcurrentModificationException e) {
+      thrown = true;
+    }
+    assertTrue("ConcurrentModificationException must be thrown", thrown);
   }
 }

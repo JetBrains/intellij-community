@@ -121,10 +121,10 @@ public abstract class BaseInspectionVisitor extends GroovyRecursiveElementVisito
                   ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
   }
 
-  private void registerError(@NotNull PsiElement location,
-                             String description,
-                             LocalQuickFix[] fixes,
-                             ProblemHighlightType highlightType) {
+  protected void registerError(@NotNull PsiElement location,
+                               String description,
+                               LocalQuickFix[] fixes,
+                               ProblemHighlightType highlightType) {
     problemsHolder.registerProblem(location, description, highlightType, fixes);
   }
 

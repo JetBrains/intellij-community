@@ -22,7 +22,6 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -36,7 +35,6 @@ import java.awt.event.KeyEvent;
 import java.util.*;
 
 public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
-  private static final Icon COPY_ICON = IconLoader.getIcon("/actions/copy.png");
   private final SvnServerFileManager myManager;
 
   private final CompositeRunnable myTreeUpdaterValidator;
@@ -193,7 +191,7 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
       }
     });
 
-    result.add(new AnAction("Copy", "Copy", COPY_ICON) {
+    result.add(new AnAction("Copy", "Copy", PlatformIcons.COPY_ICON) {
         {
             registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, KeyEvent.CTRL_MASK)), myTree);
         }

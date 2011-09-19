@@ -60,7 +60,7 @@ public class LookupActionsStep extends BaseListPopupStep<LookupElementAction> im
       myLookup.hide();
     } else if (result == LookupElementAction.Result.REFRESH_ITEM) {
       myLookup.updateLookupWidth(myLookupElement);
-      myLookup.refreshUi();
+      myLookup.refreshUi(false);
     } else if (result instanceof LookupElementAction.Result.ChooseItem) {
       myLookup.setCurrentItem(((LookupElementAction.Result.ChooseItem)result).item);
       CommandProcessor.getInstance().executeCommand(myLookup.getEditor().getProject(), new Runnable() {

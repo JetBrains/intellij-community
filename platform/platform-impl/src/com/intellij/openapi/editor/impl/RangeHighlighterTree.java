@@ -31,7 +31,7 @@ public class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighterEx> {
   }
 
   @Override
-  protected int compareEqualStartIntervals(@NotNull IntervalNode i1, @NotNull IntervalNode i2) {
+  protected int compareEqualStartIntervals(@NotNull IntervalNode<RangeHighlighterEx> i1, @NotNull IntervalNode<RangeHighlighterEx> i2) {
     RHNode o1 = (RHNode)i1;
     RHNode o2 = (RHNode)i2;
     if (o1.myLayer != o2.myLayer) {
@@ -62,7 +62,7 @@ public class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighterEx> {
     //range highlighters are strongly referenced
     @Override
     protected Getable<RangeHighlighterEx> createGetable(@NotNull RangeHighlighterEx interval) {
-      return (Getable)interval;
+      return (RangeHighlighterImpl)interval;
     }
   }
 

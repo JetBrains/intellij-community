@@ -19,6 +19,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -72,6 +73,15 @@ public class MergeDialogCustomizer {
     } else {
       return VcsBundle.message("merge.version.title.last.version");
     }
+  }
+
+  /**
+   * @return The title of multiple files merge dialog.
+   * Don't mix with {@link #getMergeWindowTitle(com.intellij.openapi.vfs.VirtualFile)} which is the title of a 3-way merge dialog
+   * displayed for a single file.
+   */
+  public @NotNull String getMultipleFileDialogTitle() {
+    return VcsBundle.message("multiple.file.merge.title");
   }
 
 }

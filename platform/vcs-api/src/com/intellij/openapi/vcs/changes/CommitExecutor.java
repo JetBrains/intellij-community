@@ -27,5 +27,5 @@ public interface CommitExecutor {
   String getActionText();
 
   @NotNull
-  CommitSession createCommitSession();
+  CommitSession createCommitSession(CommitContext commitContext);
 }

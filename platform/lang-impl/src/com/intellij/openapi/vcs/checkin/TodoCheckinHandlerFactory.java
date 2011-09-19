@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.checkin;
 
 import com.intellij.openapi.vcs.CheckinProjectPanel;
+import com.intellij.openapi.vcs.changes.CommitContext;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -26,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 public class TodoCheckinHandlerFactory extends CheckinHandlerFactory {
   @NotNull
   @Override
-  public CheckinHandler createHandler(CheckinProjectPanel panel) {
+  public CheckinHandler createHandler(CheckinProjectPanel panel, CommitContext commitContext) {
     return new TodoCheckinHandler(panel);
   }
 }

@@ -29,7 +29,7 @@ import java.util.Collection;
  * included in the checkin operation, getting/setting the commit message and so on).
  * The active check-in dialog can be retrieved from the using {@link Refreshable#PANEL_KEY}
  *
- * @see com.intellij.openapi.vcs.checkin.CheckinHandlerFactory#createHandler(CheckinProjectPanel)
+ * @see com.intellij.openapi.vcs.checkin.BaseCheckinHandlerFactory#createHandler(CheckinProjectPanel, CommitContext)
  */
 public interface CheckinProjectPanel extends Refreshable {
   JComponent getComponent();

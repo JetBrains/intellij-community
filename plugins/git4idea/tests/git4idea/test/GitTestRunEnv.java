@@ -48,7 +48,7 @@ public class GitTestRunEnv {
    * @return
    */
   public String run(@NotNull String command, String... params) throws IOException {
-    String[] arguments = (String[])ArrayUtil.join(new String[]{gitExecutable, command}, params);
+    String[] arguments = ArrayUtil.mergeArrays(new String[]{gitExecutable, command}, params);
     log("# " + StringUtil.join(arguments, " "));
     final ProcessBuilder builder = new ProcessBuilder().command(arguments);
     builder.directory(myRootDir);

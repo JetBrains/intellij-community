@@ -22,7 +22,6 @@ import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -69,14 +68,8 @@ public class BinaryDiffTool implements DiffTool {
             }
 
             @Override
-            protected void dispose() {
-              super.dispose();
-              Disposer.dispose(myPanel);
-            }
-
-            @Override
             protected JComponent createCenterPanel() {
-              myPanel = DiffManager.getInstance().createDiffPanel(getWindow(), project);
+              myPanel = DiffManager.getInstance().createDiffPanel(getWindow(), project,getDisposable());
               myPanel.setDiffRequest(data);
               myPanel.setTitle1(src.getPath());
               myPanel.setTitle2(trg.getPath());

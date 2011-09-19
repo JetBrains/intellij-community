@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,9 +34,10 @@ public interface PsiAnnotationOwner {
 
   /**
    * @return the list of annotations which are applicable to this owner.
-   * E.g. Type annotations on method belong to its type element, not the method.
+   *         E.g. Type annotations on method belong to its type element, not the method.
    */
-  @NotNull PsiAnnotation[] getApplicableAnnotations();
+  @NotNull
+  PsiAnnotation[] getApplicableAnnotations();
 
   /**
    * Searches the modifier list for an annotation with the specified fully qualified name
@@ -49,7 +50,8 @@ public interface PsiAnnotationOwner {
   PsiAnnotation findAnnotation(@NotNull @NonNls String qualifiedName);
 
   /**
-   * Add a new annotation to this modifier list. The annotation class name will be shortened. No attribbutes will be defined.
+   * Add a new annotation to this modifier list. The annotation class name will be shortened. No attributes will be defined.
+   *
    * @param qualifiedName qualifiedName
    * @return newly added annotation
    */

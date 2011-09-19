@@ -39,7 +39,7 @@ public class UnsafeUsagesDialog extends DialogWrapper {
     super(project, true);
     myConflictDescriptions = conflictDescriptions;
     setTitle(RefactoringBundle.message("usages.detected"));
-    setOKButtonText(RefactoringBundle.message("ignore.button"));
+    setOKButtonText(RefactoringBundle.message("delete.anyway.button"));
     init();
   }
 

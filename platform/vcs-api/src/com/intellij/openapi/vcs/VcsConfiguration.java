@@ -51,6 +51,7 @@ import java.util.List;
 )
 public final class VcsConfiguration implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.VcsConfiguration");
+  public final static long ourMaximumFileForBaseRevisionSize = 500 * 1000;
 
   @NonNls private static final String VALUE_ATTR = "value";
   @NonNls private static final String CONFIRM_MOVE_TO_FAILED_COMMIT_ELEMENT = "confirmMoveToFailedCommit";
@@ -83,6 +84,9 @@ public final class VcsConfiguration implements PersistentStateComponent<Element>
   public int SHORT_DIFF_EXTRA_LINES = 2;
   public boolean SOFT_WRAPS_IN_SHORT_DIFF = true;
   public IgnoreSpaceEnum SHORT_DIFF_IGNORE_SPACE = IgnoreSpaceEnum.NO;
+  // asked only for non-DVCS
+  public boolean INCLUDE_TEXT_INTO_PATCH = false;
+  public boolean INCLUDE_TEXT_INTO_SHELF = false;
 
   public enum StandardOption {
     ADD(VcsBundle.message("vcs.command.name.add")),

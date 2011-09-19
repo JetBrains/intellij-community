@@ -41,8 +41,6 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
       protected void addCompletions(@NotNull CompletionParameters parameters,
                                     ProcessingContext context,
                                     @NotNull CompletionResultSet result) {
-        if (parameters.getInvocationCount() > 0) return; //only in autopopups for now
-
         final PsiFile file = parameters.getPosition().getContainingFile();
         final int offset = parameters.getOffset();
         if (Registry.is("show.live.templates.in.completion")) {
@@ -51,6 +49,8 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
           }
           return;
         }
+
+        if (parameters.getInvocationCount() > 0) return; //only in autopopups for now
 
         final String prefix = result.getPrefixMatcher().getPrefix();
         final TemplateImpl template = findApplicableTemplate(file, offset, prefix);

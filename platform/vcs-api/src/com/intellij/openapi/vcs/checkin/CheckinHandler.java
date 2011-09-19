@@ -31,7 +31,7 @@ import java.util.List;
  *
  * @author lesya
  * @since 5.1
- * @see CheckinHandlerFactory#createHandler(com.intellij.openapi.vcs.CheckinProjectPanel)
+ * @see BaseCheckinHandlerFactory#createHandler(com.intellij.openapi.vcs.CheckinProjectPanel, CommitContext)
  * @see CodeAnalysisBeforeCheckinHandler
  */
 public abstract class CheckinHandler {
@@ -73,7 +73,7 @@ public abstract class CheckinHandler {
   /**
    * Performs the before check-in processing when a custom commit executor is used. The method can use the
    * {@link com.intellij.openapi.vcs.CheckinProjectPanel} instance passed to
-   * {@link CheckinHandlerFactory#createHandler(com.intellij.openapi.vcs.CheckinProjectPanel)} to
+   * {@link BaseCheckinHandlerFactory#createHandler(com.intellij.openapi.vcs.CheckinProjectPanel, CommitContext)} to
    * get information about the files to be checked in.
    *
    * @param executor the commit executor, or null if the standard commit operation is executed.
@@ -87,7 +87,7 @@ public abstract class CheckinHandler {
   /**
    * Performs the before check-in processing. The method can use the
    * {@link com.intellij.openapi.vcs.CheckinProjectPanel} instance passed to
-   * {@link CheckinHandlerFactory#createHandler(com.intellij.openapi.vcs.CheckinProjectPanel)} to
+   * {@link BaseCheckinHandlerFactory#createHandler(com.intellij.openapi.vcs.CheckinProjectPanel, CommitContext)} to
    * get information about the files to be checked in.
    *
    * @return the code indicating whether the check-in operation should be performed or aborted.
@@ -99,7 +99,7 @@ public abstract class CheckinHandler {
   /**
    * Performs the processing on successful check-in. The method can use the
    * {@link com.intellij.openapi.vcs.CheckinProjectPanel} instance passed to
-   * {@link CheckinHandlerFactory#createHandler(com.intellij.openapi.vcs.CheckinProjectPanel)} to
+   * {@link BaseCheckinHandlerFactory#createHandler(com.intellij.openapi.vcs.CheckinProjectPanel, CommitContext)} to
    * get information about the checked in files.
    */
   public void checkinSuccessful() {
@@ -109,7 +109,7 @@ public abstract class CheckinHandler {
   /**
    * Performs the processing on failed check-in. The method can use the
    * {@link com.intellij.openapi.vcs.CheckinProjectPanel} instance passed to
-   * {@link CheckinHandlerFactory#createHandler(com.intellij.openapi.vcs.CheckinProjectPanel)} to
+   * {@link BaseCheckinHandlerFactory#createHandler(com.intellij.openapi.vcs.CheckinProjectPanel, CommitContext)} to
    * get information about the checked in files.
    *
    * @param exception the list of VCS exceptions identifying the problems that occurred during the

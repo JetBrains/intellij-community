@@ -117,7 +117,7 @@ public class TextFieldWithAutoCompletion extends EditorTextField {
     final String advertisementText = getAdvertisementText();
     if (!StringUtil.isEmpty(advertisementText)) {
       lookup.setAdvertisementText(advertisementText);
-      lookup.refreshUi();
+      lookup.refreshUi(false);
     }
     lookup.showLookup();
   }

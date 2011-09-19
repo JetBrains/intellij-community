@@ -268,9 +268,13 @@ public abstract class AbstractExternalFilter {
       boolean skip = false;
 
       while (((read = buf.readLine()) != null) && !read.toUpperCase().trim().equals(DL)) {
-        if (read.toUpperCase().indexOf(H2) != -1) { // read=class name in <H2>
+        if (read.toUpperCase().contains(H2) && !read.toUpperCase().contains("H2")) { // read=class name in <H2>
           data.append(H2);
           skip = true;
+        }
+        else if (StringUtil.indexOfIgnoreCase(read, greatestEndSection, 0) != -1) {
+          data.append(HTML_CLOSE);
+          return;
         }
         else if (!skip) {
           appendLine(data, read);

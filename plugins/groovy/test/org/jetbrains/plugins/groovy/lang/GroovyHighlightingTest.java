@@ -20,10 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyResultOfAssignmentUsedInspection;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyUncheckedAssignmentOfMemberOfRawTypeInspection;
-import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyAccessibilityInspection;
-import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyLabeledStatementInspection;
-import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyRangeTypeCheckInspection;
-import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyResultOfObjectAllocationIgnoredInspection;
+import org.jetbrains.plugins.groovy.codeInspection.bugs.*;
 import org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyResultOfIncrementOrDecrementUsedInspection;
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialConditionalInspection;
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialIfInspection;
@@ -147,9 +144,9 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testAnonymousClassShoudImplementMethods() throws Throwable {doTest();}
   public void testAnonymousClassShouldImplementSubstitutedMethod() throws Exception {doTest();}
 
-  public void testDefaultMapConstructorNamedArgs() throws Throwable {doTest();}
-  public void testDefaultMapConstructorNamedArgsError() throws Throwable {doTest();}
-  public void testDefaultMapConstructorWhenDefConstructorExists() throws Throwable {doTest();}
+  public void testDefaultMapConstructorNamedArgs() throws Throwable {doTest(new GroovyConstructorNamedArgumentsInspection());}
+  public void testDefaultMapConstructorNamedArgsError() throws Throwable {doTest(new GroovyConstructorNamedArgumentsInspection());}
+  public void testDefaultMapConstructorWhenDefConstructorExists() throws Throwable {doTest(new GroovyConstructorNamedArgumentsInspection());}
 
   public void testSingleAllocationInClosure() throws Throwable {doTest(new GroovyResultOfObjectAllocationIgnoredInspection());}
   public void testUnusedAllocationInClosure() throws Throwable {doTest(new GroovyResultOfObjectAllocationIgnoredInspection());}
@@ -455,7 +452,7 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   }
   
   public void testConstructor() {
-    doTest(new GroovyAssignabilityCheckInspection());
+    doTest(new GroovyAssignabilityCheckInspection(), new GroovyConstructorNamedArgumentsInspection());
   }
 
   public void testRecursiveConstructors() {
@@ -468,5 +465,9 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
 
   public void testUnnecessaryReturnInSwitch() {
     doTest(new GroovyUnnecessaryReturnInspection());
+  }
+  
+  public void testLiteralConstructorUsages() {
+    doTest(new GroovyAssignabilityCheckInspection());
   }
 }

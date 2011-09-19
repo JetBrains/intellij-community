@@ -34,6 +34,7 @@ public abstract class FileDocumentManager implements SavingRequestor {
   @Nullable
   public abstract Document getCachedDocument(@NotNull VirtualFile file);
 
+  @Nullable
   public abstract VirtualFile getFile(@NotNull Document document);
 
   public abstract void saveAllDocuments();

@@ -26,6 +26,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.TransparentlyFailedValue;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
@@ -40,9 +41,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author irengrig
@@ -91,11 +90,21 @@ public class ImportToShelfExecutor implements ApplyPatchExecutor {
           PatchEP[] patchTransitExtensions = null;
           if (additionalInfo != null) {
             try {
-              final List<PatchEP> list = new ArrayList<PatchEP>();
+              final Map<String, PatchEP> extensions = new HashMap<String, PatchEP>();
               for (Map.Entry<String, Map<String, CharSequence>> entry : additionalInfo.get().entrySet()) {
-                list.add(new TransitExtension(entry.getKey(), entry.getValue()));
+                final String filePath = entry.getKey();
+                Map<String, CharSequence> extToValue = entry.getValue();
+                for (Map.Entry<String, CharSequence> innerEntry : extToValue.entrySet()) {
+                  TransitExtension patchEP = (TransitExtension)extensions.get(innerEntry.getKey());
+                  if (patchEP == null) {
+                    patchEP = new TransitExtension(innerEntry.getKey());
+                    extensions.put(innerEntry.getKey(), patchEP);
+                  }
+                  patchEP.put(filePath, innerEntry.getValue());
+                }
               }
-              patchTransitExtensions = list.toArray(new PatchEP[list.size()]);
+              Collection<PatchEP> values = extensions.values();
+              patchTransitExtensions = values.toArray(new PatchEP[values.size()]);
             }
             catch (PatchSyntaxException e) {
               VcsBalloonProblemNotifier
@@ -123,9 +132,9 @@ public class ImportToShelfExecutor implements ApplyPatchExecutor {
     private final String myName;
     private final Map<String, CharSequence> myMap;
 
-    private TransitExtension(String name, Map<String, CharSequence> map) {
+    private TransitExtension(String name) {
       myName = name;
-      myMap = map;
+      myMap = new HashMap<String, CharSequence>();
     }
 
     @NotNull
@@ -135,13 +144,24 @@ public class ImportToShelfExecutor implements ApplyPatchExecutor {
     }
 
     @Override
-    public CharSequence provideContent(Project project, @NotNull String path) {
+    public CharSequence provideContent(@NotNull String path, CommitContext commitContext) {
       return myMap.get(path);
     }
 
     @Override
-    public void consumeContent(Project project, @NotNull String path, @NotNull CharSequence content) {
+    public void consumeContent(@NotNull String path, @NotNull CharSequence content, CommitContext commitContext) {
       throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void consumeContentBeforePatchApplied(@NotNull String path,
+                                                 @NotNull CharSequence content,
+                                                 CommitContext commitContext) {
+      throw new UnsupportedOperationException();
+    }
+
+    public void put(String fileName, CharSequence value) {
+      myMap.put(fileName, value);
     }
   }
 }

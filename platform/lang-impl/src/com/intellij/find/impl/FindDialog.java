@@ -56,6 +56,7 @@ import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -178,7 +179,7 @@ class FindDialog extends DialogWrapper {
     JPanel panel = new JPanel(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
 
-    gbConstraints.insets = new Insets(4, 4, 4, 4);
+    gbConstraints.insets = new Insets(0, 0, UIUtil.DEFAULT_VGAP, 0);
     gbConstraints.fill = GridBagConstraints.VERTICAL;
     gbConstraints.weightx = 0;
     gbConstraints.weighty = 1;
@@ -340,18 +341,15 @@ class FindDialog extends DialogWrapper {
     optionsPanel.setLayout(new GridBagLayout());
 
     GridBagConstraints gbConstraints = new GridBagConstraints();
-    gbConstraints.insets = new Insets(0, 4, 0, 0);
     gbConstraints.weightx = 1;
     gbConstraints.weighty = 1;
     gbConstraints.fill = GridBagConstraints.BOTH;
-
     gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
+
     JPanel topOptionsPanel = new JPanel();
-
-    topOptionsPanel.setLayout(new GridLayout(1, 2, 8, 0));
-    optionsPanel.add(topOptionsPanel, gbConstraints);
-
+    topOptionsPanel.setLayout(new GridLayout(1, 2, UIUtil.DEFAULT_HGAP, 0));
     topOptionsPanel.add(createFindOptionsPanel());
+    optionsPanel.add(topOptionsPanel, gbConstraints);
     if (!myModel.isMultipleFiles()){
       if (FindManagerImpl.ourHasSearchInCommentsAndLiterals) {
         JPanel leftOptionsPanel = new JPanel();
@@ -719,9 +717,11 @@ class FindDialog extends DialogWrapper {
     scopePanel.setBorder(IdeBorderFactory.createTitledBorder(FindBundle.message("find.scope.group"), false, true, true));
     GridBagConstraints gbConstraints = new GridBagConstraints();
     gbConstraints.fill = GridBagConstraints.HORIZONTAL;
+    gbConstraints.anchor = GridBagConstraints.WEST;
+
     gbConstraints.gridx = 0;
     gbConstraints.gridy = 0;
-    gbConstraints.gridwidth = 2;
+    gbConstraints.gridwidth = 3;
     gbConstraints.weightx = 1;
     myRbProject = new JRadioButton(FindBundle.message("find.scope.whole.project.radio"), true);
     scopePanel.add(myRbProject, gbConstraints);
@@ -734,6 +734,7 @@ class FindDialog extends DialogWrapper {
     scopePanel.add(myRbModule, gbConstraints);
 
     gbConstraints.gridx = 1;
+    gbConstraints.gridwidth = 2;
     gbConstraints.weightx = 1;
     Module[] modules = ModuleManager.getInstance(myProject).getModules();
     String[] names = new String[modules.length];
@@ -759,7 +760,6 @@ class FindDialog extends DialogWrapper {
 
     gbConstraints.gridx = 1;
     gbConstraints.weightx = 1;
-
     myDirectoryComboBox = new ComboBox(-1);
     Component editorComponent = myDirectoryComboBox.getEditor().getEditorComponent();
     if (editorComponent instanceof JTextField) {
@@ -771,7 +771,6 @@ class FindDialog extends DialogWrapper {
 
     gbConstraints.weightx = 0;
     gbConstraints.gridx = 2;
-    gbConstraints.insets = new Insets(0, 1, 0, 0);
     mySelectDirectoryButton = new FixedSizeButton(myDirectoryComboBox);
     TextFieldWithBrowseButton.MyDoClickAction.addTo(mySelectDirectoryButton, myDirectoryComboBox);
     mySelectDirectoryButton.setMargin(new Insets(0, 0, 0, 0));
@@ -780,7 +779,7 @@ class FindDialog extends DialogWrapper {
     gbConstraints.gridx = 0;
     gbConstraints.gridy++;
     gbConstraints.weightx = 1;
-    gbConstraints.gridwidth = 2;
+    gbConstraints.gridwidth = 3;
     gbConstraints.insets = new Insets(0, 16, 0, 0);
     myCbWithSubdirectories = createCheckbox(true, FindBundle.message("find.scope.directory.recursive.checkbox"));
     myCbWithSubdirectories.setSelected(true);
@@ -789,14 +788,15 @@ class FindDialog extends DialogWrapper {
 
     gbConstraints.gridx = 0;
     gbConstraints.gridy++;
-    gbConstraints.weightx = 1;
+    gbConstraints.weightx = 0;
     gbConstraints.gridwidth = 1;
-    gbConstraints.insets = new Insets(0, 1, 0, 0);
+    gbConstraints.insets = new Insets(0, 0, 0, 0);
     myRbCustomScope = new JRadioButton(FindBundle.message("find.scope.custom.radio"), false);
     scopePanel.add(myRbCustomScope, gbConstraints);
 
     gbConstraints.gridx++;
-    gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
+    gbConstraints.weightx = 1;
+    gbConstraints.gridwidth = 2;
     myScopeCombo = new ScopeChooserCombo(myProject, true, true, FindSettings.getInstance().getDefaultScopeName());
     Disposer.register(myDisposable, myScopeCombo);
     scopePanel.add(myScopeCombo, gbConstraints);
@@ -1144,6 +1144,11 @@ class FindDialog extends DialogWrapper {
     }
     updateControls();
 
+  }
+
+  @Override
+  protected boolean isCenterStrictedToPreferredSize() {
+    return true;
   }
 }
 

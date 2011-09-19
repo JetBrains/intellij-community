@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -184,7 +184,7 @@ public abstract class GrDocMemberReferenceImpl extends GroovyDocPsiElementImpl i
 
       PsiElement[] methodCandidates = ResolveUtil.mapToElements(methodProcessor.getCandidates());
 
-      PsiElement[] elements = ArrayUtil.mergeArrays(propertyCandidates, methodCandidates, PsiElement.class);
+      PsiElement[] elements = ArrayUtil.mergeArrays(propertyCandidates, methodCandidates);
 
       return ContainerUtil.map2Array(elements, new Function<PsiElement, Object>() {
         public Object fun(PsiElement psiElement) {

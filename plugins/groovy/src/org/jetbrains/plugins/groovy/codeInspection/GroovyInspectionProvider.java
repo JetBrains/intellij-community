@@ -137,6 +137,7 @@ public class GroovyInspectionProvider implements InspectionToolProvider, Applica
         GroovyDivideByZeroInspection.class,
         GroovyResultOfObjectAllocationIgnoredInspection.class,
         GroovyAccessibilityInspection.class,
+        GroovyConstructorNamedArgumentsInspection.class,
         GroovyRangeTypeCheckInspection.class,
         GroovyLabeledStatementInspection.class,
 

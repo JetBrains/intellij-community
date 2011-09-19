@@ -61,6 +61,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAc
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.inline.InlineMethodConflictSolver;
@@ -242,7 +244,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
 
         if (StringUtil.isEmpty(result.getPrefixMatcher().getPrefix())) return;
 
-        completeStaticMembers(position).processStaticMethodsGlobally(result);
+        completeStaticMembers(parameters).processStaticMethodsGlobally(result);
       }
     });
 
@@ -286,6 +288,8 @@ public class GroovyCompletionContributor extends CompletionContributor {
         PsiElement position = parameters.getPosition();
 
         suggestVariableNames(position, result);
+
+        addUnfinishedMethodTypeParameters(position, result);
 
         final PsiElement parent = position.getParent();
         if (parent instanceof GrReferenceElement) {
@@ -339,6 +343,25 @@ public class GroovyCompletionContributor extends CompletionContributor {
 
   }
 
+  private static void addUnfinishedMethodTypeParameters(PsiElement position, CompletionResultSet result) {
+    final ProcessingContext context = new ProcessingContext();
+    if (PsiJavaPatterns.psiElement().inside(
+      PsiJavaPatterns.psiElement(GrTypeElement.class).afterLeaf(
+        PsiJavaPatterns.psiElement().withText(">").withParent(
+          PsiJavaPatterns.psiElement(GrTypeParameterList.class).withParent(PsiErrorElement.class).save("typeParameterList")))).accepts(
+      position, context)) {
+      final GrTypeParameterList list = (GrTypeParameterList)context.get("typeParameterList");
+      PsiElement current = list.getParent().getParent();
+      if (current instanceof PsiField) {
+        current = current.getParent();
+      }
+      if (current instanceof GrTypeDefinitionBody) {
+        for (PsiTypeParameter typeParameter : list.getTypeParameters()) {
+          result.addElement(new JavaPsiClassReferenceElement(typeParameter));
+        }
+      }
+    }
+  }
 
   @Override
   public void fillCompletionVariants(CompletionParameters parameters, CompletionResultSet result) {
@@ -448,7 +471,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
     });
 
     if (qualifier == null) {
-      completeStaticMembers(position).processMembersOfRegisteredClasses(null, new PairConsumer<PsiMember, PsiClass>() {
+      completeStaticMembers(parameters).processMembersOfRegisteredClasses(null, new PairConsumer<PsiMember, PsiClass>() {
         @Override
         public void consume(PsiMember member, PsiClass psiClass) {
           if (member instanceof GrAccessorMethod) {
@@ -485,11 +508,14 @@ public class GroovyCompletionContributor extends CompletionContributor {
     }
   }
 
-  private static StaticMemberProcessor completeStaticMembers(PsiElement position) {
+  private static StaticMemberProcessor completeStaticMembers(CompletionParameters parameters) {
+    final PsiElement position = parameters.getPosition();
+    final PsiElement originalPosition = parameters.getOriginalPosition();
     final StaticMemberProcessor processor = new StaticMemberProcessor(position) {
       @NotNull
       @Override
       protected LookupElement createLookupElement(@NotNull PsiMember member, @NotNull PsiClass containingClass, boolean shouldImport) {
+        shouldImport |= originalPosition != null && PsiTreeUtil.isAncestor(containingClass, originalPosition, false);
         return createGlobalMemberElement(member, containingClass, shouldImport);
       }
 
@@ -497,6 +523,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
       protected LookupElement createLookupElement(@NotNull List<PsiMethod> overloads,
                                                   @NotNull PsiClass containingClass,
                                                   boolean shouldImport) {
+        shouldImport |= originalPosition != null && PsiTreeUtil.isAncestor(containingClass, originalPosition, false);
         return new JavaGlobalMemberLookupElement(overloads, containingClass, QUALIFIED_METHOD_INSERT_HANDLER, STATIC_IMPORT_INSERT_HANDLER,
                                                  shouldImport);
       }
@@ -539,7 +566,6 @@ public class GroovyCompletionContributor extends CompletionContributor {
     return new JavaGlobalMemberLookupElement(member, containingClass, QUALIFIED_METHOD_INSERT_HANDLER, STATIC_IMPORT_INSERT_HANDLER, shouldImport);
   }
 
-  private static final String DUMMY_IDENTIFIER_TRIMMED_DECAPITALIZED = "intelliJIdeaRulezzz";
   private static final String DUMMY_IDENTIFIER_DECAPITALIZED = "intelliJIdeaRulezzz ";
 
   public void beforeCompletion(@NotNull final CompletionInitializationContext context) {

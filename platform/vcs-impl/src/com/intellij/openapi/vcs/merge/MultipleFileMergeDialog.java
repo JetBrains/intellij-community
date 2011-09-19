@@ -138,7 +138,7 @@ public class MultipleFileMergeDialog extends DialogWrapper {
     myTable.setModel(myModel);
     myVirtualFileRenderer.setFont(UIUtil.getListFont());
     myTable.setRowHeight(myVirtualFileRenderer.getPreferredSize().height);
-    setTitle(VcsBundle.message("multiple.file.merge.title"));
+    setTitle(myMergeDialogCustomizer.getMultipleFileDialogTitle());
     init();
     myAcceptYoursButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {

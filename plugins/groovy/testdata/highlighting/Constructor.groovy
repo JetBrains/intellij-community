@@ -4,7 +4,7 @@ class A {
   def A(x) {}
 
   def test() {
-    new A<warning descr="'A' in 'A' cannot be applied to '()'">()</warning>
+    new A<warning descr="Constructor 'A' in 'A' cannot be applied to '()'">()</warning>
 
     new A(field: 1)
     new A(field2: 1)
@@ -32,6 +32,6 @@ class C {
   def test() {
     new C(field: 0)
     new C(field1: 0)
-    new C<warning descr="'C' in 'C' cannot be applied to '()'">()</warning>
+    new C<warning descr="Constructor 'C' in 'C' cannot be applied to '()'">()</warning>
   }
 }

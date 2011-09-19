@@ -24,17 +24,17 @@ import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.IdeaTextPatchBuilder;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.util.WaitForProgressToShow;
@@ -46,6 +46,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -81,8 +82,8 @@ public class CreatePatchCommitExecutor implements CommitExecutorWithHelp, Projec
   }
 
   @NotNull
-  public CommitSession createCommitSession() {
-    return new CreatePatchCommitSession();
+  public CommitSession createCommitSession(CommitContext commitContext) {
+    return new CreatePatchCommitSession(commitContext);
   }
 
   public void projectOpened() {
@@ -114,6 +115,11 @@ public class CreatePatchCommitExecutor implements CommitExecutorWithHelp, Projec
 
   private class CreatePatchCommitSession implements CommitSession {
     private final CreatePatchConfigurationPanel myPanel = new CreatePatchConfigurationPanel(myProject);
+    private final CommitContext myCommitContext;
+
+    public CreatePatchCommitSession(CommitContext commitContext) {
+      myCommitContext = commitContext;
+    }
 
     @Nullable
     public JComponent getAdditionalConfigurationUI() {
@@ -126,6 +132,21 @@ public class CreatePatchCommitExecutor implements CommitExecutorWithHelp, Projec
       }
       myPanel.setFileName(ShelveChangesManager.suggestPatchName(myProject, commitMessage, new File(PATCH_PATH), null));
       myPanel.setReversePatch(REVERSE_PATCH);
+      boolean dvcsIsUsed = false;
+      for (Change change : changes) {
+        final AbstractVcs vcs = ChangesUtil.getVcsForChange(change, myProject);
+        if (VcsType.distibuted.equals(vcs.getType())) {
+          dvcsIsUsed = true;
+          break;
+        }
+      }
+      final List<Change> modified = new ArrayList<Change>();
+      for (Change change : changes) {
+        if (change.getBeforeRevision() == null || change.getAfterRevision() == null) continue;
+        modified.add(change);
+      }
+      myPanel.setChanges(modified);
+      myPanel.showTextStoreOption(dvcsIsUsed);
       return myPanel.getPanel();
     }
 
@@ -138,6 +159,14 @@ public class CreatePatchCommitExecutor implements CommitExecutorWithHelp, Projec
         Messages.showErrorDialog(myProject, VcsBundle.message("create.patch.error.title", myPanel.getError()), CommonBundle.getErrorTitle());
         return;
       }
+      myPanel.onOk();
+      myCommitContext.putUserData(BaseRevisionTextPatchEP.ourPutBaseRevisionTextKey, myPanel.isStoreTexts());
+      final List<FilePath> list = new ArrayList<FilePath>();
+      for (Change change : myPanel.getIncludedChanges()) {
+        list.add(ChangesUtil.getFilePath(change));
+      }
+      myCommitContext.putUserData(BaseRevisionTextPatchEP.ourBaseRevisionPaths, list);
+
       int binaryCount = 0;
       for(Change change: changes) {
         if (ChangesUtil.isBinaryChange(change)) {
@@ -161,7 +190,7 @@ public class CreatePatchCommitExecutor implements CommitExecutorWithHelp, Projec
         REVERSE_PATCH = myPanel.isReversePatch();
         
         List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(myProject, changes, myProject.getBaseDir().getPresentableUrl(), REVERSE_PATCH);
-        PatchWriter.writePatches(myProject, fileName, patches);
+        PatchWriter.writePatches(myProject, fileName, patches, myCommitContext);
         final String message;
         if (binaryCount == 0) {
           message = VcsBundle.message("create.patch.success.confirmation", file.getPath());
@@ -179,8 +208,9 @@ public class CreatePatchCommitExecutor implements CommitExecutorWithHelp, Projec
             }
           }
         }, null, myProject);
-      }
-      catch (final Exception ex) {
+      } catch (ProcessCanceledException e) {
+        //
+      } catch (final Exception ex) {
         LOG.info(ex);
         WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
           public void run() {

@@ -51,7 +51,11 @@ public class ChooseItemReplaceAction extends EditorAction {
     public boolean isEnabled(Editor editor, DataContext dataContext) {
       LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
       if (lookup != null) {
-        lookup.refreshUi(); // to bring the list model up to date
+        if (!lookup.isShown()) {
+          return false;
+        }
+
+        lookup.refreshUi(false); // to bring the list model up to date
 
         CompletionProcess completion = CompletionService.getCompletionService().getCurrentCompletion();
         if (completion != null && completion.isAutopopupCompletion() && hasTemplatePrefix(lookup, TemplateSettings.TAB_CHAR) && !lookup.isSelectionTouched()) {

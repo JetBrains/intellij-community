@@ -19,6 +19,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.VcsKey;
+import com.intellij.openapi.vcs.changes.CommitContext;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -37,7 +38,7 @@ public abstract class VcsCheckinHandlerFactory implements BaseCheckinHandlerFact
 
   @NotNull
   @Override
-  public CheckinHandler createHandler(CheckinProjectPanel panel) {
+  public CheckinHandler createHandler(CheckinProjectPanel panel, CommitContext commitContext) {
     if (! panel.vcsIsAffected(myKey.getName())) return CheckinHandler.DUMMY;
     return createVcsHandler(panel);
   }

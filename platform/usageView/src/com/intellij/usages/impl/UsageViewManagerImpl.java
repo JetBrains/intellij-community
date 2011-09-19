@@ -214,45 +214,19 @@ public class UsageViewManagerImpl extends UsageViewManager {
     ProgressManager.checkCanceled();
   }
 
-  public int appendUsageWhenNotTooMany(final Usage usage,
-                                       final UsageTarget[] mySearchFor,
-                                       final UsageViewImpl usageView,
-                                       final ProgressIndicator indicator,
-                                       final AtomicInteger tooManyUsages,
-                                       final CountDownLatch waitWhileUserClick,
-                                       final AtomicInteger usageCountWithoutDefinition) {
-    if (tooManyUsages.get() == 1) {
-      try {
-        waitWhileUserClick.await(1, TimeUnit.SECONDS);
+  public void showTooManyUsagesWarning(final ProgressIndicator indicator, final CountDownLatch waitWhileUserClick, final int usageCount) {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        if (searchHasBeenCancelled() || indicator != null && indicator.isCanceled()) return;
+        String message = UsageViewBundle.message("find.excessive.usage.count.prompt", usageCount);
+        int ret = UsageLimitUtil.showTooManyUsagesWarning(myProject, message);
+        if (ret != 0) {
+          setCurrentSearchCancelled(true);
+        }
+        waitWhileUserClick.countDown();
       }
-      catch (InterruptedException ignored) {
-      }
-    }
-
-    boolean incrementCounter = !isSelfUsage(usage, mySearchFor);
-
-    if (incrementCounter) {
-      final int usageCount = usageCountWithoutDefinition.incrementAndGet();
-      if (usageCount > UsageLimitUtil.USAGES_LIMIT && tooManyUsages.get() == 0 && tooManyUsages.compareAndSet(0, 1)) {
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            if (searchHasBeenCancelled() || indicator != null && indicator.isCanceled()) return;
-            String message = UsageViewBundle.message("find.excessive.usage.count.prompt", usageCountWithoutDefinition.get());
-            int ret = UsageLimitUtil.showTooManyUsagesWarning(myProject, message);
-            if (ret != 0) {
-              setCurrentSearchCancelled(true);
-            }
-            waitWhileUserClick.countDown();
-          }
-        });
-      }
-      if (usageView != null) {
-        usageView.appendUsageLater(usage);
-      }
-      return usageCount;
-    }
-    return -1;
+    });
   }
 
   private class SearchForUsagesRunnable implements Runnable {
@@ -327,10 +301,28 @@ public class UsageViewManagerImpl extends UsageViewManager {
         public boolean process(final Usage usage) {
           final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
           if (searchHasBeenCancelled() || indicator != null && indicator.isCanceled()) return false;
-          final int usageCount = appendUsageWhenNotTooMany(usage, mySearchFor, getUsageView(),
-                                                           indicator, tooManyUsages, waitWhileUserClick, myUsageCountWithoutDefinition);
-          if (usageCount == 1 && !myProcessPresentation.isShowPanelIfOnlyOneUsage()) {
-            myFirstUsage.compareAndSet(null, usage);
+          if (tooManyUsages.get() == 1) {
+            try {
+              waitWhileUserClick.await(1, TimeUnit.SECONDS);
+            }
+            catch (InterruptedException ignored) {
+            }
+          }
+
+          boolean incrementCounter = !isSelfUsage(usage, mySearchFor);
+
+          if (incrementCounter) {
+            final int usageCount = myUsageCountWithoutDefinition.incrementAndGet();
+            if (usageCount == 1 && !myProcessPresentation.isShowPanelIfOnlyOneUsage()) {
+              myFirstUsage.compareAndSet(null, usage);
+            }
+            if (usageCount > UsageLimitUtil.USAGES_LIMIT && tooManyUsages.get() == 0 && tooManyUsages.compareAndSet(0, 1)) {
+              showTooManyUsagesWarning(indicator, waitWhileUserClick, myUsageCountWithoutDefinition.get());
+            }
+            UsageViewImpl usageView = getUsageView();
+            if (usageView != null) {
+              usageView.appendUsageLater(usage);
+            }
           }
           return indicator == null || !indicator.isCanceled();
         }

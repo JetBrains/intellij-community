@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.continuation.ContinuationContext;
 import git4idea.GitVcs;
 import git4idea.config.GitVcsSettings;
+import git4idea.merge.GitConflictResolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,6 +48,8 @@ public abstract class GitChangesSaver {
   protected final ChangeListManagerEx myChangeManager;
   protected final ProgressIndicator myProgressIndicator;
   protected final String myStashMessage;
+
+  protected GitConflictResolver.Params myParams;
 
   /**
    * Returns an instance of the proper GitChangesSaver depending on the chosen save changes policy.
@@ -99,11 +102,15 @@ public abstract class GitChangesSaver {
     if (wereChangesSaved()) {
       LOG.info("Update is incomplete, changes are not restored");
       GitVcs.IMPORTANT_ERROR_NOTIFICATION.createNotification("Local changes were not restored",
-                                                "Before update your uncommitted changes were saved to <a href='saver'>" + getSaverName() + "</a><br/>" +
+                                                "Before update your uncommitted changes were saved to <a href='saver'>" + getSaverName() + "</a>.<br/>" +
                                                 "Update is not complete, you have unresolved merges in your working tree<br/>" +
                                                 "Resolve conflicts, complete update and restore changes manually.", NotificationType.WARNING,
                                                 new ShowSavedChangesNotificationListener()).notify(myProject);
     }
+  }
+
+  public void setConflictResolverParams(GitConflictResolver.Params params) {
+    myParams = params;
   }
 
   /**

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,21 @@
  */
 package com.intellij.uiDesigner.propertyInspector.editors.string;
 
+import com.intellij.ide.DataManager;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SpeedSearchBase;
+import com.intellij.ui.table.JBTable;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.StringDescriptor;
-import com.intellij.util.ui.Table;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -33,12 +37,14 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -57,7 +63,7 @@ public final class KeyChooserDialog extends DialogWrapper{
   private ArrayList<Pair<String, String>> myPairs;
   private final JComponent myCenterPanel;
   /** Table with key/value pairs */
-  private final Table myTable;
+  private final JTable myTable;
   @NonNls private static final String NULL = "null";
   private final MyTableModel myModel;
   private final GuiEditor myEditor;
@@ -66,9 +72,9 @@ public final class KeyChooserDialog extends DialogWrapper{
 
   /**
    * @param bundle resource bundle to be shown.
-   *@param bundleName name of the resource bundle to be shown. We need this
+   * @param bundleName name of the resource bundle to be shown. We need this
    * name to create StringDescriptor in {@link #getDescriptor()} method.
-   *@param keyToPreselect describes row that should be selected in the
+   * @param keyToPreselect describes row that should be selected in the
    * @param parent the parent component for the dialog.
    */
   public KeyChooserDialog(
@@ -91,7 +97,7 @@ public final class KeyChooserDialog extends DialogWrapper{
 
     // Create UI
     myModel = new MyTableModel();
-    myTable = new Table(myModel);
+    myTable = new JBTable(myModel);
     myTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     new MySpeedSearch(myTable);
     myCenterPanel = ScrollPaneFactory.createScrollPane(myTable);
@@ -104,18 +110,32 @@ public final class KeyChooserDialog extends DialogWrapper{
     });
 
     // Calculate width for "Key" columns
+    final Project projectGuess = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(parent));
+    final Dimension size = DimensionService.getInstance().getSize(getDimensionServiceKey(), projectGuess);
     final FontMetrics metrics = myTable.getFontMetrics(myTable.getFont());
-    int width = 0;
+    int minWidth = 200;
+    int maxWidth = size.width / 2;
+    if (minWidth > maxWidth) {
+      minWidth = maxWidth;
+    }
+    int width = minWidth;
     for(int i = myPairs.size() - 1; i >= 0; i--){
       final Pair<String, String> pair = myPairs.get(i);
       width = Math.max(width, metrics.stringWidth(pair.getFirst()));
     }
-    width += 30;
+    width += 20;
     width = Math.max(width, metrics.stringWidth(myModel.getColumnName(0)));
-    final TableColumn keyColumn = myTable.getColumnModel().getColumn(0);
+    width = Math.max(width, minWidth);
+    width = Math.min(width, maxWidth);
+    final TableColumnModel columnModel = myTable.getColumnModel();
+    final TableColumn keyColumn = columnModel.getColumn(0);
     keyColumn.setMaxWidth(width);
     keyColumn.setMinWidth(width);
-
+    final TableCellRenderer defaultRenderer = myTable.getDefaultRenderer(String.class);
+    if (defaultRenderer instanceof JComponent) {
+      final JComponent component = (JComponent)defaultRenderer;
+      component.putClientProperty("html.disable", Boolean.TRUE);
+    }
     selectKey(keyToPreselect);
 
     init();
@@ -252,11 +272,11 @@ public final class KeyChooserDialog extends DialogWrapper{
     }
   }
 
-  private class MySpeedSearch extends SpeedSearchBase<Table> {
+  private class MySpeedSearch extends SpeedSearchBase<JTable> {
     private TObjectIntHashMap<Object> myElements;
     private Object[] myElementsArray;
 
-    public MySpeedSearch(final Table component) {
+    public MySpeedSearch(final JTable component) {
       super(component);
     }
 

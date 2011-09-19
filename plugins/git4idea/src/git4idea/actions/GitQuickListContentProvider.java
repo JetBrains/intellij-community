@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.actions.VcsQuickListContentProvider;
 import git4idea.GitVcs;
+import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,12 +60,20 @@ public class GitQuickListContentProvider implements VcsQuickListContentProvider 
 
     // Pull/Push
     addSeparator(actions);
-    add("Git.Checkout", manager, actions);
+    add("Git.Branches", manager, actions);
     add("Git.Push.Active.Branches", manager, actions);
 
     // misc
     add("Git.Stash", manager, actions);
     add("Git.Unstash", manager, actions);
+
+    // Github
+    addSeparator(actions);
+    final AnAction githubRebase = manager.getAction("Github.Rebase");
+    if (githubRebase != null) {
+      actions.add(new Separator(GitBundle.message("vcs.popup.git.github.section")));
+      actions.add(githubRebase);
+    }
 
     return actions;
   }
@@ -81,7 +90,7 @@ public class GitQuickListContentProvider implements VcsQuickListContentProvider 
     return true;
   }
 
-  private void addSeparator(List<AnAction> actions) {
+  private void addSeparator(@NotNull final List<AnAction> actions) {
     actions.add(new Separator());
   }
 

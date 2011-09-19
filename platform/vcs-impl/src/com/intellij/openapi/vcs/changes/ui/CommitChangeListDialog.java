@@ -56,6 +56,7 @@ import java.util.List;
  */
 public class CommitChangeListDialog extends DialogWrapper implements CheckinProjectPanel, TypeSafeDataProvider {
   private final static String outCommitHelpId = "reference.dialogs.vcs.commit";
+  private final CommitContext myCommitContext;
   private final CommitMessage myCommitMessageArea;
   private Splitter mySplitter;
   private final JPanel myAdditionalOptionsPanel;
@@ -206,6 +207,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
                                  final List<LocalChangeList> changeLists, final AbstractVcs singleVcs, final boolean isAlien,
                                  final String comment) {
     super(project, true);
+    myCommitContext = new CommitContext();
     myProject = project;
     myExecutors = executors;
     myShowVcsCommit = showVcsCommit;
@@ -347,7 +349,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     Box afterBox = Box.createVerticalBox();
     final List<BaseCheckinHandlerFactory> handlerFactories = CheckinHandlersManager.getInstance(myProject).getRegisteredCheckinHandlerFactories();
     for (BaseCheckinHandlerFactory factory : handlerFactories) {
-      final CheckinHandler handler = factory.createHandler(this);
+      final CheckinHandler handler = factory.createHandler(this, myCommitContext);
       if (CheckinHandler.DUMMY.equals(handler)) continue;
 
       myHandlers.add(handler);
@@ -510,7 +512,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private void execute(final CommitExecutor commitExecutor) {
     if (!saveDialogState()) return;
     saveComments(true);
-    final CommitSession session = commitExecutor.createCommitSession();
+    final CommitSession session = commitExecutor.createCommitSession(myCommitContext);
     if (session == CommitSession.VCS_COMMIT) {
       doOKAction();
       return;

@@ -52,6 +52,10 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
     return true;
   }
 
+  public boolean isSymLink(@NotNull VirtualFile file) {
+    return false;
+  }
+
   protected abstract String extractRootPath(@NotNull String path);
 
   public void addVirtualFileListener(@NotNull final VirtualFileListener listener) {

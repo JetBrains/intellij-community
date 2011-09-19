@@ -79,7 +79,10 @@ public final class GitRepositoryManager extends AbstractProjectComponent impleme
    * or {@code null} if the given file is not a Git root known to this {@link Project}.
    */
   @Nullable
-  public GitRepository getRepositoryForRoot(@NotNull VirtualFile root) {
+  public GitRepository getRepositoryForRoot(@Nullable VirtualFile root) {
+    if (root == null) {
+      return null;
+    }
     try {
       REPO_LOCK.readLock().lock();
       return myRepositories.get(root);
@@ -111,6 +114,10 @@ public final class GitRepositoryManager extends AbstractProjectComponent impleme
     finally {
       REPO_LOCK.readLock().unlock();
     }
+  }
+
+  public boolean moreThanOneRoot() {
+    return myRepositories.values().size() > 1;
   }
 
   /**

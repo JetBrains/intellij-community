@@ -625,7 +625,11 @@ public class JavaCompletionContributor extends CompletionContributor {
       iterator.advance();
     }
 
-    if (!iterator.atEnd() && iterator.getTokenType() == JavaTokenType.LPARENTH) {
+    while (!iterator.atEnd() && ElementType.JAVA_COMMENT_OR_WHITESPACE_BIT_SET.contains(iterator.getTokenType())) {
+      iterator.advance();
+    }
+
+    if (!iterator.atEnd() && (iterator.getTokenType() == JavaTokenType.LPARENTH || iterator.getTokenType() == JavaTokenType.COLON)) {
       return true;
     }
 

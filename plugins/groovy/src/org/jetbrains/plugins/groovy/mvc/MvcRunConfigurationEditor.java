@@ -88,7 +88,7 @@ public class MvcRunConfigurationEditor<T extends MvcRunConfiguration> extends Se
 
   protected void commandLineChanged(@NotNull String newText) {
     final Module module = getSelectedModule();
-    final String depsClasspath = MvcModuleStructureSynchronizer.getFramework(module) == null ? "" : myFramework.getApplicationClassPath(module).getPathsString();
+    final String depsClasspath = MvcFramework.getInstance(module) == null ? "" : myFramework.getApplicationClassPath(module).getPathsString();
     final boolean hasClasspath = StringUtil.isNotEmpty(depsClasspath);
     setCBEnabled(hasClasspath && isAvailableDepsClasspath(), myDepsClasspath);
 

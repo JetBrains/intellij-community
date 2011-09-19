@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -977,11 +977,19 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
     @Override
     public void visitLiteralExpression(PsiLiteralExpression expression) {
-      Object value = expression.getValue();
-      if(expression.getParsingError() != null) {
-        throwEvaluateException(expression.getParsingError());
+      final String parsingError = HighlightUtil.getLiteralExpressionParsingError(expression);
+      if (parsingError != null) {
+        throwEvaluateException(parsingError);
+        return;
       }
-      myResult = new LiteralEvaluator(value, expression.getType().getCanonicalText());
+
+      final PsiType type = expression.getType();
+      if (type == null) {
+        throwEvaluateException(expression + ": null type");
+        return;
+      }
+
+      myResult = new LiteralEvaluator(expression.getValue(), type.getCanonicalText());
     }
 
     @Override

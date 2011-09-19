@@ -480,11 +480,6 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
   }
 
   @Override
-  public boolean isSymLink(@NotNull final VirtualFile file) {
-    return SymLinkUtil.isSymLink(file.getPath());
-  }
-
-  @Override
   public VirtualFile getRealFile(@NotNull final VirtualFile file) {
     final String realPath = SymLinkUtil.resolveSymLink(file.getPath());
     return realPath != null ? findFileByPath(realPath) : null;

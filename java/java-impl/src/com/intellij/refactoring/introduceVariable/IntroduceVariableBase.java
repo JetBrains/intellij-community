@@ -593,9 +593,12 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     occurrencesMap.put(OccurrencesChooser.ReplaceChoice.NO, Collections.singletonList(expr));
 
     final List<PsiExpression> nonWrite = new ArrayList<PsiExpression>();
+    boolean cantReplaceAll = false;
     for (PsiExpression occurrence : occurrences) {
       if (!RefactoringUtil.isAssignmentLHS(occurrence)) {
         nonWrite.add(occurrence);
+      } else if (isFinalVariableOnLHS(occurrence)) {
+        cantReplaceAll = true;
       }
     }
     final boolean hasWriteAccess = occurrences.length > nonWrite.size() && occurrences.length > 1;
@@ -603,7 +606,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
       occurrencesMap.put(OccurrencesChooser.ReplaceChoice.NO_WRITE, nonWrite);
     }
 
-    if (occurrences.length > 1) {
+    if (occurrences.length > 1 && !cantReplaceAll) {
       occurrencesMap.put(OccurrencesChooser.ReplaceChoice.ALL, Arrays.asList(occurrences));
     }
     return hasWriteAccess;
@@ -628,6 +631,9 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     PsiElement child = anchorStatement;
     if (!isLoopOrIf(container)) {
       child = locateAnchor(child);
+      if (isFinalVariableOnLHS(expr)) {
+        child = child.getNextSibling();
+      }
     }
     final PsiElement anchor = child == null ? anchorStatement : child;
 
@@ -741,6 +747,17 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     };
   }
 
+  private static boolean isFinalVariableOnLHS(PsiExpression expr) {
+    if (expr instanceof PsiReferenceExpression && RefactoringUtil.isAssignmentLHS(expr)) {
+      final PsiElement resolve = ((PsiReferenceExpression)expr).resolve();
+      if (resolve instanceof PsiVariable &&
+          ((PsiVariable)resolve).hasModifierProperty(PsiModifier.FINAL)) { //should be inserted after assignment
+        return true;
+      }
+    }
+    return false;
+  }
+  
   public static PsiExpression replaceExplicitWithDiamondWhenApplicable(final PsiExpression initializer,
                                                                        final PsiType expectedType) {
     if (initializer instanceof PsiNewExpression) {

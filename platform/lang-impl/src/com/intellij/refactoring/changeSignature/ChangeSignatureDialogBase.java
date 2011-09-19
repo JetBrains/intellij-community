@@ -30,6 +30,7 @@ import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiCodeFragment;
@@ -46,6 +47,7 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.table.JBListTable;
 import com.intellij.util.ui.table.JBTableRow;
 import com.intellij.util.ui.table.JBTableRowEditor;
@@ -214,7 +216,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
       typePanel.add(myReturnTypeField);
 
       if (myMethod.canChangeReturnType() == MethodDescriptor.ReadWriteOption.ReadWrite) {
-        typePanel.setPreferredSize(new Dimension(200, -1));
+        myReturnTypeField.setPreferredWidth(200);
         myReturnTypeField.addDocumentListener(mySignatureUpdater);
       }
       else {
@@ -359,7 +361,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
 
       @Nullable
       @Override
-      public TableCellEditor getCellEditor(int row, int column) {
+      public TableCellEditor getCellEditor(final int row, final int column) {
         final TableCellEditor editor = super.getCellEditor(row, column);
         final DocumentAdapter listener = new DocumentAdapter() {
           @Override
@@ -368,7 +370,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
             if (ed != null) {
               Object editorValue = ed.getCellEditorValue();
               myParametersTableModel
-                .setValueAtWithoutUpdate(editorValue, myParametersTable.getSelectedRow(), myParametersTable.getSelectedColumn());
+                .setValueAtWithoutUpdate(editorValue, row, column);
               updateSignature();
             }
           }
@@ -391,7 +393,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
     myParametersTable.setSurrendersFocusOnKeystroke(true);
     myPropagateParamChangesButton.setShortcut(CustomShortcutSet.fromString("alt G"));
 
-    if (Registry.is("change.signature.awesome.mode") && isListTableViewSupported()) {
+    if (isAwesomeMode() && isListTableViewSupported()) {
       myParametersList = new JBListTable(myParametersTable) {
         @Override
         protected JComponent getRowRenderer(JTable table, int row, boolean selected, boolean focused) {
@@ -438,6 +440,10 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
     }
   }
 
+  protected boolean isAwesomeMode() {
+    return Registry.is("change.signature.awesome.mode");
+  }
+
   protected JBTableRowEditor getTableEditor(JTable table, ParameterTableModelItemBase<P> item) {
     return null;
   }
@@ -458,11 +464,37 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
     mySignatureArea.addFocusListener(new FocusAdapter() {
       @Override
       public void focusGained(FocusEvent e) {
-        IdeFocusManager.findInstance().requestFocus(getContentPane().getFocusCycleRootAncestor(), true);
+        Container root = findTraversalRoot(getContentPane());
+
+        if (root != null) {
+          Component c = root.getFocusTraversalPolicy().getComponentAfter(root, mySignatureArea);
+          if (c != null) {
+            IdeFocusManager.findInstance().requestFocus(c, true);
+          }
+        }
       }
     });
     updateSignature();
     return panel;
+  }
+  
+  private static Container findTraversalRoot(Container container) {
+    Container current = KeyboardFocusManager.getCurrentKeyboardFocusManager().getCurrentFocusCycleRoot();
+    Container root;
+    
+    if (current == container) {
+      root = container;
+    } else {
+      root = container.getFocusCycleRootAncestor();
+      if (root == null) {
+        root = container;
+      }
+    }
+    
+    if (root != current) {
+      KeyboardFocusManager.getCurrentKeyboardFocusManager().setGlobalCurrentFocusCycleRoot(root);
+    }
+    return root;
   }
 
   protected MethodSignatureComponent createSignaturePreviewComponent() {

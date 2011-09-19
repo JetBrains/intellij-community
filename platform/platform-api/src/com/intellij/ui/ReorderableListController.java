@@ -20,6 +20,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +33,6 @@ import java.util.*;
 public abstract class ReorderableListController <T> {
   private final JList myList;
   private static final Icon REMOVE_ICON = IconLoader.getIcon("/general/remove.png");
-  private static final Icon COPY_ICON = IconLoader.getIcon("/actions/copy.png");
 
   protected ReorderableListController(final JList list) {
     myList = list;
@@ -352,7 +352,7 @@ public abstract class ReorderableListController <T> {
     }
 
     public Icon getActionIcon() {
-      return COPY_ICON;
+      return PlatformIcons.COPY_ICON;
     }
 
     public String getActionName() {

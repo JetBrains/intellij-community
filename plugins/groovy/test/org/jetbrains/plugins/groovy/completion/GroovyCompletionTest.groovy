@@ -90,6 +90,14 @@ public class GroovyCompletionTest extends GroovyCompletionTestBase {
     doVariantableTest("hahaha", "hohoho");
   }
 
+  public void testUnfinishedMethodTypeParameter() throws Throwable {
+    doVariantableTest("MyParameter", "MySecondParameter");
+  }
+
+  public void testUnfinishedMethodTypeParameter2() throws Throwable {
+    doVariantableTest("MyParameter", "MySecondParameter");
+  }
+
   public void testInstanceofHelpsDetermineType() throws Throwable {
     doBasicTest();
   }
@@ -840,5 +848,9 @@ class X {
 
   public void testSortOrder0() {
     doVariantableTest 'se', 'setMetaClass', 'setProperty', 'setSe'
+  }
+
+  public void testPrimitiveCastOverwrite() {
+    checkCompletion 'byte v1 = (by<caret>te) 0', '\t', 'byte v1 = (byte<caret>) 0'
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,13 +44,16 @@ public class ArrayUtil {
   public static final Collection[] EMPTY_COLLECTION_ARRAY = new Collection[0];
   public static final CharSequence EMPTY_CHAR_SEQUENCE = new CharArrayCharSequence(EMPTY_CHAR_ARRAY);
   public static final File[] EMPTY_FILE_ARRAY = new File[0];
+  public static final Runnable[] EMPTY_RUNNABLE_ARRAY = new Runnable[0];
+
   public static final ArrayFactory<String> STRING_ARRAY_FACTORY = new ArrayFactory<String>() {
     @Override
     public String[] create(int count) {
       return newStringArray(count);
     }
   };
-  public static final Runnable[] EMPTY_RUNNABLE_ARRAY = new Runnable[0];
+
+  private ArrayUtil() { }
 
   @NotNull
   public static byte[] realloc(@NotNull byte[] array, final int newSize) {
@@ -143,15 +146,21 @@ public class ArrayUtil {
     return ret;
   }
 
+  /** @deprecated use {@linkplain #mergeArrays(Object[], Object[])} (to remove in IDEA 13) */
   @NotNull
   public static <T> T[] mergeArrays(@NotNull T[] a1, @NotNull T[] a2, @NotNull Class<T> aClass) {
+    return mergeArrays(a1, a2);
+  }
+
+  @NotNull
+  public static <T> T[] mergeArrays(@NotNull T[] a1, @NotNull T[] a2) {
     if (a1.length == 0) {
       return a2;
     }
     if (a2.length == 0) {
       return a1;
     }
-    T[] result = (T[])Array.newInstance(aClass, a1.length + a2.length);
+    @SuppressWarnings("unchecked") T[] result = (T[])Array.newInstance(a1.getClass().getComponentType(), a1.length + a2.length);
     System.arraycopy(a1, 0, result, 0, a1.length);
     System.arraycopy(a2, 0, result, a1.length, a2.length);
     return result;
@@ -176,7 +185,6 @@ public class ArrayUtil {
     return mergeArrays(a1, a2, STRING_ARRAY_FACTORY);
   }
 
-
   @NotNull
   public static int[] mergeArrays(@NotNull int[] a1, @NotNull int[] a2) {
     if (a1.length == 0) {
@@ -185,15 +193,10 @@ public class ArrayUtil {
     if (a2.length == 0) {
       return a1;
     }
-    int[] a = new int[a1.length + a2.length];
-    int idx = 0;
-    for (int i : a1) {
-      a[idx++] = i;
-    }
-    for (int i : a2) {
-      a[idx++] = i;
-    }
-    return a;
+    int[] result = new int[a1.length + a2.length];
+    System.arraycopy(a1, 0, result, 0, a1.length);
+    System.arraycopy(a2, 0, result, a1.length, a2.length);
+    return result;
   }
 
   /**
@@ -617,10 +620,8 @@ public class ArrayUtil {
     return array.length > 0 ? array[array.length - 1] : null;
   }
 
+  /** @deprecated use {@linkplain #mergeArrays(Object[], Object[])} (to remove in IDEA 12) */
   public static <T> T[] join(T[] array1, T[] array2) {
-    final T[] newArray = (T[])Array.newInstance(array1.getClass().getComponentType(), array1.length + array2.length);
-    System.arraycopy(array1, 0, newArray, 0, array1.length);
-    System.arraycopy(array2, 0, newArray, array1.length, array2.length);
-    return newArray;
+    return mergeArrays(array1, array2);
   }
 }

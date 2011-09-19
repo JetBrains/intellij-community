@@ -22,7 +22,6 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -33,6 +32,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
@@ -300,7 +300,7 @@ public class MvcConsole implements Disposable {
         pic.setHandler(handler);
         myKillAction.setHandler(handler);
 
-        final MvcFramework framework = MvcModuleStructureSynchronizer.getFramework(module);
+        final MvcFramework framework = MvcFramework.getInstance(module);
         myToolWindow.setIcon(framework == null ? GroovyIcons.GROOVY_ICON_16x16 : framework.getIcon());
 
         myContent.setDisplayName((framework == null ? "" : framework.getDisplayName() + ":") + "Executing...");

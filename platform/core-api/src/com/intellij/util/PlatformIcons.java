@@ -76,6 +76,7 @@ public interface PlatformIcons {
   Icon GROUP_BY_PACKAGES = IconLoader.getIcon("/toolbar/folders.png");
   Icon ADD_ICON = IconLoader.getIcon("/actions/include.png");
   Icon DELETE_ICON = IconLoader.getIcon("/actions/exclude.png");
+  Icon COPY_ICON = IconLoader.getIcon("/actions/copy.png");
   Icon MOVE_UP_ICON = IconLoader.getIcon("/actions/moveUp.png");
   Icon MOVE_DOWN_ICON = IconLoader.getIcon("/actions/moveDown.png");
   Icon EDIT = IconLoader.getIcon("/actions/edit.png");

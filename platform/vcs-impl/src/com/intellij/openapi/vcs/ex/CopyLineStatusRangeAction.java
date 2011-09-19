@@ -17,8 +17,8 @@ package com.intellij.openapi.vcs.ex;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.ide.CopyPasteManager;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.util.PlatformIcons;
 
 import java.awt.datatransfer.StringSelection;
 
@@ -27,7 +27,7 @@ import java.awt.datatransfer.StringSelection;
 */
 public class CopyLineStatusRangeAction extends BaseLineStatusRangeAction {
   CopyLineStatusRangeAction(final LineStatusTracker lineStatusTracker, final Range range) {
-    super(VcsBundle.message("action.name.copy.old.text"), IconLoader.getIcon("/actions/copy.png"), lineStatusTracker, range);
+    super(VcsBundle.message("action.name.copy.old.text"), PlatformIcons.COPY_ICON, lineStatusTracker, range);
   }
 
   public boolean isEnabled() {

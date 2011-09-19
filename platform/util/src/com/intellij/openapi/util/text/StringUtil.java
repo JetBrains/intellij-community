@@ -223,7 +223,7 @@ public class StringUtil {
 
   public static String stripHtml(String html, boolean convertBreaks) {
     if (convertBreaks) {
-      html = html.replaceAll("<br/?>", "\n");
+      html = html.replaceAll("<br/?>", "\n\n");
     }
     
     return html.replaceAll("<(.|\n)*?>", "");

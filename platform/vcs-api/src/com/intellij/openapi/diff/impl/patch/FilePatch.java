@@ -29,6 +29,7 @@ public abstract class FilePatch {
   private String myAfterName;
   private String myBeforeVersionId;
   private String myAfterVersionId;
+  private String myBaseRevisionText;
 
   public String getBeforeName() {
     return myBeforeName;
@@ -75,6 +76,14 @@ public abstract class FilePatch {
   public String getAfterNameRelative(int skipDirs) {
     String[] components = myAfterName.split("/");
     return StringUtil.join(components, skipDirs, components.length, "/");
+  }
+  
+  public String getBaseRevisionText() {
+    return myBaseRevisionText;
+  }
+
+  public void setBaseRevisionText(String baseRevisionText) {
+    myBaseRevisionText = baseRevisionText;
   }
 
   public abstract boolean isNewFile();

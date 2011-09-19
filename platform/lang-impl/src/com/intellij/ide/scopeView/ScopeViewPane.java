@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -125,7 +125,7 @@ public class ScopeViewPane extends AbstractProjectViewPane {
   @NotNull
   public String[] getSubIds() {
     NamedScope[] scopes = myDependencyValidationManager.getScopes();
-    scopes = ArrayUtil.mergeArrays(scopes, myNamedScopeManager.getScopes(), NamedScope.class);
+    scopes = ArrayUtil.mergeArrays(scopes, myNamedScopeManager.getScopes());
     String[] ids = new String[scopes.length];
     for (int i = 0; i < scopes.length; i++) {
       final NamedScope scope = scopes[i];

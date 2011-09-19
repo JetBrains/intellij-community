@@ -31,7 +31,7 @@ import com.intellij.util.ui.UIUtil;
 import git4idea.GitUtil;
 import git4idea.branch.GitBranchPair;
 import git4idea.commands.*;
-import git4idea.merge.GitMergeConflictResolver;
+import git4idea.merge.GitConflictResolver;
 import git4idea.merge.GitMerger;
 import git4idea.ui.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -102,18 +102,7 @@ public class GitMergeUpdater extends GitUpdater {
     LOG.info("doUpdate merge error: " + error);
     if (error == MergeError.CONFLICT) {
       final boolean allMerged =
-        new GitMergeConflictResolver(myProject, false, "Merge conflicts detected. Resolve them before continuing update.",
-                                     "Can't complete update", "") {
-          @Override protected boolean proceedIfNothingToMerge() throws VcsException {
-            merger.mergeCommit(myRoot);
-            return true;
-          }
-
-          @Override protected boolean proceedAfterAllMerged() throws VcsException {
-            merger.mergeCommit(myRoot);
-            return true;
-          }
-        }.merge(Collections.singleton(myRoot));
+        new MyConflictResolver(myProject, merger, myRoot).merge();
       return allMerged ? GitUpdateResult.SUCCESS : GitUpdateResult.INCOMPLETE;
     }
     else if (error == MergeError.LOCAL_CHANGES) {
@@ -263,6 +252,34 @@ public class GitMergeUpdater extends GitUpdater {
 
     public List<String> getOutput() {
       return myOutput;
+    }
+  }
+
+  private static class MyConflictResolver extends GitConflictResolver {
+    private final GitMerger myMerger;
+    private final VirtualFile myRoot;
+
+    public MyConflictResolver(Project project, GitMerger merger, VirtualFile root) {
+      super(project, Collections.singleton(root), makeParams());
+      myMerger = merger;
+      myRoot = root;
+    }
+    
+    private static Params makeParams() {
+      Params params = new Params();
+      params.setErrorNotificationTitle("Can't complete update");
+      params.setMergeDescription("Merge conflicts detected. Resolve them before continuing update.");
+      return params;
+    }
+
+    @Override protected boolean proceedIfNothingToMerge() throws VcsException {
+      myMerger.mergeCommit(myRoot);
+      return true;
+    }
+
+    @Override protected boolean proceedAfterAllMerged() throws VcsException {
+      myMerger.mergeCommit(myRoot);
+      return true;
     }
   }
 }

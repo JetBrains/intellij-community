@@ -345,7 +345,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       }
       justShown = true;
     }
-    myLookup.refreshUi();
+    myLookup.refreshUi(true);
     hideAutopopupIfMeaningless();
     if (justShown) {
       myLookup.ensureSelectionVisible();
@@ -504,7 +504,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   private boolean hideAutopopupIfMeaningless() {
     if (isAutopopupCompletion() && !myLookup.isSelectionTouched() && !myLookup.isCalculating()) {
-      myLookup.refreshUi();
+      myLookup.refreshUi(true);
       final List<LookupElement> items = myLookup.getItems();
 
       for (LookupElement item : items) {

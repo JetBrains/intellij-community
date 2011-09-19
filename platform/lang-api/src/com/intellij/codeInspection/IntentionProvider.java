@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
+/** @deprecated (to remove in IDEA 12) */
 public interface IntentionProvider {
   @NotNull
   Collection<? extends IntentionAction> getIntentions();

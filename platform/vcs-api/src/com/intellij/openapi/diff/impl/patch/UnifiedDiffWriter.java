@@ -25,8 +25,10 @@ package com.intellij.openapi.diff.impl.patch;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.Writer;
@@ -45,20 +47,21 @@ public class UnifiedDiffWriter {
   private UnifiedDiffWriter() {
   }
 
-  public static void write(Project project, Collection<FilePatch> patches, Writer writer, final String lineSeparator) throws IOException {
+  public static void write(Project project, Collection<FilePatch> patches, Writer writer, final String lineSeparator,
+                           @Nullable final CommitContext commitContext) throws IOException {
     final PatchEP[] extensions = project == null ? new PatchEP[0] : Extensions.getExtensions(PatchEP.EP_NAME, project);
-    write(project, patches, writer, lineSeparator, extensions);
+    write(project, patches, writer, lineSeparator, extensions, commitContext);
   }
 
   public static void write(Project project, Collection<FilePatch> patches, Writer writer, final String lineSeparator,
-                           final PatchEP[] extensions) throws IOException {
+                           final PatchEP[] extensions, final CommitContext commitContext) throws IOException {
     for(FilePatch filePatch: patches) {
       if (!(filePatch instanceof TextFilePatch)) continue;
       TextFilePatch patch = (TextFilePatch) filePatch;
       final String path = patch.getBeforeName() == null ? patch.getAfterName() : patch.getBeforeName();
       final Map<String , CharSequence> additionalMap = new HashMap<String, CharSequence>();
       for (PatchEP extension : extensions) {
-        final CharSequence charSequence = extension.provideContent(project, path);
+        final CharSequence charSequence = extension.provideContent(path, commitContext);
         if (! StringUtil.isEmpty(charSequence)) {
           additionalMap.put(extension.getName(), charSequence);
         }

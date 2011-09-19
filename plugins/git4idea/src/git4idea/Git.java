@@ -17,24 +17,23 @@ package git4idea;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
-import git4idea.commands.GitCommand;
-import git4idea.commands.GitHandlerUtil;
-import git4idea.commands.GitLineHandler;
-import git4idea.commands.GitSimpleHandler;
+import git4idea.commands.*;
+import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Low level layer of Git commands.
+ * Collection of common native Git commands.
  *
  * @author Kirill Likhodedov
  */
@@ -47,6 +46,7 @@ public class Git {
 
   /**
    * Calls 'git init' on the specified directory.
+   * // TODO use common format
    */
   public static void init(Project project, VirtualFile root) throws VcsException {
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.INIT);
@@ -118,4 +118,118 @@ public class Git {
 
     return untrackedFiles;
   }
+
+  /**
+   * {@code git checkout &lt;reference&gt;} <br/>
+   * {@code git checkout -b &lt;trackedBranch&gt; &lt;reference&gt;}
+   */
+  public static GitCommandResult checkout(@NotNull GitRepository repository,
+                                          @NotNull String reference,
+                                          @Nullable String newTrackingBranch,
+                                          @NotNull GitLineHandlerListener... listeners) {
+    final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.CHECKOUT);
+    if (newTrackingBranch == null) { // simply checkout
+      h.addParameters(reference);
+    } else { // checkout reference as new branch
+      h.addParameters("-b", newTrackingBranch, reference);
+    }
+    for (GitLineHandlerListener listener : listeners) {
+      h.addLineListener(listener);
+    }
+    return run(h);
+  }
+
+  /**
+   * {@code git checkout -b &lt;branchName&gt;}
+   */
+  public static GitCommandResult checkoutNewBranch(@NotNull GitRepository repository, @NotNull String branchName,
+                                                   @Nullable GitLineHandlerListener listener) {
+    final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.CHECKOUT);
+    h.addParameters("-b");
+    h.addParameters(branchName);
+    if (listener != null) {
+      h.addLineListener(listener);
+    }
+    return run(h);
+  }
+
+  /**
+   * {@code git branch -d <reference>} or {@code git branch -D <reference>}
+   */
+  public static GitCommandResult branchDelete(@NotNull GitRepository repository,
+                                              @NotNull String branchName,
+                                              boolean force,
+                                              @NotNull GitLineHandlerListener... listeners) {
+    final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.BRANCH);
+    h.addParameters(force ? "-D" : "-d");
+    h.addParameters(branchName);
+    for (GitLineHandlerListener listener : listeners) {
+      h.addLineListener(listener);
+    }
+    return run(h);
+  }
+
+  /**
+   * {@code git branch --merged <branchName>}
+   */
+  public static GitCommandResult mergedToBranches(@NotNull GitRepository repository, @NotNull String branchName) {
+    final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.BRANCH);
+    h.addParameters("--merged");
+    h.addParameters(branchName);
+    return run(h);
+  }
+
+  /**
+   * Runs the given {@link GitLineHandler} in the current thread and returns the {@link GitCommandResult}.
+   */
+  private static GitCommandResult run(GitLineHandler handler) {
+    handler.setNoSSH(true);
+
+    final List<String> errorOutput = new ArrayList<String>();
+    final List<String> output = new ArrayList<String>();
+    final AtomicInteger exitCode = new AtomicInteger();
+    final AtomicBoolean startFailed = new AtomicBoolean();
+    
+    handler.addLineListener(new GitLineHandlerListener() {
+      @Override public void onLineAvailable(String line, Key outputType) {
+        if (isError(line)) {
+          errorOutput.add(line);
+        } else {
+          output.add(line);
+        }
+      }
+
+      @Override public void processTerminated(int code) {
+        exitCode.set(code);
+      }
+
+      @Override public void startFailed(Throwable exception) {
+        startFailed.set(true);
+        errorOutput.add("Failed to start Git process");
+        errorOutput.add(ExceptionUtil.getThrowableText(exception));
+      }
+    });
+    
+    handler.runInCurrentThread(null);
+    final boolean success = !startFailed.get() && errorOutput.isEmpty() && (handler.isIgnoredErrorCode(exitCode.get()) || exitCode.get() == 0);
+    return new GitCommandResult(success, exitCode.get(), errorOutput, output);
+  }
+  
+  /**
+   * Check if the line looks line an error message
+   */
+  private static boolean isError(String text) {
+    for (String indicator : ERROR_INDICATORS) {
+      if (text.startsWith(indicator.toLowerCase())) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  // could be upper-cased, so should check case-insensitively
+  private static final String[] ERROR_INDICATORS = {
+    "error", "fatal", "Cannot apply", "Could not", "Interactive rebase already started", "refusing to pull", "cannot rebase:", "conflict"
+  };
+
 }

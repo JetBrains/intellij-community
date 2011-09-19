@@ -49,13 +49,15 @@ public class TextPatchBuilder {
   private final boolean myIsCaseSensitive;
   @Nullable
   private final Runnable myCancelChecker;
+  private final boolean myIncludeBaseText;
 
   private TextPatchBuilder(final String basePath, final boolean isReversePath, final boolean isCaseSensitive,
-                           @Nullable final Runnable cancelChecker) {
+                           @Nullable final Runnable cancelChecker, boolean includeBaseText) {
     myBasePath = basePath;
     myIsReversePath = isReversePath;
     myIsCaseSensitive = isCaseSensitive;
     myCancelChecker = cancelChecker;
+    myIncludeBaseText = includeBaseText;
   }
 
   private void checkCanceled() {
@@ -65,8 +67,11 @@ public class TextPatchBuilder {
   }
 
   public static List<FilePatch> buildPatch(final Collection<BeforeAfter<AirContentRevision>> changes, final String basePath,
-                   final boolean reversePatch, final boolean isCaseSensitive, @Nullable final Runnable cancelChecker) throws VcsException {
-    final TextPatchBuilder builder = new TextPatchBuilder(basePath, reversePatch, isCaseSensitive, cancelChecker);
+                                           final boolean reversePatch,
+                                           final boolean isCaseSensitive,
+                                           @Nullable final Runnable cancelChecker,
+                                           final boolean includeBaseText) throws VcsException {
+    final TextPatchBuilder builder = new TextPatchBuilder(basePath, reversePatch, isCaseSensitive, cancelChecker, includeBaseText);
     return builder.build(changes);
   }
 

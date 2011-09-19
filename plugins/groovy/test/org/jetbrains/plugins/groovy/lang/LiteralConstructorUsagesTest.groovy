@@ -1,9 +1,9 @@
 package org.jetbrains.plugins.groovy.lang
 
+import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
-import com.intellij.psi.JavaPsiFacade
 
 /**
  * @author peter
@@ -36,7 +36,7 @@ class LiteralConstructorUsagesTest extends LightCodeInsightFixtureTestCase {
 Foo untyped() { [] }
 @Typed Foo bar() { [] }
 """
-    assertEquals(3, ReferencesSearch.search(foo.constructors[0]).findAll().size())
+    assertEquals(4, ReferencesSearch.search(foo.constructors[0]).findAll().size())
   }
 
   public void testList_Cast() throws Exception {
@@ -195,10 +195,10 @@ class Bar {
   Bar(String s) {}
 }
 
-Foo f = [['a']]
+Foo f = [new Bar('a')]
 Foo f2 = ['super':['super':'a']]
 """
-    assertEquals 2, MethodReferencesSearch.search(JavaPsiFacade.getInstance(project).findClass("Bar").constructors[0]).findAll().size()
+    assertEquals 1, MethodReferencesSearch.search(JavaPsiFacade.getInstance(project).findClass("Bar").constructors[0]).findAll().size()
   }
 
   public void testCannibalisticConstructor() throws Exception {
@@ -206,7 +206,7 @@ Foo f2 = ['super':['super':'a']]
       class Foo {
         Foo(Foo... children) {}
       }
-      Foo f = [['a']]
+      Foo f = [new Foo('a')]
     """
     assertEquals 2, MethodReferencesSearch.search(JavaPsiFacade.getInstance(project).findClass("Foo").constructors[0]).findAll().size()
   }

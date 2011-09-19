@@ -648,11 +648,13 @@ public class CompileDriver {
       status = doCompile(compileContext, isRebuild, forceCompile, false);
     }
     catch (Throwable ex) {
-      if (ApplicationManager.getApplication().isUnitTestMode()) throw new RuntimeException(ex);
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        throw new RuntimeException(ex);
+      }
       wereExceptions = true;
       final PluginId pluginId = IdeErrorsDialog.findPluginId(ex);
 
-      final StringBuffer message = new StringBuffer();
+      final StringBuilder message = new StringBuilder();
       message.append("Internal error");
       if (pluginId != null) {
         message.append(" (Plugin: ").append(pluginId).append(")");

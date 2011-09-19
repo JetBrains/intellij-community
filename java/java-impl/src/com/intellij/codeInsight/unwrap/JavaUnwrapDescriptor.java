@@ -29,19 +29,31 @@ import java.util.List;
 import java.util.Set;
 
 public class JavaUnwrapDescriptor implements UnwrapDescriptor {
-  private static final Unwrapper[] UNWRAPPERS = new Unwrapper[] {
-    new JavaMethodParameterUnwrapper(),
-    new JavaElseUnwrapper(),
-    new JavaElseRemover(),
-    new JavaIfUnwrapper(),
-    new JavaWhileUnwrapper(),
-    new JavaForUnwrapper(),
-    new JavaBracesUnwrapper(),
-    new JavaTryUnwrapper(),
-    new JavaCatchRemover(),
-    new JavaSynchronizedUnwrapper(),
-    new JavaAnonymousUnwrapper(),
-  };
+  private Unwrapper[] myUnwrappers;
+
+  public final Unwrapper[] getUnwrappers() {
+    if (myUnwrappers == null) {
+      myUnwrappers = createUnwrappers();
+    }
+
+    return myUnwrappers;
+  }
+
+  protected Unwrapper[] createUnwrappers() {
+    return new Unwrapper[] {
+        new JavaMethodParameterUnwrapper(),
+        new JavaElseUnwrapper(),
+        new JavaElseRemover(),
+        new JavaIfUnwrapper(),
+        new JavaWhileUnwrapper(),
+        new JavaForUnwrapper(),
+        new JavaBracesUnwrapper(),
+        new JavaTryUnwrapper(),
+        new JavaCatchRemover(),
+        new JavaSynchronizedUnwrapper(),
+        new JavaAnonymousUnwrapper(),
+      };
+  }
 
   public List<Pair<PsiElement, Unwrapper>> collectUnwrappers(Project project, Editor editor, PsiFile file) {
     PsiElement e = findTargetElement(editor, file);
@@ -49,7 +61,7 @@ public class JavaUnwrapDescriptor implements UnwrapDescriptor {
     List<Pair<PsiElement, Unwrapper>> result = new ArrayList<Pair<PsiElement, Unwrapper>>();
     Set<PsiElement> ignored = new HashSet<PsiElement>();
     while (e != null) {
-      for (Unwrapper u : UNWRAPPERS) {
+      for (Unwrapper u : getUnwrappers()) {
         if (u.isApplicableTo(e) && !ignored.contains(e)) {
           result.add(new Pair<PsiElement, Unwrapper>(e, u));
           u.collectElementsToIgnore(e, ignored);

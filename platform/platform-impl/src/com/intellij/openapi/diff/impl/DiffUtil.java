@@ -45,7 +45,6 @@ public class DiffUtil {
     frameWrapper.setImage(ImageLoader.loadFromResource("/diff/Diff.png"));
     frameWrapper.setPreferredFocusedComponent(diffPanel.getPreferredFocusedComponent());
     frameWrapper.closeOnEsc();
-    frameWrapper.addDisposable(diffPanel);
   }
 
   @Nullable

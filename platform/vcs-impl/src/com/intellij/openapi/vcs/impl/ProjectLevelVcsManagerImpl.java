@@ -579,6 +579,7 @@ public void addMessageToConsoleWindow(final String message, final TextAttributes
     return myMappings.getMappingsAsFilesUnderVcs(vcs);
   }
 
+  @NotNull
   public VirtualFile[] getRootsUnderVcs(AbstractVcs vcs) {
     return myMappingsToRoots.getRootsUnderVcs(vcs);
   }
@@ -749,6 +750,17 @@ public void addMessageToConsoleWindow(final String message, final TextAttributes
   public boolean isFileInContent(final VirtualFile vf) {
     return vf != null && (myExcludedIndex.isInContent(vf) || isFileInBaseDir(vf) || vf.equals(myProject.getBaseDir()) ||
                             hasExplicitMapping(vf) || isInDirectoryBasedRoot(vf)) && ! myExcludedIndex.isExcludedFile(vf);
+  }
+
+  @Override
+  public boolean dvcsUsedInProject() {
+    AbstractVcs[] allActiveVcss = getAllActiveVcss();
+    for (AbstractVcs activeVcs : allActiveVcss) {
+      if (VcsType.distibuted.equals(activeVcs.getType())) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private boolean isInDirectoryBasedRoot(final VirtualFile file) {

@@ -106,7 +106,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
       context.commitDocument();
       if (myHelper != null && willBeImported()) {
         final PsiReferenceExpression ref = PsiTreeUtil.findElementOfClassAtOffset(file, startOffset, PsiReferenceExpression.class, false);
-        if (ref != null && myContainingClass != null) {
+        if (ref != null && myContainingClass != null && !ref.isReferenceTo(method)) {
           ref.bindToElementViaStaticImport(myContainingClass);
         }
         return;

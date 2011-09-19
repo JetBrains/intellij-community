@@ -15,13 +15,13 @@
  */
 package com.intellij.codeInsight.template;
 
-import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -33,8 +33,7 @@ public class JavaStringContextType extends TemplateContextType {
   }
 
   public boolean isInContext(@NotNull final PsiFile file, final int offset) {
-    FileType fileType = file.getFileType();
-    if (fileType == StdFileTypes.JAVA) {
+    if (PsiUtilBase.getLanguageAtOffset(file, offset).isKindOf(StdLanguages.JAVA)) {
       PsiElement element = file.findElementAt(offset);
       return element instanceof PsiJavaToken && ((PsiJavaToken) element).getTokenType() == JavaTokenType.STRING_LITERAL;
     }

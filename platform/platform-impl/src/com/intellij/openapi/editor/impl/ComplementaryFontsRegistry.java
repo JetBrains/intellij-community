@@ -18,6 +18,7 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.application.ApplicationManager;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -31,7 +32,7 @@ public class ComplementaryFontsRegistry {
   private static final Object lock = new String("common lock");
   private static final ArrayList<String> ourFontNames;
   private static final LinkedHashMap<FontKey, FontInfo> ourUsedFonts;
-  private static FontKey ourSharedKeyInstance = new FontKey(null, 0, 0);
+  private static FontKey ourSharedKeyInstance = new FontKey("", 0, 0);
   private static FontInfo ourSharedDefaultFont;
   private static final TIntHashSet ourUndisplayableChars = new TIntHashSet();
 
@@ -43,7 +44,7 @@ public class ComplementaryFontsRegistry {
     public int mySize;
     public int myStyle;
 
-    public FontKey(final String familyName, final int size, final int style) {
+    public FontKey(@NotNull String familyName, final int size, final int style) {
       myFamilyName = familyName;
       mySize = size;
       myStyle = style;
@@ -86,7 +87,7 @@ public class ComplementaryFontsRegistry {
     ourUsedFonts = new LinkedHashMap<FontKey, FontInfo>();
   }
 
-  public static FontInfo getFontAbleToDisplay(char c, int size, int style, String defaultFontFamily) {
+  public static FontInfo getFontAbleToDisplay(char c, int size, int style, @NotNull String defaultFontFamily) {
     synchronized (lock) {
       if (ourSharedKeyInstance.mySize == size &&
           ourSharedKeyInstance.myStyle == style &&
@@ -108,7 +109,7 @@ public class ComplementaryFontsRegistry {
       if (defaultFont == null) {
         defaultFont = new FontInfo(defaultFontFamily, size, style);
         ourUsedFonts.put(ourSharedKeyInstance, defaultFont);
-        ourSharedKeyInstance = new FontKey(null, 0, 0);
+        ourSharedKeyInstance = new FontKey("", 0, 0);
       }
 
       ourSharedDefaultFont = defaultFont;

@@ -228,6 +228,13 @@ public final class GitRepository implements Disposable {
   public boolean isOnBranch() {
     return getState() != State.DETACHED && getState() != State.REBASING;
   }
+
+  /**
+   * @return true if current repository is "fresh", i.e. if no commits have been made yet.
+   */
+  public boolean isFresh() {
+    return getCurrentRevision() == null;
+  }
   
   @NotNull
   public GitBranchesCollection getBranches() {

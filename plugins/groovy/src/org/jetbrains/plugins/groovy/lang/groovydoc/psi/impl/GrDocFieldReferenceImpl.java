@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,7 +97,7 @@ public class GrDocFieldReferenceImpl extends GrDocMemberReferenceImpl implements
         MethodResolverProcessor constructorProcessor = new MethodResolverProcessor(name, this, true, thisType, null, PsiType.EMPTY_ARRAY);
         resolved.processDeclarations(methodProcessor, ResolveState.initial(), resolved, this);
         resolved.processDeclarations(constructorProcessor, ResolveState.initial(), resolved, this);
-        candidates = ArrayUtil.mergeArrays(methodProcessor.getCandidates(), constructorProcessor.getCandidates(), GroovyResolveResult.class);
+        candidates = ArrayUtil.mergeArrays(methodProcessor.getCandidates(), constructorProcessor.getCandidates());
         if (candidates.length > 0) {
           candidates = new GroovyResolveResult[]{candidates[0]};
         }

@@ -19,6 +19,7 @@ import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -36,7 +37,7 @@ import java.util.List;
 /**
  * @author Roman Chernyatchik
  */
-public class FileUrlProvider implements TestLocationProvider {
+public class FileUrlProvider implements TestLocationProvider, DumbAware {
   private static final Logger LOG = Logger.getInstance(FileUrlProvider.class.getName());
 
   @NonNls private static final String FILE_PROTOCOL_ID = "file";

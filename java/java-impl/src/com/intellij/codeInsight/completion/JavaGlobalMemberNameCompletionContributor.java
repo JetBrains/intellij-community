@@ -35,14 +35,18 @@ public class JavaGlobalMemberNameCompletionContributor extends CompletionContrib
       return;
     }
 
-    completeStaticMembers(position).processStaticMethodsGlobally(result);
+    completeStaticMembers(parameters).processStaticMethodsGlobally(result);
   }
 
-  public static StaticMemberProcessor completeStaticMembers(final PsiElement position) {
+  public static StaticMemberProcessor completeStaticMembers(CompletionParameters parameters) {
+    final PsiElement position = parameters.getPosition();
+    final PsiElement originalPosition = parameters.getOriginalPosition();
     final StaticMemberProcessor processor = new StaticMemberProcessor(position) {
       @NotNull
       @Override
-      protected LookupElement createLookupElement(@NotNull PsiMember member, @NotNull final PsiClass containingClass, final boolean shouldImport) {
+      protected LookupElement createLookupElement(@NotNull PsiMember member, @NotNull final PsiClass containingClass, boolean shouldImport) {
+        shouldImport |= originalPosition != null && PsiTreeUtil.isAncestor(containingClass, originalPosition, false);
+        
         if (member instanceof PsiMethod) {
           final JavaMethodCallElement element = new JavaMethodCallElement((PsiMethod)member, true, false);
           element.setShouldBeImported(shouldImport);
@@ -55,6 +59,8 @@ public class JavaGlobalMemberNameCompletionContributor extends CompletionContrib
       protected LookupElement createLookupElement(@NotNull List<PsiMethod> overloads,
                                                   @NotNull PsiClass containingClass,
                                                   boolean shouldImport) {
+        shouldImport |= originalPosition != null && PsiTreeUtil.isAncestor(containingClass, originalPosition, false);
+
         final JavaMethodCallElement element = new JavaMethodCallElement(overloads.get(0), true, true);
         element.putUserData(JavaCompletionUtil.ALL_METHODS_ATTRIBUTE, overloads);
         element.setShouldBeImported(shouldImport);

@@ -484,9 +484,9 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     HighlightInfoType highlightInfoType = HighlightInfoType.UNUSED_SYMBOL;
     HighlightDisplayKey highlightDisplayKey = myUnusedSymbolKey;
 
+    if (HighlightMethodUtil.isSerializationRelatedMethod(method, containingClass)) return null;
     if (isPrivate) {
-      if (HighlightMethodUtil.isSerializationRelatedMethod(method, containingClass) ||
-          isIntentionalPrivateConstructor(method, containingClass)) {
+      if (isIntentionalPrivateConstructor(method, containingClass)) {
         return null;
       }
       if (isImplicitUsage(method, progress)) {

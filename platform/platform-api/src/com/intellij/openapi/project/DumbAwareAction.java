@@ -17,6 +17,7 @@
 package com.intellij.openapi.project;
 
 import com.intellij.openapi.actionSystem.AnAction;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -31,7 +32,7 @@ public abstract class DumbAwareAction extends AnAction implements DumbAware {
     super(text);
   }
 
-  protected DumbAwareAction(String text, String description, Icon icon) {
+  protected DumbAwareAction(String text, String description, @Nullable Icon icon) {
     super(text, description, icon);
   }
 }

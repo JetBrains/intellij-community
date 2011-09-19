@@ -15,13 +15,14 @@
  */
 package com.intellij.codeInsight.template;
 
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -33,8 +34,7 @@ public class JavaCommentContextType extends TemplateContextType {
   }
 
   public boolean isInContext(@NotNull final PsiFile file, final int offset) {
-    FileType fileType = file.getFileType();
-    if (fileType == StdFileTypes.JAVA) {
+    if (PsiUtilBase.getLanguageAtOffset(file, offset).isKindOf(StdLanguages.JAVA)) {
       PsiElement element = file.findElementAt(offset);
       if (element instanceof PsiWhiteSpace && offset > 0) {
         element = file.findElementAt(offset-1);

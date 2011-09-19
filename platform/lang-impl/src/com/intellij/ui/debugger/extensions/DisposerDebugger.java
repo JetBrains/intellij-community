@@ -42,6 +42,7 @@ import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import gnu.trove.THashSet;
@@ -196,7 +197,7 @@ public class DisposerDebugger implements UiDebuggerExtension, Disposable  {
 
     private class CopyAllocationAction extends AnAction {
       public CopyAllocationAction() {
-        super("Copy", "Copy allocation to clipboard", IconLoader.getIcon("/actions/copy.png"));
+        super("Copy", "Copy allocation to clipboard", PlatformIcons.COPY_ICON);
       }
 
       @Override

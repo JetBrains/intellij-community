@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -115,7 +115,7 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
   @Override
   public PackagingElementType[] getAllElementTypes() {
     final PackagingElementType[] types = Extensions.getExtensions(PackagingElementType.EP_NAME);
-    return ArrayUtil.mergeArrays(STANDARD_TYPES, types, PackagingElementType.class);
+    return ArrayUtil.mergeArrays(STANDARD_TYPES, types);
   }
 
   @NotNull

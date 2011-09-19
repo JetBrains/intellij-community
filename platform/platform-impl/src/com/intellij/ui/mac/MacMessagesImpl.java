@@ -36,6 +36,7 @@ import javax.swing.*;
 import java.awt.*;
 
 import static com.intellij.ui.mac.foundation.Foundation.*;
+import static com.intellij.ui.mac.foundation.Foundation.invoke;
 
 /**
  * @author pegov
@@ -78,12 +79,13 @@ public class MacMessagesImpl extends MacMessages {
     public void callback(ID self, String selector, ID params) {
       ID title = invoke(params, "objectAtIndex:", 0);
       ID message = invoke(params, "objectAtIndex:", 1);
-      ID moreInfo = invoke(params, "objectAtIndex:", 2);
-      ID focusedWindow = invoke(params, "objectAtIndex:", 3);
-      ID fakeId = invoke(params, "objectAtIndex:", 4);
-      ID alertStyle = invoke(params, "objectAtIndex:", 5);
-      ID doNotAskText = invoke(params, "objectAtIndex:", 6);
-      ID buttons = invoke(params, "objectAtIndex:", 7);
+      ID focusedWindow = invoke(params, "objectAtIndex:", 2);
+      ID fakeId = invoke(params, "objectAtIndex:", 3);
+      ID alertStyle = invoke(params, "objectAtIndex:", 4);
+      ID doNotAskText = invoke(params, "objectAtIndex:", 5);
+      int defaultOptionIndex = Integer.parseInt(toStringViaUTF8(invoke(params, "objectAtIndex:", 6)));
+      int focusedOptionIndex = Integer.parseInt(toStringViaUTF8(invoke(params, "objectAtIndex:", 7)));
+      ID buttons = invoke(params, "objectAtIndex:", 8);
 
       ID alert = invoke(invoke("NSAlert", "alloc"), "init");
 
@@ -101,8 +103,18 @@ public class MacMessagesImpl extends MacMessages {
         invoke(alert, "addButtonWithTitle:", button);
       }
 
-      if (1 == invoke(buttons, "count").intValue()) {
-        //invoke(invoke(invoke(alert, "buttons"), "objectAtIndex:", 0), "setKeyEquivalent:", "");
+      int count = invoke(buttons, "count").intValue();
+      if (defaultOptionIndex != -1) {
+        invoke(invoke(alert, "window"), "setDefaultButtonCell:", 
+               invoke(invoke(invoke(alert, "buttons"), "objectAtIndex:", defaultOptionIndex), "cell"));
+      }
+      
+      if (focusedOptionIndex != -1) {
+        invoke(invoke(alert, "window"), "makeFirstResponder:", 
+               invoke(invoke(alert, "buttons"), "objectAtIndex:", focusedOptionIndex));
+      } else {
+        invoke(invoke(alert, "window"), "makeFirstResponder:", 
+               invoke(invoke(alert, "buttons"), "objectAtIndex:", count == 1 ? 0 : 1));
       }
       
       String doNotAsk = toStringViaUTF8(doNotAskText);
@@ -138,6 +150,17 @@ public class MacMessagesImpl extends MacMessages {
         invoke(alert, "setAlertStyle:", 2); // NSCriticalAlertStyle = 2
       }
 
+      ID window = invoke(alert, "window");
+
+      invoke(window, "makeFirstResponder:", 
+             invoke(invoke(alert, "buttons"), "objectAtIndex:", alternateExist ? 2 : otherExist ? 1 : 0));
+      
+      
+      // it is impossible to override ESCAPE key behavior -> key should be named "Cancel" to be bound to ESC
+      //if (!alternateExist) {
+        //invoke(invoke(invoke(alert, "buttons"), "objectAtIndex:", 1), "setKeyEquivalent:", cfString("\\e"));
+      //}
+      
       String doNotAsk = toStringViaUTF8(doNotAskText);
       if (!"-1".equals(doNotAsk)) {
         invoke(alert, "setShowsSuppressionButton:", 1);
@@ -216,8 +239,9 @@ public class MacMessagesImpl extends MacMessages {
     return showAlertDialog(title, defaultButton, alternateButton, otherButton, message, window, false, doNotAskOption);
   }
 
-  public int showMessageDialog(final String title, final String message, @Nullable final String moreInfo, final String[] buttons, final boolean errorStyle,
-                                @Nullable Window window, @Nullable final DialogWrapper.DoNotAskOption doNotAskDialogOption) {
+  public int showMessageDialog(final String title, final String message, final String[] buttons, final boolean errorStyle,
+                                @Nullable Window window, final int defaultOptionIndex,
+                                final int focusedOptionIndex, @Nullable final DialogWrapper.DoNotAskOption doNotAskDialogOption) {
     return doForWindowAndTitle(new PairFunction<Pair<Window, String>, JRootPane, Integer>() {
       @Override
       public Integer fun(Pair<Window, String> windowAndTitle, JRootPane pane) {
@@ -245,13 +269,15 @@ public class MacMessagesImpl extends MacMessages {
             ID paramsArray = invoke("NSArray", "arrayWithObjects:", cfString(title),
                                     // replace % -> %% to avoid formatted parameters (causes SIGTERM)
                                     cfString(StringUtil.stripHtml(message, true).replace("%", "%%")),
-                                    cfString(StringUtil.stripHtml(moreInfo == null ? "" : moreInfo, true).replace("%", "%%")),
                                     focusedWindow, cfString(fakeTitle), cfString(errorStyle ? "error" : "-1"),
                                     cfString(doNotAskDialogOption == null || !doNotAskDialogOption.canBeHidden()
                                              // TODO: state=!doNotAsk.shouldBeShown()
                                              ? "-1"
-                                             : doNotAskDialogOption.getDoNotShowMessage()), buttonsArray, null);
+                                             : doNotAskDialogOption.getDoNotShowMessage()), 
+                                    cfString(Integer.toString(defaultOptionIndex)), 
+                                    cfString(Integer.toString(focusedOptionIndex)), buttonsArray, null);
 
+            IdeFocusManager.getGlobalInstance().setTypeaheadEnabled(false);
 
             invoke(delegate, "performSelectorOnMainThread:withObject:waitUntilDone:",
                    Foundation.createSelector("showVariableButtonsSheet:"), paramsArray, true);
@@ -265,6 +291,9 @@ public class MacMessagesImpl extends MacMessages {
             pane.putClientProperty(MAC_SHEET_ID, fakeTitle);
 
             MacUtil.startModal(pane);
+            
+            IdeFocusManager.getGlobalInstance().setTypeaheadEnabled(true);
+            
             Integer code = (Integer)pane.getClientProperty(MAC_SHEET_RESULT) - 1000; // see NSAlertFirstButtonReturn for more info
             boolean suppress = Boolean.TRUE == pane.getClientProperty(MAC_SHEET_SUPPRESS);
 
@@ -395,6 +424,8 @@ public class MacMessagesImpl extends MacMessages {
                                              ? "-1"
                                              : doNotAskDialogOption.getDoNotShowMessage()), null);
 
+            IdeFocusManager.getGlobalInstance().setTypeaheadEnabled(false);
+            
             invoke(delegate, "performSelectorOnMainThread:withObject:waitUntilDone:",
                    Foundation.createSelector("showSheet:"), paramsArray, true);
           }
@@ -407,6 +438,9 @@ public class MacMessagesImpl extends MacMessages {
             pane.putClientProperty(MAC_SHEET_ID, fakeTitle);
 
             MacUtil.startModal(pane);
+            
+            IdeFocusManager.getGlobalInstance().setTypeaheadEnabled(true);
+            
             Integer result = (Integer)pane.getClientProperty(MAC_SHEET_RESULT);
             boolean suppress = Boolean.TRUE == pane.getClientProperty(MAC_SHEET_SUPPRESS);
 

@@ -192,7 +192,7 @@ public abstract class HistoryDialogModel {
   }
 
   public void createPatch(String path, boolean isReverse) throws VcsException, IOException {
-    PatchCreator.create(myProject, getChanges(), path, isReverse);
+    PatchCreator.create(myProject, getChanges(), path, isReverse, null);
   }
 
   public abstract Reverter createReverter();

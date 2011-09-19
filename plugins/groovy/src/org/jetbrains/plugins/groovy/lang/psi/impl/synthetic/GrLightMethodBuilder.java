@@ -313,11 +313,6 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod {
     }
   }
 
-  public GrLightMethodBuilder setNavigationElement(PsiElement navigationElement) {
-    super.setNavigationElement(navigationElement);
-    return this;
-  }
-
   public PsiClass getContainingClass() {
     return myContainingClass;
   }

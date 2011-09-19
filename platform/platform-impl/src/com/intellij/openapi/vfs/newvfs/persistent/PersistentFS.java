@@ -59,6 +59,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
   static final int IS_DIRECTORY_FLAG = 0x02;
   private static final int IS_READ_ONLY = 0x04;
   private static final int MUST_RELOAD_CONTENT = 0x08;
+  private static final int IS_SYMLINK = 0x10;
 
   static final int ALL_VALID_FLAGS = CHILDREN_CACHED_FLAG | IS_DIRECTORY_FLAG | IS_READ_ONLY | MUST_RELOAD_CONTENT;
 
@@ -300,7 +301,9 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
 
     FSRecords.setLength(id, directory ? -1L : delegate.getLength(file));
 
-    FSRecords.setFlags(id, (directory ? IS_DIRECTORY_FLAG : 0) | (delegate.isWritable(file) ? 0 : IS_READ_ONLY), true);
+    FSRecords.setFlags(id, (directory ? IS_DIRECTORY_FLAG : 0) |
+                           (delegate.isWritable(file) ? 0 : IS_READ_ONLY) |
+                           (delegate.isSymLink(file) ? IS_SYMLINK : 0), true);
 
     // TODO!!!: More attributes?
   }
@@ -346,6 +349,10 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
       throw new InvalidVirtualFileAccessException(file);
     }
     return id;
+  }
+
+  public boolean isSymLink(@NotNull VirtualFile file) {
+    return (FSRecords.getFlags(getFileId(file)) & IS_SYMLINK) != 0;
   }
 
   public boolean isWritable(@NotNull final VirtualFile file) {

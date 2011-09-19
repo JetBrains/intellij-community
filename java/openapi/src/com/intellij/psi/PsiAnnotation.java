@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,8 @@ public interface PsiAnnotation extends PsiAnnotationMemberValue, PsiMetaOwner {
    *
    * @return the class name, or null if the annotation is unresolved.
    */
-  @Nullable @NonNls
+  @Nullable
+  @NonNls
   String getQualifiedName();
 
   /**
@@ -68,33 +69,36 @@ public interface PsiAnnotation extends PsiAnnotationMemberValue, PsiMetaOwner {
    * Returns the value of the annotation element with the specified name.
    *
    * @param attributeName name of the annotation element for which the value is requested. If it isn't defined in annotation, tha default
-   * value is returned.
+   *                      value is returned.
    * @return the element value, or null if the annotation does not contain a value for
-   * the element and the element has no default value.
+   *         the element and the element has no default value.
    */
   @Nullable
   PsiAnnotationMemberValue findAttributeValue(@NonNls String attributeName);
 
-    /**
+  /**
    * Returns the value of the annotation element with the specified name.
    *
    * @param attributeName name of the annotation element for which the value is requested, declared in this annotation.
    * @return the element value, or null if the annotation does not contain a value for
-   * the element.
+   *         the element.
    */
   @Nullable
   PsiAnnotationMemberValue findDeclaredAttributeValue(@NonNls String attributeName);
 
   /**
    * Set annotation attribute value. Adds new name-value pair or uses an existing one, expands unnamed 'value' attribute name if needed.
+   *
    * @param attributeName attribute name
-   * @param value new value template element
+   * @param value         new value template element
+   * @return new declared attribute value
    */
   <T extends PsiAnnotationMemberValue> T setDeclaredAttributeValue(@NonNls String attributeName, @Nullable T value);
 
-  
-
-
-  // in case of type annotation the owner might be type element, not the parent 
+  /**
+   * Returns an owner of the annotation - usually a parent, but for type annotations the owner might be a type element.
+   *
+   * @return annotation owner
+   */
   PsiAnnotationOwner getOwner();
 }

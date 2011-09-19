@@ -17,7 +17,7 @@
 package org.jetbrains.plugins.groovy.lang.formatter;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.util.List;
@@ -38,9 +38,9 @@ public class FormatterTest extends GroovyFormatterTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myTempSettings.CLASS_BRACE_STYLE = CodeStyleSettings.END_OF_LINE;
-    myTempSettings.METHOD_BRACE_STYLE = CodeStyleSettings.END_OF_LINE;
-    myTempSettings.BRACE_STYLE = CodeStyleSettings.END_OF_LINE;
+    myTempSettings.CLASS_BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
+    myTempSettings.METHOD_BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
+    myTempSettings.BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
   }
 
   public void testAddign1() throws Throwable { doTest(); }
@@ -109,6 +109,7 @@ public class FormatterTest extends GroovyFormatterTestCase {
   public void testWhile2() throws Throwable { doTest(); }
 
   public void testWhileCStyle() throws Throwable { doTest(); }
+  public void testFields() throws Throwable { doTest(); }
 
   public void testClosureAfterLineComment() throws Throwable { doTest(); }
   public void testAnnotationOnSeparateLine() throws Throwable { doTest(); }
@@ -154,7 +155,7 @@ public class FormatterTest extends GroovyFormatterTestCase {
     doTest();
   }
 
-  public void doTest() throws Throwable {
+  public void doTest() {
     final List<String> data = TestUtils.readInput(getTestDataPath() + getTestName(true) + ".test");
     checkFormatting(data.get(0), StringUtil.trimEnd(data.get(1), "\n"));
   }
@@ -164,4 +165,13 @@ public class FormatterTest extends GroovyFormatterTestCase {
     // Check IDEA-57573 for more details.
     doTest();
   }
+
+  public void testFieldInColumnsAlignment() {
+    myTempSettings.ALIGN_GROUP_FIELD_DECLARATIONS = true;
+    myTempSettings.FIELD_ANNOTATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
+    myTempSettings.VARIABLE_ANNOTATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
+
+    doTest();
+  }
+
 }

@@ -80,9 +80,9 @@ public class FileWatcher {
   private List<String> myRecursiveWatchRoots = new ArrayList<String>();
   private List<String> myFlatWatchRoots = new ArrayList<String>();
 
-  private Process notifierProcess;
-  private BufferedReader notifierReader;
-  private BufferedWriter notifierWriter;
+  private volatile Process notifierProcess;
+  private volatile BufferedReader notifierReader;
+  private volatile BufferedWriter notifierWriter;
 
   private boolean myFailureShownToTheUser = false;
   private int attemptCount = 0;
@@ -99,13 +99,13 @@ public class FileWatcher {
   private FileWatcher() {
     // to avoid deadlock (PY-1215), initialize ManagingFS reference in main thread, not in FileWatcher thread
     myManagingFS = ManagingFS.getInstance();
+
     try {
       if (!"true".equals(System.getProperty(PROPERTY_WATCHER_DISABLED))) {
         startupProcess(false);
       }
     }
-    catch (IOException ignore) {
-    }
+    catch (IOException ignore) { }
 
     if (notifierProcess != null) {
       LOG.info("Native file watcher is operational.");
@@ -223,7 +223,10 @@ public class FileWatcher {
     if (!isOperational()) return false;
 
     try {
-      notifierProcess.exitValue();
+      final Process process = notifierProcess;
+      if (process != null) {
+        process.exitValue();
+      }
     }
     catch (IllegalThreadStateException e) {
       return true;
@@ -303,8 +306,7 @@ public class FileWatcher {
         try {
           writeLine(EXIT_COMMAND);
         }
-        catch (IOException ignore) {
-        }
+        catch (IOException ignore) { }
       }
 
       notifierProcess = null;
@@ -318,7 +320,6 @@ public class FileWatcher {
   }
 
   private class WatchForChangesThread extends Thread {
-
     public WatchForChangesThread() {
       //noinspection HardCodedStringLiteral
       super("WatchForChangesThread");
@@ -426,29 +427,37 @@ public class FileWatcher {
       if (LOG.isDebugEnabled()) {
         LOG.debug("to fsnotifier: " + line);
       }
-      notifierWriter.write(line);
-      notifierWriter.newLine();
-      notifierWriter.flush();
+      final BufferedWriter writer = notifierWriter;
+      if (writer != null) {
+        writer.write(line);
+        writer.newLine();
+        writer.flush();
+      }
     }
     catch (IOException e) {
       try {
-        notifierProcess.exitValue();
+        final Process process = notifierProcess;
+        if (process != null) {
+          process.exitValue();
+        }
       }
       catch (IllegalThreadStateException e1) {
         throw e;
       }
-
-      notifierProcess = null;
-      notifierWriter = null;
-      notifierReader = null;
+      finally {
+        notifierProcess = null;
+        notifierWriter = null;
+        notifierReader = null;
+      }
     }
   }
 
   @Nullable
   private String readLine() throws IOException {
-    if (notifierReader == null) return null;
+    final BufferedReader reader = notifierReader;
+    if (reader == null) return null;
 
-    final String line = notifierReader.readLine();
+    final String line = reader.readLine();
     if (LOG.isDebugEnabled()) {
       LOG.debug("fsnotifier says: " + line);
     }

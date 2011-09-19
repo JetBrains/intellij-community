@@ -34,7 +34,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PlatformIcons;
@@ -53,9 +52,8 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class CopyrightProfilesPanel extends MasterDetailsComponent implements SearchableConfigurable{
-    private static final Icon COPY_ICON = IconLoader.getIcon("/actions/copy.png");
 
-    private final Project myProject;
+  private final Project myProject;
     private final CopyrightManager myManager;
   private final AtomicBoolean myInitialized = new AtomicBoolean(false);
 
@@ -161,7 +159,7 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
 
         });
         result.add(new MyDeleteAction(Conditions.alwaysTrue()));
-        result.add(new AnAction("Copy", "Copy", COPY_ICON) {
+        result.add(new AnAction("Copy", "Copy", PlatformIcons.COPY_ICON) {
             {
                 registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, KeyEvent.CTRL_MASK)), myTree);
             }

@@ -18,16 +18,11 @@ package com.intellij.openapi.wm.impl.status;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.*;
-import com.intellij.openapi.fileEditor.impl.DockableEditorTabbedContainer;
-import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
-import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.ui.docking.DockContainer;
-import com.intellij.ui.docking.DockManager;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,24 +43,12 @@ public abstract class EditorBasedWidget extends FileEditorManagerAdapter impleme
   @Nullable
   protected final Editor getEditor() {
     final Project project = getProject();
-
     if (project == null) return null;
 
-    DockContainer c = DockManager.getInstance(project).getContainerFor(myStatusBar.getComponent());
-    EditorsSplitters splitters = null;
-    if (c instanceof DockableEditorTabbedContainer) {
-      splitters = ((DockableEditorTabbedContainer)c).getSplitters();
-    }
-
+    FileEditor fileEditor = StatusBarUtil.getCurrentFileEditor(project, myStatusBar);
     Editor result = null;
-    if (splitters != null && splitters.getCurrentWindow() != null) {
-      EditorWithProviderComposite editor = splitters.getCurrentWindow().getSelectedEditor();
-      if (editor != null) {
-        FileEditor fileEditor = editor.getSelectedEditorWithProvider().getFirst();
-        if (fileEditor instanceof TextEditor) {
-          result = ((TextEditor)fileEditor).getEditor();
-        }
-      }
+    if (fileEditor instanceof TextEditor) {
+      result = ((TextEditor)fileEditor).getEditor();
     }
 
     if (result == null) {

@@ -249,7 +249,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
       });
     }
     else {
-      if (virtualSelectTarget == null) {
+      if (virtualSelectTarget == null && getTree().getSelectionPaths().length == 1) {
         select(alreadySelected, onDone);
       } else if (onDone != null) {
         onDone.run();

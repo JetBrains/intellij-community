@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -101,7 +101,7 @@ public class CanonicalPsiTypeConverterImpl extends CanonicalPsiTypeConverter imp
             public Object[] getVariants() {
               final Object[] variants = super.getVariants();
               if (myIndex == 0) {
-                return ArrayUtil.mergeArrays(variants, PRIMITIVES, Object.class);
+                return ArrayUtil.mergeArrays(variants, PRIMITIVES);
               }
               return variants;
             }

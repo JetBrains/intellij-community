@@ -635,9 +635,23 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
         usageSearcher.generate(new Processor<Usage>() {
           public boolean process(final Usage usage) {
             if (usageViewManager.searchHasBeenCancelled()) return false;
-            ((UsageViewManagerImpl)usageViewManager).appendUsageWhenNotTooMany(usage, myTargets, UsageViewImpl.this,
-                                                                               indicator, tooManyUsages, waitWhileUserClick,
-                                                                               usageCountWithoutDefinition);
+            if (tooManyUsages.get() == 1) {
+              try {
+                waitWhileUserClick.await(1, TimeUnit.SECONDS);
+              }
+              catch (InterruptedException ignored) {
+              }
+            }
+
+            boolean incrementCounter = !com.intellij.usages.UsageViewManager.isSelfUsage(usage, myTargets);
+
+            if (incrementCounter) {
+              final int usageCount = usageCountWithoutDefinition.incrementAndGet();
+              if (usageCount > UsageLimitUtil.USAGES_LIMIT && tooManyUsages.get() == 0 && tooManyUsages.compareAndSet(0, 1)) {
+                ((UsageViewManagerImpl)usageViewManager).showTooManyUsagesWarning(indicator, waitWhileUserClick, usageCountWithoutDefinition.get());
+              }
+              appendUsageLater(usage);
+            }
             ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
             return indicator == null || !indicator.isCanceled();
           }

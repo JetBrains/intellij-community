@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,6 @@ import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import java.io.File;
 import java.io.InputStream;
-import java.util.Collection;
 import java.util.List;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
@@ -143,7 +142,7 @@ public abstract class AbstractConfigUtils {
   }
 
   public Library[] getAllSDKLibraries(@Nullable Project project) {
-    return ArrayUtil.mergeArrays(getGlobalSDKLibraries(), getProjectSDKLibraries(project), Library.class);
+    return ArrayUtil.mergeArrays(getGlobalSDKLibraries(), getProjectSDKLibraries(project));
   }
 
   public Library[] getGlobalSDKLibraries() {

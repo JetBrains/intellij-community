@@ -144,6 +144,6 @@ public class PatchCreatorTest extends PatchingTestCase {
       cc.add(c);
     }
 
-    PatchCreator.create(myProject, cc, patchFilePath, reverse);
+    PatchCreator.create(myProject, cc, patchFilePath, reverse, null);
   }
 }

@@ -438,6 +438,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     return myWindowWatcher.suggestParentWindow(project);
   }
 
+  @Nullable
   public final StatusBar getStatusBar(final Project project) {
     if (!myProject2Frame.containsKey(project)) {
       return null;

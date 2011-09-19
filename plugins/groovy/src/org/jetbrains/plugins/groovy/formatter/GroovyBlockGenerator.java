@@ -22,18 +22,22 @@ import com.intellij.formatting.Indent;
 import com.intellij.formatting.Wrap;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.formatter.processors.GroovyIndentProcessor;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference;
@@ -42,6 +46,8 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrThrowsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLabeledStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
@@ -49,13 +55,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCondit
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Utility class to generate myBlock hierarchy
@@ -139,13 +142,14 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
       return subBlocks;
     }
 
-    if (blockPsi instanceof GrCodeBlock || blockPsi instanceof GroovyFile) {
+    boolean classLevel = blockPsi instanceof GrTypeDefinitionBody;
+    if (blockPsi instanceof GrCodeBlock || blockPsi instanceof GroovyFile || classLevel) {
       List<ASTNode> children = visibleChildren(node);
-      Map<GrBinaryExpression, Alignment> innerAlignments = calculateInnerAlignments(children);
+      Map<PsiElement, Alignment> innerAlignments = calculateInnerAlignments(children, classLevel, mySettings);
       final ArrayList<Block> subBlocks = new ArrayList<Block>();
       for (ASTNode childNode : children) {
         final Indent indent = GroovyIndentProcessor.getChildIndent(block, childNode);
-        subBlocks.add(new GroovyBlock(childNode, null, indent, myWrap, mySettings, innerAlignments));
+        subBlocks.add(new GroovyBlock(childNode, classLevel ? myAlignment : null, indent, myWrap, mySettings, innerAlignments));
       }
       return subBlocks;
     }
@@ -154,38 +158,54 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
     final ArrayList<Block> subBlocks = new ArrayList<Block>();
     for (ASTNode childNode : visibleChildren(node)) {
       final Indent indent = GroovyIndentProcessor.getChildIndent(block, childNode);
-      subBlocks.add(new GroovyBlock(childNode, blockPsi instanceof GrAnonymousClassDefinition ? null : myAlignment, indent, myWrap, mySettings, block.myInnerAlignments));
+      subBlocks.add(new GroovyBlock(childNode, block.myInnerAlignments.get(childNode.getPsi()), indent, myWrap, mySettings, block.myInnerAlignments));
     }
     return subBlocks;
   }
 
-  private static Map<GrBinaryExpression, Alignment> calculateInnerAlignments(List<ASTNode> children) {
-    Map<GrBinaryExpression, Alignment> innerAlignments = CollectionFactory.hashMap();
+  private static Map<PsiElement, Alignment> calculateInnerAlignments(List<ASTNode> children, boolean classLevel, CodeStyleSettings settings) {
+    Map<PsiElement, Alignment> innerAlignments = CollectionFactory.hashMap();
     List<Alignment> currentGroup = null;
     for (ASTNode child : children) {
       PsiElement psi = child.getPsi();
       if (psi instanceof GrLabeledStatement) {
-        List<GrBinaryExpression> table = getTable(((GrLabeledStatement)psi).getStatement());
+        List<LeafPsiElement> table = getSpockTable(((GrLabeledStatement)psi).getStatement());
         if (table.isEmpty()) {
           currentGroup = null;
         }
         else {
           currentGroup = new ArrayList<Alignment>();
-          for (GrBinaryExpression expression : table) {
+          for (LeafPsiElement expression : table) {
             Alignment alignment = Alignment.createAlignment(true);
             currentGroup.add(alignment);
-            innerAlignments.put(expression, alignment);
+            ContainerUtil.putIfNotNull(expression, alignment, innerAlignments);
           }
         }
       } else if (currentGroup != null && isTablePart(psi)) {
-        List<GrBinaryExpression> table = getTable((GrStatement)psi);
+        List<LeafPsiElement> table = getSpockTable((GrStatement)psi);
         for (int i = 0; i < Math.min(table.size(), currentGroup.size()); i++) {
           innerAlignments.put(table.get(i), currentGroup.get(i));
         }
-      } else {
+      } else if (classLevel && psi instanceof GrVariableDeclaration && settings.ALIGN_GROUP_FIELD_DECLARATIONS) {
+        if (currentGroup == null || fieldGroupEnded(settings, psi)) {
+          currentGroup = Arrays.asList(Alignment.createAlignment(true), Alignment.createAlignment(true), Alignment.createAlignment(true));
+        }
+
+        GrVariable[] variables = ((GrVariableDeclaration)psi).getVariables();
+        if (variables.length > 0) {
+          ContainerUtil.putIfNotNull(((GrVariableDeclaration)psi).getTypeElementGroovy(), currentGroup.get(0), innerAlignments);
+          innerAlignments.put(variables[0].getNameIdentifierGroovy(), currentGroup.get(1));
+
+          ASTNode eq = variables[variables.length - 1].getNode().findChildByType(GroovyTokenTypes.mASSIGN);
+          if (eq != null) {
+            innerAlignments.put(eq.getPsi(), currentGroup.get(2));
+          }
+        }
+      }
+      else {
         if (psi instanceof PsiComment) {
           PsiElement prev = psi.getPrevSibling();
-          if (prev != null && prev.getNode().getElementType() != mNLS) {
+          if (prev != null && prev.getNode().getElementType() != mNLS || classLevel && !fieldGroupEnded(settings, psi)) {
             continue;
           }
         }
@@ -195,10 +215,15 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
     return innerAlignments;
   }
 
-  private static List<GrBinaryExpression> getTable(GrStatement statement) {
-    LinkedList<GrBinaryExpression> result = new LinkedList<GrBinaryExpression>();
+  private static boolean fieldGroupEnded(CodeStyleSettings settings, PsiElement psi) {
+    PsiElement prevSibling = psi.getPrevSibling();
+    return prevSibling != null && StringUtil.countChars(prevSibling.getText(), '\n') >= settings.KEEP_BLANK_LINES_IN_DECLARATIONS;
+  }
+
+  private static List<LeafPsiElement> getSpockTable(GrStatement statement) {
+    LinkedList<LeafPsiElement> result = new LinkedList<LeafPsiElement>();
     while (isTablePart(statement)) {
-      result.addFirst((GrBinaryExpression)statement);
+      result.addFirst((LeafPsiElement)((GrBinaryExpression)statement).getOperationToken());
       statement = ((GrBinaryExpression)statement).getLeftOperand();
     }
     return result;
@@ -342,7 +367,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
    * @return
    * @param node
    */
-  private static List<Block> generateForBinaryExpr(final ASTNode node, Wrap myWrap, CodeStyleSettings mySettings, Map<GrBinaryExpression, Alignment> inner) {
+  private static List<Block> generateForBinaryExpr(final ASTNode node, Wrap myWrap, CodeStyleSettings mySettings, Map<PsiElement, Alignment> inner) {
     final ArrayList<Block> subBlocks = new ArrayList<Block>();
     Alignment alignment = mySettings.ALIGN_MULTILINE_BINARY_OPERATION ? Alignment.createAlignment() : null;
 
@@ -364,7 +389,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
   private static void addBinaryChildrenRecursively(PsiElement elem,
                                                    List<Block> list,
                                                    Indent indent,
-                                                   Alignment alignment, Wrap myWrap, CodeStyleSettings mySettings, Map<GrBinaryExpression, Alignment> inner) {
+                                                   Alignment alignment, Wrap myWrap, CodeStyleSettings mySettings, Map<PsiElement, Alignment> inner) {
     if (elem == null) return;
     // For binary expressions
     if ((elem instanceof GrBinaryExpression)) {
@@ -376,7 +401,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
       for (ASTNode childNode : visibleChildren(elem.getNode())) {
         PsiElement psi = childNode.getPsi();
         if (!(psi instanceof GrBinaryExpression)) {
-          list.add(new GroovyBlock(childNode, op == psi ? inner.get(myExpr) : alignment, indent, myWrap, mySettings));
+          list.add(new GroovyBlock(childNode, op == psi ? inner.get(op) : alignment, indent, myWrap, mySettings));
         }
       }
       if (myExpr.getRightOperand() instanceof GrBinaryExpression) {

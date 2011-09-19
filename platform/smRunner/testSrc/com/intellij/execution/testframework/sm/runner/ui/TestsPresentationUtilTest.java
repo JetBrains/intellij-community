@@ -547,7 +547,7 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
 
     assertEquals(PoolOfTestIcons.NOT_RAN, myRenderer.getIcon());
     assertOneElement(myFragContainer.getFragments());
-    assertEquals("Unable to attach test reporter to test framework", myFragContainer.getTextAt(0));
+    assertEquals("Unable to attach test reporter to test framework or test framework quit unexpectedly", myFragContainer.getTextAt(0));
     assertEquals(SimpleTextAttributes.ERROR_ATTRIBUTES, myFragContainer.getAttribsAt(0));
 
   }

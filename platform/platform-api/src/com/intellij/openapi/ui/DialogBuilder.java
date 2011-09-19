@@ -23,13 +23,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 
-public class DialogBuilder {
+public class DialogBuilder implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.DialogBuilder");
 
   @NonNls public static final String REQUEST_FOCUS_ENABLED = "requestFocusEnabled";
@@ -40,7 +41,6 @@ public class DialogBuilder {
   private String myDimensionServiceKey;
   private ArrayList<ActionDescriptor> myActions = null;
   private final MyDialogWrapper myDialogWrapper;
-  private final ArrayList<Disposable> myDisposables = new ArrayList<Disposable>();
   private Runnable myCancelOperation = null;
   private Runnable myOkOperation = null;
 
@@ -54,10 +54,16 @@ public class DialogBuilder {
 
   public DialogBuilder(Project project) {
     myDialogWrapper = new MyDialogWrapper(project, true);
+    Disposer.register(myDialogWrapper.getDisposable(), this);
   }
 
   public DialogBuilder(Component parent) {
     myDialogWrapper = new MyDialogWrapper(parent, true);
+    Disposer.register(myDialogWrapper.getDisposable(), this);
+  }
+
+  @Override
+  public void dispose() {
   }
 
   private MyDialogWrapper showImpl(boolean isModal) {
@@ -118,8 +124,8 @@ public class DialogBuilder {
     return closeAction;
   }
 
-  public void addDisposable(Disposable disposable) {
-    myDisposables.add(disposable);
+  public void addDisposable(@NotNull Disposable disposable) {
+    Disposer.register(this, disposable);
   }
 
   public void setButtonsAlignment(int alignment) {
@@ -292,9 +298,6 @@ public class DialogBuilder {
 
     public void dispose() {
       myPreferedFocusComponent = null;
-      for (Disposable disposable : myDisposables) {
-        Disposer.dispose(disposable);
-      }
       super.dispose();
     }
 
