@@ -1464,7 +1464,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     // add all intention options for simplicity
     for (HighlightInfo.IntentionActionDescriptor descriptor : descriptors) {
       result.add(descriptor.getAction());
-      List<IntentionAction> options = descriptor.getOptions(element);
+      List<IntentionAction> options = descriptor.getOptions(element,editor);
       if (options != null) {
         for (IntentionAction option : options) {
           if (option.isAvailable(file.getProject(), editor, file)) {
