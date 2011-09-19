@@ -169,7 +169,7 @@ public class DetailsComponent {
 
   private void invalidateContentBorder() {
     if (myDetailsEnabled) {
-      myContent.setBorder(new EmptyBorder(8, 10, 8, 8));
+      myContent.setBorder(new EmptyBorder(UIUtil.PANEL_REGULAR_INSETS));
     }
     else {
       myContent.setBorder(null);
