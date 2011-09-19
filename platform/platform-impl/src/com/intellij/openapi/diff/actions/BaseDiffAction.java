@@ -49,9 +49,10 @@ abstract class BaseDiffAction extends AnAction implements PreloadableAction, Dum
 
   public void update(AnActionEvent e) {
     DiffRequest diffData = getDiffData(e.getDataContext());
-    boolean enabled;
-    if (diffData == null || diffData.getContents() == null) enabled = false;
-    else enabled = DiffManager.getInstance().getDiffTool().canShow(diffData);
+    
+    boolean enabled = diffData != null &&
+                      (!diffData.isSafeToCallFromUpdate() || (diffData.getContents() != null && DiffManager.getInstance().getDiffTool().canShow(diffData)));
+
     Presentation presentation = e.getPresentation();
     presentation.setEnabled(enabled);
     if (enabled) presentation.setVisible(true);
