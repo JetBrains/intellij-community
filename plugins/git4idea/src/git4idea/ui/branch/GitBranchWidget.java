@@ -127,7 +127,7 @@ public class GitBranchWidget extends EditorBasedWidget implements StatusBarWidge
   }
 
   private void update() {
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
         Project project = getProject();
