@@ -77,6 +77,20 @@ public class GrIfStatementImpl extends GroovyPsiElementImpl implements GrIfState
     return null;
   }
 
+  @Override
+  public void deleteChildInternal(@NotNull ASTNode child) {
+    GrStatement elseBranch = getElseBranch();
+
+    if (elseBranch != null && child == elseBranch.getNode()) {
+      PsiElement elseKeywordElement = findChildByType(GroovyTokenTypes.kELSE);
+      if (elseKeywordElement != null) {
+        super.deleteChildInternal(elseKeywordElement.getNode());
+      }
+    }
+
+    super.deleteChildInternal(child);
+  }
+
   public <T extends GrStatement> T replaceThenBranch(T newBranch) throws IncorrectOperationException {
     return PsiImplUtil.replaceBody(newBranch, getThenBranch(), getNode(), getProject());
   }

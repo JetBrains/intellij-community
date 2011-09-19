@@ -15,19 +15,8 @@
  */
 package org.jetbrains.plugins.groovy.unwrap;
 
-import com.intellij.codeInsight.unwrap.*;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.SelectionModel;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import com.intellij.codeInsight.unwrap.JavaUnwrapDescriptor;
+import com.intellij.codeInsight.unwrap.Unwrapper;
 
 public class GroovyUnwrapDescriptor extends JavaUnwrapDescriptor {
 
@@ -42,6 +31,8 @@ public class GroovyUnwrapDescriptor extends JavaUnwrapDescriptor {
       new GroovyForUnwrapper(),
       new GroovyCatchRemover(),
       new GroovyBracesUnwrapper(),
+      new GroovyElseRemover(),
+      new GroovyElseUnwrapper(),
     };
   }
 }
