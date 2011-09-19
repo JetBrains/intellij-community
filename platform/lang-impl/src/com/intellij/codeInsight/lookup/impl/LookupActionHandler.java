@@ -155,20 +155,22 @@ public abstract class LookupActionHandler extends EditorActionHandler {
 
   public static class PageDownHandler extends LookupActionHandler {
     public PageDownHandler(final EditorActionHandler originalHandler) {
-      super(originalHandler, true);
+      super(originalHandler, false);
     }
 
     protected void executeInLookup(final LookupImpl lookup, DataContext context) {
+      lookup.setFocused(true);
       ListScrollingUtil.movePageDown(lookup.getList());
     }
   }
 
   public static class PageUpHandler extends LookupActionHandler {
     public PageUpHandler(EditorActionHandler originalHandler){
-      super(originalHandler, true);
+      super(originalHandler, false);
     }
 
     protected void executeInLookup(final LookupImpl lookup, DataContext context) {
+      lookup.setFocused(true);
       ListScrollingUtil.movePageUp(lookup.getList());
     }
   }
