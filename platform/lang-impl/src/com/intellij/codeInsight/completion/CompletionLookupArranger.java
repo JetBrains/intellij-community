@@ -93,17 +93,29 @@ public class CompletionLookupArranger extends LookupArranger {
 
     StatisticsUpdate update = new StatisticsUpdate(ignored, selected, main);
     ourPendingUpdate = update;
+    Disposer.register(update, new Disposable() {
+      @Override
+      public void dispose() {
+        //noinspection AssignmentToStaticFieldFromInstanceMethod
+        ourPendingUpdate = null;
+      }
+    });
+
     return update;
   }
 
   public static void trackStatistics(InsertionContext context, final StatisticsUpdate update) {
+    if (ourPendingUpdate != update) {
+      return;
+    }
+
     final Document document = context.getDocument();
     int startOffset = context.getStartOffset();
     int tailOffset = context.getEditor().getCaretModel().getOffset();
     if (startOffset < 0 || tailOffset <= startOffset) {
       return;
     }
-    
+
     final RangeMarker marker = document.createRangeMarker(startOffset, tailOffset);
     final DocumentAdapter listener = new DocumentAdapter() {
       @Override
@@ -130,8 +142,6 @@ public class CompletionLookupArranger extends LookupArranger {
         document.removeDocumentListener(listener);
         marker.dispose();
         ourStatsAlarm.cancelAllRequests();
-        //noinspection AssignmentToStaticFieldFromInstanceMethod
-        ourPendingUpdate = null;
       }
     });
   }
@@ -139,6 +149,7 @@ public class CompletionLookupArranger extends LookupArranger {
   public static void cancelLastCompletionStatisticsUpdate() {
     if (ourPendingUpdate != null) {
       Disposer.dispose(ourPendingUpdate);
+      assert ourPendingUpdate == null;
     }
   }
 
@@ -147,6 +158,7 @@ public class CompletionLookupArranger extends LookupArranger {
     if (update != null) {
       update.performUpdate();
       Disposer.dispose(update);
+      assert ourPendingUpdate == null;
     }
   }
 
