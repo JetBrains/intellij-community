@@ -800,7 +800,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
 
   @Override
   public Component getFocusOwner() {
-    //assertDispatchThread();  // todo: uncomment after IDEA 11 EAP
+    assertDispatchThread();
 
     Component result = null;
     if (myRunContext != null) {
@@ -1039,7 +1039,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     return myApp.isActive() || !Registry.is("actionSystem.suspendFocusTransferIfApplicationInactive");
   }
 
-  private void assertDispatchThread() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+  private static void assertDispatchThread() {
+    //ApplicationManager.getApplication().assertIsDispatchThread(); // todo: uncomment after IDEA 11 EAP
   }
 }
