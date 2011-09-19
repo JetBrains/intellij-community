@@ -2432,6 +2432,8 @@ public class UIUtil {
   }
 
   public static void mergeComponentsWithAnchor(PanelWithAnchor c1,PanelWithAnchor c2) {
+    if (c1 == null || c2 == null) return;
+
     if (c1.getAnchor() == null) {
       c1.setAnchor(c2.getAnchor());
     } else {

@@ -17,6 +17,7 @@ package com.intellij.ui;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.border.IdeaTitledBorder;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -26,10 +27,11 @@ import java.util.List;
 /**
  * This class creates a nicely formatted panel with components.  Useful for option panels.
  */
-public class OptionGroup {
+public class OptionGroup implements PanelWithAnchor {
   private String myTitle;
   private List myOptions;
   private List myIsShifted;
+  private JComponent anchor;
 
   public OptionGroup(String title) {
     myTitle = title;
@@ -109,6 +111,22 @@ public class OptionGroup {
     return panel;
   }
 
+  @Override
+  public JComponent getAnchor() {
+    return anchor;
+  }
+
+  @Override
+  public void setAnchor(@Nullable JComponent anchor) {
+    this.anchor = anchor;
+    for (Object o : myOptions) {
+      if (o instanceof Pair &&
+          ((Pair)o).getFirst() instanceof AnchorableComponent) {
+        ((AnchorableComponent)((Pair)o).getFirst()).setAnchor(anchor);
+      }
+    }
+  }
+
   private static int getFill(JComponent component) {
     if (component instanceof JCheckBox) {
       return GridBagConstraints.NONE;
@@ -118,8 +136,7 @@ public class OptionGroup {
 
   public JComponent[] getComponents() {
     ArrayList<JComponent> components = new ArrayList<JComponent>();
-    for (int i = 0; i < myOptions.size(); i++) {
-      Object o = myOptions.get(i);
+    for (Object o : myOptions) {
       if (o instanceof Pair) {
         components.add((JComponent)((Pair)o).first);
         components.add((JComponent)((Pair)o).second);
@@ -129,5 +146,20 @@ public class OptionGroup {
       }
     }
     return components.toArray(new JComponent[components.size()]);
+  }
+
+  @Nullable
+  public JComponent findAnchor() {
+    double maxWidth = -1;
+    JComponent ans = null;
+    for (Object o : myOptions) {
+      if (o instanceof Pair &&
+          ((Pair)o).getFirst() instanceof AnchorableComponent &&
+          ((JComponent)((Pair)o).getFirst()).getPreferredSize().getWidth() > maxWidth) {
+        maxWidth = ((JComponent)((Pair)o).getFirst()).getPreferredSize().getWidth();
+        ans = (JComponent)((Pair)o).getFirst();
+      }
+    }
+    return ans;
   }
 }
