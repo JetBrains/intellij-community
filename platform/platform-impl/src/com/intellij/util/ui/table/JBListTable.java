@@ -16,6 +16,7 @@
 package com.intellij.util.ui.table;
 
 import com.intellij.ui.EditorTextField;
+import com.intellij.ui.TableUtil;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.UIUtil;
@@ -27,9 +28,6 @@ import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseWheelEvent;
 import java.util.List;
 
 /**
@@ -77,6 +75,7 @@ public abstract class JBListTable extends JPanel {
           e.consume();
           return;
         }
+
         super.processKeyEvent(e);
       }
 
@@ -92,7 +91,6 @@ public abstract class JBListTable extends JPanel {
 
       @Override
       protected boolean processKeyBinding(KeyStroke ks, KeyEvent e, int condition, boolean pressed) {
-        //be careful. hardcore!!!
         if (isEditing() && e.getKeyCode() == KeyEvent.VK_TAB) {
           if (pressed) {
             final KeyboardFocusManager mgr = KeyboardFocusManager.getCurrentKeyboardFocusManager();
@@ -104,6 +102,20 @@ public abstract class JBListTable extends JPanel {
           }
           return true;
         }
+
+        final boolean isUp = e.getKeyCode() == KeyEvent.VK_UP;
+        final boolean isDown = e.getKeyCode() == KeyEvent.VK_DOWN;
+
+        if (isEditing() && (isUp || isDown) && e.getModifiers() == 0 && e.getID() == KeyEvent.KEY_PRESSED) {
+          int row = getSelectedRow();
+          super.processKeyBinding(ks, e, condition, pressed);
+          if (!isEditing() && row != getSelectedRow()) {
+            TableUtil.editCellAt(this, getSelectedRow(), 0);
+            e.consume();
+            return true;
+          }
+        }
+
         return super.processKeyBinding(ks, e, condition, pressed);
       }
 
@@ -116,7 +128,7 @@ public abstract class JBListTable extends JPanel {
           editor.setFocusCycleRoot(true);
 
           editor.setFocusTraversalPolicy(new JBListTableFocusTraversalPolicy(editor));
-          editor.addMouseListener(new MouseSuppresser());
+          MouseSuppressor.install(editor);
 
           return new AbstractTableCellEditor() {
             JTable curTable = null;
@@ -230,37 +242,6 @@ public abstract class JBListTable extends JPanel {
       }
       catch (InterruptedException e) {        
       }
-    }
-  }
-
-  private static class MouseSuppresser extends MouseAdapter {
-    private static void handle(MouseEvent e) {
-      e.consume();
-    }
-
-    @Override
-    public void mouseClicked(MouseEvent e) {handle(e);}
-
-    @Override
-    public void mousePressed(MouseEvent e) {handle(e);}
-
-    @Override
-    public void mouseReleased(MouseEvent e) {handle(e);}
-
-    @Override
-    public void mouseEntered(MouseEvent e) {handle(e);}
-
-    @Override
-    public void mouseExited(MouseEvent e) {handle(e);}
-
-    @Override
-    public void mouseWheelMoved(MouseWheelEvent e) {handle(e);}
-
-    @Override
-    public void mouseDragged(MouseEvent e) {handle(e);}
-
-    @Override
-    public void mouseMoved(MouseEvent e) {handle(e);
     }
   }
 }
