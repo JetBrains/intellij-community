@@ -82,8 +82,8 @@ public class CreatePatchCommitExecutor implements CommitExecutorWithHelp, Projec
   }
 
   @NotNull
-  public CommitSession createCommitSession(CommitContext commitContext) {
-    return new CreatePatchCommitSession(commitContext);
+  public CommitSession createCommitSession() {
+    return new CreatePatchCommitSession();
   }
 
   public void projectOpened() {
@@ -113,12 +113,16 @@ public class CreatePatchCommitExecutor implements CommitExecutorWithHelp, Projec
     DefaultJDOMExternalizer.writeExternal(this, element);
   }
 
-  private class CreatePatchCommitSession implements CommitSession {
+  private class CreatePatchCommitSession implements CommitSession, CommitSessionContextAware {
     private final CreatePatchConfigurationPanel myPanel = new CreatePatchConfigurationPanel(myProject);
-    private final CommitContext myCommitContext;
+    private CommitContext myCommitContext;
 
-    public CreatePatchCommitSession(CommitContext commitContext) {
-      myCommitContext = commitContext;
+    public CreatePatchCommitSession() {
+    }
+
+    @Override
+    public void setContext(CommitContext context) {
+      myCommitContext = context;
     }
 
     @Nullable

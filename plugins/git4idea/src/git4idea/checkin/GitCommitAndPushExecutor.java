@@ -15,7 +15,6 @@
  */
 package git4idea.checkin;
 
-import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
 import com.intellij.openapi.vcs.changes.CommitSession;
 import org.jetbrains.annotations.Nls;
@@ -37,7 +36,7 @@ public class GitCommitAndPushExecutor implements CommitExecutor {
   }
 
   @NotNull
-  public CommitSession createCommitSession(CommitContext commitContext) {
+  public CommitSession createCommitSession() {
     myCheckinEnvironment.setNextCommitIsPushed(true);
     return CommitSession.VCS_COMMIT;
   }

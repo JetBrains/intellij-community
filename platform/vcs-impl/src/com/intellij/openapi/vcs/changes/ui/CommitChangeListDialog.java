@@ -512,7 +512,10 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private void execute(final CommitExecutor commitExecutor) {
     if (!saveDialogState()) return;
     saveComments(true);
-    final CommitSession session = commitExecutor.createCommitSession(myCommitContext);
+    final CommitSession session = commitExecutor.createCommitSession();
+    if (session instanceof CommitSessionContextAware) {
+      ((CommitSessionContextAware)session).setContext(myCommitContext);
+    }
     if (session == CommitSession.VCS_COMMIT) {
       doOKAction();
       return;

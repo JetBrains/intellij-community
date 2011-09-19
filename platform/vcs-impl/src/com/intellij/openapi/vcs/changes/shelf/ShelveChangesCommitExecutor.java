@@ -52,7 +52,7 @@ public class ShelveChangesCommitExecutor implements CommitExecutorWithHelp {
   }
 
   @NotNull
-  public CommitSession createCommitSession(CommitContext commitContext) {
+  public CommitSession createCommitSession() {
     return new ShelveChangesCommitSession();
   }
 
@@ -61,11 +61,15 @@ public class ShelveChangesCommitExecutor implements CommitExecutorWithHelp {
     return "reference.dialogs.vcs.shelve";
   }
 
-  private class ShelveChangesCommitSession implements CommitSession {
+  private class ShelveChangesCommitSession implements CommitSession, CommitSessionContextAware {
 
     @Nullable
     public JComponent getAdditionalConfigurationUI() {
       return null;
+    }
+
+    @Override
+    public void setContext(CommitContext context) {
     }
 
     @Nullable
