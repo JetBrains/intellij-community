@@ -47,6 +47,7 @@ import com.intellij.refactoring.introduceField.IntroduceConstantHandler;
 import com.intellij.ui.AddDeleteListPanel;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
@@ -227,6 +228,8 @@ public class I18nInspection extends BaseLocalInspectionTool {
     panel.add(nonAlpha, gc);
 
     gc.gridy ++;
+    gc.anchor = GridBagConstraints.NORTHWEST;
+    gc.weighty = 1;
     final JTextField text = new JTextField(nonNlsCommentPattern);
     final FieldPanel nonNlsCommentPatternComponent =
       new FieldPanel(text, CodeInsightBundle.message("inspection.i18n.option.ignore.comment.pattern"),
@@ -238,10 +241,14 @@ public class I18nInspection extends BaseLocalInspectionTool {
       });
     panel.add(nonNlsCommentPatternComponent, gc);
 
-    gc.gridy ++;
-    gc.weighty = 1;
-    panel.add(new JPanel(), gc);
-    return panel;
+    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(panel);
+    scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+    scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+    scrollPane.setBorder(null);
+    scrollPane.setPreferredSize(new Dimension(panel.getPreferredSize().width + scrollPane.getVerticalScrollBar().getPreferredSize().width,
+                                              panel.getPreferredSize().height +
+                                              scrollPane.getHorizontalScrollBar().getPreferredSize().height));
+    return scrollPane;
   }
 
   @SuppressWarnings({"NonStaticInitializer"})
