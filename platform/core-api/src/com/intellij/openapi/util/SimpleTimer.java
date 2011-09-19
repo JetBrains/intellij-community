@@ -18,6 +18,7 @@ package com.intellij.openapi.util;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -30,21 +31,23 @@ public class SimpleTimer {
 
   private final Timer ourTimer;
 
-  private static final SimpleTimer ourInstance = new SimpleTimer();
-  @NonNls private static final String THREAD_NAME = "SimpleTimer";
+  private static final SimpleTimer ourInstance = newInstance("Shared SimpleTimer");
 
   private long myNextScheduledTime = Long.MAX_VALUE;
   private TimerTask myNextProcessingTask;
 
   private final Map<Long, ArrayList<SimpleTimerTask>> myTime2Task = new TreeMap<Long, ArrayList<SimpleTimerTask>>();
+  private String myThreadName;
 
-  private SimpleTimer() {
+  private SimpleTimer(@NotNull String threadName) {
+    myThreadName = threadName;
+    
     final Thread thread = Thread.currentThread();
     final int currentPrio = thread.getPriority();
     try {
       // need this becase the timer's thread will inherit the priority on creation
       thread.setPriority(Thread.MIN_PRIORITY + 1);
-      ourTimer = new Timer(THREAD_NAME, true);
+      ourTimer = new Timer(threadName, true);
     }
     finally {
       thread.setPriority(currentPrio);
@@ -53,6 +56,10 @@ public class SimpleTimer {
 
   public static SimpleTimer getInstance() {
     return ourInstance;
+  }
+  
+  public static SimpleTimer newInstance(@NotNull String name) {
+    return new SimpleTimer(name);
   }
 
   public SimpleTimerTask setUp(final Runnable runnable, long delay) {
@@ -150,7 +157,7 @@ public class SimpleTimer {
   }
 
   public boolean isTimerThread(Thread thread) {
-    return THREAD_NAME.equals(thread.getName());
+    return myThreadName.equals(thread.getName());
   }
 
   void onCancelled(SimpleTimerTask task) {

@@ -27,10 +27,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.EdtRunnable;
-import com.intellij.openapi.util.Expirable;
-import com.intellij.openapi.util.ExpirableRunnable;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
@@ -79,24 +76,11 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   final EdtAlarm myFocusedComponentAlaram;
   private final EdtAlarm myForcedFocusRequestsAlarm;
 
+  private SimpleTimer myTimer = SimpleTimer.newInstance("FocusManager timer");
+  
   private final EdtAlarm myIdleAlarm;
   private final Set<Runnable> myIdleRequests = new LinkedHashSet<Runnable>();
-  private final EdtRunnable myIdleRunnable = new EdtRunnable() {
-    public void runEdt() {
-      if (canFlushIdleRequests()) {
-        flushIdleRequests();
-      }
-      else {
-        if (processFocusRevalidation()) {
-          if (isFocusTransferReady()) {
-            flushIdleRequests();
-          }  
-        }
-  
-        restartIdleAlarm();
-      }
-    }
-  };
+
   private boolean myFlushWasDelayedToFixFocus;
   private ExpirableRunnable myFocusRevalidator;
 
@@ -105,6 +89,24 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   private Set<ActionCallback> myTypeAheadRequestors = new HashSet<ActionCallback>();
   private UiActivityMonitor myActivityMonitor;
   private boolean myTypeaheadEnabled = true;
+
+
+  private class IdleRunnable extends EdtRunnable {
+    public void runEdt() {
+      if (canFlushIdleRequests()) {
+        flushIdleRequests();
+      }
+      else {
+        if (processFocusRevalidation()) {
+          if (isFocusTransferReady()) {
+            flushIdleRequests();
+          }
+        }
+
+        restartIdleAlarm();
+      }
+    }
+  }
 
   private boolean canFlushIdleRequests() {
     Component focusOwner = getFocusOwner();
@@ -128,9 +130,9 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     myQueue = IdeEventQueue.getInstance();
     myActivityMonitor = UiActivityMonitor.getInstance();
 
-    myFocusedComponentAlaram = new EdtAlarm(this);
-    myForcedFocusRequestsAlarm = new EdtAlarm(this);
-    myIdleAlarm = new EdtAlarm(this);
+    myFocusedComponentAlaram = new EdtAlarm();
+    myForcedFocusRequestsAlarm = new EdtAlarm();
+    myIdleAlarm = new EdtAlarm();
 
     final AppListener myAppListener = new AppListener();
     myApp.getMessageBus().connect().subscribe(ApplicationActivationListener.TOPIC, myAppListener);
@@ -462,7 +464,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
 
   private void restartIdleAlarm() {
     myIdleAlarm.cancelAllRequests();
-    myIdleAlarm.addRequest(myIdleRunnable, Registry.intValue("actionSystem.focusIdleTimeout"));
+    myIdleAlarm.addRequest(new IdleRunnable(), Registry.intValue("actionSystem.focusIdleTimeout"));
   }
 
   private void flushIdleRequests() {
@@ -895,19 +897,20 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   }
 
 
-  static class EdtAlarm {
-    private final Alarm myAlarm;
+  class EdtAlarm {
 
-    private EdtAlarm(Disposable parent) {
-      myAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD, parent);
-    }
-
+    private Set<EdtRunnable> myRequests = new HashSet<EdtRunnable>();
+    
     public void cancelAllRequests() {
-      myAlarm.cancelAllRequests();
+      for (EdtRunnable each : myRequests) {
+        each.expire();
+      }
+      myRequests.clear();
     }
 
     public void addRequest(EdtRunnable runnable, int delay) {
-      myAlarm.addRequest(runnable, delay);
+      myRequests.add(runnable);
+      myTimer.setUp(runnable, delay);
     }
   }
 
