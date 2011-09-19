@@ -20,7 +20,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidatorEx;
@@ -79,7 +78,7 @@ class GitBranchPopup  {
     DefaultActionGroup popupGroup = new DefaultActionGroup(null, false);
 
     popupGroup.addAction(new CurrentBranchAction(myRepository));
-    popupGroup.addAction(new NewBranchActions(myProject, myRepository));
+    popupGroup.addAction(new NewBranchAction(myProject, myRepository));
     popupGroup.addAction(new CheckoutRevisionActions(myProject, myRepository));
 
     popupGroup.addSeparator("Local Branches");
@@ -125,27 +124,23 @@ class GitBranchPopup  {
     }
   }
 
-  /**
-   * "New branch" item which allows to checkout new branch. 
-   * For a gentle confirmation the "Create & checkout" action is a sub-action of this ActionGroup.
-   */
-  private static class NewBranchActions extends ActionGroup implements DumbAware {
+  private static class NewBranchAction extends DumbAwareAction {
     private final Project myProject;
     private final GitRepository myRepository;
 
-    public NewBranchActions(Project project, GitRepository repository) {
+    NewBranchAction(Project project, GitRepository repository) {
       super("New Branch", "Create and checkout new branch", IconLoader.getIcon("/general/add.png"));
       myProject = project;
       myRepository = repository;
-      setPopup(true);
     }
 
-    @NotNull
     @Override
-    public AnAction[] getChildren(@Nullable AnActionEvent e) {
-      return new AnAction[]{
-        new CheckoutNewBranchAction(myProject, myRepository)
-      };
+    public void actionPerformed(AnActionEvent e) {
+      final String name = Messages.showInputDialog(myProject, "Enter name of new branch", "Checkout new branch", Messages.getQuestionIcon(),
+                                             "", GitNewBranchNameValidator.newInstance(myRepository));
+      if (name != null) {
+        new GitBranchOperationsProcessor(myProject, myRepository).checkoutNewBranch(name);
+      }
     }
 
     @Override
@@ -153,25 +148,6 @@ class GitBranchPopup  {
       if (myRepository.isFresh()) {
         e.getPresentation().setEnabled(false);
         e.getPresentation().setDescription("Checkout of a new branch is not possible before the first commit.");
-      }
-    }
-
-    private static class CheckoutNewBranchAction extends DumbAwareAction {
-      private final Project myProject;
-      private final GitRepository myRepository;
-  
-      CheckoutNewBranchAction(Project project, GitRepository repository) {
-        super("Create && Checkout");
-        myProject = project;
-        myRepository = repository;
-      }
-      
-      @Override public void actionPerformed(AnActionEvent e) {
-        final String name = Messages.showInputDialog(myProject, "Enter name of new branch", "Checkout new branch", Messages.getQuestionIcon(),
-                                               "", GitNewBranchNameValidator.newInstance(myRepository));
-        if (name != null) {
-          new GitBranchOperationsProcessor(myProject, myRepository).checkoutNewBranch(name);
-        }
       }
     }
   }
