@@ -66,6 +66,11 @@ public interface VcsRevisionNumber extends Comparable<VcsRevisionNumber>{
     public int getValue() {
       return myValue;
     }
+
+    @Override
+    public String toString() {
+      return asString();
+    }
   }
 
   class Long implements VcsRevisionNumber{
