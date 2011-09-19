@@ -20,7 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
-import com.intellij.ui.ComponentWithAnchor;
+import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.SideBorder;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PairFunction;
@@ -2431,7 +2431,7 @@ public class UIUtil {
     return false;
   }
 
-  public static void mergeComponentsWithAnchor(ComponentWithAnchor c1,ComponentWithAnchor c2) {
+  public static void mergeComponentsWithAnchor(PanelWithAnchor c1,PanelWithAnchor c2) {
     if (c1.getAnchor() == null) {
       c1.setAnchor(c2.getAnchor());
     } else {
