@@ -154,4 +154,8 @@ public class AndroidManifestDomTest extends AndroidDomTest {
     copyFileToProject("MyActivity.java", "src/p1/p2/MyActivity.java");
     doTestCompletion(false);
   }
+
+  public void testInstrumentationRunner() throws Throwable {
+    doTestHighlighting();
+  }
 }
