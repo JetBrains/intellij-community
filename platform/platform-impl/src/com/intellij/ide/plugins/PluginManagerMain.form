@@ -22,7 +22,7 @@
             <properties>
               <oneTouchExpandable value="true"/>
             </properties>
-            <border type="none"/>
+            <border type="empty"/>
             <children>
               <grid id="7d113" layout-manager="GridBagLayout">
                 <constraints>

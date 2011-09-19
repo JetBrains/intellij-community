@@ -18,7 +18,7 @@
               <dividerLocation value="200"/>
               <orientation value="0"/>
             </properties>
-            <border type="none"/>
+            <border type="empty"/>
             <children>
               <grid id="31406" binding="myDiffPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
                 <constraints>

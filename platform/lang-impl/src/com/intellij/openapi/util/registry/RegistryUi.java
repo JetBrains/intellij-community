@@ -29,6 +29,7 @@ import com.intellij.openapi.ui.ShadowAction;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -60,7 +61,7 @@ public class RegistryUi implements Disposable {
   private final MyTableModel myModel;
 
   public RegistryUi() {
-    myContent.setLayout(new BorderLayout());
+    myContent.setLayout(new BorderLayout(UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP));
 
     myModel = new MyTableModel();
     myTable = new JBTable(myModel);
@@ -87,10 +88,12 @@ public class RegistryUi implements Disposable {
     myDescriptionLabel = new JTextArea(3, 50);
     myDescriptionLabel.setEditable(false);
     final JScrollPane label = ScrollPaneFactory.createScrollPane(myDescriptionLabel);
-    label.setBorder(IdeBorderFactory.createTitledBorder("Description", false, false, true));
+    final JPanel descriptionPanel = new JPanel(new BorderLayout());
+    descriptionPanel.add(label, BorderLayout.CENTER);
+    descriptionPanel.setBorder(IdeBorderFactory.createTitledBorder("Description", false, false, true));
 
     myContent.add(ScrollPaneFactory.createScrollPane(myTable), BorderLayout.CENTER);
-    myContent.add(label, BorderLayout.SOUTH);
+    myContent.add(descriptionPanel, BorderLayout.SOUTH);
 
     myTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e) {

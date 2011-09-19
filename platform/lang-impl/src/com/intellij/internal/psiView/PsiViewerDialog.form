@@ -19,7 +19,7 @@
           <dividerSize value="4"/>
           <orientation value="0"/>
         </properties>
-        <border type="none"/>
+        <border type="empty"/>
         <children>
           <grid id="1e8e6" binding="myTextPanel" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
@@ -48,7 +48,7 @@
                   <dividerLocation value="200"/>
                   <dividerSize value="4"/>
                 </properties>
-                <border type="none"/>
+                <border type="empty"/>
                 <children>
                   <grid id="bb268" binding="myStructureTreePanel" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
                     <margin top="0" left="0" bottom="0" right="0"/>
@@ -92,7 +92,7 @@
                       <dividerLocation value="200"/>
                       <enabled value="true"/>
                     </properties>
-                    <border type="none"/>
+                    <border type="empty"/>
                     <children>
                       <grid id="47abd" binding="myReferencesPanel" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
                         <margin top="0" left="0" bottom="0" right="0"/>
