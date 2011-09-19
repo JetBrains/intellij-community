@@ -1006,10 +1006,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   public void fireItemSelected(@Nullable final LookupElement item, char completionChar){
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
-    if (item != null) {
-      getActualArranger().itemSelected(item, this);
-    }
-
     if (!myListeners.isEmpty()){
       LookupEvent event = new LookupEvent(this, item, completionChar);
       LookupListener[] listeners = myListeners.toArray(new LookupListener[myListeners.size()]);
