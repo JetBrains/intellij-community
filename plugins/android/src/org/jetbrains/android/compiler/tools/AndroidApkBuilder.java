@@ -22,6 +22,7 @@ import com.android.prefs.AndroidLocation;
 import com.android.sdklib.SdkConstants;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -52,6 +53,8 @@ import static com.intellij.openapi.compiler.CompilerMessageCategory.*;
  * @author yole
  */
 public class AndroidApkBuilder {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.compiler.tools.AndroidApkBuilder");
+
   private static final String UNALIGNED_SUFFIX = ".unaligned";
 
   private AndroidApkBuilder() {
@@ -319,6 +322,7 @@ public class AndroidApkBuilder {
 
   private static Map<CompilerMessageCategory, List<String>> addExceptionMessage(Exception e,
                                                                                 Map<CompilerMessageCategory, List<String>> result) {
+    LOG.info(e);
     String simpleExceptionName = e.getClass().getCanonicalName();
     result.get(ERROR).add(simpleExceptionName + ": " + e.getMessage());
     return result;
