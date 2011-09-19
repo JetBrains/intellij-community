@@ -651,6 +651,10 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
 
   @Override
   public Dimension getMinimumSize() {
+    if (super.isMinimumSizeSet()) {
+      return super.getMinimumSize();
+    }
+
     Dimension size = new Dimension(100, UIUtil.isUnderAquaLookAndFeel() ? 28 : 20);
     final Insets insets = getInsets();
     if (insets != null) {
