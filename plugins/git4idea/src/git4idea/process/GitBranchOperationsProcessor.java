@@ -331,20 +331,44 @@ public final class GitBranchOperationsProcessor {
    * Branches which the given branch is merged to ({@code git branch --merged},
    * except the given branch itself.
    */
-  private List<String> getMergedToBranches(String branchName) {
-    List<String> mergedToBranches = new ArrayList<String>();
-    GitCommandResult result = Git.mergedToBranches(myRepository, branchName);
+  private List<String> getMergedToBranches(@NotNull String branchName) {
+    String tip = tip(branchName);
+    if (tip == null) {
+      return Collections.emptyList();
+    }
+    return branchContainsCommit(tip, branchName);
+  }
+
+  @Nullable
+  private String tip(@NotNull String branchName) {
+    GitCommandResult result = Git.tip(myRepository, branchName);
+    if (result.success() && result.getOutput().size() == 1) {
+      return result.getOutput().get(0).trim();
+    }
+    // failing in this method is not critical - it is just additional information. So we just log the error
+    LOG.info("Failed to get [git rev-list -1] for branch [" + branchName + "]. " + result);
+    return null;
+  }
+
+  private List<String> branchContainsCommit(@NotNull String tip, @NotNull String branchName) {
+    GitCommandResult result = Git.branchContains(myRepository, tip);
     if (result.success()) {
-      for (String mergedBranch : result.getOutput()) {
-        if (!mergedBranch.trim().equals(branchName)) {
-          mergedToBranches.add(mergedBranch);
+      List<String> branches = new ArrayList<String>();
+      for (String s : result.getOutput()) {
+        s = s.trim();
+        if (s.startsWith("*")) {
+          s = s.substring(2);
+        }
+        if (!s.equals(branchName)) { // this branch contains itself - not interesting
+          branches.add(s);
         }
       }
-    } else {
-      // it is not critical - so we just log the error
-      LOG.info("Failed to get [git branch --merged] for branch [" + branchName + "]. " + result);
-    }
-    return mergedToBranches;
+      return branches;
+    } 
+      
+    // failing in this method is not critical - it is just additional information. So we just log the error
+    LOG.info("Failed to get [git branch --contains] for hash [" + tip + "]. " + result);
+    return Collections.emptyList();
   }
 
   private void notifyBranchDeleteSuccess(String branchName) {

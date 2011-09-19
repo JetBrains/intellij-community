@@ -60,6 +60,6 @@ public class GitCommandResult {
 
   @Override
   public String toString() {
-    return String.format("{%d} %s", myExitCode, myErrorOutput);
+    return String.format("{%d} %nOutput: %n%s %nError output: %n%s", myExitCode, myOutput, myErrorOutput);
   }
 }

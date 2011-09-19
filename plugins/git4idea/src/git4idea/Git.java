@@ -170,11 +170,23 @@ public class Git {
   }
 
   /**
-   * {@code git branch --merged <branchName>}
+   * Get branches containing the commit.
+   * {@code git branch --contains <commit>}
    */
-  public static GitCommandResult mergedToBranches(@NotNull GitRepository repository, @NotNull String branchName) {
+  @NotNull
+  public static GitCommandResult branchContains(@NotNull GitRepository repository, @NotNull String commit) {
     final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.BRANCH);
-    h.addParameters("--merged");
+    h.addParameters("--contains", commit);
+    return run(h);
+  }
+
+  /**
+   * Returns the last (tip) commit on the given branch.<br/>
+   * {@code git rev-list -1 <branchName>}
+   */
+  public static GitCommandResult tip(@NotNull GitRepository repository, @NotNull String branchName) {
+    final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.REV_LIST);
+    h.addParameters("-1");
     h.addParameters(branchName);
     return run(h);
   }
