@@ -464,7 +464,7 @@ public class PsiImplUtil {
     ASTNode element = node;
     while (true) {
       if (element == null) return null;
-      if (!isWhitespaceOrComment(element) || alsoSkip.contains(element.getElementType())) break;
+      if (!isWhitespaceOrComment(element) && !alsoSkip.contains(element.getElementType())) break;
       element = element.getTreeNext();
     }
     return element;
