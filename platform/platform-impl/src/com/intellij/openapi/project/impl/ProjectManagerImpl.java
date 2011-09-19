@@ -61,6 +61,7 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.io.fs.IFile;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.TObjectLongHashMap;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -384,26 +385,28 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
 
   public boolean openProject(final Project project) {
-    if (ApplicationManager.getApplication().isUnitTestMode() && project.toString().contains("lighttemp")) {
+    final Application application = ApplicationManager.getApplication();
+
+    if (application.isUnitTestMode() && project.toString().contains("lighttemp")) {
       throw new AssertionError("must not open light project");
     }
-    if (myOpenProjects.contains(project)) return false;
-    if (!ApplicationManager.getApplication().isUnitTestMode() && !((ProjectEx)project).getStateStore().checkVersion()) return false;
+
+    if (myOpenProjects.contains(project)) {
+      return false;
+    }
+
+    if (!application.isUnitTestMode() && !((ProjectEx)project).getStateStore().checkVersion()) {
+      return false;
+    }
 
     myOpenProjects.add(project);
     cacheOpenProjects();
 
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      fireProjectOpened(project);
-    }
-    else {
-      ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-        @Override
-        public void run() {
-          fireProjectOpened(project);
-        }
-      }, ModalityState.defaultModalityState());
-    }
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      public void run() {
+        fireProjectOpened(project);
+      }
+    });
 
     final StartupManagerImpl startupManager = (StartupManagerImpl)StartupManager.getInstance(project);
 
@@ -423,6 +426,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
         ok = true;
       }
       catch (Throwable e) {
+        LOG.info(e);
         ok = false;
       }
     }
@@ -433,17 +437,25 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       return false;
     }
 
-    startupManager.runPostStartupActivitiesNew();
+    // dumb mode should start before post-startup activities
+    // only when startCacheUpdate is called from UI thread, we can guarantee that
+    // when the method returns, the application has entered dumb mode
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      public void run() {
+        startupManager.startCacheUpdate();
+      }
+    });
 
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
+    startupManager.runPostStartupActivitiesFromExtensions();
+
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
       public void run() {
         startupManager.runPostStartupActivities();
       }
     });
 
-    startupManager.startCacheUpdate();
 
-    if (!ApplicationManager.getApplication().isHeadlessEnvironment() && !ApplicationManager.getApplication().isUnitTestMode()) {
+    if (!application.isHeadlessEnvironment() && !application.isUnitTestMode()) {
       // should be invoked last
       StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
         public void run() {
