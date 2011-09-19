@@ -64,6 +64,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
 import gnu.trove.TObjectHashingStrategy;
@@ -78,8 +79,6 @@ import javax.swing.border.LineBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.*;
@@ -1352,10 +1351,15 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       add(mainPanel, 0, 0);
       add(myIconPanel, 42, 0);
       add(mySortingLabel, 10, 0);
-      addComponentListener(new ComponentAdapter() {
+
+      setLayout(new AbstractLayoutManager() {
+        @Override
+        public Dimension preferredLayoutSize(Container parent) {
+          return mainPanel.getPreferredSize();
+        }
 
         @Override
-        public void componentResized(ComponentEvent e) {
+        public void layoutContainer(Container parent) {
           Dimension size = getSize();
           mainPanel.setSize(size);
           mainPanel.validate();
@@ -1400,11 +1404,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
         myElementHint.setSize(myElementHint.getPreferredSize());
         myElementHint.setLocation(new Point(bounds.x + bounds.width - myElementHint.getWidth(), bounds.y));
       }
-    }
-
-    @Override
-    public Dimension getPreferredSize() {
-      return mainPanel.getPreferredSize();
     }
 
   }
