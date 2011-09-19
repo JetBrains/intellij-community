@@ -30,7 +30,6 @@ import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiCodeFragment;
@@ -47,7 +46,7 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.ui.MacUIUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.table.JBListTable;
 import com.intellij.util.ui.table.JBTableRow;
 import com.intellij.util.ui.table.JBTableRowEditor;
@@ -282,7 +281,13 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
         tabbedPane.addTab(extraPanel.first, extraPanel.second);
       }
       main = new JPanel(new BorderLayout());
-      main.add(tabbedPane.getComponent(), BorderLayout.CENTER);
+      final JComponent tabs = tabbedPane.getComponent();
+      main.add(tabs, BorderLayout.CENTER);
+      //remove traversal policies
+      for (JComponent c : UIUtil.findComponentsOfType(tabs, JComponent.class)) {
+        c.setFocusCycleRoot(false);
+        c.setFocusTraversalPolicy(null);
+      }
     }
     final JPanel bottom = new JPanel(new BorderLayout());
     bottom.add(optionsPanel, BorderLayout.NORTH);
