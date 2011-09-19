@@ -48,7 +48,7 @@ public abstract class PlatformLiteFixture extends UsefulTestCase {
   }
 
   public void initApplication() {
-    if (ApplicationManager.getApplication() instanceof MockApplicationEx) return;
+    // if (ApplicationManager.getApplication() instanceof MockApplicationEx) return;
     ApplicationManagerEx.setApplication(disposeOnTearDown(new MockApplicationEx()), getTestRootDisposable());
     getApplication().registerService(EncodingManager.class, EncodingManagerImpl.class);
   }
