@@ -36,7 +36,9 @@ import com.intellij.idea.IdeaTestApplication;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.UndoManager;
@@ -78,6 +80,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
@@ -572,7 +575,10 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         finally {
           ourTestThread = null;
           try {
-            PlatformTestCase.cleanupApplicationCaches(ourProject);
+            Application application = ApplicationManager.getApplication();
+            if (application instanceof ApplicationEx) {
+              PlatformTestCase.cleanupApplicationCaches(ourProject);
+            }
             resetAllFields();
           }
           catch (Throwable e) {
@@ -674,6 +680,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
   @Override
   protected CodeStyleSettings getCurrentCodeStyleSettings() {
+    if (CodeStyleSchemes.getInstance().getCurrentScheme() == null) return new CodeStyleSettings();
     return CodeStyleSettingsManager.getSettings(getProject());
   }
 

@@ -109,6 +109,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   private int myRestartCode = 0;
   private volatile int myExitCode = 0;
+  private final Disposable myLastDisposable = Disposer.newDisposable(); // will be disposed last
 
   private final AtomicBoolean mySaveSettingsIsInProgress = new AtomicBoolean(false);
   @SuppressWarnings({"UseOfArchaicSystemPropertyAccessors"})
@@ -192,6 +193,8 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
                          Splash splash) {
     super(null);
 
+    ApplicationManagerEx.setApplication(this, myLastDisposable); // reset back to null only when all components already disposed
+
     getPicoContainer().registerComponentInstance(Application.class, this);
 
     CommonBundle.assertKeyIsFound = isUnitTestMode;
@@ -202,7 +205,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     myStartTime = System.currentTimeMillis();
     mySplash = splash;
     myName = appName;
-    ApplicationManagerEx.setApplication(this);
 
     PluginsFacade.INSTANCE = new PluginsFacade() {
       public IdeaPluginDescriptor getPlugin(PluginId id) {
@@ -295,7 +297,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
         }
         ShutDownTracker.invokeAndWait(isUnitTestMode(), new Runnable() {
           public void run() {
-            ApplicationManagerEx.setApplication(ApplicationImpl.this);
+            if (ApplicationManager.getApplication() != ApplicationImpl.this) return;
             try {
               saveAll();
             }
@@ -561,6 +563,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     ourThreadExecutorsService.shutdownNow();
     myComponentStore = null;
     super.dispose();
+    Disposer.dispose(myLastDisposable); // dispose it last
   }
 
   private final Object lock = new Object();
