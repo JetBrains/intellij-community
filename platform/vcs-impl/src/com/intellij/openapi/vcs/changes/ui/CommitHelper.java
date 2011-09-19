@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -135,8 +135,8 @@ public class CommitHelper {
             if (failed > 0) {
               text += ", " + failed + " " + StringUtil.pluralize("change", failed) + " failed to commit";
             }
-            String content = StringUtil.isEmpty(myCommitMessage) ? text : text + ": " + myCommitMessage;
-            VcsBalloonProblemNotifier.NOTIFICATION_GROUP.createNotification(content, NotificationType.INFORMATION).notify( myProject);
+            String content = StringUtil.isEmpty(myCommitMessage) ? text : text + ": " + StringUtil.escapeXml(myCommitMessage);
+            VcsBalloonProblemNotifier.NOTIFICATION_GROUP.createNotification(content, NotificationType.INFORMATION).notify(myProject);
             return new NotificationInfo("VCS Commit", "VCS Commit Finished", text, true);
           }
         };
