@@ -258,7 +258,6 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     if (editor.isOneLineMode()) {
       lookup.setCancelOnClickOutside(true);
       lookup.setCancelOnOtherWindowOpen(true);
-      lookup.setResizable(false);
       lookup.setForceLightweightPopup(false);
     }
     lookup.setFocused(!autopopup);
