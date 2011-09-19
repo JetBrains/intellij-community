@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs.impl;
 
-import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -23,60 +22,88 @@ import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 
 /**
+ * Utility class to sort changes by roots.
+ *
  * @author irengrig
- *         Date: 6/28/11
- *         Time: 8:46 AM
+ * @author Kirill Likhodedov
  */
 public class LocalChangesUnderRoots {
   private final Project myProject;
   private final ChangeListManager myChangeManager;
+  private final ProjectLevelVcsManager myVcsManager;
 
   public LocalChangesUnderRoots(Project project) {
     myProject = project;
     myChangeManager = ChangeListManager.getInstance(myProject);
+    myVcsManager = ProjectLevelVcsManager.getInstance(myProject);
   }
 
-  public Map<VirtualFile, Collection<Change>> getChangesUnderRoots(Collection<VirtualFile> rootsToSave) {
-    final VcsRoot[] allRoots = ProjectLevelVcsManager.getInstance(myProject).getAllVcsRoots();
-    final TreeMap<VirtualFile, Boolean> rootsMap = new TreeMap<VirtualFile, Boolean>(FilePathComparator.getInstance());
-    for (VirtualFile toSave : rootsToSave) {
-      rootsMap.put(toSave, true);
-    }
-    for (VcsRoot root : allRoots) {
-      final VirtualFile floor = rootsMap.floorKey(root.path);
-      if (floor != null && ! floor.equals(root.path)) {
-        rootsMap.put(root.path, false);
-      }
-    }
-    final Map<VirtualFile, Collection<Change>> result = new HashMap<VirtualFile, Collection<Change>>();
+  /**
+   * Sort all changes registered in the {@link ChangeListManager} by VCS roots,
+   * filtering out any roots except the specified ones.
+   * @param rootsToSave roots to search for changes only in them.
+   * @return a map, whose keys are VCS roots (from the specified list) and values are {@link Change changes} from these roots.
+   */
+  @NotNull
+  public Map<VirtualFile, Collection<Change>> getChangesUnderRoots(@NotNull Collection<VirtualFile> rootsToSave) {
+    Map<VirtualFile, Collection<Change>> result = new HashMap<VirtualFile, Collection<Change>>();
     final Collection<Change> allChanges = myChangeManager.getAllChanges();
     for (Change change : allChanges) {
       if (change.getBeforeRevision() != null) {
-        addChangeIfUnderRoot(rootsMap, result, change, change.getBeforeRevision().getFile());
+        addChangeToMap(result, change, change.getBeforeRevision(), rootsToSave);
       }
       if (change.getAfterRevision() != null) {
-        addChangeIfUnderRoot(rootsMap, result, change, change.getAfterRevision().getFile());
+        addChangeToMap(result, change, change.getAfterRevision(), rootsToSave);
       }
     }
     return result;
   }
 
-  private void addChangeIfUnderRoot(TreeMap<VirtualFile, Boolean> rootsMap, Map<VirtualFile, Collection<Change>> result, Change change,
-                                    final FilePath path) {
-    final VirtualFile vf = ChangesUtil.findValidParentUnderReadAction(path);
-    final Map.Entry<VirtualFile, Boolean> entry = rootsMap.floorEntry(vf);
-    if (entry != null && entry.getValue()) {
-      Collection<Change> collection = result.get(entry.getKey());
-      if (collection == null) {
-        collection = new HashSet<Change>();
-        result.put(entry.getKey(), collection);
-      }
-      collection.add(change);
-    }
+  private void addChangeToMap(@NotNull Map<VirtualFile, Collection<Change>> result, @NotNull Change change, @NotNull ContentRevision revision, @NotNull Collection<VirtualFile> rootsToSave) {
+    VirtualFile root = getRootForPath(revision.getFile(), rootsToSave);
+    addChangeToMap(result, root, change);
   }
+
+  @Nullable
+  private VirtualFile getRootForPath(@NotNull FilePath file, @NotNull Collection<VirtualFile> rootsToSave) {
+    final VirtualFile vf = ChangesUtil.findValidParentUnderReadAction(file);
+    if (vf == null) {
+      return null;
+    }
+    final VcsRoot[] vcsRoots = myVcsManager.getAllVcsRoots();
+    VirtualFile rootCandidate = null;
+    for (VcsRoot root : vcsRoots) {
+      if (VfsUtil.isAncestor(root.path, vf, false) && rootsToSave.contains(root.path)) {
+        if (rootCandidate == null || VfsUtil.isAncestor(rootCandidate, root.path, true)) { // in the case of nested roots choose the closest root
+          rootCandidate = root.path;
+        }
+      }
+    }
+    return rootCandidate;
+  }
+
+  private static void addChangeToMap(@NotNull Map<VirtualFile, Collection<Change>> result, @Nullable VirtualFile root, @NotNull Change change) {
+    if (root == null) {
+      return;
+    }
+    Collection<Change> changes = result.get(root);
+    if (changes == null) {
+      changes = new HashSet<Change>();
+      result.put(root, changes);
+    }
+    changes.add(change);
+  }
+
 }
