@@ -85,6 +85,6 @@ public class JavaCommenter implements CodeDocumentationAwareCommenterEx {
   public boolean isDocumentationCommentText(final PsiElement element) {
     if (element == null) return false;
     final ASTNode node = element.getNode();
-    return node != null && node.getElementType() == JavaDocTokenType.DOC_COMMENT_DATA;
+    return node != null && (node.getElementType() == JavaDocTokenType.DOC_COMMENT_DATA || node.getElementType() == JavaDocTokenType.DOC_TAG_VALUE_TOKEN);
   }
 }
