@@ -1145,10 +1145,5 @@ class FindDialog extends DialogWrapper {
     updateControls();
 
   }
-
-  @Override
-  protected boolean isCenterStrictedToPreferredSize() {
-    return true;
-  }
 }
 
