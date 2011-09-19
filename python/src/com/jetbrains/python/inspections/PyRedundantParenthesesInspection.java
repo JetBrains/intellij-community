@@ -69,6 +69,8 @@ public class PyRedundantParenthesesInspection extends PyInspection {
           registerProblem(node, "Remove redundant parentheses", new RedundantParenthesesQuickFix());
       }
       else if (expression instanceof PyBinaryExpression) {
+        if (node.getParent() instanceof PyPrefixExpression)
+          return;
         if (((PyBinaryExpression)expression).getOperator() == PyTokenTypes.AND_KEYWORD ||
             ((PyBinaryExpression)expression).getOperator() == PyTokenTypes.OR_KEYWORD) {
           if (((PyBinaryExpression)expression).getLeftExpression() instanceof PyParenthesizedExpression &&

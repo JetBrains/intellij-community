@@ -58,3 +58,12 @@ def bar(a = "qwer"):
 bar(<warning descr="Argument equals to default parameter value">a = 'qwer'</warning>)
 
 getattr(bar, "__doc__", None) # None is not highlighted
+
+class a:
+  def get(self, a, b = None):
+    pass
+
+kw = a()
+
+kw['customerPaymentProfileId'] = kw.get("customerPaymentProfileId",
+                                                 <warning descr="Argument equals to default parameter value">None</warning>)
