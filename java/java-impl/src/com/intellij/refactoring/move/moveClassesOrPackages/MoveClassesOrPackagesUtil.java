@@ -58,8 +58,6 @@ public class MoveClassesOrPackagesUtil {
                                        final String newQName) {
     PsiManager manager = element.getManager();
 
-    if (Comparing.equal(getQualfiedName(element), newQName)) return new UsageInfo[0];
-
     ArrayList<UsageInfo> results = new ArrayList<UsageInfo>();
     Set<PsiReference> foundReferences = new HashSet<PsiReference>();
 
@@ -80,24 +78,6 @@ public class MoveClassesOrPackagesUtil {
     for (MoveClassHandler handler : MoveClassHandler.EP_NAME.getExtensions()) {
       handler.preprocessUsages(results);
     }
-  }
-
-  private static String getQualfiedName(final PsiElement element) {
-    final String oldQName;
-    if (element instanceof PsiClass) {
-      oldQName = ((PsiClass)element).getQualifiedName();
-    }
-    else if (element instanceof PsiPackage) {
-      oldQName = ((PsiPackage)element).getQualifiedName();
-    }
-    else if (element instanceof PsiDirectory) {
-      final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)element));
-      oldQName = aPackage != null ? aPackage.getQualifiedName() : null;
-    }
-    else {
-      oldQName = null;
-    }
-    return oldQName;
   }
 
   public static void findNonCodeUsages(boolean searchInStringsAndComments,

@@ -387,14 +387,17 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       UIUtil.changeBackGround(this, UIUtil.getTreeTextBackground());
     }
 
-    if (!isCellSelected(row, column) && isTableDecorationSupported() && isStriped() && result instanceof JComponent) {
+    if (isTableDecorationSupported() && isStriped() && result instanceof JComponent) {
       final Color bg =  row % 2 == 1 ? getBackground() : DECORATED_ROW_BG_COLOR;
       final JComponent c = (JComponent)result;
-      c.setOpaque(true);
-      c.setBackground(bg);
-      for (Component child : c.getComponents()) {
-        child.setBackground(bg);
-      }
+      final boolean cellSelected = isCellSelected(row, column);
+      if (!cellSelected || (!hasFocus() && !getSelectionBackground().equals(c.getBackground()))) {
+        c.setOpaque(true);
+        c.setBackground(bg);
+        for (Component child : c.getComponents()) {
+          child.setBackground(bg);
+        }
+      } 
     }
 
     if (!selected) return result;

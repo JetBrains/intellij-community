@@ -78,7 +78,7 @@ public class IdeaTestApplication extends CommandLineApplication implements Dispo
     ApplicationEx applicationEx = ApplicationManagerEx.getApplicationEx();
     if (applicationEx != null) {
       Disposer.dispose(applicationEx);
-      ApplicationManagerEx.setApplication(null);
+      //ApplicationManagerEx.setApplication(null); it will set automatically back to null
     }
     ourInstance = null;
   }

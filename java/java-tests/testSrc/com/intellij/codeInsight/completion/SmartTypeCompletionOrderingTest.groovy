@@ -11,6 +11,7 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.psi.PsiClass
 import com.intellij.psi.statistics.StatisticsManager
+import com.intellij.openapi.fileEditor.FileDocumentManager
 
 public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
   private static final String BASE_PATH = "/codeInsight/completion/smartTypeSorting"; 
@@ -47,6 +48,17 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
     }
     refreshSorting(lookup);
     assertPreferredItems(0, "Component", "Container");
+  }
+  
+  public void testNoStatsOnUnsuccessfulAttempt() {
+    final LookupImpl lookup = invokeCompletion("/JComponentAddNew.java");
+    assertPreferredItems(2, "Component", "String", "FooBean3", "Container", "JComponent");
+    lookup.currentItem = lookup.items[3] //Container
+    myFixture.type('\n\b')
+    CompletionLookupArranger.applyLastCompletionStatisticsUpdate()
+    FileDocumentManager.instance.saveAllDocuments()
+    invokeCompletion("/JComponentAddNew.java")
+    assertPreferredItems(2, "Component", "String", "FooBean3", "Container", "JComponent");
   }
 
   public void testMethodStats() throws Throwable {

@@ -6,7 +6,7 @@ class Foo {
   <T> void putUserData(Key<T> key, T value) {}
 
   {
-    putUserData(Key.<Object>create(<caret>), )
+    putUserData(Key.create(<caret>), )
   }
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,18 +37,10 @@ public class JavaFileElement extends FileElement {
     super(JavaStubElementTypes.JAVA_FILE, text);
   }
 
-  public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before) {
-    if (before == null && first == last && first.getElementType() == JavaElementType.PACKAGE_STATEMENT){ //?
-      anchor = getFirstChildNode();
-      before = Boolean.TRUE;
-    }
-    return super.addInternal(first, last, anchor, before);
-  }
-
-  public void deleteChildInternal(@NotNull ASTNode child){
-    if (child.getElementType() == JavaElementType.CLASS){
-      PsiJavaFile file = (PsiJavaFile)SourceTreeToPsiMap.treeElementToPsi(this);
-      if (file.getClasses().length == 1){
+  public void deleteChildInternal(@NotNull ASTNode child) {
+    if (child.getElementType() == JavaElementType.CLASS) {
+      PsiJavaFile file = SourceTreeToPsiMap.treeToPsiNotNull(this);
+      if (file.getClasses().length == 1) {
         file.delete();
         return;
       }
@@ -59,7 +51,7 @@ public class JavaFileElement extends FileElement {
   @Nullable
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
-    switch(role){
+    switch (role) {
       default:
         return null;
 

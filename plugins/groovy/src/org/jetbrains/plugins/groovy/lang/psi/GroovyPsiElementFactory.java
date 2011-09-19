@@ -84,7 +84,7 @@ public abstract class GroovyPsiElementFactory implements JVMElementFactory {
   public abstract GrNamedArgument createNamedArgument(String name, GrExpression expression);
 
   public abstract GrStatement createStatementFromText(String text);
-  public abstract GrStatement createStatementFromText(String text, PsiElement context);
+  public abstract GrStatement createStatementFromText(String text, @Nullable PsiElement context);
 
   public abstract GrBlockStatement createBlockStatement(GrStatement... statements);
 

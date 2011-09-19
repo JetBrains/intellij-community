@@ -1,6 +1,6 @@
 package com.intellij.ui.components;
 
-import com.intellij.ui.ComponentWithAnchor;
+import com.intellij.ui.AnchorableComponent;
 
 import javax.swing.*;
 import java.awt.*;
@@ -8,7 +8,7 @@ import java.awt.*;
 /**
  * @author evgeny.zakrevsky
  */
-public class JBCheckBox extends JCheckBox implements ComponentWithAnchor {
+public class JBCheckBox extends JCheckBox implements AnchorableComponent {
   private JComponent anchor;
 
   public JBCheckBox() {

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.fileEditor.impl;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ModalityState;
@@ -326,8 +327,13 @@ public class EditorsSplitters extends JPanel {
         window = findWindowWith(panel);
       }
       //noinspection unchecked
-      final List<Element> children = leaf.getChildren("file");
+      final List<Element> children = new ArrayList<Element>(leaf.getChildren("file"));
       VirtualFile currentFile = null;
+      
+      if (UISettings.getInstance().ACTIVATE_RIGHT_EDITOR_ON_CLOSE) {
+        Collections.reverse(children);
+      }
+      
       for (final Element file : children) {
         try {
           final HistoryEntry entry = new HistoryEntry(getManager().getProject(), file.getChild(HistoryEntry.TAG));

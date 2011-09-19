@@ -72,7 +72,10 @@ public class CreatePatchFromChangesAction extends AnAction implements DumbAware 
     Collections.addAll(changeCollection, changes);
     project = project == null ? ProjectManager.getInstance().getDefaultProject() : project;
     final CreatePatchCommitExecutor executor = CreatePatchCommitExecutor.getInstance(project);
-    CommitSession commitSession = executor.createCommitSession(new CommitContext());
+    CommitSession commitSession = executor.createCommitSession();
+    if (commitSession instanceof CommitSessionContextAware) {
+      ((CommitSessionContextAware)commitSession).setContext(new CommitContext());
+    }
     DialogWrapper sessionDialog = new SessionDialog(executor.getActionText(),
                                                     project,
                                                     commitSession,

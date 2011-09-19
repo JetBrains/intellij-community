@@ -17,6 +17,7 @@ package com.intellij.testFramework;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.diagnostic.PerformanceWatcher;
+import com.intellij.mock.MockApplication;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -30,6 +31,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
@@ -144,7 +146,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   protected void checkForSettingsDamage() throws Exception {
-    if (isPerformanceTest() || ApplicationManager.getApplication() == null) {
+    if (isPerformanceTest() || ApplicationManager.getApplication() == null || ApplicationManager.getApplication() instanceof MockApplication) {
       return;
     }
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
@@ -182,6 +184,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   protected CodeStyleSettings getCurrentCodeStyleSettings() {
+    if (CodeStyleSchemes.getInstance().getCurrentScheme() == null) return new CodeStyleSettings();
     return CodeStyleSettingsManager.getInstance().getCurrentSettings();
   }
 

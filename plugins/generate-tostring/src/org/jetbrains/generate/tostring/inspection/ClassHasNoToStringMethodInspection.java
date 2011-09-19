@@ -163,7 +163,7 @@ public class ClassHasNoToStringMethodInspection extends AbstractToStringInspecti
 
         constraints.gridx = 0;
         constraints.gridy = 0;
-        constraints.weightx = 1.0;
+        constraints.weightx = 0.0;
         constraints.anchor = GridBagConstraints.WEST;
         constraints.fill = GridBagConstraints.NONE;
         panel.add(new JLabel("Exclude classes (reg exp):"), constraints);
@@ -191,7 +191,7 @@ public class ClassHasNoToStringMethodInspection extends AbstractToStringInspecti
         constraints.gridx = 1;
         constraints.gridy = 0;
         constraints.weightx = 1.0;
-        constraints.anchor = GridBagConstraints.WEST;
+        constraints.anchor = GridBagConstraints.NORTHWEST;
         constraints.fill = GridBagConstraints.NONE;
         panel.add(excludeClassNamesField, constraints);
 
@@ -244,6 +244,7 @@ public class ClassHasNoToStringMethodInspection extends AbstractToStringInspecti
         constraints.gridx = 0;
         constraints.gridy = 4;
         constraints.gridwidth = 2;
+        constraints.weighty = 1.0;
         constraints.fill = GridBagConstraints.HORIZONTAL;
         panel.add(excludeAbstractCheckBox, constraints);
 

@@ -165,12 +165,9 @@ public class DebuggerUIUtil {
 
       @Override
       public void breakpointChanged(@NotNull XBreakpoint<?> breakpoint1) {
-        if (breakpoint1.equals(breakpoint)) {
-          balloon.hide();
-        }
       }
     };
-    breakpointManager.addBreakpointListener(breakpointListener);
+
     balloon.addListener(new JBPopupListener() {
       @Override
       public void beforeShown(LightweightWindowEvent event) {
@@ -186,6 +183,7 @@ public class DebuggerUIUtil {
     propertiesPanel.setDelegate(new XLightBreakpointPropertiesPanel.Delegate() {
       @Override
       public void showMoreOptions() {
+        propertiesPanel.saveProperties();
         balloon.hide();
         showBreakpointEditorBalloon(project, point, component, true, breakpoint);
       }
@@ -198,6 +196,8 @@ public class DebuggerUIUtil {
     } else {
       balloon.show(new RelativePoint(component, point), Balloon.Position.atRight);
     }
+
+    breakpointManager.addBreakpointListener(breakpointListener);
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {

@@ -128,23 +128,39 @@ public class StartupManagerImpl extends StartupManagerEx {
     });
   }
 
-  public void runPostStartupActivitiesNew() {
+  public void runPostStartupActivitiesFromExtensions() {
     final StartupActivity[] extensions = Extensions.getExtensions(StartupActivity.POST_STARTUP_ACTIVITY);
-    for (StartupActivity extension : extensions) {
+    if (extensions.length == 0) {
+      return;
+    }
+
+    final List<Runnable> dumbAwareActivities = new ArrayList<Runnable>();
+    final List<Runnable> normalActivities = new ArrayList<Runnable>();
+    for (final StartupActivity extension : extensions) {
+      final Runnable runnable = new Runnable() {
+        public void run() {
+          extension.runActivity(myProject);
+        }
+      };
       if (extension instanceof DumbAware) {
-        extension.runActivity(myProject);
+        dumbAwareActivities.add(runnable);
+      }
+      else {
+        normalActivities.add(runnable);
       }
     }
-    DumbService.getInstance(myProject).runWhenSmart(new Runnable() {
-      public void run() {
-        if (myProject.isDisposed()) return;
-        for (StartupActivity extension : extensions) {
-          if (!(extension instanceof DumbAware)) {
-            extension.runActivity(myProject);
+
+    runActivities(dumbAwareActivities);
+
+    if (!normalActivities.isEmpty()) {
+      DumbService.getInstance(myProject).runWhenSmart(new Runnable() {
+        public void run() {
+          if (!myProject.isDisposed()) {
+            runActivities(normalActivities);
           }
         }
-      }
-    });
+      });
+    }
   }
 
   public synchronized void runPostStartupActivities() {

@@ -92,8 +92,9 @@ public class CodeStyleSchemesImpl extends CodeStyleSchemes implements Exportable
   }
 
   public void setCurrentScheme(CodeStyleScheme scheme) {
-    mySchemesManager.setCurrentSchemeName(scheme == null ? null : scheme.getName());
-    CURRENT_SCHEME_NAME = scheme.getName();
+    String schemeName = scheme == null ? null : scheme.getName();
+    mySchemesManager.setCurrentSchemeName(schemeName);
+    CURRENT_SCHEME_NAME = schemeName;
   }
 
   public CodeStyleScheme createNewScheme(String preferredName, CodeStyleScheme parentScheme) {

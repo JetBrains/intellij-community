@@ -76,14 +76,14 @@ public class MethodCouplingInspection extends MethodMetricInspection {
         final GridBagConstraints constraints = new GridBagConstraints();
         constraints.gridx = 0;
         constraints.gridy = 0;
-        constraints.weightx = 1.0;
+        constraints.weightx = 0.0;
         constraints.anchor = GridBagConstraints.WEST;
         constraints.fill = GridBagConstraints.NONE;
         panel.add(label, constraints);
         constraints.gridx = 1;
         constraints.gridy = 0;
         constraints.weightx = 1.0;
-        constraints.anchor = GridBagConstraints.WEST;
+        constraints.anchor = GridBagConstraints.NORTHWEST;
         constraints.fill = GridBagConstraints.NONE;
         panel.add(valueField, constraints);
 
@@ -104,6 +104,7 @@ public class MethodCouplingInspection extends MethodMetricInspection {
         constraints.gridx = 0;
         constraints.gridy = 2;
         constraints.gridwidth = 2;
+        constraints.weighty = 1.0;
         panel.add(objectCheckBox, constraints);
         return panel;
     }

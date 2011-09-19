@@ -44,7 +44,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.ComboboxWithBrowseButton;
-import com.intellij.ui.ComponentWithAnchor;
+import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBLabel;
@@ -106,7 +106,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
     }
   }
 
-  static class Editor implements ComponentWithAnchor {
+  static class Editor implements PanelWithAnchor {
     private JTabbedPane myComponent;
 
     private TextFieldWithBrowseButton myXsltFile;

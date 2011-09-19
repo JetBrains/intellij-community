@@ -8,7 +8,7 @@ import javax.swing.*;
  * @author evgeny.zakrevsky
  */
 
-public interface ComponentWithAnchor {
+public interface PanelWithAnchor {
   JComponent getAnchor();
   void setAnchor(@Nullable JComponent anchor);
 }

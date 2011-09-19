@@ -19,7 +19,7 @@ package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.util.Pair;
-import com.intellij.ui.ComponentWithAnchor;
+import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.Nls;
@@ -35,7 +35,7 @@ import java.util.Arrays;
 /**
  * @author Ralf Quebbemann (ralfq@codehaus.org)
  */
-public abstract class MavenGeneralConfigurable implements SearchableConfigurable, ComponentWithAnchor {
+public abstract class MavenGeneralConfigurable implements SearchableConfigurable, PanelWithAnchor {
   private JCheckBox checkboxWorkOffline;
   private JPanel panel;
   private JComboBox outputLevelCombo;

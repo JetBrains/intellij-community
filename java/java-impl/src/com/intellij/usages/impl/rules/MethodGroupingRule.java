@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,9 @@ public class MethodGroupingRule implements UsageGroupingRule {
       PsiElement containingMethod = topLevelFile == containingFile ? psiElement : containingFile.getContext();
       do {
         containingMethod = PsiTreeUtil.getParentOfType(containingMethod, PsiMethod.class, true);
-        if (containingMethod == null || ((PsiMethod)containingMethod).getContainingClass().getQualifiedName() != null) break;
+        if (containingMethod == null) break;
+        final PsiClass containingClass = ((PsiMethod)containingMethod).getContainingClass();
+        if (containingClass == null || containingClass.getQualifiedName() != null) break;
       }
       while (true);
 

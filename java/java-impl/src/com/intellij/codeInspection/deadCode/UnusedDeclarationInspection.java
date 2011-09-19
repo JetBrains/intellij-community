@@ -212,6 +212,7 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
           EntryPointsManagerImpl.getInstance(project).configureAnnotations();
         }
       });
+      gc.fill = GridBagConstraints.NONE;
       gc.gridy++;
 
       add(configureAnnotations, gc);

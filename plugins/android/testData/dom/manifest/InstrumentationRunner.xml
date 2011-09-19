@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<manifest android:versionName="1.0" android:versionCode="1" package="com.example.tests"
+          xmlns:android="http://schemas.android.com/apk/res/android">
+  <application>
+  </application>
+  <instrumentation android:name="android.test.InstrumentationTestRunner" android:targetPackage="com.example"/>
+</manifest>

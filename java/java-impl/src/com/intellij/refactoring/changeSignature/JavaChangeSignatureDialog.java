@@ -194,7 +194,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
   }
 
   @Override
-  protected JComponent getRowPresentation(ParameterTableModelItemBase<ParameterInfoImpl> item, boolean selected, boolean focused) {
+  protected JComponent getRowPresentation(ParameterTableModelItemBase<ParameterInfoImpl> item, boolean selected, final boolean focused) {
     final JPanel panel = new JPanel(new BorderLayout());
     final String typeText = item.typeCodeFragment.getText();
     final String separator = " ";StringUtil.repeatSymbol(' ', getTypesMaxLength() - typeText.length() + 1);
@@ -219,11 +219,14 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     //final Font font = EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN);
     //field.setFont(font);
 
-    if (selected) {
+    if (selected && focused) {
       panel.setBackground(UIUtil.getTableSelectionBackground());
       field.setAsRendererWithSelection(UIUtil.getTableSelectionBackground(), UIUtil.getTableSelectionForeground());
     } else {
       panel.setBackground(UIUtil.getTableBackground());
+      if (selected && !focused) {
+        panel.setBorder(new DottedBorder(UIUtil.getTableForeground()));
+      }
     }
     panel.add(field, BorderLayout.CENTER);
     return panel;

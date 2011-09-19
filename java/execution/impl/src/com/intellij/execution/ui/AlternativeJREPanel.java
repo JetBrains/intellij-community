@@ -24,7 +24,7 @@ import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.InsertPathAction;
-import com.intellij.ui.ComponentWithAnchor;
+import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.TextFieldWithHistory;
 import com.intellij.ui.components.JBCheckBox;
 
@@ -38,7 +38,7 @@ import java.util.ArrayList;
  * User: anna
  * Date: Jun 21, 2005
  */
-public class AlternativeJREPanel extends JPanel implements ComponentWithAnchor {
+public class AlternativeJREPanel extends JPanel implements PanelWithAnchor {
   private final ComponentWithBrowseButton<TextFieldWithHistory> myPathField;
   private final JBCheckBox myCbEnabled;
   final TextFieldWithHistory myFieldWithHistory;

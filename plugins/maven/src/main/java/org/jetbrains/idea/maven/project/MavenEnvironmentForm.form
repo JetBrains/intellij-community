@@ -20,7 +20,7 @@
       </component>
       <component id="3d84d" class="javax.swing.JCheckBox" binding="settingsOverrideCheckBox">
         <constraints>
-          <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="6" fill="0" indent="0" use-parent-layout="false"/>
+          <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
           <text value="Override"/>
@@ -43,13 +43,13 @@
       </component>
       <component id="d8828" class="javax.swing.JCheckBox" binding="localRepositoryOverrideCheckBox">
         <constraints>
-          <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="6" fill="0" indent="0" use-parent-layout="false"/>
+          <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
           <text value="Override"/>
         </properties>
       </component>
-      <grid id="d6902" layout-manager="GridLayoutManager" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="0">
+      <grid id="d6902" layout-manager="GridLayoutManager" row-count="2" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="0">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
           <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
@@ -59,7 +59,7 @@
         <children>
           <component id="bde1e" class="com.intellij.openapi.ui.LabeledComponent" binding="mavenHomeComponent">
             <constraints>
-              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="7" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+              <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="7" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
               <componentClass value="com.intellij.openapi.ui.TextFieldWithBrowseButton"/>
@@ -69,23 +69,27 @@
           </component>
           <component id="4becc" class="com.intellij.ui.components.JBLabel">
             <constraints>
-              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="1" hsize-policy="0" anchor="9" fill="0" indent="1" use-parent-layout="false"/>
+              <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="4" anchor="9" fill="0" indent="1" use-parent-layout="false"/>
             </constraints>
             <properties>
               <componentStyle value="SMALL"/>
               <fontColor value="BRIGHTER"/>
-              <horizontalTextPosition value="10"/>
               <text value="M2_HOME is used by default"/>
-              <verticalTextPosition value="1"/>
             </properties>
           </component>
           <component id="b0be5" class="javax.swing.JCheckBox" binding="mavenHomeOverrideCheckBox" default-binding="true">
             <constraints>
-              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="6" fill="0" indent="0" use-parent-layout="false"/>
+              <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
               <text value="Override"/>
             </properties>
+          </component>
+          <component id="25fa4" class="com.intellij.ui.components.JBLabel" binding="myFakeLabel">
+            <constraints>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties/>
           </component>
         </children>
       </grid>

@@ -116,7 +116,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     }
     else {
       if (packageName.length() > 0) {
-        add(factory.createPackageStatement(packageName));
+        addBefore(factory.createPackageStatement(packageName), getFirstChild());
       }
     }
   }

@@ -79,12 +79,12 @@ public class ToolsImpl implements Tools {
 
   public InspectionProfileEntry getInspectionTool(PsiElement element) {
     if (myTools != null) {
+      final Project project = element != null ? element.getProject() : null;
       for (ScopeToolState state : myTools) {
         if (element == null) {
           return state.getTool();
         }
         else {
-          final Project project = element.getProject();
           final DependencyValidationManager validationManager = DependencyValidationManager.getInstance(project);
           final NamedScope scope = state.getScope(project);
           if (scope != null) {
@@ -97,7 +97,7 @@ public class ToolsImpl implements Tools {
       }
 
       for (ScopeToolState state : getTools()) {
-        if (state.getScope() == null) {
+        if (state.getScope(project) == null) {
           return state.getTool();
         }
       }

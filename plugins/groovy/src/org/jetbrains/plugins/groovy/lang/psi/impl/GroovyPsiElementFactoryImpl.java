@@ -519,7 +519,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   }
 
   @Override
-  public GrStatement createStatementFromText(String text, PsiElement context) {
+  public GrStatement createStatementFromText(String text, @Nullable PsiElement context) {
     PsiFile file = createGroovyFile(text, false, context);
     assert ((GroovyFileBase) file).getTopStatements()[0] instanceof GrStatement;
     return (GrStatement) ((GroovyFileBase) file).getTopStatements()[0];

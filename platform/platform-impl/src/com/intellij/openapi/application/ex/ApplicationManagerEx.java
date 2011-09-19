@@ -44,17 +44,19 @@ public class ApplicationManagerEx extends ApplicationManager {
     new ApplicationImpl(internal, isUnitTestMode, isHeadlessMode, isCommandline, appName, splash);
   }
 
-  public static void setApplication(Application instance) {
+  private static void setApplication(Application instance) {
     ourApplication = instance;
     ApplicationComponentLocator.setInstance(instance);
     CachedSingletonsRegistry.cleanupCachedFields();
   }
 
-  public static void setApplication(Application instance, Disposable parent) {
+  public static void setApplication(Application instance, @NotNull Disposable parent) {
     final Application old = ourApplication;
     Disposer.register(parent, new Disposable() {
       public void dispose() {
-        setApplication(old);
+        if (old != null) { // to prevent NPEs in threads still running
+          setApplication(old);
+        }
       }
     });
     setApplication(instance);

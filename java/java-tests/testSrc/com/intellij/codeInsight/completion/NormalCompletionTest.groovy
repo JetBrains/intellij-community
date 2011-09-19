@@ -120,8 +120,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testMethodItemPresentation() {
     configure()
-    def presentation = new LookupElementPresentation()
-    myItems[0].renderElement(presentation)
+    LookupElementPresentation presentation = renderElement(myItems[0])
     assert "equals" == presentation.itemText
     assert "(Object anObject)" == presentation.tailText
     assert "boolean" == presentation.typeText
@@ -130,10 +129,15 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     assert presentation.itemTextBold
   }
 
+  private LookupElementPresentation renderElement(LookupElement element) {
+    def presentation = new LookupElementPresentation()
+    element.renderElement(presentation)
+    return presentation
+  }
+
   public void testMethodItemPresentationGenerics() {
     configure()
-    def presentation = new LookupElementPresentation()
-    myItems[0].renderElement(presentation)
+    LookupElementPresentation presentation = renderElement(myItems[0])
     assert "add" == presentation.itemText
     assert "(String o)" == presentation.tailText
     assert "boolean" == presentation.typeText
@@ -878,6 +882,13 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   public void testSuggestExpectedTypeMembers() throws Throwable { doTest('\n') }
   public void testSuggestExpectedTypeMembersInCall() throws Throwable { doTest('\n') }
   public void testExpectedTypesDotSelectsItem() throws Throwable { doTest('.') }
+
+  public void testDoubleExpectedTypeFactoryMethod() throws Throwable {
+    configure()
+    assertStringItems('Key', 'create', 'create')
+    assert renderElement(myItems[1]).itemText == 'Key.<Boolean>create'
+    assert renderElement(myItems[2]).itemText == 'Key.create'
+  }
 
   public void testSuggestExpectedTypeMembersNonImported() throws Throwable {
     myFixture.addClass("package foo; public class Super { public static final Super FOO = null; }")

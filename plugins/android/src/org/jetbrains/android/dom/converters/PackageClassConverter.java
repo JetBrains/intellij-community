@@ -266,7 +266,7 @@ public class PackageClassConverter extends ResolvingConverter<PsiClass> implemen
         final PsiElement element = myIsPackage ?
                                    facade.findPackage(value) :
                                    facade.findClass(value, myModule != null
-                                                           ? myModule.getModuleWithDependenciesScope()
+                                                           ? myModule.getModuleWithDependenciesAndLibrariesScope(false)
                                                            : myElement.getResolveScope());
 
         if (element != null) {
@@ -279,7 +279,7 @@ public class PackageClassConverter extends ResolvingConverter<PsiClass> implemen
         return myIsPackage ?
                facade.findPackage(relativeName) :
                facade.findClass(relativeName, myModule != null
-                                              ? myModule.getModuleWithDependenciesScope()
+                                              ? myModule.getModuleWithDependenciesAndLibrariesScope(false)
                                               : myElement.getResolveScope());
       }
       return null;

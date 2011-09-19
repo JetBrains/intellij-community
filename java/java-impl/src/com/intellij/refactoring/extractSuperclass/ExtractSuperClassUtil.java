@@ -17,20 +17,28 @@ package com.intellij.refactoring.extractSuperclass;
 
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.memberPullUp.PullUpHelper;
+import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -202,5 +210,29 @@ public class ExtractSuperClassUtil {
     }
 
     return null;
+  }
+
+  public static void checkSuperAccessible(PsiDirectory targetDirectory, MultiMap<PsiElement, String> conflicts, final PsiClass subclass) {
+    final VirtualFile virtualFile = subclass.getContainingFile().getVirtualFile();
+    if (virtualFile != null) {
+      final boolean inTestSourceContent = ProjectRootManager.getInstance(subclass.getProject()).getFileIndex().isInTestSourceContent(virtualFile);
+      final Module module = ModuleUtil.findModuleForFile(virtualFile, subclass.getProject());
+      if (targetDirectory != null &&
+          module != null &&
+          !GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, inTestSourceContent).contains(targetDirectory.getVirtualFile())) {
+        conflicts.putValue(subclass, "Superclass won't be accessible in subclass");
+      }
+    }
+  }
+
+  public static boolean showConflicts(DialogWrapper dialog, MultiMap<PsiElement, String> conflicts, final Project project) {
+    if (!conflicts.isEmpty()) {
+      ConflictsDialog conflictsDialog = new ConflictsDialog(project, conflicts);
+      conflictsDialog.show();
+      final boolean ok = conflictsDialog.isOK();
+      if (!ok && conflictsDialog.isShowConflicts()) dialog.close(DialogWrapper.CANCEL_EXIT_CODE);
+      return ok;
+    }
+    return true;
   }
 }

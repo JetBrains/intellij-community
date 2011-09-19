@@ -25,7 +25,7 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.LabeledComponent;
-import com.intellij.ui.ComponentWithAnchor;
+import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.UIUtil;
@@ -46,7 +46,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
-public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfiguration> implements ComponentWithAnchor {
+public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfiguration> implements PanelWithAnchor {
 
   private DefaultComboBoxModel myModulesModel = new DefaultComboBoxModel();
   private final JComboBox myModules = new JComboBox(myModulesModel);

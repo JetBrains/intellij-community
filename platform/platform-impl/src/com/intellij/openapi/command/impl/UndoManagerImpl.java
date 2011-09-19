@@ -564,8 +564,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
   @TestOnly
   private void flushMergers() {
     // Run dummy command in order to flush all mergers...
-    CommandProcessor.getInstance()
-      .executeCommand(myProject, EmptyRunnable.getInstance(), CommonBundle.message("drop.undo.history.command.name"), null);
+    CommandProcessor.getInstance().executeCommand(myProject, EmptyRunnable.getInstance(), CommonBundle.message("drop.undo.history.command.name"), null);
   }
 
   @TestOnly

@@ -258,7 +258,6 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     if (editor.isOneLineMode()) {
       lookup.setCancelOnClickOutside(true);
       lookup.setCancelOnOtherWindowOpen(true);
-      lookup.setResizable(false);
       lookup.setForceLightweightPopup(false);
     }
     lookup.setFocused(!autopopup);
@@ -607,6 +606,8 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_BASIC);
     }
 
+    final CompletionLookupArranger.StatisticsUpdate update = CompletionLookupArranger.collectStatisticChanges(indicator, item);
+
     final Editor editor = indicator.getEditor();
     final int caretOffset = editor.getCaretModel().getOffset();
     indicator.getOffsetMap().addOffset(CompletionInitializationContext.SELECTION_END_OFFSET, caretOffset);
@@ -650,6 +651,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         }
         context.stopWatching();
         editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+        CompletionLookupArranger.trackStatistics(context, update);
       }
     });
     final Runnable runnable = context.getLaterRunnable();

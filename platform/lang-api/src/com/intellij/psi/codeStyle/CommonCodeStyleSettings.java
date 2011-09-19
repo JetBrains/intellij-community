@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.util.Set;
 
 /**
  * Common code style settings can be used by several programming languages. Each language may have its own
@@ -40,7 +41,7 @@ public class CommonCodeStyleSettings {
   private CodeStyleSettings myRootSettings;
   private IndentOptions myIndentOptions;
   private FileType myFileType;
-  
+
   private final static String INDENT_OPTIONS_TAG = "indentOptions";
 
   public CommonCodeStyleSettings(Language language, FileType fileType) {
@@ -54,7 +55,7 @@ public class CommonCodeStyleSettings {
       myFileType = language.getAssociatedFileType();
     }
   }
-  
+
   void setRootSettings(CodeStyleSettings rootSettings) {
     myRootSettings = rootSettings;
   }
@@ -73,7 +74,7 @@ public class CommonCodeStyleSettings {
       }
     }
   }
-  
+
   @NotNull
   public IndentOptions initIndentOptions() {
     myIndentOptions = new IndentOptions();
@@ -91,7 +92,7 @@ public class CommonCodeStyleSettings {
     return null;
   }
 
-  
+
   @Nullable
   public FileType getFileType() {
     return myFileType;
@@ -127,7 +128,7 @@ public class CommonCodeStyleSettings {
   void copyNonDefaultValuesFrom(CommonCodeStyleSettings from) {
     CommonCodeStyleSettings defaultSettings = new CommonCodeStyleSettings(null);
     PARENT_SETTINGS_INSTALLED =
-      copyFields(this.getClass().getFields(), from, this, new DifferenceFilter<CommonCodeStyleSettings>(from, defaultSettings));    
+      copyFields(this.getClass().getFields(), from, this, new DifferenceFilter<CommonCodeStyleSettings>(from, defaultSettings));
   }
 
   private static void copyFields(Field[] fields, Object from, Object to) {
@@ -190,8 +191,18 @@ public class CommonCodeStyleSettings {
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    CommonCodeStyleSettings defaultSettings = getDefaultSettings(); 
-    DefaultJDOMExternalizer.writeExternal(this, element, new DifferenceFilter<CommonCodeStyleSettings>(this, defaultSettings));
+    CommonCodeStyleSettings defaultSettings = getDefaultSettings();
+    final LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(myLanguage);
+    final Set<String> fieldNames = provider == null ? null : provider.getSupportedFields();
+    DefaultJDOMExternalizer.writeExternal(this, element, new DifferenceFilter<CommonCodeStyleSettings>(this, defaultSettings) {
+      @Override
+      public boolean isAccept(Field field) {
+        if (fieldNames == null || "PARENT_SETTINGS_INSTALLED".equals(field.getName()) || fieldNames.contains(field.getName())) {
+          return super.isAccept(field);
+        }
+        return false;
+      }
+    });
     if (myIndentOptions != null) {
       IndentOptions defaultIndentOptions = defaultSettings != null ? defaultSettings.getIndentOptions() : null;
       Element indentOptionsElement = new Element(INDENT_OPTIONS_TAG);
@@ -731,7 +742,7 @@ public class CommonCodeStyleSettings {
   public boolean SPACE_BEFORE_TYPE_PARAMETER_LIST = false;
 
   //----------------- WRAPPING ---------------------------
-  
+
   public static final int DO_NOT_WRAP = 0x00;
   public static final int WRAP_AS_NEEDED = 0x01;
   public static final int WRAP_ALWAYS = 0x02;
@@ -820,13 +831,13 @@ public class CommonCodeStyleSettings {
 
   //-------------------------Enums----------------------------------------------------------
   public int ENUM_CONSTANTS_WRAP = DO_NOT_WRAP;
-  
+
   //
   // The flag telling that original default settings were overwritten with non-default
   // values from shared code style settings (happens upon the very first initialization).
   //
-  public boolean PARENT_SETTINGS_INSTALLED  = false;
-  
+  public boolean PARENT_SETTINGS_INSTALLED = false;
+
   //-------------------------Indent options-------------------------------------------------
   public static class IndentOptions implements JDOMExternalizable, Cloneable {
     public int INDENT_SIZE = 4;
@@ -856,7 +867,7 @@ public class CommonCodeStyleSettings {
         }
       });
     }
-    
+
     public void deserialize(Element indentOptionsElement) {
       XmlSerializer.deserializeInto(this, indentOptionsElement);
     }
@@ -907,7 +918,4 @@ public class CommonCodeStyleSettings {
       copyPublicFields(other, this);
     }
   }
-  
-  
-
 }

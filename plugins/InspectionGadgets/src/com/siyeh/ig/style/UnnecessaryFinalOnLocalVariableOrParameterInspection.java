@@ -78,7 +78,11 @@ public class UnnecessaryFinalOnLocalVariableOrParameterInspection
                     public void setEnabled(boolean b) {
                         // hack to display correctly on initial opening of
                         // inspection settings (otherwise it is always enabled)
-                        super.setEnabled(reportParameters);
+                        if (b) {
+                            super.setEnabled(reportParameters);
+                        } else {
+                            super.setEnabled(false);
+                        }
                     }
                 };
         abstractOnlyCheckBox.setEnabled(true);

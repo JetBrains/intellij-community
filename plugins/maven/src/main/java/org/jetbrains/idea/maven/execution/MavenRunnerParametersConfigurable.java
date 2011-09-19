@@ -21,7 +21,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.ComponentWithAnchor;
+import com.intellij.ui.PanelWithAnchor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenConstants;
@@ -32,7 +32,7 @@ import javax.swing.*;
 /**
  * @author Vladislav.Kaznacheev
  */
-public abstract class MavenRunnerParametersConfigurable implements Configurable, ComponentWithAnchor {
+public abstract class MavenRunnerParametersConfigurable implements Configurable, PanelWithAnchor {
   private JPanel panel;
   protected LabeledComponent<TextFieldWithBrowseButton> workingDirComponent;
   protected LabeledComponent<JTextField> goalsComponent;

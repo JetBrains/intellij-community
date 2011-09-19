@@ -18,7 +18,7 @@ package com.intellij.openapi.ui;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.ComponentWithAnchor;
+import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-public class LabeledComponent<Comp extends JComponent> extends JPanel implements ComponentWithAnchor {
+public class LabeledComponent<Comp extends JComponent> extends JPanel implements PanelWithAnchor {
   private final JBLabel myLabel = new JBLabel();
   private Comp myComponent;
   private String myLabelConstraints = BorderLayout.NORTH;

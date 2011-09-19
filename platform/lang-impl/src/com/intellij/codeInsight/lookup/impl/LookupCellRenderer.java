@@ -45,7 +45,6 @@ public class LookupCellRenderer implements ListCellRenderer {
   private final Font myBoldFont;
   private final FontMetrics myNormalMetrics;
   private final FontMetrics myBoldMetrics;
-  private final int myMaxWidth;
 
   public static final Color BACKGROUND_COLOR = new Color(235, 244, 254);
   static final Color FOREGROUND_COLOR = Color.black;
@@ -98,7 +97,6 @@ public class LookupCellRenderer implements ListCellRenderer {
 
     myNormalMetrics = myLookup.getEditor().getComponent().getFontMetrics(myNormalFont);
     myBoldMetrics = myLookup.getEditor().getComponent().getFontMetrics(myBoldFont);
-    myMaxWidth = myNormalMetrics.stringWidth(StringUtil.repeatSymbol('W', MAX_LENGTH));
 
     UIUtil.removeQuaquaVisualMarginsIn(myPanel);
   }
@@ -119,7 +117,7 @@ public class LookupCellRenderer implements ListCellRenderer {
     final Color foreground = isSelected ? SELECTED_FOREGROUND_COLOR : FOREGROUND_COLOR;
     final Color background = getItemBackground(list, index, isSelected);
 
-    int allowedWidth = list.getFixedCellWidth() - getCommonGapsWidth() - getIconIndent();
+    int allowedWidth = list.getWidth() - getCommonGapsWidth() - getIconIndent();
     final LookupElementPresentation presentation = new RealLookupElementPresentation(allowedWidth, myNormalMetrics, myBoldMetrics);
     item.renderElement(presentation);
 
@@ -266,7 +264,7 @@ public class LookupCellRenderer implements ListCellRenderer {
                                int allowedWidth,
                                boolean selected) {
     final String givenText = presentation.getTypeText();
-    final String labelText = trimLabelText(StringUtil.isEmpty(givenText) ? "" : "   " + givenText, allowedWidth, myNormalMetrics);
+    final String labelText = trimLabelText(StringUtil.isEmpty(givenText) ? "" : " " + givenText, allowedWidth, myNormalMetrics);
 
     int used = RealLookupElementPresentation.getStringWidth(labelText, myNormalMetrics);
 
@@ -320,8 +318,7 @@ public class LookupCellRenderer implements ListCellRenderer {
       myEmptyIcon = new EmptyIcon(Math.max(icon.getIconWidth(), myEmptyIcon.getIconWidth()), Math.max(icon.getIconHeight(), myEmptyIcon.getIconHeight()));
     }
 
-    int maxWidth = Math.min(RealLookupElementPresentation.calculateWidth(p, myNormalMetrics, myBoldMetrics), myMaxWidth);
-    return maxWidth + getCommonGapsWidth();
+    return RealLookupElementPresentation.calculateWidth(p, myNormalMetrics, myBoldMetrics) + getCommonGapsWidth();
   }
 
   private int getCommonGapsWidth() {

@@ -47,7 +47,6 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -163,7 +162,7 @@ public class HighlightInfo implements Segment {
                                                   String toolTip,
                                                   boolean isEndOfLine,
                                                   TextAttributes forcedAttributes) {
-    LOG.assertTrue(ArrayUtil.find(HighlightSeverity.DEFAULT_SEVERITIES, type.getSeverity(element)) != -1 || element != null, "Custom type demands element to detect text attributes");
+    LOG.assertTrue(element != null || ArrayUtil.find(HighlightSeverity.DEFAULT_SEVERITIES, type.getSeverity(element)) != -1, "Custom type demands element to detect its text attributes");
     HighlightInfo highlightInfo = new HighlightInfo(forcedAttributes, type, start, end, description, toolTip, type.getSeverity(element), isEndOfLine, null, false);
     PsiFile file = element == null ? null : element.getContainingFile();
     for (HighlightInfoFilter filter : getFilters()) {
@@ -474,8 +473,7 @@ public class HighlightInfo implements Segment {
     }
 
     @Nullable
-    public List<IntentionAction> getOptions(@NotNull PsiElement element) {
-      Editor editor = PsiUtilBase.findEditor(element);
+    public List<IntentionAction> getOptions(@NotNull PsiElement element, @Nullable Editor editor) {
       if (editor != null && Boolean.FALSE.equals(editor.getUserData(IntentionManager.SHOW_INTENTION_OPTIONS_KEY))) {
         return null;
       }

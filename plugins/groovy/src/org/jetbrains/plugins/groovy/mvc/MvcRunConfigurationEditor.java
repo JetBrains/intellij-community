@@ -21,7 +21,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.ComponentWithAnchor;
+import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBLabel;
@@ -34,7 +34,7 @@ import java.awt.*;
 import java.io.File;
 import java.util.HashMap;
 
-public class MvcRunConfigurationEditor<T extends MvcRunConfiguration> extends SettingsEditor<T> implements ComponentWithAnchor {
+public class MvcRunConfigurationEditor<T extends MvcRunConfiguration> extends SettingsEditor<T> implements PanelWithAnchor {
   private DefaultComboBoxModel myModulesModel;
   protected JComboBox myModulesBox;
   private JPanel myMainPanel;

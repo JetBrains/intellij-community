@@ -16,7 +16,7 @@
 
 package org.jetbrains.android.run;
 
-import com.intellij.ui.ComponentWithAnchor;
+import com.intellij.ui.PanelWithAnchor;
 
 import java.awt.*;
 
@@ -27,7 +27,7 @@ import java.awt.*;
  * Time: 7:22:44 PM
  * To change this template use File | Settings | File Templates.
  */
-public interface ConfigurationSpecificEditor<T> extends ComponentWithAnchor {
+public interface ConfigurationSpecificEditor<T> extends PanelWithAnchor {
   void applyTo(T t);
   void resetFrom(T t);
   Component getComponent();

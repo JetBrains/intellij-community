@@ -155,6 +155,10 @@ public class AndroidManifestDomTest extends AndroidDomTest {
     doTestCompletion(false);
   }
 
+  public void testInstrumentationRunner() throws Throwable {
+    doTestHighlighting();
+  }
+
   public void testIntentsCompletion1() throws Throwable {
     doTestCompletion();
   }

@@ -19,13 +19,20 @@ package com.intellij.codeInsight.completion;
 import com.google.common.collect.Maps;
 import com.intellij.codeInsight.completion.impl.CompletionSorterImpl;
 import com.intellij.codeInsight.lookup.Classifier;
-import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupArranger;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.event.DocumentAdapter;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.WeighingService;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
+import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.MultiMap;
@@ -33,10 +40,13 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 public class CompletionLookupArranger extends LookupArranger {
+  @Nullable private static StatisticsUpdate ourPendingUpdate;
+  private static final Alarm ourStatsAlarm = new Alarm(ApplicationManager.getApplication());
   private static final String SELECTED = "selected";
   static final String IGNORED = "ignored";
   private final CompletionLocation myLocation;
@@ -59,22 +69,84 @@ public class CompletionLookupArranger extends LookupArranger {
     };
   }
 
-  public void itemSelected(LookupElement item, final Lookup lookup) {
-    final StatisticsManager manager = StatisticsManager.getInstance();
-    manager.incUseCount(CompletionService.STATISTICS_KEY, item, myLocation);
-    final List<LookupElement> items = lookup.getItems();
-    final LookupImpl lookupImpl = (LookupImpl)lookup;
+  public static StatisticsUpdate collectStatisticChanges(CompletionProgressIndicator indicator, LookupElement item) {
+    LookupImpl lookupImpl = indicator.getLookup();
+    applyLastCompletionStatisticsUpdate();
+
+    CompletionLocation myLocation = new CompletionLocation(indicator.getParameters());
+    final StatisticsInfo main = StatisticsManager.serialize(CompletionService.STATISTICS_KEY, item, myLocation);
+    final List<LookupElement> items = lookupImpl.getItems();
     final int count = Math.min(lookupImpl.getPreferredItemsCount(), lookupImpl.getList().getSelectedIndex());
+
+    final List<StatisticsInfo> ignored = new ArrayList<StatisticsInfo>();
     for (int i = 0; i < count; i++) {
       final LookupElement element = items.get(i);
       StatisticsInfo baseInfo = StatisticsManager.serialize(CompletionService.STATISTICS_KEY, element, myLocation);
-      if (baseInfo != null && baseInfo != StatisticsInfo.EMPTY && manager.getUseCount(baseInfo) == 0) {
-        manager.incUseCount(new StatisticsInfo(composeContextWithValue(baseInfo), IGNORED));
+      if (baseInfo != null && baseInfo != StatisticsInfo.EMPTY && StatisticsManager.getInstance().getUseCount(baseInfo) == 0) {
+        ignored.add(new StatisticsInfo(composeContextWithValue(baseInfo), IGNORED));
       }
     }
+
     StatisticsInfo info = StatisticsManager.serialize(CompletionService.STATISTICS_KEY, item, myLocation);
-    if (info != null && info != StatisticsInfo.EMPTY) {
-      manager.incUseCount(new StatisticsInfo(composeContextWithValue(info), SELECTED));
+    final StatisticsInfo selected =
+      info != null && info != StatisticsInfo.EMPTY ? new StatisticsInfo(composeContextWithValue(info), SELECTED) : null;
+
+    StatisticsUpdate update = new StatisticsUpdate(ignored, selected, main);
+    ourPendingUpdate = update;
+    return update;
+  }
+
+  public static void trackStatistics(InsertionContext context, final StatisticsUpdate update) {
+    final Document document = context.getDocument();
+    int startOffset = context.getStartOffset();
+    int tailOffset = context.getEditor().getCaretModel().getOffset();
+    if (startOffset < 0 || tailOffset <= startOffset) {
+      return;
+    }
+    
+    final RangeMarker marker = document.createRangeMarker(startOffset, tailOffset);
+    final DocumentAdapter listener = new DocumentAdapter() {
+      @Override
+      public void beforeDocumentChange(DocumentEvent e) {
+        if (!marker.isValid() || e.getOffset() > marker.getStartOffset() && e.getOffset() < marker.getEndOffset()) {
+          cancelLastCompletionStatisticsUpdate();
+        }
+      }
+    };
+
+    ourStatsAlarm.addRequest(new Runnable() {
+      @Override
+      public void run() {
+        if (ourPendingUpdate == update) {
+          applyLastCompletionStatisticsUpdate();
+        }
+      }
+    }, 20 * 1000);
+
+    document.addDocumentListener(listener);
+    Disposer.register(update, new Disposable() {
+      @Override
+      public void dispose() {
+        document.removeDocumentListener(listener);
+        marker.dispose();
+        ourStatsAlarm.cancelAllRequests();
+        //noinspection AssignmentToStaticFieldFromInstanceMethod
+        ourPendingUpdate = null;
+      }
+    });
+  }
+
+  public static void cancelLastCompletionStatisticsUpdate() {
+    if (ourPendingUpdate != null) {
+      Disposer.dispose(ourPendingUpdate);
+    }
+  }
+
+  public static void applyLastCompletionStatisticsUpdate() {
+    StatisticsUpdate update = ourPendingUpdate;
+    if (update != null) {
+      update.performUpdate();
+      Disposer.dispose(update);
     }
   }
 
@@ -174,4 +246,31 @@ public class CompletionLookupArranger extends LookupArranger {
     };
   }
 
+  static class StatisticsUpdate implements Disposable {
+    private final List<StatisticsInfo> myIgnored;
+    private final StatisticsInfo mySelected;
+    private final StatisticsInfo myMain;
+
+    public StatisticsUpdate(List<StatisticsInfo> ignored, StatisticsInfo selected, StatisticsInfo main) {
+      myIgnored = ignored;
+      mySelected = selected;
+      myMain = main;
+    }
+
+    void performUpdate() {
+      for (StatisticsInfo statisticsInfo : myIgnored) {
+        StatisticsManager.getInstance().incUseCount(statisticsInfo);
+      }
+      if (mySelected != null) {
+        StatisticsManager.getInstance().incUseCount(mySelected);
+      }
+      if (myMain != null) {
+        StatisticsManager.getInstance().incUseCount(myMain);
+      }
+    }
+
+    @Override
+    public void dispose() {
+    }
+  }
 }

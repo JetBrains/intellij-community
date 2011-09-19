@@ -165,7 +165,7 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
                                             @NotNull PsiFile containingFile,
                                             @NotNull Editor containingEditor) {
     IntentionActionWithTextCaching cachedAction = new IntentionActionWithTextCaching(descriptor);
-    final List<IntentionAction> options = descriptor.getOptions(element);
+    final List<IntentionAction> options = descriptor.getOptions(element, containingEditor);
     if (options == null) return cachedAction;
     for (IntentionAction option : options) {
       if (!option.isAvailable(myProject, containingEditor, containingFile)) {

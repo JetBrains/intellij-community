@@ -51,7 +51,6 @@ class CopyClassDialog extends DialogWrapper{
   private final JLabel myPackageLabel = new JLabel();
   private ReferenceEditorComboWithBrowseButton myTfPackage;
   private final Project myProject;
-  private PsiDirectory myTargetDirectory;
   private final boolean myDoClone;
   private final PsiDirectory myDefaultTargetDirectory;
   private final DestinationFolderComboBox myDestinationCB = new DestinationFolderComboBox() {
@@ -65,6 +64,7 @@ class CopyClassDialog extends DialogWrapper{
       return true;
     }
   };
+  protected MoveDestination myDestination;
 
   public CopyClassDialog(PsiClass aClass, PsiDirectory defaultTargetDirectory, Project project, boolean doClone) {
     super(project, true);
@@ -174,8 +174,8 @@ class CopyClassDialog extends DialogWrapper{
     return qualifiedName;
   }
 
-  public PsiDirectory getTargetDirectory() {
-    return myTargetDirectory;
+  public MoveDestination getTargetDirectory() {
+    return myDestination;
   }
 
   public String getClassName() {
@@ -200,29 +200,8 @@ class CopyClassDialog extends DialogWrapper{
       else if (!myDoClone) {
         try {
           final PackageWrapper targetPackage = new PackageWrapper(manager, packageName);
-          final MoveDestination destination = myDestinationCB.selectDirectory(targetPackage, false);
-          if (destination == null) return;
-          myTargetDirectory = ApplicationManager.getApplication().runWriteAction(new Computable<PsiDirectory>() {
-            @Override
-            public PsiDirectory compute() {
-              return destination.getTargetDirectory(myDefaultTargetDirectory);
-            }
-          });
-          if (myTargetDirectory == null) {
-            if (errorString[0] == null) {
-              errorString[0] = ""; // message already reported by PackageUtil
-            }
-          } else {
-            CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-              public void run() {
-                ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                  public void run() {
-                    errorString[0] = RefactoringMessageUtil.checkCanCreateClass(myTargetDirectory, className);
-                  }
-                });
-              }
-            }, RefactoringBundle.message("create.directory"), null);
-          }
+          myDestination = myDestinationCB.selectDirectory(targetPackage, false);
+          if (myDestination == null) return;
         }
         catch (IncorrectOperationException e) {
           errorString[0] = e.getMessage();

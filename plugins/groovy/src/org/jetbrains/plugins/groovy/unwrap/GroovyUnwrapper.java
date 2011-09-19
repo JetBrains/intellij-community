@@ -16,23 +16,16 @@
 package org.jetbrains.plugins.groovy.unwrap;
 
 import com.intellij.codeInsight.unwrap.AbstractUnwrapper;
-import com.intellij.codeInsight.unwrap.Unwrapper;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
 
 public abstract class GroovyUnwrapper extends AbstractUnwrapper<GroovyUnwrapper.Context> {
   public GroovyUnwrapper(String description) {
@@ -99,5 +92,22 @@ public abstract class GroovyUnwrapper extends AbstractUnwrapper<GroovyUnwrapper.
     protected boolean isWhiteSpace(PsiElement element) {
       return PsiUtil.isLeafElementOfType(element, TokenSets.WHITE_SPACES_SET);
     }
+
+    public void setElseBranch(GrIfStatement ifStatement, GrStatement elseBranch) throws IncorrectOperationException {
+      GrStatement toExtract = elseBranch;
+      if (myIsEffective) {
+        ifStatement.replaceElseBranch(copyElement(elseBranch));
+        toExtract = ifStatement.getElseBranch();
+      }
+      addElementToExtract(toExtract);
+    }
+
+    private static GrStatement copyElement(GrStatement e) throws IncorrectOperationException {
+      // We cannot call el.copy() for 'else' since it sets context to parent 'if'.
+      // This causes copy to be invalidated after parent 'if' is removed by setElseBranch method.
+      GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(e.getProject());
+      return factory.createStatementFromText(e.getText(), null);
+    }
+
   }
 }

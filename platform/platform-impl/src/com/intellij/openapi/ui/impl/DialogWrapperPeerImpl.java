@@ -524,7 +524,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
       addWindowListener(myWindowListener);
 
       myComponentListener = new MyComponentListener();
-      //addComponentListener(myComponentListener);
+      addComponentListener(myComponentListener);
     }
 
     public JDialog getWindow() {

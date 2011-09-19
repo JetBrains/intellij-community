@@ -40,11 +40,11 @@ public class TitledSeparator extends JPanel {
 
   public TitledSeparator(String text, boolean boldFont, boolean smallFont) {
     setLayout(new GridBagLayout());
-    add(myLabel, new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 8), 0, 0));
+    add(myLabel, new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 6), 0, 0));
     add(separator,
         new GridBagConstraints(1, 0, GridBagConstraints.REMAINDER, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
-                               new Insets(0, 0, 0, 0), 0, 0));
-    setBorder(IdeBorderFactory.createEmptyBorder(5, 0, 5, 5));
+                               new Insets(2, 0, 0, 3), 0, 0));
+    setBorder(IdeBorderFactory.createEmptyBorder(5, 0, 5, 0));
 
     setText(text);
     this.boldFont = boldFont;

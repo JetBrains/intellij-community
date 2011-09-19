@@ -294,7 +294,12 @@ public class TabLabel extends JPanel {
   private void invalidateIfNeeded() {
     if (myLabel.getRootPane() == null) return;
 
-    if (myLabel.getSize() != null && myLabel.getSize().equals(myLabel.getPreferredSize())) return;
+    Dimension d = myLabel.getSize();
+    Dimension pref = myLabel.getPreferredSize();
+    if (d != null && (d.width >= pref.width && d.height >= pref.height)) {
+      // do not need to invalidate if size is more than preferred size
+      return;
+    }
 
     setInactiveStateImage(null);
 

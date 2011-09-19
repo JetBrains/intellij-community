@@ -87,7 +87,7 @@ public abstract class DialogWrapper {
   /**
    * The shared instance of default border for dialog's content pane.
    */
-  public static final Border ourDefaultBorder = BorderFactory.createEmptyBorder(5, 8, 5, 5);
+  public static final Border ourDefaultBorder = new EmptyBorder(UIUtil.PANEL_REGULAR_INSETS);
 
   private float myHorizontalStretch = 1.0f;
   private float myVerticalStretch = 1.0f;
@@ -318,7 +318,7 @@ public abstract class DialogWrapper {
 
   /**
    * Factory method. It creates border for dialog's content pane. By default content
-   * pane has has empty border with <code>(8,8,8,8)</code> insets. The subclasses can
+   * pane has has empty border with <code>(8,12,8,12)</code> insets. The subclasses can
    * return <code>null</code> in overridden methods. In this case there will be no
    * any border in the content pane.
    *
@@ -964,14 +964,13 @@ public abstract class DialogWrapper {
 
     final JComponent n = createNorthPanel();
     if (n != null) {
-      centerSection.add(wrap(n, isNorthStrictedToPreferredSize()), BorderLayout.NORTH);
+      centerSection.add(n, BorderLayout.NORTH);
     }
 
     final JComponent c = createCenterPanel();
     if (c != null) {
-      final JComponent wrap = wrap(c, isCenterStrictedToPreferredSize());
-      centerSection.add(wrap, BorderLayout.CENTER);
-      myErrorPane = wrap;
+      centerSection.add(c, BorderLayout.CENTER);
+      myErrorPane = c;
     }
     if (myErrorPane == null) {
       myErrorPane = root;
@@ -983,7 +982,7 @@ public abstract class DialogWrapper {
     southSection.add(myErrorText, BorderLayout.CENTER);
     final JComponent south = createSouthPanel();
     if (south != null) {
-      southSection.add(wrap(south, isSouthStrictedToPreferredSize()), BorderLayout.SOUTH);
+      southSection.add(south, BorderLayout.SOUTH);
     }
 
     new MnemonicHelper().register(root);
@@ -1019,21 +1018,6 @@ public abstract class DialogWrapper {
         }
       }
     }, myValidationDelay, ModalityState.current());
-  }
-
-  private static JComponent wrap(final JComponent c, boolean strict) {
-    if (!strict) return c;
-
-    final JPanel wrapper = new JPanel(new BorderLayout()) {
-      @Override
-      public Dimension getMinimumSize() {
-        return getComponentCount() == 1 ? getComponent(0).getPreferredSize() : super.getMinimumSize();
-      }
-    };
-
-    wrapper.add(c, BorderLayout.CENTER);
-
-    return wrapper;
   }
 
   protected boolean isNorthStrictedToPreferredSize() {

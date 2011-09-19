@@ -64,7 +64,7 @@ public final class ObjectNode<T> {
       myChildren.add(child);
       myTree.putNode(child.getObject(), child);
 
-      propogateChildModification(child.getModification());
+      propagateChildModification(child.getModification());
     }
   }
 
@@ -74,7 +74,7 @@ public final class ObjectNode<T> {
       if (myChildren.remove(child)) {
         child.setParent(null);
         myTree.putNode(child.getObject(), null);
-        propogateChildModification(myTree.getNextModification());
+        propagateChildModification(myTree.getNextModification());
       }
     }
   }
@@ -108,7 +108,7 @@ public final class ObjectNode<T> {
         action.beforeTreeExecution(myObject);
 
         ObjectNode<T>[] childrenArray = getChildrenArray();
-//todo: [kirillk] optimize
+        //todo: [kirillk] optimize
 
           for (int i = childrenArray.length - 1; i >= 0; i--) {
             childrenArray[i].execute(disposeTree, action);
@@ -187,11 +187,11 @@ public final class ObjectNode<T> {
     return myChildModification;
   }
 
-  private void propogateChildModification(long stamp) {
+  private void propagateChildModification(long stamp) {
     if (myChildModification < stamp) {
       myChildModification = stamp;
       if (getParent() != null) {
-        getParent().propogateChildModification(stamp);
+        getParent().propagateChildModification(stamp);
       }
     }
   }
