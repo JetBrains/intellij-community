@@ -259,7 +259,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     statement.done(PyElementTypes.PRINT_STATEMENT);
   }
 
-  private void parseKeywordStatement(PsiBuilder builder, IElementType statementType, boolean inSuite) {
+  protected void parseKeywordStatement(PsiBuilder builder, IElementType statementType, boolean inSuite) {
     final PsiBuilder.Marker statement = builder.mark();
     builder.advanceLexer();
     checkEndOfStatement(inSuite);
