@@ -131,4 +131,9 @@ public class GitBranchIsNotFullyMergedDialog extends DialogWrapper {
     return myCommitListWithDiffPanel.getPreferredFocusComponent();
   }
 
+  @Override
+  protected String getDimensionServiceKey() {
+    return GitBranchIsNotFullyMergedDialog.class.getName();
+  }
+
 }

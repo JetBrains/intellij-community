@@ -83,4 +83,9 @@ class GitWouldBeOverwrittenByCheckoutDialog extends DialogWrapper {
     return changesBrowser;
   }
 
+  @Override
+  protected String getDimensionServiceKey() {
+    return GitWouldBeOverwrittenByCheckoutDialog.class.getName();
+  }
+
 }

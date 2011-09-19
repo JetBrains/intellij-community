@@ -127,4 +127,10 @@ public class GitCompareBranchesDialog extends DialogWrapper {
   protected Action[] createActions() {
     return new Action[0];
   }
+
+  @Override
+  protected String getDimensionServiceKey() {
+    return GitCompareBranchesDialog.class.getName();
+  }
+
 }
