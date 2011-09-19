@@ -232,7 +232,10 @@ class GitRepositoryReader {
       @Override
       public boolean process(File file) {
         if (!file.isDirectory()) {
-          branches.put(FileUtil.getRelativePath(myRefsHeadsDir, file), file);
+          String relativePath = FileUtil.getRelativePath(myRefsHeadsDir, file);
+          if (relativePath != null) {
+            branches.put(FileUtil.toSystemIndependentName(relativePath), file);
+          }
         }
         return true;
       }
@@ -298,7 +301,9 @@ class GitRepositoryReader {
       public boolean process(File file) {
         if (!file.isDirectory()) {
           final String relativePath = FileUtil.getRelativePath(myRefsRemotesDir, file);
-          branches.add(new GitBranch(relativePath, false, true));
+          if (relativePath != null) {
+            branches.add(new GitBranch(FileUtil.toSystemIndependentName(relativePath), false, true));
+          }
         }
         return true;
       }
