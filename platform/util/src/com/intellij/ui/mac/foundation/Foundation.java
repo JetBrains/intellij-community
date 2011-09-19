@@ -20,6 +20,7 @@ import com.sun.jna.Callback;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.UnsupportedEncodingException;
@@ -128,7 +129,10 @@ public class Foundation {
     }
   }
 
+  @Nullable
   public static String toStringViaUTF8(ID cfString) {
+    if (cfString.intValue() == 0) return null;
+
     int lengthInChars = myFoundationLibrary.CFStringGetLength(cfString);
     int potentialLengthInBytes = 3 * lengthInChars + 1; // UTF8 fully escaped 16 bit chars, plus nul
 

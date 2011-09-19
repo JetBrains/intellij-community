@@ -37,10 +37,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
-import com.intellij.openapi.editor.actionSystem.EditorAction;
-import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.editor.actionSystem.EditorActionManager;
+import com.intellij.openapi.editor.actionSystem.*;
 import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
 import com.intellij.openapi.editor.event.*;
@@ -73,6 +70,7 @@ import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.Producer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.messages.MessageBusConnection;
@@ -5239,26 +5237,39 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                 if (editor.getDocument().getRangeGuard(offset, offset) != null) return;
 
                 EditorActionHandler pasteHandler = EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_PASTE);
-                final CopyPasteManager copyPasteManager = CopyPasteManager.getInstance();
+                if (ClipboardSynchronizer.useAlternativeSync() && pasteHandler instanceof EditorTextInsertHandler) {
+                  editor.putUserData(LAST_PASTED_REGION, null);
 
-                Transferable backup = null;
-                try {
-                  backup = copyPasteManager.getContents();
-                  copyPasteManager.setContents(t);
+                  EditorTextInsertHandler handler = (EditorTextInsertHandler)pasteHandler;
+                  handler.execute(editor, editor.getDataContext(), new Producer<Transferable>() {
+                    @Override
+                    public Transferable produce() {
+                      return t;
+                    }
+                  });
                 }
-                catch (Exception e) {
-                  LOG.info("Error communicating with system clipboard", e);
-                }
+                else {
+                  final CopyPasteManager copyPasteManager = CopyPasteManager.getInstance();
 
-                editor.putUserData(LAST_PASTED_REGION, null);
-                pasteHandler.execute(editor, editor.getDataContext());
-                try {
-                  if (backup != null) {
-                    copyPasteManager.setContents(backup);
+                  Transferable backup = null;
+                  try {
+                    backup = copyPasteManager.getContents();
+                    copyPasteManager.setContents(t);
                   }
-                }
-                catch (IllegalStateException e) {
-                  LOG.info(e);
+                  catch (Exception e) {
+                    LOG.info("Error communicating with system clipboard", e);
+                  }
+
+                  editor.putUserData(LAST_PASTED_REGION, null);
+                  pasteHandler.execute(editor, editor.getDataContext());
+                  try {
+                    if (backup != null) {
+                      copyPasteManager.setContents(backup);
+                    }
+                  }
+                  catch (IllegalStateException e) {
+                    LOG.info(e);
+                  }
                 }
 
                 TextRange range = editor.getUserData(LAST_PASTED_REGION);

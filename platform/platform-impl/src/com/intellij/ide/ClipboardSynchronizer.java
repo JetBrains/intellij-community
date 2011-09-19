@@ -22,6 +22,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
@@ -38,6 +39,7 @@ import javax.swing.text.DefaultEditorKit;
 import java.awt.*;
 import java.awt.datatransfer.*;
 import java.awt.event.ActionEvent;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -73,17 +75,21 @@ public class ClipboardSynchronizer implements ApplicationComponent {
   }
 
   public ClipboardSynchronizer() {
+    final boolean useAltSync = useAlternativeSync();
     if (Patches.SLOW_GETTING_CLIPBOARD_CONTENTS && SystemInfo.isMac) {
-      myClipboardHandler = new MacClipboardHandler();
+      myClipboardHandler = useAltSync ? new MacAltClipboardHandler() : new MacClipboardHandler();
     }
     else if (Patches.SLOW_GETTING_CLIPBOARD_CONTENTS && SystemInfo.isLinux) {
-      final String value = System.getProperty(ALTERNATIVE_SYNC);
-      final boolean useAltSync = "yes".equalsIgnoreCase(value) || "true".equalsIgnoreCase(value);
       myClipboardHandler = useAltSync ? new LinuxAltClipboardHandler() : new LinuxOldClipboardHandler();
     }
     else {
       myClipboardHandler = new ClipboardHandler();
     }
+  }
+
+  public static boolean useAlternativeSync() {
+    final String value = System.getProperty(ALTERNATIVE_SYNC);
+    return "yes".equalsIgnoreCase(value) || "true".equalsIgnoreCase(value);
   }
 
   @Override
@@ -487,6 +493,119 @@ public class ClipboardSynchronizer implements ApplicationComponent {
       }
 
       return null;
+    }
+  }
+
+  private static class MacAltClipboardHandler extends ClipboardHandler {
+    private Pair<String,Transferable> myFullTransferable;
+
+    @Nullable
+    private Transferable doGetContents() throws IllegalStateException {
+      if (Registry.is("ide.mac.useNativeClipboard") && "true".equals(System.getProperty("ide.mac.useNativeClipboard", "true"))) {
+        final Transferable safe = getContentsSafe();
+        if (safe != null) {
+          return safe;
+        }
+      }
+
+      return super.getContents();
+    }
+
+    @Override
+    public boolean isDataFlavorAvailable(@NotNull final DataFlavor dataFlavor) {
+      final Transferable contents = getContents();
+      return contents != null && contents.isDataFlavorSupported(dataFlavor);
+    }
+
+    @Override
+    public Transferable getContents() {
+      Transferable transferable = doGetContents();
+      if (transferable != null && myFullTransferable != null && transferable.isDataFlavorSupported(DataFlavor.stringFlavor)) {
+        try {
+          String stringData = (String) transferable.getTransferData(DataFlavor.stringFlavor);
+          if (stringData != null && stringData.equals(myFullTransferable.getFirst())) {
+            return myFullTransferable.getSecond();
+          }
+        }
+        catch (UnsupportedFlavorException e) {
+          LOG.info(e);
+        }
+        catch (IOException e) {
+          LOG.info(e);
+        }
+      }
+
+      myFullTransferable = null;
+      return transferable;
+    }
+
+    @Override
+    public void resetContent() {
+      //myFullTransferable = null;
+      super.resetContent();
+    }
+
+    @Override
+    public void setContent(@NotNull final Transferable content, @NotNull final ClipboardOwner owner) {
+      if (content.isDataFlavorSupported(DataFlavor.stringFlavor)) {
+        try {
+          String stringData = (String) content.getTransferData(DataFlavor.stringFlavor);
+          myFullTransferable = Pair.create(stringData, content);
+          super.setContent(new StringSelection(stringData), owner);
+        }
+        catch (UnsupportedFlavorException e) {
+          LOG.info(e);
+        }
+        catch (IOException e) {
+          LOG.info(e);
+        }
+      } else {
+        myFullTransferable = null;
+        super.setContent(content, owner);
+      }
+    }
+
+    public static Transferable getContentsSafe() {
+      final Ref<Transferable> result = new Ref<Transferable>();
+      Foundation.executeOnMainThread(new Runnable() {
+        @Override
+        public void run() {
+          String plainText = "public.utf8-plain-text";
+          String jvmObject = "application/x-java-jvm";
+
+          ID pasteboard = Foundation.invoke("NSPasteboard", "generalPasteboard");
+          ID types = Foundation.invoke(pasteboard, "types");
+          IntegerType count = Foundation.invoke(types, "count");
+
+          ID plainTextType = null;
+          ID vmObjectType = null;
+
+          for (int i = 0; i < count.intValue(); i++) {
+            ID each = Foundation.invoke(types, "objectAtIndex:", i);
+            String eachType = Foundation.toStringViaUTF8(each);
+            if (plainText.equals(eachType)) {
+              plainTextType = each;
+            }
+
+            if (eachType != null && eachType.contains(jvmObject)) {
+              vmObjectType = each;
+            }
+          }
+
+          if (vmObjectType != null && plainTextType != null) {
+            ID text = Foundation.invoke(pasteboard, "stringForType:", plainTextType);
+            String value = Foundation.toStringViaUTF8(text);
+            if (value == null) {
+              LOG.info(String.format("[Clipboard] Strange string value (null?) for type: %s", plainTextType));
+            }
+            else {
+              result.set(new StringSelection(value));
+            }
+          }
+        }
+      }, true, true);
+
+      return result.get();
     }
   }
 }
