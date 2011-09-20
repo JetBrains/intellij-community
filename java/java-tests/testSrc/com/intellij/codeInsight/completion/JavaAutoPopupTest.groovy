@@ -1063,5 +1063,11 @@ class LiveComplete {
     assert myFixture.file.text.contains('Foo239Util2 ')
   }
 
+  public void testTypingFirstVarargDot() {
+    myFixture.configureByText "a.java", "class Foo { void foo(Foo<caret>[] a) { }; class Bar {}}"
+    type '.'
+    assert !lookup
+  }
+
 
 }
