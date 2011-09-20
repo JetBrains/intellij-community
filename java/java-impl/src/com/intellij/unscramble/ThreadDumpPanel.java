@@ -200,7 +200,7 @@ public class ThreadDumpPanel extends JPanel {
 
     private final Comparator<ThreadState> BY_NAME = new Comparator<ThreadState>() {
       public int compare(ThreadState o1, ThreadState o2) {
-        return o1.getName().compareTo(o2.getName());
+        return o1.getName().compareToIgnoreCase(o2.getName());
       }
     };
     private Comparator<ThreadState> COMPARATOR = BY_TYPE;
