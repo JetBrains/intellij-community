@@ -142,9 +142,10 @@ class CopyClassDialog extends DialogWrapper{
     if (myDoClone) {
       myTfPackage.setVisible(false);
       myPackageLabel.setVisible(false);
-      myDestinationCB.setVisible(false);
-      label.setVisible(false);
     }
+    final boolean isMultipleSourceRoots = ProjectRootManager.getInstance(myProject).getContentSourceRoots().length > 1;
+    myDestinationCB.setVisible(!myDoClone && isMultipleSourceRoots);
+    label.setVisible(!myDoClone && isMultipleSourceRoots);
 
     gbConstraints.gridy = 3;
     gbConstraints.gridx = 0;

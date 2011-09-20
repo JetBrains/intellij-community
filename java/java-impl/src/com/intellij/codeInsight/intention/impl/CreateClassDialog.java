@@ -194,7 +194,8 @@ public class CreateClassDialog extends DialogWrapper {
     gbConstraints.insets.top = 12;
     gbConstraints.anchor = GridBagConstraints.WEST;
     gbConstraints.fill = GridBagConstraints.NONE;
-    panel.add(new JBLabel(RefactoringBundle.message("target.destination.folder")), gbConstraints);
+    final JBLabel label = new JBLabel(RefactoringBundle.message("target.destination.folder"));
+    panel.add(label, gbConstraints);
 
     gbConstraints.gridy = 4;
     gbConstraints.gridx = 0;
@@ -202,6 +203,9 @@ public class CreateClassDialog extends DialogWrapper {
     gbConstraints.insets.top = 4;
     panel.add(myDestinationCB, gbConstraints);
 
+    final boolean isMultipleSourceRoots = ProjectRootManager.getInstance(myProject).getContentSourceRoots().length > 1;
+    myDestinationCB.setVisible(isMultipleSourceRoots);
+    label.setVisible(isMultipleSourceRoots);
     return panel;
   }
 

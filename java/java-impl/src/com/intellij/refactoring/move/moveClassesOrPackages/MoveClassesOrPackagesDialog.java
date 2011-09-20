@@ -80,6 +80,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
   private JPanel myMovePackagePanel;
   private ComboboxWithBrowseButton myDestinationFolderCB;
   private JPanel myTargetPanel;
+  private JLabel myTargetDestinationLabel;
   private boolean myHavePackages;
   private boolean myTargetDirectoryFixed;
 
@@ -153,6 +154,10 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
   }
 
   protected JComponent createCenterPanel() {
+    final VirtualFile[] sourceRoots = getSourceRoots();
+    boolean isDestinationVisible = sourceRoots.length > 1;
+    myDestinationFolderCB.setVisible(isDestinationVisible);
+    myTargetDestinationLabel.setVisible(isDestinationVisible);
     return null;
   }
 
