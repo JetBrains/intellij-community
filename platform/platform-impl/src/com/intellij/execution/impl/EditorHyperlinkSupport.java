@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.EditorMouseAdapter;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
@@ -38,6 +39,7 @@ import com.intellij.util.BeforeAfter;
 import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -88,7 +90,10 @@ public class EditorHyperlinkSupport {
           myEditor.getContentComponent().setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         }
         else {
-          myEditor.getContentComponent().setCursor(Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR));
+            final Cursor cursor = editor instanceof EditorEx ?
+                                  UIUtil.getTextCursor(((EditorEx)editor).getBackgroundColor()) :
+                                  Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR);
+            myEditor.getContentComponent().setCursor(cursor);
         }
       }
     }

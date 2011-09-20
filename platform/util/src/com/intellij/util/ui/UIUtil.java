@@ -89,6 +89,11 @@ public class UIUtil {
     }
   }
 
+  public static Cursor getTextCursor(final Color backgroundColor) {
+    return SystemInfo.isMac && ColorUtil.isDark(backgroundColor) ?
+                                MacUIUtil.getInvertedTextCursor(): Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR);
+  }
+
   public enum FontSize { NORMAL, SMALL, MINI }
   public enum ComponentStyle {REGULAR, SMALL, MINI}
   public enum FontColor {NORMAL, BRIGHTER}
