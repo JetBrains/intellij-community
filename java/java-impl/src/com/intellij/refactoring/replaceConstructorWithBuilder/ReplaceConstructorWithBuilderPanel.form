@@ -86,7 +86,7 @@
               <gridbag weightx="0.0" weighty="0.0"/>
             </constraints>
             <properties>
-              <text value="Target"/>
+              <text resource-bundle="messages/RefactoringBundle" key="target.destination.folder"/>
             </properties>
           </component>
           <component id="3e899" class="com.intellij.ui.ComboboxWithBrowseButton" binding="myDestinationCb" custom-create="true">
