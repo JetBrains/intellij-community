@@ -16,6 +16,11 @@
 package org.jetbrains.plugins.groovy.lang.findUsages;
 
 import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.find.FindManager;
+import com.intellij.find.findUsages.FindUsagesHandler;
+import com.intellij.find.findUsages.FindUsagesManager;
+import com.intellij.find.findUsages.FindUsagesOptions;
+import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
@@ -24,6 +29,8 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.usageView.UsageInfo;
+import com.intellij.util.CommonProcessors;
 import com.intellij.util.Query;
 import org.jetbrains.plugins.groovy.LightGroovyTestCase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -98,7 +105,7 @@ public class FindUsagesTest extends LightGroovyTestCase {
   }
 
   public void testProperty1() throws Throwable {
-    doTestImpl("A.groovy", 1);
+    doTestImpl("A.groovy", 2);
   }
 
   public void testProperty2() throws Throwable {
@@ -123,12 +130,12 @@ public class FindUsagesTest extends LightGroovyTestCase {
 
   public void testAliasImportedProperty() throws Throwable {
     myFixture.addFileToProject("Abc.groovy", "class Abc {static def foo}");
-    doTestImpl("A.groovy", 1);
+    doTestImpl("A.groovy", 5);
   }
 
   public void testGetterWhenAliasedImportedProperty() throws Throwable {
     myFixture.addFileToProject("Abc.groovy", "class Abc {static def foo}");
-    doTestImpl("A.groovy", 2);
+    doTestImpl("A.groovy", 5);
   }
 
   public void testForInParameter() throws Throwable {
@@ -179,17 +186,18 @@ public class FindUsagesTest extends LightGroovyTestCase {
   }
 
   private void doFind(int expectedUsagesCount, PsiElement resolved) {
-    final Query<PsiReference> query;
-    final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myFixture.getProject());
-    if (resolved instanceof PsiMethod) {
-      query = MethodReferencesSearch.search((PsiMethod)resolved, projectScope, true);
+    FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(getProject())).getFindUsagesManager();
+    FindUsagesHandler handler = findUsagesManager.getFindUsagesHandler(resolved, false);
+    assertNotNull(handler);
+    final FindUsagesOptions options = handler.getFindUsagesOptions();
+    final CommonProcessors.CollectProcessor<UsageInfo> processor = new CommonProcessors.CollectProcessor<UsageInfo>();
+    for (PsiElement element : handler.getPrimaryElements()) {
+      handler.processElementUsages(element, processor, options);
     }
-    else {
-      query = ReferencesSearch.search(resolved, projectScope);
+    for (PsiElement element : handler.getSecondaryElements()) {
+      handler.processElementUsages(element, processor, options);
     }
-
-    Collection<PsiReference> references = query.findAll();
-    assertEquals(expectedUsagesCount, references.size());
+    assertEquals(expectedUsagesCount, processor.getResults().size());
   }
 
   public void testGdkMethod() throws Exception {
