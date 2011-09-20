@@ -6,7 +6,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.ui.ComponentWithAnchor;
+import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.components.JBLabel;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.run.AbstractPyCommonOptionsForm;
@@ -15,22 +15,17 @@ import com.jetbrains.python.run.PyCommonOptionsFormFactory;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 /**
  * @author yole
  */
-public class PyTestConfigurationEditor extends SettingsEditor<PyTestRunConfiguration> implements ComponentWithAnchor, PyTestRunConfigurationParams {
+public class PyTestConfigurationEditor extends SettingsEditor<PyTestRunConfiguration> implements PanelWithAnchor {
   private JPanel myMainPanel;
   private JPanel myCommonOptionsPlaceholder;
   private JTextField myKeywordsTextField;
   private TextFieldWithBrowseButton myTestScriptTextField;
   private JTextField myParamsTextField;
   private JBLabel myTargetLabel;
-  private JCheckBox myParametersCheckBox;
-  private JCheckBox myKeywordsCheckBox;
-  private JPanel myRootPanel;
   private final AbstractPyCommonOptionsForm myCommonOptionsForm;
   private final Project myProject;
   private JComponent anchor;
@@ -48,24 +43,6 @@ public class PyTestConfigurationEditor extends SettingsEditor<PyTestRunConfigura
 
     myTargetLabel.setLabelFor(myTestScriptTextField);
 
-    myParametersCheckBox.addActionListener(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        myParamsTextField.setEnabled(myParametersCheckBox.isSelected());
-      }
-    });
-
-    myKeywordsCheckBox.addActionListener(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        myKeywordsTextField.setEnabled(myKeywordsCheckBox.isSelected());
-      }
-    });
-
-    myParametersCheckBox.setSelected(configuration.useParam());
-    myKeywordsCheckBox.setSelected(configuration.useKeyword());
-
-    myParamsTextField.setEnabled(configuration.useParam());
-    myKeywordsTextField.setEnabled(configuration.useKeyword());
-
     setAnchor(myCommonOptionsForm.getAnchor());
   }
 
@@ -73,8 +50,6 @@ public class PyTestConfigurationEditor extends SettingsEditor<PyTestRunConfigura
     AbstractPythonRunConfiguration.copyParams(s, myCommonOptionsForm);
     myKeywordsTextField.setText(s.getKeywords());
     myTestScriptTextField.setText(s.getTestToRun());
-    myKeywordsCheckBox.setSelected(s.useKeyword());
-    myParametersCheckBox.setSelected(s.useParam());
     myParamsTextField.setText(s.getParams());
   }
 
@@ -83,13 +58,11 @@ public class PyTestConfigurationEditor extends SettingsEditor<PyTestRunConfigura
     s.setTestToRun(myTestScriptTextField.getText().trim());
     s.setKeywords(myKeywordsTextField.getText().trim());
     s.setParams(myParamsTextField.getText().trim());
-    s.useKeyword(myKeywordsCheckBox.isSelected());
-    s.useParam(myParametersCheckBox.isSelected());
   }
 
   @NotNull
   protected JComponent createEditor() {
-    return myRootPanel;
+    return myMainPanel;
   }
 
   protected void disposeEditor() {
@@ -105,25 +78,5 @@ public class PyTestConfigurationEditor extends SettingsEditor<PyTestRunConfigura
     this.anchor = anchor;
     myTargetLabel.setAnchor(anchor);
     myCommonOptionsForm.setAnchor(anchor);
-  }
-
-  @Override
-  public boolean useParam() {
-    return myParametersCheckBox.isSelected();
-  }
-
-  @Override
-  public void useParam(boolean useParam) {
-    myParametersCheckBox.setSelected(useParam);
-  }
-
-  @Override
-  public boolean useKeyword() {
-    return myKeywordsCheckBox.isSelected();
-  }
-
-  @Override
-  public void useKeyword(boolean useKeyword) {
-    myKeywordsCheckBox.setSelected(useKeyword);
   }
 }

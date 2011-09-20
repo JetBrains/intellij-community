@@ -1,15 +1,17 @@
 package com.jetbrains.python.testing;
 
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.ui.ComponentWithAnchor;
+import com.intellij.ui.PanelWithAnchor;
+import com.intellij.ui.components.JBLabel;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.run.AbstractPyCommonOptionsForm;
 import com.jetbrains.python.run.AbstractPythonRunConfigurationParams;
 import com.jetbrains.python.run.PyCommonOptionsFormFactory;
+import com.jetbrains.python.run.PythonRunConfigurationFormUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -22,7 +24,7 @@ import static com.jetbrains.python.testing.unittest.PythonUnitTestRunConfigurati
 /**
  * @author Leonid Shalupov
  */
-public class PythonTestRunConfigurationForm implements AbstractPythonTestRunConfigurationParams, ComponentWithAnchor {
+public class PythonTestRunConfigurationForm implements AbstractPythonTestRunConfigurationParams, PanelWithAnchor {
   private JPanel myRootPanel;
   private LabeledComponent myTestClassComponent;
   private LabeledComponent myTestMethodComponent;
@@ -32,19 +34,19 @@ public class PythonTestRunConfigurationForm implements AbstractPythonTestRunConf
   private JRadioButton myTestScriptRB;
   private JRadioButton myTestClassRB;
   private JRadioButton myTestMethodRB;
+  private LabeledComponent myPatternComponent;
   private JRadioButton myTestFunctionRB;
   private JPanel myAdditionalPanel;
   private JPanel myCommonOptionsPlaceholder;
   private JPanel myTestsPanel;
-  private JCheckBox myPatternCheckBox;
+  private JLabel myConfigurationName;
+  private JBLabel myTypeJBLabel;
 
   private TextFieldWithBrowseButton myTestFolderTextField;
   private TextFieldWithBrowseButton myTestScriptTextField;
   private JTextField myTestMethodTextField;
   private JTextField myTestClassTextField;
   private JTextField myPatternTextField;
-  private JTextField myParamTextField;
-  private JCheckBox myParamCheckBox;
 
   private final Project myProject;
   private final AbstractPyCommonOptionsForm myCommonOptionsForm;
@@ -58,16 +60,6 @@ public class PythonTestRunConfigurationForm implements AbstractPythonTestRunConf
     initComponents();
 
     setAnchor(myTestMethodComponent.getLabel());
-
-    myTestFolderTextField.addBrowseFolderListener(PyBundle.message("runcfg.unittest.dlg.select.folder.path"), null, myProject,
-                                                  FileChooserDescriptorFactory.createSingleFolderDescriptor());
-    myTestScriptTextField.addBrowseFolderListener(PyBundle.message("runcfg.unittest.dlg.select.script.path"), null, myProject,
-                                                  FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());
-
-    myPatternCheckBox.setSelected(configuration.usePattern());
-
-    myParamTextField.setVisible(false);
-    myParamCheckBox.setVisible(false);
   }
 
   public AbstractPythonRunConfigurationParams getBaseParams() {
@@ -81,22 +73,7 @@ public class PythonTestRunConfigurationForm implements AbstractPythonTestRunConf
         setTestType(getTestType());
       }
     };
-    addTestTypeListener(testTypeListener);
 
-    myPatternCheckBox.addActionListener(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        myPatternTextField.setEnabled(myPatternCheckBox.isSelected());
-      }
-    });
-
-    myParamCheckBox.addActionListener(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        myParamTextField.setEnabled(myParamCheckBox.isSelected());
-      }
-    });
-  }
-
-  public void addTestTypeListener(ActionListener testTypeListener) {
     myAllInFolderRB.addActionListener(testTypeListener);
     myTestScriptRB.addActionListener(testTypeListener);
     myTestClassRB.addActionListener(testTypeListener);
@@ -127,6 +104,10 @@ public class PythonTestRunConfigurationForm implements AbstractPythonTestRunConf
 
   public void setFolderName(String folderName) {
     myTestFolderTextField.setText(FileUtil.toSystemDependentName(folderName));
+  }
+
+  public void setConfigurationName(String name) {
+    myConfigurationName.setText(name);
   }
 
   public String getScriptName() {
@@ -171,11 +152,12 @@ public class PythonTestRunConfigurationForm implements AbstractPythonTestRunConf
   @Override
   public void setAnchor(JComponent anchor) {
     this.anchor = anchor;
-  }
-
-  public void setPatternVisible(boolean b) {
-    myPatternTextField.setVisible(b);
-    myPatternCheckBox.setVisible(b);
+    myTypeJBLabel.setAnchor(anchor);
+    myPatternComponent.setAnchor(anchor);
+    myTestClassComponent.setAnchor(anchor);
+    myTestFolderComponent.setAnchor(anchor);
+    myTestMethodComponent.setAnchor(anchor);
+    myTestScriptComponent.setAnchor(anchor);
   }
 
   private static void setSelectedIfNeeded(boolean condition, JRadioButton rb) {
@@ -191,22 +173,87 @@ public class PythonTestRunConfigurationForm implements AbstractPythonTestRunConf
     setSelectedIfNeeded(testType == TestType.TEST_METHOD, myTestMethodRB);
     setSelectedIfNeeded(testType == TestType.TEST_FUNCTION, myTestFunctionRB);
 
-
-    myTestFolderComponent.setVisible(testType == TestType.TEST_FOLDER);
-    myTestFolderTextField.setVisible(testType == TestType.TEST_FOLDER);
-    myTestScriptComponent.setVisible(testType != TestType.TEST_FOLDER);
-    myTestScriptTextField.setVisible(testType != TestType.TEST_FOLDER);
-    myTestClassComponent.setVisible(testType == TestType.TEST_CLASS || testType == TestType.TEST_METHOD);
-    myTestClassTextField.setVisible(testType == TestType.TEST_CLASS || testType == TestType.TEST_METHOD);
-    myTestMethodComponent.setVisible(testType == TestType.TEST_METHOD || testType == TestType.TEST_FUNCTION);
-    myTestMethodTextField.setVisible(testType == TestType.TEST_METHOD || testType == TestType.TEST_FUNCTION);
-    myPatternTextField.setEnabled(myPatternCheckBox.isSelected());
-    myParamTextField.setEnabled(myParamCheckBox.isSelected());
-
+    myTestFolderComponent.setEnabled(testType == TestType.TEST_FOLDER);
+    myTestScriptComponent.setEnabled(testType != TestType.TEST_FOLDER);
+    myTestClassComponent.setEnabled(testType == TestType.TEST_CLASS || testType == TestType.TEST_METHOD);
+    myTestMethodComponent.setEnabled(testType == TestType.TEST_METHOD || testType == TestType.TEST_FUNCTION);
+    myPatternComponent.setEnabled(testType == TestType.TEST_FOLDER);
   }
 
   public JComponent getPanel() {
     return myRootPanel;
+  }
+
+  private static LabeledComponent createTestFolderComponent(final Ref<TextFieldWithBrowseButton> testsFolderTextFieldWrapper) {
+    final TextFieldWithBrowseButton testsFolderTextField = new TextFieldWithBrowseButton();
+    testsFolderTextFieldWrapper.set(testsFolderTextField);
+
+    LabeledComponent<TextFieldWithBrowseButton> myComponent = new LabeledComponent<TextFieldWithBrowseButton>();
+    myComponent.setComponent(testsFolderTextField);
+    myComponent.setText(PyBundle.message("runcfg.unittest.dlg.folder_path"));
+
+    return myComponent;
+  }
+
+  public static LabeledComponent<TextFieldWithBrowseButton> createScriptPathComponent(final Ref<TextFieldWithBrowseButton> testScriptTextFieldWrapper,
+                                                                                      final String text) {
+    final TextFieldWithBrowseButton testScriptTextField = new TextFieldWithBrowseButton();
+    testScriptTextFieldWrapper.set(testScriptTextField);
+
+    LabeledComponent<TextFieldWithBrowseButton> myComponent = new LabeledComponent<TextFieldWithBrowseButton>();
+    myComponent.setComponent(testScriptTextField);
+    myComponent.setText(text);
+
+    return myComponent;
+  }
+
+  private LabeledComponent createTestClassComponent() {
+    myTestClassTextField = new JTextField();
+
+    LabeledComponent<JTextField> myComponent = new LabeledComponent<JTextField>();
+    myComponent.setComponent(myTestClassTextField);
+    myComponent.setText(PyBundle.message("runcfg.unittest.dlg.class_label"));
+
+    return myComponent;
+  }
+
+  private LabeledComponent createTestMethodComponent() {
+    myTestMethodTextField = new JTextField();
+
+    LabeledComponent<JTextField> myComponent = new LabeledComponent<JTextField>();
+
+    myComponent.setComponent(myTestMethodTextField);
+    myComponent.setText(PyBundle.message("runcfg.unittest.dlg.method_label"));
+
+    return myComponent;
+  }
+
+  private void createUIComponents() {
+    myTestClassComponent = createTestClassComponent();
+    myTestMethodComponent = createTestMethodComponent();
+    myPatternComponent = createPatternComponent();
+
+    final Ref<TextFieldWithBrowseButton> testsFolderTextFieldWrapper = new Ref<TextFieldWithBrowseButton>();
+    myTestFolderComponent = createTestFolderComponent(testsFolderTextFieldWrapper);
+    myTestFolderTextField = testsFolderTextFieldWrapper.get();
+    String title = PyBundle.message("runcfg.unittest.dlg.select.folder.path");
+    PythonRunConfigurationFormUtil.addFolderChooser(title, myTestFolderTextField, myProject);
+
+    final Ref<TextFieldWithBrowseButton> testScriptTextFieldWrapper = new Ref<TextFieldWithBrowseButton>();
+    myTestScriptComponent = createScriptPathComponent(testScriptTextFieldWrapper, PyBundle.message("runcfg.unittest.dlg.folder_path"));
+    myTestScriptTextField = testScriptTextFieldWrapper.get();
+    title = PyBundle.message("runcfg.unittest.dlg.select.script.path");
+    PythonRunConfigurationFormUtil.addFileChooser(title, myTestScriptTextField, myProject);
+  }
+
+  private LabeledComponent createPatternComponent() {
+    myPatternTextField = new JTextField();
+
+    LabeledComponent<JTextField> myComponent = new LabeledComponent<JTextField>();
+    myComponent.setComponent(myPatternTextField);
+    myComponent.setText(PyBundle.message("runcfg.unittest.dlg.pattern"));
+
+    return myComponent;
   }
 
   public JPanel getAdditionalPanel() {
@@ -216,35 +263,16 @@ public class PythonTestRunConfigurationForm implements AbstractPythonTestRunConf
   public JPanel getTestsPanel() {
     return myTestsPanel;
   }
-  public JTextField getPatternComponent() {
-    return myPatternTextField;
+  public LabeledComponent getPatternComponent() {
+    return myPatternComponent;
   }
 
-  @Override
-  public boolean usePattern() {
-    return myPatternCheckBox.isSelected();
+  public LabeledComponent getTestFolderComponent() {
+    return myTestFolderComponent;
   }
 
-  @Override
-  public void usePattern(boolean usePattern) {
-    myPatternCheckBox.setSelected(usePattern);
-  }
-
-  public String getParams() {
-    return myParamTextField.getText().trim();
-  }
-
-  public JCheckBox getParamCheckBox() {
-    return myParamCheckBox;
-  }
-
-  public void setParams(String params) {
-    myParamTextField.setText(params);
-  }
-
-  public void setParamsVisible() {
-    myParamTextField.setVisible(true);
-    myParamCheckBox.setVisible(true);
+  public JRadioButton getFunctionRB() {
+    return myTestFunctionRB;
   }
 }
 
