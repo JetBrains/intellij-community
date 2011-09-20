@@ -427,6 +427,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     configure()
     assertStringItems 'final', 'finalize'
   }
+  public void testPrivateInAnonymous() throws Throwable { doTest() }
 
   public void testMethodParenthesesSpaces() throws Throwable {
     final settings = CodeStyleSettingsManager.getSettings(getProject())

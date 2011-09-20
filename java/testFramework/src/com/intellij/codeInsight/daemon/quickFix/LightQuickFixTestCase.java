@@ -35,6 +35,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.RegExp;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -303,7 +304,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
     return getAvailableActions(getEditor(), getFile());
   }
 
-  public static List<IntentionAction> getAvailableActions(final Editor editor, final PsiFile file) {
+  public static List<IntentionAction> getAvailableActions(@NotNull Editor editor, @NotNull PsiFile file) {
     return CodeInsightTestFixtureImpl.getAvailableIntentions(editor, file);
   }
 

@@ -68,7 +68,17 @@ public abstract class UsefulTestCase extends TestCase {
   private static final String ORIGINAL_TEMP_DIR = FileUtil.getTempDirectory();
   public static final String IDEA_MARKER_CLASS = "com.intellij.openapi.components.impl.stores.IdeaProjectStoreImpl";
 
-  protected final Disposable myTestRootDisposable = Disposer.newDisposable();
+  protected final Disposable myTestRootDisposable = new Disposable() {
+    @Override
+    public void dispose() {
+    }
+
+    @Override
+    public String toString() {
+      String testName = getTestName(false);
+      return UsefulTestCase.this.getClass() + (StringUtil.isEmpty(testName) ? "" : ".test" + testName);
+    }
+  };
   private CodeStyleSettings myOldCodeStyleSettings;
   private String myTempDir;
 

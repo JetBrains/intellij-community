@@ -121,6 +121,10 @@ public class UpdateHighlightersUtil {
     return false;
   }
 
+  static boolean isCoveredBy(HighlightInfo info, HighlightInfo coveredBy) {
+    return coveredBy.startOffset <= info.startOffset && info.endOffset <= coveredBy.endOffset && info.getGutterIconRenderer() == null;
+  }
+
   private static class HighlightersRecycler {
     private final MultiMap<TextRange, RangeHighlighter> incinerator = new MultiMap<TextRange, RangeHighlighter>(){
       @Override
@@ -167,10 +171,17 @@ public class UpdateHighlightersUtil {
                                                   @NotNull Map<TextRange, RangeMarker> ranges2markersCache) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (info.isFileLevelAnnotation || info.getGutterIconRenderer() != null) return;
+    if (info.getStartOffset() < startOffset || info.getEndOffset() > endOffset) return;
 
     MarkupModel markup = DocumentMarkupModel.forDocument(document, project, true);
+    final SeverityRegistrar severityRegistrar = SeverityRegistrar.getInstance(project);
+    final boolean myInfoIsError = isSevereError(info, severityRegistrar);
     Processor<HighlightInfo> otherHighlightInTheWayProcessor = new Processor<HighlightInfo>() {
       public boolean process(HighlightInfo oldInfo) {
+        if (!myInfoIsError && isSevereError(oldInfo, severityRegistrar) && isCoveredBy(info, oldInfo)) {
+          return false;
+        }
+
         return oldInfo.group != group || !oldInfo.equalsByActualOffset(info);
       }
     };
@@ -180,10 +191,7 @@ public class UpdateHighlightersUtil {
       return;
     }
 
-    if (info.getStartOffset() < startOffset || info.getEndOffset() > endOffset) return;
-
-    createOrReuseHighlighterFor(info, colorsScheme, document, group, file, (MarkupModelEx)markup, null, ranges2markersCache,
-                                SeverityRegistrar.getInstance(project));
+    createOrReuseHighlighterFor(info, colorsScheme, document, group, file, (MarkupModelEx)markup, null, ranges2markersCache, severityRegistrar);
 
     clearWhiteSpaceOptimizationFlag(document);
     assertMarkupConsistent(markup, project);
@@ -373,10 +381,10 @@ public class UpdateHighlightersUtil {
   private static boolean isWarningCoveredByError(HighlightInfo info,
                                                  Collection<HighlightInfo> overlappingIntervals,
                                                  SeverityRegistrar severityRegistrar) {
-    if (!isError(info, severityRegistrar)) {
+    if (!isSevereError(info, severityRegistrar)) {
       for (HighlightInfo overlapping : overlappingIntervals) {
-        boolean overlapIsError = isError(overlapping, severityRegistrar);
-        if (overlapIsError && DaemonCodeAnalyzerImpl.isCoveredBy(info, overlapping)) {
+        boolean overlapIsError = isSevereError(overlapping, severityRegistrar);
+        if (overlapIsError && isCoveredBy(info, overlapping)) {
           return true;
         }
       }
@@ -384,20 +392,21 @@ public class UpdateHighlightersUtil {
     return false;
   }
 
-  private static boolean isError(HighlightInfo info, SeverityRegistrar severityRegistrar) {
-    return severityRegistrar.compare(HighlightSeverity.ERROR, info.getSeverity()) <= 0;
+  private static boolean isSevereError(HighlightInfo info, SeverityRegistrar severityRegistrar) {
+    HighlightSeverity severity = info.getSeverity();
+    return severityRegistrar.compare(HighlightSeverity.ERROR, severity) <= 0 || severity == HighlightInfoType.SYMBOL_TYPE_SEVERITY;
   }
 
   // return true if changed
   private static RangeHighlighter createOrReuseHighlighterFor(@NotNull final HighlightInfo info,
-                                                  @Nullable final EditorColorsScheme colorsScheme, // if null global scheme will be used
-                                                  @NotNull final Document document,
-                                                  final int group,
-                                                  @NotNull final PsiFile psiFile,
-                                                  @NotNull MarkupModelEx markup,
-                                                  @Nullable HighlightersRecycler infosToRemove,
-                                                  @NotNull final Map<TextRange, RangeMarker> ranges2markersCache,
-                                                  SeverityRegistrar severityRegistrar) {
+                                                              @Nullable final EditorColorsScheme colorsScheme, // if null global scheme will be used
+                                                              @NotNull final Document document,
+                                                              final int group,
+                                                              @NotNull final PsiFile psiFile,
+                                                              @NotNull MarkupModelEx markup,
+                                                              @Nullable HighlightersRecycler infosToRemove,
+                                                              @NotNull final Map<TextRange, RangeMarker> ranges2markersCache,
+                                                              SeverityRegistrar severityRegistrar) {
     final int infoStartOffset = info.startOffset;
     int infoEndOffset = info.endOffset;
 

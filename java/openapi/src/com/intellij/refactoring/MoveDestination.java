@@ -15,10 +15,16 @@
  */
 package com.intellij.refactoring;
 
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPackage;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
@@ -63,4 +69,6 @@ public interface MoveDestination {
   String verify(PsiPackage source);
 
   void analyzeModuleConflicts(final Collection<PsiElement> elements, MultiMap<PsiElement,String> conflicts, final UsageInfo[] usages);
+
+  boolean isTargetAccessible(Project project, VirtualFile place);
 }

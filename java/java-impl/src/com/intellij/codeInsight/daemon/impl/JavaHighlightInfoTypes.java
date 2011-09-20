@@ -30,6 +30,5 @@ public interface JavaHighlightInfoTypes extends HighlightInfoType {
     HighlightDisplayKey.findOrRegister(UnusedImportLocalInspection.SHORT_NAME, UnusedImportLocalInspection.DISPLAY_NAME),
     CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES);
 
-  HighlightInfoType JAVA_KEYWORD = new HighlightInfoType.HighlightInfoTypeImpl(
-    HighlightSeverity.INFORMATION, SyntaxHighlighterColors.KEYWORD);
+  HighlightInfoType JAVA_KEYWORD = new HighlightInfoType.HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, SyntaxHighlighterColors.KEYWORD);
 }

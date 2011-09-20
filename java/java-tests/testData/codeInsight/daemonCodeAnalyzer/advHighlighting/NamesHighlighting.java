@@ -1,59 +1,59 @@
-import <info descr="null" type="CLASS_NAME">java.io</info>.*; // highlight on demand import as class name
+import <symbolName descr="null" type="CLASS_NAME">java.io</symbolName>.*; // highlight on demand import as class name
 
-class <info descr="null" type="CLASS_NAME">a</info> {
- void <info descr="null" type="METHOD_DECLARATION">method</info>() {
-   <info descr="null" type="METHOD_CALL">method</info>();
+class <symbolName descr="null" type="CLASS_NAME">a</symbolName> {
+ void <symbolName descr="null" type="METHOD_DECLARATION">method</symbolName>() {
+   <symbolName descr="null" type="METHOD_CALL">method</symbolName>();
 
-   new <info descr="null" type="CONSTRUCTOR_CALL">Exception</info>();
-   new <info descr="null" type="CONSTRUCTOR_CALL">java.lang.Exception</info>();
+   new <symbolName descr="null" type="CONSTRUCTOR_CALL">Exception</symbolName>();
+   new <symbolName descr="null" type="CONSTRUCTOR_CALL">java.lang.Exception</symbolName>();
  }
- <info descr="null" type="CONSTRUCTOR_DECLARATION">a</info>() {
-   new <info descr="null" type="CONSTRUCTOR_CALL">a</info>();
+ <symbolName descr="null" type="CONSTRUCTOR_DECLARATION">a</symbolName>() {
+   new <symbolName descr="null" type="CONSTRUCTOR_CALL">a</symbolName>();
  }
  
  /**
-   * @see <info descr="null" type="INTERFACE_NAME">itf</info>#<info descr="null" type="METHOD_CALL">method</info>(<info descr="null" type="JAVA_KEYWORD">double</info>)
+   * @see <symbolName descr="null" type="INTERFACE_NAME">itf</symbolName>#<symbolName descr="null" type="METHOD_CALL">method</symbolName>(double)
   */
-  static void <info descr="null" type="METHOD_DECLARATION">f</info>() {
-   <info descr="null" type="CLASS_NAME">Integer</info>.<info descr="null" type="STATIC_METHOD">parseInt</info>("");
-   <info descr="null" type="CLASS_NAME">java.lang.Integer</info>.<info descr="null" type="STATIC_METHOD">parseInt</info>("");
-   <info descr="null" type="STATIC_METHOD">f</info>();
+  static void <symbolName descr="null" type="METHOD_DECLARATION">f</symbolName>() {
+   <symbolName descr="null" type="CLASS_NAME">Integer</symbolName>.<symbolName descr="null" type="STATIC_METHOD">parseInt</symbolName>("");
+   <symbolName descr="null" type="CLASS_NAME">java.lang.Integer</symbolName>.<symbolName descr="null" type="STATIC_METHOD">parseInt</symbolName>("");
+   <symbolName descr="null" type="STATIC_METHOD">f</symbolName>();
  }
 
- interface <info descr="null" type="INTERFACE_NAME">itf</info>{
-   int <info descr="null" type="STATIC_FIELD">CONST</info> = 0;
+ interface <symbolName descr="null" type="INTERFACE_NAME">itf</symbolName>{
+   int <symbolName descr="null" type="STATIC_FIELD">CONST</symbolName> = 0;
    /** .
-     * @param <info descr="null" type="PARAMETER">d</info> Important param
+     * @param <symbolName descr="null" type="PARAMETER">d</symbolName> Important param
      */
-   void <info descr="null" type="METHOD_DECLARATION">method</info>(double <info descr="null" type="PARAMETER">d</info>);
+   void <symbolName descr="null" type="METHOD_DECLARATION">method</symbolName>(double <symbolName descr="null" type="PARAMETER">d</symbolName>);
  }
- void <info descr="null" type="METHOD_DECLARATION">ff</info>(<info descr="null" type="INTERFACE_NAME">Runnable</info> <info descr="null" type="PARAMETER">r</info>) {
-   <info descr="null" type="METHOD_CALL">ff</info>(
-    new <info descr="null" type="INTERFACE_NAME">java.lang.Runnable</info>()
+ void <symbolName descr="null" type="METHOD_DECLARATION">ff</symbolName>(<symbolName descr="null" type="INTERFACE_NAME">Runnable</symbolName> <symbolName descr="null" type="PARAMETER">r</symbolName>) {
+   <symbolName descr="null" type="METHOD_CALL">ff</symbolName>(
+    new <symbolName descr="null" type="INTERFACE_NAME">java.lang.Runnable</symbolName>()
        {
-         public void <info descr="null" type="METHOD_DECLARATION">run</info>() {}
-         int <info descr="null" type="INSTANCE_FIELD">instance</info> = 0;
+         public void <symbolName descr="null" type="METHOD_DECLARATION">run</symbolName>() {}
+         int <symbolName descr="null" type="INSTANCE_FIELD">instance</symbolName> = 0;
        }
    );
 
-   int <info descr="null" type="LOCAL_VARIABLE">i</info> = <info descr="null" type="CLASS_NAME">java.lang.Integer</info>.<info descr="null" type="STATIC_FIELD">MIN_VALUE</info>;
-   int <info descr="null" type="LOCAL_VARIABLE">j</info> = <info descr="null" type="INTERFACE_NAME">itf</info>.<info descr="null" type="STATIC_FIELD">CONST</info>;
+   int <symbolName descr="null" type="LOCAL_VARIABLE">i</symbolName> = <symbolName descr="null" type="CLASS_NAME">java.lang.Integer</symbolName>.<symbolName descr="null" type="STATIC_FIELD">MIN_VALUE</symbolName>;
+   int <symbolName descr="null" type="LOCAL_VARIABLE">j</symbolName> = <symbolName descr="null" type="INTERFACE_NAME">itf</symbolName>.<symbolName descr="null" type="STATIC_FIELD">CONST</symbolName>;
  }
 }
 
-class <info descr="null" type="CLASS_NAME">NoCtrClass</info> {
+class <symbolName descr="null" type="CLASS_NAME">NoCtrClass</symbolName> {
   {
     // default constructor call looks like class
-    new <info descr="null" type="CLASS_NAME">NoCtrClass</info>();
+    new <symbolName descr="null" type="CLASS_NAME">NoCtrClass</symbolName>();
   }
-  void <info descr="null" type="METHOD_DECLARATION">ff</info>(int <info descr="null" type="REASSIGNED_PARAMETER">param</info>) {
-    int <info descr="null" type="REASSIGNED_LOCAL_VARIABLE">i</info> = 1;
-    <info descr="null" type="REASSIGNED_LOCAL_VARIABLE">i</info> ++;
+  void <symbolName descr="null" type="METHOD_DECLARATION">ff</symbolName>(int <symbolName descr="null" type="REASSIGNED_PARAMETER">param</symbolName>) {
+    int <symbolName descr="null" type="REASSIGNED_LOCAL_VARIABLE">i</symbolName> = 1;
+    <symbolName descr="null" type="REASSIGNED_LOCAL_VARIABLE">i</symbolName> ++;
 
-    <info descr="null" type="REASSIGNED_PARAMETER">param</info> = 0;
+    <symbolName descr="null" type="REASSIGNED_PARAMETER">param</symbolName> = 0;
   }
 }
 
-class <info descr="null" type="CLASS_NAME">Generic</info><<info descr="null" type="TYPE_PARAMETER_NAME">TT</info> extends <info descr="null" type="INTERFACE_NAME">Runnable</info>> {
-  <info descr="null" type="TYPE_PARAMETER_NAME">TT</info> <info descr="null" type="INSTANCE_FIELD">field</info>;
+class <symbolName descr="null" type="CLASS_NAME">Generic</symbolName><<symbolName descr="null" type="TYPE_PARAMETER_NAME">TT</symbolName> extends <symbolName descr="null" type="INTERFACE_NAME">Runnable</symbolName>> {
+  <symbolName descr="null" type="TYPE_PARAMETER_NAME">TT</symbolName> <symbolName descr="null" type="INSTANCE_FIELD">field</symbolName>;
 }

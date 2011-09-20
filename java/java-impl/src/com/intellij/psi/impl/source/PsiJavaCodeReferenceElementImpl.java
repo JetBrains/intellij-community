@@ -743,21 +743,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
 
   public void processVariants(final PsiScopeProcessor processor) {
     final OrFilter filter = new OrFilter();
-    PsiElement superParent = getParent();
-    boolean smartCompletion = true;
-    if (isQualified()) {
-      smartCompletion = false;
-    }
-    else {
-      while (superParent != null) {
-        if (superParent instanceof PsiCodeBlock || superParent instanceof PsiLocalVariable) {
-          smartCompletion = false;
-          break;
-        }
-        superParent = superParent.getParent();
-      }
-    }
-    if (!smartCompletion && !isCodeFragmentType(getTreeParent().getElementType()) && !(getParent() instanceof PsiAnnotation)) {
+    if (isInCode()) {
       filter.addFilter(new AndFilter(ElementClassFilter.METHOD, new NotFilter(new ConstructorFilter())));
       filter.addFilter(ElementClassFilter.VARIABLE);
     }
@@ -803,6 +789,28 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     }
     final FilterScopeProcessor proc = new FilterScopeProcessor(filter, processor);
     PsiScopesUtil.resolveAndWalk(proc, this, null, true);
+  }
+
+  private boolean isInCode() {
+    if (isCodeFragmentType(getTreeParent().getElementType()) || getParent() instanceof PsiAnnotation) {
+      return false;
+    }
+
+    if (isQualified()) {
+      return true;
+    }
+
+    PsiElement superParent = getParent();
+    while (superParent != null) {
+      if (superParent instanceof PsiCodeBlock || superParent instanceof PsiLocalVariable) {
+        return true;
+      }
+      if (superParent instanceof PsiClass) {
+        return false;
+      }
+      superParent = superParent.getParent();
+    }
+    return false;
   }
 
   private void addClassFilter(final OrFilter filter) {

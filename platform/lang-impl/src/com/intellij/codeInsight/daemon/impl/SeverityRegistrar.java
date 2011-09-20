@@ -55,7 +55,7 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
   private final JDOMExternalizableStringList myOrder = new JDOMExternalizableStringList();
   private JDOMExternalizableStringList myReadOrder;
 
-  private static final Map<String, HighlightInfoType> STANDARD_SEVERITIES = new HashMap<String, HighlightInfoType>();
+  private static final Map<String, HighlightInfoType> STANDARD_SEVERITIES = new THashMap<String, HighlightInfoType>();
 
   static {
     STANDARD_SEVERITIES.put(HighlightSeverity.ERROR.toString(), HighlightInfoType.ERROR);
@@ -102,7 +102,7 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
     return collection;
   }
 
-  private SeverityBasedTextAttributes getSeverityBasedTextAttributes(HighlightInfoType type) {
+  private SeverityBasedTextAttributes getSeverityBasedTextAttributes(@NotNull HighlightInfoType type) {
     final EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     final TextAttributes textAttributes = scheme.getAttributes(type.getAttributesKey());
     if (textAttributes != null) {
@@ -169,7 +169,7 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
     myOrder.retainAll(knownSeverities);
 
     if (myOrder.isEmpty()) {
-      myOrder.addAll(getDefaultOrder());
+      myOrder.addAll(knownSeverities);
     }
     //enforce include all known
     for (int i = 0; i < knownSeverities.size(); i++) {

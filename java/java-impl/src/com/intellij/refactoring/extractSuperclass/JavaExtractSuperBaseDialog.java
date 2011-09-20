@@ -15,7 +15,6 @@
  */
 package com.intellij.refactoring.extractSuperclass;
 
-import com.intellij.ide.util.PackageUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -76,7 +75,7 @@ public abstract class JavaExtractSuperBaseDialog extends ExtractSuperBaseDialog<
     panel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
     panel.add(new JBLabel(RefactoringBundle.message("target.destination.folder")), BorderLayout.NORTH);
 
-    myDestinationFolderComboBox.setData(myProject, myTargetDirectory, sourceRoots, new Pass<String>() {
+    myDestinationFolderComboBox.setData(myProject, myTargetDirectory, new Pass<String>() {
       @Override
       public void pass(String s) {
       }

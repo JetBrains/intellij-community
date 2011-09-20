@@ -28,10 +28,13 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.RefactorJBundle;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.move.moveClassesOrPackages.DestinationFolderComboBox;
 import com.intellij.refactoring.ui.PackageNameReferenceEditorCombo;
 import com.intellij.refactoring.ui.RefactoringDialog;
+import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
 import com.intellij.util.ui.UIUtil;
@@ -64,6 +67,7 @@ class WrapReturnValueDialog extends RefactoringDialog {
   private JRadioButton myCreateInnerClassButton;
   private JTextField myInnerClassNameTextField;
   private JPanel myCreateInnerPanel;
+  private ComboboxWithBrowseButton myDestinationCb;
   private static final String RECENT_KEYS = "WrapReturnValue.RECENT_KEYS";
 
   WrapReturnValueDialog(PsiMethod sourceMethod) {
@@ -96,7 +100,8 @@ class WrapReturnValueDialog extends RefactoringDialog {
       packageName = getPackageName();
     }
     invokeRefactoring(
-      new WrapReturnValueProcessor(className, packageName, sourceMethod, useExistingClass, createInnerClass, (PsiField)myFieldsCombo.getSelectedItem()));
+      new WrapReturnValueProcessor(className, packageName, ((DestinationFolderComboBox)myDestinationCb).selectDirectory(new PackageWrapper(sourceMethod.getManager(), packageName), false),
+                                   sourceMethod, useExistingClass, createInnerClass, (PsiField)myFieldsCombo.getSelectedItem()));
   }
 
   @Override
@@ -278,5 +283,13 @@ class WrapReturnValueDialog extends RefactoringDialog {
       }
     }, "", PsiManager.getInstance(myProject), true, RECENT_KEYS);
     existingClassField.getChildComponent().getDocument().addDocumentListener(adapter);
+
+    myDestinationCb = new DestinationFolderComboBox() {
+      @Override
+      public String getTargetPackage() {
+        return getPackageName();
+      }
+    };
+    ((DestinationFolderComboBox)myDestinationCb).setData(myProject, sourceMethod.getContainingFile().getContainingDirectory(), packageTextField.getChildComponent());
   }
 }

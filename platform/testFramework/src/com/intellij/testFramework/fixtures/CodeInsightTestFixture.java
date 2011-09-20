@@ -37,6 +37,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
+import com.intellij.testFramework.HighlightTestInfo;
 import com.intellij.testFramework.TestDataFile;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Consumer;
@@ -147,6 +148,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   long testHighlighting(@NonNls String... filePaths);
 
   long testHighlighting(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, VirtualFile file);
+  HighlightTestInfo testFile(@NonNls @NotNull String... filePath);
 
   void testInspection(String testDir, InspectionTool tool);
 

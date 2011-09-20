@@ -2,7 +2,7 @@
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.refactoring.replaceConstructorWithBuilder.ReplaceConstructorWithBuilderDialog">
   <grid id="27dc6" binding="myWholePanel" layout-manager="GridBagLayout">
     <constraints>
-      <xy x="387" y="313" width="358" height="190"/>
+      <xy x="387" y="313" width="358" height="210"/>
     </constraints>
     <properties/>
     <border type="none"/>
@@ -15,7 +15,7 @@
       </hspacer>
       <vspacer id="57b6e">
         <constraints>
-          <grid row="7" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+          <grid row="8" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
           <gridbag weightx="0.0" weighty="0.0"/>
         </constraints>
       </vspacer>
@@ -30,14 +30,14 @@
       </component>
       <component id="97fc9" class="javax.swing.JRadioButton" binding="myExistingBuilderClassRadioButton">
         <constraints>
-          <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+          <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
           <gridbag top="5" left="0" bottom="0" right="0" weightx="0.0" weighty="0.0"/>
         </constraints>
         <properties>
           <text value="&amp;Use existing"/>
         </properties>
       </component>
-      <grid id="c4e05" layout-manager="GridBagLayout">
+      <grid id="c4e05" binding="myCreateNewPanel" layout-manager="GridBagLayout">
         <constraints>
           <grid row="2" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
           <gridbag top="5" left="20" bottom="0" right="0" weightx="0.0" weighty="0.0"/>
@@ -80,11 +80,27 @@
               <text value="&amp;Package for new builder"/>
             </properties>
           </component>
+          <component id="bb743" class="javax.swing.JLabel">
+            <constraints>
+              <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+              <gridbag weightx="0.0" weighty="0.0"/>
+            </constraints>
+            <properties>
+              <text resource-bundle="messages/RefactoringBundle" key="target.destination.folder"/>
+            </properties>
+          </component>
+          <component id="3e899" class="com.intellij.ui.ComboboxWithBrowseButton" binding="myDestinationCb" custom-create="true">
+            <constraints>
+              <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+              <gridbag weightx="1.0" weighty="0.0"/>
+            </constraints>
+            <properties/>
+          </component>
         </children>
       </grid>
       <grid id="414f6" layout-manager="GridBagLayout">
         <constraints>
-          <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+          <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
           <gridbag top="5" left="20" bottom="0" right="0" weightx="1.0" weighty="0.0"/>
         </constraints>
         <properties/>

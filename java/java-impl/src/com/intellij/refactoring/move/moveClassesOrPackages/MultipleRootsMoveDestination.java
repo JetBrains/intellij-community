@@ -16,6 +16,7 @@
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.refactoring.PackageWrapper;
@@ -93,6 +94,11 @@ public class MultipleRootsMoveDestination extends AutocreatingMoveDestination {
 
   public void analyzeModuleConflicts(final Collection<PsiElement> elements,
                                      MultiMap<PsiElement,String> conflicts, final UsageInfo[] usages) {
+  }
+
+  @Override
+  public boolean isTargetAccessible(Project project, VirtualFile place) {
+    return true;
   }
 
   public PsiDirectory getTargetIfExists(PsiDirectory source) {

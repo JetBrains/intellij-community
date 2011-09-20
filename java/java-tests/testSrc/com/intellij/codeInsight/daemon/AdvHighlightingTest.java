@@ -101,7 +101,7 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
     scheme.setAttributes(utilKey, utilAttributes);
 
     try {
-      doTest(BASE_PATH+"/scopeBased/x/X.java", BASE_PATH+"/scopeBased", false, true);
+      testFile(BASE_PATH + "/scopeBased/x/X.java").projectRoot(BASE_PATH + "/scopeBased").checkSymbolNames().test();
     }
     finally {
       scopeManager.removeAllSets();
@@ -132,7 +132,7 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
     scheme.setAttributes(projectKey, projectAttributes);
 
     try {
-      doTest(BASE_PATH+"/scopeBased/x/Shared.java", BASE_PATH+"/scopeBased", false, true);
+      testFile(BASE_PATH+"/scopeBased/x/Shared.java").projectRoot(BASE_PATH+"/scopeBased").checkSymbolNames().test();
     }
     finally {
       scopeManager.removeAllSets();

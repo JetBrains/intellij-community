@@ -29,12 +29,15 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.move.moveClassesOrPackages.DestinationFolderComboBox;
 import com.intellij.refactoring.ui.PackageNameReferenceEditorCombo;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.*;
 import com.intellij.util.ui.Table;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -59,6 +62,8 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
   private JTextField myNewClassName;
   private ReferenceEditorComboWithBrowseButton  myPackageTextField;
   private ReferenceEditorComboWithBrowseButton myExistentClassTF;
+  private ComboboxWithBrowseButton myDestinationCb;
+  private JPanel myCreateNewPanel;
 
   private static final Logger LOG = Logger.getInstance("#" + ReplaceConstructorWithBuilderDialog.class.getName());
   private final LinkedHashMap<String, ParameterData> myParametersMap;
@@ -99,6 +104,7 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
       if (builderClass != null && !CommonRefactoringUtil.checkReadOnlyStatus(myProject, builderClass)) return;
     }
     invokeRefactoring(new ReplaceConstructorWithBuilderProcessor(getProject(), myConstructors, myParametersMap, className, packageName,
+                                                                 ((DestinationFolderComboBox)myDestinationCb).selectDirectory(new PackageWrapper(myConstructors[0].getManager(), packageName), false),
                                                                  myCreateBuilderClassRadioButton.isSelected()));
   }
 
@@ -139,8 +145,7 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
   }
 
   private void setEnabled(final boolean createNew) {
-    myNewClassName.setEnabled(createNew);
-    myPackageTextField.setEnabled(createNew);
+    UIUtil.setEnabled(myCreateNewPanel, createNew, true);
     myExistentClassTF.setEnabled(!createNew);
   }
 
@@ -222,6 +227,13 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
       new PackageNameReferenceEditorCombo(((PsiJavaFile)myConstructors[0].getContainingFile()).getPackageName(), myProject, RECENT_KEYS, RefactoringBundle.message("choose.destination.package"));
     myPackageTextField.getChildComponent().getDocument().addDocumentListener(adapter);
 
+    myDestinationCb = new DestinationFolderComboBox() {
+      @Override
+      public String getTargetPackage() {
+        return myPackageTextField.getText().trim();
+      }
+    };
+    ((DestinationFolderComboBox)myDestinationCb).setData(myProject, myConstructors[0].getContainingFile().getContainingDirectory(), myPackageTextField.getChildComponent());
 
     myExistentClassTF = new ReferenceEditorComboWithBrowseButton(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
