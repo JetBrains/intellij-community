@@ -102,7 +102,9 @@ public class JavaAutoImportOptions implements AutoImportOptionsProvider {
     if (packageName == null) {
       return;
     }
-    int index = myExcludePackagesModel.size();
+    int index = -Arrays.binarySearch(myExcludePackagesModel.toArray(), packageName) - 1;
+    if (index < 0) return;
+    
     myExcludePackagesModel.add(index, packageName);
     myExcludePackagesList.setSelectedValue(packageName, true);
     ListScrollingUtil.ensureIndexIsVisible(myExcludePackagesList, index, 0);
@@ -167,6 +169,7 @@ public class JavaAutoImportOptions implements AutoImportOptionsProvider {
     for (int i = 0; i < myExcludePackagesModel.size(); i++) {
       excludedPackages [i] = (String)myExcludePackagesModel.elementAt(i);
     }
+    Arrays.sort(excludedPackages);
     return excludedPackages;
   }
 
