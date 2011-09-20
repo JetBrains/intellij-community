@@ -3,6 +3,7 @@ package com.jetbrains.python.testing.nosetest;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParamsGroup;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.testing.PythonTestCommandLineStateBase;
 
@@ -51,7 +52,7 @@ public class PythonNoseTestCommandLineState extends PythonTestCommandLineStateBa
       default:
         throw new IllegalArgumentException("Unknown test type: " + myConfig.getTestType());
     }
-    if (!myConfig.getParams().isEmpty())
+    if (myConfig.useParam() && !StringUtil.isEmptyOrSpaces(myConfig.getParams()))
         specs.add(myConfig.getParams());
     return specs;
   }

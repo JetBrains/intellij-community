@@ -61,7 +61,7 @@ public class PythonUnitTestCommandLineState extends
         specs.add(myConfig.getScriptName() + "::" + myConfig.getClassName() + "::" + myConfig.getMethodName());
         break;
       case TEST_FOLDER:
-        if (!StringUtil.isEmpty(myConfig.getPattern())) {
+        if (!StringUtil.isEmpty(myConfig.getPattern()) && myConfig.usePattern()) {
           specs.add(myConfig.getFolderName() + "/" + ";" + myConfig.getPattern());
         }
         else {

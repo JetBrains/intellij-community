@@ -20,6 +20,8 @@ public class PythonNoseTestRunConfiguration extends AbstractPythonTestRunConfigu
                                           implements PythonNoseTestRunConfigurationParams {
   private String myParams = ""; // parameters for nosetests
   protected String myTitle = "Nosetests";
+  private boolean useParam = false;
+
   public PythonNoseTestRunConfiguration(RunConfigurationModule module,
                                         ConfigurationFactory configurationFactory,
                                         String name) {
@@ -40,12 +42,14 @@ public class PythonNoseTestRunConfiguration extends AbstractPythonTestRunConfigu
   public void readExternal(Element element) throws InvalidDataException {
     super.readExternal(element);
     myParams = JDOMExternalizerUtil.readField(element, "PARAMS");
+    useParam = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, "USE_PARAM"));
   }
 
   @Override
   public void writeExternal(Element element) throws WriteExternalException {
     super.writeExternal(element);
     JDOMExternalizerUtil.writeField(element, "PARAMS", myParams);
+    JDOMExternalizerUtil.writeField(element, "USE_PARAM", String.valueOf(useParam));
   }
 
   @Override
@@ -60,6 +64,7 @@ public class PythonNoseTestRunConfiguration extends AbstractPythonTestRunConfigu
   public static void copyParams(PythonNoseTestRunConfigurationParams source, PythonNoseTestRunConfigurationParams target) {
     AbstractPythonTestRunConfiguration.copyParams(source.getTestRunConfigurationParams(), target.getTestRunConfigurationParams());
     target.setParams(source.getParams());
+    target.useParam(source.useParam());
   }
 
   public String getParams() {
@@ -75,5 +80,13 @@ public class PythonNoseTestRunConfiguration extends AbstractPythonTestRunConfigu
     super.checkConfiguration();
     if (!PyTestFrameworksUtil.isNoseTestInstalled(getProject(), getSdkHome()))
       throw new RuntimeConfigurationError("No nosetest runner found in selected interpreter");
+  }
+
+  public boolean useParam() {
+    return useParam;
+  }
+
+  public void useParam(boolean useParam) {
+    this.useParam = useParam;
   }
 }

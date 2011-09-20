@@ -6,7 +6,6 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.jetbrains.python.testing.AbstractPythonTestRunConfiguration;
 import com.jetbrains.python.testing.PyTestFrameworksUtil;
@@ -18,7 +17,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PythonAtTestRunConfiguration extends AbstractPythonTestRunConfiguration
                                           implements PythonAtTestRunConfigurationParams {
-  private String myPattern = ""; // pattern for modules in folder to match against
   protected String myTitle = "Attests";
   public PythonAtTestRunConfiguration(RunConfigurationModule module,
                                       ConfigurationFactory configurationFactory,
@@ -44,13 +42,11 @@ public class PythonAtTestRunConfiguration extends AbstractPythonTestRunConfigura
   @Override
   public void readExternal(Element element) throws InvalidDataException {
     super.readExternal(element);
-    myPattern = JDOMExternalizerUtil.readField(element, "PATTERN");
   }
 
   @Override
   public void writeExternal(Element element) throws WriteExternalException {
     super.writeExternal(element);
-    JDOMExternalizerUtil.writeField(element, "PATTERN", myPattern);
   }
 
   @Override
@@ -60,15 +56,6 @@ public class PythonAtTestRunConfiguration extends AbstractPythonTestRunConfigura
 
   public static void copyParams(PythonAtTestRunConfigurationParams source, PythonAtTestRunConfigurationParams target) {
     copyParams(source.getTestRunConfigurationParams(), target.getTestRunConfigurationParams());
-    target.setPattern(source.getPattern());
-  }
-
-  public String getPattern() {
-    return myPattern;
-  }
-
-  public void setPattern(String pattern) {
-    myPattern = pattern;
   }
 
   @Override

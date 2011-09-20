@@ -40,6 +40,8 @@ public abstract class AbstractPythonTestRunConfiguration extends AbstractPythonR
   protected TestType myTestType = TestType.TEST_SCRIPT;
 
   private String myShortScriptName = "";
+  private String myPattern = ""; // pattern for modules in folder to match against
+  private boolean usePattern = false;
 
   protected AbstractPythonTestRunConfiguration(RunConfigurationModule module, ConfigurationFactory configurationFactory, String name) {
     super(name, module, configurationFactory);
@@ -52,6 +54,9 @@ public abstract class AbstractPythonTestRunConfiguration extends AbstractPythonR
     myClassName = JDOMExternalizerUtil.readField(element, "CLASS_NAME");
     myMethodName = JDOMExternalizerUtil.readField(element, "METHOD_NAME");
     myFolderName = JDOMExternalizerUtil.readField(element, "FOLDER_NAME");
+
+    myPattern = JDOMExternalizerUtil.readField(element, "PATTERN");
+    usePattern = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, "USE_PATTERN"));
 
     try {
       final String testType = JDOMExternalizerUtil.readField(element, "TEST_TYPE");
@@ -71,6 +76,8 @@ public abstract class AbstractPythonTestRunConfiguration extends AbstractPythonR
     JDOMExternalizerUtil.writeField(element, "METHOD_NAME", myMethodName);
     JDOMExternalizerUtil.writeField(element, "FOLDER_NAME", myFolderName);
     JDOMExternalizerUtil.writeField(element, "TEST_TYPE", myTestType.toString());
+    JDOMExternalizerUtil.writeField(element, "PATTERN", myPattern);
+    JDOMExternalizerUtil.writeField(element, "USE_PATTERN", String.valueOf(usePattern));
   }
 
   public AbstractPythonRunConfigurationParams getBaseParams() {
@@ -118,6 +125,22 @@ public abstract class AbstractPythonTestRunConfiguration extends AbstractPythonR
 
   public void setShortName(String name) {
     myShortScriptName = name;
+  }
+
+  public String getPattern() {
+    return myPattern;
+  }
+
+  public void setPattern(String pattern) {
+    myPattern = pattern;
+  }
+
+  public boolean usePattern() {
+    return usePattern;
+  }
+
+  public void usePattern(boolean usePattern) {
+    this.usePattern = usePattern;
   }
 
   public enum TestType {
@@ -184,6 +207,8 @@ public abstract class AbstractPythonTestRunConfiguration extends AbstractPythonR
     target.setFolderName(source.getFolderName());
     target.setMethodName(source.getMethodName());
     target.setTestType(source.getTestType());
+    target.setPattern(source.getPattern());
+    target.usePattern(source.usePattern());
   }
 
   public AbstractPythonTestRunConfigurationParams getTestRunConfigurationParams() {

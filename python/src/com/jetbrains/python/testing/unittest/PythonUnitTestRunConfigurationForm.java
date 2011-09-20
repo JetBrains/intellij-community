@@ -2,12 +2,12 @@ package com.jetbrains.python.testing.unittest;
 
 import com.intellij.openapi.project.Project;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.testing.AbstractPythonTestRunConfiguration;
 import com.jetbrains.python.testing.AbstractPythonTestRunConfigurationParams;
 import com.jetbrains.python.testing.PythonTestRunConfigurationForm;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
+import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -28,22 +28,12 @@ public class PythonUnitTestRunConfigurationForm implements PythonUnitTestRunConf
     myIsPureUnittest = new JCheckBox("Inspect only subclasses of unittest.TestCase");
     myIsPureUnittest.setSelected(configuration.isPureUnittest());
 
-    final JRadioButton functionRB = myTestRunConfigurationForm.getFunctionRB();
-    functionRB.setEnabled(!myIsPureUnittest.isSelected());
-
-    myIsPureUnittest.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        functionRB.setEnabled(!myIsPureUnittest.isSelected());
+    final ActionListener testTypeListener = new ActionListener() {
+      public void actionPerformed(final ActionEvent e) {
+        myIsPureUnittest.setVisible(myTestRunConfigurationForm.getTestType() != AbstractPythonTestRunConfiguration.TestType.TEST_FUNCTION);
       }
-    });
-
-    functionRB.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(ChangeEvent e) {
-        myIsPureUnittest.setEnabled(!functionRB.isSelected());
-      }
-    });
+    };
+    myTestRunConfigurationForm.addTestTypeListener(testTypeListener);
 
     myIsPureUnittest.addActionListener(new ActionListener() {
       @Override
@@ -52,16 +42,16 @@ public class PythonUnitTestRunConfigurationForm implements PythonUnitTestRunConf
       }
     });
     myTestRunConfigurationForm.getAdditionalPanel().add(myIsPureUnittest);
-    myTestRunConfigurationForm.setConfigurationName(
-      PyBundle.message("runcfg.unittest.display_name"));
-    myRootPanel.add(myTestRunConfigurationForm.getPanel(), BorderLayout.CENTER);
-  }
-  public String getPattern() {
-    return myTestRunConfigurationForm.getPattern();
-  }
+    TitledBorder border = (TitledBorder)myTestRunConfigurationForm.getTestsPanel().getBorder();
+    border.setTitle(PyBundle.message("runcfg.unittest.display_name"));
 
-  public void setPattern(String pattern) {
-    myTestRunConfigurationForm.setPattern(pattern);
+    myTestRunConfigurationForm.addTestTypeListener(new ActionListener() {
+      public void actionPerformed(final ActionEvent e) {
+        myTestRunConfigurationForm.setPatternVisible(myTestRunConfigurationForm.getTestType() == AbstractPythonTestRunConfiguration.TestType.TEST_FOLDER);
+      }
+    });
+
+    myRootPanel.add(myTestRunConfigurationForm.getPanel(), BorderLayout.CENTER);
   }
 
   @Override
