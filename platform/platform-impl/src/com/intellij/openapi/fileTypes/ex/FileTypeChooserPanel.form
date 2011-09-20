@@ -25,13 +25,15 @@
           <text resource-bundle="messages/FileTypesBundle" key="filetype.chooser.file.pattern"/>
         </properties>
       </component>
-      <component id="ec3da" class="javax.swing.JTextField" binding="myPattern">
+      <component id="ec3da" class="com.intellij.openapi.ui.ComboBox" binding="myPattern">
         <constraints>
           <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
             <preferred-size width="150" height="-1"/>
           </grid>
         </constraints>
-        <properties/>
+        <properties>
+          <editable value="true"/>
+        </properties>
       </component>
       <scrollpane class="com.intellij.ui.components.JBScrollPane" id="f588b">
         <constraints>
