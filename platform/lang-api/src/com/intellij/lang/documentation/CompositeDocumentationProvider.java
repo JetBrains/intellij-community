@@ -20,6 +20,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -74,6 +75,29 @@ public class CompositeDocumentationProvider implements DocumentationProvider, Ex
     }
     
     return false;
+  }
+
+  @Override
+  public boolean canFetchDocumentationLink(String link) {
+    for (DocumentationProvider provider : myProviders) {
+      if (provider instanceof ExternalDocumentationHandler && ((ExternalDocumentationHandler)provider).canFetchDocumentationLink(link)) {
+        return true;
+      }
+    }
+    
+    return false;
+  }
+
+  @NotNull
+  @Override
+  public String fetchExternalDocumentation(String link, Project project) {
+    for (DocumentationProvider provider : myProviders) {
+      if (provider instanceof ExternalDocumentationHandler && ((ExternalDocumentationHandler)provider).canFetchDocumentationLink(link)) {
+        return ((ExternalDocumentationHandler)provider).fetchExternalDocumentation(link, project);
+      }
+    }
+    
+    throw new IllegalStateException("Unable to find a provider to fetch documentation link!");
   }
 
   public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {

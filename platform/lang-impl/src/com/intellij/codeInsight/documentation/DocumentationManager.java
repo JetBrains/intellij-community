@@ -837,7 +837,7 @@ public class DocumentationManager {
     return originalElementPointer != null ? originalElementPointer.getElement() : null;
   }
 
-  void navigateByLink(final DocumentationComponent component, String url) {
+  void navigateByLink(final DocumentationComponent component, final String url) {
     component.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
     final PsiElement psiElement = component.getElement();
     final PsiManager manager = PsiManager.getInstance(getProject(psiElement));
@@ -863,9 +863,26 @@ public class DocumentationManager {
       boolean processed = false;
       if (provider instanceof CompositeDocumentationProvider) {
         for (DocumentationProvider documentationProvider : ((CompositeDocumentationProvider)provider).getProviders()) {
-          if (documentationProvider instanceof ExternalDocumentationHandler && ((ExternalDocumentationHandler)documentationProvider).handleExternalLink(manager, url, psiElement)) {
-            processed = true;
-            break;
+          if (documentationProvider instanceof ExternalDocumentationHandler) {
+            final ExternalDocumentationHandler externalDocumentationHandler = (ExternalDocumentationHandler)documentationProvider;
+            if (externalDocumentationHandler.canFetchDocumentationLink(url)) {
+              fetchDocInfo(new DocumentationCollector() {
+                @Override
+                public String getDocumentation() throws Exception {
+                  return externalDocumentationHandler.fetchExternalDocumentation(url, myProject);
+                }
+
+                @Override
+                public PsiElement getElement() {
+                  return psiElement;
+                }
+              }, component);
+              processed = true;
+            }
+            else if (externalDocumentationHandler.handleExternalLink(manager, url, psiElement)) {
+              processed = true;
+              break;
+            }
           }
         }
       }
