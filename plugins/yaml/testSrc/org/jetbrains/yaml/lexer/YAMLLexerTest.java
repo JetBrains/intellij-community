@@ -159,4 +159,10 @@ public class YAMLLexerTest extends LexerTestCase {
            "  - name: created_at\n" +
            "    direction: desc");
   }
+
+  public void testKeydots(){
+    doTest("my.testevent.pre:\n" +
+           "  type:     sfEvent");
+
+  }
 }
