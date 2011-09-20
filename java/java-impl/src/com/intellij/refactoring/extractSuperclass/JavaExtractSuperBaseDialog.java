@@ -16,20 +16,28 @@
 package com.intellij.refactoring.extractSuperclass;
 
 import com.intellij.ide.util.PackageUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.refactoring.MoveDestination;
+import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.move.moveClassesOrPackages.DestinationFolderComboBox;
 import com.intellij.refactoring.ui.PackageNameReferenceEditorCombo;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.ui.EditorComboBox;
+import com.intellij.ui.components.JBLabel;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.List;
 
 /**
@@ -37,10 +45,17 @@ import java.util.List;
  */
 public abstract class JavaExtractSuperBaseDialog extends ExtractSuperBaseDialog<PsiClass, MemberInfo> {
   private static final String DESTINATION_PACKAGE_RECENT_KEY = "ExtractSuperBase.RECENT_KEYS";
+  protected final DestinationFolderComboBox myDestinationFolderComboBox;
 
 
   public JavaExtractSuperBaseDialog(Project project, PsiClass sourceClass, List<MemberInfo> members, String refactoringName) {
     super(project, sourceClass, members, refactoringName);
+    myDestinationFolderComboBox = new DestinationFolderComboBox() {
+      @Override
+      public String getTargetPackage() {
+        return getTargetPackageName();
+      }
+    };
   }
 
   protected ComponentWithBrowseButton<EditorComboBox> createPackageNameField() {
@@ -51,6 +66,23 @@ public abstract class JavaExtractSuperBaseDialog extends ExtractSuperBaseDialog<
     }
     return new PackageNameReferenceEditorCombo(name, myProject, DESTINATION_PACKAGE_RECENT_KEY,
                                                              RefactoringBundle.message("choose.destination.package"));
+  }
+
+  @Override
+  protected JPanel createDestinationRootPanel() {
+    final VirtualFile[] sourceRoots = ProjectRootManager.getInstance(myProject).getContentSourceRoots();
+    if (sourceRoots.length <= 1) return super.createDestinationRootPanel();
+    final JPanel panel = new JPanel(new BorderLayout());
+    panel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
+    panel.add(new JBLabel(RefactoringBundle.message("target.destination.folder")), BorderLayout.NORTH);
+
+    myDestinationFolderComboBox.setData(myProject, myTargetDirectory, sourceRoots, new Pass<String>() {
+      @Override
+      public void pass(String s) {
+      }
+    }, ((PackageNameReferenceEditorCombo)myPackageNameField).getChildComponent());
+    panel.add(myDestinationFolderComboBox, BorderLayout.CENTER);
+    return panel;
   }
 
   @Override
@@ -91,8 +123,18 @@ public abstract class JavaExtractSuperBaseDialog extends ExtractSuperBaseDialog<
         myTargetDirectory = getDirUnderSameSourceRoot(directories);
       }
     }
-    myTargetDirectory
-      = PackageUtil.findOrCreateDirectoryForPackage(myProject, getTargetPackageName(), myTargetDirectory, true);
+    
+    final MoveDestination moveDestination =
+      myDestinationFolderComboBox.selectDirectory(new PackageWrapper(PsiManager.getInstance(myProject), getTargetPackageName()), false);
+    if (moveDestination == null) return;
+
+    myTargetDirectory = ApplicationManager.getApplication().runWriteAction(new Computable<PsiDirectory>() {
+      @Override
+      public PsiDirectory compute() {
+        return moveDestination.getTargetDirectory(myTargetDirectory);
+      }
+    });
+
     if (myTargetDirectory == null) {
       throw new OperationFailedException(""); // message already reported by PackageUtil
     }

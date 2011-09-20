@@ -15,14 +15,11 @@
  */
 package com.intellij.refactoring.copy;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pass;
 import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
@@ -75,13 +72,13 @@ class CopyClassDialog extends DialogWrapper{
                   RefactoringBundle.message("copy.class.copy.0.1", UsageViewUtil.getType(aClass), UsageViewUtil.getLongName(aClass));
     myInformationLabel.setText(text);
     init();
-    myDestinationCB.setData(myProject, myTfPackage, defaultTargetDirectory, ProjectRootManager.getInstance(myProject).getContentSourceRoots(),
+    myDestinationCB.setData(myProject, defaultTargetDirectory, ProjectRootManager.getInstance(myProject).getContentSourceRoots(),
                             new Pass<String>() {
                               @Override
                               public void pass(String s) {
                                 setErrorText(s);
                               }
-                            });
+                            }, myTfPackage.getChildComponent());
     myNameField.setText(UsageViewUtil.getShortName(aClass));
   }
 
