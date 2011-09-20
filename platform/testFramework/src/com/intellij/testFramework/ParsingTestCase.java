@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.options.SchemesManagerFactory;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
@@ -49,10 +50,7 @@ import com.intellij.util.Function;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusFactory;
 import org.jetbrains.annotations.NonNls;
-import org.picocontainer.MutablePicoContainer;
-import org.picocontainer.PicoContainer;
-import org.picocontainer.PicoInitializationException;
-import org.picocontainer.PicoIntrospectionException;
+import org.picocontainer.*;
 import org.picocontainer.defaults.AbstractComponentAdapter;
 
 import java.io.File;
@@ -80,16 +78,19 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
   protected void setUp() throws Exception {
     super.setUp();
     initApplication();
-    getApplication().getPicoContainer().registerComponent(new AbstractComponentAdapter("com.intellij.openapi.progress.ProgressManager", Object.class) {
-      @Override
-      public Object getComponentInstance(PicoContainer container) throws PicoInitializationException, PicoIntrospectionException {
-        return new ProgressManagerImpl(getApplication());
-      }
+    ComponentAdapter component = getApplication().getPicoContainer().getComponentAdapter(ProgressManager.class.getName());
+    if (component == null) {
+      getApplication().getPicoContainer().registerComponent(new AbstractComponentAdapter(ProgressManager.class.getName(), Object.class) {
+        @Override
+        public Object getComponentInstance(PicoContainer container) throws PicoInitializationException, PicoIntrospectionException {
+          return new ProgressManagerImpl(getApplication());
+        }
 
-      @Override
-      public void verify(PicoContainer container) throws PicoIntrospectionException {
-      }
-    });
+        @Override
+        public void verify(PicoContainer container) throws PicoIntrospectionException {
+        }
+      });
+    }
     myProject = disposeOnTearDown(new MockProjectEx());
     myPsiManager = new MockPsiManager(myProject);
     myFileFactory = new PsiFileFactoryImpl(myPsiManager);
