@@ -544,6 +544,7 @@
                            implementationClass="com.jetbrains.jinja2.parsing.Jinja2ParserDefinition"/>
     <lang.fileViewProviderFactory language="Jinja2"
                                   implementationClass="com.jetbrains.jinja2.Jinja2FileViewProviderFactory"/>
+    <annotator language="Jinja2" implementationClass="com.jetbrains.jinja2.highlighting.Jinja2Annotator"/>
   </extensions>
 
   <extensionPoints>
