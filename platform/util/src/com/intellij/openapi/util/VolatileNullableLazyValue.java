@@ -20,15 +20,15 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author peter
  */
-public abstract class NullableLazyValue<T> {
-  private boolean myComputed;
-  @Nullable private T myValue;
+public abstract class VolatileNullableLazyValue<T> extends NullableLazyValue<T> {
+  private volatile boolean myComputed;
+  @Nullable private volatile T myValue;
 
   @Nullable
   protected abstract T compute();
 
   @Nullable
-  public T getValue() {
+  public final T getValue() {
     if (!myComputed) {
       myValue = compute();
       myComputed = true;
