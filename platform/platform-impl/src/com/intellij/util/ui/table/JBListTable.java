@@ -55,15 +55,8 @@ public abstract class JBListTable extends JPanel {
       @Override
       protected void processKeyEvent(KeyEvent e) {
         if (e.isAltDown()) return;
-        if (e.getKeyCode() == KeyEvent.VK_ENTER && e.getModifiers() == 0) {
-          if (!isEditing() && e.getID() == KeyEvent.KEY_PRESSED) {
-            editCellAt(getSelectedRow(), getSelectedColumn());
-          }
-          e.consume();
-          return;
-        }
         //todo[kb] JBTabsImpl breaks focus traversal policy. Need a workaround here
-        else if (e.getKeyCode() == KeyEvent.VK_TAB) {
+        if (e.getKeyCode() == KeyEvent.VK_TAB) {
           if (e.getID() == KeyEvent.KEY_PRESSED) {
             final KeyboardFocusManager keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
             if (e.isShiftDown()) {
@@ -91,6 +84,17 @@ public abstract class JBListTable extends JPanel {
 
       @Override
       protected boolean processKeyBinding(KeyStroke ks, KeyEvent e, int condition, boolean pressed) {
+        if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+          if (!isEditing() && e.getID() == KeyEvent.KEY_PRESSED && e.getModifiers() == 0) {
+            editCellAt(getSelectedRow(), getSelectedColumn());
+          } else if (isEditing() && e.getID() == KeyEvent.KEY_PRESSED && (e.isControlDown() || e.isMetaDown())) {
+            TableUtil.stopEditing(this);
+            return false;
+          }
+          e.consume();
+          return true;
+        }
+
         if (isEditing() && e.getKeyCode() == KeyEvent.VK_TAB) {
           if (pressed) {
             final KeyboardFocusManager mgr = KeyboardFocusManager.getCurrentKeyboardFocusManager();
