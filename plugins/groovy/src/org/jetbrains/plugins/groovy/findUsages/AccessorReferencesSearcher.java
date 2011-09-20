@@ -21,9 +21,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.UsageSearchContext;
+import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
@@ -39,11 +42,22 @@ public class AccessorReferencesSearcher extends QueryExecutorBase<PsiReference, 
   @Override
   public void processQuery(@NotNull ReferencesSearch.SearchParameters queryParameters, @NotNull Processor<PsiReference> consumer) {
     final PsiElement element = queryParameters.getElementToSearch();
-    if (!(element instanceof PsiMethod)) return;
+    if (element instanceof PsiMethod) {
+      final String propertyName = GroovyPropertyUtils.getPropertyName((PsiMethod)element);
+      if (propertyName == null) return;
 
-    final String propertyName = GroovyPropertyUtils.getPropertyName((PsiMethod)element);
-    if (propertyName == null) return;
+      queryParameters.getOptimizer().searchWord(propertyName, PsiUtil.restrictScopeToGroovyFiles(queryParameters.getScope()),
+                                                UsageSearchContext.IN_CODE, true, element);
+    }
+    else if (element instanceof GrField) {
+      for (GrAccessorMethod method : ((GrField)element).getGetters()) {
+        MethodReferencesSearch.search(method, queryParameters.getScope(), true).forEach(consumer);
+      }
 
-    queryParameters.getOptimizer().searchWord(propertyName, PsiUtil.restrictScopeToGroovyFiles(queryParameters.getScope()), UsageSearchContext.IN_CODE, true, element);
+      final GrAccessorMethod setter = ((GrField)element).getSetter();
+      if (setter != null) {
+        MethodReferencesSearch.search(setter, queryParameters.getScope(), true).forEach(consumer);
+      }
+    }
   }
 }

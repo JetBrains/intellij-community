@@ -16,9 +16,7 @@
 package org.jetbrains.plugins.groovy.findUsages;
 
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -49,19 +47,38 @@ public class GroovyReadWriteAccessDetector extends ReadWriteAccessDetector{
 
   @Override
   public Access getExpressionAccess(PsiElement expression) {
-    if (!(expression instanceof GrExpression)) return Access.Read;
-    GrExpression expr = (GrExpression) expression;
-    boolean readAccess = PsiUtil.isAccessedForReading(expr);
-    boolean writeAccess = PsiUtil.isAccessedForWriting(expr);
-    if (!writeAccess && expr instanceof GrReferenceExpression) {
-      //when searching usages of fields, should show all found setters as a "only write usage"
-      PsiElement actualReferee = ((GrReferenceExpression) expr).resolve();
-      if (actualReferee instanceof PsiMethod && GroovyPropertyUtils.isSimplePropertySetter((PsiMethod)actualReferee)) {
-        writeAccess = true;
-        readAccess = false;
+    if (expression instanceof GrExpression) {
+      GrExpression expr = (GrExpression)expression;
+      boolean readAccess = PsiUtil.isAccessedForReading(expr);
+      boolean writeAccess = PsiUtil.isAccessedForWriting(expr);
+      if (!writeAccess && expr instanceof GrReferenceExpression) {
+        //when searching usages of fields, should show all found setters as a "only write usage"
+        PsiElement actualReferee = ((GrReferenceExpression)expr).resolve();
+        if (actualReferee instanceof PsiMethod && GroovyPropertyUtils.isSimplePropertySetter((PsiMethod)actualReferee)) {
+          writeAccess = true;
+          readAccess = false;
+        }
       }
+      if (writeAccess && readAccess) return Access.ReadWrite;
+      return writeAccess ? Access.Write : Access.Read;
     }
-    if (writeAccess && readAccess) return Access.ReadWrite;
-    return writeAccess ? Access.Write : Access.Read;
+    else if (expression instanceof PsiExpression) {
+      PsiExpression expr = (PsiExpression)expression;
+      boolean readAccess = com.intellij.psi.util.PsiUtil.isAccessedForReading(expr);
+      boolean writeAccess = com.intellij.psi.util.PsiUtil.isAccessedForWriting(expr);
+      if (!writeAccess && expr instanceof PsiReferenceExpression) {
+        //when searching usages of fields, should show all found setters as a "only write usage"
+        PsiElement actualReferee = ((PsiReferenceExpression)expr).resolve();
+        if (actualReferee instanceof PsiMethod && GroovyPropertyUtils.isSimplePropertySetter((PsiMethod)actualReferee)) {
+          writeAccess = true;
+          readAccess = false;
+        }
+      }
+      if (writeAccess && readAccess) return Access.ReadWrite;
+      return writeAccess ? Access.Write : Access.Read;
+    }
+    else {
+      return Access.Read;
+    }
   }
 }
