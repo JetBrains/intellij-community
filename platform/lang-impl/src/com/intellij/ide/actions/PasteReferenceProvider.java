@@ -117,9 +117,9 @@ public class PasteReferenceProvider implements PasteProvider {
     Producer<Transferable> transferableProducer = (Producer<Transferable>)dataContext.getData(PasteHandler.TRANSFERABLE_PROVIDER);
     if (transferableProducer != null) {
       transferable = transferableProducer.produce();
-      if (transferable == null) {
-        transferable = CopyPasteManager.getInstance().getContents();
-      }
+    }
+    if (transferable == null) {
+      transferable = CopyPasteManager.getInstance().getContents();
     }
 
     if (transferable == null) return null;
