@@ -29,7 +29,6 @@ import java.awt.*;
 public class LocalConnectionSettingsPanel {
   private TextFieldWithBrowseButton myPathToCvsClient;
   private JPanel myPanel;
-  private JTextField myServerCommand;
 
   public LocalConnectionSettingsPanel() {
     myPathToCvsClient.addBrowseFolderListener(CvsBundle.message("dialog.title.select.path.to.cvs.client"),
@@ -39,18 +38,14 @@ public class LocalConnectionSettingsPanel {
 
   public void updateFrom(LocalSettings localConfiguration) {
     myPathToCvsClient.setText(localConfiguration.PATH_TO_CVS_CLIENT);
-    myServerCommand.setText(localConfiguration.SERVER_COMMAND);
   }
 
   public boolean equalsTo(LocalSettings local_configuration) {
-    return
-      myPathToCvsClient.getText().equals(local_configuration.PATH_TO_CVS_CLIENT)
-      && myServerCommand.getText().equals(local_configuration.SERVER_COMMAND);
+    return myPathToCvsClient.getText().equals(local_configuration.PATH_TO_CVS_CLIENT);
   }
 
   public void saveTo(LocalSettings localConfiguration) {
     localConfiguration.PATH_TO_CVS_CLIENT = myPathToCvsClient.getText().trim();
-    localConfiguration.SERVER_COMMAND = myServerCommand.getText().trim();
     localConfiguration.setCvsClientVerified(false);
   }
 
