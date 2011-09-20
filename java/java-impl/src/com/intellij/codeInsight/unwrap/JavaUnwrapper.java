@@ -25,15 +25,11 @@ public abstract class JavaUnwrapper extends AbstractUnwrapper<JavaUnwrapper.Cont
   }
 
   @Override
-  protected Context createContext(boolean isEffective) {
-    return new Context(isEffective);
+  protected Context createContext() {
+    return new Context();
   }
 
   protected static class Context extends AbstractUnwrapper.AbstractContext {
-
-    public Context(boolean isEffective) {
-      super(isEffective);
-    }
 
     public void extractFromBlockOrSingleStatement(PsiStatement block, PsiElement from) throws IncorrectOperationException {
       if (block instanceof PsiBlockStatement) {

@@ -16,9 +16,12 @@
 package org.jetbrains.plugins.groovy.unwrap;
 
 import com.intellij.codeInsight.unwrap.AbstractUnwrapper;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
@@ -27,14 +30,16 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
+import java.util.List;
+
 public abstract class GroovyUnwrapper extends AbstractUnwrapper<GroovyUnwrapper.Context> {
   public GroovyUnwrapper(String description) {
     super(description);
   }
 
   @Override
-  protected Context createContext(boolean isEffective) {
-    return new Context(isEffective);
+  protected Context createContext() {
+    return new Context();
   }
 
   public static boolean isElseBlock(@Nullable final PsiElement element) {
@@ -43,11 +48,20 @@ public abstract class GroovyUnwrapper extends AbstractUnwrapper<GroovyUnwrapper.
     return parent instanceof GrIfStatement && element == ((GrIfStatement)parent).getElseBranch();
   }
 
-  protected static class Context extends AbstractUnwrapper.AbstractContext {
+  @Override
+  public List<PsiElement> unwrap(Editor editor, PsiElement element) throws IncorrectOperationException {
+    List<PsiElement> res = super.unwrap(editor, element);
 
-    public Context(boolean isEffective) {
-      super(isEffective);
+    for (PsiElement e : res) {
+      if (PsiUtil.isLeafElementOfType(e, GroovyTokenTypes.mNLS)) {
+        CodeEditUtil.setNodeGenerated(e.getNode(), true);
+      }
     }
+
+    return res;
+  }
+
+  protected static class Context extends AbstractUnwrapper.AbstractContext {
 
     public void extractFromBlockOrSingleStatement(GrStatement block, PsiElement from) throws IncorrectOperationException {
       if (block instanceof GrBlockStatement) {

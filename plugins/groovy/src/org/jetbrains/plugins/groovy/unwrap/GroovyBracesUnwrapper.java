@@ -19,6 +19,8 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.unwrap.JavaUnwrapper;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrCatchClause;
@@ -26,6 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTryCatchStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 public class GroovyBracesUnwrapper extends GroovyUnwrapper {
   public GroovyBracesUnwrapper() {
@@ -35,7 +38,7 @@ public class GroovyBracesUnwrapper extends GroovyUnwrapper {
   public boolean isApplicableTo(PsiElement e) {
     if (e instanceof GrClosableBlock && !((GrClosableBlock)e).hasParametersSection()) {
       PsiElement parent = e.getParent();
-      return parent instanceof GrOpenBlock || parent instanceof GrClosableBlock;
+      return parent instanceof GrOpenBlock || parent instanceof GrClosableBlock || parent instanceof GroovyFileBase;
     }
     return false;
   }
