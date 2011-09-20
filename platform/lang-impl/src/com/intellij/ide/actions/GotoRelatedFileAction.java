@@ -63,7 +63,7 @@ public class GotoRelatedFileAction extends AnAction {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       System.out.println(items);
     }
-    createPopup(items, "Goto Related").showInBestPositionFor(context);
+    createPopup(items, "Go to Related Files").showInBestPositionFor(context);
   }
 
   public static JBPopup createPopup(final List<? extends GotoRelatedItem> items, final String title) {
@@ -77,6 +77,10 @@ public class GotoRelatedFileAction extends AnAction {
     }
 
     return getPsiElementPopup(elements, new DefaultPsiElementCellRenderer() {
+                                {
+                                  setFocusBorderEnabled(false);
+                                }
+
                                 @Override
                                 public String getElementText(PsiElement element) {
                                   String customName = itemsMap.get(element).getCustomName();
@@ -92,7 +96,9 @@ public class GotoRelatedFileAction extends AnAction {
                                 @Override
                                 public String getContainerText(PsiElement element, String name) {
                                   PsiFile file = element.getContainingFile();
-                                  return file != null && !getElementText(element).equals(file.getName()) ? "(" + file.getName() + ")" : null;
+                                  return file != null && !getElementText(element).equals(file.getName())
+                                         ? "(" + file.getName() + ")"
+                                         : null;
                                 }
 
                                 @Override
@@ -122,7 +128,8 @@ public class GotoRelatedFileAction extends AnAction {
         if (element instanceof PsiElement) {
           //noinspection SuspiciousMethodCalls
           itemsMap.get(element).navigate();
-        } else {
+        }
+        else {
           ((GotoRelatedItem)element).navigate();
         }
         return true;
@@ -132,7 +139,7 @@ public class GotoRelatedFileAction extends AnAction {
   }
 
   public static JBPopup getPsiElementPopup(final Object[] elements, final PsiElementListCellRenderer<PsiElement> renderer,
-                                                                    final String title, final Processor<Object> processor) {
+                                           final String title, final Processor<Object> processor) {
     final JList list = new JBList(elements);
     list.setCellRenderer(renderer);
 
@@ -153,7 +160,7 @@ public class GotoRelatedFileAction extends AnAction {
       builder.setTitle(title);
     }
     renderer.installSpeedSearch(builder, true);
-
+    builder.setMinSize(new Dimension(200, -1));
     return builder.setItemChoosenCallback(runnable).createPopup();
   }
 

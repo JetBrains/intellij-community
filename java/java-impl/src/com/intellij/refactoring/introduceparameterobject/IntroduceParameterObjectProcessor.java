@@ -33,6 +33,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.RefactorJBundle;
 import com.intellij.refactoring.introduceparameterobject.usageInfo.*;
 import com.intellij.refactoring.psi.PropertyUtils;
@@ -49,14 +50,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringProcessor {
   private static final Logger logger = Logger.getInstance("com.siyeh.rpp.introduceparameterobject.IntroduceParameterObjectProcessor");
 
+  private MoveDestination myMoveDestination;
   private final PsiMethod method;
   private final String className;
   private final String packageName;
@@ -75,12 +74,14 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
 
   public IntroduceParameterObjectProcessor(String className,
                                            String packageName,
+                                           MoveDestination moveDestination,
                                            PsiMethod method,
                                            ParameterTablePanel.VariableData[] parameters, boolean keepMethodAsDelegate, final boolean useExistingClass,
                                            final boolean createInnerClass,
                                            String newVisibility,
                                            boolean generateAccessors) {
     super(method.getProject());
+    myMoveDestination = moveDestination;
     this.method = method;
     this.className = className;
     this.packageName = packageName;
@@ -144,10 +145,17 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
         conflicts.putValue(existingClass, RefactorJBundle.message("cannot.perform.the.refactoring") + "Selected class has no compatible constructors");
       }
     }
-    else if (existingClass != null) {
-      conflicts.putValue(existingClass,
-                    RefactorJBundle.message("cannot.perform.the.refactoring") +
-                    RefactorJBundle.message("there.already.exists.a.class.with.the.chosen.name"));
+    else {
+      if (existingClass != null) {
+        conflicts.putValue(existingClass,
+                           RefactorJBundle.message("cannot.perform.the.refactoring") +
+                           RefactorJBundle.message("there.already.exists.a.class.with.the.chosen.name"));
+      }
+      if (myMoveDestination != null) {
+        if (!myMoveDestination.isTargetAccessible(myProject, method.getContainingFile().getVirtualFile())) {
+          conflicts.putValue(method, "Created class won't be accessible");
+        }
+      }
     }
     for (UsageInfo usageInfo : refUsages.get()) {
       if (usageInfo instanceof FixableUsageInfo) {
@@ -274,8 +282,13 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
       } else {
         final PsiFile containingFile = method.getContainingFile();
         final PsiDirectory containingDirectory = containingFile.getContainingDirectory();
-        final Module module = ModuleUtil.findModuleForPsiElement(containingFile);
-        final PsiDirectory directory = PackageUtil.findOrCreateDirectoryForPackage(module, packageName, containingDirectory, true, true);
+        final PsiDirectory directory;
+        if (myMoveDestination != null) {
+          directory = myMoveDestination.getTargetDirectory(containingDirectory);
+        } else {
+          final Module module = ModuleUtil.findModuleForPsiElement(containingFile);
+          directory = PackageUtil.findOrCreateDirectoryForPackage(module, packageName, containingDirectory, true, true);
+        }
 
         if (directory != null) {
 

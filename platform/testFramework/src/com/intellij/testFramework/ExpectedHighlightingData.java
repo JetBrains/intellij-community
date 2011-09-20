@@ -25,6 +25,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeveritiesProvider;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -64,28 +65,37 @@ public class ExpectedHighlightingData {
   @NonNls private static final String END_LINE_WARNING_MARKER = "EOLWarning";
   @NonNls private static final String LINE_MARKER = "lineMarker";
 
+  @NotNull private final Document myDocument;
   private final PsiFile myFile;
   @NonNls private static final String ANY_TEXT = "*";
-  String myText;
+  private final String myText;
 
-  public static class ExpectedHighlightingSet {
+  private static class ExpectedHighlightingSet {
     private final boolean endOfLine;
     final boolean enabled;
     final Set<HighlightInfo> infos;
-    final HighlightInfoType defaultErrorType;
     final HighlightSeverity severity;
 
-    public ExpectedHighlightingSet(HighlightInfoType defaultErrorType, HighlightSeverity severity, boolean endOfLine, boolean enabled) {
+    public ExpectedHighlightingSet(@NotNull HighlightSeverity severity, boolean endOfLine, boolean enabled) {
       this.endOfLine = endOfLine;
       this.enabled = enabled;
       infos = new THashSet<HighlightInfo>();
-      this.defaultErrorType = defaultErrorType;
       this.severity = severity;
     }
   }
   @SuppressWarnings("WeakerAccess")
   protected final Map<String,ExpectedHighlightingSet> highlightingTypes;
   private final Map<RangeMarker, LineMarkerInfo> lineMarkerInfos = new THashMap<RangeMarker, LineMarkerInfo>();
+
+  public void init() {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        extractExpectedLineMarkerSet(myDocument);
+        extractExpectedHighlightsSet(myDocument);
+        refreshLineMarkers();
+      }
+    });
+  }
 
   public ExpectedHighlightingData(@NotNull Document document,boolean checkWarnings, boolean checkInfos) {
     this(document, checkWarnings, false, checkInfos);
@@ -98,35 +108,64 @@ public class ExpectedHighlightingData {
     this(document, checkWarnings, checkWeakWarnings, checkInfos, null);
   }
 
-  public ExpectedHighlightingData(@NotNull final Document document,
-                                  final boolean checkWarnings,
-                                  final boolean checkWeakWarnings,
-                                  final boolean checkInfos,
-                                  PsiFile file) {
+  public ExpectedHighlightingData(@NotNull final Document document, PsiFile file) {
+    myDocument = document;
     myFile = file;
     myText = document.getText();
     highlightingTypes = new LinkedHashMap<String,ExpectedHighlightingSet>();
     new WriteCommandAction.Simple(file == null ? null : file.getProject()) {
       public void run() {
-        highlightingTypes.put(ERROR_MARKER, new ExpectedHighlightingSet(HighlightInfoType.ERROR, HighlightSeverity.ERROR, false, true));
-        highlightingTypes.put(WARNING_MARKER, new ExpectedHighlightingSet(HighlightInfoType.WARNING, HighlightSeverity.WARNING, false, checkWarnings));
-        highlightingTypes.put(INFORMATION_MARKER, new ExpectedHighlightingSet(HighlightInfoType.WEAK_WARNING, HighlightSeverity.WEAK_WARNING, false, checkWeakWarnings));
-        highlightingTypes.put("inject", new ExpectedHighlightingSet(HighlightInfoType.INJECTED_LANGUAGE_FRAGMENT, HighlightInfoType.INJECTED_FRAGMENT_SEVERITY, false, checkInfos));
-        highlightingTypes.put(INFO_MARKER, new ExpectedHighlightingSet(HighlightInfoType.TODO, HighlightSeverity.INFORMATION, false, checkInfos));
+        boolean checkWarnings= false;
+        boolean checkWeakWarnings = false;
+        boolean checkInfos = false;
+
+
+
+        highlightingTypes.put(ERROR_MARKER, new ExpectedHighlightingSet(HighlightSeverity.ERROR, false, true));
+        highlightingTypes.put(WARNING_MARKER, new ExpectedHighlightingSet(HighlightSeverity.WARNING, false, checkWarnings));
+        highlightingTypes.put(INFORMATION_MARKER, new ExpectedHighlightingSet(HighlightSeverity.WEAK_WARNING, false, checkWeakWarnings));
+        highlightingTypes.put("inject", new ExpectedHighlightingSet(HighlightInfoType.INJECTED_FRAGMENT_SEVERITY, false, checkInfos));
+        highlightingTypes.put(INFO_MARKER, new ExpectedHighlightingSet(HighlightSeverity.INFORMATION, false, checkInfos));
+        highlightingTypes.put("symbolName", new ExpectedHighlightingSet(HighlightInfoType.SYMBOL_TYPE_SEVERITY, false, false));
         for (SeveritiesProvider provider : Extensions.getExtensions(SeveritiesProvider.EP_NAME)) {
           for (HighlightInfoType type : provider.getSeveritiesHighlightInfoTypes()) {
             final HighlightSeverity severity = type.getSeverity(null);
-            highlightingTypes.put(severity.toString(), new ExpectedHighlightingSet(type, severity, false, true));
+            highlightingTypes.put(severity.toString(), new ExpectedHighlightingSet(severity, false, true));
           }
         }
-        highlightingTypes.put(END_LINE_HIGHLIGHT_MARKER,new ExpectedHighlightingSet(HighlightInfoType.ERROR, HighlightSeverity.ERROR, true, true));
-        highlightingTypes.put(END_LINE_WARNING_MARKER, new ExpectedHighlightingSet(HighlightInfoType.WARNING, HighlightSeverity.WARNING, true, checkWarnings));
+        highlightingTypes.put(END_LINE_HIGHLIGHT_MARKER, new ExpectedHighlightingSet(HighlightSeverity.ERROR, true, true));
+        highlightingTypes.put(END_LINE_WARNING_MARKER, new ExpectedHighlightingSet(HighlightSeverity.WARNING, true, checkWarnings));
         initAdditionalHighlightingTypes();
-        extractExpectedLineMarkerSet(document);
-        extractExpectedHighlightsSet(document);
-        refreshLineMarkers();
       }
     }.execute().throwException();
+
+  }
+  public ExpectedHighlightingData(@NotNull final Document document,
+                                  final boolean checkWarnings,
+                                  final boolean checkWeakWarnings,
+                                  final boolean checkInfos,
+                                  PsiFile file) {
+    this(document, file);
+    if (checkWarnings) checkWarnings();
+    if (checkWeakWarnings) checkWeakWarnings();
+    if (checkInfos) checkInfos();
+  }
+
+  public void checkWarnings() {
+    highlightingTypes.put(WARNING_MARKER, new ExpectedHighlightingSet(HighlightSeverity.WARNING, false, true));
+    highlightingTypes.put(END_LINE_WARNING_MARKER, new ExpectedHighlightingSet(HighlightSeverity.WARNING, true, true));
+
+  }
+  public void checkWeakWarnings() {
+    highlightingTypes.put(INFORMATION_MARKER, new ExpectedHighlightingSet(HighlightSeverity.WEAK_WARNING, false, true));
+  }
+  public void checkInfos() {
+    highlightingTypes.put(INFO_MARKER, new ExpectedHighlightingSet(HighlightSeverity.INFORMATION, false, true));
+    highlightingTypes.put("inject", new ExpectedHighlightingSet(HighlightInfoType.INJECTED_FRAGMENT_SEVERITY, false, true));
+
+  }
+  public void checkSymbolNames() {
+    highlightingTypes.put("symbolName", new ExpectedHighlightingSet(HighlightInfoType.SYMBOL_TYPE_SEVERITY, false, true));
   }
 
   private void refreshLineMarkers() {
@@ -242,7 +281,8 @@ public class ExpectedHighlightingData {
         Field field = HighlightInfoType.class.getField(typeString);
         type = (HighlightInfoType)field.get(null);
       }
-      catch (Exception ignore) {
+      catch (Exception e) {
+        LOG.error(e);
       }
       LOG.assertTrue(type != null, "Wrong highlight type: " + typeString);
     }

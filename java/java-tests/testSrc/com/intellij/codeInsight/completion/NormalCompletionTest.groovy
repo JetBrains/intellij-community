@@ -396,6 +396,16 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     doTest();
   }
 
+  public void testExcludeStringBuffer() throws Throwable {
+    CodeInsightSettings.getInstance().EXCLUDED_PACKAGES = [StringBuffer.name] as String[]
+    try {
+      doAntiTest()
+    }
+    finally {
+      CodeInsightSettings.getInstance().EXCLUDED_PACKAGES = new String[0]
+    }
+  }
+
   public void testAtUnderClass() throws Throwable {
     doTest();
   }
@@ -427,6 +437,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     configure()
     assertStringItems 'final', 'finalize'
   }
+  public void testPrivateInAnonymous() throws Throwable { doTest() }
 
   public void testMethodParenthesesSpaces() throws Throwable {
     final settings = CodeStyleSettingsManager.getSettings(getProject())

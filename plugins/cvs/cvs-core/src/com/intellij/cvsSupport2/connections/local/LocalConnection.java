@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 
 import java.io.IOException;
-import java.util.StringTokenizer;
 
 /**
  * author: lesya
@@ -43,10 +42,7 @@ public class LocalConnection extends ConnectionOnProcess{
 
     final GeneralCommandLine commandLine = new GeneralCommandLine();
     commandLine.setExePath(myLocalSettings.PATH_TO_CVS_CLIENT);
-    StringTokenizer st = new StringTokenizer(myLocalSettings.SERVER_COMMAND.trim());
-     while (st.hasMoreTokens()) {
-        commandLine.addParameter(st.nextToken());
-     }
+    commandLine.addParameter("server");
     
     execute(commandLine);
   }

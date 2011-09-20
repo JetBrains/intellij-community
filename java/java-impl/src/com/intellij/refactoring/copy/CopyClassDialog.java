@@ -72,7 +72,7 @@ class CopyClassDialog extends DialogWrapper{
                   RefactoringBundle.message("copy.class.copy.0.1", UsageViewUtil.getType(aClass), UsageViewUtil.getLongName(aClass));
     myInformationLabel.setText(text);
     init();
-    myDestinationCB.setData(myProject, defaultTargetDirectory, ProjectRootManager.getInstance(myProject).getContentSourceRoots(),
+    myDestinationCB.setData(myProject, defaultTargetDirectory,
                             new Pass<String>() {
                               @Override
                               public void pass(String s) {

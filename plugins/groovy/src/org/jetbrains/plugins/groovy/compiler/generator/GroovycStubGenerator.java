@@ -20,8 +20,6 @@ import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.compiler.impl.FileSetCompileScope;
 import com.intellij.compiler.impl.TranslatingCompilerFilesMonitor;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompilerPaths;
@@ -45,6 +43,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Chunk;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -167,29 +166,22 @@ public class GroovycStubGenerator extends GroovyCompilerBase {
     return JavaPsiFacade.getInstance(project).findClass(fqn, GlobalSearchScope.moduleScope(module));
   }
 
-  private void cleanDirectory(final VirtualFile dir) {
-    new WriteCommandAction(myProject) {
-      protected void run(Result result) throws Throwable {
-        deleteChildrenRecursively(dir);
+  private static void cleanDirectory(final VirtualFile dir) {
+    VfsUtil.processFilesRecursively(dir, new Processor<VirtualFile>() {
+      @Override
+      public boolean process(VirtualFile virtualFile) {
+        TranslatingCompilerFilesMonitor.removeSourceInfo(virtualFile);
+        return true;
       }
+    });
+    File file = VfsUtil.virtualToIoFile(dir);
+    for (File child : file.listFiles()) {
+      FileUtil.delete(child);
+    }
 
-      private void deleteChildrenRecursively(final VirtualFile dir) throws IOException {
-        for (final VirtualFile child : dir.getChildren()) {
-          if (child.isDirectory()) {
-            deleteChildrenRecursively(child);
-          }
-          TranslatingCompilerFilesMonitor.removeSourceInfo(child);
-          try {
-            child.delete(this);
-          }
-          catch (IOException ignored) {
-            //may be a leaked handle from some non-completely terminated compiler process, or compiler caches, or something else
-            //not a big deal, we'll delete it next time
-          }
-        }
-      }
-    }.execute();
+    dir.refresh(false, true);
   }
+
 
   @NotNull
   public String getDescription() {

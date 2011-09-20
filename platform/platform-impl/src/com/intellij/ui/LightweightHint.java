@@ -184,7 +184,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
       Point actualPoint = new Point(x, y);
       JComponent actualComponent = new OpaquePanel(new BorderLayout());
       actualComponent.add(myComponent, BorderLayout.CENTER);
-      if (myHintHint.isAwtTooltip()) {
+      if (isAwtTooltip()) {
         fixActualPoint(actualPoint);
 
 
@@ -223,7 +223,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
   protected void onPopupCancel() {}
 
   private void fixActualPoint(Point actualPoint) {
-    if (!myHintHint.isAwtTooltip()) return;
+    if (!isAwtTooltip()) return;
     if (!myIsRealPopup) return;
 
     Dimension size = myComponent.getPreferredSize();
@@ -357,21 +357,19 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
 
   @Override
   public void pack() {
-    updateBounds(-1, -1, false);
+    setSize(myComponent.getPreferredSize());
   }
 
   @Override
   public void updateBounds(int x, int y) {
-    updateBounds(x, y, true);
+    setSize(myComponent.getPreferredSize());
+    updateLocation(x, y);
   }
 
-  private void updateBounds(int x, int y, boolean updateLocation) {
-    setSize(myComponent.getPreferredSize());
-    if (updateLocation) {
-      Point point = new Point(x, y);
-      fixActualPoint(point);
-      setLocation(new RelativePoint(myParentComponent, point));
-    }
+  public void updateLocation(int x, int y) {
+    Point point = new Point(x, y);
+    fixActualPoint(point);
+    setLocation(new RelativePoint(myParentComponent, point));
   }
 
   public final JComponent getComponent() {
@@ -436,7 +434,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
       myPopup.setSize(size);
     } else {
       //todo kirillk
-      if (myHintHint.isAwtTooltip()) {
+      if (isAwtTooltip()) {
         return;
       } else {
         myComponent.setSize(size);
@@ -445,6 +443,10 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
         myComponent.repaint();
       }
     }
+  }
+
+  public boolean isAwtTooltip() {
+    return myHintHint != null && myHintHint.isAwtTooltip();
   }
 
   public Dimension getSize() {

@@ -96,10 +96,6 @@ public class HighlightSeverity implements Comparable<HighlightSeverity>, JDOMExt
     return myVal - highlightSeverity.myVal;
   }
 
-  public void setVal(final int val) {
-    myVal = val;
-  }
-
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
   }

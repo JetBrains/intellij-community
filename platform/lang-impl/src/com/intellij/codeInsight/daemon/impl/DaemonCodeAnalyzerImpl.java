@@ -41,7 +41,6 @@ import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.MarkupModel;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -61,7 +60,10 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
-import com.intellij.util.*;
+import com.intellij.util.Alarm;
+import com.intellij.util.CommonProcessors;
+import com.intellij.util.Processor;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
@@ -594,46 +596,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
       }
     }
     return true;
-  }
-
-  static void addHighlight(MarkupModel markup,
-                           Project project,
-                           HighlightInfo toAdd) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-
-    stripWarningsCoveredByErrors(project, toAdd, markup.getDocument());
-  }
-
-  private static void stripWarningsCoveredByErrors(Project project, final HighlightInfo toAdd, Document document) {
-    final SeverityRegistrar severityRegistrar = SeverityRegistrar.getInstance(project);
-    final Set<HighlightInfo> covered = new THashSet<HighlightInfo>();
-
-    // either toAdd is warning and covered by one of errors in highlightsToSet or toAdd is an error and covers warnings in highlightsToSet or it is OK
-    final boolean addingError = severityRegistrar.compare(HighlightSeverity.ERROR, toAdd.getSeverity()) <= 0;
-    boolean toAddIsVisible = processHighlights(document, project, null, toAdd.getActualStartOffset(),
-                                               toAdd.getActualEndOffset(), new Processor<HighlightInfo>() {
-        public boolean process(HighlightInfo interval) {
-          boolean isError = severityRegistrar.compare(HighlightSeverity.ERROR, interval.getSeverity()) <= 0;
-          if (addingError && !isError && isCoveredBy(interval, toAdd)) {
-            covered.add(interval);
-          }
-          return addingError || !isError || !isCoveredBy(toAdd, interval);
-        }
-      });
-    if (!toAddIsVisible) {
-      // toAdd is covered by
-      toAdd.highlighter.dispose();
-    }
-    for (HighlightInfo warning : covered) {
-      RangeHighlighter highlighter = warning.highlighter;
-      if (highlighter != null) {
-        highlighter.dispose();
-      }
-    }
-  }
-
-  static boolean isCoveredBy(HighlightInfo info, HighlightInfo coveredBy) {
-    return coveredBy.startOffset <= info.startOffset && info.endOffset <= coveredBy.endOffset && info.getGutterIconRenderer() == null;
   }
 
   @Nullable

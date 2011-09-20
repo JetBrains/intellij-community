@@ -104,7 +104,7 @@ public class ReplaceConstructorWithBuilderTest extends MultiFileTestCase {
           }
         }
         try {
-          new ReplaceConstructorWithBuilderProcessor(getProject(), constructors, map, "Builder", packageName, createNewBuilderClass).run();
+          new ReplaceConstructorWithBuilderProcessor(getProject(), constructors, map, "Builder", packageName, null, createNewBuilderClass).run();
           if (conflicts != null) {
             fail("Conflicts were not detected:" + conflicts);
           }

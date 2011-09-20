@@ -68,6 +68,7 @@ public class GrKindWeigher extends CompletionWeigher {
       if (o instanceof PsiVariable && !(o instanceof PsiField)) {
         return NotQualifiedKind.local;
       }
+      if (isPriorityKeyword(o)) return NotQualifiedKind.local;
       if (isLightElement(o)) return NotQualifiedKind.unknown;
       if (o instanceof PsiMember) {
         final PsiClass containingClass = ((PsiMember)o).getContainingClass();
@@ -95,6 +96,10 @@ public class GrKindWeigher extends CompletionWeigher {
       }
       return QualifiedKind.unknown;
     }
+  }
+
+  private static boolean isPriorityKeyword(Object o) {
+    return PsiKeyword.INSTANCEOF.equals(o);
   }
 
   private static boolean isLightElement(Object o) {

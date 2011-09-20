@@ -264,7 +264,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     myCbSearchInComments.setSelected(searchInComments);
     myCbSearchTextOccurences.setSelected(searchForTextOccurences);
 
-    ((DestinationFolderComboBox)myDestinationFolderCB).setData(myProject, myInitialTargetDirectory, getSourceRoots(),
+    ((DestinationFolderComboBox)myDestinationFolderCB).setData(myProject, myInitialTargetDirectory,
                                                                new Pass<String>() {
                                                                  @Override
                                                                  public void pass(String s) {

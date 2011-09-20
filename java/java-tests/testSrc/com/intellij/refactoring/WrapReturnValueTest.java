@@ -4,8 +4,6 @@
  */
 package com.intellij.refactoring;
 
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
@@ -53,7 +51,8 @@ public class WrapReturnValueTest extends MultiFileTestCase{
 
           assertTrue(!existing || wrapperClass != null);
           final PsiField delegateField = existing ? wrapperClass.findFieldByName("myField", false) : null;
-          WrapReturnValueProcessor processor = new WrapReturnValueProcessor(wrapperClassName, "", method, existing, createInnerClass,
+          WrapReturnValueProcessor processor = new WrapReturnValueProcessor(wrapperClassName, "",
+                                                                            null, method, existing, createInnerClass,
                                                                             delegateField);
           processor.run();
           /*LocalFileSystem.getInstance().refresh(false);

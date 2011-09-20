@@ -28,6 +28,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.testFramework.ExpectedHighlightingData;
 import com.intellij.testFramework.FileTreeAccessFilter;
+import com.intellij.testFramework.HighlightTestInfo;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.ArrayUtil;
@@ -80,7 +81,12 @@ public abstract class LightDaemonAnalyzerTestCase extends LightCodeInsightTestCa
   protected void doTestConfiguredFile(boolean checkWarnings, boolean checkInfos) {
     getJavaFacade().setAssertOnFileLoadingFilter(VirtualFileFilter.NONE);
 
-    ExpectedHighlightingData expectedData = new ExpectedHighlightingData(getEditor().getDocument(),checkWarnings, checkInfos);
+    ExpectedHighlightingData data = new ExpectedHighlightingData(getEditor().getDocument(),checkWarnings, checkInfos);
+    checkHighlighting(data);
+  }
+
+  private void checkHighlighting(ExpectedHighlightingData data) {
+    data.init();
 
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     getFile().getText(); //to load text
@@ -91,7 +97,22 @@ public abstract class LightDaemonAnalyzerTestCase extends LightCodeInsightTestCa
 
     getJavaFacade().setAssertOnFileLoadingFilter(VirtualFileFilter.NONE);
 
-    expectedData.checkResult(infos, getEditor().getDocument().getText());
+    data.checkResult(infos, getEditor().getDocument().getText());
+  }
+
+  protected HighlightTestInfo testFile(@NonNls @NotNull String filePath) {
+    return new HighlightTestInfo(getTestRootDisposable(), filePath){
+      @Override
+      public HighlightTestInfo doTest() throws Exception {
+        String path = assertOneElement(filePaths);
+        configureByFile(path);
+        ExpectedHighlightingData data = new ExpectedHighlightingData(myEditor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos, myFile);
+        if (checkSymbolNames) data.checkSymbolNames();
+
+        checkHighlighting(data);
+        return this;
+      }
+    };
   }
 
   @NotNull

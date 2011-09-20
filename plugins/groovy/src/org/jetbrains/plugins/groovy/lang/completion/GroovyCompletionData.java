@@ -25,7 +25,9 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.lang.ASTNode;
 import com.intellij.patterns.PlatformPatterns;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -116,7 +118,8 @@ public class GroovyCompletionData {
             GroovyCompletionUtil.isInTypeDefinitionBody(position) && GroovyCompletionUtil.isNewStatement(position, true)) {
           addKeywords(result, true, PsiKeyword.SYNCHRONIZED);
         }
-        if (suggestFinalDef(position)) {
+        if (suggestFinalDef(position) || psiElement().afterLeaf(
+          psiElement().withText("(").withParent(GrForStatement.class)).accepts(position)) {
           addKeywords(result, true, PsiKeyword.FINAL, "def");
         }
       }

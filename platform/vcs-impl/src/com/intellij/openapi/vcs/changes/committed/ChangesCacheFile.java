@@ -497,7 +497,7 @@ public class ChangesCacheFile {
       }
       if (!haveUnaccountedUpdatedFiles) {
         for(IncomingChangeListData data: incomingData) {
-          saveIncoming(data);
+          saveIncoming(data, false);
         }
         writeHeader();
       }
@@ -509,9 +509,9 @@ public class ChangesCacheFile {
     return haveUnaccountedUpdatedFiles;
   }
 
-  private void saveIncoming(final IncomingChangeListData data) throws IOException {
-    writePartial(data);
-    if (data.accountedChanges.size() == data.changeList.getChanges().size()) {
+  private void saveIncoming(final IncomingChangeListData data, boolean haveNoMoreIncoming) throws IOException {
+    writePartial(data, haveNoMoreIncoming);
+    if (data.accountedChanges.size() == data.changeList.getChanges().size() || haveNoMoreIncoming) {
       debug("Removing changelist " + data.changeList.getNumber() + " from incoming changelists");
       myIndexStream.seek(data.indexOffset);
       writeIndexEntry(data.indexEntry.number, data.indexEntry.date, data.indexEntry.offset, true);
@@ -615,10 +615,10 @@ public class ChangesCacheFile {
     return data;
   }
 
-  private void writePartial(final IncomingChangeListData data) throws IOException {
+  private void writePartial(final IncomingChangeListData data, boolean haveNoMoreIncoming) throws IOException {
     File partialFile = getPartialPath(data.indexEntry.offset);
     final int accounted = data.accountedChanges.size();
-    if (accounted == data.changeList.getChanges().size()) {
+    if (haveNoMoreIncoming || accounted == data.changeList.getChanges().size()) {
       partialFile.delete();
     }
     else if (accounted > 0) {
@@ -651,13 +651,26 @@ public class ChangesCacheFile {
         RandomAccessFile file = new RandomAccessFile(partialFile, "r");
         try {
           int count = file.readInt();
-          for(int i=0; i<count; i++) {
-            boolean isAfterRevision = (file.readByte() != 0);
-            String path = file.readUTF();
-            for(Change c: data.changeList.getChanges()) {
-              final ContentRevision afterRevision = isAfterRevision ? c.getAfterRevision() : c.getBeforeRevision();
-              if (afterRevision != null && afterRevision.getFile().getIOFile().toString().equals(path)) {
-                result.add(c);
+          if (count > 0) {
+            final Collection<Change> changes = data.changeList.getChanges();
+            final Set<String> beforePaths = new HashSet<String>();
+            final Set<String> afterPaths = new HashSet<String>();
+            for (Change change : changes) {
+              if (change.getBeforeRevision() != null) {
+                beforePaths.add(FilePathsHelper.convertPath(change.getBeforeRevision().getFile()));
+              }
+              if (change.getAfterRevision() != null) {
+                afterPaths.add(FilePathsHelper.convertPath(change.getAfterRevision().getFile()));
+              }
+            }
+            for(int i=0; i<count; i++) {
+              boolean isAfterRevision = (file.readByte() != 0);
+              String path = file.readUTF();
+              final String converted = FilePathsHelper.convertPath(path);
+              for (Change c: changes) {
+                if (isAfterRevision && afterPaths.contains(converted) || beforePaths.contains(converted)) {
+                  result.add(c);
+                }
               }
             }
           }
@@ -699,6 +712,7 @@ public class ChangesCacheFile {
     private final Map<Long, CommittedChangeList> myPreviousChangeListsCache = new HashMap<Long, CommittedChangeList>();
     private List<LocalChangeList> myChangeLists;
     private ChangeListManagerImpl myClManager;
+    private boolean myAnyChanges;
 
     public boolean invoke() throws VcsException, IOException {
       if (myProject.isDisposed()) {
@@ -710,7 +724,8 @@ public class ChangesCacheFile {
 
       myLocation.onBeforeBatch();
       final Collection<FilePath> incomingFiles = myChangesProvider.getIncomingFiles(myLocation);
-      boolean anyChanges = false;
+
+      myAnyChanges = false;
       openStreams();
       loadHeader();
       myCurrentRevisions = new FactoryMap<VirtualFile, VcsRevisionNumber>() {
@@ -719,34 +734,22 @@ public class ChangesCacheFile {
         }
       };
       try {
-        final List<IncomingChangeListData> list = loadIncomingChangeListData();
-        // the incoming changelist pointers are actually sorted in reverse chronological order,
-        // so we process file delete changes before changes made to deleted files before they were deleted
-        myDeletedFiles = new HashSet<FilePath>();
-        myCreatedFiles = new HashSet<FilePath>();
-        myReplacedFiles = new HashSet<FilePath>();
         IncomingChangeState.header(myLocation.toPresentableString());
-        for(IncomingChangeListData data: list) {
-          debug("Checking incoming changelist " + data.changeList.getNumber());
-          boolean updated = false;
-          for(Change change: data.changeList.getChanges()) {
-            if (data.accountedChanges.contains(change)) continue;
-            final ContentRevision revision = (change.getAfterRevision() == null) ? change.getBeforeRevision() : change.getAfterRevision();
-            final IncomingChangeState state = new IncomingChangeState(change, revision.getRevisionNumber().asString());
-            final boolean changeFound = processIncomingChange(change, data, incomingFiles, state);
-            state.logSelf();
-            if (changeFound) {
-              data.accountedChanges.add(change);
-            }
-            updated |= changeFound;
+
+        final List<IncomingChangeListData> list = loadIncomingChangeListData();
+        boolean shouldChangeHeader;
+        if (incomingFiles != null && incomingFiles.isEmpty()) {
+          // we should just delete any partial files
+          shouldChangeHeader = ! list.isEmpty();
+          for (IncomingChangeListData data : list) {
+            saveIncoming(data, true);
           }
-          if (updated) {
-            anyChanges = true;
-            saveIncoming(data);
-          }
+        } else {
+          shouldChangeHeader = refreshIncomingInFile(incomingFiles, list);
         }
+
         IncomingChangeState.footer();
-        if (anyChanges) {
+        if (shouldChangeHeader) {
           writeHeader();
         }
       }
@@ -754,7 +757,39 @@ public class ChangesCacheFile {
         myLocation.onAfterBatch();
         closeStreams();
       }
-      return anyChanges;
+      return myAnyChanges;
+    }
+
+    private boolean refreshIncomingInFile(Collection<FilePath> incomingFiles, List<IncomingChangeListData> list) throws IOException {
+      // the incoming changelist pointers are actually sorted in reverse chronological order,
+      // so we process file delete changes before changes made to deleted files before they were deleted
+      myDeletedFiles = new HashSet<FilePath>();
+      myCreatedFiles = new HashSet<FilePath>();
+      myReplacedFiles = new HashSet<FilePath>();
+      boolean hadChanges = ! list.isEmpty();
+      for(IncomingChangeListData data: list) {
+        debug("Checking incoming changelist " + data.changeList.getNumber());
+        boolean updated = false;
+        boolean anyChangeFound = false;
+        for(Change change: data.changeList.getChanges()) {
+          if (data.accountedChanges.contains(change)) continue;
+          final ContentRevision revision = (change.getAfterRevision() == null) ? change.getBeforeRevision() : change.getAfterRevision();
+          final IncomingChangeState state = new IncomingChangeState(change, revision.getRevisionNumber().asString());
+          final boolean changeFound = processIncomingChange(change, data, incomingFiles, state);
+          state.logSelf();
+          if (changeFound) {
+            data.accountedChanges.add(change);
+          } else {
+            anyChangeFound = true;
+          }
+          updated |= changeFound;
+        }
+        if (updated || ! anyChangeFound) {
+          myAnyChanges = true;
+          saveIncoming(data, true);
+        }
+      }
+      return myAnyChanges || hadChanges;
     }
 
     private boolean processIncomingChange(final Change change,

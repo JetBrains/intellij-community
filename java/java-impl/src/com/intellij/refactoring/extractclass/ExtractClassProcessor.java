@@ -17,11 +17,12 @@ package com.intellij.refactoring.extractclass;
 
 import com.intellij.ide.util.PackageUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -38,13 +39,16 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.RefactorJBundle;
 import com.intellij.refactoring.extractclass.usageInfo.*;
 import com.intellij.refactoring.move.MoveInstanceMembersUtil;
+import com.intellij.refactoring.move.moveClassesOrPackages.DestinationFolderComboBox;
 import com.intellij.refactoring.psi.MethodInheritanceUtils;
 import com.intellij.refactoring.psi.TypeParametersVisitor;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.refactoring.util.FixableUsagesRefactoringProcessor;
+import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.usageView.UsageInfo;
@@ -68,6 +72,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
   private final Set<PsiClass> innerClassesToMakePublic = new HashSet<PsiClass>();
   private final List<PsiTypeParameter> typeParams = new ArrayList<PsiTypeParameter>();
   private final String newPackageName;
+  private final MoveDestination myMoveDestination;
   private final String myNewVisibility;
   private final boolean myGenerateAccessors;
   private final List<PsiField> enumConstants;
@@ -84,7 +89,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
                                List<PsiClass> innerClasses,
                                String newPackageName,
                                String newClassName) {
-    this(sourceClass, fields, methods, innerClasses, newPackageName, newClassName, null, false, Collections.<MemberInfo>emptyList());
+    this(sourceClass, fields, methods, innerClasses, newPackageName, null, newClassName, null, false, Collections.<MemberInfo>emptyList());
   }
 
   public ExtractClassProcessor(PsiClass sourceClass,
@@ -92,12 +97,14 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
                                List<PsiMethod> methods,
                                List<PsiClass> classes,
                                String packageName,
+                               MoveDestination moveDestination,
                                String newClassName,
                                String newVisibility,
                                boolean generateAccessors, List<MemberInfo> enumConstants) {
     super(sourceClass.getProject());
     this.sourceClass = sourceClass;
     this.newPackageName = packageName;
+    myMoveDestination = moveDestination;
     myNewVisibility = newVisibility;
     myGenerateAccessors = generateAccessors;
     this.enumConstants = new ArrayList<PsiField>();
@@ -126,13 +133,12 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
       }
       typeParams.addAll(typeParamSet);
     }
-    myClass = ApplicationManager.getApplication().runWriteAction(
-      new Computable<PsiClass>() {
-        public PsiClass compute() {
-          return buildClass();
-        }
+    myClass = new WriteCommandAction<PsiClass>(myProject, getCommandName()){
+      @Override
+      protected void run(Result<PsiClass> result) throws Throwable {
+        result.setResult(buildClass());
       }
-    );
+    }.execute().getResultObject();
     myExtractEnumProcessor = new ExtractEnumProcessor(myProject, this.enumConstants, fields, myClass);
   }
 
@@ -144,6 +150,10 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
   protected boolean preprocessUsages(final Ref<UsageInfo[]> refUsages) {
     final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
     myExtractEnumProcessor.findEnumConstantConflicts(refUsages, conflicts);
+    if (!DestinationFolderComboBox.isAccessible(myProject, sourceClass.getContainingFile().getVirtualFile(),
+                                                myClass.getContainingFile().getContainingDirectory().getVirtualFile())) {
+      conflicts.putValue(sourceClass, "Extracted class won't be accessible in " + RefactoringUIUtil.getDescription(sourceClass, true));
+    }
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         myClass.delete();
@@ -683,11 +693,15 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
 
     try {
       final PsiFile containingFile = sourceClass.getContainingFile();
-
+      final PsiDirectory directory;
       final PsiDirectory containingDirectory = containingFile.getContainingDirectory();
-      final Module module = ModuleUtil.findModuleForPsiElement(containingFile);
-      assert module != null;
-      final PsiDirectory directory = PackageUtil.findOrCreateDirectoryForPackage(module, newPackageName, containingDirectory, false, true);
+      if (myMoveDestination != null) {
+        directory = myMoveDestination.getTargetDirectory(containingDirectory);
+      } else {
+        final Module module = ModuleUtil.findModuleForPsiElement(containingFile);
+        assert module != null;
+        directory = PackageUtil.findOrCreateDirectoryForPackage(module, newPackageName, containingDirectory, false, true);
+      }
       if (directory != null) {
         final PsiFile newFile = PsiFileFactory.getInstance(project).createFileFromText(newClassName + ".java", classString);
         final PsiElement addedFile = directory.add(newFile);
