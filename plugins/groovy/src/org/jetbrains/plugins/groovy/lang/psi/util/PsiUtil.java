@@ -55,6 +55,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrSpreadArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrAssertStatement;
@@ -72,6 +73,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
@@ -86,7 +88,6 @@ import java.util.*;
 /**
  * @author ven
  */
-@SuppressWarnings({"StaticFieldReferencedViaSubclass"})
 public class PsiUtil {
   public static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil");
   public static final Key<JavaIdentifier> NAME_IDENTIFIER = new Key<JavaIdentifier>("Java Identifier");
@@ -212,18 +213,23 @@ public class PsiUtil {
     }
     else if (parent instanceof GrAnonymousClassDefinition) {
       final GrArgumentList argList = ((GrAnonymousClassDefinition)parent).getArgumentListGroovy();
-      return getArgumentTypes(argList, nullAsBottom, stopAt);
+      if (argList == null) {
+        return getArgumentTypes(GrNamedArgument.EMPTY_ARRAY, GrExpression.EMPTY_ARRAY, GrClosableBlock.EMPTY_ARRAY, false, null);
+      }
+      else {
+        return getArgumentTypes(argList.getNamedArguments(), argList.getExpressionArguments(), GrClosableBlock.EMPTY_ARRAY, false, null);
+      }
     }
 
     return null;
   }
 
-  public static PsiType[] getArgumentTypes(GrArgumentList argList, boolean nullAsBottom, @Nullable GrExpression stopAt) {
-    return getArgumentTypes(argList.getNamedArguments(), argList.getExpressionArguments(), GrClosableBlock.EMPTY_ARRAY, nullAsBottom,
-                            stopAt);
+  @Nullable
+  public static PsiType[] getArgumentTypes(GrArgumentList argList) {
+    return getArgumentTypes(argList.getNamedArguments(), argList.getExpressionArguments(), GrClosableBlock.EMPTY_ARRAY, false, null);
   }
 
-  @NotNull
+  @Nullable
   public static PsiType[] getArgumentTypes(GrNamedArgument[] namedArgs,
                                            GrExpression[] expressions,
                                            GrClosableBlock[] closures,
@@ -237,14 +243,26 @@ public class PsiUtil {
 
     for (GrExpression expression : expressions) {
       PsiType type = expression.getType();
-      if (type == null) {
-        result.add(nullAsBottom ? PsiType.NULL : TypesUtil.getJavaLangObject(expression));
-      } else {
-        if (stopAt == expression) {
-          type = TypeConversionUtil.erasure(type);
+      if (expression instanceof GrSpreadArgument) {
+        if (type instanceof GrTupleType) {
+          result.addAll(Arrays.asList(((GrTupleType)type).getComponentTypes()));
         }
-        result.add(type);
+        else {
+          return null;
+        }
       }
+      else {
+        if (type == null) {
+          result.add(nullAsBottom ? PsiType.NULL : TypesUtil.getJavaLangObject(expression));
+        }
+        else {
+          if (stopAt == expression) {
+            type = TypeConversionUtil.erasure(type);
+          }
+          result.add(type);
+        }
+      }
+
       if (stopAt == expression) {
         return result.toArray(new PsiType[result.size()]);
       }
