@@ -117,6 +117,11 @@ public class RncFileImpl extends PsiFileBase implements RncFile, XmlFile {
   }
 
   @Override
+  public boolean ignoreReferencedElementAccessibility() {
+    return false;
+  }
+
+  @Override
   public String toString() {
     return getClass().getSimpleName() + ":" + getName();
   }

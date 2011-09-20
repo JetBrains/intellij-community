@@ -25,4 +25,5 @@ import com.intellij.psi.search.GlobalSearchScope;
  */
 public interface FileResolveScopeProvider {
   GlobalSearchScope getFileResolveScope();
+  boolean ignoreReferencedElementAccessibility();
 }
