@@ -1349,19 +1349,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       add(mySortingLabel, 10, 0);
 
       setLayout(new AbstractLayoutManager() {
-        int changedWidth = -1;
-        int changedHeight = -1;
-        
         @Override
         public Dimension preferredLayoutSize(Container parent) {
-          Dimension size = new Dimension(mainPanel.getPreferredSize());
-          if (changedWidth > 0) {
-            size.width = changedWidth;
-          }
-          if (changedHeight > 0) {
-            size.height = changedHeight;
-          }
-          return size;
+          return mainPanel.getPreferredSize();
         }
 
         @Override
@@ -1370,17 +1360,10 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
           mainPanel.setSize(size);
           mainPanel.validate();
 
-          Dimension preferredSize = mainPanel.getPreferredSize();
-          if (preferredSize.width != size.width) {
-            changedWidth = size.width;
-            UISettings.getInstance().MAX_LOOKUP_LIST_WIDTH = Math.max(300, myScrollPane.getViewport().getWidth());
-          }
-          if (preferredSize.height != size.height) {
-            changedHeight = size.height;
-            int visibleRowCount = myList.getLastVisibleIndex() - myList.getFirstVisibleIndex() + 1;
-            if (visibleRowCount != myList.getModel().getSize()) {
-              UISettings.getInstance().MAX_LOOKUP_ITEM_COUNT = Math.max(5, visibleRowCount);
-            }
+          UISettings.getInstance().MAX_LOOKUP_LIST_WIDTH = Math.max(300, myScrollPane.getViewport().getWidth());
+          int visibleRowCount = myList.getLastVisibleIndex() - myList.getFirstVisibleIndex() + 1;
+          if (visibleRowCount != myList.getModel().getSize()) {
+            UISettings.getInstance().MAX_LOOKUP_ITEM_COUNT = Math.max(5, visibleRowCount);
           }
 
           layoutStatusIcons();
