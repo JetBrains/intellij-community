@@ -97,27 +97,25 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable
   private void updateChangesForDocument(@NotNull final Document document) {
     if (DaemonListeners.isUnderIgnoredAction(null)) return;
     List<Pair<PsiElement, Boolean>> toUpdate = changedElements.get(document);
-    if (toUpdate != null) {
-      Application application = ApplicationManager.getApplication();
-      final Editor editor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
-      if (editor != null && !application.isUnitTestMode()) {
-        application.invokeLater(new Runnable() {
-          public void run() {
-            if (myProject.isDisposed()) return;
-            EditorMarkupModel markupModel = (EditorMarkupModel)editor.getMarkupModel();
-            PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-            TrafficLightRenderer.setOrRefreshErrorStripeRenderer(markupModel, myProject, document, file);
-          }
-        }, ModalityState.stateForComponent(editor.getComponent()));
-      }
-
-      for (Pair<PsiElement, Boolean> changedElement : toUpdate) {
-        PsiElement element = changedElement.getFirst();
-        Boolean whiteSpaceOptimizationAllowed = changedElement.getSecond();
-        updateByChange(element, document, whiteSpaceOptimizationAllowed);
-      }
-      changedElements.remove(document);
+    if (toUpdate == null) return;
+    Application application = ApplicationManager.getApplication();
+    final Editor editor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
+    if (editor != null && !application.isUnitTestMode()) {
+      application.invokeLater(new Runnable() {
+        public void run() {
+          EditorMarkupModel markupModel = (EditorMarkupModel)editor.getMarkupModel();
+          PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+          TrafficLightRenderer.setOrRefreshErrorStripeRenderer(markupModel, myProject, document, file);
+        }
+      }, ModalityState.stateForComponent(editor.getComponent()), myProject.getDisposed());
     }
+
+    for (Pair<PsiElement, Boolean> changedElement : toUpdate) {
+      PsiElement element = changedElement.getFirst();
+      Boolean whiteSpaceOptimizationAllowed = changedElement.getSecond();
+      updateByChange(element, document, whiteSpaceOptimizationAllowed);
+    }
+    changedElements.remove(document);
   }
 
   public void childAdded(PsiTreeChangeEvent event) {
