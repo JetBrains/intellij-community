@@ -290,7 +290,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
 
     Component component = hint.getComponent();
 
-    doShowInGivenLocation(hint, editor, p, hintInfo);
+    doShowInGivenLocation(hint, editor, p, hintInfo, true);
 
     ListenerUtil.addMouseListener(component, new MouseAdapter() {
       public void mousePressed(MouseEvent e) {
@@ -364,10 +364,10 @@ public class HintManagerImpl extends HintManager implements Disposable {
     }
   }
 
-  private static void doShowInGivenLocation(final LightweightHint hint, final Editor editor, Point p, HintHint hintInfo) {
+  private static void doShowInGivenLocation(final LightweightHint hint, final Editor editor, Point p, HintHint hintInfo, boolean updateSize) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
     JLayeredPane layeredPane = editor.getComponent().getRootPane().getLayeredPane();
-    Dimension size = hint.getComponent().getPreferredSize();
+    Dimension size = updateSize ? hint.getComponent().getPreferredSize() : hint.getComponent().getSize();
 
     if (hint.isRealPopup()) {
       final Point editorCorner = editor.getComponent().getLocation();
@@ -382,24 +382,28 @@ public class HintManagerImpl extends HintManager implements Disposable {
       p = rectangle.getLocation();
       SwingUtilities.convertPointFromScreen(p, layeredPane);
     }
-    else if ((layeredPane.getWidth() < p.x + size.width) && !hintInfo.isAwtTooltip() && !hint.isRealPopup()) {
+    else if ((layeredPane.getWidth() < p.x + size.width) && !hintInfo.isAwtTooltip()) {
       p.x = Math.max(0, layeredPane.getWidth() - size.width);
     }
 
     if (hint.isVisible()) {
-      hint.updateBounds(p.x, p.y);
+      if (updateSize) {
+        hint.updateBounds(p.x, p.y);
+      } else {
+        hint.updateLocation(p.x, p.y);
+      }
     }
     else {
       hint.show(layeredPane, p.x, p.y, editor.getContentComponent(), hintInfo);
     }
   }
-
-  public static void adjustEditorHintPosition(final LightweightHint hint, final Editor editor, final Point p) {
-    adjustEditorHintPosition(hint, editor, p, UNDER);
+  
+  public static void updateLocation(final LightweightHint hint, final Editor editor, Point p) {
+    doShowInGivenLocation(hint, editor, p, createHintHint(editor, p, hint, UNDER), false);
   }
 
   public static void adjustEditorHintPosition(final LightweightHint hint, final Editor editor, final Point p, short constraint) {
-    doShowInGivenLocation(hint, editor, p, createHintHint(editor, p, hint, constraint));
+    doShowInGivenLocation(hint, editor, p, createHintHint(editor, p, hint, constraint), true);
   }
 
   public void hideAllHints() {
@@ -765,6 +769,10 @@ public class HintManagerImpl extends HintManager implements Disposable {
     }
     else if (constraint == LEFT) {
       hintInfo.setPreferredPosition(Balloon.Position.atLeft);
+    }
+
+    if (hint.isAwtTooltip()) {
+      hintInfo.setAwtTooltip(true);
     }
 
     hintInfo.setPositionChangeShift(0, editor.getLineHeight());

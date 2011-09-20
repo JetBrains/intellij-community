@@ -134,6 +134,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   private final LookupLayeredPane myLayeredPane = new LookupLayeredPane();
   private JButton myScrollBarIncreaseButton;
   private boolean myStartCompletionWhenNothingMatches;
+  private boolean myResizePending;
 
   public LookupImpl(Project project, Editor editor, @NotNull LookupArranger arranger){
     super(new JPanel(new BorderLayout()));
@@ -285,7 +286,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     myLookupTextWidth = Math.max(maxWidth, myLookupTextWidth);
 
     myModel.setItemPresentation(item, presentation);
-
+    myResizePending = true;
   }
 
   public Collection<LookupElementAction> getActionsFor(LookupElement element) {
@@ -335,6 +336,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     myAdditionalPrefix += c;
     myInitialPrefix = null;
     myFrozenItems.clear();
+    myResizePending = true;
     refreshUi(false);
     ensureSelectionVisible();
   }
@@ -365,6 +367,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     myAdditionalPrefix = myAdditionalPrefix.substring(0, len - 1);
     myInitialPrefix = null;
     myFrozenItems.clear();
+    myResizePending = true;
     if (!myReused) {
       refreshUi(false);
       ensureSelectionVisible();
@@ -801,7 +804,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     LOG.assertTrue(marker.isValid(), "invalid marker");
     marker.dispose();
     if (isVisible()) {
-      updateLookupBounds();
+      updateLookupLocation();
     }
     checkValid();
   }
@@ -1271,8 +1274,13 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
         LOG.error("Null root pane");
       }
 
+      if (myResizePending) {
+        myResizePending = false;
+        pack();
+      }
+
       updateScrollbarVisibility();
-      updateLookupBounds();
+      updateLookupLocation();
 
       if (reused || selectionVisible) {
         ensureSelectionVisible();
@@ -1280,8 +1288,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     }
   }
 
-  private void updateLookupBounds() {
-    HintManagerImpl.adjustEditorHintPosition(this, myEditor, calculatePosition());
+  private void updateLookupLocation() {
+    HintManagerImpl.updateLocation(this, myEditor, calculatePosition());
   }
 
   private void updateScrollbarVisibility() {
@@ -1360,10 +1368,14 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
           mainPanel.setSize(size);
           mainPanel.validate();
 
-          UISettings.getInstance().MAX_LOOKUP_LIST_WIDTH = Math.max(300, myScrollPane.getViewport().getWidth());
-          int visibleRowCount = myList.getLastVisibleIndex() - myList.getFirstVisibleIndex() + 1;
-          if (visibleRowCount != myList.getModel().getSize()) {
-            UISettings.getInstance().MAX_LOOKUP_ITEM_COUNT = Math.max(5, visibleRowCount);
+          Dimension preferredSize = mainPanel.getPreferredSize();
+          if (preferredSize.width != size.width) {
+            UISettings.getInstance().MAX_LOOKUP_LIST_WIDTH = Math.max(300, myScrollPane.getViewport().getWidth());
+          }
+
+          int listHeight = myList.getLastVisibleIndex() - myList.getFirstVisibleIndex() + 1;
+          if (listHeight != myList.getModel().getSize() && listHeight != myList.getVisibleRowCount() && preferredSize.height != size.height) {
+            UISettings.getInstance().MAX_LOOKUP_ITEM_COUNT = Math.max(5, listHeight);
           }
 
           layoutStatusIcons();
