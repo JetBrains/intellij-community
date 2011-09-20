@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.psi.PyElementType;
 
 import static com.jetbrains.python.PyBundle.message;
 
@@ -46,7 +45,7 @@ public class FunctionParsing extends Parsing {
     parseParameterList();
     parseReturnTypeAnnotation();
     checkMatches(PyTokenTypes.COLON, message("PARSE.expected.colon"));
-    getStatementParser().parseSuite(functionMarker, getFunctionType());
+    getStatementParser().parseSuite(functionMarker, getFunctionType(), myContext.emptyParsingScope().withFunction(true));
   }
 
   public void parseReturnTypeAnnotation() {
