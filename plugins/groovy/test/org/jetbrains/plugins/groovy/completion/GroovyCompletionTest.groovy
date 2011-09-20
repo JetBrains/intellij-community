@@ -32,6 +32,12 @@ public class GroovyCompletionTest extends GroovyCompletionTestBase {
     return TestUtils.getTestDataPath() + "groovy/completion/";
   }
 
+  @Override
+  protected void tearDown() {
+    CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER
+    super.tearDown()
+  }
+
   public void testFinishMethodWithLParen() throws Throwable {
     myFixture.testCompletionVariants(getTestName(false) + ".groovy", "getBar", "getClass", "getFoo");
     myFixture.type('(');
@@ -746,6 +752,21 @@ def a = new MyClass()
 a.<caret>""")
   }
 
+  public void testPreferInstanceof() {
+    caseSensitiveNone()
+
+    configure '''
+class Fopppp {
+    def foo() {
+        assert x ins<caret>
+    }
+}
+class Instantiation {}
+'''
+    myFixture.completeBasic()
+    assert myFixture.lookupElementStrings[0] == 'instanceof'
+  }
+
   private doContainsTest(String itemToCheck, String text) {
     myFixture.configureByText "a.groovy", text
 
@@ -782,18 +803,17 @@ while(true) {
   }
 
   public void testPreferParametersToClasses() {
-    CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
+    caseSensitiveNone()
 
-    try {
-      myFixture.configureByText "a.groovy", "def foo(stryng) { println str<caret> }"
-      myFixture.completeBasic()
-      assert myFixture.lookupElementStrings[0] == 'stryng'
-    }
-    finally {
-      CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER
-    }
+    myFixture.configureByText "a.groovy", "def foo(stryng) { println str<caret> }"
+    myFixture.completeBasic()
+    assert myFixture.lookupElementStrings[0] == 'stryng'
   }
-  
+
+  private def caseSensitiveNone() {
+    CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
+  }
+
   public void testFieldVsPackage() {
     myFixture.addFileToProject 'aaa/bbb/Foo.groovy', 'package aaa.bbb; class Foo{}'
     def file = myFixture.addFileToProject('aaa/bar.groovy', '''
