@@ -767,6 +767,16 @@ class Instantiation {}
     assert myFixture.lookupElementStrings[0] == 'instanceof'
   }
 
+  public void testForFinal() {
+    assert doContainsTest('final', '''
+class Fopppp {
+    def foo() {
+        for(fin<caret>
+    }
+}
+''')
+  }
+
   private doContainsTest(String itemToCheck, String text) {
     myFixture.configureByText "a.groovy", text
 
