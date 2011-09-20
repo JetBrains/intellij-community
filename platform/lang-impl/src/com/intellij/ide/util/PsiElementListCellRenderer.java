@@ -51,6 +51,7 @@ import java.util.Comparator;
 public abstract class PsiElementListCellRenderer<T extends PsiElement> extends JPanel implements ListCellRenderer, MatcherHolder {
 
   private Matcher myMatcher;
+  private boolean myFocusBorderEnabled = true;
 
   protected PsiElementListCellRenderer() {
     super(new BorderLayout());
@@ -118,7 +119,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
         setIcon(IconUtil.getEmptyIcon(false));
         append(value == null ? "" : value.toString(), new SimpleTextAttributes(Font.PLAIN, list.getForeground()));
       }
-      setPaintFocusBorder(hasFocus && UIUtil.isToUseDottedCellBorder());
+      setPaintFocusBorder(hasFocus && UIUtil.isToUseDottedCellBorder() && myFocusBorderEnabled);
       setBackground(selected ? UIUtil.getListSelectionBackground() : bgColor);
     }
 
@@ -158,6 +159,10 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
     add(leftCellRendererComponent, BorderLayout.WEST);
     setBackground(isSelected ? UIUtil.getListSelectionBackground() : leftCellRendererComponent.getBackground());
     return this;
+  }
+
+  protected void setFocusBorderEnabled(boolean enabled) {
+    myFocusBorderEnabled = enabled;
   }
 
   protected boolean customizeNonPsiElementLeftRenderer(ColoredListCellRenderer renderer,
