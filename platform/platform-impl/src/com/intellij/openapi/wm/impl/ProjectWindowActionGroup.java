@@ -64,6 +64,9 @@ public class ProjectWindowActionGroup extends DefaultActionGroup {
       return;
     }
     final ProjectWindowAction windowAction = findWindowAction(project.getName());
+    if (windowAction == null) {
+      return;
+    }
     final ProjectWindowAction next = windowAction.getNext();
     if (next != null) {
       next.setSelected(e, true);
@@ -76,6 +79,9 @@ public class ProjectWindowActionGroup extends DefaultActionGroup {
       return;
     }
     final ProjectWindowAction windowAction = findWindowAction(project.getName());
+    if (windowAction == null) {
+      return;
+    }
     final ProjectWindowAction previous = windowAction.getPrevious();
     if (previous != null) {
       previous.setSelected(e, true);
