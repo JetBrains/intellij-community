@@ -27,6 +27,7 @@ import org.jetbrains.yaml.YAMLTokenTypes;
   private boolean afterEOL = false;
   private int braceCount = 0;
   private IElementType valueTokenType = null;
+  private int previousState = YYINITIAL;
     
   private char previousChar() {
     return getChar(-1);
@@ -82,44 +83,46 @@ STRING=                         '([^\\']|{ESCAPE_SEQUENCE}|(''))*?'?
                                     return EOL;
                                 }
 "{"                             {   braceCount++;
-                                    yybegin(braceCount == 0 ? YYINITIAL: BRACES);
+                                    if (braceCount != 0 && yystate() != BRACES) {
+                                      previousState = yystate();
+                                    }
+                                    yybegin(braceCount == 0 ? previousState: BRACES);
                                     return LBRACE;
                                 }
 "}"                             {   braceCount--;
                                     if (yystate() == BRACES && braceCount == 0){
-                                      yybegin(YYINITIAL);
+                                      yybegin(previousState);
                                     }
                                     return RBRACE;
                                 }
 "["                             {   braceCount++;
-                                    yybegin(braceCount == 0 ? YYINITIAL: BRACES);
+                                    if (braceCount != 0 && yystate() != BRACES) {
+                                      previousState = yystate();
+                                    }
+                                    yybegin(braceCount == 0 ? previousState: BRACES);
                                     return LBRACKET;
                                 }
 "]"                             {   braceCount--;
                                     if (yystate() == BRACES && braceCount == 0){
-                                      yybegin(YYINITIAL);
+                                      yybegin(previousState);
                                     }
                                     return RBRACKET;
                                 }
 
 ","                             {   if (braceCount > 0) {
-                                      yybegin(braceCount == 0 ? YYINITIAL: BRACES);
+                                      yybegin(BRACES);
                                       return COMMA;
                                     }
                                     return TEXT;
                                 }
-":"                             {   yybegin(braceCount == 0 ? YYINITIAL: BRACES);
-                                    return COLON;
-                                }
-"?"                             {   yybegin(braceCount == 0 ? YYINITIAL: BRACES);
-                                    return QUESTION;
-                                }
+":"                             {   return COLON; }
+"?"                             {   return QUESTION; }
 
 }
 
 <YYINITIAL, BRACES, VALUE_OR_KEY> {
 
-{KEY}                           {   yybegin(VALUE);
+{KEY} / ({WHITE_SPACE} | {EOL}) {   yybegin(VALUE);
                                     return SCALAR_KEY;
                                 }
 }

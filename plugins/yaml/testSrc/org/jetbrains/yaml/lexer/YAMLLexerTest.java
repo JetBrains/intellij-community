@@ -165,4 +165,12 @@ public class YAMLLexerTest extends LexerTestCase {
            "  type:     sfEvent");
 
   }
+
+  public void testColons74100(){
+    doTest("server1: http://localhost:9876\n" +
+           "server2:\n" +
+           "  http://localhost:8765\n" +
+           "server3: test");
+
+  }
 }
