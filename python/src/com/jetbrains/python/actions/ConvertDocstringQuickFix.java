@@ -5,7 +5,9 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,7 +43,9 @@ public class ConvertDocstringQuickFix implements LocalQuickFix {
       String content = expression.getText().substring(prefixLength);
       if (content.startsWith("'''") ) {
         content = content.substring(3, content.length()-3);
-      } else {
+      } else if (content.startsWith("\"\"\""))
+        return;
+      else {
         content = content.length() == 1 ? "" : content.substring(1, content.length()-1);
       }
 
