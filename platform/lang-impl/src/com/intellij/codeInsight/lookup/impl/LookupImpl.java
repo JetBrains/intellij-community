@@ -443,9 +443,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     updateListHeight(listModel);
 
     if (!model.isEmpty()) {
-      int listWidth = Math.min(myLookupTextWidth + myCellRenderer.getIconIndent(), UISettings.getInstance().MAX_LOOKUP_LIST_WIDTH);
-      myList.setFixedCellWidth(Math.max(listWidth, myAdComponent.getAdComponent().getPreferredSize().width));
-
       LookupElement first = model.iterator().next();
       if (isFocused() && (!(isExactPrefixItem(first, true) || isExactPrefixItem(first, false)) || mySelectionTouched)) {
         restoreSelection(oldSelected, hasPreselected, oldInvariant, snapshot.second);
@@ -536,10 +533,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   private void addEmptyItem(DefaultListModel model) {
     LookupItem<String> item = new EmptyLookupItem(myCalculating ? " " : LangBundle.message("completion.no.suggestions"));
     myMatchers.put(item, new CamelHumpMatcher(""));
-    if (!myCalculating) {
-      myList.setFixedCellWidth(Math.max(myCellRenderer.updateMaximumWidth(renderItemApproximately(item)), myLookupTextWidth));
-    }
-
     model.addElement(item);
   }
 
@@ -1274,12 +1267,13 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
         LOG.error("Null root pane");
       }
 
+      updateScrollbarVisibility();
+
       if (myResizePending) {
         myResizePending = false;
         pack();
       }
 
-      updateScrollbarVisibility();
       updateLookupLocation();
 
       if (reused || selectionVisible) {
@@ -1358,8 +1352,12 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
       setLayout(new AbstractLayoutManager() {
         @Override
-        public Dimension preferredLayoutSize(Container parent) {
-          return mainPanel.getPreferredSize();
+        public Dimension preferredLayoutSize(@Nullable Container parent) {
+          int maxCellWidth = myLookupTextWidth + myCellRenderer.getIconIndent();
+          int width = Math.max(myScrollPane.getPreferredSize().width - myScrollPane.getViewport().getPreferredSize().width + maxCellWidth,
+                               myAdComponent.getAdComponent().getPreferredSize().width);
+          return new Dimension(Math.min(width, UISettings.getInstance().MAX_LOOKUP_LIST_WIDTH),
+                               mainPanel.getPreferredSize().height);
         }
 
         @Override
@@ -1368,16 +1366,19 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
           mainPanel.setSize(size);
           mainPanel.validate();
 
-          Dimension preferredSize = mainPanel.getPreferredSize();
-          if (preferredSize.width != size.width) {
-            UISettings.getInstance().MAX_LOOKUP_LIST_WIDTH = Math.max(300, myScrollPane.getViewport().getWidth());
+          if (!myResizePending) {
+            Dimension preferredSize = preferredLayoutSize(null);
+            if (preferredSize.width != size.width) {
+              UISettings.getInstance().MAX_LOOKUP_LIST_WIDTH = Math.max(300, size.width);
+            }
+
+            int listHeight = myList.getLastVisibleIndex() - myList.getFirstVisibleIndex() + 1;
+            if (listHeight != myList.getModel().getSize() && listHeight != myList.getVisibleRowCount() && preferredSize.height != size.height) {
+              UISettings.getInstance().MAX_LOOKUP_ITEM_COUNT = Math.max(5, listHeight);
+            }
           }
 
-          int listHeight = myList.getLastVisibleIndex() - myList.getFirstVisibleIndex() + 1;
-          if (listHeight != myList.getModel().getSize() && listHeight != myList.getVisibleRowCount() && preferredSize.height != size.height) {
-            UISettings.getInstance().MAX_LOOKUP_ITEM_COUNT = Math.max(5, listHeight);
-          }
-
+          myList.setFixedCellWidth(myScrollPane.getViewport().getWidth());
           layoutStatusIcons();
           layoutHint();
 
