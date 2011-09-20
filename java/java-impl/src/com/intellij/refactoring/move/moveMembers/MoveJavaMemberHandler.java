@@ -21,10 +21,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.*;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.*;
 import com.intellij.util.IncorrectOperationException;
@@ -257,7 +254,7 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
 
       final Comparator<PsiField> fieldComparator = new Comparator<PsiField>() {
         public int compare(final PsiField o1, final PsiField o2) {
-          return -PsiUtilBase.compareElementsByPosition(o1, o2);
+          return -PsiUtilCore.compareElementsByPosition(o1, o2);
         }
       };
 

@@ -1138,7 +1138,7 @@ public class ExpressionGenerator extends Generator {
         return;
       }
     }
-    final PsiType[] argTypes = PsiUtil.getArgumentTypes(argList, false, null);
+    final PsiType[] argTypes = PsiUtil.getArgumentTypes(argList);
     final PsiManager manager = expression.getManager();
     final GlobalSearchScope resolveScope = expression.getResolveScope();
 

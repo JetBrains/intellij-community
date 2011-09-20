@@ -25,7 +25,6 @@ import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiFieldStub;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
-import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.resolve.JavaResolveCache;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -83,7 +82,7 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
 
   public PsiClass getContainingClass() {
     PsiElement parent = getParent();
-    return parent instanceof PsiClass ? (PsiClass)parent : PsiTreeUtil.getParentOfType(this, JspClass.class);
+    return parent instanceof PsiClass ? (PsiClass)parent : PsiTreeUtil.getParentOfType(this, PsiSyntheticClass.class);
   }
 
   @Override
@@ -366,9 +365,9 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
     PsiElement modifierList = getModifierList();
     ASTNode field = SourceTreeToPsiMap.psiElementToTree(type.getParent());
     while(true){
-      ASTNode comma = TreeUtil.skipElements(field.getTreeNext(), StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET);
+      ASTNode comma = PsiImplUtil.skipWhitespaceAndComments(field.getTreeNext());
       if (comma == null || comma.getElementType() != JavaTokenType.COMMA) break;
-      ASTNode nextField = TreeUtil.skipElements(comma.getTreeNext(), StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET);
+      ASTNode nextField = PsiImplUtil.skipWhitespaceAndComments(comma.getTreeNext());
       if (nextField == null || nextField.getElementType() != JavaElementType.FIELD) break;
 
       TreeElement semicolon = Factory.createSingleLeafElement(JavaTokenType.SEMICOLON, ";", 0, 1, null, getManager());

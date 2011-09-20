@@ -336,7 +336,7 @@ public class InlineUtil {
               if (inferenceResult.getErrorMessage() == null) {
                 final PsiElement copy = ref.copy();
                 final PsiElement parent = ref.replace(initializer);
-                final PsiDiamondType.DiamondInferenceResult result = PsiDiamondType.resolveInferredTypes((PsiNewExpression)initializer, parent);
+                final PsiDiamondType.DiamondInferenceResult result = PsiDiamondTypeImpl.resolveInferredTypes((PsiNewExpression)initializer, parent);
                 ref = parent.replace(copy);
                 if (!result.equals(inferenceResult)) {
                   final String inferredTypeText = StringUtil.join(inferenceResult.getTypes(),

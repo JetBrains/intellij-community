@@ -46,10 +46,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.impl.source.tree.java.ReplaceExpressionUtil;
-import com.intellij.psi.util.PsiExpressionTrimRenderer;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.*;
 import com.intellij.refactoring.*;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
@@ -96,7 +93,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
       final PsiElement[] statementsInRange = findStatementsAtOffset(editor, file, offset);
 
       //try line selection
-      if (statementsInRange.length == 1 && (PsiUtil.hasErrorElementChild(statementsInRange[0]) ||
+      if (statementsInRange.length == 1 && (PsiUtilCore.hasErrorElementChild(statementsInRange[0]) ||
                                             !PsiUtil.isStatement(statementsInRange[0]) ||
                                             statementsInRange[0].getTextRange().getStartOffset() >= offset ||
                                             statementsInRange[0].getTextRange().getEndOffset() <= offset ||

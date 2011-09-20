@@ -67,7 +67,7 @@ public class BindingFactory {
           descendants.add(aClass);
         }
         else {
-          for (PsiClass bInheritor : ClassInheritorsSearch.search(bClass, bClass.getUseScope(), false)) {
+          for (PsiClass bInheritor : ClassInheritorsSearch.search(bClass, false)) {
             getGreatestLowerClasses(bInheritor, aClass, descendants);
           }
         }

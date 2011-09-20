@@ -39,11 +39,9 @@ import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.moveClassesOrPackages.DestinationFolderComboBox;
-import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil;
 import com.intellij.refactoring.ui.PackageNameReferenceEditorCombo;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.RecentsManager;
 import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
 import com.intellij.ui.components.JBLabel;
@@ -113,12 +111,12 @@ public class CreateClassDialog extends DialogWrapper {
     }
 
     myTfClassName.setText(myClassName);
-    myDestinationCB.setData(myProject, myPackageComponent, getBaseDir(normalizedPackageName), ProjectRootManager.getInstance(myProject).getContentSourceRoots(), new Pass<String>() {
+    myDestinationCB.setData(myProject, getBaseDir(normalizedPackageName), ProjectRootManager.getInstance(myProject).getContentSourceRoots(), new Pass<String>() {
       @Override
       public void pass(String s) {
         setErrorText(s);
       }
-    });
+    }, myPackageComponent.getChildComponent());
   }
 
   protected boolean reportBaseInTestSelectionInSource() {
@@ -194,7 +192,8 @@ public class CreateClassDialog extends DialogWrapper {
     gbConstraints.insets.top = 12;
     gbConstraints.anchor = GridBagConstraints.WEST;
     gbConstraints.fill = GridBagConstraints.NONE;
-    panel.add(new JBLabel(RefactoringBundle.message("target.destination.folder")), gbConstraints);
+    final JBLabel label = new JBLabel(RefactoringBundle.message("target.destination.folder"));
+    panel.add(label, gbConstraints);
 
     gbConstraints.gridy = 4;
     gbConstraints.gridx = 0;
@@ -202,6 +201,9 @@ public class CreateClassDialog extends DialogWrapper {
     gbConstraints.insets.top = 4;
     panel.add(myDestinationCB, gbConstraints);
 
+    final boolean isMultipleSourceRoots = ProjectRootManager.getInstance(myProject).getContentSourceRoots().length > 1;
+    myDestinationCB.setVisible(isMultipleSourceRoots);
+    label.setVisible(isMultipleSourceRoots);
     return panel;
   }
 

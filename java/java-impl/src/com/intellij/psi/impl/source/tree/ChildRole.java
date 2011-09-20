@@ -76,7 +76,6 @@ public class ChildRole {
   public static final int REFERENCE_NAME = 53; // in JAVA_CODE_REFERENCE, REFERENCE_EXPRESSION
   public static final int QUALIFIER = 54; // in JAVA_CODE_REFERENCE, REFERENCE_EXPRESSION, THIS_EXPRESSION, SUPER_EXPRESSION, NEW_EXPRESSION
   public static final int DOT = 55; // in JAVA_CODE_REFERENCE, REFERENCE_EXPRESSION, CLASS_OBJECT_ACCESS_EXPRESSION, THIS_EXPRESSION, SUPER_EXPRESSION, NEW_EXPRESSION
-  public static final int STATEMENT_IN_BLOCK = 56; // in CODE_BLOCK, JSP_FILE
   public static final int THROW_KEYWORD = 57; // in THROW_STATEMENT
   public static final int EXCEPTION = 58; // in THROW_STATEMENT
   public static final int EXPRESSION_IN_LIST = 59; // in EXPRESSION_LIST. ARRAY_INITIALIZER_EXPRESSION
@@ -176,7 +175,6 @@ public class ChildRole {
       case REFERENCE_IN_LIST:
       case EXPRESSION_IN_LIST:
       case ARRAY_DIMENSION:
-      case STATEMENT_IN_BLOCK:
       case TYPE_PARAMETER_IN_LIST:
       case ANNOTATION_VALUE:
         return false;

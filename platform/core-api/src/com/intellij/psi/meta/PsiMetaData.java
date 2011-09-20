@@ -16,13 +16,12 @@
 package com.intellij.psi.meta;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.filters.ElementFilter;
 import org.jetbrains.annotations.NonNls;
 
 /**
  * @author peter
  *
- * @see MetaDataRegistrar#registerMetaData(ElementFilter, Class)
+ * @see MetaDataRegistrar#registerMetaData(com.intellij.psi.filters.ElementFilter, Class)
  * @see PsiMetaOwner#getMetaData()
  */
 public interface PsiMetaData {

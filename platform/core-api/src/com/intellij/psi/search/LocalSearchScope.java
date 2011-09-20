@@ -183,7 +183,7 @@ public class LocalSearchScope extends SearchScope {
       for (int j = 0; j < elements2.length; j++) {
         final PsiElement element2 = elements2[j];
         final PsiElement unionElement = scopeElementsUnion(element1, element2);
-        if (unionElement != null) {
+        if (unionElement != null && unionElement.getContainingFile() != null) {
           result.add(unionElement);
           united[j] = true;
           break loop1;

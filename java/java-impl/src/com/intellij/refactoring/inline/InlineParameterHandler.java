@@ -254,7 +254,7 @@ public class InlineParameterHandler extends JavaInlineActionHandler {
       return RefactoringBundle.message("inline.parameter.error.varargs");
     }
     if (method.findSuperMethods().length > 0 ||
-                 OverridingMethodsSearch.search(method, method.getUseScope(), true).toArray(PsiMethod.EMPTY_ARRAY).length > 0) {
+        OverridingMethodsSearch.search(method, true).toArray(PsiMethod.EMPTY_ARRAY).length > 0) {
       return RefactoringBundle.message("inline.parameter.error.hierarchy");
     }
     return null;

@@ -17,6 +17,7 @@ package com.intellij.psi.impl.compiled;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Key;
@@ -42,7 +43,7 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
 
   @NotNull
   public Language getLanguage() {
-    return StdFileTypes.JAVA.getLanguage();
+    return JavaLanguage.INSTANCE;
   }
 
   public PsiManager getManager() {

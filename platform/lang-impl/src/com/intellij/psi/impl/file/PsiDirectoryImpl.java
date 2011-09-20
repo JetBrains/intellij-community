@@ -30,8 +30,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VfsBundle;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -48,6 +46,7 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiFileSystemItemProcessor;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
@@ -183,7 +182,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
         psiFiles.add(psiFile);
       }
     }
-    return PsiUtilBase.toPsiFileArray(psiFiles);
+    return PsiUtilCore.toPsiFileArray(psiFiles);
   }
 
   public PsiDirectory findSubdirectory(@NotNull String name) {

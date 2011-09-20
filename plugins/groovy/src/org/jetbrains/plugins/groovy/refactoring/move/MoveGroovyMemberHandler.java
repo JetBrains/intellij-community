@@ -21,7 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.moveMembers.MoveMemberHandler;
 import com.intellij.refactoring.move.moveMembers.MoveMembersOptions;
@@ -222,7 +222,7 @@ public class MoveGroovyMemberHandler implements MoveMemberHandler {
       if (!referencedFields.isEmpty()) {
         Collections.sort(referencedFields, new Comparator<PsiField>() {
           public int compare(final PsiField o1, final PsiField o2) {
-            return -PsiUtilBase.compareElementsByPosition(o1, o2);
+            return -PsiUtilCore.compareElementsByPosition(o1, o2);
           }
         });
         return referencedFields.get(0);

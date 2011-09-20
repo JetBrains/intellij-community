@@ -18,16 +18,16 @@ package com.intellij.psi.impl;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TestUtil;
 import com.intellij.compiler.CompilerConfiguration;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.ExcludedFileIndex;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.util.*;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.PlatformIcons;
@@ -79,7 +79,7 @@ public class ElementPresentationUtil implements PlatformIcons {
   private static final int CLASS_KIND_ANONYMOUS     = 40;
   private static final int CLASS_KIND_ENUM          = 50;
   private static final int CLASS_KIND_ASPECT        = 60;
-  private static final int CLASS_KIND_JSP           = 70;
+  public static final int CLASS_KIND_JSP           = 70;
   public static final int CLASS_KIND_EXCEPTION = 80;
   private static final int CLASS_KIND_JUNIT_TEST = 90;
   private static final int CLASS_KIND_RUNNABLE = 100;
@@ -95,7 +95,7 @@ public class ElementPresentationUtil implements PlatformIcons {
 
   public static boolean isExcluded(final VirtualFile vFile, final Project project) {
     return vFile != null
-           && ProjectRootManager.getInstance(project).getFileIndex().isInSource(vFile)
+           && ServiceManager.getService(project, ExcludedFileIndex.class).isInSource(vFile)
            && CompilerConfiguration.getInstance(project).isExcludedFromCompilation(vFile);
   }
 
@@ -105,7 +105,6 @@ public class ElementPresentationUtil implements PlatformIcons {
     if (aClass.isAnnotationType()) return CLASS_KIND_ANNOTATION;
     if (aClass.isEnum()) return CLASS_KIND_ENUM;
     if (aClass.isInterface()) return CLASS_KIND_INTERFACE;
-    if (aClass instanceof JspClass) return CLASS_KIND_JSP;
     if (aClass instanceof PsiAnonymousClass) return CLASS_KIND_ANONYMOUS;
 
     return CLASS_KIND_CLASS;
@@ -140,9 +139,6 @@ public class ElementPresentationUtil implements PlatformIcons {
     }
     if (aClass.isInterface()) {
       return CLASS_KIND_INTERFACE;
-    }
-    if (aClass instanceof JspClass) {
-      return CLASS_KIND_JSP;
     }
     if (aClass instanceof PsiAnonymousClass) {
       return CLASS_KIND_ANONYMOUS;
@@ -183,8 +179,6 @@ public class ElementPresentationUtil implements PlatformIcons {
     BASE_ICON.put(CLASS_KIND_EXCEPTION | FLAGS_ABSTRACT, ABSTRACT_EXCEPTION_CLASS_ICON);
     BASE_ICON.put(CLASS_KIND_INTERFACE, INTERFACE_ICON);
     BASE_ICON.put(CLASS_KIND_INTERFACE | FLAGS_ABSTRACT, INTERFACE_ICON);
-    BASE_ICON.put(CLASS_KIND_JSP, JSP_ICON);
-    BASE_ICON.put(CLASS_KIND_JSP | FLAGS_ABSTRACT, JSP_ICON);
     BASE_ICON.put(CLASS_KIND_JUNIT_TEST, CLASS_ICON);
     BASE_ICON.put(CLASS_KIND_JUNIT_TEST | FLAGS_ABSTRACT, ABSTRACT_CLASS_ICON);
     BASE_ICON.put(CLASS_KIND_RUNNABLE, CLASS_ICON);

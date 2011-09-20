@@ -33,7 +33,7 @@ import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.TrueFilter;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.meta.PsiMetaData;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -236,7 +236,7 @@ public class CompletionData {
     String s = null;
     TailType tailType = TailType.NONE;
     if (object instanceof PsiElement){
-      s = PsiUtilBase.getName((PsiElement) object);
+      s = PsiUtilCore.getName((PsiElement)object);
     }
     else if (object instanceof PsiMetaData) {
       s = ((PsiMetaData)object).getName();

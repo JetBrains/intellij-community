@@ -171,7 +171,7 @@ public final class MethodHierarchyTreeStructure extends HierarchyTreeStructure {
       return Collections.emptyList();
     }
 
-    return ClassInheritorsSearch.search(psiClass, psiClass.getUseScope(), false).findAll();
+    return ClassInheritorsSearch.search(psiClass, false).findAll();
   }
 
   private boolean shouldHideClass(final PsiClass psiClass) {

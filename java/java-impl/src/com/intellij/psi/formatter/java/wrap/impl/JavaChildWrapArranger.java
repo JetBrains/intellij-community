@@ -20,6 +20,7 @@ import com.intellij.formatting.WrapType;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiPolyadicExpression;
+import com.intellij.psi.PsiStatement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.java.FormattingAstUtil;
@@ -180,7 +181,7 @@ public class JavaChildWrapArranger {
       return null;
     }
     else if (nodeType == JavaElementType.CODE_BLOCK) {
-      if (role == ChildRole.STATEMENT_IN_BLOCK) {
+      if (child.getPsi() instanceof PsiStatement) {
         return suggestedWrap;
       }
       else {

@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.java.PsiAnnotationImpl;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -234,8 +235,8 @@ public class AnnotationsHighlightUtil {
     PsiAnnotationOwner owner = annotation.getOwner();
     if (!(owner instanceof PsiModifierList || owner instanceof PsiTypeElement || owner instanceof PsiMethodReceiver || owner instanceof PsiTypeParameter)) return null;
     PsiElement member = ((PsiElement)owner).getParent();
-    String[] elementTypeFields = getApplicableElementTypeFields(owner instanceof PsiModifierList ? member : (PsiElement)owner);
-    if (isAnnotationApplicableTo(annotation, false, elementTypeFields)) return null;
+    String[] elementTypeFields = PsiAnnotationImpl.getApplicableElementTypeFields(owner instanceof PsiModifierList ? member : (PsiElement)owner);
+    if (PsiAnnotationImpl.isAnnotationApplicableTo(annotation, false, elementTypeFields)) return null;
     PsiJavaCodeReferenceElement nameRef = annotation.getNameReferenceElement();
     String description = JavaErrorMessages.message("annotation.not.applicable",
                                                    nameRef.getText(),
@@ -243,97 +244,6 @@ public class AnnotationsHighlightUtil {
     final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, nameRef, description);
     QuickFixAction.registerQuickFixAction(highlightInfo, new DeleteNotApplicableAnnotationAction(annotation));
     return highlightInfo;
-  }
-
-  public static boolean isAnnotationApplicableTo(PsiAnnotation annotation, boolean strict, String... elementTypeFields) {
-    if (elementTypeFields == null) return true;
-    PsiJavaCodeReferenceElement nameRef = annotation.getNameReferenceElement();
-    if (nameRef == null) {
-      return !strict;
-    }
-    PsiElement resolved = nameRef.resolve();
-    if (!(resolved instanceof PsiClass) || !((PsiClass)resolved).isAnnotationType()) {
-      return !strict;
-    }
-    PsiClass annotationType = (PsiClass)resolved;
-    PsiAnnotation target = annotationType.getModifierList().findAnnotation(AnnotationUtil.TARGET_ANNOTATION_FQ_NAME);
-    if (target == null) {
-      //todo hack: ambiguity in spec
-      return !strict;
-      //return !ArrayUtil.contains("TYPE_USE", elementTypeFields);
-    }
-    PsiNameValuePair[] attributes = target.getParameterList().getAttributes();
-    if (attributes.length == 0) {
-      return !strict;
-    }
-    PsiAnnotationMemberValue value = attributes[0].getValue();
-    LOG.assertTrue(elementTypeFields.length > 0);
-
-    PsiManager manager = annotation.getManager();
-    PsiClass elementTypeClass = JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.annotation.ElementType", annotation.getResolveScope());
-    if (elementTypeClass == null) {
-      //todo hack
-      return !strict;
-      //return !ArrayUtil.contains("TYPE_USE", elementTypeFields);
-    }
-
-    for (String fieldName : elementTypeFields) {
-      PsiField field = elementTypeClass.findFieldByName(fieldName, false);
-      if (field == null) continue;
-      if (value instanceof PsiArrayInitializerMemberValue) {
-        PsiAnnotationMemberValue[] initializers = ((PsiArrayInitializerMemberValue)value).getInitializers();
-        for (PsiAnnotationMemberValue initializer : initializers) {
-          if (initializer instanceof PsiReferenceExpression) {
-            PsiReferenceExpression refExpr = (PsiReferenceExpression)initializer;
-            if (refExpr.isReferenceTo(field)) return true;
-          }
-        }
-      }
-      else if (value instanceof PsiReferenceExpression) {
-        if (((PsiReferenceExpression)value).isReferenceTo(field)) return true;
-      }
-    }
-    return false;
-  }
-
-  public static String[] getApplicableElementTypeFields(PsiElement owner) {
-    if (owner instanceof PsiClass) {
-      PsiClass aClass = (PsiClass)owner;
-      if (aClass.isAnnotationType()) {
-        return new String[]{"ANNOTATION_TYPE", "TYPE"};
-      }
-      else if (aClass instanceof PsiTypeParameter) {
-        return new String[]{"TYPE_PARAMETER"};
-      }
-      else {
-        return new String[]{"TYPE"};
-      }
-    }
-    if (owner instanceof PsiMethod) {
-      if (((PsiMethod)owner).isConstructor()) {
-        return new String[]{"CONSTRUCTOR"};
-      }
-      else {
-        return new String[]{"METHOD"};
-      }
-    }
-    if (owner instanceof PsiField) {
-      return new String[]{"FIELD"};
-    }
-    if (owner instanceof PsiParameter) {
-      return new String[]{"PARAMETER"};
-    }
-    if (owner instanceof PsiLocalVariable) {
-      return new String[]{"LOCAL_VARIABLE"};
-    }
-    if (owner instanceof PsiPackageStatement) {
-      return new String[]{"PACKAGE"};
-    }
-    if (owner instanceof PsiTypeElement) {
-      return new String[]{"TYPE_USE"};
-    }
-
-    return null;
   }
 
   private static PsiField[] getFields(final PsiClass elementTypeClass, @NonNls final String... names) {

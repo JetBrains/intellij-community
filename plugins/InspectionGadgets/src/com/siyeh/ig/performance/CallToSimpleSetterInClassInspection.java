@@ -183,8 +183,7 @@ public class CallToSimpleSetterInClassInspection extends BaseInspection {
             if(!PropertyUtils.isSimpleSetter(method)){
                 return;
             }
-            final Query<PsiMethod> query = OverridingMethodsSearch.search(
-                    method, method.getUseScope(), true);
+          final Query<PsiMethod> query = OverridingMethodsSearch.search(method, true);
             final PsiMethod overridingMethod = query.findFirst();
             if (overridingMethod != null) {
                 return;

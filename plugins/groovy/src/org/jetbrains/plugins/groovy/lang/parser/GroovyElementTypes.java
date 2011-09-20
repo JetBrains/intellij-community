@@ -230,7 +230,8 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
 
   // Arguments
   GroovyElementType ARGUMENTS = new GroovyElementType("Arguments");
-  GroovyElementType ARGUMENT = new GroovyElementType("Compound argument");
+  GroovyElementType NAMED_ARGUMENT = new GroovyElementType("Compound argument");
+  GroovyElementType SPREAD_ARGUMENT = new GroovyElementType("Spread argument");
   GroovyElementType ARGUMENT_LABEL = new GroovyElementType("Argument label");
   // Simple expression
   GroovyElementType PATH_PROPERTY = new GroovyElementType("Path name selector");

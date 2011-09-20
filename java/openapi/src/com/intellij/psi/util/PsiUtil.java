@@ -26,11 +26,8 @@ import com.intellij.psi.infos.MethodCandidateInfo.ApplicabilityLevel;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
@@ -39,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public final class PsiUtil extends PsiUtilBase {
+public final class PsiUtil extends PsiUtilCore {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.PsiUtil");
   public static final int ACCESS_LEVEL_PUBLIC = 4;
   public static final int ACCESS_LEVEL_PROTECTED = 3;
@@ -207,7 +204,7 @@ public final class PsiUtil extends PsiUtilBase {
         if (element instanceof PsiClass && !isLocalOrAnonymousClass((PsiClass)element)) {
           break;
         }
-        if (element instanceof PsiFile && PsiUtilBase.getTemplateLanguageFile(element) != null) {
+        if (element instanceof PsiFile && PsiUtilCore.getTemplateLanguageFile(element) != null) {
           return element;
         }
       }
@@ -652,28 +649,6 @@ public final class PsiUtil extends PsiUtilBase {
     return typeElement.getType() instanceof PsiDisjunctionType
            ? PsiTreeUtil.getChildrenOfTypeAsList(typeElement, PsiTypeElement.class)
            : Collections.singletonList(typeElement);
-  }
-
-  private static class ParamWriteProcessor implements Processor<PsiReference> {
-    private volatile boolean myIsWriteRefFound = false;
-    public boolean process(PsiReference reference) {
-      final PsiElement element = reference.getElement();
-      if (element instanceof PsiReferenceExpression && isAccessedForWriting((PsiExpression)element)) {
-        myIsWriteRefFound = true;
-        return false;
-      }
-      return true;
-    }
-
-    public boolean isWriteRefFound() {
-      return myIsWriteRefFound;
-    }
-  }
-
-  public static boolean isAssigned(final PsiParameter parameter) {
-    ParamWriteProcessor processor = new ParamWriteProcessor();
-    ReferencesSearch.search(parameter, new LocalSearchScope(parameter.getDeclarationScope()), true).forEach(processor);
-    return processor.isWriteRefFound();
   }
 
   public static void checkIsIdentifier(PsiManager manager, String text) throws IncorrectOperationException{

@@ -32,261 +32,18 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AsyncResult;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.psi.*;
-import com.intellij.psi.meta.PsiMetaData;
-import com.intellij.psi.meta.PsiMetaOwner;
-import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Collection;
 
 public class PsiUtilBase extends PsiUtilCore {
-  @SuppressWarnings("ConstantConditions")
-  public static final PsiElement NULL_PSI_ELEMENT = new PsiElement() {
-    @NotNull
-    public Project getProject() {
-      throw new PsiInvalidElementAccessException(this);
-    }
-
-    @NotNull
-    public Language getLanguage() {
-      throw new IllegalAccessError();
-    }
-
-    public PsiManager getManager() {
-      return null;
-    }
-
-    @NotNull
-    public PsiElement[] getChildren() {
-      return new PsiElement[0];
-    }
-
-    public PsiElement getParent() {
-      return null;
-    }
-
-    @Nullable
-    public PsiElement getFirstChild() {
-      return null;
-    }
-
-    @Nullable
-    public PsiElement getLastChild() {
-      return null;
-    }
-
-    @Nullable
-    public PsiElement getNextSibling() {
-      return null;
-    }
-
-    @Nullable
-    public PsiElement getPrevSibling() {
-      return null;
-    }
-
-    public PsiFile getContainingFile() {
-      throw new PsiInvalidElementAccessException(this);
-    }
-
-    public TextRange getTextRange() {
-      return null;
-    }
-
-    public int getStartOffsetInParent() {
-      return 0;
-    }
-
-    public int getTextLength() {
-      return 0;
-    }
-
-    public PsiElement findElementAt(int offset) {
-      return null;
-    }
-
-    @Nullable
-    public PsiReference findReferenceAt(int offset) {
-      return null;
-    }
-
-    public int getTextOffset() {
-      return 0;
-    }
-
-    public String getText() {
-      return null;
-    }
-
-    @NotNull
-    public char[] textToCharArray() {
-      return new char[0];
-    }
-
-    public PsiElement getNavigationElement() {
-      return null;
-    }
-
-    public PsiElement getOriginalElement() {
-      return null;
-    }
-
-    public boolean textMatches(@NotNull CharSequence text) {
-      return false;
-    }
-
-    public boolean textMatches(@NotNull PsiElement element) {
-      return false;
-    }
-
-    public boolean textContains(char c) {
-      return false;
-    }
-
-    public void accept(@NotNull PsiElementVisitor visitor) {
-
-    }
-
-    public void acceptChildren(@NotNull PsiElementVisitor visitor) {
-
-    }
-
-    public PsiElement copy() {
-      return null;
-    }
-
-    public PsiElement add(@NotNull PsiElement element) {
-      return null;
-    }
-
-    public PsiElement addBefore(@NotNull PsiElement element, PsiElement anchor) {
-      return null;
-    }
-
-    public PsiElement addAfter(@NotNull PsiElement element, PsiElement anchor) {
-      return null;
-    }
-
-    public void checkAdd(@NotNull PsiElement element) {
-
-    }
-
-    public PsiElement addRange(PsiElement first, PsiElement last) {
-      return null;
-    }
-
-    public PsiElement addRangeBefore(@NotNull PsiElement first, @NotNull PsiElement last, PsiElement anchor) {
-      return null;
-    }
-
-    public PsiElement addRangeAfter(PsiElement first, PsiElement last, PsiElement anchor) {
-      return null;
-    }
-
-    public void delete() {
-
-    }
-
-    public void checkDelete() {
-
-    }
-
-    public void deleteChildRange(PsiElement first, PsiElement last) {
-
-    }
-
-    public PsiElement replace(@NotNull PsiElement newElement) {
-      return null;
-    }
-
-    public boolean isValid() {
-      return false;
-    }
-
-    public boolean isWritable() {
-      return false;
-    }
-
-    @Nullable
-    public PsiReference getReference() {
-      return null;
-    }
-
-    @NotNull
-    public PsiReference[] getReferences() {
-      return new PsiReference[0];
-    }
-
-    public <T> T getCopyableUserData(Key<T> key) {
-      return null;
-    }
-
-    public <T> void putCopyableUserData(Key<T> key, T value) {
-
-    }
-
-    public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
-                                       @NotNull ResolveState state,
-                                       PsiElement lastParent,
-                                       @NotNull PsiElement place) {
-      return false;
-    }
-
-    public PsiElement getContext() {
-      return null;
-    }
-
-    public boolean isPhysical() {
-      return false;
-    }
-
-    @NotNull
-    public GlobalSearchScope getResolveScope() {
-      return GlobalSearchScope.EMPTY_SCOPE;
-    }
-
-    @NotNull
-    public SearchScope getUseScope() {
-      return GlobalSearchScope.EMPTY_SCOPE;
-    }
-
-    public ASTNode getNode() {
-      return null;
-    }
-
-    public <T> T getUserData(@NotNull Key<T> key) {
-      return null;
-    }
-
-    public <T> void putUserData(@NotNull Key<T> key, T value) {
-
-    }
-
-    public Icon getIcon(int flags) {
-      return null;
-    }
-
-    public boolean isEquivalentTo(final PsiElement another) {
-      return this == another;
-    }
-
-    @Override
-    public String toString() {
-      return "NULL_PSI_ELEMENT";
-    }
-  };
 
   public static final PsiParser NULL_PARSER = new PsiParser() {
     @NotNull
@@ -307,25 +64,6 @@ public class PsiUtilBase extends PsiUtilCore {
       if(root == psiRoots[i]) return i;
     }
     throw new RuntimeException("invalid element");
-  }
-
-  public static int compareElementsByPosition(final PsiElement element1, final PsiElement element2) {
-    if (element1 != null && element2 != null) {
-      final PsiFile psiFile1 = element1.getContainingFile();
-      final PsiFile psiFile2 = element2.getContainingFile();
-      if (Comparing.equal(psiFile1, psiFile2)){
-        final TextRange textRange1 = element1.getTextRange();
-        final TextRange textRange2 = element2.getTextRange();
-        if (textRange1 != null && textRange2 != null) {
-          return textRange1.getStartOffset() - textRange2.getStartOffset();
-        }
-      } else if (psiFile1 != null && psiFile2 != null){
-        final String name1 = psiFile1.getName();
-        final String name2 = psiFile2.getName();
-        return name1.compareToIgnoreCase(name2);
-      }
-    }
-    return 0;
   }
 
   @NotNull
@@ -351,33 +89,6 @@ public class PsiUtilBase extends PsiUtilCore {
     }
 
     return elt.getLanguage();
-  }
-
-  @Nullable
-  public static PsiFile getTemplateLanguageFile(final PsiElement element) {
-    if (element == null) return null;
-    final PsiFile containingFile = element.getContainingFile();
-    if (containingFile == null) return null;
-
-    final FileViewProvider viewProvider = containingFile.getViewProvider();
-    return viewProvider.getPsi(viewProvider.getBaseLanguage());
-  }
-
-  /** @return name for element using element structure info
-   */
-  @Nullable
-  public static String getName(PsiElement element) {
-    String name = null;
-    if (element instanceof PsiMetaOwner) {
-      final PsiMetaData data = ((PsiMetaOwner) element).getMetaData();
-      if (data != null) {
-        name = data.getName(element);
-      }
-    }
-    if (name == null && element instanceof PsiNamedElement) {
-      name = ((PsiNamedElement) element).getName();
-    }
-    return name;
   }
 
   public static boolean isUnderPsiRoot(PsiFile root, PsiElement element) {
@@ -524,25 +235,6 @@ public class PsiUtilBase extends PsiUtilCore {
   }
 
   @NotNull
-  public static PsiElement getElementAtOffset(@NotNull PsiFile file, int offset) {
-    PsiElement elt = file.findElementAt(offset);
-    if (elt == null && offset > 0) {
-      elt = file.findElementAt(offset - 1);
-    }
-    if (elt == null) {
-      return file;
-    }
-    return elt;
-  }
-
-  public static boolean hasErrorElementChild(PsiElement element) {
-    for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
-      if (child instanceof PsiErrorElement) return true;
-    }
-    return false;
-  }
-
-  @NotNull
   public static ASTNode getRoot(@NotNull ASTNode node) {
     ASTNode child = node;
     do {
@@ -603,12 +295,6 @@ public class PsiUtilBase extends PsiUtilCore {
       }
     }
     return null;
-  }
-
-  @NotNull
-  public static PsiFile[] toPsiFileArray(@NotNull Collection<? extends PsiFile> collection) {
-    if (collection.isEmpty()) return PsiFile.EMPTY_ARRAY;
-    return collection.toArray(new PsiFile[collection.size()]);
   }
 
   public static boolean isSymLink(@NotNull final PsiFileSystemItem element) {

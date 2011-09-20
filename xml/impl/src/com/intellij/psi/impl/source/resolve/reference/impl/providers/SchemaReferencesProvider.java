@@ -33,7 +33,7 @@ import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.xml.SchemaPrefixReference;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -281,12 +281,12 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
     public PsiElement resolve() {
       final PsiElement psiElement = ResolveCache.getInstance(getElement().getProject()).resolveWithCaching(this, MyResolver.INSTANCE, false, false);
 
-      return psiElement != PsiUtilBase.NULL_PSI_ELEMENT ? psiElement:null;
+      return psiElement != PsiUtilCore.NULL_PSI_ELEMENT ? psiElement:null;
     }
 
     private PsiElement resolveInner() {
       final XmlTag tag = PsiTreeUtil.getContextOfType(myElement, XmlTag.class, false);
-      if (tag == null) return PsiUtilBase.NULL_PSI_ELEMENT;
+      if (tag == null) return PsiUtilCore.NULL_PSI_ELEMENT;
 
       String canonicalText = getCanonicalText();
       XmlNSDescriptorImpl nsDescriptor = getDescriptor(tag,canonicalText);
@@ -303,7 +303,7 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
               true
             );
 
-            return descriptor != null ? descriptor.getDeclaration(): PsiUtilBase.NULL_PSI_ELEMENT;
+            return descriptor != null ? descriptor.getDeclaration(): PsiUtilCore.NULL_PSI_ELEMENT;
           }
           case AttributeReference: {
             //final String prefixByQualifiedName = XmlUtil.findPrefixByQualifiedName(canonicalText);
@@ -316,7 +316,7 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
 
             if (descriptor != null) return descriptor.getDeclaration();
 
-            return PsiUtilBase.NULL_PSI_ELEMENT;
+            return PsiUtilCore.NULL_PSI_ELEMENT;
           }
           case TypeReference: {
             TypeDescriptor typeDescriptor = nsDescriptor.getTypeDescriptor(canonicalText,tag);
@@ -329,7 +329,7 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
         }
       }
 
-      return PsiUtilBase.NULL_PSI_ELEMENT;
+      return PsiUtilCore.NULL_PSI_ELEMENT;
     }
 
     private XmlNSDescriptorImpl getDescriptor(final XmlTag tag, String text) {

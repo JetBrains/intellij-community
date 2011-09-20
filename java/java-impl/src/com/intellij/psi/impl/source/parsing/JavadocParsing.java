@@ -60,7 +60,8 @@ public class JavadocParsing extends Parsing {
   }
 
   public TreeElement parseJavaDocReference(CharSequence myBuffer, Lexer originalLexer, boolean isType, PsiManager manager) {
-    FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET));
+    final TokenSet whitespaceOrComments = TokenSet.orSet(ElementType.JAVA_WHITESPACE_BIT_SET, ElementType.JAVA_COMMENT_BIT_SET);
+    FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(whitespaceOrComments));
     lexer.start(myBuffer);
 
     final FileElement dummyRoot = DummyHolderFactory.createHolder(manager, null, myContext.getCharTable()).getTreeElement();
@@ -70,18 +71,20 @@ public class JavadocParsing extends Parsing {
       element = parseTypeWithEllipsis(lexer, true, false);
     }
     else{
-      element = myContext.getStatementParsing().parseJavaCodeReference(lexer, true, true, false, false);
+      element = parseJavaCodeReference(lexer, true, true, false);
     }
 
     if (element != null){
       dummyRoot.rawAddChildren(element);
     }
     while(lexer.getTokenType() != null){
-      dummyRoot.rawAddChildren(ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
+      dummyRoot.rawAddChildren(ParseUtilBase.createTokenElement(lexer, myContext.getCharTable()));
       lexer.advance();
     }
 
-    ParseUtil.insertMissingTokens(dummyRoot, originalLexer, 0, myBuffer.length(), 0, WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
+    final MissingTokenInserter inserter = new MissingTokenInserter(dummyRoot, originalLexer, 0, myBuffer.length(), 0,
+                                                                   WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
+    inserter.invoke();
     return dummyRoot.getFirstChildNode();
   }
 
@@ -105,7 +108,10 @@ public class JavadocParsing extends Parsing {
       }
     }
 
-    ParseUtil.insertMissingTokens(dummyRoot, originalLexer, startOffset, endOffset, -1, new JDTokenProcessor(this), myContext);
+    int state = -1;
+    final MissingTokenInserter inserter = new MissingTokenInserter(dummyRoot, originalLexer, startOffset, endOffset, state,
+                                                                   new JDTokenProcessor(this), myContext);
+    inserter.invoke();
     return dummyRoot.getFirstChildNode();
   }
 

@@ -18,6 +18,7 @@ package com.intellij.psi.impl.source.tree.java;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
@@ -63,7 +64,7 @@ public class PsiDoWhileStatementImpl extends CompositePsiElement implements PsiD
         return findChildByType(DO_KEYWORD);
 
       case ChildRole.LOOP_BODY:
-        return findChildByType(STATEMENT_BIT_SET);
+        return PsiImplUtil.findStatementChild(this);
 
       case ChildRole.WHILE_KEYWORD:
         return findChildByType(WHILE_KEYWORD);
@@ -104,7 +105,7 @@ public class PsiDoWhileStatementImpl extends CompositePsiElement implements PsiD
       if (EXPRESSION_BIT_SET.contains(child.getElementType())) {
         return ChildRole.CONDITION;
       }
-      else if (STATEMENT_BIT_SET.contains(child.getElementType())) {
+      else if (child.getPsi() instanceof PsiStatement) {
         return ChildRole.LOOP_BODY;
       }
       else {

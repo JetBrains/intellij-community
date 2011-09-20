@@ -34,6 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments.GrArgumentLabelImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments.GrArgumentListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments.GrNamedArgumentImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments.GrSpreadArgumentImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.branch.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrCaseLabelImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrCaseSectionImpl;
@@ -246,7 +247,8 @@ public class GroovyPsiCreator implements GroovyElementTypes {
 
     // Arguments
     if (elem == ARGUMENTS) return new GrArgumentListImpl(node);
-    if (elem == ARGUMENT) return new GrNamedArgumentImpl(node);
+    if (elem == NAMED_ARGUMENT) return new GrNamedArgumentImpl(node);
+    if (elem == SPREAD_ARGUMENT) return new GrSpreadArgumentImpl(node);
     if (elem == ARGUMENT_LABEL) return new GrArgumentLabelImpl(node);
 
     if (elem == BALANCED_BRACKETS) return new GroovyPsiElementImpl(node){};

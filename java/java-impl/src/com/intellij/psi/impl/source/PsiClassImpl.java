@@ -18,25 +18,14 @@ package com.intellij.psi.impl.source;
 import com.intellij.extapi.psi.StubBasedPsiElementBase;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.InheritanceImplUtil;
-import com.intellij.psi.impl.PsiClassImplUtil;
-import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.impl.PsiSuperMethodImplUtil;
+import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
 import com.intellij.psi.impl.light.LightMethod;
-import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
-import com.intellij.psi.impl.source.jsp.jspJava.JspClassLevelDeclarationStatement;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
@@ -45,7 +34,6 @@ import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.PsiFileStub;
@@ -117,42 +105,11 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
   }
 
   public PsiElement getOriginalElement() {
-    PsiFile psiFile = getContainingFile();
-
-    VirtualFile vFile = psiFile.getVirtualFile();
-    final ProjectFileIndex idx = ProjectRootManager.getInstance(getProject()).getFileIndex();
-
-    if (vFile == null || !idx.isInLibrarySource(vFile)) return this;
-    final List<OrderEntry> orderEntries = idx.getOrderEntriesForFile(vFile);
-    final String fqn = getQualifiedName();
-    if (fqn == null) return this;
-
-    PsiClass original = JavaPsiFacade.getInstance(getProject()).findClass(fqn, new GlobalSearchScope(getProject()) {
-      public int compare(VirtualFile file1, VirtualFile file2) {
-        return 0;
-      }
-
-      public boolean contains(VirtualFile file) {
-        // order for file and vFile has non empty intersection.
-        List<OrderEntry> entries = idx.getOrderEntriesForFile(file);
-        //noinspection ForLoopReplaceableByForEach
-        for (int i = 0; i < entries.size(); i++) {
-          final OrderEntry entry = entries.get(i);
-          if (orderEntries.contains(entry)) return true;
-        }
-        return false;
-      }
-
-      public boolean isSearchInModuleContent(@NotNull Module aModule) {
-        return false;
-      }
-
-      public boolean isSearchInLibraries() {
-        return true;
-      }
-    });
-
-    return original != null ? original : this;
+    final JavaPsiImplementationHelper helper = JavaPsiImplementationHelper.getInstance(getProject());
+    if (helper != null) {
+      return helper.getOriginalClass(this);
+    }
+    return this;
   }
 
   @NotNull
@@ -279,8 +236,8 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
 
     PsiElement parent = getParent();
 
-    if (parent instanceof JspClassLevelDeclarationStatement) {
-      return PsiTreeUtil.getParentOfType(this, JspClass.class);
+    if (parent instanceof PsiClassLevelDeclarationStatement) {
+      return PsiTreeUtil.getParentOfType(this, PsiSyntheticClass.class);
     }
 
     return parent instanceof PsiClass ? (PsiClass)parent : null;

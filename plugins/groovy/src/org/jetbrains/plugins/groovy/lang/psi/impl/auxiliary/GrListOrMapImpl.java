@@ -52,7 +52,7 @@ import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mCOMMA;
  * @author ilyas
  */
 public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
-  private static final TokenSet MAP_LITERAL_TOKEN_SET = TokenSet.create(GroovyElementTypes.ARGUMENT, GroovyTokenTypes.mCOLON);
+  private static final TokenSet MAP_LITERAL_TOKEN_SET = TokenSet.create(GroovyElementTypes.NAMED_ARGUMENT, GroovyTokenTypes.mCOLON);
   private static final Function<GrListOrMapImpl, PsiType> TYPES_CALCULATOR = new MyTypesCalculator();
 
   public GrListOrMapImpl(@NotNull ASTNode node) {
@@ -190,9 +190,8 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
 
     private static PsiClassType getTupleType(GrExpression[] initializers, GrListOrMap listOrMap) {
       PsiType[] result = new PsiType[initializers.length];
-      boolean isLValue = PsiUtil.isLValue(listOrMap);
       for (int i = 0; i < result.length; i++) {
-        result[i] = isLValue ? initializers[i].getNominalType() : initializers[i].getType();
+        result[i] = initializers[i].getType();
       }
       return new GrTupleType(result, JavaPsiFacade.getInstance(listOrMap.getProject()), listOrMap.getResolveScope());
     }

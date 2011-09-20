@@ -15,13 +15,12 @@
  */
 package com.intellij.psi.javadoc;
 
-import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 
 /**
  * @author Mike
  */
-public interface PsiDocToken extends PsiElement, JavaDocTokenType {
+public interface PsiDocToken extends PsiElement {
   IElementType getTokenType();
 }

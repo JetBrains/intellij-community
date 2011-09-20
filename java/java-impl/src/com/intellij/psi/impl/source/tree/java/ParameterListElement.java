@@ -18,6 +18,7 @@ package com.intellij.psi.impl.source.tree.java;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.ChildRoleBase;
@@ -80,12 +81,12 @@ public class ParameterListElement extends CompositeElement implements Constants 
     final TreeElement oldLastNodeInsideParens = getLastNodeInsideParens();
     final TreeElement oldFirstNodeInsideParens = getFirstNodeInsideParens();
     if (child.getElementType() == PARAMETER) {
-      ASTNode next = TreeUtil.skipElements(child.getTreeNext(), StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET);
+      ASTNode next = PsiImplUtil.skipWhitespaceAndComments(child.getTreeNext());
       if (next != null && next.getElementType() == COMMA) {
         deleteChildInternal(next);
       }
       else {
-        ASTNode prev = TreeUtil.skipElementsBack(child.getTreePrev(), StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET);
+        ASTNode prev = PsiImplUtil.skipWhitespaceAndCommentsBack(child.getTreePrev());
         if (prev != null && prev.getElementType() == COMMA) {
           deleteChildInternal(prev);
         }

@@ -28,7 +28,7 @@ import com.intellij.psi.PsiReferenceService;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Processor;
@@ -45,7 +45,7 @@ import java.util.Collections;
  */
 public abstract class FindUsagesHandler {
   // return this handler if you want to cancel the search
-  public static final FindUsagesHandler NULL_HANDLER = new FindUsagesHandler(PsiUtilBase.NULL_PSI_ELEMENT){};
+  public static final FindUsagesHandler NULL_HANDLER = new FindUsagesHandler(PsiUtilCore.NULL_PSI_ELEMENT){};
 
   private final PsiElement myPsiElement;
 

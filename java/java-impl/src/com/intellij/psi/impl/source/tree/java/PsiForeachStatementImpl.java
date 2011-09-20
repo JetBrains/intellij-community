@@ -18,6 +18,7 @@ package com.intellij.psi.impl.source.tree.java;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
@@ -62,7 +63,7 @@ public class PsiForeachStatementImpl extends CompositePsiElement implements PsiF
 
     switch(role) {
       case ChildRole.LOOP_BODY:
-        return findChildByType(STATEMENT_BIT_SET);
+        return PsiImplUtil.findStatementChild(this);
 
       case ChildRole.FOR_ITERATED_VALUE:
         return findChildByType(EXPRESSION_BIT_SET);
@@ -110,7 +111,7 @@ public class PsiForeachStatementImpl extends CompositePsiElement implements PsiF
       if (EXPRESSION_BIT_SET.contains(child.getElementType())) {
         return ChildRole.FOR_ITERATED_VALUE;
       }
-      else if (STATEMENT_BIT_SET.contains(child.getElementType())) {
+      else if (child.getPsi() instanceof PsiStatement) {
         return ChildRole.LOOP_BODY;
       }
       else {

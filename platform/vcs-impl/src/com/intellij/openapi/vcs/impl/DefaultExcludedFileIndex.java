@@ -38,6 +38,11 @@ public class DefaultExcludedFileIndex extends ExcludedFileIndex {
     return VfsUtil.isAncestor(getBaseDir(), file, false);
   }
 
+  @Override
+  public boolean isInSource(VirtualFile file) {
+    return isInContent(file);
+  }
+
   public boolean isExcludedFile(final VirtualFile file) {
     return false;
   }

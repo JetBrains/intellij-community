@@ -6,10 +6,12 @@ Groovy script
       PsiElement(identifier)('foo')
     PsiWhiteSpace(' ')
     Command arguments
-      PsiErrorElement:Expression expected
+      Named argument
         Argument label
           PsiElement(identifier)('a')
         PsiElement(:)(':')
+        PsiErrorElement:Expression expected
+          <empty list>
       PsiWhiteSpace(' ')
       PsiElement(,)(',')
       PsiWhiteSpace(' ')

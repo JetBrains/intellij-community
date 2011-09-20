@@ -28,7 +28,7 @@ public abstract class NullableLazyValue<T> {
   protected abstract T compute();
 
   @Nullable
-  public final T getValue() {
+  public T getValue() {
     if (!myComputed) {
       myValue = compute();
       myComputed = true;

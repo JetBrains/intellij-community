@@ -52,11 +52,9 @@ public class CommandArguments implements GroovyElementTypes {
       ParserUtils.getToken(builder, mCOLON, GroovyBundle.message("colon.expected"));
       ParserUtils.getToken(builder, mNLS);
       if (!ExpressionStatement.argParse(builder, parser)) {
-        commandMarker.error(GroovyBundle.message("expression.expected"));
+        builder.error(GroovyBundle.message("expression.expected"));
       }
-      else {
-        commandMarker.done(ARGUMENT);
-      }
+      commandMarker.done(NAMED_ARGUMENT);
       return true;
     }
 

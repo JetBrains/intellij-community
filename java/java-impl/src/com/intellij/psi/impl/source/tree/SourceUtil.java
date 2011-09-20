@@ -15,7 +15,10 @@
  */
 package com.intellij.psi.impl.source.tree;
 
-import com.intellij.lang.*;
+import com.intellij.lang.ASTFactory;
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.LighterAST;
+import com.intellij.lang.LighterASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiManager;
@@ -33,11 +36,11 @@ public class SourceUtil {
   private SourceUtil() { }
 
   public static String getTextSkipWhiteSpaceAndComments(final ASTNode element) {
-    return AstBufferUtil.getTextSkippingTokens(element, StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET);
+    return AstBufferUtil.getTextSkippingWhitespaceComments(element);
   }
 
   public static String getTextSkipWhiteSpaceAndComments(final LighterAST tree, final LighterASTNode node) {
-    return LightTreeUtil.toFilteredString(tree, node, StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET);
+    return LightTreeUtil.toFilteredString(tree, node, ElementType.JAVA_COMMENT_OR_WHITESPACE_BIT_SET);
   }
 
   public static TreeElement addParenthToReplacedChild(final IElementType parenthType, TreeElement newChild, PsiManager manager) {

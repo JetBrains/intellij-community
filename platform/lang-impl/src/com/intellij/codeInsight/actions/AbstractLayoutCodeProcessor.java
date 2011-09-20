@@ -38,7 +38,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -122,7 +122,7 @@ public abstract class AbstractLayoutCodeProcessor {
         list.add(file);
       }
     }
-    return PsiUtilBase.toPsiFileArray(list);
+    return PsiUtilCore.toPsiFileArray(list);
   }
 
   /**

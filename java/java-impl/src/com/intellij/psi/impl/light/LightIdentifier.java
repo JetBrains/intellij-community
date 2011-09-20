@@ -15,9 +15,9 @@
  */
 package com.intellij.psi.impl.light;
 
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -27,7 +27,7 @@ public class LightIdentifier extends LightElement implements PsiIdentifier, PsiJ
   private final String myText;
 
   public LightIdentifier(PsiManager manager, String text) {
-    super(manager, StdFileTypes.JAVA.getLanguage());
+    super(manager, JavaLanguage.INSTANCE);
     myText = text;
   }
 

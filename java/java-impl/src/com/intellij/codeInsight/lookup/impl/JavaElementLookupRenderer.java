@@ -22,7 +22,7 @@ import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.beanProperties.BeanPropertyElement;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -62,7 +62,7 @@ public class JavaElementLookupRenderer implements ElementLookupRenderer {
         if (element instanceof PsiKeyword || element instanceof PsiExpression || element instanceof PsiTypeElement) {
           name = element.getText();
         } else {
-          name = PsiUtilBase.getName(element);
+          name = PsiUtilCore.getName(element);
         }
       }
     }

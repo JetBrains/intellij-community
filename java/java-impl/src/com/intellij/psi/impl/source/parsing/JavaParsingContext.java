@@ -23,55 +23,13 @@ import com.intellij.util.CharTable;
  * @author ik
  */
 public class JavaParsingContext extends ParsingContext {
-  private final DeclarationParsing myDeclarationParsing;
-  private final ExpressionParsing myExpressionParsing;
-  private final ClassBodyParsing myClassBodyParsing;
-  private final StatementParsing myStatementParsing;
-  private final ImportsTextParsing myImportsParsing;
-  private final FileTextParsing myFileTextParsing;
   private final JavadocParsing myJavadocParsing;
   private final LanguageLevel myLanguageLevel;
 
   public JavaParsingContext(CharTable table, LanguageLevel languageLevel) {
     super(table);
     myLanguageLevel = languageLevel;
-    myStatementParsing = new StatementParsing(this);
-    myDeclarationParsing = new DeclarationParsing(this);
-    myExpressionParsing = new ExpressionParsing(this);
-    myClassBodyParsing = new ClassBodyParsing(this);
-    myImportsParsing = new ImportsTextParsing(this);
-    myFileTextParsing = new FileTextParsing(this);
     myJavadocParsing = new JavadocParsing(this);
-  }
-
-  @Deprecated
-  public StatementParsing getStatementParsing() {
-    return myStatementParsing;
-  }
-
-  @Deprecated
-  public DeclarationParsing getDeclarationParsing() {
-    return myDeclarationParsing;
-  }
-
-  @Deprecated
-  public ExpressionParsing getExpressionParsing() {
-    return myExpressionParsing;
-  }
-
-  @Deprecated
-  public ClassBodyParsing getClassBodyParsing() {
-    return myClassBodyParsing;
-  }
-
-  @Deprecated
-  public ImportsTextParsing getImportsTextParsing() {
-    return myImportsParsing;
-  }
-
-  @Deprecated
-  public FileTextParsing getFileTextParsing() {
-    return myFileTextParsing;
   }
 
   public JavadocParsing getJavadocParsing() {

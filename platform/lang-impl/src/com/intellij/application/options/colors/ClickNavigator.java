@@ -32,6 +32,7 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.ui.ListScrollingUtil;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -168,7 +169,9 @@ public class ClickNavigator {
   }
 
   public static void setCursor(final Editor view, int type) {
-    view.getContentComponent().setCursor(Cursor.getPredefinedCursor(type));
+    final Cursor cursor = type == Cursor.TEXT_CURSOR && view instanceof EditorEx ?
+                          UIUtil.getTextCursor(((EditorEx)view).getBackgroundColor()) : Cursor.getPredefinedCursor(type);
+    view.getContentComponent().setCursor(cursor);
   }
 
 }

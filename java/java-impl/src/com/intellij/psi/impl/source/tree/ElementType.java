@@ -19,20 +19,16 @@ import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.impl.source.PsiElementArrayConstructor;
-import com.intellij.psi.jsp.JspElementType;
 import com.intellij.psi.tree.TokenSet;
 
 public interface ElementType extends JavaTokenType, JavaDocTokenType,
                                      JavaElementType, JavaDocElementType {
-  TokenSet WHITE_SPACE_BIT_SET = TokenSet.create(WHITE_SPACE,
-                                                 JspElementType.JSP_TEMPLATE_EXPRESSION);
 
   TokenSet JAVA_WHITESPACE_BIT_SET = TokenSet.create(WHITE_SPACE);
 
   TokenSet JAVA_PLAIN_COMMENT_BIT_SET = TokenSet.create(END_OF_LINE_COMMENT, C_STYLE_COMMENT);
   TokenSet JAVA_COMMENT_BIT_SET = TokenSet.orSet(JAVA_PLAIN_COMMENT_BIT_SET, TokenSet.create(DOC_COMMENT));
 
-  TokenSet JAVA_PLAIN_COMMENT_OR_WHITESPACE_BIT_SET = TokenSet.orSet(JAVA_WHITESPACE_BIT_SET, JAVA_PLAIN_COMMENT_BIT_SET);
   TokenSet JAVA_COMMENT_OR_WHITESPACE_BIT_SET = TokenSet.orSet(JAVA_WHITESPACE_BIT_SET, JAVA_COMMENT_BIT_SET);
 
   TokenSet KEYWORD_BIT_SET = TokenSet.create(
@@ -70,12 +66,8 @@ public interface ElementType extends JavaTokenType, JavaDocTokenType,
     DECLARATION_STATEMENT, IF_STATEMENT, WHILE_STATEMENT, FOR_STATEMENT, FOREACH_STATEMENT,
     DO_WHILE_STATEMENT, SWITCH_STATEMENT, SWITCH_LABEL_STATEMENT, BREAK_STATEMENT,
     CONTINUE_STATEMENT, RETURN_STATEMENT, THROW_STATEMENT, SYNCHRONIZED_STATEMENT,
-    TRY_STATEMENT, LABELED_STATEMENT, ASSERT_STATEMENT, JspElementType.JSP_EXPRESSION
+    TRY_STATEMENT, LABELED_STATEMENT, ASSERT_STATEMENT
   );
-  TokenSet JSP_SYNTHETIC_STATEMENTS = TokenSet.create(
-    JspElementType.JSP_WHILE_STATEMENT, JspElementType.JSP_BLOCK_STATEMENT, JspElementType.JSP_EXPRESSION,
-    JspElementType.JSP_TEMPLATE_STATEMENT, JspElementType.JSP_CLASS_LEVEL_DECLARATION_STATEMENT);
-  TokenSet STATEMENT_BIT_SET = TokenSet.orSet(JAVA_STATEMENT_BIT_SET, JSP_SYNTHETIC_STATEMENTS);
 
   TokenSet TYPES_BIT_SET = TokenSet.create(TYPE);
   PsiElementArrayConstructor<PsiTypeElement> PSI_TYPE_ELEMENT_ARRAY_CONSTRUCTOR = new PsiElementArrayConstructor<PsiTypeElement>() {

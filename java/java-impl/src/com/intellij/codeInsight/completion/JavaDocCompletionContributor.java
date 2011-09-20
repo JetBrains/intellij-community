@@ -64,7 +64,7 @@ public class JavaDocCompletionContributor extends CompletionContributor {
   private static final @NonNls String LINK_TAG = "link";
 
   public JavaDocCompletionContributor() {
-    extend(CompletionType.BASIC, PsiJavaPatterns.psiElement(PsiDocToken.DOC_TAG_NAME), new TagChooser());
+    extend(CompletionType.BASIC, PsiJavaPatterns.psiElement(JavaDocTokenType.DOC_TAG_NAME), new TagChooser());
 
     extend(CompletionType.BASIC, PsiJavaPatterns.psiElement().inside(PsiDocTagValue.class), new CompletionProvider<CompletionParameters>() {
       protected void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
@@ -111,7 +111,7 @@ public class JavaDocCompletionContributor extends CompletionContributor {
 
   @Override
   public void fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet result) {
-    if (PsiJavaPatterns.psiElement(PsiDocToken.DOC_COMMENT_DATA).accepts(parameters.getPosition())) return;
+    if (PsiJavaPatterns.psiElement(JavaDocTokenType.DOC_COMMENT_DATA).accepts(parameters.getPosition())) return;
 
     super.fillCompletionVariants(parameters, result);
   }
@@ -125,7 +125,7 @@ public class JavaDocCompletionContributor extends CompletionContributor {
       final PsiElement parent = comment.getContext();
       final boolean isInline = position.getContext() instanceof PsiInlineDocTag;
 
-      final JavadocManager manager = JavaPsiFacade.getInstance(position.getProject()).getJavadocManager();
+      final JavadocManager manager = JavadocManager.SERVICE.getInstance(position.getProject());
       final JavadocTagInfo[] infos = manager.getTagInfos(parent);
       for (JavadocTagInfo info : infos) {
         if (info.getName().equals(SuppressionUtil.SUPPRESS_INSPECTIONS_TAG_NAME)) continue;

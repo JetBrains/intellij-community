@@ -1395,7 +1395,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     }
 
     void layoutHint() {
-      if (myElementHint != null) {
+      if (myElementHint != null && getCurrentItem() != null) {
         final Rectangle bounds = getCurrentItemBounds();
         myElementHint.setSize(myElementHint.getPreferredSize());
         myElementHint.setLocation(new Point(bounds.x + bounds.width - myElementHint.getWidth(), bounds.y));

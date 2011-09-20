@@ -32,13 +32,10 @@ import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
@@ -163,7 +160,7 @@ public class ImplementAbstractMethodHandler {
 
   private PsiClass[] getClassImplementations(final PsiClass psiClass) {
     ArrayList<PsiClass> list = new ArrayList<PsiClass>();
-    for (PsiClass inheritor : ClassInheritorsSearch.search(psiClass, psiClass.getUseScope(), true)) {
+    for (PsiClass inheritor : ClassInheritorsSearch.search(psiClass, true)) {
       if (!inheritor.isInterface()) {
         PsiMethod method = inheritor.findMethodBySignature(myMethod, true);
         if (method == null || !method.getContainingClass().equals(psiClass)) continue;

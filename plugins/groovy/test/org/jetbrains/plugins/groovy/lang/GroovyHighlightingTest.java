@@ -470,4 +470,8 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testLiteralConstructorUsages() {
     doTest(new GroovyAssignabilityCheckInspection());
   }
+  
+  public void testSpreadArguments() {
+    doTest(new GroovyAssignabilityCheckInspection());
+  }
 }

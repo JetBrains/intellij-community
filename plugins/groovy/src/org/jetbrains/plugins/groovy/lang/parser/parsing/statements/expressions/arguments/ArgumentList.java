@@ -32,7 +32,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 public class ArgumentList implements GroovyElementTypes {
 
   public static void parseArgumentList(PsiBuilder builder, IElementType closingBrace, GroovyParser parser) {
-    boolean hasFirstArg = argumentParse(builder, closingBrace, parser);
+    boolean hasFirstArg = argumentParse(builder, parser);
     if (!hasFirstArg) {
       if (!closingBrace.equals(builder.getTokenType())) {
         builder.error(GroovyBundle.message("expression.expected"));
@@ -51,7 +51,7 @@ public class ArgumentList implements GroovyElementTypes {
         builder.error("',' or '" + closingBrace + "' expected");
       }
       ParserUtils.getToken(builder, mNLS);
-      if (!argumentParse(builder, closingBrace, parser)) {
+      if (!argumentParse(builder, parser)) {
         if (!closingBrace.equals(builder.getTokenType())) {
           builder.error(GroovyBundle.message("expression.expected"));
         }
@@ -74,35 +74,31 @@ public class ArgumentList implements GroovyElementTypes {
    * @param builder
    * @return
    */
-  private static boolean argumentParse(PsiBuilder builder, IElementType closingBrace, GroovyParser parser) {
-
+  private static boolean argumentParse(PsiBuilder builder, GroovyParser parser) {
     PsiBuilder.Marker argMarker = builder.mark();
-    boolean labeled = argumentLabelStartCheck(builder, parser);
-    boolean expanded = ParserUtils.getToken(builder, mSTAR);
-    if (labeled) {
+
+    if (argumentLabelStartCheck(builder, parser)) {
       ParserUtils.getToken(builder, mCOLON, GroovyBundle.message("colon.expected"));
+      if (!AssignmentExpression.parse(builder, parser)) {
+        builder.error(GroovyBundle.message("expression.expected"));
+      }
+      argMarker.done(NAMED_ARGUMENT);
+      return true;
     }
 
-    // If expression is wrong...
-    boolean exprParsed = AssignmentExpression.parse(builder, parser);
-    if (labeled && !exprParsed) {
-      builder.error(GroovyBundle.message("expression.expected"));
-    }
-    while (!builder.eof() && labeled &&
-            !mCOMMA.equals(builder.getTokenType()) &&
-            !closingBrace.equals(builder.getTokenType())) {
-      builder.error(GroovyBundle.message("expression.expected"));
-      builder.advanceLexer();
-      if (AssignmentExpression.parse(builder, parser)) break;
+    if (ParserUtils.getToken(builder, mSTAR)) {
+      if (AssignmentExpression.parse(builder, parser)) {
+        argMarker.done(SPREAD_ARGUMENT);
+      }
+      else {
+        builder.error(GroovyBundle.message("colon.expected"));
+        argMarker.done(NAMED_ARGUMENT);
+      }
+      return true;
     }
 
-    if (labeled || expanded) {
-      argMarker.done(ARGUMENT);
-    } else {
-      argMarker.drop();
-    }
-
-    return labeled || exprParsed;
+    argMarker.drop();
+    return AssignmentExpression.parse(builder, parser);
   }
 
   /**

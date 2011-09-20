@@ -15,12 +15,12 @@
  */
 package com.intellij.psi.tree.java;
 
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NonNls;
 
 public class IJavaDocElementType extends IElementType {
   public IJavaDocElementType(@NonNls final String debugName) {
-    super(debugName, StdLanguages.JAVA);
+    super(debugName, JavaLanguage.INSTANCE);
   }
 }

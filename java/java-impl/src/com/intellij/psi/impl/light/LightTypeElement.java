@@ -15,7 +15,7 @@
  */
 package com.intellij.psi.impl.light;
 
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -29,7 +29,7 @@ public class LightTypeElement extends LightElement implements PsiTypeElement {
   private final PsiType myType;
 
   public LightTypeElement(PsiManager manager, PsiType type) {
-    super(manager, StdFileTypes.JAVA.getLanguage());
+    super(manager, JavaLanguage.INSTANCE);
     type = PsiUtil.convertAnonymousToBaseType(type);
     myType = type;
   }

@@ -16,7 +16,7 @@
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Comparing;
@@ -33,6 +33,7 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspxImportStatement;
 import com.intellij.psi.impl.source.resolve.ResolveClassUtil;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReference;
 import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.JavaJspElementType;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.jsp.JspSpiUtil;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -675,7 +676,7 @@ public class ImportHelper{
     if (jspFile != null) {
       PsiFile[] files = ArrayUtil.mergeArrays(JspSpiUtil.getIncludingFiles(jspFile), JspSpiUtil.getIncludedFiles(jspFile));
       for (PsiFile includingFile : files) {
-        final PsiFile javaRoot = includingFile.getViewProvider().getPsi(StdLanguages.JAVA);
+        final PsiFile javaRoot = includingFile.getViewProvider().getPsi(JavaLanguage.INSTANCE);
         if (javaRoot instanceof PsiJavaFile && file != javaRoot) {
           collectNamesToImport(names, comments, (PsiJavaFile)javaRoot, jspFile);
         }
@@ -721,7 +722,7 @@ public class ImportHelper{
           }
           IElementType elementType = node.getElementType();
           if (elementType != null &&!ElementType.IMPORT_STATEMENT_BASE_BIT_SET.contains(elementType)
-            && !ElementType.WHITE_SPACE_BIT_SET.contains(elementType))
+            && !JavaJspElementType.WHITE_SPACE_BIT_SET.contains(elementType))
           {
             comments.add(element);
           }
@@ -810,7 +811,7 @@ public class ImportHelper{
     }
 
     // do not optimize unresolved imports for things like JSP (IDEA-41814)
-    if (file.getViewProvider().getLanguages().size() > 1 && file.getViewProvider().getBaseLanguage() != StdLanguages.JAVA) {
+    if (file.getViewProvider().getLanguages().size() > 1 && file.getViewProvider().getBaseLanguage() != JavaLanguage.INSTANCE) {
       namesToImport.addAll(unresolvedOnDemand);
       namesToImport.addAll(unresolvedNames.values());
       return;

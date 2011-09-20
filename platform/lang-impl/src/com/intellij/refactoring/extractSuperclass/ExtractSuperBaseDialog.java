@@ -59,8 +59,13 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
   protected JLabel myPackageNameLabel;
   protected ComponentWithBrowseButton myPackageNameField;
   protected DocCommentPanel myDocCommentPanel;
+  private JPanel myDestinationRootPanel;
 
   protected abstract ComponentWithBrowseButton createPackageNameField();
+  
+  protected JPanel createDestinationRootPanel() {
+    return null;
+  }
 
   protected abstract JTextField createSourceClassField();
 
@@ -105,6 +110,7 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
     setTitle(myRefactoringName);
 
     myPackageNameField = createPackageNameField();
+    myDestinationRootPanel = createDestinationRootPanel();
     mySourceClassField = createSourceClassField();
     myExtractedSuperNameField = new JTextField();
 
@@ -171,6 +177,9 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
 
       _panel.add(myPackageNameLabel, BorderLayout.NORTH);
       _panel.add(myPackageNameField, BorderLayout.CENTER);
+      if (myDestinationRootPanel != null) {
+        _panel.add(myDestinationRootPanel, BorderLayout.SOUTH);
+      }
       box.add(_panel);
       box.add(Box.createVerticalStrut(10));
 

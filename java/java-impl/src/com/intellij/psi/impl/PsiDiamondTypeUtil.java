@@ -48,7 +48,7 @@ public class PsiDiamondTypeUtil {
           final PsiTypeElement[] typeElements = parameterList.getTypeParameterElements();
           if (typeElements.length > 0) {
             if (typeElements.length == 1 && typeElements[0].getType() instanceof PsiDiamondType) return false;
-            final PsiDiamondType.DiamondInferenceResult inferenceResult = PsiDiamondType.resolveInferredTypes(expression, context);
+            final PsiDiamondTypeImpl.DiamondInferenceResult inferenceResult = PsiDiamondTypeImpl.resolveInferredTypes(expression, context);
             if (inferenceResult.getErrorMessage() == null) {
               final List<PsiType> types = inferenceResult.getInferredTypes();
               PsiType[] typeArguments = null;
@@ -115,7 +115,7 @@ public class PsiDiamondTypeUtil {
     text.append('<');
     final PsiTypeElement[] typeElements = referenceParameterList.getTypeParameterElements();
     final PsiNewExpression newExpression = PsiTreeUtil.getParentOfType(typeElements[0], PsiNewExpression.class);
-    final PsiDiamondType.DiamondInferenceResult result = PsiDiamondType.resolveInferredTypesNoCheck(newExpression, newExpression);
+    final PsiDiamondType.DiamondInferenceResult result = PsiDiamondTypeImpl.resolveInferredTypesNoCheck(newExpression, newExpression);
     text.append(StringUtil.join(result.getInferredTypes(), new Function<PsiType, String>() {
       @Override
       public String fun(PsiType psiType) {

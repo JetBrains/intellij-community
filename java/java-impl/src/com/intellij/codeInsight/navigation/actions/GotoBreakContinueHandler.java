@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.navigation.actions;
 
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,7 +28,7 @@ public class GotoBreakContinueHandler extends GotoDeclarationHandlerBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.navigation.actions.GotoBreakContinueHandler"); 
 
   @Nullable
-  public PsiElement getGotoDeclarationTarget(final PsiElement elementAt) {
+  public PsiElement getGotoDeclarationTarget(final PsiElement elementAt, Editor editor) {
     if (elementAt instanceof PsiKeyword) {
       IElementType type = ((PsiKeyword)elementAt).getTokenType();
       if (type == JavaTokenType.CONTINUE_KEYWORD) {

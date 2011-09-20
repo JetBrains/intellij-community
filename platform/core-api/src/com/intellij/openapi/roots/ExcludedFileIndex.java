@@ -29,6 +29,7 @@ public abstract class ExcludedFileIndex {
   }
 
   public abstract boolean isInContent(VirtualFile file);
+  public abstract boolean isInSource(VirtualFile file);
   public abstract boolean isExcludedFile(VirtualFile file);
 
   /**

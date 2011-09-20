@@ -84,7 +84,7 @@ public class ClassElement extends CompositeElement implements Constants {
         ASTNode semicolonPlace = findEnumConstantListDelimiterPlace();
         boolean commentsOrWhiteSpaces = true;
         for (ASTNode child = first; child != null; child = child.getTreeNext()) {
-          if (!StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET.contains(child.getElementType())) {
+          if (!PsiImplUtil.isWhitespaceOrComment(child)) {
             commentsOrWhiteSpaces = false;
             break;
           }
@@ -173,12 +173,12 @@ public class ClassElement extends CompositeElement implements Constants {
   public void deleteChildInternal(@NotNull ASTNode child) {
     if (isEnum()) {
       if (child.getElementType() == ENUM_CONSTANT) {
-        ASTNode next = TreeUtil.skipElements(child.getTreeNext(), StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET);
+        ASTNode next = PsiImplUtil.skipWhitespaceAndComments(child.getTreeNext());
         if (next != null && next.getElementType() == COMMA) {
           deleteChildInternal(next);
         }
         else {
-          ASTNode prev = TreeUtil.skipElementsBack(child.getTreePrev(), StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET);
+          ASTNode prev = PsiImplUtil.skipWhitespaceAndCommentsBack(child.getTreePrev());
           if (prev != null && prev.getElementType() == COMMA) {
             deleteChildInternal(prev);
           }
@@ -293,7 +293,7 @@ public class ClassElement extends CompositeElement implements Constants {
         if (modifierList != null) {
           ASTNode treeNext = modifierList.getTreeNext();
           if (treeNext != null) {
-            treeNext = TreeUtil.skipElements(treeNext, StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET);
+            treeNext = PsiImplUtil.skipWhitespaceAndComments(treeNext);
             if (treeNext.getElementType() == AT) return treeNext;
           }
         }
@@ -312,8 +312,7 @@ public class ClassElement extends CompositeElement implements Constants {
     if (first == null) return null;
     for (ASTNode child = first.getTreeNext(); child != null; child = child.getTreeNext()) {
       final IElementType childType = child.getElementType();
-      if (StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET.contains(childType) ||
-          childType == ERROR_ELEMENT || childType == ENUM_CONSTANT) {
+      if (PsiImplUtil.isWhitespaceOrComment(child) || childType == ERROR_ELEMENT || childType == ENUM_CONSTANT) {
       }
       else if (childType == COMMA) {
       }
@@ -321,7 +320,7 @@ public class ClassElement extends CompositeElement implements Constants {
         return child;
       }
       else {
-        return TreeUtil.skipElementsBack(child.getTreePrev(), StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET);
+        return PsiImplUtil.skipWhitespaceAndCommentsBack(child.getTreePrev());
       }
     }
 

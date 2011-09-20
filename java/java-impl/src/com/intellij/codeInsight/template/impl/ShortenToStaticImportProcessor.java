@@ -28,6 +28,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,7 +60,7 @@ public class ShortenToStaticImportProcessor implements TemplateOptionalProcessor
 
     List<Pair<PsiElement, StaticImporter>> staticImportTargets = new ArrayList<Pair<PsiElement, StaticImporter>>();
     for (
-      PsiElement element = PsiUtilBase.getElementAtOffset(file, templateRange.getStartOffset());
+      PsiElement element = PsiUtilCore.getElementAtOffset(file, templateRange.getStartOffset());
       element != null && element.getTextRange().getStartOffset() < templateRange.getEndOffset();
       element = getNext(element))
     {

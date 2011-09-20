@@ -959,4 +959,9 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     info.put("fileName", psiFile.getName());
     info.put("fileType", psiFile.getFileType().toString());
   }
+
+  @Override
+  public String toString() {
+    return myElementType.toString();
+  }
 }

@@ -15,8 +15,8 @@
  */
 package com.intellij.psi.impl.light;
 
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -30,7 +30,7 @@ public class LightMemberReference extends LightElement implements PsiJavaCodeRef
   private LightReferenceParameterList myParameterList;
 
   public LightMemberReference(PsiManager manager, PsiMember refClass, PsiSubstitutor substitutor) {
-    super(manager, StdFileTypes.JAVA.getLanguage());
+    super(manager, JavaLanguage.INSTANCE);
     myRefMember = refClass;
 
     mySubstitutor = substitutor;

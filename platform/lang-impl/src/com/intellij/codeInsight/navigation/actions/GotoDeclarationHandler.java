@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.navigation.actions;
 
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
@@ -30,8 +31,9 @@ public interface GotoDeclarationHandler {
    * Provides an array of target declarations for given {@code sourceElement}.
    *
    * @param sourceElement input psiElement
+   * @param editor
    * @return all target declarations as an array of  {@code PsiElement} or null if none was found
    */
   @Nullable
-  PsiElement[] getGotoDeclarationTargets(PsiElement sourceElement);
+  PsiElement[] getGotoDeclarationTargets(PsiElement sourceElement, Editor editor);
 }

@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.*;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.java.parser.ExpressionParser;
 import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.lang.java.parser.ReferenceParser;
@@ -138,7 +139,7 @@ public interface JavaElementType {
 
   class ICodeBlockElementType extends IErrorCounterReparseableElementType implements ICompositeElementType, ILightLazyParseableElementType {
     private ICodeBlockElementType() {
-      super("CODE_BLOCK", StdLanguages.JAVA);
+      super("CODE_BLOCK", JavaLanguage.INSTANCE);
     }
 
     @Override
@@ -191,7 +192,7 @@ public interface JavaElementType {
   }
   ILazyParseableElementType CODE_BLOCK = new ICodeBlockElementType();
 
-  IElementType STATEMENTS = new ICodeFragmentElementType("STATEMENTS", StdLanguages.JAVA) {
+  IElementType STATEMENTS = new ICodeFragmentElementType("STATEMENTS", JavaLanguage.INSTANCE) {
     @Nullable
     @Override
     public ASTNode parseContents(final ASTNode chameleon) {
@@ -204,7 +205,7 @@ public interface JavaElementType {
     }
   };
 
-  IElementType EXPRESSION_TEXT = new ICodeFragmentElementType("EXPRESSION_TEXT", StdLanguages.JAVA) {
+  IElementType EXPRESSION_TEXT = new ICodeFragmentElementType("EXPRESSION_TEXT", JavaLanguage.INSTANCE) {
     @Nullable
     @Override
     public ASTNode parseContents(final ASTNode chameleon) {
@@ -217,7 +218,7 @@ public interface JavaElementType {
     }
   };
 
-  IElementType REFERENCE_TEXT = new ICodeFragmentElementType("REFERENCE_TEXT", StdLanguages.JAVA) {
+  IElementType REFERENCE_TEXT = new ICodeFragmentElementType("REFERENCE_TEXT", JavaLanguage.INSTANCE) {
     @Nullable
     @Override
     public ASTNode parseContents(final ASTNode chameleon) {
@@ -230,7 +231,7 @@ public interface JavaElementType {
     }
   };
 
-  IElementType TYPE_TEXT = new ICodeFragmentElementType("TYPE_TEXT", StdLanguages.JAVA) {
+  IElementType TYPE_TEXT = new ICodeFragmentElementType("TYPE_TEXT", JavaLanguage.INSTANCE) {
     @Nullable
     @Override
     public ASTNode parseContents(final ASTNode chameleon) {
@@ -246,7 +247,7 @@ public interface JavaElementType {
 
   class JavaDummyElementType extends ILazyParseableElementType implements ICompositeElementType {
     private JavaDummyElementType() {
-      super("DUMMY_ELEMENT", StdLanguages.JAVA);
+      super("DUMMY_ELEMENT", JavaLanguage.INSTANCE);
     }
 
     @NotNull

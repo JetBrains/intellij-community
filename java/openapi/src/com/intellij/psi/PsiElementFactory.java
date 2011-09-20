@@ -15,6 +15,8 @@
  */
 package com.intellij.psi;
 
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -33,6 +35,15 @@ import java.util.Map;
  * @see com.intellij.psi.JavaPsiFacade#getElementFactory()
  */
 public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactory {
+  class SERVICE {
+    private SERVICE() {
+    }
+
+    public static PsiElementFactory getInstance(Project project) {
+      return ServiceManager.getService(project, PsiElementFactory.class);
+    }
+  }
+  
   /**
    * Creates an empty class with the specified name.
    *

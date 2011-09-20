@@ -25,6 +25,7 @@ import com.intellij.openapi.fileTypes.FileTypes;
 public class StdLanguages {
   /**
    * The definition for the Java language.
+   * @deprecated use JavaLanguage.INSTANCE instead
    */
   public static Language JAVA = StdFileTypes.JAVA.getLanguage();
 

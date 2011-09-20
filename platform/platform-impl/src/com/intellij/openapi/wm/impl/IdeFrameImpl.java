@@ -165,7 +165,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
               }
               
               final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-              if (openProjects.length > 1) {
+              if (openProjects.length > 1 || (openProjects.length == 1 && SystemInfo.isMacSystemMenu)) {
                 if (myProject != null && myProject.isOpen()) {
                   ProjectUtil.closeAndDispose(myProject);
                 }

@@ -204,7 +204,7 @@ public class GrIntroduceParameterProcessor extends BaseRefactoringProcessor impl
       }
     }
 
-    Collection<PsiMethod> overridingMethods = OverridingMethodsSearch.search(toSearchFor, toSearchFor.getUseScope(), true).findAll();
+    Collection<PsiMethod> overridingMethods = OverridingMethodsSearch.search(toSearchFor, true).findAll();
 
     for (PsiMethod overridingMethod : overridingMethods) {
       result.add(new UsageInfo(overridingMethod));

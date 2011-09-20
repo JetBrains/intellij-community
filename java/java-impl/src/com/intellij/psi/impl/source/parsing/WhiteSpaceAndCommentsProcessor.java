@@ -15,13 +15,13 @@
  */
 package com.intellij.psi.impl.source.parsing;
 
-import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.impl.source.tree.StdTokenSets;
-import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.impl.source.ParsingContext;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.impl.source.ParsingContext;
+import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 
 public class WhiteSpaceAndCommentsProcessor implements TokenProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.parsing.WhiteSpaceAndCommentsProcessor");
@@ -30,7 +30,7 @@ public class WhiteSpaceAndCommentsProcessor implements TokenProcessor {
   private final TokenSet myWhitespaceSet;
 
   public WhiteSpaceAndCommentsProcessor() {
-    this(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET);
+    this(TokenSet.orSet(ElementType.JAVA_WHITESPACE_BIT_SET, ElementType.JAVA_COMMENT_BIT_SET));
   }
 
   public WhiteSpaceAndCommentsProcessor(TokenSet whitespaceSet) {
@@ -60,7 +60,7 @@ public class WhiteSpaceAndCommentsProcessor implements TokenProcessor {
   }
 
   protected TreeElement createToken(final Lexer lexer, final ParsingContext context) {
-    return ParseUtil.createTokenElement(lexer, context.getCharTable());
+    return ParseUtilBase.createTokenElement(lexer, context.getCharTable());
   }
 
   public boolean isTokenValid(IElementType tokenType) {

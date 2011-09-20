@@ -32,10 +32,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.PackageWrapper;
-import com.intellij.ui.CollectionComboBoxModel;
-import com.intellij.ui.ComboboxSpeedSearch;
-import com.intellij.ui.ComboboxWithBrowseButton;
-import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
+import com.intellij.ui.*;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -68,10 +65,9 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
   }
 
   public void setData(final Project project,
-                      final ReferenceEditorComboWithBrowseButton packageChooser,
                       final PsiDirectory initialTargetDirectory,
                       final VirtualFile[] sourceRoots,
-                      final Pass<String> pass) {
+                      final Pass<String> errorMessageUpdater, final EditorComboBox editorComboBox) {
     myInitialTargetDirectory = initialTargetDirectory;
     mySourceRoots = sourceRoots;
     new ComboboxSpeedSearch(getComboBox()) {
@@ -125,21 +121,21 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
             return;
           }
         }
-        setComboboxModel(getComboBox(), root, fileIndex, sourceRoots, project, true, pass);
+        setComboboxModel(getComboBox(), root, fileIndex, sourceRoots, project, true, errorMessageUpdater);
       }
     });
 
-    packageChooser.getChildComponent().addDocumentListener(new DocumentAdapter() {
+    editorComboBox.addDocumentListener(new DocumentAdapter() {
       @Override
       public void documentChanged(DocumentEvent e) {
-        setComboboxModel(getComboBox(), initialSourceRoot, fileIndex, sourceRoots, project, false, pass);
+        setComboboxModel(getComboBox(), initialSourceRoot, fileIndex, sourceRoots, project, false, errorMessageUpdater);
       }
     });
-    setComboboxModel(getComboBox(), initialSourceRoot, fileIndex, sourceRoots, project, false, pass);
+    setComboboxModel(getComboBox(), initialSourceRoot, fileIndex, sourceRoots, project, false, errorMessageUpdater);
     getComboBox().addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        updateErrorMessage(pass, fileIndex, getComboBox().getSelectedItem());
+        updateErrorMessage(errorMessageUpdater, fileIndex, getComboBox().getSelectedItem());
       }
     });
   }

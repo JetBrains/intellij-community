@@ -19,20 +19,16 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.Constants;
-import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.impl.source.tree.CompositePsiElement;
-import com.intellij.psi.impl.source.tree.SourceUtil;
-import com.intellij.psi.impl.source.tree.TreeUtil;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.ChildRoleBase;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiPackageStatementImpl extends CompositePsiElement implements PsiPackageStatement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiPackageStatementImpl");
 
   public PsiPackageStatementImpl() {
-    super(Constants.PACKAGE_STATEMENT);
+    super(JavaElementType.PACKAGE_STATEMENT);
   }
 
   public PsiJavaCodeReferenceElement getPackageReference() {
@@ -55,32 +51,32 @@ public class PsiPackageStatementImpl extends CompositePsiElement implements PsiP
         return null;
 
       case ChildRole.PACKAGE_KEYWORD:
-        return findChildByType(Constants.PACKAGE_KEYWORD);
+        return findChildByType(JavaTokenType.PACKAGE_KEYWORD);
 
       case ChildRole.PACKAGE_REFERENCE:
-        return findChildByType(Constants.JAVA_CODE_REFERENCE);
+        return findChildByType(JavaElementType.JAVA_CODE_REFERENCE);
 
       case ChildRole.CLOSING_SEMICOLON:
-        return TreeUtil.findChildBackward(this, Constants.SEMICOLON);
+        return TreeUtil.findChildBackward(this, JavaTokenType.SEMICOLON);
 
       case ChildRole.MODIFIER_LIST:
-        return findChildByType(Constants.MODIFIER_LIST);
+        return findChildByType(JavaElementType.MODIFIER_LIST);
     }
   }
 
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
-    if (i == Constants.PACKAGE_KEYWORD) {
+    if (i == JavaTokenType.PACKAGE_KEYWORD) {
       return ChildRole.PACKAGE_KEYWORD;
     }
-    else if (i == Constants.JAVA_CODE_REFERENCE) {
+    else if (i == JavaElementType.JAVA_CODE_REFERENCE) {
       return ChildRole.PACKAGE_REFERENCE;
     }
-    else if (i == Constants.SEMICOLON) {
+    else if (i == JavaTokenType.SEMICOLON) {
       return ChildRole.CLOSING_SEMICOLON;
     }
-    else if (i == Constants.MODIFIER_LIST) {
+    else if (i == JavaElementType.MODIFIER_LIST) {
       return ChildRole.MODIFIER_LIST;
     }
     else {

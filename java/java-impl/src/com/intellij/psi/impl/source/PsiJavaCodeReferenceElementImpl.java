@@ -215,7 +215,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
            else {
              if (getLastChildNode().getElementType() == JavaElementType.REFERENCE_PARAMETER_LIST) {
                ASTNode current = getLastChildNode().getTreePrev();
-               while (current != null && StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET.contains(current.getElementType())) {
+               while (current != null && (current.getPsi() instanceof PsiWhiteSpace || current.getPsi() instanceof PsiComment)) {
                  current = current.getTreePrev();
                }
                if (current != null && current.getElementType() == JavaTokenType.IDENTIFIER) {

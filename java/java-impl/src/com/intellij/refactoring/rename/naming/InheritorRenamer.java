@@ -24,7 +24,7 @@ import com.intellij.refactoring.RefactoringBundle;
  */
 public class InheritorRenamer extends AutomaticRenamer {
   public InheritorRenamer(PsiClass aClass, String newClassName) {
-    for (final PsiClass inheritor : ClassInheritorsSearch.search(aClass, aClass.getUseScope(), true).findAll()) {
+    for (final PsiClass inheritor : ClassInheritorsSearch.search(aClass, true).findAll()) {
       if (inheritor.getName() != null) {
         myElements.add(inheritor);
       }

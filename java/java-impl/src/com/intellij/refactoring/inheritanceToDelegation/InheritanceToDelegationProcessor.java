@@ -155,7 +155,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
   @NotNull
   protected UsageInfo[] findUsages() {
     ArrayList<UsageInfo> usages = new ArrayList<UsageInfo>();
-    final PsiClass[] inheritors = ClassInheritorsSearch.search(myClass, myClass.getUseScope(), true).toArray(PsiClass.EMPTY_ARRAY);
+    final PsiClass[] inheritors = ClassInheritorsSearch.search(myClass, true).toArray(PsiClass.EMPTY_ARRAY);
     myClassInheritors = new HashSet<PsiClass>();
     myClassInheritors.add(myClass);
     addAll(myClassInheritors, inheritors);

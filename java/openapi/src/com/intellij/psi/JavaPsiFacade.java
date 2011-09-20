@@ -22,7 +22,6 @@ package com.intellij.psi;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyKey;
-import com.intellij.psi.javadoc.JavadocManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import org.jetbrains.annotations.NonNls;
@@ -139,15 +138,6 @@ public abstract class JavaPsiFacade {
    */
   @NotNull
   public abstract PsiMigration startMigration();
-
-  /**
-   * Returns the JavaDoc manager for the project, which can be used to retrieve
-   * information about JavaDoc tags known to IDEA.
-   *
-   * @return the JavaDoc manager instance.
-   */
-  @NotNull
-  public abstract JavadocManager getJavadocManager();
 
   /**
    * Returns the name helper for the project, which can be used to validate

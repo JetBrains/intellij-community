@@ -24,7 +24,7 @@ import com.intellij.codeInsight.template.Template;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.meta.PsiMetaData;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -114,7 +114,7 @@ public class LookupItemUtil{
     String s = null;
     LookupItem item = new LookupItem(object, "");
     if (object instanceof PsiElement){
-      s = PsiUtilBase.getName((PsiElement) object);
+      s = PsiUtilCore.getName((PsiElement)object);
     }
     TailType tailType = TailType.NONE;
     if (object instanceof PsiMetaData) {

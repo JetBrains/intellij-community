@@ -103,7 +103,7 @@ public abstract class MoveInstanceMethodDialogBase extends RefactoringDialog {
   protected boolean verifyTargetClass (PsiClass targetClass) {
     if (targetClass.isInterface()) {
       final Project project = getProject();
-      if (ClassInheritorsSearch.search(targetClass, targetClass.getUseScope(), false).findFirst() == null) {
+      if (ClassInheritorsSearch.search(targetClass, false).findFirst() == null) {
         final String message = RefactoringBundle.message("0.is.an.interface.that.has.no.implementing.classes", UsageViewUtil.getDescriptiveName(targetClass));
 
         Messages.showErrorDialog(project, message, myRefactoringName);

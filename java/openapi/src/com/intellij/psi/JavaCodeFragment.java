@@ -19,7 +19,7 @@ package com.intellij.psi;
  * Represents a fragment of Java code which exists outside of a project structure (for example,
  * in a foreign language code or in a user interface element other than the main source code editor).
  */
-public interface JavaCodeFragment extends PsiImportHolder, IntentionFilterOwner, PsiCodeFragment {
+public interface JavaCodeFragment extends PsiImportHolder, PsiCodeFragment {
 
 
   /**

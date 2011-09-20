@@ -16,6 +16,7 @@
 package com.intellij.refactoring.typeMigration;
 
 import com.intellij.lang.StdLanguages;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -386,7 +387,7 @@ public class TypeMigrationLabeler {
 
     if (resolved instanceof PsiMethod) {
       final PsiMethod method = ((PsiMethod)resolved);
-      final PsiMethod[] methods = OverridingMethodsSearch.search(method, method.getUseScope(), true).toArray(PsiMethod.EMPTY_ARRAY);
+      final PsiMethod[] methods = OverridingMethodsSearch.search(method, true).toArray(PsiMethod.EMPTY_ARRAY);
       final OverridenUsageInfo overridenUsageInfo = new OverridenUsageInfo(method);
       final OverriderUsageInfo[] overriders = new OverriderUsageInfo[methods.length];
       for (int i = -1; i < methods.length; i++) {
@@ -409,7 +410,7 @@ public class TypeMigrationLabeler {
       final PsiMethod method = (PsiMethod)((PsiParameter)resolved).getDeclarationScope();
 
       final int index = method.getParameterList().getParameterIndex(((PsiParameter)resolved));
-      final PsiMethod[] methods = OverridingMethodsSearch.search(method, method.getUseScope(), true).toArray(PsiMethod.EMPTY_ARRAY);
+      final PsiMethod[] methods = OverridingMethodsSearch.search(method, true).toArray(PsiMethod.EMPTY_ARRAY);
 
       final OverriderUsageInfo[] overriders = new OverriderUsageInfo[methods.length];
       final OverridenUsageInfo overridenUsageInfo = new OverridenUsageInfo(method.getParameterList().getParameters()[index]);
@@ -626,7 +627,7 @@ public class TypeMigrationLabeler {
 
   void migrateRootUsageExpression(final PsiReference usage, final Set<PsiElement> processed) {
     final PsiElement ref = usage.getElement();
-    if (ref != null && ref.getLanguage() == StdLanguages.JAVA) {
+    if (ref != null && ref.getLanguage() == JavaLanguage.INSTANCE) {
       final PsiElement element = getContainingStatement(ref);
       if (element != null && !processed.contains(element)) {
         processed.add(element);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.jsp;
+package com.intellij.openapi.roots;
+
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ModificationTracker;
 
 /**
- * @author peter
+ * @author yole
  */
-public interface AbstractJspJavaLexer  {
+public abstract class ProjectRootModificationTracker implements ModificationTracker {
+  public static ProjectRootModificationTracker getInstance(Project project) {
+    return ServiceManager.getService(project, ProjectRootModificationTracker.class);
+  }
 }
