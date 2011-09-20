@@ -27,12 +27,12 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.RefactorJBundle;
-import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.*;
+import com.intellij.refactoring.move.moveClassesOrPackages.DestinationFolderComboBox;
 import com.intellij.refactoring.ui.PackageNameReferenceEditorCombo;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.ParameterTablePanel;
+import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.RecentsManager;
 import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
@@ -75,6 +75,7 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
   private ReferenceEditorComboWithBrowseButton existingClassField;
   private JCheckBox myGenerateAccessorsCheckBox;
   private JCheckBox myEscalateVisibilityCheckBox;
+  private ComboboxWithBrowseButton myDestinationCb;
   private static final String RECENTS_KEY = "IntroduceParameterObject.RECENTS_KEY";
   private static final String EXISTING_KEY = "IntroduceParameterObject.EXISTING_KEY";
 
@@ -168,7 +169,9 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
     }
     final String newVisibility =
       myEscalateVisibilityCheckBox.isEnabled() && myEscalateVisibilityCheckBox.isSelected() ? VisibilityUtil.ESCALATE_VISIBILITY : null;
-    invokeRefactoring(new IntroduceParameterObjectProcessor(className, packageName, sourceMethod,
+    final MoveDestination moveDestination = ((DestinationFolderComboBox)myDestinationCb)
+      .selectDirectory(new PackageWrapper(PsiManager.getInstance(myProject), packageName), false);
+    invokeRefactoring(new IntroduceParameterObjectProcessor(className, packageName, moveDestination, sourceMethod,
                                                             parameters.toArray(new ParameterTablePanel.VariableData[parameters.size()]),
                                                             keepMethod, useExistingClass,
                                                             createInnerClass, newVisibility, myGenerateAccessorsCheckBox.isSelected()));
@@ -312,6 +315,13 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
         enableGenerateAccessors();
       }
     });
+    myDestinationCb = new DestinationFolderComboBox() {
+      @Override
+      public String getTargetPackage() {
+        return getPackageName();
+      }
+    };
+    ((DestinationFolderComboBox)myDestinationCb).setData(myProject, sourceMethod.getContainingFile().getContainingDirectory(), packageTextField.getChildComponent());
   }
 
   private void enableGenerateAccessors() {

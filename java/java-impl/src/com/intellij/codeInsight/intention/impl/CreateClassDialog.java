@@ -111,7 +111,7 @@ public class CreateClassDialog extends DialogWrapper {
     }
 
     myTfClassName.setText(myClassName);
-    myDestinationCB.setData(myProject, getBaseDir(normalizedPackageName), ProjectRootManager.getInstance(myProject).getContentSourceRoots(), new Pass<String>() {
+    myDestinationCB.setData(myProject, getBaseDir(normalizedPackageName), new Pass<String>() {
       @Override
       public void pass(String s) {
         setErrorText(s);

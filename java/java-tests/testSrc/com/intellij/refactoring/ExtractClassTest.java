@@ -145,7 +145,7 @@ public class ExtractClassTest extends MultiFileTestCase{
   private static void doTest(final PsiClass aClass, final ArrayList<PsiMethod> methods, final ArrayList<PsiField> fields, final String conflicts,
                              boolean generateGettersSetters) {
     try {
-      ExtractClassProcessor processor = new ExtractClassProcessor(aClass, fields, methods, new ArrayList<PsiClass>(), "", "Extracted", null, generateGettersSetters, Collections.<MemberInfo>emptyList());
+      ExtractClassProcessor processor = new ExtractClassProcessor(aClass, fields, methods, new ArrayList<PsiClass>(), "", null, "Extracted", null, generateGettersSetters, Collections.<MemberInfo>emptyList());
       processor.run();
       LocalFileSystem.getInstance().refresh(false);
       FileDocumentManager.getInstance().saveAllDocuments();
@@ -266,7 +266,7 @@ public class ExtractClassTest extends MultiFileTestCase{
         fields.add(aClass.findFieldByName("myT", false));
 
         final ExtractClassProcessor processor =
-          new ExtractClassProcessor(aClass, fields, methods, new ArrayList<PsiClass>(), "", "Extracted", PsiModifier.PUBLIC, false, Collections.<MemberInfo>emptyList());
+          new ExtractClassProcessor(aClass, fields, methods, new ArrayList<PsiClass>(), "", null, "Extracted", PsiModifier.PUBLIC, false, Collections.<MemberInfo>emptyList());
         processor.run();
         LocalFileSystem.getInstance().refresh(false);
         FileDocumentManager.getInstance().saveAllDocuments();

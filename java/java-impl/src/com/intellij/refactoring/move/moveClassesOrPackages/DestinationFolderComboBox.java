@@ -30,6 +30,7 @@ import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.ui.*;
@@ -65,11 +66,20 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
   }
 
   public void setData(final Project project,
+                    final PsiDirectory initialTargetDirectory,
+                    final EditorComboBox editorComboBox) {
+    setData(project, initialTargetDirectory, new Pass<String>() {
+      @Override
+      public void pass(String s) {
+      }
+    }, editorComboBox);
+  }
+
+  public void setData(final Project project,
                       final PsiDirectory initialTargetDirectory,
-                      final VirtualFile[] sourceRoots,
                       final Pass<String> errorMessageUpdater, final EditorComboBox editorComboBox) {
     myInitialTargetDirectory = initialTargetDirectory;
-    mySourceRoots = sourceRoots;
+    mySourceRoots = ProjectRootManager.getInstance(project).getContentSourceRoots();
     new ComboboxSpeedSearch(getComboBox()) {
       @Override
       protected String getElementText(Object element) {
@@ -111,7 +121,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
       @Override
       public void actionPerformed(ActionEvent e) {
         VirtualFile root = MoveClassesOrPackagesUtil
-          .chooseSourceRoot(new PackageWrapper(PsiManager.getInstance(project), getTargetPackage()), sourceRoots, initialTargetDirectory);
+          .chooseSourceRoot(new PackageWrapper(PsiManager.getInstance(project), getTargetPackage()), mySourceRoots, initialTargetDirectory);
         if (root == null) return;
         final ComboBoxModel model = getComboBox().getModel();
         for (int i = 0; i < model.getSize(); i++) {
@@ -121,17 +131,17 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
             return;
           }
         }
-        setComboboxModel(getComboBox(), root, fileIndex, sourceRoots, project, true, errorMessageUpdater);
+        setComboboxModel(getComboBox(), root, fileIndex, mySourceRoots, project, true, errorMessageUpdater);
       }
     });
 
     editorComboBox.addDocumentListener(new DocumentAdapter() {
       @Override
       public void documentChanged(DocumentEvent e) {
-        setComboboxModel(getComboBox(), initialSourceRoot, fileIndex, sourceRoots, project, false, errorMessageUpdater);
+        setComboboxModel(getComboBox(), initialSourceRoot, fileIndex, mySourceRoots, project, false, errorMessageUpdater);
       }
     });
-    setComboboxModel(getComboBox(), initialSourceRoot, fileIndex, sourceRoots, project, false, errorMessageUpdater);
+    setComboboxModel(getComboBox(), initialSourceRoot, fileIndex, mySourceRoots, project, false, errorMessageUpdater);
     getComboBox().addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -230,6 +240,19 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
       return true;
     }
     if (oItem.getDirectory() != itemWrapper.getDirectory()) {
+      return false;
+    }
+    return true;
+  }
+
+  public static boolean isAccessible(final Project project,
+                                     final VirtualFile virtualFile,
+                                     final VirtualFile targetVirtualFile) {
+    final boolean inTestSourceContent = ProjectRootManager.getInstance(project).getFileIndex().isInTestSourceContent(virtualFile);
+    final Module module = ModuleUtil.findModuleForFile(virtualFile, project);
+    if (targetVirtualFile != null &&
+        module != null &&
+        !GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, inTestSourceContent).contains(targetVirtualFile)) {
       return false;
     }
     return true;

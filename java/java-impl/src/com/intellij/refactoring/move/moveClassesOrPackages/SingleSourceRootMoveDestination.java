@@ -16,7 +16,13 @@
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.util.RefactoringConflictsUtil;
@@ -71,6 +77,18 @@ public class SingleSourceRootMoveDestination implements MoveDestination {
   public void analyzeModuleConflicts(final Collection<PsiElement> elements,
                                      MultiMap<PsiElement,String> conflicts, final UsageInfo[] usages) {
     RefactoringConflictsUtil.analyzeModuleConflicts(myPackage.getManager().getProject(), elements, usages, myTargetDirectory, conflicts);
+  }
+
+  @Override
+  public boolean isTargetAccessible(Project project, VirtualFile place) {
+    final boolean inTestSourceContent = ProjectRootManager.getInstance(project).getFileIndex().isInTestSourceContent(place);
+    final Module module = ModuleUtil.findModuleForFile(place, project);
+    final VirtualFile targetVirtualFile = myTargetDirectory.getVirtualFile();
+    if (module != null &&
+        !GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, inTestSourceContent).contains(targetVirtualFile)) {
+      return false;
+    }
+    return true;
   }
 
   public PsiDirectory getTargetDirectory(PsiFile source) {

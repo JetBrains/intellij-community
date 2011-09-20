@@ -51,7 +51,7 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
         final PsiMethod method = aClass.findMethodsByName("foo", false)[0];
         final ParameterTablePanel.VariableData[] datas = function.fun(method);
 
-        IntroduceParameterObjectProcessor processor = new IntroduceParameterObjectProcessor("Param", "", method, datas, delegate, false,
+        IntroduceParameterObjectProcessor processor = new IntroduceParameterObjectProcessor("Param", "", null, method, datas, delegate, false,
                                                                                             createInner, null, false);
         processor.run();
       }
@@ -172,7 +172,7 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
         assertNotNull("Class Test not found", aClass);
 
         final PsiMethod method = aClass.findMethodsByName("foo", false)[0];
-        IntroduceParameterObjectProcessor processor = new IntroduceParameterObjectProcessor(existingClassName, existingClassPackage, method,
+        IntroduceParameterObjectProcessor processor = new IntroduceParameterObjectProcessor(existingClassName, existingClassPackage, null, method,
                                                                                             generateParams(method), false, true,
                                                                                             false, newVisibility, generateAccessors);
         processor.run();
