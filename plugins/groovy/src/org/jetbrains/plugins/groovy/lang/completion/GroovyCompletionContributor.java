@@ -417,6 +417,10 @@ public class GroovyCompletionContributor extends CompletionContributor {
           object = ((GroovyResolveResult)object).getElement();
         }
 
+        if (object instanceof PsiClass && JavaCompletionUtil.isInExcludedPackage((PsiClass)object)) {
+          return;
+        }
+
         final boolean autopopup = parameters.getInvocationCount() == 0;
         //skip default groovy methods
         if (firstCompletionInvoked &&

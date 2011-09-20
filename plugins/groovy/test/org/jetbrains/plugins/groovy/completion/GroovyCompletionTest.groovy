@@ -777,6 +777,17 @@ class Fopppp {
 ''')
   }
 
+  public void testExcludeStringBuffer() {
+    assert doContainsTest('StringBuffer', 'StringBuff<caret>f')
+    CodeInsightSettings.getInstance().EXCLUDED_PACKAGES = [StringBuffer.name] as String[]
+    try {
+      assert !doContainsTest('StringBuffer', 'StringBuff<caret>f')
+    }
+    finally {
+      CodeInsightSettings.getInstance().EXCLUDED_PACKAGES = new String[0]
+    }
+  }
+
   private doContainsTest(String itemToCheck, String text) {
     myFixture.configureByText "a.groovy", text
 
