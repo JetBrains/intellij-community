@@ -70,7 +70,7 @@ public class ConstructorAnnotationsProcessor extends NonCodeMembersContributor {
     }
 
     final LightMethodBuilder fieldsConstructor = new LightMethodBuilder(psiClass, GroovyFileType.GROOVY_LANGUAGE);
-    fieldsConstructor.setConstructor(true);
+    fieldsConstructor.setConstructor(true).setNavigationElement(psiClass);
 
     Set<String> excludes = new HashSet<String>();
     if (tupleConstructor != null) {
