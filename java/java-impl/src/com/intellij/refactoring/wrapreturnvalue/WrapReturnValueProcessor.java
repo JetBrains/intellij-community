@@ -31,6 +31,7 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.RefactorJBundle;
 import com.intellij.refactoring.psi.PropertyUtils;
 import com.intellij.refactoring.psi.TypeParametersVisitor;
@@ -58,6 +59,7 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
 
   private static final Logger LOG = Logger.getInstance("com.siyeh.rpp.wrapreturnvalue.WrapReturnValueProcessor");
 
+  private MoveDestination myMoveDestination;
   private final PsiMethod method;
   private final String className;
   private final String packageName;
@@ -71,10 +73,11 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
 
   public WrapReturnValueProcessor(String className,
                                   String packageName,
-                                  PsiMethod method,
+                                  MoveDestination moveDestination, PsiMethod method,
                                   boolean useExistingClass,
                                   final boolean createInnerClass, PsiField delegateField) {
     super(method.getProject());
+    myMoveDestination = moveDestination;
     this.method = method;
     this.className = className;
     this.packageName = packageName;
@@ -227,6 +230,9 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
       if (existingClass != null) {
         conflicts.putValue(existingClass, RefactorJBundle.message("there.already.exists.a.class.with.the.selected.name"));
       }
+      if (myMoveDestination != null && !myMoveDestination.isTargetAccessible(myProject, method.getContainingFile().getVirtualFile())) {
+        conflicts.putValue(method, "Created class won't be accessible in the call place");
+      }
     }
     return showConflicts(conflicts, refUsages.get());
   }
@@ -268,8 +274,13 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
         final PsiFile containingFile = method.getContainingFile();
 
         final PsiDirectory containingDirectory = containingFile.getContainingDirectory();
-        final Module module = ModuleUtil.findModuleForPsiElement(containingFile);
-        final PsiDirectory directory = PackageUtil.findOrCreateDirectoryForPackage(module, packageName, containingDirectory, true, true);
+        final PsiDirectory directory;
+        if (myMoveDestination != null) {
+          directory = myMoveDestination.getTargetDirectory(containingDirectory);
+        } else {
+          final Module module = ModuleUtil.findModuleForPsiElement(containingFile);
+          directory = PackageUtil.findOrCreateDirectoryForPackage(module, packageName, containingDirectory, true, true);
+        }
 
         if (directory != null) {
           final PsiElement shortenedFile = JavaCodeStyleManager.getInstance(project).shortenClassReferences(psiFile);
