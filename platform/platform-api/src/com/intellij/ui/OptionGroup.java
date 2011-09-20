@@ -31,12 +31,18 @@ public class OptionGroup implements PanelWithAnchor {
   private String myTitle;
   private List myOptions;
   private List myIsShifted;
+  private boolean boldTitle;
   private JComponent anchor;
 
   public OptionGroup(String title) {
+    this(title, false);
+  }
+
+  public OptionGroup(String title, boolean boldTitle) {
     myTitle = title;
     myOptions = new ArrayList();
     myIsShifted = new ArrayList();
+    this.boldTitle = boldTitle;
   }
 
   /**
@@ -103,7 +109,7 @@ public class OptionGroup implements PanelWithAnchor {
                                      new Insets(0, 0, 0, 0), 0, 0));
 
     if (myTitle != null) {
-      IdeaTitledBorder titledBorder = IdeBorderFactory.createTitledBorder(myTitle, false, true, true);
+      IdeaTitledBorder titledBorder = IdeBorderFactory.createTitledBorder(myTitle, boldTitle, true, true);
       panel.setBorder(titledBorder);
       titledBorder.acceptMinimumSize(panel);
     }

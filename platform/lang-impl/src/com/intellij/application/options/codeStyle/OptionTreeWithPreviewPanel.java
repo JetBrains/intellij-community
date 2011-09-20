@@ -71,13 +71,13 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
     myOptionsTree.setCellRenderer(new MyTreeCellRenderer());
     myPanel.add(ScrollPaneFactory.createScrollPane(myOptionsTree),
                 new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.BOTH,
-                                       new Insets(7, 7, 3, 4), 0, 0));
+                                       new Insets(0, 0, 0, 5), 0, 0));
 
     JPanel previewPanel = createPreviewPanel();
 
     myPanel.add(previewPanel,
                 new GridBagConstraints(1, 0, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.BOTH,
-                                       new Insets(0, 0, 0, 4), 0, 0));
+                                       new Insets(0, 0, 0, 0), 0, 0));
 
     installPreviewPanel(previewPanel);
     addPanelToWatch(myPanel);

@@ -130,8 +130,6 @@ public class DebuggerLaunchingConfigurable implements Configurable{
     JPanel result = new JPanel(new BorderLayout());
     result.add(panel, BorderLayout.NORTH);
 
-    result.setBorder(new EmptyBorder(4, 4, 0, 0));
-
     return result;
   }
 

@@ -96,7 +96,6 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable {
   public KeymapPanel() {
     setLayout(new BorderLayout());
     JPanel keymapPanel = new JPanel(new BorderLayout());
-    keymapPanel.setBorder(BorderFactory.createEmptyBorder(5, 2, 2, 2));
     keymapPanel.add(createKeymapListPanel(), BorderLayout.NORTH);
     keymapPanel.add(createKeymapSettingsPanel(), BorderLayout.CENTER);
     add(keymapPanel, BorderLayout.CENTER);
@@ -145,7 +144,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable {
     myKeymapList.setRenderer(new MyKeymapRenderer(myKeymapList.getRenderer()));
     JLabel keymapLabel = new JLabel(KeyMapBundle.message("keymaps.border.factory.title"));
     keymapLabel.setLabelFor(myKeymapList);
-    panel.add(keymapLabel, new GridBagConstraints(0,0, 1, 1, 0,0,GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0,2,0,0), 0,0));
+    panel.add(keymapLabel, new GridBagConstraints(0,0, 1, 1, 0,0,GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0,0,0,0), 0,0));
     panel.add(myKeymapList, new GridBagConstraints(1,0,1,1,0,0,GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0,4,0,0),0,0));
 
     panel.add(createKeymapButtonsPanel(), new GridBagConstraints(2,0,1,1,0,0,GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0,0,0,0),0,0));

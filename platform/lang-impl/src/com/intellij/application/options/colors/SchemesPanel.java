@@ -107,12 +107,12 @@ public class SchemesPanel extends JPanel {
     JPanel panel = new JPanel(new GridBagLayout());
 
     panel.add(new JLabel(ApplicationBundle.message("combobox.scheme.name")),
-              new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(5, 5, 5, 5), 0,
+              new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 5), 0,
                                      0));
 
     mySchemeComboBox = new JComboBox();
     panel.add(mySchemeComboBox,
-              new GridBagConstraints(1, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(5, 0, 5, 5), 0,
+              new GridBagConstraints(1, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 10), 0,
                                      0));
 
     JButton saveAsButton = new JButton(ApplicationBundle.message("button.save.as"));
@@ -122,7 +122,7 @@ public class SchemesPanel extends JPanel {
       }
     });
     panel.add(saveAsButton,
-              new GridBagConstraints(2, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(5, 0, 5, 5), 0,
+              new GridBagConstraints(2, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 5), 0,
                                      0));
 
     myDeleteButton = new JButton(ApplicationBundle.message("button.delete"));
