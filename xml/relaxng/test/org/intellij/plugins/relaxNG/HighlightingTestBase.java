@@ -188,6 +188,7 @@ public abstract class HighlightingTestBase extends UsefulTestCase implements Ide
     final PsiFile file = myTestFixture.getFile();
     final Document doc = myTestFixture.getEditor().getDocument();
     ExpectedHighlightingData data = new ExpectedHighlightingData(doc, true, checkWeakWarnings, false, file);
+    data.init();
     PsiDocumentManager.getInstance(myTestFixture.getProject()).commitAllDocuments();
 
     Collection<HighlightInfo> highlights1 = doHighlighting(includeExternalToolPass);

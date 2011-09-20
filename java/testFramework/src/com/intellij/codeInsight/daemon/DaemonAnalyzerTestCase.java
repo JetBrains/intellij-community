@@ -75,6 +75,7 @@ import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.xml.XmlFileNSInfoProvider;
 import com.intellij.testFramework.ExpectedHighlightingData;
 import com.intellij.testFramework.FileTreeAccessFilter;
+import com.intellij.testFramework.HighlightTestInfo;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.IncorrectOperationException;
@@ -98,7 +99,6 @@ import java.util.Map;
 public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   private final Map<String, LocalInspectionTool> myAvailableTools = new THashMap<String, LocalInspectionTool>();
   private final Map<String, LocalInspectionToolWrapper> myAvailableLocalTools = new THashMap<String, LocalInspectionToolWrapper>();
-  private boolean toInitializeDaemon;
   private final FileTreeAccessFilter myFileTreeAccessFilter = new FileTreeAccessFilter();
 
   @Override
@@ -246,29 +246,45 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     return result.toArray(new LocalInspectionTool[result.size()]);
   }
 
-  protected void doTest(String filePath, boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings) throws Exception {
+  protected void doTest(@NonNls @NotNull String filePath, boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings) throws Exception {
     configureByFile(filePath);
     doDoTest(checkWarnings, checkInfos, checkWeakWarnings);
   }
 
-  protected void doTest(String filePath, boolean checkWarnings, boolean checkInfos) throws Exception {
+  protected void doTest(@NonNls @NotNull String filePath, boolean checkWarnings, boolean checkInfos) throws Exception {
     doTest(filePath, checkWarnings, checkInfos, false);
   }
 
-  protected void doTest(@NonNls String filePath, @NonNls String projectRoot, boolean checkWarnings, boolean checkInfos) throws Exception {
+  protected void doTest(@NonNls @NotNull String filePath, @NonNls String projectRoot, boolean checkWarnings, boolean checkInfos) throws Exception {
     configureByFile(filePath, projectRoot);
     doDoTest(checkWarnings, checkInfos);
   }
 
-  protected void doTest(VirtualFile vFile, boolean checkWarnings, boolean checkInfos) throws Exception {
+  @NotNull
+  @SuppressWarnings("TestMethodWithIncorrectSignature")
+  protected HighlightTestInfo testFile(@NonNls @NotNull String... filePath) {
+    return new HighlightTestInfo(getTestRootDisposable(), filePath){
+      @Override
+      public HighlightTestInfo doTest() throws Exception {
+        configureByFiles(projectRoot, filePaths);
+        ExpectedHighlightingData data = new ExpectedHighlightingData(myEditor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos, myFile);
+        if (checkSymbolNames) data.checkSymbolNames();
+        checkHighlighting(data);
+        return this;
+      }
+    };
+  }
+
+  protected void doTest(@NotNull VirtualFile vFile, boolean checkWarnings, boolean checkInfos) throws Exception {
     doTest(new VirtualFile[] { vFile }, checkWarnings, checkInfos );
   }
 
-  protected void doTest(VirtualFile[] vFile, boolean checkWarnings, boolean checkInfos) throws Exception {
+  protected void doTest(@NotNull VirtualFile[] vFile, boolean checkWarnings, boolean checkInfos) throws Exception {
     configureByFiles(null, vFile);
     doDoTest(checkWarnings, checkInfos);
   }
 
+  @NotNull
   protected Collection<HighlightInfo> doDoTest(boolean checkWarnings, boolean checkInfos) {
     return doDoTest(checkWarnings, checkInfos, false);
   }
@@ -277,7 +293,9 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     return checkHighlighting(new ExpectedHighlightingData(myEditor.getDocument(),checkWarnings, checkWeakWarnings, checkInfos, myFile));
   }
 
-  protected Collection<HighlightInfo> checkHighlighting(final ExpectedHighlightingData data) {
+  @NotNull
+  protected Collection<HighlightInfo> checkHighlighting(@NotNull final ExpectedHighlightingData data) {
+    data.init();
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
     //to load text
@@ -309,14 +327,16 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     return infos;
   }
 
-  public void allowTreeAccessForFile(final VirtualFile file) {
+  public void allowTreeAccessForFile(@NotNull VirtualFile file) {
     myFileTreeAccessFilter.allowTreeAccessForFile(file);
   }
 
+  @NotNull
   protected Collection<HighlightInfo> highlightErrors() {
     return filter(doHighlighting(), HighlightSeverity.ERROR);
   }
 
+  @NotNull
   protected List<HighlightInfo> doHighlighting() {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
@@ -359,7 +379,8 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     return annotatedWith(CanChangeDocumentDuringHighlighting.class);
   }
 
-  public static List<HighlightInfo> filter(final List<HighlightInfo> infos, HighlightSeverity minSeverity) {
+  @NotNull
+  public static List<HighlightInfo> filter(@NotNull List<HighlightInfo> infos, @NotNull HighlightSeverity minSeverity) {
     ArrayList<HighlightInfo> result = new ArrayList<HighlightInfo>();
     for (final HighlightInfo info : infos) {
       if (info.getSeverity().compareTo(minSeverity) >= 0) result.add(info);
@@ -379,16 +400,16 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     return false;
   }
 
-  protected static void findAndInvokeIntentionAction(final Collection<HighlightInfo> infos, String intentionActionName, final Editor editor,
-                                              final PsiFile file) throws IncorrectOperationException {
+  protected static void findAndInvokeIntentionAction(@NotNull Collection<HighlightInfo> infos, @NotNull String intentionActionName, @NotNull Editor editor,
+                                                     @NotNull PsiFile file) throws IncorrectOperationException {
     IntentionAction intentionAction = findIntentionAction(infos, intentionActionName, editor, file);
 
     assertNotNull(intentionActionName, intentionAction);
     assertTrue(ShowIntentionActionsHandler.chooseActionAndInvoke(file, editor, intentionAction, intentionActionName));
   }
 
-  protected static IntentionAction findIntentionAction(final Collection<HighlightInfo> infos, final String intentionActionName, final Editor editor,
-                                              final PsiFile file) {
+  protected static IntentionAction findIntentionAction(@NotNull Collection<HighlightInfo> infos, @NotNull String intentionActionName, @NotNull Editor editor,
+                                                       @NotNull PsiFile file) {
     List<IntentionAction> actions = LightQuickFixTestCase.getAvailableActions(editor, file);
     IntentionAction intentionAction = LightQuickFixTestCase.findActionWithText(actions, intentionActionName);
 
