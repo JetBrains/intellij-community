@@ -13,21 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members;
+package com.intellij.psi;
 
-import com.intellij.psi.PsiMirrorElement;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 
 /**
  * @author Max Medvedev
+ *
+ * Synthetic element to represent prototype in special contexts
  */
-public interface GrReflectedMethod extends GrMethod, PsiMirrorElement {
-  GrReflectedMethod[] EMPTY_ARRAY = new GrReflectedMethod[0];
+public interface PsiMirrorElement extends PsiElement, SyntheticElement {
 
+  /**
+   * @return prototype of this element
+   */
   @NotNull
-  GrMethod getBaseMethod();
-
-  @NotNull
-  GrParameter[] getSkippedParameters();
+  PsiElement getPrototype();
 }

@@ -161,6 +161,7 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod {
     return myNamedParametersArray;
   }
 
+  @NotNull
   @Override
   public GrReflectedMethod[] getReflectedMethods() {
     return GrReflectedMethod.EMPTY_ARRAY;

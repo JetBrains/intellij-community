@@ -154,6 +154,7 @@ public class GrReflectedMethodImpl extends LightMethodBuilder implements GrRefle
     return myBaseMethod.getNamedParametersArray();
   }
 
+  @NotNull
   @Override
   public GrReflectedMethod[] getReflectedMethods() {
     return GrReflectedMethod.EMPTY_ARRAY;
@@ -224,5 +225,11 @@ public class GrReflectedMethodImpl extends LightMethodBuilder implements GrRefle
     }
 
     return methods;
+  }
+
+  @NotNull
+  @Override
+  public PsiElement getPrototype() {
+    return getBaseMethod();
   }
 }
