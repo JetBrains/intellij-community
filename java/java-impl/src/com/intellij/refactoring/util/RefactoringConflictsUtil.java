@@ -253,47 +253,50 @@ public class RefactoringConflictsUtil {
     boolean isInTestSources = ModuleRootManager.getInstance(targetModule).getFileIndex().isInTestSourceContent(vFile);
     NextUsage:
     for (UsageInfo usage : usages) {
-      if (usage instanceof MoveRenameUsageInfo) {
-        final MoveRenameUsageInfo moveRenameUsageInfo = (MoveRenameUsageInfo)usage;
-        final PsiElement element = usage.getElement();
-        if (element != null && PsiTreeUtil.getParentOfType(element, PsiImportStatement.class, false) == null) {
+      final PsiElement element = usage.getElement();
+      if (element != null && PsiTreeUtil.getParentOfType(element, PsiImportStatement.class, false) == null) {
 
-          for (PsiElement scope : scopes) {
-            if (PsiTreeUtil.isAncestor(scope, element, false)) continue NextUsage;
+        for (PsiElement scope : scopes) {
+          if (PsiTreeUtil.isAncestor(scope, element, false)) continue NextUsage;
+        }
+
+        final GlobalSearchScope resolveScope1 = element.getResolveScope();
+        if (!resolveScope1.isSearchInModuleContent(targetModule, isInTestSources)) {
+          final PsiFile usageFile = element.getContainingFile();
+          PsiElement container;
+          if (usageFile instanceof PsiJavaFile) {
+            container = ConflictsUtil.getContainer(element);
           }
-
-          final GlobalSearchScope resolveScope1 = element.getResolveScope();
-          if (!resolveScope1.isSearchInModuleContent(targetModule, isInTestSources)) {
-            final PsiFile usageFile = element.getContainingFile();
-            PsiElement container;
-            if (usageFile instanceof PsiJavaFile) {
-              container = ConflictsUtil.getContainer(element);
-            }
-            else {
-              container = usageFile;
-            }
-            final String scopeDescription = RefactoringUIUtil.getDescription(container, true);
-            final VirtualFile usageVFile = usageFile.getVirtualFile();
-            if (usageVFile != null) {
-              Module module = ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(usageVFile);
-              if (module != null) {
-                final String message;
-                final PsiElement referencedElement = moveRenameUsageInfo.getReferencedElement();
-                assert referencedElement != null : moveRenameUsageInfo;
-                if (module == targetModule && isInTestSources) {
-                  message = RefactoringBundle.message("0.referenced.in.1.will.not.be.accessible.from.production.of.module.2",
-                                                      RefactoringUIUtil.getDescription(referencedElement, true),
-                                                      scopeDescription,
-                                                      CommonRefactoringUtil.htmlEmphasize(module.getName()));
-                }
-                else {
-                  message = RefactoringBundle.message("0.referenced.in.1.will.not.be.accessible.from.module.2",
-                                                      RefactoringUIUtil.getDescription(referencedElement, true),
-                                                      scopeDescription,
-                                                      CommonRefactoringUtil.htmlEmphasize(module.getName()));
-                }
-                conflicts.putValue(referencedElement, CommonRefactoringUtil.capitalize(message));
+          else {
+            container = usageFile;
+          }
+          final String scopeDescription = RefactoringUIUtil.getDescription(container, true);
+          final VirtualFile usageVFile = usageFile.getVirtualFile();
+          if (usageVFile != null) {
+            Module module = ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(usageVFile);
+            if (module != null) {
+              final String message;
+              final PsiElement referencedElement;
+              if (usage instanceof MoveRenameUsageInfo) {
+                referencedElement = ((MoveRenameUsageInfo)usage).getReferencedElement();
               }
+              else {
+                referencedElement = usage.getElement();
+              }
+              assert referencedElement != null : usage;
+              if (module == targetModule && isInTestSources) {
+                message = RefactoringBundle.message("0.referenced.in.1.will.not.be.accessible.from.production.of.module.2",
+                                                    RefactoringUIUtil.getDescription(referencedElement, true),
+                                                    scopeDescription,
+                                                    CommonRefactoringUtil.htmlEmphasize(module.getName()));
+              }
+              else {
+                message = RefactoringBundle.message("0.referenced.in.1.will.not.be.accessible.from.module.2",
+                                                    RefactoringUIUtil.getDescription(referencedElement, true),
+                                                    scopeDescription,
+                                                    CommonRefactoringUtil.htmlEmphasize(module.getName()));
+              }
+              conflicts.putValue(referencedElement, CommonRefactoringUtil.capitalize(message));
             }
           }
         }
