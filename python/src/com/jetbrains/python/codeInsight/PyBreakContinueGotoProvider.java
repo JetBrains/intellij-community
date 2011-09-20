@@ -2,6 +2,7 @@ package com.jetbrains.python.codeInsight;
 
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandlerBase;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
@@ -18,7 +19,7 @@ import com.jetbrains.python.psi.*;
  */
 public class PyBreakContinueGotoProvider extends GotoDeclarationHandlerBase {
 
-  public PsiElement getGotoDeclarationTarget(PsiElement source) {
+  public PsiElement getGotoDeclarationTarget(PsiElement source, Editor editor) {
     if (source != null && source.getLanguage() instanceof PythonLanguage) {
       final PyLoopStatement loop = PsiTreeUtil.getParentOfType(source, PyLoopStatement.class, false, PyFunction.class, PyClass.class);
       if (loop != null) {
