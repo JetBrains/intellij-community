@@ -16,6 +16,7 @@
 package git4idea.history.wholeTree;
 
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Pair;
@@ -65,6 +66,7 @@ public class GitCommitsSequentialIndex implements GitCommitsSequentially {
   private final File myDir;
   // loaded roots to files mapping
   private SmallMapSerializer<String, String> myState;
+  private static final Logger LOG = Logger.getInstance("#git4idea.history.wholeTree.GitCommitsSequentialIndex");
 
   public GitCommitsSequentialIndex() {
     myLock = new Object();
@@ -77,7 +79,6 @@ public class GitCommitsSequentialIndex implements GitCommitsSequentially {
     myPacks = new SLRUMap<VirtualFile, List<Long>>(10,10);
   }
 
-  // TODO call!
   public void activate() {
     synchronized (myLock) {
       if (myState == null) {
@@ -86,9 +87,12 @@ public class GitCommitsSequentialIndex implements GitCommitsSequentially {
     }
   }
 
-  // TODO call!
   public void deactivate() {
     synchronized (myLock) {
+      if (myState == null) {
+        LOG.info("Deactivate without activate");
+        return;
+      }
       myState.force();
       myState = null;
     }
