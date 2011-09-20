@@ -22,6 +22,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.ExpirableRunnable;
@@ -66,6 +67,7 @@ public class FocusTrackback {
   private boolean mySheduledForRestore;
   private boolean myWillBeSheduledForRestore;
   private boolean myForcedRestore;
+  private boolean myTrack = false;
 
   public FocusTrackback(@NotNull Object requestor, Component parent, boolean mustBeShown) {
     this(requestor, parent == null || parent instanceof Window ? (Window)parent : SwingUtilities.getWindowAncestor(parent), mustBeShown);
@@ -187,6 +189,10 @@ public class FocusTrackback {
   }
 
   public void restoreFocus() {
+    myTrack =
+      getRequestor() instanceof DialogWrapper && "Use Interface Where Possible".equals(((DialogWrapper)getRequestor()).getTitle());
+
+
     final Application app = ApplicationManager.getApplication();
     if (app == null || wrongOS() || myConsumed || isSheduledForRestore()) return;
 
@@ -204,6 +210,12 @@ public class FocusTrackback {
       if (stack.get(i).isSheduledForRestore()) {
         dispose();
         return;
+      }
+    }
+
+    if (!myForcedRestore) {
+      if (index == 0 && stack.size() == 1 && !UIUtil.isMeaninglessFocusOwner(getFocusOwner())) {
+        myForcedRestore = true;
       }
     }
 
