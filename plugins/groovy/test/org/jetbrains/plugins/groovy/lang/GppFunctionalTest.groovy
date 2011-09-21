@@ -336,6 +336,17 @@ a.fol<caret>dLeft(2, { a, b -> a+b })
     return findReference().resolve()
   }
 
+  public void testResolveToSuperMethodClosureSyntax() {
+    configureScript """
+abstract class Super implements Runnable {
+  def method(int bar) {}
+}
+
+Super s = { <caret>method(2) } as Super
+"""
+    assert resolveReference() instanceof GrMethod
+  }
+
   public void testMethodTypeParameterInference() throws Exception {
     configureScript """
 @Typed package aaa

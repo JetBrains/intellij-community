@@ -82,6 +82,10 @@ public class ResolveUtil {
 
     while (run != null) {
       if (!run.processDeclarations(processor, ResolveState.initial(), lastParent, place)) return false;
+      if (run instanceof GrClosableBlock) {
+        PsiClass superClass = getLiteralSuperClass((GrClosableBlock)run);
+        if (superClass != null && !superClass.processDeclarations(processor, ResolveState.initial(), null, place)) return false;
+      }
       if (processNonCodeMethods) {
         if (run instanceof GrTypeDefinition) {
           if (!processNonCodeMembers(factory.createType(((GrTypeDefinition)run)), processor, place)) return false;
@@ -372,10 +376,9 @@ public class ResolveUtil {
       }
       if (place instanceof GrClosableBlock) {
         if (inCodeBlock && !GdkMethodUtil.categoryIteration((GrClosableBlock)place, processor)) return false;
-        if (gpp) {
-          PsiClass superClass = getGppSuperClass((GrClosableBlock)place);
-          if (superClass != null && !GdkMethodUtil.processCategoryMethods(place, processor, null, superClass)) return false;
-        }
+
+        PsiClass superClass = getLiteralSuperClass((GrClosableBlock)place);
+        if (superClass != null && !GdkMethodUtil.processCategoryMethods(place, processor, null, superClass)) return false;
       }
       if (place instanceof GrTypeDefinition) {
         GrTypeDefinition typeDefinition = (GrTypeDefinition)place;
@@ -387,7 +390,7 @@ public class ResolveUtil {
     return true;
   }
 
-  @Nullable private static PsiClass getGppSuperClass(GrClosableBlock closure) {
+  @Nullable private static PsiClass getLiteralSuperClass(GrClosableBlock closure) {
     PsiClassType type;
     if (closure.getParent() instanceof GrNamedArgument && closure.getParent().getParent() instanceof GrListOrMap) {
       type = LiteralConstructorReference.getTargetConversionType((GrListOrMap)closure.getParent().getParent());
