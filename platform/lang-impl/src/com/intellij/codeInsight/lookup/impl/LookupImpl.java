@@ -149,6 +149,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     myList.setCellRenderer(myCellRenderer);
 
     myList.setFocusable(false);
+    myList.setFixedCellWidth(50);
 
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myList.setBackground(LookupCellRenderer.BACKGROUND_COLOR);
