@@ -15,10 +15,8 @@
  */
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.lifecycle.ControlledAlarmFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Getter;
