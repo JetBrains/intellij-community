@@ -36,8 +36,7 @@ class GppFunctionalTest extends LightCodeInsightFixtureTestCase {
     super.setUp()
   }
 
-  //todo it doesn't work in groovypp 0.4.94
-  public void _testCastListToIterable() throws Exception {
+  public void testCastListToIterable() throws Exception {
     myFixture.addClass("class X extends java.util.ArrayList<Integer> {}")
     testAssignability """
 X ints = [239, 4.2d]
