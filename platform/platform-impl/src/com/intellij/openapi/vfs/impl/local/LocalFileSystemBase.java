@@ -119,14 +119,25 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     return path.replace(File.separatorChar, '/');
   }
 
-  @SuppressWarnings({"NonConstantStringShouldBeStringBuffer"})
-  protected static File convertToIOFile(VirtualFile file) {
+  @NotNull
+  protected static File convertToIOFile(@NotNull final VirtualFile file) {
     String path = file.getPath();
     if (path.endsWith(":") && path.length() == 2 && (SystemInfo.isWindows || SystemInfo.isOS2)) {
       path += "/"; // Make 'c:' resolve to a root directory for drive c:, not the current directory on that drive
     }
 
     return new File(path);
+  }
+
+  @NotNull
+  private static File convertToIOFileAndCheck(@NotNull final VirtualFile file) throws FileNotFoundException {
+    final File ioFile = convertToIOFile(file);
+
+    if (ioFile.exists() && !ioFile.isFile()) {
+      throw new FileNotFoundException("Not a file: " + ioFile);
+    }
+
+    return ioFile;
   }
 
   public boolean exists(@NotNull final VirtualFile fileOrDirectory) {
@@ -142,10 +153,17 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     return convertToIOFile(file).lastModified();
   }
 
+  @Override
+  public boolean isFile(@NotNull final VirtualFile file) {
+    return convertToIOFile(file).isFile();
+  }
+
+  @Override
   public boolean isDirectory(@NotNull final VirtualFile file) {
     return convertToIOFile(file).isDirectory();
   }
 
+  @Override
   public boolean isWritable(@NotNull final VirtualFile file) {
     return convertToIOFile(file).canWrite();
   }
@@ -407,23 +425,23 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @NotNull
   public InputStream getInputStream(@NotNull final VirtualFile file) throws FileNotFoundException {
-    return new BufferedInputStream(new FileInputStream(convertToIOFile(file)));
+    return new BufferedInputStream(new FileInputStream(convertToIOFileAndCheck(file)));
   }
 
   @NotNull
   public byte[] contentsToByteArray(@NotNull final VirtualFile file) throws IOException {
-      FileInputStream stream = new FileInputStream(convertToIOFile(file));
-      try {
-        return FileUtil.loadBytes(stream, (int)file.getLength());
-      }
-      finally {
-        stream.close();
-      }
+    final FileInputStream stream = new FileInputStream(convertToIOFileAndCheck(file));
+    try {
+      return FileUtil.loadBytes(stream, (int)file.getLength());
+    }
+    finally {
+      stream.close();
+    }
   }
 
   @NotNull
   public OutputStream getOutputStream(@NotNull final VirtualFile file, final Object requestor, final long modStamp, final long timeStamp) throws FileNotFoundException {
-    final File ioFile = convertToIOFile(file);
+    final File ioFile = convertToIOFileAndCheck(file);
     @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
     final OutputStream stream = shallUseSafeStream(requestor, ioFile) ? new SafeFileOutputStream(ioFile) : new FileOutputStream(ioFile);
     return new BufferedOutputStream(stream) {
@@ -477,14 +495,16 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     });
   }
 
-  public VirtualFile copyFile(final Object requestor, @NotNull final VirtualFile vFile, @NotNull final VirtualFile newParent, @NotNull final String copyName)
-    throws IOException {
+  public VirtualFile copyFile(final Object requestor,
+                              @NotNull final VirtualFile vFile,
+                              @NotNull final VirtualFile newParent,
+                              @NotNull final String copyName) throws IOException {
+    File physicalFile = convertToIOFileAndCheck(vFile);
+
     File physicalCopy = auxCopy(vFile, newParent, copyName);
 
     try {
       if (physicalCopy == null) {
-        File physicalFile = convertToIOFile(vFile);
-
         File newPhysicalParent = convertToIOFile(newParent);
         physicalCopy = new File(newPhysicalParent, copyName);
 
@@ -501,7 +521,8 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
           throw e;
         }
       }
-    } finally {
+    }
+    finally {
       auxNotifyCompleted(new ThrowableConsumer<LocalFileOperationsHandler, IOException>() {
         public void consume(LocalFileOperationsHandler handler) throws IOException {
           handler.copy(vFile, newParent, copyName);
