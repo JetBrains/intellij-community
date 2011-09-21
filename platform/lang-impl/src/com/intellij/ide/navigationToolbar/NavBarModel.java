@@ -384,7 +384,7 @@ public class NavBarModel {
               }
 
               @Override
-              public boolean execute(PsiFileSystemItem element) {
+              public boolean execute(@NotNull PsiFileSystemItem element) {
                 result.add(element);
                 return true;
               }

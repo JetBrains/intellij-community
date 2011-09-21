@@ -19,10 +19,10 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.scope.processor.FilterElementProcessor;
+import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.xml.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -56,7 +56,7 @@ public class XmlAttlistDeclImpl extends XmlElementImpl implements XmlAttlistDecl
   public XmlAttributeDecl[] getAttributeDecls() {
     final List<XmlAttributeDecl> result = new ArrayList<XmlAttributeDecl>();
     processElements(new FilterElementProcessor(new ClassFilter(XmlAttributeDecl.class), result) {
-      public boolean execute(final PsiElement element) {
+      public boolean execute(@NotNull final PsiElement element) {
         if (element instanceof XmlAttributeDecl) {
           if (element.getNextSibling() == null && element.getChildren().length == 1) {
             return true;

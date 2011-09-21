@@ -54,7 +54,7 @@ public final class NavigationUtil {
 
   public static JBPopup getPsiElementPopup(final PsiElement[] elements, final PsiElementListCellRenderer<PsiElement> renderer, final String title) {
     return getPsiElementPopup(elements, renderer, title, new PsiElementProcessor<PsiElement>() {
-      public boolean execute(final PsiElement element) {
+      public boolean execute(@NotNull final PsiElement element) {
         Navigatable descriptor = EditSourceUtil.getDescriptor(element);
         if (descriptor != null && descriptor.canNavigate()) {
           descriptor.navigate(true);

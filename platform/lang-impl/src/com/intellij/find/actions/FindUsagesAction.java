@@ -55,7 +55,7 @@ public class FindUsagesAction extends AnAction {
 
     final Editor editor = e.getData(PlatformDataKeys.EDITOR);
     chooseAmbiguousTargetAndPerform(project, editor, new PsiElementProcessor<PsiElement>() {
-      public boolean execute(final PsiElement element) {
+      public boolean execute(@NotNull final PsiElement element) {
         new PsiElement2UsageTargetAdapter(element).findUsages();
         return false;
       }

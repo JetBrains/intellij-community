@@ -125,7 +125,7 @@ class ChangedConstantsDependencyProcessor {
     processIdentifiers(psiSearchHelper, new PsiElementProcessor<PsiIdentifier>() {
       private boolean skipResolve = mySkipExpressionResolve;
       @Override
-      public boolean execute(PsiIdentifier identifier) {
+      public boolean execute(@NotNull PsiIdentifier identifier) {
         try {
           final PsiElement parent = identifier.getParent();
           if (parent instanceof PsiReferenceExpression) {

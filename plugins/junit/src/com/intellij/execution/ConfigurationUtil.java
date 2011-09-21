@@ -30,6 +30,7 @@ import com.intellij.psi.search.searches.AnnotatedMembersSearch;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
@@ -43,7 +44,7 @@ public class ConfigurationUtil {
     GlobalSearchScope projectScopeWithoutLibraries = GlobalSearchScope.projectScope(project);
     final GlobalSearchScope scope = projectScopeWithoutLibraries.intersectWith(testClassFilter.getScope());
     ClassInheritorsSearch.search(testClassFilter.getBase(), scope, true).forEach(new PsiElementProcessorAdapter<PsiClass>(new PsiElementProcessor<PsiClass>() {
-      public boolean execute(final PsiClass aClass) {
+      public boolean execute(@NotNull final PsiClass aClass) {
         if (testClassFilter.isAccepted(aClass)) found.add(aClass);
         return true;
       }
@@ -112,7 +113,7 @@ public class ConfigurationUtil {
             }
             ClassInheritorsSearch.search(containingClass, scope, true)
               .forEach(new PsiElementProcessorAdapter<PsiClass>(new PsiElementProcessor<PsiClass>() {
-                public boolean execute(final PsiClass aClass) {
+                public boolean execute(@NotNull final PsiClass aClass) {
                   if (testClassFilter.isAccepted(aClass)) {
                     found.add(aClass);
                     isJUnit4.set(Boolean.TRUE);

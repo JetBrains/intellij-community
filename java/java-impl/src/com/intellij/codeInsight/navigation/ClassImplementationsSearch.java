@@ -39,7 +39,7 @@ public class ClassImplementationsSearch implements QueryExecutor<PsiElement, Psi
         return psiClass.getUseScope();
       }
     }), true).forEach(new PsiElementProcessorAdapter<PsiClass>(new PsiElementProcessor<PsiClass>() {
-      public boolean execute(PsiClass element) {
+      public boolean execute(@NotNull PsiClass element) {
         return element.isInterface() || processor.process(element);
       }
     }));

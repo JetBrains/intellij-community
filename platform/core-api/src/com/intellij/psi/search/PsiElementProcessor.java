@@ -36,7 +36,7 @@ public interface PsiElementProcessor<T extends PsiElement> {
    * @param element currently processed element.
    * @return false to stop processing.
    */
-  boolean execute(T element);
+  boolean execute(@NotNull T element);
 
   class CollectElements<T extends PsiElement> implements PsiElementProcessor<T> {
     private final Collection<T> myCollection;
@@ -61,7 +61,7 @@ public interface PsiElementProcessor<T extends PsiElement> {
       return myCollection.toArray(array);
     }
 
-    public boolean execute(T element) {
+    public boolean execute(@NotNull T element) {
       myCollection.add(element);
       return true;
     }
@@ -79,7 +79,7 @@ public interface PsiElementProcessor<T extends PsiElement> {
       myFilter = filter;
     }
 
-    public boolean execute(T element) {
+    public boolean execute(@NotNull T element) {
       return !myFilter.isAccepted(element) || super.execute(element);
     }
   }
@@ -98,7 +98,7 @@ public interface PsiElementProcessor<T extends PsiElement> {
       myLimit = limit;
     }
 
-    public boolean execute(T element) {
+    public boolean execute(@NotNull T element) {
       if (myCount.get() == myLimit){
         myOverflow = true;
         return false;
@@ -128,7 +128,7 @@ public interface PsiElementProcessor<T extends PsiElement> {
       return false;
     }
 
-    public boolean execute(T element) {
+    public boolean execute(@NotNull T element) {
       return setFound(element);
     }
   }
@@ -140,7 +140,7 @@ public interface PsiElementProcessor<T extends PsiElement> {
       myFilter = filter;
     }
 
-    public boolean execute(T element) {
+    public boolean execute(@NotNull T element) {
       return !myFilter.isAccepted(element) || super.execute(element);
     }
   }

@@ -40,7 +40,10 @@ import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
 
 /**
  * @author Mike
@@ -111,7 +114,7 @@ public class XmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl imple
     final XmlNSDescriptor NSDescriptor = nsDescriptor != null? nsDescriptor:getNsDescriptorFrom(context);
     
     XmlUtil.processXmlElements(contentSpecElement, new PsiElementProcessor(){
-      public boolean execute(PsiElement child){
+      public boolean execute(@NotNull PsiElement child){
         if (child instanceof XmlToken) {
           final XmlToken token = (XmlToken)child;
 

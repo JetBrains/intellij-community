@@ -46,7 +46,10 @@ import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.psi.xml.*;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.CharTable;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
@@ -526,7 +529,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
   protected XmlAttribute[] calculateAttributes(final Map<String, String> attributesValueMap) {
     final List<XmlAttribute> result = new ArrayList<XmlAttribute>(10);
     processChildren(new PsiElementProcessor() {
-      public boolean execute(PsiElement element) {
+      public boolean execute(@NotNull PsiElement element) {
         if (element instanceof XmlAttribute) {
           XmlAttribute attribute = (XmlAttribute)element;
           result.add(attribute);
@@ -620,7 +623,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
 
   protected void fillSubTags(final List<XmlTag> result) {
     processElements(new PsiElementProcessor() {
-      public boolean execute(PsiElement element) {
+      public boolean execute(@NotNull PsiElement element) {
         if (element instanceof XmlTag) result.add((XmlTag)element);
         return true;
       }
@@ -966,7 +969,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
   private PsiElement[] getElements() {
     final List<PsiElement> elements = new ArrayList<PsiElement>();
     processElements(new PsiElementProcessor() {
-      public boolean execute(PsiElement psiElement) {
+      public boolean execute(@NotNull PsiElement psiElement) {
         elements.add(psiElement);
         return true;
       }

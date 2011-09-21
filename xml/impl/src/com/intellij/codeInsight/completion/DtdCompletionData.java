@@ -22,22 +22,26 @@
  */
 package com.intellij.codeInsight.completion;
 
-import com.intellij.psi.xml.*;
-import com.intellij.psi.filters.*;
-import com.intellij.psi.filters.position.XmlTokenTypeFilter;
-import com.intellij.psi.filters.position.LeftNeighbour;
-import com.intellij.psi.PsiElement;
+import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.filters.*;
+import com.intellij.psi.filters.position.LeftNeighbour;
+import com.intellij.psi.filters.position.XmlTokenTypeFilter;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.MutableLookupElement;
-import com.intellij.codeInsight.TailType;
-import com.intellij.xml.util.XmlUtil;
+import com.intellij.psi.xml.XmlEntityDecl;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlToken;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.ArrayUtil;
+import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -109,7 +113,7 @@ public class DtdCompletionData extends CompletionData {
       final List<String> results = new LinkedList<String>();
 
       final PsiElementProcessor processor = new PsiElementProcessor() {
-        public boolean execute(final PsiElement element) {
+        public boolean execute(@NotNull final PsiElement element) {
           if (element instanceof XmlEntityDecl) {
             final XmlEntityDecl xmlEntityDecl = (XmlEntityDecl)element;
             if (xmlEntityDecl.isInternalReference()) {

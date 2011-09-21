@@ -197,7 +197,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
   private static XmlTag[] collectSubTags(final XmlElement node) {
     final List<XmlTag> result = new ArrayList<XmlTag>();
     node.processElements(new PsiElementProcessor() {
-      public boolean execute(final PsiElement element) {
+      public boolean execute(@NotNull final PsiElement element) {
         if (element instanceof XmlTag) {
           result.add((XmlTag)element);
         }

@@ -181,7 +181,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator<XmlDocumen
       final List<XmlElementDecl> decls = new ArrayList<XmlElementDecl>(3);
 
       XmlUtil.processXmlElements(document, new PsiElementProcessor() {
-        public boolean execute(final PsiElement element) {
+        public boolean execute(@NotNull final PsiElement element) {
           if (element instanceof XmlElementDecl) decls.add((XmlElementDecl)element);
           return true;
         }

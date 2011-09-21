@@ -205,7 +205,7 @@ public class ConvertToBasicLatinAction extends PsiElementBaseIntentionAction {
       ourEntities = new HashMap<Character, String>();
       final Pattern pattern = Pattern.compile("&#(\\d+);");
       XmlUtil.processXmlElements(file, new PsiElementProcessor() {
-        public boolean execute(PsiElement element) {
+        public boolean execute(@NotNull PsiElement element) {
           if (element instanceof XmlEntityDecl) {
             final XmlEntityDecl entity = (XmlEntityDecl)element;
             final Matcher m = pattern.matcher(entity.getValueElement().getValue());

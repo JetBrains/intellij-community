@@ -38,6 +38,7 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -85,7 +86,7 @@ public abstract class LocalToFieldHandler {
       final boolean isStatic = tempIsStatic;
       NavigationUtil.getPsiElementPopup(classes.toArray(new PsiClass[classes.size()]), new PsiClassListCellRenderer(), "Choose class to introduce " + (myIsConstant ? "constant" : "field"), new PsiElementProcessor<PsiClass>() {
         @Override
-        public boolean execute(PsiClass aClass) {
+        public boolean execute(@NotNull PsiClass aClass) {
           convertLocalToField(local, aClass, editor, isStatic);
           return false;
         }
