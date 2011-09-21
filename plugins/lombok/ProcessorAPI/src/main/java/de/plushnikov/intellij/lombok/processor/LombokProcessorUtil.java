@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 public class LombokProcessorUtil {
 
   @Nullable
-  public static String getMethodVisibity(@NotNull PsiAnnotation psiAnnotation) {
+  public static String getMethodVisibility(@NotNull PsiAnnotation psiAnnotation) {
     return convertAcessLevelToJavaString(findAnnotationPropertyValue(psiAnnotation, "value", true));
   }
 

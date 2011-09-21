@@ -1,23 +1,28 @@
 package de.plushnikov.intellij.lombok.processor.clazz;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.StringBuilderSpinAllocator;
 import de.plushnikov.intellij.lombok.UserMapKeys;
+import de.plushnikov.intellij.lombok.problem.ProblemBuilder;
+import de.plushnikov.intellij.lombok.util.PsiClassUtil;
+import de.plushnikov.intellij.lombok.util.PsiFieldUtil;
+import de.plushnikov.intellij.lombok.util.PsiMethodUtil;
 import lombok.EqualsAndHashCode;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -34,33 +39,66 @@ public class EqualsAndHashCodeProcessor extends AbstractLombokClassProcessor {
     super(CLASS_NAME, PsiMethod.class);
   }
 
-  public <Psi extends PsiElement> void process(@NotNull PsiClass psiClass, @NotNull PsiMethod[] classMethods, @NotNull PsiAnnotation psiAnnotation, @NotNull List<Psi> target) {
-    if (!hasMethodByName(classMethods, EQUALS_METHOD_NAME, HASH_CODE_METHOD_NAME)) {
-      boolean shouldGenerateCanEqual = shouldGenerateCanEqual(psiClass);
+  @Override
+  protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
+    return validateAnnotationOnRigthType(psiClass, builder) &&
+        validateExistingMethods(psiClass, builder);
+    // TODO validation
+    //validate exclude : This field does not exist, or would have been excluded anyway
+    //validate of : This field does not exist
+    //validate : exclude and of are mutually exclusive; the 'exclude' parameter will be ignored.
+    //validate callSuper: Generating equals/hashCode with a supercall to java.lang.Object is pointless
+    //validate : Generating equals/hashCode implementation but without a call to superclass, even though this class does not extend java.lang.Object. If this is intentional, add '@EqualsAndHashCode(callSuper=false)' to your type.
+  }
 
-      if (!shouldGenerateCanEqual || !hasMethodByName(classMethods, CAN_EQUAL_METHOD_NAME)) {
-        Project project = psiClass.getProject();
-        PsiManager manager = psiClass.getContainingFile().getManager();
-        PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
-
-        PsiMethod equalsMethod = createEqualsMethod(psiClass, elementFactory);
-        target.add((Psi) prepareMethod(manager, equalsMethod, psiClass, psiAnnotation));
-
-        PsiMethod hashcodeMethod = createHashCodeMethod(psiClass, elementFactory);
-        target.add((Psi) prepareMethod(manager, hashcodeMethod, psiClass, psiAnnotation));
-
-        if (shouldGenerateCanEqual) {
-          PsiMethod canEqualsMethod = createCanEqualMethod(psiClass, elementFactory);
-          target.add((Psi) prepareMethod(manager, canEqualsMethod, psiClass, psiAnnotation));
-        }
-
-        Collection<PsiField> equalsAndHashCodeFields = filterFieldsByModifiers(psiClass.getFields(), PsiModifier.STATIC, PsiModifier.TRANSIENT);
-        UserMapKeys.addReadUsageFor(equalsAndHashCodeFields);
-      }
-    } else {
-      //TODO create warning in code
-      //Not generating methodName(): A method with that name already exists
+  protected boolean validateAnnotationOnRigthType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
+    boolean result = true;
+    if (psiClass.isAnnotationType() || psiClass.isInterface() || psiClass.isEnum()) {
+      builder.addError("@EqualsAndHashCode is only supported on a class type");
+      result = false;
     }
+    return result;
+  }
+
+  protected boolean validateExistingMethods(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
+    boolean result = true;
+
+    if (areMethodsAlreadyExists(psiClass)) {
+      final boolean needsCanEqual = shouldGenerateCanEqual(psiClass);
+      builder.addProblem(String.format("Not generating equals%s: A method with one of those names already exists. (Either all or none of these methods will be generated).",
+          needsCanEqual ? ", hashCode and canEquals" : " and hashCode"));
+      return false;
+    }
+
+    return result;
+  }
+
+  private boolean areMethodsAlreadyExists(@NotNull PsiClass psiClass) {
+    final PsiMethod[] classMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
+    return PsiMethodUtil.hasMethodByName(classMethods, EQUALS_METHOD_NAME, HASH_CODE_METHOD_NAME, CAN_EQUAL_METHOD_NAME);
+  }
+
+  protected <Psi extends PsiElement> void processIntern(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<Psi> target) {
+    target.addAll((Collection<? extends Psi>) createEqualAndHashCode(psiClass, psiAnnotation));
+  }
+
+  protected Collection<PsiMethod> createEqualAndHashCode(PsiClass psiClass, PsiElement psiNavTargetElement) {
+    if (areMethodsAlreadyExists(psiClass)) {
+      return Collections.emptyList();
+    }
+    Collection<PsiMethod> result = new ArrayList<PsiMethod>(3);
+    result.add(createEqualsMethod(psiClass, psiNavTargetElement));
+    result.add(createHashCodeMethod(psiClass, psiNavTargetElement));
+
+    final boolean shouldGenerateCanEqual = shouldGenerateCanEqual(psiClass);
+    if (shouldGenerateCanEqual) {
+      result.add(createCanEqualMethod(psiClass, psiNavTargetElement));
+    }
+
+    Collection<PsiField> equalsAndHashCodeFields = PsiFieldUtil.filterFieldsByModifiers(psiClass.getFields(), PsiModifier.STATIC, PsiModifier.TRANSIENT);
+    UserMapKeys.addReadUsageFor(equalsAndHashCodeFields);
+
+    return result;
   }
 
   private boolean shouldGenerateCanEqual(@NotNull PsiClass psiClass) {
@@ -80,23 +118,43 @@ public class EqualsAndHashCodeProcessor extends AbstractLombokClassProcessor {
   }
 
   @NotNull
-  private PsiMethod createEqualsMethod(@NotNull PsiClass psiClass, @NotNull PsiElementFactory elementFactory) {
-    return elementFactory.createMethodFromText(
-        "@java.lang.Override public boolean " + EQUALS_METHOD_NAME + "(final java.lang.Object other) { return super.equals(other); }",
-        psiClass);
+  private PsiMethod createEqualsMethod(@NotNull PsiClass psiClass, @NotNull PsiElement psiNavTargetElement) {
+    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
+    try {
+      builder.append("@java.lang.Override ");
+      builder.append("public boolean ").append(EQUALS_METHOD_NAME).append("(final java.lang.Object other)");
+      builder.append("{ return super.equals(other); }");
+
+      return PsiMethodUtil.createMethod(psiClass, builder.toString(), psiNavTargetElement);
+    } finally {
+      StringBuilderSpinAllocator.dispose(builder);
+    }
   }
 
   @NotNull
-  private PsiMethod createHashCodeMethod(@NotNull PsiClass psiClass, @NotNull PsiElementFactory elementFactory) {
-    return elementFactory.createMethodFromText(
-        "@java.lang.Override public int " + HASH_CODE_METHOD_NAME + "() { return super.hashCode(); }",
-        psiClass);
+  private PsiMethod createHashCodeMethod(@NotNull PsiClass psiClass, @NotNull PsiElement psiNavTargetElement) {
+    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
+    try {
+      builder.append("@java.lang.Override ");
+      builder.append("public int ").append(HASH_CODE_METHOD_NAME).append("()");
+      builder.append("{ return super.hashCode(); }");
+
+      return PsiMethodUtil.createMethod(psiClass, builder.toString(), psiNavTargetElement);
+    } finally {
+      StringBuilderSpinAllocator.dispose(builder);
+    }
   }
 
   @NotNull
-  private PsiMethod createCanEqualMethod(@NotNull PsiClass psiClass, @NotNull PsiElementFactory elementFactory) {
-    return elementFactory.createMethodFromText(
-        "public boolean " + CAN_EQUAL_METHOD_NAME + "(final java.lang.Object other) { return other instanceof " + psiClass.getName() + "; }",
-        psiClass);
+  private PsiMethod createCanEqualMethod(@NotNull PsiClass psiClass, @NotNull PsiElement psiNavTargetElement) {
+    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
+    try {
+      builder.append("public boolean ").append(CAN_EQUAL_METHOD_NAME).append("(final java.lang.Object other)");
+      builder.append("{ return other instanceof ").append(psiClass.getName()).append("; }");
+
+      return PsiMethodUtil.createMethod(psiClass, builder.toString(), psiNavTargetElement);
+    } finally {
+      StringBuilderSpinAllocator.dispose(builder);
+    }
   }
 }

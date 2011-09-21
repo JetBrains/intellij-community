@@ -25,6 +25,9 @@
     <!-- Add your extensions here -->
     <lang.psiAugmentProvider implementation="de.plushnikov.intellij.plugin.provider.LombokAugmentProvider"/>
     <implicitUsageProvider implementation="de.plushnikov.intellij.plugin.provider.LombokImplicitUsageProvider"/>
+    <inspectionToolProvider implementation="de.plushnikov.intellij.plugin.provider.LombokInspectionProvider"/>
+
+    <completion.contributor implementationClass=""/>
     <renameHandler implementation="de.plushnikov.intellij.plugin.handler.LombokElementRenameHandler" order="first"/>
     <!--<refactoring.changeSignatureUsageProcessor implementation=""/>-->
     <!--<refactoring.safeDeleteProcessor      -->

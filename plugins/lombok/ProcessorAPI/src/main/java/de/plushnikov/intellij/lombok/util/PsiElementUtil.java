@@ -1,6 +1,8 @@
-package de.plushnikov.intellij.lombok;
+package de.plushnikov.intellij.lombok.util;
 
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiParameterList;
@@ -12,9 +14,9 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Copy from com.siyeh.ig.psiutils
- * Classes: MethodUtils and EquivalenceChecker
+ * Classes: PsiElementUtil and EquivalenceChecker
  */
-public class MethodUtils {
+public class PsiElementUtil {
   /**
    * @param method              the method to compare to.
    * @param containingClassName the name of the class which contiains the
@@ -130,5 +132,21 @@ public class MethodUtils {
     final String type1Text = type1.getCanonicalText();
     final String type2Text = type2.getCanonicalText();
     return type1Text.equals(type2Text);
+  }
+
+  @Nullable
+  public static <T extends PsiElement> T getParentOfType(@Nullable final PsiElement psiElement, @NotNull final Class<? extends T>... clazzes) {
+    PsiElement current = psiElement;
+    // break on null or file as top element
+    while (current != null && !(current instanceof PsiFile)) {
+      for (Class<? extends T> clazz : clazzes) {
+        if (clazz.isInstance(current)) {
+          //noinspection unchecked
+          return (T) current;
+        }
+      }
+      current = current.getParent();
+    }
+    return null;
   }
 }

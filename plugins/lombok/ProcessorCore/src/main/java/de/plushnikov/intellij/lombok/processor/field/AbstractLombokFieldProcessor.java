@@ -1,16 +1,20 @@
 package de.plushnikov.intellij.lombok.processor.field;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiModifierList;
-import com.intellij.util.StringBuilderSpinAllocator;
+import de.plushnikov.intellij.lombok.problem.LombokProblem;
+import de.plushnikov.intellij.lombok.problem.ProblemBuilder;
+import de.plushnikov.intellij.lombok.problem.ProblemEmptyBuilder;
+import de.plushnikov.intellij.lombok.problem.ProblemNewBuilder;
 import de.plushnikov.intellij.lombok.processor.AbstractLombokProcessor;
-import lombok.handlers.TransformationsUtil;
+import de.plushnikov.intellij.lombok.util.PsiElementUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Base lombok processor class for field annotations
@@ -23,45 +27,28 @@ public abstract class AbstractLombokFieldProcessor extends AbstractLombokProcess
     super(supportedAnnotation, supportedClass);
   }
 
-  @NotNull
-  protected Collection<String> collectAnnotationsToCopy(@NotNull PsiField psiField) {
-    Collection<String> annotationsToCopy = new ArrayList<String>();
-    PsiModifierList modifierList = psiField.getModifierList();
-    if (null != modifierList) {
-      for (PsiAnnotation psiAnnotation : modifierList.getAnnotations()) {
-        final String qualifiedName = StringUtil.notNullize(psiAnnotation.getQualifiedName());
-        final String annotationName = extractAnnotationName(qualifiedName);
-        if (TransformationsUtil.NON_NULL_PATTERN.matcher(annotationName).matches()) {
-          annotationsToCopy.add(qualifiedName);
-        }
-      }
+  @Override
+  public Collection<LombokProblem> verifyAnnotation(PsiAnnotation psiAnnotation) {
+    Collection<LombokProblem> result = Collections.emptyList();
+
+    PsiField psiField = PsiElementUtil.getParentOfType(psiAnnotation, PsiField.class);
+    if (null != psiField) {
+      result = new ArrayList<LombokProblem>(1);
+      validate(psiAnnotation, psiField, new ProblemNewBuilder(result));
     }
-    return annotationsToCopy;
+
+    return result;
   }
 
-  @NotNull
-  private String extractAnnotationName(@NotNull String qualifiedName) {
-    final String annotationName;
-    int indexOfLastPoint = qualifiedName.lastIndexOf('.');
-    if (indexOfLastPoint != -1) {
-      annotationName = qualifiedName.substring(indexOfLastPoint + 1);
-    } else {
-      annotationName = qualifiedName;
+  protected abstract boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiField psiField, @NotNull ProblemBuilder builder);
+
+  public final <Psi extends PsiElement> void process(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull List<Psi> target) {
+    if (validate(psiAnnotation, psiField, new ProblemEmptyBuilder())) {
+      processIntern(psiField, psiAnnotation, target);
     }
-    return annotationName;
   }
 
-  @NotNull
-  protected String buildAnnotationsString(@NotNull Collection<String> annotationsToCopy) {
-    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-    try {
-      for (String annotationName : annotationsToCopy) {
-        builder.append('@').append(annotationName).append(' ');
-      }
-      return builder.toString();
-    } finally {
-      StringBuilderSpinAllocator.dispose(builder);
-    }
-  }
+  protected abstract <Psi extends PsiElement> void processIntern(PsiField psiField, PsiAnnotation psiAnnotation, List<Psi> target);
+
 
 }

@@ -9,7 +9,7 @@ public class LogProcessor extends AbstractLogProcessor {
   private static final String CLASS_NAME = Log.class.getName();
 
   private static final String LOGGER_TYPE = "java.util.logging.Logger";
-  private static final String LOGGER_INITIALIZER = "java.util.logging.Logger.getLogger(LogExample.class.getName());";
+  private static final String LOGGER_INITIALIZER = "java.util.logging.Logger.getLogger(%s.class.getName());";
 
   public LogProcessor() {
     super(CLASS_NAME, LOGGER_TYPE, LOGGER_INITIALIZER);
