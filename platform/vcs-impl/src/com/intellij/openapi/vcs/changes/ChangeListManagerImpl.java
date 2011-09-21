@@ -16,7 +16,6 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.ide.highlighter.WorkspaceFileType;
-import com.intellij.lifecycle.AtomicSectionsAware;
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -1271,17 +1270,13 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   private static class MyChangesDeltaForwarder implements PlusMinus<Pair<String, AbstractVcs>> {
-    //private SlowlyClosingAlarm myAlarm;
     private RemoteRevisionsCache myRevisionsCache;
     private final ProjectLevelVcsManager myVcsManager;
-    private ExecutorWrapper myExecutorWrapper;
     private final ExecutorService myService;
 
 
     public MyChangesDeltaForwarder(final Project project, final ExecutorService service) {
       myService = service;
-      //myAlarm = ControlledAlarmFactory.createOnSharedThread(project, UpdateRequestsQueue.LOCAL_CHANGES_UPDATE, service);
-      myExecutorWrapper = new ExecutorWrapper(project, UpdateRequestsQueue.LOCAL_CHANGES_UPDATE);
       myRevisionsCache = RemoteRevisionsCache.getInstance(project);
       myVcsManager = ProjectLevelVcsManager.getInstance(project);
     }
@@ -1291,11 +1286,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         public void run() {
           final Pair<String, AbstractVcs> correctedPair = getCorrectedPair(stringAbstractVcsPair);
           if (correctedPair == null) return;
-          myExecutorWrapper.submit(new Consumer<AtomicSectionsAware>() {
-            public void consume(AtomicSectionsAware atomicSectionsAware) {
-              myRevisionsCache.plus(correctedPair);
-            }
-          });
+          myRevisionsCache.plus(correctedPair);
         }
       });
     }
@@ -1305,12 +1296,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         public void run() {
           final Pair<String, AbstractVcs> correctedPair = getCorrectedPair(stringAbstractVcsPair);
           if (correctedPair == null) return;
-          myExecutorWrapper.submit(new Consumer<AtomicSectionsAware>() {
-            public void consume(AtomicSectionsAware atomicSectionsAware) {
-              myRevisionsCache.minus(correctedPair);
-            }
-          });
-          //myRevisionsCache.minus(correctedPair);
+          myRevisionsCache.minus(correctedPair);
         }
       });
     }
