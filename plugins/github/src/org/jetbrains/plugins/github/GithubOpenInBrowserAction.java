@@ -24,7 +24,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitBranch;
@@ -54,8 +53,7 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
     try {
       final Project project = e.getData(PlatformDataKeys.PROJECT);
       final VirtualFile virtualFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
-      if (StringUtil.isEmptyOrSpaces(GithubSettings.getInstance().getLogin()) ||
-          project == null || project.isDefault() || virtualFile == null) {
+      if (project == null || project.isDefault() || virtualFile == null) {
         e.getPresentation().setVisible(false);
         e.getPresentation().setEnabled(false);
         return;
