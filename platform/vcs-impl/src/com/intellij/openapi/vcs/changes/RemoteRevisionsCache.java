@@ -23,6 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ui.RemoteStatusChangeNodeDecorator;
@@ -78,15 +79,14 @@ public class RemoteRevisionsCache implements PlusMinus<Pair<String, AbstractVcs>
       }
     });
     final VcsConfiguration vcsConfiguration = VcsConfiguration.getInstance(myProject);
-    myControlledCycle = new ControlledCycle(project, new ControlledCycle.MyCallback() {
-      public boolean call(final AtomicSectionsAware atomicSectionsAware) {
-        atomicSectionsAware.checkShouldExit();
+    myControlledCycle = new ControlledCycle(project, new Getter<Boolean>() {
+      @Override
+      public Boolean get() {
         final boolean shouldBeDone = vcsConfiguration.isChangedOnServerEnabled() && myVcsManager.hasActiveVcss();
 
         if (shouldBeDone) {
-          boolean somethingChanged = myRemoteRevisionsNumbersCache.updateStep(atomicSectionsAware);
-          atomicSectionsAware.checkShouldExit();
-          somethingChanged |= myRemoteRevisionsStateCache.updateStep(atomicSectionsAware);
+          boolean somethingChanged = myRemoteRevisionsNumbersCache.updateStep();
+          somethingChanged |= myRemoteRevisionsStateCache.updateStep();
           if (somethingChanged) {
             myProject.getMessageBus().syncPublisher(REMOTE_VERSION_CHANGED).run();
           }

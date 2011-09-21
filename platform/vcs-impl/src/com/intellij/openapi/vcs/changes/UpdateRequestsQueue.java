@@ -46,7 +46,7 @@ public class UpdateRequestsQueue {
   private final static String ourHeavyLatchOptimization = "vcs.local.changes.track.heavy.latch";
   private final Project myProject;
   private final ScheduledExecutorService myExecutor;
-  private final LocalChangesUpdater myDelegate;
+  private final Runnable myDelegate;
   private final Object myLock;
   private volatile boolean myStarted;
   private volatile boolean myStopped;
@@ -57,18 +57,14 @@ public class UpdateRequestsQueue {
   private final ProjectLevelVcsManager myPlVcsManager;
   //private final ScheduledSlowlyClosingAlarm mySharedExecutor;
   private final StartupManager myStartupManager;
-  private final ExecutorWrapper myExecutorWrapper;
   @NonNls public static final String LOCAL_CHANGES_UPDATE = "Local changes update";
   private final boolean myTrackHeavyLatch;
   private Getter<Boolean> myIsStoppedGetter;
 
-  public UpdateRequestsQueue(final Project project, final ScheduledExecutorService executor, final LocalChangesUpdater delegate) {
+  public UpdateRequestsQueue(final Project project, final ScheduledExecutorService executor, final Runnable delegate) {
     myProject = project;
     myExecutor = executor;
     myTrackHeavyLatch = Boolean.parseBoolean(System.getProperty(ourHeavyLatchOptimization));
-
-    //mySharedExecutor = ControlledAlarmFactory.createScheduledOnSharedThread(project, LOCAL_CHANGES_UPDATE, executor);
-    myExecutorWrapper = new ExecutorWrapper(myProject, LOCAL_CHANGES_UPDATE);
 
     myDelegate = delegate;
     myPlVcsManager = ProjectLevelVcsManager.getInstance(myProject);
@@ -218,11 +214,7 @@ public class UpdateRequestsQueue {
         }
 
         LOG.debug("MyRunnable: INVOKE, project: " + myProject.getName() + ", runnable: " + hashCode());
-        myExecutorWrapper.submit(new Consumer<AtomicSectionsAware>() {
-          public void consume(AtomicSectionsAware atomicSectionsAware) {
-            myDelegate.execute(atomicSectionsAware);
-          }
-        });
+        myDelegate.run();
         LOG.debug("MyRunnable: invokeD, project: " + myProject.getName() + ", runnable: " + hashCode());
       } finally {
         synchronized (myLock) {

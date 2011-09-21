@@ -15,9 +15,7 @@
  */
 package org.jetbrains.idea.svn;
 
-import com.intellij.lifecycle.AtomicSectionsAware;
-import com.intellij.lifecycle.ControlledAlarmFactory;
-import com.intellij.lifecycle.SlowlyClosingAlarm;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -31,15 +29,12 @@ public class SvnCopiesRefreshManager {
 
   public SvnCopiesRefreshManager(final Project project, final SvnFileUrlMappingImpl mapping) {
     myCopiesRefresh = new MyVeryRefresh();
-    //myCopiesRefreshProxy = new DefendedCopiesRefreshProxy(veryRefresh);
 
-    final SlowlyClosingAlarm alarm = ControlledAlarmFactory.createOnOwnThread(project, "Subversion working copies refresher");
-    final Runnable refresher = new MyRefresher(project, mapping, alarm);
-    //final Runnable proxiedRefresher = myCopiesRefreshProxy.proxyRefresher(refresher);
+    final Runnable refresher = new MyRefresher(mapping);
 
     final RequestsMerger requestsMerger = new RequestsMerger(refresher, new Consumer<Runnable>() {
       public void consume(final Runnable runnable) {
-        alarm.addRequest(runnable);
+        ApplicationManager.getApplication().executeOnPooledThread(runnable);
       }
     });
     ((MyVeryRefresh) myCopiesRefresh).setRequestMerger(requestsMerger);
@@ -97,19 +92,15 @@ public class SvnCopiesRefreshManager {
   }
 
   private static class MyRefresher implements Runnable {
-    private final Project myProject;
     private final SvnFileUrlMappingImpl myMapping;
-    private final AtomicSectionsAware myAtomicSectionsAware;
 
-    private MyRefresher(final Project project, final SvnFileUrlMappingImpl mapping, final AtomicSectionsAware atomicSectionsAware) {
-      myProject = project;
+    private MyRefresher(final SvnFileUrlMappingImpl mapping) {
       myMapping = mapping;
-      myAtomicSectionsAware = atomicSectionsAware;
     }
 
     public void run() {
       try {
-        myMapping.realRefresh(myAtomicSectionsAware);
+        myMapping.realRefresh();
       }
       catch (ProcessCanceledException e) {
         //

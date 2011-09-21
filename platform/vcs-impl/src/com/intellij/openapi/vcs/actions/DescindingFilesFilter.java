@@ -73,7 +73,7 @@ public class DescindingFilesFilter {
     return result.toArray(new FilePath[result.size()]);
   }
 
-  private static class FilePathComparator implements Comparator<FilePath> {
+  public static class FilePathComparator implements Comparator<FilePath> {
     private final static FilePathComparator ourInstance = new FilePathComparator();
 
     public static FilePathComparator getInstance() {

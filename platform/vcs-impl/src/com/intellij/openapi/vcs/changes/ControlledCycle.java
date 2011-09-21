@@ -15,24 +15,21 @@
  */
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.lifecycle.AtomicSectionsAware;
-import com.intellij.lifecycle.ControlledAlarmFactory;
-import com.intellij.lifecycle.SlowlyClosingAlarm;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.SomeQueue;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Getter;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @SomeQueue
-public class ControlledCycle implements Runnable {
+public class ControlledCycle {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ControlledCycle");
 
   private final Alarm mySimpleAlarm;
-  private final SlowlyClosingAlarm myControlledAlarm;
   // this interval is also to check for not initialized paths, so it is rather small
   private static final int ourRefreshInterval = 10000;
   private int myRefreshInterval;
@@ -40,19 +37,15 @@ public class ControlledCycle implements Runnable {
 
   private final AtomicBoolean myActive;
 
-  public ControlledCycle(final Project project, final MyCallback callback, @NotNull final String name) {
-    this(project, callback, name, -1);
-  }
-
-  public ControlledCycle(final Project project, final MyCallback callback, @NotNull final String name, final int refreshInterval) {
+  public ControlledCycle(final Project project, final Getter<Boolean> callback, @NotNull final String name, final int refreshInterval) {
     myRefreshInterval = (refreshInterval <= 0) ? ourRefreshInterval : refreshInterval;
     myActive = new AtomicBoolean(false);
     myRunnable = new Runnable() {
       boolean shouldBeContinued = true;
       public void run() {
-        if (! myActive.get()) return;
+        if (! myActive.get() || project.isDisposed()) return;
         try {
-          shouldBeContinued = callback.call(myControlledAlarm);
+          shouldBeContinued = callback.get();
         } catch (ProcessCanceledException e) {
           return;
         } catch (RuntimeException e) {
@@ -61,12 +54,11 @@ public class ControlledCycle implements Runnable {
         if (! shouldBeContinued) {
           myActive.set(false);
         } else {
-          mySimpleAlarm.addRequest(ControlledCycle.this, myRefreshInterval);
+          mySimpleAlarm.addRequest(myRunnable, myRefreshInterval);
         }
       }
     };
     mySimpleAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, project);
-    myControlledAlarm = ControlledAlarmFactory.createOnApplicationPooledThread(project, name);
   }
 
   public boolean startIfNotStarted(final int refreshInterval) {
@@ -80,25 +72,12 @@ public class ControlledCycle implements Runnable {
 
     final boolean wasSet = myActive.compareAndSet(false, true);
     if (wasSet || refreshIntervalChanged) {
-      mySimpleAlarm.addRequest(this, myRefreshInterval);
+      mySimpleAlarm.addRequest(myRunnable, myRefreshInterval);
     }
     return wasSet;
   }
 
   public void stop() {
     myActive.set(false);
-  }
-
-  public void run() {
-    try {
-      myControlledAlarm.checkShouldExit();
-      myControlledAlarm.addRequest(myRunnable);
-    } catch (ProcessCanceledException e) {
-      //
-    }
-  }
-
-  public interface MyCallback {
-    boolean call(final AtomicSectionsAware atomicSectionsAware);
   }
 }

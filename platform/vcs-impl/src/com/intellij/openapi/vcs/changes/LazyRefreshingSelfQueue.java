@@ -80,7 +80,7 @@ public class LazyRefreshingSelfQueue<T> {
   }
 
   // called by outside timer or something
-  public void updateStep(@NotNull final ProgressIndicator pi) {
+  public void updateStep() {
     final List<T> dirty = new LinkedList<T>();
 
     final long startTime = System.currentTimeMillis() - myUpdateInterval.get();
@@ -96,13 +96,11 @@ public class LazyRefreshingSelfQueue<T> {
     }
 
     // do not ask under lock
-    pi.checkCanceled();
     final Boolean shouldUpdateOld = onlyAbsolute ? false : myShouldUpdateOldChecker.compute();
 
     synchronized (myLock) {
       // get absolute
       while (! myQueue.isEmpty()) {
-        pi.checkCanceled();
         final Pair<Long, T> pair = myQueue.get(0);
         if (pair.getFirst() == null) {
           dirty.add(myQueue.removeFirst().getSecond());
@@ -127,7 +125,6 @@ public class LazyRefreshingSelfQueue<T> {
 
     LOG.debug("found something to update: " + (! dirty.isEmpty()));
     for (T t : dirty) {
-      pi.checkCanceled();
       myUpdater.consume(t);
       synchronized (myLock) {
         if (myInProgress.remove(t)) {

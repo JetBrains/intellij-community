@@ -100,7 +100,7 @@ class NavBarItem extends SimpleColoredComponent implements Disposable {
     final NavBarModel model = myPanel.getModel();
     final boolean selected = isSelected();
 
-    setPaintFocusBorder(!focused && selected && !isPopupElement);
+    setPaintFocusBorder(selected && !isPopupElement && myPanel.isNodePopupActive());
     setFocusBorderAroundIcon(false);
 
     setBackground(selected && focused

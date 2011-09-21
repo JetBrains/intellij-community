@@ -226,38 +226,21 @@ public class GithubUtil {
   }
 
   public static boolean checkCredentials(final Project project) {
-    return checkCredentials(project, null, null, null);
+    final GithubSettings settings = GithubSettings.getInstance();
+    return checkCredentials(project, settings.getHost(), settings.getLogin(), settings.getPassword());
   }
-  public static boolean checkCredentials(final Project project, @Nullable final String url, @Nullable final String login, @Nullable final String password) {
-    if (login == null && password == null && StringUtil.isEmptyOrSpaces(GithubSettings.getInstance().getLogin())){
-      return false;
-    }
-    try {
-      if (accessToGithubWithModalProgress(project, new Computable<Boolean>() {
-        @Override
-        public Boolean compute() {
-          ProgressManager.getInstance().getProgressIndicator().setText("Trying to login to GitHub");
-          if (url != null && login != null && password != null){
-            return testConnection(url, login, password);
-          }
-          return false;
-        }
-      })) {
-        return true;
-      }
 
-      return accessToGithubWithModalProgress(project, new Computable<Boolean>() {
-        @Override
-        public Boolean compute() {
-          ProgressManager.getInstance().getProgressIndicator().setText("Trying to login to GitHub");
-          final GithubSettings settings = GithubSettings.getInstance();
-          return testConnection(settings.getHost(), settings.getLogin(), settings.getPassword());
-        }
-      });
-    }
-    catch (CancelledException e) {
+  public static boolean checkCredentials(final Project project, final String url, final String login, final String password) {
+    if (StringUtil.isEmptyOrSpaces(url) || StringUtil.isEmptyOrSpaces(login) || StringUtil.isEmptyOrSpaces(password)){
       return false;
     }
+    return accessToGithubWithModalProgress(project, new Computable<Boolean>() {
+      @Override
+      public Boolean compute() {
+        ProgressManager.getInstance().getProgressIndicator().setText("Trying to login to GitHub");
+        return testConnection(url, login, password);
+      }
+    });
   }
 
   public static class CancelledException extends RuntimeException {}
@@ -293,12 +276,12 @@ public class GithubUtil {
     }
     // Otherwise our credentials are valid and they are successfully stored in settings
     try {
-      final String validPassword = settings.getPassword();
+      final String settingsPassword = settings.getPassword();
       return accessToGithubWithModalProgress(project, new Computable<List<RepositoryInfo>>() {
         @Override
         public List<RepositoryInfo> compute() {
           ProgressManager.getInstance().getProgressIndicator().setText("Extracting info about available repositories");
-          return getAvailableRepos(settings.getHost(), settings.getLogin(), validPassword, ownOnly);
+          return getAvailableRepos(settings.getHost(), settings.getLogin(), settingsPassword, ownOnly);
         }
       });
     }

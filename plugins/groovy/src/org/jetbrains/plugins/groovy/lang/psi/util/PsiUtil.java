@@ -71,6 +71,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.util.GrNamedArgumentsOwner;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
@@ -939,29 +940,12 @@ public class PsiUtil {
   public static PsiElement getNamedArgumentValue(GrNamedArgument otherNamedArgument, String argumentName) {
     PsiElement parent = otherNamedArgument.getParent();
 
-    GrNamedArgument[] arguments;
-    if (parent instanceof GrArgumentList) {
-      arguments = ((GrArgumentList)parent).getNamedArguments();
-    }
-    else {
-      arguments = ((GrListOrMap)parent).getNamedArguments();
-    }
+    if (!(parent instanceof GrNamedArgumentsOwner)) return null;
 
-    return getNamedArgumentValue(arguments, argumentName);
-  }
+    GrNamedArgument namedArgument = ((GrNamedArgumentsOwner)parent).findNamedArgument(argumentName);
+    if (namedArgument == null) return null;
 
-  @Nullable
-  public static PsiElement getNamedArgumentValue(GrNamedArgument[] arguments, String argumentName) {
-    for (GrNamedArgument namedArgument : arguments) {
-      GrArgumentLabel label = namedArgument.getLabel();
-      if (label != null) {
-        if (argumentName.equals(label.getName())) {
-          return namedArgument.getExpression();
-        }
-      }
-    }
-
-    return null;
+    return namedArgument.getExpression();
   }
 
   @NotNull
