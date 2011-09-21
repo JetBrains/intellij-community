@@ -16,9 +16,11 @@
 package org.jetbrains.plugins.groovy.refactoring.inline;
 
 import com.intellij.lang.refactoring.InlineHandler;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.Collection;
 
@@ -31,7 +33,12 @@ public class InlineLocalVarSettings implements InlineHandler.Settings {
   private boolean myRemoveDeclaration;
 
   public InlineLocalVarSettings(GrExpression initializer, Collection<GrReferenceExpression> refs, boolean removeDeclaration) {
-    myInitializer = initializer;
+    final PsiElement psiElement = PsiUtil.skipParentheses(initializer, false);
+    if (psiElement instanceof GrExpression) {
+      myInitializer = (GrExpression)psiElement;
+    } else {
+      myInitializer = initializer;
+    }
 
     myRefs = refs;
     myRemoveDeclaration = removeDeclaration;

@@ -17,7 +17,6 @@
 package org.jetbrains.plugins.groovy.refactoring.inline;
 
 import com.intellij.lang.refactoring.InlineHandler;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMember;
@@ -26,30 +25,18 @@ import org.jetbrains.plugins.groovy.lang.psi.GrClassSubstitution;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
-import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 /**
  * @author ilyas
  */
 public class GroovyInlineHandler implements InlineHandler {
 
-  private static final Logger LOG = Logger.getInstance(GroovyInlineHandler.class);
-
   @Nullable
   public Settings prepareInlineElement(final PsiElement element, Editor editor, boolean invokedOnReference) {
-    if (element instanceof GrVariable) {
-      if (GroovyRefactoringUtil.isLocalVariable((GrVariable)element)) {
-        return GroovyInlineVariableUtil.inlineLocalVariableSettings((GrVariable)element, editor, invokedOnReference);
-      }
-      else if (element instanceof GrField) {
-        return GrInlineFieldUtil.inlineFieldSettings((GrField)element, editor, invokedOnReference);
-      }
-    }
-    else if (element instanceof GrAccessorMethod) {
-      return GrInlineFieldUtil.inlineFieldSettings(((GrAccessorMethod)element).getProperty(), editor, invokedOnReference);
+    if (element instanceof GrField) {
+      return GrInlineFieldUtil.inlineFieldSettings((GrField)element, editor, invokedOnReference);
     }
     else if (element instanceof GrMethod) {
       return GroovyInlineMethodUtil.inlineMethodSettings((GrMethod)element, editor, invokedOnReference);
@@ -72,14 +59,6 @@ public class GroovyInlineHandler implements InlineHandler {
   }
 
   public void removeDefinition(PsiElement element, Settings settings) {
-    if (element instanceof GrAccessorMethod) {
-      element = ((GrAccessorMethod)element).getProperty();
-    }
-
-    if (element instanceof GrVariable && GroovyRefactoringUtil.isLocalVariable((GrVariable)element)) {
-      GroovyInlineVariableUtil.removeDefinition(element, settings);
-      return;
-    }
     final PsiElement owner = element.getParent().getParent();
     if (element instanceof GrVariable && owner instanceof GrVariableDeclarationOwner) {
       ((GrVariableDeclarationOwner)owner).removeVariable(((GrVariable)element));
@@ -92,10 +71,7 @@ public class GroovyInlineHandler implements InlineHandler {
   @Nullable
   public Inliner createInliner(PsiElement element, Settings settings) {
     if (element instanceof GrVariable) {
-      return GroovyInlineVariableUtil.createInlinerForVariable((GrVariable)element, settings);
-    }
-    if (element instanceof GrAccessorMethod) {
-      return GroovyInlineVariableUtil.createInlinerForVariable(((GrAccessorMethod)element).getProperty(), settings);
+      return new GrVariableInliner((GrVariable)element, settings);
     }
     if (element instanceof GrMethod) {
       return new GroovyMethodInliner((GrMethod)element);
