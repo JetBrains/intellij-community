@@ -228,37 +228,24 @@ public class GithubUtil {
   public static boolean checkCredentials(final Project project) {
     return checkCredentials(project, null, null, null);
   }
-  public static boolean checkCredentials(final Project project, @Nullable final String url, @Nullable final String login, @Nullable final String password) {
+  public static boolean checkCredentials(final Project project, @Nullable final String url, @Nullable final String login, @Nullable String password) {
     if (login == null && password == null && StringUtil.isEmptyOrSpaces(GithubSettings.getInstance().getLogin())){
       return false;
     }
-    try {
-      if (accessToGithubWithModalProgress(project, new Computable<Boolean>() {
-        @Override
-        public Boolean compute() {
-          ProgressManager.getInstance().getProgressIndicator().setText("Trying to login to GitHub");
-          if (url != null && login != null && password != null){
-            return testConnection(url, login, password);
-          }
-          return false;
+    final Ref<String> pass = new Ref<String>(password);
+    if (password == null){
+      pass.set(GithubSettings.getInstance().getPassword());
+    }
+    return accessToGithubWithModalProgress(project, new Computable<Boolean>() {
+      @Override
+      public Boolean compute() {
+        ProgressManager.getInstance().getProgressIndicator().setText("Trying to login to GitHub");
+        if (url != null && login != null){
+          return testConnection(url, login, pass.get());
         }
-      })) {
-        return true;
+        return false;
       }
-
-      final GithubSettings settings = GithubSettings.getInstance();
-      final String settingsPassword = settings.getPassword();
-      return accessToGithubWithModalProgress(project, new Computable<Boolean>() {
-        @Override
-        public Boolean compute() {
-          ProgressManager.getInstance().getProgressIndicator().setText("Trying to login to GitHub");
-          return testConnection(settings.getHost(), settings.getLogin(), settingsPassword);
-        }
-      });
-    }
-    catch (CancelledException e) {
-      return false;
-    }
+    });
   }
 
   public static class CancelledException extends RuntimeException {}
