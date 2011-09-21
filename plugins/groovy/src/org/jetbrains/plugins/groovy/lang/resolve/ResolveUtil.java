@@ -29,6 +29,7 @@ import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.gpp.GppTypeConverter;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -360,10 +361,18 @@ public class ResolveUtil {
   }
 
   public static boolean processCategoryMembers(PsiElement place, PsiScopeProcessor processor) {
+    boolean gpp = GppTypeConverter.hasTypedContext(place);
+    boolean inCodeBlock = true;
     while (place != null) {
-      if (place instanceof GrMember) break;
+      if (place instanceof GrMember) {
+        inCodeBlock = false;
+      }
       if (place instanceof GrClosableBlock) {
-        if (!GdkMethodUtil.categoryIteration((GrClosableBlock)place, processor)) return false;
+        if (inCodeBlock && !GdkMethodUtil.categoryIteration((GrClosableBlock)place, processor)) return false;
+      }
+      if (place instanceof GrTypeDefinition) {
+        GrTypeDefinition typeDefinition = (GrTypeDefinition)place;
+        if (gpp && !GdkMethodUtil.processCategoryMethods(place, processor, typeDefinition, typeDefinition)) return false;
       }
       place = place.getContext();
     }

@@ -21,6 +21,7 @@ import com.intellij.psi.scope.DelegatingScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -75,6 +76,21 @@ public class GdkMethodUtil {
 
     if (!(call.resolveMethod() instanceof GrGdkMethod)) return true;
 
+    for (GrExpression arg : args) {
+      if (arg instanceof GrReferenceExpression) {
+        final PsiElement resolved = ((GrReferenceExpression)arg).resolve();
+        if (resolved instanceof PsiClass) {
+          if (!processCategoryMethods(place, processor, call, (PsiClass)resolved)) return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  public static boolean processCategoryMethods(PsiElement place,
+                                                final PsiScopeProcessor processor,
+                                                GroovyPsiElement resolveContext,
+                                                @NotNull PsiClass categoryClass) {
     final DelegatingScopeProcessor delegate = new DelegatingScopeProcessor(processor) {
       @Override
       public boolean execute(PsiElement element, ResolveState state) {
@@ -88,17 +104,8 @@ public class GdkMethodUtil {
         }
       }
     };
-    for (GrExpression arg : args) {
-      if (arg instanceof GrReferenceExpression) {
-        final PsiElement resolved = ((GrReferenceExpression)arg).resolve();
-        if (resolved instanceof PsiClass) {
-          if (!resolved.processDeclarations(delegate, ResolveState.initial().put(ResolverProcessor.RESOLVE_CONTEXT, call), null, place)) {
-            return false;
-          }
-        }
-      }
-    }
-    return true;
+    return categoryClass
+      .processDeclarations(delegate, ResolveState.initial().put(ResolverProcessor.RESOLVE_CONTEXT, resolveContext), null, place);
   }
 
   public static boolean withIteration(GrClosableBlock block, final PsiScopeProcessor processor, GroovyPsiElement place) {

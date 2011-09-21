@@ -24,12 +24,11 @@ import com.intellij.psi.*
  * @author peter
  */
 class GppFunctionalTest extends LightCodeInsightFixtureTestCase {
-  static def descriptor = new GppProjectDescriptor()
 
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return descriptor;
+    return GppProjectDescriptor.instance;
   }
 
   protected void setUp() {
@@ -536,6 +535,8 @@ new Foo().foo.substr<caret>a
 }
 
 class GppProjectDescriptor extends DefaultLightProjectDescriptor {
+  static def instance = new GppProjectDescriptor()
+
   @Override
     public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
     final Library.ModifiableModel modifiableModel = model.getModuleLibraryTable().createLibrary("GROOVY++").getModifiableModel();
