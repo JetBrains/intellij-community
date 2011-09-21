@@ -139,6 +139,15 @@
         </value>
       </option>
 
+      <option name="DELETED_TEXT_ATTRIBUTES">
+        <value>
+          <option name="FOREGROUND" value="c3c3c3"/>
+          <option name="BACKGROUND" value="f0f0f0"/>
+          <option name="EFFECT_COLOR"/>
+          <option name="EFFECT_TYPE" value="1"/>
+        </value>
+      </option>
+
       <option name="JAVA_DOC_MARKUP">
         <value>
           <option name="FOREGROUND"/>

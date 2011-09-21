@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -193,55 +193,59 @@ public interface JavaElementType {
   ILazyParseableElementType CODE_BLOCK = new ICodeBlockElementType();
 
   IElementType STATEMENTS = new ICodeFragmentElementType("STATEMENTS", JavaLanguage.INSTANCE) {
+    private final JavaParserUtil.ParserWrapper myParser = new JavaParserUtil.ParserWrapper() {
+      public void parse(final PsiBuilder builder) {
+        StatementParser.parseStatements(builder);
+      }
+    };
+
     @Nullable
     @Override
     public ASTNode parseContents(final ASTNode chameleon) {
-      return JavaParserUtil.parseFragment(chameleon,
-                                          new JavaParserUtil.ParserWrapper() {
-                                            public void parse(final PsiBuilder builder) {
-                                              StatementParser.parseStatements(builder);
-                                            }
-                                          });
+      return JavaParserUtil.parseFragment(chameleon, myParser);
     }
   };
 
   IElementType EXPRESSION_TEXT = new ICodeFragmentElementType("EXPRESSION_TEXT", JavaLanguage.INSTANCE) {
+    private final JavaParserUtil.ParserWrapper myParser = new JavaParserUtil.ParserWrapper() {
+      public void parse(final PsiBuilder builder) {
+        ExpressionParser.parse(builder);
+      }
+    };
+
     @Nullable
     @Override
     public ASTNode parseContents(final ASTNode chameleon) {
-      return JavaParserUtil.parseFragment(chameleon,
-                                          new JavaParserUtil.ParserWrapper() {
-                                            public void parse(final PsiBuilder builder) {
-                                              ExpressionParser.parse(builder);
-                                            }
-                                          });
+      return JavaParserUtil.parseFragment(chameleon, myParser);
     }
   };
 
   IElementType REFERENCE_TEXT = new ICodeFragmentElementType("REFERENCE_TEXT", JavaLanguage.INSTANCE) {
+    private final JavaParserUtil.ParserWrapper myParser = new JavaParserUtil.ParserWrapper() {
+      public void parse(final PsiBuilder builder) {
+        ReferenceParser.parseJavaCodeReference(builder, false, true, false, false, false);
+      }
+    };
+
     @Nullable
     @Override
     public ASTNode parseContents(final ASTNode chameleon) {
-      return JavaParserUtil.parseFragment(chameleon,
-                                          new JavaParserUtil.ParserWrapper() {
-                                            public void parse(final PsiBuilder builder) {
-                                              ReferenceParser.parseJavaCodeReference(builder, false, true, false, false, false);
-                                            }
-                                          });
+      return JavaParserUtil.parseFragment(chameleon, myParser);
     }
   };
 
   IElementType TYPE_TEXT = new ICodeFragmentElementType("TYPE_TEXT", JavaLanguage.INSTANCE) {
+    private final JavaParserUtil.ParserWrapper myParser = new JavaParserUtil.ParserWrapper() {
+      public void parse(final PsiBuilder builder) {
+        ReferenceParser.parseType(builder, ReferenceParser.EAT_LAST_DOT | ReferenceParser.ELLIPSIS |
+                                           ReferenceParser.WILDCARD | ReferenceParser.DISJUNCTIONS);
+      }
+    };
+
     @Nullable
     @Override
     public ASTNode parseContents(final ASTNode chameleon) {
-      return JavaParserUtil.parseFragment(chameleon,
-                                          new JavaParserUtil.ParserWrapper() {
-                                            public void parse(final PsiBuilder builder) {
-                                              ReferenceParser.parseType(builder, ReferenceParser.EAT_LAST_DOT | ReferenceParser.ELLIPSIS |
-                                                                                 ReferenceParser.WILDCARD | ReferenceParser.DISJUNCTIONS);
-                                            }
-                                          });
+      return JavaParserUtil.parseFragment(chameleon, myParser);
     }
   };
 

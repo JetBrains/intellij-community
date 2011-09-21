@@ -242,7 +242,7 @@ public class PsiTreeUtil {
                                                             @NotNull final Class<T>... classes) {
     PsiElementProcessor.FindElement<PsiElement> processor = new PsiElementProcessor.FindElement<PsiElement>() {
       @Override
-      public boolean execute(PsiElement each) {
+      public boolean execute(@NotNull PsiElement each) {
         if (strict && each == element) return true;
         if (instanceOf(each, classes)) {
           return setFound(each);

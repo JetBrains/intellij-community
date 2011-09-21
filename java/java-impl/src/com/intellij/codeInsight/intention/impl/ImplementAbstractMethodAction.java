@@ -99,7 +99,7 @@ public class ImplementAbstractMethodAction extends BaseIntentionAction {
       return myHasExistingImplementations;
     }
 
-    public boolean execute(PsiElement element) {
+    public boolean execute(@NotNull PsiElement element) {
       if (element instanceof PsiClass) {
         PsiClass aClass = (PsiClass) element;
         final PsiMethod existingImplementation = findExistingImplementation(aClass, myMethod);

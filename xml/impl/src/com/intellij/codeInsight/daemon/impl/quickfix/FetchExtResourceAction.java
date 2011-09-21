@@ -362,7 +362,7 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
     XmlUtil.processXmlElements(
       file,
       new PsiElementProcessor() {
-        public boolean execute(PsiElement element) {
+        public boolean execute(@NotNull PsiElement element) {
           if (element instanceof XmlEntityDecl) {
             String candidateName = null;
 

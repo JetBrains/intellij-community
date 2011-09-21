@@ -200,7 +200,7 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
                 return caseSensitive ? decoded.equals(name) : decoded.compareToIgnoreCase(name) == 0;
               }
 
-              public boolean execute(PsiFileSystemItem element) {
+              public boolean execute(@NotNull PsiFileSystemItem element) {
                 result.add(new PsiElementResolveResult(getOriginalFile(element)));
                 return true;
               }
@@ -251,7 +251,7 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
 
     final CommonProcessors.CollectUniquesProcessor<PsiFileSystemItem> collector = new CommonProcessors.CollectUniquesProcessor<PsiFileSystemItem>();
     final PsiElementProcessor<PsiFileSystemItem> processor = new PsiElementProcessor<PsiFileSystemItem>() {
-      public boolean execute(PsiFileSystemItem fileSystemItem) {
+      public boolean execute(@NotNull PsiFileSystemItem fileSystemItem) {
         return new FilteringProcessor<PsiFileSystemItem>(myFileReferenceSet.getReferenceCompletionFilter(), collector).process(getOriginalFile(fileSystemItem));
       }
     };

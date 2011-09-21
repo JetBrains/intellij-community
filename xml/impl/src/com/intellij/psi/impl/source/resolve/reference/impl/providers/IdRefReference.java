@@ -16,20 +16,23 @@
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.openapi.util.Key;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.XmlRecursiveElementVisitor;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlComment;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.xml.util.XmlDeclareIdInCommentAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.ArrayList;
 
 /**
  * @author peter
@@ -152,7 +155,7 @@ public class IdRefReference extends BasicAttributeValueReference {
     process(new PsiElementProcessor<PsiElement>() {
       String canonicalText = getCanonicalText();
 
-      public boolean execute(final PsiElement element) {
+      public boolean execute(@NotNull final PsiElement element) {
         final String idValue = getIdValue(element);
         if (idValue != null && idValue.equals(canonicalText)) {
           result[0] = getIdValueElement(element);
@@ -170,7 +173,7 @@ public class IdRefReference extends BasicAttributeValueReference {
     final List<String> result = new LinkedList<String>();
 
     process(new PsiElementProcessor<PsiElement>() {
-      public boolean execute(final PsiElement element) {
+      public boolean execute(@NotNull final PsiElement element) {
         String value = getIdValue(element);
         if (value != null) {
           result.add(value);

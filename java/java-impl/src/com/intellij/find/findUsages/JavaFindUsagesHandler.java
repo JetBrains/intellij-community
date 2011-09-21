@@ -393,7 +393,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
   private static void processOverridingMethods(PsiMethod psiMethod, final Processor<UsageInfo> processor, final JavaMethodFindUsagesOptions options) {
     OverridingMethodsSearch.search(psiMethod, options.searchScope, options.isCheckDeepInheritance).forEach(new PsiElementProcessorAdapter<PsiMethod>(
       new PsiElementProcessor<PsiMethod>() {
-      public boolean execute(PsiMethod element) {
+      public boolean execute(@NotNull PsiMethod element) {
         addResult(processor, element.getNavigationElement(), options);
         return true;
       }
@@ -554,7 +554,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
   private static void addInheritors(final PsiClass aClass, final Processor<UsageInfo> results, final JavaClassFindUsagesOptions options) {
     ClassInheritorsSearch.search(aClass, options.searchScope, options.isCheckDeepInheritance).forEach(new PsiElementProcessorAdapter<PsiClass>(
       new PsiElementProcessor<PsiClass>() {
-      public boolean execute(PsiClass element) {
+      public boolean execute(@NotNull PsiClass element) {
         addResult(results, element, options);
         return true;
       }
@@ -565,7 +565,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
   private static void addDerivedInterfaces(PsiClass anInterface, final Processor<UsageInfo> results, final JavaClassFindUsagesOptions options) {
     ClassInheritorsSearch.search(anInterface, options.searchScope, options.isCheckDeepInheritance).forEach(new PsiElementProcessorAdapter<PsiClass>(
       new PsiElementProcessor<PsiClass>() {
-      public boolean execute(PsiClass inheritor) {
+      public boolean execute(@NotNull PsiClass inheritor) {
         if (inheritor.isInterface()) {
           addResult(results, inheritor, options);
         }
@@ -578,7 +578,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
   private static void addImplementingClasses(PsiClass anInterface, final Processor<UsageInfo> results, final JavaClassFindUsagesOptions options) {
     ClassInheritorsSearch.search(anInterface, options.searchScope, options.isCheckDeepInheritance).forEach(new PsiElementProcessorAdapter<PsiClass>(
       new PsiElementProcessor<PsiClass>() {
-      public boolean execute(PsiClass inheritor) {
+      public boolean execute(@NotNull PsiClass inheritor) {
         if (!inheritor.isInterface()) {
           addResult(results, inheritor, options);
         }

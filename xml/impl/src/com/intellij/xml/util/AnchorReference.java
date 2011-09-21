@@ -234,7 +234,7 @@ class AnchorReference implements PsiReference, EmptyResolveMessageProvider {
       if (rootTag != null) {
         processXmlElements(rootTag,
           new PsiElementProcessor() {
-            public boolean execute(final PsiElement element) {
+            public boolean execute(@NotNull final PsiElement element) {
               final String anchorValue = element instanceof XmlTag ? getAnchorValue((XmlTag)element):null;
 
               if (anchorValue!=null) {

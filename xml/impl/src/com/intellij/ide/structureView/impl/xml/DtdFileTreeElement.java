@@ -45,7 +45,7 @@ public class DtdFileTreeElement extends PsiTreeElementBase<XmlFile> {
     final List<StructureViewTreeElement> elements = new ArrayList<StructureViewTreeElement>();
 
     XmlUtil.processXmlElements(element, new PsiElementProcessor() {
-      public boolean execute(final PsiElement element) {
+      public boolean execute(@NotNull final PsiElement element) {
         if (element instanceof XmlElementDecl ||
             element instanceof XmlEntityDecl) {
           elements.add(new DtdTreeElement((PsiNamedElement)element));

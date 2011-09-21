@@ -61,14 +61,16 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
                                                                                             Queryable, PsiClassOwnerEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsFileImpl");
 
-  static final Object MIRROR_LOCK = new String("Mirror Lock");
+  /** YOU absolutely MUST NOT hold PsiLock under the MIRROR_LOCK */
+  private static final MirrorLock MIRROR_LOCK = new MirrorLock();
+  private static class MirrorLock {}
 
   private static final Key<Document> DOCUMENT_IN_MIRROR_KEY = Key.create("DOCUMENT_IN_MIRROR_KEY");
   private final PsiManagerImpl myManager;
   private final boolean myIsForDecompiling;
   private final FileViewProvider myViewProvider;
   private volatile SoftReference<StubTree> myStub;
-  private TreeElement myMirrorFileElement;
+  private TreeElement myMirrorFileElement;  // guarded by MIRROR_LOCK
   private volatile ClsPackageStatementImpl myPackageStatement = null;
 
   private ClsFileImpl(@NotNull PsiManagerImpl manager, @NotNull FileViewProvider viewProvider, boolean forDecompiling) {
@@ -231,7 +233,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
       PsiPackageStatement packageStatementMirror = ((PsiJavaFile)mirrorFile).getPackageStatement();
       final PsiPackageStatement packageStatement = getPackageStatement();
       if (packageStatementMirror != null && packageStatement != null) {
-        ((ClsElementImpl)packageStatement).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(packageStatementMirror));
+        ((ClsElementImpl)packageStatement).setMirror((TreeElement)packageStatementMirror.getNode());
       }
 
       PsiClass[] classes = getClasses();
@@ -240,9 +242,14 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
         PsiClass[] mirrorClasses = ((PsiJavaFile)mirrorFile).getClasses();
         if (classes.length != mirrorClasses.length) {
           LOG.error("file: " + mirrorFile + " classes: " + Arrays.toString(classes) + " mirrors: " + Arrays.toString(mirrorClasses));
-        } else {
+        }
+        else {
           for (int i = 0; i < classes.length; i++) {
-            ((ClsElementImpl)classes[i]).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirrorClasses[i]));
+            PsiClass mirrorClass = mirrorClasses[i];
+            assert mirrorClass != null : this +"; mirror classes: " + Arrays.asList(mirrorClasses);
+            PsiClass aClass = classes[i];
+            assert aClass != null : this +"; classes: " + Arrays.asList(classes);
+            ((ClsElementImpl)aClass).setMirror((TreeElement)mirrorClass.getNode());
           }
         }
       }
@@ -412,9 +419,10 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
   }
 
   private void resetMirror() {
+    ClsPackageStatementImpl clsPackageStatement = new ClsPackageStatementImpl(this);
     synchronized (MIRROR_LOCK) {
       myMirrorFileElement = null;
-      myPackageStatement = new ClsPackageStatementImpl(this);
+      myPackageStatement = clsPackageStatement;
     }
   }
 

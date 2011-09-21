@@ -79,7 +79,7 @@ public class XsltCodeInsightUtil {
     public static PsiElement findFirstRealTagChild(@NotNull XmlTag xmlTag) {
         final PsiElement[] child = new PsiElement[1];
         xmlTag.processElements(new PsiElementProcessor() {
-            public boolean execute(PsiElement element) {
+            public boolean execute(@NotNull PsiElement element) {
                 if (element instanceof XmlToken) {
                     if (((XmlToken)element).getTokenType() == XmlTokenType.XML_TAG_END) {
                         child[0] = element.getNextSibling();
@@ -154,7 +154,7 @@ public class XsltCodeInsightUtil {
     public static XmlTag findLastWithParam(XmlTag templateTag) {
         final XmlTag[] lastParam = new XmlTag[1];
         templateTag.processElements(new PsiElementProcessor() {
-            public boolean execute(PsiElement element) {
+            public boolean execute(@NotNull PsiElement element) {
                 if (element instanceof XmlTag) {
                     if ("with-param".equals(((XmlTag)element).getLocalName())) {
                         lastParam[0] = (XmlTag)element;

@@ -105,7 +105,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
 
   private static void chooseAmbiguousTarget(final Editor editor, int offset, PsiElement[] elements) {
     PsiElementProcessor<PsiElement> navigateProcessor = new PsiElementProcessor<PsiElement>() {
-      public boolean execute(final PsiElement element) {
+      public boolean execute(@NotNull final PsiElement element) {
         Navigatable navigatable = EditSourceUtil.getDescriptor(element);
         if (navigatable != null && navigatable.canNavigate()) {
           navigatable.navigate(true);

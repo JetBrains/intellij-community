@@ -78,7 +78,7 @@ public final class ModelAnnotator implements Annotator, DomElementsAnnotator {
         final OverriddenDefineSearcher searcher = new OverriddenDefineSearcher(define, xmlFile, result);
 
         final PsiElementProcessor.FindElement<XmlFile> processor = new PsiElementProcessor.FindElement<XmlFile>() {
-          public boolean execute(XmlFile file) {
+          public boolean execute(@NotNull XmlFile file) {
             final Grammar grammar = GrammarFactory.getGrammar(file);
             if (grammar == null) return true;
 

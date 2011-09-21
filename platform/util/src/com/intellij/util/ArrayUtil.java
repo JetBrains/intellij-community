@@ -160,7 +160,12 @@ public class ArrayUtil {
     if (a2.length == 0) {
       return a1;
     }
-    @SuppressWarnings("unchecked") T[] result = (T[])Array.newInstance(a1.getClass().getComponentType(), a1.length + a2.length);
+
+    final Class<?> class1 = a1.getClass().getComponentType();
+    final Class<?> class2 = a2.getClass().getComponentType();
+    final Class<?> aClass = class1.isAssignableFrom(class2) ? class1 : class2;
+
+    @SuppressWarnings("unchecked") T[] result = (T[])Array.newInstance(aClass, a1.length + a2.length);
     System.arraycopy(a1, 0, result, 0, a1.length);
     System.arraycopy(a2, 0, result, a1.length, a2.length);
     return result;

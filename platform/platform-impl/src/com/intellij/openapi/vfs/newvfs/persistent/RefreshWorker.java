@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,13 +68,13 @@ public class RefreshWorker {
           final boolean fullSync = dir.allChildrenLoaded();
           if (fullSync) {
             Set<String> currentNames = new HashSet<String>(Arrays.asList(persistence.list(file)));
-            Set<String> uptodateNames = new HashSet<String>(Arrays.asList(VfsUtil.filterNames(delegate.list(file))));
+            Set<String> upToDateNames = new HashSet<String>(Arrays.asList(VfsUtil.filterNames(delegate.list(file))));
 
-            Set<String> newNames = new HashSet<String>(uptodateNames);
+            Set<String> newNames = new HashSet<String>(upToDateNames);
             newNames.removeAll(currentNames);
 
             Set<String> deletedNames = new HashSet<String>(currentNames);
-            deletedNames.removeAll(uptodateNames);
+            deletedNames.removeAll(upToDateNames);
 
             for (String name : deletedNames) {
               scheduleDeletion(file.findChild(name));
@@ -114,18 +114,18 @@ public class RefreshWorker {
         }
         else {
           long currentTimestamp = persistence.getTimeStamp(file);
-          long updtodateTimestamp = delegate.getTimeStamp(file);
+          long upToDateTimestamp = delegate.getTimeStamp(file);
 
-          if (currentTimestamp != updtodateTimestamp) {
+          if (currentTimestamp != upToDateTimestamp) {
             scheduleUpdateContent(file);
           }
         }
 
         boolean currentWritable = persistence.isWritable(file);
-        boolean uptodateWritable = delegate.isWritable(file);
+        boolean upToDateWritable = delegate.isWritable(file);
 
-        if (currentWritable != uptodateWritable) {
-          scheduleWritableAttributeChange(file, currentWritable, uptodateWritable);
+        if (currentWritable != upToDateWritable) {
+          scheduleWritableAttributeChange(file, currentWritable, upToDateWritable);
         }
 
         file.markClean();
@@ -135,10 +135,10 @@ public class RefreshWorker {
 
   private void scheduleChildRefresh(final VirtualFileSystemEntry file, final VirtualFile child, final NewVirtualFileSystem delegate) {
     final boolean currentIsDirectory = child.isDirectory();
-    final boolean uptodateisDirectory = delegate.isDirectory(child);
-    if (currentIsDirectory != uptodateisDirectory) {
+    final boolean upToDateIsDirectory = delegate.isDirectory(child);
+    if (currentIsDirectory != upToDateIsDirectory) {
       scheduleDeletion(child);
-      scheduleCreation(file, child.getName(), uptodateisDirectory);
+      scheduleCreation(file, child.getName(), upToDateIsDirectory);
     }
     else if (myIsRecursive || !currentIsDirectory) {
       myRefreshQueue.addLast(child);
@@ -147,8 +147,8 @@ public class RefreshWorker {
 
   private void scheduleWritableAttributeChange(final VirtualFileSystemEntry file,
                                                final boolean currentWritable,
-                                               final boolean uptodateWritable) {
-    myEvents.add(new VFilePropertyChangeEvent(null, file, VirtualFile.PROP_WRITABLE, currentWritable, uptodateWritable, true));
+                                               final boolean upToDateWritable) {
+    myEvents.add(new VFilePropertyChangeEvent(null, file, VirtualFile.PROP_WRITABLE, currentWritable, upToDateWritable, true));
   }
 
   private void scheduleUpdateContent(final VirtualFileSystemEntry file) {

@@ -30,6 +30,7 @@ import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -65,7 +66,7 @@ public class ScriptSupportUtil {
 
               if (document != null) {
                 PsiElementProcessor psiElementProcessor = new PsiElementProcessor() {
-                  public boolean execute(final PsiElement element) {
+                  public boolean execute(@NotNull final PsiElement element) {
                     if (element instanceof XmlTag) {
                       final XmlTag tag = (XmlTag)element;
 

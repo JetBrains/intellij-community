@@ -312,11 +312,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       public void attributesChanged(@NotNull RangeHighlighterEx highlighter) {
         int textLength = myDocument.getTextLength();
-        int start = Math.max(0, Math.min(textLength - 1, highlighter.getAffectedAreaStartOffset()));
-        int end = Math.max(0, Math.min(textLength - 1, highlighter.getAffectedAreaEndOffset()));
+        int start = highlighter.getAffectedAreaStartOffset();
+        int end = highlighter.getAffectedAreaEndOffset();
+        if (start < 0 || start >= textLength) start = -1;
+        if (end < 0 || end >= textLength) end = -1;
 
-        int startLine = myDocument.getLineNumber(start);
-        int endLine = myDocument.getLineNumber(end);
+        int startLine = myDocument.getLineNumber(Math.max(0, Math.min(textLength - 1, start)));
+        int endLine = myDocument.getLineNumber(Math.max(0, Math.min(textLength - 1, end)));
         repaintLines(Math.max(0, startLine - 1), Math.min(endLine + 1, getDocument().getLineCount()));
         GutterIconRenderer renderer = highlighter.getGutterIconRenderer();
 

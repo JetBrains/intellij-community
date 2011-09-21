@@ -51,6 +51,7 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
     "  return <identifier>i;</identifier>\n" +
     "\n" +
     "<folded_text>Folded text</folded_text>\n" +
+    "<deleted_text>Deleted text</deleted_text>\n" +
     "Template <template_var>VARIABLE</template_var>\n" +
     "Injected language: <injected_lang>\\.(gif|jpg|png)$</injected_lang>\n" +
     "\n" +
@@ -70,6 +71,7 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
     new AttributesDescriptor(OptionsBundle.message("options.general.attribute.descriptor.default.text"), HighlighterColors.TEXT),
 
     new AttributesDescriptor(OptionsBundle.message("options.general.attribute.descriptor.folded.text"), EditorColors.FOLDED_TEXT_ATTRIBUTES),
+    new AttributesDescriptor(OptionsBundle.message("options.general.attribute.descriptor.deleted.text"), EditorColors.DELETED_TEXT_ATTRIBUTES),
     new AttributesDescriptor(OptionsBundle.message("options.general.attribute.descriptor.search.result"), EditorColors.SEARCH_RESULT_ATTRIBUTES),
     new AttributesDescriptor(OptionsBundle.message("options.general.attribute.descriptor.search.result.write.access"), EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES),
     new AttributesDescriptor(OptionsBundle.message("options.general.attribute.descriptior.identifier.under.caret"), EditorColors.IDENTIFIER_UNDER_CARET_ATTRIBUTES),
@@ -122,6 +124,7 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
 
   static{
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("folded_text", EditorColors.FOLDED_TEXT_ATTRIBUTES);
+    ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("deleted_text", EditorColors.DELETED_TEXT_ATTRIBUTES);
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("search_result", EditorColors.SEARCH_RESULT_ATTRIBUTES);
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("search_result_wr", EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES);
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("search_text", EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES);

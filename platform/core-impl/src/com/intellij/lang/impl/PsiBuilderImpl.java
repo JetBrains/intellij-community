@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package com.intellij.lang.impl;
 import com.intellij.lang.*;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -56,7 +57,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * User: max
+ * @author max
  */
 public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.impl.PsiBuilderImpl");
@@ -135,16 +136,22 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
                         @NotNull ParserDefinition parserDefinition,
                         @NotNull Lexer lexer,
                         CharTable charTable,
-                        @NotNull final CharSequence text, ASTNode originalTree, MyTreeStructure parentLightTree) {
-    this(project, containingFile, parserDefinition.getWhitespaceTokens(), parserDefinition.getCommentTokens(), lexer, charTable, text, originalTree, parentLightTree);
+                        @NotNull final CharSequence text,
+                        @Nullable ASTNode originalTree,
+                        @Nullable MyTreeStructure parentLightTree) {
+    this(project, containingFile, parserDefinition.getWhitespaceTokens(), parserDefinition.getCommentTokens(), lexer, charTable, text,
+         originalTree, parentLightTree);
   }
+
   public PsiBuilderImpl(Project project,
                         PsiFile containingFile,
                         @NotNull TokenSet whiteSpaces,
                         @NotNull TokenSet comments,
                         @NotNull Lexer lexer,
                         CharTable charTable,
-                        @NotNull final CharSequence text, ASTNode originalTree, MyTreeStructure parentLightTree) {
+                        @NotNull final CharSequence text,
+                        @Nullable ASTNode originalTree,
+                        @Nullable MyTreeStructure parentLightTree) {
     myProject = project;
     myFile = containingFile;
 
@@ -152,7 +159,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     myTextArray = CharArrayUtil.fromSequenceWithoutCopying(text);
     myLexer = lexer;
 
-    myWhitespaces=whiteSpaces;
+    myWhitespaces = whiteSpaces;
     myComments = comments;
     myCharTable = charTable;
     myOriginalTree = originalTree;
@@ -166,7 +173,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
                         @NotNull final Lexer lexer,
                         @NotNull final ASTNode chameleon,
                         @NotNull final CharSequence text) {
-    this(project, SharedImplUtil.getContainingFile(chameleon), parserDefinition, lexer, SharedImplUtil.findCharTableByTree(chameleon), text, chameleon.getUserData(BlockSupport.TREE_TO_BE_REPARSED), null);
+    this(project, SharedImplUtil.getContainingFile(chameleon), parserDefinition, lexer, SharedImplUtil.findCharTableByTree(chameleon), text,
+         chameleon.getUserData(BlockSupport.TREE_TO_BE_REPARSED), null);
   }
 
   public PsiBuilderImpl(@NotNull final Project project,
@@ -174,7 +182,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
                         @NotNull final Lexer lexer,
                         @NotNull final LighterLazyParseableNode chameleon,
                         @NotNull final CharSequence text) {
-    this(project, chameleon.getContainingFile(), parserDefinition, lexer, chameleon.getCharTable(), text, null, ((LazyParseableToken)chameleon).myParent);
+    this(project, chameleon.getContainingFile(), parserDefinition, lexer, chameleon.getCharTable(), text,
+         null, ((LazyParseableToken)chameleon).myParent);
   }
 
   private void cacheLexemes() {
@@ -949,7 +958,9 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     final MyTreeStructure treeStructure = new MyTreeStructure(newRoot, null);
     final MyComparator comparator = new MyComparator(getUserDataUnprotected(CUSTOM_COMPARATOR), treeStructure);
 
-    BlockSupportImpl.diffTrees(oldRoot, builder, comparator, treeStructure, ProgressIndicatorProvider.getInstance().getProgressIndicator());
+    final ProgressIndicatorProvider provider = ProgressIndicatorProvider.getInstance();
+    final ProgressIndicator indicator = provider != null ? provider.getProgressIndicator() : null;
+    BlockSupportImpl.diffTrees(oldRoot, builder, comparator, treeStructure, indicator);
     return diffLog;
   }
 
@@ -1512,10 +1523,10 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     }
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public <T> T getUserDataUnprotected(@NotNull final Key<T> key) {
     if (key == FileContextUtil.CONTAINING_FILE_KEY) return (T)myFile;
-    //noinspection unchecked
     return myUserData != null ? (T)myUserData.get(key) : null;
   }
 

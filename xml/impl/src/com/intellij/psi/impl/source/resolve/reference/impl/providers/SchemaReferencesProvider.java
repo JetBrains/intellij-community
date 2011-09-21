@@ -449,7 +449,7 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
       String namespace;
       XmlTag tag;
 
-      public boolean execute(final XmlTag element) {
+      public boolean execute(@NotNull final XmlTag element) {
         String name = element.getAttributeValue(NAME_ATTR_NAME);
         final String prefixByNamespace = tag.getPrefixByNamespace(namespace);
         if (prefixByNamespace != null && prefixByNamespace.length() > 0 && nsPrefix == null) {

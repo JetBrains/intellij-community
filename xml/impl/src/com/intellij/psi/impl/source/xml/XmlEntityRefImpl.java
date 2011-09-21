@@ -143,7 +143,7 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
       final XmlEntityDecl[] result = new XmlEntityDecl[]{null};
 
       PsiElementProcessor processor = new PsiElementProcessor() {
-        public boolean execute(PsiElement element) {
+        public boolean execute(@NotNull PsiElement element) {
           if (element instanceof XmlDoctype) {
             XmlDoctype xmlDoctype = (XmlDoctype)element;
             final String dtdUri = XmlUtil.getDtdUri(xmlDoctype);

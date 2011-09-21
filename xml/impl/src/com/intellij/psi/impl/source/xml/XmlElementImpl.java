@@ -62,7 +62,7 @@ public abstract class XmlElementImpl extends CompositePsiElement implements XmlE
     result[0] = null;
 
     processElements(new PsiElementProcessor(){
-      public boolean execute(PsiElement element){
+      public boolean execute(@NotNull PsiElement element){
         if(element instanceof TreeElement && ((ASTNode)element).getElementType() == type){
           result[0] = (XmlElement)element;
           return false;
@@ -156,7 +156,7 @@ public abstract class XmlElementImpl extends CompositePsiElement implements XmlE
       final StringBuilder builder = new StringBuilder();
 
       ((XmlElement)name.getPsi()).processElements(new PsiElementProcessor() {
-        public boolean execute(final PsiElement element) {
+        public boolean execute(@NotNull final PsiElement element) {
           builder.append(element.getText());
           return true;
         }

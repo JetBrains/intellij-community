@@ -25,6 +25,7 @@ import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.xml.*;
 import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.NotNull;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.ext.Attributes2Impl;
@@ -66,7 +67,7 @@ class Psi2SaxAdapter extends XmlElementVisitor implements PsiElementProcessor<Ps
     }
   }
 
-  public boolean execute(PsiElement element) {
+  public boolean execute(@NotNull PsiElement element) {
     element.accept(this);
     return true;
   }

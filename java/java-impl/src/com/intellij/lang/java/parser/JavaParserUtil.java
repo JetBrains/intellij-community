@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.lang.*;
 import com.intellij.lang.impl.PsiBuilderAdapter;
 import com.intellij.lang.java.JavaParserDefinition;
+import com.intellij.lexer.JavaDocLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -225,7 +226,9 @@ public class JavaParserUtil {
     final Project project = psi.getProject();
 
     final PsiBuilderFactory factory = PsiBuilderFactory.getInstance();
-    final Lexer lexer = JavaParserDefinition.createLexer(level);
+    final Lexer lexer = chameleon.getElementType() == JavaDocElementType.DOC_COMMENT
+                        ? new JavaDocLexer(level.isAtLeast(LanguageLevel.JDK_1_5))
+                        : JavaParserDefinition.createLexer(level);
     final PsiBuilder builder = factory.createBuilder(project, chameleon, lexer, chameleon.getElementType().getLanguage(), chameleon.getChars());
     setLanguageLevel(builder, level);
 

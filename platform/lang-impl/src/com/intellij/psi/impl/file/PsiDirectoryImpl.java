@@ -229,7 +229,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
     VirtualFile[] files = myFile.getChildren();
     final ArrayList<PsiElement> children = new ArrayList<PsiElement>(files.length);
     processChildren(new PsiElementProcessor<PsiFileSystemItem>() {
-      public boolean execute(final PsiFileSystemItem element) {
+      public boolean execute(@NotNull final PsiFileSystemItem element) {
         children.add(element);
         return true;
       }

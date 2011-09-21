@@ -447,7 +447,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
       XmlUtil.processXmlElements(
         xmlFile,
         new PsiElementProcessor() {
-          public boolean execute(final PsiElement element) {
+          public boolean execute(@NotNull final PsiElement element) {
             if (element instanceof XmlEntityDecl) {
               final XmlEntityDecl entityDecl = (XmlEntityDecl)element;
               if (entityDecl.isInternalReference() && name.equals(entityDecl.getName())) {
@@ -484,7 +484,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
     private @NonNls static final String CDATA_PREFIX = "<![CDATA[";
     private @NonNls static final String CDATA_SUFFIX = "]]>";
 
-    public boolean execute(PsiElement element) {
+    public boolean execute(@NotNull PsiElement element) {
       if (element instanceof XmlTag &&
           ((XmlTag)element).getLocalName().equals(DOCUMENTATION_ELEMENT_LOCAL_NAME)
       ) {

@@ -35,6 +35,7 @@ import gnu.trove.TObjectHashingStrategy;
 import org.intellij.plugins.relaxNG.compact.psi.RncFile;
 import org.intellij.plugins.relaxNG.model.*;
 import org.intellij.plugins.relaxNG.xml.dom.RngGrammar;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
@@ -192,7 +193,7 @@ public class DefinitionResolver extends CommonElement.Visitor implements
       myValue = value;
     }
 
-    public boolean execute(XmlFile element) {
+    public boolean execute(@NotNull XmlFile element) {
       final Grammar g = GrammarFactory.getGrammar(element);
       if (g != null) {
         g.acceptChildren(new CommonElement.Visitor() {
