@@ -81,15 +81,15 @@ public class ComponentConfig {
   }
 
   public void setImplementationClass(String implementationClass) {
-    this.implementationClass = implementationClass;
+    this.implementationClass = implementationClass == null ? null : implementationClass.trim();
   }
 
   public void setInterfaceClass(String interfaceClass) {
-    this.interfaceClass = interfaceClass;
+    this.interfaceClass = interfaceClass == null ? null : interfaceClass.trim();
   }
 
   public void setHeadlessImplementationClass(String headlessImplementationClass) {
-    this.headlessImplementationClass = headlessImplementationClass;
+    this.headlessImplementationClass = headlessImplementationClass == null ? null : headlessImplementationClass.trim();
   }
 
   public void setLoadForDefaultProject(boolean loadForDefaultProject) {
