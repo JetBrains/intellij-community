@@ -155,6 +155,7 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
     return ProjectViewDirectoryHelper.getInstance(myProject).getDirectoryChildren(getValue(), getSettings(), true);
   }
 
+  @SuppressWarnings("deprecation")
   public String getTestPresentation() {
     return "PsiDirectory: " + getValue().getName();
   }
@@ -262,24 +263,25 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
   }
 
   protected Icon patchIcon(Icon original, VirtualFile file) {
-    Bookmark bookmarkAtFile = BookmarkManager.getInstance(myProject).findFileBookmark(file);
+    Icon icon = original;
+
+    final Bookmark bookmarkAtFile = BookmarkManager.getInstance(myProject).findFileBookmark(file);
     if (bookmarkAtFile != null) {
-      RowIcon composite = new RowIcon(2);
-      composite.setIcon(original, 0);
+      final RowIcon composite = new RowIcon(2);
+      composite.setIcon(icon, 0);
       composite.setIcon(bookmarkAtFile.getIcon(), 1);
-      return addReadMark(composite, file.isWritable());
+      icon = composite;
     }
 
-    return addReadMark(original, file.isWritable());
-  }
+    if (!file.isWritable()) {
+      icon = LayeredIcon.create(icon, PlatformIcons.LOCKED_ICON);
+    }
 
-  private static Icon addReadMark(Icon originalIcon, boolean isWritable) {
-    if (isWritable) {
-      return originalIcon;
+    if (file.isSymLink()) {
+      icon = LayeredIcon.create(icon, PlatformIcons.SYMLINK_ICON);
     }
-    else {
-      return LayeredIcon.create(originalIcon, PlatformIcons.LOCKED_ICON);
-    }
+
+    return icon;
   }
 
   public String getQualifiedNameSortKey() {

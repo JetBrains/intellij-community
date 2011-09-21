@@ -27,6 +27,7 @@ public interface PlatformIcons {
   @NonNls String PUBLIC_ICON_PATH = "/nodes/c_public.png";
   Icon PUBLIC_ICON = IconLoader.getIcon(PUBLIC_ICON_PATH);
   Icon LOCKED_ICON = IconLoader.getIcon("/nodes/locked.png");
+  Icon SYMLINK_ICON = IconLoader.getIcon("/nodes/symlink.png");
   Icon PRIVATE_ICON = IconLoader.getIcon("/nodes/c_private.png");
   Icon PROTECTED_ICON = IconLoader.getIcon("/nodes/c_protected.png");
   Icon PACKAGE_LOCAL_ICON = IconLoader.getIcon("/nodes/c_plocal.png");
