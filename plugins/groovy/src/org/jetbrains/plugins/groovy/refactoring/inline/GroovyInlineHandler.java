@@ -23,7 +23,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrClassSubstitution;
@@ -35,7 +34,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
-import java.util.ArrayList;
 import java.util.Collection;
 
 /**
@@ -124,15 +122,7 @@ public class GroovyInlineHandler implements InlineHandler, ReferencesToInlineSea
       }
 
       LOG.assertTrue(((GrField)element).getSetter() == null);
-
-      Collection<PsiReference> result = new ArrayList<PsiReference>();
-      result.addAll(ReferencesSearch.search(element).findAll());
-
-      for (GrAccessorMethod getter : ((GrField)element).getGetters()) {
-        result.addAll(MethodReferencesSearch.search(getter).findAll());
-      }
-
-      return result;
+      return ReferencesSearch.search(element).findAll();
     }
 
     return ReferencesSearch.search(element).findAll();
