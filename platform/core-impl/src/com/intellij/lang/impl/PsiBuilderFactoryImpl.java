@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,8 @@ public class PsiBuilderFactoryImpl extends PsiBuilderFactory {
                                   @Nullable final Lexer lexer,
                                   @NotNull final Language lang,
                                   @NotNull final CharSequence seq) {
-    return new PsiBuilderImpl(project, LanguageParserDefinitions.INSTANCE.forLanguage(lang), lexer != null ? lexer : createLexer(project, lang), chameleon, seq);
+    final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
+    return new PsiBuilderImpl(project, parserDefinition, lexer != null ? lexer : createLexer(project, lang), chameleon, seq);
   }
 
   @NotNull
@@ -59,8 +60,7 @@ public class PsiBuilderFactoryImpl extends PsiBuilderFactory {
                                   @NotNull final Language lang,
                                   @NotNull final CharSequence seq) {
     final Language language = chameleon.getTokenType().getLanguage();
-    ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
-
+    final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
     return new PsiBuilderImpl(project, parserDefinition, lexer != null ? lexer : createLexer(project, lang), chameleon, seq);
   }
 
@@ -72,7 +72,8 @@ public class PsiBuilderFactoryImpl extends PsiBuilderFactory {
 
   @NotNull
   @Override
-  public PsiBuilder createBuilder(@NotNull ParserDefinition parserDefinition, @NotNull final Lexer lexer,
+  public PsiBuilder createBuilder(@NotNull final ParserDefinition parserDefinition,
+                                  @NotNull final Lexer lexer,
                                   @NotNull final CharSequence seq) {
     return new PsiBuilderImpl(null, null, parserDefinition.getWhitespaceTokens(), parserDefinition.getCommentTokens(), lexer, null, seq, null, null);
   }
