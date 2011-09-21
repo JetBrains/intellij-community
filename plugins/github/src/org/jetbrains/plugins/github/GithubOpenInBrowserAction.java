@@ -143,7 +143,7 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
       }
     }
     catch (VcsException e1) {
-      Messages.showErrorDialog(project, "Error occured while inspecting branches: " + e1, CANNOT_OPEN_IN_BROWSER);
+      Messages.showErrorDialog(project, "Error occurred while inspecting branches: " + e1, CANNOT_OPEN_IN_BROWSER);
       return;
     }
     String branch = tracked.getName();
