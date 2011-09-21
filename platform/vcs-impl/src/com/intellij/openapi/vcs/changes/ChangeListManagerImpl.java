@@ -30,10 +30,7 @@ import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
@@ -217,18 +214,23 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   private void initializeForNewProject() {
-    synchronized (myDataLock) {
-      if (myWorker.isEmpty()) {
-        final LocalChangeList list = myWorker.addChangeList(VcsBundle.message("changes.default.changlist.name"), null);
-        setDefaultChangeList(list);
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
+      public void run() {
+        synchronized (myDataLock) {
+          if (myWorker.isEmpty()) {
+            final LocalChangeList list = myWorker.addChangeList(VcsBundle.message("changes.default.changlist.name"), null);
+            setDefaultChangeList(list);
 
-        if (myIgnoredIdeaLevel.isEmpty()) {
-          final String name = myProject.getName();
-          myIgnoredIdeaLevel.add(IgnoredBeanFactory.ignoreFile(name + WorkspaceFileType.DOT_DEFAULT_EXTENSION, myProject));
-          myIgnoredIdeaLevel.add(IgnoredBeanFactory.ignoreFile(Project.DIRECTORY_STORE_FOLDER + "/workspace.xml", myProject));
+            if (myIgnoredIdeaLevel.isEmpty()) {
+              final String name = myProject.getName();
+              myIgnoredIdeaLevel.add(IgnoredBeanFactory.ignoreFile(name + WorkspaceFileType.DOT_DEFAULT_EXTENSION, myProject));
+              myIgnoredIdeaLevel.add(IgnoredBeanFactory.ignoreFile(Project.DIRECTORY_STORE_FOLDER + "/workspace.xml", myProject));
+            }
+          }
         }
       }
-    }
+    });
   }
 
   public void projectClosed() {
@@ -305,9 +307,10 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     myUpdater.schedule();
   }
 
-  private class ActualUpdater implements LocalChangesUpdater {
-    public void execute(AtomicSectionsAware atomicSectionsAware) {
-      updateImmediately(atomicSectionsAware);
+  private class ActualUpdater implements Runnable {
+    @Override
+    public void run() {
+      updateImmediately();
     }
   }
 
@@ -356,7 +359,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
   }
 
-  private void updateImmediately(final AtomicSectionsAware atomicSectionsAware) {
+  private void updateImmediately() {
     final DataHolder dataHolder;
 
     final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
@@ -387,10 +390,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       dataHolder.notifyStart();
       myChangesViewManager.scheduleRefresh();
 
-      // todo should also ask self flag
-      myUpdateChangesProgressIndicator = createProgressIndicator(atomicSectionsAware);
+      myUpdateChangesProgressIndicator = createProgressIndicator();
 
-      iterateScopes(atomicSectionsAware, dataHolder, scopes);
+      iterateScopes(dataHolder, scopes);
 
       final boolean takeChanges = (myUpdateException == null);
       if (takeChanges) {
@@ -399,28 +401,33 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       }
 
       clearCurrentRevisionsCache(invalidated);
-      synchronized (myDataLock) {
-        // do same modifications to change lists as was done during update + do delayed notifications
-        dataHolder.notifyEnd();
-        // should be applied for notifications to be delivered (they were delayed) - anyway whether we take changes or not
-        myModifier.finishUpdate(dataHolder.getChangeListWorker());
-        // update member from copy
-        if (takeChanges) {
-          final ChangeListWorker oldWorker = myWorker;
-          myWorker = dataHolder.getChangeListWorker();
-          myWorker.onAfterWorkerSwitch(oldWorker);
-          myModifier.setWorker(myWorker);
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("refresh procedure finished, size: " + dataHolder.getComposite().getVFHolder(FileHolder.HolderType.UNVERSIONED).getSize());
-          }
-          final boolean statusChanged = ! myComposite.equals(dataHolder.getComposite());
-          myComposite = dataHolder.getComposite();
-          if (statusChanged) {
-            myDelayedNotificator.getProxyDispatcher().unchangedFileStatusChanged();
+      // for the case of project being closed we need a read action here -> to be more consistent
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        public void run() {
+          synchronized (myDataLock) {
+            // do same modifications to change lists as was done during update + do delayed notifications
+            dataHolder.notifyEnd();
+            // should be applied for notifications to be delivered (they were delayed) - anyway whether we take changes or not
+            myModifier.finishUpdate(dataHolder.getChangeListWorker());
+            // update member from copy
+            if (takeChanges) {
+              final ChangeListWorker oldWorker = myWorker;
+              myWorker = dataHolder.getChangeListWorker();
+              myWorker.onAfterWorkerSwitch(oldWorker);
+              myModifier.setWorker(myWorker);
+              if (LOG.isDebugEnabled()) {
+                LOG.debug("refresh procedure finished, size: " + dataHolder.getComposite().getVFHolder(FileHolder.HolderType.UNVERSIONED).getSize());
+              }
+              final boolean statusChanged = ! myComposite.equals(dataHolder.getComposite());
+              myComposite = dataHolder.getComposite();
+              if (statusChanged) {
+                myDelayedNotificator.getProxyDispatcher().unchangedFileStatusChanged();
+              }
+            }
+            myShowLocalChangesInvalidated = false;
           }
         }
-        myShowLocalChangesInvalidated = false;
-      }
+      });
       myChangesViewManager.scheduleRefresh();
     }
     catch (DisposedException e) {
@@ -467,14 +474,14 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     return checkScopeIsAllIgnored(invalidated);
   }
 
-  private void iterateScopes(AtomicSectionsAware atomicSectionsAware, DataHolder dataHolder, List<VcsDirtyScope> scopes) {
+  private void iterateScopes(DataHolder dataHolder, List<VcsDirtyScope> scopes) {
     final ChangeListManagerGate gate = dataHolder.getChangeListWorker().createSelfGate();
     // do actual requests about file statuses
     final UpdatingChangeListBuilder builder = new UpdatingChangeListBuilder(dataHolder.getChangeListWorker(),
       dataHolder.getComposite(), myUpdater.getIsStoppedGetter(), myIgnoredIdeaLevel, gate);
 
     for (final VcsDirtyScope scope : scopes) {
-      atomicSectionsAware.checkShouldExit();
+      myUpdateChangesProgressIndicator.checkCanceled();
 
       final AbstractVcs vcs = scope.getVcs();
       if (vcs == null) continue;
@@ -498,16 +505,15 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
   }
 
-  private EmptyProgressIndicator createProgressIndicator(final AtomicSectionsAware atomicSectionsAware) {
+  private EmptyProgressIndicator createProgressIndicator() {
     return new EmptyProgressIndicator() {
       @Override
       public boolean isCanceled() {
-        return myUpdater.isStopped() || atomicSectionsAware.shouldExitAsap();
+        return myUpdater.isStopped();
       }
       @Override
       public void checkCanceled() {
         checkIfDisposed();
-        atomicSectionsAware.checkShouldExit();
       }
     };
   }
@@ -731,19 +737,29 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
   }
 
-  public LocalChangeList addChangeList(@NotNull String name, final String comment) {
-    synchronized (myDataLock) {
-      final LocalChangeList changeList = myModifier.addChangeList(name, comment);
-      myChangesViewManager.scheduleRefresh();
-      return changeList;
-    }
+  public LocalChangeList addChangeList(@NotNull final String name, final String comment) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<LocalChangeList>() {
+      @Override
+      public LocalChangeList compute() {
+        synchronized (myDataLock) {
+          final LocalChangeList changeList = myModifier.addChangeList(name, comment);
+          myChangesViewManager.scheduleRefresh();
+          return changeList;
+        }
+      }
+    });
   }
 
   public void removeChangeList(final String name) {
-    synchronized (myDataLock) {
-      myModifier.removeChangeList(name);
-      myChangesViewManager.scheduleRefresh();
-    }
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
+      public void run() {
+        synchronized (myDataLock) {
+          myModifier.removeChangeList(name);
+          myChangesViewManager.scheduleRefresh();
+        }
+      }
+    });
   }
 
   public void removeChangeList(LocalChangeList list) {
@@ -763,34 +779,44 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     return new Runnable() {
       public void run() {
         final ChangeListListener multicaster = myDelayedNotificator.getProxyDispatcher();
-        synchronized (myDataLock) {
-          for (Map.Entry<String, List<Change>> entry : map.entrySet()) {
-            final List<Change> changes = entry.getValue();
-            for (Iterator<Change> iterator = changes.iterator(); iterator.hasNext();) {
-              final Change change = iterator.next();
-              if (getChangeList(change) != null) {
-                // was not actually rolled back
-                iterator.remove();
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          @Override
+          public void run() {
+            synchronized (myDataLock) {
+              for (Map.Entry<String, List<Change>> entry : map.entrySet()) {
+                final List<Change> changes = entry.getValue();
+                for (Iterator<Change> iterator = changes.iterator(); iterator.hasNext();) {
+                  final Change change = iterator.next();
+                  if (getChangeList(change) != null) {
+                    // was not actually rolled back
+                    iterator.remove();
+                  }
+                }
+                multicaster.changesRemoved(changes, lists.get(entry.getKey()));
+              }
+              for (String listName : map.keySet()) {
+                final LocalChangeList byName = myWorker.getCopyByName(listName);
+                if (byName != null && byName.getChanges().isEmpty() && ! byName.isDefault() && ! byName.isReadOnly()) {
+                  myWorker.removeChangeList(listName);
+                }
               }
             }
-            multicaster.changesRemoved(changes, lists.get(entry.getKey()));
           }
-          for (String listName : map.keySet()) {
-            final LocalChangeList byName = myWorker.getCopyByName(listName);
-            if (byName != null && byName.getChanges().isEmpty() && ! byName.isDefault() && ! byName.isReadOnly()) {
-              myWorker.removeChangeList(listName);
-            }
-          }
-        }
+        });
       }
     };
   }
 
-  public void setDefaultChangeList(@NotNull LocalChangeList list) {
-    synchronized (myDataLock) {
-      myModifier.setDefault(list.getName());
-      myChangesViewManager.scheduleRefresh();
-    }
+  public void setDefaultChangeList(@NotNull final LocalChangeList list) {
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
+      public void run() {
+        synchronized (myDataLock) {
+          myModifier.setDefault(list.getName());
+        }
+      }
+    });
+    myChangesViewManager.scheduleRefresh();
   }
 
   @Nullable
@@ -923,10 +949,15 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
   }
 
-  public void moveChangesTo(LocalChangeList list, final Change[] changes) {
-    synchronized (myDataLock) {
-      myModifier.moveChangesTo(list.getName(), changes);
-    }
+  public void moveChangesTo(final LocalChangeList list, final Change[] changes) {
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
+      public void run() {
+        synchronized (myDataLock) {
+          myModifier.moveChangesTo(list.getName(), changes);
+        }
+      }
+    });
     myChangesViewManager.scheduleRefresh();
   }
 
@@ -961,23 +992,28 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       // find the changes for the added files and move them to the necessary changelist
       invokeAfterUpdate(new Runnable() {
         public void run() {
-          synchronized (myDataLock) {
-            List<Change> changesToMove = new ArrayList<Change>();
-            final LocalChangeList defaultList = getDefaultChangeList();
-            for(Change change: defaultList.getChanges()) {
-              final ContentRevision afterRevision = change.getAfterRevision();
-              if (afterRevision != null) {
-                VirtualFile vFile = afterRevision.getFile().getVirtualFile();
-                if (files.contains(vFile)) {
-                  changesToMove.add(change);
+          ApplicationManager.getApplication().runReadAction(new Runnable() {
+            @Override
+            public void run() {
+              synchronized (myDataLock) {
+                List<Change> changesToMove = new ArrayList<Change>();
+                final LocalChangeList defaultList = getDefaultChangeList();
+                for(Change change: defaultList.getChanges()) {
+                  final ContentRevision afterRevision = change.getAfterRevision();
+                  if (afterRevision != null) {
+                    VirtualFile vFile = afterRevision.getFile().getVirtualFile();
+                    if (files.contains(vFile)) {
+                      changesToMove.add(change);
+                    }
+                  }
+                }
+
+                if (changesToMove.size() > 0) {
+                  moveChangesTo(list, changesToMove.toArray(new Change[changesToMove.size()]));
                 }
               }
             }
-
-            if (changesToMove.size() > 0) {
-              moveChangesTo(list, changesToMove.toArray(new Change[changesToMove.size()]));
-            }
-          }
+          });
 
           myChangesViewManager.scheduleRefresh();
         }
@@ -1174,27 +1210,42 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   public boolean setReadOnly(final String name, final boolean value) {
-    synchronized (myDataLock) {
-      final boolean result = myModifier.setReadOnly(name, value);
-      myChangesViewManager.scheduleRefresh();
-      return result;
-    }
+    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+      @Override
+      public Boolean compute() {
+        synchronized (myDataLock) {
+          final boolean result = myModifier.setReadOnly(name, value);
+          myChangesViewManager.scheduleRefresh();
+          return result;
+        }
+      }
+    });
   }
 
   public boolean editName(@NotNull final String fromName, @NotNull final String toName) {
-    synchronized (myDataLock) {
-      final boolean result = myModifier.editName(fromName, toName);
-      myChangesViewManager.scheduleRefresh();
-      return result;
-    }
+    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+      @Override
+      public Boolean compute() {
+        synchronized (myDataLock) {
+          final boolean result = myModifier.editName(fromName, toName);
+          myChangesViewManager.scheduleRefresh();
+          return result;
+        }
+      }
+    });
   }
 
   public String editComment(@NotNull final String fromName, final String newComment) {
-    synchronized (myDataLock) {
-      final String oldComment = myModifier.editComment(fromName, newComment);
-      myChangesViewManager.scheduleRefresh();
-      return oldComment;
-    }
+    return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      @Override
+      public String compute() {
+        synchronized (myDataLock) {
+          final String oldComment = myModifier.editComment(fromName, newComment);
+          myChangesViewManager.scheduleRefresh();
+          return oldComment;
+        }
+      }
+    });
   }
 
   /**
