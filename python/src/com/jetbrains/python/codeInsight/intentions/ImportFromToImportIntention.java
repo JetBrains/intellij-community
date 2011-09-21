@@ -192,7 +192,7 @@ public class ImportFromToImportIntention implements IntentionAction {
       final Map<PsiReference, PyImportElement> references = new HashMap<PsiReference, PyImportElement>();
       final List<PsiReference> star_references = new ArrayList<PsiReference>();
       PsiTreeUtil.processElements(file, new PsiElementProcessor() {
-        public boolean execute(PsiElement element) {
+        public boolean execute(@NotNull PsiElement element) {
           if (element instanceof PyReferenceExpression && PsiTreeUtil.getParentOfType(element, PyImportElement.class) == null && element.isValid()) {
             PyReferenceExpression ref = (PyReferenceExpression)element;
             if (ref.getQualifier() == null) {

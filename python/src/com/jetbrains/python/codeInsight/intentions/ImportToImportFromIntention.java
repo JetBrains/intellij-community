@@ -86,7 +86,7 @@ public class ImportToImportFromIntention implements IntentionAction {
         if (myReferee != null && myModuleName != null && myQualifierName != null) {
           final Collection<PsiReference> references = new ArrayList<PsiReference>();
           PsiTreeUtil.processElements(file, new PsiElementProcessor() {
-            public boolean execute(PsiElement element) {
+            public boolean execute(@NotNull PsiElement element) {
               if (element instanceof PyReferenceExpression && PsiTreeUtil.getParentOfType(element, PyImportElement.class) == null) {
                 PyReferenceExpression ref = (PyReferenceExpression)element;
                 if (myQualifierName.equals(PyResolveUtil.toPath(ref, "."))) {  // filter out other names that might resolve to our target
