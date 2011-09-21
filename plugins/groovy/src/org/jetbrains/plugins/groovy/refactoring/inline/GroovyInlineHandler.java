@@ -17,13 +17,10 @@
 package org.jetbrains.plugins.groovy.refactoring.inline;
 
 import com.intellij.lang.refactoring.InlineHandler;
-import com.intellij.lang.refactoring.ReferencesToInlineSearcher;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMember;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrClassSubstitution;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
@@ -34,12 +31,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
-import java.util.Collection;
-
 /**
  * @author ilyas
  */
-public class GroovyInlineHandler implements InlineHandler, ReferencesToInlineSearcher {
+public class GroovyInlineHandler implements InlineHandler {
 
   private static final Logger LOG = Logger.getInstance(GroovyInlineHandler.class);
 
@@ -106,26 +101,6 @@ public class GroovyInlineHandler implements InlineHandler, ReferencesToInlineSea
       return new GroovyMethodInliner((GrMethod)element);
     }
     return null;
-  }
-
-  @Override
-  public Collection<? extends PsiReference> findReferences(PsiElement element, Settings settings) {
-    if (element instanceof GrVariable && GroovyRefactoringUtil.isLocalVariable((GrVariable)element)) {
-      if (settings instanceof InlineLocalVarSettings) {
-        return ((InlineLocalVarSettings)settings).getRefs();
-      }
-    }
-
-    else if (element instanceof GrAccessorMethod || element instanceof GrField) {
-      if (element instanceof GrAccessorMethod) {
-        element = ((GrAccessorMethod)element).getProperty();
-      }
-
-      LOG.assertTrue(((GrField)element).getSetter() == null);
-      return ReferencesSearch.search(element).findAll();
-    }
-
-    return ReferencesSearch.search(element).findAll();
   }
 }
 
