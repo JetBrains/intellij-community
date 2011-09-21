@@ -140,7 +140,9 @@ public class JarHandler implements FileSystemInterface {
     return info;
   }
 
-  public String[] list(final VirtualFile file) {
+  @Override
+  @NotNull
+  public String[] list(@NotNull final VirtualFile file) {
     synchronized (lock) {
       EntryInfo parentEntry = getEntryInfo(file);
 
@@ -245,20 +247,23 @@ public class JarHandler implements FileSystemInterface {
     return zip != null ? zip.getEntry(path) : null;
   }
 
-  public long getLength(final VirtualFile file) {
+  @Override
+  public long getLength(@NotNull final VirtualFile file) {
     synchronized (lock) {
       final ZipEntry entry = convertToEntry(file);
       return entry != null ? entry.getSize() : 0;
     }
   }
 
+  @Override
   @NotNull
-  public InputStream getInputStream(final VirtualFile file) throws IOException {
+  public InputStream getInputStream(@NotNull final VirtualFile file) throws IOException {
     return new ByteArrayInputStream(contentsToByteArray(file));
   }
 
+  @Override
   @NotNull
-  public byte[] contentsToByteArray(final VirtualFile file) throws IOException {
+  public byte[] contentsToByteArray(@NotNull final VirtualFile file) throws IOException {
     synchronized (lock) {
       final ZipEntry entry = convertToEntry(file);
       if (entry == null) {
@@ -280,7 +285,8 @@ public class JarHandler implements FileSystemInterface {
     }
   }
 
-  public long getTimeStamp(final VirtualFile file) {
+  @Override
+  public long getTimeStamp(@NotNull final VirtualFile file) {
     if (file.getParent() == null) return -1L; // Optimization
     synchronized (lock) {
       final ZipEntry entry = convertToEntry(file);
@@ -288,11 +294,11 @@ public class JarHandler implements FileSystemInterface {
     }
   }
 
-  public boolean isDirectory(final VirtualFile file) {
+  @Override
+  public boolean isDirectory(@NotNull final VirtualFile file) {
     if (file.getParent() == null) return true; // Optimization
-
     synchronized (lock) {
-      String path = getRelativePath(file);
+      final String path = getRelativePath(file);
       final EntryInfo info = getEntriesMap().get(path);
       return info == null || info.isDirectory;
     }
@@ -302,11 +308,13 @@ public class JarHandler implements FileSystemInterface {
     return initEntries();
   }
 
-  public boolean isWritable(final VirtualFile file) {
+  @Override
+  public boolean isWritable(@NotNull final VirtualFile file) {
     return false;
   }
 
-  public boolean exists(final VirtualFile fileOrDirectory) {
+  @Override
+  public boolean exists(@NotNull final VirtualFile fileOrDirectory) {
     if (fileOrDirectory.getParent() == null) {
       // Optimization. Do not build entries if asked for jar root existence.
       return myZipFile.get() != null || getOriginalFile().exists();
@@ -319,32 +327,38 @@ public class JarHandler implements FileSystemInterface {
     throw new IOException("Jar file system is read-only");
   }
 
+  @Override
   @NotNull
   @SuppressWarnings({"ConstantConditions"})
-  public OutputStream getOutputStream(final VirtualFile file, final Object requestor, final long modStamp, final long timeStamp) throws IOException {
+  public OutputStream getOutputStream(@NotNull final VirtualFile file, final Object requestor, final long modStamp, final long timeStamp) throws IOException {
     throwReadOnly();
     return null; // Unreachable
   }
 
+  @Override
   @SuppressWarnings({"ConstantConditions"})
-  public VirtualFile copyFile(final Object requestor, final VirtualFile file, final VirtualFile newParent, final String copyName) throws IOException {
+  public VirtualFile copyFile(final Object requestor, @NotNull final VirtualFile file, @NotNull final VirtualFile newParent, @NotNull final String copyName) throws IOException {
     throwReadOnly();
     return null;
   }
 
-  public void moveFile(final Object requestor, final VirtualFile file, final VirtualFile newParent) throws IOException {
+  @Override
+  public void moveFile(final Object requestor, @NotNull final VirtualFile file, @NotNull final VirtualFile newParent) throws IOException {
     throwReadOnly();
   }
 
-  public void renameFile(final Object requestor, final VirtualFile file, final String newName) throws IOException {
+  @Override
+  public void renameFile(final Object requestor, @NotNull final VirtualFile file, @NotNull final String newName) throws IOException {
     throwReadOnly();
   }
 
-  public void setTimeStamp(final VirtualFile file, final long modstamp) throws IOException {
+  @Override
+  public void setTimeStamp(@NotNull final VirtualFile file, final long timeStamp) throws IOException {
     throwReadOnly();
   }
 
-  public void setWritable(final VirtualFile file, final boolean writableFlag) throws IOException {
+  @Override
+  public void setWritable(@NotNull final VirtualFile file, final boolean writableFlag) throws IOException {
     throwReadOnly();
   }
 
@@ -353,19 +367,22 @@ public class JarHandler implements FileSystemInterface {
     return false;
   }
 
+  @Override
   @SuppressWarnings({"ConstantConditions"})
-  public VirtualFile createChildDirectory(final Object requestor, final VirtualFile parent, final String dir) throws IOException {
+  public VirtualFile createChildDirectory(final Object requestor, @NotNull final VirtualFile parent, @NotNull final String dir) throws IOException {
     throwReadOnly();
     return null;
   }
 
+  @Override
   @SuppressWarnings({"ConstantConditions"})
-  public VirtualFile createChildFile(final Object requestor, final VirtualFile parent, final String file) throws IOException {
+  public VirtualFile createChildFile(final Object requestor, @NotNull final VirtualFile parent, @NotNull final String file) throws IOException {
     throwReadOnly();
     return null;
   }
 
-  public void deleteFile(final Object requestor, final VirtualFile file) throws IOException {
+  @Override
+  public void deleteFile(final Object requestor, @NotNull final VirtualFile file) throws IOException {
     throwReadOnly();
   }
 }

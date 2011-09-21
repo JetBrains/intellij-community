@@ -167,11 +167,11 @@ public class TempFileSystem extends NewVirtualFileSystem {
     return fsItem.myTimestamp;
   }
 
-  public void setTimeStamp(@NotNull final VirtualFile file, final long modstamp) throws IOException {
+  public void setTimeStamp(@NotNull final VirtualFile file, final long timeStamp) throws IOException {
     final FSItem fsItem = convert(file);
     assert fsItem != null;
 
-    fsItem.myTimestamp = modstamp > 0 ? modstamp : LocalTimeCounter.currentTime();
+    fsItem.myTimestamp = timeStamp > 0 ? timeStamp : LocalTimeCounter.currentTime();
   }
 
   public boolean isWritable(@NotNull final VirtualFile file) {

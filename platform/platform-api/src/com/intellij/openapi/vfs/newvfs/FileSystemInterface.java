@@ -36,7 +36,7 @@ public interface FileSystemInterface {
   boolean isDirectory(@NotNull VirtualFile file);
 
   long getTimeStamp(@NotNull VirtualFile file);
-  void setTimeStamp(@NotNull VirtualFile file, long modstamp) throws IOException;
+  void setTimeStamp(@NotNull VirtualFile file, long timeStamp) throws IOException;
 
   boolean isWritable(@NotNull VirtualFile file);
   void setWritable(@NotNull VirtualFile file, boolean writableFlag) throws IOException;

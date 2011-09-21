@@ -241,6 +241,8 @@ nosort
 notnull
 novalidate
 nowait
+nullabilities
+nullability
 nullif
 nvarchar
 oauth
