@@ -48,13 +48,6 @@ import java.util.Locale;
 public abstract class LocalFileSystemBase extends LocalFileSystem {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl");
 
-  private static final FileFilter FILE_FILTER = new FileFilter() {
-    @Override
-    public boolean accept(final File child) {
-      return child.isFile() || child.isDirectory();
-    }
-  };
-
   private final List<LocalFileOperationsHandler> myHandlers = new ArrayList<LocalFileOperationsHandler>();
 
   @Nullable
@@ -133,9 +126,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
       path += "/"; // Make 'c:' resolve to a root directory for drive c:, not the current directory on that drive
     }
 
-    final File ioFile = new File(path);
-    assert !ioFile.exists() || ioFile.isFile() || ioFile.isDirectory() : ioFile.getAbsolutePath();
-    return ioFile;
+    return new File(path);
   }
 
   public boolean exists(@NotNull final VirtualFile fileOrDirectory) {
@@ -189,15 +180,8 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
       return ArrayUtil.EMPTY_STRING_ARRAY;
     }
 
-    final File ioFile = convertToIOFile(file);
-    final File[] files = ioFile.listFiles(FILE_FILTER);
-    if (files == null || files.length == 0) return ArrayUtil.EMPTY_STRING_ARRAY;
-
-    final String[] names = new String[files.length];
-    for (int i = 0, length = files.length; i < length; i++) {
-      names[i] = files[i].getName();
-    }
-    return names;
+    final String[] names = convertToIOFile(file).list();
+    return names != null ? names : ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
   protected static boolean isInvalidSymLink(@NotNull final VirtualFile file) {
