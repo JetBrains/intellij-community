@@ -45,6 +45,8 @@ public class ClassRepr extends Proto {
 
         public abstract boolean packageLocalOn();
 
+        public abstract boolean extendsAdded ();
+
         public boolean no() {
             return base() == NONE &&
                     interfaces().unchanged() &&
@@ -68,6 +70,12 @@ public class ClassRepr extends Proto {
         final int d = base;
 
         return new Diff() {
+            @Override
+            public boolean extendsAdded() {
+                final String pastSuperName = ((TypeRepr.ClassType) ((ClassRepr) past).superClass).className.value;
+                return (d & Difference.SUPERCLASS) > 0 && pastSuperName.equals("java/lang/Object");
+            }
+
             @Override
             public boolean packageLocalOn() {
                 return

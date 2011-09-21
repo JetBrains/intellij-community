@@ -28,6 +28,10 @@ public class TestClassModifiers extends IncrementalTestCase {
         doTest();
     }
 
+    public void testDropAbstract() throws Exception {
+        doTest();
+    }
+
     public void testSetFinal() throws Exception {
         doTest();
     }

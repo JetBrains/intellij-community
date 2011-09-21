@@ -79,6 +79,16 @@ public class Mappings {
         return false;
     }
 
+    private void affectSubclasses (final StringCache.S className, final Set<StringCache.S> affectedFiles) {
+        affectedFiles.add(classToSourceFile.get(className));
+
+        final Collection<StringCache.S> directSubclasses = classToSubclasses.foxyGet(className);
+
+        for (StringCache.S subClass : directSubclasses) {
+            affectSubclasses(subClass, affectedFiles);
+        }
+    }
+
     private void affectAll(final StringCache.S fileName, final Set<StringCache.S> affectedFiles) {
         final Set<StringCache.S> dependants = (Set<StringCache.S>) fileToFileDependency.foxyGet(fileName);
 
@@ -144,6 +154,21 @@ public class Mappings {
 
                 final int addedModifiers = diff.addedModifiers();
                 final int removedModifiers = diff.removedModifiers();
+
+                if ((diff.base() & Difference.SUPERCLASS) > 0) {
+                    affectSubclasses(it.name, affectedFiles);
+                    if (!diff.extendsAdded()) {
+                        affectedUsages.add(it.createUsage());
+                    }
+                }
+
+                if (!diff.interfaces().unchanged()) {
+                    if (!diff.interfaces().removed().isEmpty()) {
+                        affectedUsages.add(it.createUsage());
+                    }
+
+                    affectSubclasses(it.name, affectedFiles);
+                }
 
                 if (it.isAnnotation() && it.policy == RetentionPolicy.SOURCE) {
                     return false;
@@ -215,8 +240,14 @@ public class Mappings {
                             l.add(m.name);
                             annotationQuery.add((UsageRepr.AnnotationUsage) UsageRepr.createAnnotationUsage(TypeRepr.createClassType(it.name), l, null));
                         }
-                    } else if (mr.snd.base() != Difference.NONE) {
-                        affectedUsages.add(mr.fst.createUsage(it.name));
+                    } else if (d.base() != Difference.NONE) {
+                        // TODO!!
+                        if (d.base() == Difference.ACCESS && d.removedModifiers() == Opcodes.ACC_ABSTRACT) {
+
+                        }
+                        else {
+                            affectedUsages.add(mr.fst.createUsage(it.name));
+                        }
                     }
                 }
 
@@ -251,6 +282,10 @@ public class Mappings {
 
                 filewise:
                 for (StringCache.S depFile : dependants) {
+                    if (affectedFiles.contains(depFile)) {
+                        continue filewise;
+                    }
+
                     final UsageRepr.Cluster depCluster = sourceFileToUsages.get(depFile);
                     final Set<UsageRepr.Usage> depUsages = depCluster.getUsages();
 
