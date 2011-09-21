@@ -7,6 +7,7 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.util.Processor;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -113,7 +114,7 @@ class FindInFilesOptimizingSearchHelper extends OptimizingSearchHelperBase {
     final List<PsiElement> results = new ArrayList<PsiElement>();
 
     PsiElementProcessor<PsiClass> processor = new PsiElementProcessor<PsiClass>() {
-      public boolean execute(PsiClass element) {
+      public boolean execute(@NotNull PsiClass element) {
         results.add(element);
         return true;
       }
