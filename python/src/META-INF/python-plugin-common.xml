@@ -204,6 +204,8 @@
       <category>Python</category>
     </intentionAction>
 
+    <testFinder implementation="com.jetbrains.python.codeInsight.testIntegration.PyTestFinder"/>
+
     <stubElementTypeHolder class="com.jetbrains.python.PyElementTypes"/>
     <inspectionToolProvider implementation="com.jetbrains.python.inspections.PythonInspectionToolProvider"/>
 
