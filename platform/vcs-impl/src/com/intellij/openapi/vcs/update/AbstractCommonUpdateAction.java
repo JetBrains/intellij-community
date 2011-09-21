@@ -42,7 +42,6 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManagerImpl;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesAdapter;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache;
-import com.intellij.openapi.vcs.changes.committed.IntoSelfVirtualFileConvertor;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
@@ -187,10 +186,28 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
     for (Map.Entry<AbstractVcs, Collection<FilePath>> entry : resultPrep.entrySet()) {
       final AbstractVcs vcs = entry.getKey();
       final List<FilePath> paths = new ArrayList<FilePath>(entry.getValue());
-      final List<VirtualFile> files = ObjectsConvertor.convert(paths, ObjectsConvertor.FILEPATH_TO_VIRTUAL, ObjectsConvertor.NOT_NULL);
-      result.put(vcs, ObjectsConvertor.vf2fp(vcs.filterUniqueRoots(files, IntoSelfVirtualFileConvertor.getInstance())));
+      result.put(vcs, filterSubdirectories(paths));
     }
 
+    return result;
+  }
+
+  private static List<FilePath> filterSubdirectories(List<FilePath> paths) {
+    if (paths.isEmpty()) {
+      return paths;
+    }
+    Collections.sort(paths, DescindingFilesFilter.FilePathComparator.getInstance());
+    final ArrayList<FilePath> result = new ArrayList<FilePath>();
+    outer:
+    for (int i = 0, pathsSize = paths.size(); i < pathsSize; i++) {
+      final FilePath path = paths.get(i);
+      for (FilePath root : result) {
+        if (path.isUnder(root, false)) {
+          continue outer;
+        }
+      }
+      result.add(path);
+    }
     return result;
   }
 
