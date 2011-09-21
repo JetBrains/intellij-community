@@ -187,7 +187,7 @@ public class ProjectUtil {
     final GeneralSettings settings = GeneralSettings.getInstance();
     if (settings.getConfirmOpenNewProject() == GeneralSettings.OPEN_PROJECT_ASK) {
       if (isNewProject) {
-        Messages.showYesNoDialog(IdeBundle.message("prompt.open.project.in.new.frame"),
+        return Messages.showYesNoDialog(IdeBundle.message("prompt.open.project.in.new.frame"),
                                  IdeBundle.message("title.new.project"),
                                  IdeBundle.message("button.existingframe"),
                                  IdeBundle.message("button.newframe"),
