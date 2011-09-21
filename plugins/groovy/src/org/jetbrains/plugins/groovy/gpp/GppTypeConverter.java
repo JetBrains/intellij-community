@@ -28,7 +28,7 @@ public class GppTypeConverter extends GrTypeConverter {
       return false;
     }
 
-    if (AnnotatedContextFilter.hasAnnotatedContext(context, GROOVY_LANG_TYPED)) {
+    if (AnnotatedContextFilter.findContextAnnotation(context, GROOVY_LANG_TYPED) != null) {
       return true;
     }
 

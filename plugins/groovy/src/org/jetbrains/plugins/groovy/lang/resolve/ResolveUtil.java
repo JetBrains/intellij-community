@@ -29,6 +29,8 @@ import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.dsl.psi.PsiElementCategory;
+import org.jetbrains.plugins.groovy.dsl.toplevel.AnnotatedContextFilter;
 import org.jetbrains.plugins.groovy.findUsages.LiteralConstructorReference;
 import org.jetbrains.plugins.groovy.gpp.GppTypeConverter;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -369,6 +371,8 @@ public class ResolveUtil {
 
   public static boolean processCategoryMembers(PsiElement place, PsiScopeProcessor processor) {
     boolean gpp = GppTypeConverter.hasTypedContext(place);
+    if (gpp && !processUseAnnotation(place, processor)) return false;
+
     boolean inCodeBlock = true;
     while (place != null) {
       if (place instanceof GrMember) {
@@ -380,13 +384,28 @@ public class ResolveUtil {
         PsiClass superClass = getLiteralSuperClass((GrClosableBlock)place);
         if (superClass != null && !GdkMethodUtil.processCategoryMethods(place, processor, null, superClass)) return false;
       }
-      if (place instanceof GrTypeDefinition) {
+      if (gpp && place instanceof GrTypeDefinition) {
         GrTypeDefinition typeDefinition = (GrTypeDefinition)place;
-        if (gpp && !GdkMethodUtil.processCategoryMethods(place, processor, typeDefinition, typeDefinition)) return false;
+        if (!GdkMethodUtil.processCategoryMethods(place, processor, typeDefinition, typeDefinition)) return false;
       }
       place = place.getContext();
     }
 
+    return true;
+  }
+
+  private static boolean processUseAnnotation(PsiElement place, PsiScopeProcessor processor) {
+    PsiAnnotation use = AnnotatedContextFilter.findContextAnnotation(place, GroovyCommonClassNames.GROOVY_LANG_USE);
+    if (use != null) {
+      for (PsiElement element : PsiElementCategory.asList(use.findDeclaredAttributeValue("value"))) {
+        if (element instanceof GrReferenceExpression) {
+          PsiElement resolve = ((GrReferenceExpression)element).resolve();
+          if (resolve instanceof PsiClass && !GdkMethodUtil.processCategoryMethods(place, processor, null, (PsiClass)resolve)) {
+            return false;
+          }
+        }
+      }
+    }
     return true;
   }
 

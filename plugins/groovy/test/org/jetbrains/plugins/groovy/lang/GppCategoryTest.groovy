@@ -80,6 +80,33 @@ class Sub extends Super {
 """
   }
 
+  public void testUseOnClass() {
+    assertResolves """
+class Super {
+  static def category(Object foo, int bar) {}
+}
+
+@Use(Super)
+class Sub {
+  def run() {
+    "".cate<caret>gory(2)
+  }
+}
+"""
+  }
+
+  public void testUseOnPackage() {
+    assertResolves """
+@Use([Object, Super]) package foo
+
+class Super {
+  static def category(Object foo, int bar) {}
+}
+
+"".cate<caret>gory(2)
+"""
+  }
+
   private def assertResolves(String text) {
     myFixture.configureByText "a.gpp", text
     assert findReference().resolve() instanceof GrGdkMethod
