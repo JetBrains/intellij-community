@@ -367,7 +367,7 @@ public class ExpectedHighlightingData {
     }
 
     for (LineMarkerInfo expectedLineMarker : lineMarkerInfos.values()) {
-      if (!containsLineMarker(expectedLineMarker, markerInfos)) {
+      if (markerInfos != null && !containsLineMarker(expectedLineMarker, markerInfos)) {
         final int startOffset = expectedLineMarker.startOffset;
         final int endOffset = expectedLineMarker.endOffset;
 
