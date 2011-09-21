@@ -285,11 +285,13 @@ public class ClassfileAnalyzer {
             classNameHolder.set(n);
 
             if (superClass != null) {
+                usages.addUsage(classNameHolder.get(), UsageRepr.createClassUsage(StringCache.get(superClass)));
                 usages.addUsage(classNameHolder.get(), UsageRepr.createClassExtendsUsage(StringCache.get(superClass)));
             }
 
             if (interfaces != null) {
                 for (String it : interfaces) {
+                    usages.addUsage(classNameHolder.get(), UsageRepr.createClassUsage(StringCache.get(it)));
                     usages.addUsage(classNameHolder.get(), UsageRepr.createClassExtendsUsage(StringCache.get(it)));
                 }
             }
@@ -380,6 +382,7 @@ public class ClassfileAnalyzer {
                     final TypeRepr.AbstractType element = typ.getDeepElementType();
 
                     if (element instanceof TypeRepr.ClassType) {
+                        usages.addUsage(classNameHolder.get(), UsageRepr.createClassUsage(((TypeRepr.ClassType) element).className));
                         usages.addUsage(classNameHolder.get(), UsageRepr.createClassNewUsage(((TypeRepr.ClassType) element).className));
                     }
 
@@ -409,9 +412,11 @@ public class ClassfileAnalyzer {
                     final TypeRepr.AbstractType typ = type.startsWith("[") ? TypeRepr.getType(type) : TypeRepr.createClassType(type);
 
                     if (opcode == Opcodes.NEW) {
+                        usages.addUsage(classNameHolder.get(), UsageRepr.createClassUsage(((TypeRepr.ClassType) typ).className));
                         usages.addUsage(classNameHolder.get(), UsageRepr.createClassNewUsage(((TypeRepr.ClassType) typ).className));
                     } else if (opcode == Opcodes.ANEWARRAY) {
                         if (typ instanceof TypeRepr.ClassType) {
+                            usages.addUsage(classNameHolder.get(), UsageRepr.createClassUsage(((TypeRepr.ClassType) typ).className));
                             usages.addUsage(classNameHolder.get(), UsageRepr.createClassNewUsage(((TypeRepr.ClassType) typ).className));
                         }
                     }

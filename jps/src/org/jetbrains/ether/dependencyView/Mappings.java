@@ -42,8 +42,6 @@ public class Mappings {
 
     private FoxyMap<StringCache.S, StringCache.S> classToSubclasses = new FoxyMap<StringCache.S, StringCache.S>(stringSetConstructor);
     private FoxyMap<StringCache.S, ClassRepr> sourceFileToClasses = new FoxyMap<StringCache.S, ClassRepr>(classSetConstructor);
-    //private FoxyMap<StringCache.S, UsageRepr.Usage> sourceFileToUsages = new FoxyMap<StringCache.S, UsageRepr.Usage>(usageSetConstructor);
-
     private Map<StringCache.S, UsageRepr.Cluster> sourceFileToUsages = new HashMap<StringCache.S, UsageRepr.Cluster>();
 
     private FoxyMap<StringCache.S, UsageRepr.Usage> sourceFileToAnnotationUsages = new FoxyMap<StringCache.S, UsageRepr.Usage>(usageSetConstructor);
@@ -53,11 +51,69 @@ public class Mappings {
     private Map<StringCache.S, StringCache.S> formToClass = new HashMap<StringCache.S, StringCache.S>();
     private Map<StringCache.S, StringCache.S> classToForm = new HashMap<StringCache.S, StringCache.S>();
 
+    private ClassRepr reprByName (final StringCache.S name) {
+        final Collection<ClassRepr> reprs = sourceFileToClasses.foxyGet(classToSourceFile.get(name));
+
+        for (ClassRepr repr : reprs) {
+            if (repr.name.equals(name)) {
+                return repr;
+            }
+        }
+
+        return null;
+    }
+
+    private boolean isInheritorOf (final StringCache.S who, final StringCache.S whom) {
+        if (who.equals(whom)) {
+            return true;
+        }
+
+        final ClassRepr repr = reprByName(who);
+
+        for (StringCache.S s : repr.getSupers()){
+            if (isInheritorOf(s, whom)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private void affectAll(final StringCache.S fileName, final Set<StringCache.S> affectedFiles) {
         final Set<StringCache.S> dependants = (Set<StringCache.S>) fileToFileDependency.foxyGet(fileName);
 
         if (dependants != null) {
             affectedFiles.addAll(dependants);
+        }
+    }
+
+    private abstract class UsageConstraint {
+        public abstract boolean checkResidence(final StringCache.S residence);
+    }
+
+    private class PackageConstraint extends UsageConstraint {
+        public final String packageName;
+
+        public PackageConstraint(final String packageName) {
+            this.packageName = packageName;
+        }
+
+        @Override
+        public boolean checkResidence(final StringCache.S residence) {
+            return !ClassRepr.getPackageName(residence).equals(packageName);
+        }
+    }
+
+    private class InheritanceConstraint extends UsageConstraint {
+        public final StringCache.S rootClass;
+
+        public InheritanceConstraint(final StringCache.S rootClass) {
+            this.rootClass = rootClass;
+        }
+
+        @Override
+        public boolean checkResidence(final StringCache.S residence) {
+            return !isInheritorOf(rootClass, residence);
         }
     }
 
@@ -78,6 +134,7 @@ public class Mappings {
             final Set<StringCache.S> dependants = (Set<StringCache.S>) fileToFileDependency.foxyGet(fileName);
             final Set<UsageRepr.Usage> affectedUsages = new HashSet<UsageRepr.Usage>();
             final Set<UsageRepr.AnnotationUsage> annotationQuery = new HashSet<UsageRepr.AnnotationUsage>();
+            final Map<UsageRepr.Usage, UsageConstraint> usageConstraints = new HashMap<UsageRepr.Usage, UsageConstraint>();
 
             final Difference.Specifier<ClassRepr> classDiff = Difference.make(pastClasses, classes);
 
@@ -93,12 +150,26 @@ public class Mappings {
                 }
 
                 if ((addedModifiers & Opcodes.ACC_PROTECTED) > 0) {
+                    final UsageRepr.Usage usage = it.createUsage();
 
+                    affectedUsages.add(usage);
+                    usageConstraints.put(usage, new InheritanceConstraint(it.name));
+                }
+
+                if (diff.packageLocalOn()) {
+                    final UsageRepr.Usage usage = it.createUsage();
+
+                    affectedUsages.add(usage);
+                    usageConstraints.put(usage, new PackageConstraint(it.getPackageName()));
                 }
 
                 if ((addedModifiers & Opcodes.ACC_FINAL) > 0 ||
                         (addedModifiers & Opcodes.ACC_PRIVATE) > 0) {
                     affectedUsages.add(it.createUsage());
+                }
+
+                if ((addedModifiers & Opcodes.ACC_ABSTRACT) > 0) {
+                    affectedUsages.add(UsageRepr.createClassNewUsage(it.name));
                 }
 
                 if ((addedModifiers & Opcodes.ACC_STATIC) > 0 ||
@@ -178,6 +249,7 @@ public class Mappings {
             if (dependants != null) {
                 dependants.removeAll(compiledFiles);
 
+                filewise:
                 for (StringCache.S depFile : dependants) {
                     final UsageRepr.Cluster depCluster = sourceFileToUsages.get(depFile);
                     final Set<UsageRepr.Usage> depUsages = depCluster.getUsages();
@@ -188,7 +260,23 @@ public class Mappings {
                         usages.retainAll(affectedUsages);
 
                         if (!usages.isEmpty()) {
-                            affectedFiles.add(depFile);
+                            for (UsageRepr.Usage usage : usages) {
+                                final UsageConstraint constraint = usageConstraints.get(usage);
+
+                                if (constraint == null) {
+                                    affectedFiles.add(depFile);
+                                    continue filewise;
+                                } else {
+                                    final Set<StringCache.S> residenceClasses = depCluster.getResidence(usage);
+                                    for (StringCache.S residentName : residenceClasses) {
+                                        if (constraint.checkResidence(residentName)) {
+                                            affectedFiles.add(depFile);
+                                            continue filewise;
+                                        }
+                                    }
+
+                                }
+                            }
                         }
 
                         if (annotationQuery.size() > 0) {
@@ -198,7 +286,7 @@ public class Mappings {
                                 for (UsageRepr.AnnotationUsage query : annotationQuery) {
                                     if (query.satisfies(usage)) {
                                         affectedFiles.add(depFile);
-                                        break;
+                                        continue filewise;
                                     }
                                 }
                             }
@@ -248,9 +336,8 @@ public class Mappings {
 
         if (c == null) {
             sourceFileToUsages.put(source, usages);
-        }
-        else {
-            c.updateCluster (usages);
+        } else {
+            c.updateCluster(usages);
         }
     }
 

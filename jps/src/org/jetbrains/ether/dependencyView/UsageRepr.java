@@ -280,6 +280,18 @@ public class UsageRepr {
         public int hashCode() {
             return className.hashCode() + 1;
         }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            ClassExtendsUsage that = (ClassExtendsUsage) o;
+
+            if (!className.equals(that.className)) return false;
+
+            return true;
+        }
     }
 
     public static class ClassNewUsage extends ClassExtendsUsage {

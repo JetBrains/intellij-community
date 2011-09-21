@@ -32,20 +32,27 @@ public class ClassRepr extends Proto {
 
     public abstract class Diff extends Difference {
         public abstract Specifier<TypeRepr.AbstractType> interfaces();
-        public abstract Specifier<TypeRepr.AbstractType> nestedClasses();
-        public abstract Specifier<FieldRepr> fields();
-        public abstract Specifier<MethodRepr> methods();
-        public abstract Specifier<ElementType> targets();
-        public abstract boolean retentionChanged ();
 
-        public boolean no () {
+        public abstract Specifier<TypeRepr.AbstractType> nestedClasses();
+
+        public abstract Specifier<FieldRepr> fields();
+
+        public abstract Specifier<MethodRepr> methods();
+
+        public abstract Specifier<ElementType> targets();
+
+        public abstract boolean retentionChanged();
+
+        public abstract boolean packageLocalOn();
+
+        public boolean no() {
             return base() == NONE &&
-                   interfaces().unchanged() &&
-                   nestedClasses().unchanged() &&
-                   fields().unchanged() &&
-                   methods().unchanged() &&
-                   targets().unchanged() &&
-                   ! retentionChanged();
+                    interfaces().unchanged() &&
+                    nestedClasses().unchanged() &&
+                    fields().unchanged() &&
+                    methods().unchanged() &&
+                    targets().unchanged() &&
+                    !retentionChanged();
         }
     }
 
@@ -61,6 +68,21 @@ public class ClassRepr extends Proto {
         final int d = base;
 
         return new Diff() {
+            @Override
+            public boolean packageLocalOn() {
+                return
+                        ((past.access & Opcodes.ACC_PRIVATE) != 0 ||
+                                (past.access & Opcodes.ACC_PUBLIC) != 0 ||
+                                (past.access & Opcodes.ACC_PROTECTED) != 0
+                        )
+
+                                &&
+
+                                ((access & Opcodes.ACC_PRIVATE) == 0 &&
+                                        (access & Opcodes.ACC_PROTECTED) == 0 &&
+                                        (access & Opcodes.ACC_PUBLIC) == 0);
+            }
+
             @Override
             public int addedModifiers() {
                 return diff.addedModifiers();
@@ -99,9 +121,9 @@ public class ClassRepr extends Proto {
             @Override
             public boolean retentionChanged() {
                 return !((policy == null && pastClass.policy == RetentionPolicy.CLASS) ||
-                         (policy == RetentionPolicy.CLASS && pastClass.policy == null) ||
-                         (policy == pastClass.policy)
-                        );
+                        (policy == RetentionPolicy.CLASS && pastClass.policy == null) ||
+                        (policy == pastClass.policy)
+                );
             }
 
             @Override
@@ -111,14 +133,14 @@ public class ClassRepr extends Proto {
         };
     }
 
-    public StringCache.S[] getSupers () {
+    public StringCache.S[] getSupers() {
         final StringCache.S[] result = new StringCache.S[interfaces.size() + 1];
 
-        result[0] = ((TypeRepr.ClassType)superClass).className;
+        result[0] = ((TypeRepr.ClassType) superClass).className;
 
         int i = 1;
         for (TypeRepr.AbstractType t : interfaces) {
-            result[i++] = ((TypeRepr.ClassType)t).className;
+            result[i++] = ((TypeRepr.ClassType) t).className;
         }
 
         return result;
@@ -169,7 +191,7 @@ public class ClassRepr extends Proto {
         policy = s.isEmpty() ? null : RetentionPolicy.valueOf(s);
     }
 
-    public boolean isAnnotation () {
+    public boolean isAnnotation() {
         return (access & Opcodes.ACC_ANNOTATION) > 0;
     }
 
@@ -220,8 +242,15 @@ public class ClassRepr extends Proto {
         return sourceFileName;
     }
 
-    public String getPackageName(){
-        final String raw = name.value;
+    public String getPackageName() {
+        return getPackageName(name);
+    }
+
+    public static String getPackageName(final StringCache.S s) {
+        return getPackageName(s.value);
+
+    }
+    public static String getPackageName(final String raw) {
         final int index = raw.lastIndexOf('/');
 
         if (index == -1) {
