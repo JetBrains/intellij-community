@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitBranch;
 import git4idea.GitRemote;
 import git4idea.GitUtil;
+import org.jetbrains.plugins.github.ui.GithubLoginDialog;
 
 import javax.swing.*;
 
@@ -40,7 +41,7 @@ import javax.swing.*;
  */
 public class GithubOpenInBrowserAction extends DumbAwareAction {
   public static final Icon ICON = IconLoader.getIcon("/icons/github.png");
-  private static final String CANNOT_OPEN_IN_BROWSER = "Cannot open in browser";
+  public static final String CANNOT_OPEN_IN_BROWSER = "Cannot open in browser";
   private static final Logger LOG = Logger.getInstance(GithubOpenInBrowserAction.class.getName());
 
   protected GithubOpenInBrowserAction() {
@@ -71,9 +72,12 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
   @Override
   public void actionPerformed(final AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
-    if (!GithubUtil.checkCredentials(project)){
-      Messages.showErrorDialog(project, "Cannot login with GitHub credentials. Please configure them in File | Settings | GitHub", CANNOT_OPEN_IN_BROWSER);
-      return;
+    while (!GithubUtil.checkCredentials(project)) {
+      final GithubLoginDialog dialog = new GithubLoginDialog(project);
+      dialog.show();
+      if (!dialog.isOK()){
+        return;
+      }
     }
 
     final VirtualFile root = project.getBaseDir();
