@@ -270,7 +270,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
           if (expressionArguments.length + closureArguments.length > 0) {
             final GroovyResolveResult[] resolveResults = constructorCall.multiResolveClass();
             if (resolveResults.length == 1) {
-              final PsiElement element = resolveResults[1].getElement();
+              final PsiElement element = resolveResults[0].getElement();
               if (element instanceof PsiClass) {
                 registerError(getElementToHighlight(refElement, argList),
                               GroovyBundle.message("cannot.apply.default.constructor", ((PsiClass)element).getName()));
