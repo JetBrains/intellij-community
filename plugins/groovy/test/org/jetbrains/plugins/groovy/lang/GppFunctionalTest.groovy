@@ -315,12 +315,12 @@ class BarImpl extends Bar {}
   public void testResolveToStdLib() throws Exception {
     configureScript """
 @Typed def foo(List<String> l) {
-  l.ea<caret>ch { l.substring(1) }
+  l.ea<caret>ch { it.substring(1) }
 }
 """
     PsiMethod method = resolveReference().navigationElement
     assertEquals "each", method.name
-    assertEquals "groovy.util.Iterations", method.containingClass.qualifiedName
+    assertEquals "groovypp.util.Iterations", method.containingClass.qualifiedName
   }
 
   public void testResolveToStdLibWithArrayQualifier() throws Exception {
@@ -330,7 +330,7 @@ a.fol<caret>dLeft(2, { a, b -> a+b })
 """
     PsiMethod method = resolveReference().navigationElement
     assertEquals "foldLeft", method.name
-    assertEquals "groovy.util.Iterations", method.containingClass.qualifiedName
+    assertEquals "groovypp.util.Iterations", method.containingClass.qualifiedName
   }
 
   private PsiElement resolveReference() {
@@ -539,7 +539,7 @@ class GppProjectDescriptor extends DefaultLightProjectDescriptor {
   @Override
     public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
     final Library.ModifiableModel modifiableModel = model.getModuleLibraryTable().createLibrary("GROOVY++").getModifiableModel();
-    modifiableModel.addRoot(JarFileSystem.instance.refreshAndFindFileByPath(TestUtils.absoluteTestDataPath + "mockGroovypp/groovypp-0.2.3.jar!/"), OrderRootType.CLASSES);
+    modifiableModel.addRoot(JarFileSystem.instance.refreshAndFindFileByPath(TestUtils.absoluteTestDataPath + "mockGroovypp/groovypp-0.9.0_1.8.2.jar!/"), OrderRootType.CLASSES)
     modifiableModel.addRoot(JarFileSystem.instance.refreshAndFindFileByPath(TestUtils.mockGroovy1_7LibraryName + "!/"), OrderRootType.CLASSES);
     modifiableModel.commit();
   }
