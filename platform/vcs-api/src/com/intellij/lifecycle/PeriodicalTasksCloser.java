@@ -15,44 +15,18 @@
  */
 package com.intellij.lifecycle;
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
-import com.intellij.openapi.project.impl.ProjectLifecycleListener;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.util.concurrency.Semaphore;
-import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcsUtil.Rethrow;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-public class PeriodicalTasksCloser extends ProjectManagerAdapter implements ProjectLifecycleListener, ApplicationComponent {
+public class PeriodicalTasksCloser implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lifecycle.PeriodicalTasksCloser");
   private final Object myLock = new Object();
-
-  PeriodicalTasksCloser(final ProjectManager projectManager) {
-    Application application = ApplicationManager.getApplication();
-    MessageBusConnection connection = application.getMessageBus().connect(application);
-    connection.subscribe(ProjectLifecycleListener.TOPIC, this);
-    projectManager.addProjectManagerListener(this, application);
-  }
 
   public static PeriodicalTasksCloser getInstance() {
     return ApplicationManager.getApplication().getComponent(PeriodicalTasksCloser.class);
@@ -70,85 +44,6 @@ public class PeriodicalTasksCloser extends ProjectManagerAdapter implements Proj
 
   @Override
   public void initComponent() {
-  }
-
-  private static class Interrupter implements Disposable {
-    private final String myName;
-    private final Runnable myRunnable;
-
-    private Interrupter(@NotNull String name, @NotNull Runnable runnable) {
-      myName = name;
-      myRunnable = runnable;
-    }
-
-    @Override
-    public void dispose() {
-      final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-      if (indicator != null) {
-        indicator.setText(myName);
-        indicator.checkCanceled();
-      }
-      myRunnable.run();
-    }
-  }
-
-  private static final Key<List<Interrupter>> INTERRUPTERS = Key.create("VCS_INTERRUPTERS");
-  public boolean register(@NotNull Project project, @NotNull String name, @NotNull Runnable runnable) {
-    synchronized (myLock) {
-      if (project.isDisposed()) {
-        return false;
-      }
-
-      Interrupter interrupter = new Interrupter(name, runnable);
-      List<Interrupter> list = project.getUserData(INTERRUPTERS);
-      if (list == null) {
-        list = new ArrayList<Interrupter>();
-        project.putUserData(INTERRUPTERS, list);
-      }
-      list.add(interrupter);
-      Disposer.register(project, interrupter);
-
-      return true;
-    }
-  }
-
-  public boolean canCloseProject(Project project) {
-    return true;
-  }
-
-  public void projectClosing(final Project project) {
-    final List<Interrupter> interrupters;
-    synchronized (myLock) {
-      List<Interrupter> list = project.getUserData(INTERRUPTERS);
-      if (list == null) {
-        interrupters = null;
-      }
-      else {
-        interrupters = new ArrayList<Interrupter>(list);
-        list.clear();
-      }
-    }
-    if (interrupters != null) {
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-        public void run() {
-          for (Interrupter interrupter : interrupters) {
-            Disposer.dispose(interrupter);
-          }
-        }
-      }, "Please wait for safe shutdown of periodical tasks...", true, project);
-    }
-  }
-
-  @Override
-  public void afterProjectClosed(@NotNull Project project) {
-  }
-
-  @Override
-  public void projectComponentsInitialized(Project project) {
-  }
-
-  @Override
-  public void beforeProjectLoaded(@NotNull Project project) {
   }
 
   public <T> T safeGetComponent(@NotNull final Project project, final Class<T> componentClass) throws ProcessCanceledException {
