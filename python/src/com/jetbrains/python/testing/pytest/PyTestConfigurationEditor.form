@@ -23,6 +23,9 @@
               </grid>
             </constraints>
             <properties/>
+            <clientProperties>
+              <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
+            </clientProperties>
             <border type="none" title="py.tests"/>
             <children>
               <component id="97832" class="com.intellij.ui.components.JBLabel" binding="myTargetLabel">
@@ -95,6 +98,9 @@
               <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties/>
+            <clientProperties>
+              <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
+            </clientProperties>
             <border type="none" title="Interpreter"/>
             <children/>
           </grid>
