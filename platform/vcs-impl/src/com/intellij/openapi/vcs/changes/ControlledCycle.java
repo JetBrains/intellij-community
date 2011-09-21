@@ -15,9 +15,6 @@
  */
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.lifecycle.AtomicSectionsAware;
-import com.intellij.lifecycle.ControlledAlarmFactory;
-import com.intellij.lifecycle.SlowlyClosingAlarm;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.SomeQueue;
