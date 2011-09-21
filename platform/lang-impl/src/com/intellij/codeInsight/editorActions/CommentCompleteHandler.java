@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.lang.CodeDocumentationAwareCommenter;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiComment;
 
@@ -25,7 +26,7 @@ import com.intellij.psi.PsiComment;
 public interface CommentCompleteHandler {
   ExtensionPointName<CommentCompleteHandler> EP_NAME = ExtensionPointName.create("com.intellij.commentCompleteHandler");
 
-  boolean isCommentComplete(PsiComment comment, CodeDocumentationAwareCommenter commenter);
+  boolean isCommentComplete(PsiComment comment, CodeDocumentationAwareCommenter commenter, Editor editor);
 
   boolean isApplicable(PsiComment comment, CodeDocumentationAwareCommenter commenter);
 }
