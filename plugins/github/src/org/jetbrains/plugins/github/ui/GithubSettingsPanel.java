@@ -54,8 +54,11 @@ public class GithubSettingsPanel {
     myTestButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        final boolean result = GithubUtil.checkCredentials(ProjectManager.getInstance().getDefaultProject(), getHost(), getLogin(), getPassword());
-        Messages.showInfoMessage(result ? "Connection successful" : "Cannot login to the " + getHost() + " using given credentials", result ? "Success" : "Failure");
+        if (GithubUtil.checkCredentials(ProjectManager.getInstance().getDefaultProject(), getHost(), getLogin(), getPassword())){
+          Messages.showInfoMessage("Connection successful", "Success");
+        } else {
+          Messages.showErrorDialog("Cannot login to the " + getHost() + " using given credentials", "Failure");
+        }
       }
     });
   }
