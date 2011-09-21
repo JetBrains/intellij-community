@@ -60,22 +60,18 @@ public class ConfigurationUtil {
         }
     );
     for (final PsiMethod method : suiteMethods) {
-      final PsiClass containingClass = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
-        public PsiClass compute() {
-          return method.getContainingClass();
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        public void run() {
+          final PsiClass containingClass = method.getContainingClass();
+          if (containingClass == null) return;
+          if (containingClass instanceof PsiAnonymousClass) return;
+          if (containingClass.hasModifierProperty(PsiModifier.ABSTRACT)) return;
+          if (containingClass.getContainingClass() != null && !containingClass.hasModifierProperty(PsiModifier.STATIC)) return;
+          if (JUnitUtil.isSuiteMethod(method, project)) {
+            found.add(containingClass);
+          }
         }
       });
-      if (containingClass == null) continue;
-      if (containingClass instanceof PsiAnonymousClass) continue;
-      if (containingClass.hasModifierProperty(PsiModifier.ABSTRACT)) continue;
-      if (containingClass.getContainingClass() != null && !containingClass.hasModifierProperty(PsiModifier.STATIC)) continue;
-      if (ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-        public Boolean compute() {
-          return JUnitUtil.isSuiteMethod(method, project);
-        }
-      }).booleanValue()) {
-        found.add(containingClass);
-      }
     }
 
     boolean hasJunit4 = addAnnotatedMethodsAnSubclasses(manager, scope, testClassFilter, found, "org.junit.Test", true);
