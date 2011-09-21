@@ -226,24 +226,19 @@ public class GithubUtil {
   }
 
   public static boolean checkCredentials(final Project project) {
-    return checkCredentials(project, null, null, null);
+    final GithubSettings settings = GithubSettings.getInstance();
+    return checkCredentials(project, settings.getHost(), settings.getLogin(), settings.getPassword());
   }
-  public static boolean checkCredentials(final Project project, @Nullable final String url, @Nullable final String login, @Nullable String password) {
-    if (login == null && password == null && StringUtil.isEmptyOrSpaces(GithubSettings.getInstance().getLogin())){
+
+  public static boolean checkCredentials(final Project project, final String url, final String login, final String password) {
+    if (StringUtil.isEmptyOrSpaces(url) || StringUtil.isEmptyOrSpaces(login) || StringUtil.isEmptyOrSpaces(password)){
       return false;
-    }
-    final Ref<String> pass = new Ref<String>(password);
-    if (password == null){
-      pass.set(GithubSettings.getInstance().getPassword());
     }
     return accessToGithubWithModalProgress(project, new Computable<Boolean>() {
       @Override
       public Boolean compute() {
         ProgressManager.getInstance().getProgressIndicator().setText("Trying to login to GitHub");
-        if (url != null && login != null){
-          return testConnection(url, login, pass.get());
-        }
-        return false;
+        return testConnection(url, login, password);
       }
     });
   }
