@@ -79,18 +79,24 @@ public class ActionCommand extends TypeCommand {
           public void run() {
             final Ref<AnActionListener> listener = new Ref<AnActionListener>();
             listener.set(new AnActionListener.Adapter() {
-              @Override
-              public void afterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
-                if (context.isDisposed()) {
-                  am.removeAnActionListener(listener.get());
-                  return;
-                }
 
-                if (targetAction.equals(action)) {
-                  context.message("Performed action: " + actionName, context.getCurrentLine());
-                  am.removeAnActionListener(listener.get());
-                  result.setDone();
-                }
+              @Override
+              public void beforeActionPerformed(final AnAction action, DataContext dataContext, AnActionEvent event) {
+                SwingUtilities.invokeLater(new Runnable() {
+                  @Override
+                  public void run() {
+                    if (context.isDisposed()) {
+                      am.removeAnActionListener(listener.get());
+                      return;
+                    }
+
+                    if (targetAction.equals(action)) {
+                      context.message("Performed action: " + actionName, context.getCurrentLine());
+                      am.removeAnActionListener(listener.get());
+                      result.setDone();
+                    }
+                  }
+                });
               }
             });
             am.addAnActionListener(listener.get());
