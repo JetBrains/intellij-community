@@ -141,10 +141,10 @@ public class FSRecords implements Forceable {
       return myFreeRecords.remove(myFreeRecords.size() - 1);
     }
 
-    private static void createBrokenMarkerFile(Throwable reason) {
+    private static void createBrokenMarkerFile(@Nullable Throwable reason) {
       File brokenMarker = getCorruptionMarkerFile();
-      try {
 
+      try {
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
         final PrintStream stream = new PrintStream(out);
         new Exception().printStackTrace(stream);
@@ -1199,7 +1199,8 @@ public class FSRecords implements Forceable {
   }
 
   public static void checkSanity() {
-    //long startTime = System.currentTimeMillis();
+    long t = System.currentTimeMillis();
+
     synchronized (lock) {
       final int fileLength = (int)getRecords().length();
       assert fileLength % RECORD_SIZE == 0;
@@ -1209,7 +1210,7 @@ public class FSRecords implements Forceable {
       IntArrayList validAttributeIds = new IntArrayList();
       for (int id = 2; id < recordCount; id++) {
         int flags = getFlags(id);
-        assert (flags & ~ALL_VALID_FLAGS) == 0;
+        LOG.assertTrue((flags & ~ALL_VALID_FLAGS) == 0, "Invalid flags: 0x" + Integer.toHexString(flags) + ", id: " + id);
         if ((flags & FREE_RECORD_FLAG) != 0) {
           LOG.assertTrue(DbConnection.myFreeRecords.contains(id), "Record, marked free, not in free list: " + id);
         }
@@ -1220,10 +1221,9 @@ public class FSRecords implements Forceable {
       }
     }
 
-    //long endTime = System.currentTimeMillis();
-    //System.out.println("Sanity check took " + (endTime-startTime) + " ms");
+    t = System.currentTimeMillis() - t;
+    LOG.info("Sanity check took " + t + " ms");
   }
-
 
   private static void checkRecordSanity(final int id, final int recordCount, final IntArrayList usedAttributeRecordIds,
                                         final IntArrayList validAttributeIds) {

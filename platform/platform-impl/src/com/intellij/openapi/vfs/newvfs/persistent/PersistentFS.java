@@ -61,7 +61,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
   private static final int MUST_RELOAD_CONTENT = 0x08;
   private static final int IS_SYMLINK = 0x10;
 
-  static final int ALL_VALID_FLAGS = CHILDREN_CACHED_FLAG | IS_DIRECTORY_FLAG | IS_READ_ONLY | MUST_RELOAD_CONTENT;
+  static final int ALL_VALID_FLAGS = CHILDREN_CACHED_FLAG | IS_DIRECTORY_FLAG | IS_READ_ONLY | MUST_RELOAD_CONTENT | IS_SYMLINK;
 
   private final MessageBus myEventsBus;
 
@@ -72,16 +72,6 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
   public PersistentFS(MessageBus bus) {
     myEventsBus = bus;
 
-    /*
-    PropertiesComponent properties = PropertiesComponent.getInstance();
-    if (properties != null && !properties.isTrueValue("AntivirusActivityReporter.disabled")) {
-      AntivirusDetector.getInstance().enable(new Runnable() {
-        public void run() {
-          LOG.info("Antivirus activity detected. Please make sure IDEA system and caches directory as well as project foler are exluded from antivirus on-the-fly check list.");
-        }
-      });
-    }
-    */
     ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
       public void run() {
         performShutdown();
@@ -304,8 +294,6 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     FSRecords.setFlags(id, (directory ? IS_DIRECTORY_FLAG : 0) |
                            (delegate.isWritable(file) ? 0 : IS_READ_ONLY) |
                            (delegate.isSymLink(file) ? IS_SYMLINK : 0), true);
-
-    // TODO!!!: More attributes?
   }
 
   public boolean isDirectory(@NotNull final VirtualFile file) {
