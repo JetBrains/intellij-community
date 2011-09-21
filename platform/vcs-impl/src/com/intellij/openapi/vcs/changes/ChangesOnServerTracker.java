@@ -27,5 +27,5 @@ public interface ChangesOnServerTracker extends PlusMinus<Pair<String, AbstractV
   // todo add vcs parameter???
   void invalidate(final Collection<String> paths);
   boolean isUpToDate(final Change change);
-  boolean updateStep(final AtomicSectionsAware atomicSectionsAware);
+  boolean updateStep();
 }

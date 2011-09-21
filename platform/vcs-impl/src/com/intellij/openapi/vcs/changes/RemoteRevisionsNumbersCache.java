@@ -15,9 +15,9 @@
  */
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.lifecycle.AtomicSectionsAware;
 import com.intellij.lifecycle.ControlledAlarmFactory;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -75,8 +75,10 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
     }
   };
   private final VcsConfiguration myVcsConfiguration;
+  private final Project myProject;
 
   RemoteRevisionsNumbersCache(final Project project) {
+    myProject = project;
     myLock = new Object();
     myData = new HashMap<String, Pair<VcsRoot, VcsRevisionNumber>>();
     myRefreshingQueues = Collections.synchronizedMap(new HashMap<VcsRoot, LazyRefreshingSelfQueue<String>>());
@@ -86,7 +88,7 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
     myVcsConfiguration = VcsConfiguration.getInstance(project);
   }
 
-  public boolean updateStep(final AtomicSectionsAware atomicSectionsAware) {
+  public boolean updateStep() {
     mySomethingChanged = false;
     final HashMap<VcsRoot, LazyRefreshingSelfQueue> copyMap;
     synchronized (myLock) {
@@ -103,10 +105,9 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
       }
     }
     LOG.debug("queues refresh started, queues: " + copyMap.size());
-    final ProgressIndicator pi = ControlledAlarmFactory.createProgressIndicator(atomicSectionsAware);
     for (LazyRefreshingSelfQueue queue : copyMap.values()) {
-      atomicSectionsAware.checkShouldExit();
-      queue.updateStep(pi);
+      if (myProject.isDisposed()) throw new ProcessCanceledException();
+      queue.updateStep();
     }
     return mySomethingChanged;
   }

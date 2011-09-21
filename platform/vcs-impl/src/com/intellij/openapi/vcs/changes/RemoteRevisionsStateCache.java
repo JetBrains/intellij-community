@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.lifecycle.AtomicSectionsAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.*;
@@ -99,7 +98,7 @@ public class RemoteRevisionsStateCache implements ChangesOnServerTracker {
     }
   }
 
-  public boolean updateStep(final AtomicSectionsAware atomicSectionsAware) {
+  public boolean updateStep() {
     final MultiMap<VcsRoot, String> dirty = new MultiMap<VcsRoot, String>();
     final long oldPoint = System.currentTimeMillis() - (myVcsConfiguration.CHANGED_ON_SERVER_INTERVAL > 0 ?
                                                         myVcsConfiguration.CHANGED_ON_SERVER_INTERVAL * 60000 : DISCRETE);
@@ -134,7 +133,6 @@ public class RemoteRevisionsStateCache implements ChangesOnServerTracker {
 
     final Map<String, Pair<Boolean, VcsRoot>> results = new HashMap<String, Pair<Boolean, VcsRoot>>();
     for (VcsRoot vcsRoot : dirty.keySet()) {
-      atomicSectionsAware.checkShouldExit();
       // todo - actually it means nothing since the only known VCS to use this scheme is Git and now it always allow
       // todo - background operations. when it changes, develop more flexible behavior here
       if (! vcsRoot.vcs.isVcsBackgroundOperationsAllowed(vcsRoot.path)) continue;

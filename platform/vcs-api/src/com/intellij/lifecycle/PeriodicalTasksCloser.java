@@ -29,6 +29,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.project.impl.ProjectLifecycleListener;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -193,42 +194,5 @@ public class PeriodicalTasksCloser extends ProjectManagerAdapter implements Proj
       }
     }
     throw new ProcessCanceledException();
-  }
-
-  public void invokeAndWaitInterruptedWhenClosing(Project project, @NotNull final Runnable runnable, @NotNull ModalityState modalityState) {
-    final AtomicBoolean start = new AtomicBoolean(true);
-    LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread());
-
-    final Semaphore semaphore = new Semaphore();
-    semaphore.down();
-    Runnable runnable1 = new Runnable() {
-      public void run() {
-        try {
-          runnable.run();
-        }
-        finally {
-          semaphore.up();
-        }
-      }
-
-      @NonNls
-      public String toString() {
-        return "PeriodicalTaskCloser's invoke and wait [" + runnable.toString() + "]";
-      }
-    };
-    ApplicationManager.getApplication().invokeLater(runnable1, modalityState, new Condition<Object>() {
-      public boolean value(Object o) {
-        return !start.get();
-      }
-    });
-
-    while (true) {
-      if (semaphore.waitFor(1000)) {
-        return;
-      }
-      if (project != null && !project.isOpen()) {
-        start.set(false);
-      }
-    }
   }
 }
