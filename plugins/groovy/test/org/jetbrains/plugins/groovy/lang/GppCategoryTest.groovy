@@ -30,7 +30,7 @@ class GppCategoryTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testFromSuperClass() {
-    myFixture.configureByText "a.gpp", """
+    assertResolves("""
 class Super {
   static def category(Object foo, int bar) {}
 }
@@ -40,12 +40,32 @@ class Sub extends Super {
     "".cate<caret>gory(2)
   }
 }
+""")
+  }
+
+  public void testFromSuperClassClosureSyntax() {
+    assertResolves """
+abstract class Super implements Runnable {
+  static def category(Object foo, int bar) {}
+}
+
+Super s = { "".cate<caret>gory(2) }
 """
-    assert findReference().resolve() instanceof GrGdkMethod
+  }
+
+  public void testFromSuperClassMapSyntax() {
+    assertResolves """
+class Super {
+  static def category(Object foo, int bar) {}
+  void xxx() {}
+}
+
+Super s = [xxx:{ "".cate<caret>gory(2) }]
+"""
   }
 
   public void testFromSuperClassTrait() {
-    myFixture.configureByText "a.gpp", """
+    assertResolves """
 @Trait class MyTrait {
   static def category(Object foo, int bar) {}
 }
@@ -58,11 +78,15 @@ class Sub extends Super {
   }
 }
 """
+  }
+
+  private def assertResolves(String text) {
+    myFixture.configureByText "a.gpp", text
     assert findReference().resolve() instanceof GrGdkMethod
   }
 
   private PsiReference findReference() {
     return myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset)
   }
-  
+
 }

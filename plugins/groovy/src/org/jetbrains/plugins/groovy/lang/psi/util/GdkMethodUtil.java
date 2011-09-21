@@ -89,7 +89,7 @@ public class GdkMethodUtil {
 
   public static boolean processCategoryMethods(PsiElement place,
                                                 final PsiScopeProcessor processor,
-                                                GroovyPsiElement resolveContext,
+                                                @Nullable GroovyPsiElement resolveContext,
                                                 @NotNull PsiClass categoryClass) {
     final DelegatingScopeProcessor delegate = new DelegatingScopeProcessor(processor) {
       @Override

@@ -29,13 +29,16 @@ import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.findUsages.LiteralConstructorReference;
 import org.jetbrains.plugins.groovy.gpp.GppTypeConverter;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
@@ -369,6 +372,10 @@ public class ResolveUtil {
       }
       if (place instanceof GrClosableBlock) {
         if (inCodeBlock && !GdkMethodUtil.categoryIteration((GrClosableBlock)place, processor)) return false;
+        if (gpp) {
+          PsiClass superClass = getGppSuperClass((GrClosableBlock)place);
+          if (superClass != null && !GdkMethodUtil.processCategoryMethods(place, processor, null, superClass)) return false;
+        }
       }
       if (place instanceof GrTypeDefinition) {
         GrTypeDefinition typeDefinition = (GrTypeDefinition)place;
@@ -378,6 +385,16 @@ public class ResolveUtil {
     }
 
     return true;
+  }
+
+  @Nullable private static PsiClass getGppSuperClass(GrClosableBlock closure) {
+    PsiClassType type;
+    if (closure.getParent() instanceof GrNamedArgument && closure.getParent().getParent() instanceof GrListOrMap) {
+      type = LiteralConstructorReference.getTargetConversionType((GrListOrMap)closure.getParent().getParent());
+    } else {
+      type = LiteralConstructorReference.getTargetConversionType(closure);
+    }
+    return type != null ? type.resolve() : null;
   }
 
   public static PsiElement[] mapToElements(GroovyResolveResult[] candidates) {
