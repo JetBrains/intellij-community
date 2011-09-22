@@ -117,7 +117,7 @@ public class ConversionServiceImpl extends ConversionService {
   @Override
   public ConversionResult convert(@NotNull String projectPath) {
     try {
-      if (!isConversionNeeded(projectPath)) {
+      if (!new File(projectPath).exists() || ApplicationManager.getApplication().isHeadlessEnvironment() || !isConversionNeeded(projectPath)) {
         return ConversionResultImpl.CONVERSION_NOT_NEEDED;
       }
 
@@ -167,10 +167,6 @@ public class ConversionServiceImpl extends ConversionService {
   }
 
   public static boolean isConversionNeeded(String projectPath) throws CannotConvertException {
-    if (projectPath == null || !new File(projectPath).exists() || ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      return false;
-    }
-
     final ConversionContextImpl context = new ConversionContextImpl(projectPath);
     final List<ConversionRunner> runners = getSortedConverters(context);
     if (runners.isEmpty()) {
