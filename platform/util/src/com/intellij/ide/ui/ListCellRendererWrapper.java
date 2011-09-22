@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import java.awt.*;
  * is used instead of DefaultComboBoxRenderer.
  *
  * @author oleg
- * Date: 9/30/10
+ * @since 30.09.2010
  */
 public abstract class ListCellRendererWrapper<T> implements ListCellRenderer {
   private final ListCellRenderer myOriginalRenderer;
@@ -58,8 +58,8 @@ public abstract class ListCellRendererWrapper<T> implements ListCellRenderer {
                                                       final boolean isSelected,
                                                       final boolean cellHasFocus) {
     try {
-      //noinspection unchecked
-      customize(list, (T)value, index, isSelected, cellHasFocus);
+      @SuppressWarnings("unchecked") final T t = (T)value;
+      customize(list, t, index, isSelected, cellHasFocus);
       final Component component = myOriginalRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
       if (component instanceof JLabel) {
         final JLabel label = (JLabel)component;
@@ -93,7 +93,7 @@ public abstract class ListCellRendererWrapper<T> implements ListCellRenderer {
     myIcon = icon;
   }
 
-  public final void setText(final String text) {
+  public final void setText(@Nullable final String text) {
     myText = text;
   }
 
