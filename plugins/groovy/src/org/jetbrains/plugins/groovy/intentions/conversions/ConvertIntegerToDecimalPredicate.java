@@ -37,7 +37,7 @@ class ConvertIntegerToDecimalPredicate implements PsiElementPredicate {
         !type.equalsToText("java.lang.Integer") && !type.equalsToText("java.lang.Long")) {
       return false;
     }
-    @NonNls final String text = expression.getText();
+    @NonNls final String text = expression.getText().replaceAll("_", "");
     if (text == null || text.length() < 2) {
       return false;
     }

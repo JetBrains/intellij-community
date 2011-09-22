@@ -98,6 +98,7 @@ public class ChangeListViewerDialog extends DialogWrapper implements DataProvide
 
   private void initCommitMessageArea(final Project project, final CommittedChangeList changeList) {
     myCommitMessageArea = new JEditorPane(UIUtil.HTML_MIME, "");
+    myCommitMessageArea.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
     myCommitMessageArea.setEditable(false);
     @NonNls final String text = IssueLinkHtmlRenderer.formatTextIntoHtml(project, changeList.getComment().trim());
     myCommitMessageArea.setBackground(UIUtil.getComboBoxDisabledBackground());
@@ -126,7 +127,7 @@ public class ChangeListViewerDialog extends DialogWrapper implements DataProvide
   public JComponent createCenterPanel() {
     final JPanel mainPanel = new JPanel();
     mainPanel.setLayout(new BorderLayout());
-    final Splitter splitter = new Splitter(true, 0.9f);
+    final Splitter splitter = new Splitter(true, 0.8f);
     myChangesBrowser = new RepositoryChangesBrowser(myProject, Collections.singletonList(myChangeList),
                                                     new ArrayList<Change>(myChangeList.getChanges()),
                                                     myChangeList) {

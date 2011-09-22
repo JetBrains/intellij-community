@@ -113,6 +113,11 @@ public class TargetElementUtil extends TargetElementUtilBase {
           }
         }
       }
+
+      if (refElement instanceof PsiMirrorElement) {
+        return ((PsiMirrorElement)refElement).getPrototype();
+      }
+
       if (refElement instanceof PsiClass) {
         final PsiFile containingFile = refElement.getContainingFile();
         if (containingFile != null && containingFile.getVirtualFile() == null) { // in mirror file of compiled class

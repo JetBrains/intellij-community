@@ -503,6 +503,7 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
     return PsiClassImplUtil.isMethodEquivalentTo(this, another);
   }
 
+  @NotNull
   @Override
   public GrReflectedMethod[] getReflectedMethods() {
     CachedValue<GrReflectedMethod[]> cached = getUserData(CACHED_REFLECTED_METHODS_KEY);

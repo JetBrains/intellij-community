@@ -16,7 +16,6 @@
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.CommonBundle;
-import com.intellij.application.options.PathMacrosCollector;
 import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.conversion.ConversionResult;
 import com.intellij.conversion.ConversionService;

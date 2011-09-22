@@ -13,16 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.lang.refactoring;
+package org.jetbrains.plugins.groovy.lang.psi.api.types;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
-
-import java.util.Collection;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Max Medvedev
  */
-public interface ReferencesToInlineSearcher {
-  Collection<? extends PsiReference> findReferences(PsiElement element, InlineHandler.Settings settings);
+public interface GrDisjunctionTypeElement extends GrTypeElement {
+  @NotNull
+  GrTypeElement[] getTypeElements();
 }

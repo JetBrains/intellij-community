@@ -152,6 +152,7 @@ public class ConvertMethodToClosureIntention extends Intention {
       else {
         final PsiElement parent = element.getParent();
         if (!(parent instanceof GrMethod)) return false;
+        if (((GrMethod)parent).getNameIdentifierGroovy() != element) return false;
         method = (GrMethod)parent;
       }
       return method.getBlock() != null && method.getParent() instanceof GrTypeDefinitionBody;

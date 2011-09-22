@@ -186,4 +186,9 @@ public class GrAccessorMethodImpl extends LightMethodBuilder implements GrAccess
     return false;
   }
 
+  @NotNull
+  @Override
+  public PsiElement getPrototype() {
+    return getProperty();
+  }
 }

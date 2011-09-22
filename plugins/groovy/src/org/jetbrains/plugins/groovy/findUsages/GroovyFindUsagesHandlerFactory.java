@@ -28,13 +28,15 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -82,7 +84,10 @@ public class GroovyFindUsagesHandlerFactory extends JavaFindUsagesHandlerFactory
               for (PsiMethod setter : setters) {
                 ContainerUtil.addAll(elements, SuperMethodWarningUtil.checkSuperMethods(setter, ACTION_STRING));
               }
-              return PsiUtilBase.toPsiElementArray(elements);
+              for (Iterator<PsiElement> iterator = elements.iterator(); iterator.hasNext(); ) {
+                if (iterator.next() instanceof GrAccessorMethod) iterator.remove();
+              }
+              return PsiUtilCore.toPsiElementArray(elements);
             }
             else {
               return PsiElement.EMPTY_ARRAY;

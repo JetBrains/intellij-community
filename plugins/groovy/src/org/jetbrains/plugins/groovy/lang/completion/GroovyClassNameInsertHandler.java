@@ -18,11 +18,15 @@ package org.jetbrains.plugins.groovy.lang.completion;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrCatchClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
@@ -99,7 +103,14 @@ public class GroovyClassNameInsertHandler implements InsertHandler<JavaPsiClassR
   }
 
   private static boolean isInVariable(PsiElement position) {
-    GrVariable variable = PsiTreeUtil.getParentOfType(position, GrVariable.class);
-    return variable != null && variable.getTypeElementGroovy() == null && position == variable.getNameIdentifierGroovy();
+    final PsiElement parent = position.getParent();
+    if (parent instanceof GrVariable) {
+      return ((GrVariable)parent).getTypeElementGroovy() == null && position == ((GrVariable)parent).getNameIdentifierGroovy();
+    }
+    if (parent instanceof GrCatchClause)  {
+      return ((GrCatchClause)parent).getParameter() == null;
+    }
+
+    return false;
   }
 }

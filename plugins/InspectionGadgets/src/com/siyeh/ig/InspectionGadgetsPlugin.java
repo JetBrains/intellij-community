@@ -749,6 +749,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(ExpectedExceptionNeverThrownInspection.class);
         m_inspectionClasses.add(ParameterizedParametersStaticCollectionInspection.class);
         m_inspectionClasses.add(ConstantJUnitAssertArgumentInspection.class);
+        m_inspectionClasses.add(IgnoredJUnitTestInspection.class);
         m_inspectionClasses.add(JUnit4AnnotatedMethodInJUnit3TestCaseInspection.class);
         m_inspectionClasses.add(JUnitAbstractTestClassNamingConventionInspection.class);
         m_inspectionClasses.add(JUnitTestClassNamingConventionInspection.class);

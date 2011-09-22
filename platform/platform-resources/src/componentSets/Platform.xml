@@ -6,6 +6,11 @@
     </component>
 
     <component>
+      <interface-class>com.intellij.openapi.project.ProjectManager</interface-class>
+      <implementation-class>com.intellij.openapi.project.impl.ProjectManagerImpl</implementation-class>
+    </component>
+
+    <component>
       <interface-class>com.intellij.openapi.fileTypes.FileTypeManager</interface-class>
       <implementation-class>com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl</implementation-class>
     </component>

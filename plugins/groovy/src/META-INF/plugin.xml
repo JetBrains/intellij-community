@@ -221,7 +221,7 @@
     <codeInsight.parameterInfo language="Groovy"
                                implementationClass="org.jetbrains.plugins.groovy.lang.parameterInfo.GroovyParameterInfoHandler"/>
     <refactoring.inlineHandler language="Groovy" implementationClass="org.jetbrains.plugins.groovy.refactoring.inline.GroovyInlineHandler"/>
-    <refactoring.referencesToInlineSearcher language="Groovy" implementationClass="org.jetbrains.plugins.groovy.refactoring.inline.GroovyInlineHandler"/>
+    <inlineActionHandler implementation="org.jetbrains.plugins.groovy.refactoring.inline.GroovyInlineLocalHandler"/>
 
     <refactoring.moveClassHandler implementation="org.jetbrains.plugins.groovy.refactoring.move.MoveGroovyClassHandler"/>
     <refactoring.moveMemberHandler language="Groovy" implementationClass="org.jetbrains.plugins.groovy.refactoring.move.MoveGroovyMemberHandler"/>
@@ -291,6 +291,7 @@
     <methodReferencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.AccessorMethodReferencesSearcher"/>
     <methodReferencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.MethodLateBoundReferencesSearcher"/>
     <methodReferencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.GroovyConstructorUsagesSearcher"/>
+    <methodReferencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.GroovyReflectedMethodReferenceSearcher"/>
     <annotatedElementsSearch implementation="org.jetbrains.plugins.groovy.findUsages.AnnotatedMembersSearcher"/>
     <superMethodsSearch implementation="org.jetbrains.plugins.groovy.findUsages.GDKSuperMethodSearcher"/>
     <definitionsSearch implementation="org.jetbrains.plugins.groovy.findUsages.GroovyImplementationSearch"/>

@@ -13,23 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.lang.refactoring;
+package com.intellij.psi;
 
-import com.intellij.lang.Language;
-import com.intellij.lang.LanguageExtension;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Max Medvedev
+ *
+ * Synthetic element to represent prototype in special contexts
  */
-public class ReferencesToInlineSearchers extends LanguageExtension<ReferencesToInlineSearcher> {
-  private final static ReferencesToInlineSearchers INSTANCE = new ReferencesToInlineSearchers();
+public interface PsiMirrorElement extends PsiElement, SyntheticElement {
 
-  private ReferencesToInlineSearchers() {
-    super("com.intellij.refactoring.referencesToInlineSearcher");
-  }
-
-  public static ReferencesToInlineSearcher getSearcher(Language language) {
-    return INSTANCE.forLanguage(language);
-  }
-
+  /**
+   * @return prototype of this element
+   */
+  @NotNull
+  PsiElement getPrototype();
 }

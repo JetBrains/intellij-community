@@ -33,6 +33,7 @@ public class GroovyUnwrapDescriptor extends JavaUnwrapDescriptor {
       new GroovyBracesUnwrapper(),
       new GroovyElseRemover(),
       new GroovyElseUnwrapper(),
+      new GroovyConditionalUnwrapper(),
     };
   }
 }

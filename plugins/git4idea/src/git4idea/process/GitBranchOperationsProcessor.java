@@ -43,6 +43,7 @@ import git4idea.history.browser.GitCommit;
 import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
 import git4idea.stash.GitChangesSaver;
+import git4idea.ui.branch.GitBranchUiUtil;
 import git4idea.ui.branch.GitCompareBranchesDialog;
 import git4idea.update.GitComplexProcess;
 import org.jetbrains.annotations.NotNull;
@@ -403,7 +404,13 @@ public final class GitBranchOperationsProcessor {
 
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override public void run() {
-        new GitCompareBranchesDialog(myRepository, branchName, headToBranch, branchToHead).show();
+        if (headToBranch.isEmpty() && branchToHead.isEmpty()) {
+          String currentBranch = GitBranchUiUtil.getBranchNameOrRev(myRepository);
+          Messages.showInfoMessage(myProject, String.format("There are no changes in the Git log between <code>%s</code> and <code>%s</code>",
+                                                            currentBranch, branchName), "No Changes Detected");
+        } else {
+          new GitCompareBranchesDialog(myRepository, branchName, headToBranch, branchToHead).show();
+        }
       }
     });
   }

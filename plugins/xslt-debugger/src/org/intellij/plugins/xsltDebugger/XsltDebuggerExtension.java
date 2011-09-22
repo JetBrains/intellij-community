@@ -16,7 +16,6 @@
 
 package org.intellij.plugins.xsltDebugger;
 
-import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.diagnostic.logging.AdditionalTabComponent;
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.configurations.AdditionalTabComponentManager;
@@ -105,11 +104,7 @@ public class XsltDebuggerExtension extends XsltRunnerExtension {
     assert jdk != null;
 
     final String ver = jdk.getVersionString();
-    if (!(CompilerUtil.isOfVersion(ver, "1.5") ||
-          CompilerUtil.isOfVersion(ver, "5.0") ||
-          CompilerUtil.isOfVersion(ver, "1.6") ||
-          CompilerUtil.isOfVersion(ver, "1.7"))) {
-
+    if (ver == null || (ver.contains("1.0") || ver.contains("1.1") || ver.contains("1.2") || ver.contains("1.3") || ver.contains("1.4"))) {
       throw new CantRunException("The XSLT Debugger can only be used with JDK 1.5+");
     }
 

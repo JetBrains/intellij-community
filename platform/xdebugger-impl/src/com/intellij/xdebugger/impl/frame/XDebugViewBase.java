@@ -41,11 +41,11 @@ public abstract class XDebugViewBase implements Disposable {
   }
 
   private void onSessionEvent(final SessionEvent event) {
-    DebuggerUIUtil.invokeOnEventDispatch(new Runnable() {
+    DebuggerUIUtil.invokeOnEventDispatchIfProjectNotDisposed(new Runnable() {
       public void run() {
         rebuildView(event);
       }
-    });
+    }, mySession.getProject());
   }
 
   protected abstract void rebuildView(final SessionEvent event);

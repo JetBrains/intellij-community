@@ -3,12 +3,10 @@ package org.intellij.plugins.xsltDebugger;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
-import com.intellij.execution.configurations.RunnerSettings;
+import com.intellij.execution.runners.DefaultProgramRunner;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.runners.JavaPatchableProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
@@ -26,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 * User: sweinreuter
 * Date: 16.11.10
 */
-public class XsltDebuggerRunner extends JavaPatchableProgramRunner {
+public class XsltDebuggerRunner extends DefaultProgramRunner {
   static final ThreadLocal<Boolean> ACTIVE = new ThreadLocal<Boolean>();
 
   @NonNls
@@ -52,11 +50,6 @@ public class XsltDebuggerRunner extends JavaPatchableProgramRunner {
                                            ExecutionEnvironment env) throws ExecutionException {
     FileDocumentManager.getInstance().saveAllDocuments();
     return createContentDescriptor(project, executor, state, contentToReuse, env);
-  }
-
-  @Override
-  public void patch(JavaParameters javaParameters, RunnerSettings settings, boolean beforeExecution) throws ExecutionException {
-    javaParameters.setJdk(((XsltRunConfiguration)settings.getRunProfile()).getEffectiveJDK());
   }
 
   protected RunContentDescriptor createContentDescriptor(Project project,

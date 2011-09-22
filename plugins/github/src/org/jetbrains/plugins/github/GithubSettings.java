@@ -57,6 +57,10 @@ public class GithubSettings implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(GithubSettings.class.getName());
   private boolean passwordChanged = false;
 
+  // Once master password is refused, do not ask for it again
+  private boolean masterPasswordRefused = false;
+
+
   public static GithubSettings getInstance(){
     return ServiceManager.getService(GithubSettings.class);
   }
@@ -66,7 +70,7 @@ public class GithubSettings implements PersistentStateComponent<Element> {
 
     final Project project = ProjectManager.getInstance().getDefaultProject();
     try {
-      if (passwordChanged) {
+      if (passwordChanged && !masterPasswordRefused) {
         PasswordSafe.getInstance().storePassword(project,
                                                  GithubSettings.class, GITHUB_SETTINGS_PASSWORD_KEY,
                                                  getPassword());
@@ -74,6 +78,7 @@ public class GithubSettings implements PersistentStateComponent<Element> {
     }
     catch (MasterPasswordUnavailableException e){
       LOG.info("Couldn't store password for key [" + GITHUB_SETTINGS_PASSWORD_KEY + "]", e);
+      masterPasswordRefused = true;
     }
     catch (Exception e) {
       Messages.showErrorDialog("Error happened while storing password for github", "Error");
@@ -123,6 +128,7 @@ public class GithubSettings implements PersistentStateComponent<Element> {
     }
     catch (PasswordSafeException e) {
       LOG.info("Couldn't get password for key [" + GITHUB_SETTINGS_PASSWORD_KEY + "]", e);
+      masterPasswordRefused = true;
       password = "";
     }
     // Store password in memory

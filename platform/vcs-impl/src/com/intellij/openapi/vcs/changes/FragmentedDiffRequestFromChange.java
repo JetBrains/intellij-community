@@ -21,12 +21,8 @@ import com.intellij.openapi.diff.impl.fragments.LineFragment;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.diff.impl.processing.TextCompareProcessor;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.highlighter.*;
 import com.intellij.openapi.editor.impl.DocumentImpl;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -45,7 +41,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.ListIterator;
 
 /**
  * @author irengrig
@@ -79,6 +74,7 @@ public class FragmentedDiffRequestFromChange {
       throw exception;
     }
     List<BeforeAfter<TextRange>> ranges = calculator.getRanges();
+    if (ranges == null || ranges.isEmpty()) return null;
     final PreparedFragmentedContent preparedFragmentedContent =
       new PreparedFragmentedContent(myProject, new FragmentedContent(calculator.getOldDocument(), calculator.getDocument(), ranges),
                                     filePath.getName(), filePath.getFileType());

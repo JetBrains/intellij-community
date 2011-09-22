@@ -1365,11 +1365,16 @@ public class StringUtil {
   }
 
   public static List<String> findMatches(String s, Pattern pattern) {
+    return findMatches(s, pattern, 1);
+  }
+
+  public static List<String> findMatches(String s, Pattern pattern, int groupIndex) {
     List<String> result = new SmartList<String>();
     Matcher m = pattern.matcher(s);
     while (m.find()) {
-      if (m.groupCount() > 0) {
-        result.add(m.group(1));
+      String group = m.group(groupIndex);
+      if (group != null) {
+        result.add(group);
       }
     }
     return result;

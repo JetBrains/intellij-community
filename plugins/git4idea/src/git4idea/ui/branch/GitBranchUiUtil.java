@@ -41,7 +41,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author Kirill Likhodedov
  */
-class GitBranchUiUtil {
+public class GitBranchUiUtil {
 
   private GitBranchUiUtil() {
   }
@@ -51,7 +51,7 @@ class GitBranchUiUtil {
    * For fresh repository returns an empty string.
    */
   @NotNull
-  static String getBranchNameOrRev(@NotNull GitRepository repository) {
+  public static String getBranchNameOrRev(@NotNull GitRepository repository) {
     if (repository.isOnBranch()) {
       GitBranch currentBranch = repository.getCurrentBranch();
       assert currentBranch != null;

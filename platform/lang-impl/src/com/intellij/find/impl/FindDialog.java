@@ -177,15 +177,9 @@ class FindDialog extends DialogWrapper {
 
   public JComponent createNorthPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
-    GridBagConstraints gbConstraints = new GridBagConstraints();
 
-    gbConstraints.insets = new Insets(0, 0, UIUtil.DEFAULT_VGAP, 0);
-    gbConstraints.fill = GridBagConstraints.VERTICAL;
-    gbConstraints.weightx = 0;
-    gbConstraints.weighty = 1;
-    gbConstraints.anchor = GridBagConstraints.WEST;
     JLabel prompt = new JLabel(FindBundle.message("find.text.to.find.label"));
-    panel.add(prompt, gbConstraints);
+    panel.add(prompt, new GridBagConstraints(0,0,1,1,0,1, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0,0,UIUtil.DEFAULT_VGAP,UIUtil.DEFAULT_HGAP), 0,0));
 
     myInputComboBox = new ComboBox(300);
     revealWhitespaces(myInputComboBox);
@@ -208,23 +202,14 @@ class FindDialog extends DialogWrapper {
     }
 
 
-    gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
-    gbConstraints.fill = GridBagConstraints.BOTH;
-    gbConstraints.weightx = 1;
-    panel.add(myInputComboBox, gbConstraints);
+    panel.add(myInputComboBox, new GridBagConstraints(1,0,1,1,1,1, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0,0,UIUtil.DEFAULT_VGAP,0), 0,0));
     prompt.setLabelFor(myInputComboBox.getEditor().getEditorComponent());
 
     if (myModel.isReplaceState()){
-      gbConstraints.gridwidth = GridBagConstraints.RELATIVE;
-      gbConstraints.fill = GridBagConstraints.VERTICAL;
-      gbConstraints.weightx = 0;
       final JLabel replacePrompt = new JLabel(FindBundle.message("find.replace.with.label"));
-      panel.add(replacePrompt, gbConstraints);
+      panel.add(replacePrompt, new GridBagConstraints(0,1,1,1,0,1, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0,0,UIUtil.DEFAULT_VGAP,UIUtil.DEFAULT_HGAP), 0,0));
 
-      gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
-      gbConstraints.fill = GridBagConstraints.BOTH;
-      gbConstraints.weightx = 1;
-      panel.add(myReplaceComboBox, gbConstraints);
+      panel.add(myReplaceComboBox, new GridBagConstraints(1,1,1,1,1,1, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0,0,UIUtil.DEFAULT_VGAP,0), 0,0));
       replacePrompt.setLabelFor(myReplaceComboBox.getEditor().getEditorComponent());
     }
 

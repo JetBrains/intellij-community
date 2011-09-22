@@ -86,7 +86,7 @@ public class KeymapUtil {
       s = getMouseShortcutText(mouseShortcut.getButton(), mouseShortcut.getModifiers(), mouseShortcut.getClickCount());
     }
     else {
-      throw new IllegalArgumentException("unknown shortcut class: " + shortcut);
+      throw new IllegalArgumentException("unknown shortcut class: " + shortcut.getClass().getCanonicalName());
     }
     return s;
   }

@@ -84,5 +84,6 @@ public interface GrMethod extends GrMembersDeclaration, GrNamedElement, PsiMetho
   @NotNull
   String[] getNamedParametersArray();
 
+  @NotNull
   GrReflectedMethod[] getReflectedMethods();
 }

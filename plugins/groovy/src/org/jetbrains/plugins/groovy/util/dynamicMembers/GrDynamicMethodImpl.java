@@ -125,6 +125,7 @@ public class GrDynamicMethodImpl extends LightElement implements GrMethod {
     return myMethod.getNamedParametersArray();
   }
 
+  @NotNull
   @Override
   public GrReflectedMethod[] getReflectedMethods() {
     return GrReflectedMethod.EMPTY_ARRAY;

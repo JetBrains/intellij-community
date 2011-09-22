@@ -57,7 +57,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.types.G
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.types.GrInstanceofExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.types.GrSafeCastExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.types.GrTypeCastExpressionImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrMultitypeParameterImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.*;
@@ -177,7 +176,6 @@ public class GroovyPsiCreator implements GroovyElementTypes {
     //parameters
     if (elem == PARAMETERS_LIST) return new GrParameterListImpl(node);
     if (elem == PARAMETER) return new GrParameterImpl(node);
-    if (elem == MULTI_TYPE_PARAMETER) return new GrMultitypeParameterImpl(node);
 
     //type parameters
     if (elem == TYPE_ARGUMENT) return new GrWildcardTypeArgumentImpl(node);
@@ -228,6 +226,7 @@ public class GroovyPsiCreator implements GroovyElementTypes {
     if (elem == BUILT_IN_TYPE_EXPRESSION) return new GrBuiltinTypeClassExpressionImpl(node);
     if (elem == ARRAY_TYPE) return new GrArrayTypeElementImpl(node);
     if (elem == BUILT_IN_TYPE) return new GrBuiltInTypeElementImpl(node);
+    if (elem == DISJUNCTION_TYPE_ELEMENT) return new GrDisjunctionTypeElementImpl(node);
     if (elem == GSTRING) return new GrStringImpl(node);
     if (elem == REGEX) return new GrRegexImpl(node);
     if (elem == GSTRING_INJECTION) return new GrStringInjectionImpl(node);

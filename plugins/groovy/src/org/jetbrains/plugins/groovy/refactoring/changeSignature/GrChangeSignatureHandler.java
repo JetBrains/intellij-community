@@ -36,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 
 /**
@@ -54,7 +55,7 @@ public class GrChangeSignatureHandler implements ChangeSignatureHandler {
 
   private static void invokeOnElement(Project project, Editor editor, PsiElement element) {
     if (element instanceof PsiMethod) {
-      invoke((PsiMethod)element, project, editor);
+      invoke((PsiMethod)element, project);
     }
     else {
       String message =
@@ -69,14 +70,15 @@ public class GrChangeSignatureHandler implements ChangeSignatureHandler {
     invokeOnElement(project, editor, elements[0]);
   }
 
-  private static void invoke(final PsiMethod method, final Project project, @Nullable final Editor editor) {
+  private static void invoke(PsiMethod method, final Project project) {
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, method)) return;
+    if (method instanceof GrReflectedMethod) method = ((GrReflectedMethod)method).getBaseMethod();
 
     PsiMethod newMethod = SuperMethodWarningUtil.checkSuperMethod(method, RefactoringBundle.message("to.refactor"));
     if (newMethod == null) return;
 
     if (!newMethod.equals(method)) {
-      invoke(newMethod, project, editor);
+      invoke(newMethod, project);
       return;
     }
 

@@ -33,7 +33,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisRe
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  * @author ilyas
@@ -78,6 +81,11 @@ public class GroovyNameSuggestionUtil {
       name = validator.validateName(name, true);
       if (GroovyNamesUtil.isIdentifier(name)) {
         possibleNames.add(name);
+      }
+    }
+    else if (type instanceof PsiIntersectionType) {
+      for (PsiType psiType : ((PsiIntersectionType)type).getConjuncts()) {
+        generateByType(psiType, possibleNames, validator);
       }
     }
     else {
