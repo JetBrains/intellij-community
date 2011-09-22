@@ -44,6 +44,11 @@ public class ProjectExcludedFileIndex extends ExcludedFileIndex {
     return myRootManager.getFileIndex().isInSource(file);
   }
 
+  @Override
+  public boolean isInLibraryClasses(VirtualFile file) {
+    return myRootManager.getFileIndex().isInLibraryClasses(file);
+  }
+
   public boolean isExcludedFile(final VirtualFile file) {
     return myRootManager.getFileIndex().isIgnored(file);
   }

@@ -43,6 +43,11 @@ public class DefaultExcludedFileIndex extends ExcludedFileIndex {
     return isInContent(file);
   }
 
+  @Override
+  public boolean isInLibraryClasses(VirtualFile file) {
+    return false;
+  }
+
   public boolean isExcludedFile(final VirtualFile file) {
     return false;
   }
