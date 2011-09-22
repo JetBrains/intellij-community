@@ -24,6 +24,8 @@ import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.net.URL;
@@ -35,18 +37,22 @@ public class ProductivityFeaturesRegistryImpl extends ProductivityFeaturesRegist
   private final Map<String, GroupDescriptor> myGroups = new HashMap<String, GroupDescriptor>();
   private final List<Pair<String, ApplicabilityFilter>> myApplicabilityFilters = new ArrayList<Pair<String,ApplicabilityFilter>>();
 
-  private boolean myLoadAdditionFeatures = false;
+  private boolean myAdditionalFeaturesLoaded = false;
 
-  public static final @NonNls String WELCOME = "features.welcome";
+  @NonNls public static final String WELCOME = "features.welcome";
 
-  private static final @NonNls String TAG_FILTER = "filter";
-  private static final @NonNls String TAG_GROUP = "group";
-  private static final @NonNls String TAG_FEATURE = "feature";
-  private static final @NonNls String TODO_HTML_MARKER = "todo.html";
+  @NonNls private static final String TAG_FILTER = "filter";
+  @NonNls private static final String TAG_GROUP = "group";
+  @NonNls private static final String TAG_FEATURE = "feature";
+  @NonNls private static final String TODO_HTML_MARKER = "todo.html";
   @NonNls private static final String CLASS_ATTR = "class";
   @NonNls private static final String PREFIX_ATTR = "prefix";
 
   public ProductivityFeaturesRegistryImpl() {
+    reloadFromXml();
+  }
+
+  private void reloadFromXml() {
     try {
       readFromXml("file:///ProductivityFeaturesRegistry.xml");
     }
@@ -69,39 +75,43 @@ public class ProductivityFeaturesRegistryImpl extends ProductivityFeaturesRegist
   }
 
   private void lazyLoadFromPluginsFeaturesProviders() {
+    if (myAdditionalFeaturesLoaded) return;
     loadFeaturesFromProviders(ApplicationManager.getApplication().getComponents(ProductivityFeaturesProvider.class));
     loadFeaturesFromProviders(Extensions.getExtensions(ProductivityFeaturesProvider.EP_NAME));
-    myLoadAdditionFeatures = true;
+    myAdditionalFeaturesLoaded = true;
   }
 
   private void loadFeaturesFromProviders(ProductivityFeaturesProvider[] providers) {
     for (ProductivityFeaturesProvider provider : providers) {
       final GroupDescriptor[] groupDescriptors = provider.getGroupDescriptors();
-      for (int j = 0; groupDescriptors != null && j < groupDescriptors.length; j++) {
-        GroupDescriptor groupDescriptor = groupDescriptors[j];
-        myGroups.put(groupDescriptor.getId(), groupDescriptor);
+      if (groupDescriptors != null) {
+        for (GroupDescriptor groupDescriptor : groupDescriptors) {
+          myGroups.put(groupDescriptor.getId(), groupDescriptor);
+        }
       }
       final FeatureDescriptor[] featureDescriptors = provider.getFeatureDescriptors();
-      for (int j = 0; featureDescriptors != null && j < featureDescriptors.length; j++) {
-        FeatureDescriptor featureDescriptor = featureDescriptors[j];
-        final FeatureDescriptor featureLoadedStatistics = myFeatures.get(featureDescriptor.getId());
-        if (featureLoadedStatistics != null) {
-          featureDescriptor.copyStatistics(featureLoadedStatistics);
+      if (featureDescriptors != null) {
+        for (FeatureDescriptor featureDescriptor : featureDescriptors) {
+          final FeatureDescriptor featureLoadedStatistics = myFeatures.get(featureDescriptor.getId());
+          if (featureLoadedStatistics != null) {
+            featureDescriptor.copyStatistics(featureLoadedStatistics);
+          }
+          myFeatures.put(featureDescriptor.getId(), featureDescriptor);
         }
-        myFeatures.put(featureDescriptor.getId(), featureDescriptor);
       }
       final ApplicabilityFilter[] applicabilityFilters = provider.getApplicabilityFilters();
-      for (int j = 0; applicabilityFilters != null && j < applicabilityFilters.length; j++) {
-        ApplicabilityFilter applicabilityFilter = applicabilityFilters[j];
-        myApplicabilityFilters.add(new Pair<String, ApplicabilityFilter>(applicabilityFilter.getPrefix(), applicabilityFilter));
+      if (applicabilityFilters != null) {
+        for (ApplicabilityFilter applicabilityFilter : applicabilityFilters) {
+          myApplicabilityFilters.add(new Pair<String, ApplicabilityFilter>(applicabilityFilter.getPrefix(), applicabilityFilter));
+        }
       }
     }
   }
 
   private void readFilters(Element element) {
     List filters = element.getChildren(TAG_FILTER);
-    for (int i = 0; i < filters.size(); i++) {
-      Element filterElement = (Element)filters.get(i);
+    for (Object filter1 : filters) {
+      Element filterElement = (Element)filter1;
       String className = filterElement.getAttributeValue(CLASS_ATTR);
       try {
         Class klass = Class.forName(className);
@@ -121,8 +131,8 @@ public class ProductivityFeaturesRegistryImpl extends ProductivityFeaturesRegist
 
   private void readGroups(Element element) {
     List groups = element.getChildren(TAG_GROUP);
-    for (int i = 0; i < groups.size(); i++) {
-      Element groupElement = (Element)groups.get(i);
+    for (Object group : groups) {
+      Element groupElement = (Element)group;
       readGroup(groupElement);
     }
   }
@@ -137,8 +147,8 @@ public class ProductivityFeaturesRegistryImpl extends ProductivityFeaturesRegist
 
   private void readFeatures(Element groupElement, GroupDescriptor groupDescriptor) {
     List features = groupElement.getChildren(TAG_FEATURE);
-    for (int i = 0; i < features.size(); i++) {
-      Element featureElement = (Element)features.get(i);
+    for (Object feature : features) {
+      Element featureElement = (Element)feature;
       FeatureDescriptor featureDescriptor = new FeatureDescriptor(groupDescriptor);
       featureDescriptor.readExternal(featureElement);
       if (!TODO_HTML_MARKER.equals(featureDescriptor.getTipFileName())) {
@@ -147,43 +157,34 @@ public class ProductivityFeaturesRegistryImpl extends ProductivityFeaturesRegist
     }
   }
 
+  @NotNull
   public Set<String> getFeatureIds() {
-    if (!myLoadAdditionFeatures){
-      lazyLoadFromPluginsFeaturesProviders();
-    }
+    lazyLoadFromPluginsFeaturesProviders();
     return myFeatures.keySet();
   }
 
-  public FeatureDescriptor getFeatureDescriptor(String id) {
+  public FeatureDescriptor getFeatureDescriptor(@NotNull String id) {
+    lazyLoadFromPluginsFeaturesProviders();
+    return getFeatureDescriptorEx(id);
+  }
+
+  public FeatureDescriptor getFeatureDescriptorEx(@NotNull String id) {
     if (WELCOME.equals(id)) {
-      FeatureDescriptor descriptor = new FeatureDescriptor(WELCOME, "AdaptiveWelcome.html", FeatureStatisticsBundle.message("feature.statistics.welcome.tip.name"));
-      return descriptor;
-    }
-    if (!myLoadAdditionFeatures){
-      lazyLoadFromPluginsFeaturesProviders();
+      return new FeatureDescriptor(WELCOME, "AdaptiveWelcome.html", FeatureStatisticsBundle.message("feature.statistics.welcome.tip.name"));
     }
     return myFeatures.get(id);
   }
 
-  public FeatureDescriptor getFeatureDescriptorEx(String id) {
-    if (WELCOME.equals(id)) {
-      FeatureDescriptor descriptor = new FeatureDescriptor(WELCOME, "AdaptiveWelcome.html", FeatureStatisticsBundle.message("feature.statistics.welcome.tip.name"));
-      return descriptor;
-    }
-    return myFeatures.get(id);
-  }
-
-  public GroupDescriptor getGroupDescriptor(String id) {
+  public GroupDescriptor getGroupDescriptor(@NotNull String id) {
+    lazyLoadFromPluginsFeaturesProviders();
     return myGroups.get(id);
   }
 
-  public ApplicabilityFilter[] getMatchingFilters(String featureId) {
-    if (!myLoadAdditionFeatures){
-      lazyLoadFromPluginsFeaturesProviders();
-    }
+  @NotNull
+  public ApplicabilityFilter[] getMatchingFilters(@NotNull String featureId) {
+    lazyLoadFromPluginsFeaturesProviders();
     List<ApplicabilityFilter> filters = new ArrayList<ApplicabilityFilter>();
-    for (int i = 0; i < myApplicabilityFilters.size(); i++) {
-      Pair<String, ApplicabilityFilter> pair = myApplicabilityFilters.get(i);
+    for (Pair<String, ApplicabilityFilter> pair : myApplicabilityFilters) {
       if (featureId.startsWith(pair.getFirst())) {
         filters.add(pair.getSecond());
       }
@@ -191,7 +192,17 @@ public class ProductivityFeaturesRegistryImpl extends ProductivityFeaturesRegist
     return filters.toArray(new ApplicabilityFilter[filters.size()]);
   }
 
-  public void addFeatureStatistics(final FeatureDescriptor descriptor) {
-    myFeatures.put(descriptor.getId(), descriptor);
+  @Override
+  public String toString() {
+    return super.toString() + "; myAdditionalFeaturesLoaded="+myAdditionalFeaturesLoaded;
+  }
+
+  @TestOnly
+  public void prepareForTest() {
+    myAdditionalFeaturesLoaded = false;
+    myFeatures.clear();
+    myApplicabilityFilters.clear();
+    myGroups.clear();
+    reloadFromXml();
   }
 }

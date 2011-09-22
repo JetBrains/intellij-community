@@ -29,8 +29,8 @@ import java.util.concurrent.Future;
 public class MockApplication extends MockComponentManager implements Application {
   private ModalityState MODALITY_STATE_NONE;
 
-  public MockApplication() {
-    super(null);
+  public MockApplication(@NotNull Disposable parentDisposable) {
+    super(null, parentDisposable);
   }
 
   @Override

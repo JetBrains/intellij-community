@@ -41,7 +41,7 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
 
   private final Map<Class, Object> myComponents = new HashMap<Class, Object>();
 
-  public MockComponentManager(@Nullable PicoContainer parent) {
+  public MockComponentManager(@Nullable PicoContainer parent, @NotNull Disposable parentDisposable) {
     myPicoContainer = new IdeaPicoContainer(parent) {
       @Override
       @Nullable
@@ -54,6 +54,7 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
       }
     };
     myPicoContainer.registerComponentInstance(this);
+    Disposer.register(parentDisposable, this);
   }
 
   @Override

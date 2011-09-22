@@ -68,7 +68,7 @@ public abstract class JavaParsingTestCase extends ParsingTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myModule = disposeOnTearDown(new MockModule(getProject()));
+    myModule = new MockModule(getProject(), getTestRootDisposable());
     myLanguageLevel = LanguageLevel.JDK_1_6;
     getProject().registerService(LanguageLevelProjectExtension.class, new LanguageLevelProjectExtensionImpl(getProject()));
     addExplicitExtension(LanguageASTFactory.INSTANCE, JavaLanguage.INSTANCE, new JavaASTFactory());

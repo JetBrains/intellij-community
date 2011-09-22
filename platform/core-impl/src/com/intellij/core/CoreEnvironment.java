@@ -50,7 +50,7 @@ public class CoreEnvironment {
   private MockApplication myApplication;
   private MockProject myProject;
 
-  public CoreEnvironment() {
+  public CoreEnvironment(Disposable parentDisposable) {
     myFileTypeRegistry = new CoreFileTypeRegistry();
     //noinspection AssignmentToStaticFieldFromInstanceMethod
     FileTypeRegistry.ourInstanceGetter = new Getter<FileTypeRegistry>() {
@@ -60,13 +60,13 @@ public class CoreEnvironment {
       }
     };
 
-    myApplication = new MockApplication();
+    myApplication = new MockApplication(parentDisposable);
     new ApplicationManager() {{
       ourApplication = myApplication;
     }};
     ApplicationComponentLocator.setInstance(myApplication);
 
-    myProject = new MockProject(myApplication.getPicoContainer());
+    myProject = new MockProject(myApplication.getPicoContainer(), parentDisposable);
 
     final MutablePicoContainer appContainer = myApplication.getPicoContainer();
     registerComponentInstance(appContainer, FileDocumentManager.class, new MockFileDocumentManagerImpl(new Function<CharSequence, Document>() {

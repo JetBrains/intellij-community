@@ -21,15 +21,14 @@ public abstract class FlyIdeaTestCase extends TestCase {
   @Override
   protected void setUp() throws Exception {
     final Application old = ApplicationManagerEx.getApplication();
-    MockApplicationEx app = new MockApplicationEx() {
+    myRootDisposable = Disposer.newDisposable();
+    MockApplicationEx app = new MockApplicationEx(getRootDisposable()) {
       @Override
       public Future<?> executeOnPooledThread(@NotNull Runnable action) {
         return old != null ? old.executeOnPooledThread(action) : super.executeOnPooledThread(action);
       }
     };
-    myRootDisposable = Disposer.newDisposable();
     ApplicationManagerEx.setApplication(app, myRootDisposable);
-
   }
 
   public File getTempDir() throws IOException {
