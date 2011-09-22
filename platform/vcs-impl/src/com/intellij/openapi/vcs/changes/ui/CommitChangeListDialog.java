@@ -17,14 +17,20 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
@@ -100,6 +106,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private static final String DETAILS_SHOW_OPTION = "CommitChangeListDialog.DETAILS_SHOW_OPTION";
   private JPanel myDetailsPanel;
   private final AdjustComponentWhenShown myAdjustWhenShown;
+  private final FileAndDocumentListenersForShortDiff myListenersForShortDiff;
 
   private static class MyUpdateButtonsRunnable implements Runnable {
     private CommitChangeListDialog myDialog;
@@ -251,6 +258,13 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       myBrowserExtender = browser.getExtender();
     }
     myDiffDetails.setParent(myBrowser);
+    myListenersForShortDiff = new FileAndDocumentListenersForShortDiff(myDiffDetails) {
+      @Override
+      protected void updateDetails() {
+        myDiffDetails.refresh();
+      }
+    };
+    myListenersForShortDiff.on();
 
     final ZipperUpdater zipperUpdater = new ZipperUpdater(30, Alarm.ThreadToUse.SWING_THREAD, getDisposable());
     final Runnable refreshShortDiffDetails = new Runnable() {
@@ -638,6 +652,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     Disposer.dispose(myCommitMessageArea);
     Disposer.dispose(myOKButtonUpdateAlarm);
     myUpdateButtonsRunnable.cancel();
+    myListenersForShortDiff.off();
     super.dispose();
     Disposer.dispose(myDiffDetails);
     PropertiesComponent.getInstance().setValue(SPLITTER_PROPORTION_OPTION, String.valueOf(mySplitter.getProportion()));

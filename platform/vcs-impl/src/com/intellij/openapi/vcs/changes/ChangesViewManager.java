@@ -32,11 +32,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.editor.event.EditorEventMulticaster;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
@@ -47,9 +42,6 @@ import com.intellij.openapi.vcs.changes.actions.IgnoredSettingsAction;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileAdapter;
-import com.intellij.openapi.vfs.VirtualFileEvent;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
@@ -96,9 +88,7 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangesViewManager");
   private Splitter mySplitter;
   private boolean myDetailsOn;
-  private ChangesViewManager.MyFileListener myFileListener;
   private FilePath myDetailsFilePath;
-  private final MyDocumentListener myDocumentListener;
   private ZipperUpdater myDetailsUpdater;
   private Runnable myUpdateDetails;
   private MessageBusConnection myConnection;
@@ -106,6 +96,7 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
 
   private final ShortDiffDetails myDiffDetails;
   private final TreeSelectionListener myTsl;
+  private final FileAndDocumentListenersForShortDiff myListenersForShortDiff;
 
   public static ChangesViewI getInstance(Project project) {
     return PeriodicalTasksCloser.getInstance().safeGetComponent(project, ChangesViewI.class);
@@ -118,14 +109,18 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
 
     Disposer.register(project, myView);
     myRepaintAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
-    myFileListener = new MyFileListener();
-    myDocumentListener = new MyDocumentListener();
     myDiffDetails = new ShortDiffDetails(myProject, new Getter<Change[]>() {
       @Override
       public Change[] get() {
         return myView.getSelectedChanges();
       }
     }, vcsChangeDetailsManager);
+    myListenersForShortDiff = new FileAndDocumentListenersForShortDiff(myDiffDetails) {
+      @Override
+      protected void updateDetails() {
+        myDetailsUpdater.queue(myUpdateDetails);
+      }
+    };
     myDiffDetails.setParent(myView);
     myDetailsUpdater = new ZipperUpdater(300, Alarm.ThreadToUse.SWING_THREAD, myProject);
     myUpdateDetails = new Runnable() {
@@ -170,8 +165,7 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
 
   public void projectClosed() {
     if (myToggleDetailsAction.isSelected(null)) {
-      VirtualFileManager.getInstance().removeVirtualFileListener(myFileListener);
-      EditorFactory.getInstance().getEventMulticaster().removeDocumentListener(myDocumentListener);
+      myListenersForShortDiff.off();
     }
     myDiffDetails.dispose();
     myView.removeTreeSelectionListener(myTsl);
@@ -493,61 +487,13 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
 
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
-      final VirtualFileManager manager = VirtualFileManager.getInstance();
-      final EditorEventMulticaster multicaster = EditorFactory.getInstance().getEventMulticaster();
       if (myDetailsOn) {
-        manager.removeVirtualFileListener(myFileListener);
-        multicaster.removeDocumentListener(myDocumentListener);
+        myListenersForShortDiff.off();
       } else {
-        manager.addVirtualFileListener(myFileListener);
-        multicaster.addDocumentListener(myDocumentListener);
+        myListenersForShortDiff.on();
       }
       myDetailsOn = ! myDetailsOn;
       changeDetails();
-    }
-  }
-
-  private class MyFileListener extends VirtualFileAdapter {
-    @Override
-    public void contentsChanged(VirtualFileEvent event) {
-      impl(event.getFile());
-    }
-
-    @Override
-    public void fileCreated(VirtualFileEvent event) {
-      impl(event.getFile());
-    }
-
-    @Override
-    public void fileDeleted(VirtualFileEvent event) {
-      impl(event.getFile());
-    }
-  }
-
-  private void impl(final VirtualFile vf) {
-    final boolean wasInCache = myDiffDetails.refreshData(vf);
-    if (wasInCache || (myDetailsFilePath != null && myDetailsFilePath.getVirtualFile() != null && myDetailsFilePath.getVirtualFile().equals(vf))) {
-      myDetailsUpdater.queue(myUpdateDetails);
-    }
-  }
-
-  private class MyDocumentListener implements DocumentListener {
-    private final FileDocumentManager myFileDocumentManager;
-
-    public MyDocumentListener() {
-      myFileDocumentManager = FileDocumentManager.getInstance();
-    }
-
-    @Override
-    public void beforeDocumentChange(DocumentEvent event) {
-    }
-
-    @Override
-    public void documentChanged(DocumentEvent event) {
-      final VirtualFile vf = myFileDocumentManager.getFile(event.getDocument());
-      if (vf != null) {
-        impl(vf);
-      }
     }
   }
 }
