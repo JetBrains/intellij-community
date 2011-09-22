@@ -730,10 +730,6 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
     return psiCatchSection;
   }
 
-  private static void markGenerated(final PsiElement element) {
-    ((TreeElement)element.getNode()).acceptTree(new GeneratedMarkerVisitor());
-  }
-
   private static PsiImportStatementBase extractImport(final PsiJavaFile aFile, final boolean isStatic) {
     final PsiImportList importList = aFile.getImportList();
     assert importList != null : aFile;

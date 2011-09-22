@@ -281,7 +281,7 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
 
     final PsiTypeElement element = createTypeElementFromText(text, context);
     if (markAsCopy) {
-      ((TreeElement)element.getNode()).acceptTree(new GeneratedMarkerVisitor());
+      markGenerated(element);
     }
     return element.getType();
   }
@@ -344,7 +344,8 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
   @NotNull
   @Override
   public PsiTypeParameter createTypeParameterFromText(@NotNull final String text, @Nullable final PsiElement context) throws IncorrectOperationException {
-    final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, TYPE_PARAMETER, level(context)), context);
+    final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, TYPE_PARAMETER, level(context)),
+                                                               context);
     final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());
     if (!(element instanceof PsiTypeParameter)) {
       throw new IncorrectOperationException("Incorrect type parameter \"" + text + "\".");

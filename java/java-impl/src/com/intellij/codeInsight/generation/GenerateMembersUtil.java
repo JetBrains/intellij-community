@@ -82,8 +82,8 @@ public class GenerateMembersUtil {
           //     }
           whiteSpace += "\n";
         }
-        PsiElementFactory factory = JavaPsiFacade.getInstance(file.getProject()).getElementFactory();
-        final ASTNode singleNewLineWhitespace = factory.createWhiteSpaceFromText(whiteSpace).getNode();
+        final PsiParserFacade parserFacade = PsiParserFacade.SERVICE.getInstance(file.getProject());
+        final ASTNode singleNewLineWhitespace = parserFacade.createWhiteSpaceFromText(whiteSpace).getNode();
         if (singleNewLineWhitespace != null) {
           spaceNode.getTreeParent().replaceChild(spaceNode, singleNewLineWhitespace); // See http://jetbrains.net/jira/browse/IDEADEV-12837
         }
