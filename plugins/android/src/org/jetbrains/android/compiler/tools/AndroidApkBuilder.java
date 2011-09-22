@@ -246,9 +246,11 @@ public class AndroidApkBuilder {
           fis.close();
         }
       }
+
+      final HashSet<String> nativeLibs = new HashSet<String>();
       for (VirtualFile nativeLibsFolder : nativeLibsFolders) {
         for (VirtualFile child : nativeLibsFolder.getChildren()) {
-          writeNativeLibraries(builder, nativeLibsFolder, child, signed);
+          writeNativeLibraries(builder, nativeLibsFolder, child, signed, nativeLibs);
         }
       }
       builder.close();
@@ -309,14 +311,24 @@ public class AndroidApkBuilder {
     });
   }
 
-  private static void writeNativeLibraries(SignedJarBuilder builder, VirtualFile nativeLibsFolder, VirtualFile child, boolean debugBuild)
+  private static void writeNativeLibraries(SignedJarBuilder builder,
+                                           VirtualFile nativeLibsFolder,
+                                           VirtualFile child,
+                                           boolean debugBuild,
+                                           Set<String> added)
     throws IOException {
     ArrayList<VirtualFile> list = new ArrayList<VirtualFile>();
     collectNativeLibraries(child, list, debugBuild);
     for (VirtualFile file : list) {
       String relativePath = VfsUtil.getRelativePath(file, nativeLibsFolder, File.separatorChar);
       String path = FileUtil.toSystemIndependentName(SdkConstants.FD_APK_NATIVE_LIBS + File.separator + relativePath);
-      builder.writeFile(toIoFile(file), path);
+      if (added.add(path)) {
+        builder.writeFile(toIoFile(file), path);
+        LOG.info("Native lib file added to APK: " + file.getPath());
+      }
+      else {
+        LOG.info("Duplicate in APK: native lib file " + file.getPath() + " won't be added.");
+      }
     }
   }
 
