@@ -20,7 +20,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Set;
 
 public abstract class PlaybackContext  {
@@ -101,19 +100,19 @@ public abstract class PlaybackContext  {
   }
   
   public void error(String text, int currentLine) {
-    getCallback().message(this, text, currentLine, PlaybackRunner.StatusCallback.Type.error);
+    getCallback().message(this, text, PlaybackRunner.StatusCallback.Type.error);
   }
 
   public void message(String text, int currentLine) {
-    getCallback().message(this, text, currentLine, PlaybackRunner.StatusCallback.Type.message);
+    getCallback().message(this, text, PlaybackRunner.StatusCallback.Type.message);
   }
 
   public void test(String text, int currentLine) {
-    getCallback().message(this, text, currentLine, PlaybackRunner.StatusCallback.Type.test);
+    getCallback().message(this, text, PlaybackRunner.StatusCallback.Type.test);
   }
 
   public void code(String text, int currentLine) {
-    getCallback().message(this, text, currentLine, PlaybackRunner.StatusCallback.Type.code);
+    getCallback().message(this, text, PlaybackRunner.StatusCallback.Type.code);
   }
 
   public abstract void pushStage(StageInfo info);

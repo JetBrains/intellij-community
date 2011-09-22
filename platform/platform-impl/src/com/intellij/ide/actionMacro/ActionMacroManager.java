@@ -208,9 +208,9 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
 
     final PlaybackRunner runner = new PlaybackRunner(script.toString(), new PlaybackRunner.StatusCallback.Edt() {
 
-      public void messageEdt(PlaybackContext context, String text, int curentLine, Type type) {
+      public void messageEdt(PlaybackContext context, String text, Type type) {
         if (type == Type.message || type == Type.error) {
-          frame.getStatusBar().setInfo("Line " + curentLine + ": " + text);
+          frame.getStatusBar().setInfo("Line " + context.getCurrentLine() + ": " + text);
         }
       }
 
