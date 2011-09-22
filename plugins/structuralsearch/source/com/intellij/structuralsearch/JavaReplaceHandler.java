@@ -449,7 +449,7 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
   }
 
   private static PsiElement createWhiteSpace(final PsiElement space) throws IncorrectOperationException {
-    return JavaPsiFacade.getInstance(space.getProject()).getElementFactory().createWhiteSpaceFromText(" ");
+    return PsiParserFacade.SERVICE.getInstance(space.getProject()).createWhiteSpaceFromText(" ");
   }
 
   private static class ModifierListOwnerCollector extends JavaRecursiveElementWalkingVisitor {
