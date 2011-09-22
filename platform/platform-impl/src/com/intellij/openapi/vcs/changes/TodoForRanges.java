@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Getter;
@@ -29,7 +30,6 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.TodoItem;
 import com.intellij.util.containers.Convertor;
 
-import java.awt.font.TextAttribute;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -47,21 +47,23 @@ public class TodoForRanges {
   private final String myText;
   private final boolean myOldRevision;
   private final List<TextRange> myRanges;
+  private final FileType myFileType;
 
   public TodoForRanges(final Project project, final String fileName, final String text, final boolean oldRevision,
-                       final List<TextRange> ranges) {
+                       final List<TextRange> ranges, FileType fileType) {
     myProject = project;
     myFileName = fileName;
     myText = text;
     myOldRevision = oldRevision;
     myRanges = ranges;
+    myFileType = fileType;
   }
 
   public List<Pair<TextRange, TextAttributes>> execute() {
     final TodoItem[] todoItems = ApplicationManager.getApplication().runReadAction(new Computable<TodoItem[]>() {
       @Override
       public TodoItem[] compute() {
-        final PsiFile psiFile = PsiFileFactory.getInstance(myProject).createFileFromText((myOldRevision ? "old" : "") + myFileName, myText);
+        final PsiFile psiFile = PsiFileFactory.getInstance(myProject).createFileFromText((myOldRevision ? "old" : "") + myFileName, myFileType, myText);
 
         final PsiSearchHelper helper = PsiSearchHelper.SERVICE.getInstance(myProject);
         return helper.findTodoItemsLight(psiFile);

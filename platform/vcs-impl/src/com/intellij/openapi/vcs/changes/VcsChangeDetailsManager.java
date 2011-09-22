@@ -27,7 +27,9 @@ import com.intellij.openapi.diff.impl.DiffPanelImpl;
 import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffAction;
 import com.intellij.openapi.vcs.history.ShortVcsRevisionNumber;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -259,13 +261,10 @@ public class VcsChangeDetailsManager {
 
     @Override
     protected JPanel dataToPresentation(ValueWithVcsException<PreparedFragmentedContent> value) {
-      if (value == null) {
-        return noDifferences();
-      }
       final PreparedFragmentedContent requestForChange;
       try {
         requestForChange = value.get();
-        if (requestForChange == null) throw new VcsException("Can not load content");
+        if (requestForChange == null) return noDifferences();
         if (requestForChange.isEmpty()) {
           return noDifferences();
         }
