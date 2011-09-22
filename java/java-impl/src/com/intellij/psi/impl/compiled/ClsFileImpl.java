@@ -16,6 +16,8 @@
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.ide.caches.FileContent;
+import com.intellij.ide.highlighter.JavaClassFileType;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.FileASTNode;
 import com.intellij.lang.java.JavaLanguage;
@@ -24,8 +26,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.NonCancelableSection;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -266,7 +268,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
         VirtualFile virtualFile = getVirtualFile();
         final Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
         String text = document.getText();
-        String ext = StdFileTypes.JAVA.getDefaultExtension();
+        String ext = JavaFileType.INSTANCE.getDefaultExtension();
         PsiClass[] classes = getClasses();
 
         String fileName = (classes.length > 0 ? classes[0].getName(): virtualFile.getNameWithoutExtension()) + "." + ext;
@@ -275,12 +277,14 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
         final ASTNode mirrorTreeElement = SourceTreeToPsiMap.psiElementToTree(mirror);
 
         //IMPORTANT: do not take lock too early - FileDocumentManager.getInstance().saveToString() can run write action...
-        ProgressManager.getInstance().executeNonCancelableSection(new Runnable() {
-          public void run() {
-            setMirror((TreeElement)mirrorTreeElement);
-            myMirrorFileElement.putUserData(DOCUMENT_IN_MIRROR_KEY, document);
-          }
-        });
+        final NonCancelableSection section = ProgressIndicatorProvider.getInstance().startNonCancelableSection();
+        try {
+          setMirror((TreeElement)mirrorTreeElement);
+          myMirrorFileElement.putUserData(DOCUMENT_IN_MIRROR_KEY, document);
+        }
+        finally {
+          section.done();
+        }
       }
 
       return myMirrorFileElement.getPsi();
@@ -311,7 +315,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
 
   @NotNull
   public FileType getFileType() {
-    return StdFileTypes.CLASS;
+    return JavaClassFileType.INSTANCE;
   }
 
   @NotNull
