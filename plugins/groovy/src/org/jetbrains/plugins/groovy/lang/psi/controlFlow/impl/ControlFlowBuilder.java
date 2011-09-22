@@ -619,6 +619,10 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
       if (tryBeg != null) addEdge(tryBeg, catchBeg);
       if (tryEnd != null) addEdge(tryEnd, catchBeg);
+      final GrParameter parameter = catchClauses[i].getParameter();
+      if (parameter != null) {
+        addNode(new ReadWriteVariableInstructionImpl(parameter, myInstructionNumber++));
+      }
       catchClauses[i].accept(this);
       catches[i] = myHead;
       finishNode(catchBeg);

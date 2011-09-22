@@ -20,14 +20,15 @@ println v + m
 2(3) WRITE m
 3(4,8) element: Open block
 4(5) READ x
-5(6,7,8,11) element: Switch statement
-6(8,11) WRITE v
+5(6,7,8,12) element: Switch statement
+6(8,12) WRITE v
 7(8) element: THROW statement
 8(9) element: Catch clause
-9(10) READ e
-10(15) element: THROW statement
-11(12) READ println
-12(13) READ v
-13(14) READ m
-14(15) element: Call expression MAYBE_RETURN
-15() element: null
+9(10) WRITE e
+10(11) READ e
+11(16) element: THROW statement
+12(13) READ println
+13(14) READ v
+14(15) READ m
+15(16) element: Call expression MAYBE_RETURN
+16() element: null
