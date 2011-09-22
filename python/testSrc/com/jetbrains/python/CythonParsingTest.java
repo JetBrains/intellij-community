@@ -74,6 +74,10 @@ public class CythonParsingTest extends ParsingTestCase {
     doTest();
   }
 
+  public void testIncludes() {
+    doTest();
+  }
+
   public void doTest() {
     doTest(true);
   }
