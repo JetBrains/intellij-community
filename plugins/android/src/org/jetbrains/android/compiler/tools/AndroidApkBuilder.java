@@ -20,6 +20,7 @@ import com.android.jarutils.JavaResourceFilter;
 import com.android.jarutils.SignedJarBuilder;
 import com.android.prefs.AndroidLocation;
 import com.android.sdklib.SdkConstants;
+import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
@@ -336,7 +337,8 @@ public class AndroidApkBuilder {
   public static void collectNativeLibraries(@NotNull VirtualFile file, @NotNull List<VirtualFile> result, boolean debugBuild) {
     if (!file.isDirectory()) {
       String ext = file.getExtension();
-      if (AndroidUtils.EXT_NATIVE_LIB.equalsIgnoreCase(ext) || debugBuild) {
+      if (AndroidUtils.EXT_NATIVE_LIB.equalsIgnoreCase(ext) ||
+          (debugBuild && !(file.getFileType() instanceof ArchiveFileType))) {
         result.add(file);
       }
     }
