@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
+import org.jetbrains.annotations.Nullable;
 
 import static com.jetbrains.python.PyBundle.message;
 
@@ -34,16 +35,31 @@ public class FunctionParsing extends Parsing {
     return PARAMETER_LIST_TYPE;
   }
 
+  @Nullable
+  protected IElementType getNameType() {
+    return null;
+  }
+
   protected void parseFunctionInnards(PsiBuilder.Marker functionMarker) {
     myBuilder.advanceLexer();
+    final IElementType elementType = getNameType();
+    final PsiBuilder.Marker mark = myBuilder.mark();
+    boolean nameFound = false;
     if (myBuilder.getTokenType() == PyTokenTypes.IDENTIFIER) {
       myBuilder.advanceLexer();
+      nameFound = true;
     }
     else {
       myBuilder.error(message("PARSE.expected.func.name"));
     }
     parseParameterList();
     parseReturnTypeAnnotation();
+    if (elementType != null && nameFound) {
+      mark.done(elementType);
+    }
+    else {
+      mark.drop();
+    }
     checkMatches(PyTokenTypes.COLON, message("PARSE.expected.colon"));
     getStatementParser().parseSuite(functionMarker, getFunctionType(), myContext.emptyParsingScope().withFunction(true));
   }
