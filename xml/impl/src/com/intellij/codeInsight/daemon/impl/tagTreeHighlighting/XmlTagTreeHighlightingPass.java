@@ -60,12 +60,12 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
     .createTextAttributesKey("TAG_TREE_HIGHLIGHTING_KEY"));
 
   private final XmlFile myFile;
-  private final Editor myEditor;
+  private final EditorEx myEditor;
   private final BreadcrumbsInfoProvider myInfoProvider;
 
   private final List<Pair<TextRange, TextRange>> myPairsToHighlight = new ArrayList<Pair<TextRange, TextRange>>();
 
-  public XmlTagTreeHighlightingPass(@NotNull XmlFile file, @NotNull Editor editor) {
+  public XmlTagTreeHighlightingPass(@NotNull XmlFile file, @NotNull EditorEx editor) {
     super(file.getProject(), editor.getDocument(), true);
     myFile = file;
     myEditor = editor;
@@ -257,7 +257,7 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
   }
 
   private Color[] toColorsForEditor(Color[] baseColors) {
-    final Color tagBackground = myEditor instanceof EditorEx ? ((EditorEx)myEditor).getBackgroundColor() : null;
+    final Color tagBackground = myEditor.getBackgroundColor();
 
     if (tagBackground == null) {
       return baseColors;
