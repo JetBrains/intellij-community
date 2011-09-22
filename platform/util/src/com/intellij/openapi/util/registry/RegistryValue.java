@@ -121,6 +121,10 @@ public class RegistryValue {
   private String _get(String key, String defaultValue, boolean mustExistInBundle) {
     final String userValue = myRegistry.getUserProperties().get(key);
     if (userValue == null) {
+      String systemProperty = System.getProperty(key);
+      if (systemProperty != null) {
+        return systemProperty;
+      }
       final String bundleValue = getBundleValue(key, mustExistInBundle);
       if (bundleValue != null) {
         return bundleValue;

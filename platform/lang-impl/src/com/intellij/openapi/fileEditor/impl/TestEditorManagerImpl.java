@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -397,8 +397,9 @@ import java.util.Map;
 
     if (editor == null) {
       PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
-      LOG.assertTrue(psiFile != null);
+      LOG.assertTrue(psiFile != null, file);
       Document document = PsiDocumentManager.getInstance(myProject).getDocument(psiFile);
+      LOG.assertTrue(document != null, psiFile);
       editor = EditorFactory.getInstance().createEditor(document, myProject);
       ((EditorEx) editor).setHighlighter(HighlighterFactory.createHighlighter(myProject, file));
       ((EditorEx) editor).setFile(file);

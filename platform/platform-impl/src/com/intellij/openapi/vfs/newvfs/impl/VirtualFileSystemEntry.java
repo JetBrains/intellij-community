@@ -423,7 +423,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   @Override
   public boolean isFile() {
     final NewVirtualFileSystem fs = getFileSystem();
-    return fs instanceof LocalFileSystem && ((LocalFileSystem)fs).isFile(this);
+    return !(fs instanceof LocalFileSystem) || ((LocalFileSystem)fs).isFile(this);
   }
 
   @Override

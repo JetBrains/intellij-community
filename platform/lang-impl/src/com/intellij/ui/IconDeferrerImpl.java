@@ -20,7 +20,6 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.Function;
 import com.intellij.util.messages.MessageBus;
@@ -33,6 +32,7 @@ import java.util.Map;
 public class IconDeferrerImpl extends IconDeferrer {
   private final Object LOCK = new Object();
   private final Map<Object, Icon> myIconsCache = new HashMap<Object, Icon>();
+  private long myLastClearTimestamp = 0;
 
   public IconDeferrerImpl(MessageBus bus) {
     final MessageBusConnection connection = bus.connect();
@@ -42,22 +42,12 @@ public class IconDeferrerImpl extends IconDeferrer {
         clear();
       }
     });
-
-    connection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
-      @Override
-      public void enteredDumbMode() {
-      }
-
-      @Override
-      public void exitDumbMode() {
-        clear();
-      }
-    });
   }
 
   private void clear() {
     synchronized (LOCK) {
       myIconsCache.clear();
+      myLastClearTimestamp++;
     }
   }
 
@@ -69,11 +59,15 @@ public class IconDeferrerImpl extends IconDeferrer {
     synchronized (LOCK) {
       Icon result = myIconsCache.get(param);
       if (result == null) {
+        final long started = myLastClearTimestamp;
         result = new DeferredIconImpl<T>(base, param, f).setDoneListener(new DeferredIconImpl.IconListener<T>() {
           @Override
           public void evalDone(T key, Icon r) {
             synchronized (LOCK) {
-              myIconsCache.put(key, r);
+              // check if our results is not outdated yet
+              if (started == myLastClearTimestamp) {
+                myIconsCache.put(key, r);
+              }
             }
           }
         });

@@ -88,6 +88,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   private Set<ActionCallback> myTypeAheadRequestors = new HashSet<ActionCallback>();
   private UiActivityMonitor myActivityMonitor;
   private boolean myTypeaheadEnabled = true;
+  private int myModalityStateForLastForcedRequest;
 
 
   private class IdleRunnable extends EdtRunnable {
@@ -392,6 +393,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
 
   private void setLastEffectiveForcedRequest(FocusCommand command) {
     myLastForcedRequest = new WeakReference<FocusCommand>(command);
+    myModalityStateForLastForcedRequest = getCurrentModalityCount();
   }
 
   @Nullable
@@ -402,7 +404,8 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   }
 
   boolean isUnforcedRequestAllowed() {
-    return getLastEffectiveForcedRequest() == null;
+    if (getLastEffectiveForcedRequest() == null) return true;
+    return myModalityStateForLastForcedRequest != getCurrentModalityCount();
   }
 
   public static FocusManagerImpl getInstance() {

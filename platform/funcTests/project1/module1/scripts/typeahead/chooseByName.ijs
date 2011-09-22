@@ -1,3 +1,4 @@
+%startTest Typeahead in choose by name popup
 %include ../include/project1Init.ijs
 
 %action GotoClass
@@ -6,3 +7,4 @@ PsiManager\n
 %action GotoClass
 ActiveLibrary\n
 %call checkFocus(editorTab=ActiveLibrary.java)
+%endTest

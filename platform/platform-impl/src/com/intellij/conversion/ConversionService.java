@@ -27,8 +27,10 @@ import java.io.File;
  */
 public abstract class ConversionService {
 
+  @NotNull
   public static ConversionService getInstance() {
-    return ServiceManager.getService(ConversionService.class);
+    ConversionService service = ServiceManager.getService(ConversionService.class);
+    return service == null ? new DummyConversionService() : service;
   }
 
   @NotNull
