@@ -323,7 +323,14 @@ public class TabLabel extends JPanel {
   }
   
   private void setIcon(final Icon icon, int layer) {
-    getLayeredIcon().setIcon(icon, layer);
+    LayeredIcon layeredIcon = getLayeredIcon();
+    layeredIcon.setIcon(icon, layer);
+    if (hasIcons()) {
+      myLabel.setIcon(layeredIcon);
+    } else {
+      myLabel.setIcon(null);
+    }
+    
     invalidateIfNeeded();
   }
 
