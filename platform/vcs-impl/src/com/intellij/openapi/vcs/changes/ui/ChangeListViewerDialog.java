@@ -127,7 +127,7 @@ public class ChangeListViewerDialog extends DialogWrapper implements DataProvide
   public JComponent createCenterPanel() {
     final JPanel mainPanel = new JPanel();
     mainPanel.setLayout(new BorderLayout());
-    final Splitter splitter = new Splitter(true, 0.7f);
+    final Splitter splitter = new Splitter(true, 0.8f);
     myChangesBrowser = new RepositoryChangesBrowser(myProject, Collections.singletonList(myChangeList),
                                                     new ArrayList<Change>(myChangeList.getChanges()),
                                                     myChangeList) {
