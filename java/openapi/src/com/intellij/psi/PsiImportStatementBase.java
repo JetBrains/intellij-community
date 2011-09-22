@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.psi;
 
+import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -27,6 +28,13 @@ public interface PsiImportStatementBase extends PsiElement {
    * The empty array of PSI base import statements which can be reused to avoid unnecessary allocations.
    */
   PsiImportStatementBase[] EMPTY_ARRAY = new PsiImportStatementBase[0];
+
+  ArrayFactory<PsiImportStatementBase> ARRAY_FACTORY = new ArrayFactory<PsiImportStatementBase>() {
+    @Override
+    public PsiImportStatementBase[] create(final int count) {
+      return count == 0 ? EMPTY_ARRAY : new PsiImportStatementBase[count];
+    }
+  };
 
   /**
    * Checks if the statement represents a single element or on-demand import.

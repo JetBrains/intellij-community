@@ -146,7 +146,7 @@ public class ArrayUtil {
     return ret;
   }
 
-  /** @deprecated use {@linkplain #mergeArrays(Object[], Object[])} (to remove in IDEA 13) */
+  /** @deprecated use {@linkplain #mergeArrays(Object[], Object[], com.intellij.util.ArrayFactory)} (to remove in IDEA 13) */
   @NotNull
   public static <T> T[] mergeArrays(@NotNull T[] a1, @NotNull T[] a2, @NotNull Class<T> aClass) {
     if (a1.length == 0) {
