@@ -115,6 +115,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     myDockManager = dockManager;
     myListenerList =
       new MessageListenerList<FileEditorManagerListener>(myProject.getMessageBus(), FileEditorManagerListener.FILE_EDITOR_MANAGER);
+    myQueue.setTrackUiActivity(true);
   }
 
   private void initDockableContentFactory() {

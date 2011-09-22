@@ -2416,7 +2416,7 @@ public class UIUtil {
   public static boolean isMeaninglessFocusOwner(@Nullable Component c) {
     if (c == null || !c.isShowing()) return true;
 
-    return c instanceof JFrame || c instanceof JDialog || c instanceof JWindow || c instanceof JRootPane;
+    return c instanceof JFrame || c instanceof JDialog || c instanceof JWindow || c instanceof JRootPane || isFocusProxy(c);
   }
 
   public static Timer createNamedTimer(@NonNls @NotNull final String name, int delay, @NotNull ActionListener listener) {

@@ -446,7 +446,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
   }
 
   private void message(@Nullable final PlaybackContext context, final String text, final int currentLine, final Type type, final boolean forced) {
-    final int depth = context != null ? context.getStageCount() : 0;
+    final int depth = context != null ? context.getCurrentStageDepth() : 0;
     
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override

@@ -12,5 +12,5 @@ PsiManager\n
 \n
 %call flushUi()
 \n
-%call checkFocus(editorTab=FileEditorManager.java)
+%call checkFocus(editorTab=ClassWithManyImports.java)
 

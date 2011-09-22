@@ -255,7 +255,9 @@ public class FocusTrackback {
       if (ownerBySwing != null) {
         final Window ownerBySwingWindow = SwingUtilities.getWindowAncestor(ownerBySwing);
         if (ownerBySwingWindow != null && ownerBySwingWindow == SwingUtilities.getWindowAncestor(toFocus)) {
-          toFocus = ownerBySwing;
+          if (!UIUtil.isMeaninglessFocusOwner(ownerBySwing)) {
+            toFocus = ownerBySwing;
+          }
         }
       }
 

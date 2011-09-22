@@ -57,7 +57,7 @@ public class PlaybackRunner {
   private final ApplicationActivationListener myAppListener;
 
   private HashSet<Class> myFacadeClasses = new HashSet<Class>();
-  private ArrayList<StageInfo> myStages = new ArrayList<StageInfo>();
+  private ArrayList<StageInfo> myCurrentStageDepth = new ArrayList<StageInfo>();
   private ArrayList<StageInfo> myPassedStages = new ArrayList<StageInfo>();
 
   private long myContextTimestamp;
@@ -92,7 +92,7 @@ public class PlaybackRunner {
     myStopRequested = false;
 
     UiActivityMonitor.getInstance().clear();
-    myStages.clear();
+    myCurrentStageDepth.clear();
     myPassedStages.clear();
     myContextTimestamp++;
 
@@ -148,19 +148,19 @@ public class PlaybackRunner {
           private long myTimeStamp = myContextTimestamp;
 
           public void pushStage(StageInfo info) {
-            myStages.add(info);
+            myCurrentStageDepth.add(info);
           }
 
           public StageInfo popStage() {
-            if (myStages.size() > 0) {
-              return myStages.remove(myStages.size() - 1);
+            if (myCurrentStageDepth.size() > 0) {
+              return myCurrentStageDepth.remove(myCurrentStageDepth.size() - 1);
             }
 
             return null;
           }
 
-          public int getStageCount() {
-            return myStages.size();
+          public int getCurrentStageDepth() {
+            return myCurrentStageDepth.size();
           }
 
           @Override

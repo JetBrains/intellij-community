@@ -120,7 +120,7 @@ public abstract class PlaybackContext  {
 
   public abstract StageInfo popStage();
 
-  public abstract int getStageCount();
+  public abstract int getCurrentStageDepth();
 
   public abstract void addPassed(StageInfo stage);
 
