@@ -45,19 +45,23 @@ public class JavaVisibilityPanel extends VisibilityPanelBase {
   private final JRadioButton myRbPublic;
 
   public JavaVisibilityPanel(boolean hasAsIs, final boolean hasEscalate) {
-    setBorder(IdeBorderFactory.createTitledBorder(RefactoringBundle.message("visibility.border.title"), false, true, true, new Insets(0,UIUtil.DEFAULT_HGAP,0,0)));
+    setBorder(IdeBorderFactory.createTitledBorder(RefactoringBundle.message("visibility.border.title"), false, true, true,
+                                                  new Insets(IdeBorderFactory.TITLED_BORDER_TOP_INSET,
+                                                             UIUtil.DEFAULT_HGAP,
+                                                             IdeBorderFactory.TITLED_BORDER_BOTTOM_INSET,
+                                                             IdeBorderFactory.TITLED_BORDER_RIGHT_INSET)));
     setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
     ButtonGroup bg = new ButtonGroup();
 
     ItemListener listener = new ItemListener() {
       public void itemStateChanged(ItemEvent e) {
-        if(e.getStateChange() == ItemEvent.SELECTED) {
+        if (e.getStateChange() == ItemEvent.SELECTED) {
           myEventDispatcher.getMulticaster().stateChanged(new ChangeEvent(this));
         }
       }
     };
 
-    if(hasEscalate) {
+    if (hasEscalate) {
       myRbEscalate = new JRadioButton();
       myRbEscalate.setText(RefactoringBundle.getEscalateVisibility());
       myRbEscalate.addItemListener(listener);
@@ -65,14 +69,13 @@ public class JavaVisibilityPanel extends VisibilityPanelBase {
       bg.add(myRbEscalate);
     }
 
-    if(hasAsIs) {
+    if (hasAsIs) {
       myRbAsIs = new JRadioButton();
       myRbAsIs.setText(RefactoringBundle.getVisibilityAsIs());
       myRbAsIs.addItemListener(listener);
       add(myRbAsIs);
       bg.add(myRbAsIs);
     }
-
 
 
     myRbPrivate = new JRadioButton();
@@ -159,5 +162,4 @@ public class JavaVisibilityPanel extends VisibilityPanelBase {
     myRbPublic.setEnabled(true);
     myRbPublic.setSelected(true);
   }
-
 }
