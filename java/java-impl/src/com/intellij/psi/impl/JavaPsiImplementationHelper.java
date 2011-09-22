@@ -18,9 +18,7 @@ package com.intellij.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiImportList;
-import com.intellij.psi.PsiImportStatementBase;
+import com.intellij.psi.*;
 
 /**
  * @author yole
@@ -31,6 +29,8 @@ public abstract class JavaPsiImplementationHelper {
   }
 
   public abstract PsiClass getOriginalClass(PsiClass psiClass);
+
+  public abstract PsiElement getClsFileNavigationElement(PsiJavaFile clsFile);
 
   public abstract ASTNode getDefaultImportAnchor(PsiImportList list, PsiImportStatementBase statement);
 }

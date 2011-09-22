@@ -19,12 +19,14 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.impl.compiled.ClsClassImpl;
 import com.intellij.psi.impl.source.codeStyle.ImportHelper;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
@@ -74,6 +76,32 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
     });
 
     return original != null ? original : psiClass;
+  }
+
+  @Override
+  public PsiElement getClsFileNavigationElement(PsiJavaFile clsFile) {
+    String packageName = clsFile.getPackageName();
+    PsiClass[] classes = clsFile.getClasses();
+    if (classes.length == 0) return clsFile;
+    String sourceFileName = ((ClsClassImpl)classes[0]).getSourceFileName();
+    String relativeFilePath = packageName.length() == 0 ? sourceFileName : packageName.replace('.', '/') + '/' + sourceFileName;
+
+    final VirtualFile vFile = clsFile.getContainingFile().getVirtualFile();
+    ProjectFileIndex projectFileIndex = ProjectFileIndex.SERVICE.getInstance(clsFile.getProject());
+    final List<OrderEntry> orderEntries = projectFileIndex.getOrderEntriesForFile(vFile);
+    for (OrderEntry orderEntry : orderEntries) {
+      VirtualFile[] files = orderEntry.getFiles(OrderRootType.SOURCES);
+      for (VirtualFile file : files) {
+        VirtualFile source = file.findFileByRelativePath(relativeFilePath);
+        if (source != null) {
+          PsiFile psiSource = clsFile.getManager().findFile(source);
+          if (psiSource instanceof PsiClassOwner) {
+            return psiSource;
+          }
+        }
+      }
+    }
+    return clsFile;
   }
 
   @Override
