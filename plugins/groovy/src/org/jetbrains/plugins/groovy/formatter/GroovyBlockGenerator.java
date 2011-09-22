@@ -23,6 +23,7 @@ import com.intellij.formatting.Wrap;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -275,8 +276,10 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
   }
 
   private static boolean isKeyword(ASTNode node) {
-    return node != null && (TokenSets.KEYWORDS.contains(node.getElementType()) ||
-        TokenSets.BRACES.contains(node.getElementType()));
+    if (node == null) return false;
+    
+    return TokenSets.KEYWORDS.contains(node.getElementType()) ||
+        TokenSets.BRACES.contains(node.getElementType()) && !PlatformPatterns.psiElement().withText(")").withParent(GrArgumentList.class).afterLeaf(",").accepts(node.getPsi());
   }
 
 
