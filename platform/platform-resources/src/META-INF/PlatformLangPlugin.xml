@@ -96,7 +96,4 @@
   <xi:include href="/META-INF/GraphPlugin.xml" xpointer="xpointer(/idea-plugin/*)">
     <xi:fallback/>
   </xi:include>
-  <xi:include href="/META-INF/duplicates.xml" xpointer="xpointer(/idea-plugin/*)">
-    <xi:fallback/>
-  </xi:include>
 </idea-plugin>
