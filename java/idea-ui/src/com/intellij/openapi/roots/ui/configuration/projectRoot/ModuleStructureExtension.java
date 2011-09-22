@@ -52,10 +52,10 @@ public abstract class ModuleStructureExtension {
     return Collections.emptyList();
   }
 
-  public boolean canBeCopied(final NamedConfigurable confugurable) {
+  public boolean canBeCopied(final NamedConfigurable configurable) {
     return false;
   }
 
-  public void copy(final NamedConfigurable confugurable, final Runnable treeNodeNameUpdater) {
+  public void copy(final NamedConfigurable configurable, final Runnable treeNodeNameUpdater) {
   }
 }
