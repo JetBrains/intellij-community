@@ -29,6 +29,7 @@ import com.intellij.psi.filters.ConstructorFilter;
 import com.intellij.psi.filters.NotFilter;
 import com.intellij.psi.filters.OrFilter;
 import com.intellij.psi.impl.CheckUtil;
+import com.intellij.psi.impl.JavaPsiImplementationHelper;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.SourceJavaCodeReference;
@@ -48,7 +49,6 @@ import com.intellij.psi.scope.processor.MethodResolverProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.*;
@@ -102,7 +102,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
       doImportStatic = false;
     }
     if (doImportStatic) {
-      bindToElementViaStaticImport(qualifierClass, staticName, importList);
+      JavaPsiImplementationHelper.getInstance(getProject()).bindToElementViaStaticImport(qualifierClass, staticName, importList);
     }
     else {
       PsiManagerEx manager = getManager();
@@ -113,34 +113,6 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
       addBefore(classRef, SourceTreeToPsiMap.treeElementToPsi(dot));
     }
     return this;
-  }
-
-  public static void bindToElementViaStaticImport(final PsiClass qualifierClass, final String staticName, final PsiImportList importList)
-    throws IncorrectOperationException {
-    final String qualifiedName  = qualifierClass.getQualifiedName();
-    final List<PsiJavaCodeReferenceElement> refs = getImportsFromClass(importList, qualifiedName);
-    if (refs.size() < CodeStyleSettingsManager.getSettings(qualifierClass.getProject()).NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND) {
-      importList.add(JavaPsiFacade.getInstance(qualifierClass.getProject()).getElementFactory().createImportStaticStatement(qualifierClass, staticName));
-    } else {
-      for (PsiJavaCodeReferenceElement ref : refs) {
-        final PsiImportStaticStatement importStatement = PsiTreeUtil.getParentOfType(ref, PsiImportStaticStatement.class);
-        if (importStatement != null) {
-          importStatement.delete();
-        }
-      }
-      importList.add(JavaPsiFacade.getInstance(qualifierClass.getProject()).getElementFactory().createImportStaticStatement(qualifierClass, "*"));
-    }
-  }
-
-  private static List<PsiJavaCodeReferenceElement> getImportsFromClass(@NotNull PsiImportList importList, String className){
-    final List<PsiJavaCodeReferenceElement> array = new ArrayList<PsiJavaCodeReferenceElement>();
-    for (PsiImportStaticStatement staticStatement : importList.getImportStaticStatements()) {
-      final PsiClass psiClass = staticStatement.resolveTargetClass();
-      if (psiClass != null && Comparing.strEqual(psiClass.getQualifiedName(), className)) {
-        array.add(staticStatement.getImportReference());
-      }
-    }
-    return array;
   }
 
   public void setQualifierExpression(@Nullable PsiExpression newQualifier) throws IncorrectOperationException {

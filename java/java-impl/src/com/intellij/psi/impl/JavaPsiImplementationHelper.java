@@ -33,4 +33,6 @@ public abstract class JavaPsiImplementationHelper {
   public abstract PsiElement getClsFileNavigationElement(PsiJavaFile clsFile);
 
   public abstract ASTNode getDefaultImportAnchor(PsiImportList list, PsiImportStatementBase statement);
+
+  public abstract void bindToElementViaStaticImport(PsiClass qualifierClass, String staticName, PsiImportList importList);
 }
