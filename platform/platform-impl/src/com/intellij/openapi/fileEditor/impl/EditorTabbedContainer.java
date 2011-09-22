@@ -93,7 +93,7 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
       @NotNull
       public UiDecoration getDecoration() {
         if (((MacJBTabs)myTabs).isNewTabsActive()) {
-          return new UiDecoration(null /*UIUtil.getLabelFont().deriveFont(11f)*/, new Insets(2, 7, 1, 7));
+          return new UiDecoration(null /*UIUtil.getLabelFont().deriveFont(11f)*/, new Insets(2, 9, 1, 9));
         } else {
           return new UiDecoration(null, new Insets(1, 6, 1, 6));
         }
