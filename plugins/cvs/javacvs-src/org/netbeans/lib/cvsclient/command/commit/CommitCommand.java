@@ -184,7 +184,8 @@ public final class CommitCommand extends AbstractCommand {
 		}
 		if (getToRevisionOrBranch() != null) {
 			arguments.append("-r ");
-			arguments.append(getToRevisionOrBranch() + " ");
+			arguments.append(getToRevisionOrBranch());
+			arguments.append(" ");
 		}
 		if (getMessage() != null) {
 			arguments.append("-m \"");
