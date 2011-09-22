@@ -994,6 +994,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     final List<S> notMatched = new LinkedList<S>();
     for (S s : in) {
       final VirtualFile vf = convertor.convert(s);
+      if (vf == null) continue;
 
       final File ioFile = new File(vf.getPath());
       SVNURL url = mapping.getUrlForFile(ioFile);
