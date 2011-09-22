@@ -60,6 +60,11 @@ def x = 1
 """);
   }
 
+  public void testUnwrapParameterUnderArgumentList() throws Exception {
+    assertUnwrapped("xxx(1, yyy(<caret>1), 2)",
+                    "xxx(1, <caret>1, 2)");
+  }
+
   public void testTryWithCatches() throws Exception {
     assertUnwrapped("try {\n" +
                     "    int i;<caret>\n" +
@@ -70,6 +75,36 @@ def x = 1
                     "}\n",
 
                     "int i;\n");
+  }
+
+  public void testConditionalThat() throws Exception {
+    assertUnwrapped("xxx(f ? <caret>'1' : '2');\n",
+                    "xxx('1');\n");
+  }
+
+  public void testConditionalElse() throws Exception {
+    assertUnwrapped("xxx(f ? '1' : '2' +<caret> 3);\n",
+                    "xxx('2' +<caret> 3);\n");
+  }
+
+  public void testConditionalFromParameterList2() throws Exception {
+    assertUnwrapped("xxx(11, f ? '1' : '2' +<caret> 3, 12);\n",
+                    "xxx(11, '2' +<caret> 3, 12);\n");
+  }
+
+  public void testConditionalCond1() throws Exception {
+    assertUnwrapped("f <caret>? \"1\" : \"2\" + 3",
+                    "\"1\"");
+  }
+
+  public void testConditionalCond2() throws Exception {
+    assertUnwrapped("<caret>f ? \"1\" : \"2\" + 3",
+                    "\"1\"");
+  }
+
+  public void testConditionalUnwrapUnderAssigmentExpression() throws Exception {
+    assertUnwrapped("String s = f ? \"1<caret>\" : \"2\";\n",
+                    "String s = \"1\";\n");
   }
 
 }
