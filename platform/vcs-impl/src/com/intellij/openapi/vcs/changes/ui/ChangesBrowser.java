@@ -226,6 +226,11 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
     else if (leadSelection != null) {
       showDiffForChanges(new Change[]{leadSelection}, 0);
     }
+
+    afterDiffRefresh();
+  }
+
+  protected void afterDiffRefresh() {
   }
 
   private static boolean isInFrame() {

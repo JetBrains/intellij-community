@@ -253,19 +253,17 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
               handler.includedChangesChanged();
             }
           }
-        });
+        }) {
+        @Override
+        protected void afterDiffRefresh() {
+          myBrowser.rebuildList();
+          myBrowser.setDataIsDirty(false);
+        }
+      };
       myBrowser = browser;
       myBrowserExtender = browser.getExtender();
     }
     myDiffDetails.setParent(myBrowser);
-    myListenersForShortDiff = new FileAndDocumentListenersForShortDiff(myDiffDetails) {
-      @Override
-      protected void updateDetails() {
-        myDiffDetails.refresh();
-      }
-    };
-    myListenersForShortDiff.on();
-
     final ZipperUpdater zipperUpdater = new ZipperUpdater(30, Alarm.ThreadToUse.SWING_THREAD, getDisposable());
     final Runnable refreshShortDiffDetails = new Runnable() {
       @Override
@@ -273,6 +271,14 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
         myDiffDetails.refresh();
       }
     };
+    myListenersForShortDiff = new FileAndDocumentListenersForShortDiff(myDiffDetails) {
+      @Override
+      protected void updateDetails() {
+        zipperUpdater.queue(refreshShortDiffDetails);
+      }
+    };
+    myListenersForShortDiff.on();
+
     myBrowser.getViewer().addSelectionListener(new Runnable() {
       @Override
       public void run() {
