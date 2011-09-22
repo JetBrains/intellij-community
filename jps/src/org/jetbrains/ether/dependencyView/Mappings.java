@@ -170,6 +170,11 @@ public class Mappings {
                     affectSubclasses(it.name, affectedFiles);
                 }
 
+                if ((diff.addedModifiers() & Opcodes.ACC_INTERFACE) > 0 ||
+                    (diff.removedModifiers() & Opcodes.ACC_INTERFACE) > 0) {
+                    affectedUsages.add(it.createUsage());
+                }
+
                 if (it.isAnnotation() && it.policy == RetentionPolicy.SOURCE) {
                     return false;
                 }

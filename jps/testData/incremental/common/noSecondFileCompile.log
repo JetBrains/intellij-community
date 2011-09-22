@@ -1,0 +1,21 @@
+Request to make modules:
+module NoSecondFileCompile
+End of request
+digraph X {
+  NoSecondFileCompile[label="NoSecondFileCompile"];
+}
+digraph X {
+  NoSecondFileCompile[label="NoSecondFileCompile"];
+}
+Propagated modules:
+module NoSecondFileCompile
+End of propagated
+Cleaning output files:
+out/production/NoSecondFileCompile/A.class
+out/production/NoSecondFileCompile/B.class
+out/production/NoSecondFileCompile/C.class
+End of files
+Compiling files:
+src/A.java
+src/C.java
+End of files

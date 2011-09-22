@@ -1,0 +1,11 @@
+Request to make modules:
+module NoResourceDelete
+End of request
+digraph X {
+  NoResourceDelete[label="NoResourceDelete"];
+}
+digraph X {
+  NoResourceDelete[label="NoResourceDelete"];
+}
+Propagated modules:
+End of propagated
