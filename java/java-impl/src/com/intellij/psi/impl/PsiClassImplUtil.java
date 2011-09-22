@@ -17,7 +17,7 @@ package com.intellij.psi.impl;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -500,7 +500,7 @@ public class PsiClassImplUtil {
       final List<Pair<PsiMethod, PsiSubstitutor>> list = allMethodsMap.get(nameHint.getName(state));
       if (list != null) {
         for (final Pair<PsiMethod, PsiSubstitutor> candidate : list) {
-          ProgressManager.checkCanceled();
+          ProgressIndicatorProvider.checkCanceled();
           PsiMethod candidateMethod = candidate.getFirst();
           if (processor instanceof MethodResolverProcessor) {
             if (candidateMethod.isConstructor() != ((MethodResolverProcessor)processor).isConstructor()) continue;

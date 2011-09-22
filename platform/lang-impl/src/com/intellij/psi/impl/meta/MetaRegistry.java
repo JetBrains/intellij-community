@@ -18,7 +18,7 @@ package com.intellij.psi.impl.meta;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataCache;
@@ -109,7 +109,7 @@ public class MetaRegistry extends MetaDataRegistrar {
   
   @Nullable
   public static PsiMetaData getMetaBase(final PsiElement element) {
-    ProgressManager.checkCanceled();
+    ProgressIndicatorProvider.checkCanceled();
     return ourCachedMetaCache.get(META_DATA_KEY, element, null).getValue();
   }
 
