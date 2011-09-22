@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.project.impl;
 
+import com.intellij.conversion.ConversionResult;
+import com.intellij.conversion.ConversionService;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.highlighter.WorkspaceFileType;
 import com.intellij.ide.impl.ProjectUtil;
@@ -320,9 +322,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     return project;
   }
 
-  @Nullable
-  protected static String canonicalize(final String filePath) {
-    if (filePath == null) return null;
+  @NotNull
+  private static String canonicalize(final @NotNull String filePath) {
     try {
       return FileUtil.resolveShortWindowsName(filePath);
     }
@@ -475,38 +476,28 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     myOpenProjectsArrayCache = myOpenProjects.toArray(new Project[myOpenProjects.size()]);
   }
 
-  public Project loadAndOpenProject(@NotNull String filePath) throws IOException, JDOMException, InvalidDataException {
-    return loadAndOpenProject(filePath, true);
-  }
-
-  @Nullable
-  public Project convertAndLoadProject(String filePath, boolean convert, Ref<Boolean> cancelled) throws IOException {
-    return loadProjectWithProgress(filePath, cancelled);
-  }
-
-  @Nullable
-  public Project loadAndOpenProject(final String filePath, final boolean convert) throws IOException, JDOMException, InvalidDataException {
+  public Project loadAndOpenProject(@NotNull final String filePath) throws IOException, JDOMException, InvalidDataException {
     final Ref<Project> projectRef = new Ref<Project>();
     final Ref<IOException> exceptionRef = new Ref<IOException>();
     myProgressManager.runProcessWithProgressSynchronously(new Runnable() {
       @Override
       public void run() {
         try {
-          final Project project = convertAndLoadProject(filePath, convert, new Ref<Boolean>());
+          final Project project = convertAndLoadProject(filePath, new Ref<Boolean>());
           if (project == null) {
             return;
           }
-    
+
           if (!openProject(project)) {
             ApplicationManager.getApplication().runWriteAction(new Runnable() {
               public void run() {
                 Disposer.dispose(project);
               }
             });
-    
+
             return;
           }
-    
+
           projectRef.set(project);
         }
         catch (StateStorageException e) {
@@ -517,7 +508,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
         }
       }
     }, ProjectBundle.message("project.load.progress"), true, null);
-    
+
     if (!exceptionRef.isNull()) {
       throw exceptionRef.get();
     }
@@ -525,8 +516,26 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
 
   @Nullable
-  public Project loadProjectWithProgress(final String filePath) throws IOException {
-    return loadProjectWithProgress(filePath, new Ref<Boolean>());
+  public Project convertAndLoadProject(String filePath, Ref<Boolean> cancelled) throws IOException {
+    final ConversionResult conversionResult;
+    final String fp = canonicalize(filePath);
+    conversionResult = ConversionService.getInstance().convert(fp);
+    if (conversionResult.openingIsCanceled()) {
+      cancelled.set(true);
+      return null;
+    }
+
+    final Project project = loadProjectWithProgress(filePath, new Ref<Boolean>());
+    if (project == null) return null;
+
+    if (!conversionResult.conversionNotNeeded()) {
+      StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
+        public void run() {
+          conversionResult.postStartupActivity(project);
+        }
+      });
+    }
+    return project;
   }
 
   @Nullable
