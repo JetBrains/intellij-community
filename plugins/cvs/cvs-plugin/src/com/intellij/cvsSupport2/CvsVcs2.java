@@ -21,6 +21,7 @@ import com.intellij.cvsSupport2.actions.merge.CvsMergeProvider;
 import com.intellij.cvsSupport2.annotate.CvsAnnotationProvider;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.application.CvsStorageComponent;
+import com.intellij.cvsSupport2.changeBrowser.CvsChangeList;
 import com.intellij.cvsSupport2.changeBrowser.CvsCommittedChangesProvider;
 import com.intellij.cvsSupport2.checkinProject.CvsCheckinEnvironment;
 import com.intellij.cvsSupport2.checkinProject.CvsRollbackEnvironment;
@@ -56,6 +57,7 @@ import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,7 +70,7 @@ import java.util.List;
  * @author lesya
  */
 
-public class CvsVcs2 extends AbstractVcs implements TransactionProvider, EditFileProvider {
+public class CvsVcs2 extends AbstractVcs<CvsChangeList> implements TransactionProvider, EditFileProvider {
   private static final String NAME = "CVS";
   private static final VcsKey ourKey = createKey(NAME);
   private final Cvs2Configurable myConfigurable;
@@ -373,6 +375,11 @@ public class CvsVcs2 extends AbstractVcs implements TransactionProvider, EditFil
   @Override
   public boolean areDirectoriesVersionedItems() {
     return true;
+  }
+
+  @Override
+  public <S> List<S> filterUniqueRoots(List<S> in, Convertor<S, VirtualFile> convertor) {
+    return in;
   }
 }
 
