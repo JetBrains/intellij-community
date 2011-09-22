@@ -95,7 +95,7 @@ public class AndroidSdkAdditionalData implements SdkAdditionalData {
   }
 
   public void setBuildTarget(IAndroidTarget target) {
-    myBuildTarget = target.hashString();
+    myBuildTarget = target != null ? target.hashString() : null;
   }
 
   public void save(Element element) {
