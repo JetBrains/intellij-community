@@ -52,7 +52,8 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
   @Override
   public <Psi extends PsiElement> List<Psi> getAugments(@NotNull PsiElement element, @NotNull Class<Psi> type) {
     // Expecting that we are only augmenting an PsiClass
-    if (!(element instanceof PsiClass) || !element.isValid() || !element.isPhysical()) {
+    // Don't filter !isPhysical elements or code autocompletion will not work
+    if (!(element instanceof PsiClass) || !element.isValid()) {
       //noinspection unchecked
       return Collections.emptyList();
     }
