@@ -1010,7 +1010,14 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     doItemTest();
   }
 
+  public void testInheritorMembers() throws Throwable { doTest(); }
+  public void testInheritorEnumMembers() throws Throwable { doTest(); }
   public void testDuplicateMembersFromSuperClass() throws Throwable { doTest(); }
+
+  public void testNoNewEnum() throws Throwable {
+    configureByTestName();
+    assertStringItems("Foo");
+  }
 
   public void testDuplicateMembersFromSuperClassInAnotherFile() throws Throwable {
     myFixture.addClass("class Super { public static final Super FOO = null; }");

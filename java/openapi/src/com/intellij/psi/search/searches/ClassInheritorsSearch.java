@@ -93,7 +93,7 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
     }
 
     public SearchParameters(@NotNull final PsiClass aClass, @NotNull SearchScope scope, final boolean checkDeep, final boolean checkInheritance,
-                            boolean includeAnonymous, final Condition<String> nameCondition) {
+                            boolean includeAnonymous, @NotNull final Condition<String> nameCondition) {
       myClass = aClass;
       myScope = scope;
       myCheckDeep = checkDeep;
@@ -107,7 +107,7 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
       return myClass;
     }
 
-    public Condition<String> getNameCondition() {
+    @NotNull public Condition<String> getNameCondition() {
       return myNameCondition;
     }
 
