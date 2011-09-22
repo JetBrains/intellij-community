@@ -153,7 +153,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
   public void visitClosure(GrClosableBlock closure) {
     if ((myChild1.getElementType() == mLCURLY && myChild2.getElementType() != PARAMETERS_LIST && myChild2.getElementType() != mCLOSABLE_BLOCK_OP)
         || myChild2.getElementType() == mRCURLY) {
-      myResult = Spacing.createDependentLFSpacing(0, Integer.MAX_VALUE, closure.getTextRange(), mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
+      myResult = Spacing.createDependentLFSpacing(0, 1, closure.getTextRange(), mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
     } else if (myChild1.getElementType() == mCLOSABLE_BLOCK_OP) {
       GrStatement[] statements = closure.getStatements();
       if (statements.length > 0) {

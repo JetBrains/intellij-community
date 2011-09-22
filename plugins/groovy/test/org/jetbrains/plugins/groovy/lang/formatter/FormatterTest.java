@@ -149,6 +149,7 @@ public class FormatterTest extends GroovyFormatterTestCase {
   public void testFormatAnonymousDiamonds() throws Throwable { doTest(); }
   public void testPreserveChainingLineBreaks() throws Throwable { doTest(); }
   public void testMultilineEolComment() throws Throwable { doTest(); }
+  public void testRedundantClosureSpace() throws Throwable { doTest(); }
 
   public void testAlignChainedCalls() throws Throwable {
     myTempSettings.ALIGN_MULTILINE_CHAINED_METHODS = true;
