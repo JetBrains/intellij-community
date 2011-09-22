@@ -158,32 +158,6 @@ public class GithubUtil {
     return Collections.emptyList();
   }
 
-    public static boolean isPushableRepo(final String url, final String login, final String password, final RepositoryInfo repositoryInfo) {
-    try {
-      // Github API doesn't list your own repos among pushable repos. Fail!
-      if (login.equals(repositoryInfo.getOwner())){
-        return true;
-      }
-      final HttpMethod method = doREST(url, login, password, "/repos/pushable", false);
-      final InputStream stream = method.getResponseBodyAsStream();
-      final Element element = new SAXBuilder(false).build(stream).getRootElement();
-      if ("error".equals(element.getName())){
-        LOG.warn("Got error element by request: " + "/repos/pushable");
-        return false;
-      }
-      final List repositories = element.getChildren();
-      for (int i = 0; i < repositories.size(); i++) {
-        final Element repo = (Element)repositories.get(i);
-        if (repositoryInfo.equals(new RepositoryInfo(repo))){
-          return true;
-        }
-      }
-    }
-    catch (Exception e) {
-      // ignore
-    }
-    return false;
-  }
 
   @Nullable
   public static RepositoryInfo getDetailedRepoInfo(final String url, final String login, final String password, final String owner, final String name) {
@@ -369,18 +343,6 @@ public class GithubUtil {
       // ignore
     }
     return null;
-  }
-
-  public static boolean isWriteAccessAllowed(final Project project, final RepositoryInfo repo) {
-    final GithubSettings settings = GithubSettings.getInstance();
-    final String password = settings.getPassword();
-    return accessToGithubWithModalProgress(project, new Computable<Boolean>() {
-        @Override
-        public Boolean compute() {
-          ProgressManager.getInstance().getProgressIndicator().setText("Extracting info about pushable repositories");
-          return isPushableRepo(settings.getHost(), settings.getLogin(), password, repo);
-        }
-      });
   }
 
   public static boolean testGitExecutable(final Project project) {
