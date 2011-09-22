@@ -16,9 +16,20 @@
 import java.io.*;
 class Test {
   interface InterfA {
-    <error descr="'foo(T)' is already defined in 'Test.InterfA'"><T extends Cloneable & Iterable> void foo(T x)</error>;
+    <T extends Cloneable & Iterable> void foo(T x);
 
-    <error descr="'foo(T)' is already defined in 'Test.InterfA'"><T extends Iterable & Cloneable> void foo(T x)</error>;
+    <T extends Iterable & Cloneable> void foo(T x);
+  }
+
+  class ANotSame {
+    <T extends Cloneable & Iterable> void foo(T x){}
+
+    <T extends Iterable & Cloneable> void foo(T x){}
+  }
+
+  class BNotSame extends ANotSame {
+      @Override
+      <T extends Cloneable & Iterable> void foo(T x){}
   }
 
   abstract class A<T extends Throwable> {

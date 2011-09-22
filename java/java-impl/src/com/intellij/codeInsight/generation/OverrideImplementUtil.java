@@ -181,7 +181,7 @@ public class OverrideImplementUtil {
     for (final MethodImplementor implementor : getImplementors()) {
       for (final PsiMethod method : implementor.getMethodsToImplement(aClass)) {
         MethodSignature signature = MethodSignatureUtil.createMethodSignature(method.getName(), method.getParameterList(),
-                                                                              method.getTypeParameterList(), PsiSubstitutor.EMPTY);
+                                                                              method.getTypeParameterList(), PsiSubstitutor.EMPTY, method.isConstructor());
         CandidateInfo info = new CandidateInfo(method, PsiSubstitutor.EMPTY);
         result.put(signature, info);
       }
@@ -679,7 +679,7 @@ public class OverrideImplementUtil {
       String name = prevBaseMethod.isConstructor() ? aClass.getName() : prevBaseMethod.getName();
       //Happens when aClass instanceof PsiAnonymousClass
       if (name != null) {
-        MethodSignature signature = MethodSignatureUtil.createMethodSignature(name, prevBaseMethod.getParameterList(), prevBaseMethod.getTypeParameterList(), substitutor);
+        MethodSignature signature = MethodSignatureUtil.createMethodSignature(name, prevBaseMethod.getParameterList(), prevBaseMethod.getTypeParameterList(), substitutor, prevBaseMethod.isConstructor());
         PsiMethod prevMethod = MethodSignatureUtil.findMethodBySignature(aClass, signature, false);
         if (prevMethod != null){
           return prevMethod.getNextSibling();
@@ -692,7 +692,7 @@ public class OverrideImplementUtil {
     while(nextBaseMethod != null) {
       String name = nextBaseMethod.isConstructor() ? aClass.getName() : nextBaseMethod.getName();
       if (name != null) {
-        MethodSignature signature = MethodSignatureUtil.createMethodSignature(name, nextBaseMethod.getParameterList(), nextBaseMethod.getTypeParameterList(), substitutor);
+        MethodSignature signature = MethodSignatureUtil.createMethodSignature(name, nextBaseMethod.getParameterList(), nextBaseMethod.getTypeParameterList(), substitutor, nextBaseMethod.isConstructor());
         PsiMethod nextMethod = MethodSignatureUtil.findMethodBySignature(aClass, signature, false);
         if (nextMethod != null){
           return nextMethod;
