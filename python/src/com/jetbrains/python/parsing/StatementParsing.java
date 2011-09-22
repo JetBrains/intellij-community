@@ -563,14 +563,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
   private void parseForStatement(ParsingScope scope) {
     assertCurrentToken(PyTokenTypes.FOR_KEYWORD);
     final PsiBuilder.Marker statement = myBuilder.mark();
-    final PsiBuilder.Marker forPart = myBuilder.mark();
-    myBuilder.advanceLexer();
-    getExpressionParser().parseExpression(true, true);
-    checkMatches(PyTokenTypes.IN_KEYWORD, "'in' expected");
-    getExpressionParser().parseExpression();
-    checkMatches(PyTokenTypes.COLON, "colon expected");
-    parseSuite(scope);
-    forPart.done(PyElementTypes.FOR_PART);
+    parseForPart(scope);
     final PsiBuilder.Marker elsePart = myBuilder.mark();
     if (myBuilder.getTokenType() == PyTokenTypes.ELSE_KEYWORD) {
       myBuilder.advanceLexer();
@@ -580,6 +573,17 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     }
     else elsePart.drop();
     statement.done(PyElementTypes.FOR_STATEMENT);
+  }
+
+  protected void parseForPart(ParsingScope scope) {
+    final PsiBuilder.Marker forPart = myBuilder.mark();
+    myBuilder.advanceLexer();
+    getExpressionParser().parseExpression(true, true);
+    checkMatches(PyTokenTypes.IN_KEYWORD, "'in' expected");
+    getExpressionParser().parseExpression();
+    checkMatches(PyTokenTypes.COLON, "colon expected");
+    parseSuite(scope);
+    forPart.done(PyElementTypes.FOR_PART);
   }
 
   private void parseWhileStatement(ParsingScope scope) {

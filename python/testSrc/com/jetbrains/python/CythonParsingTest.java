@@ -70,6 +70,10 @@ public class CythonParsingTest extends ParsingTestCase {
     doTest();
   }
 
+  public void testForLoops() {
+    doTest();
+  }
+
   public void doTest() {
     doTest(true);
   }
