@@ -24,7 +24,7 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.value.DfaTypeValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.psi.PsiPrimitiveType;
@@ -48,8 +48,8 @@ public class DfaVariableState implements Cloneable {
     myVar = var;
     myInstanceofValues = new HashSet<DfaTypeValue>();
     myNotInstanceofValues = new HashSet<DfaTypeValue>();
-    myNullable = var != null && AnnotationUtil.isNullable(var);
-    myVariableIsDeclaredNotNull = var != null && AnnotationUtil.isNotNull(var);
+    myNullable = var != null && NullableNotNullManager.isNullable(var);
+    myVariableIsDeclaredNotNull = var != null && NullableNotNullManager.isNotNull(var);
   }
 
   protected DfaVariableState(final DfaVariableState toClone) {
