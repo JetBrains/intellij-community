@@ -28,7 +28,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.JavaPsiImplementationHelper;
 import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -135,7 +134,7 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
     });
 
     if (resolved != null) {
-      JavaPsiImplementationHelper.getInstance(element.getProject()).bindToElementViaStaticImport(
+      PsiReferenceExpressionImpl.bindToElementViaStaticImport(
         getResolvedClass(element, (PsiMember)resolved), ((PsiNamedElement)resolved).getName(), ((PsiJavaFile)file).getImportList()
       );
     }

@@ -22,7 +22,6 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -30,10 +29,8 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.compiled.ClsClassImpl;
 import com.intellij.psi.impl.source.codeStyle.ImportHelper;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -115,30 +112,67 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
   }
 
   @Override
-  public void bindToElementViaStaticImport(PsiClass qualifierClass, String staticName, PsiImportList importList) {
-    final String qualifiedName  = qualifierClass.getQualifiedName();
-    final List<PsiJavaCodeReferenceElement> refs = getImportsFromClass(importList, qualifiedName);
-    if (refs.size() < CodeStyleSettingsManager.getSettings(qualifierClass.getProject()).NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND) {
-      importList.add(JavaPsiFacade.getInstance(qualifierClass.getProject()).getElementFactory().createImportStaticStatement(qualifierClass, staticName));
-    } else {
-      for (PsiJavaCodeReferenceElement ref : refs) {
-        final PsiImportStaticStatement importStatement = PsiTreeUtil.getParentOfType(ref, PsiImportStaticStatement.class);
-        if (importStatement != null) {
-          importStatement.delete();
+  public PsiElement getDefaultMemberAnchor(PsiClass aClass, PsiMember member) {
+    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(aClass.getProject());
+
+    int order = getMemberOrderWeight(member, settings);
+    if (order < 0) return null;
+
+    PsiElement lastMember = null;
+    for (PsiElement child = aClass.getFirstChild(); child != null; child = child.getNextSibling()) {
+      int order1 = getMemberOrderWeight(child, settings);
+      if (order1 < 0) continue;
+      if (order1 > order) {
+        if (lastMember != null) {
+          PsiElement nextSibling = lastMember.getNextSibling();
+          while (nextSibling instanceof PsiJavaToken && (nextSibling.getText().equals(",") || nextSibling.getText().equals(";"))) {
+            nextSibling = nextSibling.getNextSibling();
+          }
+          return nextSibling == null ? aClass.getLBrace().getNextSibling() : nextSibling;
+        }
+        else {
+          // The main idea is to avoid to anchor to 'white space' element because that causes reformatting algorithm
+          // to perform incorrectly. The algorithm is encapsulated at PostprocessReformattingAspect.doPostponedFormattingInner().
+          final PsiElement lBrace = aClass.getLBrace();
+          if (lBrace != null) {
+            PsiElement result = lBrace.getNextSibling();
+            while (result instanceof PsiWhiteSpace) {
+              result = result.getNextSibling();
+            }
+            return result;
+          }
         }
       }
-      importList.add(JavaPsiFacade.getInstance(qualifierClass.getProject()).getElementFactory().createImportStaticStatement(qualifierClass, "*"));
+      lastMember = child;
     }
+    return aClass.getRBrace();
   }
 
-  private static List<PsiJavaCodeReferenceElement> getImportsFromClass(@NotNull PsiImportList importList, String className){
-    final List<PsiJavaCodeReferenceElement> array = new ArrayList<PsiJavaCodeReferenceElement>();
-    for (PsiImportStaticStatement staticStatement : importList.getImportStaticStatements()) {
-      final PsiClass psiClass = staticStatement.resolveTargetClass();
-      if (psiClass != null && Comparing.strEqual(psiClass.getQualifiedName(), className)) {
-        array.add(staticStatement.getImportReference());
+  public static int getMemberOrderWeight(PsiElement member, CodeStyleSettings settings) {
+    if (member instanceof PsiField) {
+      if (member instanceof PsiEnumConstant) {
+        return 1;
+      }
+      else {
+        return ((PsiField)member).hasModifierProperty(PsiModifier.STATIC) ? settings.STATIC_FIELDS_ORDER_WEIGHT + 1
+                                                                          : settings.FIELDS_ORDER_WEIGHT + 1;
       }
     }
-    return array;
+    else if (member instanceof PsiMethod) {
+      if (((PsiMethod)member).isConstructor()) {
+        return settings.CONSTRUCTORS_ORDER_WEIGHT + 1;
+      }
+      else {
+        return ((PsiMethod)member).hasModifierProperty(PsiModifier.STATIC) ? settings.STATIC_METHODS_ORDER_WEIGHT + 1
+                                                                           : settings.METHODS_ORDER_WEIGHT + 1;
+      }
+    }
+    else if (member instanceof PsiClass) {
+      return ((PsiClass)member).hasModifierProperty(PsiModifier.STATIC) ? settings.STATIC_INNER_CLASSES_ORDER_WEIGHT + 1
+                                                                        : settings.INNER_CLASSES_ORDER_WEIGHT + 1;
+    }
+    else {
+      return -1;
+    }
   }
 }

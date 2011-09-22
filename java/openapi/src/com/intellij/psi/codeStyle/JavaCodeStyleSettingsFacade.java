@@ -13,26 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.impl;
+package com.intellij.psi.codeStyle;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
 
 /**
  * @author yole
  */
-public abstract class JavaPsiImplementationHelper {
-  public static JavaPsiImplementationHelper getInstance(Project project) {
-    return ServiceManager.getService(project, JavaPsiImplementationHelper.class);
+public abstract class JavaCodeStyleSettingsFacade {
+  public abstract int getNamesCountToUseImportOnDemand();
+
+  public abstract boolean useFQClassNames();
+
+  public abstract boolean isJavaDocLeadingAsterisksEnabled();
+
+  public abstract int getIndentSize();
+
+  public abstract boolean isGenerateFinalParameters();
+
+  public abstract boolean isGenerateFinalLocals();
+
+
+  public static JavaCodeStyleSettingsFacade getInstance(Project project) {
+    return ServiceManager.getService(project, JavaCodeStyleSettingsFacade.class);
   }
-
-  public abstract PsiClass getOriginalClass(PsiClass psiClass);
-
-  public abstract PsiElement getClsFileNavigationElement(PsiJavaFile clsFile);
-
-  public abstract ASTNode getDefaultImportAnchor(PsiImportList list, PsiImportStatementBase statement);
-
-  public abstract PsiElement getDefaultMemberAnchor(PsiClass psiClass, PsiMember firstPsi);
 }

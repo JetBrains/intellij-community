@@ -30,6 +30,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.JavaPsiImplementationHelper;
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
+import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -266,8 +267,7 @@ public class ReplaceImplementsWithStaticImportAction extends PsiElementBaseInten
                                     PsiReference reference,
                                     Project project) {
     if (reference instanceof PsiReferenceExpression) {
-      final JavaPsiImplementationHelper helper = JavaPsiImplementationHelper.getInstance(psiFile.getProject());
-      helper.bindToElementViaStaticImport(containingClass, fieldName, ((PsiJavaFile)psiFile).getImportList());
+      PsiReferenceExpressionImpl.bindToElementViaStaticImport(containingClass, fieldName, ((PsiJavaFile)psiFile).getImportList());
       final PsiElement qualifier = ((PsiReferenceExpression)reference).getQualifier();
       if (qualifier != null) {
         final Boolean canRemoveQualifier = qualifier.getCopyableUserData(ChangeContextUtil.CAN_REMOVE_QUALIFIER_KEY);
