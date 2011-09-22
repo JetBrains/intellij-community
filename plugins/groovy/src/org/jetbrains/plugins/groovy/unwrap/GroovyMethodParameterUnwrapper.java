@@ -49,11 +49,7 @@ public class GroovyMethodParameterUnwrapper extends GroovyUnwrapper {
   protected void doUnwrap(PsiElement element, Context context) throws IncorrectOperationException {
     PsiElement methodCall = element.getParent().getParent();
     context.extractElement(element, methodCall);
-    if (methodCall.getParent() instanceof GrArgumentList) {
-      context.delete(methodCall);
-    }
-    else {
-      context.deleteExactly(methodCall);
-    }
+
+    context.deleteExactly(methodCall);
   }
 }
