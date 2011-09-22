@@ -75,7 +75,6 @@ public class MultilineEditor extends JPanel {
               return false;
           }
         };
-        myEditorTextField.setCenterByHeight(false);
         add(myEditorTextField, BorderLayout.CENTER);
         model.addListDataListener(new ListDataListener() {
             public void intervalAdded(ListDataEvent e) {
