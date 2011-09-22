@@ -180,6 +180,7 @@ class LayoutDeviceManager {
   }
 
   private void parseAddOnLayoutDevice(File deviceXml) {
+    myAddOnLayoutDevices = new ArrayList<LayoutDevice>();
     parseLayoutDevices(deviceXml, myAddOnLayoutDevices, LayoutDevice.Type.ADD_ON);
   }
 
