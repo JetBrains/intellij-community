@@ -18,11 +18,12 @@ package com.intellij.psi.impl.java.stubs;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.impl.cache.RecordUtil;
 import com.intellij.psi.impl.compiled.ClsClassImpl;
 import com.intellij.psi.impl.java.stubs.impl.PsiClassStubImpl;
-import com.intellij.psi.impl.java.stubs.index.JavaFullClassNameIndex;
 import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
 import com.intellij.psi.impl.source.PsiAnonymousClassImpl;
 import com.intellij.psi.impl.source.PsiClassImpl;
@@ -201,9 +202,6 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
       }
 
       final String fqn = stub.getQualifiedName();
-      if (JavaFullClassNameIndex.DEBUG) {
-        System.out.println("Indexing " + fqn);
-      }
       if (fqn != null) {
         sink.occurrence(JavaStubIndexKeys.CLASS_FQN, fqn.hashCode());
       }

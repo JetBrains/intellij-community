@@ -29,8 +29,6 @@ import com.intellij.psi.stubs.StubIndexKey;
 import java.util.Collection;
 
 public class JavaFullClassNameIndex extends IntStubIndexExtension<PsiClass> {
-  public static volatile boolean DEBUG = false;
-
   private static final JavaFullClassNameIndex ourInstance = new JavaFullClassNameIndex();
   public static JavaFullClassNameIndex getInstance() {
     return ourInstance;
