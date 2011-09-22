@@ -22,9 +22,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.cache.RecordUtil;
 import com.intellij.psi.impl.compiled.ClsClassImpl;
 import com.intellij.psi.impl.java.stubs.impl.PsiClassStubImpl;
-import com.intellij.psi.impl.java.stubs.index.JavaAnonymousClassBaseRefOccurenceIndex;
 import com.intellij.psi.impl.java.stubs.index.JavaFullClassNameIndex;
-import com.intellij.psi.impl.java.stubs.index.JavaShortClassNameIndex;
+import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
 import com.intellij.psi.impl.source.PsiAnonymousClassImpl;
 import com.intellij.psi.impl.source.PsiClassImpl;
 import com.intellij.psi.impl.source.PsiEnumConstantInitializerImpl;
@@ -192,13 +191,13 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
     if (isAnonymous) {
       String baseRef = stub.getBaseClassReferenceText();
       if (baseRef != null) {
-        sink.occurrence(JavaAnonymousClassBaseRefOccurenceIndex.KEY, PsiNameHelper.getShortClassName(baseRef));
+        sink.occurrence(JavaStubIndexKeys.ANONYMOUS_BASEREF, PsiNameHelper.getShortClassName(baseRef));
       }
     }
     else {
       final String shortName = stub.getName();
       if (shortName != null) {
-        sink.occurrence(JavaShortClassNameIndex.KEY, shortName);
+        sink.occurrence(JavaStubIndexKeys.CLASS_SHORT_NAMES, shortName);
       }
 
       final String fqn = stub.getQualifiedName();
@@ -206,7 +205,7 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
         System.out.println("Indexing " + fqn);
       }
       if (fqn != null) {
-        sink.occurrence(JavaFullClassNameIndex.KEY, fqn.hashCode());
+        sink.occurrence(JavaStubIndexKeys.CLASS_FQN, fqn.hashCode());
       }
     }
   }

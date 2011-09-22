@@ -29,7 +29,6 @@ import com.intellij.psi.stubs.StubIndexKey;
 import java.util.Collection;
 
 public class JavaAnonymousClassBaseRefOccurenceIndex extends StringStubIndexExtension<PsiAnonymousClass> {
-  public static final StubIndexKey<String,PsiAnonymousClass> KEY = StubIndexKey.createIndexKey("java.anonymous.baseref");
 
   private static final JavaAnonymousClassBaseRefOccurenceIndex ourInstance = new JavaAnonymousClassBaseRefOccurenceIndex();
   public static JavaAnonymousClassBaseRefOccurenceIndex getInstance() {
@@ -38,7 +37,7 @@ public class JavaAnonymousClassBaseRefOccurenceIndex extends StringStubIndexExte
 
 
   public StubIndexKey<String, PsiAnonymousClass> getKey() {
-    return KEY;
+    return JavaStubIndexKeys.ANONYMOUS_BASEREF;
   }
 
   public Collection<PsiAnonymousClass> get(final String s, final Project project, final GlobalSearchScope scope) {
