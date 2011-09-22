@@ -5,6 +5,8 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiModifier;
@@ -53,14 +55,18 @@ public abstract class AbstractLogProcessor extends AbstractLombokClassProcessor 
     Project project = psiClass.getProject();
     PsiManager manager = psiClass.getContainingFile().getManager();
 
-    PsiType psiLoggerType = JavaPsiFacade.getElementFactory(project).createTypeFromText(loggerType, psiClass);
+    final PsiElementFactory psiElementFactory = JavaPsiFacade.getElementFactory(project);
+    PsiType psiLoggerType = psiElementFactory.createTypeFromText(loggerType, psiClass);
     LightElement loggerField = new MyLightFieldBuilder(manager, loggerName, psiLoggerType)
         .setHasInitializer(true)
         .setContainingClass(psiClass)
         .setModifiers(PsiModifier.FINAL, PsiModifier.STATIC, PsiModifier.PRIVATE)
         .setNavigationElement(psiAnnotation);
 
-    //TODO add Initializer support
+    final String classQualifiedName = psiClass.getQualifiedName();
+    final String className = null != classQualifiedName ? classQualifiedName : psiClass.getName();
+    PsiExpression initializer = psiElementFactory.createExpressionFromText(String.format(loggerInitializer, className), psiClass);
+    ((MyLightFieldBuilder) loggerField).setInitializer(initializer);
 
     target.add((Psi) loggerField);
   }
