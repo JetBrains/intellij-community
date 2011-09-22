@@ -46,7 +46,7 @@ public class PsiParserFacadeImpl implements PsiParserFacade {
     final FileElement holderElement = DummyHolderFactory.createHolder(myManager, null).getTreeElement();
     final LeafElement newElement = ASTFactory.leaf(TokenType.WHITE_SPACE, holderElement.getCharTable().intern(text));
     holderElement.rawAddChildren(newElement);
-    markGenerated(newElement.getPsi());
+    GeneratedMarkerVisitor.markGenerated(newElement.getPsi());
     return newElement.getPsi();
   }
 
@@ -99,9 +99,5 @@ public class PsiParserFacadeImpl implements PsiParserFacade {
     @NonNls String fileName = "_Dummy_." + ext;
 
     return PsiFileFactory.getInstance(myManager.getProject()).createFileFromText(fileType, fileName, text, 0, text.length());
-  }
-
-  protected static void markGenerated(final PsiElement element) {
-    ((TreeElement)element.getNode()).acceptTree(new GeneratedMarkerVisitor());
   }
 }

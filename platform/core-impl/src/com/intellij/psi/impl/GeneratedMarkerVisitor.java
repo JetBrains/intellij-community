@@ -16,6 +16,7 @@
 
 package com.intellij.psi.impl;
 
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.tree.RecursiveTreeElementWalkingVisitor;
 import com.intellij.psi.impl.source.tree.TreeElement;
@@ -24,5 +25,9 @@ public class GeneratedMarkerVisitor extends RecursiveTreeElementWalkingVisitor {
   protected void visitNode(TreeElement element) {
     CodeEditUtil.setNodeGenerated(element, true);
     super.visitNode(element);
+  }
+
+  public static void markGenerated(final PsiElement element) {
+    ((TreeElement)element.getNode()).acceptTree(new GeneratedMarkerVisitor());
   }
 }
