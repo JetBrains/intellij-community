@@ -44,7 +44,7 @@ public abstract class DumbService {
   /**
    * @see com.intellij.openapi.project.Project#getMessageBus()
    */
-  public static final Topic<DumbModeListener> DUMB_MODE = new Topic<DumbModeListener>("dumb mode", DumbModeListener.class);
+  public static final Topic<DumbModeListener> DUMB_MODE = new Topic<DumbModeListener>("dumb mode", DumbModeListener.class, Topic.BroadcastDirection.TO_PARENT);
 
   /**
    * @return whether IntelliJ IDEA is in dumb mode, which means that right now indices are updated in background.
