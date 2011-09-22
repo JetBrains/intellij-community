@@ -30,6 +30,7 @@ import com.intellij.execution.ui.AlternativeJREPanel;
 import com.intellij.execution.ui.ClassBrowser;
 import com.intellij.execution.ui.CommonJavaParametersPanel;
 import com.intellij.execution.ui.ConfigurationModuleSelector;
+import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.PackageChooserDialog;
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -76,12 +77,6 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
     new TIntArrayList(new int[]{4})
   );
 
-  // Garbage
-  private JRadioButton myAllInPackageButton;
-  private JRadioButton myClassButton;
-  private JRadioButton myTestMethodButton;
-  private JRadioButton myTestPatternButton;
-  private JRadioButton myTestDirButton;
   private JComponent myPackagePanel;
   private LabeledComponent<EditorTextFieldWithBrowseButton> myPackage;
   private LabeledComponent<TextFieldWithBrowseButton> myDir;
@@ -99,7 +94,6 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
   private TextFieldWithBrowseButton myPatternTextField;
 
   private final ConfigurationModuleSelector myModuleSelector;
-  private final JRadioButton[] myRadioButtons = new JRadioButton[5];
   private final LabeledComponent[] myTestLocations = new LabeledComponent[5];
   private final JUnitConfigurationModel myModel;
 
@@ -107,6 +101,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
   private AlternativeJREPanel myAlternativeJREPanel;
   private JComboBox myForkCb;
   private JBLabel myTestLabel;
+  private JComboBox myTypeChooser;
   @NonNls private static final String NONE = "none";
   @NonNls private static final String METHOD = "method";
   @NonNls private static final String KLASS = "class";
@@ -142,11 +137,35 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
       }
     };
     // Garbage support
-    myRadioButtons[JUnitConfigurationModel.ALL_IN_PACKAGE] = myAllInPackageButton;
-    myRadioButtons[JUnitConfigurationModel.CLASS] = myClassButton;
-    myRadioButtons[JUnitConfigurationModel.METHOD] = myTestMethodButton;
-    myRadioButtons[JUnitConfigurationModel.PATTERN] = myTestPatternButton;
-    myRadioButtons[JUnitConfigurationModel.DIR] = myTestDirButton;
+    final DefaultComboBoxModel aModel = new DefaultComboBoxModel();
+    aModel.addElement(JUnitConfigurationModel.ALL_IN_PACKAGE);
+    aModel.addElement(JUnitConfigurationModel.DIR);
+    aModel.addElement(JUnitConfigurationModel.PATTERN);
+    aModel.addElement(JUnitConfigurationModel.CLASS);
+    aModel.addElement(JUnitConfigurationModel.METHOD);
+    myTypeChooser.setModel(aModel);
+    myTypeChooser.setRenderer(new ListCellRendererWrapper<Integer>(myTypeChooser) {
+      @Override
+      public void customize(JList list, Integer value, int index, boolean selected, boolean hasFocus) {
+        switch (value) {
+          case JUnitConfigurationModel.ALL_IN_PACKAGE:
+            setText("All in package");
+            break;
+          case JUnitConfigurationModel.DIR:
+            setText("All in directory");
+            break;
+          case JUnitConfigurationModel.PATTERN:
+            setText("Pattern");
+            break;
+          case JUnitConfigurationModel.CLASS:
+            setText("Class");
+            break;
+          case JUnitConfigurationModel.METHOD:
+            setText("Method");
+            break;
+        }
+      }
+    });
 
     myTestLocations[JUnitConfigurationModel.ALL_IN_PACKAGE] = myPackage;
     myTestLocations[JUnitConfigurationModel.CLASS] = myClass;
@@ -177,19 +196,15 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
 
     myModel.setListener(this);
 
-    addRadioButtonsListeners(myRadioButtons, new ChangeListener() {
-        public void stateChanged(final ChangeEvent e) {
-          final ButtonModel buttonModel = (ButtonModel)e.getSource();
-          if (buttonModel.isSelected()) {
-            for (int i = 0; i < myRadioButtons.length; i++)
-              if (buttonModel == myRadioButtons[i].getModel()) {
-                myModel.setType(i);
-                break;
-              }
-            changePanel();
-          }
-        }
-      });
+    myTypeChooser.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        final Object selectedItem = myTypeChooser.getSelectedItem();
+        myModel.setType((Integer)selectedItem);
+        changePanel();
+      }
+    }
+    );
     myModel.setType(JUnitConfigurationModel.CLASS);
     installDocuments();
     addRadioButtonsListeners(new JRadioButton[]{myWholeProjectScope, mySingleModuleScope, myModuleWDScope}, null);
@@ -249,7 +264,8 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
     if (selectedItem == null) {
       selectedItem = NONE;
     }
-    if (myAllInPackageButton.isSelected()) {
+    final Integer selectedType = (Integer)myTypeChooser.getSelectedItem();
+    if (selectedType == JUnitConfigurationModel.ALL_IN_PACKAGE) {
       myPackagePanel.setVisible(true);
       myPattern.setVisible(false);
       myClass.setVisible(false);
@@ -258,7 +274,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
       myForkCb.setEnabled(true);
       myForkCb.setModel(new DefaultComboBoxModel(FORK_MODE_ALL));
       myForkCb.setSelectedItem(selectedItem);
-    } else if (myTestDirButton.isSelected()) {
+    } else if (selectedType == JUnitConfigurationModel.DIR) {
       myPackagePanel.setVisible(false);
       myDir.setVisible(true);
       myPattern.setVisible(false);
@@ -268,7 +284,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
       myForkCb.setModel(new DefaultComboBoxModel(FORK_MODE_ALL));
       myForkCb.setSelectedItem(selectedItem);
     }
-    else if (myClassButton.isSelected()) {
+    else if (selectedType == JUnitConfigurationModel.CLASS) {
       myPackagePanel.setVisible(false);
       myPattern.setVisible(false);
       myDir.setVisible(false);
@@ -278,7 +294,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
       myForkCb.setModel(new DefaultComboBoxModel(FORK_MODE));
       myForkCb.setSelectedItem(selectedItem != KLASS ? selectedItem : METHOD);
     }
-    else if (myTestMethodButton.isSelected()){
+    else if (selectedType == JUnitConfigurationModel.METHOD){
       myPackagePanel.setVisible(false);
       myPattern.setVisible(false);
       myDir.setVisible(false);
@@ -405,7 +421,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
   }
 
   public void onTypeChanged(final int newType) {
-    myRadioButtons[newType].setSelected(true);
+    myTypeChooser.setSelectedItem(newType);
     final TIntArrayList enabledFields = ourEnabledFields.get(newType);
     for (int i = 0; i < myTestLocations.length; i++)
       getTestLocation(i).setEnabled(enabledFields.contains(i));
