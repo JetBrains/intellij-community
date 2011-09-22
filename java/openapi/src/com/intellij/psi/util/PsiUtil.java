@@ -20,6 +20,8 @@ import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.MethodCandidateInfo.ApplicabilityLevel;
@@ -655,6 +657,15 @@ public final class PsiUtil extends PsiUtilCore {
     if (!JavaPsiFacade.getInstance(manager.getProject()).getNameHelper().isIdentifier(text)){
       throw new IncorrectOperationException(PsiBundle.message("0.is.not.an.identifier", text) );
     }
+  }
+
+  @Nullable
+  public static VirtualFile getJarFile(PsiElement candidate) {
+    VirtualFile file = candidate.getContainingFile().getVirtualFile();
+    if (file != null && file.getFileSystem() instanceof JarFileSystem) {
+      return JarFileSystem.getInstance().getVirtualFileForJar(file);
+    }
+    return file;
   }
 
   private static class TypeParameterIterator implements Iterator<PsiTypeParameter> {
