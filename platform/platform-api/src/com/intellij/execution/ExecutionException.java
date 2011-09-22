@@ -15,6 +15,8 @@
  */
 package com.intellij.execution;
 
+import java.io.IOException;
+
 public class ExecutionException extends Exception {
   public ExecutionException(final String s) {
     super(s);
@@ -22,5 +24,10 @@ public class ExecutionException extends Exception {
 
   public ExecutionException(final String s, Throwable cause) {
     super(s, cause);
+  }
+
+  public IOException toIOException() {
+    final Throwable cause = getCause();
+    return cause instanceof IOException ? (IOException)cause : new IOException(this);
   }
 }

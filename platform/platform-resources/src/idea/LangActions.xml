@@ -148,7 +148,7 @@
     </group>
 
     <action id="ViewNavigationBar" class="com.intellij.ide.actions.ViewNavigationBarAction">
-      <add-to-group group-id="ViewMenu" relative-to-action="ViewStatusBar" anchor="after"/>
+      <add-to-group group-id="UIToggleActions" relative-to-action="ViewStatusBar" anchor="after"/>
     </action>
 
     <action id="ViewImportPopups" class="com.intellij.openapi.editor.actions.ToggleShowImportPopupsAction">

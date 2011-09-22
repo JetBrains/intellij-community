@@ -44,7 +44,7 @@ public class ActivityMonitorTest extends UsefulTestCase {
     myCurrentState = ModalityState.NON_MODAL;
     final ModalityStateEx any = new ModalityStateEx();
 
-    ApplicationManagerEx.setApplication(new MockApplication() {
+    ApplicationManagerEx.setApplication(new MockApplication(getTestRootDisposable()) {
       @NotNull
       @Override
       public ModalityState getCurrentModalityState() {
@@ -64,11 +64,11 @@ public class ActivityMonitorTest extends UsefulTestCase {
   public void testReady() {
     assertReady(null);
 
-    MockProject project1 = new MockProjectEx();
+    MockProject project1 = new MockProjectEx(getTestRootDisposable());
     assertReady(project1);
     assertFalse(myMonitor.hasObjectFor(project1));
 
-    MockProject project2 = new MockProjectEx();
+    MockProject project2 = new MockProjectEx(getTestRootDisposable());
     assertReady(project2);
     assertFalse(myMonitor.hasObjectFor(project2));
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ import java.util.Collections;
 public class CommonRefactoringUtil {
   private CommonRefactoringUtil() {}
 
-  public static void showErrorMessage(String title, String message, @NonNls String helpId, @NotNull Project project) {
+  public static void showErrorMessage(String title, String message, @Nullable @NonNls String helpId, @NotNull Project project) {
     if (ApplicationManager.getApplication().isUnitTestMode()) throw new RuntimeException(message);
     RefactoringMessageDialog dialog = new RefactoringMessageDialog(title, message, helpId, "OptionPane.errorIcon", false, project);
     dialog.show();
@@ -76,8 +76,8 @@ public class CommonRefactoringUtil {
   }
 
   public static boolean checkReadOnlyStatus(@NotNull PsiElement element) {
-    final PsiFile psiFile = element.getContainingFile();
-    return !ReadonlyStatusHandler.getInstance(element.getProject()).ensureFilesWritable(psiFile.getVirtualFile()).hasReadonlyFiles();
+    final VirtualFile file = element.getContainingFile().getVirtualFile();
+    return file != null && !ReadonlyStatusHandler.getInstance(element.getProject()).ensureFilesWritable(file).hasReadonlyFiles();
   }
 
   public static boolean checkReadOnlyStatus(@NotNull Project project, @NotNull PsiElement element) {
@@ -105,26 +105,20 @@ public class CommonRefactoringUtil {
                                              final String messagePrefix,
                                              boolean recursively,
                                              final boolean notifyOnFail) {
-    //Not writable, but could be checked out
-    final Collection<VirtualFile> readonly = new THashSet<VirtualFile>();
-    //Those located in jars
-    final Collection<VirtualFile> failed = new THashSet<VirtualFile>();
+    final Collection<VirtualFile> readonly = new THashSet<VirtualFile>(); // not writable, but could be checked out
+    final Collection<VirtualFile> failed = new THashSet<VirtualFile>();   // those located in jars
     boolean seenNonWritablePsiFilesWithoutVirtualFile = false;
 
     for (PsiElement element : elements) {
       if (element instanceof PsiDirectory) {
-        PsiDirectory dir = (PsiDirectory)element;
+        final PsiDirectory dir = (PsiDirectory)element;
         final VirtualFile vFile = dir.getVirtualFile();
         if (vFile.getFileSystem() instanceof JarFileSystem) {
-          /*String message1 = messagePrefix + ".\n Directory " + vFile.getPresentableUrl() + " is located in a jar file.";
-         showErrorMessage("Cannot Modify Jar", message1, null, project);
-         return false;*/
           failed.add(vFile);
         }
         else {
           if (recursively) {
             addVirtualFiles(vFile, readonly);
-
           }
           else {
             readonly.add(vFile);
@@ -180,8 +174,8 @@ public class CommonRefactoringUtil {
       }
     }
 
-    final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project)
-      .ensureFilesWritable(VfsUtil.toVirtualFileArray(readonly));
+    final VirtualFile[] files = VfsUtil.toVirtualFileArray(readonly);
+    final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(files);
     ContainerUtil.addAll(failed, status.getReadonlyFiles());
     if (notifyOnFail && (!failed.isEmpty() || seenNonWritablePsiFilesWithoutVirtualFile && readonly.isEmpty())) {
       StringBuilder message = new StringBuilder(messagePrefix);
@@ -214,12 +208,14 @@ public class CommonRefactoringUtil {
     if (!vFile.isWritable()) {
       list.add(vFile);
     }
-    final VirtualFile[] children = vFile.getChildren();
-    final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-    if (children != null) {
-      for (VirtualFile virtualFile : children) {
-        if (fileTypeManager.isFileIgnored(virtualFile)) continue;
-        addVirtualFiles(virtualFile, list);
+    if (!vFile.isSymLink()) {
+      final VirtualFile[] children = vFile.getChildren();
+      if (children != null) {
+        final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
+        for (VirtualFile virtualFile : children) {
+          if (fileTypeManager.isFileIgnored(virtualFile)) continue;
+          addVirtualFiles(virtualFile, list);
+        }
       }
     }
   }

@@ -3,6 +3,7 @@
  */
 package com.intellij.mock;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -16,12 +17,12 @@ import org.jetbrains.annotations.Nullable;
 public class MockModule extends MockComponentManager implements Module {
   private final Project myProject;
 
-  public MockModule() {
-    this(null);
+  public MockModule(@NotNull Disposable parentDisposable) {
+    this(null, parentDisposable);
   }
 
-  public MockModule(final Project project) {
-    super(project == null ? null : project.getPicoContainer());
+  public MockModule(final Project project, @NotNull Disposable parentDisposable) {
+    super(project == null ? null : project.getPicoContainer(), parentDisposable);
     myProject = project;
   }
 

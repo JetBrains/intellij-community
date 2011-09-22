@@ -50,7 +50,6 @@ public class PsiPackageReference extends PsiPolyVariantReferenceBase<PsiElement>
         psiPackages.add((PsiPackage)psiElement);
       }
     }
-    ;
     return psiPackages;
   }
 

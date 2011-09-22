@@ -29,12 +29,18 @@ import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.dsl.psi.PsiElementCategory;
+import org.jetbrains.plugins.groovy.dsl.toplevel.AnnotatedContextFilter;
+import org.jetbrains.plugins.groovy.findUsages.LiteralConstructorReference;
+import org.jetbrains.plugins.groovy.gpp.GppTypeConverter;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
@@ -78,6 +84,10 @@ public class ResolveUtil {
 
     while (run != null) {
       if (!run.processDeclarations(processor, ResolveState.initial(), lastParent, place)) return false;
+      if (run instanceof GrClosableBlock) {
+        PsiClass superClass = getLiteralSuperClass((GrClosableBlock)run);
+        if (superClass != null && !superClass.processDeclarations(processor, ResolveState.initial(), null, place)) return false;
+      }
       if (processNonCodeMethods) {
         if (run instanceof GrTypeDefinition) {
           if (!processNonCodeMembers(factory.createType(((GrTypeDefinition)run)), processor, place)) return false;
@@ -360,15 +370,53 @@ public class ResolveUtil {
   }
 
   public static boolean processCategoryMembers(PsiElement place, PsiScopeProcessor processor) {
+    boolean gpp = GppTypeConverter.hasTypedContext(place);
+    if (gpp && !processUseAnnotation(place, processor)) return false;
+
+    boolean inCodeBlock = true;
     while (place != null) {
-      if (place instanceof GrMember) break;
+      if (place instanceof GrMember) {
+        inCodeBlock = false;
+      }
       if (place instanceof GrClosableBlock) {
-        if (!GdkMethodUtil.categoryIteration((GrClosableBlock)place, processor)) return false;
+        if (inCodeBlock && !GdkMethodUtil.categoryIteration((GrClosableBlock)place, processor)) return false;
+
+        PsiClass superClass = getLiteralSuperClass((GrClosableBlock)place);
+        if (superClass != null && !GdkMethodUtil.processCategoryMethods(place, processor, null, superClass)) return false;
+      }
+      if (gpp && place instanceof GrTypeDefinition) {
+        GrTypeDefinition typeDefinition = (GrTypeDefinition)place;
+        if (!GdkMethodUtil.processCategoryMethods(place, processor, typeDefinition, typeDefinition)) return false;
       }
       place = place.getContext();
     }
 
     return true;
+  }
+
+  private static boolean processUseAnnotation(PsiElement place, PsiScopeProcessor processor) {
+    PsiAnnotation use = AnnotatedContextFilter.findContextAnnotation(place, GroovyCommonClassNames.GROOVY_LANG_USE);
+    if (use != null) {
+      for (PsiElement element : PsiElementCategory.asList(use.findDeclaredAttributeValue("value"))) {
+        if (element instanceof GrReferenceExpression) {
+          PsiElement resolve = ((GrReferenceExpression)element).resolve();
+          if (resolve instanceof PsiClass && !GdkMethodUtil.processCategoryMethods(place, processor, null, (PsiClass)resolve)) {
+            return false;
+          }
+        }
+      }
+    }
+    return true;
+  }
+
+  @Nullable private static PsiClass getLiteralSuperClass(GrClosableBlock closure) {
+    PsiClassType type;
+    if (closure.getParent() instanceof GrNamedArgument && closure.getParent().getParent() instanceof GrListOrMap) {
+      type = LiteralConstructorReference.getTargetConversionType((GrListOrMap)closure.getParent().getParent());
+    } else {
+      type = LiteralConstructorReference.getTargetConversionType(closure);
+    }
+    return type != null ? type.resolve() : null;
   }
 
   public static PsiElement[] mapToElements(GroovyResolveResult[] candidates) {

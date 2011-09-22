@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,7 +56,7 @@ public class SelfElementInfo implements SmartPointerElementInfo {
                          @NotNull PsiFile containingFile,
                          @NotNull Language language) {
     myLanguage = language;
-    myVirtualFile = containingFile.getVirtualFile();
+    myVirtualFile = PsiUtilCore.getVirtualFile(containingFile);
     myType = anchorClass;
 
     myProject = project;
@@ -97,7 +98,7 @@ public class SelfElementInfo implements SmartPointerElementInfo {
     if (marker != null) {
       return marker.getDocument();
     }
-    return FileDocumentManager.getInstance().getCachedDocument(myVirtualFile);
+    return myVirtualFile == null ? null : FileDocumentManager.getInstance().getCachedDocument(myVirtualFile);
   }
 
   // before change
@@ -110,7 +111,7 @@ public class SelfElementInfo implements SmartPointerElementInfo {
       return; // no need to update, the change is far after
     }
     if (marker == null) {
-      Document document = FileDocumentManager.getInstance().getDocument(myVirtualFile);
+      Document document = myVirtualFile == null ? null : FileDocumentManager.getInstance().getDocument(myVirtualFile);
       if (document == null) {
         mySyncMarkerIsValid = false;
         return;
@@ -265,7 +266,7 @@ public class SelfElementInfo implements SmartPointerElementInfo {
 
   @Override
   public int elementHashCode() {
-    return myVirtualFile.hashCode();
+    return myVirtualFile == null ? 0 : myVirtualFile.hashCode();
   }
 
   @Override

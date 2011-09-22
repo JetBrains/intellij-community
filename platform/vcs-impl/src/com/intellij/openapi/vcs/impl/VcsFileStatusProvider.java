@@ -91,10 +91,17 @@ public class VcsFileStatusProvider implements FileStatusProvider, VcsBaseContent
 
   public FileStatus getFileStatus(final VirtualFile virtualFile) {
     final AbstractVcs vcs = myVcsManager.getVcsFor(virtualFile);
-    if (vcs == null) return FileStatus.NOT_CHANGED;
+    if (vcs == null) {
+      return FileStatusManagerImpl.getDefaultStatus(virtualFile);
+    }
 
     final FileStatus status = myChangeListManager.getStatus(virtualFile);
-    if (status == FileStatus.NOT_CHANGED && isDocumentModified(virtualFile)) return FileStatus.MODIFIED;
+    if (status == FileStatus.NOT_CHANGED && isDocumentModified(virtualFile)) {
+      return FileStatus.MODIFIED;
+    }
+    if (status == FileStatus.NOT_CHANGED) {
+      return FileStatusManagerImpl.getDefaultStatus(virtualFile);
+    }
     return status;
   }
 

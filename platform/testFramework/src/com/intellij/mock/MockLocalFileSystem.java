@@ -239,18 +239,12 @@ public class MockLocalFileSystem extends LocalFileSystem {
     return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
-  public VirtualFile[] listFiles(final VirtualFile file) {
-    return new VirtualFile[0];
-  }
-
   @Override
-  public void setTimeStamp(@NotNull final VirtualFile file, final long modstamp) throws IOException {
-
+  public void setTimeStamp(@NotNull final VirtualFile file, final long timeStamp) throws IOException {
   }
 
   @Override
   public void setWritable(@NotNull final VirtualFile file, final boolean writableFlag) throws IOException {
-
   }
 
   @Override

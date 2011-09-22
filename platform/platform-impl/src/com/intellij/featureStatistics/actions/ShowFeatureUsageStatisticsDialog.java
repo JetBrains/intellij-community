@@ -159,10 +159,8 @@ public class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
     splitter.setShowDividerControls(true);
 
     ProductivityFeaturesRegistry registry = ProductivityFeaturesRegistry.getInstance();
-    Set<String> ids = registry.getFeatureIds();
     ArrayList<FeatureDescriptor> features = new ArrayList<FeatureDescriptor>();
-    for (Iterator<String> iterator = ids.iterator(); iterator.hasNext();) {
-      String id = iterator.next();
+    for (String id : registry.getFeatureIds()) {
       features.add(registry.getFeatureDescriptor(id));
     }
     final TableView table = new TableView(new ListTableModel(COLUMNS, features, 0));

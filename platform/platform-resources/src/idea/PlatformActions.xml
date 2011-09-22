@@ -220,6 +220,12 @@
           <action id="ViewToolButtons" class="com.intellij.ide.actions.ViewToolWindowButtonsAction"/>
           <action id="ViewStatusBar" class="com.intellij.ide.actions.ViewStatusBarAction"/>
         </group>
+
+        <!-- Mac OS Lion: In native apps toggle full screen mode is the last action in "View" menu -->
+        <group id="ToggleFullScreenGroup">
+          <separator/>
+          <action id="ToggleFullScreen" class="com.intellij.ide.actions.ToggleMacFullScreenAction"/>
+        </group>
       </group>
 
       <!-- Go to -->
@@ -256,7 +262,6 @@
 
       <group id="WindowMenu" popup="true">
         <action id="MinimizeCurrentWindow" class="com.intellij.ide.actions.MinimizeCurrentWindowAction"/>
-        <action id="ToggleFullScreen" class="com.intellij.ide.actions.ToggleMacFullScreenAction"/>
         <group id="ToolWindowsGroup" class="com.intellij.ide.actions.ToolWindowsGroup" popup="true"/>
         <group id="BackgroundTasks" popup="true">
           <action id="ShowProcessWindow" class="com.intellij.openapi.wm.impl.status.ShowProcessWindowAction"/>

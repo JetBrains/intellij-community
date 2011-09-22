@@ -15,13 +15,16 @@
  */
 package com.intellij.ide.actions;
 
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.mac.MacMainFrameDecorator;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -31,21 +34,43 @@ import java.awt.*;
  */
 public class ToggleMacFullScreenAction extends AnAction implements DumbAware {
 
+  private static final String TEXT_ENTER_FULLSCREEN = ActionsBundle.message("action.ToggleFullScreen.text.enter");
+  private static final String TEXT_EXIT_FULL_SCREEN = ActionsBundle.message("action.ToggleFullScreen.text.exit");
+
   @Override
   public void actionPerformed(final AnActionEvent e) {
-    final Component focusOwner = IdeFocusManager.getGlobalInstance().getFocusOwner();
-    if (focusOwner != null) {
-      final Window window = focusOwner instanceof JFrame ? (Window) focusOwner : SwingUtilities.getWindowAncestor(focusOwner);
-      if (window instanceof JFrame) {
-        MacMainFrameDecorator.toggleFullScreen((Frame) window);
-      }
+    final Frame frame = getFrame();
+    if (frame != null) {
+      MacMainFrameDecorator.toggleFullScreen(frame);
     }
   }
 
   @Override
   public void update(final AnActionEvent e) {
     final Presentation p = e.getPresentation();
-    p.setVisible(SystemInfo.isMac && SystemInfo.isMacOSLion);
-    p.setEnabled(SystemInfo.isMac && SystemInfo.isMacOSLion);
+
+    final boolean isApplicable = SystemInfo.isMac && SystemInfo.isMacOSLion;
+
+    p.setVisible(isApplicable);
+    p.setEnabled(isApplicable);
+
+    if (isApplicable) {
+      final Frame frame = getFrame();
+      final boolean isInFullScreen = frame != null && WindowManagerEx.getInstanceEx().isFullScreen(frame);
+      p.setText(isInFullScreen ? TEXT_EXIT_FULL_SCREEN : TEXT_ENTER_FULLSCREEN);
+    }
   }
+
+  @Nullable
+  private Frame getFrame() {
+    final Component focusOwner = IdeFocusManager.getGlobalInstance().getFocusOwner();
+    if (focusOwner != null) {
+      final Window window = focusOwner instanceof JFrame ? (Window) focusOwner : SwingUtilities.getWindowAncestor(focusOwner);
+      if (window instanceof JFrame) {
+        return (Frame)window;
+      }
+    }
+    return null;
+  }
+
 }

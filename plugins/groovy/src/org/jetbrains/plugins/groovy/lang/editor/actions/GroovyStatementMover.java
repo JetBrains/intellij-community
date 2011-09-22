@@ -209,7 +209,7 @@ public class GroovyStatementMover extends StatementUpDownMover {
         return text.charAt(CharArrayUtil.shiftForward(text, 0, " \t")) == '\n';
       }
 
-      if (!(sibling instanceof PsiComment) && !StringUtil.isEmptyOrSpaces(text)) {
+      if (!(sibling instanceof PsiComment) && !StringUtil.isEmptyOrSpaces(text) && !text.equals(";")) {
         return false;
       }
 

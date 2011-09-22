@@ -1,11 +1,9 @@
 package org.jetbrains.plugins.groovy.dsl.toplevel;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiModifierList;
-import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.*;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.dsl.GroovyClassDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
@@ -23,36 +21,38 @@ public class AnnotatedContextFilter implements ContextFilter {
   }
 
   public boolean isApplicable(GroovyClassDescriptor descriptor, ProcessingContext ctx) {
-    return hasAnnotatedContext(descriptor.getPlace(), myAnnoQName);
+    return findContextAnnotation(descriptor.getPlace(), myAnnoQName) != null;
   }
 
-  public static boolean hasAnnotatedContext(@NotNull PsiElement context, String annoQName) {
+  @Nullable public static PsiAnnotation findContextAnnotation(@NotNull PsiElement context, String annoQName) {
     PsiElement current = context;
     while (current != null) {
       if (current instanceof PsiModifierListOwner) {
-        if (!(current instanceof GrVariableDeclaration) &&
-            hasAnnotation(((PsiModifierListOwner)current).getModifierList(), annoQName)) {
-          return true;
+        if (!(current instanceof GrVariableDeclaration)) {
+          PsiAnnotation annotation = findAnnotation(((PsiModifierListOwner)current).getModifierList(), annoQName);
+          if (annotation != null) {
+            return annotation;
+          }
         }
       }
       else if (current instanceof PsiFile) {
         if (current instanceof GroovyFile) {
           final GrPackageDefinition packageDefinition = ((GroovyFile)current).getPackageDefinition();
-          if (packageDefinition != null && hasAnnotation(packageDefinition.getAnnotationList(), annoQName)) {
-            return true;
+          if (packageDefinition != null) {
+            return findAnnotation(packageDefinition.getAnnotationList(), annoQName);
           }
         }
-        return false;
+        return null;
       }
 
       current = current.getContext();
     }
 
-    return false;
+    return null;
   }
 
-  private static boolean hasAnnotation(PsiModifierList modifierList, String annoQName) {
-    return modifierList != null && modifierList.findAnnotation(annoQName) != null;
+  @Nullable private static PsiAnnotation findAnnotation(PsiModifierList modifierList, String annoQName) {
+    return modifierList != null ? modifierList.findAnnotation(annoQName) : null;
   }
 
 

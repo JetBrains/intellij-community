@@ -15,6 +15,7 @@
  */
 package com.intellij.mock;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
@@ -27,6 +28,10 @@ import javax.swing.*;
 import java.io.IOException;
 
 public class MockApplicationEx extends MockApplication implements ApplicationEx {
+
+  public MockApplicationEx(@NotNull Disposable parentDisposable) {
+    super(parentDisposable);
+  }
 
   @NotNull
   @Override

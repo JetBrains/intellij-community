@@ -15,14 +15,15 @@
  */
 package com.intellij.mock;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.project.ex.ProjectEx;
 import org.jetbrains.annotations.NotNull;
 
 public class MockProjectEx  extends MockProject implements ProjectEx {
-  public MockProjectEx() {
-    super(ApplicationManager.getApplication() != null ? ApplicationManager.getApplication().getPicoContainer() : null);
+  public MockProjectEx(@NotNull Disposable parentDisposable) {
+    super(ApplicationManager.getApplication() != null ? ApplicationManager.getApplication().getPicoContainer() : null, parentDisposable);
   }
 
   @Override

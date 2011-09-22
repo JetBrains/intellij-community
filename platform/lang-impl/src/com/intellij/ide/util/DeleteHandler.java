@@ -158,7 +158,9 @@ public class DeleteHandler {
     final FileTypeManager ftManager = FileTypeManager.getInstance();
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
       public void run() {
-        CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, Arrays.asList(elements), false);
+        if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, Arrays.asList(elements), false)) {
+          return;
+        }
 
         // deleted from project view or something like that.
         if (PlatformDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext()) == null) {

@@ -15,6 +15,7 @@
  */
 package com.intellij.mock;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -27,8 +28,8 @@ import org.picocontainer.PicoContainer;
  * @author yole
  */
 public class MockProject extends MockComponentManager implements Project {
-  public MockProject(PicoContainer parent) {
-    super(parent);
+  public MockProject(PicoContainer parent, @NotNull Disposable parentDisposable) {
+    super(parent, parentDisposable);
   }
 
   @Override

@@ -50,7 +50,12 @@ import com.intellij.util.Function;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusFactory;
 import org.jetbrains.annotations.NonNls;
-import org.picocontainer.*;
+import org.jetbrains.annotations.NotNull;
+import org.picocontainer.ComponentAdapter;
+import org.picocontainer.MutablePicoContainer;
+import org.picocontainer.PicoContainer;
+import org.picocontainer.PicoInitializationException;
+import org.picocontainer.PicoIntrospectionException;
 import org.picocontainer.defaults.AbstractComponentAdapter;
 
 import java.io.File;
@@ -66,9 +71,9 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
   private MockPsiManager myPsiManager;
   private PsiFileFactoryImpl myFileFactory;
   protected Language myLanguage;
-  private final ParserDefinition[] myDefinitions;
+  @NotNull private final ParserDefinition[] myDefinitions;
 
-  public ParsingTestCase(@NonNls String dataPath, String fileExt, ParserDefinition... definitions) {
+  public ParsingTestCase(@NonNls @NotNull String dataPath, @NotNull String fileExt, @NotNull ParserDefinition... definitions) {
     myDefinitions = definitions;
     myFullDataPath = getTestDataPath() + "/" + dataPath;
     myFileExt = fileExt;
@@ -91,7 +96,7 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
         }
       });
     }
-    myProject = disposeOnTearDown(new MockProjectEx());
+    myProject = new MockProjectEx(getTestRootDisposable());
     myPsiManager = new MockPsiManager(myProject);
     myFileFactory = new PsiFileFactoryImpl(myPsiManager);
     final MutablePicoContainer appContainer = getApplication().getPicoContainer();
@@ -106,7 +111,7 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
       }
     }, FileDocumentManagerImpl.DOCUMENT_KEY));
     registerComponentInstance(appContainer, PsiDocumentManager.class, new MockPsiDocumentManager());
-    myLanguage = myLanguage == null && myDefinitions != null && myDefinitions.length > 0? myDefinitions[0].getFileNodeType().getLanguage() : myLanguage;
+    myLanguage = myLanguage == null && myDefinitions.length > 0? myDefinitions[0].getFileNodeType().getLanguage() : myLanguage;
     registerComponentInstance(appContainer, FileTypeManager.class, new MockFileTypeManager(new MockLanguageFileType(myLanguage, myFileExt)));
     registerApplicationService(PsiBuilderFactory.class, new PsiBuilderFactoryImpl());
     registerApplicationService(DefaultASTFactory.class, new DefaultASTFactoryImpl());

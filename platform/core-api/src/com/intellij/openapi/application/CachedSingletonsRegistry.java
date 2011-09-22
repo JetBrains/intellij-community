@@ -19,7 +19,7 @@
  */
 package com.intellij.openapi.application;
 
-import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
@@ -27,15 +27,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CachedSingletonsRegistry {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.CachedSingletonsRegistry");
-
   private static final Object LOCK = new CachedSingletonsRegistry();
   private static final List<Class<?>> ourRegisteredClasses = new ArrayList<Class<?>>();
 
   private CachedSingletonsRegistry() {}
 
   @Nullable
-  public static <T> T markCachedField(Class<T> klass) {
+  public static <T> T markCachedField(@NotNull Class<T> klass) {
     synchronized (LOCK) {
       ourRegisteredClasses.add(klass);
     }

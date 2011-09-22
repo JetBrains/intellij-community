@@ -41,6 +41,17 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
   }
 
   /**
+   * Checks whether given file is a regular file.
+   *
+   * @param file a file to check.
+   * @return <code>true</code> if the file is a regular, <code>false</code> otherwise
+   * @since 11.0
+   */
+  public boolean isFile(@NotNull final VirtualFile file) {
+    return exists(file) && !isDirectory(file);
+  }
+
+  /**
    * Checks whether given file is a symbolic link.
    *
    * @param file a file to check.

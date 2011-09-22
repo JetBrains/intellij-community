@@ -25,7 +25,7 @@ public class XTestEvaluationCallback extends com.intellij.xdebugger.impl.ui.tree
   }
 
   public Pair<XValue, String> waitFor(long timeoutInMilliseconds) throws InterruptedException {
-    Assert.assertTrue(XDebuggerTestUtil.waitFor(myFinished, timeoutInMilliseconds));
+    Assert.assertTrue("timed out", XDebuggerTestUtil.waitFor(myFinished, timeoutInMilliseconds));
     return Pair.create(myResult, myErrorMessage);
   }
 }
