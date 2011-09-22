@@ -20,7 +20,6 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.Function;
 import com.intellij.util.messages.MessageBus;
@@ -40,17 +39,6 @@ public class IconDeferrerImpl extends IconDeferrer {
     connection.subscribe(PsiModificationTracker.TOPIC, new PsiModificationTracker.Listener() {
       @Override
       public void modificationCountChanged() {
-        clear();
-      }
-    });
-
-    connection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
-      @Override
-      public void enteredDumbMode() {
-      }
-
-      @Override
-      public void exitDumbMode() {
         clear();
       }
     });
