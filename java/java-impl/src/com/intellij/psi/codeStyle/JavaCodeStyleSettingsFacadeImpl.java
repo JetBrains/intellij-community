@@ -23,7 +23,7 @@ import com.intellij.ide.highlighter.JavaFileType;
 public class JavaCodeStyleSettingsFacadeImpl extends JavaCodeStyleSettingsFacade {
   private final CodeStyleSettingsManager myManager;
 
-  public JavaCodeStyleSettingsFacadeImpl(CodeStyleSettingsManager manager) {
+  public JavaCodeStyleSettingsFacadeImpl(ProjectCodeStyleSettingsManager manager) {
     myManager = manager;
   }
 
