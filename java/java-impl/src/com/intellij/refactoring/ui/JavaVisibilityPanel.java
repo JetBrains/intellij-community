@@ -28,9 +28,11 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
+import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
@@ -43,7 +45,7 @@ public class JavaVisibilityPanel extends VisibilityPanelBase {
   private final JRadioButton myRbPublic;
 
   public JavaVisibilityPanel(boolean hasAsIs, final boolean hasEscalate) {
-    setBorder(IdeBorderFactory.createTitledBorder(RefactoringBundle.message("visibility.border.title"), false, true, true));
+    setBorder(IdeBorderFactory.createTitledBorder(RefactoringBundle.message("visibility.border.title"), false, true, true, new Insets(0,UIUtil.DEFAULT_HGAP,0,0)));
     setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
     ButtonGroup bg = new ButtonGroup();
 
