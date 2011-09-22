@@ -41,11 +41,6 @@ public class MacJBTabs extends JBTabsImpl {
   }
 
   @Override
-  public int getInterTabSpaceLength() {
-    return isNewTabsActive() ? 1 : 0;
-  }
-  
-  @Override
   protected void paintFirstGhost(Graphics2D g2d) {
     if (!isNewTabsActive()) {
       super.paintFirstGhost(g2d);
@@ -169,7 +164,7 @@ public class MacJBTabs extends JBTabsImpl {
 
     int leftX = /*firstShowing ? shape.getX() : */shape.getX() /*- shape.deltaX(arc + 1) */;
     int topY = shape.getY() + shape.deltaY(selectionTabVShift);
-    int rigthX = /*!lastShowing && leftFromSelection ? shape.getMaxX() + shape.deltaX(arc + 1) : */shape.getMaxX();
+    int rigthX = /*!lastShowing && leftFromSelection ? shape.getMaxX() + shape.deltaX(arc + 1) : */shape.getMaxX() - 1;
     int bottomY = shape.getMaxY() + shape.deltaY(1);
 
     Insets border = getTabsBorder().getEffectiveBorder();
@@ -463,7 +458,7 @@ public class MacJBTabs extends JBTabsImpl {
     shape.labelBottomY = shape.labelPath.getMaxY() + shape.labelPath.deltaY(1);
     shape.labelTopY = shape.labelPath.getY() + getSelectionTabVShift();
     shape.labelLeftX = shape.labelPath.getX() - getArcSize();
-    shape.labelRightX = shape.labelPath.getMaxX();
+    shape.labelRightX = shape.labelPath.getMaxX() - 1;
 
     boolean first = getLastLayoutPass().getPreviousFor(selected) == null;
     boolean last = getLastLayoutPass().getNextFor(selected) == null;

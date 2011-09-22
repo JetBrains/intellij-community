@@ -3126,7 +3126,7 @@ public class JBTabsImpl extends JComponent
 
   @Override
   public int getInterTabSpaceLength() {
-    return 0;
+    return 1;
   }
 
   @Override

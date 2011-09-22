@@ -499,7 +499,10 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
                               @NotNull final VirtualFile vFile,
                               @NotNull final VirtualFile newParent,
                               @NotNull final String copyName) throws IOException {
-    File physicalFile = convertToIOFileAndCheck(vFile);
+    File physicalFile = convertToIOFile(vFile);
+    if (physicalFile.exists() && !physicalFile.isFile() && !physicalFile.isDirectory()) {
+      throw new FileNotFoundException("Not a file: " + physicalFile);
+    }
 
     File physicalCopy = auxCopy(vFile, newParent, copyName);
 

@@ -19,6 +19,7 @@ package com.intellij.conversion.impl;
 import com.intellij.conversion.*;
 import com.intellij.conversion.impl.ui.ConvertProjectDialog;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.diagnostic.Logger;
@@ -166,6 +167,10 @@ public class ConversionServiceImpl extends ConversionService {
   }
 
   public static boolean isConversionNeeded(String projectPath) throws CannotConvertException {
+    if (projectPath == null || !new File(projectPath).exists() || ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      return false;
+    }
+
     final ConversionContextImpl context = new ConversionContextImpl(projectPath);
     final List<ConversionRunner> runners = getSortedConverters(context);
     if (runners.isEmpty()) {

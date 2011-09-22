@@ -102,7 +102,7 @@ public abstract class SingleRowLayoutStrategy {
     }
 
     public int getMaxPosition(final Rectangle bounds) {
-      return (int)bounds.getMaxX() + myTabs.getInterTabSpaceLength();
+      return (int)bounds.getMaxX();
     }
 
     public int getFixedFitLength(final SingleRowPassInfo data) {
