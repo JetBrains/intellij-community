@@ -15,11 +15,11 @@
  */
 package com.intellij.psi.impl.compiled;
 
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -113,7 +113,7 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
   }
 
   protected int getIndentSize() {
-    return CodeStyleSettingsManager.getSettings(getProject()).getIndentSize(StdFileTypes.JAVA);
+    return CodeStyleSettingsManager.getSettings(getProject()).getIndentSize(JavaFileType.INSTANCE);
   }
 
   public abstract void setMirror(@NotNull TreeElement element);
