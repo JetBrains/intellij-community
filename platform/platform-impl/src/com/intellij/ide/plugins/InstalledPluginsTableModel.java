@@ -76,7 +76,6 @@ public class InstalledPluginsTableModel extends PluginTableModel {
 
   public void addData(List<IdeaPluginDescriptor> list) {
     modifyData(list);
-    reset(Arrays.asList(PluginManager.getPlugins()));
   }
 
   private void reset(final List<IdeaPluginDescriptor> list) {
