@@ -20,15 +20,17 @@ package standardDsls
  */
 
 contributor([:]) {
-  gppCategory "groovy.util.Conversions"
-  gppCategory "groovy.util.Files"
-  gppCategory "groovy.util.Filters"
-  gppCategory "groovy.util.Iterations"
-  gppCategory "groovy.util.Mappers"
-  gppCategory "groovy.util.Sort"
-  gppCategory "groovy.util.Strings"
-  gppCategory "groovy.util.With"
-  gppCategory "groovy.util.concurrent.Atomics"
+  gppCategory "groovypp.util.Conversions"
+  gppCategory "groovypp.util.Files"
+  gppCategory "groovypp.util.Filters"
+  gppCategory "groovypp.util.Iterations"
+  gppCategory "groovypp.util.Mappers"
+  gppCategory "groovypp.util.Sort"
+  gppCategory "groovypp.util.Strings"
+  gppCategory "groovypp.util.With"
+  gppCategory "groovypp.util.With"
+  gppCategory "groovypp.concurrent.Atomics"
+  gppCategory "groovypp.concurrent.CallLaterExecutors"
   gppCategory "org.mbte.groovypp.runtime.ArraysMethods"
   gppCategory "org.mbte.groovypp.runtime.DefaultGroovyPPMethods"
 
