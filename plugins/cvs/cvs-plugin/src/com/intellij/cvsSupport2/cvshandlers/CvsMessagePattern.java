@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,10 @@
 package com.intellij.cvsSupport2.cvshandlers;
 
 import com.intellij.util.PatternUtil;
-import com.intellij.util.PatternUtil;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * author: lesya
@@ -32,14 +30,13 @@ public class CvsMessagePattern {
 
   public CvsMessagePattern(@NonNls String[] groups, int fileNameGroup) {
     myFileNameGroup = fileNameGroup;
-    String regex = createRegex(groups);
+    final String regex = createRegex(groups);
     myPattern = Pattern.compile(regex);
   }
 
-  private String createRegex(@NonNls String[] groups) {
-    StringBuffer result = new StringBuffer();
-    for (int i = 0; i < groups.length; i++) {
-      String group = groups[i];
+  private static String createRegex(@NonNls String[] groups) {
+    final StringBuilder result = new StringBuilder();
+    for (String group : groups) {
       result.append("(");
       result.append(PatternUtil.convertToRegex(group));
       result.append(")");
@@ -55,20 +52,16 @@ public class CvsMessagePattern {
     this(pattern, -1);
   }
 
-
   public CvsMessagePattern(@NonNls String pattern) {
     this(new String[]{pattern});
   }
 
   public String getRelativeFileName(String message) {
     if (myFileNameGroup < 0) return null;
-    Matcher matcher = myPattern.matcher(message);
+    final Matcher matcher = myPattern.matcher(message);
     if (matcher.matches()) {
       return matcher.group(myFileNameGroup);
     }
-    {
-      return null;
-    }
-
+    return null;
   }
 }
