@@ -16,14 +16,13 @@
 package com.intellij.psi.formatter.java;
 
 import com.intellij.formatting.*;
+import com.intellij.formatting.alignment.AlignmentStrategy;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.TokenType;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.formatter.common.AbstractBlock;
-import com.intellij.formatting.alignment.AlignmentStrategy;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
@@ -68,7 +67,7 @@ public class CodeBlockBlock extends AbstractJavaBlock {
     if (baseNode.getElementType() != JavaElementType.CLASS || !settings.ALIGN_MULTILINE_EXTENDS_LIST) {
       return AlignmentStrategy.wrap(alignment);
     }
-    for (ASTNode node = baseNode.getLastChildNode(); node != null; node = FormattingAstUtil.getPrevNonWhiteSpaceNode(node)) {
+    for (ASTNode node = baseNode.getLastChildNode(); node != null; node = FormatterUtil.getPreviousNonWhitespaceSibling(node)) {
       if (node.getElementType() != JavaElementType.IMPLEMENTS_LIST) {
         continue;
       }
