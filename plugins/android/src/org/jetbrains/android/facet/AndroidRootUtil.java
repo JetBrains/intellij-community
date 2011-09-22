@@ -151,6 +151,32 @@ public class AndroidRootUtil {
     return getFileByRelativeModulePath(module, '/' + SdkConstants.FD_GEN_SOURCES, false);
   }
 
+  private static void collectClassFilesAndJars(@NotNull VirtualFile root,
+                                               @NotNull Set<VirtualFile> result,
+                                               @NotNull Set<VirtualFile> visited) {
+    if (!visited.add(root)) {
+      return;
+    }
+    for (VirtualFile child : root.getChildren()) {
+      if (child.exists()) {
+        if (child.isDirectory()) {
+          collectClassFilesAndJars(child, result, visited);
+        }
+        else if ("jar".equals(child.getExtension()) || "class".equals(child.getExtension())) {
+          if (child.getFileSystem() instanceof JarFileSystem) {
+            final VirtualFile localFile = JarFileSystem.getInstance().getVirtualFileForJar(child);
+            if (localFile != null) {
+              result.add(localFile);
+            }
+          }
+          else {
+            result.add(child);
+          }
+        }
+      }
+    }
+  }
+
   private static void fillExternalLibrariesAndModules(final Module module,
                                                       final Set<VirtualFile> outputDirs,
                                                       @Nullable final Set<VirtualFile> libraries,
@@ -172,12 +198,17 @@ public class AndroidRootUtil {
               if (library != null) {
                 for (VirtualFile file : library.getFiles(OrderRootType.CLASSES)) {
                   if (file.exists()) {
+                  if (file.isDirectory()) {
+                    collectClassFilesAndJars(file, libraries, new HashSet<VirtualFile>());
+                  }
+                  else {
                     if (file.getFileSystem() instanceof JarFileSystem) {
                       VirtualFile localFile = JarFileSystem.getInstance().getVirtualFileForJar(file);
                       if (localFile != null) libraries.add(localFile);
                     }
                     else {
                       libraries.add(file);
+                    }
                     }
                   }
                 }
