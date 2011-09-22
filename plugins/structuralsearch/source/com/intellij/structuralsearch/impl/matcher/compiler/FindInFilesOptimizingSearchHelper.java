@@ -108,7 +108,7 @@ class FindInFilesOptimizingSearchHelper extends OptimizingSearchHelperBase {
 
   private List<PsiElement> buildDescendants(String className, boolean includeSelf) {
     if (!doOptimizing()) return Collections.emptyList();
-    PsiShortNamesCache cache = JavaPsiFacade.getInstance(context.getProject()).getShortNamesCache();
+    PsiShortNamesCache cache = PsiShortNamesCache.getInstance(context.getProject());
     SearchScope scope = context.getOptions().getScope();
     PsiClass[] classes = cache.getClassesByName(className,(GlobalSearchScope)scope);
     final List<PsiElement> results = new ArrayList<PsiElement>();
