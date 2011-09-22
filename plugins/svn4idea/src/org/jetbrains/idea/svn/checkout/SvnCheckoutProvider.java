@@ -20,13 +20,13 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
-import com.intellij.openapi.roots.ExcludedFileIndex;
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -227,7 +227,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
               final VirtualFile targetVf = SvnUtil.getVirtualFile(targetPath);
               if (targetVf == null) {
                 errorMessage.set("Can not find file: " + targetPath);
-              } else if (project.isDefault() || !PeriodicalTasksCloser.getInstance().safeGetService(project, ExcludedFileIndex.class)
+              } else if (project.isDefault() || !PeriodicalTasksCloser.getInstance().safeGetService(project, FileIndexFacade.class)
                 .isInContent(targetVf)) {
                 // do not pay attention to ignored/excluded settings
                 client.doImport(target, url, message, null, !includeIgnored, false, depth);

@@ -15,10 +15,10 @@
  */
 package com.intellij.psi.impl;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -926,7 +926,7 @@ public class PsiClassImplUtil {
       return compareClassSeqNumber(aClass, (PsiClass)another);
     }    
 
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(aClass.getProject()).getFileIndex();
+    final FileIndexFacade fileIndex = ServiceManager.getService(file1.getProject(), FileIndexFacade.class);
     final VirtualFile vfile1 = file1.getViewProvider().getVirtualFile();
     final VirtualFile vfile2 = file2.getViewProvider().getVirtualFile();
     return (fileIndex.isInSource(vfile1) || fileIndex.isInLibraryClasses(vfile1)) &&

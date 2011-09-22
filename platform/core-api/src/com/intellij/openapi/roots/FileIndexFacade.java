@@ -21,10 +21,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 /**
  * @author yole
  */
-public abstract class ExcludedFileIndex {
+public abstract class FileIndexFacade {
   protected final Project myProject;
 
-  protected ExcludedFileIndex(final Project project) {
+  protected FileIndexFacade(final Project project) {
     myProject = project;
   }
 

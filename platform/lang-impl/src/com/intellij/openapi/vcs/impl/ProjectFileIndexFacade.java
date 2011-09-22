@@ -17,7 +17,7 @@
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ExcludedFileIndex;
+import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -25,11 +25,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 /**
  * @author yole
  */
-public class ProjectExcludedFileIndex extends ExcludedFileIndex {
+public class ProjectFileIndexFacade extends FileIndexFacade {
   private final ProjectRootManager myRootManager;
   private final DirectoryIndex myDirectoryIndex;
 
-  public ProjectExcludedFileIndex(final Project project, final ProjectRootManager rootManager, final DirectoryIndex directoryIndex) {
+  public ProjectFileIndexFacade(final Project project, final ProjectRootManager rootManager, final DirectoryIndex directoryIndex) {
     super(project);
     myRootManager = rootManager;
     myDirectoryIndex = directoryIndex;

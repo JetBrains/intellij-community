@@ -22,7 +22,7 @@ package com.intellij.psi;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ExcludedFileIndex;
+import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
@@ -39,7 +39,7 @@ public class ClassFileViewProvider extends SingleRootFileViewProvider {
 
   @Override
   protected PsiFile createFile(final Project project, final VirtualFile vFile, final FileType fileType) {
-    final ExcludedFileIndex fileIndex = ServiceManager.getService(project, ExcludedFileIndex.class);
+    final FileIndexFacade fileIndex = ServiceManager.getService(project, FileIndexFacade.class);
     if (fileIndex.isInLibraryClasses(vFile) || !fileIndex.isInSource(vFile)) {
       String name = vFile.getName();
 

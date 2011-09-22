@@ -17,7 +17,7 @@ package org.jetbrains.idea.svn;
 
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.roots.ExcludedFileIndex;
+import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.tmatesoft.svn.core.SVNCancelException;
@@ -30,14 +30,14 @@ import org.tmatesoft.svn.core.wc.SVNStatusClient;
 public class StatusWalkerPartnerImpl implements StatusWalkerPartner {
   private final SvnVcs myVcs;
   private final ChangeListManager myClManager;
-  private final ExcludedFileIndex myExcludedFileIndex;
+  private final FileIndexFacade myExcludedFileIndex;
   private final ProgressIndicator myIndicator;
   private ISVNStatusFileProvider myFileProvider;
 
   public StatusWalkerPartnerImpl(final SvnVcs vcs, final ProgressIndicator pi) {
     myVcs = vcs;
     myClManager = ChangeListManager.getInstance(myVcs.getProject());
-    myExcludedFileIndex = PeriodicalTasksCloser.getInstance().safeGetService(myVcs.getProject(), ExcludedFileIndex.class);
+    myExcludedFileIndex = PeriodicalTasksCloser.getInstance().safeGetService(myVcs.getProject(), FileIndexFacade.class);
     myIndicator = pi;
   }
 

@@ -17,8 +17,8 @@ package org.jetbrains.idea.svn.actions;
 
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.roots.ExcludedFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
@@ -37,14 +37,14 @@ public class SvnExcludingIgnoredOperation {
 
   public static class Filter {
     private final Project myProject;
-    private final ExcludedFileIndex myIndex;
+    private final FileIndexFacade myIndex;
     private final ChangeListManager myClManager;
 
     public Filter(final Project project) {
       myProject = project;
 
       if (! project.isDefault()) {
-        myIndex = PeriodicalTasksCloser.getInstance().safeGetService(project, ExcludedFileIndex.class);
+        myIndex = PeriodicalTasksCloser.getInstance().safeGetService(project, FileIndexFacade.class);
         myClManager = ChangeListManager.getInstance(project);
       } else {
         myIndex = null;
