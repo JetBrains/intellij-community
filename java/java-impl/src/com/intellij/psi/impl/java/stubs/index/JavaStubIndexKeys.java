@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.java.stubs.index;
 
 import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.stubs.StubIndexKey;
 
@@ -23,8 +24,9 @@ import com.intellij.psi.stubs.StubIndexKey;
  * @author yole
  */
 public class JavaStubIndexKeys {
-  public static final StubIndexKey<String,PsiAnnotation> ANNOTATIONS = StubIndexKey.createIndexKey("java.annotations");
+  public static final StubIndexKey<String, PsiAnnotation> ANNOTATIONS = StubIndexKey.createIndexKey("java.annotations");
   public static final StubIndexKey<String, PsiReferenceList> SUPER_CLASSES = StubIndexKey.createIndexKey("java.class.extlist");
+  public static final StubIndexKey<String, PsiField> FIELDS = StubIndexKey.createIndexKey("java.field.name");
 
   private JavaStubIndexKeys() {
   }
