@@ -52,6 +52,7 @@ public class JavaUnwrapDescriptor implements UnwrapDescriptor {
         new JavaCatchRemover(),
         new JavaSynchronizedUnwrapper(),
         new JavaAnonymousUnwrapper(),
+        new JavaConditionalUnwrapper()
       };
   }
 
