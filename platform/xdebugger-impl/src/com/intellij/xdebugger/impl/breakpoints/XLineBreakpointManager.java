@@ -185,8 +185,11 @@ public class XLineBreakpointManager {
   }
 
   public void breakpointChanged(final XLineBreakpointImpl breakpoint) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    breakpoint.updateUI();
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      breakpoint.updateUI();
+    } else {
+      queueBreakpointUpdate(breakpoint);
+    }
   }
 
   public void queueBreakpointUpdate(final XBreakpoint<?> slave) {

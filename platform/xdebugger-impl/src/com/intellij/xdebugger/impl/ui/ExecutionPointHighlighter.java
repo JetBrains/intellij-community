@@ -50,13 +50,11 @@ public class ExecutionPointHighlighter {
 
   public void show(final @NotNull XSourcePosition position, final boolean useSelection,
                    @Nullable final GutterIconRenderer gutterIconRenderer) {
-    DebuggerUIUtil.invokeOnEventDispatch(new Runnable() {
+    DebuggerUIUtil.invokeOnEventDispatchIfProjectNotDisposed(new Runnable() {
       public void run() {
-        if (!myProject.isDisposed()) {
-          doShow(position, useSelection, gutterIconRenderer);
-        }
+        doShow(position, useSelection, gutterIconRenderer);
       }
-    });
+    }, myProject);
   }
 
   public void hide() {
