@@ -95,10 +95,13 @@ public class AndroidMavenProviderImpl implements AndroidMavenProvider {
 
         List<Pattern> includes = MavenResourceCompiler.collectPatterns(resource.getIncludes(), "**/*");
         List<Pattern> excludes = MavenResourceCompiler.collectPatterns(resource.getExcludes(), null);
-        String targetPath = FileUtil.toSystemIndependentName(resource.getTargetPath());
+        final String resourceTargetPath = resource.getTargetPath();
+        if (resourceTargetPath != null) {
+          String targetPath = FileUtil.toSystemIndependentName(resourceTargetPath);
 
-        if (processResources(module.getProject(), resDir, resDir, includes, excludes, targetPath, processor)) {
-          return true;
+          if (processResources(module.getProject(), resDir, resDir, includes, excludes, targetPath, processor)) {
+            return true;
+          }
         }
       }
     }
