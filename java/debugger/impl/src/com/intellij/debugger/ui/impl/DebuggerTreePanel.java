@@ -19,17 +19,20 @@
  */
 package com.intellij.debugger.ui.impl;
 
-import com.intellij.debugger.impl.DebuggerSession;
+import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerStateManager;
 import com.intellij.debugger.ui.impl.watch.DebuggerTree;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.PopupHandler;
+import com.intellij.util.Alarm;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
+import com.sun.jdi.VMDisconnectedException;
 
 import javax.swing.*;
 import java.awt.*;
@@ -38,6 +41,7 @@ import java.awt.event.KeyEvent;
 public abstract class DebuggerTreePanel extends UpdatableDebuggerView implements DataProvider {
   public static final DataKey<DebuggerTreePanel> DATA_KEY = DataKey.create("DebuggerPanel");
   
+  private final Alarm myRebuildAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   protected DebuggerTree myTree;
 
   public DebuggerTreePanel(Project project, DebuggerStateManager stateManager) {
@@ -75,15 +79,24 @@ public abstract class DebuggerTreePanel extends UpdatableDebuggerView implements
 
 
   protected void rebuild(int event) {
-    DebuggerSession debuggerSession = getContext().getDebuggerSession();
-    if(debuggerSession == null) {
-      return;
-    }
-
-    getTree().rebuild(getContext());
+    myRebuildAlarm.cancelAllRequests();
+    myRebuildAlarm.addRequest(new Runnable() {
+      public void run() {
+        try {
+          final DebuggerContextImpl context = getContext();
+          if(context.getDebuggerSession() != null) {
+            getTree().rebuild(context);
+          }
+        }
+        catch (VMDisconnectedException e) {
+          // ignored
+        }
+      }
+    }, 100, ModalityState.NON_MODAL);
   }
 
   public void dispose() {
+    Disposer.dispose(myRebuildAlarm);
     try {
       super.dispose();
     }

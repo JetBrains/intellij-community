@@ -46,11 +46,15 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBoxWithWidePopup;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.util.Alarm;
 import com.sun.jdi.ObjectCollectedException;
+import com.sun.jdi.VMDisconnectedException;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -63,6 +67,7 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class FramesPanel extends UpdatableDebuggerView {
@@ -72,7 +77,8 @@ public class FramesPanel extends UpdatableDebuggerView {
   private final FramesListener myFramesListener;
   private final DebuggerStateManager myStateManager;
   private boolean myShowLibraryFrames = DebuggerSettings.getInstance().SHOW_LIBRARY_STACKFRAMES;
-  
+  private final Alarm myRebuildAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+
   public FramesPanel(Project project, DebuggerStateManager stateManager) {
     super(project, stateManager);
     myStateManager = stateManager;
@@ -164,14 +170,32 @@ public class FramesPanel extends UpdatableDebuggerView {
     }
   }
 
-  /*invoked in swing thread*/
+  private final AtomicBoolean myPerformFullRebuild = new AtomicBoolean(false);
+
   protected void rebuild(int event) {
-    final DebuggerContextImpl context = getContext();
-    final boolean paused = context.getDebuggerSession().isPaused();
+    myRebuildAlarm.cancelAllRequests();
     final boolean isRefresh = event == DebuggerSession.EVENT_REFRESH ||
                               event == DebuggerSession.EVENT_REFRESH_VIEWS_ONLY ||
                               event == DebuggerSession.EVENT_THREADS_REFRESH;
-    if (!paused || !isRefresh) {
+    if (!isRefresh) {
+      myPerformFullRebuild.set(true);
+    }
+    myRebuildAlarm.addRequest(new Runnable() {
+      public void run() {
+        try {
+          doRebuild(!myPerformFullRebuild.getAndSet(false));
+        }
+        catch (VMDisconnectedException e) {
+          // ignored
+        }
+      }
+    }, 100, ModalityState.NON_MODAL);
+  }
+
+  private void doRebuild(boolean refreshOnly) {
+    final DebuggerContextImpl context = getContext();
+    final boolean paused = context.getDebuggerSession().isPaused();
+    if (!paused || !refreshOnly) {
       myThreadsCombo.removeAllItems();
       synchronized (myFramesList) {
         myFramesLastUpdateTime = getNextStamp();
@@ -182,8 +206,18 @@ public class FramesPanel extends UpdatableDebuggerView {
     if (paused) {
       final DebugProcessImpl process = context.getDebugProcess();
       if (process != null) {
-        process.getManagerThread().schedule(new RefreshFramePanelCommand(isRefresh && myThreadsCombo.getItemCount() != 0));
+        process.getManagerThread().schedule(new RefreshFramePanelCommand(refreshOnly && myThreadsCombo.getItemCount() != 0));
       }
+    }
+  }
+
+  @Override
+  public void dispose() {
+    try {
+      Disposer.dispose(myRebuildAlarm);
+    }
+    finally {
+      super.dispose();
     }
   }
 
@@ -196,7 +230,6 @@ public class FramesPanel extends UpdatableDebuggerView {
       myShowLibraryFrames = showLibraryFrames;
       rebuild(DebuggerSession.EVENT_CONTEXT);
     }
-
   }
 
   private class RefreshFramePanelCommand extends DebuggerContextCommandImpl {
