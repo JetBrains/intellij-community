@@ -137,7 +137,7 @@ public class IdeaApplication {
   @SuppressWarnings({"HardCodedStringLiteral"})
   private static void initLAF() {
     if (SystemInfo.isMac) {
-      UIManager.put("Panel.opaque", Boolean.FALSE);
+      UIManager.put("Panel.opaque", Boolean.TRUE);
       UIManager.installLookAndFeel("Quaqua", "ch.randelshofer.quaqua.QuaquaLookAndFeel");
     }
     else {
