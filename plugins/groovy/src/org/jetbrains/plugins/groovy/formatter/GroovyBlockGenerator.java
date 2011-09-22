@@ -51,6 +51,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -261,6 +262,10 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
              || children.get(1).getElementType() != CLOSABLE_BLOCK || children.get(2).getElementType() != mRPAREN;
     }
 
+    if (blockPsi instanceof GrAssignmentExpression && ((GrAssignmentExpression)blockPsi).getRValue() instanceof GrAssignmentExpression) {
+      return mySettings.ALIGN_MULTILINE_ASSIGNMENT;
+    }
+
     return blockPsi instanceof GrParameterList && mySettings.ALIGN_MULTILINE_PARAMETERS ||
         blockPsi instanceof GrExtendsClause && mySettings.ALIGN_MULTILINE_EXTENDS_LIST ||
         blockPsi instanceof GrThrowsClause && mySettings.ALIGN_MULTILINE_THROWS_LIST ||
@@ -270,6 +275,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
   private static boolean isListLikeClause(PsiElement blockPsi) {
     return blockPsi instanceof GrParameterList ||
         blockPsi instanceof GrArgumentList ||
+        blockPsi instanceof GrAssignmentExpression ||
         blockPsi instanceof GrConditionalExpression ||
         blockPsi instanceof GrExtendsClause ||
         blockPsi instanceof GrThrowsClause;

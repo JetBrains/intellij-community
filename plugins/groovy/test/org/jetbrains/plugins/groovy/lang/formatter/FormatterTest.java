@@ -166,6 +166,11 @@ public class FormatterTest extends GroovyFormatterTestCase {
     doTest();
   }
 
+  public void testAlignAssignments() throws Throwable {
+    myTempSettings.ALIGN_MULTILINE_ASSIGNMENT = true;
+    doTest();
+  }
+
   public void doTest() {
     final List<String> data = TestUtils.readInput(getTestDataPath() + getTestName(true) + ".test");
     checkFormatting(data.get(0), StringUtil.trimEnd(data.get(1), "\n"));
