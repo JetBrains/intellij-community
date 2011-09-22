@@ -65,7 +65,7 @@ public class EqualsAndHashCodeProcessor extends AbstractLombokClassProcessor {
 
     if (areMethodsAlreadyExists(psiClass)) {
       final boolean needsCanEqual = shouldGenerateCanEqual(psiClass);
-      builder.addProblem(String.format("Not generating equals%s: A method with one of those names already exists. (Either all or none of these methods will be generated).",
+      builder.addWarning(String.format("Not generating equals%s: A method with one of those names already exists. (Either all or none of these methods will be generated).",
           needsCanEqual ? ", hashCode and canEquals" : " and hashCode"));
       return false;
     }

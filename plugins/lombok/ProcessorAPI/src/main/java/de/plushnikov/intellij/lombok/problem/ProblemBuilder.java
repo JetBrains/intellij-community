@@ -7,13 +7,13 @@ import com.intellij.codeInspection.ProblemHighlightType;
  * @author Plushnikov Michail
  */
 public interface ProblemBuilder {
-  void addProblem(String message);
+  void addWarning(String message);
 
   void addError(String message);
 
-  void addProblem(String message, ProblemHighlightType highlightType);
+  void addWarning(String message, LocalQuickFix... quickFixes);
 
-  void addProblem(String message, LocalQuickFix... quickFixes);
+  void addError(String message, LocalQuickFix... quickFixes);
 
   void addProblem(String message, ProblemHighlightType highlightType, LocalQuickFix... quickFixes);
 }

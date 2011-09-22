@@ -8,17 +8,16 @@ import com.intellij.codeInspection.ProblemHighlightType;
  */
 public class ProblemEmptyBuilder implements ProblemBuilder {
 
-  public void addProblem(String message) {
+  public void addWarning(String message) {
   }
 
   public void addError(String message) {
-
   }
 
-  public void addProblem(String message, ProblemHighlightType highlightType) {
+  public void addWarning(String message, LocalQuickFix... quickFixes) {
   }
 
-  public void addProblem(String message, LocalQuickFix... quickFixes) {
+  public void addError(String message, LocalQuickFix... quickFixes) {
   }
 
   public void addProblem(String message, ProblemHighlightType highlightType, LocalQuickFix... quickFixes) {

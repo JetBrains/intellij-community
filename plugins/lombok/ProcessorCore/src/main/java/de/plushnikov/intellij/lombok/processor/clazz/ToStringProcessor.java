@@ -56,7 +56,7 @@ public class ToStringProcessor extends AbstractLombokClassProcessor {
 
     final PsiMethod[] classMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
     if (PsiMethodUtil.hasMethodByName(classMethods, METHOD_NAME)) {
-      builder.addProblem(String.format("Not generated '%s'(): A method with same name already exists", METHOD_NAME));
+      builder.addWarning(String.format("Not generated '%s'(): A method with same name already exists", METHOD_NAME));
       result = false;
     }
 

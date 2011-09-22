@@ -80,7 +80,7 @@ public class SetterFieldProcessor extends AbstractLombokFieldProcessor {
         if (PsiMethodUtil.hasMethodByName(classMethods, methodName)) {
           final String setterMethodName = TransformationsUtil.toSetterName(psiField.getName(), isBoolean);
 
-          builder.addProblem(String.format("Not generated '%s'(): A method with similar name '%s' already exists", setterMethodName, methodName));
+          builder.addWarning(String.format("Not generated '%s'(): A method with similar name '%s' already exists", setterMethodName, methodName));
           result = false;
         }
       }

@@ -15,7 +15,7 @@ public class ProblemNewBuilder implements ProblemBuilder {
     this.target = target;
   }
 
-  public void addProblem(String message) {
+  public void addWarning(String message) {
     addProblem(message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
   }
 
@@ -23,12 +23,12 @@ public class ProblemNewBuilder implements ProblemBuilder {
     addProblem(message, ProblemHighlightType.GENERIC_ERROR);
   }
 
-  public void addProblem(String message, ProblemHighlightType highlightType) {
-    addProblem(message, highlightType, LombokProblem.EMPTY_QUICK_FIXS);
+  public void addWarning(String message, LocalQuickFix... quickFixes) {
+    addProblem(message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, quickFixes);
   }
 
-  public void addProblem(String message, LocalQuickFix... quickFixes) {
-    addProblem(message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, quickFixes);
+  public void addError(String message, LocalQuickFix... quickFixes) {
+    addProblem(message, ProblemHighlightType.GENERIC_ERROR, quickFixes);
   }
 
   public void addProblem(String message, ProblemHighlightType highlightType, LocalQuickFix... quickFixes) {
