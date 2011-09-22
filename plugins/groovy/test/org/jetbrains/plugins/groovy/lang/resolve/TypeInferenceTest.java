@@ -235,7 +235,7 @@ public class TypeInferenceTest extends GroovyResolveTestCase {
   }
   
   public void testMultiTypeParameter() {
-    assertTypeEquals("Base", "a.groovy");
+    assertTypeEquals("X | Y", "a.groovy");
   }
 
   public void testTypeArgsInAccessor() {

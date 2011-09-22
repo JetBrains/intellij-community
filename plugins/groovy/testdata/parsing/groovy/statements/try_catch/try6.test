@@ -30,40 +30,41 @@ Groovy script
       PsiElement(catch)('catch')
       PsiWhiteSpace(' ')
       PsiElement(()('(')
-      Multi-type catch parameter
+      Parameter
         Modifiers
           <empty list>
-        Type element
-          Reference element
-            PsiElement(identifier)('A')
-        PsiWhiteSpace(' ')
-        PsiElement(|)('|')
-        PsiWhiteSpace(' ')
-        Type element
-          Reference element
+        disjunction type element
+          Type element
+            Reference element
+              PsiElement(identifier)('A')
+          PsiWhiteSpace(' ')
+          PsiElement(|)('|')
+          PsiWhiteSpace(' ')
+          Type element
             Reference element
               Reference element
-                PsiElement(identifier)('x')
+                Reference element
+                  PsiElement(identifier)('x')
+                PsiElement(.)('.')
+                PsiElement(identifier)('y')
               PsiElement(.)('.')
-              PsiElement(identifier)('y')
-            PsiElement(.)('.')
-            PsiElement(identifier)('B')
-        PsiWhiteSpace(' ')
-        PsiElement(|)('|')
-        PsiWhiteSpace(' ')
-        Type element
-          Reference element
-            PsiElement(identifier)('abc')
-        PsiWhiteSpace(' ')
-        PsiElement(|)('|')
-        PsiErrorElement:type expected
-          <empty list>
-        PsiWhiteSpace(' ')
-        PsiElement(|)('|')
-        PsiWhiteSpace(' ')
-        Type element
-          Reference element
-            PsiElement(identifier)('FOO')
+              PsiElement(identifier)('B')
+          PsiWhiteSpace(' ')
+          PsiElement(|)('|')
+          PsiWhiteSpace(' ')
+          Type element
+            Reference element
+              PsiElement(identifier)('abc')
+          PsiWhiteSpace(' ')
+          PsiElement(|)('|')
+          PsiErrorElement:type expected
+            <empty list>
+          PsiWhiteSpace(' ')
+          PsiElement(|)('|')
+          PsiWhiteSpace(' ')
+          Type element
+            Reference element
+              PsiElement(identifier)('FOO')
         PsiWhiteSpace(' ')
         PsiElement(identifier)('param')
       PsiElement())(')')

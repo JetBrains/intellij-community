@@ -30,18 +30,20 @@ Groovy script
       PsiElement(catch)('catch')
       PsiWhiteSpace(' ')
       PsiElement(()('(')
-      Parameter
-        Modifiers
-          <empty list>
+      Modifiers
+        <empty list>
+      disjunction type element
         Type element
           Reference element
             PsiElement(identifier)('A')
         PsiWhiteSpace(' ')
         PsiElement(|)('|')
-        PsiErrorElement:type expected
-          <empty list>
         PsiWhiteSpace('     ')
-        PsiElement(identifier)('e')
+        Type element
+          Reference element
+            PsiElement(identifier)('e')
+        PsiErrorElement:Identifier expected
+          <empty list>
       PsiElement())(')')
       PsiWhiteSpace(' ')
       Open block
