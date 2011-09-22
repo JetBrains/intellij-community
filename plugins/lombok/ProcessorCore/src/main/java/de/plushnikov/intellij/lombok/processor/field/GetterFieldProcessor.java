@@ -49,7 +49,9 @@ public class GetterFieldProcessor extends AbstractLombokFieldProcessor {
     if (result) {
       result = validateExistingMethods(psiField, builder);
     }
-
+    //Warning: "'lazy' does not work with AccessLevel.NONE."
+    //Error: "'lazy' requires the field to be private and final."
+    //Error: "'lazy' requires field initialization."
     return result;
   }
 

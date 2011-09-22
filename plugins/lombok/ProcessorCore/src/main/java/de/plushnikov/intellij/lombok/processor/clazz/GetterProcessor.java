@@ -44,6 +44,7 @@ public class GetterProcessor extends AbstractLombokClassProcessor {
       builder.addError("@Getter is only supported on a class, enum or field type");
       result = false;
     }
+    //Error "'lazy' is not supported for @Getter on a type."
     return result;
   }
 

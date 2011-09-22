@@ -44,11 +44,11 @@ public class EqualsAndHashCodeProcessor extends AbstractLombokClassProcessor {
     return validateAnnotationOnRigthType(psiClass, builder) &&
         validateExistingMethods(psiClass, builder);
     // TODO validation
-    //validate exclude : This field does not exist, or would have been excluded anyway
-    //validate of : This field does not exist
-    //validate : exclude and of are mutually exclusive; the 'exclude' parameter will be ignored.
-    //validate callSuper: Generating equals/hashCode with a supercall to java.lang.Object is pointless
-    //validate : Generating equals/hashCode implementation but without a call to superclass, even though this class does not extend java.lang.Object. If this is intentional, add '@EqualsAndHashCode(callSuper=false)' to your type.
+    //Warning: exclude : This field does not exist, or would have been excluded anyway
+    //Warning: of : This field does not exist
+    //Warning: exclude and of are mutually exclusive; the 'exclude' parameter will be ignored.
+    //Error: callSuper: Generating equals/hashCode with a supercall to java.lang.Object is pointless
+    //Warning: Generating equals/hashCode implementation but without a call to superclass, even though this class does not extend java.lang.Object. If this is intentional, add '@EqualsAndHashCode(callSuper=false)' to your type.
   }
 
   protected boolean validateAnnotationOnRigthType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
@@ -103,6 +103,7 @@ public class EqualsAndHashCodeProcessor extends AbstractLombokClassProcessor {
 
   private boolean shouldGenerateCanEqual(@NotNull PsiClass psiClass) {
     boolean result = true;
+    //needsCanEqual = !isFinal || !isDirectDescendantOfObject
     final PsiClass superClass = psiClass.getSuperClass();
     if (null == superClass && psiClass.hasModifierProperty(PsiModifier.FINAL)) {
       result = false;

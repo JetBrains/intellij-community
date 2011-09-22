@@ -2,12 +2,20 @@ package de.plushnikov.intellij.lombok.util;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnnotationMemberValue;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiEnumConstant;
+import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiVariable;
 import com.intellij.util.StringBuilderSpinAllocator;
 import lombok.handlers.TransformationsUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
@@ -82,13 +90,51 @@ public class PsiAnnotationUtil {
   public static List<PsiAnnotation> findAnnotations(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull final Pattern annotationPattern) {
     final List<PsiAnnotation> annoations = new ArrayList<PsiAnnotation>();
     final PsiModifierList psiModifierList = psiModifierListOwner.getModifierList();
-    if (psiModifierList != null) for (PsiAnnotation psiAnnotation : psiModifierList.getApplicableAnnotations()) {
-      final String name = getSimpleNameOf(psiAnnotation);
-      if (annotationPattern.matcher(name).matches()) {
-        annoations.add(psiAnnotation);
+    if (psiModifierList != null) {
+      for (PsiAnnotation psiAnnotation : psiModifierList.getApplicableAnnotations()) {
+        final String name = getSimpleNameOf(psiAnnotation);
+        if (annotationPattern.matcher(name).matches()) {
+          annoations.add(psiAnnotation);
+        }
       }
     }
     return annoations;
+  }
+
+  @Nullable
+  public static <T> T getAnnotationValue(@NotNull PsiAnnotation psiAnnotation) {
+    return getAnnotationValue(psiAnnotation, "value");
+  }
+
+  @Nullable
+  public static <T> T getAnnotationValue(@NotNull PsiAnnotation psiAnnotation, @NotNull String parameter) {
+    T value = null;
+    PsiAnnotationMemberValue attributeValue = psiAnnotation.findAttributeValue(parameter);
+    if (null != attributeValue) {
+      value = resolveElementValue(attributeValue);
+    }
+    return value;
+  }
+
+  private static <T> T resolveElementValue(PsiElement psiElement) {
+    T value = null;
+    if (psiElement instanceof PsiReferenceExpression) {
+      final PsiElement resolved = ((PsiReferenceExpression) psiElement).resolve();
+
+      if (resolved instanceof PsiEnumConstant) {
+        final PsiEnumConstant psiEnumConstant = (PsiEnumConstant) resolved;
+        value = (T) psiEnumConstant.getName();
+      } else if (resolved instanceof PsiVariable) {
+        final PsiVariable psiVariable = (PsiVariable) resolved;
+        final PsiExpression initializer = psiVariable.getInitializer();
+        if (null != initializer) {
+          value = resolveElementValue(initializer);
+        }
+      }
+    } else if (psiElement instanceof PsiLiteralExpression) {
+      value = (T) ((PsiLiteralExpression) psiElement).getValue();
+    }
+    return value;
   }
 
   @NotNull

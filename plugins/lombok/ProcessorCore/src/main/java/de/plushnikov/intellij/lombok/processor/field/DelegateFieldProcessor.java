@@ -83,7 +83,7 @@ public class DelegateFieldProcessor extends AbstractLombokFieldProcessor {
     if (!(psiType instanceof PsiClassType)) {
       result = false;
     }
-
+    //Error: @Delegate can only use concrete class types, not wildcards, arrays, type variables, or primitives.
     return result;
   }
 

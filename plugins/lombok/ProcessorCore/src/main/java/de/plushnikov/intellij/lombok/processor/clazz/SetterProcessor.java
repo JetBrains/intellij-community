@@ -35,10 +35,6 @@ public class SetterProcessor extends AbstractLombokClassProcessor {
 
   @Override
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
-    // TODO if (lazy) addError("'lazy' is not supported for @Getter on a type.");
-    // TODO Warning("'lazy' does not work with AccessLevel.NONE."
-    // TODO "'lazy' requires the field to be private and final.
-    // TODO "'lazy' requires field initialization."
     return validateAnnotationOnRigthType(psiClass, builder) && validateVisibility(psiAnnotation);
   }
 

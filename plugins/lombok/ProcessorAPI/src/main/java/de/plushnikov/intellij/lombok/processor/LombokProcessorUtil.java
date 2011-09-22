@@ -1,9 +1,8 @@
 package de.plushnikov.intellij.lombok.processor;
 
 import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiAnnotationParameterList;
 import com.intellij.psi.PsiKeyword;
-import com.intellij.psi.PsiNameValuePair;
+import de.plushnikov.intellij.lombok.util.PsiAnnotationUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,39 +13,27 @@ public class LombokProcessorUtil {
 
   @Nullable
   public static String getMethodVisibility(@NotNull PsiAnnotation psiAnnotation) {
-    return convertAcessLevelToJavaString(findAnnotationPropertyValue(psiAnnotation, "value", true));
+    return convertAcessLevelToJavaString(PsiAnnotationUtil.<String>getAnnotationValue(psiAnnotation, "value"));
   }
 
   @Nullable
   public static String getAccessVisibity(@NotNull PsiAnnotation psiAnnotation) {
-    return convertAcessLevelToJavaString(findAnnotationPropertyValue(psiAnnotation, "access", false));
-  }
-
-  public static String findAnnotationPropertyValue(@NotNull PsiAnnotation psiAnnotation, String propertyName, boolean isDefaultProperty) {
-    PsiAnnotationParameterList annotationParameterList = psiAnnotation.getParameterList();
-    String value = "";
-    for (PsiNameValuePair pair : annotationParameterList.getAttributes()) {
-      if (propertyName.equals(pair.getName()) || (isDefaultProperty && null == pair.getName())) {
-        value = pair.getText();
-        break;
-      }
-    }
-    return value;
+    return convertAcessLevelToJavaString(PsiAnnotationUtil.<String>getAnnotationValue(psiAnnotation, "access"));
   }
 
   @Nullable
   public static String convertAcessLevelToJavaString(String value) {
-    if (null == value || value.isEmpty() || value.endsWith("AccessLevel.PUBLIC"))
+    if (null == value || value.isEmpty() || value.equals("PUBLIC"))
       return PsiKeyword.PUBLIC;
-    if (value.endsWith("AccessLevel.MODULE"))
+    if (value.equals("MODULE"))
       return "";
-    if (value.endsWith("AccessLevel.PROTECTED"))
+    if (value.equals("PROTECTED"))
       return PsiKeyword.PROTECTED;
-    if (value.endsWith("AccessLevel.PACKAGE"))
+    if (value.equals("PACKAGE"))
       return "";
-    if (value.endsWith("AccessLevel.PRIVATE"))
+    if (value.equals("PRIVATE"))
       return PsiKeyword.PRIVATE;
-    if (value.endsWith("AccessLevel.NONE"))
+    if (value.equals("NONE"))
       return null;
     else
       return null;
