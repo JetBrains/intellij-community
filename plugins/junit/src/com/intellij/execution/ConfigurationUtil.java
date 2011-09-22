@@ -26,6 +26,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiElementProcessorAdapter;
+import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.search.searches.AnnotatedMembersSearch;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiUtilBase;
@@ -54,7 +55,7 @@ public class ConfigurationUtil {
     final PsiMethod[] suiteMethods = ApplicationManager.getApplication().runReadAction(
         new Computable<PsiMethod[]>() {
           public PsiMethod[] compute() {
-            return JavaPsiFacade.getInstance(project).getShortNamesCache().getMethodsByName(JUnitUtil.SUITE_METHOD_NAME, scope);
+            return PsiShortNamesCache.getInstance(project).getMethodsByName(JUnitUtil.SUITE_METHOD_NAME, scope);
           }
         }
     );

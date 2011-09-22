@@ -323,6 +323,11 @@
     <projectService serviceInterface="com.intellij.codeInsight.NullableNotNullManager"
                     serviceImplementation="com.intellij.codeInsight.NullableNotNullManager"/>
 
+    <projectService serviceInterface="com.intellij.psi.search.PsiShortNamesCache"
+                    serviceImplementation="com.intellij.psi.impl.CompositeShortNamesCache"/>
+
+    <java.shortNamesCache implementation="com.intellij.psi.impl.PsiShortNamesCacheImpl"/>
+
     <applicationService serviceInterface="com.intellij.framework.library.DownloadableLibraryService"
                         serviceImplementation="com.intellij.framework.library.impl.DownloadableLibraryServiceImpl"/>
 

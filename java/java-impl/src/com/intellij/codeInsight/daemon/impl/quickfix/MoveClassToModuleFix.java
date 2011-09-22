@@ -33,6 +33,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringActionHandlerFactory;
 import com.intellij.util.IncorrectOperationException;
@@ -73,7 +74,7 @@ public class MoveClassToModuleFix {
     if (sourceRoot == null) return;
 
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-    PsiClass[] classes = facade.getShortNamesCache().getClassesByName(referenceName, GlobalSearchScope.allScope(project));
+    PsiClass[] classes = PsiShortNamesCache.getInstance(project).getClassesByName(referenceName, GlobalSearchScope.allScope(project));
     for (final PsiClass aClass : classes) {
       if (!facade.getResolveHelper().isAccessible(aClass, psiElement, aClass)) continue;
       final PsiFile psiFile = aClass.getContainingFile();

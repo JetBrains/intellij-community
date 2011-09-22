@@ -23,7 +23,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiShortNamesCache;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -111,24 +110,6 @@ public abstract class JavaPsiFacade {
    */
   @NotNull
   public abstract PsiResolveHelper getResolveHelper();
-
-  /**
-   * Returns the short name cache for the project, which can be used to locate files, classes,
-   * methods and fields by non-qualified names.
-   *
-   * @return the short name cache instance.
-   */
-  @NotNull
-  public abstract PsiShortNamesCache getShortNamesCache();
-
-  /**
-   * Registers a custom short name cache implementation for the project, which is used
-   * in addition to the standard IDEA implementation. Should not be used by most plugins.
-   *
-   * @param cache the short name cache instance.
-   * @deprecated register cache via extension
-   */
-  public abstract void registerShortNamesCache(@NotNull PsiShortNamesCache cache);
 
   /**
    * Initiates a migrate refactoring. The refactoring is finished when

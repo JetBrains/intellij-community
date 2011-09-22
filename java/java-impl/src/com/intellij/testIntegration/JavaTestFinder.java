@@ -20,7 +20,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
@@ -30,7 +29,10 @@ import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.regex.Pattern;
 
 public class JavaTestFinder implements TestFinder {
@@ -52,7 +54,7 @@ public class JavaTestFinder implements TestFinder {
       scope = GlobalSearchScope.projectScope(element.getProject());
     }
 
-    PsiShortNamesCache cache = JavaPsiFacade.getInstance(element.getProject()).getShortNamesCache();
+    PsiShortNamesCache cache = PsiShortNamesCache.getInstance(element.getProject());
 
     List<Pair<? extends PsiNamedElement, Integer>> classesWithWeights = new ArrayList<Pair<? extends PsiNamedElement, Integer>>();
     for (Pair<String, Integer> eachNameWithWeight : TestFinderHelper.collectPossibleClassNamesWithWeights(klass.getName())) {
@@ -90,7 +92,7 @@ public class JavaTestFinder implements TestFinder {
       scope = GlobalSearchScope.projectScope(element.getProject());
     }
 
-    PsiShortNamesCache cache = JavaPsiFacade.getInstance(element.getProject()).getShortNamesCache();
+    PsiShortNamesCache cache = PsiShortNamesCache.getInstance(element.getProject());
 
     String klassName = klass.getName();
     Pattern pattern = Pattern.compile(".*" + klassName + ".*");

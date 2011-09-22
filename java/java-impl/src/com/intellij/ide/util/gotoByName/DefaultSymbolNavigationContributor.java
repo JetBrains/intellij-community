@@ -35,7 +35,7 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.gotoByName.DefaultSymbolNavigationContributor");
 
   public String[] getNames(Project project, boolean includeNonProjectItems) {
-    PsiShortNamesCache cache = JavaPsiFacade.getInstance(project).getShortNamesCache();
+    PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
     HashSet<String> set = new HashSet<String>();
     cache.getAllMethodNames(set);
     cache.getAllFieldNames(set);
@@ -45,7 +45,7 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
 
   public NavigationItem[] getItemsByName(String name, final String pattern, Project project, boolean includeNonProjectItems) {
     GlobalSearchScope scope = includeNonProjectItems ? GlobalSearchScope.allScope(project) : GlobalSearchScope.projectScope(project);
-    PsiShortNamesCache cache = JavaPsiFacade.getInstance(project).getShortNamesCache();
+    PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
 
     PsiMethod[] methods = cache.getMethodsByName(name, scope);
     methods = filterInheritedMethods(methods);
