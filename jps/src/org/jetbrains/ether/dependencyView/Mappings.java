@@ -310,7 +310,13 @@ public class Mappings {
                     }
                 }
 
+                final int mask = Opcodes.ACC_STATIC | Opcodes.ACC_FINAL;
+
                 for (FieldRepr f : diff.fields().removed()) {
+                    if ((f.access & mask) == mask) {
+                        return false;
+                    }
+
                     affectedUsages.add(f.createUsage(it.name));
                 }
 
@@ -318,9 +324,7 @@ public class Mappings {
                     final Difference d = f.snd;
                     final FieldRepr field = f.fst;
 
-                    final int mask = Opcodes.ACC_STATIC | Opcodes.ACC_FINAL;
-
-                    if (((field.access & Opcodes.ACC_PUBLIC) > 0 || (field.access & Opcodes.ACC_PROTECTED) > 0) && ((field.access & mask) == mask)) {
+                    if ((field.access & mask) == mask) {
                         if ((d.base() & Difference.ACCESS) > 0 || (d.base() & Difference.VALUE) > 0) {
                             return false;
                         }

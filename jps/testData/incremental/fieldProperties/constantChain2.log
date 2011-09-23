@@ -1,0 +1,26 @@
+Request to make modules:
+module ConstantChain2
+End of request
+digraph X {
+  ConstantChain2[label="ConstantChain2"];
+}
+digraph X {
+  ConstantChain2[label="ConstantChain2"];
+}
+Propagated modules:
+module ConstantChain2
+End of propagated
+Cleaning output files:
+out/production/ConstantChain2/Client.class
+out/production/ConstantChain2/Const1.class
+End of files
+Compiling files:
+src/Client.java
+src/Const1.java
+End of files
+Cleaning output files:
+out/production/ConstantChain2/Const2.class
+End of files
+Compiling files:
+src/Const2.java
+End of files

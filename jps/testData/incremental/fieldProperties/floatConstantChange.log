@@ -1,0 +1,24 @@
+Request to make modules:
+module FloatConstantChange
+End of request
+digraph X {
+  FloatConstantChange[label="FloatConstantChange"];
+}
+digraph X {
+  FloatConstantChange[label="FloatConstantChange"];
+}
+Propagated modules:
+module FloatConstantChange
+End of propagated
+Cleaning output files:
+out/production/FloatConstantChange/Server.class
+End of files
+Compiling files:
+src/Server.java
+End of files
+Cleaning output files:
+out/production/FloatConstantChange/Client.class
+End of files
+Compiling files:
+src/Client.java
+End of files
