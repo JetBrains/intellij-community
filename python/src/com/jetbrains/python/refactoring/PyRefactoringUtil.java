@@ -11,6 +11,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
@@ -78,7 +79,7 @@ public class PyRefactoringUtil {
       final PyElementGenerator generator = PyElementGenerator.getInstance(project);
       final LanguageLevel langLevel = LanguageLevel.forElement(element1);
       final PyExpression expression = generator.createFromText(langLevel, PyAssignmentStatement.class, "z=" + selection).getAssignedValue();
-      if (PsiUtilBase.hasErrorElementChild(expression) || !(expression instanceof PyBinaryExpression)) {
+      if (PsiUtilCore.hasErrorElementChild(expression) || !(expression instanceof PyBinaryExpression)) {
         return null;
       }
       final String parentText = parent.getText();
@@ -92,7 +93,7 @@ public class PyRefactoringUtil {
       final String suffix = parentText.substring(endOffset, parentText.length());
       final TextRange textRange = TextRange.from(startOffset, endOffset - startOffset);
       final PsiElement fakeExpression = generator.createFromText(langLevel, parent.getClass(), prefix + "python" + suffix);
-      if (PsiUtilBase.hasErrorElementChild(fakeExpression)) {
+      if (PsiUtilCore.hasErrorElementChild(fakeExpression)) {
         return null;
       }
 

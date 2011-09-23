@@ -17,7 +17,7 @@ import javax.swing.*;
  * User : catherine
  */
 public class PythonTestConfigurationType implements ConfigurationType {
-  private String myId = "tests";
+  public static final String ID = "tests";
 
   public final PythonDocTestConfigurationFactory PY_DOCTEST_FACTORY = new PythonDocTestConfigurationFactory(this);
   public final PythonUnitTestConfigurationFactory PY_UNITTEST_FACTORY = new PythonUnitTestConfigurationFactory(this);
@@ -35,13 +35,6 @@ public class PythonTestConfigurationType implements ConfigurationType {
   private static class PythonUnitTestConfigurationFactory extends ConfigurationFactory {
     protected PythonUnitTestConfigurationFactory(ConfigurationType configurationType) {
       super(configurationType);
-    }
-
-    @NotNull
-    public ConfigurationType getType() {
-      ConfigurationType type = super.getType();
-      ((PythonTestConfigurationType)type).setId("PythonUnitTestConfigurationType");
-      return type;
     }
 
     public RunConfiguration createTemplateConfiguration(Project project) {
@@ -63,13 +56,6 @@ public class PythonTestConfigurationType implements ConfigurationType {
       return new PythonDocTestRunConfiguration(new RunConfigurationModule(project), this, "");
     }
 
-    @NotNull
-    public ConfigurationType getType() {
-      ConfigurationType type = super.getType();
-      ((PythonTestConfigurationType)type).setId("PythonDocTestRunConfigurationType");
-      return type;
-    }
-
     @Override
     public String getName() {
       return PyBundle.message("runcfg.doctest.display_name");
@@ -83,13 +69,6 @@ public class PythonTestConfigurationType implements ConfigurationType {
 
     public RunConfiguration createTemplateConfiguration(Project project) {
       return new PyTestRunConfiguration("", new RunConfigurationModule(project), this);
-    }
-
-    @NotNull
-    public ConfigurationType getType() {
-      ConfigurationType type = super.getType();
-      ((PythonTestConfigurationType)type).setId("py.test");
-      return type;
     }
 
     @Override
@@ -107,13 +86,6 @@ public class PythonTestConfigurationType implements ConfigurationType {
       return new PythonNoseTestRunConfiguration(new RunConfigurationModule(project), this, "");
     }
 
-    @NotNull
-    public ConfigurationType getType() {
-      ConfigurationType type = super.getType();
-      ((PythonTestConfigurationType)type).setId("PythonNoseTestRunConfigurationType");
-      return type;
-    }
-
     @Override
     public String getName() {
       return PyBundle.message("runcfg.nosetests.display_name");
@@ -127,13 +99,6 @@ public class PythonTestConfigurationType implements ConfigurationType {
 
     public RunConfiguration createTemplateConfiguration(Project project) {
       return new PythonAtTestRunConfiguration(new RunConfigurationModule(project), this, "");
-    }
-
-    @NotNull
-    public ConfigurationType getType() {
-      ConfigurationType type = super.getType();
-      ((PythonTestConfigurationType)type).setId("attests");
-      return type;
     }
 
     @Override
@@ -160,11 +125,7 @@ public class PythonTestConfigurationType implements ConfigurationType {
   @NotNull
   @Override
   public String getId() {
-    return myId;
-  }
-
-  public void setId(String id) {
-    myId = id;
+    return ID;
   }
 
   public ConfigurationFactory[] getConfigurationFactories() {

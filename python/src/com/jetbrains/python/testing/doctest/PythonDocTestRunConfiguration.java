@@ -6,7 +6,6 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.jetbrains.python.testing.AbstractPythonTestRunConfiguration;
 import org.jdom.Element;
@@ -17,7 +16,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PythonDocTestRunConfiguration extends AbstractPythonTestRunConfiguration
                                           implements PythonDocTestRunConfigurationParams {
-  private String myPattern = ""; // pattern for modules in folder to match against
   protected String myTitle = "Doctests";
   public PythonDocTestRunConfiguration(RunConfigurationModule module,
                                        ConfigurationFactory configurationFactory,
@@ -43,13 +41,11 @@ public class PythonDocTestRunConfiguration extends AbstractPythonTestRunConfigur
   @Override
   public void readExternal(Element element) throws InvalidDataException {
     super.readExternal(element);
-    myPattern = JDOMExternalizerUtil.readField(element, "PATTERN");
   }
 
   @Override
   public void writeExternal(Element element) throws WriteExternalException {
     super.writeExternal(element);
-    JDOMExternalizerUtil.writeField(element, "PATTERN", myPattern);
   }
 
   @Override
@@ -59,14 +55,5 @@ public class PythonDocTestRunConfiguration extends AbstractPythonTestRunConfigur
 
   public static void copyParams(PythonDocTestRunConfigurationParams source, PythonDocTestRunConfigurationParams target) {
     copyParams(source.getTestRunConfigurationParams(), target.getTestRunConfigurationParams());
-    target.setPattern(source.getPattern());
-  }
-
-  public String getPattern() {
-    return myPattern;
-  }
-
-  public void setPattern(String pattern) {
-    myPattern = pattern;
   }
 }

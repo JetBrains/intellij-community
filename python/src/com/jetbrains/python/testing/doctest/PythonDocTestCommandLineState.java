@@ -60,8 +60,8 @@ public class PythonDocTestCommandLineState extends PythonTestCommandLineStateBas
 	if (!myConfig.getPattern().isEmpty())
           specs.add(myConfig.getFolderName() + "/" + ";" + myConfig.getPattern());
         else
-	      specs.add(myConfig.getFolderName() + "/");
-	      // TODO[kate]:think about delimiter between folderName and Pattern
+          specs.add(myConfig.getFolderName() + "/");
+          // TODO[kate]:think about delimiter between folderName and Pattern
         break;
       case TEST_FUNCTION:
         specs.add(myConfig.getScriptName() + "::::" + myConfig.getMethodName());

@@ -8,6 +8,8 @@ import com.jetbrains.python.testing.AbstractPythonTestRunConfigurationParams;
 public interface PythonNoseTestRunConfigurationParams {
   String getParams();
   void setParams(String params);
+  boolean useParam();
+  void useParam(boolean useParam);
 
   AbstractPythonTestRunConfigurationParams getTestRunConfigurationParams();
 }

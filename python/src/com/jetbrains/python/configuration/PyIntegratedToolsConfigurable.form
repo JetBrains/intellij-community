@@ -45,7 +45,7 @@
         </constraints>
         <properties>
           <labelFor value="e486b"/>
-          <text value="Sphinx documentation sources:"/>
+          <text value="Sphinx working directory:"/>
         </properties>
       </component>
       <component id="bef7c" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myWorkDir">

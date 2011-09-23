@@ -1,12 +1,12 @@
 package com.jetbrains.python.testing.nosetest;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.LabeledComponent;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.testing.AbstractPythonTestRunConfigurationParams;
 import com.jetbrains.python.testing.PythonTestRunConfigurationForm;
 
 import javax.swing.*;
+import javax.swing.border.TitledBorder;
 import java.awt.*;
 
 /**
@@ -16,25 +16,37 @@ public class PythonNoseTestRunConfigurationForm implements PythonNoseTestRunConf
   private JPanel myRootPanel;
 
   private final PythonTestRunConfigurationForm myTestRunConfigurationForm;
-  private JTextField myParamTextField;
-
 
   public PythonNoseTestRunConfigurationForm(final Project project, final PythonNoseTestRunConfiguration configuration) {
     myRootPanel = new JPanel(new BorderLayout());
     myTestRunConfigurationForm = new PythonTestRunConfigurationForm(project, configuration);
     myRootPanel.add(myTestRunConfigurationForm.getPanel(), BorderLayout.CENTER);
-    myTestRunConfigurationForm.getAdditionalPanel().add(createParamComponent());
     myTestRunConfigurationForm.getPatternComponent().setVisible(false);
-    myTestRunConfigurationForm.setConfigurationName(
-      PyBundle.message("runcfg.nosetests.display_name"));
+    TitledBorder border = (TitledBorder)myTestRunConfigurationForm.getTestsPanel().getBorder();
+    border.setTitle(PyBundle.message("runcfg.nosetests.display_name"));
+    myTestRunConfigurationForm.setParamsVisible();
+
+    myTestRunConfigurationForm.getParamCheckBox().setSelected(configuration.useParam());
+    myTestRunConfigurationForm.setPatternVisible(false);
+
   }
 
   public String getParams() {
-    return myParamTextField.getText().trim();
+    return myTestRunConfigurationForm.getParams();
   }
 
   public void setParams(String params) {
-    myParamTextField.setText(params);
+    myTestRunConfigurationForm.setParams(params);
+  }
+
+  @Override
+  public boolean useParam() {
+    return myTestRunConfigurationForm.getParamCheckBox().isSelected();
+  }
+
+  @Override
+  public void useParam(boolean useParam) {
+    myTestRunConfigurationForm.getParamCheckBox().setSelected(useParam);
   }
 
   @Override
@@ -46,17 +58,6 @@ public class PythonNoseTestRunConfigurationForm implements PythonNoseTestRunConf
     return myRootPanel;
   }
 
-  private LabeledComponent createParamComponent() {
-    myParamTextField = new JTextField();
-
-    LabeledComponent<JTextField> myComponent = new LabeledComponent<JTextField>();
-    myComponent.setComponent(myParamTextField);
-    myComponent.setText("Param");
-    myComponent.setLabelLocation(BorderLayout.WEST);
-    myComponent.setAnchor(myTestRunConfigurationForm.getAnchor());
-
-    return myComponent;
-  }
 }
 
 

@@ -18,7 +18,6 @@ import org.jetbrains.annotations.NotNull;
 public class PythonUnitTestRunConfiguration extends
                                             AbstractPythonTestRunConfiguration
                                               implements PythonUnitTestRunConfigurationParams {
-  private String myPattern = ""; // pattern for modules in folder to match against
   private boolean myIsPureUnittest = true;
   protected String myTitle = "Unittests";
 
@@ -46,14 +45,12 @@ public class PythonUnitTestRunConfiguration extends
   @Override
   public void readExternal(Element element) throws InvalidDataException {
     super.readExternal(element);
-    myPattern = JDOMExternalizerUtil.readField(element, "PATTERN");
     myIsPureUnittest = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, "PUREUNITTEST"));
   }
 
   @Override
   public void writeExternal(Element element) throws WriteExternalException {
     super.writeExternal(element);
-    JDOMExternalizerUtil.writeField(element, "PATTERN", myPattern);
     JDOMExternalizerUtil.writeField(element, "PUREUNITTEST", String.valueOf(myIsPureUnittest));
   }
 
@@ -64,16 +61,7 @@ public class PythonUnitTestRunConfiguration extends
 
   public static void copyParams(PythonUnitTestRunConfigurationParams source, PythonUnitTestRunConfigurationParams target) {
     copyParams(source.getTestRunConfigurationParams(), target.getTestRunConfigurationParams());
-    target.setPattern(source.getPattern());
     target.setPureUnittest(source.isPureUnittest());
-  }
-
-  public String getPattern() {
-    return myPattern;
-  }
-
-  public void setPattern(String pattern) {
-    myPattern = pattern;
   }
 
   @Override

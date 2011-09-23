@@ -8,6 +8,7 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.testing.AbstractPythonTestRunConfiguration;
 import com.jetbrains.python.testing.PyTestFrameworksUtil;
 import org.jdom.Element;
@@ -16,10 +17,12 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author yole
  */
-public class PyTestRunConfiguration extends AbstractPythonTestRunConfiguration {
+public class PyTestRunConfiguration extends AbstractPythonTestRunConfiguration implements PyTestRunConfigurationParams {
   private String myTestToRun = "";
   private String myKeywords = "";
   private String myParams = "";
+  private boolean useParam = false;
+  private boolean useKeyword = false;
 
   private static final String TEST_TO_RUN_FIELD = "testToRun";
   private static final String KEYWORDS_FIELD = "keywords";
@@ -50,7 +53,9 @@ public class PyTestRunConfiguration extends AbstractPythonTestRunConfiguration {
   }
 
   public String getKeywords() {
-    return myKeywords;
+    if (useKeyword)
+      return myKeywords;
+    return "";
   }
 
   public void setKeywords(String keywords) {
@@ -62,8 +67,27 @@ public class PyTestRunConfiguration extends AbstractPythonTestRunConfiguration {
   }
 
   public String getParams() {
-    return myParams;
+    if (useParam)
+      return myParams;
+    return "";
   }
+
+  public boolean useParam() {
+    return useParam;
+  }
+
+  public void useParam(boolean useParam) {
+    this.useParam = useParam;
+  }
+
+  public boolean useKeyword() {
+    return useKeyword;
+  }
+
+  public void useKeyword(boolean useKeyword) {
+    this.useKeyword = useKeyword;
+  }
+
 
   @Override
   public void readExternal(Element element) throws InvalidDataException {
@@ -71,6 +95,8 @@ public class PyTestRunConfiguration extends AbstractPythonTestRunConfiguration {
     myTestToRun = JDOMExternalizerUtil.readField(element, TEST_TO_RUN_FIELD);
     myKeywords = JDOMExternalizerUtil.readField(element, KEYWORDS_FIELD);
     myParams = JDOMExternalizerUtil.readField(element, PARAMS_FIELD);
+    useParam = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, "USE_PARAM"));
+    useKeyword = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, "USE_KEYWORD"));
   }
 
   @Override
@@ -79,10 +105,15 @@ public class PyTestRunConfiguration extends AbstractPythonTestRunConfiguration {
     JDOMExternalizerUtil.writeField(element, TEST_TO_RUN_FIELD, myTestToRun);
     JDOMExternalizerUtil.writeField(element, KEYWORDS_FIELD, myKeywords);
     JDOMExternalizerUtil.writeField(element, PARAMS_FIELD, myParams);
+    JDOMExternalizerUtil.writeField(element, "USE_PARAM", String.valueOf(useParam));
+    JDOMExternalizerUtil.writeField(element, "USE_KEYWORD", String.valueOf(useKeyword));
   }
 
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
+    if (StringUtil.isEmptyOrSpaces(myTestToRun)) {
+      throw new RuntimeConfigurationError("Please specify target folder or script");
+    }
     if (!PyTestFrameworksUtil.isPyTestInstalled(getProject(), getSdkHome()))
       throw new RuntimeConfigurationError("No py.test runner found in selected interpreter");
   }
