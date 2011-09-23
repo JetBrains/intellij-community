@@ -17,8 +17,6 @@ package com.intellij.codeInsight.unwrap;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiResourceList;
-import com.intellij.psi.PsiResourceVariable;
 import com.intellij.psi.PsiTryStatement;
 import com.intellij.util.IncorrectOperationException;
 

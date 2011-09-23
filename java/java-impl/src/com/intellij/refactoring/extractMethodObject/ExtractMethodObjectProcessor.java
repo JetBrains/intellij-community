@@ -20,7 +20,6 @@
  */
 package com.intellij.refactoring.extractMethodObject;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;

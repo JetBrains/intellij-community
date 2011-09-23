@@ -27,7 +27,6 @@ package com.intellij.refactoring.introduceField;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.TestFrameworks;
-import com.intellij.codeInsight.TestFrameworksImpl;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.navigation.NavigationUtil;

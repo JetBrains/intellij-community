@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.refactoring;
 
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -27,7 +26,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Set;
 
 /**

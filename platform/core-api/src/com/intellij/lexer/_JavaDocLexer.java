@@ -20,7 +20,6 @@
 package com.intellij.lexer;
 
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.*;
 
 
 /**

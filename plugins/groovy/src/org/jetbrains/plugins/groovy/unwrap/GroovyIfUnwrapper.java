@@ -16,11 +16,7 @@
 package org.jetbrains.plugins.groovy.unwrap;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.unwrap.JavaUnwrapper;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiIfStatement;
-import com.intellij.psi.PsiStatement;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;

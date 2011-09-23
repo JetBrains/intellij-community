@@ -17,7 +17,6 @@ package com.intellij.ide.util;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.psi.*;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
 /**

@@ -3,7 +3,6 @@ package org.jetbrains.plugins.groovy.unwrap;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
 
 import java.util.List;
