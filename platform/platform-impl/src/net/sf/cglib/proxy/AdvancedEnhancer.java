@@ -989,6 +989,12 @@ public class AdvancedEnhancer extends AbstractClassGenerator
       public Signature getImplSignature(MethodInfo method) {
         return rename(method.getSignature(), (Integer)positions.get(method));
       }
+
+      @Override
+      public void emitInvoke(CodeEmitter codeEmitter, MethodInfo methodInfo) {
+        codeEmitter.super_invoke(methodInfo.getSignature());
+      }
+
       public CodeEmitter beginMethod(ClassEmitter ce, MethodInfo method) {
         CodeEmitter e = EmitUtils.begin_method(ce, method);
         if (!interceptDuringConstruction &&
