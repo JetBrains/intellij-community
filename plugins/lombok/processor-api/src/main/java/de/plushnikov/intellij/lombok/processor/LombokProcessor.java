@@ -13,7 +13,8 @@ import java.util.Collection;
 public interface LombokProcessor {
   <Psi extends PsiElement> boolean acceptAnnotation(@NotNull PsiAnnotation psiAnnotation, @NotNull Class<Psi> type);
 
+  @NotNull
   String getSupportedAnnotation();
 
-  Collection<LombokProblem> verifyAnnotation(PsiAnnotation psiAnnotation);
+  Collection<LombokProblem> verifyAnnotation(@NotNull PsiAnnotation psiAnnotation);
 }

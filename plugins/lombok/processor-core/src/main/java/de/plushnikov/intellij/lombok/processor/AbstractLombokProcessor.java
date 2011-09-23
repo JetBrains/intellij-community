@@ -31,6 +31,7 @@ public abstract class AbstractLombokProcessor implements LombokProcessor {
     this.supportedClass = supportedClass;
   }
 
+  @NotNull
   @Override
   public String getSupportedAnnotation() {
     return supportedAnnotation;

@@ -31,7 +31,8 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
+ * Inspect and validate @Delegate lombok annotation on a field
+ * Creates delegation methods for this field
  *
  * @author Plushnikov Michail
  */
@@ -83,7 +84,7 @@ public class DelegateFieldProcessor extends AbstractLombokFieldProcessor {
     if (!(psiType instanceof PsiClassType)) {
       result = false;
     }
-    //Error: @Delegate can only use concrete class types, not wildcards, arrays, type variables, or primitives.
+    //TODO Error: @Delegate can only use concrete class types, not wildcards, arrays, type variables, or primitives.
     return result;
   }
 

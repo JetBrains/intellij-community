@@ -33,13 +33,17 @@ public class ToStringProcessor extends AbstractLombokClassProcessor {
 
   @Override
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
-    return validateAnnotationOnRigthType(psiClass, builder) &&
-        validateExistingMethods(psiClass, builder);
+    final boolean result = validateAnnotationOnRigthType(psiClass, builder);
+    if (result) {
+      validateExistingMethods(psiClass, builder);
+    }
+
     // TODO validation messages for
     //validate exclude : This field does not exist, or would have been excluded anyway
     //validate of : This field does not exist
     //validate : exclude and of are mutually exclusive; the 'exclude' parameter will be ignored.
     //validate : Generating toString() implementation but without a call to superclass, even though this class does not extend java.lang.Object. If this is intentional, add '@EqualsAndHashCode(callSuper=false)' to your type.
+    return result;
   }
 
   protected boolean validateAnnotationOnRigthType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {

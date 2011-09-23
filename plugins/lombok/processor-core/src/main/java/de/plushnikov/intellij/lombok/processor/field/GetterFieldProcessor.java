@@ -22,7 +22,8 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
+ * Inspect and validate @Getter lombok annotation on a field
+ * Creates getter method for this field
  *
  * @author Plushnikov Michail
  */
@@ -45,19 +46,29 @@ public class GetterFieldProcessor extends AbstractLombokFieldProcessor {
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiField psiField, @NotNull ProblemBuilder builder) {
     boolean result;
 
-    result = validateVisibility(psiAnnotation);
+    final String methodVisibity = LombokProcessorUtil.getMethodVisibility(psiAnnotation);
+    result = null != methodVisibity;
+
+    final String lazyAsString = PsiAnnotationUtil.getAnnotationValue(psiAnnotation, "lazy");
+    final Boolean lazy = Boolean.valueOf(lazyAsString);
+    if (null == methodVisibity && lazy) {
+      builder.addWarning("'lazy' does not work with AccessLevel.NONE.");
+    }
+
+    if (result && lazy) {
+      if (!psiField.hasModifierProperty(PsiModifier.FINAL) || !psiField.hasModifierProperty(PsiModifier.PRIVATE)) {
+        builder.addError("'lazy' requires the field to be private and final");
+      }
+      if (null == psiField.getInitializer()) {
+        builder.addError("'lazy' requires field initialization.");
+      }
+    }
+
     if (result) {
       result = validateExistingMethods(psiField, builder);
     }
-    //Warning: "'lazy' does not work with AccessLevel.NONE."
-    //Error: "'lazy' requires the field to be private and final."
-    //Error: "'lazy' requires field initialization."
-    return result;
-  }
 
-  protected boolean validateVisibility(@NotNull PsiAnnotation psiAnnotation) {
-    final String methodVisibity = LombokProcessorUtil.getMethodVisibility(psiAnnotation);
-    return null != methodVisibity;
+    return result;
   }
 
   protected boolean validateExistingMethods(@NotNull PsiField psiField, @NotNull ProblemBuilder builder) {

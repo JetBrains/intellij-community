@@ -28,7 +28,7 @@ public abstract class AbstractLombokFieldProcessor extends AbstractLombokProcess
   }
 
   @Override
-  public Collection<LombokProblem> verifyAnnotation(PsiAnnotation psiAnnotation) {
+  public Collection<LombokProblem> verifyAnnotation(@NotNull PsiAnnotation psiAnnotation) {
     Collection<LombokProblem> result = Collections.emptyList();
 
     PsiField psiField = PsiElementUtil.getParentOfType(psiAnnotation, PsiField.class);

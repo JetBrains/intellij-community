@@ -8,9 +8,11 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiType;
+import de.plushnikov.intellij.lombok.LombokConstants;
 import de.plushnikov.intellij.lombok.problem.ProblemBuilder;
 import de.plushnikov.intellij.lombok.processor.LombokProcessorUtil;
 import de.plushnikov.intellij.lombok.processor.field.GetterFieldProcessor;
+import de.plushnikov.intellij.lombok.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.lombok.util.PsiClassUtil;
 import de.plushnikov.intellij.lombok.util.PsiMethodUtil;
 import lombok.Getter;
@@ -22,6 +24,9 @@ import java.util.Collection;
 import java.util.List;
 
 /**
+ * Inspect and validate @Getter lombok annotation on a class
+ * Creates getter methods for fields of this class
+ *
  * @author Plushnikov Michail
  */
 public class GetterProcessor extends AbstractLombokClassProcessor {
@@ -35,7 +40,14 @@ public class GetterProcessor extends AbstractLombokClassProcessor {
 
   @Override
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
-    return validateAnnotationOnRigthType(psiClass, builder) && validateVisibility(psiAnnotation);
+    final boolean result = validateAnnotationOnRigthType(psiClass, builder) && validateVisibility(psiAnnotation);
+
+    final String lazyAsString = PsiAnnotationUtil.getAnnotationValue(psiAnnotation, "lazy");
+    if (Boolean.valueOf(lazyAsString)) {
+      builder.addWarning("'lazy' is not supported for @Getter on a type");
+    }
+
+    return result;
   }
 
   protected boolean validateAnnotationOnRigthType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
@@ -44,7 +56,6 @@ public class GetterProcessor extends AbstractLombokClassProcessor {
       builder.addError("@Getter is only supported on a class, enum or field type");
       result = false;
     }
-    //Error "'lazy' is not supported for @Getter on a type."
     return result;
   }
 
@@ -74,7 +85,7 @@ public class GetterProcessor extends AbstractLombokClassProcessor {
         //Skip fields having Getter annotation already
         createGetter &= !hasFieldProcessorAnnotation(modifierList);
         //Skip fields that start with $
-        createGetter &= !psiField.getName().startsWith("$");
+        createGetter &= !psiField.getName().startsWith(LombokConstants.LOMBOK_INTERN_FIELD_MARKER);
         //Skip fields if a method with same name already exists
         final Collection<String> methodNames = TransformationsUtil.toAllGetterNames(psiField.getName(), PsiType.BOOLEAN.equals(psiField.getType()));
         createGetter &= !PsiMethodUtil.hasMethodByName(classMethods, methodNames);

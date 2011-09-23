@@ -2,9 +2,14 @@
   <name>Lombook Plugin</name>
   <description>A plugin that adds first-class support for Project Lombok</description>
   <vendor email="lombokplugin@plushnikov.de">Michail Plushnikov</vendor>
-  <version>0.1</version>
+  <version>0.2</version>
 
   <idea-version since-build="99.18"/>
+
+  <change-notes>
+    Added inspections for lombok annotations.
+    Fixed bug with auto completion in the same class where lombok annotations are used.
+  </change-notes>
 
   <application-components>
     <!-- Add your application components here -->
@@ -27,7 +32,6 @@
     <implicitUsageProvider implementation="de.plushnikov.intellij.plugin.provider.LombokImplicitUsageProvider"/>
     <inspectionToolProvider implementation="de.plushnikov.intellij.plugin.provider.LombokInspectionProvider"/>
 
-    <completion.contributor implementationClass=""/>
     <renameHandler implementation="de.plushnikov.intellij.plugin.handler.LombokElementRenameHandler" order="first"/>
     <!--<refactoring.changeSignatureUsageProcessor implementation=""/>-->
     <!--<refactoring.safeDeleteProcessor      -->
