@@ -198,7 +198,6 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
 
       for (PsiReference ref1 : refs) {
         PsiElement ref = ref1.getElement();
-        //todo stop here
         if (!PsiTreeUtil.isAncestor(toReplaceIn, ref, false)) {
           result.add(new ExternalUsageInfo(ref));
         }
@@ -315,8 +314,19 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
   }
 
   private void processExternalUsage(UsageInfo usage) {
-    GrCall callExpression = GroovyRefactoringUtil.getCallExpressionByMethodReference(usage.getElement());
-    LOG.assertTrue(callExpression != null);
+    final PsiElement element = usage.getElement();
+    GrCall callExpression = GroovyRefactoringUtil.getCallExpressionByMethodReference(element);
+    if (callExpression == null) {
+      final PsiElement parent = element.getParent();
+      if (parent instanceof GrReferenceExpression && element == ((GrReferenceExpression)parent).getQualifier() && "call".equals(((GrReferenceExpression)parent).getReferenceName())) {
+        callExpression = GroovyRefactoringUtil.getCallExpressionByMethodReference(parent);
+      }
+    }
+    
+    if (callExpression == null) return;
+      
+      
+    //LOG.assertTrue(callExpression != null);
 
     //check for x.getFoo()(args)
     if (callExpression instanceof GrMethodCall) {
