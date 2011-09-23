@@ -49,6 +49,11 @@ public class DefaultFileIndexFacade extends FileIndexFacade {
     return false;
   }
 
+  @Override
+  public boolean isInLibrarySource(VirtualFile file) {
+    return false;
+  }
+
   public boolean isExcludedFile(final VirtualFile file) {
     return false;
   }

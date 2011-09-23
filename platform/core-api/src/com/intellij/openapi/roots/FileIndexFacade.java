@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -30,9 +31,14 @@ public abstract class FileIndexFacade {
     myProject = project;
   }
 
+  public static FileIndexFacade getInstance(Project project) {
+    return ServiceManager.getService(project, FileIndexFacade.class);
+  }
+
   public abstract boolean isInContent(VirtualFile file);
   public abstract boolean isInSource(VirtualFile file);
   public abstract boolean isInLibraryClasses(VirtualFile file);
+  public abstract boolean isInLibrarySource(VirtualFile file);
   public abstract boolean isExcludedFile(VirtualFile file);
 
   @Nullable
