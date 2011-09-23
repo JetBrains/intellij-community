@@ -362,7 +362,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
       try {
         final Object result = method.invoke(myDelegateTable, unwrapParams(params));
         if (result instanceof Library) {
-          return Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{Library.class},
+          return Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{result instanceof LibraryEx ? LibraryEx.class : Library.class},
                                         new LibraryInvocationHandler((Library)result));
         }
         else if (result instanceof LibraryTable.ModifiableModel) {
@@ -374,7 +374,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
           for (int idx = 0; idx < libraries.length; idx++) {
             Library library = libraries[idx];
             libraries[idx] =
-            (Library)Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{Library.class},
+            (Library)Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{library instanceof LibraryEx ? LibraryEx.class : Library.class},
                                             new LibraryInvocationHandler(library));
           }
         }
