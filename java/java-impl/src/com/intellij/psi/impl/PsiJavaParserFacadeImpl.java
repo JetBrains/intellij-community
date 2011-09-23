@@ -15,20 +15,14 @@
  */
 package com.intellij.psi.impl;
 
-import com.intellij.ide.fileTemplates.FileTemplate;
-import com.intellij.ide.fileTemplates.FileTemplateManager;
-import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.java.parser.*;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.JavaDummyElement;
@@ -44,7 +38,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
-import java.util.Properties;
 
 /**
  * @author max
@@ -56,8 +49,6 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
   public PsiJavaParserFacadeImpl(PsiManagerEx manager) {
     myManager = manager;
   }
-
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiJavaParserFacadeImpl");
 
   private static final JavaParserUtil.ParserWrapper ANNOTATION = new JavaParserUtil.ParserWrapper() {
     @Override
@@ -148,13 +139,6 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
     @Override
     public void parse(final PsiBuilder builder) {
       DeclarationParser.parseEnumConstant(builder);
-    }
-  };
-
-  private static final JavaParserUtil.ParserWrapper CATCH_SECTION = new JavaParserUtil.ParserWrapper() {
-    @Override
-    public void parse(final PsiBuilder builder) {
-      StatementParser.parseCatchBlock(builder);
     }
   };
 
@@ -387,51 +371,6 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
 
   @NotNull
   @Override
-  public PsiCatchSection createCatchSection(@NotNull final PsiType exceptionType,
-                                            @NotNull final String exceptionName,
-                                            @Nullable final PsiElement context) throws IncorrectOperationException {
-    if (!(exceptionType instanceof PsiClassType || exceptionType instanceof PsiDisjunctionType)) {
-      throw new IncorrectOperationException("Unexpected type:" + exceptionType);
-    }
-    final String text = StringUtil.join("catch (", exceptionType.getCanonicalText(), " ", exceptionName, ") {}");
-    final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, CATCH_SECTION, level(context)), context);
-    final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());
-    if (!(element instanceof PsiCatchSection)) {
-      throw new IncorrectOperationException("Incorrect catch section '" + text + "'. Parsed element: " + element);
-    }
-    setupCatchBlock(exceptionName, context, (PsiCatchSection)element);
-    return (PsiCatchSection)CodeStyleManager.getInstance(myManager.getProject()).reformat(element);
-  }
-
-  private void setupCatchBlock(final String exceptionName, @Nullable final PsiElement context, final PsiCatchSection psiCatchSection)
-     throws IncorrectOperationException {
-    final FileTemplate catchBodyTemplate = FileTemplateManager.getInstance().getCodeTemplate(JavaTemplateUtil.TEMPLATE_CATCH_BODY);
-    LOG.assertTrue(catchBodyTemplate != null);
-
-    final Properties props = new Properties();
-    props.setProperty(FileTemplate.ATTRIBUTE_EXCEPTION, exceptionName);
-    if (context != null && context.isPhysical()) {
-      final PsiDirectory directory = context.getContainingFile().getContainingDirectory();
-      if (directory != null) {
-        JavaTemplateUtil.setPackageNameAttribute(props, directory);
-      }
-    }
-
-    final PsiCodeBlock codeBlockFromText;
-    try {
-      codeBlockFromText = createCodeBlockFromText("{\n" + catchBodyTemplate.getText(props) + "\n}", null);
-    }
-    catch (ProcessCanceledException ce) {
-      throw ce;
-    }
-    catch (Exception e) {
-      throw new IncorrectOperationException("Incorrect file template", e);
-    }
-    psiCatchSection.getCatchBlock().replace(codeBlockFromText);
-  }
-
-  @NotNull
-  @Override
   public PsiType createPrimitiveType(@NotNull final String text, @NotNull final PsiAnnotation[] annotations) throws IncorrectOperationException {
     final PsiPrimitiveType primitiveType = getPrimitiveType(text);
     if (primitiveType == null) {
@@ -452,7 +391,7 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
     return PRIMITIVE_TYPES.get(text);
   }
 
-  private static LanguageLevel level(@Nullable final PsiElement context) {
+  protected static LanguageLevel level(@Nullable final PsiElement context) {
     return context != null ? PsiUtil.getLanguageLevel(context) : LanguageLevel.HIGHEST;
   }
 
