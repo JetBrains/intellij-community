@@ -25,7 +25,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.GlobalSearchScopes;
 import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -49,7 +48,7 @@ public class PsiJavaFileImpl extends PsiJavaFileBaseImpl {
     if (file != null && !(file instanceof LightVirtualFile)) {
       final FileIndexFacade index = ServiceManager.getService(getProject(), FileIndexFacade.class);
       if (!index.isInSource(file) && !index.isInLibraryClasses(file)) {
-        return GlobalSearchScopes.fileScope(this);
+        return GlobalSearchScope.fileScope(this);
       }
     }
     return super.getResolveScope();

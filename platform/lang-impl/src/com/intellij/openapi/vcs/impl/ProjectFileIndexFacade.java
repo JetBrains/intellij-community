@@ -16,11 +16,13 @@
 
 package com.intellij.openapi.vcs.impl;
 
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
@@ -51,6 +53,12 @@ public class ProjectFileIndexFacade extends FileIndexFacade {
 
   public boolean isExcludedFile(final VirtualFile file) {
     return myRootManager.getFileIndex().isIgnored(file);
+  }
+
+  @Nullable
+  @Override
+  public Module getModuleForFile(VirtualFile file) {
+    return myRootManager.getFileIndex().getModuleForFile(file);
   }
 
   public boolean isValidAncestor(final VirtualFile baseDir, VirtualFile childDir) {
