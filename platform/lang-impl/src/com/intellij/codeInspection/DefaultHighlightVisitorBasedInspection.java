@@ -145,7 +145,7 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
                 @Override
                 public boolean add(@Nullable HighlightInfo info) {
                   if (info == null) return true;
-                  if (info.severity == HighlightInfoType.INJECTED_FRAGMENT_SEVERITY) return true;
+                  if (info.type == HighlightInfoType.INJECTED_LANGUAGE_FRAGMENT) return true;
                   if (info.severity == HighlightSeverity.INFORMATION) return true;
                   ProblemHighlightType problemHighlightType = HighlightInfo.convertType(info.type);
                   TextRange range = new TextRange(info.startOffset, info.endOffset);
