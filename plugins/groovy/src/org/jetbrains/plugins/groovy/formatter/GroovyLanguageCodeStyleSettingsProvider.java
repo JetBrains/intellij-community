@@ -58,6 +58,7 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
       case INDENT_SETTINGS: return INDENT_OPTIONS_SAMPLE;
       case SPACING_SETTINGS: return SPACING_SAMPLE;
       case WRAPPING_AND_BRACES_SETTINGS: return WRAPPING_CODE_SAMPLE;
+      case BLANK_LINES_SETTINGS: return BLANK_LINE_SAMPLE;
       default:
         return "";
     }
@@ -165,6 +166,41 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
     "    public void method(@Annotation1 @Annotation3(param1=\"value1\", param2=\"value2\") final int param){\n" +
     "        @Annotation1 @Annotation3(param1=\"value1\", param2=\"value2\") final int localVariable" +
     "    }\n" +
+    "}";
+
+
+  private static final String BLANK_LINE_SAMPLE =
+    "/*\n" +
+    " * This is a sample file.\n" +
+    " */\n" +
+    "package com.intellij.samples\n" +
+    "\n" +
+    "import com.intellij.idea.Main\n" +
+    "\n" +
+    "import javax.swing.*\n" +
+    "import java.util.Vector\n" +
+    "\n" +
+    "public class Foo {\n" +
+    "  private int field1\n" +
+    "  private int field2\n" +
+    "\n" +
+    "  public void foo1() {\n" +
+    "      new Runnable() {\n" +
+    "          public void run() {\n" +
+    "          }\n" +
+    "      }\n" +
+    "  }\n" +
+    "\n" +
+    "  public class InnerClass {\n" +
+    "  }\n" +
+    "}\n" +
+    "class AnotherClass {\n" +
+    "}\n" +
+    "interface TestInterface {\n" +
+    "    int MAX = 10\n" +
+    "    int MIN = 1\n" +
+    "    def method1()\n" +
+    "    void method2()\n" +
     "}";
 
 }
