@@ -115,7 +115,7 @@ public class LightVariableBuilder<T extends LightVariableBuilder> extends LightE
   }
 
   public Icon getElementIcon(final int flags) {
-    final RowIcon baseIcon = createLayeredIcon(myBaseIcon, ElementPresentationUtil.getFlags(this, false));
+    final RowIcon baseIcon = ElementPresentationUtil.createLayeredIcon(myBaseIcon, this, false);
     return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
   }
 

@@ -629,7 +629,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
   public Icon getIcon(int flags) {
     Icon icon = getIconInner();
     final boolean isLocked = (flags & ICON_FLAG_READ_STATUS) != 0 && !isWritable();
-    RowIcon rowIcon = ElementBase.createLayeredIcon(icon, ElementPresentationUtil.getFlags(this, isLocked));
+    RowIcon rowIcon = ElementPresentationUtil.createLayeredIcon(icon, this, isLocked);
     if ((flags & ICON_FLAG_VISIBILITY) != 0) {
       VisibilityIcons.setVisibilityIcon(getModifierList(), rowIcon);
     }

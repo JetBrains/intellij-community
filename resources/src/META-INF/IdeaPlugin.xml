@@ -962,6 +962,8 @@
                               implementationClass="com.intellij.psi.presentation.java.VariablePresentationProvider"/>
     <itemPresentationProvider forClass="com.intellij.psi.PsiParameter"
                               implementationClass="com.intellij.psi.presentation.java.VariablePresentationProvider"/>
+
+    <iconLayerProvider implementation="com.intellij.compiler.CompilerIconLayerProvider"/>
   </extensions>
 
 </idea-plugin>

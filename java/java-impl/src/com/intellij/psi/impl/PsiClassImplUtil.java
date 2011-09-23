@@ -294,7 +294,7 @@ public class PsiClassImplUtil {
       Icon symbolIcon = r.symbolIcon != null
                         ? r.symbolIcon
                         : ElementPresentationUtil.getClassIconOfKind(r.psiClass, ElementPresentationUtil.getClassKind(r.psiClass));
-      RowIcon baseIcon = ElementBase.createLayeredIcon(symbolIcon, ElementPresentationUtil.getFlags(r.psiClass, isLocked));
+      RowIcon baseIcon = ElementPresentationUtil.createLayeredIcon(symbolIcon, r.psiClass, isLocked);
       return ElementPresentationUtil.addVisibilityIcon(r.psiClass, r.flags, baseIcon);
     }
   };
@@ -309,7 +309,7 @@ public class PsiClassImplUtil {
       if (symbolIcon == null) {
         symbolIcon = ElementPresentationUtil.getClassIconOfKind(aClass, ElementPresentationUtil.getBasicClassKind(aClass));
       }
-      RowIcon baseIcon = ElementBase.createLayeredIcon(symbolIcon, 0);
+      RowIcon baseIcon = ElementBase.createLayeredIcon(aClass, symbolIcon, 0);
       base = ElementPresentationUtil.addVisibilityIcon(aClass, flags, baseIcon);
     }
 

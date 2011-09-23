@@ -241,7 +241,7 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement<PsiFieldStub> implemen
   }
 
   public Icon getElementIcon(final int flags) {
-    final RowIcon baseIcon = createLayeredIcon(PlatformIcons.FIELD_ICON, ElementPresentationUtil.getFlags(this, false));
+    final RowIcon baseIcon = ElementPresentationUtil.createLayeredIcon(PlatformIcons.FIELD_ICON, this, false);
     return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
   }
 

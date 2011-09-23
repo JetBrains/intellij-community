@@ -228,7 +228,7 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
   }
 
   public Icon getElementIcon(final int flags) {
-    final RowIcon baseIcon = createLayeredIcon(PlatformIcons.PARAMETER_ICON, 0);
+    final RowIcon baseIcon = createLayeredIcon(this, PlatformIcons.PARAMETER_ICON, 0);
     return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
   }
   @Override

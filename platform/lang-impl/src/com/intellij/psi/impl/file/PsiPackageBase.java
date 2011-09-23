@@ -91,7 +91,7 @@ public abstract class PsiPackageBase extends PsiElementBase implements PsiDirect
   }
 
   public RowIcon getElementIcon(final int elementFlags) {
-    return createLayeredIcon(PlatformIcons.PACKAGE_ICON, elementFlags);
+    return createLayeredIcon(this, PlatformIcons.PACKAGE_ICON, elementFlags);
   }
 
   public String getName() {

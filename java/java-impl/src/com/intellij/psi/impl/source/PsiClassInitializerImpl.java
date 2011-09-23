@@ -82,6 +82,6 @@ public class PsiClassInitializerImpl extends JavaStubPsiElement<PsiClassInitiali
   }
 
   public Icon getElementIcon(int flags) {
-    return createLayeredIcon(PlatformIcons.CLASS_INITIALIZER, ElementPresentationUtil.getFlags(this, false));
+    return ElementPresentationUtil.createLayeredIcon(PlatformIcons.CLASS_INITIALIZER, this, false);
   }
 }

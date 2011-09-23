@@ -302,7 +302,7 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
   }
 
   public Icon getElementIcon(final int flags) {
-    final RowIcon baseIcon = createLayeredIcon(PlatformIcons.VARIABLE_ICON, ElementPresentationUtil.getFlags(this, false));
+    final RowIcon baseIcon = ElementPresentationUtil.createLayeredIcon(PlatformIcons.VARIABLE_ICON, this, false);
     return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
   }
   @Override

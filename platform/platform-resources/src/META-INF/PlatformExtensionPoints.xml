@@ -102,6 +102,7 @@
 
   <extensionPoint name="fileIconProvider" interface="com.intellij.ide.FileIconProvider"/>
   <extensionPoint name="fileIconPatcher" interface="com.intellij.ide.FileIconPatcher"/>
+  <extensionPoint name="iconLayerProvider" interface="com.intellij.ide.IconLayerProvider"/>
 
   <extensionPoint name="generalOptionsProvider" beanClass="com.intellij.ide.GeneralSettingsConfigurableEP"/>
   

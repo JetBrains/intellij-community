@@ -315,7 +315,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
   @Nullable
   public Icon getIcon(int flags) {
     final Icon baseIcon = isScript() ? GroovyScriptTypeDetector.getScriptType(this).getScriptIcon() : GroovyIcons.GROOVY_ICON_16x16;
-    return ElementBase.createLayeredIcon(baseIcon, ElementBase.transformFlags(this, flags));
+    return ElementBase.createLayeredIcon(this, baseIcon, ElementBase.transformFlags(this, flags));
   }
 
   public GrImportStatement addImportForClass(PsiClass aClass) {

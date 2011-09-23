@@ -325,7 +325,7 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
 
   public Icon getElementIcon(final int flags) {
     Icon methodIcon = hasModifierProperty(PsiModifier.ABSTRACT) ? PlatformIcons.ABSTRACT_METHOD_ICON : PlatformIcons.METHOD_ICON;
-    RowIcon baseIcon = createLayeredIcon(methodIcon, ElementPresentationUtil.getFlags(this, false));
+    RowIcon baseIcon = ElementPresentationUtil.createLayeredIcon(methodIcon, this, false);
     return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
   }
 

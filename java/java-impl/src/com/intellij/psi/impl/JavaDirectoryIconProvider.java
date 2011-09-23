@@ -72,8 +72,7 @@ public class JavaDirectoryIconProvider extends IconProvider implements DumbAware
       else {
         symbolIcon = isOpen ? PlatformIcons.DIRECTORY_OPEN_ICON : PlatformIcons.DIRECTORY_CLOSED_ICON;
       }
-      boolean isExcluded = ElementPresentationUtil.isExcluded(vFile, project);
-      return ElementBase.createLayeredIcon(symbolIcon, isExcluded ? ElementPresentationUtil.FLAGS_EXCLUDED : 0);
+      return ElementBase.createLayeredIcon(element, symbolIcon, 0);
     }
     return null;
   }

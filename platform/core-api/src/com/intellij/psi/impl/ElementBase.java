@@ -16,8 +16,10 @@
 
 package com.intellij.psi.impl;
 
+import com.intellij.ide.IconLayerProvider;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.INativeFileType;
 import com.intellij.openapi.fileTypes.UnknownFileType;
@@ -113,7 +115,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   private static Icon computeIconNow(PsiElement element, int flags) {
     final Icon providersIcon = PsiIconUtil.getProvidersIcon(element, flags);
     if (providersIcon != null) {
-      return providersIcon instanceof RowIcon ? (RowIcon)providersIcon : createLayeredIcon(providersIcon, flags);
+      return providersIcon instanceof RowIcon ? (RowIcon)providersIcon : createLayeredIcon(element, providersIcon, flags);
     }
     return ((ElementBase)element).getElementIcon(flags);
   }
@@ -204,7 +206,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     final boolean isLocked = (flags & ICON_FLAG_READ_STATUS) != 0 && !element.isWritable();
     int elementFlags = isLocked ? FLAGS_LOCKED : 0;
     if (element instanceof ItemPresentation && ((ItemPresentation)element).getIcon(false) != null) {
-        baseIcon = createLayeredIcon(((ItemPresentation)element).getIcon(false), elementFlags);
+        baseIcon = createLayeredIcon(this, ((ItemPresentation)element).getIcon(false), elementFlags);
     }
     else if (element instanceof PsiFile) {
       PsiFile file = (PsiFile)element;
@@ -217,7 +219,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
       else {
         fileTypeIcon = IconUtil.getIcon(virtualFile, flags & ~ICON_FLAG_READ_STATUS, file.getProject());
       }
-      return createLayeredIcon(fileTypeIcon, elementFlags);
+      return createLayeredIcon(this, fileTypeIcon, elementFlags);
     }
     else {
       return null;
@@ -225,14 +227,22 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     return baseIcon;
   }
 
-  public static RowIcon createLayeredIcon(Icon icon, int flags) {
-    if (flags != 0) {
+  public static RowIcon createLayeredIcon(Iconable instance, Icon icon, int flags) {
+    List<Icon> layersFromProviders = new SmartList<Icon>();
+    for (IconLayerProvider provider : Extensions.getExtensions(IconLayerProvider.EP_NAME)) {
+      final Icon layerIcon = provider.getLayerIcon(instance);
+      if (layerIcon != null) {
+        layersFromProviders.add(layerIcon);
+      }
+    }
+    if (flags != 0 && !layersFromProviders.isEmpty()) {
       List<Icon> iconLayers = new SmartList<Icon>();
       for(IconLayer l: ourIconLayers) {
         if ((flags & l.flagMask) != 0) {
           iconLayers.add(l.icon);
         }
       }
+      iconLayers.addAll(layersFromProviders);
       LayeredIcon layeredIcon = new LayeredIcon(1 + iconLayers.size());
       layeredIcon.setIcon(icon, 0);
       for (int i = 0; i < iconLayers.size(); i++) {

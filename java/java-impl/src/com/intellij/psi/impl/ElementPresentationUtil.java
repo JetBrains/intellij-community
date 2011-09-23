@@ -17,16 +17,13 @@ package com.intellij.psi.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TestFrameworks;
-import com.intellij.compiler.CompilerConfiguration;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.ide.IconLayerProvider;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
 import com.intellij.ui.RowIcon;
@@ -48,13 +45,10 @@ public class ElementPresentationUtil implements PlatformIcons {
 
 
   public static int getFlags(PsiModifierListOwner element, final boolean isLocked) {
-    final PsiFile containingFile = element.getContainingFile();
-    final VirtualFile vFile = containingFile == null ? null : containingFile.getVirtualFile();
     final boolean isEnum = element instanceof PsiClass && ((PsiClass)element).isEnum();
     int flags = (element.hasModifierProperty(PsiModifier.FINAL) && !isEnum ? FLAGS_FINAL : 0)
                 | (element.hasModifierProperty(PsiModifier.STATIC) && !isEnum ? FLAGS_STATIC : 0)
-                | (isLocked ? ElementBase.FLAGS_LOCKED : 0)
-                | (isExcluded(vFile, element.getProject()) ? FLAGS_EXCLUDED : 0);
+                | (isLocked ? ElementBase.FLAGS_LOCKED : 0);
     if (element instanceof PsiClass) {
       final PsiClass aClass = (PsiClass)element;
       if (element.hasModifierProperty(PsiModifier.ABSTRACT) && !((PsiClass)element).isInterface()) {
@@ -69,6 +63,10 @@ public class ElementPresentationUtil implements PlatformIcons {
       }
     }
     return flags;
+  }
+
+  public static RowIcon createLayeredIcon(Icon baseIcon, PsiModifierListOwner element, boolean isLocked) {
+    return ElementBase.createLayeredIcon(element, baseIcon, getFlags(element, isLocked));
   }
 
   private static final Icon ABSTRACT_EXCEPTION_CLASS_ICON = IconLoader.getIcon("/nodes/abstractException.png");
@@ -87,17 +85,10 @@ public class ElementPresentationUtil implements PlatformIcons {
   private static final int FLAGS_ABSTRACT = 0x100;
   private static final int FLAGS_STATIC = 0x200;
   private static final int FLAGS_FINAL = 0x400;
-  public static final int FLAGS_EXCLUDED = 0x1000;
   private static final int FLAGS_JUNIT_TEST = 0x2000;
   private static final int FLAGS_RUNNABLE = 0x4000;
 
   private static final Key<CachedValue<Integer>> CLASS_KIND_KEY = new Key<CachedValue<Integer>>("CLASS_KIND_KEY");
-
-  public static boolean isExcluded(final VirtualFile vFile, final Project project) {
-    return vFile != null
-           && ServiceManager.getService(project, FileIndexFacade.class).isInSource(vFile)
-           && CompilerConfiguration.getInstance(project).isExcludedFromCompilation(vFile);
-  }
 
   public static int getBasicClassKind(PsiClass aClass) {
     if (!aClass.isValid()) return CLASS_KIND_CLASS;
@@ -219,7 +210,11 @@ public class ElementPresentationUtil implements PlatformIcons {
   private static String getFlagsDescription(final PsiModifierListOwner aClass) {
     int flags = getFlags(aClass, false);
     String adj = "";
-    if ((flags & FLAGS_EXCLUDED) != 0) adj += " " + CodeInsightBundle.message("node.excluded.flag.tooltip");
+    for (IconLayerProvider provider : Extensions.getExtensions(IconLayerProvider.EP_NAME)) {
+      if (provider.getLayerIcon(aClass) != null) {
+        adj += " " + provider.getLayerDescription();
+      }
+    }
     if ((flags & FLAGS_ABSTRACT) != 0) adj += " " + CodeInsightBundle.message("node.abstract.flag.tooltip");
     if ((flags & FLAGS_FINAL) != 0) adj += " " + CodeInsightBundle.message("node.final.flag.tooltip");
     if ((flags & FLAGS_STATIC) != 0) adj += " " + CodeInsightBundle.message("node.static.flag.tooltip");
@@ -236,7 +231,6 @@ public class ElementPresentationUtil implements PlatformIcons {
 
   static {
     ElementBase.registerIconLayer(FLAGS_STATIC, STATIC_MARK_ICON);
-    ElementBase.registerIconLayer(FLAGS_EXCLUDED, EXCLUDED_FROM_COMPILE_ICON);
     ElementBase.registerIconLayer(FLAGS_FINAL, FINAL_MARK_ICON);
     ElementBase.registerIconLayer(FLAGS_JUNIT_TEST, JUNIT_TEST_MARK);
     ElementBase.registerIconLayer(FLAGS_RUNNABLE, RUNNABLE_MARK);

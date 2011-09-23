@@ -99,7 +99,7 @@ public class PsiClassObjectAccessExpressionImpl extends ExpressionPsiElement imp
 
   @NotNull
   public Icon getElementIcon(final int flags) {
-    final RowIcon rowIcon = createLayeredIcon(PlatformIcons.FIELD_ICON, 0);
+    final RowIcon rowIcon = createLayeredIcon(this, PlatformIcons.FIELD_ICON, 0);
     rowIcon.setIcon(PlatformIcons.PUBLIC_ICON, 1);
     return rowIcon;
   }
