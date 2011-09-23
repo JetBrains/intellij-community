@@ -634,11 +634,6 @@
     <component>
       <implementation-class>com.jetbrains.python.sdk.PythonSdkUpdater</implementation-class>
     </component>
-    <component>
-      <interface-class>com.intellij.coverage.CoverageDataManager</interface-class>
-      <implementation-class>com.intellij.coverage.CoverageDataManagerImpl</implementation-class>
-      <option name="workspace" value="true"/>
-    </component>
   </project-components>
 
   <actions>
