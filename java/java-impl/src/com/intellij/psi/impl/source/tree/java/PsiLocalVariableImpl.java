@@ -26,7 +26,6 @@ import com.intellij.psi.impl.source.JavaDummyHolder;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.tree.*;
-import com.intellij.psi.presentation.java.JavaPresentationUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
