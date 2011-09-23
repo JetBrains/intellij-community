@@ -29,6 +29,7 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 
@@ -61,7 +62,7 @@ public class PatchProjectUtil {
         final Set<VirtualFile> included = new HashSet<VirtualFile>();
         iterate(contentRoot, new ContentIterator() {
           public boolean processFile(final VirtualFile fileOrDir) {
-            String relativeName = VfsUtil.getRelativePath(fileOrDir, contentRoot, '/');
+            String relativeName = VfsUtilCore.getRelativePath(fileOrDir, contentRoot, '/');
             for (Pattern module : excludePatterns.keySet()) {
               if (module == null || module.matcher(modules[idx].getName()).matches()) {
                 final Set<Pattern> dirPatterns = excludePatterns.get(module);

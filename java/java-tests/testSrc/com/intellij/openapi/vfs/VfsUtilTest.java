@@ -124,9 +124,9 @@ public class VfsUtilTest extends IdeaTestCase {
     final VirtualFile vSubSubDir = LocalFileSystem.getInstance().findFileByIoFile(subSubDir);
     assertNotNull(vSubSubDir);
 
-    assertEquals("subDir", VfsUtil.getRelativePath(vSubDir, vTestRoot, '/'));
-    assertEquals("subDir/subSubDir", VfsUtil.getRelativePath(vSubSubDir, vTestRoot, '/'));
-    assertEquals("", VfsUtil.getRelativePath(vTestRoot, vTestRoot, '/'));
+    assertEquals("subDir", VfsUtilCore.getRelativePath(vSubDir, vTestRoot, '/'));
+    assertEquals("subDir/subSubDir", VfsUtilCore.getRelativePath(vSubSubDir, vTestRoot, '/'));
+    assertEquals("", VfsUtilCore.getRelativePath(vTestRoot, vTestRoot, '/'));
   }
 
   public void testAsyncRefresh() throws Throwable {

@@ -17,7 +17,7 @@ package com.intellij.framework.detection.impl.ui;
 
 import com.intellij.framework.detection.DetectionExcludesConfiguration;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.util.PlatformIcons;
@@ -48,7 +48,7 @@ class FrameworkDirectoryNode extends DetectedFrameworkTreeNodeBase {
     String path;
     if (parent instanceof FrameworkDirectoryNode) {
       final VirtualFile parentDir = ((FrameworkDirectoryNode)parent).myDirectory;
-      path = VfsUtil.getRelativePath(myDirectory, parentDir, File.separatorChar);
+      path = VfsUtilCore.getRelativePath(myDirectory, parentDir, File.separatorChar);
       LOG.assertTrue(path != null, myDirectory + " is not under " + parentDir);
     }
     else {

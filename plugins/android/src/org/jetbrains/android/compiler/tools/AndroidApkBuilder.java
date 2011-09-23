@@ -26,7 +26,7 @@ import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
@@ -321,7 +321,7 @@ public class AndroidApkBuilder {
     ArrayList<VirtualFile> list = new ArrayList<VirtualFile>();
     collectNativeLibraries(child, list, debugBuild);
     for (VirtualFile file : list) {
-      String relativePath = VfsUtil.getRelativePath(file, nativeLibsFolder, File.separatorChar);
+      String relativePath = VfsUtilCore.getRelativePath(file, nativeLibsFolder, File.separatorChar);
       String path = FileUtil.toSystemIndependentName(SdkConstants.FD_APK_NATIVE_LIBS + File.separator + relativePath);
       if (added.add(path)) {
         builder.writeFile(toIoFile(file), path);
@@ -387,7 +387,7 @@ public class AndroidApkBuilder {
                                                          SignedJarBuilder jarBuilder,
                                                          Set<String> added) throws IOException {
     for (VirtualFile child : resources) {
-      final String relativePath = FileUtil.toSystemIndependentName(VfsUtil.getRelativePath(child, sourceRoot, File.separatorChar));
+      final String relativePath = FileUtil.toSystemIndependentName(VfsUtilCore.getRelativePath(child, sourceRoot, File.separatorChar));
       if (!added.contains(relativePath)) {
         File file = toIoFile(child);
         jarBuilder.writeFile(file, FileUtil.toSystemIndependentName(relativePath));

@@ -56,6 +56,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -724,7 +725,7 @@ public class BackendCompilerWrapper {
    */
   protected static String calcPackagePath(VirtualFile srcFile, VirtualFile sourceRoot, String packagePrefix) {
     final String prefix = packagePrefix != null && packagePrefix.length() > 0 ? packagePrefix.replace('.', '/') + "/" : "";
-    return prefix + VfsUtil.getRelativePath(srcFile, sourceRoot, '/');
+    return prefix + VfsUtilCore.getRelativePath(srcFile, sourceRoot, '/');
   }
 
   @Nullable

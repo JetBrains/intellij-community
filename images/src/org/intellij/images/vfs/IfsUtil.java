@@ -22,7 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.LogicalRoot;
@@ -129,6 +129,6 @@ public final class IfsUtil {
     if (root.equals(file)) {
       return file.getPath();
     }
-    return "/" + VfsUtil.getRelativePath(file, root, '/');
+    return "/" + VfsUtilCore.getRelativePath(file, root, '/');
   }
 }

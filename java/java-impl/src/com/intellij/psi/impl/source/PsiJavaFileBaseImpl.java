@@ -26,7 +26,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyKey;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -434,7 +434,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
     final VirtualFile sourceRoot = index.getSourceRootForFile(virtualFile);
     if (sourceRoot != null && folder != null) {
-      String relativePath = VfsUtil.getRelativePath(folder, sourceRoot, '/');
+      String relativePath = VfsUtilCore.getRelativePath(folder, sourceRoot, '/');
       LOG.assertTrue(relativePath != null);
       List<OrderEntry> orderEntries = index.getOrderEntriesForFile(virtualFile);
       if (orderEntries.isEmpty()) {
