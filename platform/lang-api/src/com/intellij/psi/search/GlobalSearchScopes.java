@@ -21,6 +21,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiBundle;
 import com.intellij.psi.PsiDirectory;
@@ -191,7 +192,7 @@ public class GlobalSearchScopes {
 
     public boolean contains(VirtualFile file) {
       if (myWithSubdirectories) {
-        return VfsUtil.isAncestor(myDirectory, file, false);
+        return VfsUtilCore.isAncestor(myDirectory, file, false);
       }
       else {
         return myDirectory.equals(file.getParent());
