@@ -51,4 +51,8 @@ public class FieldRepr extends ProtoMember {
     public UsageRepr.Usage createUsage (final StringCache.S owner) {
         return UsageRepr.createFieldUsage(name.value, owner.value, type.getDescr());
     }
+
+    public UsageRepr.Usage createAssignUsage (final StringCache.S owner) {
+        return UsageRepr.createFieldAssignUsage(name.value, owner.value, type.getDescr());
+    }
 }

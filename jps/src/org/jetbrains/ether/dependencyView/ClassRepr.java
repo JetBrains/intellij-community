@@ -27,8 +27,8 @@ public class ClassRepr extends Proto {
     public final Set<ElementType> targets;
     public final RetentionPolicy policy;
 
-    private final Set<FieldRepr> fields;
-    private final Set<MethodRepr> methods;
+    public final Set<FieldRepr> fields;
+    public final Set<MethodRepr> methods;
 
     public abstract class Diff extends Difference {
         public abstract Specifier<TypeRepr.AbstractType> interfaces();

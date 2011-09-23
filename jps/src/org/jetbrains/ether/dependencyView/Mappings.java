@@ -43,7 +43,6 @@ public class Mappings {
     private FoxyMap<StringCache.S, StringCache.S> classToSubclasses = new FoxyMap<StringCache.S, StringCache.S>(stringSetConstructor);
     private FoxyMap<StringCache.S, ClassRepr> sourceFileToClasses = new FoxyMap<StringCache.S, ClassRepr>(classSetConstructor);
     private Map<StringCache.S, UsageRepr.Cluster> sourceFileToUsages = new HashMap<StringCache.S, UsageRepr.Cluster>();
-
     private FoxyMap<StringCache.S, UsageRepr.Usage> sourceFileToAnnotationUsages = new FoxyMap<StringCache.S, UsageRepr.Usage>(usageSetConstructor);
     private Map<StringCache.S, StringCache.S> classToSourceFile = new HashMap<StringCache.S, StringCache.S>();
     private FoxyMap<StringCache.S, StringCache.S> fileToFileDependency = new FoxyMap<StringCache.S, StringCache.S>(stringSetConstructor);
@@ -51,7 +50,61 @@ public class Mappings {
     private Map<StringCache.S, StringCache.S> formToClass = new HashMap<StringCache.S, StringCache.S>();
     private Map<StringCache.S, StringCache.S> classToForm = new HashMap<StringCache.S, StringCache.S>();
 
-    private ClassRepr reprByName (final StringCache.S name) {
+    public void compensateRemovedContent(final Collection<StringCache.S> compiled) {
+        for (StringCache.S name : compiled) {
+            final Collection<ClassRepr> classes = sourceFileToClasses.foxyGet(name);
+
+            if (classes == null) {
+                sourceFileToClasses.put(name, new HashSet<ClassRepr>());
+            }
+        }
+    }
+
+    private void propagateMemberAccessRec(final Collection<StringCache.S> acc, final boolean isField, final boolean root, final StringCache.S name, final StringCache.S reflcass) {
+        final ClassRepr repr = reprByName(reflcass);
+
+        if (repr != null) {
+            if (!root) {
+                final Collection members = isField ? repr.fields : repr.methods;
+
+                for (Object o : members) {
+                    final ProtoMember m = (ProtoMember) o;
+
+                    if (m.name.equals(name)) {
+                        return;
+                    }
+                }
+
+                acc.add(reflcass);
+            }
+
+            final Collection<StringCache.S> subclasses = classToSubclasses.foxyGet(reflcass);
+
+            if (subclasses != null) {
+                for (StringCache.S subclass : subclasses) {
+                    propagateMemberAccessRec(acc, isField, false, name, subclass);
+                }
+            }
+        }
+    }
+
+    private Collection<StringCache.S> propagateMemberAccess(final boolean isField, final StringCache.S name, final StringCache.S className) {
+        final Set<StringCache.S> acc = new HashSet<StringCache.S>();
+
+        propagateMemberAccessRec(acc, isField, true, name, className);
+
+        return acc;
+    }
+
+    private Collection<StringCache.S> propagateFieldAccess(final StringCache.S name, final StringCache.S className) {
+        return propagateMemberAccess(true, name, className);
+    }
+
+    private Collection<StringCache.S> propagateMethodAccess(final StringCache.S name, final StringCache.S className) {
+        return propagateMemberAccess(false, name, className);
+    }
+
+    private ClassRepr reprByName(final StringCache.S name) {
         final Collection<ClassRepr> reprs = sourceFileToClasses.foxyGet(classToSourceFile.get(name));
 
         for (ClassRepr repr : reprs) {
@@ -63,14 +116,14 @@ public class Mappings {
         return null;
     }
 
-    private boolean isInheritorOf (final StringCache.S who, final StringCache.S whom) {
+    private boolean isInheritorOf(final StringCache.S who, final StringCache.S whom) {
         if (who.equals(whom)) {
             return true;
         }
 
         final ClassRepr repr = reprByName(who);
 
-        for (StringCache.S s : repr.getSupers()){
+        for (StringCache.S s : repr.getSupers()) {
             if (isInheritorOf(s, whom)) {
                 return true;
             }
@@ -79,13 +132,15 @@ public class Mappings {
         return false;
     }
 
-    private void affectSubclasses (final StringCache.S className, final Set<StringCache.S> affectedFiles) {
+    private void affectSubclasses(final StringCache.S className, final Set<StringCache.S> affectedFiles) {
         affectedFiles.add(classToSourceFile.get(className));
 
         final Collection<StringCache.S> directSubclasses = classToSubclasses.foxyGet(className);
 
-        for (StringCache.S subClass : directSubclasses) {
-            affectSubclasses(subClass, affectedFiles);
+        if (directSubclasses != null) {
+            for (StringCache.S subClass : directSubclasses) {
+                affectSubclasses(subClass, affectedFiles);
+            }
         }
     }
 
@@ -134,7 +189,7 @@ public class Mappings {
             }
         }
 
-        for (StringCache.S fileName : compiledFiles /* delta.sourceFileToClasses.keySet()*/) {
+        for (StringCache.S fileName : delta.sourceFileToClasses.keySet()) {
             if (safeFiles.contains(fileName)) {
                 continue;
             }
@@ -146,7 +201,7 @@ public class Mappings {
             final Set<UsageRepr.AnnotationUsage> annotationQuery = new HashSet<UsageRepr.AnnotationUsage>();
             final Map<UsageRepr.Usage, UsageConstraint> usageConstraints = new HashMap<UsageRepr.Usage, UsageConstraint>();
 
-            final Difference.Specifier<ClassRepr> classDiff = Difference.make(pastClasses, classes != null ? classes : new HashSet<ClassRepr>());
+            final Difference.Specifier<ClassRepr> classDiff = Difference.make(pastClasses, classes);
 
             for (Pair<ClassRepr, Difference> changed : classDiff.changed()) {
                 final ClassRepr it = changed.fst;
@@ -171,7 +226,7 @@ public class Mappings {
                 }
 
                 if ((diff.addedModifiers() & Opcodes.ACC_INTERFACE) > 0 ||
-                    (diff.removedModifiers() & Opcodes.ACC_INTERFACE) > 0) {
+                        (diff.removedModifiers() & Opcodes.ACC_INTERFACE) > 0) {
                     affectedUsages.add(it.createUsage());
                 }
 
@@ -249,8 +304,7 @@ public class Mappings {
                         // TODO!!
                         if (d.base() == Difference.ACCESS && d.removedModifiers() == Opcodes.ACC_ABSTRACT) {
 
-                        }
-                        else {
+                        } else {
                             affectedUsages.add(mr.fst.createUsage(it.name));
                         }
                     }
@@ -272,8 +326,27 @@ public class Mappings {
                         }
                     }
 
-                    if (d.base() != Difference.NONE) {
-                        affectedUsages.add(field.createUsage(it.name));
+                    if ((d.base() & Difference.ACCESS) > 0) {
+                        final Collection<StringCache.S> propagated = propagateFieldAccess(field.name, it.name);
+
+                        if ((d.addedModifiers() & Opcodes.ACC_FINAL) > 0) {
+                            affectedUsages.add(field.createAssignUsage(it.name));
+                            for (StringCache.S p : propagated) {
+                                affectedUsages.add(field.createAssignUsage(p));
+                            }
+                        }
+
+                        if ((d.addedModifiers() & Opcodes.ACC_STATIC) > 0 ||
+                            (d.removedModifiers() & Opcodes.ACC_STATIC) > 0) {
+                            affectedUsages.add(field.createUsage(it.name));
+                            for (StringCache.S p : propagated) {
+                                affectedUsages.add(field.createUsage(p));
+                            }
+                        }
+                    } else {
+                        if (d.base() != Difference.NONE) {
+                            affectedUsages.add(field.createUsage(it.name));
+                        }
                     }
                 }
             }

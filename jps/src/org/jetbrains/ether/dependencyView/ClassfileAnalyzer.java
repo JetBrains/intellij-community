@@ -1,5 +1,6 @@
 package org.jetbrains.ether.dependencyView;
 
+import com.sun.org.apache.bcel.internal.generic.PUTFIELD;
 import org.jetbrains.ether.Pair;
 import org.objectweb.asm.*;
 import org.objectweb.asm.commons.EmptyVisitor;
@@ -428,6 +429,9 @@ public class ClassfileAnalyzer {
 
                 @Override
                 public void visitFieldInsn(int opcode, String owner, String name, String desc) {
+                    if (opcode == Opcodes.PUTFIELD || opcode == Opcodes.PUTSTATIC) {
+                        usages.addUsage(classNameHolder.get(), UsageRepr.createFieldAssignUsage(name, owner, desc));
+                    }
                     usages.addUsage(classNameHolder.get(), UsageRepr.createFieldUsage(name, owner, desc));
                     super.visitFieldInsn(opcode, owner, name, desc);
                 }

@@ -31,7 +31,7 @@ public class UsageRepr {
         return r;
     }
 
-    public static class Cluster implements  RW.Writable {
+    public static class Cluster implements RW.Writable {
         final Set<Usage> usages = new HashSet<Usage>();
         final Map<Usage, Set<StringCache.S>> residentialMap = new HashMap<Usage, Set<StringCache.S>>();
 
@@ -41,7 +41,7 @@ public class UsageRepr {
         public Cluster(final BufferedReader r) {
             final int size = RW.readInt(r);
 
-            for (int i = 0; i<size; i++) {
+            for (int i = 0; i < size; i++) {
                 final Usage u = reader.read(r);
                 final Set<StringCache.S> s = (Set<StringCache.S>) RW.readMany(r, StringCache.reader, new HashSet<StringCache.S>());
 
@@ -59,7 +59,7 @@ public class UsageRepr {
             }
         }
 
-        public void addUsage (final String residence, final Usage usage){
+        public void addUsage(final String residence, final Usage usage) {
             final StringCache.S r = StringCache.get(residence);
 
             Set<StringCache.S> s = residentialMap.get(usage);
@@ -73,15 +73,15 @@ public class UsageRepr {
             usages.add(usage);
         }
 
-        public Set<Usage> getUsages (){
+        public Set<Usage> getUsages() {
             return usages;
         }
 
-        public Set<StringCache.S> getResidence(final Usage usage){
+        public Set<StringCache.S> getResidence(final Usage usage) {
             return residentialMap.get(usage);
         }
 
-        public void updateCluster (final Cluster c) {
+        public void updateCluster(final Cluster c) {
             usages.addAll(c.getUsages());
             for (Map.Entry<Usage, Set<StringCache.S>> e : c.residentialMap.entrySet()) {
                 final Usage u = e.getKey();
@@ -96,13 +96,13 @@ public class UsageRepr {
             }
         }
 
-        public boolean isEmpty(){
+        public boolean isEmpty() {
             return usages.isEmpty();
         }
     }
 
     public static abstract class Usage implements RW.Writable {
-        public abstract StringCache.S getOwner ();
+        public abstract StringCache.S getOwner();
     }
 
     public static abstract class FMUsage extends Usage {
@@ -158,6 +158,38 @@ public class UsageRepr {
         @Override
         public int hashCode() {
             return 31 * (31 * type.hashCode() + (name.hashCode())) + owner.hashCode();
+        }
+    }
+
+    public static class FieldAssignUsage extends FieldUsage {
+        private FieldAssignUsage(final String n, final String o, final String d) {
+            super(n, o, d);
+        }
+
+        private FieldAssignUsage(final BufferedReader r) {
+            super(r);
+        }
+
+        public void write(final BufferedWriter w) {
+            RW.writeln(w, "fieldAssignUsage");
+            RW.writeln(w, name.value);
+            RW.writeln(w, owner.value);
+            type.write(w);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            final FieldAssignUsage that = (FieldAssignUsage) o;
+
+            return type.equals(that.type) && name.equals(that.name) && owner.equals(that.owner);
+        }
+
+        @Override
+        public int hashCode() {
+            return super.hashCode() + 1;
         }
     }
 
@@ -421,6 +453,10 @@ public class UsageRepr {
         return getUsage(new FieldUsage(name, owner, descr));
     }
 
+    public static Usage createFieldAssignUsage(final String name, final String owner, final String descr) {
+        return getUsage(new FieldAssignUsage(name, owner, descr));
+    }
+
     public static Usage createMethodUsage(final String name, final String owner, final String descr) {
         return getUsage(new MethodUsage(name, owner, descr));
     }
@@ -453,6 +489,8 @@ public class UsageRepr {
                 return getUsage(new ClassUsage(r));
             } else if (tag.equals("fieldUsage")) {
                 return getUsage(new FieldUsage(r));
+            } else if (tag.equals("fieldAssignUsage")) {
+                return getUsage(new FieldAssignUsage(r));
             } else if (tag.equals("methodUsage")) {
                 return getUsage(new MethodUsage(r));
             } else if (tag.equals("classExtendsUsage")) {
