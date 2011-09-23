@@ -76,7 +76,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
         do {
           parent = parent.getParent();
         } while(parent instanceof PsiJavaCodeReferenceElement || parent instanceof PsiTypeElement);
-        if (parent instanceof PsiParameterList) return false;
+        if (parent instanceof PsiParameterList || parent instanceof PsiParameter) return false;
 
         if (!".".equals(lastElement.getText()) && !"#".equals(lastElement.getText())) {
           return false;

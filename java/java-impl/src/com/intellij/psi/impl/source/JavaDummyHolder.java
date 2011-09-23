@@ -15,7 +15,7 @@
  */
 package com.intellij.psi.impl.source;
 
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
@@ -35,27 +35,27 @@ public class JavaDummyHolder extends DummyHolder implements PsiImportHolder {
   private Map<String, PsiClass> myPseudoImports = EMPTY;
 
   public JavaDummyHolder(@NotNull PsiManager manager, TreeElement contentElement, PsiElement context) {
-    super(manager, contentElement, context, null, null, StdLanguages.JAVA);
+    super(manager, contentElement, context, null, null, JavaLanguage.INSTANCE);
   }
 
   public JavaDummyHolder(@NotNull PsiManager manager, CharTable table, boolean validity) {
-    super(manager, null, null, table, Boolean.valueOf(validity), StdLanguages.JAVA);
+    super(manager, null, null, table, Boolean.valueOf(validity), JavaLanguage.INSTANCE);
   }
 
   public JavaDummyHolder(@NotNull PsiManager manager, PsiElement context) {
-    super(manager, null, context, null, null, StdLanguages.JAVA);
+    super(manager, null, context, null, null, JavaLanguage.INSTANCE);
   }
 
   public JavaDummyHolder(@NotNull PsiManager manager, TreeElement contentElement, PsiElement context, CharTable table) {
-    super(manager, contentElement, context, table, null, StdLanguages.JAVA);
+    super(manager, contentElement, context, table, null, JavaLanguage.INSTANCE);
   }
 
   public JavaDummyHolder(@NotNull PsiManager manager, PsiElement context, CharTable table) {
-    super(manager, null, context, table, null, StdLanguages.JAVA);
+    super(manager, null, context, table, null, JavaLanguage.INSTANCE);
   }
 
   public JavaDummyHolder(@NotNull PsiManager manager, final CharTable table) {
-    super(manager, null, null, table, null, StdLanguages.JAVA);
+    super(manager, null, null, table, null, JavaLanguage.INSTANCE);
   }
 
   public boolean importClass(PsiClass aClass) {

@@ -33,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 public class I18nMessageGotoDeclarationHandler extends GotoDeclarationHandlerBase {
   private static final Key<FoldingBuilder> KEY = CompositeFoldingBuilder.FOLDING_BUILDER;
 
-  public PsiElement getGotoDeclarationTarget(PsiElement element) {
+  public PsiElement getGotoDeclarationTarget(PsiElement element, Editor editor) {
     if (!(element instanceof PsiJavaToken)) return null;
 
     int i = 4; //some street magic
@@ -56,8 +56,6 @@ public class I18nMessageGotoDeclarationHandler extends GotoDeclarationHandlerBas
     //case: MyBundle.message("literalAnnotatedWithPropertyKey", param1, param2)
     if (element instanceof PsiMethodCallExpression) {
       final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)element;
-      final Editor editor = FileEditorManager.getInstance(element.getProject()).getSelectedTextEditor();
-      if (editor == null) return null;
       FoldRegion foldRegion = null;
       for (FoldRegion region : editor.getFoldingModel().getAllFoldRegions()) {
         final PsiElement psiElement = EditorFoldingInfo.get(editor).getPsiElement(region);

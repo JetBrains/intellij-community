@@ -15,11 +15,16 @@
  */
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPackage;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.util.RefactoringConflictsUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
@@ -78,6 +83,18 @@ public class AutocreatingSingleSourceRootMoveDestination extends AutocreatingMov
   public void analyzeModuleConflicts(final Collection<PsiElement> elements,
                                      MultiMap<PsiElement,String> conflicts, final UsageInfo[] usages) {
     RefactoringConflictsUtil.analyzeModuleConflicts(getTargetPackage().getManager().getProject(), elements, usages, mySourceRoot, conflicts);
+  }
+
+  @Override
+  public boolean isTargetAccessible(Project project, VirtualFile place) {
+    final boolean inTestSourceContent = ProjectRootManager.getInstance(project).getFileIndex().isInTestSourceContent(place);
+    final Module module = ModuleUtil.findModuleForFile(place, project);
+    if (mySourceRoot != null &&
+        module != null &&
+        !GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, inTestSourceContent).contains(mySourceRoot)) {
+      return false;
+    }
+    return true;
   }
 
   PsiDirectory myTargetDirectory = null;

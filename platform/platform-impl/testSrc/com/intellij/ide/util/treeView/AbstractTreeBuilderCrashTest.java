@@ -277,7 +277,7 @@ public abstract class AbstractTreeBuilderCrashTest extends BaseTreeTestCase  {
     }
   }
 
-  public static class NoYieldNoBackground extends AbstractTreeBuilderCrashTest {
+  public abstract static class NoYieldNoBackground extends AbstractTreeBuilderCrashTest {
     public NoYieldNoBackground() {
       super(false, false);
     }

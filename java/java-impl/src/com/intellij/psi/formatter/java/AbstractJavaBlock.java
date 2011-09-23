@@ -67,7 +67,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
    * @see CodeStyleSettings#ALIGN_GROUP_FIELD_DECLARATIONS
    */
   private static final AlignmentInColumnsConfig ALIGNMENT_IN_COLUMNS_CONFIG = new AlignmentInColumnsConfig(
-    TokenSet.create(JavaTokenType.IDENTIFIER), ElementType.WHITE_SPACE_BIT_SET, ElementType.JAVA_COMMENT_BIT_SET,
+    TokenSet.create(JavaTokenType.IDENTIFIER), JavaJspElementType.WHITE_SPACE_BIT_SET, ElementType.JAVA_COMMENT_BIT_SET,
     TokenSet.create(JavaTokenType.EQ), TokenSet.create(JavaElementType.FIELD));
 
   /**
@@ -238,7 +238,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       }
     }
 
-    final ASTNode prevElement = FormattingAstUtil.getPrevNonWhiteSpaceNode(child);
+    final ASTNode prevElement = FormatterUtil.getPreviousNonWhitespaceSibling(child);
     if (prevElement != null && prevElement.getElementType() == JavaElementType.MODIFIER_LIST) {
       return Indent.getNoneIndent();
     }
@@ -410,7 +410,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     if (myNode instanceof PsiPolyadicExpression) {
       final ASTNode treeParent = myNode.getTreeParent();
       if (treeParent instanceof PsiPolyadicExpression) {
-        return FormattingAstUtil.areSamePriorityBinaryExpressions(myNode, treeParent);
+        return JavaFormatterUtil.areSamePriorityBinaryExpressions(myNode, treeParent);
       }
     }
     return false;
@@ -979,7 +979,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
     // We don't want to align subsequent identifiers in single-line declarations like 'int i1, i2, i3'. I.e. only 'i1'
     // should be aligned then.
-    ASTNode previousNode = FormattingAstUtil.getPrevNonWhiteSpaceNode(child);
+    ASTNode previousNode = FormatterUtil.getPreviousNonWhitespaceSibling(child);
     if (childType == JavaTokenType.IDENTIFIER && (previousNode == null || previousNode.getElementType() == JavaTokenType.COMMA)) {
       return null;
     }
@@ -1116,7 +1116,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     //        });
     //    } 
     ASTNode rBrace = myNode.getLastChildNode();
-    if (node == FormattingAstUtil.getPrevNonWhiteSpaceNode(rBrace)) {
+    if (node == FormatterUtil.getPreviousNonWhitespaceSibling(rBrace)) {
       return false;
     }
 
@@ -1464,7 +1464,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     }
 
     ASTNode prev = node.getTreePrev();
-    return prev == null || !ElementType.WHITE_SPACE_BIT_SET.contains(prev.getElementType())
+    return prev == null || !JavaJspElementType.WHITE_SPACE_BIT_SET.contains(prev.getElementType())
            || StringUtil.countNewLines(prev.getChars()) <= 1;
   }
 

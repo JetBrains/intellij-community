@@ -23,6 +23,7 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
+import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -118,7 +119,7 @@ public class ClassTreeNode extends BasePsiMemberNode<PsiClass>{
       return 0;
     }
     try {
-      int pos = ElementPresentationUtil.getClassKind(aClass);
+      int pos = aClass instanceof JspClass ? ElementPresentationUtil.CLASS_KIND_JSP : ElementPresentationUtil.getClassKind(aClass);
       //abstract class before concrete
       if (pos == ElementPresentationUtil.CLASS_KIND_CLASS || pos == ElementPresentationUtil.CLASS_KIND_EXCEPTION) {
         boolean isAbstract = aClass.hasModifierProperty(PsiModifier.ABSTRACT) && !aClass.isInterface();

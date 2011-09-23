@@ -17,7 +17,7 @@ package com.intellij.openapi.vcs.impl;
 
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ExcludedFileIndex;
+import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -31,12 +31,12 @@ import java.util.*;
 public class VcsRootIterator {
   // folder path to files to be excluded
   private final Map<String, MyRootFilter> myOtherVcsFolders;
-  private final ExcludedFileIndex myExcludedFileIndex;
+  private final FileIndexFacade myExcludedFileIndex;
 
   public VcsRootIterator(final Project project, final AbstractVcs vcs) {
     final ProjectLevelVcsManager plVcsManager = ProjectLevelVcsManager.getInstance(project);
     myOtherVcsFolders = new HashMap<String, MyRootFilter>();
-    myExcludedFileIndex = PeriodicalTasksCloser.getInstance().safeGetService(project, ExcludedFileIndex.class);
+    myExcludedFileIndex = PeriodicalTasksCloser.getInstance().safeGetService(project, FileIndexFacade.class);
 
     final VcsRoot[] allRoots = plVcsManager.getAllVcsRoots();
     final VirtualFile[] roots = plVcsManager.getRootsUnderVcs(vcs);
@@ -111,7 +111,7 @@ public class VcsRootIterator {
     @Nullable private final PairProcessor<VirtualFile, VirtualFile[]> myDirectoryFilter;
     private final LinkedList<VirtualFile> myQueue;
     private final MyRootFilter myRootPresentFilter;
-    private final ExcludedFileIndex myExcludedFileIndex;
+    private final FileIndexFacade myExcludedFileIndex;
 
     private MyRootIterator(final Project project, final VirtualFile root, final Processor<FilePath> processor,
                            @Nullable PairProcessor<VirtualFile, VirtualFile[]> directoryFilter) {
@@ -121,7 +121,7 @@ public class VcsRootIterator {
       final ProjectLevelVcsManager plVcsManager = ProjectLevelVcsManager.getInstance(project);
       final AbstractVcs vcs = plVcsManager.getVcsFor(root);
       myRootPresentFilter = (vcs == null) ? null : new MyRootFilter(root, vcs.getName());
-      myExcludedFileIndex = PeriodicalTasksCloser.getInstance().safeGetService(project, ExcludedFileIndex.class);
+      myExcludedFileIndex = PeriodicalTasksCloser.getInstance().safeGetService(project, FileIndexFacade.class);
 
       myQueue = new LinkedList<VirtualFile>();
       myQueue.add(root);

@@ -15,7 +15,7 @@
  */
 package com.intellij.psi.tree.java;
 
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NonNls;
 
@@ -27,7 +27,7 @@ public class IJavaElementType extends IElementType {
   }
 
   public IJavaElementType(@NonNls final String debugName, final boolean leftBound) {
-    super(debugName, StdFileTypes.JAVA != null ? StdFileTypes.JAVA.getLanguage() : null);
+    super(debugName, JavaLanguage.INSTANCE);
     myLeftBound = leftBound;
   }
 

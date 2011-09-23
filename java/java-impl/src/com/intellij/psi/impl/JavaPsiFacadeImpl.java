@@ -16,7 +16,6 @@
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
@@ -38,15 +37,12 @@ import com.intellij.psi.impl.migration.PsiMigrationImpl;
 import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.JavaDummyHolder;
 import com.intellij.psi.impl.source.JavaDummyHolderFactory;
-import com.intellij.psi.impl.source.javadoc.JavadocManagerImpl;
 import com.intellij.psi.impl.source.jsp.jspXml.JspDirective;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.resolve.PsiResolveHelperImpl;
 import com.intellij.psi.impl.source.tree.JavaChangeUtilSupport;
 import com.intellij.psi.impl.source.tree.JavaElementType;
-import com.intellij.psi.javadoc.JavadocManager;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.ConcurrencyUtil;
@@ -70,11 +66,8 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
 
   private PsiMigrationImpl myCurrentMigration;
   private final PsiElementFinder[] myElementFinders;
-  private PsiShortNamesCache myShortNamesCache;
   private final PsiResolveHelper myResolveHelper;
-  private final JavadocManager myJavadocManager;
   private final PsiNameHelper myNameHelper;
-  private final PsiElementFactory myElementFactory;
   private final PsiConstantEvaluationHelper myConstantEvaluationHelper;
   private final ConcurrentMap<String, PsiPackage> myPackageCache = new ConcurrentHashMap<String, PsiPackage>();
   private final Project myProject;
@@ -89,10 +82,8 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
                            MessageBus bus) {
     myProject = project;
     myResolveHelper = new PsiResolveHelperImpl(PsiManager.getInstance(project));
-    myJavadocManager = new JavadocManagerImpl(project);
     myNameHelper = new PsiNameHelperImpl(this);
     myConstantEvaluationHelper = new PsiConstantEvaluationHelperImpl();
-    myElementFactory = new PsiElementFactoryImpl(psiManager);
 
     List<PsiElementFinder> elementFinders = new ArrayList<PsiElementFinder>();
     elementFinders.add(new PsiElementFinderImpl());
@@ -102,16 +93,6 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
     myPackagePrefixIndex = new PackagePrefixIndex(myProject);
 
     boolean isProjectDefault = project.isDefault();
-
-    if (isProjectDefault) {
-      myShortNamesCache = new EmptyShortNamesCacheImpl();
-    }
-    else {
-      myShortNamesCache = new PsiShortNamesCacheImpl((PsiManagerEx)PsiManager.getInstance(project));
-      for (final PsiShortNamesCache cache : project.getExtensions(PsiShortNamesCache.EP_NAME)) {
-        _registerShortNamesCache(cache);
-      }
-    }
 
     myFileManager = new JavaFileManagerImpl(psiManager, projectRootManagerEx, psiManager.getFileManager(), bus);
 
@@ -147,7 +128,6 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
 
   private void runStartupActivity() {
     myFileManager.initialize();
-    myShortNamesCache.runStartupActivity();
   }
 
   public void dispose() {
@@ -272,38 +252,10 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
   }
 
   @NotNull
-  public PsiShortNamesCache getShortNamesCache() {
-    return myShortNamesCache;
-  }
-
-  public void registerShortNamesCache(@NotNull PsiShortNamesCache cache) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
-    _registerShortNamesCache(cache);
-  }
-
-  private void _registerShortNamesCache(PsiShortNamesCache cache) {
-    assert !(cache instanceof CompositeShortNamesCache) : cache;
-    if (myShortNamesCache instanceof CompositeShortNamesCache) {
-      ((CompositeShortNamesCache)myShortNamesCache).addCache(cache);
-    }
-    else {
-      CompositeShortNamesCache composite = new CompositeShortNamesCache();
-      composite.addCache(myShortNamesCache);
-      composite.addCache(cache);
-      myShortNamesCache = composite;
-    }
-  }
-
-  @NotNull
   public PsiMigration startMigration() {
     LOG.assertTrue(myCurrentMigration == null);
     myCurrentMigration = new PsiMigrationImpl(this, (PsiManagerImpl)PsiManager.getInstance(myProject));
     return myCurrentMigration;
-  }
-
-  @NotNull
-  public JavadocManager getJavadocManager() {
-    return myJavadocManager;
   }
 
   @NotNull
@@ -547,7 +499,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
 
   @NotNull
   public PsiElementFactory getElementFactory() {
-    return myElementFactory;
+    return PsiElementFactory.SERVICE.getInstance(myProject);
   }
 
   public void setAssertOnFileLoadingFilter(final VirtualFileFilter filter) {

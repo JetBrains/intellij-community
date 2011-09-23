@@ -24,13 +24,7 @@ import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.JavaDummyHolder;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
-import com.intellij.psi.impl.source.jsp.JspContextManager;
-import com.intellij.psi.impl.source.jsp.jspJava.JspCodeBlock;
 import com.intellij.psi.impl.source.tree.*;
-import com.intellij.psi.jsp.BaseJspFile;
-import com.intellij.psi.jsp.JspElementType;
-import com.intellij.psi.jsp.JspFile;
-import com.intellij.psi.jsp.JspSpiUtil;
 import com.intellij.psi.presentation.java.JavaPresentationUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.LocalSearchScope;
@@ -38,12 +32,10 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.Processor;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -172,7 +164,7 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
         ASTNode modifierListCopy = modifierList.copy().getNode();
         CompositeElement variable = (CompositeElement)SourceTreeToPsiMap.psiToTreeNotNull(variables[i]);
 
-        ASTNode comma = TreeUtil.skipElementsBack(variable.getTreePrev(), StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET);
+        ASTNode comma = PsiImplUtil.skipWhitespaceAndCommentsBack(variable.getTreePrev());
         if (comma != null && comma.getElementType() == JavaTokenType.COMMA) {
           CodeEditUtil.removeChildren(statement, comma, variable.getTreePrev());
         }
@@ -300,30 +292,6 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
 
   @NotNull
   public SearchScope getUseScope() {
-    if (JspPsiUtil.isInJspFile(this)) {
-      if (getTreeParent().getElementType() == JavaElementType.DECLARATION_STATEMENT &&
-          getTreeParent().getTreeParent() instanceof JspCodeBlock &&
-          getTreeParent().getTreeParent().getTreeParent().getElementType() == JspElementType.HOLDER_METHOD) { //?
-        final JspFile jspFile = JspPsiUtil.getJspFile(this);
-        final JspContextManager contextManager = JspContextManager.getInstance(getProject());
-        if (contextManager == null) {
-          return super.getUseScope();
-        }
-
-        final Set<PsiFile> allIncluded = new THashSet<PsiFile>(10);
-        final BaseJspFile rootContext = contextManager.getRootContextFile(jspFile);
-        allIncluded.add(rootContext);
-        JspSpiUtil.visitAllIncludedFilesRecursively(rootContext, new Processor<BaseJspFile>()  {
-          public boolean process(final BaseJspFile file) {
-            allIncluded.add(file);
-            return true;
-          }
-        });
-
-        return new LocalSearchScope(PsiUtilBase.toPsiFileArray(allIncluded));
-      }
-    }
-
     final PsiElement parentElement = getParent();
     if (parentElement instanceof PsiDeclarationStatement) {
       return new LocalSearchScope(parentElement.getParent());

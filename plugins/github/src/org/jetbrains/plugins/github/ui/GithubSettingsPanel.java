@@ -18,6 +18,7 @@ package org.jetbrains.plugins.github.ui;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.HyperlinkAdapter;
 import org.jetbrains.plugins.github.GithubUtil;
 
@@ -53,8 +54,11 @@ public class GithubSettingsPanel {
     myTestButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        final boolean result = GithubUtil.checkCredentials(ProjectManager.getInstance().getDefaultProject(), getHost(), getLogin(), getPassword());
-        Messages.showInfoMessage(result ? "Connection successful" : "Cannot login to the " + getHost() + " using given credentials", result ? "Success" : "Failure");
+        if (GithubUtil.checkCredentials(ProjectManager.getInstance().getDefaultProject(), getHost(), getLogin(), getPassword())){
+          Messages.showInfoMessage("Connection successful", "Success");
+        } else {
+          Messages.showErrorDialog("Cannot login to the " + getHost() + " using given credentials", "Failure");
+        }
       }
     });
   }
@@ -68,7 +72,8 @@ public class GithubSettingsPanel {
   }
 
   public void setPassword(final String password) {
-    myPasswordField.setText(password);
+    // Show password as blank if password is empty
+    myPasswordField.setText(StringUtil.isEmpty(password) ? null : password);
   }
 
   public String getLogin() {

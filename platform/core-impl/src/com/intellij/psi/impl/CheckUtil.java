@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,28 +23,24 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
-/**
- *
- */
 public class CheckUtil {
+  private CheckUtil() { }
 
-  private CheckUtil() {
-  }
-
-  public static void checkWritable(PsiElement element) throws IncorrectOperationException{
-    if (!element.isWritable()){
-      if (element instanceof PsiDirectory){
+  public static void checkWritable(@NotNull final PsiElement element) throws IncorrectOperationException {
+    if (!element.isWritable()) {
+      if (element instanceof PsiDirectory) {
         throw new IncorrectOperationException(
           PsiBundle.message("cannot.modify.a.read.only.directory", ((PsiDirectory)element).getVirtualFile().getPresentableUrl()));
       }
-      else{
+      else {
         PsiFile file = element.getContainingFile();
-        if (file == null){
+        if (file == null) {
           throw new IncorrectOperationException();
         }
         final VirtualFile virtualFile = file.getVirtualFile();
-        if (virtualFile == null){
+        if (virtualFile == null) {
           throw new IncorrectOperationException();
         }
         throw new IncorrectOperationException(PsiBundle.message("cannot.modify.a.read.only.file", virtualFile.getPresentableUrl()));
@@ -52,12 +48,14 @@ public class CheckUtil {
     }
   }
 
-  public static void checkDelete(VirtualFile file) throws IncorrectOperationException{
-    if (FileTypeRegistry.getInstance().isFileIgnored(file)) return;
+  public static void checkDelete(@NotNull final VirtualFile file) throws IncorrectOperationException {
+    if (FileTypeRegistry.getInstance().isFileIgnored(file)) {
+      return;
+    }
     if (!file.isWritable()) {
       throw new IncorrectOperationException(PsiBundle.message("cannot.delete.a.read.only.file", file.getPresentableUrl()));
     }
-    if (file.isDirectory()){
+    if (file.isDirectory() && !file.isSymLink()) {
       VirtualFile[] children = file.getChildren();
       for (VirtualFile aChildren : children) {
         checkDelete(aChildren);

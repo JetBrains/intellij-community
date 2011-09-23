@@ -20,7 +20,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiSubstitutorImpl;
-import com.intellij.psi.impl.search.JavaDirectInheritorsSearcher;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
@@ -179,10 +178,10 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
     if (classes.length == 0) return null;
 
     if (classes.length > 1) {
-      VirtualFile jarFile = JavaDirectInheritorsSearcher.getJarFile(this);
+      VirtualFile jarFile = PsiUtil.getJarFile(this);
       if (jarFile != null) {
         for (PsiClass aClass : classes) {
-          if (JavaDirectInheritorsSearcher.getJarFile(aClass) == jarFile) return aClass;
+          if (PsiUtil.getJarFile(aClass) == jarFile) return aClass;
         }
       }
     }

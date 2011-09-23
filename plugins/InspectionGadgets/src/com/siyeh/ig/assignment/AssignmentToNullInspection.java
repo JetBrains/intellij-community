@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig.assignment;
 
-import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
@@ -99,7 +99,7 @@ public class AssignmentToNullInspection extends BaseInspection {
             if (ignoreAssignmentsToFields && variable instanceof PsiField) {
                 return true;
             }
-            return AnnotationUtil.isNullable(variable);
+            return NullableNotNullManager.isNullable(variable);
         }
     }
 }

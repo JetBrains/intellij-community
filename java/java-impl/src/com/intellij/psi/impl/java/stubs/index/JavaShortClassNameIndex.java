@@ -29,7 +29,6 @@ import com.intellij.psi.stubs.StubIndexKey;
 import java.util.Collection;
 
 public class JavaShortClassNameIndex extends StringStubIndexExtension<PsiClass> {
-  public static final StubIndexKey<String,PsiClass> KEY = StubIndexKey.createIndexKey("java.class.shortname");
 
   private static final JavaShortClassNameIndex ourInstance = new JavaShortClassNameIndex();
   public static JavaShortClassNameIndex getInstance() {
@@ -37,7 +36,7 @@ public class JavaShortClassNameIndex extends StringStubIndexExtension<PsiClass> 
   }
 
   public StubIndexKey<String, PsiClass> getKey() {
-    return KEY;
+    return JavaStubIndexKeys.CLASS_SHORT_NAMES;
   }
 
   public Collection<PsiClass> get(final String s, final Project project, final GlobalSearchScope scope) {

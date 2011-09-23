@@ -22,6 +22,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.JavaJspElementType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -153,11 +154,8 @@ public class SurroundWithUtil {
    * 
    * @param container     code block that surrounds target statements
    * @param statements    target statements being surrounded
-   * @param factory       factory to use for the new white space element construction
    */
-  public static void indentCommentIfNecessary(@NotNull PsiCodeBlock container, @Nullable PsiElement[] statements, 
-                                              @NotNull PsiElementFactory factory)
-  {
+  public static void indentCommentIfNecessary(@NotNull PsiCodeBlock container, @Nullable PsiElement[] statements) {
     if (statements == null || statements.length <= 0) {
       return;
     }
@@ -169,7 +167,7 @@ public class SurroundWithUtil {
     }
 
     ASTNode commentWsText = node.getTreePrev();
-    if (commentWsText == null || !ElementType.WHITE_SPACE_BIT_SET.contains(commentWsText.getElementType())) {
+    if (commentWsText == null || !JavaJspElementType.WHITE_SPACE_BIT_SET.contains(commentWsText.getElementType())) {
       return;
     }
 
@@ -188,6 +186,7 @@ public class SurroundWithUtil {
     PsiElement codeBlockWsElement = null;
     ASTNode codeBlockWsNode = null;
     boolean lbraceFound = false;
+    final PsiParserFacade parserFacade = PsiParserFacade.SERVICE.getInstance(container.getProject());
     for (PsiElement codeBlockChild = container.getFirstChild(); codeBlockChild != null; codeBlockChild = codeBlockChild.getNextSibling()) {
       ASTNode childNode = codeBlockChild.getNode();
       if (childNode == null) {
@@ -201,7 +200,7 @@ public class SurroundWithUtil {
         continue;
       }
 
-      if (ElementType.WHITE_SPACE_BIT_SET.contains(childNode.getElementType())) {
+      if (JavaJspElementType.WHITE_SPACE_BIT_SET.contains(childNode.getElementType())) {
         codeBlockWsElement = codeBlockChild;
         codeBlockWsNode = childNode;
         break;
@@ -226,11 +225,11 @@ public class SurroundWithUtil {
       if (existingWhiteSpaceEndOffset < existingWhiteSpaceText.length()) {
         newWsText = existingWhiteSpaceText.subSequence(0, existingWhiteSpaceEndOffset + 1).toString() + newWsText;
       }
-      PsiElement indentElement = factory.createWhiteSpaceFromText(newWsText);
+      PsiElement indentElement = parserFacade.createWhiteSpaceFromText(newWsText);
       codeBlockWsElement.replace(indentElement);
     }
     else {
-      PsiElement indentElement = factory.createWhiteSpaceFromText(text.subSequence(text.length() - indent, text.length()).toString());
+      PsiElement indentElement = parserFacade.createWhiteSpaceFromText(text.subSequence(text.length() - indent, text.length()).toString());
       container.add(indentElement);
     }
   }

@@ -31,9 +31,9 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.formatter.FormattingDocumentModelImpl;
 import com.intellij.psi.formatter.java.AbstractJavaBlock;
-import com.intellij.psi.formatter.java.FormattingAstUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.PsiBasedFormatterModelWithShiftIndentInside;
 import com.intellij.psi.impl.source.tree.FileElement;
@@ -103,7 +103,7 @@ public class JavaFormattingModelBuilder implements FormattingModelBuilder {
     if (node.getElementType() == TokenType.ERROR_ELEMENT) {
       return node.getTextRange();
     }
-    final ASTNode prevLeaf = FormattingAstUtil.getPrevLeaf(node, TokenType.WHITE_SPACE);
+    final ASTNode prevLeaf = FormatterUtil.getPreviousLeaf(node, TokenType.WHITE_SPACE);
     if (prevLeaf == null || prevLeaf.getElementType() != TokenType.ERROR_ELEMENT) {
       return node.getTextRange();
     }

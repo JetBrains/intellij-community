@@ -681,8 +681,7 @@ public class ControlFlowUtils {
   private static void writeAccess(Instruction cur, String name, Set<Instruction> visited, Collection<ReadWriteVariableInstruction> result, boolean ahead) {
     final Iterable<? extends Instruction> toIterate = ahead ? cur.allSucc() : cur.allPred();
     for (Instruction i : toIterate) {
-      if (visited.contains(i)) continue;
-      visited.add(i);
+      if (!visited.add(i)) continue;
       if (i instanceof ReadWriteVariableInstruction && ((ReadWriteVariableInstruction)i).isWrite() && name.equals(((ReadWriteVariableInstruction)i).getVariableName())) {
         result.add((ReadWriteVariableInstruction)i);
       }

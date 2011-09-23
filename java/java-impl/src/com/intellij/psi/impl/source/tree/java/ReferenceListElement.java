@@ -18,6 +18,7 @@ package com.intellij.psi.impl.source.tree.java;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.TokenType;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
@@ -68,12 +69,12 @@ public abstract class ReferenceListElement extends CompositeElement {
 
   public void deleteChildInternal(@NotNull ASTNode child) {
     if (child.getElementType() == JavaElementType.JAVA_CODE_REFERENCE){
-      ASTNode next = TreeUtil.skipElements(child.getTreeNext(), StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET);
+      ASTNode next = PsiImplUtil.skipWhitespaceAndComments(child.getTreeNext());
       if (next != null && next.getElementType() == JavaTokenType.COMMA){
         deleteChildInternal(next);
       }
       else{
-        ASTNode prev = TreeUtil.skipElementsBack(child.getTreePrev(), StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET);
+        ASTNode prev = PsiImplUtil.skipWhitespaceAndCommentsBack(child.getTreePrev());
         if (prev != null){
           if (prev.getElementType() == JavaTokenType.COMMA
               || prev.getElementType() == getKeywordType()

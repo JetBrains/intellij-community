@@ -95,7 +95,7 @@ public class XsltSupport {
             }
           }
         });
-        return files.isEmpty() ? PsiFile.EMPTY_ARRAY : PsiUtilBase.toPsiFileArray(files);
+        return files.isEmpty() ? PsiFile.EMPTY_ARRAY : PsiUtilCore.toPsiFileArray(files);
       }
       return PsiFile.EMPTY_ARRAY;
     }

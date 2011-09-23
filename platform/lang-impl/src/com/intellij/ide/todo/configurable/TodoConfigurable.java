@@ -374,9 +374,9 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
     //
     myPanel = new JPanel(new GridBagLayout());
     myPanel.add(patternsPanel, new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
-                                                      new Insets(5, 2, 4, 2), 0, 0));
+                                                      new Insets(0,0,0,0), 0, 0));
     myPanel.add(filtersPanel, new GridBagConstraints(0, 1, 1, 1, 1, 1, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
-                                                     new Insets(5, 2, 4, 2), 0, 0));
+                                                     new Insets(0,0,0,0), 0, 0));
 
     myPanel.setPreferredSize(new Dimension(Math.max(700, myPanel.getPreferredSize().width), myPanel.getPreferredSize().height));
     return myPanel;

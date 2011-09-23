@@ -60,7 +60,7 @@ public class EditSourceUtil {
     }
     final PsiElement navigationElement = element.getNavigationElement();
     final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(navigationElement);
-    return virtualFile != null && virtualFile.isValid();
+    return virtualFile != null && virtualFile.isValid() && virtualFile.isFile();
   }
 
   public static void navigate(NavigationItem item, boolean requestFocus, boolean useCurrentWindow) {

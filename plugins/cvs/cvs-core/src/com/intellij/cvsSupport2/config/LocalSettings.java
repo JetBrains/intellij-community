@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,8 +32,6 @@ public class LocalSettings implements JDOMExternalizable, Cloneable {
 
   @NonNls
   public String PATH_TO_CVS_CLIENT = "cvs";
-  @NonNls
-  public String SERVER_COMMAND = "server";
 
   private boolean myCvsClientVerified = false;
 

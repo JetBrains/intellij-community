@@ -39,11 +39,7 @@ public class MockPsiManager extends PsiManagerEx {
   private MockFileManager myMockFileManager;
   private PsiModificationTrackerImpl myPsiModificationTracker;
 
-  public MockPsiManager() {
-    this(null);
-  }
-
-  public MockPsiManager(final Project project) {
+  public MockPsiManager(@NotNull Project project) {
     myProject = project;
   }
 

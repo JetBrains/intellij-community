@@ -523,6 +523,9 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
     public void performAction(final InputEvent e, final AnAction action, final AnActionEvent actionEvent) {
       e.consume();
+      if (Registry.is("actionSystem.fixLostTyping")) {
+        IdeEventQueue.getInstance().getKeyEventDispatcher().resetState();
+      }
       action.actionPerformed(actionEvent);
     }
   };

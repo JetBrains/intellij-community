@@ -70,7 +70,7 @@ public class ImplementAbstractMethodAction extends BaseIntentionAction {
           }
         }
       }
-      ClassInheritorsSearch.search(containingClass, containingClass.getUseScope(), false).forEach(new PsiElementProcessorAdapter<PsiClass>(
+      ClassInheritorsSearch.search(containingClass, false).forEach(new PsiElementProcessorAdapter<PsiClass>(
         processor));
       return isAvailable(processor);
     }
@@ -99,7 +99,7 @@ public class ImplementAbstractMethodAction extends BaseIntentionAction {
       return myHasExistingImplementations;
     }
 
-    public boolean execute(PsiElement element) {
+    public boolean execute(@NotNull PsiElement element) {
       if (element instanceof PsiClass) {
         PsiClass aClass = (PsiClass) element;
         final PsiMethod existingImplementation = findExistingImplementation(aClass, myMethod);

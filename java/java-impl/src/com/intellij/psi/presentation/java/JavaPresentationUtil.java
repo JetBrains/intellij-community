@@ -60,11 +60,12 @@ public class JavaPresentationUtil {
   }
 
   public static ItemPresentation getFieldPresentation(final PsiField psiField) {
-    return new ItemPresentation() {
+    return new ColoredItemPresentation() {
       public String getPresentableText() {
         return psiField.getName();
       }
 
+      @Override
       public TextAttributesKey getTextAttributesKey() {
         if (psiField.isDeprecated()) {
           return CodeInsightColors.DEPRECATED_ATTRIBUTES;

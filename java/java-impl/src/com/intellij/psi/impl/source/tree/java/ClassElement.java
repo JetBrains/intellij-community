@@ -18,8 +18,7 @@ package com.intellij.psi.impl.source.tree.java;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.impl.JavaPsiImplementationHelper;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -60,7 +59,9 @@ public class ClassElement extends CompositeElement implements Constants {
               before = anchor != findChildByRole(ChildRole.LBRACE);
             }
             else {
-              PsiElement psiElement = firstPsi instanceof PsiMember ? getDefaultAnchor(psiClass, (PsiMember)firstPsi) : null;
+              PsiElement psiElement = firstPsi instanceof PsiMember
+                                      ? JavaPsiImplementationHelper.getInstance(psiClass.getProject()).getDefaultMemberAnchor(psiClass, (PsiMember)firstPsi)
+                                      : null;
               anchor = psiElement != null ? SourceTreeToPsiMap.psiElementToTree(psiElement) : null;
               before = Boolean.TRUE;
             }
@@ -84,7 +85,7 @@ public class ClassElement extends CompositeElement implements Constants {
         ASTNode semicolonPlace = findEnumConstantListDelimiterPlace();
         boolean commentsOrWhiteSpaces = true;
         for (ASTNode child = first; child != null; child = child.getTreeNext()) {
-          if (!StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET.contains(child.getElementType())) {
+          if (!PsiImplUtil.isWhitespaceOrComment(child)) {
             commentsOrWhiteSpaces = false;
             break;
           }
@@ -173,12 +174,12 @@ public class ClassElement extends CompositeElement implements Constants {
   public void deleteChildInternal(@NotNull ASTNode child) {
     if (isEnum()) {
       if (child.getElementType() == ENUM_CONSTANT) {
-        ASTNode next = TreeUtil.skipElements(child.getTreeNext(), StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET);
+        ASTNode next = PsiImplUtil.skipWhitespaceAndComments(child.getTreeNext());
         if (next != null && next.getElementType() == COMMA) {
           deleteChildInternal(next);
         }
         else {
-          ASTNode prev = TreeUtil.skipElementsBack(child.getTreePrev(), StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET);
+          ASTNode prev = PsiImplUtil.skipWhitespaceAndCommentsBack(child.getTreePrev());
           if (prev != null && prev.getElementType() == COMMA) {
             deleteChildInternal(prev);
           }
@@ -293,7 +294,7 @@ public class ClassElement extends CompositeElement implements Constants {
         if (modifierList != null) {
           ASTNode treeNext = modifierList.getTreeNext();
           if (treeNext != null) {
-            treeNext = TreeUtil.skipElements(treeNext, StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET);
+            treeNext = PsiImplUtil.skipWhitespaceAndComments(treeNext);
             if (treeNext.getElementType() == AT) return treeNext;
           }
         }
@@ -312,8 +313,7 @@ public class ClassElement extends CompositeElement implements Constants {
     if (first == null) return null;
     for (ASTNode child = first.getTreeNext(); child != null; child = child.getTreeNext()) {
       final IElementType childType = child.getElementType();
-      if (StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET.contains(childType) ||
-          childType == ERROR_ELEMENT || childType == ENUM_CONSTANT) {
+      if (PsiImplUtil.isWhitespaceOrComment(child) || childType == ERROR_ELEMENT || childType == ENUM_CONSTANT) {
       }
       else if (childType == COMMA) {
       }
@@ -321,7 +321,7 @@ public class ClassElement extends CompositeElement implements Constants {
         return child;
       }
       else {
-        return TreeUtil.skipElementsBack(child.getTreePrev(), StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET);
+        return PsiImplUtil.skipWhitespaceAndCommentsBack(child.getTreePrev());
       }
     }
 
@@ -391,70 +391,6 @@ public class ClassElement extends CompositeElement implements Constants {
     }
     else {
       return ChildRoleBase.NONE;
-    }
-  }
-
-  public static PsiElement getDefaultAnchor(PsiClass aClass, PsiMember member) {
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(aClass.getProject());
-
-    int order = getMemberOrderWeight(member, settings);
-    if (order < 0) return null;
-
-    PsiElement lastMember = null;
-    for (PsiElement child = aClass.getFirstChild(); child != null; child = child.getNextSibling()) {
-      int order1 = getMemberOrderWeight(child, settings);
-      if (order1 < 0) continue;
-      if (order1 > order) {
-        if (lastMember != null) {
-          PsiElement nextSibling = lastMember.getNextSibling();
-          while (nextSibling instanceof PsiJavaToken && (nextSibling.getText().equals(",") || nextSibling.getText().equals(";"))) {
-            nextSibling = nextSibling.getNextSibling();
-          }
-          return nextSibling == null ? aClass.getLBrace().getNextSibling() : nextSibling;
-        }
-        else {
-          // The main idea is to avoid to anchor to 'white space' element because that causes reformatting algorithm
-          // to perform incorrectly. The algorithm is encapsulated at PostprocessReformattingAspect.doPostponedFormattingInner().
-          final PsiElement lBrace = aClass.getLBrace();
-          if (lBrace != null) {
-            PsiElement result = lBrace.getNextSibling();
-            while (result instanceof PsiWhiteSpace) {
-              result = result.getNextSibling();
-            }
-            return result;
-          }
-        }
-      }
-      lastMember = child;
-    }
-    return aClass.getRBrace();
-  }
-
-  public static int getMemberOrderWeight(PsiElement member, CodeStyleSettings settings) {
-    if (member instanceof PsiField) {
-      if (member instanceof PsiEnumConstant) {
-        return 1;
-      }
-      else {
-        return ((PsiField)member).hasModifierProperty(PsiModifier.STATIC) ? settings.STATIC_FIELDS_ORDER_WEIGHT + 1
-                                                                          : settings.FIELDS_ORDER_WEIGHT + 1;
-      }
-    }
-    else if (member instanceof PsiMethod) {
-      if (((PsiMethod)member).isConstructor()) {
-        return settings.CONSTRUCTORS_ORDER_WEIGHT + 1;
-      }
-      else {
-        return ((PsiMethod)member).hasModifierProperty(PsiModifier.STATIC) ? settings.STATIC_METHODS_ORDER_WEIGHT + 1
-                                                                           : settings.METHODS_ORDER_WEIGHT + 1;
-      }
-    }
-    else if (member instanceof PsiClass) {
-      return ((PsiClass)member).hasModifierProperty(PsiModifier.STATIC) ? settings.STATIC_INNER_CLASSES_ORDER_WEIGHT + 1
-                                                                        : settings.INNER_CLASSES_ORDER_WEIGHT + 1;
-    }
-    else {
-      return -1;
     }
   }
 

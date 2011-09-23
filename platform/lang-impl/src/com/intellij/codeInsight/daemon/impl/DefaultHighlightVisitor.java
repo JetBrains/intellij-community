@@ -83,6 +83,8 @@ public class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
     }
     finally {
       myAnnotationHolder.clear();
+      myAnnotationHolder = null;
+      myHolder = null;
     }
     return true;
   }

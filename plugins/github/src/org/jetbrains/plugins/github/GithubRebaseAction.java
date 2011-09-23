@@ -35,6 +35,7 @@ import git4idea.GitUtil;
 import git4idea.actions.BasicAction;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
+import org.jetbrains.plugins.github.ui.GithubLoginDialog;
 
 import javax.swing.*;
 import java.util.List;
@@ -69,9 +70,12 @@ public class GithubRebaseAction extends DumbAwareAction {
   @Override
   public void actionPerformed(final AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
-    if (!GithubUtil.checkCredentials(project)){
-      Messages.showErrorDialog(project, "Cannot login with GitHub credentials. Please configure them in File | Settings | GitHub", CANNOT_PERFORM_GITHUB_REBASE);
-      return;
+    while (!GithubUtil.checkCredentials(project)) {
+      final GithubLoginDialog dialog = new GithubLoginDialog(project);
+      dialog.show();
+      if (!dialog.isOK()){
+        return;
+      }
     }
 
     final VirtualFile root = project.getBaseDir();

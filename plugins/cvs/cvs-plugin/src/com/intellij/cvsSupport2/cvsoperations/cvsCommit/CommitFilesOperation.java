@@ -37,9 +37,8 @@ public class CommitFilesOperation extends CvsOperationOnFiles {
   }
 
   protected Command createCommand(CvsRootProvider root, CvsExecutionEnvironment cvsExecutionEnvironment) {
-    CommitCommand result = new CommitCommand();
+    final CommitCommand result = new CommitCommand();
     addFilesToCommand(root, result);
-    result.setForceCommit(true);
     if(myMessage != null)
       result.setMessage(myMessage.toString());
     return result;

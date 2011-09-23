@@ -25,7 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
 /**
  * @author ven
  */
-public class GroovyCodeFragment extends GroovyFileImpl implements JavaCodeFragment {
+public class GroovyCodeFragment extends GroovyFileImpl implements JavaCodeFragment, IntentionFilterOwner {
   private PsiType myThisType;
   private PsiType mySuperType;
   private ExceptionHandler myExceptionChecker;

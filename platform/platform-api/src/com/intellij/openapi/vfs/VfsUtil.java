@@ -42,7 +42,7 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.*;
 
-public class VfsUtil {
+public class VfsUtil extends VfsUtilCore {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.VfsUtil");
 
   public static String loadText(@NotNull VirtualFile file) throws IOException{
@@ -58,26 +58,6 @@ public class VfsUtil {
   public static void saveText(@NotNull VirtualFile file, @NotNull String text) throws IOException {
     Charset charset = file.getCharset();
     file.setBinaryContent(text.getBytes(charset.name()));
-  }
-
-  /**
-   * Checks whether the <code>ancestor {@link VirtualFile}</code> is parent of <code>file
-   * {@link VirtualFile}</code>.
-   *
-   * @param ancestor the file
-   * @param file     the file
-   * @param strict   if <code>false</code> then this method returns <code>true</code> if <code>ancestor</code>
-   *                 and <code>file</code> are equal
-   * @return <code>true</code> if <code>ancestor</code> is parent of <code>file</code>; <code>false</code> otherwise
-   */
-  public static boolean isAncestor(@NotNull VirtualFile ancestor, @NotNull VirtualFile file, boolean strict) {
-    if (!file.getFileSystem().equals(ancestor.getFileSystem())) return false;
-    VirtualFile parent = strict ? file.getParent() : file;
-    while (true) {
-      if (parent == null) return false;
-      if (parent.equals(ancestor)) return true;
-      parent = parent.getParent();
-    }
   }
 
   /**

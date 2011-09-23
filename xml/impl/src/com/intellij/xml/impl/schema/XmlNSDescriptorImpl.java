@@ -668,14 +668,14 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator<XmlDocumen
     class CollectElementsProcessor implements PsiElementProcessor<XmlTag> {
       final List<XmlElementDescriptor> result = new ArrayList<XmlElementDescriptor>();
       
-      public boolean execute(final XmlTag element) {
+      public boolean execute(@NotNull final XmlTag element) {
         result.add(getElementDescriptor(element.getAttributeValue("name"),getDefaultNamespace()));
         return true;
       }
     }
     
     CollectElementsProcessor processor = new CollectElementsProcessor() {
-      public boolean execute(final XmlTag element) {
+      public boolean execute(@NotNull final XmlTag element) {
         if (!XmlElementDescriptorImpl.isAbstractDeclaration(element)) return super.execute(element);
         return true;
       }
@@ -689,7 +689,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator<XmlDocumen
     class CollectAttributesProcessor implements PsiElementProcessor<XmlTag> {
       final List<XmlAttributeDescriptor> result = new ArrayList<XmlAttributeDescriptor>();
 
-      public boolean execute(final XmlTag element) {
+      public boolean execute(@NotNull final XmlTag element) {
         result.add(createAttributeDescriptor(element));
         return true;
       }

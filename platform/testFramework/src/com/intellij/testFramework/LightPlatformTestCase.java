@@ -463,10 +463,13 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     checkForSettingsDamage();
     doTearDown(getProject(), ourApplication, true);
 
-    super.tearDown();
-
-    myThreadTracker.checkLeak();
-    ((InjectedLanguageManagerImpl)InjectedLanguageManager.getInstance(getProject())).checkInjectorsAreDisposed();
+    try {
+      super.tearDown();
+    }
+    finally {
+      myThreadTracker.checkLeak();
+      ((InjectedLanguageManagerImpl)InjectedLanguageManager.getInstance(getProject())).checkInjectorsAreDisposed();
+    }
   }
 
   public static void doTearDown(final Project project, IdeaTestApplication application, boolean checkForEditors) throws Exception {

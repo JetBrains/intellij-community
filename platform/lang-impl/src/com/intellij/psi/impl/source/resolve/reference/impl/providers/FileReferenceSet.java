@@ -66,6 +66,7 @@ public class FileReferenceSet {
   private PsiElement myElement;
   private final int myStartInElement;
   private final boolean myCaseSensitive;
+  private final String myPathStringNonTrimmed;
   private final String myPathString;
   private Collection<PsiFileSystemItem> myDefaultContexts;
   private final boolean myEndingSlashNotAllowed;
@@ -80,16 +81,30 @@ public class FileReferenceSet {
                           boolean caseSensitive,
                           boolean endingSlashNotAllowed,
                           @Nullable FileType[] suitableFileTypes) {
+    this(str, element, startInElement, provider, caseSensitive, endingSlashNotAllowed, suitableFileTypes, true);
+  }
+
+  public FileReferenceSet(String str,
+                          PsiElement element,
+                          int startInElement,
+                          PsiReferenceProvider provider,
+                          boolean caseSensitive,
+                          boolean endingSlashNotAllowed,
+                          @Nullable FileType[] suitableFileTypes,
+                          boolean init) {
     myElement = element;
     myStartInElement = startInElement;
     myCaseSensitive = caseSensitive;
+    myPathStringNonTrimmed = str;
     myPathString = str.trim();
     myEndingSlashNotAllowed = endingSlashNotAllowed;
     myEmptyPathAllowed = !endingSlashNotAllowed;
     myOptions = provider instanceof CustomizableReferenceProvider ? ((CustomizableReferenceProvider)provider).getOptions() : null;
     mySuitableFileTypes = suitableFileTypes;
 
-    reparse(str);
+    if (init) {
+      reparse();
+    }
   }
 
   protected String getNewAbsolutePath(PsiFileSystemItem root, String relativePath) {
@@ -145,12 +160,12 @@ public class FileReferenceSet {
     myElement = element;
     TextRange range = ElementManipulators.getValueTextRange(element);
     myStartInElement = range.getStartOffset();
-    final String s = range.substring(element.getText());
-    myPathString = s.trim();
+    myPathStringNonTrimmed = range.substring(element.getText());
+    myPathString = myPathStringNonTrimmed.trim();
     myEndingSlashNotAllowed = true;
     myCaseSensitive = false;
 
-    reparse(s);
+    reparse();
   }
 
 
@@ -178,7 +193,9 @@ public class FileReferenceSet {
     return new FileReference(this, range, index, text);
   }
 
-  private void reparse(String str) {
+  protected void reparse() {
+    String str = myPathStringNonTrimmed;
+
     final List<FileReference> referencesList = new ArrayList<FileReference>();
     // skip white space
     int currentSlash = -1;
@@ -205,11 +222,7 @@ public class FileReferenceSet {
       }
     }
 
-    setReferences(referencesList.toArray(new FileReference[referencesList.size()]));
-  }
-
-  private void setReferences(final FileReference[] references) {
-    myReferences = references;
+    myReferences = referencesList.toArray(new FileReference[referencesList.size()]);
   }
 
   public FileReference getReference(int index) {

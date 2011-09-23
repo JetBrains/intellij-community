@@ -291,7 +291,8 @@ public class EditorModificationUtil {
       final int caretOffset = editor.getCaretModel().getOffset();
       boolean atLineStart = caretOffset >= doc.getTextLength() || doc.getLineStartOffset(doc.getLineNumber(caretOffset)) == caretOffset;
       if (atLineStart && project != null) {
-        String properIndent = CodeStyleFacade.getInstance(project).getLineIndent(editor);
+        int offset = editor.getCaretModel().getOffset();
+        String properIndent = offset >= doc.getTextLength() ? "" : CodeStyleFacade.getInstance(project).getLineIndent(doc, offset);
         if (properIndent != null) {
           int tabSize = editor.getSettings().getTabSize(project);
           for (int i = 0; i < properIndent.length(); i++) {

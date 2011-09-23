@@ -47,7 +47,7 @@ import java.util.regex.Pattern;
  */
 public class DependsOnGroupsInspection extends BaseJavaLocalInspectionTool {
   private static final Logger LOGGER = Logger.getInstance("TestNG Runner");
-  private static final Pattern PATTERN = Pattern.compile("\"([a-zA-Z1-9_\\(\\)]*)\"");
+  private static final Pattern PATTERN = Pattern.compile("\"([a-zA-Z0-9_\\-\\(\\)]*)\"");
   private static final ProblemDescriptor[] EMPTY = new ProblemDescriptor[0];
 
   public JDOMExternalizableStringList groups = new JDOMExternalizableStringList();

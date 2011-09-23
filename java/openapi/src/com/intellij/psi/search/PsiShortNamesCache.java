@@ -15,7 +15,9 @@
  */
 package com.intellij.psi.search;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
@@ -29,13 +31,18 @@ import org.jetbrains.annotations.NotNull;
  * @see JavaPsiFacade#getShortNamesCache()
  */
 public abstract class PsiShortNamesCache {
-  public static final ExtensionPointName<PsiShortNamesCache> EP_NAME = ExtensionPointName.create("com.intellij.java.shortNamesCache");
-
   /**
-   * Initializes the cache. To be used by custom PsiShortNameCache implementations
+   * Return the composite short names cache, uniting all short name cache instances registered via extensions.
+   *
+   * @param project the project to return the cache for.
+   * @return the cache instance.
    */
-  public void runStartupActivity() {
+
+  public static PsiShortNamesCache getInstance(Project project) {
+    return ServiceManager.getService(project, PsiShortNamesCache.class);
   }
+  
+  public static final ExtensionPointName<PsiShortNamesCache> EP_NAME = ExtensionPointName.create("com.intellij.java.shortNamesCache");
 
   /**
    * Returns the list of files with the specified name.

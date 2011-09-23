@@ -311,7 +311,7 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
   private static <Member extends PsiMember, P extends Processor<Member>> PsiElementProcessorAdapter<Member> createMembersProcessor(final List<P> processors,
                                                                                                                                    final AnalysisScope scope) {
     return new PsiElementProcessorAdapter<Member>(new PsiElementProcessor<Member>() {
-      public boolean execute(Member member) {
+      public boolean execute(@NotNull Member member) {
         if (scope.contains(member)) return true;
         final List<P> processorsArrayed = new ArrayList<P>(processors);
         for (P processor : processorsArrayed) {

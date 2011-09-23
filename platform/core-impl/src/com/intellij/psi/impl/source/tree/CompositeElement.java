@@ -177,6 +177,12 @@ public class CompositeElement extends TreeElement {
     return node == null ? null : node.getPsi();
   }
 
+  @Nullable
+  public PsiElement findPsiChildByType(TokenSet types) {
+    final ASTNode node = findChildByType(types);
+    return node == null ? null : node.getPsi();
+  }
+
   public ASTNode findChildByType(IElementType type) {
     if (DebugUtil.CHECK_INSIDE_ATOMIC_ACTION_ENABLED){
       ApplicationManager.getApplication().assertReadAccessAllowed();

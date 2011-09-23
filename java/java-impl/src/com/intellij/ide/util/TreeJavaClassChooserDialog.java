@@ -20,7 +20,6 @@ import com.intellij.ide.projectView.impl.nodes.ClassTreeNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -99,7 +98,7 @@ public class TreeJavaClassChooserDialog extends AbstractTreeClassChooserDialog<P
                                             final boolean checkBoxState,
                                             final String pattern,
                                             final GlobalSearchScope searchScope) {
-    final PsiShortNamesCache cache = JavaPsiFacade.getInstance(getProject()).getShortNamesCache();
+    final PsiShortNamesCache cache = PsiShortNamesCache.getInstance(getProject());
     PsiClass[] classes =
       cache.getClassesByName(name, checkBoxState ? searchScope : GlobalSearchScope.projectScope(getProject()).intersectWith(searchScope));
     return Lists.newArrayList(classes);
@@ -132,7 +131,7 @@ public class TreeJavaClassChooserDialog extends AbstractTreeClassChooserDialog<P
 
     @Override
     protected String[] getNames() {
-      return JavaPsiFacade.getInstance(myProject).getShortNamesCache().getAllClassNames();
+      return PsiShortNamesCache.getInstance(myProject).getAllClassNames();
     }
   }
 

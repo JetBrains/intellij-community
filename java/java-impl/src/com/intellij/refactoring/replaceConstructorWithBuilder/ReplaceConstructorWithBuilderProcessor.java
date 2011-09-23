@@ -37,6 +37,7 @@ import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.replaceConstructorWithBuilder.usageInfo.ReplaceConstructorWithSettersChainInfo;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.refactoring.util.FixableUsagesRefactoringProcessor;
@@ -48,6 +49,7 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -59,6 +61,7 @@ public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefacto
   private final String myPackageName;
   private final boolean myCreateNewBuilderClass;
   private final PsiElementFactory myElementFactory;
+  private MoveDestination myMoveDestination;
 
 
   public ReplaceConstructorWithBuilderProcessor(Project project,
@@ -66,8 +69,9 @@ public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefacto
                                                 Map<String, ParameterData> parametersMap,
                                                 String className,
                                                 String packageName,
-                                                boolean createNewBuilderClass) {
+                                                MoveDestination moveDestination, boolean createNewBuilderClass) {
     super(project);
+    myMoveDestination = moveDestination;
     myElementFactory = JavaPsiFacade.getInstance(myProject).getElementFactory();
     myConstructors = constructors;
     myParametersMap = parametersMap;
@@ -108,9 +112,14 @@ public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefacto
 
     final PsiFile containingFile = myConstructors[0].getContainingFile();
     final PsiDirectory containingDirectory = containingFile.getContainingDirectory();
-    final Module module = ModuleUtil.findModuleForPsiElement(containingFile);
-    assert module != null;
-    final PsiDirectory directory = PackageUtil.findOrCreateDirectoryForPackage(module, myPackageName, containingDirectory, true, true);
+    final PsiDirectory directory;
+    if (myMoveDestination != null) {
+      directory = myMoveDestination.getTargetDirectory(containingDirectory);
+    } else {
+      final Module module = ModuleUtil.findModuleForPsiElement(containingFile);
+      assert module != null;
+      directory = PackageUtil.findOrCreateDirectoryForPackage(module, myPackageName, containingDirectory, true, true);
+    }
 
     if (directory != null) {
 
@@ -279,6 +288,10 @@ public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefacto
       }
     } else if (myCreateNewBuilderClass){
       conflicts.putValue(builderClass, "Class with chosen name already exist.");
+    }
+    
+    if (myMoveDestination != null && myCreateNewBuilderClass) {
+      myMoveDestination.analyzeModuleConflicts(Collections.<PsiElement>emptyList(), conflicts, refUsages.get());
     }
 
     final PsiMethod commonConstructor = getMostCommonConstructor();

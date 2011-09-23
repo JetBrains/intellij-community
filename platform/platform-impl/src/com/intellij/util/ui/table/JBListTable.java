@@ -30,6 +30,10 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.util.List;
 
+import static java.awt.event.KeyEvent.KEY_PRESSED;
+import static java.awt.event.KeyEvent.VK_ENTER;
+import static java.awt.event.KeyEvent.VK_TAB;
+
 /**
  * @author Konstantin Bulenkov
  */
@@ -55,16 +59,9 @@ public abstract class JBListTable extends JPanel {
       @Override
       protected void processKeyEvent(KeyEvent e) {
         if (e.isAltDown()) return;
-        if (e.getKeyCode() == KeyEvent.VK_ENTER && e.getModifiers() == 0) {
-          if (!isEditing() && e.getID() == KeyEvent.KEY_PRESSED) {
-            editCellAt(getSelectedRow(), getSelectedColumn());
-          }
-          e.consume();
-          return;
-        }
         //todo[kb] JBTabsImpl breaks focus traversal policy. Need a workaround here
-        else if (e.getKeyCode() == KeyEvent.VK_TAB) {
-          if (e.getID() == KeyEvent.KEY_PRESSED) {
+        if (e.getKeyCode() == VK_TAB) {
+          if (e.getID() == KEY_PRESSED) {
             final KeyboardFocusManager keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
             if (e.isShiftDown()) {
               keyboardFocusManager.focusPreviousComponent(this);
@@ -91,7 +88,25 @@ public abstract class JBListTable extends JPanel {
 
       @Override
       protected boolean processKeyBinding(KeyStroke ks, KeyEvent e, int condition, boolean pressed) {
-        if (isEditing() && e.getKeyCode() == KeyEvent.VK_TAB) {
+        if (e.getKeyCode() == VK_ENTER) {
+          if (!isEditing() && e.getID() == KEY_PRESSED && e.getModifiers() == 0) {
+            editCellAt(getSelectedRow(), getSelectedColumn());
+          } else if (isEditing() && e.getID() == KEY_PRESSED) {
+            TableUtil.stopEditing(this);
+            if (e.isControlDown() || e.isMetaDown()) {
+              return false;
+            } else {
+              final int row = getSelectedRow() + 1;
+              if (row < getRowCount()) {
+                getSelectionModel().setSelectionInterval(row, row);
+              }
+            }
+          }
+          e.consume();
+          return true;
+        }
+
+        if (isEditing() && e.getKeyCode() == VK_TAB) {
           if (pressed) {
             final KeyboardFocusManager mgr = KeyboardFocusManager.getCurrentKeyboardFocusManager();
             if (e.isShiftDown()) {
@@ -106,7 +121,7 @@ public abstract class JBListTable extends JPanel {
         final boolean isUp = e.getKeyCode() == KeyEvent.VK_UP;
         final boolean isDown = e.getKeyCode() == KeyEvent.VK_DOWN;
 
-        if (isEditing() && (isUp || isDown) && e.getModifiers() == 0 && e.getID() == KeyEvent.KEY_PRESSED) {
+        if (isEditing() && (isUp || isDown) && e.getModifiers() == 0 && e.getID() == KEY_PRESSED) {
           int row = getSelectedRow();
           super.processKeyBinding(ks, e, condition, pressed);
           if (!isEditing() && row != getSelectedRow()) {

@@ -38,7 +38,7 @@ public class ConvertIntegerToDecimalIntention extends Intention {
   public void processIntention(@NotNull PsiElement element, Project project, Editor editor)
       throws IncorrectOperationException {
     final GrLiteral exp = (GrLiteral) element;
-    @NonNls String textString = exp.getText();
+    @NonNls String textString = exp.getText().replaceAll("_", "");
     final int textLength = textString.length();
     final char lastChar = textString.charAt(textLength - 1);
     final boolean isLong = lastChar == 'l' || lastChar == 'L';

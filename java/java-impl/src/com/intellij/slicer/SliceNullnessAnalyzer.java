@@ -15,7 +15,7 @@
  */
 package com.intellij.slicer;
 
-import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInspection.dataFlow.DfaUtil;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -222,8 +222,8 @@ public class SliceNullnessAnalyzer {
     if (value instanceof PsiThisExpression) return DfaUtil.Nullness.NOT_NULL;
     if (value instanceof PsiMethodCallExpression) {
       PsiMethod method = ((PsiMethodCallExpression)value).resolveMethod();
-      if (method != null && AnnotationUtil.isNotNull(method)) return DfaUtil.Nullness.NOT_NULL;
-      if (method != null && AnnotationUtil.isNullable(method)) return DfaUtil.Nullness.NULL;
+      if (method != null && NullableNotNullManager.isNotNull(method)) return DfaUtil.Nullness.NOT_NULL;
+      if (method != null && NullableNotNullManager.isNullable(method)) return DfaUtil.Nullness.NULL;
     }
     if (value instanceof PsiPolyadicExpression && ((PsiPolyadicExpression)value).getOperationTokenType() == JavaTokenType.PLUS) {
       return DfaUtil.Nullness.NOT_NULL; // "xxx" + var
@@ -251,8 +251,8 @@ public class SliceNullnessAnalyzer {
     }
 
     if (value instanceof PsiModifierListOwner) {
-      if (AnnotationUtil.isNotNull((PsiModifierListOwner)value)) return DfaUtil.Nullness.NOT_NULL;
-      if (AnnotationUtil.isNullable((PsiModifierListOwner)value)) return DfaUtil.Nullness.NULL;
+      if (NullableNotNullManager.isNotNull((PsiModifierListOwner)value)) return DfaUtil.Nullness.NOT_NULL;
+      if (NullableNotNullManager.isNullable((PsiModifierListOwner)value)) return DfaUtil.Nullness.NULL;
     }
 
     if (value instanceof PsiEnumConstant) return DfaUtil.Nullness.NOT_NULL;

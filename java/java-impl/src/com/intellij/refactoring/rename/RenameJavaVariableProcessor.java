@@ -297,7 +297,7 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
     if (field.getContainingClass() == null) return;
     if (field.hasModifierProperty(PsiModifier.PRIVATE)) return;
     final PsiClass containingClass = field.getContainingClass();
-    Collection<PsiClass> inheritors = ClassInheritorsSearch.search(containingClass, containingClass.getUseScope(), true).findAll();
+    Collection<PsiClass> inheritors = ClassInheritorsSearch.search(containingClass, true).findAll();
     for (PsiClass inheritor : inheritors) {
       PsiField conflictingField = inheritor.findFieldByName(newName, false);
       if (conflictingField != null) {

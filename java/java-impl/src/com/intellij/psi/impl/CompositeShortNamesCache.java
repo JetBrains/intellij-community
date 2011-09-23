@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
@@ -37,15 +38,17 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
   private final List<PsiShortNamesCache> myCaches = new ArrayList<PsiShortNamesCache>();
   private PsiShortNamesCache[] myCacheArray = new PsiShortNamesCache[0];
 
+  public CompositeShortNamesCache(Project project) {
+    if (!project.isDefault()) {
+      for (final PsiShortNamesCache cache : project.getExtensions(PsiShortNamesCache.EP_NAME)) {
+        addCache(cache);
+      }
+    }
+  }
+
   public void addCache(PsiShortNamesCache cache) {
     myCaches.add(cache);
     myCacheArray = myCaches.toArray(new PsiShortNamesCache[myCaches.size()]);
-  }
-
-  public void runStartupActivity() {
-    for (PsiShortNamesCache cache : myCaches) {
-      cache.runStartupActivity();
-    }
   }
 
   @NotNull

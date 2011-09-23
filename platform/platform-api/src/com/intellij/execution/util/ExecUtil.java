@@ -22,8 +22,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import java.io.File;
 import java.io.IOException;
@@ -85,11 +83,17 @@ public class ExecUtil {
   public static int sudoAndGetResult(@NotNull final String scriptPath,
                                      @NotNull final String prompt) throws IOException, ExecutionException, ScriptException, InterruptedException {
     if (SystemInfo.isMac) {
+      /*
       final ScriptEngine engine = new ScriptEngineManager(null).getEngineByName("AppleScript");
       if (engine == null) {
         throw new ExecutionException("Could not find AppleScript engine");
       }
       engine.eval("do shell script \"" + scriptPath + "\" with administrator privileges");
+      */
+      final String script = "do shell script \"" + scriptPath + "\" with administrator privileges";
+      Runtime runtime = Runtime.getRuntime();
+      String[] args = {"osascript", "-e", script};
+      runtime.exec(args);
       return 0;
     }
     else if (SystemInfo.isKDE) {

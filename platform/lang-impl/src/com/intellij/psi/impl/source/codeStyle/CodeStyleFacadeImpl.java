@@ -20,7 +20,7 @@
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.codeStyle.CodeStyleFacade;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
@@ -45,9 +45,9 @@ public class CodeStyleFacadeImpl extends CodeStyleFacade {
   }
 
   @Nullable
-  public String getLineIndent(@NotNull final Editor editor) {
+  public String getLineIndent(@NotNull final Document document, int offset) {
     if (myProject == null) return null;
-    return CodeStyleManager.getInstance(myProject).getLineIndent(editor);
+    return CodeStyleManager.getInstance(myProject).getLineIndent(document, offset);
   }
 
   public String getLineSeparator() {

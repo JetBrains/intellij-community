@@ -38,6 +38,7 @@ class ActionPanel extends NonOpaquePanel {
   private final JBTabsImpl myTabs;
 
   private boolean myAutoHide;
+  private boolean myActionsIsVisible = false;
 
   private final int myGap = 2;
 
@@ -70,7 +71,6 @@ class ActionPanel extends NonOpaquePanel {
       myButtons.add(eachButton);
       InplaceButton component = eachButton.getComponent();
       inner.add(component);
-      inner.add(Box.createHorizontalStrut(2));
     }
 
     add(wrapper);
@@ -78,11 +78,15 @@ class ActionPanel extends NonOpaquePanel {
 
   public boolean update() {
     boolean changed = false;
+    boolean anyVisible = false;
     for (ActionButton each : myButtons) {
       changed |= each.update();
       each.setMouseDeadZone(myTabs.getTabActionsMouseDeadzone());
+      anyVisible |= each.getComponent().isVisible();
     }
 
+    myActionsIsVisible = anyVisible;
+    
     return changed;
   }
 
@@ -96,6 +100,11 @@ class ActionPanel extends NonOpaquePanel {
       ActionButton each = iterator.next();
       each.setAutoHide(myAutoHide);
     }
+  }
+
+  @Override
+  public Dimension getPreferredSize() {
+    return myActionsIsVisible ? super.getPreferredSize() : new Dimension(0, 0);
   }
 
   public void toggleShowActions(final boolean show) {

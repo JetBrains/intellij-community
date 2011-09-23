@@ -19,7 +19,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettingsFacade;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.PsiElementArrayConstructor;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -29,7 +29,7 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.CharTable;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -77,7 +77,7 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
         array.add(child.getPsi());
       }
     }
-    return PsiUtilBase.toPsiElementArray(array);
+    return PsiUtilCore.toPsiElementArray(array);
   }
 
   @NotNull
@@ -156,7 +156,7 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
     tag.addChild(newLine, null);
 
     ASTNode leadingWhitespaceAnchor = null;
-    if (CodeStyleSettingsManager.getSettings(project).JD_LEADING_ASTERISKS_ARE_ENABLED) {
+    if (JavaCodeStyleSettingsFacade.getInstance(project).isJavaDocLeadingAsterisksEnabled()) {
       final TreeElement leadingAsterisk = Factory.createSingleLeafElement(DOC_COMMENT_LEADING_ASTERISKS, "*", 0, 1, treeCharTab,
                                                                           SharedImplUtil.getManagerByTree(tag));
 
@@ -172,7 +172,7 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
     if (first == last && first.getElementType() == DOC_TAG) {
       if (anchor == null) {
         anchor = getLastChildNode(); // this is a '*/'
-        final ASTNode prevBeforeWS = TreeUtil.skipElementsBack(anchor.getTreePrev(), WHITE_SPACE_BIT_SET);
+        final ASTNode prevBeforeWS = TreeUtil.skipElementsBack(anchor.getTreePrev(), ElementType.JAVA_WHITESPACE_BIT_SET);
         if (prevBeforeWS != null) {
           anchor = prevBeforeWS;
           before = Boolean.FALSE;
@@ -223,7 +223,7 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
       current = current.getTreePrev();
     }
     if (current != null && current.getElementType() == DOC_COMMENT_LEADING_ASTERISKS) {
-      final ASTNode prevWhiteSpace = TreeUtil.skipElementsBack(current.getTreePrev(), WHITE_SPACE_BIT_SET);
+      final ASTNode prevWhiteSpace = TreeUtil.skipElementsBack(current.getTreePrev(), ElementType.JAVA_WHITESPACE_BIT_SET);
       ASTNode toBeDeleted = prevWhiteSpace.getTreeNext();
       while (toBeDeleted != null) {
         ASTNode next = toBeDeleted.getTreeNext();

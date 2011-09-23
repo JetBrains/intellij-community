@@ -18,6 +18,7 @@ package com.intellij.psi.impl.source.resolve;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.ClassCandidateInfo;
 import com.intellij.psi.scope.BaseScopeProcessor;
@@ -201,9 +202,9 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
       return true;
     }
 
-    if (JspPsiUtil.isInJspFile(aClass.getContainingFile())) {
+    if (PsiImplUtil.isInServerPage(aClass.getContainingFile())) {
       PsiFile file = FileContextUtil.getContextFile(myPlace);
-      if (JspPsiUtil.isInJspFile(file)) {
+      if (PsiImplUtil.isInServerPage(file)) {
         return true;
       }
     }

@@ -23,7 +23,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.PackageIndex;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiPackage;
 import org.jetbrains.annotations.NotNull;
@@ -49,7 +49,7 @@ public class PackageScope extends GlobalSearchScope {
   public boolean contains(VirtualFile file) {
     for (VirtualFile scopeDir : myDirs) {
       boolean inDir = myIncludeSubpackages
-                      ? VfsUtil.isAncestor(scopeDir, file, false)
+                      ? VfsUtilCore.isAncestor(scopeDir, file, false)
                       : Comparing.equal(file.getParent(), scopeDir);
       if (inDir) return true;
     }

@@ -167,7 +167,7 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement {
       final int accessLevel = PsiUtil.getAccessLevel(copy);
 
       OverridingMethodsSearch.search((PsiMethod)owner, owner.getResolveScope(), true).forEach(new PsiElementProcessorAdapter<PsiMethod>(new PsiElementProcessor<PsiMethod>() {
-          public boolean execute(PsiMethod inheritor) {
+          public boolean execute(@NotNull PsiMethod inheritor) {
             PsiModifierList list = inheritor.getModifierList();
             if (inheritor.getManager().isInProject(inheritor) && PsiUtil.getAccessLevel(list) < accessLevel) {
               modifierLists.add(list);

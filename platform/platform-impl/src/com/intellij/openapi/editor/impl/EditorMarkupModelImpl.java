@@ -93,6 +93,9 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   }
 
   private int offsetToLine(int offset, Document document) {
+    if (offset < 0) {
+      return 0;
+    }
     if (offset > document.getTextLength()) {
       return document.getLineCount();
     }
@@ -292,10 +295,10 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     super.dispose();
   }
 
+  // startOffset == -1 || endOffset == -1 means whole document
   void repaint(int startOffset, int endOffset) {
-    markDirtied(startOffset, endOffset);
-
     ProperTextRange range = offsetsToYPositions(startOffset, endOffset);
+    markDirtied(range);
 
     myEditor.getVerticalScrollBar().repaint(0, range.getStartOffset(), PREFERRED_WIDTH, range.getLength() + getMinHeight());
   }
@@ -718,9 +721,10 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     LOG.assertTrue(success);
   }
 
-  public void markDirtied(int startOffset, int endOffset) {
-    ProperTextRange pos = offsetsToYPositions(startOffset, endOffset);
-    ProperTextRange adj = new ProperTextRange(Math.max(0, pos.getStartOffset() - myEditor.getLineHeight()), myEditorScrollbarTop + myEditorTargetHeight == 0 ? pos.getEndOffset() + myEditor.getLineHeight() : Math.min(myEditorScrollbarTop + myEditorTargetHeight, pos.getEndOffset() + myEditor.getLineHeight()));
+  public void markDirtied(ProperTextRange pos) {
+    ProperTextRange adj = new ProperTextRange(Math.max(0, pos.getStartOffset() - myEditor.getLineHeight()), myEditorScrollbarTop + myEditorTargetHeight == 0 ? pos
+                                                                                                                                                                 .getEndOffset() + myEditor.getLineHeight() : Math.min(myEditorScrollbarTop + myEditorTargetHeight, pos
+                                                                                                                                                                                                                                                                      .getEndOffset() + myEditor.getLineHeight()));
 
     if (myDirtyYPositions == null) {
       myDirtyYPositions = adj;
@@ -796,12 +800,13 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
   }
 
+  @NotNull
   private ProperTextRange offsetsToYPositions(int start, int end) {
     if (!dimensionsAreValid) {
       recalcEditorDimensions();
     }
     Document document = myEditor.getDocument();
-    int startLineNumber = offsetToLine(start, document);
+    int startLineNumber = end == -1 ? 0 : offsetToLine(start, document);
     int startY;
     int lineCount;
     if (myEditorSourceHeight < myEditorTargetHeight) {
@@ -814,7 +819,10 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
 
     int endY;
-    if (start == end || document.getLineNumber(start) == document.getLineNumber(end)) {
+    if (end == -1 || start == -1) {
+      endY = Math.min(myEditorSourceHeight, myEditorTargetHeight);
+    }
+    else if (start == end || document.getLineNumber(start) == document.getLineNumber(end)) {
       endY = startY; // both offsets are on the same line, no need to recalc Y position
     }
     else {
@@ -825,8 +833,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       else {
         endY = myEditorScrollbarTop + (int)((float)endLineNumber / lineCount * myEditorTargetHeight);
       }
-      if (endY < startY) endY = startY;
     }
+    if (endY < startY) endY = startY;
     return new ProperTextRange(startY, endY);
   }
 

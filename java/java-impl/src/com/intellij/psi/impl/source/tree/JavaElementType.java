@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.*;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.java.parser.ExpressionParser;
 import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.lang.java.parser.ReferenceParser;
@@ -138,7 +139,7 @@ public interface JavaElementType {
 
   class ICodeBlockElementType extends IErrorCounterReparseableElementType implements ICompositeElementType, ILightLazyParseableElementType {
     private ICodeBlockElementType() {
-      super("CODE_BLOCK", StdLanguages.JAVA);
+      super("CODE_BLOCK", JavaLanguage.INSTANCE);
     }
 
     @Override
@@ -191,62 +192,66 @@ public interface JavaElementType {
   }
   ILazyParseableElementType CODE_BLOCK = new ICodeBlockElementType();
 
-  IElementType STATEMENTS = new ICodeFragmentElementType("STATEMENTS", StdLanguages.JAVA) {
+  IElementType STATEMENTS = new ICodeFragmentElementType("STATEMENTS", JavaLanguage.INSTANCE) {
+    private final JavaParserUtil.ParserWrapper myParser = new JavaParserUtil.ParserWrapper() {
+      public void parse(final PsiBuilder builder) {
+        StatementParser.parseStatements(builder);
+      }
+    };
+
     @Nullable
     @Override
     public ASTNode parseContents(final ASTNode chameleon) {
-      return JavaParserUtil.parseFragment(chameleon,
-                                          new JavaParserUtil.ParserWrapper() {
-                                            public void parse(final PsiBuilder builder) {
-                                              StatementParser.parseStatements(builder);
-                                            }
-                                          });
+      return JavaParserUtil.parseFragment(chameleon, myParser);
     }
   };
 
-  IElementType EXPRESSION_TEXT = new ICodeFragmentElementType("EXPRESSION_TEXT", StdLanguages.JAVA) {
+  IElementType EXPRESSION_TEXT = new ICodeFragmentElementType("EXPRESSION_TEXT", JavaLanguage.INSTANCE) {
+    private final JavaParserUtil.ParserWrapper myParser = new JavaParserUtil.ParserWrapper() {
+      public void parse(final PsiBuilder builder) {
+        ExpressionParser.parse(builder);
+      }
+    };
+
     @Nullable
     @Override
     public ASTNode parseContents(final ASTNode chameleon) {
-      return JavaParserUtil.parseFragment(chameleon,
-                                          new JavaParserUtil.ParserWrapper() {
-                                            public void parse(final PsiBuilder builder) {
-                                              ExpressionParser.parse(builder);
-                                            }
-                                          });
+      return JavaParserUtil.parseFragment(chameleon, myParser);
     }
   };
 
-  IElementType REFERENCE_TEXT = new ICodeFragmentElementType("REFERENCE_TEXT", StdLanguages.JAVA) {
+  IElementType REFERENCE_TEXT = new ICodeFragmentElementType("REFERENCE_TEXT", JavaLanguage.INSTANCE) {
+    private final JavaParserUtil.ParserWrapper myParser = new JavaParserUtil.ParserWrapper() {
+      public void parse(final PsiBuilder builder) {
+        ReferenceParser.parseJavaCodeReference(builder, false, true, false, false, false);
+      }
+    };
+
     @Nullable
     @Override
     public ASTNode parseContents(final ASTNode chameleon) {
-      return JavaParserUtil.parseFragment(chameleon,
-                                          new JavaParserUtil.ParserWrapper() {
-                                            public void parse(final PsiBuilder builder) {
-                                              ReferenceParser.parseJavaCodeReference(builder, false, true, false, false, false);
-                                            }
-                                          });
+      return JavaParserUtil.parseFragment(chameleon, myParser);
     }
   };
 
-  IElementType TYPE_TEXT = new ICodeFragmentElementType("TYPE_TEXT", StdLanguages.JAVA) {
+  IElementType TYPE_TEXT = new ICodeFragmentElementType("TYPE_TEXT", JavaLanguage.INSTANCE) {
+    private final JavaParserUtil.ParserWrapper myParser = new JavaParserUtil.ParserWrapper() {
+      public void parse(final PsiBuilder builder) {
+        ReferenceParser.parseType(builder, ReferenceParser.EAT_LAST_DOT | ReferenceParser.ELLIPSIS |
+                                           ReferenceParser.WILDCARD | ReferenceParser.DISJUNCTIONS);
+      }
+    };
+
     @Nullable
     @Override
     public ASTNode parseContents(final ASTNode chameleon) {
-      return JavaParserUtil.parseFragment(chameleon,
-                                          new JavaParserUtil.ParserWrapper() {
-                                            public void parse(final PsiBuilder builder) {
-                                              ReferenceParser.parseType(builder, ReferenceParser.EAT_LAST_DOT | ReferenceParser.ELLIPSIS |
-                                                                                 ReferenceParser.WILDCARD | ReferenceParser.DISJUNCTIONS);
-                                            }
-                                          });
+      return JavaParserUtil.parseFragment(chameleon, myParser);
     }
   };
 
   class JavaDummyElementType extends ILazyParseableElementType implements ICompositeElementType {
     private JavaDummyElementType() {
-      super("DUMMY_ELEMENT", StdLanguages.JAVA);
+      super("DUMMY_ELEMENT", JavaLanguage.INSTANCE);
     }
 
     @NotNull

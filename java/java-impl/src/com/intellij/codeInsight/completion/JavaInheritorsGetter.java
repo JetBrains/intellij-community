@@ -130,9 +130,10 @@ public class JavaInheritorsGetter extends CompletionProvider<CompletionParameter
           .createStatementFromText(psiType.getCanonicalText() + " v = new " + canonicalText + "<>()", parameters.getOriginalFile());
         final PsiVariable declaredVar = (PsiVariable)((PsiDeclarationStatement)statement).getDeclaredElements()[0];
         final PsiNewExpression initializer = (PsiNewExpression)declaredVar.getInitializer();
-        final boolean hasDefaultConstructorOrNoGenericsOne = PsiDiamondType.hasDefaultConstructor(psiClass) || !PsiDiamondType.haveConstructorsGenericsParameters(psiClass);
+        final boolean hasDefaultConstructorOrNoGenericsOne = PsiDiamondTypeImpl.hasDefaultConstructor(psiClass) ||
+                                                             !PsiDiamondTypeImpl.haveConstructorsGenericsParameters(psiClass);
         if (hasDefaultConstructorOrNoGenericsOne) {
-          final PsiDiamondType.DiamondInferenceResult inferenceResult = PsiDiamondType.resolveInferredTypes(initializer);
+          final PsiDiamondTypeImpl.DiamondInferenceResult inferenceResult = PsiDiamondTypeImpl.resolveInferredTypes(initializer);
           if (inferenceResult.getErrorMessage() == null &&
               !psiClass.hasModifierProperty(PsiModifier.ABSTRACT) &&
               areInferredTypesApplicable(inferenceResult.getTypes(), parameters.getOriginalPosition())) {

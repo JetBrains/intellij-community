@@ -133,6 +133,9 @@ public class IconUtil {
           if ((flags & Iconable.ICON_FLAG_READ_STATUS) != 0 && !file.isWritable()) {
             icon = new LayeredIcon(icon, PlatformIcons.LOCKED_ICON);
           }
+          if (file.isSymLink()) {
+            icon = new LayeredIcon(icon, PlatformIcons.SYMLINK_ICON);
+          }
 
           Iconable.LastComputedIcon.put(file, icon, flags);
 

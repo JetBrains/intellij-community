@@ -22,7 +22,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -54,6 +54,6 @@ public class BeforeCheckinHandlerUtil {
         if (psiFile != null) result.add(psiFile);
       }
     }
-    return PsiUtilBase.toPsiFileArray(result);
+    return PsiUtilCore.toPsiFileArray(result);
   }
 }

@@ -342,15 +342,16 @@ public final class RequestProcessor implements IRequestProcessor {
     //final ErrorDefendingResponseHandler proxy = new ErrorDefendingResponseHandler(myTimeout, responseHandler);
 
     final ResponseParser responseParser = new ResponseParser(responseHandler, clientEnvironment.getCharset());
-    final StringBuffer responseBuffer = new StringBuffer(32);
-    for (; ;) {
-      final String responseString = readResponse(connectionStreams.getLoggedReader(), responseBuffer);
+    final StringBuilder responseBuffer = new StringBuilder(32);
+    while (true) {
+      readResponse(connectionStreams.getLoggedReader(), responseBuffer);
       checkCanceled();
-      if (responseString.length() == 0) {
+      if (responseBuffer.length() == 0) {
         return false;
       }
 
-      final Boolean result = responseParser.processResponse(responseString, connectionStreams, responseServices, clientEnvironment);
+      final Boolean result =
+        responseParser.processResponse(responseBuffer.toString(), connectionStreams, responseServices, clientEnvironment);
       if (result != null) {
         return result.booleanValue();
       }
@@ -362,18 +363,15 @@ public final class RequestProcessor implements IRequestProcessor {
     }
   }
 
-  private static String readResponse(Reader reader, StringBuffer responseBuffer) throws IOException {
+  private static void readResponse(Reader reader, StringBuilder responseBuffer) throws IOException {
     responseBuffer.setLength(0);
 
     for (int chr = reader.read(); chr >= 0; chr = reader.read()) {
       if (chr == '\n' || chr == ' ') {
         break;
       }
-
       responseBuffer.append((char)chr);
     }
-
-    return responseBuffer.toString();
   }
 
   private void sendFile(FileDetails fileDetails, IConnectionStreams connectionStreams) throws IOException {

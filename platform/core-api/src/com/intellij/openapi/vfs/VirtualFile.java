@@ -196,6 +196,16 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   public abstract boolean isWritable();
 
   /**
+   * Checks whether this file is a regular file.
+   *
+   * @since 11.0
+   * @return <code>true</code> if this file exists and is a regular file, <code>false</code> otherwise
+   */
+  public boolean isFile() {
+    return exists() && !isDirectory();
+  }
+
+  /**
    * Checks whether this file is a directory.
    *
    * @return <code>true</code> if this file is a directory, <code>false</code> otherwise

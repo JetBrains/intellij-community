@@ -19,7 +19,7 @@ import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.roots.ExcludedFileIndex;
+import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
@@ -36,7 +36,7 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
   private VcsDirtyScope myScope;
   private FoldersCutDownWorker myFoldersCutDownWorker;
   private final IgnoredFilesComponent myIgnoredFilesComponent;
-  private final ExcludedFileIndex myIndex;
+  private final FileIndexFacade myIndex;
   private final ChangeListManagerGate myGate;
 
   UpdatingChangeListBuilder(final ChangeListWorker changeListWorker,
@@ -48,7 +48,7 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
     myDisposedGetter = disposedGetter;
     myIgnoredFilesComponent = ignoredFilesComponent;
     myGate = gate;
-    myIndex = PeriodicalTasksCloser.getInstance().safeGetService(changeListWorker.getProject(), ExcludedFileIndex.class);
+    myIndex = PeriodicalTasksCloser.getInstance().safeGetService(changeListWorker.getProject(), FileIndexFacade.class);
   }
 
   private void checkIfDisposed() {

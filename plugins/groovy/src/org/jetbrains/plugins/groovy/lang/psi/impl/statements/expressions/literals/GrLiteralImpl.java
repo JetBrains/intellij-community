@@ -25,6 +25,7 @@ import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
@@ -61,52 +62,53 @@ public class GrLiteralImpl extends GrExpressionImpl implements GrLiteral, PsiLan
     final PsiElement child = getFirstChild();
     IElementType elemType = child.getNode().getElementType();
     String text = child.getText();
-    if (elemType == mNUM_INT) {
+    if (TokenSets.NUMBERS.contains(elemType)) {
+      text = text.replaceAll("_", "");
       try {
-        return Integer.parseInt(text);
-      } catch (NumberFormatException e) {
+        if (elemType == mNUM_INT) {
+          return Integer.parseInt(text);
+        }
+        else if (elemType == mNUM_LONG) {
+          return Long.parseLong(text);
+        }
+        else if (elemType == mNUM_FLOAT) {
+          return Float.parseFloat(text);
+        }
+        else if (elemType == mNUM_DOUBLE) {
+          return Double.parseDouble(text);
+        }
+        else if (elemType == mNUM_BIG_INT) {
+          return new BigInteger(text);
+        }
+        else if (elemType == mNUM_BIG_DECIMAL) {
+
+          return new BigDecimal(text);
+        }
       }
-    } else if (elemType == mNUM_LONG) {
-      try {
-        return Long.parseLong(text);
-      } catch (NumberFormatException e) {
+      catch (NumberFormatException ignored) {
       }
-    } else if (elemType == mNUM_FLOAT) {
-      try {
-        return Float.parseFloat(text);
-      } catch (NumberFormatException e) {
-      }
-    } else if (elemType == mNUM_DOUBLE) {
-      try {
-        return Double.parseDouble(text);
-      } catch (NumberFormatException e) {
-      }
-    } else if (elemType == mNUM_BIG_INT) {
-      try {
-        return new BigInteger(text);
-      } catch (NumberFormatException e) {
-      }
-    } else if (elemType == mNUM_BIG_DECIMAL) {
-      try {
-        return new BigDecimal(text);
-      } catch (NumberFormatException e) {
-      }
-    } else if (elemType == kFALSE) {
+    }
+
+    else if (elemType == kFALSE) {
       return Boolean.FALSE;
-    } else if (elemType == kTRUE) {
+    }
+    else if (elemType == kTRUE) {
       return Boolean.TRUE;
-    } else if (elemType == mSTRING_LITERAL) {
+    }
+    else if (elemType == mSTRING_LITERAL) {
       if (!text.startsWith("'")) return null;
       text = text.substring(1);
       if (text.endsWith("'")) {
         text = text.substring(0, text.length() - 1);
       }
       return StringUtil.unescapeStringCharacters(text);
-    } else if (elemType == mGSTRING_LITERAL) {
+    }
+    else if (elemType == mGSTRING_LITERAL) {
       if (!text.startsWith("\"")) return null;
       if (text.startsWith("\"\"\"")) {
         text = StringUtil.trimEnd(text.substring(3), "\"\"\"");
-      } else {
+      }
+      else {
         text = StringUtil.trimEnd(text.substring(1), "\"");
       }
       return StringUtil.unescapeStringCharacters(text);

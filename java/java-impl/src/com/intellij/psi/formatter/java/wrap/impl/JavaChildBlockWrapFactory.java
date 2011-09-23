@@ -21,7 +21,7 @@ import com.intellij.formatting.WrapType;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiPolyadicExpression;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.psi.formatter.java.FormattingAstUtil;
+import com.intellij.psi.formatter.java.JavaFormatterUtil;
 import com.intellij.psi.formatter.java.wrap.ReservedWrapsProvider;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.IElementType;
@@ -62,7 +62,7 @@ public class JavaChildBlockWrapFactory {
         return Wrap.createWrap(settings.BINARY_OPERATION_WRAP, false);
       }
       else {
-        if (FormattingAstUtil.areSamePriorityBinaryExpressions(node, node.getTreeParent())) {
+        if (JavaFormatterUtil.areSamePriorityBinaryExpressions(node, node.getTreeParent())) {
           return actualWrap;
         }
         else {
@@ -85,7 +85,7 @@ public class JavaChildBlockWrapFactory {
     else if (nodeType == JavaElementType.CODE_BLOCK) {
       return Wrap.createWrap(Wrap.NORMAL, false);
     }
-    else if (FormattingAstUtil.isAssignment(node)) {
+    else if (JavaFormatterUtil.isAssignment(node)) {
       return Wrap.createWrap(settings.ASSIGNMENT_WRAP, true);
     }
     else {

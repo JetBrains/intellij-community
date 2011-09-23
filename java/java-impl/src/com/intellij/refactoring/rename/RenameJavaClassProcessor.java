@@ -146,7 +146,7 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
   public static void findSubmemberHidesMemberCollisions(final PsiClass aClass, final String newName, final List<UsageInfo> result) {
     if (aClass.getParent() instanceof PsiClass) {
       PsiClass parent = (PsiClass)aClass.getParent();
-      Collection<PsiClass> inheritors = ClassInheritorsSearch.search(parent, parent.getUseScope(), true).findAll();
+      Collection<PsiClass> inheritors = ClassInheritorsSearch.search(parent, true).findAll();
       for (PsiClass inheritor : inheritors) {
         if (newName.equals(inheritor.getName())) {
           final ClassCollisionsDetector classCollisionsDetector = new ClassCollisionsDetector(aClass);

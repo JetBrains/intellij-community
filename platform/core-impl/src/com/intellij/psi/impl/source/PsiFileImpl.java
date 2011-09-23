@@ -398,8 +398,8 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       throw new AssertionError("Unable to clone the view provider: " + viewProvider + "; " + language);
     }
     PsiFileImpl clone = (PsiFileImpl)providerCopy.getPsi(language);
-    assert clone != null : "Cannot find psi file with language:" + language + " from viewprovider:" +
-                           providerCopy + " virtual file:" + getVirtualFile();
+    assert clone != null : "Cannot find psi file with: " + language + " from viewprovider:" +
+                           providerCopy + "; virtual file: " + getVirtualFile();
 
     copyCopyableDataTo(clone);
 
@@ -958,5 +958,10 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   public static void putInfo(PsiFile psiFile, Map<String, String> info) {
     info.put("fileName", psiFile.getName());
     info.put("fileType", psiFile.getFileType().toString());
+  }
+
+  @Override
+  public String toString() {
+    return myElementType.toString();
   }
 }

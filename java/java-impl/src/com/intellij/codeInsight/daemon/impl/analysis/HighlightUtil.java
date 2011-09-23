@@ -30,6 +30,7 @@ import com.intellij.codeInsight.quickfix.ChangeVariableTypeQuickFixProvider;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.findUsages.LanguageFindUsages;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
@@ -774,7 +775,7 @@ public class HighlightUtil {
   @Nullable
   private static Map<String, Set<String>> getIncompatibleModifierMap(PsiModifierList modifierList) {
     PsiElement parent = modifierList.getParent();
-    if (parent == null || PsiUtilBase.hasErrorElementChild(parent)) return null;
+    if (parent == null || PsiUtilCore.hasErrorElementChild(parent)) return null;
     return parent instanceof PsiClass
            ? ((PsiClass)parent).isInterface() ? ourInterfaceIncompatibleModifiers : ourClassIncompatibleModifiers
            : parent instanceof PsiMethod
@@ -787,7 +788,7 @@ public class HighlightUtil {
   @Nullable
   public static String getIncompatibleModifier(String modifier, PsiModifierList modifierList) {
     PsiElement parent = modifierList.getParent();
-    if (parent == null || PsiUtilBase.hasErrorElementChild(parent)) return null;
+    if (parent == null || PsiUtilCore.hasErrorElementChild(parent)) return null;
     final Map<String, Set<String>> incompatibleModifierMap = getIncompatibleModifierMap(modifierList);
     if (incompatibleModifierMap == null) return null;
     return getIncompatibleModifier(modifier, modifierList, incompatibleModifierMap);
@@ -798,7 +799,7 @@ public class HighlightUtil {
   public static HighlightInfo checkNotAllowedModifier(PsiKeyword keyword, PsiModifierList modifierList) {
     PsiElement modifierOwner = modifierList.getParent();
     if (modifierOwner == null) return null;
-    if (PsiUtilBase.hasErrorElementChild(modifierOwner)) return null;
+    if (PsiUtilCore.hasErrorElementChild(modifierOwner)) return null;
     @Modifier String modifier = keyword.getText();
     final Map<String, Set<String>> incompatibleModifierMap = getIncompatibleModifierMap(modifierList);
     if (incompatibleModifierMap == null) return null;
@@ -1201,7 +1202,7 @@ public class HighlightUtil {
 
   @Nullable
   static HighlightInfo checkNotAStatement(PsiStatement statement) {
-    if (!PsiUtil.isStatement(statement) && !PsiUtilBase.hasErrorElementChild(statement)) {
+    if (!PsiUtil.isStatement(statement) && !PsiUtilCore.hasErrorElementChild(statement)) {
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, statement, JavaErrorMessages.message("not.a.statement"));
     }
     return null;
@@ -1313,7 +1314,7 @@ public class HighlightUtil {
   }
 
   static String buildProblemWithStaticDescription(PsiElement refElement) {
-    String type = LanguageFindUsages.INSTANCE.forLanguage(StdLanguages.JAVA).getType(refElement);
+    String type = LanguageFindUsages.INSTANCE.forLanguage(JavaLanguage.INSTANCE).getType(refElement);
     String name = HighlightMessageUtil.getSymbolName(refElement, PsiSubstitutor.EMPTY);
     return JavaErrorMessages.message("non.static.symbol.referenced.from.static.context", type, name);
   }
@@ -1682,7 +1683,7 @@ public class HighlightUtil {
                typeOwner instanceof PsiClassObjectAccessExpression &&
                TypeConversionUtil.isVoidType(((PsiClassObjectAccessExpression)typeOwner).getOperand().getType()) ||
                // do not highlight incomplete declarations
-               typeOwner != null && PsiUtilBase.hasErrorElementChild(typeOwner)) {
+               typeOwner != null && PsiUtilCore.hasErrorElementChild(typeOwner)) {
         return null;
       }
       else if (typeOwner instanceof JavaCodeFragment) {

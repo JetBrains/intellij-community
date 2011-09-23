@@ -16,18 +16,19 @@
 package com.intellij.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
-import com.intellij.psi.impl.file.impl.ResolveScopeManagerImpl;
 import com.intellij.psi.impl.light.LightClassReference;
+import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.impl.source.tree.CompositeElement;
-import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -39,8 +40,10 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PackageScope;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PairFunction;
 import com.intellij.util.SmartList;
@@ -285,10 +288,7 @@ public class PsiImplUtil {
   @Nullable
   public static ASTNode findDocComment(@NotNull CompositeElement element) {
     TreeElement node = element.getFirstChildNode();
-    while (node != null &&
-           (ElementType.WHITE_SPACE_BIT_SET.contains(node.getElementType()) ||
-            node.getElementType() == JavaTokenType.C_STYLE_COMMENT ||
-            node.getElementType() == JavaTokenType.END_OF_LINE_COMMENT)) {
+    while (node != null && (isWhitespaceOrComment(node) && !(node.getPsi() instanceof PsiDocComment))) {
       node = node.getTreeNext();
     }
 
@@ -349,9 +349,9 @@ public class PsiImplUtil {
 
   @NotNull
   public static SearchScope getMemberUseScope(@NotNull PsiMember member) {
-    final GlobalSearchScope maximalUseScope = ResolveScopeManagerImpl.getElementUseScope(member);
+    final GlobalSearchScope maximalUseScope = ResolveScopeManager.getElementUseScope(member);
     PsiFile file = member.getContainingFile();
-    if (JspPsiUtil.isInJspFile(file)) return maximalUseScope;
+    if (isInServerPage(file)) return maximalUseScope;
 
     PsiClass aClass = member.getContainingClass();
     if (aClass instanceof PsiAnonymousClass) {
@@ -382,6 +382,15 @@ public class PsiImplUtil {
 
       return maximalUseScope;
     }
+  }
+
+  public static boolean isInServerPage(@Nullable final PsiElement element) {
+    return getServerPageFile(element) != null;
+  }
+
+  public static ServerPageFile getServerPageFile(final PsiElement element) {
+    final PsiFile psiFile = PsiUtilCore.getTemplateLanguageFile(element);
+    return psiFile instanceof ServerPageFile ? (ServerPageFile)psiFile : null;
   }
 
   public static PsiElement setName(@NotNull PsiElement element, @NotNull String name) throws IncorrectOperationException {
@@ -438,5 +447,82 @@ public class PsiImplUtil {
                                                      @NotNull String namePrefix,
                                                      @NotNull PairFunction<Project, String, PsiAnnotation> annotationCreator) {
     return annotationCreator.fun(value.getProject(), "@A(" + namePrefix + value.getText() + ")").getParameterList().getAttributes()[0];
+  }
+
+  @Nullable
+  public static ASTNode skipWhitespaceAndComments(final ASTNode node) {
+    return skipWhitespaceCommentsAndTokens(node, TokenSet.EMPTY);
+  }
+
+  @Nullable
+  public static ASTNode skipWhitespaceCommentsAndTokens(final ASTNode node, TokenSet alsoSkip) {
+    ASTNode element = node;
+    while (true) {
+      if (element == null) return null;
+      if (!isWhitespaceOrComment(element) && !alsoSkip.contains(element.getElementType())) break;
+      element = element.getTreeNext();
+    }
+    return element;
+  }
+
+  public static boolean isWhitespaceOrComment(ASTNode element) {
+    return element.getPsi() instanceof PsiWhiteSpace || element.getPsi() instanceof PsiComment;
+  }
+
+  @Nullable
+  public static ASTNode skipWhitespaceAndCommentsBack(final ASTNode node) {
+    if (node == null) return null;
+    if (!isWhitespaceOrComment(node)) return node;
+
+    ASTNode parent = node.getTreeParent();
+    ASTNode prev = node;
+    while (prev instanceof CompositeElement) {
+      if (!isWhitespaceOrComment(prev)) return prev;
+      prev = prev.getTreePrev();
+    }
+    if (prev == null) return null;
+    ASTNode firstChildNode = parent.getFirstChildNode();
+    ASTNode lastRelevant = null;
+    while (firstChildNode != prev) {
+      if (!isWhitespaceOrComment(firstChildNode)) lastRelevant = firstChildNode;
+      firstChildNode = firstChildNode.getTreeNext();
+    }
+    return lastRelevant;
+  }
+
+  @Nullable
+  public static ASTNode findStatementChild(CompositePsiElement statement) {
+    if (DebugUtil.CHECK_INSIDE_ATOMIC_ACTION_ENABLED){
+      ApplicationManager.getApplication().assertReadAccessAllowed();
+    }
+    for(ASTNode element = statement.getFirstChildNode(); element != null; element = element.getTreeNext()){
+      if (element.getPsi() instanceof PsiStatement) return element;
+    }
+    return null;
+  }
+
+  public static PsiStatement[] getChildStatements(CompositeElement psiCodeBlock) {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+    // no lock is needed because all chameleons are expanded already
+    int count = 0;
+    for (ASTNode child1 = psiCodeBlock.getFirstChildNode(); child1 != null; child1 = child1.getTreeNext()) {
+      if (child1.getPsi() instanceof PsiStatement) {
+        count++;
+      }
+    }
+
+    PsiStatement[] result = Constants.PSI_STATEMENT_ARRAY_CONSTRUCTOR.newPsiElementArray(count);
+    if (count == 0) {
+      return result;
+    }
+    int idx = 0;
+    for (ASTNode child = psiCodeBlock.getFirstChildNode(); child != null && idx < count; child = child.getTreeNext()) {
+      if (child.getPsi() instanceof PsiStatement) {
+        PsiStatement element = (PsiStatement)child.getPsi();
+        LOG.assertTrue(element != null, child);
+        result[idx++] = element;
+      }
+    }
+    return result;
   }
 }

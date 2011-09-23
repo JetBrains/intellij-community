@@ -103,6 +103,6 @@ public class ScopeHighlighter {
 
   private static TextAttributes getTestAttributesForRemoval() {
     EditorColorsManager manager = EditorColorsManager.getInstance();
-    return manager.getGlobalScheme().getAttributes(EditorColors.FOLDED_TEXT_ATTRIBUTES);
+    return manager.getGlobalScheme().getAttributes(EditorColors.DELETED_TEXT_ATTRIBUTES);
   }
 }

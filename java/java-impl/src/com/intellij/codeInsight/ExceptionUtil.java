@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -523,7 +524,7 @@ public class ExceptionUtil {
       JavaCodeFragment.ExceptionHandler exceptionHandler = codeFragment.getExceptionHandler();
       return exceptionHandler != null && exceptionHandler.isHandledException(exceptionType);
     }
-    else if (JspPsiUtil.isInJspFile(parent) && parent instanceof PsiFile) {
+    else if (PsiImplUtil.isInServerPage(parent) && parent instanceof PsiFile) {
       return true;
     }
     else if (parent instanceof PsiFile) {

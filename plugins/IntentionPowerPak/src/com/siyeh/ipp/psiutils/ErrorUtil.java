@@ -18,7 +18,7 @@ package com.siyeh.ipp.psiutils;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 
 public class ErrorUtil{
 
@@ -30,7 +30,7 @@ public class ErrorUtil{
      */
     public static boolean containsError(PsiElement element){
         // check only immediate children, full tree traversal is too expensive
-        return PsiUtil.hasErrorElementChild(element);
+        return PsiUtilCore.hasErrorElementChild(element);
     }
 
     /**

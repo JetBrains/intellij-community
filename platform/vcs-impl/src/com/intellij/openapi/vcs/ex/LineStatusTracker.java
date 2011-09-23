@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -33,6 +34,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
@@ -40,6 +42,7 @@ import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -277,6 +280,7 @@ public class LineStatusTracker {
     private int myUpToDateLastLine;
     private int myLastChangedLine;
     private int myLinesBeforeChange;
+    private final VcsDirtyScopeManager myVcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
 
     public void beforeDocumentChange(DocumentEvent e) {
       myApplication.assertWriteAccessAllowed();
@@ -330,7 +334,7 @@ public class LineStatusTracker {
       return result;
     }
 
-    public void documentChanged(DocumentEvent e) {
+    public void documentChanged(final DocumentEvent e) {
       myApplication.assertWriteAccessAllowed();
 
       synchronized (myLock) {
@@ -373,6 +377,23 @@ public class LineStatusTracker {
 
             for (Range range : myRanges) {
               if (!range.hasHighlighter()) range.setHighlighter(createHighlighter(range));
+            }
+
+            if (myRanges.isEmpty()) {
+              SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                  FileDocumentManager.getInstance().saveDocument(e.getDocument());
+                  boolean[] stillEmpty = new boolean[1];
+                  synchronized (myLock) {
+                    stillEmpty[0] = myRanges.isEmpty();
+                  }
+                  if (stillEmpty[0]) {
+                    // file was modified, and now it's not -> dirty local change
+                    myVcsDirtyScopeManager.fileDirty(myVirtualFile);
+                  }
+                }
+              });
             }
           }
         } catch (ProcessCanceledException ignore) {

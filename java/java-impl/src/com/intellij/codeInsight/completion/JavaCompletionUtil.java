@@ -438,7 +438,7 @@ public class JavaCompletionUtil {
       if (item != null) {
         final Object o = item.getObject();
         if (o instanceof PsiClass) {
-          if (!isSourceLevelAccessible(element, (PsiClass)o, pkgContext)) {
+          if (!isSourceLevelAccessible(element, (PsiClass)o, pkgContext) || isInExcludedPackage((PsiClass)o)) {
             continue;
           }
         }

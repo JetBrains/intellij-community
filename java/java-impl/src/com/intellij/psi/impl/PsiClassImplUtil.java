@@ -15,10 +15,10 @@
  */
 package com.intellij.psi.impl;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -255,12 +255,14 @@ public class PsiClassImplUtil {
   }
 
   private static class ClassIconRequest {
-    public PsiClass psiClass;
-    public int flags;
+    public final PsiClass psiClass;
+    public final int flags;
+    public final Icon symbolIcon;
 
-    private ClassIconRequest(PsiClass psiClass, int flags) {
+    private ClassIconRequest(PsiClass psiClass, int flags, Icon symbolIcon) {
       this.psiClass = psiClass;
       this.flags = flags;
+      this.symbolIcon = symbolIcon;
     }
 
     @Override
@@ -289,21 +291,29 @@ public class PsiClassImplUtil {
       if (!r.psiClass.isValid() || r.psiClass.getProject().isDisposed()) return null;
 
       final boolean isLocked = (r.flags & Iconable.ICON_FLAG_READ_STATUS) != 0 && !r.psiClass.isWritable();
-      Icon symbolIcon = ElementPresentationUtil.getClassIconOfKind(r.psiClass, ElementPresentationUtil.getClassKind(r.psiClass));
+      Icon symbolIcon = r.symbolIcon != null
+                        ? r.symbolIcon
+                        : ElementPresentationUtil.getClassIconOfKind(r.psiClass, ElementPresentationUtil.getClassKind(r.psiClass));
       RowIcon baseIcon = ElementBase.createLayeredIcon(symbolIcon, ElementPresentationUtil.getFlags(r.psiClass, isLocked));
       return ElementPresentationUtil.addVisibilityIcon(r.psiClass, r.flags, baseIcon);
     }
   };
 
   public static Icon getClassIcon(final int flags, final PsiClass aClass) {
+    return getClassIcon(flags, aClass, null);
+  }
+
+  public static Icon getClassIcon(int flags, PsiClass aClass, @Nullable Icon symbolIcon) {
     Icon base = Iconable.LastComputedIcon.get(aClass, flags);
     if (base == null) {
-      Icon symbolIcon = ElementPresentationUtil.getClassIconOfKind(aClass, ElementPresentationUtil.getBasicClassKind(aClass));
+      if (symbolIcon == null) {
+        symbolIcon = ElementPresentationUtil.getClassIconOfKind(aClass, ElementPresentationUtil.getBasicClassKind(aClass));
+      }
       RowIcon baseIcon = ElementBase.createLayeredIcon(symbolIcon, 0);
       base = ElementPresentationUtil.addVisibilityIcon(aClass, flags, baseIcon);
     }
 
-    return IconDeferrer.getInstance().defer(base, new ClassIconRequest(aClass, flags), FULL_ICON_EVALUATOR);
+    return IconDeferrer.getInstance().defer(base, new ClassIconRequest(aClass, flags, symbolIcon), FULL_ICON_EVALUATOR);
   }
 
   public static SearchScope getClassUseScope(final PsiClass aClass) {
@@ -312,7 +322,7 @@ public class PsiClassImplUtil {
       return new LocalSearchScope(aClass);
     }
     PsiFile file = aClass.getContainingFile();
-    if (JspPsiUtil.isInJspFile(file)) return maximalUseScope;
+    if (PsiImplUtil.isInServerPage(file)) return maximalUseScope;
     final PsiClass containingClass = aClass.getContainingClass();
     if (aClass.hasModifierProperty(PsiModifier.PUBLIC) ||
         aClass.hasModifierProperty(PsiModifier.PROTECTED)) {
@@ -490,7 +500,7 @@ public class PsiClassImplUtil {
       final List<Pair<PsiMethod, PsiSubstitutor>> list = allMethodsMap.get(nameHint.getName(state));
       if (list != null) {
         for (final Pair<PsiMethod, PsiSubstitutor> candidate : list) {
-          ProgressManager.checkCanceled();
+          ProgressIndicatorProvider.checkCanceled();
           PsiMethod candidateMethod = candidate.getFirst();
           if (processor instanceof MethodResolverProcessor) {
             if (candidateMethod.isConstructor() != ((MethodResolverProcessor)processor).isConstructor()) continue;
@@ -916,7 +926,7 @@ public class PsiClassImplUtil {
       return compareClassSeqNumber(aClass, (PsiClass)another);
     }    
 
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(aClass.getProject()).getFileIndex();
+    final FileIndexFacade fileIndex = ServiceManager.getService(file1.getProject(), FileIndexFacade.class);
     final VirtualFile vfile1 = file1.getViewProvider().getVirtualFile();
     final VirtualFile vfile2 = file2.getViewProvider().getVirtualFile();
     return (fileIndex.isInSource(vfile1) || fileIndex.isInLibraryClasses(vfile1)) &&

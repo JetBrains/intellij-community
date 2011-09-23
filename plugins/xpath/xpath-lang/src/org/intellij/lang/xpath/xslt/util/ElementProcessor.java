@@ -15,18 +15,17 @@
  */
 package org.intellij.lang.xpath.xslt.util;
 
-import org.intellij.lang.xpath.psi.impl.ResolveUtil;
-import org.intellij.lang.xpath.xslt.XsltSupport;
-
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
+import org.intellij.lang.xpath.psi.impl.ResolveUtil;
+import org.intellij.lang.xpath.xslt.XsltSupport;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class ElementProcessor<T extends PsiElement> implements ResolveUtil.XmlProcessor {
     private int myInclude;
@@ -97,7 +96,7 @@ public abstract class ElementProcessor<T extends PsiElement> implements ResolveU
         myInclude++;
         try {
             rootTag.processElements(new PsiElementProcessor() {
-                public boolean execute(PsiElement element) {
+                public boolean execute(@NotNull PsiElement element) {
                     if (element instanceof XmlTag) {
                         return process((XmlTag)element);
                     }

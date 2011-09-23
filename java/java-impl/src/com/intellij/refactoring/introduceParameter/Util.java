@@ -120,7 +120,7 @@ public class Util {
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     if (parameters.length == 0) return new TIntArrayList();
 
-    PsiMethod[] overridingMethods = OverridingMethodsSearch.search(method, method.getUseScope(), true).toArray(PsiMethod.EMPTY_ARRAY);
+    PsiMethod[] overridingMethods = OverridingMethodsSearch.search(method, true).toArray(PsiMethod.EMPTY_ARRAY);
     final PsiMethod[] allMethods = ArrayUtil.append(overridingMethods, method);
 
     final TIntHashSet suspects = new TIntHashSet();

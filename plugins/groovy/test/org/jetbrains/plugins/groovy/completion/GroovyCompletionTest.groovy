@@ -32,6 +32,12 @@ public class GroovyCompletionTest extends GroovyCompletionTestBase {
     return TestUtils.getTestDataPath() + "groovy/completion/";
   }
 
+  @Override
+  protected void tearDown() {
+    CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER
+    super.tearDown()
+  }
+
   public void testFinishMethodWithLParen() throws Throwable {
     myFixture.testCompletionVariants(getTestName(false) + ".groovy", "getBar", "getClass", "getFoo");
     myFixture.type('(');
@@ -597,6 +603,16 @@ format(<caret>)"""
     myFixture.checkResult "def foo(@AbcdAnno<caret> ) {}"
   }
 
+  public void testNoCompletionInClassBodyComments() {
+    myFixture.configureByText "a.groovy", "class Foo { /* protec<caret> */ }"
+    assertEmpty(myFixture.completeBasic())
+  }
+
+  public void testNoCompletionInCodeBlockComments() {
+    myFixture.configureByText "a.groovy", "def Foo() { /* whil<caret> */ }"
+    assertEmpty(myFixture.completeBasic())
+  }
+
   public void testParenthesesForExpectedClassTypeRegardlessInners() {
     myFixture.addClass "class Fooooo { interface Bar {} }"
     myFixture.configureByText "a.groovy", "Fooooo f = new Foo<caret>"
@@ -746,6 +762,42 @@ def a = new MyClass()
 a.<caret>""")
   }
 
+  public void testPreferInstanceof() {
+    caseSensitiveNone()
+
+    configure '''
+class Fopppp {
+    def foo() {
+        assert x ins<caret>
+    }
+}
+class Instantiation {}
+'''
+    myFixture.completeBasic()
+    assert myFixture.lookupElementStrings[0] == 'instanceof'
+  }
+
+  public void testForFinal() {
+    assert doContainsTest('final', '''
+class Fopppp {
+    def foo() {
+        for(fin<caret>
+    }
+}
+''')
+  }
+
+  public void testExcludeStringBuffer() {
+    assert doContainsTest('StringBuffer', 'StringBuff<caret>f')
+    CodeInsightSettings.getInstance().EXCLUDED_PACKAGES = [StringBuffer.name] as String[]
+    try {
+      assert !doContainsTest('StringBuffer', 'StringBuff<caret>f')
+    }
+    finally {
+      CodeInsightSettings.getInstance().EXCLUDED_PACKAGES = new String[0]
+    }
+  }
+
   private doContainsTest(String itemToCheck, String text) {
     myFixture.configureByText "a.groovy", text
 
@@ -782,18 +834,17 @@ while(true) {
   }
 
   public void testPreferParametersToClasses() {
-    CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
+    caseSensitiveNone()
 
-    try {
-      myFixture.configureByText "a.groovy", "def foo(stryng) { println str<caret> }"
-      myFixture.completeBasic()
-      assert myFixture.lookupElementStrings[0] == 'stryng'
-    }
-    finally {
-      CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER
-    }
+    myFixture.configureByText "a.groovy", "def foo(stryng) { println str<caret> }"
+    myFixture.completeBasic()
+    assert myFixture.lookupElementStrings[0] == 'stryng'
   }
-  
+
+  private def caseSensitiveNone() {
+    CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
+  }
+
   public void testFieldVsPackage() {
     myFixture.addFileToProject 'aaa/bbb/Foo.groovy', 'package aaa.bbb; class Foo{}'
     def file = myFixture.addFileToProject('aaa/bar.groovy', '''

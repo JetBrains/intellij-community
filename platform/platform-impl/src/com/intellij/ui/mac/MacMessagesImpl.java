@@ -380,6 +380,20 @@ public class MacMessagesImpl extends MacMessages {
       pane = dialog.getRootPane();
       _windowTitle = dialog.getTitle();
     }
+    
+    if (_windowTitle == null) {
+      _window = SwingUtilities.getWindowAncestor(_window);
+      if (_window instanceof JFrame) {
+        JFrame frame = (JFrame)_window;
+        pane = frame.getRootPane();
+        _windowTitle = frame.getTitle();
+      }
+      else if (_window instanceof JDialog) {
+        JDialog dialog = (JDialog)_window;
+        pane = dialog.getRootPane();
+        _windowTitle = dialog.getTitle();
+      }
+    }
 
     LOG.assertTrue(_windowTitle != null && _windowTitle.length() > 0 && pane != null, "Window MUST have a title and a root pane!");
 

@@ -199,7 +199,7 @@ public abstract class CompletionContributor {
   }
 
   /**
-   * Called when the completion is finished quickly, lookup hasn't been shown and gives possiblity to autoinsert some item (typically - the only one).
+   * Called when the completion is finished quickly, lookup hasn't been shown and gives possibility to autoinsert some item (typically - the only one).
    */
   @Nullable
   public AutoCompletionDecision handleAutoCompletionPossibility(AutoCompletionContext context) {

@@ -172,7 +172,7 @@ public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> impleme
 
   @Nullable
   public GrTypeElement getTypeElementGroovy() {
-    return (GrTypeElement)findChildByType(GroovyElementTypes.TYPE_ELEMENTS);
+    return findChildByClass(GrTypeElement.class);
   }
 
   @Nullable

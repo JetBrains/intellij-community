@@ -26,6 +26,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
 import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
@@ -61,7 +62,7 @@ public class VariableTypeFromCallFix implements IntentionAction {
   public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) throws IncorrectOperationException {
     final TypeMigrationRules rules = new TypeMigrationRules(TypeMigrationLabeler.getElementType(myVar));
     rules.setMigrationRootType(myExpressionType);
-    rules.setBoundScope(myVar.getUseScope());
+    rules.setBoundScope(PsiSearchHelper.SERVICE.getInstance(project).getUseScope(myVar));
 
     TypeMigrationProcessor.runHighlightingTypeMigration(project, editor, rules, myVar);
   }

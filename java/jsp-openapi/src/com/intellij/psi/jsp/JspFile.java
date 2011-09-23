@@ -16,9 +16,10 @@
 package com.intellij.psi.jsp;
 
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.ServerPageFile;
 import com.intellij.psi.xml.XmlTag;
 
-public interface JspFile extends BaseJspFile {
+public interface JspFile extends BaseJspFile, ServerPageFile {
   JspFile[] EMPTY_ARRAY = new JspFile[0];
 
   XmlTag[] getDirectiveTagsInContext(JspDirectiveKind directiveKind);

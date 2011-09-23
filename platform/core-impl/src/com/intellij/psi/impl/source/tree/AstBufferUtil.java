@@ -21,7 +21,8 @@ package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
-import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiWhiteSpace;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,10 +30,10 @@ public class AstBufferUtil {
   private AstBufferUtil() {}
 
   public static int toBuffer(@NotNull ASTNode element, @Nullable char[] buffer, int offset) {
-    return toBuffer(element, buffer, offset, null);
+    return toBuffer(element, buffer, offset, false);
   }
 
-  public static int toBuffer(@NotNull final ASTNode element, @Nullable final char[] buffer, int offset, @Nullable final TokenSet skipTypes) {
+  public static int toBuffer(@NotNull final ASTNode element, @Nullable final char[] buffer, int offset, final boolean skipWhitespaceAndComments) {
     final int[] result = {offset};
 
     ((TreeElement)element).acceptTree(new RecursiveTreeElementWalkingVisitor(false) {
@@ -40,7 +41,7 @@ public class AstBufferUtil {
       public void visitLeaf(LeafElement element) {
         ProgressIndicatorProvider.checkCanceled();
         if (element instanceof ForeignLeafPsiElement ||
-            skipTypes != null && skipTypes.contains(element.getElementType())) {
+            (skipWhitespaceAndComments && (element instanceof PsiWhiteSpace || element instanceof PsiComment))) {
           return;
         }
 
@@ -66,10 +67,10 @@ public class AstBufferUtil {
     return result[0];
   }
 
-  public static String getTextSkippingTokens(@NotNull ASTNode element, @Nullable TokenSet skipTypes) {
-    int length = toBuffer(element, null, 0, skipTypes);
+  public static String getTextSkippingWhitespaceComments(@NotNull ASTNode element) {
+    int length = toBuffer(element, null, 0, true);
     char[] buffer = new char[length];
-    toBuffer(element, buffer, 0, skipTypes);
+    toBuffer(element, buffer, 0, true);
     return new String(buffer);
   }
 }

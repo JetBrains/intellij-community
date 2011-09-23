@@ -18,20 +18,26 @@ package com.intellij.refactoring.extractclass;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Pass;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.RefactorJBundle;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.classMembers.DelegatingMemberInfoModel;
 import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.intellij.refactoring.classMembers.MemberInfoChange;
 import com.intellij.refactoring.classMembers.MemberInfoChangeListener;
+import com.intellij.refactoring.move.moveClassesOrPackages.DestinationFolderComboBox;
 import com.intellij.refactoring.ui.*;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,6 +58,7 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
   private final List<MemberInfo> memberInfo;
   private final JTextField classNameField;
   private final ReferenceEditorComboWithBrowseButton packageTextField;
+  private final DestinationFolderComboBox myDestinationFolderComboBox;
   private final JTextField sourceClassTextField;
   private JCheckBox myGenerateAccessorsCb;
   private final JavaVisibilityPanel myVisibilityPanel;
@@ -80,6 +87,13 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
         validateButtons();
       }
     });
+    myDestinationFolderComboBox = new DestinationFolderComboBox() {
+      @Override
+      public String getTargetPackage() {
+        return getPackageName();
+      }
+    };
+    myDestinationFolderComboBox.setData(myProject, sourceClass.getContainingFile().getContainingDirectory(), packageTextField.getChildComponent());
     classNameField.getDocument().addDocumentListener(docListener);
     sourceClassTextField = new JTextField();
     final MemberInfo.Filter<PsiMember> filter = new MemberInfo.Filter<PsiMember>() {
@@ -129,7 +143,8 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
         return o1.getMember().getTextOffset() - o2.getMember().getTextOffset();
       }
     });
-    final ExtractClassProcessor processor = new ExtractClassProcessor(sourceClass, fields, methods, classes, packageName, newClassName, myVisibilityPanel.getVisibility(), isGenerateAccessors(),
+    final ExtractClassProcessor processor = new ExtractClassProcessor(sourceClass, fields, methods, classes, packageName, myDestinationFolderComboBox.selectDirectory(new PackageWrapper(PsiManager.getInstance(myProject), packageName), false),
+                                                                      newClassName, myVisibilityPanel.getVisibility(), isGenerateAccessors(),
                                                                       isExtractAsEnum() ? enumConstants : Collections.<MemberInfo>emptyList());
     if (processor.getCreatedClass() == null) {
       Messages.showErrorDialog(myVisibilityPanel, "Unable to create class with the given name");
@@ -245,6 +260,14 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
     packageNamePanel.add(packageLabel, BorderLayout.NORTH);
     packageNamePanel.add(packageTextField, BorderLayout.CENTER);
     box.add(packageNamePanel);
+
+    if (ProjectRootManager.getInstance(myProject).getContentSourceRoots().length > 1) {
+      final JPanel panel = new JPanel(new BorderLayout());
+      panel.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
+      panel.add(new JBLabel(RefactoringBundle.message("target.destination.folder")), BorderLayout.NORTH);
+      panel.add(myDestinationFolderComboBox, BorderLayout.CENTER);
+      box.add(panel);
+    }
 
     box.add(Box.createVerticalStrut(10));
     final JPanel panel = new JPanel(new BorderLayout());

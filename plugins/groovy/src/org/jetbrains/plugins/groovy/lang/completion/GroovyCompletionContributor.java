@@ -282,10 +282,15 @@ public class GroovyCompletionContributor extends CompletionContributor {
       protected void addCompletions(@NotNull CompletionParameters parameters,
                                     ProcessingContext context,
                                     @NotNull final CompletionResultSet result) {
-        GroovyCompletionData.addGroovyKeywords(parameters, result);
         GroovyCompletionData.addGroovyDocKeywords(parameters, result);
 
         PsiElement position = parameters.getPosition();
+        if (psiElement().inside(false, psiElement(PsiComment.class)).accepts(position)) {
+          return;
+        }
+
+        GroovyCompletionData.addGroovyKeywords(parameters, result);
+
 
         suggestVariableNames(position, result);
 
@@ -415,6 +420,10 @@ public class GroovyCompletionContributor extends CompletionContributor {
           resolveResult = (GroovyResolveResult)object;
           substitutor = resolveResult.getSubstitutor();
           object = ((GroovyResolveResult)object).getElement();
+        }
+
+        if (object instanceof PsiClass && JavaCompletionUtil.isInExcludedPackage((PsiClass)object)) {
+          return;
         }
 
         final boolean autopopup = parameters.getInvocationCount() == 0;

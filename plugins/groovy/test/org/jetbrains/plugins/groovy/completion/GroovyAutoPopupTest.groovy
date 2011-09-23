@@ -151,5 +151,18 @@ class GroovyAutoPopupTest extends CompletionAutoPopupTestCase {
     assert lookup
   }
 
+  public void testTypingFirstVarargDot() {
+    myFixture.addClass("class Foo { static class Bar {} }")
+    myFixture.configureByText "a.groovy", "void foo(Foo<caret>[] a) { }"
+    type '.'
+    assert !lookup
+  }
+
+  public void testTypingFirstVarargDot2() {
+    myFixture.addClass("class Foo { static class Bar {} }")
+    myFixture.configureByText "a.groovy", "void foo(Foo<caret>) { }"
+    type '.'
+    assert !lookup
+  }
 
 }

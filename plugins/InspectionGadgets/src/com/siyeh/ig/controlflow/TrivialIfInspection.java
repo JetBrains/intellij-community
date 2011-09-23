@@ -20,7 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -275,7 +275,7 @@ public class TrivialIfInspection extends BaseInspection {
             if (condition == null) {
                 return;
             }
-            if (PsiUtil.hasErrorElementChild(ifStatement)) {
+            if (PsiUtilCore.hasErrorElementChild(ifStatement)) {
                 return;
             }
             if (isSimplifiableAssignment(ifStatement)) {

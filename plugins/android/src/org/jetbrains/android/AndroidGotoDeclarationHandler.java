@@ -16,6 +16,7 @@
 package org.jetbrains.android;
 
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.android.facet.AndroidFacet;
@@ -26,7 +27,7 @@ import org.jetbrains.android.util.AndroidResourceUtil;
  */
 public class AndroidGotoDeclarationHandler implements GotoDeclarationHandler {
   @Override
-  public PsiElement[] getGotoDeclarationTargets(PsiElement sourceElement) {
+  public PsiElement[] getGotoDeclarationTargets(PsiElement sourceElement, Editor editor) {
     if (!(sourceElement instanceof PsiIdentifier)) {
       return null;
     }

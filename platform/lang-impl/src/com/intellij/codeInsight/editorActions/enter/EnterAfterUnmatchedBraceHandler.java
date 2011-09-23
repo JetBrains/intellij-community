@@ -40,7 +40,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -171,7 +171,7 @@ public class EnterAfterUnmatchedBraceHandler extends EnterHandlerDelegateAdapter
    * @return        offset to use for inserting closing brace
    */
   private static int calculateOffsetToInsertClosingBrace(PsiFile file, CharSequence text, final int offset) {
-    PsiElement element = PsiUtilBase.getElementAtOffset(file, offset);
+    PsiElement element = PsiUtilCore.getElementAtOffset(file, offset);
     ASTNode node = element.getNode();
     if (node != null && node.getElementType() == TokenType.WHITE_SPACE) {
       return CharArrayUtil.shiftForwardUntil(text, offset, "\n");

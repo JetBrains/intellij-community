@@ -25,7 +25,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -125,7 +125,7 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> {
   }
 
   private static String getName(final PsiClass psiClass, final LookupItem<?> item, boolean diamond) {
-    String name = PsiUtilBase.getName(psiClass);
+    String name = PsiUtilCore.getName(psiClass);
 
     if (item.getAttribute(LookupItem.FORCE_QUALIFY) != null) {
       if (psiClass.getContainingClass() != null) {

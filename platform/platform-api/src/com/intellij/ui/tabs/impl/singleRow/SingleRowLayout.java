@@ -217,7 +217,7 @@ public class SingleRowLayout extends TabLayout {
       label.setAligmentToCenter(deltaToFit > 0 && getStrategy().isToCenterTextWhenStretched());
 
       data.position = getStrategy().getMaxPosition(label.getBounds());
-      data.position++;
+      data.position += myTabs.getInterTabSpaceLength();
 
       totalLength = getStrategy().getMaxPosition(label.getBounds()) - positionStart;
     }
@@ -241,8 +241,7 @@ public class SingleRowLayout extends TabLayout {
     }
                                 
     for (TabInfo eachInfo : data.myVisibleInfos) {
-      data.requiredLength += getStrategy().getLengthIncrement(myTabs.myInfo2Label.get(eachInfo).getPreferredSize()) + myTabs
-        .getInterTabSpaceLength();
+      data.requiredLength += getStrategy().getLengthIncrement(myTabs.myInfo2Label.get(eachInfo).getPreferredSize());
       data.toLayout.add(eachInfo);
     }
 

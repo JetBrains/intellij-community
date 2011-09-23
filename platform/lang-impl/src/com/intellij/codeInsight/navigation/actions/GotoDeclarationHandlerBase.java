@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.navigation.actions;
 
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,11 +25,11 @@ import org.jetbrains.annotations.Nullable;
 public abstract class GotoDeclarationHandlerBase implements GotoDeclarationHandler {
   @Nullable
   @Override
-  public PsiElement[] getGotoDeclarationTargets(PsiElement sourceElement) {
-    final PsiElement target = getGotoDeclarationTarget(sourceElement);
+  public PsiElement[] getGotoDeclarationTargets(PsiElement sourceElement, Editor editor) {
+    final PsiElement target = getGotoDeclarationTarget(sourceElement, editor);
     return target != null ? new PsiElement[] {target} : null;
   }
 
   @Nullable
-  public abstract PsiElement getGotoDeclarationTarget(PsiElement sourceElement);
+  public abstract PsiElement getGotoDeclarationTarget(PsiElement sourceElement, Editor editor);
 }

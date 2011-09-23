@@ -41,7 +41,7 @@ public abstract class AbstractUnwrapper<C extends AbstractUnwrapper.AbstractCont
 
   public PsiElement collectAffectedElements(PsiElement e, List<PsiElement> toExtract) {
     try {
-      C c = createContext(false);
+      C c = createContext();
       doUnwrap(e, c);
       toExtract.addAll(c.myElementsToExtract);
       return e;
@@ -52,22 +52,19 @@ public abstract class AbstractUnwrapper<C extends AbstractUnwrapper.AbstractCont
   }
 
   public List<PsiElement> unwrap(Editor editor, PsiElement element) throws IncorrectOperationException {
-    C c = createContext(true);
+    C c = createContext();
+    c.myIsEffective = true;
     doUnwrap(element, c);
     return c.myElementsToExtract;
   }
 
   protected abstract void doUnwrap(PsiElement element, C context) throws IncorrectOperationException;
 
-  protected abstract C createContext(boolean isEffective);
+  protected abstract C createContext();
 
   public abstract static class AbstractContext {
     protected final List<PsiElement> myElementsToExtract = new ArrayList<PsiElement>();
-    protected final boolean myIsEffective;
-
-    public AbstractContext(boolean isEffective) {
-      myIsEffective = isEffective;
-    }
+    protected boolean myIsEffective;
 
     public void addElementToExtract(PsiElement e) {
       myElementsToExtract.add(e);

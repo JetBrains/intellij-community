@@ -40,6 +40,8 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
 public class LookupCellRenderer implements ListCellRenderer {
+  private static final int AFTER_TAIL = 10;
+  private static final int AFTER_TYPE = 6;
   private Icon myEmptyIcon = EmptyIcon.create(5);
   private final Font myNormalFont;
   private final Font myBoldFont;
@@ -90,10 +92,10 @@ public class LookupCellRenderer implements ListCellRenderer {
     myPanel = new LookupPanel();
     myPanel.add(myNameComponent, BorderLayout.WEST);
     myPanel.add(myTailComponent, BorderLayout.CENTER);
-    myTailComponent.setBorder(new EmptyBorder(0, 0, 0, 10));
+    myTailComponent.setBorder(new EmptyBorder(0, 0, 0, AFTER_TAIL));
 
     myPanel.add(myTypeLabel, BorderLayout.EAST);
-    myTypeLabel.setBorder(new EmptyBorder(0, 0, 0, 6));
+    myTypeLabel.setBorder(new EmptyBorder(0, 0, 0, AFTER_TYPE));
 
     myNormalMetrics = myLookup.getEditor().getComponent().getFontMetrics(myNormalFont);
     myBoldMetrics = myLookup.getEditor().getComponent().getFontMetrics(myBoldFont);
@@ -117,12 +119,12 @@ public class LookupCellRenderer implements ListCellRenderer {
     final Color foreground = isSelected ? SELECTED_FOREGROUND_COLOR : FOREGROUND_COLOR;
     final Color background = getItemBackground(list, index, isSelected);
 
-    int allowedWidth = list.getWidth() - getCommonGapsWidth() - getIconIndent();
+    int allowedWidth = list.getWidth() - AFTER_TAIL - AFTER_TYPE - getIconIndent();
     final LookupElementPresentation presentation = new RealLookupElementPresentation(allowedWidth, myNormalMetrics, myBoldMetrics);
     item.renderElement(presentation);
 
     myNameComponent.clear();
-    myNameComponent.setIcon(getIcon(presentation.getIcon()));
+    myNameComponent.setIcon(augmentIcon(presentation.getIcon(), myEmptyIcon));
     myNameComponent.setBackground(background);
     allowedWidth -= setItemTextLabel(item, foreground, isSelected, presentation, allowedWidth);
 
@@ -293,10 +295,6 @@ public class LookupCellRenderer implements ListCellRenderer {
     return used;
   }
 
-  private Icon getIcon(Icon icon){
-    return augmentIcon(icon, myEmptyIcon);
-  }
-
   public static Icon augmentIcon(@Nullable Icon icon, @NotNull Icon standard) {
     if (icon == null) {
       return standard;
@@ -318,11 +316,7 @@ public class LookupCellRenderer implements ListCellRenderer {
       myEmptyIcon = new EmptyIcon(Math.max(icon.getIconWidth(), myEmptyIcon.getIconWidth()), Math.max(icon.getIconHeight(), myEmptyIcon.getIconHeight()));
     }
 
-    return RealLookupElementPresentation.calculateWidth(p, myNormalMetrics, myBoldMetrics) + getCommonGapsWidth();
-  }
-
-  private int getCommonGapsWidth() {
-    return 2 * myNormalMetrics.stringWidth("W"); //tail-type separation and a space after type
+    return RealLookupElementPresentation.calculateWidth(p, myNormalMetrics, myBoldMetrics) + AFTER_TAIL + AFTER_TYPE;
   }
 
   public int getIconIndent() {
@@ -333,7 +327,6 @@ public class LookupCellRenderer implements ListCellRenderer {
   private static class MySimpleColoredComponent extends SimpleColoredComponent {
     private MySimpleColoredComponent() {
       setFocusBorderAroundIcon(true);
-      setBorderInsets(new Insets(0, 0, 0, 0));
     }
 
     @Override

@@ -36,6 +36,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.List;
@@ -66,13 +68,13 @@ public class XDebuggerTestUtil {
     XDebuggerUtil.getInstance().toggleLineBreakpoint(project, file, line);
   }
 
-  public static void assertPosition(XSourcePosition pos, VirtualFile file, int line) {
+  public static void assertPosition(XSourcePosition pos, VirtualFile file, int line) throws IOException {
     Assert.assertNotNull(pos);
-    Assert.assertEquals(file, pos.getFile());
+    Assert.assertEquals(new File(file.getPath()).getCanonicalPath(), new File(pos.getFile().getPath()).getCanonicalPath());
     if (line != -1) Assert.assertEquals(line, pos.getLine());
   }
 
-  public static void assertCurrentPosition(XDebugSession session, VirtualFile file, int line) {
+  public static void assertCurrentPosition(XDebugSession session, VirtualFile file, int line) throws IOException {
     assertPosition(session.getCurrentPosition(), file, line);
   }
 

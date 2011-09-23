@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
@@ -85,11 +86,29 @@ public class DebuggerUIUtil {
   }
 
   public static void invokeOnEventDispatch(final Runnable runnable) {
+    invokeOnEventDispatch(runnable, null);
+  }
+  
+  public static void invokeOnEventDispatchIfProjectNotDisposed(final Runnable runnable, final Project project) {
+    invokeOnEventDispatch(runnable, new Condition<Object>() {
+      @Override
+      public boolean value(Object o) {
+        return project.isDisposed();
+      }
+    });
+  }
+
+  private static void invokeOnEventDispatch(final Runnable runnable,
+                                           @Nullable Condition<Object> expired) {
     if (ApplicationManager.getApplication().isDispatchThread()) {
       runnable.run();
     }
     else {
-      ApplicationManager.getApplication().invokeLater(runnable);
+      if (expired == null) {
+        ApplicationManager.getApplication().invokeLater(runnable);
+      } else {
+        ApplicationManager.getApplication().invokeLater(runnable, expired);
+      }
     }
   }
 

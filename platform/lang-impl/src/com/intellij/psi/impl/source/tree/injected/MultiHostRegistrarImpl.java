@@ -52,7 +52,7 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NonNls;
@@ -84,7 +84,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
   MultiHostRegistrarImpl(@NotNull Project project, @NotNull PsiFile hostPsiFile, @NotNull PsiElement contextElement) {
     myProject = project;
     myContextElement = contextElement;
-    myHostPsiFile = PsiUtilBase.getTemplateLanguageFile(hostPsiFile);
+    myHostPsiFile = PsiUtilCore.getTemplateLanguageFile(hostPsiFile);
     myPsiManager = myHostPsiFile.getManager();
     cleared = true;
   }
@@ -145,7 +145,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
                                      @NotNull TextRange rangeInsideHost) {
     ProperTextRange.assertProperRange(rangeInsideHost);
 
-    PsiFile containingFile = PsiUtilBase.getTemplateLanguageFile(host);
+    PsiFile containingFile = PsiUtilCore.getTemplateLanguageFile(host);
     assert containingFile == myHostPsiFile : exceptionContext("Trying to inject into foreign file: "+containingFile);
     TextRange hostTextRange = host.getTextRange();
     if (!hostTextRange.contains(rangeInsideHost.shiftRight(hostTextRange.getStartOffset()))) {

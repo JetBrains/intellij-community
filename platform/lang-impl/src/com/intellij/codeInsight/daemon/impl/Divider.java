@@ -24,7 +24,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.Stack;
 import gnu.trove.TIntStack;
 import org.jetbrains.annotations.NotNull;
@@ -72,20 +72,20 @@ public class Divider {
     final Stack<PsiElement> children = new Stack<PsiElement>(STARTING_TREE_HEIGHT);
     PsiElement element = root;
 
-    PsiElement child = PsiUtilBase.NULL_PSI_ELEMENT;
+    PsiElement child = PsiUtilCore.NULL_PSI_ELEMENT;
     while (true) {
       ProgressManager.checkCanceled();
 
       for (Condition<PsiElement> filter : filters) {
         if (!filter.value(element)) {
-          assert child == PsiUtilBase.NULL_PSI_ELEMENT;
+          assert child == PsiUtilCore.NULL_PSI_ELEMENT;
           child = null; // do not want to process children
           break;
         }
       }
 
       boolean startChildrenVisiting;
-      if (child == PsiUtilBase.NULL_PSI_ELEMENT) {
+      if (child == PsiUtilCore.NULL_PSI_ELEMENT) {
         startChildrenVisiting = true;
         child = element.getFirstChild();
       }
@@ -120,7 +120,7 @@ public class Divider {
         starts.push(offset);
         elements.push(element);
         element = child;
-        child = PsiUtilBase.NULL_PSI_ELEMENT;
+        child = PsiUtilCore.NULL_PSI_ELEMENT;
       }
     }
 

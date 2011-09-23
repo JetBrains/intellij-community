@@ -19,6 +19,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -116,7 +117,7 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
       public JavaResolveResult[] resolveInner(boolean incompleteCode) {
         ASTNode classRef = findChildByRole(ChildRole.TYPE_REFERENCE);
         if (classRef != null) {
-          ASTNode argumentList = TreeUtil.skipElements(classRef.getTreeNext(), StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET);
+          ASTNode argumentList = PsiImplUtil.skipWhitespaceAndComments(classRef.getTreeNext());
           if (argumentList != null && argumentList.getElementType() == JavaElementType.EXPRESSION_LIST) {
             final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
             PsiType aClass = facade.getElementFactory().createType((PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(classRef));

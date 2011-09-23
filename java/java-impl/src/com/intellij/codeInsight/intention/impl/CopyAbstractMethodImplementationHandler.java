@@ -34,7 +34,7 @@ import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.IncorrectOperationException;
@@ -106,7 +106,7 @@ public class CopyAbstractMethodImplementationHandler {
   private void searchExistingImplementations() {
     mySourceClass = myMethod.getContainingClass();
     if (!mySourceClass.isValid()) return;
-    for (PsiClass inheritor : ClassInheritorsSearch.search(mySourceClass, mySourceClass.getUseScope(), true)) {
+    for (PsiClass inheritor : ClassInheritorsSearch.search(mySourceClass, true)) {
       if (!inheritor.isInterface()) {
         PsiMethod method = ImplementAbstractMethodAction.findExistingImplementation(inheritor, myMethod);
         if (method != null && !method.hasModifierProperty(PsiModifier.ABSTRACT)) {
@@ -197,7 +197,7 @@ public class CopyAbstractMethodImplementationHandler {
     for(PsiClass psiClass: myTargetClasses) {
       fileList.add(psiClass.getContainingFile());
     }
-    return PsiUtilBase.toPsiFileArray(fileList);
+    return PsiUtilCore.toPsiFileArray(fileList);
   }
 
 }

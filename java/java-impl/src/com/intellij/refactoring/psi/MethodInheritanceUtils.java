@@ -39,7 +39,7 @@ public class MethodInheritanceUtils {
         {
             final PsiMethod methodToAnalyze = pendingMethods.pop();
             siblingMethods.add(methodToAnalyze);
-            final Iterable<PsiMethod> overridingMethods = OverridingMethodsSearch.search(methodToAnalyze, methodToAnalyze.getUseScope(), false);
+          final Iterable<PsiMethod> overridingMethods = OverridingMethodsSearch.search(methodToAnalyze, false);
             for (PsiMethod overridingMethod : overridingMethods) {
                 if (!siblingMethods.contains(overridingMethod) &&
                         !pendingMethods.contains(overridingMethod)) {

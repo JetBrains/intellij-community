@@ -77,8 +77,7 @@ public class OnClickConverter extends Converter<String> implements CustomReferen
       }
 
       final Project project = myElement.getProject();
-      final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-      final PsiShortNamesCache cache = psiFacade.getShortNamesCache();
+      final PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
 
       final PsiMethod[] methods = cache.getMethodsByName(methodName, GlobalSearchScope.projectScope(project));
       if (methods.length == 0) {

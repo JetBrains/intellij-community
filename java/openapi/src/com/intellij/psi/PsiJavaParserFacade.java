@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author max
  */
-public interface PsiJavaParserFacade extends PsiParserFacade {
+public interface PsiJavaParserFacade {
   /**
    * Creates a JavaDoc tag from the specified text.
    *

@@ -19,6 +19,7 @@ package com.intellij.conversion.impl;
 import com.intellij.conversion.*;
 import com.intellij.conversion.impl.ui.ConvertProjectDialog;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.diagnostic.Logger;
@@ -116,7 +117,7 @@ public class ConversionServiceImpl extends ConversionService {
   @Override
   public ConversionResult convert(@NotNull String projectPath) {
     try {
-      if (!isConversionNeeded(projectPath)) {
+      if (!new File(projectPath).exists() || ApplicationManager.getApplication().isHeadlessEnvironment() || !isConversionNeeded(projectPath)) {
         return ConversionResultImpl.CONVERSION_NOT_NEEDED;
       }
 

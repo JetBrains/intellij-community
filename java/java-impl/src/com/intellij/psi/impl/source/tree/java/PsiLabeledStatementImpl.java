@@ -53,7 +53,7 @@ public class PsiLabeledStatementImpl extends CompositePsiElement implements PsiL
         return null;
 
       case ChildRole.STATEMENT:
-        return findChildByType(STATEMENT_BIT_SET);
+        return PsiImplUtil.findStatementChild(this);
 
       case ChildRole.COLON:
         return findChildByType(COLON);
@@ -73,7 +73,7 @@ public class PsiLabeledStatementImpl extends CompositePsiElement implements PsiL
       return ChildRole.COLON;
     }
     else {
-      if (STATEMENT_BIT_SET.contains(child.getElementType())) {
+      if (child.getPsi() instanceof PsiStatement) {
         return ChildRole.STATEMENT;
       }
       return ChildRoleBase.NONE;

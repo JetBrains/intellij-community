@@ -293,6 +293,8 @@
                   serviceImplementation="com.intellij.openapi.roots.impl.ProjectFileIndexImpl"/>
   <projectService serviceInterface="com.intellij.psi.impl.source.resolve.ResolveCache"
                   serviceImplementation="com.intellij.psi.impl.source.resolve.ResolveCache"/>
+  <projectService serviceInterface="com.intellij.openapi.roots.ProjectRootModificationTracker"
+                  serviceImplementation="com.intellij.openapi.roots.ProjectRootModificationTrackerImpl"/>
 
   <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.GeneralColorsPage" id="general"/>
   <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.ANSIColoredConsoleColorsPage" id="general"/>

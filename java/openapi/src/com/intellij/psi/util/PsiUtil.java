@@ -20,17 +20,16 @@ import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.MethodCandidateInfo.ApplicabilityLevel;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
@@ -39,7 +38,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public final class PsiUtil extends PsiUtilBase {
+public final class PsiUtil extends PsiUtilCore {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.PsiUtil");
   public static final int ACCESS_LEVEL_PUBLIC = 4;
   public static final int ACCESS_LEVEL_PROTECTED = 3;
@@ -207,7 +206,7 @@ public final class PsiUtil extends PsiUtilBase {
         if (element instanceof PsiClass && !isLocalOrAnonymousClass((PsiClass)element)) {
           break;
         }
-        if (element instanceof PsiFile && PsiUtilBase.getTemplateLanguageFile(element) != null) {
+        if (element instanceof PsiFile && PsiUtilCore.getTemplateLanguageFile(element) != null) {
           return element;
         }
       }
@@ -654,32 +653,19 @@ public final class PsiUtil extends PsiUtilBase {
            : Collections.singletonList(typeElement);
   }
 
-  private static class ParamWriteProcessor implements Processor<PsiReference> {
-    private volatile boolean myIsWriteRefFound = false;
-    public boolean process(PsiReference reference) {
-      final PsiElement element = reference.getElement();
-      if (element instanceof PsiReferenceExpression && isAccessedForWriting((PsiExpression)element)) {
-        myIsWriteRefFound = true;
-        return false;
-      }
-      return true;
-    }
-
-    public boolean isWriteRefFound() {
-      return myIsWriteRefFound;
-    }
-  }
-
-  public static boolean isAssigned(final PsiParameter parameter) {
-    ParamWriteProcessor processor = new ParamWriteProcessor();
-    ReferencesSearch.search(parameter, new LocalSearchScope(parameter.getDeclarationScope()), true).forEach(processor);
-    return processor.isWriteRefFound();
-  }
-
   public static void checkIsIdentifier(PsiManager manager, String text) throws IncorrectOperationException{
     if (!JavaPsiFacade.getInstance(manager.getProject()).getNameHelper().isIdentifier(text)){
       throw new IncorrectOperationException(PsiBundle.message("0.is.not.an.identifier", text) );
     }
+  }
+
+  @Nullable
+  public static VirtualFile getJarFile(PsiElement candidate) {
+    VirtualFile file = candidate.getContainingFile().getVirtualFile();
+    if (file != null && file.getFileSystem() instanceof JarFileSystem) {
+      return JarFileSystem.getInstance().getVirtualFileForJar(file);
+    }
+    return file;
   }
 
   private static class TypeParameterIterator implements Iterator<PsiTypeParameter> {

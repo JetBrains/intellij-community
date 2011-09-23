@@ -17,14 +17,13 @@ package com.intellij.psi.impl.compiled;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettingsFacade;
 import com.intellij.psi.impl.PsiElementBase;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -38,11 +37,11 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
   protected static final Object LAZY_BUILT_LOCK = new String("lazy cls tree initialization lock");
   public static final Key<PsiCompiledElement> COMPILED_ELEMENT = Key.create("COMPILED_ELEMENT");
 
-  private TreeElement myMirror = null;
+  private volatile TreeElement myMirror = null;
 
   @NotNull
   public Language getLanguage() {
-    return StdFileTypes.JAVA.getLanguage();
+    return JavaLanguage.INSTANCE;
   }
 
   public PsiManager getManager() {
@@ -113,19 +112,18 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
   }
 
   protected int getIndentSize() {
-    return CodeStyleSettingsManager.getSettings(getProject()).getIndentSize(StdFileTypes.JAVA);
+    return JavaCodeStyleSettingsFacade.getInstance(getProject()).getIndentSize();
   }
 
   public abstract void setMirror(@NotNull TreeElement element);
 
   public PsiElement getMirror() {
-    synchronized (ClsFileImpl.MIRROR_LOCK) {
-      if (myMirror == null) {
-        final ClsFileImpl file = (ClsFileImpl)getContainingFile();
-        file.getMirror();
-      }
-      return SourceTreeToPsiMap.treeElementToPsi(myMirror);
+    TreeElement mirror = myMirror;
+    if (mirror == null) {
+      ((ClsFileImpl)getContainingFile()).getMirror();
+      mirror = myMirror;
     }
+    return mirror.getPsi();
   }
 
   public final TextRange getTextRange() {

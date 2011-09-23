@@ -360,8 +360,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
           assertNotNull(psiFile);
           final Document document = PsiDocumentManager.getInstance(getProject()).getDocument(psiFile);
           assertNotNull(document);
-          return Trinity.create(psiFile, createEditor(file),
-                                new ExpectedHighlightingData(document, checkWarnings, checkWeakWarnings, checkInfos, psiFile));
+          ExpectedHighlightingData data = new ExpectedHighlightingData(document, checkWarnings, checkWeakWarnings, checkInfos, psiFile);
+          data.init();
+          return Trinity.create(psiFile, createEditor(file), data);
         }
       });
     for (Trinity<PsiFile, Editor, ExpectedHighlightingData> trinity : datas) {
@@ -407,6 +408,21 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       throw new RuntimeException(e);
     }
     return duration.get().longValue();
+  }
+
+  @Override
+  public HighlightTestInfo testFile(@NonNls @NotNull String... filePath) {
+    return new HighlightTestInfo(getTestRootDisposable(), filePath){
+      @Override
+      public HighlightTestInfo doTest() throws Exception {
+        configureByFiles(filePaths);
+        ExpectedHighlightingData data = new ExpectedHighlightingData(myEditor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos, myFile);
+        if (checkSymbolNames) data.checkSymbolNames();
+        data.init();
+        collectAndCheckHighlightings(data, Ref.create(0L));
+        return this;
+      }
+    };
   }
 
   public void openFileInEditor(@NotNull final VirtualFile file) {
@@ -1305,7 +1321,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     throws Exception {
     ExpectedHighlightingData data =
       new ExpectedHighlightingData(myEditor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos, myFile);
-
+    data.init();
     collectAndCheckHighlightings(data, duration);
   }
 
@@ -1350,13 +1366,13 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     for (Iterator<HighlightInfo> it = infos.iterator(); it.hasNext();) {
       final HighlightInfo info = it.next();
       if (prevInfo != null &&
-          info.getSeverity() == HighlightSeverity.INFORMATION &&
+          info.getSeverity() == HighlightInfoType.SYMBOL_TYPE_SEVERITY &&
           info.description == null &&
           info.startOffset == prevInfo.startOffset &&
           info.endOffset == prevInfo.endOffset) {
         it.remove();
       }
-      prevInfo = info.getSeverity() == HighlightInfoType.INJECTED_FRAGMENT_SEVERITY ? info : null;
+      prevInfo = info.type == HighlightInfoType.INJECTED_LANGUAGE_FRAGMENT ? info : null;
     }
   }
 
@@ -1364,13 +1380,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @NotNull
   public List<HighlightInfo> doHighlighting() {
     final Project project = getProject();
-    new WriteCommandAction.Simple(project) {
-      @Override
-      protected void run() throws Throwable {
-        PsiDocumentManager.getInstance(project).commitAllDocuments();
-      }
-    }.execute().throwException();
-
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     return
       ApplicationManager.getApplication().runReadAction(new Computable<List<HighlightInfo>>() {
@@ -1430,7 +1440,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return myFile;
   }
 
-  public static List<IntentionAction> getAvailableIntentions(final Editor editor, final PsiFile file) {
+  public static List<IntentionAction> getAvailableIntentions(@NotNull final Editor editor, @NotNull final PsiFile file) {
     return ApplicationManager.getApplication().runReadAction(new Computable<List<IntentionAction>>() {
       @Override
       public List<IntentionAction> compute() {
@@ -1439,7 +1449,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     });
   }
 
-  private static List<IntentionAction> doGetAvailableIntentions(Editor editor, PsiFile file) {
+  private static List<IntentionAction> doGetAvailableIntentions(@NotNull Editor editor, @NotNull PsiFile file) {
     ShowIntentionsPass.IntentionsInfo intentions = new ShowIntentionsPass.IntentionsInfo();
     ShowIntentionsPass.getActionsToShow(editor, file, intentions, -1);
     List<HighlightInfo.IntentionActionDescriptor> descriptors = new ArrayList<HighlightInfo.IntentionActionDescriptor>();

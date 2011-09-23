@@ -30,7 +30,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierL
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrMultiTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
@@ -43,7 +42,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrVariableDeclarati
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrBlockImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrClosableBlockImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrOpenBlockImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrMultitypeParameterImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.*;
@@ -230,7 +228,8 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
 
   // Arguments
   GroovyElementType ARGUMENTS = new GroovyElementType("Arguments");
-  GroovyElementType ARGUMENT = new GroovyElementType("Compound argument");
+  GroovyElementType NAMED_ARGUMENT = new GroovyElementType("Compound argument");
+  GroovyElementType SPREAD_ARGUMENT = new GroovyElementType("Spread argument");
   GroovyElementType ARGUMENT_LABEL = new GroovyElementType("Argument label");
   // Simple expression
   GroovyElementType PATH_PROPERTY = new GroovyElementType("Path name selector");
@@ -248,6 +247,8 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
   GroovyElementType ARRAY_TYPE = new GroovyElementType("Array type");
 
   GroovyElementType BUILT_IN_TYPE = new GroovyElementType("Built in type");
+  
+  GroovyElementType DISJUNCTION_TYPE_ELEMENT = new GroovyElementType("Disjunction type element");
 
   // GStrings
   GroovyElementType GSTRING = new GroovyElementType("GString");
@@ -366,35 +367,6 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
     }
   };
 
-  GrStubElementType<GrMultiTypeParameterStub, GrMultiTypeParameter> MULTI_TYPE_PARAMETER = new GrStubElementType<GrMultiTypeParameterStub, GrMultiTypeParameter>("multi type parameter") {
-    @Override
-    public GrMultiTypeParameter createPsi(GrMultiTypeParameterStub stub) {
-      return new GrMultitypeParameterImpl(stub);
-    }
-
-    @Override
-    public GrMultiTypeParameterStub createStub(GrMultiTypeParameter psi, StubElement parentStub) {
-      return new GrMultiTypeParameterStub(parentStub, StringRef.fromString(psi.getName()), GrStubUtils.getAnnotationNames(psi), GrStubUtils.getMultiTypes(
-        psi));
-    }
-
-    @Override
-    public void serialize(GrMultiTypeParameterStub stub, StubOutputStream dataStream) throws IOException {
-      dataStream.writeName(stub.getName());
-      GrStubUtils.writeStringArray(dataStream, stub.getAnnotations());
-      GrStubUtils.writeStringArray(dataStream, stub.getTypes());
-    }
-
-    @Override
-    public GrMultiTypeParameterStub deserialize(StubInputStream dataStream, StubElement parentStub) throws IOException {
-      final StringRef name = dataStream.readName();
-      final String[] annotations = GrStubUtils.readStringArray(dataStream);
-      final String[] types = GrStubUtils.readStringArray(dataStream);
-      return new GrMultiTypeParameterStub(parentStub, name, annotations, types);
-    }
-  };
-
-
   EmptyStubElementType<GrTypeDefinitionBody> CLASS_BODY = new EmptyStubElementType<GrTypeDefinitionBody>("class block", GroovyFileType.GROOVY_LANGUAGE) {
       @Override
       public GrTypeDefinitionBody createPsi(EmptyStub stub) {
@@ -467,6 +439,6 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
 
   TokenSet METHOD_DEFS = TokenSet.create(METHOD_DEFINITION, CONSTRUCTOR_DEFINITION, ANNOTATION_METHOD);
   TokenSet VARIABLES = TokenSet.create(VARIABLE, FIELD);
-  TokenSet TYPE_ELEMENTS = TokenSet.create(CLASS_TYPE_ELEMENT, ARRAY_TYPE, BUILT_IN_TYPE, TYPE_ARGUMENT);
+  TokenSet TYPE_ELEMENTS = TokenSet.create(CLASS_TYPE_ELEMENT, ARRAY_TYPE, BUILT_IN_TYPE, TYPE_ARGUMENT, DISJUNCTION_TYPE_ELEMENT);
 
 }

@@ -114,7 +114,7 @@ public final class KeyChooserDialog extends DialogWrapper{
     final Dimension size = DimensionService.getInstance().getSize(getDimensionServiceKey(), projectGuess);
     final FontMetrics metrics = myTable.getFontMetrics(myTable.getFont());
     int minWidth = 200;
-    int maxWidth = size.width / 2;
+    int maxWidth = size != null ? size.width / 2 : Integer.MAX_VALUE;
     if (minWidth > maxWidth) {
       minWidth = maxWidth;
     }
@@ -187,6 +187,7 @@ public final class KeyChooserDialog extends DialogWrapper{
     myTable.scrollRectToVisible(myTable.getCellRect(index, 0, true));
   }
 
+  @NotNull
   protected String getDimensionServiceKey() {
     return getClass().getName();
   }

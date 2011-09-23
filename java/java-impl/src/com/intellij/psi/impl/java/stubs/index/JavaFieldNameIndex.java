@@ -29,7 +29,6 @@ import com.intellij.psi.stubs.StubIndexKey;
 import java.util.Collection;
 
 public class JavaFieldNameIndex extends StringStubIndexExtension<PsiField> {
-  public static final StubIndexKey<String,PsiField> KEY = StubIndexKey.createIndexKey("java.field.name");
 
   private static final JavaFieldNameIndex ourInstance = new JavaFieldNameIndex();
   public static JavaFieldNameIndex getInstance() {
@@ -37,7 +36,7 @@ public class JavaFieldNameIndex extends StringStubIndexExtension<PsiField> {
   }
 
   public StubIndexKey<String, PsiField> getKey() {
-    return KEY;
+    return JavaStubIndexKeys.FIELDS;
   }
 
   public Collection<PsiField> get(final String s, final Project project, final GlobalSearchScope scope) {

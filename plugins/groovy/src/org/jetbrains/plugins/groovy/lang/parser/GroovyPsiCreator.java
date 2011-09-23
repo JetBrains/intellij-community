@@ -34,6 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments.GrArgumentLabelImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments.GrArgumentListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments.GrNamedArgumentImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments.GrSpreadArgumentImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.branch.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrCaseLabelImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrCaseSectionImpl;
@@ -56,7 +57,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.types.G
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.types.GrInstanceofExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.types.GrSafeCastExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.types.GrTypeCastExpressionImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrMultitypeParameterImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.*;
@@ -176,7 +176,6 @@ public class GroovyPsiCreator implements GroovyElementTypes {
     //parameters
     if (elem == PARAMETERS_LIST) return new GrParameterListImpl(node);
     if (elem == PARAMETER) return new GrParameterImpl(node);
-    if (elem == MULTI_TYPE_PARAMETER) return new GrMultitypeParameterImpl(node);
 
     //type parameters
     if (elem == TYPE_ARGUMENT) return new GrWildcardTypeArgumentImpl(node);
@@ -227,6 +226,7 @@ public class GroovyPsiCreator implements GroovyElementTypes {
     if (elem == BUILT_IN_TYPE_EXPRESSION) return new GrBuiltinTypeClassExpressionImpl(node);
     if (elem == ARRAY_TYPE) return new GrArrayTypeElementImpl(node);
     if (elem == BUILT_IN_TYPE) return new GrBuiltInTypeElementImpl(node);
+    if (elem == DISJUNCTION_TYPE_ELEMENT) return new GrDisjunctionTypeElementImpl(node);
     if (elem == GSTRING) return new GrStringImpl(node);
     if (elem == REGEX) return new GrRegexImpl(node);
     if (elem == GSTRING_INJECTION) return new GrStringInjectionImpl(node);
@@ -246,7 +246,8 @@ public class GroovyPsiCreator implements GroovyElementTypes {
 
     // Arguments
     if (elem == ARGUMENTS) return new GrArgumentListImpl(node);
-    if (elem == ARGUMENT) return new GrNamedArgumentImpl(node);
+    if (elem == NAMED_ARGUMENT) return new GrNamedArgumentImpl(node);
+    if (elem == SPREAD_ARGUMENT) return new GrSpreadArgumentImpl(node);
     if (elem == ARGUMENT_LABEL) return new GrArgumentLabelImpl(node);
 
     if (elem == BALANCED_BRACKETS) return new GroovyPsiElementImpl(node){};

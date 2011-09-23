@@ -330,7 +330,6 @@ public class TemplateListPanel extends JPanel implements Disposable {
     JPanel panel = new JPanel(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
     gbConstraints.weighty = 0;
-    gbConstraints.insets = new Insets(4, 0, 0, 0);
     gbConstraints.weightx = 0;
     gbConstraints.gridy = 0;
 //    panel.add(createLabel("By default expand with       "), gbConstraints);
@@ -346,7 +345,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
     gbConstraints.gridx = 2;
     gbConstraints.weightx = 1;
     panel.add(new JPanel(), gbConstraints);
-    panel.setBorder(new EmptyBorder(5, 0, 10, 0));
+    panel.setBorder(new EmptyBorder(0, 0, 10, 0));
     return panel;
   }
 

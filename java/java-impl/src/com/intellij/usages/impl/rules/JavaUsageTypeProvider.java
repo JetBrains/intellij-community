@@ -15,10 +15,10 @@
  */
 package com.intellij.usages.impl.rules;
 
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Processor;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -91,7 +91,7 @@ public class JavaUsageTypeProvider implements UsageTypeProvider {
     }
 
     for (PsiParameter parameter : parameters) {
-      if (PsiUtil.isAssigned(parameter)) return false;
+      if (HighlightControlFlowUtil.isAssigned(parameter)) return false;
     }
 
     return true;

@@ -100,7 +100,7 @@ public class PullAsAbstractUpFix extends LocalQuickFixAndIntentionActionOnPsiEle
                                           "Choose super class",
                                           new PsiElementProcessor<PsiClass>() {
                                             @Override
-                                            public boolean execute(PsiClass aClass) {
+                                            public boolean execute(@NotNull PsiClass aClass) {
                                               pullUp(method, containingClass, aClass);
                                               return false;
                                             }

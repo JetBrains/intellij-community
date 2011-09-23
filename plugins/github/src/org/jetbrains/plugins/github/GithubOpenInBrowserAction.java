@@ -24,12 +24,12 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitBranch;
 import git4idea.GitRemote;
 import git4idea.GitUtil;
+import org.jetbrains.plugins.github.ui.GithubLoginDialog;
 
 import javax.swing.*;
 
@@ -41,7 +41,7 @@ import javax.swing.*;
  */
 public class GithubOpenInBrowserAction extends DumbAwareAction {
   public static final Icon ICON = IconLoader.getIcon("/icons/github.png");
-  private static final String CANNOT_OPEN_IN_BROWSER = "Cannot open in browser";
+  public static final String CANNOT_OPEN_IN_BROWSER = "Cannot open in browser";
   private static final Logger LOG = Logger.getInstance(GithubOpenInBrowserAction.class.getName());
 
   protected GithubOpenInBrowserAction() {
@@ -54,8 +54,7 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
     try {
       final Project project = e.getData(PlatformDataKeys.PROJECT);
       final VirtualFile virtualFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
-      if (StringUtil.isEmptyOrSpaces(GithubSettings.getInstance().getLogin()) ||
-          project == null || project.isDefault() || virtualFile == null) {
+      if (project == null || project.isDefault() || virtualFile == null) {
         e.getPresentation().setVisible(false);
         e.getPresentation().setEnabled(false);
         return;
@@ -73,9 +72,12 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
   @Override
   public void actionPerformed(final AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
-    if (!GithubUtil.checkCredentials(project)){
-      Messages.showErrorDialog(project, "Cannot login with GitHub credentials. Please configure them in File | Settings | GitHub", CANNOT_OPEN_IN_BROWSER);
-      return;
+    while (!GithubUtil.checkCredentials(project)) {
+      final GithubLoginDialog dialog = new GithubLoginDialog(project);
+      dialog.show();
+      if (!dialog.isOK()){
+        return;
+      }
     }
 
     final VirtualFile root = project.getBaseDir();
@@ -141,7 +143,7 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
       }
     }
     catch (VcsException e1) {
-      Messages.showErrorDialog(project, "Error occured while inspecting branches: " + e1, CANNOT_OPEN_IN_BROWSER);
+      Messages.showErrorDialog(project, "Error occurred while inspecting branches: " + e1, CANNOT_OPEN_IN_BROWSER);
       return;
     }
     String branch = tracked.getName();

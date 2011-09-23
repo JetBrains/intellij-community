@@ -16,7 +16,6 @@
 package com.intellij.testFramework;
 
 import com.intellij.mock.MockApplicationEx;
-import com.intellij.mock.MockProject;
 import com.intellij.mock.MockProjectEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -48,8 +47,8 @@ public abstract class PlatformLiteFixture extends UsefulTestCase {
   }
 
   public void initApplication() {
-    if (ApplicationManager.getApplication() instanceof MockApplicationEx) return;
-    ApplicationManagerEx.setApplication(disposeOnTearDown(new MockApplicationEx()), getTestRootDisposable());
+    //if (ApplicationManager.getApplication() instanceof MockApplicationEx) return;
+    ApplicationManagerEx.setApplication(new MockApplicationEx(getTestRootDisposable()), getTestRootDisposable());
     getApplication().registerService(EncodingManager.class, EncodingManagerImpl.class);
   }
 

@@ -120,6 +120,8 @@ public class ParameterDeclaration implements GroovyElementTypes {
     // Parse optional modifier(s)
     parseOptionalModifier(builder, parser);
 
+    final PsiBuilder.Marker disjunctionMarker = builder.mark();
+
     PsiBuilder.Marker rb = builder.mark();
 
     int typeCount = 0;
@@ -131,31 +133,42 @@ public class ParameterDeclaration implements GroovyElementTypes {
       if (result == ReferenceElement.ReferenceElementResult.fail && ParserUtils.lookAhead(builder, mBOR)) {
         builder.error(GroovyBundle.message("type.expected"));
       }
+      else {
+        if (builder.getTokenType() == mTRIPLE_DOT) {
+          builder.error(GroovyBundle.message("triple.is.not.expected.here"));
+          builder.advanceLexer();
+        }
+      }
     }
     while (ParserUtils.getToken(builder, mBOR));
 
-    if (mIDENT.equals(builder.getTokenType()) || (mTRIPLE_DOT.equals(builder.getTokenType()))) {
+
+
+    if (mIDENT == builder.getTokenType()) {
       rb.drop();
     }
-    else {
+    else if (typeCount == 1) {
       rb.rollbackTo();
       typeCount--;
-      if (typeCount > 0) {
-        builder.error(GroovyBundle.message("type.expected"));
-      }
+    }
+    else {
+      builder.error(GroovyBundle.message("identifier.expected"));
+      rb.drop();
+    }
+
+    if (typeCount > 1) {
+      disjunctionMarker.done(DISJUNCTION_TYPE_ELEMENT);
+    }
+    else {
+      disjunctionMarker.drop();
     }
 
     if (ParserUtils.getToken(builder, mIDENT)) {
-      if (typeCount > 1) {
-        pdMarker.done(MULTI_TYPE_PARAMETER);
-      }
-      else {
-        pdMarker.done(PARAMETER);
-      }
+      pdMarker.done(PARAMETER);
       return true;
     }
     else {
-      pdMarker.rollbackTo();
+      pdMarker.drop();
       return false;
     }
   }

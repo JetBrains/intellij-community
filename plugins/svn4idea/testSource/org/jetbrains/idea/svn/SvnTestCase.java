@@ -100,7 +100,7 @@ public abstract class SvnTestCase extends AbstractVcsTestCase {
           final SvnVcs vcs = SvnVcs.getInstance(myProject);
           ((StartupManagerImpl) StartupManager.getInstance(myProject)).runPostStartupActivities();
           //vcs.postStartup();
-          ((SvnFileUrlMappingImpl) vcs.getSvnFileUrlMapping()).realRefresh(myRefreshCopiesStub);
+          ((SvnFileUrlMappingImpl) vcs.getSvnFileUrlMapping()).realRefresh();
 
         }
         catch (Exception e) {

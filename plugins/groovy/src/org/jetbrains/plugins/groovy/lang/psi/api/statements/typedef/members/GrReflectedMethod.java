@@ -15,13 +15,14 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members;
 
+import com.intellij.psi.PsiMirrorElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 
 /**
  * @author Max Medvedev
  */
-public interface GrReflectedMethod extends GrMethod {
+public interface GrReflectedMethod extends GrMethod, PsiMirrorElement {
   GrReflectedMethod[] EMPTY_ARRAY = new GrReflectedMethod[0];
 
   @NotNull

@@ -19,7 +19,7 @@ import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
@@ -620,7 +620,7 @@ public class RefactoringUtil {
 
   public static boolean isMethodUsage(PsiElement element) {
     if (element instanceof PsiEnumConstant) {
-      return StdLanguages.JAVA.equals(element.getLanguage());
+      return JavaLanguage.INSTANCE.equals(element.getLanguage());
     }
     if (!(element instanceof PsiJavaCodeReferenceElement)) return false;
     PsiElement parent = element.getParent();
@@ -897,34 +897,6 @@ public class RefactoringUtil {
         }
       }
     }
-  }
-
-  public static void bindToElementViaStaticImport(final PsiClass qualifierClass, final String staticName, final PsiImportList importList)
-    throws IncorrectOperationException {
-    final String qualifiedName  = qualifierClass.getQualifiedName();
-    final List<PsiJavaCodeReferenceElement> refs = getImportsFromClass(importList, qualifiedName);
-    if (refs.size() < CodeStyleSettingsManager.getSettings(qualifierClass.getProject()).NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND) {
-      importList.add(JavaPsiFacade.getInstance(qualifierClass.getProject()).getElementFactory().createImportStaticStatement(qualifierClass, staticName));
-    } else {
-      for (PsiJavaCodeReferenceElement ref : refs) {
-        final PsiImportStaticStatement importStatement = PsiTreeUtil.getParentOfType(ref, PsiImportStaticStatement.class);
-        if (importStatement != null) {
-          importStatement.delete();
-        }
-      }
-      importList.add(JavaPsiFacade.getInstance(qualifierClass.getProject()).getElementFactory().createImportStaticStatement(qualifierClass, "*"));
-    }
-  }
-
-  public static List<PsiJavaCodeReferenceElement> getImportsFromClass(@NotNull PsiImportList importList, String className){
-    final List<PsiJavaCodeReferenceElement> array = new ArrayList<PsiJavaCodeReferenceElement>();
-    for (PsiImportStaticStatement staticStatement : importList.getImportStaticStatements()) {
-      final PsiClass psiClass = staticStatement.resolveTargetClass();
-      if (psiClass != null && Comparing.strEqual(psiClass.getQualifiedName(), className)) {
-        array.add(staticStatement.getImportReference());
-      }
-    }
-    return array;
   }
 
   @Nullable

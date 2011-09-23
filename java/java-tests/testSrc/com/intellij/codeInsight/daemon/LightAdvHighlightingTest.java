@@ -265,7 +265,10 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
 
   public void testNamesHighlighting() throws Exception {
     LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
-    doTest(false, true);
+    testFile(BASE_PATH + "/" + getTestName(false) + ".java").checkSymbolNames().test();
+  }
+  public void testMultiFieldDeclNames() throws Exception {
+    testFile(BASE_PATH + "/" + getTestName(false) + ".java").checkSymbolNames().test();
   }
 
   public static class MyAnnotator implements Annotator {

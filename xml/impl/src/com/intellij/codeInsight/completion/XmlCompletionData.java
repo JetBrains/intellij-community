@@ -35,6 +35,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -225,7 +226,7 @@ public class XmlCompletionData extends CompletionData {
         final boolean acceptSystemEntities = containingFile.getFileType() == StdFileTypes.XML;
 
         final PsiElementProcessor processor = new PsiElementProcessor() {
-          public boolean execute(final PsiElement element) {
+          public boolean execute(@NotNull final PsiElement element) {
             if (element instanceof XmlEntityDecl) {
               final XmlEntityDecl xmlEntityDecl = (XmlEntityDecl)element;
               if (xmlEntityDecl.isInternalReference() || acceptSystemEntities) {

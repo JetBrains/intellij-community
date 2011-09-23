@@ -61,7 +61,7 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
       return Extensions.getExtensions(FileStatusProvider.EP_NAME, myProject);
     }
   };
-  
+
   private static class FileStatusNull implements FileStatus {
     private static final FileStatus INSTANCE = new FileStatusNull();
 
@@ -92,18 +92,23 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
     myFileStatusProvider = fileStatusProvider;
   }
 
-  public FileStatus calcStatus(@NotNull VirtualFile virtualFile) {
+  public FileStatus calcStatus(@NotNull final VirtualFile virtualFile) {
     for (FileStatusProvider extension : myExtensions.getValue()) {
-      FileStatus status = extension.getFileStatus(virtualFile);
+      final FileStatus status = extension.getFileStatus(virtualFile);
       if (status != null) {
         return status;
       }
     }
+
     if (virtualFile.isInLocalFileSystem() && myFileStatusProvider != null) {
       return myFileStatusProvider.getFileStatus(virtualFile);
-    } else {
-      return FileStatus.NOT_CHANGED;
     }
+
+    return getDefaultStatus(virtualFile);
+  }
+
+  public static FileStatus getDefaultStatus(@NotNull final VirtualFile file) {
+    return file.isSymLink() || file.isFile() || file.isDirectory() ? FileStatus.NOT_CHANGED : FileStatus.IGNORED;
   }
 
   public void projectClosed() {

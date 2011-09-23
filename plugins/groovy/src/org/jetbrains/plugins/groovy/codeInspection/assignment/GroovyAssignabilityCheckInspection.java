@@ -16,6 +16,7 @@
 
 package org.jetbrains.plugins.groovy.codeInspection.assignment;
 
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
@@ -244,7 +245,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
 
     private void checkConstructorCall(GrConstructorCall constructorCall, GroovyPsiElement refElement) {
       final GrArgumentList argList = constructorCall.getArgumentList();
-
+      if (checkCannotInferArgumentTypes(refElement)) return;
       final GroovyResolveResult constructorResolveResult = constructorCall.resolveConstructorGenerics();
       final PsiElement constructor = constructorResolveResult.getElement();
 
@@ -261,7 +262,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
             }
           }
 
-          registerError(getElementToHighlight(refElement, argList), GroovyBundle.message("method.call.is.ambiguous"));
+          registerError(getElementToHighlight(refElement, argList), GroovyBundle.message("constructor.call.is.ambiguous"));
         }
         else {
           final GrExpression[] expressionArguments = constructorCall.getExpressionArguments();
@@ -269,7 +270,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
           if (expressionArguments.length + closureArguments.length > 0) {
             final GroovyResolveResult[] resolveResults = constructorCall.multiResolveClass();
             if (resolveResults.length == 1) {
-              final PsiElement element = resolveResults[1].getElement();
+              final PsiElement element = resolveResults[0].getElement();
               if (element instanceof PsiClass) {
                 registerError(getElementToHighlight(refElement, argList),
                               GroovyBundle.message("cannot.apply.default.constructor", ((PsiClass)element).getName()));
@@ -386,6 +387,8 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
       }
 
       if (parent instanceof GrCall) {
+        if (checkCannotInferArgumentTypes(referenceExpression)) return;
+
         final PsiType type = referenceExpression.getType();
         if (resolved != null ) {
           if (resolved instanceof PsiMethod && !resolveResult.isInvokedOnProperty()) {
@@ -411,6 +414,14 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
                         GroovyBundle.message("method.call.is.ambiguous"));
         }
       }
+    }
+
+    private boolean checkCannotInferArgumentTypes(PsiElement referenceExpression) {
+      if (PsiUtil.getArgumentTypes(referenceExpression, true) != null) return false;
+
+      registerError(getElementToHighlight(referenceExpression, PsiUtil.getArgumentsList(referenceExpression)),
+                    GroovyBundle.message("cannot.infer.argument.types"), LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.WEAK_WARNING);
+      return true;
     }
 
     @Override

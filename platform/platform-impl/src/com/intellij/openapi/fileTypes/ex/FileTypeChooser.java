@@ -19,11 +19,16 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.impl.FileTypeRenderer;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ListScrollingUtil;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -33,17 +38,19 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Deque;
+import java.util.LinkedList;
 
 public class FileTypeChooser extends DialogWrapper {
   private JList myList;
   private JLabel myTitleLabel;
-  private JTextField myPattern;
+  private ComboBox myPattern;
   private JPanel myPanel;
   private JRadioButton myOpenInIdea;
   private JRadioButton myOpenAsNative;
   private final String myFileName;
 
-  private FileTypeChooser(String pattern, String fileName) {
+  private FileTypeChooser(@NotNull String[] patterns, @NotNull String fileName) {
     super(true);
     myFileName = fileName;
 
@@ -69,7 +76,7 @@ public class FileTypeChooser extends DialogWrapper {
       }
     }
     myList.setModel(model);
-    myPattern.setText(pattern);
+    myPattern.setModel(new CollectionComboBoxModel(ContainerUtil.map(patterns, Function.ID), patterns[0]));
 
     setTitle(FileTypesBundle.message("filetype.chooser.title"));
     init();
@@ -146,8 +153,8 @@ public class FileTypeChooser extends DialogWrapper {
   }
 
   @Nullable
-  public static FileType associateFileType(String fileName) {
-    final FileTypeChooser chooser = new FileTypeChooser(suggestPatternText(fileName), fileName);
+  public static FileType associateFileType(@NotNull final String fileName) {
+    final FileTypeChooser chooser = new FileTypeChooser(suggestPatterns(fileName), fileName);
     chooser.show();
     if (!chooser.isOK()) return null;
     final FileType type = chooser.getSelectedType();
@@ -155,24 +162,25 @@ public class FileTypeChooser extends DialogWrapper {
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        FileTypeManagerEx.getInstanceEx().associatePattern(type, chooser.myPattern.getText());
+        FileTypeManagerEx.getInstanceEx().associatePattern(type, (String)chooser.myPattern.getSelectedItem());
       }
     });
 
     return type;
   }
 
-  private static String suggestPatternText(final String fileName) {
-    String pattern = FileUtil.getExtension(fileName);
-
-    final String finalPattern;
-    if (StringUtil.isEmpty(pattern)) {
-      finalPattern = fileName;
+  @NotNull
+  static String[] suggestPatterns(@NotNull final String fileName) {
+    final Deque<String> patterns = new LinkedList<String>();
+    int i = -1;
+    patterns.addFirst(fileName);
+    while ((i = fileName.indexOf('.', i + 1)) > 0) {
+      final String extension = fileName.substring(i);
+      if (!StringUtil.isEmpty(extension)) {
+        patterns.addFirst("*" + extension);
+      }
     }
-    else {
-      finalPattern = "*." + pattern;
-    }
-    return finalPattern;
+    return ArrayUtil.toStringArray(patterns);
   }
 
   @Override

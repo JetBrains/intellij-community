@@ -26,6 +26,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -79,7 +80,7 @@ public class GotoTestOrCodeHandler extends GotoTargetHandler {
 
   @NotNull
   public static PsiElement getSelectedElement(Editor editor, PsiFile file) {
-    return PsiUtilBase.getElementAtOffset(file, editor.getCaretModel().getOffset());
+    return PsiUtilCore.getElementAtOffset(file, editor.getCaretModel().getOffset());
   }
 
   @Override

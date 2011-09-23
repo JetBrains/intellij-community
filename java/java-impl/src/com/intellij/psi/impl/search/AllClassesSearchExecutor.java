@@ -54,10 +54,7 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
   }
 
   private static boolean processAllClassesInGlobalScope(final GlobalSearchScope scope, final Processor<PsiClass> processor, AllClassesSearch.SearchParameters parameters) {
-    final PsiManager manager = PsiManager.getInstance(parameters.getProject());
-
-    final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
-    final PsiShortNamesCache cache = facade.getShortNamesCache();
+    final PsiShortNamesCache cache = PsiShortNamesCache.getInstance(parameters.getProject());
 
     final String[] names = ApplicationManager.getApplication().runReadAction(new Computable<String[]>() {
       public String[] compute() {

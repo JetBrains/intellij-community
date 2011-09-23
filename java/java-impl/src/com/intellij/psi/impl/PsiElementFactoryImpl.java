@@ -21,8 +21,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettingsFacade;
 import com.intellij.psi.impl.light.*;
 import com.intellij.psi.impl.source.*;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
@@ -247,8 +247,8 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
     PsiParameter parameter = createParameterFromText(text, null);
     final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(myManager.getProject());
     PsiUtil.setModifierProperty(parameter, PsiModifier.FINAL,
-                                CodeStyleSettingsManager.getSettings(myManager.getProject()).GENERATE_FINAL_PARAMETERS);
-    markGenerated(parameter);
+                                JavaCodeStyleSettingsFacade.getInstance(myManager.getProject()).isGenerateFinalParameters());
+    GeneratedMarkerVisitor.markGenerated(parameter);
     parameter = (PsiParameter)JavaCodeStyleManager.getInstance(myManager.getProject()).shortenClassReferences(parameter);
     return (PsiParameter)codeStyleManager.reformat(parameter);
   }
@@ -568,11 +568,11 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
     final PsiVariable variable = (PsiVariable)statement.getDeclaredElements()[0];
     replace(variable.getTypeElement(), createTypeElement(type), text);
     PsiUtil.setModifierProperty(variable, PsiModifier.FINAL,
-                                CodeStyleSettingsManager.getSettings(myManager.getProject()).GENERATE_FINAL_LOCALS);
+                                JavaCodeStyleSettingsFacade.getInstance(myManager.getProject()).isGenerateFinalLocals());
     if (initializer != null) {
       replace(variable.getInitializer(), initializer, text);
     }
-    markGenerated(statement);
+    GeneratedMarkerVisitor.markGenerated(statement);
     return statement;
   }
 
@@ -635,7 +635,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   @Override
   public PsiAnnotation createAnnotationFromText(@NotNull final String annotationText, @Nullable final PsiElement context) throws IncorrectOperationException {
     final PsiAnnotation psiAnnotation = super.createAnnotationFromText(annotationText, context);
-    markGenerated(psiAnnotation);
+    GeneratedMarkerVisitor.markGenerated(psiAnnotation);
     return psiAnnotation;
   }
 
@@ -643,7 +643,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   @Override
   public PsiCodeBlock createCodeBlockFromText(@NotNull final String text, @Nullable final PsiElement context) throws IncorrectOperationException {
     final PsiCodeBlock psiCodeBlock = super.createCodeBlockFromText(text, context);
-    markGenerated(psiCodeBlock);
+    GeneratedMarkerVisitor.markGenerated(psiCodeBlock);
     return psiCodeBlock;
   }
 
@@ -651,7 +651,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   @Override
   public PsiEnumConstant createEnumConstantFromText(@NotNull final String text, @Nullable final PsiElement context) throws IncorrectOperationException {
     final PsiEnumConstant enumConstant = super.createEnumConstantFromText(text, context);
-    markGenerated(enumConstant);
+    GeneratedMarkerVisitor.markGenerated(enumConstant);
     return enumConstant;
   }
 
@@ -659,7 +659,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   @Override
   public PsiExpression createExpressionFromText(@NotNull final String text, @Nullable final PsiElement context) throws IncorrectOperationException {
     final PsiExpression expression = super.createExpressionFromText(text, context);
-    markGenerated(expression);
+    GeneratedMarkerVisitor.markGenerated(expression);
     return expression;
   }
 
@@ -667,7 +667,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   @Override
   public PsiField createFieldFromText(@NotNull final String text, @Nullable final PsiElement context) throws IncorrectOperationException {
     final PsiField psiField = super.createFieldFromText(text, context);
-    markGenerated(psiField);
+    GeneratedMarkerVisitor.markGenerated(psiField);
     return psiField;
   }
 
@@ -675,7 +675,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   @Override
   public PsiParameter createParameterFromText(@NotNull final String text, @Nullable final PsiElement context) throws IncorrectOperationException {
     final PsiParameter parameter = super.createParameterFromText(text, context);
-    markGenerated(parameter);
+    GeneratedMarkerVisitor.markGenerated(parameter);
     return parameter;
   }
 
@@ -683,7 +683,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   @Override
   public PsiStatement createStatementFromText(@NotNull final String text, @Nullable final PsiElement context) throws IncorrectOperationException {
     final PsiStatement statement = super.createStatementFromText(text, context);
-    markGenerated(statement);
+    GeneratedMarkerVisitor.markGenerated(statement);
     return statement;
   }
 
@@ -698,16 +698,8 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   public PsiTypeParameter createTypeParameterFromText(@NotNull final String text,
                                                       final PsiElement context) throws IncorrectOperationException {
     final PsiTypeParameter typeParameter = super.createTypeParameterFromText(text, context);
-    markGenerated(typeParameter);
+    GeneratedMarkerVisitor.markGenerated(typeParameter);
     return typeParameter;
-  }
-
-  @NotNull
-  @Override
-  public PsiElement createWhiteSpaceFromText(@NotNull @NonNls final String text) throws IncorrectOperationException {
-    final PsiElement whitespace = super.createWhiteSpaceFromText(text);
-    markGenerated(whitespace);
-    return whitespace;
   }
 
   @NotNull
@@ -716,7 +708,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
                                         final PsiElement context,
                                         final LanguageLevel level) throws IncorrectOperationException {
     final PsiMethod method = super.createMethodFromText(text, context, level);
-    markGenerated(method);
+    GeneratedMarkerVisitor.markGenerated(method);
     return method;
   }
 
@@ -726,12 +718,8 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
                                             @NotNull final String exceptionName,
                                             final PsiElement context) throws IncorrectOperationException {
     final PsiCatchSection psiCatchSection = super.createCatchSection(exceptionType, exceptionName, context);
-    markGenerated(psiCatchSection);
+    GeneratedMarkerVisitor.markGenerated(psiCatchSection);
     return psiCatchSection;
-  }
-
-  private static void markGenerated(final PsiElement element) {
-    ((TreeElement)element.getNode()).acceptTree(new GeneratedMarkerVisitor());
   }
 
   private static PsiImportStatementBase extractImport(final PsiJavaFile aFile, final boolean isStatic) {

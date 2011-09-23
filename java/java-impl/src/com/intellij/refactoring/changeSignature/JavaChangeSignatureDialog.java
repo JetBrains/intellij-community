@@ -18,6 +18,8 @@ package com.intellij.refactoring.changeSignature;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -197,7 +199,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
   protected JComponent getRowPresentation(ParameterTableModelItemBase<ParameterInfoImpl> item, boolean selected, final boolean focused) {
     final JPanel panel = new JPanel(new BorderLayout());
     final String typeText = item.typeCodeFragment.getText();
-    final String separator = " ";StringUtil.repeatSymbol(' ', getTypesMaxLength() - typeText.length() + 1);
+    final String separator = StringUtil.repeatSymbol(' ', getTypesMaxLength() - typeText.length() + 1);
     String text = typeText + separator + item.parameter.getName();
     final String defaultValue = item.defaultValueCodeFragment.getText();
     if (StringUtil.isNotEmpty(defaultValue)) {
@@ -215,9 +217,10 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
         return false;
       }
     };
-    //We don't need this editor's font
-    //final Font font = EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN);
-    //field.setFont(font);
+
+    Font font = EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN);
+    font = new Font(font.getFontName(), font.getStyle(), 12);
+    field.setFont(font);
 
     if (selected && focused) {
       panel.setBackground(UIUtil.getTableSelectionBackground());

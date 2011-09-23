@@ -120,6 +120,7 @@ public abstract class FrameworkDetectionStep extends AbstractStepWithProgress<Li
     else {
       myFrameworksDetectedLabel.setText(ProjectBundle.message("label.text.the.following.frameworks.are.detected"));
     }
+    myFrameworksPanel.setVisible(!result.isEmpty());
   }
 
   public Icon getIcon() {

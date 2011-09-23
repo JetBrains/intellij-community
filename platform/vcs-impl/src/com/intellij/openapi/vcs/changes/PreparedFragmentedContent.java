@@ -24,7 +24,6 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.util.BeforeAfter;
 
@@ -265,9 +264,9 @@ public class PreparedFragmentedContent {
 
   private void setTodoHighlighting(final Document oldDocument, final Document document) {
     final List<Pair<TextRange,TextAttributes>> beforeTodoRanges = new TodoForRanges(myProject, myFileName, oldDocument.getText(), true,
-                                                getBeforeFragments()).execute();
+                                                getBeforeFragments(), myFileType).execute();
     final List<Pair<TextRange, TextAttributes>> afterTodoRanges = new TodoForRanges(myProject, myFileName, document.getText(), false,
-                                                getAfterFragments()).execute();
+                                                getAfterFragments(), myFileType).execute();
     setBeforeTodoRanges(beforeTodoRanges);
     setAfterTodoRanges(afterTodoRanges);
   }

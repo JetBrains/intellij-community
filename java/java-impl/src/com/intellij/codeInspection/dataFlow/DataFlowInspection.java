@@ -74,7 +74,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
 
 
       @Override public void visitField(PsiField field) {
-        if (isNullLiteralExpression(field.getInitializer()) && AnnotationUtil.isNotNull(field)) {
+        if (isNullLiteralExpression(field.getInitializer()) && NullableNotNullManager.isNotNull(field)) {
           holder.registerProblem(field.getInitializer(), InspectionsBundle.message("dataflow.message.initializing.field.with.null"));
         }
       }

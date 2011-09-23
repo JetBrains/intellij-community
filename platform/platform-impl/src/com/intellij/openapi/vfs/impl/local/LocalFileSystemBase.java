@@ -119,14 +119,25 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     return path.replace(File.separatorChar, '/');
   }
 
-  @SuppressWarnings({"NonConstantStringShouldBeStringBuffer"})
-  protected static File convertToIOFile(VirtualFile file) {
+  @NotNull
+  protected static File convertToIOFile(@NotNull final VirtualFile file) {
     String path = file.getPath();
     if (path.endsWith(":") && path.length() == 2 && (SystemInfo.isWindows || SystemInfo.isOS2)) {
       path += "/"; // Make 'c:' resolve to a root directory for drive c:, not the current directory on that drive
     }
 
     return new File(path);
+  }
+
+  @NotNull
+  private static File convertToIOFileAndCheck(@NotNull final VirtualFile file) throws FileNotFoundException {
+    final File ioFile = convertToIOFile(file);
+
+    if (ioFile.exists() && !ioFile.isFile()) {
+      throw new FileNotFoundException("Not a file: " + ioFile);
+    }
+
+    return ioFile;
   }
 
   public boolean exists(@NotNull final VirtualFile fileOrDirectory) {
@@ -142,10 +153,17 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     return convertToIOFile(file).lastModified();
   }
 
+  @Override
+  public boolean isFile(@NotNull final VirtualFile file) {
+    return convertToIOFile(file).isFile();
+  }
+
+  @Override
   public boolean isDirectory(@NotNull final VirtualFile file) {
     return convertToIOFile(file).isDirectory();
   }
 
+  @Override
   public boolean isWritable(@NotNull final VirtualFile file) {
     return convertToIOFile(file).canWrite();
   }
@@ -180,8 +198,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
       return ArrayUtil.EMPTY_STRING_ARRAY;
     }
 
-    final File ioFile = convertToIOFile(file);
-    final String[] names = ioFile.list();
+    final String[] names = convertToIOFile(file).list();
     return names != null ? names : ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
@@ -363,13 +380,13 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   @NotNull
   public VirtualFile createChildDirectory(final Object requestor, @NotNull final VirtualFile parent, @NotNull final String dir) throws IOException {
     final File ioDir = new File(convertToIOFile(parent), dir);
-    final boolean succ = auxCreateDirectory(parent, dir) || ioDir.mkdirs();
+    final boolean succeed = auxCreateDirectory(parent, dir) || ioDir.mkdirs();
     auxNotifyCompleted(new ThrowableConsumer<LocalFileOperationsHandler, IOException>() {
       public void consume(LocalFileOperationsHandler handler) throws IOException {
         handler.createDirectory(parent, dir);
       }
     });
-    if (!succ) {
+    if (!succeed) {
       throw new IOException("Failed to create directory: " + ioDir.getPath());
     }
 
@@ -378,13 +395,13 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   public VirtualFile createChildFile(final Object requestor, @NotNull final VirtualFile parent, @NotNull final String file) throws IOException {
     final File ioFile = new File(convertToIOFile(parent), file);
-    final boolean succ = auxCreateFile(parent, file) || FileUtil.createIfDoesntExist(ioFile);
+    final boolean succeed = auxCreateFile(parent, file) || FileUtil.createIfDoesntExist(ioFile);
     auxNotifyCompleted(new ThrowableConsumer<LocalFileOperationsHandler, IOException>() {
       public void consume(LocalFileOperationsHandler handler) throws IOException {
         handler.createFile(parent, file);
       }
     });
-    if (!succ) {
+    if (!succeed) {
       throw new IOException("Failed to create child file at " + ioFile.getPath());
     }
 
@@ -408,30 +425,32 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @NotNull
   public InputStream getInputStream(@NotNull final VirtualFile file) throws FileNotFoundException {
-    return new BufferedInputStream(new FileInputStream(convertToIOFile(file)));
+    return new BufferedInputStream(new FileInputStream(convertToIOFileAndCheck(file)));
   }
 
   @NotNull
   public byte[] contentsToByteArray(@NotNull final VirtualFile file) throws IOException {
-      FileInputStream stream = new FileInputStream(convertToIOFile(file));
-      try {
-        return FileUtil.loadBytes(stream, (int)file.getLength());
-      }
-      finally {
-        stream.close();
-      }
+    final FileInputStream stream = new FileInputStream(convertToIOFileAndCheck(file));
+    try {
+      return FileUtil.loadBytes(stream, (int)file.getLength());
+    }
+    finally {
+      stream.close();
+    }
   }
 
   @NotNull
   public OutputStream getOutputStream(@NotNull final VirtualFile file, final Object requestor, final long modStamp, final long timeStamp) throws FileNotFoundException {
-    final File ioFile = convertToIOFile(file);
+    final File ioFile = convertToIOFileAndCheck(file);
     @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
     final OutputStream stream = shallUseSafeStream(requestor, ioFile) ? new SafeFileOutputStream(ioFile) : new FileOutputStream(ioFile);
     return new BufferedOutputStream(stream) {
       public void close() throws IOException {
         super.close();
         if (timeStamp > 0) {
-          ioFile.setLastModified(timeStamp);
+          if (!ioFile.setLastModified(timeStamp)) {
+            LOG.error("Failed: " + file.getPath() + ", " + timeStamp);
+          }
         }
       }
     };
@@ -445,7 +464,9 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     if (!auxMove(file, newParent)) {
       final File ioFrom = convertToIOFile(file);
       final File ioParent = convertToIOFile(newParent);
-      ioFrom.renameTo(new File(ioParent, file.getName()));
+      if (!ioFrom.renameTo(new File(ioParent, file.getName()))) {
+        LOG.error("Failed: " + file.getPath() + " => " + newParent.getPath());
+      }
     }
     auxNotifyCompleted(new ThrowableConsumer<LocalFileOperationsHandler, IOException>() {
       public void consume(LocalFileOperationsHandler handler) throws IOException {
@@ -474,14 +495,19 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     });
   }
 
-  public VirtualFile copyFile(final Object requestor, @NotNull final VirtualFile vFile, @NotNull final VirtualFile newParent, @NotNull final String copyName)
-    throws IOException {
+  public VirtualFile copyFile(final Object requestor,
+                              @NotNull final VirtualFile vFile,
+                              @NotNull final VirtualFile newParent,
+                              @NotNull final String copyName) throws IOException {
+    File physicalFile = convertToIOFile(vFile);
+    if (physicalFile.exists() && !physicalFile.isFile() && !physicalFile.isDirectory()) {
+      throw new FileNotFoundException("Not a file: " + physicalFile);
+    }
+
     File physicalCopy = auxCopy(vFile, newParent, copyName);
 
     try {
       if (physicalCopy == null) {
-        File physicalFile = convertToIOFile(vFile);
-
         File newPhysicalParent = convertToIOFile(newParent);
         physicalCopy = new File(newPhysicalParent, copyName);
 
@@ -498,7 +524,8 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
           throw e;
         }
       }
-    } finally {
+    }
+    finally {
       auxNotifyCompleted(new ThrowableConsumer<LocalFileOperationsHandler, IOException>() {
         public void consume(LocalFileOperationsHandler handler) throws IOException {
           handler.copy(vFile, newParent, copyName);
@@ -508,8 +535,10 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     return new FakeVirtualFile(newParent, copyName);
   }
 
-  public void setTimeStamp(@NotNull final VirtualFile file, final long modstamp) {
-    convertToIOFile(file).setLastModified(modstamp);
+  public void setTimeStamp(@NotNull final VirtualFile file, final long timeStamp) {
+    if (!convertToIOFile(file).setLastModified(timeStamp)) {
+      LOG.error("Failed: " + file.getPath() + ", " + timeStamp);
+    }
   }
 
   public void setWritable(@NotNull final VirtualFile file, final boolean writableFlag) throws IOException {

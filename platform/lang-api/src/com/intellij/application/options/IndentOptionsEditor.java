@@ -35,7 +35,6 @@ public class IndentOptionsEditor extends OptionGroup {
     addComponents();
 
     final JPanel result = super.createPanel();
-    result.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 0));
     return result;
   }
 

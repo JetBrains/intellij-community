@@ -146,7 +146,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
     ArrayList<UsageInfo> result = new ArrayList<UsageInfo>();
 
     PsiMethod[] overridingMethods =
-      OverridingMethodsSearch.search(myMethodToSearchFor, myMethodToSearchFor.getUseScope(), true).toArray(PsiMethod.EMPTY_ARRAY);
+      OverridingMethodsSearch.search(myMethodToSearchFor, true).toArray(PsiMethod.EMPTY_ARRAY);
     for (PsiMethod overridingMethod : overridingMethods) {
       result.add(new UsageInfo(overridingMethod));
     }

@@ -71,7 +71,7 @@ public class Centerizer extends JPanel {
   }
 
   @SuppressWarnings({"ConstantConditions"})
-  public Dimension getMaximimSize() {
+  public Dimension getMaximumSize() {
     return getComponent() != null ? getComponent().getMaximumSize() : super.getPreferredSize();
   }
 }

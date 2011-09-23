@@ -34,6 +34,15 @@ public class RepositoryInfo {
     return getOwner() + "/" + getName();
   }
 
+  public String getUrl() {
+    return myRepository.getChildText("url");
+  }
+
+  @Override
+  public int hashCode() {
+    return myRepository != null ? myRepository.hashCode() : 0;
+  }
+
   @Override
   public boolean equals(Object obj) {
     if (!(obj instanceof RepositoryInfo)){

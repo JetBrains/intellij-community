@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection.inferNullity;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.openapi.project.Project;
@@ -380,7 +379,7 @@ public class NullityInferrer {
   }
 
   private boolean isNotNull(PsiModifierListOwner owner) {
-    if (AnnotationUtil.isNotNull(owner)) {
+    if (NullableNotNullManager.isNotNull(owner)) {
       return true;
     }
     final SmartPsiElementPointer<PsiModifierListOwner> pointer = myPointerManager.createLazyPointer(owner);
@@ -388,7 +387,7 @@ public class NullityInferrer {
   }
 
   private boolean isNullable(PsiModifierListOwner owner) {
-    if (AnnotationUtil.isNullable(owner)) {
+    if (NullableNotNullManager.isNullable(owner)) {
       return true;
     }
     final SmartPsiElementPointer<PsiModifierListOwner> pointer = myPointerManager.createLazyPointer(owner);

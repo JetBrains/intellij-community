@@ -70,7 +70,7 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
 
     final JPanel mainPanel = new JPanel(new GridLayout(2, 1));
     mainPanel.setPreferredSize(new Dimension(300, 500));
-    mainPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+    mainPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 0, 0));
 
     final List<FileColorConfiguration> localConfigurations = manager.getLocalConfigurations();
     myLocalTable = new FileColorSettingsTable(manager, localConfigurations) {

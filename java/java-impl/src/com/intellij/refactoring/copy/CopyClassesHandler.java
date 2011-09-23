@@ -18,7 +18,6 @@ package com.intellij.refactoring.copy;
 import com.intellij.codeInsight.actions.OptimizeImportsProcessor;
 import com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.ide.util.DirectoryUtil;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -31,7 +30,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveDirectoryWithClassesProcessor;
@@ -146,7 +145,7 @@ public class CopyClassesHandler implements CopyHandlerDelegate {
       } else {
         defaultTargetDirectory = CopyFilesOrDirectoriesHandler.resolveDirectory(defaultTargetDirectory);
         if (defaultTargetDirectory == null) return;
-        final CopyFilesOrDirectoriesDialog dialog = new CopyFilesOrDirectoriesDialog(PsiUtilBase.toPsiFileArray(classes.keySet()),
+        final CopyFilesOrDirectoriesDialog dialog = new CopyFilesOrDirectoriesDialog(PsiUtilCore.toPsiFileArray(classes.keySet()),
                                                                                defaultTargetDirectory, project, false);
         dialog.show();
         if (dialog.isOK()) {

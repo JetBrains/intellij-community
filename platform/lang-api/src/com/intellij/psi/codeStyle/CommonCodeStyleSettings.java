@@ -128,7 +128,7 @@ public class CommonCodeStyleSettings {
   void copyNonDefaultValuesFrom(CommonCodeStyleSettings from) {
     CommonCodeStyleSettings defaultSettings = new CommonCodeStyleSettings(null);
     PARENT_SETTINGS_INSTALLED =
-      copyFields(this.getClass().getFields(), from, this, new DifferenceFilter<CommonCodeStyleSettings>(from, defaultSettings));
+      copyFields(this.getClass().getFields(), from, this, new SupportedFieldsDiffFilter(from, getSupportedFields(), defaultSettings));
   }
 
   private static void copyFields(Field[] fields, Object from, Object to) {
@@ -192,17 +192,11 @@ public class CommonCodeStyleSettings {
 
   public void writeExternal(Element element) throws WriteExternalException {
     CommonCodeStyleSettings defaultSettings = getDefaultSettings();
-    final LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(myLanguage);
-    final Set<String> fieldNames = provider == null ? null : provider.getSupportedFields();
-    DefaultJDOMExternalizer.writeExternal(this, element, new DifferenceFilter<CommonCodeStyleSettings>(this, defaultSettings) {
-      @Override
-      public boolean isAccept(Field field) {
-        if (fieldNames == null || "PARENT_SETTINGS_INSTALLED".equals(field.getName()) || fieldNames.contains(field.getName())) {
-          return super.isAccept(field);
-        }
-        return false;
-      }
-    });
+    Set<String> supportedFields = getSupportedFields();
+    if (supportedFields != null) {
+      supportedFields.add("PARENT_SETTINGS_INSTALLED");
+    }
+    DefaultJDOMExternalizer.writeExternal(this, element, new SupportedFieldsDiffFilter(this, supportedFields, defaultSettings));
     if (myIndentOptions != null) {
       IndentOptions defaultIndentOptions = defaultSettings != null ? defaultSettings.getIndentOptions() : null;
       Element indentOptionsElement = new Element(INDENT_OPTIONS_TAG);
@@ -210,6 +204,33 @@ public class CommonCodeStyleSettings {
       if (indentOptionsElement.getChildren().size() > 0) {
         element.addContent(indentOptionsElement);
       }
+    }
+  }
+
+  @Nullable
+  private Set<String> getSupportedFields() {
+    final LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(myLanguage);
+    return provider == null ? null : provider.getSupportedFields();
+  }
+  
+  private static class SupportedFieldsDiffFilter extends DifferenceFilter<CommonCodeStyleSettings> {
+    
+    private Set<String> mySupportedFieldNames;
+
+    public SupportedFieldsDiffFilter(final CommonCodeStyleSettings object,
+                                     Set<String> supportedFiledNames,
+                                     final CommonCodeStyleSettings parentObject) {
+      super(object, parentObject);
+      mySupportedFieldNames = supportedFiledNames;
+    }
+
+    @Override
+    public boolean isAccept(Field field) {
+      if (mySupportedFieldNames == null ||
+          mySupportedFieldNames.contains(field.getName())) {
+        return super.isAccept(field);
+      }
+      return false;
     }
   }
 

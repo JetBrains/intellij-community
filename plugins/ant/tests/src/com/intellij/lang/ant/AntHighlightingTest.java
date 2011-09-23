@@ -32,6 +32,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestDataFile;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
@@ -124,6 +125,7 @@ public class AntHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
 
+  @NotNull
   @Override
   protected List<HighlightInfo> doHighlighting() {
     final List<HighlightInfo> infos = super.doHighlighting();

@@ -23,6 +23,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Clock;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
@@ -43,6 +44,7 @@ import git4idea.history.browser.GitCommit;
 import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
 import git4idea.stash.GitChangesSaver;
+import git4idea.ui.branch.GitBranchUiUtil;
 import git4idea.ui.branch.GitCompareBranchesDialog;
 import git4idea.update.GitComplexProcess;
 import org.jetbrains.annotations.NotNull;
@@ -390,6 +392,23 @@ public final class GitBranchOperationsProcessor {
    * @param branchName name of the branch to compare with.
    */
   public void compare(@NotNull final String branchName) {
+    new CommonBackgroundTask(myProject, "Comparing with " + branchName) {
+
+      private Pair<List<GitCommit>,List<GitCommit>> myCommits;
+
+      @Override
+      public void execute(@NotNull ProgressIndicator indicator) {
+        myCommits = loadCommitsToCompare(branchName);
+      }
+
+      @Override
+      public void onSuccess() {
+        displayCompareDialog(myCommits.getFirst(), myCommits.getSecond(), branchName);
+      }
+    }.runInBackground();
+  }
+
+  private Pair<List<GitCommit>, List<GitCommit>> loadCommitsToCompare(@NotNull final String branchName) {
     final List<GitCommit> headToBranch;
     final List<GitCommit> branchToHead;
     try {
@@ -400,12 +419,17 @@ public final class GitBranchOperationsProcessor {
       // we treat it as critical and report an error
       throw new GitExecutionException("Couldn't get [git log .." + branchName + "] on repository [" + myRepository.getRoot() + "]", e);
     }
+    return Pair.create(headToBranch, branchToHead);
+  }
 
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override public void run() {
-        new GitCompareBranchesDialog(myRepository, branchName, headToBranch, branchToHead).show();
-      }
-    });
+  private void displayCompareDialog(List<GitCommit> headToBranch, List<GitCommit> branchToHead, String branchName) {
+    if (headToBranch.isEmpty() && branchToHead.isEmpty()) {
+      String currentBranch = GitBranchUiUtil.getBranchNameOrRev(myRepository);
+      Messages.showInfoMessage(myProject, String.format("There are no changes in the Git log between <code>%s</code> and <code>%s</code>",
+                                                        currentBranch, branchName), "No Changes Detected");
+    } else {
+      new GitCompareBranchesDialog(myRepository, branchName, headToBranch, branchToHead).show();
+    }
   }
 
   private void updateRepository() {

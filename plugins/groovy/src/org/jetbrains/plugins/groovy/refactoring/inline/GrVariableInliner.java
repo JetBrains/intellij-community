@@ -47,12 +47,9 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.skipParentheses
  * @author Max Medvedev
  */
 public class GrVariableInliner implements InlineHandler.Inliner {
-  private Project myProject;
   private final GrExpression myTempExpr;
 
   public GrVariableInliner(GrVariable variable, InlineHandler.Settings settings) {
-    myProject = variable.getProject();
-
     GrExpression initializer;
     if (settings instanceof InlineLocalVarSettings) {
       initializer = ((InlineLocalVarSettings)settings).getInitializer();
@@ -90,7 +87,11 @@ public class GrVariableInliner implements InlineHandler.Inliner {
   }
 
   public void inlineUsage(final UsageInfo usage, final PsiElement referenced) {
-    if (myTempExpr == null) return;
+    inlineReference(usage, referenced, myTempExpr);
+  }
+
+  static void inlineReference(UsageInfo usage, PsiElement referenced, GrExpression initializer) {
+    if (initializer == null) return;
 
     GrExpression exprToBeReplaced = (GrExpression)usage.getElement();
     if (exprToBeReplaced == null) return;
@@ -108,10 +109,10 @@ public class GrVariableInliner implements InlineHandler.Inliner {
       }
     }
 
-    GrExpression newExpr = exprToBeReplaced.replaceWithExpression((GrExpression)myTempExpr.copy(), true);
-    FileEditorManager manager = FileEditorManager.getInstance(myProject);
-    Editor editor = manager.getSelectedTextEditor();
-    GroovyRefactoringUtil.highlightOccurrences(myProject, editor, new PsiElement[]{newExpr});
-    WindowManager.getInstance().getStatusBar(myProject).setInfo(GroovyRefactoringBundle.message("press.escape.to.remove.the.highlighting"));
+    GrExpression newExpr = exprToBeReplaced.replaceWithExpression((GrExpression)initializer.copy(), true);
+    final Project project = usage.getProject();
+    Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
+    GroovyRefactoringUtil.highlightOccurrences(project, editor, new PsiElement[]{newExpr});
+    WindowManager.getInstance().getStatusBar(project).setInfo(GroovyRefactoringBundle.message("press.escape.to.remove.the.highlighting"));
   }
 }

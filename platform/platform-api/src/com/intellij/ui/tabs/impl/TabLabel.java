@@ -68,7 +68,7 @@ public class TabLabel extends JPanel {
     myInfo = info;
     myLabel.setOpaque(false);
     myLabel.setBorder(null);
-    myLabel.setIconTextGap(new JLabel().getIconTextGap());
+    myLabel.setIconTextGap(tabs instanceof MacJBTabs && ((MacJBTabs)tabs).isNewTabsActive() ? 2 : new JLabel().getIconTextGap());
     myLabel.setIconOpaque(false);
     myLabel.setIpad(new Insets(0, 0, 0, 0));
     setOpaque(false);
@@ -80,7 +80,6 @@ public class TabLabel extends JPanel {
     setAligmentToCenter(true);
 
     myIcon = new LayeredIcon(2);
-    myLabel.setIcon(myIcon);
 
     addMouseListener(new MouseAdapter() {
       public void mousePressed(final MouseEvent e) {
@@ -154,18 +153,6 @@ public class TabLabel extends JPanel {
     }
   }
 
-  public void repaintIcon(int x, int y, int width, int height) {
-    final Rectangle r = new Rectangle(x, y, width, height);
-    doTranslate(new PairConsumer<Integer, Integer>() {
-      @Override
-      public void consume(Integer x, Integer y) {
-        r.translate(x, y);
-      }
-    });
-    
-    repaint(r.x, r.y, r.width, r.height);
-  }
-  
   public void doTranslate(PairConsumer<Integer, Integer> consumer) {
     final JBTabsPosition pos = myTabs.getTabsPosition();
 
@@ -227,7 +214,13 @@ public class TabLabel extends JPanel {
   }
 
   private int getSelectedOffset() {
-    return myTabs.getPresentation().getTabsPosition() == JBTabsPosition.top ? 2 : 1;
+    if (myTabs.getPresentation().getTabsPosition() == JBTabsPosition.top) {
+      if (myTabs instanceof MacJBTabs && ((MacJBTabs)myTabs).isNewTabsActive()) {
+        return 2;
+      }
+    }
+    
+    return  1;
   }
 
   @Override
@@ -278,9 +271,9 @@ public class TabLabel extends JPanel {
     myLabel.change(new Runnable() {
       public void run() {
         myLabel.clear();
-        myLabel.setIcon(myIcon);
+        myLabel.setIcon(hasIcons() ? myIcon : null);
 
-         if (text != null) {
+        if (text != null) {
           text.appendToComponent(myLabel);
         }
       }
@@ -296,8 +289,7 @@ public class TabLabel extends JPanel {
 
     Dimension d = myLabel.getSize();
     Dimension pref = myLabel.getPreferredSize();
-    if (d != null && (d.width >= pref.width && d.height >= pref.height)) {
-      // do not need to invalidate if size is more than preferred size
+    if (d != null && d.equals(pref)) {
       return;
     }
 
@@ -313,7 +305,32 @@ public class TabLabel extends JPanel {
   }
 
   public void setIcon(final Icon icon) {
-    getLayeredIcon().setIcon(icon, 0);
+    setIcon(icon, 0);
+  }
+
+  private boolean hasIcons() {
+    LayeredIcon layeredIcon = getLayeredIcon();
+    boolean hasIcons = false;
+    Icon[] layers = layeredIcon.getAllLayers();
+    for (Icon layer1 : layers) {
+      if (layer1 != null) {
+        hasIcons = true;
+        break;
+      }
+    }
+    
+    return hasIcons;
+  }
+  
+  private void setIcon(final Icon icon, int layer) {
+    LayeredIcon layeredIcon = getLayeredIcon();
+    layeredIcon.setIcon(icon, layer);
+    if (hasIcons()) {
+      myLabel.setIcon(layeredIcon);
+    } else {
+      myLabel.setIcon(null);
+    }
+    
     invalidateIfNeeded();
   }
 
@@ -392,10 +409,10 @@ public class TabLabel extends JPanel {
 
   private void setAttractionIcon(Icon icon) {
     if (myIcon.getIcon(0) == null) {
-      getLayeredIcon().setIcon(null, 1);
+      setIcon(null, 1);
       myOverlayedIcon = icon;
     } else {
-      getLayeredIcon().setIcon(icon, 1);
+      setIcon(icon, 1);
       myOverlayedIcon = null;
     }
   }

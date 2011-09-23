@@ -19,7 +19,7 @@ Groovy script
         PsiElement(Integer)('2')
     PsiElement(,)(',')
     PsiWhiteSpace(' ')
-    Named argument
+    Spread argument
       PsiElement(*)('*')
       Reference expression
         PsiElement(identifier)('myList')

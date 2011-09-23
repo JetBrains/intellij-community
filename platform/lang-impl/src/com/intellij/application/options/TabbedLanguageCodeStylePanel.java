@@ -30,6 +30,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -123,7 +124,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
   protected final void addTab(CodeStyleAbstractPanel tab) {
     myTabs.add(tab);
     tab.setShouldUpdatePreview(true);
-    tab.getPanel().setBorder(new EmptyBorder(5, 8, 5, 5));
+    tab.getPanel().setBorder(new EmptyBorder(UIUtil.PANEL_SMALL_INSETS));
     addPanelToWatch(tab.getPanel());
     myTabbedPane.addTab(tab.getTabTitle(), tab.getPanel());
     if (myActiveTab == null) {

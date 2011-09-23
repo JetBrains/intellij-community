@@ -19,6 +19,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiKeyword;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.ChildRoleBase;
@@ -76,12 +77,12 @@ public class TypeParameterExtendsBoundsListElement extends CompositeElement impl
 
   public void deleteChildInternal(@NotNull ASTNode child) {
     if (child.getElementType() == JAVA_CODE_REFERENCE){
-      ASTNode next = TreeUtil.skipElements(child.getTreeNext(), StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET);
+      ASTNode next = PsiImplUtil.skipWhitespaceAndComments(child.getTreeNext());
       if (next != null && next.getElementType() == AND){
         deleteChildInternal(next);
       }
       else{
-        ASTNode prev = TreeUtil.skipElementsBack(child.getTreePrev(), StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET);
+        ASTNode prev = PsiImplUtil.skipWhitespaceAndCommentsBack(child.getTreePrev());
         if (prev != null){
           if (prev.getElementType() == AND || prev.getElementType() == EXTENDS_KEYWORD){
             deleteChildInternal(prev);

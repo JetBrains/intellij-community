@@ -23,11 +23,11 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.meta.PsiMetaData;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.ChildRoleBase;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlUtil;
@@ -100,7 +100,7 @@ public class XmlAttributeDeclImpl extends XmlElementImpl implements XmlAttribute
 
     final StringBuilder builder = new StringBuilder();
     value.processElements(new PsiElementProcessor() {
-      public boolean execute(PsiElement element) {
+      public boolean execute(@NotNull PsiElement element) {
         builder.append(element.getText());
         return true;
       }

@@ -46,6 +46,7 @@ public class PsiParserFacadeImpl implements PsiParserFacade {
     final FileElement holderElement = DummyHolderFactory.createHolder(myManager, null).getTreeElement();
     final LeafElement newElement = ASTFactory.leaf(TokenType.WHITE_SPACE, holderElement.getCharTable().intern(text));
     holderElement.rawAddChildren(newElement);
+    GeneratedMarkerVisitor.markGenerated(newElement.getPsi());
     return newElement.getPsi();
   }
 

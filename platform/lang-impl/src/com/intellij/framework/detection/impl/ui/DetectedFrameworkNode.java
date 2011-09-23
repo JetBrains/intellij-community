@@ -89,7 +89,8 @@ class DetectedFrameworkNode extends DetectedFrameworkTreeNodeBase {
   }
 
   private void appendDirectoryPath(ColoredTreeCellRenderer renderer, final VirtualFile dir) {
-    renderer.append(" (" + getRelativePath(dir) + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
+    final String path = getRelativePath(dir);
+    renderer.append(" (" + (path.isEmpty() ? "/" : path) + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
   }
 
   @NotNull

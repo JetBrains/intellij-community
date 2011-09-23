@@ -49,7 +49,13 @@ import java.util.Properties;
 /**
  * @author max
  */
-public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJavaParserFacade {
+public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
+  protected final PsiManagerEx myManager;
+
+  public PsiJavaParserFacadeImpl(PsiManagerEx manager) {
+    myManager = manager;
+  }
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiJavaParserFacadeImpl");
 
   private static final JavaParserUtil.ParserWrapper ANNOTATION = new JavaParserUtil.ParserWrapper() {
@@ -166,10 +172,6 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
     PRIMITIVE_TYPES.put(PsiType.NULL.getCanonicalText(), PsiType.NULL);
   }
 
-  public PsiJavaParserFacadeImpl(final PsiManagerEx manager) {
-    super(manager);
-  }
-
   @NotNull
   @Override
   public PsiAnnotation createAnnotationFromText(@NotNull final String text, @Nullable final PsiElement context) throws IncorrectOperationException {
@@ -281,7 +283,7 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
 
     final PsiTypeElement element = createTypeElementFromText(text, context);
     if (markAsCopy) {
-      ((TreeElement)element.getNode()).acceptTree(new GeneratedMarkerVisitor());
+      GeneratedMarkerVisitor.markGenerated(element);
     }
     return element.getType();
   }
@@ -344,7 +346,8 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
   @NotNull
   @Override
   public PsiTypeParameter createTypeParameterFromText(@NotNull final String text, @Nullable final PsiElement context) throws IncorrectOperationException {
-    final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, TYPE_PARAMETER, level(context)), context);
+    final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, TYPE_PARAMETER, level(context)),
+                                                               context);
     final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());
     if (!(element instanceof PsiTypeParameter)) {
       throw new IncorrectOperationException("Incorrect type parameter \"" + text + "\".");

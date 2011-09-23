@@ -16,7 +16,7 @@
 package com.intellij.psi.impl.light;
 
 import com.intellij.lang.Language;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
@@ -39,7 +39,7 @@ public abstract class LightVariableBase extends LightElement implements PsiVaria
   protected boolean myWritable;
 
   public LightVariableBase(PsiManager manager, PsiIdentifier nameIdentifier, PsiType type, boolean writable, PsiElement scope) {
-    this(manager, nameIdentifier, StdFileTypes.JAVA.getLanguage(), type, writable, scope);
+    this(manager, nameIdentifier, JavaLanguage.INSTANCE, type, writable, scope);
   }
 
   public LightVariableBase(PsiManager manager, PsiIdentifier nameIdentifier, Language language, PsiType type, boolean writable, PsiElement scope) {

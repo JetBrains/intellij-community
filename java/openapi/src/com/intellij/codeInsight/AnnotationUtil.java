@@ -75,14 +75,6 @@ public class AnnotationUtil {
     ALL_ANNOTATIONS.add(NOT_NULL);
   }
 
-  public static boolean isNullable(@NotNull PsiModifierListOwner owner) {
-    return !isNotNull(owner) && NullableNotNullManager.getInstance(owner.getProject()).isNullable(owner, true);
-  }
-
-  public static boolean isNotNull(@NotNull PsiModifierListOwner owner) {
-    return NullableNotNullManager.getInstance(owner.getProject()).isNotNull(owner, true);
-  }
-
   @Nullable
   public static PsiAnnotation findAnnotation(PsiModifierListOwner listOwner, @NotNull String... annotationNames) {
     return findAnnotation(listOwner, false, annotationNames);

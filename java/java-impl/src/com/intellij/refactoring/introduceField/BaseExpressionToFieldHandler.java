@@ -139,7 +139,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
                                         "Choose class to introduce " + (myIsConstant ? "constant" : "field"),
                                         new PsiElementProcessor<PsiClass>() {
                                           @Override
-                                          public boolean execute(PsiClass aClass) {
+                                          public boolean execute(@NotNull PsiClass aClass) {
                                             myParentClass = aClass;
                                             convertExpressionToField(selectedExpr, editor, file, project, tempType);
                                             return false;

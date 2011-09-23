@@ -377,9 +377,18 @@ public class StringUtil {
   public static boolean containsLineBreak(@NotNull CharSequence text) {
     for (int i = 0; i < text.length(); i++) {
       char c = text.charAt(i);
-      if (c == '\n' || c == '\r') return true;
+      if (isLineBreak(c)) return true;
     }
     return false;
+  }
+
+  public static boolean isLineBreak(char c) {
+    return c == '\n' || c == '\r';
+  }
+
+  public static boolean endsWithLineBreak(@NotNull CharSequence text) {
+    int len = text.length();
+    return len > 0 && isLineBreak(text.charAt(len - 1));
   }
 
   public static int lineColToOffset(@NotNull CharSequence text, int line, int col) {
@@ -1365,11 +1374,16 @@ public class StringUtil {
   }
 
   public static List<String> findMatches(String s, Pattern pattern) {
+    return findMatches(s, pattern, 1);
+  }
+
+  public static List<String> findMatches(String s, Pattern pattern, int groupIndex) {
     List<String> result = new SmartList<String>();
     Matcher m = pattern.matcher(s);
     while (m.find()) {
-      if (m.groupCount() > 0) {
-        result.add(m.group(1));
+      String group = m.group(groupIndex);
+      if (group != null) {
+        result.add(group);
       }
     }
     return result;

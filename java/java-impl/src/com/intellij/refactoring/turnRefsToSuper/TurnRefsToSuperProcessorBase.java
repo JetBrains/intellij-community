@@ -491,7 +491,7 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
         final PsiMethod[] superMethods = method.findSuperMethods();
         new Inner().linkInheritors(superMethods);
         PsiClass containingClass = method.getContainingClass();
-        List<PsiClass> subClasses = new ArrayList<PsiClass>(ClassInheritorsSearch.search(containingClass, containingClass.getUseScope(), false).findAll());
+        List<PsiClass> subClasses = new ArrayList<PsiClass>(ClassInheritorsSearch.search(containingClass, false).findAll());
         // ??? In the theory this is non-efficient way: too many inheritors can be processed.
         // ??? But in real use it seems reasonably fast. If poor performance problems emerged,
         // ??? should be optimized
@@ -563,7 +563,7 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
     // ??? But in real use it seems reasonably fast. If poor performance problems emerged,
     // ??? should be optimized
     PsiClass containingClass = method.getContainingClass();
-    final PsiClass[] subClasses = ClassInheritorsSearch.search(containingClass, containingClass.getUseScope(), false).toArray(PsiClass.EMPTY_ARRAY);
+    final PsiClass[] subClasses = ClassInheritorsSearch.search(containingClass, false).toArray(PsiClass.EMPTY_ARRAY);
     for (int i1 = 0; i1 != subClasses.length; ++i1) {
       final PsiMethod[] mBSs = subClasses[i1].findMethodsBySignature(method, true);
       new Inner().linkInheritors(mBSs);

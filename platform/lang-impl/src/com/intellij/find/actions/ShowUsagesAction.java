@@ -149,7 +149,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     final Editor editor = e.getData(PlatformDataKeys.EDITOR);
     if (usageTargets == null) {
       FindUsagesAction.chooseAmbiguousTargetAndPerform(project, editor, new PsiElementProcessor<PsiElement>() {
-        public boolean execute(final PsiElement element) {
+        public boolean execute(@NotNull final PsiElement element) {
           startFindUsages(element, popupPosition, editor, USAGES_PAGE_SIZE);
           return false;
         }

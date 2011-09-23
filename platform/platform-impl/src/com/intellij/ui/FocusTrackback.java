@@ -22,6 +22,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.ExpirableRunnable;
@@ -254,7 +255,9 @@ public class FocusTrackback {
       if (ownerBySwing != null) {
         final Window ownerBySwingWindow = SwingUtilities.getWindowAncestor(ownerBySwing);
         if (ownerBySwingWindow != null && ownerBySwingWindow == SwingUtilities.getWindowAncestor(toFocus)) {
-          toFocus = ownerBySwing;
+          if (!UIUtil.isMeaninglessFocusOwner(ownerBySwing)) {
+            toFocus = ownerBySwing;
+          }
         }
       }
 

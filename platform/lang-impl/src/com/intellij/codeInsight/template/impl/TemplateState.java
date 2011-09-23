@@ -672,10 +672,12 @@ public class TemplateState implements Disposable {
     replaceString(newValue, start, end, segmentNumber);
 
     if (result instanceof RecalculatableResult) {
+      IntArrayList indices = initEmptyVariables();
       shortenReferences();
       PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
       ((RecalculatableResult)result)
         .handleRecalc(psiFile, myDocument, mySegments.getSegmentStart(segmentNumber), mySegments.getSegmentEnd(segmentNumber));
+      restoreEmptyVariables(indices);
     }
   }
 

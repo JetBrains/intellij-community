@@ -48,7 +48,6 @@ class FileGenerationTest extends LightGroovyTestCase {
 
   @Override
   protected void tearDown() {
-    println (System.currentTimeMillis()-length)
     super.tearDown()
   }
 

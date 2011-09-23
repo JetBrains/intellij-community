@@ -111,4 +111,9 @@ public class XmlFileImpl extends PsiFileImpl implements XmlFile {
   public GlobalSearchScope getFileResolveScope() {
     return ProjectScope.getAllScope(getProject());
   }
+
+  @Override
+  public boolean ignoreReferencedElementAccessibility() {
+    return true;
+  }
 }

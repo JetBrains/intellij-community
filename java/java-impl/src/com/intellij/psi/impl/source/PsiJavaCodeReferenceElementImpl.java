@@ -19,8 +19,8 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettingsFacade;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.classes.AnnotationTypeFilter;
 import com.intellij.psi.filters.element.ModifierFilter;
@@ -215,7 +215,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
            else {
              if (getLastChildNode().getElementType() == JavaElementType.REFERENCE_PARAMETER_LIST) {
                ASTNode current = getLastChildNode().getTreePrev();
-               while (current != null && StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET.contains(current.getElementType())) {
+               while (current != null && (current.getPsi() instanceof PsiWhiteSpace || current.getPsi() instanceof PsiComment)) {
                  current = current.getTreePrev();
                }
                if (current != null && current.getElementType() == JavaTokenType.IDENTIFIER) {
@@ -540,7 +540,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
 
   private PsiElement bindToClass(final PsiClass aClass) throws IncorrectOperationException {
     String qName = aClass.getQualifiedName();
-    final boolean preserveQualification = CodeStyleSettingsManager.getSettings(getProject()).USE_FQ_CLASS_NAMES && isFullyQualified();
+    final boolean preserveQualification = JavaCodeStyleSettingsFacade.getInstance(getProject()).useFQClassNames() && isFullyQualified();
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
     if (qName == null) {
       qName = aClass.getName();
@@ -743,21 +743,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
 
   public void processVariants(final PsiScopeProcessor processor) {
     final OrFilter filter = new OrFilter();
-    PsiElement superParent = getParent();
-    boolean smartCompletion = true;
-    if (isQualified()) {
-      smartCompletion = false;
-    }
-    else {
-      while (superParent != null) {
-        if (superParent instanceof PsiCodeBlock || superParent instanceof PsiLocalVariable) {
-          smartCompletion = false;
-          break;
-        }
-        superParent = superParent.getParent();
-      }
-    }
-    if (!smartCompletion && !isCodeFragmentType(getTreeParent().getElementType()) && !(getParent() instanceof PsiAnnotation)) {
+    if (isInCode()) {
       filter.addFilter(new AndFilter(ElementClassFilter.METHOD, new NotFilter(new ConstructorFilter())));
       filter.addFilter(ElementClassFilter.VARIABLE);
     }
@@ -803,6 +789,28 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     }
     final FilterScopeProcessor proc = new FilterScopeProcessor(filter, processor);
     PsiScopesUtil.resolveAndWalk(proc, this, null, true);
+  }
+
+  private boolean isInCode() {
+    if (isCodeFragmentType(getTreeParent().getElementType()) || getParent() instanceof PsiAnnotation) {
+      return false;
+    }
+
+    if (isQualified()) {
+      return true;
+    }
+
+    PsiElement superParent = getParent();
+    while (superParent != null) {
+      if (superParent instanceof PsiCodeBlock || superParent instanceof PsiLocalVariable) {
+        return true;
+      }
+      if (superParent instanceof PsiClass) {
+        return false;
+      }
+      superParent = superParent.getParent();
+    }
+    return false;
   }
 
   private void addClassFilter(final OrFilter filter) {

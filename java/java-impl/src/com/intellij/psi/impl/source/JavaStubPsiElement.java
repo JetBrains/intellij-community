@@ -20,10 +20,10 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.extapi.psi.StubBasedPsiElementBase;
-import com.intellij.ide.util.EditSourceUtil;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
@@ -54,7 +54,7 @@ public abstract class JavaStubPsiElement<T extends StubElement> extends StubBase
 
   @NotNull
   public Language getLanguage() {
-    return StdLanguages.JAVA;
+    return JavaLanguage.INSTANCE;
   }
 
   public PsiElement getParent() {
@@ -138,14 +138,14 @@ public abstract class JavaStubPsiElement<T extends StubElement> extends StubBase
   }
 
   public void navigate(boolean requestFocus) {
-    final Navigatable navigatable = EditSourceUtil.getDescriptor(this);
+    final Navigatable navigatable = PsiNavigationSupport.getInstance().getDescriptor(this);
     if (navigatable != null) {
       navigatable.navigate(requestFocus);
     }
   }
 
   public boolean canNavigate() {
-    return EditSourceUtil.canNavigate(this);
+    return PsiNavigationSupport.getInstance().canNavigate(this);
   }
 
   public boolean canNavigateToSource() {

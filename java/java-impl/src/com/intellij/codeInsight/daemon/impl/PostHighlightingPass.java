@@ -74,7 +74,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Processor;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectIntHashMap;
@@ -271,7 +271,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   private HighlightInfo processIdentifier(PsiIdentifier identifier, ProgressIndicator progress) {
     if (InspectionManagerEx.inspectionResultSuppressed(identifier, myUnusedSymbolInspection)) return null;
     PsiElement parent = identifier.getParent();
-    if (PsiUtilBase.hasErrorElementChild(parent)) return null;
+    if (PsiUtilCore.hasErrorElementChild(parent)) return null;
 
     if (parent instanceof PsiLocalVariable && myUnusedSymbolInspection.LOCAL_VARIABLE) {
       return processLocalVariable((PsiLocalVariable)parent, progress);
@@ -430,7 +430,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     PsiElement declarationScope = parameter.getDeclarationScope();
     if (declarationScope instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)declarationScope;
-      if (PsiUtilBase.hasErrorElementChild(method)) return null;
+      if (PsiUtilCore.hasErrorElementChild(method)) return null;
       if ((method.isConstructor() ||
            method.hasModifierProperty(PsiModifier.PRIVATE) ||
            method.hasModifierProperty(PsiModifier.STATIC) ||
@@ -664,7 +664,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     // jsp include directive hack
     if (importStatement instanceof JspxImportStatement && ((JspxImportStatement)importStatement).isForeignFileImport()) return null;
 
-    if (PsiUtilBase.hasErrorElementChild(importStatement)) return null;
+    if (PsiUtilCore.hasErrorElementChild(importStatement)) return null;
 
     boolean isRedundant = myRefCountHolder.isRedundant(importStatement);
     if (!isRedundant && !(importStatement instanceof PsiImportStaticStatement)) {

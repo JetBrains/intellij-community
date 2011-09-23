@@ -65,7 +65,10 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.JDOMXIncluder;
 import com.intellij.xml.*;
-import com.intellij.xml.impl.schema.*;
+import com.intellij.xml.impl.schema.ComplexTypeDescriptor;
+import com.intellij.xml.impl.schema.TypeDescriptor;
+import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
+import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
 import com.intellij.xml.index.IndexedRelevantResource;
 import com.intellij.xml.index.XmlNamespaceIndex;
 import org.jetbrains.annotations.NonNls;
@@ -420,7 +423,7 @@ public class XmlUtil {
         final XmlTag[] simpleContent = new XmlTag[1];
 
         processXmlElements(((ComplexTypeDescriptor)type).getDeclaration(), new PsiElementProcessor() {
-          public boolean execute(final PsiElement element) {
+          public boolean execute(@NotNull final PsiElement element) {
             if (element instanceof XmlTag) {
               final XmlTag tag = (XmlTag)element;
               @NonNls final String s = ((XmlTag)element).getLocalName();
@@ -1390,7 +1393,7 @@ public class XmlUtil {
       final PsiNamedElement[] result = new PsiNamedElement[1];
 
       processXmlElements((XmlFile)currentElement, new PsiElementProcessor() {
-        public boolean execute(final PsiElement element) {
+        public boolean execute(@NotNull final PsiElement element) {
           if (element instanceof PsiNamedElement) {
             final String elementName = ((PsiNamedElement)element).getName();
 

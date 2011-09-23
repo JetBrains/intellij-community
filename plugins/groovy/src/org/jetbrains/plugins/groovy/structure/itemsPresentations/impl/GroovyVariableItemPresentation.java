@@ -34,7 +34,7 @@ public class GroovyVariableItemPresentation extends GroovyItemPresentation {
   }
 
   public String getPresentableText() {
-    StringBuffer presentableText = new StringBuffer();
+    StringBuilder presentableText = new StringBuilder();
 
     presentableText.append(myVariable.getName());
     if (!(myVariable instanceof GrVariable) || ((GrVariable)myVariable).getTypeElementGroovy() != null) {
