@@ -11,7 +11,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -760,7 +760,7 @@ public class ResolveImportUtil {
   private static PsiDirectory findSkeletonDir(PsiDirectory dir, @Nullable VirtualFile root) {
     String relativeName = null;
     if (root != null) {
-      relativeName = VfsUtil.getRelativePath(dir.getVirtualFile(), root, '/');
+      relativeName = VfsUtilCore.getRelativePath(dir.getVirtualFile(), root, '/');
     }
     else {
       PyQualifiedName relativeQName = findShortestImportableQName(dir);
@@ -806,7 +806,7 @@ public class ResolveImportUtil {
     }
 
     public boolean visitRoot(VirtualFile root) {
-      final String relativePath = VfsUtil.getRelativePath(myVFile, root, '/');
+      final String relativePath = VfsUtilCore.getRelativePath(myVFile, root, '/');
       if (relativePath != null) {
         List<String> result = StringUtil.split(relativePath, "/");
         if (myResult == null || result.size() < myResult.size()) {
