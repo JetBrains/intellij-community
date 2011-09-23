@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig.errorhandling;
 
-import com.intellij.codeInsight.TestUtil;
+import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
 import com.intellij.openapi.actionSystem.ActionToolbar;
@@ -31,13 +31,8 @@ import com.siyeh.ig.ui.ExternalizableStringSet;
 import com.siyeh.ig.ui.UiUtils;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import java.awt.Dimension;
-import java.awt.FontMetrics;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
+import javax.swing.*;
+import java.awt.*;
 import java.util.List;
 
 public class BadExceptionDeclaredInspection extends BaseInspection {
@@ -146,7 +141,7 @@ public class BadExceptionDeclaredInspection extends BaseInspection {
             if(ignoreTestCases){
                 final PsiClass containingClass = method.getContainingClass();
                 if(containingClass != null &&
-                        TestUtil.isTestClass(containingClass)){
+                   TestFrameworks.getInstance().isTestClass(containingClass)){
                     return;
                 }
                 if (TestUtils.isJUnitTestMethod(method)) {

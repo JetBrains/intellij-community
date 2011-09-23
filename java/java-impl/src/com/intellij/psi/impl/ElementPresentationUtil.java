@@ -16,7 +16,7 @@
 package com.intellij.psi.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.TestUtil;
+import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.DumbService;
@@ -153,7 +153,7 @@ public class ElementPresentationUtil implements PlatformIcons {
         return CLASS_KIND_EXCEPTION;
       }
 
-      if (TestUtil.isTestClass(aClass)) {
+      if (TestFrameworks.getInstance().isTestClass(aClass)) {
         return CLASS_KIND_JUNIT_TEST;
       }
     }
