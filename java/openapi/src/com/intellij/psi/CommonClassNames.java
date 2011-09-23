@@ -84,4 +84,5 @@ public interface CommonClassNames {
   @NonNls String JAVA_UTIL_ARRAY_LIST = "java.util.ArrayList";
 
   @NonNls String JAVA_LANG_INVOKE_MH_POLYMORPHIC = "java.lang.invoke.MethodHandle.PolymorphicSignature";
+  String TARGET_ANNOTATION_FQ_NAME = "java.lang.annotation.Target";
 }

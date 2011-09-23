@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl.source.tree.java;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -151,7 +150,7 @@ public class PsiAnnotationImpl extends JavaStubPsiElement<PsiAnnotationStub> imp
       return !strict;
     }
     PsiClass annotationType = (PsiClass)resolved;
-    PsiAnnotation target = annotationType.getModifierList().findAnnotation(AnnotationUtil.TARGET_ANNOTATION_FQ_NAME);
+    PsiAnnotation target = annotationType.getModifierList().findAnnotation(CommonClassNames.TARGET_ANNOTATION_FQ_NAME);
     if (target == null) {
       //todo hack: ambiguity in spec
       return !strict;

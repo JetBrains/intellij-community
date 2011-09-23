@@ -67,7 +67,6 @@ public class AnnotationUtil {
   @NonNls private static final String[] SIMPLE_NAMES =
     {NOT_NULL_SIMPLE_NAME, NULLABLE_SIMPLE_NAME, NON_NLS_SIMPLE_NAME, PROPERTY_KEY_SIMPLE_NAME, TEST_ONLY_SIMPLE_NAME,
       "Language", "Identifier", "Pattern", "PrintFormat", "RegExp", "Subst"};
-  public static final String TARGET_ANNOTATION_FQ_NAME = "java.lang.annotation.Target";
 
   static {
     ALL_ANNOTATIONS = new HashSet<String>(2);
