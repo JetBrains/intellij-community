@@ -569,7 +569,7 @@ public class FinalUtils {
             }
             @NonNls final String referenceName =
                     methodExpression.getReferenceName();
-            if ("this".equals(referenceName)) {
+            if (PsiKeyword.THIS.equals(referenceName)) {
                 definitelyUnassigned = false;
                 definitelyAssigned = true;
             }
