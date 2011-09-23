@@ -35,6 +35,7 @@ import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.impl.CaretModelImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
@@ -577,8 +578,8 @@ public class EditorActionUtil {
                                      boolean isWithSelection,
                                      int selectionStart, LogicalPosition blockSelectionStart) {
     SelectionModel selectionModel = editor.getSelectionModel();
+    CaretModelImpl caretModel = (CaretModelImpl)editor.getCaretModel();
     if (isWithSelection) {
-      CaretModel caretModel = editor.getCaretModel();
       if (editor.isColumnMode()) {
         selectionModel.setBlockSelection(blockSelectionStart, caretModel.getLogicalPosition());
       }
@@ -589,6 +590,8 @@ public class EditorActionUtil {
     else {
       selectionModel.removeSelection();
     }
+
+    caretModel.selectNonexpandableFold();
   }
 
   public static void moveCaretToPreviousWord(Editor editor, boolean isWithSelection) {
