@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.actions.generate.accessors;
 
 import com.intellij.codeInsight.generation.GenerateSetterHandler;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.actions.generate.GrBaseGenerateAction;
 
 /**
@@ -25,4 +26,9 @@ public class GroovyGenerateSetterAction extends GrBaseGenerateAction {
   public GroovyGenerateSetterAction() {
     super(new GenerateSetterHandler());
   }
+
+  protected String getCommandName() {
+    return GroovyBundle.message("Setter");
+  }
+
 }
