@@ -79,11 +79,11 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
       return;
     }
     if (firstToken == PyTokenTypes.AT) {
-      getFunctionParser().parseDecoratedDeclaration();
+      getFunctionParser().parseDecoratedDeclaration(scope);
       return;
     }
     if (firstToken == PyTokenTypes.CLASS_KEYWORD) {
-      parseClassDeclaration();
+      parseClassDeclaration(scope);
       return;
     }
     if (firstToken == PyTokenTypes.WITH_KEYWORD) {
@@ -91,7 +91,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
       return;
     }
 
-    parseSimpleStatement(myContext.emptyParsingScope());
+    parseSimpleStatement(scope);
   }
 
   protected void parseSimpleStatement(ParsingScope scope) {
@@ -687,12 +687,12 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     statement.done(PyElementTypes.WITH_STATEMENT);
   }
 
-  private void parseClassDeclaration() {
+  private void parseClassDeclaration(ParsingScope scope) {
     final PsiBuilder.Marker classMarker = myBuilder.mark();
-    parseClassDeclaration(classMarker);
+    parseClassDeclaration(classMarker, scope);
   }
 
-  public void parseClassDeclaration(PsiBuilder.Marker classMarker) {
+  public void parseClassDeclaration(PsiBuilder.Marker classMarker, ParsingScope scope) {
     assertCurrentToken(PyTokenTypes.CLASS_KEYWORD);
     myBuilder.advanceLexer();
     checkMatches(PyTokenTypes.IDENTIFIER, "identifier expected");
@@ -704,7 +704,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
       inheritMarker.done(PyElementTypes.ARGUMENT_LIST);
     }
     checkMatches(PyTokenTypes.COLON, "colon expected");
-    parseSuite(myContext.emptyParsingScope().withClass(true));
+    parseSuite(scope.withClass(true));
     classMarker.done(PyElementTypes.CLASS_DECLARATION);
   }
 

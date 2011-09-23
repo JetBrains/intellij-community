@@ -80,7 +80,7 @@ public class FunctionParsing extends Parsing {
     }
   }
 
-  public void parseDecoratedDeclaration() {
+  public void parseDecoratedDeclaration(ParsingScope scope) {
     assertCurrentToken(PyTokenTypes.AT); // ??? need this?
     final PsiBuilder.Marker decoratorStartMarker = myBuilder.mark();
     final PsiBuilder.Marker decoListMarker = myBuilder.mark();
@@ -105,7 +105,7 @@ public class FunctionParsing extends Parsing {
       parseFunctionInnards(decoratorStartMarker); // it calls decoratorStartMarker.done()
     }
     else if (myBuilder.getTokenType() == PyTokenTypes.CLASS_KEYWORD) {
-      getStatementParser().parseClassDeclaration(decoratorStartMarker);
+      getStatementParser().parseClassDeclaration(decoratorStartMarker, scope);
     }
     else {
       myBuilder.error(message("PARSE.expected.@.or.def"));
