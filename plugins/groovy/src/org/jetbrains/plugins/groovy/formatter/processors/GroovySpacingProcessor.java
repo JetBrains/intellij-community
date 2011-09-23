@@ -23,6 +23,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.CompositeElement;
@@ -71,13 +72,13 @@ import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.mRCURL
  */
 public class GroovySpacingProcessor extends GroovyElementVisitor {
   private PsiElement myParent;
-  private final CodeStyleSettings mySettings;
+  private final CommonCodeStyleSettings mySettings;
 
   private Spacing myResult;
   private ASTNode myChild1;
   private ASTNode myChild2;
 
-  public GroovySpacingProcessor(ASTNode node, CodeStyleSettings settings) {
+  public GroovySpacingProcessor(ASTNode node, CommonCodeStyleSettings settings) {
     mySettings = settings;
 
     _init(node);
@@ -321,7 +322,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
   public void visitDocComment(GrDocComment comment) {
     if (myChild1.getElementType() == GDOC_TAG &&
         myChild2.getElementType() == GDOC_TAG &&
-        mySettings.JD_LEADING_ASTERISKS_ARE_ENABLED) {
+        mySettings.getRootSettings().JD_LEADING_ASTERISKS_ARE_ENABLED) {
       IElementType type = myChild1.getLastChildNode().getElementType();
       if (type == mGDOC_ASTERISKS) {
         myResult = Spacing.createSpacing(1, 1, 0, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
