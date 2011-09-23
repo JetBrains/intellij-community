@@ -18,11 +18,11 @@ package com.intellij.psi.impl;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.java.parser.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.text.StringUtil;
@@ -339,8 +339,8 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
   }
 
   protected PsiJavaFile createDummyJavaFile(final String text) {
-    final String fileName = "_Dummy_." + StdFileTypes.JAVA.getDefaultExtension();
-    final FileType type = StdFileTypes.JAVA;
+    final String fileName = "_Dummy_." + JavaFileType.INSTANCE.getDefaultExtension();
+    final FileType type = JavaFileType.INSTANCE;
     return (PsiJavaFile)PsiFileFactory.getInstance(myManager.getProject()).createFileFromText(type, fileName, text, 0, text.length());
   }
 
