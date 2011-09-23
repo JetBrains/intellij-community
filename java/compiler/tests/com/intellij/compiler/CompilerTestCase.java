@@ -464,7 +464,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
   }
 
   private boolean shouldDelete(VirtualFile file) {
-    String path = VfsUtil.getRelativePath(file, myModuleRoot, '/');
+    String path = VfsUtilCore.getRelativePath(file, myModuleRoot, '/');
     return myData != null && myData.shouldDeletePath(path);
   }
 
