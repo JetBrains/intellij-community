@@ -47,18 +47,9 @@ import static com.intellij.openapi.util.text.StringUtil.join;
 public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements PsiElementFactory {
   private PsiClass myArrayClass;
   private PsiClass myArrayClass15;
-  private PsiJavaFile myDummyJavaFile;
 
   public PsiElementFactoryImpl(final PsiManagerEx manager) {
     super(manager);
-  }
-
-  public PsiJavaFile getDummyJavaFile() {
-    if (myDummyJavaFile == null) {
-      myDummyJavaFile = createDummyJavaFile("");
-    }
-
-    return myDummyJavaFile;
   }
 
   @NotNull

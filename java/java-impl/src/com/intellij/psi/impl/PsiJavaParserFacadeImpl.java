@@ -51,6 +51,7 @@ import java.util.Properties;
  */
 public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
   protected final PsiManagerEx myManager;
+  private PsiJavaFile myDummyJavaFile;
 
   public PsiJavaParserFacadeImpl(PsiManagerEx manager) {
     myManager = manager;
@@ -437,6 +438,14 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
       throw new IncorrectOperationException("Incorrect primitive type \"" + text + "\".");
     }
     return annotations.length == 0 ? primitiveType : new PsiPrimitiveType(text, annotations);
+  }
+
+  public PsiJavaFile getDummyJavaFile() {
+    if (myDummyJavaFile == null) {
+      myDummyJavaFile = createDummyJavaFile("");
+    }
+
+    return myDummyJavaFile;
   }
 
   public static PsiPrimitiveType getPrimitiveType(final String text) {
