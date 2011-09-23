@@ -55,10 +55,9 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
   @Override
   public String getCodeSample(@NotNull SettingsType settingsType) {
     switch (settingsType) {
-      case INDENT_SETTINGS:
-        return INDENT_OPTIONS_SAMPLE;
-      case SPACING_SETTINGS:
-        return SPACING_SAMPLE;
+      case INDENT_SETTINGS: return INDENT_OPTIONS_SAMPLE;
+      case SPACING_SETTINGS: return SPACING_SAMPLE;
+      case WRAPPING_AND_BRACES_SETTINGS: return WRAPPING_CODE_SAMPLE;
       default:
         return "";
     }
@@ -77,18 +76,16 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
   
   private final static String SPACING_SAMPLE =
     "class Foo {\n" +
-    "  private int[] list = [1, 3, 5, 6, 7, 87, 1213, 2]\n" +
-    "\n" +
     "  public static foo(int x, int y) {\n" +
     "    for (int i = 0; i < x; i++) {\n" +
-    "      y += (y ^ 0x123) << 2;\n" +
+    "      y += (y ^ 0x123) << 2\n" +
     "    }\n" +
-    "    int j = 0;\n" +
+    "    int j = 0\n" +
     "    while (j < 10) {\n" +
     "      try {\n" +
     "        if (0 < x && x < 10) {\n" +
     "          while (x != y) {\n" +
-    "            x = f(x * 3 + 5);\n" +
+    "            x = f(x * 3 + 5)\n" +
     "          }\n" +
     "        } else {\n" +
     "          synchronized (this) {\n" +
@@ -99,11 +96,75 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
     "        }\n" +
     "      } catch (MyException e) {\n" +
     "      } finally {\n" +
-    "        int[] arr = (int[]) g(y);\n" +
-    "        x = y >= 0 ? arr[y] : -1;\n" +
+    "        int[] arr = (int[]) g(y)\n" +
+    "        x = y >= 0 ? arr[y] : -1\n" +
     "      }\n" +
     "    }\n" +
     "  }\n" +
     "\n" +
     "}";
+  private static final String WRAPPING_CODE_SAMPLE =
+    "/*\n" +
+    " * This is a sample file.\n" +
+    " */\n" +
+    "\n" +
+    "public class ThisIsASampleClass extends C1 implements I1, I2, I3, I4, I5 {\n" +
+    "  private int f1 = 1\n" +
+    "  private String field2 = \"\"\n" +
+    "  public void foo1(int i1, int i2, int i3, int i4, int i5, int i6, int i7) {}\n" +
+    "  public static void longerMethod() throws Exception1, Exception2, Exception3 {\n" +
+    "// todo something\n" +
+    "    int\n" +
+    "i = 0\n" +
+    "    int var1 = 1; int var2 = 2\n" +
+    "    foo1(0x0051, 0x0052, 0x0053, 0x0054, 0x0055, 0x0056, 0x0057)\n" +
+    "    int x = (3 + 4 + 5 + 6) * (7 + 8 + 9 + 10) * (11 + 12 + 13 + 14 + 0xFFFFFFFF)\n" +
+    "    String s1, s2, s3\n" +
+    "    s1 = s2 = s3 = \"012345678901456\"\n" +
+    "    assert i + j + k + l + n+ m <= 2 : \"assert description\"" +
+    "    int y = 2 > 3 ? 7 + 8 + 9 : 11 + 12 + 13\n" +
+    "    super.getFoo().foo().getBar().bar()\n" +
+    "\n" +
+    "    label: " +
+    "    if (2 < 3) return else if (2 > 3) return else return\n" +
+    "    for (int i = 0; i < 0xFFFFFF; i += 2) System.out.println(i)\n" +
+    "    while (x < 50000) x++\n" +
+    "    switch (a) {\n" +
+    "    case 0:\n" +
+    "      doCase0()\n" +
+    "      break\n" +
+    "    default:\n" +
+    "      doDefault()\n" +
+    "    }\n" +
+    "    try {\n" +
+    "      doSomething()\n" +
+    "    } catch (Exception e) {\n" +
+    "      processException(e)\n" +
+    "    } finally {\n" +
+    "      processFinally()\n" +
+    "    }\n" +
+    "  }\n" +
+    "    public static void test() \n" +
+    "        throws Exception { \n" +
+    "        foo.foo().bar(\"arg1\", \n" +
+    "                      \"arg2\") \n" +
+    "        new Object() {}" +
+    "    } \n" +
+    "    class TestInnerClass {}\n" +
+    "    interface TestInnerInterface {}\n" +
+    "}\n" +
+    "\n" +
+    "enum Breed {\n" +
+    "    Dalmatian(), Labrador(), Dachshund()\n" +
+    "}\n" +
+    "\n" +
+    "@Annotation1 @Annotation2 @Annotation3(param1=\"value1\", param2=\"value2\") @Annotation4 class Foo {\n" +
+    "    @Annotation1 @Annotation3(param1=\"value1\", param2=\"value2\") public static void foo(){\n" +
+    "    }\n" +
+    "    @Annotation1 @Annotation3(param1=\"value1\", param2=\"value2\") public static int myFoo\n" +
+    "    public void method(@Annotation1 @Annotation3(param1=\"value1\", param2=\"value2\") final int param){\n" +
+    "        @Annotation1 @Annotation3(param1=\"value1\", param2=\"value2\") final int localVariable" +
+    "    }\n" +
+    "}";
+
 }
