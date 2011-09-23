@@ -19,6 +19,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
+import com.intellij.util.concurrency.QueueProcessor;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
@@ -62,6 +64,7 @@ public final class GitRepository implements Disposable {
   private final VirtualFile myGitDir;
   private final MessageBus myMessageBus;
   private final GitUntrackedFilesHolder myUntrackedFilesHolder;
+  private final QueueProcessor<Object> myNotifier;
 
   private volatile State myState;
   private volatile String myCurrentRevision;
@@ -149,6 +152,7 @@ public final class GitRepository implements Disposable {
     Disposer.register(this, myUntrackedFilesHolder);
 
     myMessageBus = project.getMessageBus();
+    myNotifier = new QueueProcessor<Object>(new NotificationConsumer(myProject, myMessageBus), myProject.getDisposed());
     update(TrackedTopic.ALL);
   }
 
@@ -275,8 +279,24 @@ public final class GitRepository implements Disposable {
   }
 
   private void notifyListeners() {
-    if (!Disposer.isDisposed(this)) {
-      myMessageBus.syncPublisher(GIT_REPO_CHANGE).repositoryChanged();
+    myNotifier.add(new Object());
+  }
+
+  private static class NotificationConsumer implements Consumer<Object> {
+
+    private final Project myProject;
+    private final MessageBus myMessageBus;
+
+    NotificationConsumer(Project project, MessageBus messageBus) {
+      myProject = project;
+      myMessageBus = messageBus;
+    }
+
+    @Override
+    public void consume(Object o) {
+      if (!Disposer.isDisposed(myProject)) {
+        myMessageBus.syncPublisher(GIT_REPO_CHANGE).repositoryChanged();
+      }
     }
   }
 
