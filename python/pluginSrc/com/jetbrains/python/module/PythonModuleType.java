@@ -6,6 +6,8 @@ import com.intellij.ide.util.newProjectWizard.SupportForFrameworksStep;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.module.ModuleTypeManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
 import com.jetbrains.python.PythonModuleTypeBase;
@@ -26,12 +28,21 @@ public class PythonModuleType extends PythonModuleTypeBase<PythonModuleBuilder> 
                                               final PythonModuleBuilder moduleBuilder,
                                               final ModulesProvider modulesProvider) {
     ArrayList<ModuleWizardStep> steps = new ArrayList<ModuleWizardStep>();
-    steps.add(new PythonSdkSelectStep(moduleBuilder, null, "reference.project.structure.sdk.python", wizardContext.getProject()));
+    final Project project = getProject(wizardContext);
+    steps.add(new PythonSdkSelectStep(moduleBuilder, null, "reference.project.structure.sdk.python", project));
     final List<FrameworkSupportProvider> frameworkSupportProviderList = FrameworkSupportUtil.getProviders(getInstance());
     if (!frameworkSupportProviderList.isEmpty()) {
-      steps.add(new SupportForFrameworksStep(moduleBuilder, LibrariesContainerFactory.createContainer(wizardContext.getProject())));
+      steps.add(new SupportForFrameworksStep(moduleBuilder, LibrariesContainerFactory.createContainer(project)));
     }
     return steps.toArray(new ModuleWizardStep[steps.size()]);
+  }
+
+  private static Project getProject(final WizardContext context) {
+    Project project = context.getProject();
+    if (project == null) {
+      project = ProjectManager.getInstance().getDefaultProject();
+    }
+    return project;
   }
 
   public PythonModuleBuilder createModuleBuilder() {
