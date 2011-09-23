@@ -18,7 +18,10 @@ package com.intellij.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
@@ -31,6 +34,15 @@ public abstract class JavaPsiImplementationHelper {
   public abstract PsiClass getOriginalClass(PsiClass psiClass);
 
   public abstract PsiElement getClsFileNavigationElement(PsiJavaFile clsFile);
+
+  /**
+   * For files under a library source root, returns the language level configured for the corresponding classes root.
+   *
+   * @param virtualFile virtual file for which language level is requested.
+   * @return language level for classes root or null if file is not under a library source root or no matching classes root is found.
+   */
+  @Nullable
+  public abstract LanguageLevel getClassesLanguageLevel(VirtualFile virtualFile);
 
   public abstract ASTNode getDefaultImportAnchor(PsiImportList list, PsiImportStatementBase statement);
 
