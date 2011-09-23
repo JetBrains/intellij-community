@@ -48,6 +48,10 @@ public abstract class GroovyFormatterTestCase extends LightCodeInsightFixtureTes
     setSettingsBack();
     super.tearDown();
   }
+  
+  protected CommonCodeStyleSettings getGroovySettings() {
+    return myTempSettings.getCommonSettings(GroovyFileType.GROOVY_LANGUAGE);
+  }
 
   protected void setSettings(Project project) {
     Assert.assertNull(myTempSettings);
