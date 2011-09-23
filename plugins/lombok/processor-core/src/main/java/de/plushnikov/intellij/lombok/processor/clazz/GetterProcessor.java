@@ -53,7 +53,7 @@ public class GetterProcessor extends AbstractLombokClassProcessor {
   protected boolean validateAnnotationOnRigthType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     boolean result = true;
     if (psiClass.isAnnotationType() || psiClass.isInterface()) {
-      builder.addError("@Getter is only supported on a class, enum or field type");
+      builder.addError("'@Getter' is only supported on a class, enum or field type");
       result = false;
     }
     return result;

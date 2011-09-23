@@ -39,7 +39,7 @@ public class SynchronizedProcessor extends AbstractLombokProcessor {
     PsiMethod psiMethod = PsiElementUtil.getParentOfType(psiAnnotation, PsiMethod.class);
     if (null != psiMethod) {
       if (psiMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        problemNewBuilder.addError("'@Synchronized' is legal only on concrete methods.");//TODO add fix for make method not abstract
+        problemNewBuilder.addError("'@Synchronized' is legal only on concrete methods.");//TODO add QuickFix for make method not abstract
       }
 
       final String lockFieldName = PsiAnnotationUtil.getAnnotationValue(psiAnnotation, "value");
@@ -50,10 +50,10 @@ public class SynchronizedProcessor extends AbstractLombokProcessor {
           final PsiField lockField = containingClass.findFieldByName(lockFieldName, true);
           if (null != lockField) {
             if (!lockField.hasModifierProperty(PsiModifier.FINAL)) {
-              problemNewBuilder.addWarning(String.format("Synchronization on a non-final field %s.", lockFieldName));  //TODO add fix for make this field final
+              problemNewBuilder.addWarning(String.format("Synchronization on a non-final field %s.", lockFieldName));  //TODO add QuickFix for make this field final
             }
           } else {
-            problemNewBuilder.addError(String.format("The field %s does not exist.", lockFieldName));  //TODO add fix for creating this field
+            problemNewBuilder.addError(String.format("The field %s does not exist.", lockFieldName));  //TODO add QuickFix for creating this field
           }
         }
       }

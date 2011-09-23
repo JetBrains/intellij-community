@@ -9,6 +9,7 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.util.StringBuilderSpinAllocator;
 import de.plushnikov.intellij.lombok.UserMapKeys;
 import de.plushnikov.intellij.lombok.problem.ProblemBuilder;
+import de.plushnikov.intellij.lombok.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.lombok.util.PsiClassUtil;
 import de.plushnikov.intellij.lombok.util.PsiFieldUtil;
 import de.plushnikov.intellij.lombok.util.PsiMethodUtil;
@@ -20,6 +21,9 @@ import java.util.Collections;
 import java.util.List;
 
 /**
+ * Inspect and validate @ToString lombok annotation on a class
+ * Creates toString() method for fields of this class
+ *
  * @author Plushnikov Michail
  */
 public class ToStringProcessor extends AbstractLombokClassProcessor {
@@ -38,11 +42,17 @@ public class ToStringProcessor extends AbstractLombokClassProcessor {
       validateExistingMethods(psiClass, builder);
     }
 
-    // TODO validation messages for
-    //validate exclude : This field does not exist, or would have been excluded anyway
-    //validate of : This field does not exist
-    //validate : exclude and of are mutually exclusive; the 'exclude' parameter will be ignored.
-    //validate : Generating toString() implementation but without a call to superclass, even though this class does not extend java.lang.Object. If this is intentional, add '@EqualsAndHashCode(callSuper=false)' to your type.
+    final String[] excludeProperty = PsiAnnotationUtil.getAnnotationValues(psiAnnotation, "exclude", PsiAnnotationUtil.STRING_ARRAY_FACTORY);
+    final String[] ofProperty = PsiAnnotationUtil.getAnnotationValues(psiAnnotation, "of", PsiAnnotationUtil.STRING_ARRAY_FACTORY);
+
+    if (excludeProperty.length > 0 && ofProperty.length > 0) {
+      builder.addWarning("exclude and of are mutually exclusive; the 'exclude' parameter will be ignored");//TODO add QuickFix  : remove all exclude params
+    } else {
+      validateExcludeParam(psiClass, builder, excludeProperty);
+    }
+    validateOfParam(psiClass, builder, ofProperty);
+    validateCallSuperParam(psiAnnotation, psiClass, builder, "toString()");
+
     return result;
   }
 

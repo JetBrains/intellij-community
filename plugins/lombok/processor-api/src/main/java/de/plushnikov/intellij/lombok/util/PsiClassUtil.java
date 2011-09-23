@@ -7,6 +7,9 @@ import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.PsiClassImpl;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.Collection;
+
 /**
  * @author Plushnikov Michail
  */
@@ -21,6 +24,19 @@ public class PsiClassUtil {
   @NotNull
   public static PsiMethod[] collectClassMethodsIntern(@NotNull PsiClass psiClass) {
     return ((PsiClassImpl) psiClass).getStubOrPsiChildren(Constants.METHOD_BIT_SET, PsiMethod.ARRAY_FACTORY);
+  }
+
+  @NotNull
+  public static PsiMethod[] collectClassConstructorIntern(@NotNull PsiClass psiClass) {
+    final PsiMethod[] psiMethods = collectClassMethodsIntern(psiClass);
+
+    Collection<PsiMethod> classConstructors = new ArrayList<PsiMethod>(3);
+    for (PsiMethod psiMethod : psiMethods) {
+      if (psiMethod.isConstructor()) {
+        classConstructors.add(psiMethod);
+      }
+    }
+    return classConstructors.toArray(new PsiMethod[classConstructors.size()]);
   }
 
   /**

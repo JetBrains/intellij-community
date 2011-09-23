@@ -3,6 +3,7 @@ package de.plushnikov.intellij.lombok.util;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiAnnotationMemberValue;
+import com.intellij.psi.PsiArrayInitializerMemberValue;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiEnumConstant;
 import com.intellij.psi.PsiExpression;
@@ -12,6 +13,7 @@ import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiVariable;
+import com.intellij.util.ArrayFactory;
 import com.intellij.util.StringBuilderSpinAllocator;
 import lombok.handlers.TransformationsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -29,6 +31,12 @@ import java.util.regex.Pattern;
  * @author Plushnikov Michail
  */
 public class PsiAnnotationUtil {
+  private static final String[] EMPTY_STRING_ARRAY = new String[0];
+  public static ArrayFactory<String> STRING_ARRAY_FACTORY = new ArrayFactory<String>() {
+    public String[] create(final int count) {
+      return count == 0 ? EMPTY_STRING_ARRAY : new String[count];
+    }
+  };
 
   public static boolean isNotAnnotatedWith(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull final Class<? extends Annotation>... annotationTypes) {
     return !isAnnotatedWith(psiModifierListOwner, annotationTypes);
@@ -110,6 +118,31 @@ public class PsiAnnotationUtil {
   public static <T> T getAnnotationValue(@NotNull PsiAnnotation psiAnnotation, @NotNull String parameter) {
     T value = null;
     PsiAnnotationMemberValue attributeValue = psiAnnotation.findAttributeValue(parameter);
+    if (null != attributeValue) {
+      value = resolveElementValue(attributeValue);
+    }
+    return value;
+  }
+
+  @NotNull
+  public static <T> T[] getAnnotationValues(@NotNull PsiAnnotation psiAnnotation, @NotNull String parameter, ArrayFactory<T> f) {
+    T[] value = f.create(0);
+    PsiAnnotationMemberValue attributeValue = psiAnnotation.findAttributeValue(parameter);
+    if (attributeValue instanceof PsiArrayInitializerMemberValue) {
+      final PsiAnnotationMemberValue[] memberValues = ((PsiArrayInitializerMemberValue) attributeValue).getInitializers();
+
+      value = f.create(memberValues.length);
+      for (int i = 0; i < memberValues.length; i++) {
+        value[i] = resolveElementValue(memberValues[i]);
+      }
+    }
+    return value;
+  }
+
+  @Nullable
+  public static <T> T getDeclaredAnnotationValue(@NotNull PsiAnnotation psiAnnotation, @NotNull String parameter) {
+    T value = null;
+    PsiAnnotationMemberValue attributeValue = psiAnnotation.findDeclaredAttributeValue(parameter);
     if (null != attributeValue) {
       value = resolveElementValue(attributeValue);
     }

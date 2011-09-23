@@ -22,7 +22,8 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
+ * Inspect and validate @Setter lombok annotation on a field
+ * Creates setter method for this field
  *
  * @author Plushnikov Michail
  */
@@ -57,7 +58,7 @@ public class SetterFieldProcessor extends AbstractLombokFieldProcessor {
   protected boolean validateFinalModifier(@NotNull PsiField psiField, @NotNull ProblemBuilder builder) {
     boolean result = true;
     if (psiField.hasModifierProperty(PsiModifier.FINAL)) {
-      builder.addError("@Setter on final filed is not allowed");
+      builder.addError("'@Setter' on final filed is not allowed");
       result = false;
     }
     return result;
@@ -118,7 +119,9 @@ public class SetterFieldProcessor extends AbstractLombokFieldProcessor {
 
       UserMapKeys.addWriteUsageFor(psiField);
 
-      return PsiMethodUtil.createMethod(psiClass, builder.toString(), psiField);
+      //((PsiClassType)psiField.getType()).resolveGenerics().getSubstitutor().substitute(psiFieldType)....
+      PsiMethod method = PsiMethodUtil.createMethod(psiClass, builder.toString(), psiField);
+      return method;
     } finally {
       StringBuilderSpinAllocator.dispose(builder);
     }

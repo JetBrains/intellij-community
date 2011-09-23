@@ -1,13 +1,19 @@
 package de.plushnikov.intellij.lombok.processor.clazz;
 
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiModifier;
+import de.plushnikov.intellij.lombok.LombokConstants;
 import de.plushnikov.intellij.lombok.problem.LombokProblem;
 import de.plushnikov.intellij.lombok.problem.ProblemBuilder;
 import de.plushnikov.intellij.lombok.problem.ProblemEmptyBuilder;
 import de.plushnikov.intellij.lombok.problem.ProblemNewBuilder;
 import de.plushnikov.intellij.lombok.processor.AbstractLombokProcessor;
+import de.plushnikov.intellij.lombok.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.lombok.util.PsiElementUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -49,4 +55,42 @@ public abstract class AbstractLombokClassProcessor extends AbstractLombokProcess
   }
 
   protected abstract <Psi extends PsiElement> void processIntern(PsiClass psiClass, PsiAnnotation psiAnnotation, List<Psi> target);
+
+  protected void validateCallSuperParam(PsiAnnotation psiAnnotation, PsiClass psiClass, ProblemBuilder builder, String generatedMethodName) {
+    String callSuperProperty = PsiAnnotationUtil.getDeclaredAnnotationValue(psiAnnotation, "callSuper");
+    if (StringUtil.isEmptyOrSpaces(callSuperProperty)) {
+      final PsiClass superClass = psiClass.getSuperClass();
+      if (null != superClass && !CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName())) {
+        builder.addWarning("Generating " + generatedMethodName + " implementation but without a call to superclass, " +
+            "even though this class does not extend java.lang.Object." +
+            "If this is intentional, add 'callSuper=false' to your type.");//TODO add QuickFix : add callSuper param
+      }
+    }
+  }
+
+  protected void validateOfParam(PsiClass psiClass, ProblemBuilder builder, String[] ofProperty) {
+    for (String fieldName : ofProperty) {
+      if (!StringUtil.isEmptyOrSpaces(fieldName)) {
+        PsiField fieldByName = psiClass.findFieldByName(fieldName, false);
+        if (null == fieldByName) {
+          builder.addWarning(String.format("The field '%s' does not exist", fieldName));//TODO add QuickFix  : remove of param
+        }
+      }
+    }
+  }
+
+  protected void validateExcludeParam(PsiClass psiClass, ProblemBuilder builder, String[] excludeProperty) {
+    for (String fieldName : excludeProperty) {
+      if (!StringUtil.isEmptyOrSpaces(fieldName)) {
+        PsiField fieldByName = psiClass.findFieldByName(fieldName, false);
+        if (null == fieldByName) {
+          builder.addWarning(String.format("The field '%s' does not exist", fieldName));//TODO add QuickFix  : remove exclude param
+        } else {
+          if (fieldName.startsWith(LombokConstants.LOMBOK_INTERN_FIELD_MARKER) || fieldByName.hasModifierProperty(PsiModifier.STATIC)) {
+            builder.addWarning(String.format("The field '%s' would have been excluded anyway", fieldName));//TODO add QuickFix  : remove exclude param
+          }
+        }
+      }
+    }
+  }
 }

@@ -45,7 +45,7 @@ public class SetterProcessor extends AbstractLombokClassProcessor {
   protected boolean validateAnnotationOnRigthType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     boolean result = true;
     if (psiClass.isAnnotationType() || psiClass.isInterface() || psiClass.isEnum()) {
-      builder.addError("@Setter is only supported on a class or field type");
+      builder.addError("'@Setter' is only supported on a class or field type");
       result = false;
     }
     return result;
