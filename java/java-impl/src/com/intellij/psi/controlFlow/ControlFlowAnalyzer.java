@@ -22,8 +22,6 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
-import com.intellij.psi.jsp.JavaJspElementVisitor;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.Stack;
@@ -34,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-class ControlFlowAnalyzer extends JavaJspElementVisitor {
+class ControlFlowAnalyzer extends JavaElementVisitor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.controlFlow.ControlFlowAnalyzer");
 
   private final PsiElement myCodeFragment;
@@ -388,7 +386,8 @@ class ControlFlowAnalyzer extends JavaJspElementVisitor {
     myCurrentFlow.addInstruction(EmptyInstruction.INSTANCE);
   }
 
-  @Override public void visitJspFile(JspFile file) {
+  @Override
+  public void visitFile(PsiFile file) {
     visitChildren(file);
   }
 
