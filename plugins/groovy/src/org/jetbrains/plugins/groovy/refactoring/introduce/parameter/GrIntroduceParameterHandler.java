@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.refactoring.introduce.parameter;
 
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -27,6 +28,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupAdapter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
@@ -34,11 +36,12 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.ui.MethodCellRenderer;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
@@ -48,6 +51,7 @@ import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
@@ -82,6 +86,8 @@ import static org.jetbrains.plugins.groovy.refactoring.HelpID.GROOVY_INTRODUCE_P
  * @author Maxim.Medvedev
  */
 public class GrIntroduceParameterHandler implements RefactoringActionHandler {
+  private static final Logger LOG = Logger.getInstance(GrIntroduceParameterHandler.class);
+
   @NonNls public static final String USE_SUPER_METHOD_OF = "Use super method of";
   @NonNls public static final String CHANGE_USAGES_OF = "Change usages of";
   private JBPopup myEnclosingMethodsPopup;
@@ -183,7 +189,32 @@ public class GrIntroduceParameterHandler implements RefactoringActionHandler {
       panel.add(superMethod, BorderLayout.SOUTH);
       final JBList list = new JBList(scopes.toArray());
       list.setVisibleRowCount(5);
-      list.setCellRenderer(new MethodCellRenderer());
+      list.setCellRenderer(new DefaultListCellRenderer() {
+        @Override
+        public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+          super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+
+          final String text;
+          if (value instanceof PsiMethod) {
+            final PsiMethod method = (PsiMethod)value;
+            text = PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY,
+                                              PsiFormatUtilBase.SHOW_CONTAINING_CLASS |
+                                              PsiFormatUtilBase.SHOW_NAME |
+                                              PsiFormatUtilBase.SHOW_PARAMETERS,
+                                              PsiFormatUtilBase.SHOW_TYPE);
+            final int flags = Iconable.ICON_FLAG_VISIBILITY;
+            final Icon icon = method.getIcon(flags);
+            if (icon != null) setIcon(icon);
+          }
+          else {
+            LOG.assertTrue(value instanceof GrClosableBlock);
+            setIcon(GroovyIcons.GROOVY_ICON_16x16);
+            text = "{...}";
+          }
+          setText(text);
+          return this;
+        }
+      });
       list.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       list.setSelectedIndex(0);
       final List<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
@@ -227,7 +258,7 @@ public class GrIntroduceParameterHandler implements RefactoringActionHandler {
         }
       }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)));
       myEnclosingMethodsPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, list)
-        .setTitle("Introduce parameter to method")
+        .setTitle("Introduce parameter to")
         .setMovable(false)
         .setResizable(false)
         .setRequestFocus(true)
