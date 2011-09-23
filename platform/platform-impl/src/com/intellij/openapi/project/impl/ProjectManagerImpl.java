@@ -517,10 +517,15 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
   @Nullable
   public Project convertAndLoadProject(String filePath, Ref<Boolean> cancelled) throws IOException {
-    final ConversionResult conversionResult;
+    final Ref<ConversionResult> conversionResult = new Ref<ConversionResult>();
     final String fp = canonicalize(filePath);
-    conversionResult = ConversionService.getInstance().convert(fp);
-    if (conversionResult.openingIsCanceled()) {
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        conversionResult.set(ConversionService.getInstance().convert(fp));
+      }
+    });
+    if (conversionResult.get().openingIsCanceled()) {
       cancelled.set(true);
       return null;
     }
@@ -528,10 +533,10 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     final Project project = loadProjectWithProgress(filePath, new Ref<Boolean>());
     if (project == null) return null;
 
-    if (!conversionResult.conversionNotNeeded()) {
+    if (!conversionResult.get().conversionNotNeeded()) {
       StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
         public void run() {
-          conversionResult.postStartupActivity(project);
+          conversionResult.get().postStartupActivity(project);
         }
       });
     }
