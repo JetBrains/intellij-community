@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.github;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -44,10 +43,6 @@ public class GithubCheckoutProvider implements CheckoutProvider {
     BasicAction.saveAll();
     final List<RepositoryInfo> availableRepos = GithubUtil.getAvailableRepos(project, false);
     if (availableRepos == null){
-      return;
-    }
-    if (availableRepos.isEmpty()){
-      Messages.showErrorDialog(project, "You don't have any repository available on GitHub.\nOnly your own or watched repositories can be cloned.", "Cannot clone");
       return;
     }
     Collections.sort(availableRepos, new Comparator<RepositoryInfo>() {
