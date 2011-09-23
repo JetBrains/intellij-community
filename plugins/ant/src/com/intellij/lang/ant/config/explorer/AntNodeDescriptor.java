@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,13 @@ package com.intellij.lang.ant.config.explorer;
 
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ui.util.CellAppearance;
+import com.intellij.openapi.roots.ui.CellAppearanceEx;
+import com.intellij.ui.HtmlListCellRenderer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.NotNull;
 
-abstract class AntNodeDescriptor extends NodeDescriptor implements CellAppearance {
+abstract class AntNodeDescriptor extends NodeDescriptor implements CellAppearanceEx {
   public AntNodeDescriptor(Project project, NodeDescriptor parentDescriptor) {
     super(project, parentDescriptor);
   }
@@ -30,6 +32,11 @@ abstract class AntNodeDescriptor extends NodeDescriptor implements CellAppearanc
 
   public void customize(SimpleColoredComponent component) {
     component.append(toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+  }
+
+  @Override
+  public void customize(@NotNull final HtmlListCellRenderer renderer) {
+    renderer.append(toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
   }
 
   public String getText() {

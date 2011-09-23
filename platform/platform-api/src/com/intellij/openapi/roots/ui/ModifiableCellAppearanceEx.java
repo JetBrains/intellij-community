@@ -13,15 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.roots.ui.util;
+package com.intellij.openapi.roots.ui;
+
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author dyoma
- * @deprecated please use {@linkplain com.intellij.openapi.roots.ui.ModifiableCellAppearanceEx} (to remove in IDEA 12).
- */
-public interface ModifiableCellAppearance extends CellAppearance {
-  Icon getIcon();
-  void setIcon(Icon icon);
+public interface ModifiableCellAppearanceEx extends CellAppearanceEx {
+  void setIcon(@Nullable Icon icon);
 }

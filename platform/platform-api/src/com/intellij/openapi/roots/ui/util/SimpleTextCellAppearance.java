@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.roots.ui.util;
 
-import com.intellij.openapi.roots.ui.CellAppearanceEx;
+import com.intellij.openapi.roots.ui.ModifiableCellAppearanceEx;
 import com.intellij.ui.HtmlListCellRenderer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 // todo: move to lang-impl ?
-public class SimpleTextCellAppearance implements ModifiableCellAppearance, CellAppearanceEx {
+public class SimpleTextCellAppearance implements ModifiableCellAppearanceEx, ModifiableCellAppearance {
   private Icon myIcon;
   private final SimpleTextAttributes myTextAttributes;
   private final String myText;

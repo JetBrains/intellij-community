@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.util.CompositeAppearance;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.ui.HtmlListCellRenderer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -61,8 +63,22 @@ final class AntBuildFileNodeDescriptor extends AntNodeDescriptor {
   }
 
   public void customize(SimpleColoredComponent component) {
-    if (myAppearance != null) myAppearance.customize(component);
-    else super.customize(component);
+    if (myAppearance != null) {
+      myAppearance.customize(component);
+    }
+    else {
+      super.customize(component);
+    }
+  }
+
+  @Override
+  public void customize(@NotNull final HtmlListCellRenderer renderer) {
+    if (myAppearance != null) {
+      myAppearance.customize(renderer);
+    }
+    else {
+      super.customize(renderer);
+    }
   }
 
   public boolean isAutoExpand() {

@@ -27,6 +27,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.roots.ui.CellAppearanceEx;
 import com.intellij.openapi.roots.ui.OrderEntryAppearanceService;
 import com.intellij.openapi.roots.ui.configuration.*;
 import com.intellij.openapi.roots.ui.configuration.dependencyAnalysis.AnalyzeDependenciesDialog;
@@ -39,7 +40,6 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.LibraryPro
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ModuleProjectStructureElement;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.SdkProjectStructureElement;
-import com.intellij.openapi.roots.ui.util.CellAppearance;
 import com.intellij.openapi.ui.ComboBoxTableRenderer;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -625,9 +625,9 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     return elements;
   }
 
-  private static CellAppearance getCellAppearance(final ClasspathTableItem<?> item,
-                                                  final StructureConfigurableContext context,
-                                                  final boolean selected) {
+  private static CellAppearanceEx getCellAppearance(final ClasspathTableItem<?> item,
+                                                    final StructureConfigurableContext context,
+                                                    final boolean selected) {
     final OrderEntryAppearanceService service = OrderEntryAppearanceService.getInstance(context.getProject());
     if (item instanceof InvalidJdkItem) {
       return service.forJdk(null, false, selected, true);

@@ -39,8 +39,8 @@ import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.roots.ui.CellAppearanceEx;
 import com.intellij.openapi.roots.ui.OrderEntryAppearanceService;
-import com.intellij.openapi.roots.ui.util.CellAppearance;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
@@ -301,7 +301,7 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
   private static class LibraryDescriptor extends LibrariesTreeNodeBase<Library> {
     protected LibraryDescriptor(final Project project, final NodeDescriptor parentDescriptor, final Library element) {
       super(project, parentDescriptor, element);
-      final CellAppearance appearance = OrderEntryAppearanceService.getInstance(project).forLibrary(element, false);
+      final CellAppearanceEx appearance = OrderEntryAppearanceService.getInstance(project).forLibrary(element, false);
       final SimpleColoredComponent coloredComponent = new SimpleColoredComponent();
       appearance.customize(coloredComponent);
       final PresentationData templatePresentation = getTemplatePresentation();

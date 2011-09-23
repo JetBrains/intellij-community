@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,12 +30,14 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ui.util.CellAppearance;
+import com.intellij.openapi.roots.ui.CellAppearanceEx;
 import com.intellij.openapi.roots.ui.util.CompositeAppearance;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.HtmlListCellRenderer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -127,7 +129,7 @@ final class AntTargetNodeDescriptor extends AntNodeDescriptor {
     } else return false;
   }
 
-  public CellAppearance getHighlightedText() {
+  public CellAppearanceEx getHighlightedText() {
     return myHighlightedText;
   }
 
@@ -140,5 +142,13 @@ final class AntTargetNodeDescriptor extends AntNodeDescriptor {
     component.setIcon(getOpenIcon());
     String toolTipText = getTarget().getNotEmptyDescription();
     component.setToolTipText(toolTipText);
+  }
+
+  @Override
+  public void customize(@NotNull final HtmlListCellRenderer renderer) {
+    getHighlightedText().customize(renderer);
+    renderer.setIcon(getOpenIcon());
+    String toolTipText = getTarget().getNotEmptyDescription();
+    renderer.setToolTipText(toolTipText);
   }
 }

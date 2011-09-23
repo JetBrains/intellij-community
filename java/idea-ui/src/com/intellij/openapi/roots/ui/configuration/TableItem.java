@@ -15,15 +15,15 @@
  */
 package com.intellij.openapi.roots.ui.configuration;
 
+import com.intellij.openapi.roots.ui.CellAppearanceEx;
 import com.intellij.openapi.roots.ui.FileAppearanceService;
-import com.intellij.openapi.roots.ui.util.CellAppearance;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jetbrains.annotations.NotNull;
 
 class TableItem {
   private final String myUrl;
-  private final CellAppearance myCellAppearance;
+  private final CellAppearanceEx myCellAppearance;
 
   public TableItem(@NotNull final VirtualFile file) {
     myUrl = file.getUrl();
@@ -48,7 +48,7 @@ class TableItem {
   }
 
   @NotNull
-  public CellAppearance getCellAppearance() {
+  public CellAppearanceEx getCellAppearance() {
     return myCellAppearance;
   }
 }

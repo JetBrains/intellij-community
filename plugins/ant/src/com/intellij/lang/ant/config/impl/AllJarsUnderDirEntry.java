@@ -19,7 +19,7 @@ import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.roots.ui.CellAppearanceEx;
 import com.intellij.openapi.roots.ui.FileAppearanceService;
-import com.intellij.openapi.roots.ui.util.ModifiableCellAppearance;
+import com.intellij.openapi.roots.ui.ModifiableCellAppearanceEx;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.WriteExternalException;
@@ -75,8 +75,8 @@ public class AllJarsUnderDirEntry implements AntClasspathEntry {
 
   public CellAppearanceEx getAppearance() {
     CellAppearanceEx appearance = FileAppearanceService.getInstance().forIoFile(myDir);
-    if (appearance instanceof ModifiableCellAppearance) {
-      ((ModifiableCellAppearance)appearance).setIcon(ALL_JARS_IN_DIR_ICON);
+    if (appearance instanceof ModifiableCellAppearanceEx) {
+      ((ModifiableCellAppearanceEx)appearance).setIcon(ALL_JARS_IN_DIR_ICON);
     }
     return appearance;
   }
