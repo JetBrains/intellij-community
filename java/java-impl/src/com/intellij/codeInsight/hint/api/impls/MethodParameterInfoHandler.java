@@ -24,6 +24,7 @@ import com.intellij.lang.parameterInfo.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
+import com.intellij.psi.infos.ClassCandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.MethodSignatureUtil;
@@ -125,7 +126,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     for (int i = 0; i < candidates.length; i++) {
       CandidateInfo candidate = (CandidateInfo)candidates[i];
       PsiMethod method = (PsiMethod)candidate.getElement();
-      PsiSubstitutor substitutor = candidate.getSubstitutor();
+      PsiSubstitutor substitutor = candidate instanceof MethodCandidateInfo ? ((MethodCandidateInfo)candidate).inferTypeArguments(true) : candidate.getSubstitutor();
       assert substitutor != null;
 
       if (!method.isValid() || !substitutor.isValid()) {
@@ -408,7 +409,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
   public void updateUI(final Object p, final ParameterInfoUIContext context) {
     if (p instanceof CandidateInfo) {
       CandidateInfo info = (CandidateInfo)p;
-      updateMethodPresentation((PsiMethod)info.getElement(), info.getSubstitutor(), context);
+      updateMethodPresentation((PsiMethod)info.getElement(), info instanceof MethodCandidateInfo ? ((MethodCandidateInfo)info).inferTypeArguments(true) : info.getSubstitutor(), context);
     }
     else {
       updateMethodPresentation((PsiMethod)p, null, context);

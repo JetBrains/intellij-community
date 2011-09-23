@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -29,7 +30,6 @@ import com.intellij.psi.impl.java.stubs.PsiMethodStub;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.presentation.java.JavaPresentationUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.search.SearchScope;
@@ -366,7 +366,7 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement<PsiMethodStub> implem
   }
 
   public ItemPresentation getPresentation() {
-    return JavaPresentationUtil.getMethodPresentation(this);
+    return ItemPresentationProviders.getItemPresentation(this);
   }
 
   public Icon getElementIcon(final int flags) {

@@ -203,5 +203,23 @@ def c = { a ->
 """
   }
 
+  public void testEnterWithAlignedParameters() {
+    groovySettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true
+    doTest """foo(2,<caret>)
+""", """foo(2,
+    <caret>)
+"""
+
+  }
+
+  public void testEnterWithAlignedParameters2() {
+      groovySettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true
+    doTest """foo(2,<caret>
+""", """foo(2,
+    <caret>
+"""
+
+  }
+
 }
 

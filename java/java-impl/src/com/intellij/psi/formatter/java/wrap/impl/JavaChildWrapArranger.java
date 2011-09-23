@@ -23,7 +23,8 @@ import com.intellij.psi.PsiPolyadicExpression;
 import com.intellij.psi.PsiStatement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.psi.formatter.java.FormattingAstUtil;
+import com.intellij.psi.formatter.FormatterUtil;
+import com.intellij.psi.formatter.java.JavaFormatterUtil;
 import com.intellij.psi.formatter.java.wrap.JavaWrapManager;
 import com.intellij.psi.formatter.java.wrap.ReservedWrapsProvider;
 import com.intellij.psi.impl.source.tree.ChildRole;
@@ -107,7 +108,7 @@ public class JavaChildWrapArranger {
 
     }
 
-    else if (FormattingAstUtil.isAssignment(parent)) {
+    else if (JavaFormatterUtil.isAssignment(parent)) {
       if (role == ChildRole.INITIALIZER_EQ && settings.PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE) return suggestedWrap;
       if (role == ChildRole.INITIALIZER_EQ && !settings.PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE) return null;
       if (role == ChildRole.OPERATION_SIGN && settings.PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE) return suggestedWrap;
@@ -160,7 +161,7 @@ public class JavaChildWrapArranger {
       else if (childType == JavaTokenType.END_OF_LINE_COMMENT) {
         return Wrap.createWrap(WrapType.NORMAL, true);
       }
-      ASTNode prevElement = FormattingAstUtil.getPrevNonWhiteSpaceNode(child);
+      ASTNode prevElement = FormatterUtil.getPreviousNonWhitespaceSibling(child);
       if (prevElement != null && prevElement.getElementType() == JavaElementType.ANNOTATION) {
         return reservedWrapsProvider.getReservedWrap(JavaElementType.MODIFIER_LIST);
       }

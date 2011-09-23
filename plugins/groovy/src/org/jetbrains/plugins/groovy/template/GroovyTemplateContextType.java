@@ -19,6 +19,7 @@ import com.intellij.codeInsight.template.EverywhereContextType;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.patterns.PlatformPatterns;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
@@ -133,6 +134,10 @@ public abstract class GroovyTemplateContextType extends TemplateContextType {
     @Override
     protected boolean isInContext(@NotNull PsiElement element) {
       if (PsiTreeUtil.getParentOfType(element, GrCodeBlock.class, false, GrTypeDefinition.class) != null) {
+        return false;
+      }
+
+      if (element instanceof PsiComment) {
         return false;
       }
 

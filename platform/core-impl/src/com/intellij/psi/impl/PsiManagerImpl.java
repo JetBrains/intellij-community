@@ -24,7 +24,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ExcludedFileIndex;
+import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -50,7 +50,7 @@ public class PsiManagerImpl extends PsiManagerEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiManagerImpl");
 
   private final Project myProject;
-  private final ExcludedFileIndex myExcludedFileIndex;
+  private final FileIndexFacade myExcludedFileIndex;
   private final MessageBus myMessageBus;
 
   private final FileManager myFileManager;
@@ -72,7 +72,7 @@ public class PsiManagerImpl extends PsiManagerEx {
   public PsiManagerImpl(Project project,
                         FileDocumentManager fileDocumentManager,
                         PsiBuilderFactory psiBuilderFactory,
-                        ExcludedFileIndex excludedFileIndex,
+                        FileIndexFacade excludedFileIndex,
                         MessageBus messageBus) {
     myProject = project;
     myExcludedFileIndex = excludedFileIndex;

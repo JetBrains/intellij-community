@@ -15,21 +15,16 @@
  */
 package com.intellij.psi.impl.source;
 
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiElementFactory;
-import com.intellij.psi.PsiPackageStatement;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.GlobalSearchScopes;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -51,9 +46,9 @@ public class PsiJavaFileImpl extends PsiJavaFileBaseImpl {
   public GlobalSearchScope getResolveScope() {
     final VirtualFile file = getVirtualFile();
     if (file != null && !(file instanceof LightVirtualFile)) {
-      final ProjectFileIndex index = ProjectRootManager.getInstance(getProject()).getFileIndex();
+      final FileIndexFacade index = ServiceManager.getService(getProject(), FileIndexFacade.class);
       if (!index.isInSource(file) && !index.isInLibraryClasses(file)) {
-        return GlobalSearchScopes.fileScope(this);
+        return GlobalSearchScope.fileScope(this);
       }
     }
     return super.getResolveScope();
@@ -61,6 +56,6 @@ public class PsiJavaFileImpl extends PsiJavaFileBaseImpl {
 
   @NotNull
   public FileType getFileType() {
-    return StdFileTypes.JAVA;
+    return JavaFileType.INSTANCE;
   }
 }

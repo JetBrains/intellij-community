@@ -16,20 +16,22 @@
 
 package com.intellij.openapi.vcs.impl;
 
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ExcludedFileIndex;
+import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
  */
-public class ProjectExcludedFileIndex extends ExcludedFileIndex {
+public class ProjectFileIndexFacade extends FileIndexFacade {
   private final ProjectRootManager myRootManager;
   private final DirectoryIndex myDirectoryIndex;
 
-  public ProjectExcludedFileIndex(final Project project, final ProjectRootManager rootManager, final DirectoryIndex directoryIndex) {
+  public ProjectFileIndexFacade(final Project project, final ProjectRootManager rootManager, final DirectoryIndex directoryIndex) {
     super(project);
     myRootManager = rootManager;
     myDirectoryIndex = directoryIndex;
@@ -44,8 +46,19 @@ public class ProjectExcludedFileIndex extends ExcludedFileIndex {
     return myRootManager.getFileIndex().isInSource(file);
   }
 
+  @Override
+  public boolean isInLibraryClasses(VirtualFile file) {
+    return myRootManager.getFileIndex().isInLibraryClasses(file);
+  }
+
   public boolean isExcludedFile(final VirtualFile file) {
     return myRootManager.getFileIndex().isIgnored(file);
+  }
+
+  @Nullable
+  @Override
+  public Module getModuleForFile(VirtualFile file) {
+    return myRootManager.getFileIndex().getModuleForFile(file);
   }
 
   public boolean isValidAncestor(final VirtualFile baseDir, VirtualFile childDir) {

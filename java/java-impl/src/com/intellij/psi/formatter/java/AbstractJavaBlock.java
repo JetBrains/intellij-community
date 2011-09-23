@@ -238,7 +238,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       }
     }
 
-    final ASTNode prevElement = FormattingAstUtil.getPrevNonWhiteSpaceNode(child);
+    final ASTNode prevElement = FormatterUtil.getPreviousNonWhitespaceSibling(child);
     if (prevElement != null && prevElement.getElementType() == JavaElementType.MODIFIER_LIST) {
       return Indent.getNoneIndent();
     }
@@ -410,7 +410,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     if (myNode instanceof PsiPolyadicExpression) {
       final ASTNode treeParent = myNode.getTreeParent();
       if (treeParent instanceof PsiPolyadicExpression) {
-        return FormattingAstUtil.areSamePriorityBinaryExpressions(myNode, treeParent);
+        return JavaFormatterUtil.areSamePriorityBinaryExpressions(myNode, treeParent);
       }
     }
     return false;
@@ -979,7 +979,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
     // We don't want to align subsequent identifiers in single-line declarations like 'int i1, i2, i3'. I.e. only 'i1'
     // should be aligned then.
-    ASTNode previousNode = FormattingAstUtil.getPrevNonWhiteSpaceNode(child);
+    ASTNode previousNode = FormatterUtil.getPreviousNonWhitespaceSibling(child);
     if (childType == JavaTokenType.IDENTIFIER && (previousNode == null || previousNode.getElementType() == JavaTokenType.COMMA)) {
       return null;
     }
@@ -1116,7 +1116,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     //        });
     //    } 
     ASTNode rBrace = myNode.getLastChildNode();
-    if (node == FormattingAstUtil.getPrevNonWhiteSpaceNode(rBrace)) {
+    if (node == FormatterUtil.getPreviousNonWhitespaceSibling(rBrace)) {
       return false;
     }
 

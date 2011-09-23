@@ -25,6 +25,7 @@ import org.jetbrains.plugins.groovy.intentions.base.ErrorUtil;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
 /**
@@ -52,7 +53,7 @@ public class RemoveUnnecessaryBracesInGStringIntention extends Intention {
 
       if (ErrorUtil.containsError(element)) return false;
 
-      for (PsiElement child : element.getChildren()) {
+      for (GrStringInjection child : ((GrString)element).getInjections()) {
         if (GrStringUtil.checkGStringInjectionForUnnecessaryBraces(child)) return true;
       }
       return false;

@@ -4,7 +4,7 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ExcludedFileIndex;
+import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -133,7 +133,7 @@ public class LocalChangeListImpl extends LocalChangeList {
     createReadChangesCache();
     final Collection<Change> result = new ArrayList<Change>();
     myChangesBeforeUpdate = new OpenTHashSet<Change>(myChanges);
-    final ExcludedFileIndex fileIndex = PeriodicalTasksCloser.getInstance().safeGetService(project, ExcludedFileIndex.class);
+    final FileIndexFacade fileIndex = PeriodicalTasksCloser.getInstance().safeGetService(project, FileIndexFacade.class);
     for (Change oldBoy : myChangesBeforeUpdate) {
       final ContentRevision before = oldBoy.getBeforeRevision();
       final ContentRevision after = oldBoy.getAfterRevision();
@@ -146,13 +146,13 @@ public class LocalChangeListImpl extends LocalChangeList {
     return result;
   }
 
-  private static boolean isIgnoredChange(final Change change, final ExcludedFileIndex fileIndex) {
+  private static boolean isIgnoredChange(final Change change, final FileIndexFacade fileIndex) {
     boolean beforeRevIgnored = change.getBeforeRevision() == null || isIgnoredRevision(change.getBeforeRevision(), fileIndex);
     boolean afterRevIgnored = change.getAfterRevision() == null || isIgnoredRevision(change.getAfterRevision(), fileIndex);
     return beforeRevIgnored && afterRevIgnored;
   }
 
-  private static boolean isIgnoredRevision(final ContentRevision revision, final ExcludedFileIndex fileIndex) {
+  private static boolean isIgnoredRevision(final ContentRevision revision, final FileIndexFacade fileIndex) {
     VirtualFile vFile = revision.getFile().getVirtualFile();
     return vFile != null && fileIndex.isExcludedFile(vFile);
   }

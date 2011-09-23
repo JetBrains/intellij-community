@@ -15,6 +15,8 @@
  */
 package com.intellij.ide;
 
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -22,8 +24,6 @@ import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Application;
 import com.intellij.util.Alarm;
 import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NonNls;
@@ -31,7 +31,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
-import javax.swing.FocusManager;
 import javax.swing.*;
 import javax.swing.event.CaretListener;
 import javax.swing.event.ChangeListener;
@@ -76,7 +75,7 @@ public final class SwingCleanuper implements ApplicationComponent{
           myAlarm.addRequest(
             new Runnable() {
               public void run() {
-                // request focus into some focusable somponent inside IdeFrame
+                // request focus into some focusable component inside IdeFrame
                 final IdeFrameImpl frame;
                 final Window window=KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
                 if(window instanceof IdeFrameImpl){
@@ -96,18 +95,10 @@ public final class SwingCleanuper implements ApplicationComponent{
                     public void run() {
 
                       // KeyboardFocusManager.newFocusOwner
-                      try{
-                        //noinspection HardCodedStringLiteral
-                        final Field newFocusOwnerField = KeyboardFocusManager.class.getDeclaredField("newFocusOwner");
-                        newFocusOwnerField.setAccessible(true);
-                        newFocusOwnerField.set(null, null);
-                      }
-                      catch(final Exception exc){
-                        // Ignore
-                      }
+                      resetStaticField(KeyboardFocusManager.class, "newFocusOwner");
 
                       // Clear "realOppositeComponent", "realOppositeWindow"
-                      final KeyboardFocusManager focusManager = FocusManager.getCurrentKeyboardFocusManager();
+                      final KeyboardFocusManager focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
                       resetField(focusManager, Component.class, "realOppositeComponent");
                       resetField(focusManager, Window.class, "realOppositeWindow");
 
@@ -156,33 +147,10 @@ public final class SwingCleanuper implements ApplicationComponent{
                       catch (Exception e) {
                         // Ignore
                       }
-                      try {
-                        final Field f = KeyboardFocusManager.class.getDeclaredField("newFocusOwner");
-                        f.setAccessible(true);
-                        f.set(null, null);
-                      }
-                      catch (Exception e) {
-                        // Ignore
-                      }
 
-                      try {
-                        final Field f = KeyboardFocusManager.class.getDeclaredField("permanentFocusOwner");
-                        f.setAccessible(true);
-                        f.set(null, null);
-                      }
-                      catch (Exception e) {
-                        // Ignore
-                      }
-
-                      try {
-                        final Field f = KeyboardFocusManager.class.getDeclaredField("currentFocusCycleRoot");
-                        f.setAccessible(true);
-                        f.set(null, null);
-                      }
-                      catch (Exception e) {
-                        // Ignore
-                      }
-
+                      resetStaticField(KeyboardFocusManager.class, "newFocusOwner");
+                      resetStaticField(KeyboardFocusManager.class, "permanentFocusOwner");
+                      resetStaticField(KeyboardFocusManager.class, "currentFocusCycleRoot");
                     }
                   }
                 );
@@ -200,7 +168,7 @@ public final class SwingCleanuper implements ApplicationComponent{
         if (!SystemInfo.isMac || !Registry.is("jvmbugfix.mac.caccessibleLeak")) return;
 
         HierarchyEvent he = (HierarchyEvent)event;
-        if ((he.getChangeFlags() & (HierarchyEvent.SHOWING_CHANGED)) > 0) {
+        if ((he.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) > 0) {
           if (he.getComponent() != null && !he.getComponent().isShowing()) {
             Component c = he.getComponent();
             if (c instanceof JTextComponent) {
@@ -252,17 +220,16 @@ public final class SwingCleanuper implements ApplicationComponent{
                   accessible.set(resource, null);
                 }
               }
-              catch (Exception e) {
-               return;
+              catch (Exception ignored) {
               }
             }
           }
         }
       }
-    }, HierarchyEvent.HIERARCHY_EVENT_MASK);
+    }, AWTEvent.HIERARCHY_EVENT_MASK);
   }
 
-  private boolean isCAccessibleListener(EventListener listener) {
+  private static boolean isCAccessibleListener(EventListener listener) {
     return listener != null && listener.toString().contains("AXTextChangeNotifier");
   }
 
@@ -272,6 +239,14 @@ public final class SwingCleanuper implements ApplicationComponent{
     }
     catch (Exception e) {
       // Ignore
+    }
+  }
+  private static void resetStaticField(@NotNull Class aClass, @NotNull @NonNls String name) {
+    try {
+      Field field = aClass.getDeclaredField(name);
+      ReflectionUtil.resetField(null, field);
+    }
+    catch (Exception ignored) {
     }
   }
 

@@ -580,7 +580,7 @@ public class CreateFromUsageUtils {
         PsiManager manager = expression.getManager();
     GlobalSearchScope resolveScope = expression.getResolveScope();
 
-    ExpectedTypesProvider provider = ExpectedTypesProvider.getInstance(manager.getProject());
+    ExpectedTypesProvider provider = ExpectedTypesProvider.getInstance(expression.getProject());
     List<ExpectedTypeInfo[]> typesList = new ArrayList<ExpectedTypeInfo[]>();
     List<String> expectedMethodNames = new ArrayList<String>();
     List<String> expectedFieldNames  = new ArrayList<String>();
@@ -596,15 +596,16 @@ public class CreateFromUsageUtils {
     }
 
     if (typesList.isEmpty()) {
-      final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
+      final JavaPsiFacade facade = JavaPsiFacade.getInstance(expression.getProject());
+      final PsiShortNamesCache cache = PsiShortNamesCache.getInstance(expression.getProject());
       PsiElementFactory factory = facade.getElementFactory();
       for (String fieldName : expectedFieldNames) {
-        PsiField[] fields = facade.getShortNamesCache().getFieldsByName(fieldName, resolveScope);
+        PsiField[] fields = cache.getFieldsByName(fieldName, resolveScope);
         addMemberInfo(fields, expression, typesList, factory);
       }
 
       for (String methodName : expectedMethodNames) {
-        PsiMethod[] methods = facade.getShortNamesCache().getMethodsByName(methodName, resolveScope);
+        PsiMethod[] methods = cache.getMethodsByName(methodName, resolveScope);
         addMemberInfo(methods, expression, typesList, factory);
       }
     }
@@ -647,14 +648,15 @@ public class CreateFromUsageUtils {
 
     if (typesList.isEmpty()) {
       final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
+      final PsiShortNamesCache cache = PsiShortNamesCache.getInstance(expression.getProject());
       PsiElementFactory factory = facade.getElementFactory();
       for (String fieldName : expectedFieldNames) {
-        PsiField[] fields = facade.getShortNamesCache().getFieldsByName(fieldName, resolveScope);
+        PsiField[] fields = cache.getFieldsByName(fieldName, resolveScope);
         addMemberInfo(fields, expression, typesList, factory);
       }
 
       for (String methodName : expectedMethodNames) {
-        PsiMethod[] methods = facade.getShortNamesCache().getMethodsByName(methodName, resolveScope);
+        PsiMethod[] methods = cache.getMethodsByName(methodName, resolveScope);
         addMemberInfo(methods, expression, typesList, factory);
       }
     }
@@ -816,7 +818,7 @@ public class CreateFromUsageUtils {
     });
     GlobalSearchScope descendantsSearchScope = GlobalSearchScope.moduleWithDependenciesScope(moduleForFile);
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-    final PsiShortNamesCache cache = facade.getShortNamesCache();
+    final PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
 
     if (handleObjectMethod(possibleClassNames, facade, searchScope, method, memberName, staticAccess, addObjectInheritors)) {
       return;
@@ -852,7 +854,7 @@ public class CreateFromUsageUtils {
   }
 
   private static boolean handleObjectMethod(Set<String> possibleClassNames, final JavaPsiFacade facade, final GlobalSearchScope searchScope, final boolean method, final String memberName, final boolean staticAccess, boolean addInheritors) {
-    final PsiShortNamesCache cache = facade.getShortNamesCache();
+    final PsiShortNamesCache cache = PsiShortNamesCache.getInstance(facade.getProject());
     final boolean[] allClasses = {false};
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {

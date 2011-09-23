@@ -339,6 +339,33 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     if (desiredX >= 0) {
       myDesiredX = desiredX;
     }
+
+    selectNonexpandableFold();
+  }
+
+  LogicalPosition prevPos = null;
+  public void selectNonexpandableFold() {
+    final LogicalPosition pos = getLogicalPosition();
+    
+    if (prevPos == null) {
+      prevPos = pos;
+    }
+    else {
+      int columnShift = pos.line == prevPos.line ? pos.column - prevPos.column : 0;
+      prevPos = pos;
+
+      final FoldRegion collapsedUndeCaret = myEditor.getFoldingModel().getCollapsedRegionAtOffset(getOffset());
+      if (collapsedUndeCaret != null && collapsedUndeCaret.shouldNeverExpand()) {
+        if (columnShift > 0) {
+          moveToOffset(collapsedUndeCaret.getEndOffset());
+        }
+        else if (columnShift < 0) {
+          moveToOffset(collapsedUndeCaret.getStartOffset());
+        }
+        myEditor.getSelectionModel().setSelection(collapsedUndeCaret.getStartOffset(), collapsedUndeCaret.getEndOffset());
+      }
+    }
+
   }
 
   public void moveToLogicalPosition(@NotNull LogicalPosition pos) {

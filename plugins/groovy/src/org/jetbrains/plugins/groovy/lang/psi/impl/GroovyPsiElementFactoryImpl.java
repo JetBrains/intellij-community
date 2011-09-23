@@ -760,14 +760,19 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   @Override
   public GrMethod createMethod(@NotNull @NonNls String name, @Nullable PsiType returnType) throws IncorrectOperationException {
     StringBuilder builder = StringBuilderSpinAllocator.alloc();
-    if (returnType != null) {
-      builder.append(returnType.getCanonicalText());
+    try {
+      if (returnType != null) {
+        builder.append(returnType.getCanonicalText());
+      }
+      else {
+        builder.append("def");
+      }
+      builder.append(' ').append(name).append("(){}");
+      return createMethodFromText(builder.toString());
     }
-    else {
-      builder.append("def");
+    finally {
+      StringBuilderSpinAllocator.dispose(builder);
     }
-    builder.append(' ').append(name).append("(){}");
-    return createMethodFromText(builder.toString());
   }
 
   @NotNull

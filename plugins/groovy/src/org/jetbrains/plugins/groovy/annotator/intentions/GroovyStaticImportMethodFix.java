@@ -96,8 +96,7 @@ public class GroovyStaticImportMethodFix implements IntentionAction {
 
   @NotNull
   private List<PsiMethod> getMethodsToImport() {
-    final JavaPsiFacade facade = JavaPsiFacade.getInstance(myMethodCall.getProject());
-    PsiShortNamesCache cache = facade.getShortNamesCache();
+    PsiShortNamesCache cache = PsiShortNamesCache.getInstance(myMethodCall.getProject());
 
     GrMethodCall element = myMethodCall.getElement();
     LOG.assertTrue(element != null);

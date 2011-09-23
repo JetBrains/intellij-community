@@ -41,6 +41,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import gnu.trove.THashSet;
@@ -165,7 +166,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     List<LocalQuickFix> result = new ArrayList<LocalQuickFix>();
     Set<Object> librariesToAdd = new THashSet<Object>();
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(psiElement.getProject());
-    PsiClass[] classes = facade.getShortNamesCache().getClassesByName(referenceName, GlobalSearchScope.allScope(project));
+    PsiClass[] classes = PsiShortNamesCache.getInstance(project).getClassesByName(referenceName, GlobalSearchScope.allScope(project));
     for (final PsiClass aClass : classes) {
       if (!facade.getResolveHelper().isAccessible(aClass, psiElement, aClass)) continue;
       PsiFile psiFile = aClass.getContainingFile();

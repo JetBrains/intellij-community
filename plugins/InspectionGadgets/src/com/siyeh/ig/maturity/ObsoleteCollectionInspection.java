@@ -16,7 +16,7 @@
 package com.siyeh.ig.maturity;
 
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScopes;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Query;
@@ -150,7 +150,7 @@ public class ObsoleteCollectionInspection extends BaseInspection {
             final PsiFile containingFile = namedElement.getContainingFile();
             final Query<PsiReference> query =
                     ReferencesSearch.search(namedElement,
-                            GlobalSearchScopes.fileScope(containingFile));
+                            GlobalSearchScope.fileScope(containingFile));
             for (PsiReference reference : query) {
                 final PsiElement element = reference.getElement();
                 if (isRequiredObsoleteCollectionElement(element)) {

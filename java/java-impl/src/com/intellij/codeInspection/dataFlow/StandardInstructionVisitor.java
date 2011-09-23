@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.*;
@@ -67,10 +66,10 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       if (callExpression != null) {
         final PsiMethod callee = callExpression.resolveMethod();
         if (callee != null) {
-          if (AnnotationUtil.isNullable(callee)) {
+          if (NullableNotNullManager.isNullable(callee)) {
             return Boolean.TRUE;
           }
-          if (AnnotationUtil.isNotNull(callee)) {
+          if (NullableNotNullManager.isNotNull(callee)) {
             return Boolean.FALSE;
           }
         }

@@ -62,28 +62,26 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
   }
 
   public PsiReference getReference() {
-    final PsiElement scope = getScope();
+    final PsiClass scope = getScope();
     final PsiElement element = getNameElement();
     if (scope == null || element == null) return new MyReference(null);
 
     PsiReference psiReference = getReferenceInScope(scope, element);
     if (psiReference != null) return psiReference;
 
-    if (scope instanceof PsiClass) {
-      PsiClass classScope = ((PsiClass)scope);
-      PsiClass containingClass = classScope.getContainingClass();
-      while (containingClass != null) {
-        classScope = containingClass;
-        psiReference = getReferenceInScope(classScope, element);
-        if (psiReference != null) return psiReference;
-        containingClass = classScope.getContainingClass();
-      }
+    PsiClass classScope;
+    PsiClass containingClass = scope.getContainingClass();
+    while (containingClass != null) {
+      classScope = containingClass;
+      psiReference = getReferenceInScope(classScope, element);
+      if (psiReference != null) return psiReference;
+      containingClass = classScope.getContainingClass();
     }
     return new MyReference(null);
   }
 
   @Nullable
-  private PsiReference getReferenceInScope(PsiElement scope, PsiElement element) {
+  private PsiReference getReferenceInScope(PsiClass scope, PsiElement element) {
     final String name = element.getText();
     final String[] signature = getSignature();
 
@@ -108,7 +106,8 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
         }
       }
       methodSignature = MethodSignatureUtil.createMethodSignature(name, types.toArray(new PsiType[types.size()]),
-                                                                  PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY);
+                                                                  PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY,
+                                                                  name.equals(scope.getName()));
     }
     else {
       methodSignature = null;
@@ -187,13 +186,13 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
   }
 
   @Nullable
-  private PsiElement getScope(){
+  private PsiClass getScope(){
     if (getFirstChildNode().getElementType() == ElementType.DOC_REFERENCE_HOLDER) {
       final PsiElement firstChildPsi = SourceTreeToPsiMap.treeElementToPsi(getFirstChildNode().getFirstChildNode());
       if (firstChildPsi instanceof PsiJavaCodeReferenceElement) {
         PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)firstChildPsi;
         final PsiElement referencedElement = referenceElement.resolve();
-        if (referencedElement instanceof PsiClass) return referencedElement;
+        if (referencedElement instanceof PsiClass) return (PsiClass)referencedElement;
         return null;
       }
       else if (firstChildPsi instanceof PsiKeyword) {

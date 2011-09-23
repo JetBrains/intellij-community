@@ -21,6 +21,7 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
@@ -40,8 +41,9 @@ public class XmlTagTreeHighlightingPassFactory extends AbstractProjectComponent 
     if (editor.isOneLineMode()) return null;
 
     if (!XmlTagTreeHighlightingUtil.isTagTreeHighlightingActive(file)) return null;
+    if (!(editor instanceof EditorEx)) return null;
 
-    return new XmlTagTreeHighlightingPass((XmlFile)file, editor);
+    return new XmlTagTreeHighlightingPass((XmlFile)file, (EditorEx)editor);
   }
 }
 

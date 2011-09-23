@@ -23,11 +23,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.ShortcutSet;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.util.Alarm;
-import com.sun.jdi.VMDisconnectedException;
 
 import javax.swing.*;
 import java.awt.*;
@@ -36,9 +33,8 @@ import java.util.ArrayList;
 public abstract class UpdatableDebuggerView extends JPanel implements DebuggerView {
   private final Project myProject;
   private final DebuggerStateManager myStateManager;
-  protected final Alarm myRebuildAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-  protected volatile boolean myRefreshNeeded = true;
-  protected final java.util.List<Disposable> myDisposables = new ArrayList<Disposable>();
+  private volatile boolean myRefreshNeeded = true;
+  private final java.util.List<Disposable> myDisposables = new ArrayList<Disposable>();
   private boolean myUpdateEnabled;
 
   protected UpdatableDebuggerView(final Project project, final DebuggerStateManager stateManager) {
@@ -82,17 +78,7 @@ public abstract class UpdatableDebuggerView extends JPanel implements DebuggerVi
   public final void rebuildIfVisible(final int event) {
     if(isUpdateEnabled()) {
       myRefreshNeeded = false;
-      myRebuildAlarm.cancelAllRequests();
-      myRebuildAlarm.addRequest(new Runnable() {
-        public void run() {
-          try {
-            rebuild(event);
-          }
-          catch (VMDisconnectedException e) {
-            // ignored
-          }
-        }
-      }, 100, ModalityState.NON_MODAL);
+      rebuild(event);
     }
     else {
       myRefreshNeeded = true;
@@ -118,7 +104,6 @@ public abstract class UpdatableDebuggerView extends JPanel implements DebuggerVi
   }
 
   public void dispose() {
-    Disposer.dispose(myRebuildAlarm);
     for (Disposable disposable : myDisposables) {
       Disposer.dispose(disposable);
     }

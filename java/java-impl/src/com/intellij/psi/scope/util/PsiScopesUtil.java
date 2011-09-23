@@ -24,7 +24,7 @@
 package com.intellij.psi.scope.util;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
@@ -61,7 +61,7 @@ public class PsiScopesUtil {
     PsiElement scope = entrance;
 
     while (scope != null) {
-      ProgressManager.checkCanceled();
+      ProgressIndicatorProvider.checkCanceled();
       if (scope instanceof PsiClass) {
         processor.handleEvent(JavaScopeProcessorEvent.SET_CURRENT_FILE_CONTEXT, scope);
       }

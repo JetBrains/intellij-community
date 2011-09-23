@@ -28,7 +28,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
-import com.intellij.openapi.roots.ExcludedFileIndex;
+import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
@@ -112,9 +112,9 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   private final ContentRevisionCache myContentRevisionCache;
   private MessageBusConnection myConnect;
   private VcsListener myVcsListener;
-  private final ExcludedFileIndex myExcludedIndex;
+  private final FileIndexFacade myExcludedIndex;
 
-  public ProjectLevelVcsManagerImpl(Project project, final FileStatusManager manager, MessageBus messageBus, final ExcludedFileIndex excludedFileIndex) {
+  public ProjectLevelVcsManagerImpl(Project project, final FileStatusManager manager, MessageBus messageBus, final FileIndexFacade excludedFileIndex) {
     myProject = project;
     myMessageBus = messageBus;
     mySerialization = new ProjectLevelVcsManagerSerialization();

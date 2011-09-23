@@ -105,7 +105,7 @@ public class GroovyMoveScriptTest extends LightCodeInsightFixtureTestCase {
     String testName = getTestName(true);
     final VirtualFile actualRoot = myFixture.copyDirectoryToProject(testName + "/before", "");
 
-    performAction(fileNames, newDirName, VfsUtil.getRelativePath(actualRoot, myFixture.getTempDirFixture().getFile(""), '/'));
+    performAction(fileNames, newDirName, VfsUtilCore.getRelativePath(actualRoot, myFixture.getTempDirFixture().getFile(""), '/'));
 
     final VirtualFile expectedRoot = LocalFileSystem.getInstance().findFileByPath(getTestDataPath() + getTestName(true) + "/after");
     //File expectedRoot = new File(getTestDataPath() + testName + "/after");

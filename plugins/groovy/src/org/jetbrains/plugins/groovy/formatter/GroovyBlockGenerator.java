@@ -23,10 +23,11 @@ import com.intellij.formatting.Wrap;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
@@ -50,6 +51,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -76,7 +78,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
   public static List<Block> generateSubBlocks(ASTNode node,
                                               Alignment myAlignment,
                                               Wrap myWrap,
-                                              CodeStyleSettings mySettings,
+                                              CommonCodeStyleSettings mySettings,
                                               GroovyBlock block) {
     //For binary expressions
     PsiElement blockPsi = block.getNode().getPsi();
@@ -163,7 +165,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
     return subBlocks;
   }
 
-  private static Map<PsiElement, Alignment> calculateInnerAlignments(List<ASTNode> children, boolean classLevel, CodeStyleSettings settings) {
+  private static Map<PsiElement, Alignment> calculateInnerAlignments(List<ASTNode> children, boolean classLevel, CommonCodeStyleSettings settings) {
     Map<PsiElement, Alignment> innerAlignments = CollectionFactory.hashMap();
     List<Alignment> currentGroup = null;
     for (ASTNode child : children) {
@@ -215,7 +217,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
     return innerAlignments;
   }
 
-  private static boolean fieldGroupEnded(CodeStyleSettings settings, PsiElement psi) {
+  private static boolean fieldGroupEnded(CommonCodeStyleSettings settings, PsiElement psi) {
     PsiElement prevSibling = psi.getPrevSibling();
     return prevSibling != null && StringUtil.countChars(prevSibling.getText(), '\n') >= settings.KEEP_BLANK_LINES_IN_DECLARATIONS;
   }
@@ -243,7 +245,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
     return list;
   }
 
-  private static boolean mustAlign(PsiElement blockPsi, CodeStyleSettings mySettings, List<ASTNode> children) {
+  private static boolean mustAlign(PsiElement blockPsi, CommonCodeStyleSettings mySettings, List<ASTNode> children) {
     // We don't want to align single call argument if it's a closure. The reason is that it looks better to have call like
     //
     // foo({
@@ -260,6 +262,10 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
              || children.get(1).getElementType() != CLOSABLE_BLOCK || children.get(2).getElementType() != mRPAREN;
     }
 
+    if (blockPsi instanceof GrAssignmentExpression && ((GrAssignmentExpression)blockPsi).getRValue() instanceof GrAssignmentExpression) {
+      return mySettings.ALIGN_MULTILINE_ASSIGNMENT;
+    }
+
     return blockPsi instanceof GrParameterList && mySettings.ALIGN_MULTILINE_PARAMETERS ||
         blockPsi instanceof GrExtendsClause && mySettings.ALIGN_MULTILINE_EXTENDS_LIST ||
         blockPsi instanceof GrThrowsClause && mySettings.ALIGN_MULTILINE_THROWS_LIST ||
@@ -269,18 +275,21 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
   private static boolean isListLikeClause(PsiElement blockPsi) {
     return blockPsi instanceof GrParameterList ||
         blockPsi instanceof GrArgumentList ||
+        blockPsi instanceof GrAssignmentExpression ||
         blockPsi instanceof GrConditionalExpression ||
         blockPsi instanceof GrExtendsClause ||
         blockPsi instanceof GrThrowsClause;
   }
 
   private static boolean isKeyword(ASTNode node) {
-    return node != null && (TokenSets.KEYWORDS.contains(node.getElementType()) ||
-        TokenSets.BRACES.contains(node.getElementType()));
+    if (node == null) return false;
+    
+    return TokenSets.KEYWORDS.contains(node.getElementType()) ||
+        TokenSets.BRACES.contains(node.getElementType()) && !PlatformPatterns.psiElement().withText(")").withParent(GrArgumentList.class).afterLeaf(",").accepts(node.getPsi());
   }
 
 
-  private static List<Block> generateForMultiLineString(ASTNode node, Alignment myAlignment, Wrap myWrap, CodeStyleSettings mySettings) {
+  private static List<Block> generateForMultiLineString(ASTNode node, Alignment myAlignment, Wrap myWrap, CommonCodeStyleSettings mySettings) {
     final ArrayList<Block> subBlocks = new ArrayList<Block>();
     final int start = node.getTextRange().getStartOffset();
     final int end = node.getTextRange().getEndOffset();
@@ -306,7 +315,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
     return subBlocks;
   }
 
-  private static List<Block> generateForMultiLineGStringBegin(ASTNode node, Alignment myAlignment, Wrap myWrap, CodeStyleSettings mySettings) {
+  private static List<Block> generateForMultiLineGStringBegin(ASTNode node, Alignment myAlignment, Wrap myWrap, CommonCodeStyleSettings mySettings) {
     final ArrayList<Block> subBlocks = new ArrayList<Block>();
     final int start = node.getTextRange().getStartOffset();
     final int end = node.getTextRange().getEndOffset();
@@ -367,7 +376,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
    * @return
    * @param node
    */
-  private static List<Block> generateForBinaryExpr(final ASTNode node, Wrap myWrap, CodeStyleSettings mySettings, Map<PsiElement, Alignment> inner) {
+  private static List<Block> generateForBinaryExpr(final ASTNode node, Wrap myWrap, CommonCodeStyleSettings mySettings, Map<PsiElement, Alignment> inner) {
     final ArrayList<Block> subBlocks = new ArrayList<Block>();
     Alignment alignment = mySettings.ALIGN_MULTILINE_BINARY_OPERATION ? Alignment.createAlignment() : null;
 
@@ -389,7 +398,9 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
   private static void addBinaryChildrenRecursively(PsiElement elem,
                                                    List<Block> list,
                                                    Indent indent,
-                                                   Alignment alignment, Wrap myWrap, CodeStyleSettings mySettings, Map<PsiElement, Alignment> inner) {
+                                                   Alignment alignment, Wrap myWrap,
+                                                   CommonCodeStyleSettings mySettings,
+                                                   Map<PsiElement, Alignment> inner) {
     if (elem == null) return;
     // For binary expressions
     if ((elem instanceof GrBinaryExpression)) {
@@ -414,7 +425,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
   private static void addNestedChildren(final PsiElement elem, List<Block> list,
                                         @Nullable final Alignment alignment,
                                         final Wrap wrap,
-                                        final CodeStyleSettings settings, final boolean topLevel) {
+                                        final CommonCodeStyleSettings settings, final boolean topLevel) {
     final List<ASTNode> children = visibleChildren(elem.getNode());
     if (elem instanceof GrMethodCallExpression) {
       GrExpression invokedExpression = ((GrMethodCallExpression)elem).getInvokedExpression();
@@ -444,7 +455,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
   private static void processNestedChildrenPrefix(List<Block> list,
                                                   Alignment alignment,
                                                   Wrap wrap,
-                                                  CodeStyleSettings settings,
+                                                  CommonCodeStyleSettings settings,
                                                   boolean topLevel, List<ASTNode> children, int limit) {
     ASTNode fst = children.get(0);
     assert limit > 0;
@@ -459,7 +470,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
   static void addNestedChildrenSuffix(List<Block> list,
                                       Alignment alignment,
                                       Wrap wrap,
-                                      CodeStyleSettings settings,
+                                      CommonCodeStyleSettings settings,
                                       boolean topLevel, List<ASTNode> children, int limit) {
     for (int i = 1; i < limit; i++) {
       ASTNode childNode = children.get(i);

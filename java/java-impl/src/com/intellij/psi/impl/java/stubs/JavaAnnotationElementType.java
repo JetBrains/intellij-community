@@ -22,7 +22,7 @@ import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.impl.compiled.ClsAnnotationImpl;
 import com.intellij.psi.impl.java.stubs.impl.PsiAnnotationStubImpl;
-import com.intellij.psi.impl.java.stubs.index.JavaAnnotationIndex;
+import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
 import com.intellij.psi.impl.source.tree.LightTreeUtil;
 import com.intellij.psi.impl.source.tree.java.AnnotationElement;
 import com.intellij.psi.impl.source.tree.java.PsiAnnotationImpl;
@@ -77,7 +77,7 @@ public class JavaAnnotationElementType extends JavaStubElementType<PsiAnnotation
 
   public void indexStub(final PsiAnnotationStub stub, final IndexSink sink) {
     final String refText = getReferenceShortName(stub.getText());
-    sink.occurrence(JavaAnnotationIndex.KEY, refText);
+    sink.occurrence(JavaStubIndexKeys.ANNOTATIONS, refText);
   }
 
   private static String getReferenceShortName(String annotationText) {

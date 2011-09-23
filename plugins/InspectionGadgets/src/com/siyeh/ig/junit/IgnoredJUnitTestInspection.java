@@ -68,7 +68,6 @@ public class IgnoredJUnitTestInspection extends BaseInspection {
             final PsiJavaCodeReferenceElement nameReferenceElement =
                     annotation.getNameReferenceElement();
             if (nameReferenceElement == null) {
-              System.out.println("nameReferenceElement = " + nameReferenceElement);
                 return;
             }
             final PsiElement target = nameReferenceElement.resolve();
@@ -79,7 +78,6 @@ public class IgnoredJUnitTestInspection extends BaseInspection {
             final PsiClass aClass = (PsiClass) target;
             final String qualifiedName = aClass.getQualifiedName();
             if (!"org.junit.Ignore".equals(qualifiedName)) {
-              System.out.println("qualifiedName = " + qualifiedName);
                 return;
             }
             registerError(annotation, modifierListOwner);

@@ -35,16 +35,16 @@ public class JavaMembersGetter extends MembersGetter {
   private final PsiType myExpectedType;
 
   public JavaMembersGetter(@NotNull PsiType expectedType) {
-    myExpectedType = expectedType;
+    myExpectedType = JavaCompletionUtil.originalize(expectedType);
   }
 
   public void addMembers(PsiElement position, Consumer<LookupElement> results) {
-    final PsiClass psiClass = PsiUtil.resolveClassInType(myExpectedType);
-    processMembers(position, results, psiClass, PsiTreeUtil.getParentOfType(position, PsiAnnotation.class) != null);
-
     if (myExpectedType instanceof PsiPrimitiveType && PsiType.DOUBLE.isAssignableFrom(myExpectedType)) {
       addConstantsFromTargetClass(position, results);
     }
+
+    final PsiClass psiClass = PsiUtil.resolveClassInType(myExpectedType);
+    processMembers(position, results, psiClass, PsiTreeUtil.getParentOfType(position, PsiAnnotation.class) != null);
   }
 
   private void addConstantsFromTargetClass(PsiElement position, Consumer<LookupElement> results) {

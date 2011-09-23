@@ -18,21 +18,21 @@ package com.intellij.ide.util.gotoByName;
 import com.intellij.navigation.GotoClassContributor;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiShortNamesCache;
 
 import java.util.ArrayList;
 
 public class DefaultClassNavigationContributor implements GotoClassContributor {
   public String[] getNames(Project project, boolean includeNonProjectItems) {
-    return JavaPsiFacade.getInstance(project).getShortNamesCache().getAllClassNames();
+    return PsiShortNamesCache.getInstance(project).getAllClassNames();
   }
 
   public NavigationItem[] getItemsByName(String name, final String pattern, Project project, boolean includeNonProjectItems) {
     final GlobalSearchScope scope = includeNonProjectItems ? GlobalSearchScope.allScope(project) : GlobalSearchScope.projectScope(project);
-    return filterUnshowable(JavaPsiFacade.getInstance(project).getShortNamesCache().getClassesByName(name, scope), pattern);
+    return filterUnshowable(PsiShortNamesCache.getInstance(project).getClassesByName(name, scope), pattern);
   }
 
   private static NavigationItem[] filterUnshowable(PsiClass[] items, final String pattern) {

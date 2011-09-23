@@ -345,14 +345,15 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     roots.add(myRoot);
     checkApply(roots, ProjectBundle.message("rename.message.prefix.module"), ProjectBundle.message("rename.module.title"));
 
-    if (myContext.myModulesConfigurator.isModified()) {
-      myContext.myModulesConfigurator.apply();
-    }
-
+    // let's apply extensions first, since they can write to/commit modifiable models
     for (final ModuleStructureExtension extension : ModuleStructureExtension.EP_NAME.getExtensions()) {
       if (extension.isModified()) {
         extension.apply();
       }
+    }
+
+    if (myContext.myModulesConfigurator.isModified()) {
+      myContext.myModulesConfigurator.apply();
     }
   }
 

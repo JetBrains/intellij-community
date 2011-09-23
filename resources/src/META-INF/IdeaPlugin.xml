@@ -250,6 +250,9 @@
                         serviceImplementation="com.intellij.psi.impl.source.codeStyle.JavaIndentHelper"
                         overrides="true"/>
 
+    <applicationService serviceInterface="com.intellij.codeInsight.TestFrameworks"
+                        serviceImplementation="com.intellij.codeInsight.TestFrameworksImpl"/>
+
     <projectService serviceInterface="com.intellij.ide.util.TreeClassChooserFactory"
                     serviceImplementation="com.intellij.ide.util.TreeClassChooserFactoryImpl"/>
     <projectService serviceInterface="com.intellij.codeInsight.guess.GuessManager"
@@ -262,6 +265,8 @@
                     serviceImplementation="com.intellij.psi.impl.source.javadoc.JavadocManagerImpl"/>
     <projectService serviceInterface="com.intellij.psi.impl.JavaPsiImplementationHelper"
                     serviceImplementation="com.intellij.psi.impl.JavaPsiImplementationHelperImpl"/>
+    <projectService serviceInterface="com.intellij.psi.codeStyle.JavaCodeStyleSettingsFacade"
+                    serviceImplementation="com.intellij.psi.codeStyle.JavaCodeStyleSettingsFacadeImpl"/>
 
     <applicationService serviceInterface="com.intellij.psi.JavaDirectoryService"
                         serviceImplementation="com.intellij.psi.impl.file.JavaDirectoryServiceImpl"/>
@@ -322,6 +327,11 @@
 
     <projectService serviceInterface="com.intellij.codeInsight.NullableNotNullManager"
                     serviceImplementation="com.intellij.codeInsight.NullableNotNullManager"/>
+
+    <projectService serviceInterface="com.intellij.psi.search.PsiShortNamesCache"
+                    serviceImplementation="com.intellij.psi.impl.CompositeShortNamesCache"/>
+
+    <java.shortNamesCache implementation="com.intellij.psi.impl.PsiShortNamesCacheImpl"/>
 
     <applicationService serviceInterface="com.intellij.framework.library.DownloadableLibraryService"
                         serviceImplementation="com.intellij.framework.library.impl.DownloadableLibraryServiceImpl"/>
@@ -941,6 +951,17 @@
     <programRunner id="defaultDebugRunner" implementation="com.intellij.debugger.impl.GenericDebuggerRunner" order="last"/>
 
     <generation.topLevelFactory language="JAVA" implementationClass="com.intellij.psi.impl.JavaFactoryProvider"/>
+
+    <itemPresentationProvider forClass="com.intellij.psi.PsiClass"
+                              implementationClass="com.intellij.psi.presentation.java.ClassPresentationProvider"/>
+    <itemPresentationProvider forClass="com.intellij.psi.PsiMethod"
+                              implementationClass="com.intellij.psi.presentation.java.MethodPresentationProvider"/>
+    <itemPresentationProvider forClass="com.intellij.psi.PsiField"
+                              implementationClass="com.intellij.psi.presentation.java.FieldPresentationProvider"/>
+    <itemPresentationProvider forClass="com.intellij.psi.PsiLocalVariable"
+                              implementationClass="com.intellij.psi.presentation.java.VariablePresentationProvider"/>
+    <itemPresentationProvider forClass="com.intellij.psi.PsiParameter"
+                              implementationClass="com.intellij.psi.presentation.java.VariablePresentationProvider"/>
   </extensions>
 
 </idea-plugin>

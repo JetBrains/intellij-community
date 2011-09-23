@@ -19,6 +19,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
+import com.intellij.util.concurrency.QueueProcessor;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
@@ -28,18 +30,18 @@ import git4idea.status.GitUntrackedFilesHolder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-
 /**
  * <p>
- *   GitRepository is a representation of the Git repository stored under the specified directory.
- *   Its stores the information about the repository, which is frequently requested by other plugin components,
- *   thus all get-methods (like {@link #getCurrentRevision()}) are just getters of the correspondent fields.
+ *   GitRepository is a representation of a Git repository stored under the specified directory.
+ *   It stores the information about the repository, which is frequently requested by other plugin components.
+ *   All get-methods (like {@link #getCurrentRevision()}) are just getters of the correspondent fields and thus are very fast.
  * </p>
  * <p>
- *   The GitRepository is updated "externally" by the {@link git4idea.repo.GitRepositoryUpdater}, when correspondent .git service files
- *   change. To force asynchronous update, it is enough to call {@link VirtualFile#refresh(boolean, boolean) refresh} on the root directory.
+ *   The GitRepository is updated "externally" by the {@link git4idea.repo.GitRepositoryUpdater}, when correspondent {@code .git/} service files
+ *   change.
+ * </p>
+ * <p>
+ *   To force asynchronous update, it is enough to call {@link VirtualFile#refresh(boolean, boolean) refresh} on the root directory.
  * </p>
  * <p>
  *   To make a synchronous update of the repository call {@link #update(TrackedTopic...)} and specify
@@ -62,16 +64,12 @@ public final class GitRepository implements Disposable {
   private final VirtualFile myGitDir;
   private final MessageBus myMessageBus;
   private final GitUntrackedFilesHolder myUntrackedFilesHolder;
+  private final QueueProcessor<Object> myNotifier;
 
   private volatile State myState;
   private volatile String myCurrentRevision;
   private volatile GitBranch myCurrentBranch;
   private volatile GitBranchesCollection myBranches = GitBranchesCollection.EMPTY;
-
-  private final ReadWriteLock STATE_LOCK = new ReentrantReadWriteLock();
-  private final ReadWriteLock CUR_REV_LOCK = new ReentrantReadWriteLock();
-  private final ReadWriteLock CUR_BRANCH_LOCK = new ReentrantReadWriteLock();
-  private final ReadWriteLock BRANCHES_LOCK = new ReentrantReadWriteLock();
 
   /**
    * Current state of the repository.
@@ -154,6 +152,7 @@ public final class GitRepository implements Disposable {
     Disposer.register(this, myUntrackedFilesHolder);
 
     myMessageBus = project.getMessageBus();
+    myNotifier = new QueueProcessor<Object>(new NotificationConsumer(myProject, myMessageBus), myProject.getDisposed());
     update(TrackedTopic.ALL);
   }
 
@@ -174,15 +173,18 @@ public final class GitRepository implements Disposable {
     return myUntrackedFilesHolder;
   }
 
+  /*
+    Getters and setters (update...()-methods) are not synchronized intentionally - to avoid live- and deadlocks.
+    GitRepository is updated asynchronously,
+    so even if the getters would have been synchronized, it wouldn't guarantee that they return actual values (as they are in .git).
+
+    If one needs an up-to-date value, one should call update(TrackedTopic...) and then get...().
+    update() is a synchronous read from .git, so it is guaranteed to query the real value.
+   */
+
   @NotNull
   public State getState() {
-    try {
-      STATE_LOCK.readLock().lock();
-      return myState;
-    }
-    finally {
-      STATE_LOCK.readLock().unlock();
-    }
+    return myState;
   }
 
   /**
@@ -191,13 +193,7 @@ public final class GitRepository implements Disposable {
    */
   @Nullable
   public String getCurrentRevision() {
-    try {
-      CUR_REV_LOCK.readLock().lock();
-      return myCurrentRevision;
-    }
-    finally {
-      CUR_REV_LOCK.readLock().unlock();
-    }
+    return myCurrentRevision;
   }
 
   /**
@@ -208,13 +204,15 @@ public final class GitRepository implements Disposable {
    */
   @Nullable
   public GitBranch getCurrentBranch() {
-    try {
-      CUR_BRANCH_LOCK.readLock().lock();
-      return myCurrentBranch;
-    }
-    finally {
-      CUR_BRANCH_LOCK.readLock().unlock();
-    }
+    return myCurrentBranch;
+  }
+
+  /**
+   * @return local and remote branches in this repository.
+   */
+  @NotNull
+  public GitBranchesCollection getBranches() {
+    return new GitBranchesCollection(myBranches);
   }
 
   public boolean isMergeInProgress() {
@@ -234,17 +232,6 @@ public final class GitRepository implements Disposable {
    */
   public boolean isFresh() {
     return getCurrentRevision() == null;
-  }
-  
-  @NotNull
-  public GitBranchesCollection getBranches() {
-    try {
-      BRANCHES_LOCK.readLock().lock();
-      return myBranches;
-    }
-    finally {
-      BRANCHES_LOCK.readLock().unlock();
-    }
   }
 
   public void addListener(GitRepositoryChangeListener listener) {
@@ -266,14 +253,7 @@ public final class GitRepository implements Disposable {
    * Reads current state and notifies listeners about the change.
    */
   private void updateState() {
-    try {
-      STATE_LOCK.writeLock().lock();
-      myState = myReader.readState();
-    }
-    finally {
-      STATE_LOCK.writeLock().unlock();
-    }
-
+    myState = myReader.readState();
     notifyListeners();
   }
 
@@ -281,14 +261,7 @@ public final class GitRepository implements Disposable {
    * Reads current revision and notifies listeners about the change.
    */
   private void updateCurrentRevision() {
-    try {
-      CUR_REV_LOCK.writeLock().lock();
-      myCurrentRevision = myReader.readCurrentRevision();
-    }
-    finally {
-      CUR_REV_LOCK.writeLock().unlock();
-    }
-
+    myCurrentRevision = myReader.readCurrentRevision();
     notifyListeners();
   }
 
@@ -296,32 +269,34 @@ public final class GitRepository implements Disposable {
    * Reads current branch and notifies listeners about the change.
    */
   private void updateCurrentBranch() {
-    try {
-      CUR_BRANCH_LOCK.writeLock().lock();
-      myCurrentBranch = myReader.readCurrentBranch();
-    }
-    finally {
-      CUR_BRANCH_LOCK.writeLock().unlock();
-    }
-
+    myCurrentBranch = myReader.readCurrentBranch();
     notifyListeners();
   }
   
   private void updateBranchList() {
-    GitBranchesCollection branches = myReader.readBranches();
-    try {
-      BRANCHES_LOCK.writeLock().lock();
-      myBranches = branches;
-    }
-    finally {
-      BRANCHES_LOCK.writeLock().unlock();
-    }
+    myBranches = myReader.readBranches();
     notifyListeners();
   }
 
   private void notifyListeners() {
-    if (!Disposer.isDisposed(this)) {
-      myMessageBus.syncPublisher(GIT_REPO_CHANGE).repositoryChanged();
+    myNotifier.add(new Object());
+  }
+
+  private static class NotificationConsumer implements Consumer<Object> {
+
+    private final Project myProject;
+    private final MessageBus myMessageBus;
+
+    NotificationConsumer(Project project, MessageBus messageBus) {
+      myProject = project;
+      myMessageBus = messageBus;
+    }
+
+    @Override
+    public void consume(Object o) {
+      if (!Disposer.isDisposed(myProject)) {
+        myMessageBus.syncPublisher(GIT_REPO_CHANGE).repositoryChanged();
+      }
     }
   }
 

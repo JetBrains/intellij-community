@@ -15,20 +15,14 @@
  */
 package com.intellij.psi.impl;
 
-import com.intellij.ide.fileTemplates.FileTemplate;
-import com.intellij.ide.fileTemplates.FileTemplateManager;
-import com.intellij.ide.fileTemplates.JavaTemplateUtil;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.java.parser.*;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.JavaDummyElement;
@@ -44,13 +38,17 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
-import java.util.Properties;
 
 /**
  * @author max
  */
-public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJavaParserFacade {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiJavaParserFacadeImpl");
+public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
+  protected final PsiManagerEx myManager;
+  private PsiJavaFile myDummyJavaFile;
+
+  public PsiJavaParserFacadeImpl(PsiManagerEx manager) {
+    myManager = manager;
+  }
 
   private static final JavaParserUtil.ParserWrapper ANNOTATION = new JavaParserUtil.ParserWrapper() {
     @Override
@@ -144,13 +142,6 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
     }
   };
 
-  private static final JavaParserUtil.ParserWrapper CATCH_SECTION = new JavaParserUtil.ParserWrapper() {
-    @Override
-    public void parse(final PsiBuilder builder) {
-      StatementParser.parseCatchBlock(builder);
-    }
-  };
-
   private static final Map<String, PsiPrimitiveType> PRIMITIVE_TYPES;
   static {
     PRIMITIVE_TYPES = new HashMap<String, PsiPrimitiveType>();
@@ -164,10 +155,6 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
     PRIMITIVE_TYPES.put(PsiType.BOOLEAN.getCanonicalText(), PsiType.BOOLEAN);
     PRIMITIVE_TYPES.put(PsiType.VOID.getCanonicalText(), PsiType.VOID);
     PRIMITIVE_TYPES.put(PsiType.NULL.getCanonicalText(), PsiType.NULL);
-  }
-
-  public PsiJavaParserFacadeImpl(final PsiManagerEx manager) {
-    super(manager);
   }
 
   @NotNull
@@ -281,7 +268,7 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
 
     final PsiTypeElement element = createTypeElementFromText(text, context);
     if (markAsCopy) {
-      ((TreeElement)element.getNode()).acceptTree(new GeneratedMarkerVisitor());
+      GeneratedMarkerVisitor.markGenerated(element);
     }
     return element.getType();
   }
@@ -336,15 +323,16 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
   }
 
   protected PsiJavaFile createDummyJavaFile(final String text) {
-    final String fileName = "_Dummy_." + StdFileTypes.JAVA.getDefaultExtension();
-    final FileType type = StdFileTypes.JAVA;
+    final String fileName = "_Dummy_." + JavaFileType.INSTANCE.getDefaultExtension();
+    final FileType type = JavaFileType.INSTANCE;
     return (PsiJavaFile)PsiFileFactory.getInstance(myManager.getProject()).createFileFromText(type, fileName, text, 0, text.length());
   }
 
   @NotNull
   @Override
   public PsiTypeParameter createTypeParameterFromText(@NotNull final String text, @Nullable final PsiElement context) throws IncorrectOperationException {
-    final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, TYPE_PARAMETER, level(context)), context);
+    final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, TYPE_PARAMETER, level(context)),
+                                                               context);
     final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());
     if (!(element instanceof PsiTypeParameter)) {
       throw new IncorrectOperationException("Incorrect type parameter \"" + text + "\".");
@@ -383,51 +371,6 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
 
   @NotNull
   @Override
-  public PsiCatchSection createCatchSection(@NotNull final PsiType exceptionType,
-                                            @NotNull final String exceptionName,
-                                            @Nullable final PsiElement context) throws IncorrectOperationException {
-    if (!(exceptionType instanceof PsiClassType || exceptionType instanceof PsiDisjunctionType)) {
-      throw new IncorrectOperationException("Unexpected type:" + exceptionType);
-    }
-    final String text = StringUtil.join("catch (", exceptionType.getCanonicalText(), " ", exceptionName, ") {}");
-    final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, CATCH_SECTION, level(context)), context);
-    final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());
-    if (!(element instanceof PsiCatchSection)) {
-      throw new IncorrectOperationException("Incorrect catch section '" + text + "'. Parsed element: " + element);
-    }
-    setupCatchBlock(exceptionName, context, (PsiCatchSection)element);
-    return (PsiCatchSection)CodeStyleManager.getInstance(myManager.getProject()).reformat(element);
-  }
-
-  private void setupCatchBlock(final String exceptionName, @Nullable final PsiElement context, final PsiCatchSection psiCatchSection)
-     throws IncorrectOperationException {
-    final FileTemplate catchBodyTemplate = FileTemplateManager.getInstance().getCodeTemplate(JavaTemplateUtil.TEMPLATE_CATCH_BODY);
-    LOG.assertTrue(catchBodyTemplate != null);
-
-    final Properties props = new Properties();
-    props.setProperty(FileTemplate.ATTRIBUTE_EXCEPTION, exceptionName);
-    if (context != null && context.isPhysical()) {
-      final PsiDirectory directory = context.getContainingFile().getContainingDirectory();
-      if (directory != null) {
-        JavaTemplateUtil.setPackageNameAttribute(props, directory);
-      }
-    }
-
-    final PsiCodeBlock codeBlockFromText;
-    try {
-      codeBlockFromText = createCodeBlockFromText("{\n" + catchBodyTemplate.getText(props) + "\n}", null);
-    }
-    catch (ProcessCanceledException ce) {
-      throw ce;
-    }
-    catch (Exception e) {
-      throw new IncorrectOperationException("Incorrect file template", e);
-    }
-    psiCatchSection.getCatchBlock().replace(codeBlockFromText);
-  }
-
-  @NotNull
-  @Override
   public PsiType createPrimitiveType(@NotNull final String text, @NotNull final PsiAnnotation[] annotations) throws IncorrectOperationException {
     final PsiPrimitiveType primitiveType = getPrimitiveType(text);
     if (primitiveType == null) {
@@ -436,11 +379,19 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
     return annotations.length == 0 ? primitiveType : new PsiPrimitiveType(text, annotations);
   }
 
+  public PsiJavaFile getDummyJavaFile() {
+    if (myDummyJavaFile == null) {
+      myDummyJavaFile = createDummyJavaFile("");
+    }
+
+    return myDummyJavaFile;
+  }
+
   public static PsiPrimitiveType getPrimitiveType(final String text) {
     return PRIMITIVE_TYPES.get(text);
   }
 
-  private static LanguageLevel level(@Nullable final PsiElement context) {
+  protected static LanguageLevel level(@Nullable final PsiElement context) {
     return context != null ? PsiUtil.getLanguageLevel(context) : LanguageLevel.HIGHEST;
   }
 

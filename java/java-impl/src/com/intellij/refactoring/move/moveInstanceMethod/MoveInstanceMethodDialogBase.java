@@ -66,7 +66,7 @@ public abstract class MoveInstanceMethodDialogBase extends RefactoringDialog {
 
     gbConstraints.fill = GridBagConstraints.BOTH;
     gbConstraints.weightx = 1;
-    gbConstraints.weighty = 0;
+    gbConstraints.weighty = 1;
     gbConstraints.gridheight = 1;
     gbConstraints.gridx = 0;
     gbConstraints.gridy = 0;
@@ -74,7 +74,8 @@ public abstract class MoveInstanceMethodDialogBase extends RefactoringDialog {
     hBox.add(scrollPane, gbConstraints);
     hBox.add(Box.createHorizontalStrut(4));
     gbConstraints.weightx = 0;
-    gbConstraints.fill = GridBagConstraints.VERTICAL;
+    gbConstraints.fill = GridBagConstraints.NONE;
+    gbConstraints.anchor = GridBagConstraints.NORTH;
     gbConstraints.gridx++;
     myVisibilityPanel = createVisibilityPanel();
     hBox.add (myVisibilityPanel, gbConstraints);

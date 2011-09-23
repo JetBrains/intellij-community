@@ -29,7 +29,6 @@ import com.intellij.psi.stubs.StubIndexKey;
 import java.util.Collection;
 
 public class JavaSuperClassNameOccurenceIndex extends StringStubIndexExtension<PsiReferenceList> {
-  public static final StubIndexKey<String, PsiReferenceList> KEY = StubIndexKey.createIndexKey("java.class.extlist");
   private static final int VERSION = 1;
 
   private static final JavaSuperClassNameOccurenceIndex ourInstance = new JavaSuperClassNameOccurenceIndex();
@@ -38,7 +37,7 @@ public class JavaSuperClassNameOccurenceIndex extends StringStubIndexExtension<P
   }
 
   public StubIndexKey<String, PsiReferenceList> getKey() {
-    return KEY;
+    return JavaStubIndexKeys.SUPER_CLASSES;
   }
 
   public Collection<PsiReferenceList> get(final String s, final Project project, final GlobalSearchScope scope) {

@@ -28,7 +28,6 @@ import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -89,6 +88,7 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
     if (myPopup.isDisposed()) return;
 
     synchronized (lock) {
+      if (myData.contains(element)) return;
       myData.add(element);
     }
 

@@ -25,6 +25,11 @@ import java.awt.*;
 
 public class IdeBorderFactory {
   public static final int BORDER_ROUNDNESS = 5;
+  public static final int TITLED_BORDER_TOP_INSET = 7;
+  public static final int TITLED_BORDER_LEFT_INSET = 0;
+  public static final int TITLED_BORDER_BOTTOM_INSET = 10;
+  public static final int TITLED_BORDER_RIGHT_INSET = 0;
+  public static final int TITLED_BORDER_INDENT = 20;
 
   private IdeBorderFactory() {
   }
@@ -58,12 +63,12 @@ public class IdeBorderFactory {
   }
 
   public static IdeaTitledBorder createTitledBorder(String title, boolean hasBoldFont, boolean hasIndent, boolean hasSmallFont) {
-    Insets insets = new Insets(5, 0, 10, 0);
+    Insets insets = new Insets(TITLED_BORDER_TOP_INSET, TITLED_BORDER_LEFT_INSET, TITLED_BORDER_BOTTOM_INSET, TITLED_BORDER_RIGHT_INSET);
     return createTitledBorder(title, hasBoldFont, hasIndent, hasSmallFont, insets);
   }
 
     public static IdeaTitledBorder createTitledBorder(String title, boolean hasBoldFont, boolean hasIndent, boolean hasSmallFont, Insets insets) {
-      int indent = hasIndent ? 20 : 0;
+      int indent = hasIndent ? TITLED_BORDER_INDENT : 0;
       return new IdeaTitledBorder(title, hasBoldFont, hasSmallFont, indent, insets);
     }
 

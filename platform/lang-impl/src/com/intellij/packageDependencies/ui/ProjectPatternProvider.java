@@ -29,7 +29,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependencyUISettings;
 import com.intellij.psi.PsiFile;
@@ -109,7 +109,7 @@ public class ProjectPatternProvider extends PatternDialectProvider {
       LOG.assertTrue(virtualFile != null);
       final VirtualFile contentRoot = ProjectRootManager.getInstance(file.getProject()).getFileIndex().getContentRootForFile(virtualFile);
       if (contentRoot == null) return null;
-      final String fqName = VfsUtil.getRelativePath(virtualFile, contentRoot, '/');
+      final String fqName = VfsUtilCore.getRelativePath(virtualFile, contentRoot, '/');
       if (fqName != null) return new FilePatternPackageSet(getModulePattern(node), fqName);
     }
     return null;

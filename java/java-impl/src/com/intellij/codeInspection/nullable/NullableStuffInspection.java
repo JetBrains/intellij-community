@@ -84,7 +84,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
             PsiExpression psiExpression = expressions[i];
             if (psiExpression.getType() == PsiType.NULL) {
               final PsiParameter parameter = parameters[i];
-              if (!AnnotationUtil.isNullable(parameter) && !AnnotationUtil.isNotNull(parameter)) {
+              if (!NullableNotNullManager.isNullable(parameter) && !NullableNotNullManager.isNotNull(parameter)) {
                 final PsiClass annotationsClass =
                   JavaPsiFacade.getInstance(holder.getProject()).findClass(NullableNotNullManager.getInstance(holder.getProject()).getDefaultNullable(),
                                                                            psiMethod.getResolveScope());
@@ -322,7 +322,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
       if (!reported_nullable_method_overrides_notnull
           && REPORT_NOTNULL_PARAMETER_OVERRIDES_NULLABLE
           && annotated.isDeclaredNullable
-          && AnnotationUtil.isNotNull(superMethod)) {
+          && NullableNotNullManager.isNotNull(superMethod)) {
         reported_nullable_method_overrides_notnull = true;
         holder.registerProblem(method.getNameIdentifier(),
                                InspectionsBundle.message("inspection.nullable.problems.Nullable.method.overrides.NotNull"),
@@ -332,7 +332,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
           && REPORT_NOT_ANNOTATED_METHOD_OVERRIDES_NOTNULL
           && !annotated.isDeclaredNullable
           && !annotated.isDeclaredNotNull
-          && AnnotationUtil.isNotNull(superMethod)) {
+          && NullableNotNullManager.isNotNull(superMethod)) {
         reported_not_annotated_method_overrides_notnull = true;
         final String defaultNotNull = nullableManager.getDefaultNotNull();
         final String[] annotationsToRemove = ArrayUtil.toStringArray(nullableManager.getNullables());

@@ -15,6 +15,7 @@
  */
 package com.siyeh.ipp.comment;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
@@ -32,11 +33,11 @@ public class ChangeToEndOfLineCommentIntention extends Intention {
     public void processIntention(@NotNull PsiElement element)
             throws IncorrectOperationException {
         final PsiComment comment = (PsiComment)element;
-        final PsiManager manager = comment.getManager();
-      final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(manager.getProject());
+        final Project project = comment.getProject();
+        final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
         final PsiElement parent = comment.getParent();
         assert parent != null;
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+        final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
         final String commentText = comment.getText();
         final PsiElement whitespace = comment.getNextSibling();
         final String text = commentText.substring(2, commentText.length() - 2);
@@ -47,8 +48,9 @@ public class ChangeToEndOfLineCommentIntention extends Intention {
                             parent);
             parent.addAfter(nextComment, comment);
             if (whitespace != null) {
-                final PsiElement newWhiteSpace =
-                        factory.createWhiteSpaceFromText(whitespace.getText());
+              final PsiParserFacade parserFacade = PsiParserFacade.SERVICE.getInstance(project);
+              final PsiElement newWhiteSpace =
+                        parserFacade.createWhiteSpaceFromText(whitespace.getText());
                 parent.addAfter(newWhiteSpace, comment);
             }
         }

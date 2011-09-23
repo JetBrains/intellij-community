@@ -30,6 +30,7 @@ import com.intellij.openapi.vcs.changes.actions.RevertSelectedChangesAction;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffWithLocalAction;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NonNls;
 
@@ -46,12 +47,17 @@ public class RepositoryChangesBrowser extends ChangesBrowser implements DataProv
   private CommittedChangesBrowserUseCase myUseCase;
 
   public RepositoryChangesBrowser(final Project project, final List<CommittedChangeList> changeLists) {
-    super(project, changeLists, Collections.<Change>emptyList(), null, false, false, null, MyUseCase.COMMITTED_CHANGES);
+    super(project, changeLists, Collections.<Change>emptyList(), null, false, false, null, MyUseCase.COMMITTED_CHANGES, null);
   }
 
   public RepositoryChangesBrowser(final Project project, final List<? extends ChangeList> changeLists, final List<Change> changes,
                                   final ChangeList initialListSelection) {
-    super(project, changeLists, changes, initialListSelection, false, false, null, MyUseCase.COMMITTED_CHANGES);
+    super(project, changeLists, changes, initialListSelection, false, false, null, MyUseCase.COMMITTED_CHANGES, null);
+  }
+
+  public RepositoryChangesBrowser(final Project project, final List<? extends ChangeList> changeLists, final List<Change> changes,
+                                  final ChangeList initialListSelection, VirtualFile toSelect) {
+    super(project, changeLists, changes, initialListSelection, false, false, null, MyUseCase.COMMITTED_CHANGES, toSelect);
   }
 
   protected void buildToolBar(final DefaultActionGroup toolBarGroup) {

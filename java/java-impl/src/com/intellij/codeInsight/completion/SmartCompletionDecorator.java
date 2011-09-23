@@ -74,12 +74,15 @@ public class SmartCompletionDecorator extends TailTypeDecorator<LookupElement> {
         Set<TailType> assignableTyped = new HashSet<TailType>();
         for (ExpectedTypeInfo info : myExpectedTypeInfos) {
           final PsiType infoType = info.getType();
+          final PsiType originalInfoType = JavaCompletionUtil.originalize(infoType);
           if (PsiType.VOID.equals(infoType)) {
             voidTyped.add(info.getTailType());
-          } else if (infoType.equals(type)) {
+          } else if (infoType.equals(type) || originalInfoType.equals(type)) {
             sameTyped.add(info.getTailType());
-          } else if ((infoType.isAssignableFrom(type) && info.getKind() == ExpectedTypeInfo.TYPE_OR_SUBTYPE) ||
-                     (type.isAssignableFrom(infoType) && info.getKind() == ExpectedTypeInfo.TYPE_OR_SUPERTYPE)) {
+          } else if ((info.getKind() == ExpectedTypeInfo.TYPE_OR_SUBTYPE &&
+                      (infoType.isAssignableFrom(type) || originalInfoType.isAssignableFrom(type))) ||
+                     (info.getKind() == ExpectedTypeInfo.TYPE_OR_SUPERTYPE &&
+                      (type.isAssignableFrom(infoType) || type.isAssignableFrom(originalInfoType)))) {
             assignableTyped.add(info.getTailType());
           }
         }

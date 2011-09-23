@@ -25,7 +25,7 @@ import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.compiled.ClsEnumConstantImpl;
 import com.intellij.psi.impl.compiled.ClsFieldImpl;
 import com.intellij.psi.impl.java.stubs.impl.PsiFieldStubImpl;
-import com.intellij.psi.impl.java.stubs.index.JavaFieldNameIndex;
+import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
 import com.intellij.psi.impl.source.PsiEnumConstantImpl;
 import com.intellij.psi.impl.source.PsiFieldImpl;
 import com.intellij.psi.impl.source.tree.ElementType;
@@ -140,7 +140,7 @@ public abstract class JavaFieldStubElementType extends JavaStubElementType<PsiFi
   public void indexStub(final PsiFieldStub stub, final IndexSink sink) {
     final String name = stub.getName();
     if (name != null) {
-      sink.occurrence(JavaFieldNameIndex.KEY, name);
+      sink.occurrence(JavaStubIndexKeys.FIELDS, name);
     }
   }
 

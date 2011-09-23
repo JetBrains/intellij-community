@@ -23,6 +23,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.formatter.FormattingDocumentModelImpl;
 import com.intellij.psi.formatter.PsiBasedFormattingModel;
@@ -46,7 +47,8 @@ public class GroovyFormattingModelBuilder implements FormattingModelBuilder {
     assert containingFile != null : element.getContainingFile();
     ASTNode astNode = containingFile.getNode();
     assert astNode != null;
-    final GroovyBlock block = new GroovyBlock(astNode, null, Indent.getAbsoluteNoneIndent(), null, settings);
+    CommonCodeStyleSettings groovySettings = settings.getCommonSettings(GroovyFileType.GROOVY_LANGUAGE);
+    final GroovyBlock block = new GroovyBlock(astNode, null, Indent.getAbsoluteNoneIndent(), null, groovySettings);
     return new GroovyFormattingModel(containingFile, block, FormattingDocumentModelImpl.createOn(containingFile));
   }
 

@@ -17,6 +17,8 @@ package org.jetbrains.plugins.groovy.lang.formatter;
 
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.lang.reflect.Field;
@@ -45,17 +47,18 @@ public class GroovyCodeStyleFormatterTest extends GroovyFormatterTestCase {
       if (!matcher.find()) break;
       final String[] strings = matcher.group(1).split("=");
       String name = strings[0];
-      final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
-      final Field field = CodeStyleSettings.class.getField(name);
+      final CommonCodeStyleSettings groovySettings =
+        CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(GroovyFileType.GROOVY_LANGUAGE);
+      final Field field = CommonCodeStyleSettings.class.getField(name);
       final String value = strings[1];
       if ("true".equals(value) || "false".equals(value)) {
-        field.set(settings, Boolean.parseBoolean(value));
+        field.set(groovySettings, Boolean.parseBoolean(value));
       } else {
         try {
-          field.set(settings, Integer.parseInt(value));
+          field.set(groovySettings, Integer.parseInt(value));
         }
         catch (NumberFormatException e) {
-          field.set(settings, CodeStyleSettings.class.getField(value).get(value));
+          field.set(groovySettings, CommonCodeStyleSettings.class.getField(value).get(value));
         }
       }
       input = input.substring(matcher.end());

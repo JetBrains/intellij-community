@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.actions.generate.constructors;
 
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.actions.generate.GrBaseGenerateAction;
 
 /**
@@ -24,5 +25,9 @@ import org.jetbrains.plugins.groovy.actions.generate.GrBaseGenerateAction;
 public class GroovyGenerateConstructorAction extends GrBaseGenerateAction {
   public GroovyGenerateConstructorAction() {
     super(new GroovyGenerateConstructorHandler());
+  }
+
+  protected String getCommandName() {
+    return GroovyBundle.message("Constructor");
   }
 }

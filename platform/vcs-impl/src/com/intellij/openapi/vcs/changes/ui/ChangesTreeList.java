@@ -30,6 +30,8 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -236,6 +238,10 @@ public abstract class ChangesTreeList<T> extends JPanel {
     PopupHandler.installUnknownPopupHandler(myList, group, ActionManager.getInstance());
     PopupHandler.installUnknownPopupHandler(myTree, group, ActionManager.getInstance());
   }
+  
+  public JComponent getPreferredFocusedComponent() {
+    return myTree;
+  }
 
   public Dimension getPreferredSize() {
     return new Dimension(400, 400);
@@ -275,6 +281,10 @@ public abstract class ChangesTreeList<T> extends JPanel {
   }
 
   public void setChangesToDisplay(final List<T> changes) {
+    setChangesToDisplay(changes, null);
+  }
+  
+  public void setChangesToDisplay(final List<T> changes, @Nullable final VirtualFile toSelect) {
     final List<T> sortedChanges = new ArrayList<T>(changes);
     Collections.sort(sortedChanges, new Comparator<T>() {
       public int compare(final T o1, final T o2) {
@@ -337,7 +347,33 @@ public abstract class ChangesTreeList<T> extends JPanel {
               }
             }
           }
+        } else {
+          if (toSelect != null) {
+            ChangesBrowserNode root = (ChangesBrowserNode)model.getRoot();
+            final int[] rowToSelect = new int[] {-1}; 
+            TreeUtil.traverse(root, new TreeUtil.Traverse() {
+              @Override
+              public boolean accept(Object node) {
+                if (node instanceof DefaultMutableTreeNode) {
+                  Object userObject = ((DefaultMutableTreeNode)node).getUserObject();
+                  if (userObject instanceof Change) {
+                    Change change = (Change)userObject;
+                    VirtualFile virtualFile = change.getVirtualFile();
+                    if ((virtualFile != null && virtualFile.equals(toSelect)) || seemsToBeMoved(change, toSelect)) {
+                      TreeNode[] path = ((DefaultMutableTreeNode)node).getPath();
+                      rowToSelect[0] = myTree.getRowForPath(new TreePath(path));
+                    }
+                  }
+                }
+
+                return rowToSelect[0] == -1;
+              }
+            });
+            
+            scrollRow = rowToSelect[0] == -1 ? scrollRow : rowToSelect[0];
+          }
         }
+        
         if (changes.size() > 0) {
           myList.setSelectedIndex(listSelection);
           myList.ensureIndexIsVisible(listSelection);
@@ -352,6 +388,13 @@ public abstract class ChangesTreeList<T> extends JPanel {
     } else {
       SwingUtilities.invokeLater(runnable);
     }
+  }
+  
+  private static boolean seemsToBeMoved(Change change, VirtualFile toSelect) {
+    ContentRevision afterRevision = change.getAfterRevision();
+    if (afterRevision == null) return false;
+    FilePath file = afterRevision.getFile();
+    return file.getName().equals(toSelect.getName());
   }
 
   protected abstract DefaultTreeModel buildTreeModel(final List<T> changes, final ChangeNodeDecorator changeNodeDecorator);

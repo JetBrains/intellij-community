@@ -35,6 +35,7 @@ import com.intellij.openapi.vcs.changes.committed.RepositoryChangesBrowser;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeListImpl;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SeparatorFactory;
@@ -63,10 +64,19 @@ public class ChangeListViewerDialog extends DialogWrapper implements DataProvide
   private Change[] myChanges;
   private NotNullFunction<Change, Change> myConvertor;
   private JScrollPane commitMessageScroll;
+  private VirtualFile myToSelect;
 
   public ChangeListViewerDialog(Project project, CommittedChangeList changeList) {
     super(project, true);
     myInAir = false;
+    initCommitMessageArea(project, changeList);
+    initDialog(project, changeList);
+  }
+
+  public ChangeListViewerDialog(Project project, CommittedChangeList changeList, VirtualFile toSelect) {
+    super(project, true);
+    myInAir = false;
+    myToSelect = toSelect;
     initCommitMessageArea(project, changeList);
     initDialog(project, changeList);
   }
@@ -130,7 +140,7 @@ public class ChangeListViewerDialog extends DialogWrapper implements DataProvide
     final Splitter splitter = new Splitter(true, 0.8f);
     myChangesBrowser = new RepositoryChangesBrowser(myProject, Collections.singletonList(myChangeList),
                                                     new ArrayList<Change>(myChangeList.getChanges()),
-                                                    myChangeList) {
+                                                    myChangeList, myToSelect) {
       @Override
       protected void showDiffForChanges(final Change[] changesArray, final int indexInSelection) {
         if (myInAir && (myConvertor != null)) {
@@ -177,12 +187,14 @@ public class ChangeListViewerDialog extends DialogWrapper implements DataProvide
 
   @Override
   protected Action[] createActions() {
-    return new Action[] { getCancelAction() };
+    Action cancelAction = getCancelAction();
+    cancelAction.putValue(DEFAULT_ACTION, Boolean.TRUE);
+    return new Action[] {cancelAction};
   }
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myChangesBrowser;
+    return myChangesBrowser.getPreferredFocusedComponent();
   }
 
   /**

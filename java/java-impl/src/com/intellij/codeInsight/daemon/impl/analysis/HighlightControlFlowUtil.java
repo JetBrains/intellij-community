@@ -25,12 +25,14 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
-import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiMatcherImpl;
 import com.intellij.psi.util.PsiMatchers;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -191,6 +193,28 @@ public class HighlightControlFlowUtil {
     // our constructor is reached from some other constructor by constructor chain
     return info.visitedConstructors.indexOf(info.recursivelyCalledConstructor) <=
            info.visitedConstructors.indexOf(constructor);
+  }
+
+  public static boolean isAssigned(final PsiParameter parameter) {
+    ParamWriteProcessor processor = new ParamWriteProcessor();
+    ReferencesSearch.search(parameter, new LocalSearchScope(parameter.getDeclarationScope()), true).forEach(processor);
+    return processor.isWriteRefFound();
+  }
+
+  private static class ParamWriteProcessor implements Processor<PsiReference> {
+    private volatile boolean myIsWriteRefFound = false;
+    public boolean process(PsiReference reference) {
+      final PsiElement element = reference.getElement();
+      if (element instanceof PsiReferenceExpression && PsiUtil.isAccessedForWriting((PsiExpression)element)) {
+        myIsWriteRefFound = true;
+        return false;
+      }
+      return true;
+    }
+
+    public boolean isWriteRefFound() {
+      return myIsWriteRefFound;
+    }
   }
 
   private static class ConstructorVisitorInfo {
@@ -434,7 +458,7 @@ public class HighlightControlFlowUtil {
     }
     else if (variable instanceof PsiParameter) {
       final PsiParameter parameter = (PsiParameter)variable;
-      return PsiImplUtil.isAssigned(parameter);
+      return isAssigned(parameter);
     }
     else {
       return false;

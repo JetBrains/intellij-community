@@ -59,7 +59,7 @@ public class ExpectedHighlightingData {
 
   @NonNls private static final String ERROR_MARKER = "error";
   @NonNls private static final String WARNING_MARKER = "warning";
-  @NonNls private static final String INFORMATION_MARKER = "weak_warning";
+  @NonNls private static final String WEAK_WARNING_MARKER = "weak_warning";
   @NonNls private static final String INFO_MARKER = "info";
   @NonNls private static final String END_LINE_HIGHLIGHT_MARKER = "EOLError";
   @NonNls private static final String END_LINE_WARNING_MARKER = "EOLWarning";
@@ -123,8 +123,8 @@ public class ExpectedHighlightingData {
 
         highlightingTypes.put(ERROR_MARKER, new ExpectedHighlightingSet(HighlightSeverity.ERROR, false, true));
         highlightingTypes.put(WARNING_MARKER, new ExpectedHighlightingSet(HighlightSeverity.WARNING, false, checkWarnings));
-        highlightingTypes.put(INFORMATION_MARKER, new ExpectedHighlightingSet(HighlightSeverity.WEAK_WARNING, false, checkWeakWarnings));
-        highlightingTypes.put("inject", new ExpectedHighlightingSet(HighlightInfoType.INJECTED_FRAGMENT_SEVERITY, false, checkInfos));
+        highlightingTypes.put(WEAK_WARNING_MARKER, new ExpectedHighlightingSet(HighlightSeverity.WEAK_WARNING, false, checkWeakWarnings));
+        //highlightingTypes.put("inject", new ExpectedHighlightingSet(HighlightInfoType.INJECTED_FRAGMENT_SEVERITY, false, checkInfos));
         highlightingTypes.put(INFO_MARKER, new ExpectedHighlightingSet(HighlightSeverity.INFORMATION, false, checkInfos));
         highlightingTypes.put("symbolName", new ExpectedHighlightingSet(HighlightInfoType.SYMBOL_TYPE_SEVERITY, false, false));
         for (SeveritiesProvider provider : Extensions.getExtensions(SeveritiesProvider.EP_NAME)) {
@@ -157,11 +157,11 @@ public class ExpectedHighlightingData {
 
   }
   public void checkWeakWarnings() {
-    highlightingTypes.put(INFORMATION_MARKER, new ExpectedHighlightingSet(HighlightSeverity.WEAK_WARNING, false, true));
+    highlightingTypes.put(WEAK_WARNING_MARKER, new ExpectedHighlightingSet(HighlightSeverity.WEAK_WARNING, false, true));
   }
   public void checkInfos() {
     highlightingTypes.put(INFO_MARKER, new ExpectedHighlightingSet(HighlightSeverity.INFORMATION, false, true));
-    highlightingTypes.put("inject", new ExpectedHighlightingSet(HighlightInfoType.INJECTED_FRAGMENT_SEVERITY, false, true));
+    //highlightingTypes.put("inject", new ExpectedHighlightingSet(HighlightInfoType.INJECTED_FRAGMENT_SEVERITY, false, true));
 
   }
   public void checkSymbolNames() {

@@ -27,6 +27,7 @@ package com.intellij.refactoring.ui;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
@@ -40,7 +41,11 @@ public class DocCommentPanel extends JPanel {
 
   public DocCommentPanel(String title) {
     setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-    myBorder = IdeBorderFactory.createTitledBorder(title, false, true, true);
+    myBorder = IdeBorderFactory.createTitledBorder(title, false, true, true,
+                                                   new Insets(IdeBorderFactory.TITLED_BORDER_TOP_INSET,
+                                                              UIUtil.DEFAULT_HGAP,
+                                                              IdeBorderFactory.TITLED_BORDER_BOTTOM_INSET,
+                                                              IdeBorderFactory.TITLED_BORDER_RIGHT_INSET));
     this.setBorder(myBorder);
 
     myRbJavaDocAsIs = new JRadioButton();

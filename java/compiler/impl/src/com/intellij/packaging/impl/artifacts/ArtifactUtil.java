@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
@@ -336,7 +337,7 @@ public class ArtifactUtil {
                 relativePath = ((FileCopyPackagingElement)element).getOutputFileName();
               }
               else {
-                relativePath = VfsUtil.getRelativePath(file, root, '/');
+                relativePath = VfsUtilCore.getRelativePath(file, root, '/');
               }
               artifacts.add(Trinity.create(artifact, path, relativePath));
               return false;
@@ -361,7 +362,7 @@ public class ArtifactUtil {
                                                 @NotNull PackagingElementResolvingContext context) {
     for (VirtualFile sourceRoot : moduleElement.getSourceRoots(context)) {
       if (VfsUtil.isAncestor(sourceRoot, file, true)) {
-        return VfsUtil.getRelativePath(file, sourceRoot, '/');
+        return VfsUtilCore.getRelativePath(file, sourceRoot, '/');
       }
     }
     return null;

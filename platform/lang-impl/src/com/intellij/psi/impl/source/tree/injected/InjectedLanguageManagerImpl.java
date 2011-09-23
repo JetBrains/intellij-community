@@ -47,6 +47,7 @@ import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -126,43 +127,51 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
       myProgress = new DaemonProgressIndicator();
     }
 
+    final Processor<DocumentWindow> commitProcessor = new Processor<DocumentWindow>() {
+      @Override
+      public boolean process(DocumentWindow documentWindow) {
+        ProgressManager.checkCanceled();
+        RangeMarker rangeMarker = documentWindow.getHostRanges()[0];
+        PsiElement element = rangeMarker.isValid() ? hostPsiFile.findElementAt(rangeMarker.getStartOffset()) : null;
+        if (element == null) {
+          injected.remove(documentWindow);
+          return true;
+        }
+        final DocumentWindow[] stillInjectedDocument = {null};
+        // it is here where the reparse happens and old file contents replaced
+        InjectedLanguageUtil.enumerate(element, hostPsiFile, true, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+          public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
+            stillInjectedDocument[0] = (DocumentWindow)injectedPsi.getViewProvider().getDocument();
+            PsiDocumentManagerImpl.checkConsistency(injectedPsi, stillInjectedDocument[0]);
+          }
+        });
+        if (stillInjectedDocument[0] == null) {
+          injected.remove(documentWindow);
+        }
+        else if (stillInjectedDocument[0] != documentWindow) {
+          injected.remove(documentWindow);
+          injected.add(stillInjectedDocument[0]);
+        }
+
+        return true;
+      }
+    };
     final Computable<Boolean> commitRunnable = new Computable<Boolean>() {
       @Override
       public Boolean compute() {
-        return JobUtil.invokeConcurrentlyUnderProgress(new ArrayList<DocumentWindow>(injected), myProgress, !synchronously, new Processor<DocumentWindow>() {
-          @Override
-          public boolean process(DocumentWindow documentWindow) {
-            ProgressManager.checkCanceled();
-            RangeMarker rangeMarker = documentWindow.getHostRanges()[0];
-            PsiElement element = rangeMarker.isValid() ? hostPsiFile.findElementAt(rangeMarker.getStartOffset()) : null;
-            if (element == null) {
-              injected.remove(documentWindow);
-              return true;
-            }
-            final DocumentWindow[] stillInjectedDocument = {null};
-            // it is here where the reparse happens and old file contents replaced
-            InjectedLanguageUtil.enumerate(element, hostPsiFile, true, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
-              public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
-                stillInjectedDocument[0] = (DocumentWindow)injectedPsi.getViewProvider().getDocument();
-                PsiDocumentManagerImpl.checkConsistency(injectedPsi, stillInjectedDocument[0]);
-              }
-            });
-            if (stillInjectedDocument[0] == null) {
-              injected.remove(documentWindow);
-            }
-            else if (stillInjectedDocument[0] != documentWindow) {
-              injected.remove(documentWindow);
-              injected.add(stillInjectedDocument[0]);
-            }
-
-            return true;
-          }
-        });
+        return JobUtil.invokeConcurrentlyUnderProgress(new ArrayList<DocumentWindow>(injected), myProgress, !synchronously, commitProcessor);
       }
     };
 
     if (synchronously) {
-      return commitRunnable.compute();
+      if (Thread.holdsLock(PsiLock.LOCK)) {
+        // hack for the case when docCommit was called from within PSI modification, e.g. in formatter
+        // we can't spawn threads to do injections there or deadlock is imminent
+        return ContainerUtil.process(injected, commitProcessor);
+      }
+      else {
+        return commitRunnable.compute();
+      }
     }
     else {
       JobUtil.submitToJobThread(Job.DEFAULT_PRIORITY, new Runnable() {

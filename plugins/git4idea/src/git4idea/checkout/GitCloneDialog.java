@@ -267,6 +267,10 @@ public class GitCloneDialog extends DialogWrapper {
       }
     });
   }
+  
+  public void prependToHistory(final String item) {
+    myRepositoryURL.prependItem(item);
+  }
 
   public void rememberSettings() {
     final GitRememberedInputs rememberedInputs = GitRememberedInputs.getInstance();

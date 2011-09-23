@@ -32,32 +32,6 @@ import java.util.Set;
  */
 public class JavaAwareCompletionData extends CompletionData{
 
-  @NotNull
-  static TailType analyzeItem(final Object completion, final PsiElement position) {
-    if(completion instanceof PsiKeyword){
-      final String text = ((PsiKeyword)completion).getText();
-      if(PsiKeyword.RETURN.equals(text)){
-        PsiElement scope = position;
-        while(true){
-          if (scope instanceof PsiFile || scope instanceof PsiClassInitializer){
-            return TailType.NONE;
-          }
-
-          if (scope instanceof PsiMethod){
-            final PsiMethod method = (PsiMethod)scope;
-            if(method.isConstructor() || PsiType.VOID.equals(method.getReturnType())) {
-              return TailType.SEMICOLON;
-            }
-
-            return TailType.SPACE;
-          }
-          scope = scope.getParent();
-        }
-      }
-    }
-    return TailType.NONE;
-  }
-
   protected void addLookupItem(Set<LookupElement> set, final TailType tailType, @NotNull Object completion, final PsiFile file, final CompletionVariant variant) {
     if (completion instanceof LookupElement && !(completion instanceof LookupItem)) {
       set.add((LookupElement)completion);
@@ -77,13 +51,8 @@ public class JavaAwareCompletionData extends CompletionData{
         if (context.shouldAddCompletionChar()) {
           return;
         }
-        TailType type = analyzeItem(item.getObject(), context.getFile().findElementAt(context.getStartOffset()));
-        if (type == TailType.NONE) {
-          type = tailType;
-        }
-        //new DefaultInsertHandler().handleInsert(context, item);
-        if (type != TailType.NONE) {
-          type.processTail(context.getEditor(), context.getTailOffset());
+        if (tailType != TailType.NONE) {
+          tailType.processTail(context.getEditor(), context.getTailOffset());
         }
       }
     });

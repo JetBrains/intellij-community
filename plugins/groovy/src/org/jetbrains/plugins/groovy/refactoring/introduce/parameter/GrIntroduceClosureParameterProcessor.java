@@ -198,7 +198,6 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
 
       for (PsiReference ref1 : refs) {
         PsiElement ref = ref1.getElement();
-        //todo stop here
         if (!PsiTreeUtil.isAncestor(toReplaceIn, ref, false)) {
           result.add(new ExternalUsageInfo(ref));
         }
@@ -226,20 +225,37 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
 
   @Override
   protected void performRefactoring(UsageInfo[] usages) {
-
-    GrClosableBlock toReplaceIn = this.toReplaceIn;
     if (mySettings.generateDelegate()) {
       LOG.assertTrue(toSearchFor instanceof GrVariable);
-      toReplaceIn = generateDelegate(this.toReplaceIn, (GrVariable)toSearchFor);
+
+      String newName = InlineMethodConflictSolver.suggestNewName(((GrVariable)toSearchFor).getName() + "Delegate", null, toSearchFor);
+      GrClosableBlock result = generateDelegateClosure(this.toReplaceIn, (GrVariable)toSearchFor, newName);
+
+      processClosure(usages);
+
+      final GrVariableDeclaration declaration = myFactory.createVariableDeclaration(null, toReplaceIn, ((GrVariable)toSearchFor)
+        .getDeclaredType(), newName);
+      declaration.getModifierList().replace(((GrVariable)toSearchFor).getModifierList());
+      toReplaceIn.replace(result);
+      insertDeclaration((GrVariable)toSearchFor, declaration).getVariables()[0].getInitializerGroovy();
     }
     else {
       processExternalUsages(usages);
+
+      processClosure(usages);
     }
 
+    if (myContext.var != null && mySettings.removeLocalVariable()) {
+      myContext.var.delete();
+    }
+  }
+
+  private void processClosure(UsageInfo[] usages) {
     changeSignature(toReplaceIn);
+    processInternalUsages(usages);
+  }
 
-    if (myContext.var != null) myContext.var.delete();
-
+  private void processInternalUsages(UsageInfo[] usages) {
     // Replacing expression occurrences
     for (UsageInfo usage : usages) {
       if (usage instanceof ChangedMethodCallInfo) {
@@ -259,11 +275,6 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
         }
       }
     }
-
-    if (myContext.var != null && mySettings.removeLocalVariable()) {
-      myContext.var.delete();
-    }
-    //fieldConflictsResolver.fix();
   }
 
   private void processExternalUsages(UsageInfo[] usages) {
@@ -315,8 +326,20 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
   }
 
   private void processExternalUsage(UsageInfo usage) {
-    GrCall callExpression = GroovyRefactoringUtil.getCallExpressionByMethodReference(usage.getElement());
-    LOG.assertTrue(callExpression != null);
+    final PsiElement element = usage.getElement();
+    GrCall callExpression = GroovyRefactoringUtil.getCallExpressionByMethodReference(element);
+    if (callExpression == null) {
+      final PsiElement parent = element.getParent();
+      if (parent instanceof GrReferenceExpression && element == ((GrReferenceExpression)parent).getQualifier() && "call".equals(
+        ((GrReferenceExpression)parent).getReferenceName())) {
+        callExpression = GroovyRefactoringUtil.getCallExpressionByMethodReference(parent);
+      }
+    }
+    
+    if (callExpression == null) return;
+      
+      
+    //LOG.assertTrue(callExpression != null);
 
     //check for x.getFoo()(args)
     if (callExpression instanceof GrMethodCall) {
@@ -378,34 +401,37 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
   }
 
 
-  private GrClosableBlock generateDelegate(GrClosableBlock prototype, GrVariable anchor) {
-
-    GrClosableBlock result = myFactory.createClosureFromText("{->}", anchor);
-    final GrParameterList parameterList = (GrParameterList)prototype.getParameterList().copy();
-    result.getParameterList().replace(parameterList);
+  private GrClosableBlock generateDelegateClosure(GrClosableBlock originalClosure, GrVariable anchor, String newName) {
+    GrClosableBlock result;
+    if (originalClosure.hasParametersSection()) {
+      result = myFactory.createClosureFromText("{->}", anchor);
+      final GrParameterList parameterList = (GrParameterList)originalClosure.getParameterList().copy();
+      result.getParameterList().replace(parameterList);
+    }
+    else {
+      result = myFactory.createClosureFromText("{}", anchor);
+    }
 
     StringBuilder call = new StringBuilder();
+    call.append(newName).append('(');
+
     final GrParameter[] parameters = result.getParameters();
     for (GrParameter parameter : parameters) {
       call.append(parameter.getName()).append(", ");
     }
     call.append(myParameterInitializer.getText());
-    call.append(");\n}");
+    call.append(")");
 
     final GrStatement statement = myFactory.createStatementFromText(call.toString());
     result.addStatementBefore(statement, null);
-
-    String newName = InlineMethodConflictSolver.suggestNewName(anchor.getName() + "Delegate", null, result.getParameterList());
-    final GrVariableDeclaration declaration = myFactory.createVariableDeclaration(null, null, anchor.getDeclaredType(), newName);
-    declaration.getModifierList().replace(anchor.getModifierList().copy());
-    return (GrClosableBlock)insertDeclaration(anchor, declaration).getVariables()[0].getInitializerGroovy();
+    return result;
   }
 
   private GrVariableDeclaration insertDeclaration(GrVariable original, GrVariableDeclaration declaration) {
     if (original instanceof GrField) {
       final PsiClass containingClass = ((GrField)original).getContainingClass();
       LOG.assertTrue(containingClass != null);
-      return (GrVariableDeclaration)containingClass.addAfter(declaration, original.getParent());
+      return (GrVariableDeclaration)containingClass.addBefore(declaration, original.getParent());
     }
 
     final GrStatementOwner block;
@@ -462,11 +488,11 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
       parent = block.addStatementBefore(((GrVariableDeclaration)parent), null);
     }
     else {
-      LOG.assertTrue(parent instanceof GrStatementOwner);
-      block = (GrStatementOwner)parent;
+      LOG.assertTrue(pparent instanceof GrStatementOwner);
+      block = (GrStatementOwner)pparent;
     }
 
-    return (GrVariableDeclaration)block.addStatementBefore(declaration, (GrVariableDeclaration)parent);
+    return (GrVariableDeclaration)block.addStatementBefore(declaration, (GrStatement)parent);
   }
 
   private void processChangedMethodCall(PsiElement element) {

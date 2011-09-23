@@ -73,7 +73,7 @@ public final class FileContentImpl extends UserDataHolderBase implements FileCon
       final Language substitutedLanguage = LanguageSubstitutors.INSTANCE.substituteLanguage(language, getFile(), project);
       psi = PsiFileFactory.getInstance(project).createFileFromText(getFileName(), substitutedLanguage, getContentAsText(), false, false, true);
 
-      psi.putUserData(FileBasedIndex.VIRTUAL_FILE, getFile());
+      psi.putUserData(IndexingDataKeys.VIRTUAL_FILE, getFile());
       putUserData(CACHED_PSI, psi);
     }
     return psi;

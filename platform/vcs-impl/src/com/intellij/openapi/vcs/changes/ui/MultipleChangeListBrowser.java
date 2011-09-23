@@ -65,7 +65,7 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
                                    final boolean capableOfExcludingChanges,
                                    final boolean highlightProblems, final Runnable rebuildListListener, @Nullable final Runnable inclusionListener,
                                    final AnAction... additionalActions) {
-    super(project, changeLists, changes, initialListSelection, capableOfExcludingChanges, highlightProblems, inclusionListener, MyUseCase.LOCAL_CHANGES);
+    super(project, changeLists, changes, initialListSelection, capableOfExcludingChanges, highlightProblems, inclusionListener, MyUseCase.LOCAL_CHANGES, null);
     myRebuildListListener = rebuildListListener;
 
     myChangeListChooser = new ChangeListChooser(changeLists);

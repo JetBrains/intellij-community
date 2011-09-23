@@ -70,6 +70,7 @@ public class GroovyLiveTemplatesTest extends LightCodeInsightFixtureTestCase{
     assertFalse(isApplicable("class Foo {{ return (<caret>xxx) }}", template));
     assertTrue(isApplicable("class Foo { <caret>xxx }", template));
     assertFalse(isApplicable("class Foo { int <caret>xxx }", template));
+    assertFalse(isApplicable("class Foo { /* <caret>xxx */ }", template));
     assertTrue(isApplicable("class Foo {}\n<caret>xxx", template));
     assertTrue(isApplicable("<caret>xxx", template));
   }

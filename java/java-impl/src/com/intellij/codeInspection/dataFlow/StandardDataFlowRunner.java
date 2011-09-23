@@ -24,6 +24,7 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.instructions.InstanceofInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,7 +33,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiReturnStatement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.codeInsight.AnnotationUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -67,8 +67,8 @@ public class StandardDataFlowRunner extends AnnotationsAwareDataFlowRunner {
     myIsInMethod = psiBlock.getParent() instanceof PsiMethod;
     if (myIsInMethod) {
       PsiMethod method = (PsiMethod)psiBlock.getParent();
-      myInNullableMethod = AnnotationUtil.isNullable(method);
-      myInNotNullMethod = AnnotationUtil.isNotNull(method);
+      myInNullableMethod = NullableNotNullManager.isNullable(method);
+      myInNotNullMethod = NullableNotNullManager.isNotNull(method);
     }
 
     myNPEInstructions.clear();

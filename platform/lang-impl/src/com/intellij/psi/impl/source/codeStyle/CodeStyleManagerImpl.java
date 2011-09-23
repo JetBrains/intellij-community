@@ -340,14 +340,8 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
   }
 
   @Nullable
-  public String getLineIndent(@NotNull Editor editor) {
-    Document doc = editor.getDocument();
-    int offset = editor.getCaretModel().getOffset();
-    if (offset >= doc.getTextLength()) {
-      return "";
-    }
-
-    PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(doc);
+  public String getLineIndent(@NotNull Document document, int offset) {
+    PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
     if (file == null) return "";
 
     return getLineIndent(file, offset);

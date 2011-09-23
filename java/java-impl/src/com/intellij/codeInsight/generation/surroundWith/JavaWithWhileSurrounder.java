@@ -51,7 +51,7 @@ class JavaWithWhileSurrounder extends JavaStatementsSurrounder{
       return null;
     }
     PsiCodeBlock bodyBlock = ((PsiBlockStatement)body).getCodeBlock();
-    SurroundWithUtil.indentCommentIfNecessary(bodyBlock, statements, factory);
+    SurroundWithUtil.indentCommentIfNecessary(bodyBlock, statements);
     bodyBlock.addRange(statements[0], statements[statements.length - 1]);
     container.deleteChildRange(statements[0], statements[statements.length - 1]);
 

@@ -23,8 +23,10 @@ import com.intellij.psi.PsiVariable;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.moveInstanceMethod.MoveInstanceMethodDialogBase;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
+import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -54,17 +56,11 @@ public class ConvertToInstanceMethodDialog  extends MoveInstanceMethodDialogBase
   }
 
   protected JComponent createCenterPanel() {
-    final Box vBox = Box.createVerticalBox();
-    final Box labelBox = Box.createHorizontalBox();
-    final JLabel label = new JLabel();
-    labelBox.add(label);
-    labelBox.add(Box.createHorizontalGlue());
-    vBox.add(labelBox);
-    vBox.add(Box.createVerticalStrut(4));
-
-    vBox.add(createListAndVisibilityPanels());
-    label.setText(RefactoringBundle.message("moveInstanceMethod.select.an.instance.parameter"));
-    return vBox;
+    JPanel panel = new JPanel(new BorderLayout(UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP));
+    final JLabel label = new JLabel(RefactoringBundle.message("moveInstanceMethod.select.an.instance.parameter"));
+    panel.add(label, BorderLayout.NORTH);
+    panel.add(createListAndVisibilityPanels(), BorderLayout.CENTER);
+    return panel;
   }
 
   @Override

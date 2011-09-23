@@ -29,10 +29,12 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SeparatorFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -56,7 +58,9 @@ public class KeyboardShortcutDialog extends DialogWrapper {
     myActionId = actionId;
     final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(component));
     myMainGroup = ActionsTreeUtil.createMainGroup(project, myKeymap, quickLists, null, false, null); //without current filter
-    myEnableSecondKeystroke = new JCheckBox(KeyMapBundle.message("enable.second.keystroke.check.box"));
+    myEnableSecondKeystroke = new JCheckBox();
+    UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myEnableSecondKeystroke);
+    myEnableSecondKeystroke.setBorder(new EmptyBorder(4, 0, 0, 2));
     myEnableSecondKeystroke.setFocusable(false);
     myKeystrokePreview = new JLabel(" ");
     myConflictInfoArea = new JTextArea("");
@@ -76,35 +80,30 @@ public class KeyboardShortcutDialog extends DialogWrapper {
     myFirstStrokePanel = new StrokePanel(KeyMapBundle.message("first.stroke.panel.title"));
     panel.add(
       myFirstStrokePanel,
-      new GridBagConstraints(0,0,1,1,1,0,GridBagConstraints.CENTER,GridBagConstraints.HORIZONTAL,new Insets(0,0,0,0),0,0)
+      new GridBagConstraints(0,0,2,1,1,0,GridBagConstraints.CENTER,GridBagConstraints.HORIZONTAL,new Insets(0,0,0,0),0,0)
     );
 
     // Second stroke panel
 
     panel.add(
       myEnableSecondKeystroke,
-      new GridBagConstraints(0,1,1,1,0,0,GridBagConstraints.WEST,GridBagConstraints.NONE,new Insets(0,0,0,0),0,0)
+      new GridBagConstraints(0,1,1,1,0,0,GridBagConstraints.NORTHWEST,GridBagConstraints.NONE,new Insets(0,0,0,0),0,0)
     );
 
     mySecondStrokePanel = new StrokePanel(KeyMapBundle.message("second.stroke.panel.title"));
     panel.add(
       mySecondStrokePanel,
-      new GridBagConstraints(0,2,1,1,1,0,GridBagConstraints.CENTER,GridBagConstraints.HORIZONTAL,new Insets(0,30,0,0),0,0)
+      new GridBagConstraints(1,1,1,1,1,0,GridBagConstraints.NORTHWEST,GridBagConstraints.HORIZONTAL,new Insets(0,0,0,0),0,0)
     );
 
     // Shortcut preview
 
     JPanel previewPanel = new JPanel(new BorderLayout());
-    previewPanel.setBorder(
-      BorderFactory.createCompoundBorder(
-        IdeBorderFactory.createTitledBorder(KeyMapBundle.message("shortcut.preview.ide.border.factory.title"), false, true, true),
-        BorderFactory.createEmptyBorder(5,5,5,5)
-      )
-    );
+    previewPanel.setBorder(IdeBorderFactory.createTitledBorder(KeyMapBundle.message("shortcut.preview.ide.border.factory.title"), false, true, true));
     previewPanel.add(myKeystrokePreview);
     panel.add(
       previewPanel,
-      new GridBagConstraints(0,3,1,1,1,0,GridBagConstraints.CENTER,GridBagConstraints.HORIZONTAL,new Insets(0,0,0,0),0,0)
+      new GridBagConstraints(0,2,2,1,1,0,GridBagConstraints.CENTER,GridBagConstraints.HORIZONTAL,new Insets(0,0,0,0),0,0)
     );
 
     // Conflicts
@@ -122,7 +121,7 @@ public class KeyboardShortcutDialog extends DialogWrapper {
     conflictsPanel.add(conflictInfoScroll);
     panel.add(
       conflictsPanel,
-      new GridBagConstraints(0,4,1,1,1,1,GridBagConstraints.CENTER,GridBagConstraints.BOTH,new Insets(0,0,0,0),0,0)
+      new GridBagConstraints(0,3,2,1,1,1,GridBagConstraints.CENTER,GridBagConstraints.BOTH,new Insets(0,0,0,0),0,0)
     );
 
     myEnableSecondKeystroke.addActionListener(new ActionListener() {
@@ -247,12 +246,7 @@ public class KeyboardShortcutDialog extends DialogWrapper {
 
     public StrokePanel(String borderText) {
       setLayout(new BorderLayout());
-      setBorder(
-        BorderFactory.createCompoundBorder(
-          IdeBorderFactory.createTitledBorder(borderText, false, true, true),
-          BorderFactory.createEmptyBorder(5,5,5,5)
-        )
-      );
+      setBorder(IdeBorderFactory.createTitledBorder(borderText, false, false, true));
 
       myShortcutTextField = new ShortcutTextField(){
         protected void updateCurrentKeyStrokeInfo() {

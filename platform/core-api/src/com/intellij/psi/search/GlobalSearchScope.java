@@ -15,20 +15,25 @@
  */
 package com.intellij.psi.search;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.FileIndexFacade;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiBundle;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 public abstract class GlobalSearchScope extends SearchScope implements ProjectAwareFileFilter {
@@ -216,6 +221,19 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
   public static GlobalSearchScope moduleTestsWithDependentsScope(@NotNull Module module) {
     return module.getModuleWithDependentsScope();
+  }
+
+  public static GlobalSearchScope fileScope(@NotNull PsiFile psiFile) {
+    return new FileScope(psiFile.getProject(), psiFile.getVirtualFile());
+  }
+
+  public static GlobalSearchScope fileScope(final Project project, final VirtualFile virtualFile) {
+    return new FileScope(project, virtualFile);
+  }
+
+  public static GlobalSearchScope filesScope(final Project project, final Collection<VirtualFile> files) {
+    if (files.isEmpty()) return EMPTY_SCOPE;
+    return files.size() == 1? fileScope(project, files.iterator().next()) : new FilesScope(project, files);
   }
 
   static class IntersectionScope extends GlobalSearchScope {
@@ -469,4 +487,74 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
   }
 
   public static final GlobalSearchScope EMPTY_SCOPE = new EmptyScope();
+
+  private static class FileScope extends GlobalSearchScope {
+    private final VirtualFile myVirtualFile;
+    private final Module myModule;
+
+    private FileScope(final Project project, final VirtualFile virtualFile) {
+      super(project);
+      myVirtualFile = virtualFile;
+      FileIndexFacade fileIndex = ServiceManager.getService(project, FileIndexFacade.class);
+      myModule = myVirtualFile != null ? fileIndex.getModuleForFile(myVirtualFile) : null;
+    }
+
+    public boolean contains(VirtualFile file) {
+      return Comparing.equal(myVirtualFile, file);
+    }
+
+    public int compare(VirtualFile file1, VirtualFile file2) {
+      return 0;
+    }
+
+    public boolean isSearchInModuleContent(@NotNull Module aModule) {
+      return aModule == myModule;
+    }
+
+    public boolean isSearchInLibraries() {
+      return myModule == null;
+    }
+  }
+
+  private static class FilesScope extends GlobalSearchScope {
+    private final Collection<VirtualFile> myFiles;
+
+    public FilesScope(final Project project, final Collection<VirtualFile> files) {
+      super(project);
+      myFiles = files;
+    }
+
+    @Override
+    public boolean contains(final VirtualFile file) {
+      return myFiles.contains(file);
+    }
+
+    @Override
+    public int compare(final VirtualFile file1, final VirtualFile file2) {
+      return 0;
+    }
+
+    @Override
+    public boolean isSearchInModuleContent(@NotNull Module aModule) {
+      return true;
+    }
+
+    @Override
+    public boolean isSearchInLibraries() {
+      return false;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof FilesScope)) return false;
+
+      return myFiles.equals(((FilesScope)o).myFiles);
+    }
+
+    @Override
+    public int hashCode() {
+      return myFiles.hashCode();
+    }
+  }
 }

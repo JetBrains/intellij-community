@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.actions.generate.accessors;
 
 import com.intellij.codeInsight.generation.GenerateGetterHandler;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.actions.generate.GrBaseGenerateAction;
 
 /**
@@ -24,5 +25,10 @@ import org.jetbrains.plugins.groovy.actions.generate.GrBaseGenerateAction;
 public class GroovyGenerateGetterAction extends GrBaseGenerateAction {
   public GroovyGenerateGetterAction() {
     super(new GenerateGetterHandler());
+  }
+
+  @Override
+  protected String getCommandName() {
+    return GroovyBundle.message("Getter");
   }
 }

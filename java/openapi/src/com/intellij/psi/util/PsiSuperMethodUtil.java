@@ -62,7 +62,7 @@ public class PsiSuperMethodUtil {
       PsiClass superClass = containingClass.getSuperClass();
       if (superClass != null) {
         MethodSignature defConstructor = MethodSignatureUtil.createMethodSignature(superClass.getName(), PsiType.EMPTY_ARRAY,
-                                                                                   PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY);
+                                                                                   PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY, true);
         return MethodSignatureUtil.findMethodBySignature(superClass, defConstructor, false);
       }
     }

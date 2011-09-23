@@ -180,4 +180,12 @@ public class NullableNotNullManager implements PersistentStateComponent<Element>
       LOG.error(e);
     }
   }
+
+  public static boolean isNullable(@NotNull PsiModifierListOwner owner) {
+    return !isNotNull(owner) && getInstance(owner.getProject()).isNullable(owner, true);
+  }
+
+  public static boolean isNotNull(@NotNull PsiModifierListOwner owner) {
+    return getInstance(owner.getProject()).isNotNull(owner, true);
+  }
 }

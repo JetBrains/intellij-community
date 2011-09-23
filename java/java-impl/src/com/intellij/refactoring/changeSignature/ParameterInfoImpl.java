@@ -99,7 +99,8 @@ public class ParameterInfoImpl implements JavaParameterInfo {
   }
 
   public int hashCode() {
-    int result = getName().hashCode();
+    final String name = getName();
+    int result = name != null ? name.hashCode() : 0;
     result = 29 * result + getTypeText().hashCode();
     return result;
   }

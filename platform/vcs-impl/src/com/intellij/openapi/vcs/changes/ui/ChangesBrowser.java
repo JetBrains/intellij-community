@@ -55,6 +55,7 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
 
   public static DataKey<ChangesBrowser> DATA_KEY = DataKey.create("com.intellij.openapi.vcs.changes.ui.ChangesBrowser");
   private ShowDiffAction myDiffAction;
+  private final VirtualFile myToSelect;
 
   public void setChangesToDisplay(final List<Change> changes) {
     myChangesToDisplay = changes;
@@ -67,11 +68,14 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
 
   public ChangesBrowser(final Project project, List<? extends ChangeList> changeLists, final List<Change> changes,
                         ChangeList initialListSelection, final boolean capableOfExcludingChanges, final boolean highlightProblems,
-                        @Nullable final Runnable inclusionListener, final MyUseCase useCase) {
+                        @Nullable final Runnable inclusionListener, final MyUseCase useCase, @Nullable VirtualFile toSelect) {
     super(new BorderLayout());
+    setFocusable(false);
+
     myDataIsDirty = false;
     myProject = project;
     myCapableOfExcludingChanges = capableOfExcludingChanges;
+    myToSelect = toSelect;
 
     final ChangeNodeDecorator decorator = MyUseCase.LOCAL_CHANGES.equals(useCase) ?
                                           RemoteRevisionsCache.getInstance(myProject).getChangesNodeDecorator() : null;
@@ -257,7 +261,7 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
   }
 
   public void rebuildList() {
-    myViewer.setChangesToDisplay(getCurrentDisplayedChanges());
+    myViewer.setChangesToDisplay(getCurrentDisplayedChanges(), myToSelect);
   }
 
   private JComponent createToolbar() {
@@ -314,8 +318,8 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
     return mySelectedChangeList;
   }
 
-  public JComponent getPrefferedFocusComponent() {
-    return myViewer;
+  public JComponent getPreferredFocusedComponent() {
+    return myViewer.getPreferredFocusedComponent();
   }
 
   private ChangeList[] getSelectedChangeLists() {

@@ -15,8 +15,8 @@
  */
 package com.intellij.codeInspection.redundantCast;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.miscGenerics.GenericsInspectionToolBase;
@@ -26,8 +26,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -103,10 +101,10 @@ public class RedundantCastInspection extends GenericsInspectionToolBase {
         final PsiElement gParent = parent.getParent();
         if (gParent instanceof PsiMethodCallExpression) {
           final PsiMethod psiMethod = ((PsiMethodCallExpression)gParent).resolveMethod();
-          if (psiMethod != null && AnnotationUtil.isNotNull(psiMethod)) {
+          if (psiMethod != null && NullableNotNullManager.isNotNull(psiMethod)) {
             final PsiClass superClass = PsiUtil.resolveClassInType(operand.getType());
             for (PsiMethod method : psiMethod.findSuperMethods(superClass)) {
-              if (AnnotationUtil.isNullable(method)) {
+              if (NullableNotNullManager.isNullable(method)) {
                 return null;
               }
             }

@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.actions.generate.equals;
 
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.actions.generate.GrBaseGenerateAction;
 
 /**
@@ -24,5 +25,10 @@ import org.jetbrains.plugins.groovy.actions.generate.GrBaseGenerateAction;
 public class GroovyGenerateEqualsAction extends GrBaseGenerateAction {
   public GroovyGenerateEqualsAction() {
     super(new GroovyGenerateEqualsHandler());
+  }
+
+  @Override
+  protected String getCommandName() {
+    return GroovyBundle.message("Equals");
   }
 }

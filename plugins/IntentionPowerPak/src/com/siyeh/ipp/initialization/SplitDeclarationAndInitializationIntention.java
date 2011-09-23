@@ -90,7 +90,7 @@ public class SplitDeclarationAndInitializationIntention extends Intention {
 
             // add some whitespace between the field and the class initializer
             final PsiElement whitespace =
-                    elementFactory.createWhiteSpaceFromText("\n");
+                    PsiParserFacade.SERVICE.getInstance(project).createWhiteSpaceFromText("\n");
             containingClass.addAfter(whitespace, field);
         }
         final PsiCodeBlock body = classInitializer.getBody();

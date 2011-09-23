@@ -16,7 +16,7 @@
 package com.intellij.refactoring.introduceField;
 
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.TestUtil;
+import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
@@ -176,7 +176,7 @@ public abstract class LocalToFieldHandler {
 
   private static PsiStatement addInitializationToSetUp(final PsiLocalVariable local, final PsiField field, final PsiElementFactory factory)
                                                                                                                              throws IncorrectOperationException {
-    PsiMethod inClass = TestUtil.findOrCreateSetUpMethod(field.getContainingClass());
+    PsiMethod inClass = TestFrameworks.getInstance().findOrCreateSetUpMethod(field.getContainingClass());
     assert inClass != null;
     PsiStatement assignment = createAssignment(local, field.getName(), factory);
     final PsiCodeBlock body = inClass.getBody();

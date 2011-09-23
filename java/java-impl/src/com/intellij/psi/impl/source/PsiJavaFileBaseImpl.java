@@ -15,22 +15,20 @@
  */
 package com.intellij.psi.impl.source;
 
-import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
+import com.intellij.codeInsight.completion.scope.JavaCompletionHints;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.DirectoryIndex;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyKey;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.impl.JavaPsiImplementationHelper;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiJavaFileStub;
@@ -49,7 +47,7 @@ import com.intellij.util.NotNullFunction;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MostlySingularMultiMap;
-import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.IndexingDataKeys;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -312,7 +310,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     final PsiImportStaticStatement[] importStaticStatements = importList.getImportStaticStatements();
     if (importStaticStatements.length > 0) {
       final StaticImportFilteringProcessor staticImportProcessor = new StaticImportFilteringProcessor(processor);
-      final boolean forCompletion = Boolean.TRUE == processor.getHint(JavaCompletionProcessor.JAVA_COMPLETION);
+      final boolean forCompletion = Boolean.TRUE == processor.getHint(JavaCompletionHints.JAVA_COMPLETION);
 
       // single member processing
       for (PsiImportStaticStatement importStaticStatement : importStaticStatements) {
@@ -415,13 +413,14 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     VirtualFile virtualFile = getVirtualFile();
 
     if (virtualFile == null) {
-      virtualFile = getUserData(FileBasedIndex.VIRTUAL_FILE);
+      virtualFile = getUserData(IndexingDataKeys.VIRTUAL_FILE);
     }
 
+    final Project project = getProject();
     if (virtualFile == null) {
       final PsiFile originalFile = getOriginalFile();
       if (originalFile instanceof PsiJavaFile && originalFile != this) return ((PsiJavaFile)originalFile).getLanguageLevel();
-      return LanguageLevelProjectExtension.getInstance(getProject()).getLanguageLevel();
+      return LanguageLevelProjectExtension.getInstance(project).getLanguageLevel();
     }
 
     final VirtualFile folder = virtualFile.getParent();
@@ -430,39 +429,11 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
       if (level != null) return level;
     }
 
-    final Project project = getProject();
-    final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
-    final VirtualFile sourceRoot = index.getSourceRootForFile(virtualFile);
-    if (sourceRoot != null && folder != null) {
-      String relativePath = VfsUtil.getRelativePath(folder, sourceRoot, '/');
-      LOG.assertTrue(relativePath != null);
-      List<OrderEntry> orderEntries = index.getOrderEntriesForFile(virtualFile);
-      if (orderEntries.isEmpty()) {
-        LOG.error("Inconsistent: " + DirectoryIndex.getInstance(project).getInfoForDirectory(folder).toString());
-      }
-      final VirtualFile[] files = orderEntries.get(0).getFiles(OrderRootType.CLASSES);
-      for (VirtualFile rootFile : files) {
-        final VirtualFile classFile = rootFile.findFileByRelativePath(relativePath);
-        if (classFile != null) {
-          return getLanguageLevel(classFile);
-        }
-      }
+    final LanguageLevel classesLanguageLevel = JavaPsiImplementationHelper.getInstance(project).getClassesLanguageLevel(virtualFile);
+    if (classesLanguageLevel != null) {
+      return classesLanguageLevel;
     }
-
     return LanguageLevelProjectExtension.getInstance(project).getLanguageLevel();
-  }
-
-  private LanguageLevel getLanguageLevel(final VirtualFile dirFile) {
-    final VirtualFile[] children = dirFile.getChildren();
-    final LanguageLevel defaultLanguageLevel = LanguageLevelProjectExtension.getInstance(getProject()).getLanguageLevel();
-    for (VirtualFile child : children) {
-      if (StdFileTypes.CLASS.equals(child.getFileType())) {
-        final PsiFile psiFile = getManager().findFile(child);
-        if (psiFile instanceof PsiJavaFile) return ((PsiJavaFile)psiFile).getLanguageLevel();
-      }
-    }
-
-    return defaultLanguageLevel;
   }
 
   private static class MyCacheBuilder implements CachedValueProvider<MostlySingularMultiMap<String, SymbolCollectingProcessor.ResultWithContext>> {

@@ -67,28 +67,30 @@ public class ModifierChooser
       new String[]{"final", "abstract"}
     });
 
-    myMap.put(new OrFilter(new ClassFilter(PsiStatement.class), new ClassFilter(PsiCodeBlock.class)), new String[][]{
-      new String[]{"final"}
-    });
-
     myMap.put(new ClassFilter(PsiParameterList.class), new String[][]{
       new String[]{"final"}
     });
   }
 
-  public String[] getKeywords(CompletionContext context, PsiElement position){
+  public String[] getKeywords(CompletionContext context, PsiElement position) {
+    if (JavaCompletionData.INSIDE_SWITCH.isAcceptable(position, position)) {
+      return ArrayUtil.EMPTY_STRING_ARRAY;
+    }
+
     final List<String> ret = new ArrayList<String>();
-    try{
+    try {
       PsiElement scope;
 
-      if(position == null)
+      if (position == null) {
         scope = context.file;
-      else
+      }
+      else {
         scope = position.getParent();
+      }
 
       final PsiModifierList list = getModifierList(position);
 
-scopes:
+      scopes:
       while (scope != null) {
         for (final Object o : myMap.keySet()) {
           final ElementFilter filter = (ElementFilter)o;
@@ -119,7 +121,8 @@ scopes:
         if (scope instanceof PsiDirectory) break;
       }
     }
-    catch(Exception e){}
+    catch (Exception e) {
+    }
     return ArrayUtil.toStringArray(ret);
   }
 

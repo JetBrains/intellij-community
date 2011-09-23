@@ -21,7 +21,7 @@ import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiElementFactoryImpl;
+import com.intellij.psi.impl.PsiJavaParserFacadeImpl;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.JavaDummyElement;
@@ -48,7 +48,7 @@ public class ClsParsingUtil {
 
   public static PsiExpression createExpressionFromText(final String exprText, final PsiManager manager, final ClsElementImpl parent) {
     final PsiJavaParserFacade parserFacade = JavaPsiFacade.getInstance(manager.getProject()).getParserFacade();
-    final PsiJavaFile dummyJavaFile = ((PsiElementFactoryImpl)parserFacade).getDummyJavaFile(); // to resolve classes from java.lang
+    final PsiJavaFile dummyJavaFile = ((PsiJavaParserFacadeImpl)parserFacade).getDummyJavaFile(); // to resolve classes from java.lang
     final PsiExpression expr;
     try {
       expr = parserFacade.createExpressionFromText(exprText, dummyJavaFile);
@@ -64,7 +64,7 @@ public class ClsParsingUtil {
   @NotNull
   public static PsiAnnotationMemberValue createMemberValueFromText(final String text, final PsiManager manager, final ClsElementImpl parent) {
     final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
-    final PsiJavaFile context = ((PsiElementFactoryImpl)factory).getDummyJavaFile(); // to resolve classes from java.lang
+    final PsiJavaFile context = ((PsiJavaParserFacadeImpl)factory).getDummyJavaFile(); // to resolve classes from java.lang
     final LanguageLevel level = PsiUtil.getLanguageLevel(parent);
     final DummyHolder holder = DummyHolderFactory.createHolder(manager, new JavaDummyElement(text, ANNOTATION_VALUE, level), context);
     final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());

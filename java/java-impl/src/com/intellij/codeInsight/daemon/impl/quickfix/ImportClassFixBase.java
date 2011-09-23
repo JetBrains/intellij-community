@@ -70,8 +70,7 @@ public abstract class ImportClassFixBase<T extends PsiElement & PsiReference> im
   protected abstract boolean hasTypeParameters(T reference);
 
   public List<PsiClass> getClassesToImport() {
-    PsiManager manager = PsiManager.getInstance(myRef.getProject());
-    PsiShortNamesCache cache = JavaPsiFacade.getInstance(manager.getProject()).getShortNamesCache();
+    PsiShortNamesCache cache = PsiShortNamesCache.getInstance(myRef.getProject());
     String name = getReferenceName(myRef);
     GlobalSearchScope scope = myRef.getResolveScope();
     if (name == null) {

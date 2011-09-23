@@ -603,6 +603,16 @@ format(<caret>)"""
     myFixture.checkResult "def foo(@AbcdAnno<caret> ) {}"
   }
 
+  public void testNoCompletionInClassBodyComments() {
+    myFixture.configureByText "a.groovy", "class Foo { /* protec<caret> */ }"
+    assertEmpty(myFixture.completeBasic())
+  }
+
+  public void testNoCompletionInCodeBlockComments() {
+    myFixture.configureByText "a.groovy", "def Foo() { /* whil<caret> */ }"
+    assertEmpty(myFixture.completeBasic())
+  }
+
   public void testParenthesesForExpectedClassTypeRegardlessInners() {
     myFixture.addClass "class Fooooo { interface Bar {} }"
     myFixture.configureByText "a.groovy", "Fooooo f = new Foo<caret>"

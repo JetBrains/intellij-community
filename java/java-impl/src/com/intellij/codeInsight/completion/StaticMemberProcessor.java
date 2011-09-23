@@ -58,7 +58,7 @@ public abstract class StaticMemberProcessor {
 
     final PrefixMatcher matcher = resultSet.getPrefixMatcher();
     final GlobalSearchScope scope = myPosition.getResolveScope();
-    final PsiShortNamesCache namesCache = JavaPsiFacade.getInstance(myProject).getShortNamesCache();
+    final PsiShortNamesCache namesCache = PsiShortNamesCache.getInstance(myProject);
     for (final String methodName : namesCache.getAllMethodNames()) {
       if (matcher.prefixMatches(methodName)) {
         Set<PsiClass> classes = new THashSet<PsiClass>();

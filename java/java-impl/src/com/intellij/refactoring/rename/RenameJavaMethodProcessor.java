@@ -243,7 +243,8 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
     MethodSignature oldSignature = method.getSignature(PsiSubstitutor.EMPTY);
     MethodSignature newSignature = MethodSignatureUtil.createMethodSignature(newName, oldSignature.getParameterTypes(),
                                                                              oldSignature.getTypeParameters(),
-                                                                             oldSignature.getSubstitutor());
+                                                                             oldSignature.getSubstitutor(),
+                                                                             method.isConstructor());
     for (PsiClass inheritor : inheritors) {
       PsiSubstitutor superSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(containingClass, inheritor, PsiSubstitutor.EMPTY);
       final PsiMethod[] methodsByName = inheritor.findMethodsByName(newName, false);

@@ -15,11 +15,8 @@
  */
 package com.intellij.psi.filters;
 
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import org.jdom.Element;
 
 /**
  * Created by IntelliJ IDEA.

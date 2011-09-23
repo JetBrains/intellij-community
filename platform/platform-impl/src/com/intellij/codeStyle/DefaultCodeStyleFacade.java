@@ -19,7 +19,7 @@
  */
 package com.intellij.codeStyle;
 
-import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.options.Configurable;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +31,7 @@ public class DefaultCodeStyleFacade extends CodeStyleFacade {
   }
 
   @Nullable
-  public String getLineIndent(@NotNull final Editor editor) {
+  public String getLineIndent(@NotNull final Document document, int offset) {
     return null;
   }
 

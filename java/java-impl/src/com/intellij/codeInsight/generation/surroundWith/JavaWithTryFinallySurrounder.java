@@ -50,7 +50,7 @@ class JavaWithTryFinallySurrounder extends JavaStatementsSurrounder{
     if (tryBlock == null) {
       return null;
     }
-    SurroundWithUtil.indentCommentIfNecessary(tryBlock, statements, factory);
+    SurroundWithUtil.indentCommentIfNecessary(tryBlock, statements);
     tryBlock.addRange(statements[0], statements[statements.length - 1]);
     container.deleteChildRange(statements[0], statements[statements.length - 1]);
 

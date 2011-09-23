@@ -18,6 +18,7 @@ package com.intellij.psi.impl.light;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
@@ -88,7 +89,7 @@ public class LightMethodBuilder extends LightElement implements PsiMethod {
 
   @Override
   public ItemPresentation getPresentation() {
-    return JavaPresentationUtil.getMethodPresentation(this);
+    return ItemPresentationProviders.getItemPresentation(this);
   }
 
   public boolean hasTypeParameters() {

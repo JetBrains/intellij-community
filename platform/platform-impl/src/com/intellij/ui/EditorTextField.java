@@ -75,7 +75,6 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
   private boolean myInheritSwingFont = true;
   private Color myEnforcedBgColor = null;
   private boolean myOneLineMode; // use getter to access this field! It is allowed to override getter and change initial behaviour
-  private boolean myCenterByHeight = false;
   private boolean myEnsureWillComputePreferredSize;
   private Dimension myPassivePreferredSize;
   private CharSequence myHintText;
@@ -111,7 +110,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     setDocument(document);
     myProject = project;
     myFileType = fileType;
-    setLayout(null);
+    setLayout(new BorderLayout());
     enableEvents(AWTEvent.KEY_EVENT_MASK);
     // todo[dsl,max]
     setFocusable(true);
@@ -218,7 +217,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     Editor editor = myEditor;
     myEditor = createEditor();
     releaseEditor(editor);
-    add(myEditor.getComponent());
+    add(myEditor.getComponent(), BorderLayout.CENTER);
 
     validate();
     if (isFocused) {
@@ -348,7 +347,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
   private void initEditor() {
     myEditor = createEditor();
     final JComponent component = myEditor.getComponent();
-    add(component);
+    add(component, BorderLayout.CENTER);
   }
 
   public void removeNotify() {
@@ -571,10 +570,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
       Editor editor = myEditor;
       releaseEditor(editor);
       myEditor = createEditor();
-      add(myEditor.getComponent()
-
-
-      );
+      add(myEditor.getComponent(), BorderLayout.CENTER);
       revalidate();
     }
   }
@@ -595,19 +591,6 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     super.addImpl(comp, constraints, index);
   }
 
-  @Override
-  public void doLayout() {
-    Component c = getComponent(0);
-    Insets insets = getInsets() != null ? getInsets() : new Insets(0, 0, 0, 0);
-    int prefHeight = c.getPreferredSize().height;
-    if (myOneLineMode && getSize().height > prefHeight && myCenterByHeight) {
-      int y = insets.top + getSize().height / 2 - prefHeight / 2;
-      c.setBounds(insets.left, y, getSize().width - insets.left - insets.right, prefHeight + 1);
-    } else {
-      c.setBounds(insets.left, insets.top, getSize().width - insets.left - insets.right, getSize().height - insets.top - insets.bottom);
-    }
-  }
-
   public Dimension getPreferredSize() {
     if (super.isPreferredSizeSet()) {
       return super.getPreferredSize();
@@ -621,7 +604,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     }
 
 
-    Dimension size = new Dimension(100, 20);
+    Dimension size = new Dimension(100, UIUtil.isUnderAquaLookAndFeel() ? 28 : 20);
     if (myEditor != null) {
       final Dimension preferredSize = new Dimension(myEditor.getComponent().getPreferredSize());
 
@@ -655,15 +638,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
       return super.getMinimumSize();
     }
 
-    Dimension size = new Dimension(100, UIUtil.isUnderAquaLookAndFeel() ? 28 : 20);
-    final Insets insets = getInsets();
-    if (insets != null) {
-      size.width += insets.left;
-      size.width += insets.right;
-      size.height += insets.top;
-      size.height += insets.bottom;
-    }
-    return size;
+    return new Dimension(100, UIUtil.isUnderAquaLookAndFeel() ? 28 : 20);
   }
 
   public void setPreferredWidth(int preferredWidth) {
@@ -741,10 +716,6 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
   public void setNewDocumentAndFileType(final FileType fileType, Document document) {
     myFileType = fileType;
     setDocument(document);
-  }
-
-  public void setCenterByHeight(boolean centerByHeight) {
-    myCenterByHeight = centerByHeight;
   }
 
   public void ensureWillComputePreferredSize() {
