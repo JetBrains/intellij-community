@@ -864,7 +864,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
 
   @Nullable
   private static ASTNode getPrevElementType(final ASTNode child) {
-    return FormatterUtil.getLeafNonSpaceBefore(child);
+    return FormatterUtil.getPreviousNonWhitespaceLeaf(child);
   }
 
   private Spacing getSpaceBeforeLBrace(final boolean spaceBeforeLbrace,
@@ -998,7 +998,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
       if (annotations.length > 0) {
         useParentBlockAsDependencyAllTheTime = false;
         PsiAnnotation annotation = annotations[annotations.length - 1];
-        ASTNode nextModifier = FormattingAstUtil.getNextNonWhiteSpaceNode(annotation.getNode());
+        ASTNode nextModifier = FormatterUtil.getNextNonWhitespaceSibling(annotation.getNode());
         if (nextModifier == null) {
           PsiElement element = modifierList.getNextSibling();
           if (element != null) {
@@ -1182,7 +1182,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
         createSpaceInCode(mySettings.SPACE_WITHIN_FOR_PARENTHESES);
       }
       else {
-        ASTNode prev = FormattingAstUtil.getPrevLeaf(myChild2, TokenType.WHITE_SPACE, TokenType.ERROR_ELEMENT);
+        ASTNode prev = FormatterUtil.getPreviousLeaf(myChild2, TokenType.WHITE_SPACE, TokenType.ERROR_ELEMENT);
         if (prev != null && prev.getElementType() == JavaTokenType.SEMICOLON) {
           // Handle empty 'initialization' or 'condition' section.
           createSpaceInCode(mySettings.SPACE_AFTER_SEMICOLON);

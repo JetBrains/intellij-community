@@ -2,7 +2,6 @@ package org.intellij.lang.xpath.xslt.psi.impl;
 
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.Navigatable;

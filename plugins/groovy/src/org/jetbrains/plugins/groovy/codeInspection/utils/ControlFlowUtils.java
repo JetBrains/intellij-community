@@ -588,11 +588,11 @@ public class ControlFlowUtils {
     boolean visitExitPoint(Instruction instruction, @Nullable GrExpression returnValue);
   }
 
-  public static void visitAllExitPoints(@Nullable GrControlFlowOwner block, ExitPointVisitor visitor) {
-    if (block == null) return;
+  public static boolean visitAllExitPoints(@Nullable GrControlFlowOwner block, ExitPointVisitor visitor) {
+    if (block == null) return true;
     final Instruction[] flow = block.getControlFlow();
     boolean[] visited = new boolean[flow.length];
-    visitAllExitPointsInner(flow[flow.length - 1], flow[0], visited, visitor);
+    return visitAllExitPointsInner(flow[flow.length - 1], flow[0], visited, visitor);
   }
 
   private static boolean visitAllExitPointsInner(Instruction last, Instruction first, boolean[] visited, ExitPointVisitor visitor) {
@@ -681,8 +681,7 @@ public class ControlFlowUtils {
   private static void writeAccess(Instruction cur, String name, Set<Instruction> visited, Collection<ReadWriteVariableInstruction> result, boolean ahead) {
     final Iterable<? extends Instruction> toIterate = ahead ? cur.allSucc() : cur.allPred();
     for (Instruction i : toIterate) {
-      if (visited.contains(i)) continue;
-      visited.add(i);
+      if (!visited.add(i)) continue;
       if (i instanceof ReadWriteVariableInstruction && ((ReadWriteVariableInstruction)i).isWrite() && name.equals(((ReadWriteVariableInstruction)i).getVariableName())) {
         result.add((ReadWriteVariableInstruction)i);
       }

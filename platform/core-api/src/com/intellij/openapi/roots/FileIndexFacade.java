@@ -15,22 +15,28 @@
  */
 package com.intellij.openapi.roots;
 
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
  */
-public abstract class ExcludedFileIndex {
+public abstract class FileIndexFacade {
   protected final Project myProject;
 
-  protected ExcludedFileIndex(final Project project) {
+  protected FileIndexFacade(final Project project) {
     myProject = project;
   }
 
   public abstract boolean isInContent(VirtualFile file);
   public abstract boolean isInSource(VirtualFile file);
+  public abstract boolean isInLibraryClasses(VirtualFile file);
   public abstract boolean isExcludedFile(VirtualFile file);
+
+  @Nullable
+  public abstract Module getModuleForFile(VirtualFile file);
 
   /**
    * Checks if <code>file</code> is an ancestor of <code>baseDir</code> and none of the files

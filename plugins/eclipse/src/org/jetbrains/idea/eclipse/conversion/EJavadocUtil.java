@@ -30,10 +30,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
@@ -165,7 +162,7 @@ public class EJavadocUtil {
         if (javadocFile != null) {
           final String relativeUrl;
           if (contentRoot != null && VfsUtil.isAncestor(contentRoot, javadocFile, false)) {
-            relativeUrl = "/" + VfsUtil.getRelativePath(javadocFile, baseDir, '/');
+            relativeUrl = "/" + VfsUtilCore.getRelativePath(javadocFile, baseDir, '/');
           } else {
             relativeUrl = collapse2eclipseRelative2OtherModule(project, javadocFile);
           }

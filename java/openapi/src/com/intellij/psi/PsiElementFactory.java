@@ -512,4 +512,17 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
    */
   @NotNull
   PsiElement createDummyHolder(@NotNull String text, @NotNull IElementType type, @Nullable PsiElement context);
+
+  /**
+   * Creates a <code>catch</code> section for catching an exception of the specified
+   * type and name.
+   *
+   * @param exceptionType the type of the exception to catch (either {@linkplain PsiClassType} or {@linkplain PsiDisjunctionType}).
+   * @param exceptionName the name of the variable in which the caught exception is stored (may be an empty string).
+   * @param context       the context for resolving references.
+   * @return the created catch section instance.
+   * @throws IncorrectOperationException if some of the parameters are not valid.
+   */
+  @NotNull
+  PsiCatchSection createCatchSection(@NotNull PsiType exceptionType, @NotNull String exceptionName, @Nullable PsiElement context) throws IncorrectOperationException;
 }

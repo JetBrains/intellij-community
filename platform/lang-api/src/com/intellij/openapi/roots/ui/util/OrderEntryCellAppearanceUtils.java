@@ -26,10 +26,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.LightFilePointer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.*;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PlatformIcons;
@@ -179,7 +176,7 @@ public class OrderEntryCellAppearanceUtils {
       relativePath = absolutePath.startsWith(contentPath) ? absolutePath.substring(contentPath.length()) : absolutePath;
     }
     else {
-      relativePath = VfsUtil.getRelativePath(folderFile.getFile(), file, File.separatorChar);
+      relativePath = VfsUtilCore.getRelativePath(folderFile.getFile(), file, File.separatorChar);
       textAttributes = SimpleTextAttributes.REGULAR_ATTRIBUTES;
     }
     if (relativePath == null) relativePath = "";

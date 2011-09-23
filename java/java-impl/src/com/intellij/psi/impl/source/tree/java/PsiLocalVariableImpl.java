@@ -17,6 +17,7 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.*;
@@ -25,7 +26,6 @@ import com.intellij.psi.impl.source.JavaDummyHolder;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.tree.*;
-import com.intellij.psi.presentation.java.JavaPresentationUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -283,7 +283,7 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
   }
 
   public ItemPresentation getPresentation() {
-    return JavaPresentationUtil.getVariablePresentation(this);
+    return ItemPresentationProviders.getItemPresentation(this);
   }
 
   public String toString() {

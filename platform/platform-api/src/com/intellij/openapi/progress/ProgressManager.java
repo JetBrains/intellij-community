@@ -17,6 +17,7 @@ package com.intellij.openapi.progress;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ThrowableComputable;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -101,6 +102,22 @@ public abstract class ProgressManager {
                                                               @NotNull @Nls String progressTitle,
                                                               boolean canBeCanceled,
                                                               @Nullable Project project);
+
+  /**
+   * Runs the specified operation in a background thread and shows a modal progress dialog in the
+   * main thread while the operation is executing.
+   *
+   * @param process       the operation to execute.
+   * @param progressTitle the title of the progress window.
+   * @param canBeCanceled whether "Cancel" button is shown on the progress window.
+   * @param project       the project in the context of which the operation is executed.
+   * @return true result of operation
+   * @throws Exception exception thrown by process
+   */
+  public abstract <T> T runProcessWithProgressSynchronously(@NotNull ThrowableComputable<T, Exception> process,
+                                                              @NotNull @Nls String progressTitle,
+                                                              boolean canBeCanceled,
+                                                              @Nullable Project project) throws Exception;
 
   /**
    * Runs the specified operation in a background thread and shows a modal progress dialog in the

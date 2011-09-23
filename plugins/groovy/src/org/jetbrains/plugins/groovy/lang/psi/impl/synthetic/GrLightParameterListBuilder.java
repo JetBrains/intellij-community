@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 import com.intellij.lang.Language;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;

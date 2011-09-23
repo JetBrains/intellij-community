@@ -20,12 +20,13 @@ import com.android.jarutils.JavaResourceFilter;
 import com.android.jarutils.SignedJarBuilder;
 import com.android.prefs.AndroidLocation;
 import com.android.sdklib.SdkConstants;
+import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
@@ -246,9 +247,11 @@ public class AndroidApkBuilder {
           fis.close();
         }
       }
+
+      final HashSet<String> nativeLibs = new HashSet<String>();
       for (VirtualFile nativeLibsFolder : nativeLibsFolders) {
         for (VirtualFile child : nativeLibsFolder.getChildren()) {
-          writeNativeLibraries(builder, nativeLibsFolder, child, signed);
+          writeNativeLibraries(builder, nativeLibsFolder, child, signed, nativeLibs);
         }
       }
       builder.close();
@@ -309,14 +312,24 @@ public class AndroidApkBuilder {
     });
   }
 
-  private static void writeNativeLibraries(SignedJarBuilder builder, VirtualFile nativeLibsFolder, VirtualFile child, boolean debugBuild)
+  private static void writeNativeLibraries(SignedJarBuilder builder,
+                                           VirtualFile nativeLibsFolder,
+                                           VirtualFile child,
+                                           boolean debugBuild,
+                                           Set<String> added)
     throws IOException {
     ArrayList<VirtualFile> list = new ArrayList<VirtualFile>();
     collectNativeLibraries(child, list, debugBuild);
     for (VirtualFile file : list) {
-      String relativePath = VfsUtil.getRelativePath(file, nativeLibsFolder, File.separatorChar);
+      String relativePath = VfsUtilCore.getRelativePath(file, nativeLibsFolder, File.separatorChar);
       String path = FileUtil.toSystemIndependentName(SdkConstants.FD_APK_NATIVE_LIBS + File.separator + relativePath);
-      builder.writeFile(toIoFile(file), path);
+      if (added.add(path)) {
+        builder.writeFile(toIoFile(file), path);
+        LOG.info("Native lib file added to APK: " + file.getPath());
+      }
+      else {
+        LOG.info("Duplicate in APK: native lib file " + file.getPath() + " won't be added.");
+      }
     }
   }
 
@@ -331,7 +344,10 @@ public class AndroidApkBuilder {
   public static void collectNativeLibraries(@NotNull VirtualFile file, @NotNull List<VirtualFile> result, boolean debugBuild) {
     if (!file.isDirectory()) {
       String ext = file.getExtension();
-      if (AndroidUtils.EXT_NATIVE_LIB.equalsIgnoreCase(ext) || debugBuild) {
+
+      // some users store jars and *.so libs in the same directory. Do not pack JARs to APK's "lib" folder!
+      if (AndroidUtils.EXT_NATIVE_LIB.equalsIgnoreCase(ext) ||
+          (debugBuild && !(file.getFileType() instanceof ArchiveFileType))) {
         result.add(file);
       }
     }
@@ -371,7 +387,7 @@ public class AndroidApkBuilder {
                                                          SignedJarBuilder jarBuilder,
                                                          Set<String> added) throws IOException {
     for (VirtualFile child : resources) {
-      final String relativePath = FileUtil.toSystemIndependentName(VfsUtil.getRelativePath(child, sourceRoot, File.separatorChar));
+      final String relativePath = FileUtil.toSystemIndependentName(VfsUtilCore.getRelativePath(child, sourceRoot, File.separatorChar));
       if (!added.contains(relativePath)) {
         File file = toIoFile(child);
         jarBuilder.writeFile(file, FileUtil.toSystemIndependentName(relativePath));

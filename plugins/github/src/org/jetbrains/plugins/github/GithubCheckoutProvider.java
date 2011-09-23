@@ -15,19 +15,15 @@
  */
 package org.jetbrains.plugins.github;
 
-import com.intellij.ide.GeneralSettings;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.SystemProperties;
 import git4idea.actions.BasicAction;
 import git4idea.checkout.GitCheckoutProvider;
+import git4idea.checkout.GitCloneDialog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.github.ui.GithubCloneProjectDialog;
 
 import java.io.File;
 import java.util.Collections;
@@ -49,10 +45,6 @@ public class GithubCheckoutProvider implements CheckoutProvider {
     if (availableRepos == null){
       return;
     }
-    if (availableRepos.isEmpty()){
-      Messages.showErrorDialog(project, "You don't have any repository available on GitHub.\nOnly your own or watched repositories can be cloned.", "Cannot clone");
-      return;
-    }
     Collections.sort(availableRepos, new Comparator<RepositoryInfo>() {
       @Override
       public int compare(final RepositoryInfo r1, final RepositoryInfo r2) {
@@ -61,58 +53,25 @@ public class GithubCheckoutProvider implements CheckoutProvider {
       }
     });
 
-    // Configure folder to select project to
-    String clonePath;
-    final String lastProjectLocation = GeneralSettings.getInstance().getLastProjectLocation();
-    final String userHome = SystemProperties.getUserHome();
-    if (lastProjectLocation != null) {
-       clonePath = lastProjectLocation.replace('/', File.separatorChar);
-    } else {
-      //noinspection HardCodedStringLiteral
-      clonePath = userHome.replace('/', File.separatorChar) + File.separator + ApplicationNamesInfo.getInstance().getLowercaseProductName() +
-                  "Projects";
+    final GitCloneDialog dialog = new GitCloneDialog(project);
+    // Add predefined repositories to history
+    for (int i = availableRepos.size() - 1; i>=0; i--){
+      dialog.prependToHistory(availableRepos.get(i).getUrl());
     }
-    final GithubSettings settings = GithubSettings.getInstance();
-    final GithubCloneProjectDialog checkoutDialog = new GithubCloneProjectDialog(project, availableRepos);
-    final File file = new File(clonePath);
-    if (!file.exists() || !file.isDirectory()){
-      clonePath = userHome;
-    }
-    checkoutDialog.setSelectedPath(clonePath);
-    checkoutDialog.show();
-    if (!checkoutDialog.isOK()) {
+    dialog.show();
+    if (!dialog.isOK()) {
       return;
     }
+    dialog.rememberSettings();
+    final VirtualFile destinationParent = LocalFileSystem.getInstance().findFileByIoFile(new File(dialog.getParentDirectory()));
+    if (destinationParent == null) {
+      return;
+    }
+    final String sourceRepositoryURL = dialog.getSourceRepositoryURL();
+    final String directoryName = dialog.getDirectoryName();
+    final String parentDirectory = dialog.getParentDirectory();
 
-    // All the preliminary work is already done, go and clone the selected repository!
-    RepositoryInfo selectedRepository = checkoutDialog.getSelectedRepository();
-    // Check if selected repository exists
-    final String owner = selectedRepository.getOwner();
-    final String name = selectedRepository.getName();
-    if (selectedRepository instanceof UnknownRepositoryInfo) {
-      selectedRepository = GithubUtil.getDetailedRepositoryInfo(project, owner, name);
-    }
-    if (selectedRepository == null){
-      Messages.showErrorDialog(project, "Selected repository ''" + owner +"/" + name + "'' doesn't exist.", "Cannot clone repository");
-      return;
-    }
-
-    final boolean writeAccessAllowed = GithubUtil.isWriteAccessAllowed(project, selectedRepository);
-    if (!writeAccessAllowed){
-      Messages.showErrorDialog(project, "It seems that you have only read access to the selected repository.\n" +
-        "GitHub supports only https protocol for readonly access, which is not supported yet.\n" +
-        "As a workaround, please fork it and clone your forked repository instead.\n" +
-        "More details are available here: http://youtrack.jetbrains.net/issue/IDEA-55298", "Cannot clone repository");
-      return;
-    }
-    final String host = writeAccessAllowed ? "git@" + settings.getHost() + ":" : "https://github.com" + settings.getHost() + "/";
-    final String selectedPath = checkoutDialog.getSelectedPath();
-    final VirtualFile selectedPathFile = LocalFileSystem.getInstance().findFileByPath(selectedPath);
-    final String projectName = checkoutDialog.getProjectName();
-    final String repositoryName = name;
-    final String repositoryOwner = owner;
-    final String checkoutUrl = host + repositoryOwner + "/" + repositoryName + ".git";
-    GitCheckoutProvider.clone(project, listener, selectedPathFile, checkoutUrl, projectName, selectedPath);
+    GitCheckoutProvider.clone(project, listener, destinationParent, sourceRepositoryURL, directoryName, parentDirectory);
   }
 
   @Override

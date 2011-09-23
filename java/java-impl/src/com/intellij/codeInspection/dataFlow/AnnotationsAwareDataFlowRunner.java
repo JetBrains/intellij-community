@@ -15,10 +15,10 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import org.jetbrains.annotations.NotNull;
 
@@ -42,7 +42,7 @@ public class AnnotationsAwareDataFlowRunner extends DataFlowRunner {
 
       //todo move out from generic runner
       for (PsiParameter parameter : method.getParameterList().getParameters()) {
-        if (AnnotationUtil.isNotNull(parameter)) {
+        if (NullableNotNullManager.isNotNull(parameter)) {
           final DfaVariableValue value = getFactory().getVarFactory().create(parameter, false);
           for (final DfaMemoryState initialState : initialStates) {
             initialState.applyNotNull(value);

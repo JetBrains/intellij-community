@@ -18,6 +18,7 @@ package com.intellij.psi.impl.source;
 import com.intellij.extapi.psi.StubBasedPsiElementBase;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Pair;
@@ -30,7 +31,6 @@ import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -576,7 +576,7 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
   }
 
   public ItemPresentation getPresentation() {
-    return ClassPresentationUtil.getPresentation(this);
+    return ItemPresentationProviders.getItemPresentation(this);
   }
 
   public Icon getElementIcon(final int flags) {

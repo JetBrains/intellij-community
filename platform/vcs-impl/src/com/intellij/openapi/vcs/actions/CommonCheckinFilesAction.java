@@ -18,7 +18,7 @@ package com.intellij.openapi.vcs.actions;
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
-import com.intellij.openapi.roots.ExcludedFileIndex;
+import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.roots.impl.FileIndexImplUtil;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.*;
@@ -75,7 +75,7 @@ public class CommonCheckinFilesAction extends AbstractCommonCheckinAction {
         change.set(changeListManager.getChange(file));
       }
       else {
-        final ExcludedFileIndex index = PeriodicalTasksCloser.getInstance().safeGetService(project, ExcludedFileIndex.class);
+        final FileIndexFacade index = PeriodicalTasksCloser.getInstance().safeGetService(project, FileIndexFacade.class);
         final VirtualFileFilter filter = new VirtualFileFilter() {
           public boolean accept(final VirtualFile file) {
             return (! index.isExcludedFile(file));

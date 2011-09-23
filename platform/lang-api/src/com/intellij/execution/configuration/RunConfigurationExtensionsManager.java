@@ -1,0 +1,166 @@
+package com.intellij.execution.configuration;
+
+import com.google.common.collect.Maps;
+import com.intellij.execution.Location;
+import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.process.ProcessHandler;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.openapi.options.SettingsEditorGroup;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.ui.LayeredIcon;
+import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+
+/**
+ * @author traff
+ */
+public class RunConfigurationExtensionsManager<U extends AbstractRunConfiguration, T extends RunConfigurationExtension<U>> {
+  public static final Key<List<Element>> RUN_EXTENSIONS = Key.create("run.extension.elements");
+  private static final String EXT_ID_ATTR = "ID";
+  private static final String EXTENSION_ROOT_ATTR = "EXTENSION";
+  protected final ExtensionPointName<T> myExtensionPointName;
+
+  public RunConfigurationExtensionsManager(ExtensionPointName<T> extensionPointName) {
+    myExtensionPointName = extensionPointName;
+  }
+
+  public void readExternal(@NotNull final U configuration,
+                           @NotNull final Element parentNode) throws InvalidDataException {
+    final List<Element> children = parentNode.getChildren(EXTENSION_ROOT_ATTR);
+    final Map<String, T> extensions = Maps.newHashMap();
+    for (T extension : getApplicableExtensions(configuration)) {
+      extensions.put(extension.getSerializationId(), extension);
+    }
+
+    // if some of extensions settings weren't found we should just keep it because some plugin with extension
+    // may be turned off
+    boolean found = true;
+    for (Object o : children) {
+      final Element element = (Element)o;
+      final String extensionName = element.getAttributeValue(EXT_ID_ATTR);
+      final T extension = extensions.remove(extensionName);
+      if (extension != null) {
+        extension.readExternal(configuration, element);
+      }
+      else {
+        found = false;
+      }
+    }
+    if (!found) {
+      configuration.putCopyableUserData(RUN_EXTENSIONS, children);
+    }
+  }
+
+  public void writeExternal(@NotNull final U configuration,
+                            @NotNull final Element parentNode) throws WriteExternalException {
+    final TreeMap<String, Element> map = Maps.newTreeMap();
+    final List<Element> elements = configuration.getCopyableUserData(RUN_EXTENSIONS);
+    if (elements != null) {
+      for (Element el : elements) {
+        final String name = el.getAttributeValue(EXT_ID_ATTR);
+        map.put(name, (Element)el.clone());
+      }
+    }
+
+    for (T extension : getApplicableExtensions(configuration)) {
+      Element el = new Element(EXTENSION_ROOT_ATTR);
+      el.setAttribute(EXT_ID_ATTR, extension.getSerializationId());
+      extension.writeExternal(configuration, el);
+      map.put(extension.getSerializationId(), el);
+    }
+
+    for (Element val : map.values()) {
+      parentNode.addContent(val);
+    }
+  }
+
+  public Icon getIcon(@NotNull final U configuration, @NotNull final Icon icon) {
+    for (T extension : getApplicableExtensions(configuration)) {
+      final Icon extIcon = extension.getIcon(configuration);
+      if (extIcon != null) {
+        return LayeredIcon.create(icon, extIcon);
+      }
+    }
+    return icon;
+  }
+
+  public <V extends U> void appendEditors(@NotNull final U configuration,
+                            @NotNull final SettingsEditorGroup<V> group) {
+    for (T extension : getApplicableExtensions(configuration)) {
+      @SuppressWarnings("unchecked")
+      final SettingsEditor<V> editor = extension.createEditor((V)configuration);
+      if (editor != null) {
+        group.addEditor(extension.getEditorTitle(), editor);
+      }
+    }
+  }
+
+  public void validateConfiguration(@NotNull final U configuration,
+                                    final boolean isExecution) throws Exception {
+    // only for enabled extensions
+    for (T extension : getEnabledExtensions(configuration)) {
+      extension.validateConfiguration(configuration, isExecution);
+    }
+  }
+
+  public void extendCreatedConfiguration(@NotNull final U configuration,
+                                         @NotNull final Location location) {
+    for (T extension : getApplicableExtensions(configuration)) {
+      extension.extendCreatedConfiguration(configuration, location);
+    }
+  }
+
+  public void extendTemplateConfiguration(@NotNull final U configuration) {
+    for (T extension : getApplicableExtensions(configuration)) {
+      extension.extendTemplateConfiguration(configuration);
+    }
+  }
+
+  public void patchCommandLine(@NotNull final U configuration,
+                               @NotNull final GeneralCommandLine cmdLine,
+                               @NotNull final AbstractRunConfiguration.RunnerType type) {
+    // only for enabled extensions
+    for (T extension : getEnabledExtensions(configuration)) {
+      extension.patchCommandLine(configuration, cmdLine, type);
+    }
+  }
+
+  public void attachExtensionsToProcess(@NotNull final U configuration,
+                                        @NotNull final ProcessHandler handler,
+                                        @NotNull final AbstractRunConfiguration.RunnerType type) {
+    // only for enabled extensions
+    for (T extension : getEnabledExtensions(configuration)) {
+      extension.attachToProcess(configuration, handler, type);
+    }
+  }
+
+  private List<T> getApplicableExtensions(@NotNull final U configuration) {
+    final List<T> extensions = new ArrayList<T>();
+    for (T extension : Extensions.getExtensions(myExtensionPointName)) {
+      if (extension.isApplicableFor(configuration)) {
+        extensions.add(extension);
+      }
+    }
+    return extensions;
+  }
+
+  private List<T> getEnabledExtensions(@NotNull final U configuration) {
+    final List<T> extensions = new ArrayList<T>();
+    for (T extension : Extensions.getExtensions(myExtensionPointName)) {
+      if (extension.isApplicableFor(configuration) && extension.isEnabledFor(configuration)) {
+        extensions.add(extension);
+      }
+    }
+    return extensions;
+  }
+}

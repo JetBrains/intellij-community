@@ -27,11 +27,12 @@ import com.intellij.testIntegration.TestFramework;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
-public class TestUtil {
-  private TestUtil() {
+public class TestFrameworksImpl extends TestFrameworks {
+  private TestFrameworksImpl() {
   }
 
-  public static boolean isTestClass(final PsiClass psiClass) {
+  @Override
+  public boolean isTestClass(final PsiClass psiClass) {
     final TestFramework[] testFrameworks = Extensions.getExtensions(TestFramework.EXTENSION_NAME);
     for (TestFramework framework : testFrameworks) {
       if (framework.isTestClass(psiClass)) {
@@ -41,8 +42,9 @@ public class TestUtil {
     return false;
   }
 
+  @Override
   @Nullable
-  public static PsiMethod findOrCreateSetUpMethod(final PsiClass psiClass) {
+  public PsiMethod findOrCreateSetUpMethod(final PsiClass psiClass) {
     final TestFramework[] testFrameworks = Extensions.getExtensions(TestFramework.EXTENSION_NAME);
     for (TestFramework framework : testFrameworks) {
       if (framework.isTestClass(psiClass)) {
@@ -60,8 +62,9 @@ public class TestUtil {
     return null;
   }
 
+  @Override
   @Nullable
-  public static PsiMethod findSetUpMethod(final PsiClass psiClass) {
+  public PsiMethod findSetUpMethod(final PsiClass psiClass) {
     final TestFramework[] testFrameworks = Extensions.getExtensions(TestFramework.EXTENSION_NAME);
     for (TestFramework framework : testFrameworks) {
       if (framework.isTestClass(psiClass)) {

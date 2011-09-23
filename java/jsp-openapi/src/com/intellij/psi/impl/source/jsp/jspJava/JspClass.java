@@ -15,9 +15,7 @@
  */
 package com.intellij.psi.impl.source.jsp.jspJava;
 
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiSyntheticClass;
-import com.intellij.psi.SyntheticElement;
 import com.intellij.psi.jsp.JspFile;
 
 /**

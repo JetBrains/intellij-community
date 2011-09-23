@@ -16,7 +16,6 @@
 package com.intellij.psi.filters.position;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.filters.position.PositionElementFilter;
 import com.intellij.psi.filters.ElementFilter;
 
 /**

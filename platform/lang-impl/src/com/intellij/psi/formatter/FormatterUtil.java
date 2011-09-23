@@ -21,7 +21,6 @@ import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.*;
@@ -30,6 +29,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.CharTable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -37,9 +37,9 @@ import java.util.Collections;
 import java.util.List;
 
 public class FormatterUtil {
-  
+
   private static final List<FormatterUtilHelper> ourHelpers = ContainerUtil.createEmptyCOWList();
-  
+
   public static final Collection<String> FORMATTER_ACTION_NAMES = Collections.unmodifiableCollection(ContainerUtil.addAll(
     new HashSet<String>(), ReformatAndOptimizeImportsProcessor.COMMAND_NAME, ReformatCodeProcessor.COMMAND_NAME
   ));
@@ -51,57 +51,182 @@ public class FormatterUtil {
     ourHelpers.add(helper);
   }
 
-  private static ASTNode getWsCandidate(ASTNode element) {
-    if (element == null) return null;
-    ASTNode treePrev = element.getTreePrev();
-    if (treePrev != null) {
-      if (isSpaceTextElement(treePrev)) {
-        return treePrev;
+  public static boolean isWhitespaceOrEmpty(@Nullable ASTNode node) {
+    if (node == null) return false;
+    IElementType type = node.getElementType();
+    return type == TokenType.WHITE_SPACE || (type != TokenType.ERROR_ELEMENT && node.getTextLength() == 0);
+  }
+
+  @Nullable
+  public static ASTNode getPrevious(@Nullable ASTNode node, @NotNull IElementType... typesToIgnore) {
+    if (node == null) return null;
+
+    ASTNode prev = node.getTreePrev();
+    ASTNode parent = node.getTreeParent();
+    while (prev == null && parent != null) {
+      prev = parent.getTreePrev();
+      parent = parent.getTreeParent();
+    }
+
+    if (prev == null) {
+      return null;
+    }
+
+    for (IElementType type : typesToIgnore) {
+      if (prev.getElementType() == type) {
+        return getPrevious(prev, typesToIgnore);
       }
-      else if (treePrev.getTextLength() == 0) {
-        return getWsCandidate(treePrev);
+    }
+
+    return prev;
+  }
+
+  @Nullable
+  public static ASTNode getPreviousLeaf(@Nullable ASTNode node, @NotNull IElementType... typesToIgnore) {
+    ASTNode prev = getPrevious(node, typesToIgnore);
+    if (prev == null) {
+      return null;
+    }
+
+    ASTNode result = prev;
+    ASTNode lastChild = prev.getLastChildNode();
+    while (lastChild != null) {
+      result = lastChild;
+      lastChild = lastChild.getLastChildNode();
+    }
+
+    for (IElementType type : typesToIgnore) {
+      if (result.getElementType() == type) {
+        return getPreviousLeaf(result, typesToIgnore);
+      }
+    }
+    return result;
+  }
+
+  @Nullable
+  public static ASTNode getPreviousNonWhitespaceLeaf(@Nullable ASTNode node) {
+    if (node == null) return null;
+    ASTNode treePrev = node.getTreePrev();
+    if (treePrev != null) {
+      ASTNode candidate = TreeUtil.getLastChild(treePrev);
+      if (candidate != null && !isWhitespaceOrEmpty(candidate)) {
+        return candidate;
       }
       else {
-        return element;
+        return getPreviousNonWhitespaceLeaf(candidate);
       }
     }
-    final ASTNode treeParent = element.getTreeParent();
+    final ASTNode treeParent = node.getTreeParent();
 
     if (treeParent == null || treeParent.getTreeParent() == null) {
-      return element;
+      return null;
     }
     else {
-      return getWsCandidate(treeParent);
+      return getPreviousNonWhitespaceLeaf(treeParent);
     }
   }
 
   @Nullable
-  private static ASTNode getLastChildOf(ASTNode element) {
-    return TreeUtil.getLastChild(element);
+  public static ASTNode getPreviousNonWhitespaceSibling(@Nullable ASTNode node) {
+    ASTNode prevNode = node == null ? null : node.getTreePrev();
+    while (prevNode != null && isWhitespaceOrEmpty(prevNode)) {
+      prevNode = prevNode.getTreePrev();
+    }
+    return prevNode;
   }
 
-  private static boolean isWhiteSpaceElement(ASTNode treePrev) {
-    return isWhiteSpaceElement(treePrev, TokenType.WHITE_SPACE);
+  @Nullable
+  public static ASTNode getNextNonWhitespaceSibling(@Nullable ASTNode node) {
+    ASTNode next = node == null ? null : node.getTreeNext();
+    while (next != null && isWhitespaceOrEmpty(next)) {
+      next = next.getTreeNext();
+    }
+    return next;
   }
 
-  private static boolean isWhiteSpaceElement(ASTNode treePrev, IElementType whiteSpaceTokenType) {
-    return treePrev.getElementType() == whiteSpaceTokenType;
+  public static boolean isPrecededBy(@Nullable ASTNode node, IElementType expectedType) {
+    ASTNode prevNode = node == null ? null : node.getTreePrev();
+    while (prevNode != null && isWhitespaceOrEmpty(prevNode)) {
+      prevNode = prevNode.getTreePrev();
+    }
+    if (prevNode == null) return false;
+    return prevNode.getElementType() == expectedType;
   }
 
-  private static boolean isSpaceTextElement(ASTNode treePrev) {
-    return isWhiteSpaceElement(treePrev);
+  public static boolean isPrecededBy(@Nullable ASTNode node, TokenSet expectedTypes) {
+    ASTNode prevNode = node == null ? null : node.getTreePrev();
+    while (prevNode != null && isWhitespaceOrEmpty(prevNode)) {
+      prevNode = prevNode.getTreePrev();
+    }
+    if (prevNode == null) return false;
+    return expectedTypes.contains(prevNode.getElementType());
+  }
+
+  public static boolean isFollowedBy(@Nullable ASTNode node, IElementType expectedType) {
+    ASTNode nextNode = node == null ? null : node.getTreeNext();
+    while (nextNode != null && isWhitespaceOrEmpty(nextNode)) {
+      nextNode = nextNode.getTreeNext();
+    }
+    if (nextNode == null) return false;
+    return nextNode.getElementType() == expectedType;
+  }
+
+  public static boolean isIncomplete(@Nullable ASTNode node) {
+    ASTNode lastChild = node == null ? null : node.getLastChildNode();
+    while (lastChild != null && lastChild.getElementType() == TokenType.WHITE_SPACE) {
+      lastChild = lastChild.getTreePrev();
+    }
+    if (lastChild == null) return false;
+    if (lastChild.getElementType() == TokenType.ERROR_ELEMENT) return true;
+    return isIncomplete(lastChild);
+  }
+
+  public static boolean containsWhiteSpacesOnly(@Nullable ASTNode node) {
+    if (node == null) return false;
+
+    final boolean[] spacesOnly = {true};
+    ((TreeElement)node).acceptTree(new RecursiveTreeElementWalkingVisitor() {
+      @Override
+      public void visitComposite(CompositeElement composite) {
+        if (!spacesOnly(composite)) {
+          super.visitComposite(composite);
+        }
+      }
+
+      @Override
+      public void visitLeaf(LeafElement leaf) {
+        if (!spacesOnly(leaf)) {
+          spacesOnly[0] = false;
+          stopWalking();
+        }
+      }
+    });
+
+    return spacesOnly[0];
+  }
+
+  private static boolean spacesOnly(@Nullable TreeElement node) {
+    if (node == null) return false;
+
+    if (isWhitespaceOrEmpty(node)) return true;
+    for (FormatterUtilHelper helper : ourHelpers) {
+      if (helper.containsWhitespacesOnly(node)) return true;
+    }
+
+    return false;
   }
 
   public static void replaceWhiteSpace(final String whiteSpace,
-                                         final ASTNode leafElement,
-                                         final IElementType whiteSpaceToken,
-                                         final @Nullable TextRange textRange) {
+                                       final ASTNode leafElement,
+                                       final IElementType whiteSpaceToken,
+                                       final @Nullable TextRange textRange) {
     final CharTable charTable = SharedImplUtil.findCharTableByTree(leafElement);
 
     if (textRange != null && textRange.getStartOffset() > leafElement.getTextRange().getStartOffset() &&
         textRange.getEndOffset() < leafElement.getTextRange().getEndOffset()) {
       StringBuilder newText = createNewLeafChars(leafElement, textRange, whiteSpace);
-      LeafElement newElement = Factory.createSingleLeafElement(leafElement.getElementType(), newText, charTable, leafElement.getPsi().getManager());
+      LeafElement newElement =
+        Factory.createSingleLeafElement(leafElement.getElementType(), newText, charTable, leafElement.getPsi().getManager());
 
       leafElement.getTreeParent().replaceChild(leafElement, newElement);
       return;
@@ -118,50 +243,91 @@ public class FormatterUtil {
         treePrev.getTextLength() > 0 &&
         whiteSpace.length() >
         0) {
-      LeafElement whiteSpaceElement = Factory.createSingleLeafElement(treePrev.getElementType(), whiteSpace, charTable, SharedImplUtil.getManagerByTree(leafElement));
+      LeafElement whiteSpaceElement =
+        Factory.createSingleLeafElement(treePrev.getElementType(), whiteSpace, charTable, SharedImplUtil.getManagerByTree(leafElement));
 
       ASTNode treeParent = treePrev.getTreeParent();
       treeParent.replaceChild(treePrev, whiteSpaceElement);
     }
     else {
-      LeafElement whiteSpaceElement = Factory.createSingleLeafElement(whiteSpaceToken, whiteSpace, charTable, SharedImplUtil.getManagerByTree(leafElement));
+      LeafElement whiteSpaceElement =
+        Factory.createSingleLeafElement(whiteSpaceToken, whiteSpace, charTable, SharedImplUtil.getManagerByTree(leafElement));
 
       if (treePrev == null) {
         if (whiteSpace.length() > 0) {
           addWhiteSpace(leafElement, whiteSpaceElement);
         }
       }
-      else if (!isWhiteSpaceElement(treePrev, whiteSpaceToken)) {
-        if (whiteSpace.length() > 0) {
-          addWhiteSpace(treePrev, whiteSpaceElement);
-        }
-      }
-      else if (isWhiteSpaceElement(treePrev, whiteSpaceToken)) {
-        final CompositeElement treeParent = (CompositeElement)treePrev.getTreeParent();
-        if (whiteSpace.length() > 0) {
-//          LOG.assertTrue(textRange == null || treeParent.getTextRange().equals(textRange));
-          treeParent.replaceChild(treePrev, whiteSpaceElement);
+      else {
+        if (!(treePrev.getElementType() == whiteSpaceToken)) {
+          if (whiteSpace.length() > 0) {
+            addWhiteSpace(treePrev, whiteSpaceElement);
+          }
         }
         else {
-          treeParent.removeChild(treePrev);
-        }
+          if (treePrev.getElementType() == whiteSpaceToken) {
+            final CompositeElement treeParent = (CompositeElement)treePrev.getTreeParent();
+            if (whiteSpace.length() > 0) {
+              //          LOG.assertTrue(textRange == null || treeParent.getTextRange().equals(textRange));
+              treeParent.replaceChild(treePrev, whiteSpaceElement);
+            }
+            else {
+              treeParent.removeChild(treePrev);
+            }
 
-        // There is a possible case that more than one PSI element is matched by the target text range.
-        // That is the case, for example, for Python's multi-line expression. It may looks like below:
-        //     import contextlib,\
-        //       math, decimal
-        // Here single range contains two blocks: '\' & '\n  '. So, we may want to replace that range to another text, hence,
-        // we replace last element located there with it ('\n  ') and want to remove any remaining elements ('\').
-        ASTNode removeCandidate = findPreviousWhiteSpace(whiteSpaceElement, whiteSpaceToken);
-        while (textRange != null && removeCandidate != null && removeCandidate.getStartOffset() >= textRange.getStartOffset()) {
-          treePrev = findPreviousWhiteSpace(removeCandidate, whiteSpaceToken);
-          removeCandidate.getTreeParent().removeChild(removeCandidate);
-          removeCandidate = treePrev;
+            // There is a possible case that more than one PSI element is matched by the target text range.
+            // That is the case, for example, for Python's multi-line expression. It may looks like below:
+            //     import contextlib,\
+            //       math, decimal
+            // Here single range contains two blocks: '\' & '\n  '. So, we may want to replace that range to another text, hence,
+            // we replace last element located there with it ('\n  ') and want to remove any remaining elements ('\').
+            ASTNode removeCandidate = findPreviousWhiteSpace(whiteSpaceElement, whiteSpaceToken);
+            while (textRange != null && removeCandidate != null && removeCandidate.getStartOffset() >= textRange.getStartOffset()) {
+              treePrev = findPreviousWhiteSpace(removeCandidate, whiteSpaceToken);
+              removeCandidate.getTreeParent().removeChild(removeCandidate);
+              removeCandidate = treePrev;
+            }
+            //treeParent.subtreeChanged();
+          }
         }
-        //treeParent.subtreeChanged();
       }
     }
+  }
 
+  @Nullable
+  private static ASTNode findPreviousWhiteSpace(final ASTNode leafElement, final IElementType whiteSpaceTokenType) {
+    final int offset = leafElement.getTextRange().getStartOffset() - 1;
+    if (offset < 0) return null;
+    final PsiElement found = SourceTreeToPsiMap.treeElementToPsi(leafElement).getContainingFile().findElementAt(offset);
+    if (found == null) return null;
+    final ASTNode treeElement = found.getNode();
+    if (treeElement != null && treeElement.getElementType() == whiteSpaceTokenType) return treeElement;
+    return null;
+  }
+
+  @Nullable
+  private static ASTNode getWsCandidate(@Nullable ASTNode node) {
+    if (node == null) return null;
+    ASTNode treePrev = node.getTreePrev();
+    if (treePrev != null) {
+      if (treePrev.getElementType() == TokenType.WHITE_SPACE) {
+        return treePrev;
+      }
+      else if (treePrev.getTextLength() == 0) {
+        return getWsCandidate(treePrev);
+      }
+      else {
+        return node;
+      }
+    }
+    final ASTNode treeParent = node.getTreeParent();
+
+    if (treeParent == null || treeParent.getTreeParent() == null) {
+      return node;
+    }
+    else {
+      return getWsCandidate(treeParent);
+    }
   }
 
   private static StringBuilder createNewLeafChars(final ASTNode leafElement, final TextRange textRange, final String whiteSpace) {
@@ -192,59 +358,6 @@ public class FormatterUtil {
     treeParent.addChild(whiteSpaceElement, treePrev);
   }
 
-  @Nullable
-  private static ASTNode findPreviousWhiteSpace(final ASTNode leafElement, final IElementType whiteSpaceTokenType) {
-    final int offset = leafElement.getTextRange().getStartOffset() - 1;
-    if (offset < 0) return null;
-    final PsiElement found = SourceTreeToPsiMap.treeElementToPsi(leafElement).getContainingFile().findElementAt(offset);
-    if (found == null) return null;
-    final ASTNode treeElement = found.getNode();
-    if (treeElement != null && treeElement.getElementType() == whiteSpaceTokenType) return treeElement;
-    return null;
-  }
-
-  @Nullable
-  public static ASTNode getLeafNonSpaceBefore(final ASTNode element) {
-    if (element == null) return null;
-    ASTNode treePrev = element.getTreePrev();
-    if (treePrev != null) {
-      ASTNode candidate = getLastChildOf(treePrev);
-      if (candidate != null && !isSpaceTextElement(candidate) && candidate.getTextLength() > 0) {
-        return candidate;
-      }
-      else {
-        return getLeafNonSpaceBefore(candidate);
-      }
-    }
-    final ASTNode treeParent = element.getTreeParent();
-
-    if (treeParent == null || treeParent.getTreeParent() == null) {
-      return null;
-    }
-    else {
-      return getLeafNonSpaceBefore(treeParent);
-    }
-
-  }
-
-  public static ASTNode getPreviousNonSpaceSibling(ASTNode node) {
-    ASTNode prevNode = node.getTreePrev();
-    while (prevNode != null && prevNode.getPsi() instanceof PsiWhiteSpace) {
-      prevNode = prevNode.getTreePrev();
-    }
-    return prevNode;
-  }
-
-
-  public static boolean isIncompleted(final ASTNode treeNode) {
-    ASTNode lastChild = treeNode.getLastChildNode();
-    while (lastChild != null && lastChild.getElementType() == TokenType.WHITE_SPACE) {
-      lastChild = lastChild.getTreePrev();
-    }
-    if (lastChild == null) return false;
-    if (lastChild.getElementType() == TokenType.ERROR_ELEMENT) return true;
-    return isIncompleted(lastChild);
-  }
 
   public static void replaceLastWhiteSpace(final ASTNode astNode, final String whiteSpace, final TextRange textRange) {
     ASTNode lastWS = TreeUtil.findLastLeaf(astNode);
@@ -266,67 +379,10 @@ public class FormatterUtil {
 
     if (lastWS == null) {
       astNode.addChild(whiteSpaceElement, null);
-    } else {
+    }
+    else {
       ASTNode treeParent = lastWS.getTreeParent();
       treeParent.replaceChild(lastWS, whiteSpaceElement);
     }
-  }
-
-  private static boolean spacesOnly(TreeElement node) {
-    if (node.getElementType() == TokenType.WHITE_SPACE || node.getTextLength() == 0) return true;
-    for (FormatterUtilHelper helper : ourHelpers) {
-      if (helper.containsWhitespacesOnly(node)) return true;
-    }
-
-    return false;
-  }
-
-  public static boolean containsWhiteSpacesOnly(final ASTNode root) {
-    final boolean[] spacesOnly = {true};
-    ((TreeElement)root).acceptTree(new RecursiveTreeElementWalkingVisitor() {
-      @Override
-      public void visitComposite(CompositeElement composite) {
-        if (!spacesOnly(composite)) {
-          super.visitComposite(composite);
-        }
-      }
-
-      @Override
-      public void visitLeaf(LeafElement leaf) {
-        if (!spacesOnly(leaf)) {
-          spacesOnly[0] = false;
-          stopWalking();
-        }
-      }
-    });
-
-    return spacesOnly[0];
-  }
-
-  public static boolean isPrecededBy(ASTNode node, IElementType eType) {
-    ASTNode prevNode = node.getTreePrev();
-    while (prevNode != null && prevNode.getPsi() instanceof PsiWhiteSpace) {
-      prevNode = prevNode.getTreePrev();
-    }
-    if (prevNode == null) return false;
-    return prevNode.getElementType() == eType;
-  }
-
-  public static boolean isPrecededBy(ASTNode node, TokenSet tokens) {
-    ASTNode prevNode = node.getTreePrev();
-    while (prevNode != null && prevNode.getPsi() instanceof PsiWhiteSpace) {
-      prevNode = prevNode.getTreePrev();
-    }
-    if (prevNode == null) return false;
-    return tokens.contains(prevNode.getElementType());
-  }
-
-  public static boolean isFollowedBy(ASTNode node, IElementType eType) {
-    ASTNode nextNode = node.getTreeNext();
-    while (nextNode != null && nextNode.getPsi() instanceof PsiWhiteSpace) {
-      nextNode = nextNode.getTreeNext();
-    }
-    if (nextNode == null) return false;
-    return nextNode.getElementType() == eType;
   }
 }

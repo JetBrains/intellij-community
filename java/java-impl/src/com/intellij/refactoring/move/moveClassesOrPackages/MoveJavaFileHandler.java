@@ -72,6 +72,7 @@ public class MoveJavaFileHandler extends MoveFileHandler {
         final PsiReference reference = moveRenameUsage.getReference();
         if (reference != null) {
           try {
+            LOG.assertTrue(newElement != null, oldElement != null ? oldElement : reference);
             reference.bindToElement(newElement);
           } catch (IncorrectOperationException ex) {
             LOG.error(ex);

@@ -377,9 +377,18 @@ public class StringUtil {
   public static boolean containsLineBreak(@NotNull CharSequence text) {
     for (int i = 0; i < text.length(); i++) {
       char c = text.charAt(i);
-      if (c == '\n' || c == '\r') return true;
+      if (isLineBreak(c)) return true;
     }
     return false;
+  }
+
+  public static boolean isLineBreak(char c) {
+    return c == '\n' || c == '\r';
+  }
+
+  public static boolean endsWithLineBreak(@NotNull CharSequence text) {
+    int len = text.length();
+    return len > 0 && isLineBreak(text.charAt(len - 1));
   }
 
   public static int lineColToOffset(@NotNull CharSequence text, int line, int col) {

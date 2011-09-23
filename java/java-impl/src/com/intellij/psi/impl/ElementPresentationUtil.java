@@ -16,12 +16,12 @@
 package com.intellij.psi.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.TestUtil;
+import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ExcludedFileIndex;
+import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Key;
@@ -95,7 +95,7 @@ public class ElementPresentationUtil implements PlatformIcons {
 
   public static boolean isExcluded(final VirtualFile vFile, final Project project) {
     return vFile != null
-           && ServiceManager.getService(project, ExcludedFileIndex.class).isInSource(vFile)
+           && ServiceManager.getService(project, FileIndexFacade.class).isInSource(vFile)
            && CompilerConfiguration.getInstance(project).isExcludedFromCompilation(vFile);
   }
 
@@ -153,7 +153,7 @@ public class ElementPresentationUtil implements PlatformIcons {
         return CLASS_KIND_EXCEPTION;
       }
 
-      if (TestUtil.isTestClass(aClass)) {
+      if (TestFrameworks.getInstance().isTestClass(aClass)) {
         return CLASS_KIND_JUNIT_TEST;
       }
     }

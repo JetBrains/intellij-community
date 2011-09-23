@@ -23,6 +23,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidFacetConfiguration;
@@ -95,10 +96,13 @@ public class AndroidMavenProviderImpl implements AndroidMavenProvider {
 
         List<Pattern> includes = MavenResourceCompiler.collectPatterns(resource.getIncludes(), "**/*");
         List<Pattern> excludes = MavenResourceCompiler.collectPatterns(resource.getExcludes(), null);
-        String targetPath = FileUtil.toSystemIndependentName(resource.getTargetPath());
+        final String resourceTargetPath = resource.getTargetPath();
+        if (resourceTargetPath != null) {
+          String targetPath = FileUtil.toSystemIndependentName(resourceTargetPath);
 
-        if (processResources(module.getProject(), resDir, resDir, includes, excludes, targetPath, processor)) {
-          return true;
+          if (processResources(module.getProject(), resDir, resDir, includes, excludes, targetPath, processor)) {
+            return true;
+          }
         }
       }
     }
@@ -114,7 +118,7 @@ public class AndroidMavenProviderImpl implements AndroidMavenProvider {
                                   ResourceProcessor processor) {
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     if (!fileIndex.isIgnored(file)) {
-      String relPath = VfsUtil.getRelativePath(file, sourceRoot, '/');
+      String relPath = VfsUtilCore.getRelativePath(file, sourceRoot, '/');
       if (relPath != null && MavenUtil.isIncluded(relPath, includes, excludes)) {
         if (processor.process(file, resOutputDir + "/" + relPath)) {
           return true;

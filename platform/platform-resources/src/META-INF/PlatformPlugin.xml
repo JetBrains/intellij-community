@@ -26,8 +26,8 @@
     <applicationService serviceInterface="com.intellij.ui.mac.MacMessages"
                         serviceImplementation="com.intellij.ui.mac.MacMessagesImpl"/>
     
-    <projectService serviceInterface="com.intellij.openapi.roots.ExcludedFileIndex"
-                    serviceImplementation="com.intellij.openapi.vcs.impl.DefaultExcludedFileIndex"/>
+    <projectService serviceInterface="com.intellij.openapi.roots.FileIndexFacade"
+                    serviceImplementation="com.intellij.openapi.vcs.impl.DefaultFileIndexFacade"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy"
                     serviceImplementation="com.intellij.openapi.vcs.impl.BasicDefaultVcsRootPolicy"/>
 

@@ -29,7 +29,6 @@ import com.intellij.psi.stubs.StubIndexKey;
 import java.util.Collection;
 
 public class JavaAnnotationIndex extends StringStubIndexExtension<PsiAnnotation> {
-  public static final StubIndexKey<String,PsiAnnotation> KEY = StubIndexKey.createIndexKey("java.annotations");
 
   private static final JavaAnnotationIndex ourInstance = new JavaAnnotationIndex();
   public static JavaAnnotationIndex getInstance() {
@@ -37,7 +36,7 @@ public class JavaAnnotationIndex extends StringStubIndexExtension<PsiAnnotation>
   }
 
   public StubIndexKey<String, PsiAnnotation> getKey() {
-    return KEY;
+    return JavaStubIndexKeys.ANNOTATIONS;
   }
 
   public Collection<PsiAnnotation> get(final String s, final Project project, final GlobalSearchScope scope) {

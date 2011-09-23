@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.overrideImplement;
 
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.lang.LanguageCodeInsightActionHandler;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -35,9 +36,14 @@ public class GroovyImplementMethodsHandler implements LanguageCodeInsightActionH
 
   public void invoke(@NotNull final Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     PsiClass aClass = OverrideImplementUtil.getContextClass(project, editor, file, true);
-    if (aClass != null) {
-      OverrideImplementUtil.chooseAndImplementMethods(project, editor, aClass);
+    if (aClass == null) return;
+
+    if (OverrideImplementUtil.getMethodSignaturesToImplement(aClass).isEmpty()) {
+      HintManager.getInstance().showErrorHint(editor, "No methods to implement have been found");
+      return;
     }
+
+    OverrideImplementUtil.chooseAndImplementMethods(project, editor, aClass);
   }
 
   public boolean startInWriteAction() {

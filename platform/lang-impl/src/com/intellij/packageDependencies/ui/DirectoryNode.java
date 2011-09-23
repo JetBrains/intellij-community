@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -66,13 +67,13 @@ public class DirectoryNode extends PackageDependenciesNode {
         else {
           final VirtualFile sourceRoot = index.getSourceRootForFile(myVDirectory);
           if (myVDirectory == sourceRoot) {
-            myFQName = VfsUtil.getRelativePath(myVDirectory, contentRoot, '/');
+            myFQName = VfsUtilCore.getRelativePath(myVDirectory, contentRoot, '/');
           }
           else if (sourceRoot != null) {
-            myFQName = VfsUtil.getRelativePath(myVDirectory, sourceRoot, '/');
+            myFQName = VfsUtilCore.getRelativePath(myVDirectory, sourceRoot, '/');
           }
           else {
-            myFQName = VfsUtil.getRelativePath(myVDirectory, contentRoot, '/');
+            myFQName = VfsUtilCore.getRelativePath(myVDirectory, contentRoot, '/');
           }
         }
 
@@ -97,7 +98,7 @@ public class DirectoryNode extends PackageDependenciesNode {
     if (baseDir != null) {
       if (myVDirectory != baseDir) {
         if (VfsUtil.isAncestor(baseDir, myVDirectory, false)) {
-          return VfsUtil.getRelativePath(myVDirectory, baseDir, '/');
+          return VfsUtilCore.getRelativePath(myVDirectory, baseDir, '/');
         } else {
           return myVDirectory.getPresentableUrl();
         }
@@ -145,7 +146,7 @@ public class DirectoryNode extends PackageDependenciesNode {
     if (contentRoot == null) {
       return "";
     }
-    return VfsUtil.getRelativePath(directory, contentRoot, '/');
+    return VfsUtilCore.getRelativePath(directory, contentRoot, '/');
   }
 
   public PsiElement getPsiElement() {

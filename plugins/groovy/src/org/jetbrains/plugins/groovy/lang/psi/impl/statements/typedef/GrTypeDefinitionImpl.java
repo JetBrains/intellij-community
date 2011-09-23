@@ -25,7 +25,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
-import com.intellij.psi.impl.source.tree.java.ClassElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.util.CachedValueProvider;
@@ -749,12 +748,12 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
   private PsiElement getDefaultAnchor(GrTypeDefinitionBody body, PsiMember member) {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
 
-    int order = ClassElement.getMemberOrderWeight(member, settings);
+    int order = JavaPsiImplementationHelperImpl.getMemberOrderWeight(member, settings);
     if (order < 0) return null;
 
     PsiElement lastMember = null;
     for (PsiElement child = body.getFirstChild(); child != null; child = child.getNextSibling()) {
-      int order1 = ClassElement.getMemberOrderWeight(getAnyMember(child), settings);
+      int order1 = JavaPsiImplementationHelperImpl.getMemberOrderWeight(getAnyMember(child), settings);
       if (order1 < 0) continue;
       if (order1 > order) {
         final PsiElement lBrace = body.getLBrace();

@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.generation;
 
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.lang.LanguageCodeInsightActionHandler;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -33,9 +34,14 @@ public class JavaOverrideMethodsHandler implements LanguageCodeInsightActionHand
 
   public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
     PsiClass aClass = OverrideImplementUtil.getContextClass(project, editor, file, true);
-    if (aClass != null) {
-      OverrideImplementUtil.chooseAndOverrideMethods(project, editor, aClass);
+    if (aClass == null) return;
+
+    if (OverrideImplementUtil.getMethodSignaturesToImplement(aClass).isEmpty()) {
+      HintManager.getInstance().showErrorHint(editor, "No methods to override have been found");
+      return;
     }
+
+    OverrideImplementUtil.chooseAndOverrideMethods(project, editor, aClass);
   }
 
   public boolean startInWriteAction() {

@@ -51,7 +51,7 @@ class JavaWithSynchronizedSurrounder extends JavaStatementsSurrounder{
     if (synchronizedBlock == null) {
       return null;
     }
-    SurroundWithUtil.indentCommentIfNecessary(synchronizedBlock, statements, factory);
+    SurroundWithUtil.indentCommentIfNecessary(synchronizedBlock, statements);
     synchronizedBlock.addRange(statements[0], statements[statements.length - 1]);
     container.deleteChildRange(statements[0], statements[statements.length - 1]);
 

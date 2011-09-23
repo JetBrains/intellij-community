@@ -17,6 +17,7 @@ package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.CheckUtil;
@@ -28,7 +29,6 @@ import com.intellij.psi.impl.java.stubs.PsiParameterStub;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.JavaSharedImplUtil;
-import com.intellij.psi.presentation.java.JavaPresentationUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.RowIcon;
@@ -224,7 +224,7 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
   }
 
   public ItemPresentation getPresentation() {
-    return JavaPresentationUtil.getVariablePresentation(this);
+    return ItemPresentationProviders.getItemPresentation(this);
   }
 
   public Icon getElementIcon(final int flags) {

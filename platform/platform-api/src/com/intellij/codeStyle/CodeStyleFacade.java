@@ -20,7 +20,7 @@
 package com.intellij.codeStyle;
 
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
@@ -38,16 +38,16 @@ public abstract class CodeStyleFacade {
   }
 
   /**
-   * Calculates the indent that should be used for the current line in the specified
-   * editor.
+   * Calculates the indent that should be used for the line at specified offset in the specified
+   * document.
    *
-   * @param editor the editor for which the indent should be calculated.
+   * @param document the document for which the indent should be calculated.
+   * @param offset the caret offset in the editor.
    * @return the indent string (containing of tabs and/or white spaces), or null if it
    *         was not possible to calculate the indent.
    */
   @Nullable
-  public abstract String getLineIndent(@NotNull Editor editor);
-
+  public abstract String getLineIndent(@NotNull Document document, int offset);
 
   public abstract int getIndentSize(FileType fileType);
 

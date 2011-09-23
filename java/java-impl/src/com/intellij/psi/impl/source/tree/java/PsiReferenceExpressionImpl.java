@@ -22,8 +22,8 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettingsFacade;
 import com.intellij.psi.filters.AndFilter;
 import com.intellij.psi.filters.ConstructorFilter;
 import com.intellij.psi.filters.NotFilter;
@@ -119,7 +119,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     throws IncorrectOperationException {
     final String qualifiedName  = qualifierClass.getQualifiedName();
     final List<PsiJavaCodeReferenceElement> refs = getImportsFromClass(importList, qualifiedName);
-    if (refs.size() < CodeStyleSettingsManager.getSettings(qualifierClass.getProject()).NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND) {
+    if (refs.size() < JavaCodeStyleSettingsFacade.getInstance(qualifierClass.getProject()).getNamesCountToUseImportOnDemand()) {
       importList.add(JavaPsiFacade.getInstance(qualifierClass.getProject()).getElementFactory().createImportStaticStatement(qualifierClass, staticName));
     } else {
       for (PsiJavaCodeReferenceElement ref : refs) {
@@ -520,7 +520,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     final PsiManager manager = getManager();
     final PsiJavaParserFacade parserFacade = JavaPsiFacade.getInstance(getProject()).getParserFacade();
     if (element instanceof PsiClass) {
-      final boolean preserveQualification = CodeStyleSettingsManager.getSettings(getProject()).USE_FQ_CLASS_NAMES && isFullyQualified(this);
+      final boolean preserveQualification = JavaCodeStyleSettingsFacade.getInstance(getProject()).useFQClassNames() && isFullyQualified(this);
       String qName = ((PsiClass)element).getQualifiedName();
       if (qName == null) {
         qName = ((PsiClass)element).getName();

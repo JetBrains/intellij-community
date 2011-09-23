@@ -17,7 +17,7 @@
 /*
  * @author max
  */
-package com.intellij.openapi.fileTypes;
+package com.intellij.openapi.util;
 
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.util.LazyInstance;

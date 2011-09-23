@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
@@ -26,7 +27,6 @@ import com.intellij.psi.impl.java.stubs.PsiFieldStub;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.presentation.java.JavaPresentationUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.IncorrectOperationException;
@@ -233,8 +233,9 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement<PsiFieldStub> implemen
   }
 
   public ItemPresentation getPresentation() {
-    return JavaPresentationUtil.getFieldPresentation(this);
+    return ItemPresentationProviders.getItemPresentation(this);
   }
+
   public void setInitializer(PsiExpression initializer) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }

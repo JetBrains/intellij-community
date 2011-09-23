@@ -18,7 +18,6 @@ package org.intellij.lang.xpath.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;

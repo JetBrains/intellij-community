@@ -24,7 +24,7 @@ import com.intellij.psi.impl.cache.RecordUtil;
 import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.compiled.ClsMethodImpl;
 import com.intellij.psi.impl.java.stubs.impl.PsiMethodStubImpl;
-import com.intellij.psi.impl.java.stubs.index.JavaMethodNameIndex;
+import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
 import com.intellij.psi.impl.source.PsiAnnotationMethodImpl;
 import com.intellij.psi.impl.source.PsiMethodImpl;
 import com.intellij.psi.impl.source.tree.ElementType;
@@ -139,7 +139,7 @@ public abstract class JavaMethodElementType extends JavaStubElementType<PsiMetho
   public void indexStub(final PsiMethodStub stub, final IndexSink sink) {
     final String name = stub.getName();
     if (name != null) {
-      sink.occurrence(JavaMethodNameIndex.KEY, name);
+      sink.occurrence(JavaStubIndexKeys.METHODS, name);
     }
   }
 }

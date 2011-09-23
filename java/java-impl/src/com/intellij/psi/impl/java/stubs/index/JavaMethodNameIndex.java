@@ -29,7 +29,6 @@ import com.intellij.psi.stubs.StubIndexKey;
 import java.util.Collection;
 
 public class JavaMethodNameIndex extends StringStubIndexExtension<PsiMethod> {
-  public static final StubIndexKey<String,PsiMethod> KEY = StubIndexKey.createIndexKey("java.method.name");
 
   private static final JavaMethodNameIndex ourInstance = new JavaMethodNameIndex();
   public static JavaMethodNameIndex getInstance() {
@@ -37,7 +36,7 @@ public class JavaMethodNameIndex extends StringStubIndexExtension<PsiMethod> {
   }
 
   public StubIndexKey<String, PsiMethod> getKey() {
-    return KEY;
+    return JavaStubIndexKeys.METHODS;
   }
 
   public Collection<PsiMethod> get(final String s, final Project project, final GlobalSearchScope scope) {

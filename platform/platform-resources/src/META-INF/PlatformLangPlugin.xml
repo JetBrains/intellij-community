@@ -34,8 +34,8 @@
 
     <exportable serviceInterface="com.intellij.openapi.projectRoots.ProjectJdkTable"/>
 
-    <projectService serviceInterface="com.intellij.openapi.roots.ExcludedFileIndex"
-                    serviceImplementation="com.intellij.openapi.vcs.impl.ProjectExcludedFileIndex"/>
+    <projectService serviceInterface="com.intellij.openapi.roots.FileIndexFacade"
+                    serviceImplementation="com.intellij.openapi.vcs.impl.ProjectFileIndexFacade"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy"
                     serviceImplementation="com.intellij.openapi.vcs.impl.ModuleDefaultVcsRootPolicy"/>
 

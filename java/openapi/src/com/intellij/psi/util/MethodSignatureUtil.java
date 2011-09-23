@@ -45,7 +45,7 @@ public class MethodSignatureUtil {
   public static final TObjectHashingStrategy<MethodSignature> METHOD_PARAMETERS_ERASURE_EQUALITY =
     new TObjectHashingStrategy<MethodSignature>() {
       public int computeHashCode(final MethodSignature signature) {
-        int result = signature.getName().hashCode();
+        int result = signature.isConstructor() ? 0 : signature.getName().hashCode();
 
         PsiType[] parameterTypes = signature.getParameterTypes();
         result += 37 * parameterTypes.length;
@@ -58,7 +58,8 @@ public class MethodSignatureUtil {
       }
 
       public boolean equals(MethodSignature method1, MethodSignature method2) {
-        if (!method1.getName().equals(method2.getName())) return false;
+        if (method1.isConstructor() != method2.isConstructor()) return false;
+        if (!method1.isConstructor() && !method1.getName().equals(method2.getName())) return false;
         final PsiType[] parameterTypes1 = method1.getParameterTypes();
         final PsiType[] parameterTypes2 = method2.getParameterTypes();
         if (parameterTypes1.length != parameterTypes2.length) return false;
@@ -122,6 +123,7 @@ public class MethodSignatureUtil {
                                                    final MethodSignature superSignature,
                                                    final PsiSubstitutor unifyingSubstitutor) {
     if (unifyingSubstitutor == null) return false;
+    if (!METHOD_PARAMETERS_ERASURE_EQUALITY.equals(subSignature, superSignature)) return false;
 
     final PsiType[] subParameterTypes = subSignature.getParameterTypes();
     final PsiType[] superParameterTypes = superSignature.getParameterTypes();

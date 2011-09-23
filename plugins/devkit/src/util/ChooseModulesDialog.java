@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.ui.ColoredListCellRenderer;
@@ -188,7 +189,7 @@ public class ChooseModulesDialog extends DialogWrapper {
           assert virtualFile != null;
           final VirtualFile projectPath = myProject.getBaseDir();
           if (VfsUtil.isAncestor(projectPath, virtualFile, false)) {
-            append(" (" + VfsUtil.getRelativePath(virtualFile, projectPath, File.separatorChar) + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+            append(" (" + VfsUtilCore.getRelativePath(virtualFile, projectPath, File.separatorChar) + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
           } else {
             append(" (" + virtualFile.getPresentableUrl() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
           }

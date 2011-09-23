@@ -45,7 +45,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import static org.jetbrains.plugins.groovy.GroovyFileType.GROOVY_LANGUAGE;
 import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes.mGDOC_TAG_VALUE_COMMA;
 import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes.mGDOC_TAG_VALUE_LPAREN;
-import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.COMMENT_SET;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kELSE;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kNEW;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kSWITCH;
@@ -56,6 +55,7 @@ import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mLPAREN;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mRBRACK;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mRPAREN;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSL_COMMENT;
+import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.COMMENT_SET;
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.*;
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.GDOC_TAG;
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.mCLOSABLE_BLOCK_OP;
@@ -63,6 +63,7 @@ import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.mGDOC_
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.mGDOC_INLINE_TAG_END;
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.mGDOC_INLINE_TAG_START;
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.mGDOC_TAG_VALUE_RPAREN;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.mNLS;
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.mRCURLY;
 
 /**
@@ -153,7 +154,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
   public void visitClosure(GrClosableBlock closure) {
     if ((myChild1.getElementType() == mLCURLY && myChild2.getElementType() != PARAMETERS_LIST && myChild2.getElementType() != mCLOSABLE_BLOCK_OP)
         || myChild2.getElementType() == mRCURLY) {
-      myResult = Spacing.createDependentLFSpacing(0, Integer.MAX_VALUE, closure.getTextRange(), mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
+      myResult = Spacing.createDependentLFSpacing(0, 1, closure.getTextRange(), mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
     } else if (myChild1.getElementType() == mCLOSABLE_BLOCK_OP) {
       GrStatement[] statements = closure.getStatements();
       if (statements.length > 0) {
@@ -515,7 +516,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
   }
 
   static ASTNode getPrevElementType(final ASTNode child) {
-    return FormatterUtil.getLeafNonSpaceBefore(child);
+    return FormatterUtil.getPreviousNonWhitespaceLeaf(child);
   }
 }
 

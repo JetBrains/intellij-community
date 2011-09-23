@@ -17,6 +17,7 @@ package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Queryable;
@@ -34,7 +35,6 @@ import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.JavaSharedImplUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.presentation.java.JavaPresentationUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
@@ -320,7 +320,7 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
   }
 
   public ItemPresentation getPresentation() {
-    return JavaPresentationUtil.getMethodPresentation(this);
+    return ItemPresentationProviders.getItemPresentation(this);
   }
 
   public Icon getElementIcon(final int flags) {

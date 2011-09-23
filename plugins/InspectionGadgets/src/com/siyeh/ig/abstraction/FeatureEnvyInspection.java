@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig.abstraction;
 
-import com.intellij.codeInsight.TestUtil;
+import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiIdentifier;
@@ -71,7 +71,7 @@ public class FeatureEnvyInspection extends BaseInspection {
             if (ignoreTestCases) {
                 final PsiClass containingClass = method.getContainingClass();
                 if(containingClass != null &&
-                        TestUtil.isTestClass(containingClass)){
+                   TestFrameworks.getInstance().isTestClass(containingClass)){
                     return;
                 }
                 if (TestUtils.isJUnitTestMethod(method)) {

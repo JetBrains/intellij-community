@@ -15,8 +15,9 @@
  */
 package com.intellij.openapi.vcs.impl;
 
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ExcludedFileIndex;
+import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.ProjectBaseDirectory;
@@ -24,11 +25,11 @@ import com.intellij.platform.ProjectBaseDirectory;
 /**
  * @author yole
  */
-public class DefaultExcludedFileIndex extends ExcludedFileIndex {
+public class DefaultFileIndexFacade extends FileIndexFacade {
   private final Project myProject;
   private final VirtualFile myBaseDir;
 
-  public DefaultExcludedFileIndex(final Project project) {
+  public DefaultFileIndexFacade(final Project project) {
     super(project);
     myProject = project;
     myBaseDir = project.getBaseDir();
@@ -43,8 +44,18 @@ public class DefaultExcludedFileIndex extends ExcludedFileIndex {
     return isInContent(file);
   }
 
+  @Override
+  public boolean isInLibraryClasses(VirtualFile file) {
+    return false;
+  }
+
   public boolean isExcludedFile(final VirtualFile file) {
     return false;
+  }
+
+  @Override
+  public Module getModuleForFile(VirtualFile file) {
+    return null;
   }
 
   public boolean isValidAncestor(final VirtualFile baseDir, final VirtualFile childDir) {

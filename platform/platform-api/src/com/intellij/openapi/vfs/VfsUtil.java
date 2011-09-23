@@ -42,7 +42,7 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.*;
 
-public class VfsUtil {
+public class VfsUtil extends VfsUtilCore {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.VfsUtil");
 
   public static String loadText(@NotNull VirtualFile file) throws IOException{
@@ -58,68 +58,6 @@ public class VfsUtil {
   public static void saveText(@NotNull VirtualFile file, @NotNull String text) throws IOException {
     Charset charset = file.getCharset();
     file.setBinaryContent(text.getBytes(charset.name()));
-  }
-
-  /**
-   * Checks whether the <code>ancestor {@link VirtualFile}</code> is parent of <code>file
-   * {@link VirtualFile}</code>.
-   *
-   * @param ancestor the file
-   * @param file     the file
-   * @param strict   if <code>false</code> then this method returns <code>true</code> if <code>ancestor</code>
-   *                 and <code>file</code> are equal
-   * @return <code>true</code> if <code>ancestor</code> is parent of <code>file</code>; <code>false</code> otherwise
-   */
-  public static boolean isAncestor(@NotNull VirtualFile ancestor, @NotNull VirtualFile file, boolean strict) {
-    if (!file.getFileSystem().equals(ancestor.getFileSystem())) return false;
-    VirtualFile parent = strict ? file.getParent() : file;
-    while (true) {
-      if (parent == null) return false;
-      if (parent.equals(ancestor)) return true;
-      parent = parent.getParent();
-    }
-  }
-
-  /**
-   * Gets the relative path of <code>file</code> to its <code>ancestor</code>. Uses <code>separator</code> for
-   * separating files.
-   *
-   * @param file      the file
-   * @param ancestor  parent file
-   * @param separator character to use as files separator
-   * @return the relative path or {@code null} if {@code ancestor} is not ancestor for {@code file}
-   */
-  @Nullable
-  public static String getRelativePath(@NotNull VirtualFile file, @NotNull VirtualFile ancestor, char separator) {
-    if (!file.getFileSystem().equals(ancestor.getFileSystem())) return null;
-
-    int length = 0;
-    VirtualFile parent = file;
-    while (true) {
-      if (parent == null) return null;
-      if (parent.equals(ancestor)) break;
-      if (length > 0) {
-        length++;
-      }
-      length += parent.getName().length();
-      parent = parent.getParent();
-    }
-
-    char[] chars = new char[length];
-    int index = chars.length;
-    parent = file;
-    while (true) {
-      if (parent.equals(ancestor)) break;
-      if (index < length) {
-        chars[--index] = separator;
-      }
-      String name = parent.getName();
-      for (int i = name.length() - 1; i >= 0; i--) {
-        chars[--index] = name.charAt(i);
-      }
-      parent = parent.getParent();
-    }
-    return new String(chars);
   }
 
   /**

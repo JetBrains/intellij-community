@@ -31,6 +31,7 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.PsiTreeUtil;
 
 public class JavaCharFilter extends CharFilter {
@@ -54,7 +55,7 @@ public class JavaCharFilter extends CharFilter {
     
     Object o = item.getObject();
     if (o instanceof PsiClass && ((PsiClass)o).getName().length() > lookup.itemPattern(item).length()) {
-      if (JavaPsiFacade.getInstance(file.getProject()).getShortNamesCache().getClassesByName(lookup.itemPattern(item), file.getResolveScope()).length > 0) {
+      if (PsiShortNamesCache.getInstance(file.getProject()).getClassesByName(lookup.itemPattern(item), file.getResolveScope()).length > 0) {
         return true;
       }
     }

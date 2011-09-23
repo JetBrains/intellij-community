@@ -15,7 +15,7 @@
  */
 package com.intellij.testIntegration;
 
-import com.intellij.codeInsight.TestUtil;
+import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.template.Expression;
@@ -77,7 +77,7 @@ public class TestIntegrationUtils {
 
   public static boolean isTest(@NotNull PsiElement element) {
     PsiClass klass = findOuterClass(element);
-    return klass != null && TestUtil.isTestClass(klass);
+    return klass != null && TestFrameworks.getInstance().isTestClass(klass);
   }
 
   @Nullable

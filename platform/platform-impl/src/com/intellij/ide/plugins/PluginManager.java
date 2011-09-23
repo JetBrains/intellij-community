@@ -95,7 +95,7 @@ public class PluginManager {
 
 
   public static long startupStart;
-  public static final float PLUGINS_PROGRESS_MAX_VALUE = 0.5f;
+  public static final float PLUGINS_PROGRESS_MAX_VALUE = 0.3f;
 
   public static class Facade extends PluginsFacade {
     public IdeaPluginDescriptor getPlugin(PluginId id) {
@@ -272,7 +272,7 @@ public class PluginManager {
 
       pluginDescriptor.registerExtensions();
       if (progress != null) {
-        progress.showProgress("", 0.5f + (i++ / (float)result.size()) * 0.25f);
+        progress.showProgress("", PLUGINS_PROGRESS_MAX_VALUE + (i++ / (float)result.size()) * 0.35f);
       }
     }
 

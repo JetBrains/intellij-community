@@ -164,7 +164,7 @@ public class ClassTreeNode extends BasePsiMemberNode<PsiClass>{
     if (parentFile != null && (parentFile == element || parentFile.getVirtualFile() == element)) return true;
 
     if (!getSettings().isShowMembers()) {
-      if (element instanceof PsiElement) {
+      if (element instanceof PsiElement && ((PsiElement)element).isValid()) {
         PsiFile elementFile = ((PsiElement)element).getContainingFile();
         if (elementFile != null && parentFile != null) {
           return elementFile.equals(parentFile);

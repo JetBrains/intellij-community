@@ -18,7 +18,6 @@ package com.intellij.psi.codeStyle;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -191,7 +190,7 @@ public abstract class CodeStyleManager  {
    *         was not possible to calculate the indent.
    */
   @Nullable
-  public abstract String getLineIndent(@NotNull Editor editor);
+  public abstract String getLineIndent(@NotNull Document document, int offset);
 
   /**
    * @deprecated

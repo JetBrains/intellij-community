@@ -17,7 +17,7 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.JavaResolveCache;
 import com.intellij.psi.impl.source.tree.ChildRole;
@@ -86,7 +86,7 @@ public class PsiBinaryExpressionImpl extends ExpressionPsiElement implements Psi
         @Override
         protected void elementFinished(PsiElement element) {
           if (element instanceof PsiExpression) {
-            ProgressManager.checkCanceled();
+            ProgressIndicatorProvider.checkCanceled();
             ((PsiExpression)element).getType();
           }
         }

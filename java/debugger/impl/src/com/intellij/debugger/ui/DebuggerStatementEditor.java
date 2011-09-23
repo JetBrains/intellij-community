@@ -61,7 +61,6 @@ public class DebuggerStatementEditor extends DebuggerEditorImpl {
         return false;
       }
     };
-    myEditor.setCenterByHeight(false);
 
     setLayout(new BorderLayout());
     add(addChooseFactoryLabel(myEditor, true));

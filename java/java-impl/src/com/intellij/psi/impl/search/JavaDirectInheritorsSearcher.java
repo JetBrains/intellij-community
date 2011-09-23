@@ -7,7 +7,6 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
@@ -18,12 +17,12 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.AllClassesSearch;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -163,10 +162,10 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     // if there is a class from the same jar, prefer it
     boolean sameJarClassFound = false;
 
-    VirtualFile jarFile = getJarFile(aClass);
+    VirtualFile jarFile = PsiUtil.getJarFile(aClass);
     if (jarFile != null) {
       for (PsiClass sameNamedClass : sameNamedClasses) {
-        boolean fromSameJar = getJarFile(sameNamedClass) == jarFile;
+        boolean fromSameJar = PsiUtil.getJarFile(sameNamedClass) == jarFile;
         if (fromSameJar) {
           sameJarClassFound = true;
           if (!consumer.process(sameNamedClass)) return false;
@@ -178,14 +177,5 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
       return ContainerUtil.process(sameNamedClasses, consumer);
     }
     return true;
-  }
-
-  @Nullable
-  public static VirtualFile getJarFile(PsiElement candidate) {
-    VirtualFile file = candidate.getContainingFile().getVirtualFile();
-    if (file != null && file.getFileSystem() instanceof JarFileSystem) {
-      return JarFileSystem.getInstance().getVirtualFileForJar(file);
-    }
-    return file;
   }
 }

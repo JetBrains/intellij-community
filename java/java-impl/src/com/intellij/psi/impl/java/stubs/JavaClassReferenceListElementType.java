@@ -22,7 +22,7 @@ import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.impl.compiled.ClsReferenceListImpl;
 import com.intellij.psi.impl.java.stubs.impl.PsiClassReferenceListStubImpl;
-import com.intellij.psi.impl.java.stubs.index.JavaSuperClassNameOccurenceIndex;
+import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
 import com.intellij.psi.impl.source.PsiReferenceListImpl;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.LightTreeUtil;
@@ -160,7 +160,7 @@ public abstract class JavaClassReferenceListElementType extends JavaStubElementT
     if (role == PsiReferenceList.Role.EXTENDS_LIST || role == PsiReferenceList.Role.IMPLEMENTS_LIST) {
       final String[] names = stub.getReferencedNames();
       for (String name : names) {
-        sink.occurrence(JavaSuperClassNameOccurenceIndex.KEY, PsiNameHelper.getShortClassName(name));
+        sink.occurrence(JavaStubIndexKeys.SUPER_CLASSES, PsiNameHelper.getShortClassName(name));
       }
 
       if (role == PsiReferenceList.Role.EXTENDS_LIST) {
@@ -168,11 +168,11 @@ public abstract class JavaClassReferenceListElementType extends JavaStubElementT
         if (parentStub instanceof PsiClassStub) {
           PsiClassStub psiClassStub = (PsiClassStub)parentStub;
           if (psiClassStub.isEnum()) {
-            sink.occurrence(JavaSuperClassNameOccurenceIndex.KEY, "Enum");
+            sink.occurrence(JavaStubIndexKeys.SUPER_CLASSES, "Enum");
           }
 
           if (psiClassStub.isAnnotationType()) {
-            sink.occurrence(JavaSuperClassNameOccurenceIndex.KEY, "Annotation");
+            sink.occurrence(JavaStubIndexKeys.SUPER_CLASSES, "Annotation");
           }
         }
       }

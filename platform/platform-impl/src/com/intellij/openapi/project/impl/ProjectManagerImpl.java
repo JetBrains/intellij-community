@@ -402,59 +402,38 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
     myOpenProjects.add(project);
     cacheOpenProjects();
-
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      public void run() {
-        fireProjectOpened(project);
-      }
-    });
+    fireProjectOpened(project);
 
     final StartupManagerImpl startupManager = (StartupManagerImpl)StartupManager.getInstance(project);
 
-    boolean ok;
-    ProgressIndicator indicator = myProgressManager.getProgressIndicator();
-
-    if (indicator == null) {
-        ok = myProgressManager.runProcessWithProgressSynchronously(new Runnable() {
-        public void run() {
-          startupManager.runStartupActivities();
-        }
-      }, ProjectBundle.message("project.load.progress"), true, project);
-    }
-    else {
-      try {
+    boolean ok = myProgressManager.runProcessWithProgressSynchronously(new Runnable() {
+      public void run() {
         startupManager.runStartupActivities();
-        ok = true;
+
+        // dumb mode should start before post-startup activities
+        // only when startCacheUpdate is called from UI thread, we can guarantee that
+        // when the method returns, the application has entered dumb mode
+        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+          public void run() {
+            startupManager.startCacheUpdate();
+          }
+        });
+
+        startupManager.runPostStartupActivitiesFromExtensions();
+
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
+          public void run() {
+            startupManager.runPostStartupActivities();
+          }
+        });
       }
-      catch (Throwable e) {
-        LOG.info(e);
-        ok = false;
-      }
-    }
+    }, ProjectBundle.message("project.load.progress"), true, project);
 
     if (!ok) {
       closeProject(project, false, false);
       notifyProjectOpenFailed();
       return false;
     }
-
-    // dumb mode should start before post-startup activities
-    // only when startCacheUpdate is called from UI thread, we can guarantee that
-    // when the method returns, the application has entered dumb mode
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      public void run() {
-        startupManager.startCacheUpdate();
-      }
-    });
-
-    startupManager.runPostStartupActivitiesFromExtensions();
-
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      public void run() {
-        startupManager.runPostStartupActivities();
-      }
-    });
-
 
     if (!application.isHeadlessEnvironment() && !application.isUnitTestMode()) {
       // should be invoked last
@@ -476,56 +455,32 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     myOpenProjectsArrayCache = myOpenProjects.toArray(new Project[myOpenProjects.size()]);
   }
 
-  public Project loadAndOpenProject(@NotNull final String filePath) throws IOException, JDOMException, InvalidDataException {
-    final Ref<Project> projectRef = new Ref<Project>();
-    final Ref<IOException> exceptionRef = new Ref<IOException>();
-    myProgressManager.runProcessWithProgressSynchronously(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          final Project project = convertAndLoadProject(filePath, new Ref<Boolean>());
-          if (project == null) {
-            return;
-          }
-
-          if (!openProject(project)) {
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-              public void run() {
-                Disposer.dispose(project);
-              }
-            });
-
-            return;
-          }
-
-          projectRef.set(project);
-        }
-        catch (StateStorageException e) {
-          exceptionRef.set(new IOException(e.getMessage()));
-        }
-        catch (IOException e) {
-          exceptionRef.set(e);
-        }
-      }
-    }, ProjectBundle.message("project.load.progress"), true, null);
-
-    if (!exceptionRef.isNull()) {
-      throw exceptionRef.get();
+  public Project loadAndOpenProject(@NotNull final String filePath) throws IOException {
+    final Project project = convertAndLoadProject(filePath, new Ref<Boolean>());
+    if (project == null) {
+      return null;
     }
-    return projectRef.get();
+
+    if (!openProject(project)) {
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          Disposer.dispose(project);
+        }
+      });
+    }
+    return project;
   }
 
   @Nullable
   public Project convertAndLoadProject(String filePath, Ref<Boolean> cancelled) throws IOException {
-    final ConversionResult conversionResult;
     final String fp = canonicalize(filePath);
-    conversionResult = ConversionService.getInstance().convert(fp);
+    final ConversionResult conversionResult = ConversionService.getInstance().convert(fp);
     if (conversionResult.openingIsCanceled()) {
       cancelled.set(true);
       return null;
     }
 
-    final Project project = loadProjectWithProgress(filePath, new Ref<Boolean>());
+    final Project project = loadProjectWithProgress(filePath);
     if (project == null) return null;
 
     if (!conversionResult.conversionNotNeeded()) {
@@ -539,57 +494,33 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
 
   @Nullable
-  public Project loadProjectWithProgress(final String filePath, final Ref<Boolean> canceled) throws IOException {
-    final IOException[] io = {null};
-    final StateStorageException[] stateStorage = {null};
+  private Project loadProjectWithProgress(final @NotNull String filePath) throws IOException {
 
-    if (filePath != null) {
-      refreshProjectFiles(filePath);
+    refreshProjectFiles(filePath);
+    Project project = null;
+    try {
+      project = myProgressManager.runProcessWithProgressSynchronously(new ThrowableComputable<Project, Exception>() {
+        @Nullable
+        public Project compute() throws Exception {
+          return doLoadProject(filePath);
+        }
+      }, ProjectBundle.message("project.load.progress"), true, null);
     }
-    final Project[] project = new Project[1];
-    canceled.set(false);
-    Runnable runnable = new Runnable() {
-      public void run() {
-        try {
-          project[0] = doLoadProject(filePath);
-        }
-        catch (IOException e) {
-          io[0] = e;
-        }
-        catch (StateStorageException e) {
-          stateStorage[0] = e;
-        }
-        catch (ProcessCanceledException e) {
-          canceled.set(true);
-          throw e;
-        }
-      }
-    };
-    if (ProgressManager.getInstance().getProgressIndicator() == null) {
-      myProgressManager.runProcessWithProgressSynchronously(runnable, ProjectBundle.message("project.load.progress"), true, null);
+    catch (StateStorageException e) {
+      throw new IOException(e);
     }
-    else {
-      runnable.run();
+    catch (IOException e) {
+      throw e;
+    }
+    catch (Exception ignore) {
+      // ignore
     }
 
-    if (canceled.get() || project[0] == null) {
-      if (project[0] != null) {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            Disposer.dispose(project[0]);
-          }
-        });
-      }
+    if (project == null) {
       notifyProjectOpenFailed();
     }
 
-    if (io[0] != null) throw io[0];
-    if (stateStorage[0] != null) throw stateStorage[0];
-
-    if (project[0] == null || canceled.get()) {
-      return null;
-    }
-    return project [0];
+    return project;
   }
 
   private static void refreshProjectFiles(final String filePath) {

@@ -29,6 +29,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -127,7 +128,7 @@ public class JavaQualifiedNameProvider implements QualifiedNameProvider {
     }
     VirtualFile file = LocalFileSystem.getInstance().findFileByPath(fqn);
     if (file != null) return file;
-    PsiFile[] files = JavaPsiFacade.getInstance(project).getShortNamesCache().getFilesByName(fqn);
+    PsiFile[] files = PsiShortNamesCache.getInstance(project).getFilesByName(fqn);
     for (PsiFile psiFile : files) {
       VirtualFile virtualFile = psiFile.getVirtualFile();
       if (virtualFile != null) return virtualFile;

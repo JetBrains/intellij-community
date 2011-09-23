@@ -19,7 +19,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettingsFacade;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.PsiElementArrayConstructor;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -156,7 +156,7 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
     tag.addChild(newLine, null);
 
     ASTNode leadingWhitespaceAnchor = null;
-    if (CodeStyleSettingsManager.getSettings(project).JD_LEADING_ASTERISKS_ARE_ENABLED) {
+    if (JavaCodeStyleSettingsFacade.getInstance(project).isJavaDocLeadingAsterisksEnabled()) {
       final TreeElement leadingAsterisk = Factory.createSingleLeafElement(DOC_COMMENT_LEADING_ASTERISKS, "*", 0, 1, treeCharTab,
                                                                           SharedImplUtil.getManagerByTree(tag));
 

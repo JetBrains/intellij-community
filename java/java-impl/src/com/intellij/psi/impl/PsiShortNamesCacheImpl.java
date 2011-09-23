@@ -21,6 +21,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.index.JavaFieldNameIndex;
 import com.intellij.psi.impl.java.stubs.index.JavaMethodNameIndex;
 import com.intellij.psi.impl.java.stubs.index.JavaShortClassNameIndex;
+import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
@@ -103,7 +104,7 @@ class PsiShortNamesCacheImpl extends PsiShortNamesCache {
   @NotNull
   public PsiMethod[] getMethodsByName(@NotNull String name, @NotNull final GlobalSearchScope scope) {
     final Collection<PsiMethod> methods =
-        StubIndex.getInstance().get(JavaMethodNameIndex.KEY, name, myManager.getProject(), scope);
+        StubIndex.getInstance().get(JavaStubIndexKeys.METHODS, name, myManager.getProject(), scope);
     if (methods.isEmpty()) return PsiMethod.EMPTY_ARRAY;
 
     List<PsiMethod> list = filterMembers(methods, scope);

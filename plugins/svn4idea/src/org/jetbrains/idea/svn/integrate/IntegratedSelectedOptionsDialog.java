@@ -24,7 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.roots.ExcludedFileIndex;
+import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.UIUtil;
@@ -210,7 +210,7 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
 
   private boolean underProject(final File file) {
     final VirtualFile vf = SvnUtil.getVirtualFile(file.getAbsolutePath());
-    return (vf == null) || PeriodicalTasksCloser.getInstance().safeGetService(myProject, ExcludedFileIndex.class).isInContent(vf);
+    return (vf == null) || PeriodicalTasksCloser.getInstance().safeGetService(myProject, FileIndexFacade.class).isInContent(vf);
   }
 
   public WorkingCopyInfo getSelectedWc() {

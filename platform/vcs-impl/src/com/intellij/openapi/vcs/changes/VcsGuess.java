@@ -20,7 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
-import com.intellij.openapi.roots.ExcludedFileIndex;
+import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
@@ -32,12 +32,12 @@ import org.jetbrains.annotations.Nullable;
 public class VcsGuess {
   private final Project myProject;
   private final ProjectLevelVcsManagerImpl myVcsManager;
-  private final ExcludedFileIndex myExcludedFileIndex;
+  private final FileIndexFacade myExcludedFileIndex;
 
   VcsGuess(final Project project) {
     myProject = project;
     myVcsManager = (ProjectLevelVcsManagerImpl) ProjectLevelVcsManagerImpl.getInstance(myProject);
-    myExcludedFileIndex = PeriodicalTasksCloser.getInstance().safeGetService(myProject, ExcludedFileIndex.class);
+    myExcludedFileIndex = PeriodicalTasksCloser.getInstance().safeGetService(myProject, FileIndexFacade.class);
   }
 
   @Nullable

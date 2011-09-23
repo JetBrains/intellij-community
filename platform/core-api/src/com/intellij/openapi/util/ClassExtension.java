@@ -17,9 +17,8 @@
 /*
  * @author max
  */
-package com.intellij.openapi.fileTypes;
+package com.intellij.openapi.util;
 
-import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.util.ReflectionCache;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;

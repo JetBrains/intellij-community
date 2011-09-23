@@ -20,7 +20,6 @@ import com.intellij.lang.Language;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.navigation.PsiElementNavigationItem;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
