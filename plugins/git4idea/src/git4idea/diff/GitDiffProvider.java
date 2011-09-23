@@ -84,7 +84,7 @@ public class GitDiffProvider implements DiffProvider, DiffMixin {
       return null;
     }
     try {
-      return GitHistoryUtils.getCurrentRevision(myProject, VcsUtil.getFilePath(file.getPath()), null);
+      return GitHistoryUtils.getCurrentRevision(myProject, VcsUtil.getFilePath(file.getPath()), "HEAD");
     }
     catch (VcsException e) {
       return null;
