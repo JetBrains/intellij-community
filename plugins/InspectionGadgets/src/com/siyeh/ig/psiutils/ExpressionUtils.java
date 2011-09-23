@@ -418,4 +418,18 @@ public class ExpressionUtils {
         }
         return false;
     }
+
+
+    public static boolean isConstructorInvocation(PsiElement element) {
+        if (!(element instanceof PsiMethodCallExpression)) {
+            return false;
+        }
+        final PsiMethodCallExpression methodCallExpression =
+                (PsiMethodCallExpression)element;
+        final PsiReferenceExpression methodExpression =
+                methodCallExpression.getMethodExpression();
+        final String callName = methodExpression.getReferenceName();
+        return PsiKeyword.THIS.equals(callName) ||
+                PsiKeyword.SUPER.equals(callName);
+    }
 }
