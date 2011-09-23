@@ -80,4 +80,15 @@ public class VfsUtilCore {
     }
     return new String(chars);
   }
+
+  @Nullable
+  public static VirtualFile getVirtualFileForJar(@Nullable VirtualFile entryVFile) {
+    if (entryVFile == null) return null;
+    final String path = entryVFile.getPath();
+    final int separatorIndex = path.indexOf("!/");
+    if (separatorIndex < 0) return null;
+
+    String localPath = path.substring(0, separatorIndex);
+    return VirtualFileManager.getInstance().findFileByUrl("file://" + localPath);
+  }
 }

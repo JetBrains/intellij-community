@@ -20,7 +20,7 @@ import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -662,8 +662,8 @@ public final class PsiUtil extends PsiUtilCore {
   @Nullable
   public static VirtualFile getJarFile(PsiElement candidate) {
     VirtualFile file = candidate.getContainingFile().getVirtualFile();
-    if (file != null && file.getFileSystem() instanceof JarFileSystem) {
-      return JarFileSystem.getInstance().getVirtualFileForJar(file);
+    if (file != null && file.getFileSystem().getProtocol().equals("jar")) {
+      return VfsUtilCore.getVirtualFileForJar(file);
     }
     return file;
   }
