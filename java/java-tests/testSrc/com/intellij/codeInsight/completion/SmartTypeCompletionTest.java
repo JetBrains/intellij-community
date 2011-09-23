@@ -1010,6 +1010,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     doItemTest();
   }
 
+  public void testArrayInitializerBeforeVarargs() throws Throwable { doTest(); }
   public void testInheritorMembers() throws Throwable { doTest(); }
   public void testInheritorEnumMembers() throws Throwable { doTest(); }
   public void testDuplicateMembersFromSuperClass() throws Throwable { doTest(); }

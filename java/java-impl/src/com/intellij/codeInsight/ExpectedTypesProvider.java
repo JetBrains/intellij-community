@@ -959,11 +959,10 @@ public class ExpectedTypesProvider {
 
     private static TailType getMethodArgumentTailType(final PsiExpression argument, final int index, final PsiMethod method, final PsiSubstitutor substitutor,
                                                final PsiParameter[] params) {
-      if (index >= params.length) {
+      if (index >= params.length || index == params.length - 2 && params[index + 1].isVarArgs()) {
         return TailType.NONE;
       }
-      if (index == params.length - 1 || index == params.length - 2 && params[index + 1].isVarArgs()) {
-        //myTailType = CompletionUtil.NONE_TAIL;
+      if (index == params.length - 1) {
         final PsiElement call = argument.getParent().getParent();
         if (call instanceof JspMethodCall) return TailType.NONE;
 

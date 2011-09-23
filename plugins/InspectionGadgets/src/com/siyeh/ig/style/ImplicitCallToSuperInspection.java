@@ -25,9 +25,10 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public class ImplicitCallToSuperInspection extends BaseInspection {
 
@@ -145,16 +146,7 @@ public class ImplicitCallToSuperInspection extends BaseInspection {
                     (PsiExpressionStatement)statement;
             final PsiExpression expression =
                     expressionStatement.getExpression();
-            if (!(expression instanceof PsiMethodCallExpression)) {
-                return false;
-            }
-            final PsiMethodCallExpression methodCall =
-                    (PsiMethodCallExpression)expression;
-            final PsiReferenceExpression methodExpression =
-                    methodCall.getMethodExpression();
-            final String text = methodExpression.getText();
-            return PsiKeyword.SUPER.equals(text) ||
-                    PsiKeyword.THIS.equals(text);
+            return ExpressionUtils.isConstructorInvocation(expression);
         }
     }
 }

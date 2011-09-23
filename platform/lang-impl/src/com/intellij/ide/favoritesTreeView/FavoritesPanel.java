@@ -72,7 +72,7 @@ public class FavoritesPanel {
   }
 
   private void setupDnD() {
-    DnDSupport.createBuilder(myTree)
+    DnDSupport.createBuilder(myViewPanel)
       .setBeanProvider(new Function<DnDActionInfo, DnDDragStartBean>() {
         @Override
         public DnDDragStartBean fun(DnDActionInfo dnDActionInfo) {
@@ -82,11 +82,10 @@ public class FavoritesPanel {
       .setTargetChecker(new DnDTargetChecker() {
         @Override
         public boolean update(DnDEvent event) {
-          final Point p = event.getPoint();
-
+          final Point p = SwingUtilities.convertPoint(myViewPanel, event.getPoint(), myTree);
           FavoritesListNode node = findFavoritesListNode(p);
           if (node != null) {
-            TreePath pathToList = myTree.getPathForLocation(p.x, p.y);
+            TreePath pathToList = myTree.getPath(node);
             while (pathToList != null) {
               final Object pathObj = pathToList.getLastPathComponent();
               if (pathObj instanceof DefaultMutableTreeNode) {
@@ -144,6 +143,6 @@ public class FavoritesPanel {
         }
       }
     }
-    return null;
+    return (FavoritesListNode)((FavoritesRootNode)myTreeStructure.getRootElement()).getChildren().iterator().next();
   }
 }

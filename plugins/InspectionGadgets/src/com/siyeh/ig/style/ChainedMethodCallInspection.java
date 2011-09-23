@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -29,6 +29,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,36 +37,50 @@ import javax.swing.*;
 
 public class ChainedMethodCallInspection extends BaseInspection {
 
-    /** @noinspection PublicField */
+    @SuppressWarnings("PublicField")
     public boolean m_ignoreFieldInitializations = true;
 
+    @SuppressWarnings("PublicField")
+    public boolean m_ignoreThisSuperCalls = true;
+
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "chained.method.call.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "chained.method.call.problem.descriptor");
     }
 
+    @Override
     public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel(
-                InspectionGadgetsBundle.message(
-                        "chained.method.call.ignore.option"),
-                this, "m_ignoreFieldInitializations");
+        final MultipleCheckboxOptionsPanel panel =
+                new MultipleCheckboxOptionsPanel(this);
+        panel.addCheckbox(InspectionGadgetsBundle.message(
+                "chained.method.call.ignore.option"),
+                "m_ignoreFieldInitializations");
+        panel.addCheckbox(InspectionGadgetsBundle.message(
+                "chained.method.call.ignore.this.super.option"),
+                "m_ignoreThisSuperCalls");
+        return panel;
     }
 
+    @Override
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
         return true;
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new ChainedMethodCallVisitor();
     }
 
+    @Override
     protected InspectionGadgetsFix buildFix(Object... infos) {
         return new ChainedMethodCallFix();
     }
@@ -78,6 +93,7 @@ public class ChainedMethodCallInspection extends BaseInspection {
                     "introduce.variable.quickfix");
         }
 
+        @Override
         public void doFix(final Project project, ProblemDescriptor descriptor) {
             final JavaRefactoringActionHandlerFactory factory =
                     JavaRefactoringActionHandlerFactory.getInstance();
@@ -92,16 +108,17 @@ public class ChainedMethodCallInspection extends BaseInspection {
             final DataManager dataManager = DataManager.getInstance();
             final DataContext dataContext = dataManager.getDataContext();
             final Runnable runnable = new Runnable() {
-              public void run() {
-                introduceHandler.invoke(project, new PsiElement[]{qualifier},
-                                        dataContext);
-              }
+                public void run() {
+                    introduceHandler.invoke(project,
+                            new PsiElement[]{qualifier}, dataContext);
+                }
             };
             if (ApplicationManager.getApplication().isUnitTestMode()) {
-              runnable.run();
+                runnable.run();
             }
             else {
-              ApplicationManager.getApplication().invokeLater(runnable, project.getDisposed());
+                ApplicationManager.getApplication().invokeLater(runnable,
+                        project.getDisposed());
             }
         }
     }
@@ -127,13 +144,24 @@ public class ChainedMethodCallInspection extends BaseInspection {
                     return;
                 }
             }
+            if (m_ignoreThisSuperCalls) {
+                final PsiExpressionList expressionList =
+                        PsiTreeUtil.getParentOfType(expression,
+                                PsiExpressionList.class);
+                if (expressionList != null) {
+                    final PsiElement parent = expressionList.getParent();
+                    if (ExpressionUtils.isConstructorInvocation(parent)) {
+                        return;
+                    }
+                }
+            }
             registerMethodCallError(expression);
         }
 
         private boolean isCallExpression(PsiExpression expression) {
             expression = ParenthesesUtils.stripParentheses(expression);
             return expression instanceof PsiMethodCallExpression ||
-                   expression instanceof PsiNewExpression;
+                    expression instanceof PsiNewExpression;
         }
     }
 }
