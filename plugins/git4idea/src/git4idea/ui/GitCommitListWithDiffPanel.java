@@ -51,7 +51,7 @@ public class GitCommitListWithDiffPanel extends JPanel {
       }
     });
 
-    myChangesBrowser = new ChangesBrowser(myProject, null, Collections.<Change>emptyList(), null, false, true, null, ChangesBrowser.MyUseCase.LOCAL_CHANGES);
+    myChangesBrowser = new ChangesBrowser(myProject, null, Collections.<Change>emptyList(), null, false, true, null, ChangesBrowser.MyUseCase.LOCAL_CHANGES, null);
     myCommitListPanel.registerDiffAction(myChangesBrowser.getDiffAction());
 
     Splitter splitter = new Splitter(false, 0.7f);

@@ -195,7 +195,7 @@ public class RollbackChangesDialog extends DialogWrapper {
   }
 
   public JComponent getPreferredFocusedComponent() {
-    return myBrowser.getPrefferedFocusComponent();
+    return myBrowser.getPreferredFocusedComponent();
   }
 
   protected String getDimensionServiceKey() {

@@ -33,7 +33,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -52,7 +51,6 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.committed.*;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vcs.history.*;
-import com.intellij.openapi.vcs.history.FileHistoryRefresher;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.merge.MultipleFileMergeDialog;
@@ -421,12 +419,17 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     dlg.show();
   }
 
-  public void showChangesListBrowser(CommittedChangeList changelist, @Nls String title) {
-    final ChangeListViewerDialog dlg = new ChangeListViewerDialog(myProject, changelist);
+  @Override
+  public void showChangesListBrowser(CommittedChangeList changelist, @Nullable VirtualFile toSelect, @Nls String title) {
+    final ChangeListViewerDialog dlg = new ChangeListViewerDialog(myProject, changelist, toSelect);
     if (title != null) {
       dlg.setTitle(title);
     }
     dlg.show();
+  }
+
+  public void showChangesListBrowser(CommittedChangeList changelist, @Nls String title) {
+    showChangesListBrowser(changelist, null, title);
   }
 
   public void showWhatDiffersBrowser(final Component parent, final Collection<Change> changes, @Nls final String title) {

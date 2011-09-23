@@ -78,7 +78,7 @@ class GitWouldBeOverwrittenByCheckoutDialog extends DialogWrapper {
   @Override
   protected JComponent createCenterPanel() {
     ChangesBrowser changesBrowser =
-      new ChangesBrowser(myProject, null, myChanges, null, false, true, null, ChangesBrowser.MyUseCase.LOCAL_CHANGES);
+      new ChangesBrowser(myProject, null, myChanges, null, false, true, null, ChangesBrowser.MyUseCase.LOCAL_CHANGES, null);
     changesBrowser.setChangesToDisplay(myChanges);
     return changesBrowser;
   }
