@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
@@ -28,27 +29,26 @@ import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ui.DynamicDialo
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ui.DynamicElementSettings;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ui.DynamicMethodDialog;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
  * @author Maxim.Medvedev
  */
-public class DynamicMethodFix implements IntentionAction {
+public class DynamicMethodFix implements IntentionAction, LowPriorityAction {
   private final GrReferenceExpression myReferenceExpression;
+  private final PsiType[] myMethodArgumentsTypes;
 
-  public DynamicMethodFix(GrReferenceExpression referenceExpression) {
+  public DynamicMethodFix(GrReferenceExpression referenceExpression, final PsiType[] argumentTypes) {
     myReferenceExpression = referenceExpression;
+    myMethodArgumentsTypes = argumentTypes;
   }
 
   @NotNull
   public String getText() {
-    final PsiType[] methodArgumentsTypes = PsiUtil.getArgumentTypes(myReferenceExpression, false);
     StringBuilder builder = new StringBuilder(" '").append(myReferenceExpression.getName());
     builder.append("(");
 
-    assert methodArgumentsTypes != null;
-    for (int i = 0; i < methodArgumentsTypes.length; i++) {
-      PsiType type = methodArgumentsTypes[i];
+    for (int i = 0; i < myMethodArgumentsTypes.length; i++) {
+      PsiType type = myMethodArgumentsTypes[i];
 
       if (i > 0) {
         builder.append(", ");

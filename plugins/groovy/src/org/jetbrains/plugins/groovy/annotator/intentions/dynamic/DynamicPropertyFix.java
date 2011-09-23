@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -36,7 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 /**
  * @author Maxim.Medvedev
  */
-public class DynamicPropertyFix extends GroovyFix implements IntentionAction {
+public class DynamicPropertyFix extends GroovyFix implements IntentionAction, LowPriorityAction {
   private final GrReferenceExpression myReferenceExpression;
   private final GrArgumentLabel myArgumentLabel;
   private final PsiClass myTargetClass;

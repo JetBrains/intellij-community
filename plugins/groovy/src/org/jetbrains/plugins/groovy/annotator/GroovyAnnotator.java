@@ -1444,7 +1444,10 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     }
 
     if (QuickfixUtil.isCall(referenceExpression)) {
-      annotation.registerFix(new DynamicMethodFix(referenceExpression), referenceExpression.getTextRange());
+      PsiType[] argumentTypes = PsiUtil.getArgumentTypes(referenceExpression, false);
+      if (argumentTypes != null) {
+        annotation.registerFix(new DynamicMethodFix(referenceExpression, argumentTypes), referenceExpression.getTextRange());
+      }
     }
     else {
       annotation.registerFix(new DynamicPropertyFix(referenceExpression), referenceExpression.getTextRange());
