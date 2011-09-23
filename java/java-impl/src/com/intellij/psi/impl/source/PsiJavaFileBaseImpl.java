@@ -49,7 +49,7 @@ import com.intellij.util.NotNullFunction;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MostlySingularMultiMap;
-import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.IndexingDataKeys;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -415,7 +415,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     VirtualFile virtualFile = getVirtualFile();
 
     if (virtualFile == null) {
-      virtualFile = getUserData(FileBasedIndex.VIRTUAL_FILE);
+      virtualFile = getUserData(IndexingDataKeys.VIRTUAL_FILE);
     }
 
     if (virtualFile == null) {
