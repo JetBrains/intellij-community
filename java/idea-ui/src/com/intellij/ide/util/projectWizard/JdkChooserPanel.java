@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.TIntArrayList;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -52,13 +53,13 @@ public class JdkChooserPanel extends JPanel {
   private final Project myProject;
   private SdkType[] myAllowedJdkTypes = null;
 
-  public JdkChooserPanel(Project project) {
+  public JdkChooserPanel(@NotNull final Project project) {
     super(new BorderLayout());
     myProject = project;
     myListModel = new DefaultListModel();
     myList = new JBList(myListModel);
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    myList.setCellRenderer(new ProjectJdkListRenderer(myList.getCellRenderer()));
+    myList.setCellRenderer(new ProjectJdkListRenderer(myList.getCellRenderer(), project));
     //noinspection HardCodedStringLiteral
     myList.setPrototypeCellValue("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
 

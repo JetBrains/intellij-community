@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.lang.ant.config.impl.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ui.ProjectJdksEditor;
@@ -38,6 +39,7 @@ import com.intellij.util.config.AbstractProperty;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -49,10 +51,12 @@ import java.util.*;
 
 public class BuildFilePropertiesPanel {
   @NonNls private static final String DIMENSION_SERVICE_KEY = "antBuildFilePropertiesDialogDimension";
-  private final Form myForm = new Form();
+
+  private final Form myForm;
   private AntBuildFileBase myBuildFile;
 
-  private BuildFilePropertiesPanel() {
+  private BuildFilePropertiesPanel(@NotNull final Project project) {
+    myForm = new Form(project);
   }
 
   private void reset(final AntBuildFileBase buildFile) {
@@ -90,8 +94,8 @@ public class BuildFilePropertiesPanel {
     Disposer.dispose(myForm);
   }
 
-  public static boolean editBuildFile(AntBuildFileBase buildFile) {
-    BuildFilePropertiesPanel panel = new BuildFilePropertiesPanel();
+  public static boolean editBuildFile(AntBuildFileBase buildFile, @NotNull final Project project) {
+    BuildFilePropertiesPanel panel = new BuildFilePropertiesPanel(project);
     panel.reset(buildFile);
     return panel.showDialog();
   }
@@ -131,16 +135,18 @@ public class BuildFilePropertiesPanel {
     private JPanel myTabsPlace;
     private JPanel myWholePanel;
     private JLabel myHeapSizeLabel;
-    private final Tab[] myTabs = {
-          new PropertiesTab(),
-          new ExecutionTab(GlobalAntConfiguration.getInstance()),
-          new AdditionalClasspathTab(),
-          new FiltersTab()
-        };
+    private final Tab[] myTabs;
     private final UIPropertyBinding.Composite myBinding = new UIPropertyBinding.Composite();
     private final TabbedPaneWrapper myWrapper;
 
-    private Form() {
+    private Form(@NotNull final Project project) {
+      myTabs = new Tab[]{
+        new PropertiesTab(),
+        new ExecutionTab(GlobalAntConfiguration.getInstance(), project),
+        new AdditionalClasspathTab(),
+        new FiltersTab()
+      };
+
       myHeapSizeLabel.setLabelFor(myXmx);
       myWrapper = new TabbedPaneWrapper(this);
       myTabsPlace.setLayout(new BorderLayout());
@@ -365,9 +371,11 @@ public class BuildFilePropertiesPanel {
 
     private AntReference myProjectDefaultAnt = null;
     private final GlobalAntConfiguration myAntGlobalConfiguration;
+    private final Project myProject;
 
-    public ExecutionTab(final GlobalAntConfiguration antConfiguration) {
+    public ExecutionTab(final GlobalAntConfiguration antConfiguration, @NotNull final Project project) {
       myAntGlobalConfiguration = antConfiguration;
+      myProject = project;
       myAntCommandLine.attachLabel(myAntCmdLineLabel);
       myAntCommandLine.setDialogCaption(AntBundle.message("run.execution.tab.ant.command.line.dialog.title"));
       setLabelFor(myJDKLabel, myJDKs);
@@ -425,7 +433,7 @@ public class BuildFilePropertiesPanel {
 
     public void reset(AbstractProperty.AbstractPropertyContainer options) {
       String projectJdkName = AntConfigurationImpl.DEFAULT_JDK_NAME.get(options);
-      myJDKsController.setRenderer(new AntUIUtil.ProjectJdkRenderer(myAntGlobalConfiguration, true, projectJdkName));
+      myJDKsController.setRenderer(new AntUIUtil.ProjectJdkRenderer(myProject, true, projectJdkName));
       super.reset(options);
       myJDKsController.resetList(null);
       myProjectDefaultAnt = AntConfigurationImpl.DEFAULT_ANT.get(options);

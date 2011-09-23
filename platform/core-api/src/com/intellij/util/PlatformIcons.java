@@ -105,6 +105,7 @@ public interface PlatformIcons {
   Icon FOLDER_ICON = IconLoader.getIcon("/nodes/folder.png");
   Icon SOURCE_FOLDERS_ICON = IconLoader.getIcon("/nodes/sourceFolder.png");
   Icon TEST_SOURCE_FOLDER = IconLoader.getIcon("/nodes/testSourceFolder.png");
+  Icon INVALID_ENTRY_ICON = IconLoader.getIcon("/nodes/ppInvalid.png");
 
   Icon MODULES_SOURCE_FOLDERS_ICON = IconLoader.getIcon("/modules/sourceRootClosed.png");
   Icon MODULES_TEST_SOURCE_FOLDER = IconLoader.getIcon("/modules/testRootClosed.png");

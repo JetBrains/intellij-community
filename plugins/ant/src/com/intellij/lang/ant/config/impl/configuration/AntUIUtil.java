@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,27 +17,25 @@ package com.intellij.lang.ant.config.impl.configuration;
 
 import com.intellij.ide.macro.MacrosDialog;
 import com.intellij.lang.ant.AntBundle;
-import com.intellij.lang.ant.AntIcons;
 import com.intellij.lang.ant.config.impl.AntClasspathEntry;
 import com.intellij.lang.ant.config.impl.AntInstallation;
 import com.intellij.lang.ant.config.impl.AntReference;
 import com.intellij.lang.ant.config.impl.GlobalAntConfiguration;
-import com.intellij.lang.ant.psi.AntProject;
-import com.intellij.lang.ant.psi.AntTarget;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ui.util.CellAppearanceUtils;
-import com.intellij.openapi.roots.ui.util.CompositeAppearance;
-import com.intellij.openapi.roots.ui.util.OrderEntryCellAppearanceUtils;
+import com.intellij.openapi.roots.ui.OrderEntryAppearanceService;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.config.AbstractProperty;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.CellEditorComponentWithBrowseButton;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.text.BadLocationException;
@@ -46,7 +44,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class AntUIUtil {
-  public static final Icon ANT_INSTALLATION_ICON = IconLoader.getIcon("/ant/antInstallation.png");
+  private static final Icon ANT_INSTALLATION_ICON = IconLoader.getIcon("/ant/antInstallation.png");
+  private static final Icon GENERIC_JDK_ICON = IconLoader.getIcon("/general/jdk.png");
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.ant.impl.configuration.AntUIUtil");
 
   private AntUIUtil() {
@@ -92,7 +92,7 @@ public class AntUIUtil {
     AntInstallation antInstallation = antReference.find(configuration);
     if (antInstallation != null) customizeAnt(antInstallation.getProperties(), component);
     else {
-      component.setIcon(CellAppearanceUtils.INVALID_ICON);
+      component.setIcon(PlatformIcons.INVALID_ENTRY_ICON);
       component.append(antReference.getName(), SimpleTextAttributes.ERROR_ATTRIBUTES);
     }
   }
@@ -165,12 +165,12 @@ public class AntUIUtil {
   }
 
   public static class ProjectJdkRenderer extends ColoredListCellRenderer {
-    private final GlobalAntConfiguration myAntConfiguration;
+    private final Project myProject;
     private final boolean myInComboBox;
     private final String myProjectJdkName;
 
-    public ProjectJdkRenderer(GlobalAntConfiguration antConfiguration, boolean inComboBox, String projectJdkName) {
-      myAntConfiguration = antConfiguration;
+    public ProjectJdkRenderer(@NotNull final Project project, boolean inComboBox, String projectJdkName) {
+      myProject = project;
       myInComboBox = inComboBox;
       myProjectJdkName = projectJdkName != null ? projectJdkName : "";
     }
@@ -178,46 +178,20 @@ public class AntUIUtil {
     protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
       String jdkName = (String)value;
       if (jdkName == null || jdkName.length() == 0) jdkName = "";
-      Sdk jdk = myAntConfiguration.findJdk(jdkName);
+      Sdk jdk = GlobalAntConfiguration.findJdk(jdkName);
       if (jdk == null) {
         if (myProjectJdkName.length() > 0) {
-          setIcon(OrderEntryCellAppearanceUtils.GENERIC_JDK_ICON);
+          setIcon(GENERIC_JDK_ICON);
           append(AntBundle.message("project.jdk.project.jdk.name.list.column.value", myProjectJdkName), selected ? SimpleTextAttributes.SELECTED_SIMPLE_CELL_ATTRIBUTES : SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
         }
         else {
-          setIcon(CellAppearanceUtils.INVALID_ICON);
+          setIcon(PlatformIcons.INVALID_ENTRY_ICON);
           append(AntBundle.message("project.jdk.not.specified.list.column.value"), SimpleTextAttributes.ERROR_ATTRIBUTES);
         }
       }
       else  {
-        OrderEntryCellAppearanceUtils.forJdk(jdk, myInComboBox, selected).customize(this);
+        OrderEntryAppearanceService.getInstance(myProject).forJdk(jdk, myInComboBox, selected, true).customize(this);
       }
-    }
-  }
-
-  public static class DOMTargetRenderer extends ColoredListCellRenderer {
-    private final AntProject myDomProject;
-
-    public DOMTargetRenderer(final AntProject domProject) {
-      myDomProject = domProject;
-    }
-
-    protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-      AntTarget target = (AntTarget)value;
-      String name = target.getName();
-      CompositeAppearance appearance = name != null
-                   ? CompositeAppearance.single(name, SimpleTextAttributes.REGULAR_ATTRIBUTES)
-                   : CompositeAppearance.single(AntBundle.message("unnamed.string.presentation"), SimpleTextAttributes.ERROR_ATTRIBUTES);
-
-      AntProject project = target.getAntProject();
-      if (project != myDomProject) {
-        String projectName = project.getName();
-        if (projectName == null || projectName.trim().length() == 0)
-          projectName = project.getAntFile().getName();
-        appearance.getEnding().addComment(projectName);
-      }
-      appearance.customize(this);
-      setIcon(AntIcons.ANT_TARGET_ICON);
     }
   }
 }

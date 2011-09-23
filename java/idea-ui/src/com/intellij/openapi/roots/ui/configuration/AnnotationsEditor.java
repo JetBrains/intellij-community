@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,13 +20,9 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.AnnotationOrderRootType;
-import com.intellij.openapi.roots.ui.util.CellAppearance;
-import com.intellij.openapi.roots.ui.util.CellAppearanceUtils;
-import com.intellij.openapi.roots.ui.util.SimpleTextCellAppearance;
 import com.intellij.openapi.ui.PanelWithText;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TableUtil;
@@ -167,34 +163,6 @@ public class AnnotationsEditor extends ModuleElementsEditor {
 
       final TableItem tableItem = ((TableItem)value);
       tableItem.getCellAppearance().customize(this);
-    }
-  }
-
-  private static class TableItem {
-    private final String myUrl;
-    private final CellAppearance myCellAppearance;
-    public TableItem(VirtualFile file) {
-      myUrl = file.getUrl();
-      myCellAppearance = CellAppearanceUtils.forVirtualFile(file);
-    }
-
-    public TableItem(String url) {
-      myUrl = url;
-      final VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
-      if (file != null) {
-        myCellAppearance = CellAppearanceUtils.forVirtualFile(file);
-      }
-      else {
-        myCellAppearance = SimpleTextCellAppearance.invalid(url, CellAppearanceUtils.INVALID_ICON);
-      }
-    }
-
-    public String getUrl() {
-      return myUrl;
-    }
-
-    public CellAppearance getCellAppearance() {
-      return myCellAppearance;
     }
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 package com.intellij.ide.structureView.impl;
 
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.openapi.roots.ui.FileAppearanceService;
 import com.intellij.openapi.roots.ui.util.CellAppearance;
-import com.intellij.openapi.roots.ui.util.CellAppearanceUtils;
 import com.intellij.openapi.roots.ui.util.CompositeAppearance;
 import com.intellij.openapi.roots.ui.util.ModifiableCellAppearance;
 import com.intellij.openapi.util.Iconable;
@@ -46,7 +46,7 @@ public class StructureNodeRenderer extends ColoredTreeCellRenderer {
 
   public static CellAppearance forNodeDescriptorInTree(Object node, boolean expanded) {
     NodeDescriptor descriptor = getNodeDescriptor(node);
-    if (descriptor == null) return CellAppearanceUtils.EMPTY;
+    if (descriptor == null) return FileAppearanceService.getInstance().empty();
     String name = descriptor.toString();
     Object psiElement = descriptor.getElement();
     ModifiableCellAppearance result;

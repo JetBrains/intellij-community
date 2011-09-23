@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ui.util.CellAppearanceUtils;
+import com.intellij.openapi.roots.ui.FileAppearanceService;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.IconLoader;
@@ -77,7 +77,7 @@ public class JumpFromRemoteFileToLocalAction extends AnAction {
       list.setCellRenderer(new ColoredListCellRenderer() {
         @Override
         protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-          CellAppearanceUtils.forVirtualFile((VirtualFile)value).customize(this);
+          FileAppearanceService.getInstance().forVirtualFile((VirtualFile)value).customize(this);
         }
       });
       new PopupChooserBuilder(list)

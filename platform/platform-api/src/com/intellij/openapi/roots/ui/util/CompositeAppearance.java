@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,16 +17,21 @@ package com.intellij.openapi.roots.ui.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.roots.ui.CellAppearanceEx;
+import com.intellij.ui.HtmlListCellRenderer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-public class CompositeAppearance implements ModifiableCellAppearance {
+// todo: move to lang-impl ?
+public class CompositeAppearance implements ModifiableCellAppearance, CellAppearanceEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.util.CompositeAppearance");
 
   private Icon myIcon;
@@ -35,17 +40,26 @@ public class CompositeAppearance implements ModifiableCellAppearance {
 
   public synchronized void customize(SimpleColoredComponent component) {
     for (TextSection section : mySections) {
-      TextAttributes attributes = section.ATTRIBUTES;
-      component.append(section.TEXT, SimpleTextAttributes.fromTextAttributes(attributes));
+      final TextAttributes attributes = section.getTextAttributes();
+      component.append(section.getText(), SimpleTextAttributes.fromTextAttributes(attributes));
     }
     component.setIcon(myIcon);
   }
 
-  public Icon getIcon() {
+  @Override
+  public void customize(@NotNull final HtmlListCellRenderer renderer) {
+    for (TextSection section : mySections) {
+      final TextAttributes attributes = section.getTextAttributes();
+      renderer.append(section.getText(), SimpleTextAttributes.fromTextAttributes(attributes));
+    }
+    setIcon(myIcon);
+  }
+
+  public synchronized Icon getIcon() {
     return myIcon;
   }
 
-  public void setIcon(Icon icon) {
+  public synchronized void setIcon(@Nullable final Icon icon) {
     myIcon = icon;
   }
 
@@ -72,15 +86,13 @@ public class CompositeAppearance implements ModifiableCellAppearance {
     return getText().hashCode();
   }
 
-  protected void addSectionAt(int index, @NotNull TextSection section) {
-    synchronized (this) {
-      mySections.add(index, section);
-      for (Iterator<TextSection> iterator = mySections.iterator(); iterator.hasNext();) {
-        TextSection textSection = iterator.next();
-        if (textSection == null) {
-          LOG.error("index: " + index + " size: " + mySections.size());
-          iterator.remove();
-        }
+  protected synchronized void addSectionAt(int index, @NotNull TextSection section) {
+    mySections.add(index, section);
+    for (Iterator<TextSection> iterator = mySections.iterator(); iterator.hasNext();) {
+      TextSection textSection = iterator.next();
+      if (textSection == null) {
+        LOG.error("index: " + index + " size: " + mySections.size());
+        iterator.remove();
       }
     }
   }
@@ -116,7 +128,7 @@ public class CompositeAppearance implements ModifiableCellAppearance {
 
   public static CompositeAppearance invalid(String absolutePath) {
     CompositeAppearance appearance = new CompositeAppearance();
-    appearance.setIcon(CellAppearanceUtils.INVALID_ICON);
+    appearance.setIcon(PlatformIcons.INVALID_ENTRY_ICON);
     appearance.getEnding().addText(absolutePath, SimpleTextAttributes.ERROR_ATTRIBUTES);
     return appearance;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@ package com.intellij.openapi.roots.ui.configuration.dependencyAnalysis;
 import com.intellij.ide.presentation.VirtualFilePresentation;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ui.OrderEntryAppearanceService;
 import com.intellij.openapi.roots.ui.util.CellAppearance;
-import com.intellij.openapi.roots.ui.util.OrderEntryCellAppearanceUtils;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -369,7 +369,7 @@ public class ModuleDependenciesAnalyzer {
     @NotNull
     @Override
     public CellAppearance getAppearance(boolean isSelected) {
-      return OrderEntryCellAppearanceUtils.forOrderEntry(myEntry, isSelected);
+      return OrderEntryAppearanceService.getInstance(myEntry.getOwnerModule().getProject()).forOrderEntry(myEntry, isSelected);
     }
   }
 

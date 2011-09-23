@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,9 +27,9 @@ import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ModuleSourceOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.ui.OrderEntryAppearanceService;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.util.CellAppearance;
-import com.intellij.openapi.roots.ui.util.OrderEntryCellAppearanceUtils;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.IconLoader;
@@ -629,10 +629,10 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
           };
         }
         else {
-          return OrderEntryCellAppearanceUtils.forModule(e.getOwnerModule());
+          return OrderEntryAppearanceService.getInstance(myModule.getProject()).forModule(e.getOwnerModule());
         }
       }
-      return OrderEntryCellAppearanceUtils.forOrderEntry(myExplanation.entry(), selected);
+      return OrderEntryAppearanceService.getInstance(myModule.getProject()).forOrderEntry(myExplanation.entry(), selected);
     }
 
     /**
@@ -678,8 +678,7 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
      * The constructor
      */
     public SdkFilterAction() {
-      super("Include SDK", "If selected, the SDK classes are included",
-            IconLoader.findIcon("/general/jdk.png"));    //To change body of overridden methods use File | Settings | File Templates.
+      super("Include SDK", "If selected, the SDK classes are included", IconLoader.findIcon("/general/jdk.png"));
     }
 
     /**

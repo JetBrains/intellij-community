@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.ui.FileAppearanceService;
 import com.intellij.openapi.roots.ui.LightFilePointer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
@@ -36,13 +37,16 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 
+/**
+ * @deprecated please use {@linkplain com.intellij.openapi.roots.ui.OrderEntryAppearanceService} (to remove in IDEA 12)
+ */
+@SuppressWarnings("UnusedDeclaration")
 public class OrderEntryCellAppearanceUtils {
-  public static final Icon EXCLUDE_FOLDER_ICON = CellAppearanceUtils.excludeIcon(PlatformIcons.FOLDER_ICON);
+  public static final Icon EXCLUDE_FOLDER_ICON = IconLoader.getDisabledIcon(PlatformIcons.FOLDER_ICON);
   public static final Icon GENERIC_JDK_ICON = IconLoader.getIcon("/general/jdk.png");
   public static final String NO_JDK = ProjectBundle.message("jdk.missing.item");
 
-  private OrderEntryCellAppearanceUtils() {
-  }
+  private OrderEntryCellAppearanceUtils() { }
 
   public static CellAppearance forOrderEntry(OrderEntry orderEntry, boolean selected) {
     if (orderEntry instanceof JdkOrderEntry) {
@@ -50,19 +54,18 @@ public class OrderEntryCellAppearanceUtils {
       Sdk jdk = jdkLibraryEntry.getJdk();
       if (!orderEntry.isValid()) {
         final String oldJdkName = jdkLibraryEntry.getJdkName();
-        return SimpleTextCellAppearance.invalid(oldJdkName != null ? oldJdkName : NO_JDK,
-                                                CellAppearanceUtils.INVALID_ICON);
+        return FileAppearanceService.getInstance().forInvalidUrl(oldJdkName != null ? oldJdkName : NO_JDK);
       }
       return forJdk(jdk, false, selected);
     }
     else if (!orderEntry.isValid()) {
-      return SimpleTextCellAppearance.invalid(orderEntry.getPresentableName(), CellAppearanceUtils.INVALID_ICON);
+      return FileAppearanceService.getInstance().forInvalidUrl(orderEntry.getPresentableName());
     }
     else if (orderEntry instanceof LibraryOrderEntry) {
       LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)orderEntry;
       final Library library = libraryOrderEntry.getLibrary();
       if (!libraryOrderEntry.isValid()){ //library can be removed
-        return SimpleTextCellAppearance.invalid(orderEntry.getPresentableName(), CellAppearanceUtils.INVALID_ICON);
+        return FileAppearanceService.getInstance().forInvalidUrl(orderEntry.getPresentableName());
       }
       return forLibrary(library);
     }
@@ -73,7 +76,7 @@ public class OrderEntryCellAppearanceUtils {
     }
     else if (orderEntry instanceof ModuleOrderEntry) {
       final Icon icon = ModuleType.get(((ModuleOrderEntry)orderEntry).getModule()).getNodeIcon(false);
-      return SimpleTextCellAppearance.normal(orderEntry.getPresentableName(), icon);
+      return SimpleTextCellAppearance.regular(orderEntry.getPresentableName(), icon);
     }
     else return CompositeAppearance.single(orderEntry.getPresentableName());
   }
@@ -95,14 +98,14 @@ public class OrderEntryCellAppearanceUtils {
       return forVirtualFilePointer(new LightFilePointer(files[0]));
     }
     String url = StringUtil.trimEnd(files[0], JarFileSystem.JAR_SEPARATOR);
-    return SimpleTextCellAppearance.normal(PathUtil.getFileName(url), PlatformIcons.LIBRARY_ICON);
+    return SimpleTextCellAppearance.regular(PathUtil.getFileName(url), PlatformIcons.LIBRARY_ICON);
   }
 
   public static CellAppearance normalOrRedWaved(String text, final Icon icon, boolean waved) {
     if (waved) {
       return new SimpleTextCellAppearance(text, icon, new SimpleTextAttributes(SimpleTextAttributes.STYLE_WAVED, null, Color.RED));
     }
-    return SimpleTextCellAppearance.normal(text, icon);
+    return SimpleTextCellAppearance.regular(text, icon);
   }
 
   public static Icon sourceFolderIcon(boolean testSource) {
@@ -111,20 +114,21 @@ public class OrderEntryCellAppearanceUtils {
 
   public static ModifiableCellAppearance forJdk(@Nullable Sdk jdk, boolean isInComboBox, final boolean selected, final boolean showVersion) {
     if (jdk == null) {
-      return SimpleTextCellAppearance.invalid(NO_JDK, CellAppearanceUtils.INVALID_ICON);
+      return (ModifiableCellAppearance)FileAppearanceService.getInstance().forInvalidUrl(NO_JDK);
     }
     String name = jdk.getName();
     CompositeAppearance appearance = new CompositeAppearance();
     appearance.setIcon(jdk.getSdkType().getIcon());
     VirtualFile homeDirectory = jdk.getHomeDirectory();
-    SimpleTextAttributes attributes =
-        homeDirectory != null && homeDirectory.isValid() ? CellAppearanceUtils.createSimpleCellAttributes(selected) : SimpleTextAttributes.ERROR_ATTRIBUTES;
+    SimpleTextAttributes attributes = homeDirectory != null && homeDirectory.isValid()
+                                      ? CellAppearanceUtils.createSimpleCellAttributes(selected) : SimpleTextAttributes.ERROR_ATTRIBUTES;
     CompositeAppearance.DequeEnd ending = appearance.getEnding();
     ending.addText(name, attributes);
     if (showVersion) {
       String versionString = jdk.getVersionString();
       if (versionString != null && !versionString.equals(name)) {
-        SimpleTextAttributes textAttributes = isInComboBox ? SimpleTextAttributes.SYNTHETIC_ATTRIBUTES : SimpleTextAttributes.GRAY_ATTRIBUTES;
+        SimpleTextAttributes textAttributes = isInComboBox
+                                              ? SimpleTextAttributes.SYNTHETIC_ATTRIBUTES : SimpleTextAttributes.GRAY_ATTRIBUTES;
         ending.addComment(versionString, textAttributes);
       }
     }
@@ -156,7 +160,7 @@ public class OrderEntryCellAppearanceUtils {
   }
 
   public static CellAppearance forModule(Module module) {
-    return SimpleTextCellAppearance.normal(module.getName(), ModuleType.get(module).getNodeIcon(false));
+    return SimpleTextCellAppearance.regular(module.getName(), ModuleType.get(module).getNodeIcon(false));
   }
 
   public static CellAppearance forContentEntry(ContentEntry contentEntry) {
@@ -166,7 +170,7 @@ public class OrderEntryCellAppearanceUtils {
   public static SimpleTextCellAppearance formatRelativePath(ContentFolder folder, Icon icon) {
     LightFilePointer folderFile = new LightFilePointer(folder.getUrl());
     VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(folder.getContentEntry().getUrl());
-    if (file == null) return forInvalidVirtualFilePointer(folderFile);
+    if (file == null) return (SimpleTextCellAppearance)FileAppearanceService.getInstance().forInvalidUrl(folderFile.getPresentableUrl());
     String contentPath = file.getPath();
     String relativePath;
     SimpleTextAttributes textAttributes;
@@ -195,8 +199,7 @@ public class OrderEntryCellAppearanceUtils {
       // probably invalid JDK
       final String projectJdkName = projectRootManager.getProjectSdkName();
       if (projectJdkName != null) {
-        appearance = SimpleTextCellAppearance.invalid(ProjectBundle.message("jdk.combo.box.invalid.item", projectJdkName),
-                                                      CellAppearanceUtils.INVALID_ICON);
+        appearance = FileAppearanceService.getInstance().forInvalidUrl(ProjectBundle.message("jdk.combo.box.invalid.item", projectJdkName));
       }
       else {
         appearance = forJdk(null, false, false);
@@ -206,12 +209,8 @@ public class OrderEntryCellAppearanceUtils {
   }
 
   public static CellAppearance forVirtualFilePointer(LightFilePointer filePointer) {
-    return filePointer.isValid() ?
-           CellAppearanceUtils.forValidVirtualFile(filePointer.getFile()) :
-           forInvalidVirtualFilePointer(filePointer);
-  }
-
-  static SimpleTextCellAppearance forInvalidVirtualFilePointer(LightFilePointer filePointer) {
-    return SimpleTextCellAppearance.invalid(filePointer.getPresentableUrl(), CellAppearanceUtils.INVALID_ICON);
+    final VirtualFile file = filePointer.getFile();
+    return file != null ? FileAppearanceService.getInstance().forVirtualFile(file)
+                        : FileAppearanceService.getInstance().forInvalidUrl(filePointer.getPresentableUrl());
   }
 }

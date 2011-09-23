@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package com.intellij.lang.ant.config.impl;
 
-import com.intellij.openapi.roots.ui.util.CompositeAppearance;
+import com.intellij.openapi.roots.ui.CellAppearanceEx;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.PathUtil;
@@ -48,5 +48,5 @@ public interface AntClasspathEntry {
 
   void addFilesTo(List<File> files);
 
-  CompositeAppearance getAppearance();
+  CellAppearanceEx getAppearance();
 }

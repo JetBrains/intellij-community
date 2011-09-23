@@ -16,16 +16,14 @@
 package com.intellij.ui;
 
 import com.intellij.ide.ui.ListCellRendererWrapper;
-import com.intellij.openapi.roots.ui.util.CompositeAppearance;
+import com.intellij.openapi.roots.ui.CellAppearanceEx;
 import com.intellij.openapi.roots.ui.util.ModifiableCellAppearance;
-import com.intellij.openapi.roots.ui.util.SimpleTextCellAppearance;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Iterator;
 
 /**
  * <p>Replacement for {@link ColoredListCellRenderer}, L&F friendly.
@@ -34,8 +32,7 @@ import java.util.Iterator;
  * text fragments should be added via {@link #append(String, SimpleTextAttributes)}.<br>
  * Note that not all styles from SimpleTextAttributes are supported, see method code for details.
  *
- * <p>Alternatively, item can be rendered from {@link com.intellij.openapi.roots.ui.util.ModifiableCellAppearance}
- * by {@link #render(com.intellij.openapi.roots.ui.util.ModifiableCellAppearance)}.
+ * <p>Alternatively, item can be rendered by {@link com.intellij.openapi.roots.ui.CellAppearanceEx#customize(HtmlListCellRenderer)}.
  *
  * @param <T> type of list items.
  */
@@ -120,21 +117,8 @@ public abstract class HtmlListCellRenderer<T> extends ListCellRendererWrapper<T>
     builder.append('"');
   }
 
+  /** @deprecated use {@linkplain com.intellij.openapi.roots.ui.CellAppearanceEx#customize(HtmlListCellRenderer)} (to remove in IDEA 12) */
   public void render(@NotNull final ModifiableCellAppearance appearance) {
-    if (appearance instanceof SimpleTextCellAppearance) {
-      final SimpleTextCellAppearance simple = (SimpleTextCellAppearance)appearance;
-      append(simple.getText(), simple.getTextAttributes());
-    }
-    else if (appearance instanceof CompositeAppearance) {
-      final Iterator<CompositeAppearance.TextSection> iterator = ((CompositeAppearance)appearance).getSectionsIterator();
-      while (iterator.hasNext()) {
-        final CompositeAppearance.TextSection section = iterator.next();
-        append(section.getText(), SimpleTextAttributes.fromTextAttributes(section.getTextAttributes()));
-      }
-    }
-    else {
-      throw new IllegalArgumentException("Unknown class: " + appearance.getClass());
-    }
-    setIcon(appearance.getIcon());
+    ((CellAppearanceEx)appearance).customize(this);
   }
 }
