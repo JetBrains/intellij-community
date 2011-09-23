@@ -948,6 +948,17 @@
     <programRunner id="defaultDebugRunner" implementation="com.intellij.debugger.impl.GenericDebuggerRunner" order="last"/>
 
     <generation.topLevelFactory language="JAVA" implementationClass="com.intellij.psi.impl.JavaFactoryProvider"/>
+
+    <itemPresentationProvider forClass="com.intellij.psi.PsiClass"
+                              implementationClass="com.intellij.psi.presentation.java.ClassPresentationProvider"/>
+    <itemPresentationProvider forClass="com.intellij.psi.PsiMethod"
+                              implementationClass="com.intellij.psi.presentation.java.MethodPresentationProvider"/>
+    <itemPresentationProvider forClass="com.intellij.psi.PsiField"
+                              implementationClass="com.intellij.psi.presentation.java.FieldPresentationProvider"/>
+    <itemPresentationProvider forClass="com.intellij.psi.PsiLocalVariable"
+                              implementationClass="com.intellij.psi.presentation.java.VariablePresentationProvider"/>
+    <itemPresentationProvider forClass="com.intellij.psi.PsiParameter"
+                              implementationClass="com.intellij.psi.presentation.java.VariablePresentationProvider"/>
   </extensions>
 
 </idea-plugin>

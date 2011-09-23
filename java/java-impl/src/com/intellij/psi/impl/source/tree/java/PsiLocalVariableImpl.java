@@ -17,6 +17,7 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.*;
@@ -283,7 +284,7 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
   }
 
   public ItemPresentation getPresentation() {
-    return JavaPresentationUtil.getVariablePresentation(this);
+    return ItemPresentationProviders.getItemPresentation(this);
   }
 
   public String toString() {

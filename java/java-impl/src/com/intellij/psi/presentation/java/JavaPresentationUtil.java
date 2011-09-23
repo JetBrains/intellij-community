@@ -83,22 +83,6 @@ public class JavaPresentationUtil {
     };
   }
 
-  public static ItemPresentation getVariablePresentation(final PsiVariable variable) {
-    return new ItemPresentation() {
-      public String getPresentableText() {
-        return PsiFormatUtil.formatVariable(variable, PsiFormatUtil.SHOW_TYPE, PsiSubstitutor.EMPTY);
-      }
-
-      public String getLocationString() {
-        return "";
-      }
-
-      public Icon getIcon(boolean open) {
-        return variable.getIcon(Iconable.ICON_FLAG_OPEN);
-      }
-    };
-  }
-
   @Nullable
   private static String getJavaSymbolContainerText(final PsiElement element) {
     final String result;

@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Pair;
@@ -33,7 +34,6 @@ import com.intellij.psi.impl.source.PsiClassImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.IncorrectOperationException;
@@ -524,7 +524,7 @@ public class ClsClassImpl extends ClsRepositoryPsiElement<PsiClassStub<?>> imple
   }
 
   public ItemPresentation getPresentation() {
-    return ClassPresentationUtil.getPresentation(this);
+    return ItemPresentationProviders.getItemPresentation(this);
   }
 
   public Icon getElementIcon(final int flags) {
