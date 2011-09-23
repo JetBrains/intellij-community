@@ -255,9 +255,15 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
     repaint();
   }
 
+  @Override
   public Dimension getPreferredSize() {
     return computePreferredSize(false);
 
+  }
+
+  @Override
+  public Dimension getMinimumSize() {
+    return computePreferredSize(false);
   }
 
   public synchronized Object getFragmentTag(int index) {
