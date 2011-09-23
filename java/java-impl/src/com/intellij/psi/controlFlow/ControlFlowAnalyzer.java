@@ -18,7 +18,7 @@ package com.intellij.psi.controlFlow;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
@@ -202,7 +202,7 @@ class ControlFlowAnalyzer extends JavaJspElementVisitor {
 
     // register all sub ranges
     for (Map.Entry<PsiElement, ControlFlowSubRange> entry : mySubRanges.entrySet()) {
-      ProgressManager.checkCanceled();
+      ProgressIndicatorProvider.checkCanceled();
       ControlFlowSubRange subRange = entry.getValue();
       PsiElement element = entry.getKey();
       myControlFlowFactory.registerSubRange(element, subRange, myEvaluateConstantIfCondition, myPolicy);
@@ -211,13 +211,13 @@ class ControlFlowAnalyzer extends JavaJspElementVisitor {
 
   private void startElement(PsiElement element) {
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
-      ProgressManager.checkCanceled();
+      ProgressIndicatorProvider.checkCanceled();
       if (child instanceof PsiErrorElement && !Comparing.strEqual(((PsiErrorElement)child).getErrorDescription(), JavaErrorMessages.message("expected.semicolon"))) {
         // do not perform control flow analysis for incomplete code
         throw new AnalysisCanceledSoftException(element);
       }
     }
-    ProgressManager.checkCanceled();
+    ProgressIndicatorProvider.checkCanceled();
     myCurrentFlow.startElement(element);
 
     generateUncheckedExceptionJumpsIfNeeded(element, true);
@@ -249,7 +249,7 @@ class ControlFlowAnalyzer extends JavaJspElementVisitor {
     }
 
     for (int i = myUnhandledExceptionCatchBlocks.size() - 1; i >= 0; i--) {
-      ProgressManager.checkCanceled();
+      ProgressIndicatorProvider.checkCanceled();
       PsiElement block = myUnhandledExceptionCatchBlocks.get(i);
       // cannot jump to outer catch blocks (belonging to outer try stmt) if current try{} has finally block
       if (block == null) {
@@ -282,7 +282,7 @@ class ControlFlowAnalyzer extends JavaJspElementVisitor {
     //generate jumps to all handled exception handlers
     Collection<PsiClassType> unhandledExceptions = ExceptionUtil.collectUnhandledExceptions(element, element.getParent());
     for (PsiClassType unhandledException : unhandledExceptions) {
-      ProgressManager.checkCanceled();
+      ProgressIndicatorProvider.checkCanceled();
       generateThrow(unhandledException, element);
     }
   }
@@ -290,7 +290,7 @@ class ControlFlowAnalyzer extends JavaJspElementVisitor {
   private void generateThrow(PsiClassType unhandledException, PsiElement throwingElement) {
     final List<PsiElement> catchBlocks = findThrowToBlocks(unhandledException);
     for (PsiElement block : catchBlocks) {
-      ProgressManager.checkCanceled();
+      ProgressIndicatorProvider.checkCanceled();
       ConditionalThrowToInstruction instruction = new ConditionalThrowToInstruction(0);
       myCurrentFlow.addInstruction(instruction);
       if (!patchCheckedThrowInstructionIfInsideFinally(instruction, throwingElement, block)) {
@@ -348,7 +348,7 @@ class ControlFlowAnalyzer extends JavaJspElementVisitor {
     int prevOffset = myCurrentFlow.getSize();
     PsiElement[] children = codeFragment.getChildren();
     for (PsiElement child : children) {
-      ProgressManager.checkCanceled();
+      ProgressIndicatorProvider.checkCanceled();
       child.accept(this);
     }
 
@@ -368,7 +368,7 @@ class ControlFlowAnalyzer extends JavaJspElementVisitor {
     int prevOffset = myCurrentFlow.getSize();
     PsiStatement[] statements = block.getStatements();
     for (PsiStatement statement : statements) {
-      ProgressManager.checkCanceled();
+      ProgressIndicatorProvider.checkCanceled();
       statement.accept(this);
     }
 
@@ -479,7 +479,7 @@ class ControlFlowAnalyzer extends JavaJspElementVisitor {
     int pc = myCurrentFlow.getSize();
     PsiElement[] elements = statement.getDeclaredElements();
     for (PsiElement element : elements) {
-      ProgressManager.checkCanceled();
+      ProgressIndicatorProvider.checkCanceled();
       if (element instanceof PsiClass) {
         element.accept(this);
       }
@@ -569,7 +569,7 @@ class ControlFlowAnalyzer extends JavaJspElementVisitor {
     expression.accept(this);
 
     for (PsiParameter catchParameter : myCatchParameters) {
-      ProgressManager.checkCanceled();
+      ProgressIndicatorProvider.checkCanceled();
       PsiType type = catchParameter.getType();
       if (type instanceof PsiClassType) {
         generateThrow((PsiClassType)type, statement);
@@ -582,7 +582,7 @@ class ControlFlowAnalyzer extends JavaJspElementVisitor {
     startElement(statement);
     PsiExpression[] expressions = statement.getExpressionList().getExpressions();
     for (PsiExpression expr : expressions) {
-      ProgressManager.checkCanceled();
+      ProgressIndicatorProvider.checkCanceled();
       expr.accept(this);
     }
     finishElement(statement);
@@ -850,7 +850,7 @@ class ControlFlowAnalyzer extends JavaJspElementVisitor {
       PsiStatement[] statements = body.getStatements();
       PsiSwitchLabelStatement defaultLabel = null;
       for (PsiStatement aStatement : statements) {
-        ProgressManager.checkCanceled();
+        ProgressIndicatorProvider.checkCanceled();
         if (aStatement instanceof PsiSwitchLabelStatement) {
           if (((PsiSwitchLabelStatement)aStatement).isDefaultCase()) {
             defaultLabel = (PsiSwitchLabelStatement)aStatement;
@@ -912,7 +912,7 @@ class ControlFlowAnalyzer extends JavaJspElementVisitor {
     }
     else {
       for (int i = 0; i < blocks.size(); i++) {
-        ProgressManager.checkCanceled();
+        ProgressIndicatorProvider.checkCanceled();
         element = blocks.get(i);
         BranchingInstruction instruction = i == blocks.size() - 1
                                            ? new ThrowToInstruction(0)
@@ -944,7 +944,7 @@ class ControlFlowAnalyzer extends JavaJspElementVisitor {
   private List<PsiElement> findThrowToBlocks(PsiClassType throwType) {
     List<PsiElement> blocks = new ArrayList<PsiElement>();
     for (int i = myCatchParameters.size() - 1; i >= 0; i--) {
-      ProgressManager.checkCanceled();
+      ProgressIndicatorProvider.checkCanceled();
       PsiParameter parameter = myCatchParameters.get(i);
       PsiType catchType = parameter.getType();
       if (catchType.isAssignableFrom(throwType) || throwType.isAssignableFrom(catchType)) {
@@ -1001,7 +1001,7 @@ class ControlFlowAnalyzer extends JavaJspElementVisitor {
     int catchNum = Math.min(catchBlocks.length, catchBlockParameters.length);
     myUnhandledExceptionCatchBlocks.push(null);
     for (int i = catchNum - 1; i >= 0; i--) {
-      ProgressManager.checkCanceled();
+      ProgressIndicatorProvider.checkCanceled();
       myCatchParameters.push(catchBlockParameters[i]);
       myCatchBlocks.push(catchBlocks[i]);
 
@@ -1061,7 +1061,7 @@ class ControlFlowAnalyzer extends JavaJspElementVisitor {
     }
 
     for (int i = catchNum - 1; i >= 0; i--) {
-      ProgressManager.checkCanceled();
+      ProgressIndicatorProvider.checkCanceled();
       if (myPolicy.isParameterAccepted(catchBlockParameters[i])) {
         generateWriteInstruction(catchBlockParameters[i]);
       }
@@ -1131,7 +1131,7 @@ class ControlFlowAnalyzer extends JavaJspElementVisitor {
       // checked exception throwing completion. need to dispatch to the correct catch clause
       final List<PsiElement> unhandledExceptionCatchBlocks = finallyBlockToUnhandledExceptions.remove(finallyBlock);
       for (int i = 0; unhandledExceptionCatchBlocks != null && i < unhandledExceptionCatchBlocks.size(); i++) {
-        ProgressManager.checkCanceled();
+        ProgressIndicatorProvider.checkCanceled();
         PsiElement catchBlock = unhandledExceptionCatchBlocks.get(i);
 
         final ReturnInstruction returnInstruction = new ReturnInstruction(0, myStack, callInstruction);
@@ -1165,7 +1165,7 @@ class ControlFlowAnalyzer extends JavaJspElementVisitor {
 
     final List<PsiResourceVariable> resources = resourceList.getResourceVariables();
     for (PsiResourceVariable resource : resources) {
-      ProgressManager.checkCanceled();
+      ProgressIndicatorProvider.checkCanceled();
       processVariable(resource);
     }
 
@@ -1222,7 +1222,7 @@ class ControlFlowAnalyzer extends JavaJspElementVisitor {
   @Override public void visitExpressionList(PsiExpressionList list) {
     PsiExpression[] expressions = list.getExpressions();
     for (final PsiExpression expression : expressions) {
-      ProgressManager.checkCanceled();
+      ProgressIndicatorProvider.checkCanceled();
       myStartStatementStack.pushStatement(expression, false);
       myEndStatementStack.pushStatement(expression, false);
 
@@ -1249,7 +1249,7 @@ class ControlFlowAnalyzer extends JavaJspElementVisitor {
 
     PsiExpression[] initializers = expression.getInitializers();
     for (PsiExpression initializer : initializers) {
-      ProgressManager.checkCanceled();
+      ProgressIndicatorProvider.checkCanceled();
       initializer.accept(this);
     }
 
@@ -1415,7 +1415,7 @@ class ControlFlowAnalyzer extends JavaJspElementVisitor {
 
     PsiElement[] children = element.getChildren();
     for (PsiElement child : children) {
-      ProgressManager.checkCanceled();
+      ProgressIndicatorProvider.checkCanceled();
       child.accept(this);
     }
 
@@ -1468,7 +1468,7 @@ class ControlFlowAnalyzer extends JavaJspElementVisitor {
     int pc = myCurrentFlow.getSize();
     PsiElement[] children = expression.getChildren();
     for (PsiElement child : children) {
-      ProgressManager.checkCanceled();
+      ProgressIndicatorProvider.checkCanceled();
       child.accept(this);
     }
     generateCheckedExceptionJumps(expression);
@@ -1584,7 +1584,7 @@ class ControlFlowAnalyzer extends JavaJspElementVisitor {
     List<PsiVariable> array = new ArrayList<PsiVariable>();
     addUsedVariables(array, aClass);
     for (PsiVariable var : array) {
-      ProgressManager.checkCanceled();
+      ProgressIndicatorProvider.checkCanceled();
       generateReadInstruction(var);
     }
     finishElement(aClass);
@@ -1602,7 +1602,7 @@ class ControlFlowAnalyzer extends JavaJspElementVisitor {
 
     PsiElement[] children = scope.getChildren();
     for (PsiElement child : children) {
-      ProgressManager.checkCanceled();
+      ProgressIndicatorProvider.checkCanceled();
       addUsedVariables(array, child);
     }
   }
