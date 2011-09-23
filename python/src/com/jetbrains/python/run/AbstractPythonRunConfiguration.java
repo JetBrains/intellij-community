@@ -1,11 +1,15 @@
 package com.jetbrains.python.run;
 
-import com.google.common.collect.Maps;
+import com.google.common.collect.Lists;
+import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.configuration.AbstractRunConfiguration;
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.configurations.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -22,7 +26,6 @@ import com.jetbrains.python.sdk.PythonSdkType;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,13 +33,11 @@ import java.util.Map;
 /**
  * @author Leonid Shalupov
  */
-public abstract class AbstractPythonRunConfiguration extends ModuleBasedConfiguration<RunConfigurationModule>
+public abstract class AbstractPythonRunConfiguration<T extends AbstractRunConfiguration> extends AbstractRunConfiguration
   implements LocatableConfiguration, AbstractPythonRunConfigurationParams, CommandLinePatcher {
   private String myInterpreterOptions = "";
   private String myWorkingDirectory = "";
   private String mySdkHome = "";
-  private boolean myPassParentEnvs = true;
-  private Map<String, String> myEnvs = Maps.newHashMap();
   private boolean myUseModuleSdk;
 
   public AbstractPythonRunConfiguration(final String name, final RunConfigurationModule module, final ConfigurationFactory factory) {
@@ -46,7 +47,7 @@ public abstract class AbstractPythonRunConfiguration extends ModuleBasedConfigur
 
   public List<Module> getValidModules() {
     final Module[] modules = ModuleManager.getInstance(getProject()).getModules();
-    List<Module> result = new ArrayList<Module>();
+    List<Module> result = Lists.newArrayList();
     for (Module module : modules) {
       if (PythonSdkType.findPythonSdk(module) != null) {
         result.add(module);
@@ -54,6 +55,27 @@ public abstract class AbstractPythonRunConfiguration extends ModuleBasedConfigur
     }
     return result;
   }
+
+  @Override
+  public final SettingsEditor<T> getConfigurationEditor() {
+    final SettingsEditor<T> runConfigurationEditor = createConfigurationEditor();
+
+    final SettingsEditorGroup<T> group = new SettingsEditorGroup<T>();
+
+    // run configuration settings tab:
+    group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"), runConfigurationEditor);
+
+    // tabs provided by extensions:
+    //noinspection unchecked
+    PythonRunConfigurationExtensionsManager.getInstance().appendEditors(this, (SettingsEditorGroup)group);
+
+    if (group.getEditors().size() > 0) {
+      return group;
+    }
+    return runConfigurationEditor;
+  }
+
+  protected abstract SettingsEditor<T> createConfigurationEditor();
 
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
@@ -115,7 +137,7 @@ public abstract class AbstractPythonRunConfiguration extends ModuleBasedConfigur
   public PythonSdkFlavor getSdkFlavor() {
     final String path = getInterpreterPath();
     return path == null ? null : PythonSdkFlavor.getFlavor(path);
-  } 
+  }
 
   public void readExternal(Element element) throws InvalidDataException {
     super.readExternal(element);
@@ -125,12 +147,15 @@ public abstract class AbstractPythonRunConfiguration extends ModuleBasedConfigur
     myWorkingDirectory = JDOMExternalizerUtil.readField(element, "WORKING_DIRECTORY");
     myUseModuleSdk = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, "IS_MODULE_SDK"));
     getConfigurationModule().readExternal(element);
+
+    // extension settings:
+    PythonRunConfigurationExtensionsManager.getInstance().readExternal(this, element);
   }
 
   protected void readEnvs(Element element) {
     final String parentEnvs = JDOMExternalizerUtil.readField(element, "PARENT_ENVS");
     if (parentEnvs != null) {
-      myPassParentEnvs = Boolean.parseBoolean(parentEnvs);
+      setPassParentEnvs(Boolean.parseBoolean(parentEnvs));
     }
     EnvironmentVariablesComponent.readExternal(element, getEnvs());
   }
@@ -143,19 +168,14 @@ public abstract class AbstractPythonRunConfiguration extends ModuleBasedConfigur
     JDOMExternalizerUtil.writeField(element, "WORKING_DIRECTORY", myWorkingDirectory);
     JDOMExternalizerUtil.writeField(element, "IS_MODULE_SDK", Boolean.toString(myUseModuleSdk));
     getConfigurationModule().writeExternal(element);
+
+    // extension settings:
+    PythonRunConfigurationExtensionsManager.getInstance().writeExternal(this, element);
   }
 
   protected void writeEnvs(Element element) {
-    JDOMExternalizerUtil.writeField(element, "PARENT_ENVS", Boolean.toString(myPassParentEnvs));
+    JDOMExternalizerUtil.writeField(element, "PARENT_ENVS", Boolean.toString(isPassParentEnvs()));
     EnvironmentVariablesComponent.writeExternal(element, getEnvs());
-  }
-
-  public Map<String, String> getEnvs() {
-    return myEnvs;
-  }
-
-  public void setEnvs(final Map<String, String> envs) {
-    myEnvs = envs;
   }
 
   public String getInterpreterOptions() {
@@ -190,14 +210,6 @@ public abstract class AbstractPythonRunConfiguration extends ModuleBasedConfigur
     myUseModuleSdk = useModuleSdk;
   }
 
-  public boolean isPassParentEnvs() {
-    return myPassParentEnvs;
-  }
-
-  public void setPassParentEnvs(boolean passParentEnvs) {
-    myPassParentEnvs = passParentEnvs;
-  }
-
   public static void copyParams(AbstractPythonRunConfigurationParams source, AbstractPythonRunConfigurationParams target) {
     target.setEnvs(new HashMap<String, String>(source.getEnvs()));
     target.setInterpreterOptions(source.getInterpreterOptions());
@@ -211,23 +223,25 @@ public abstract class AbstractPythonRunConfiguration extends ModuleBasedConfigur
   /**
    * Some setups (e.g. virtualenv) provide a script that alters environment variables before running a python interpreter or other tools.
    * Such settings are not directly stored but applied right before running using this method.
+   *
    * @param commandLine what to patch
    */
   public void patchCommandLine(GeneralCommandLine commandLine) {
     final String sdk_home = getSdkHome();
     Sdk sdk = PythonSdkType.findPythonSdk(getModule());
     if (sdk != null && sdk_home != null) {
-      SdkType sdk_type = sdk.getSdkType();
-      patchCommandLineFirst(commandLine, sdk_home, sdk_type);
-      patchCommandLineForVirtualenv(commandLine, sdk_home, sdk_type);
-      patchCommandLineForBuildout(commandLine, sdk_home, sdk_type);
-      patchCommandLineLast(commandLine, sdk_home, sdk_type);
+      SdkType sdkType = sdk.getSdkType();
+      patchCommandLineFirst(commandLine, sdk_home, sdkType);
+      patchCommandLineForVirtualenv(commandLine, sdk_home, sdkType);
+      patchCommandLineForBuildout(commandLine, sdk_home, sdkType);
+      patchCommandLineLast(commandLine, sdk_home, sdkType);
     }
   }
 
   /**
    * Patches command line before virtualenv and buildout patchers.
    * Default implementation does nothing.
+   *
    * @param commandLine
    * @param sdk_home
    * @param sdk_type
@@ -239,6 +253,7 @@ public abstract class AbstractPythonRunConfiguration extends ModuleBasedConfigur
   /**
    * Patches command line after virtualenv and buildout patchers.
    * Default implementation does nothing.
+   *
    * @param commandLine
    * @param sdk_home
    * @param sdk_type
@@ -250,21 +265,23 @@ public abstract class AbstractPythonRunConfiguration extends ModuleBasedConfigur
   /**
    * Gets called after {@link #patchCommandLineForVirtualenv(com.intellij.execution.configurations.GeneralCommandLine, String, com.intellij.openapi.projectRoots.SdkType)}
    * Does nothing here, real implementations should use alter running script name or use engulfer.
+   *
    * @param commandLine
-   * @param sdk_home
-   * @param sdk_type
+   * @param sdkHome
+   * @param sdkType
    */
-  protected void patchCommandLineForBuildout(GeneralCommandLine commandLine, String sdk_home, SdkType sdk_type) {
+  protected void patchCommandLineForBuildout(GeneralCommandLine commandLine, String sdkHome, SdkType sdkType) {
   }
 
   /**
    * Alters PATH so that a virtualenv is activated, if present.
+   *
    * @param commandLine
-   * @param sdk_home
-   * @param sdk_type
+   * @param sdkHome
+   * @param sdkType
    */
-  protected void patchCommandLineForVirtualenv(GeneralCommandLine commandLine, String sdk_home, SdkType sdk_type) {
-    PythonSdkType.patchCommandLineForVirtualenv(commandLine, sdk_home, isPassParentEnvs());
+  protected void patchCommandLineForVirtualenv(GeneralCommandLine commandLine, String sdkHome, SdkType sdkType) {
+    PythonSdkType.patchCommandLineForVirtualenv(commandLine, sdkHome, isPassParentEnvs());
   }
 
   protected void setUnbufferedEnv() {

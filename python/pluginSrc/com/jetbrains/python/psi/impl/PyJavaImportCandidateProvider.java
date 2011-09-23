@@ -3,7 +3,6 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
@@ -23,7 +22,7 @@ public class PyJavaImportCandidateProvider implements PyImportCandidateProvider 
     final Project project = element.getProject();
     Module module = ModuleUtil.findModuleForPsiElement(element);
     GlobalSearchScope scope = module == null ? ProjectScope.getAllScope(project) : module.getModuleWithDependenciesAndLibrariesScope(false);
-    PsiShortNamesCache cache = JavaPsiFacade.getInstance(project).getShortNamesCache();
+    PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
     final PsiClass[] classesByName = cache.getClassesByName(name, scope);
     for (PsiClass psiClass : classesByName) {
       final PyQualifiedName packageQName = PyQualifiedName.fromDottedString(psiClass.getQualifiedName()).removeLastComponent();

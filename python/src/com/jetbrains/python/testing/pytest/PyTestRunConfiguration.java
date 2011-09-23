@@ -36,7 +36,7 @@ public class PyTestRunConfiguration extends AbstractPythonTestRunConfiguration i
     return new PyTestRunConfiguration(getName(), getConfigurationModule(), getFactory());
   }
 
-  public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
+  protected SettingsEditor<? extends RunConfiguration> createConfigurationEditor() {
     return new PyTestConfigurationEditor(getProject(), this);
   }
 

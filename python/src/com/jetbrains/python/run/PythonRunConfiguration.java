@@ -43,7 +43,8 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
     return new PythonRunConfiguration(getConfigurationModule(), getFactory(), getName());
   }
 
-  public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
+  @Override
+  protected SettingsEditor<? extends RunConfiguration> createConfigurationEditor() {
     return new PythonRunConfigurationEditor(this);
   }
 

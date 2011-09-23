@@ -29,7 +29,7 @@ public class PythonDocTestRunConfiguration extends AbstractPythonTestRunConfigur
   }
 
   @Override
-  public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
+  protected SettingsEditor<? extends RunConfiguration> createConfigurationEditor() {
     return new PythonDocTestRunConfigurationEditor(getProject(), this);
   }
 

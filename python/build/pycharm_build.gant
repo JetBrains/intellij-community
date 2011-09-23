@@ -356,7 +356,7 @@ def buildTarGz() {
   project.stage("tar.gz")
   def tarRoot = isEap() ? "pycharm-$buildNumber" : "pycharm-${p("component.version.major")}.${p("component.version.minor")}"
   def tarPath = "$paths.artifacts/pycharm${buildName}.tar"
-  ant.echo(file: "$paths.distUnix/bin/pycharm.vmoptions", message: vmoptions32().replace(' ', '\n'))
+  ant.echo(file: "$paths.distUnix/bin/pycharm.vmoptions", message: vmoptions32().replace(' ', '\n').replace("agentlib:yjpagent", "agentlib:yjpagent\$BITS"))
   ant.tar(tarfile: tarPath) {
     tarfileset(dir: paths.distAll, prefix: tarRoot) {
       exclude(name: "**/*.dll")
