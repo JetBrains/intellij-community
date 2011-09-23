@@ -735,6 +735,11 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
         if (eachDialog.isModal() && eachDialog.isShowing()) {
           modalDialogs++;
         }
+      } else if (each instanceof JWindow) {
+        final JBPopup popup = (JBPopup)((JWindow)each).getRootPane().getClientProperty(JBPopup.KEY);
+        if (popup != null && popup.isModalContext()) {
+          modalDialogs++;
+        }
       }
     }
     Iterator<Integer> modalityCounts = myModalityCount2FlushCount.keySet().iterator();

@@ -178,7 +178,7 @@ public class WindowSystemPlaybackCall {
     return result;
   }
 
-  private static AsyncResult<Project> findProject() {
+  public static AsyncResult<Project> findProject() {
     final AsyncResult<Project> project = new AsyncResult<Project>();
     final IdeFocusManager fm = IdeFocusManager.getGlobalInstance();
     fm.doWhenFocusSettlesDown(new Runnable() {
@@ -334,7 +334,7 @@ public class WindowSystemPlaybackCall {
     return result;
   }
 
-  private static ActionCallback getUiReady(final PlaybackContext context) {
+  public static ActionCallback getUiReady(final PlaybackContext context) {
     final ActionCallback result = new ActionCallback();
     context.flushAwtAndRun(new Runnable() {
       @Override
