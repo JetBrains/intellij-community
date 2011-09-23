@@ -15,7 +15,7 @@
  */
 package com.intellij.psi.impl.source;
 
-import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
+import com.intellij.codeInsight.completion.scope.JavaCompletionHints;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
@@ -312,7 +312,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     final PsiImportStaticStatement[] importStaticStatements = importList.getImportStaticStatements();
     if (importStaticStatements.length > 0) {
       final StaticImportFilteringProcessor staticImportProcessor = new StaticImportFilteringProcessor(processor);
-      final boolean forCompletion = Boolean.TRUE == processor.getHint(JavaCompletionProcessor.JAVA_COMPLETION);
+      final boolean forCompletion = Boolean.TRUE == processor.getHint(JavaCompletionHints.JAVA_COMPLETION);
 
       // single member processing
       for (PsiImportStaticStatement importStaticStatement : importStaticStatements) {

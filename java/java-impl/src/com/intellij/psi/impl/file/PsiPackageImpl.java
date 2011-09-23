@@ -15,7 +15,7 @@
  */
 package com.intellij.psi.impl.file;
 
-import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
+import com.intellij.codeInsight.completion.scope.JavaCompletionHints;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.PackageViewPane;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
@@ -276,7 +276,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     final JavaPsiFacadeImpl facade = getFacade();
     final PsiMigrationImpl migration = facade.getCurrentMigration();
 
-    final Condition<String> prefixMatcher = processor.getHint(JavaCompletionProcessor.NAME_FILTER);
+    final Condition<String> prefixMatcher = processor.getHint(JavaCompletionHints.NAME_FILTER);
 
     if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.CLASS)) {
       NameHint nameHint = processor.getHint(NameHint.KEY);
