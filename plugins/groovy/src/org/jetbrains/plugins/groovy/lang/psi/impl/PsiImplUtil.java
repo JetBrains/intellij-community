@@ -39,7 +39,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -55,6 +54,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
@@ -106,13 +108,20 @@ public class PsiImplUtil {
 
     // check priorities
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(oldExpr.getProject());
-    if (GrStringUtil.isReplacedExpressionInGStringInjection(oldExpr)) {
-      /*if (newExpr instanceof GrLiteral) {            todo Max Medvedev
-        return GrStringUtil.replaceStringInjectionByLiteral(oldExpr, ((GrLiteral)newExpr));
+    if (oldExpr.getParent() instanceof GrStringInjection) {
+      if (newExpr instanceof GrString || newExpr instanceof GrLiteral && ((GrLiteral)newExpr).getValue() instanceof String) {
+        return GrStringUtil.replaceStringInjectionByLiteral((GrStringInjection)oldExpr.getParent(), (GrLiteral)newExpr);
       }
-      else */if (!(newExpr instanceof GrReferenceExpression)){
+      else {
         newExpr = factory.createExpressionFromText("{" + newExpr.getText() + "}");
+        return (GrExpression)((GrClosableBlock)oldExpr.replace(newExpr)).getStatements()[0];
       }
+    }
+    else if (PsiTreeUtil.getParentOfType(oldExpr, GrStringInjection.class, false, GrCodeBlock.class) != null) {
+      final PsiElement replaced = oldExpr.replace(newExpr);
+      final GrStringInjection stringInjection = PsiTreeUtil.getParentOfType(replaced, GrStringInjection.class);
+      GrStringUtil.wrapInjection(stringInjection);
+      return stringInjection.getClosableBlock();
     }
     else if (oldParent instanceof GrExpression && !(oldParent instanceof GrParenthesizedExpression)) {
       GrExpression result = addParenthesesIfNeeded(newExpr, oldExpr, (GrExpression)oldParent);
