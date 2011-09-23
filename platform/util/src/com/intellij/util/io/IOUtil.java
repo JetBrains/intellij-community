@@ -15,8 +15,8 @@
  */
 package com.intellij.util.io;
 
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -65,8 +65,10 @@ public class IOUtil {
   }
 
   public static void writeUTFTruncated(final DataOutput stream, final String text) throws IOException {
-    if (text.length() > 65535) {
-      stream.writeUTF(text.substring(0, 65535));
+    // we should not compare number of symbols to 65635 -> it is number of bytes what should be compared
+    // ? 4 bytes per symbol - rough estimation
+    if (text.length() > 16383) {
+      stream.writeUTF(text.substring(0, 16383));
     }
     else {
       stream.writeUTF(text);

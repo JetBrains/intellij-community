@@ -34,7 +34,6 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ConstantFunction;
 import com.intellij.util.NotNullFunction;
-import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
@@ -491,12 +490,24 @@ public class SvnChangeList implements CommittedChangeList {
     stream.writeLong(myRevision);
     stream.writeUTF(myAuthor);
     stream.writeLong(myDate.getTime());
-    IOUtil.writeUTFTruncated(stream, myMessage);
+    writeUTFTruncated(stream, myMessage);
     writeFiles(stream, myChangedPaths);
     writeFiles(stream, myAddedPaths);
     writeFiles(stream, myDeletedPaths);
     writeMap(stream, myCopiedAddedPaths);
     writeFiles(stream, myReplacedPaths);
+  }
+
+  // to be able to update plugin only
+  public static void writeUTFTruncated(final DataOutput stream, final String text) throws IOException {
+    // we should not compare number of symbols to 65635 -> it is number of bytes what should be compared
+    // ? 4 bytes per symbol - rough estimation
+    if (text.length() > 16383) {
+      stream.writeUTF(text.substring(0, 16383));
+    }
+    else {
+      stream.writeUTF(text);
+    }
   }
 
   private static void writeFiles(final DataOutput stream, final Set<String> paths) throws IOException {
