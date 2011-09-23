@@ -1,5 +1,6 @@
 package de.plushnikov.intellij.lombok.processor.field;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -98,7 +99,7 @@ public class SetterFieldProcessor extends AbstractLombokFieldProcessor {
       final String methodName = TransformationsUtil.toSetterName(fieldName, PsiType.BOOLEAN.equals(psiFieldType));
 
       builder.append(methodVisibility);
-      if (builder.length() > 0) {
+      if (StringUtil.isNotEmpty(methodVisibility)) {
         builder.append(' ');
       }
       if (psiField.hasModifierProperty(PsiModifier.STATIC)) {
