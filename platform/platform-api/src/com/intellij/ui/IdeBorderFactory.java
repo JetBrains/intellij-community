@@ -25,7 +25,7 @@ import java.awt.*;
 
 public class IdeBorderFactory {
   public static final int BORDER_ROUNDNESS = 5;
-  public static final int TITLED_BORDER_TOP_INSET = 5;
+  public static final int TITLED_BORDER_TOP_INSET = 7;
   public static final int TITLED_BORDER_LEFT_INSET = 0;
   public static final int TITLED_BORDER_BOTTOM_INSET = 10;
   public static final int TITLED_BORDER_RIGHT_INSET = 0;
