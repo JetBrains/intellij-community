@@ -5,8 +5,6 @@
 package com.intellij.refactoring;
 
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.search.GlobalSearchScope;
