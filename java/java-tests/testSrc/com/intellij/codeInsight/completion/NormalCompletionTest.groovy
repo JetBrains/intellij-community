@@ -855,6 +855,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   public void testDontCastInstanceofedQualifier() throws Throwable { doTest(); }
   public void testQualifierCastingWithUnknownAssignments() throws Throwable { doTest(); }
   public void testQualifierCastingBeforeLt() throws Throwable { doTest(); }
+  public void testNoReturnInTernary() throws Throwable { doTest(); }
 
   public void testOrAssignmentDfa() throws Throwable { doTest(); }
 
