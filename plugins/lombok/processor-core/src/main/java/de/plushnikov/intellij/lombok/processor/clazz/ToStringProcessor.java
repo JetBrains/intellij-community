@@ -42,8 +42,8 @@ public class ToStringProcessor extends AbstractLombokClassProcessor {
       validateExistingMethods(psiClass, builder);
     }
 
-    final String[] excludeProperty = PsiAnnotationUtil.getAnnotationValues(psiAnnotation, "exclude", PsiAnnotationUtil.STRING_ARRAY_FACTORY);
-    final String[] ofProperty = PsiAnnotationUtil.getAnnotationValues(psiAnnotation, "of", PsiAnnotationUtil.STRING_ARRAY_FACTORY);
+    final String[] excludeProperty = PsiAnnotationUtil.getAnnotationValues(psiAnnotation, "exclude");
+    final String[] ofProperty = PsiAnnotationUtil.getAnnotationValues(psiAnnotation, "of");
 
     if (excludeProperty.length > 0 && ofProperty.length > 0) {
       builder.addWarning("exclude and of are mutually exclusive; the 'exclude' parameter will be ignored");//TODO add QuickFix  : remove all exclude params

@@ -13,7 +13,6 @@ import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiVariable;
-import com.intellij.util.ArrayFactory;
 import com.intellij.util.StringBuilderSpinAllocator;
 import lombok.handlers.TransformationsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -32,11 +31,6 @@ import java.util.regex.Pattern;
  */
 public class PsiAnnotationUtil {
   private static final String[] EMPTY_STRING_ARRAY = new String[0];
-  public static ArrayFactory<String> STRING_ARRAY_FACTORY = new ArrayFactory<String>() {
-    public String[] create(final int count) {
-      return count == 0 ? EMPTY_STRING_ARRAY : new String[count];
-    }
-  };
 
   public static boolean isNotAnnotatedWith(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull final Class<? extends Annotation>... annotationTypes) {
     return !isAnnotatedWith(psiModifierListOwner, annotationTypes);
@@ -110,13 +104,13 @@ public class PsiAnnotationUtil {
   }
 
   @Nullable
-  public static <T> T getAnnotationValue(@NotNull PsiAnnotation psiAnnotation) {
+  public static String getAnnotationValue(@NotNull PsiAnnotation psiAnnotation) {
     return getAnnotationValue(psiAnnotation, "value");
   }
 
   @Nullable
-  public static <T> T getAnnotationValue(@NotNull PsiAnnotation psiAnnotation, @NotNull String parameter) {
-    T value = null;
+  public static String getAnnotationValue(@NotNull PsiAnnotation psiAnnotation, @NotNull String parameter) {
+    String value = null;
     PsiAnnotationMemberValue attributeValue = psiAnnotation.findAttributeValue(parameter);
     if (null != attributeValue) {
       value = resolveElementValue(attributeValue);
@@ -125,13 +119,13 @@ public class PsiAnnotationUtil {
   }
 
   @NotNull
-  public static <T> T[] getAnnotationValues(@NotNull PsiAnnotation psiAnnotation, @NotNull String parameter, ArrayFactory<T> f) {
-    T[] value = f.create(0);
+  public static String[] getAnnotationValues(@NotNull PsiAnnotation psiAnnotation, @NotNull String parameter) {
+    String[] value = EMPTY_STRING_ARRAY;
     PsiAnnotationMemberValue attributeValue = psiAnnotation.findAttributeValue(parameter);
     if (attributeValue instanceof PsiArrayInitializerMemberValue) {
       final PsiAnnotationMemberValue[] memberValues = ((PsiArrayInitializerMemberValue) attributeValue).getInitializers();
 
-      value = f.create(memberValues.length);
+      value = new String[memberValues.length];
       for (int i = 0; i < memberValues.length; i++) {
         value[i] = resolveElementValue(memberValues[i]);
       }
@@ -140,8 +134,8 @@ public class PsiAnnotationUtil {
   }
 
   @Nullable
-  public static <T> T getDeclaredAnnotationValue(@NotNull PsiAnnotation psiAnnotation, @NotNull String parameter) {
-    T value = null;
+  public static String getDeclaredAnnotationValue(@NotNull PsiAnnotation psiAnnotation, @NotNull String parameter) {
+    String value = null;
     PsiAnnotationMemberValue attributeValue = psiAnnotation.findDeclaredAttributeValue(parameter);
     if (null != attributeValue) {
       value = resolveElementValue(attributeValue);
@@ -149,14 +143,14 @@ public class PsiAnnotationUtil {
     return value;
   }
 
-  private static <T> T resolveElementValue(PsiElement psiElement) {
-    T value = null;
+  private static String resolveElementValue(PsiElement psiElement) {
+    String value = null;
     if (psiElement instanceof PsiReferenceExpression) {
       final PsiElement resolved = ((PsiReferenceExpression) psiElement).resolve();
 
       if (resolved instanceof PsiEnumConstant) {
         final PsiEnumConstant psiEnumConstant = (PsiEnumConstant) resolved;
-        value = (T) psiEnumConstant.getName();
+        value = psiEnumConstant.getName();
       } else if (resolved instanceof PsiVariable) {
         final PsiVariable psiVariable = (PsiVariable) resolved;
         final PsiExpression initializer = psiVariable.getInitializer();
@@ -165,7 +159,10 @@ public class PsiAnnotationUtil {
         }
       }
     } else if (psiElement instanceof PsiLiteralExpression) {
-      value = (T) ((PsiLiteralExpression) psiElement).getValue();
+      Object elementValue = ((PsiLiteralExpression) psiElement).getValue();
+      if (null != elementValue) {
+        value = elementValue.toString();
+      }
     }
     return value;
   }

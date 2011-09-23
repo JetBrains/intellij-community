@@ -38,7 +38,7 @@ public class DataProcessor extends AbstractLombokClassProcessor {
   protected boolean validateAnnotationOnRigthType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     boolean result = true;
     if (psiClass.isAnnotationType() || psiClass.isInterface() || psiClass.isEnum()) {
-      builder.addError("@Data is only supported on a class type");
+      builder.addError("'@Data' is only supported on a class type");
       result = false;
     }
     return result;

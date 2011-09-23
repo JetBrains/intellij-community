@@ -13,12 +13,12 @@ public class LombokProcessorUtil {
 
   @Nullable
   public static String getMethodVisibility(@NotNull PsiAnnotation psiAnnotation) {
-    return convertAcessLevelToJavaString(PsiAnnotationUtil.<String>getAnnotationValue(psiAnnotation, "value"));
+    return convertAcessLevelToJavaString(PsiAnnotationUtil.getAnnotationValue(psiAnnotation, "value"));
   }
 
   @Nullable
   public static String getAccessVisibity(@NotNull PsiAnnotation psiAnnotation) {
-    return convertAcessLevelToJavaString(PsiAnnotationUtil.<String>getAnnotationValue(psiAnnotation, "access"));
+    return convertAcessLevelToJavaString(PsiAnnotationUtil.getAnnotationValue(psiAnnotation, "access"));
   }
 
   @Nullable
