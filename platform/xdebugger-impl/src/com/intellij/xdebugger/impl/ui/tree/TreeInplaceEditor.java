@@ -15,7 +15,6 @@
  */
 package com.intellij.xdebugger.impl.ui.tree;
 
-import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.execution.ExecutionManager;
@@ -222,14 +221,13 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
     final Editor editor = getEditor();
     if (editor == null) return;
     
-    final Lookup activeLookup = LookupManager.getInstance(editor.getProject()).getActiveLookup();
+    final LookupImpl activeLookup = (LookupImpl)LookupManager.getInstance(editor.getProject()).getActiveLookup();
     if (activeLookup != null){
-      final JLayeredPane layeredPane = getTree().getRootPane().getLayeredPane();
-      final Point layeredPoint = SwingUtilities.convertPoint(sourceComponent, originalPoint, layeredPane);
-      if (activeLookup.getBounds().contains(layeredPoint)){
+      final Point lookupPoint = SwingUtilities.convertPoint(sourceComponent, originalPoint, activeLookup.getComponent());
+      if (activeLookup.getComponent().getBounds().contains(lookupPoint)){
         return; //mouse click inside lookup
       } else {
-        ((LookupImpl)activeLookup).hide(); //hide popup on mouse position changed
+        activeLookup.hide(); //hide popup on mouse position changed
       }
     }
 
