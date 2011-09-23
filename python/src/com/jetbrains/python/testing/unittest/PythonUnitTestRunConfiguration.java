@@ -34,7 +34,7 @@ public class PythonUnitTestRunConfiguration extends
   }
 
   @Override
-  public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
+  protected SettingsEditor<? extends RunConfiguration> createConfigurationEditor() {
     return new PythonUnitTestRunConfigurationEditor(getProject(), this);
   }
 

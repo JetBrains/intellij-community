@@ -6,6 +6,7 @@ import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
+import com.intellij.execution.configuration.AbstractRunConfiguration;
 import com.intellij.execution.configurations.CommandLineState;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -64,6 +65,10 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
   protected static boolean isDebug(ConfigurationPerRunnerSettings configurationSettings) {
     return PyDebugRunner.PY_DEBUG_RUNNER.equals(configurationSettings.getRunnerId());
+  }
+
+  private AbstractRunConfiguration.RunnerType getRunnerType() {
+    return isDebug() ? AbstractRunConfiguration.RunnerType.DEBUG : AbstractRunConfiguration.RunnerType.RUN;
   }
 
   public PythonCommandLineState(AbstractPythonRunConfiguration runConfiguration, ExecutionEnvironment env, List<Filter> filters) {
@@ -128,8 +133,15 @@ public abstract class PythonCommandLineState extends CommandLineState {
   protected ProcessHandler startProcess(CommandLinePatcher... patchers) throws ExecutionException {
     GeneralCommandLine commandLine = generateCommandLine(patchers);
 
+    // Extend command line
+    PythonRunConfigurationExtensionsManager.getInstance().patchCommandLine(myConfig, commandLine, getRunnerType());
+
     final ProcessHandler processHandler = doCreateProcess(commandLine);
     ProcessTerminatedListener.attach(processHandler);
+
+    // attach extensions
+    PythonRunConfigurationExtensionsManager.getInstance().attachExtensionsToProcess(myConfig, processHandler, getRunnerType());
+
     return processHandler;
   }
 

@@ -32,7 +32,7 @@ public class PythonNoseTestRunConfiguration extends AbstractPythonTestRunConfigu
   }
 
   @Override
-  public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
+  protected SettingsEditor<? extends RunConfiguration> createConfigurationEditor() {
     return new PythonNoseTestRunConfigurationEditor(getProject(), this);
   }
 

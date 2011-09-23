@@ -40,13 +40,16 @@
     <extendWordSelectionHandler implementation="com.jetbrains.python.editor.selectWord.PyStatementSelectionHandler"/>
     <extendWordSelectionHandler implementation="com.jetbrains.python.editor.selectWord.PyListSelectionHandler"/>
     <extendWordSelectionHandler implementation="com.jetbrains.python.editor.selectWord.PyCommaSelectionHandler"/>
-    <completion.contributor language="Python" implementationClass="com.jetbrains.python.codeInsight.completion.PyKeywordCompletionContributor"/>
+    <completion.contributor language="Python"
+                            implementationClass="com.jetbrains.python.codeInsight.completion.PyKeywordCompletionContributor"/>
     <completion.contributor language="Python"
                             implementationClass="com.jetbrains.python.codeInsight.completion.PySpecialMethodNamesCompletionContributor"/>
-    <completion.contributor language="Python" implementationClass="com.jetbrains.python.codeInsight.completion.PySuperMethodCompletionContributor"/>
+    <completion.contributor language="Python"
+                            implementationClass="com.jetbrains.python.codeInsight.completion.PySuperMethodCompletionContributor"/>
     <completion.contributor language="Python"
                             implementationClass="com.jetbrains.python.codeInsight.completion.PySuperClassAttributesCompletionContributor"/>
-    <completion.contributor language="Python" implementationClass="com.jetbrains.python.codeInsight.completion.PyDictKeyNamesCompletionContributor"/>
+    <completion.contributor language="Python"
+                            implementationClass="com.jetbrains.python.codeInsight.completion.PyDictKeyNamesCompletionContributor"/>
     <lang.tokenSeparatorGenerator language="Python" implementationClass="com.jetbrains.python.PyTokenSeparatorGenerator"/>
     <lang.elementManipulator forClass="com.jetbrains.python.psi.PyReferenceExpression"
                              implementationClass="com.jetbrains.python.psi.impl.PyReferenceExpressionManipulator"/>
@@ -76,6 +79,8 @@
                              implementationClass="com.jetbrains.python.codeInsight.PyDeclarationRangeHandler"/>
 
     <!-- Run/Debug -->
+    <applicationService serviceInterface="com.jetbrains.python.run.PythonRunConfigurationExtensionsManager"
+                        serviceImplementation="com.jetbrains.python.run.PythonRunConfigurationExtensionsManager"/>
     <configurationType implementation="com.jetbrains.python.run.PythonConfigurationType"/>
     <programRunner implementation="com.jetbrains.python.run.PythonRunner"/>
     <programRunner implementation="com.jetbrains.python.debugger.PyDebugRunner"/>
@@ -243,7 +248,8 @@
 
     <defaultLiveTemplatesProvider implementation="com.jetbrains.python.codeInsight.PyDefaultLiveTemplatesProvider"/>
 
-    <completion.contributor language="Python" implementationClass="com.jetbrains.python.codeInsight.completion.PyClassNameCompletionContributor"/>
+    <completion.contributor language="Python"
+                            implementationClass="com.jetbrains.python.codeInsight.completion.PyClassNameCompletionContributor"/>
     <weigher key="completion" implementationClass="com.jetbrains.python.codeInsight.completion.PythonCompletionWeigher" order="first"/>
     <typedHandler implementation="com.jetbrains.python.console.completion.PythonConsoleAutopopupBlockingHandler" id="pydevBlockAutoPopup"
                   order="first, before completionAutoPopup"/>
@@ -309,8 +315,17 @@
     <treeStructureProvider implementation="com.jetbrains.python.projectView.PyTreeStructureProvider"/>
 
     <project.converterProvider implementation="com.jetbrains.python.testing.converters.PythonTestConverterProvider"/>
-    
+
     <lang.parserDefinition language="Cython" implementationClass="com.jetbrains.cython.parser.CythonParserDefinition"/>
+
+    <coverageEngine implementation="com.jetbrains.python.coverage.PyCoverageEngine"/>
+    <coverageRunner implementation="com.jetbrains.python.coverage.PyCoverageRunner"/>
+
+    <!--<applicationService serviceInterface="org.jetbrains.plugins.ruby.coverage.RCovDeserializationService"-->
+    <!--serviceImplementation="org.jetbrains.plugins.ruby.coverage.RCovDeserializationService"/>-->
+
+    <projectService serviceInterface="com.jetbrains.python.coverage.PyCoverageAnnotator"
+                    serviceImplementation="com.jetbrains.python.coverage.PyCoverageAnnotator"/>
 
     <!-- Django -->
     <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.django.annotator.ViewMethodLineMarkerProvider"/>
@@ -430,7 +445,8 @@
       <category>Python</category>
     </intentionAction>
 
-    <lang.braceMatcher language="DjangoTemplate" implementationClass="com.jetbrains.django.lang.template.highlighting.DjangoTemplateBraceMatcher"/>
+    <lang.braceMatcher language="DjangoTemplate"
+                       implementationClass="com.jetbrains.django.lang.template.highlighting.DjangoTemplateBraceMatcher"/>
 
     <!-- App Engine -->
     <facetType implementation="com.jetbrains.appengine.facet.AppEngineFacetType"/>
@@ -563,8 +579,12 @@
     <extensionPoint qualifiedName="Pythonid.customTargetExpressionStubType"
                     interface="com.jetbrains.python.psi.impl.stubs.CustomTargetExpressionStubType"/>
     <extensionPoint qualifiedName="Pythonid.knownDecoratorProvider" interface="com.jetbrains.python.psi.PyKnownDecoratorProvider"/>
-    <extensionPoint qualifiedName="Pythonid.documentationLinkProvider" interface="com.jetbrains.python.documentation.PythonDocumentationLinkProvider"/>
-    <extensionPoint qualifiedName="Pythonid.importCandidateProvider" interface="com.jetbrains.python.codeInsight.imports.PyImportCandidateProvider"/>
+    <extensionPoint qualifiedName="Pythonid.documentationLinkProvider"
+                    interface="com.jetbrains.python.documentation.PythonDocumentationLinkProvider"/>
+    <extensionPoint qualifiedName="Pythonid.importCandidateProvider"
+                    interface="com.jetbrains.python.codeInsight.imports.PyImportCandidateProvider"/>
+    <extensionPoint qualifiedName="Pythonid.runConfigurationExtension"
+                    interface="com.jetbrains.python.run.PythonRunConfigurationExtension"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="Pythonid">
@@ -576,6 +596,7 @@
     <dumbAnnotator implementation="com.jetbrains.python.validation.DocStringAnnotator"/>
     <dumbAnnotator implementation="com.jetbrains.python.validation.PyDefinitionsAnnotator"/>
     <customTargetExpressionStubType implementation="com.jetbrains.python.psi.impl.stubs.PropertyStubType"/>
+    <runConfigurationExtension implementation="com.jetbrains.python.coverage.PythonCoverageRunConfigurationExtension"/>
 
     <pyClassMembersProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibClassMembersProvider"/>
     <typeProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider"/>
@@ -607,6 +628,14 @@
     </component>
     <component>
       <implementation-class>com.jetbrains.python.sdk.PythonSdkUpdater</implementation-class>
+    </component>
+    <component>
+      <interface-class>com.intellij.coverage.CoverageDataManager</interface-class>
+      <implementation-class>com.intellij.coverage.CoverageDataManagerImpl</implementation-class>
+      <option name="workspace" value="true"/>
+    </component>
+    <component>
+      <implementation-class>com.intellij.internal.statistic.updater.SendStatisticsProjectComponent</implementation-class>
     </component>
   </project-components>
 

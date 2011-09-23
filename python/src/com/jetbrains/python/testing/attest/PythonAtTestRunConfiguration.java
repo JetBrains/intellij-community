@@ -32,7 +32,7 @@ public class PythonAtTestRunConfiguration extends AbstractPythonTestRunConfigura
   }
 
   @Override
-  public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
+  protected SettingsEditor<? extends RunConfiguration> createConfigurationEditor() {
     return new PythonAtTestRunConfigurationEditor(getProject(), this);
   }
 
