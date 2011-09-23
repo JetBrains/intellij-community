@@ -14,7 +14,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.IndexingDataKeys;
 import com.jetbrains.python.*;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.psi.*;
@@ -108,7 +108,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     VirtualFile virtualFile = getVirtualFile();
 
     if (virtualFile == null) {
-      virtualFile = getUserData(FileBasedIndex.VIRTUAL_FILE);
+      virtualFile = getUserData(IndexingDataKeys.VIRTUAL_FILE);
     }
     if (virtualFile == null) {
       virtualFile = getViewProvider().getVirtualFile();
