@@ -15,7 +15,6 @@
  */
 package com.intellij.refactoring.typeMigration;
 
-import com.intellij.lang.StdLanguages;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;

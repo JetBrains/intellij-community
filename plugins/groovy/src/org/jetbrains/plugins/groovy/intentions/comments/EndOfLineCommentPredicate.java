@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.intentions.comments;
 
-import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.javadoc.PsiDocComment;

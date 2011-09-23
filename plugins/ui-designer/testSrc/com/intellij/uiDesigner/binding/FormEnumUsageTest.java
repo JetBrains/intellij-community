@@ -22,7 +22,6 @@
  */
 package com.intellij.uiDesigner.binding;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
