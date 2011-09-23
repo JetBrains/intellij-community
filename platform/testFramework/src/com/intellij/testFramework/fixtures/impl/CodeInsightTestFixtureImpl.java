@@ -1366,13 +1366,13 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     for (Iterator<HighlightInfo> it = infos.iterator(); it.hasNext();) {
       final HighlightInfo info = it.next();
       if (prevInfo != null &&
-          info.getSeverity() == HighlightSeverity.INFORMATION &&
+          info.getSeverity() == HighlightInfoType.SYMBOL_TYPE_SEVERITY &&
           info.description == null &&
           info.startOffset == prevInfo.startOffset &&
           info.endOffset == prevInfo.endOffset) {
         it.remove();
       }
-      prevInfo = info.getSeverity() == HighlightInfoType.INJECTED_FRAGMENT_SEVERITY ? info : null;
+      prevInfo = info.type == HighlightInfoType.INJECTED_LANGUAGE_FRAGMENT ? info : null;
     }
   }
 
