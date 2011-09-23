@@ -15,7 +15,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.AllowedApiFilterExtension;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.GlobalSearchScopes;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -93,7 +92,7 @@ public class ConvertFieldToThreadLocalIntention extends PsiElementBaseIntentionA
 
       final TypeMigrationRules rules = new TypeMigrationRules(fromType);
       rules.setMigrationRootType(toType);
-      rules.setBoundScope(GlobalSearchScopes.fileScope(file));
+      rules.setBoundScope(GlobalSearchScope.fileScope(file));
       final TypeMigrationLabeler labeler = new TypeMigrationLabeler(rules);
       labeler.getMigratedUsages(false, psiField);
       for (PsiReference reference : refs) {
