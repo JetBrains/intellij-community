@@ -76,10 +76,12 @@ public class ScopeViewPane extends AbstractProjectViewPane {
             final String id = myProjectView.getCurrentViewId();
             myProjectView.removeProjectPane(ScopeViewPane.this);
             myProjectView.addProjectPane(ScopeViewPane.this);
-            if (Comparing.strEqual(id, getId())) {
-              myProjectView.changeView(getId(), subId);
-            } else {
-              myProjectView.changeView(id);
+            if (id != null) {
+              if (Comparing.strEqual(id, getId())) {
+                myProjectView.changeView(id, subId);
+              } else {
+                myProjectView.changeView(id);
+              }
             }
           }
         },10);
