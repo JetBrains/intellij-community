@@ -134,7 +134,7 @@ public class Mappings {
             }
         }
 
-        for (StringCache.S fileName : delta.sourceFileToClasses.keySet()) {
+        for (StringCache.S fileName : compiledFiles /* delta.sourceFileToClasses.keySet()*/) {
             if (safeFiles.contains(fileName)) {
                 continue;
             }
@@ -146,7 +146,7 @@ public class Mappings {
             final Set<UsageRepr.AnnotationUsage> annotationQuery = new HashSet<UsageRepr.AnnotationUsage>();
             final Map<UsageRepr.Usage, UsageConstraint> usageConstraints = new HashMap<UsageRepr.Usage, UsageConstraint>();
 
-            final Difference.Specifier<ClassRepr> classDiff = Difference.make(pastClasses, classes);
+            final Difference.Specifier<ClassRepr> classDiff = Difference.make(pastClasses, classes != null ? classes : new HashSet<ClassRepr>());
 
             for (Pair<ClassRepr, Difference> changed : classDiff.changed()) {
                 final ClassRepr it = changed.fst;

@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/src/DeleteClassPackageDoesntMatchRoot.iml" filepath="$PROJECT_DIR$/src/DeleteClassPackageDoesntMatchRoot.iml" />
+      <module fileurl="file://$PROJECT_DIR$//DeleteClassPackageDoesntMatchRoot.iml" filepath="$PROJECT_DIR$//DeleteClassPackageDoesntMatchRoot.iml" />
     </modules>
   </component>
 </project>

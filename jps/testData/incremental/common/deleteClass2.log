@@ -1,0 +1,24 @@
+Request to make modules:
+module DeleteClass2
+End of request
+digraph X {
+  DeleteClass2[label="DeleteClass2"];
+}
+digraph X {
+  DeleteClass2[label="DeleteClass2"];
+}
+Propagated modules:
+module DeleteClass2
+End of propagated
+Cleaning output files:
+out/production/DeleteClass2/packageA/Server.class
+End of files
+Compiling files:
+src/packageA/Server.java
+End of files
+Cleaning output files:
+out/production/DeleteClass2/packageA/Client.class
+End of files
+Compiling files:
+src/packageA/Client.java
+End of files

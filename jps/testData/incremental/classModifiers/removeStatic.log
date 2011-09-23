@@ -11,7 +11,6 @@ Propagated modules:
 module RemoveStatic
 End of propagated
 Cleaning output files:
-out/production/RemoveStatic//A.class
 out/production/RemoveStatic/A$B.class
 out/production/RemoveStatic/A.class
 End of files

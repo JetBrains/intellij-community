@@ -17,7 +17,6 @@ Compiling files:
 src/Server.java
 End of files
 Cleaning output files:
-out/production/ChangeDefinitionToClass2//Factory.class
 out/production/ChangeDefinitionToClass2/Client.class
 out/production/ChangeDefinitionToClass2/Factory$1.class
 out/production/ChangeDefinitionToClass2/Factory.class
