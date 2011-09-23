@@ -639,9 +639,6 @@
       <implementation-class>com.intellij.coverage.CoverageDataManagerImpl</implementation-class>
       <option name="workspace" value="true"/>
     </component>
-    <component>
-      <implementation-class>com.intellij.internal.statistic.updater.SendStatisticsProjectComponent</implementation-class>
-    </component>
   </project-components>
 
   <actions>
