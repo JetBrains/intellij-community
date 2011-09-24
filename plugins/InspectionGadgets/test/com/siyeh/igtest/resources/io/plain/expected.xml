@@ -97,5 +97,12 @@
     <problem_class>I/O resource opened but not safely closed</problem_class>
     <description>'FileInputStream' should be opened in front of a try block and closed in the corresponding finally block #loc</description>
   </problem>
+
+  <problem>
+    <file>IOResourceInspection.java</file>
+    <line>148</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">I/O resource opened but not safely closed</problem_class>
+    <description>'InputStream' should be opened in front of a 'try' block and closed in the corresponding 'finally' block #loc</description>
+  </problem>
 </problems>
 
