@@ -4,15 +4,18 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiAnnotationMemberValue;
 import com.intellij.psi.PsiArrayInitializerMemberValue;
+import com.intellij.psi.PsiClassObjectAccessExpression;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiEnumConstant;
-import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.PsiVariable;
+import com.intellij.psi.util.ClassUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
 import lombok.handlers.TransformationsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -21,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -83,9 +87,7 @@ public class PsiAnnotationUtil {
 
   @NotNull
   public static String getSimpleNameOf(@NotNull PsiAnnotation psiAnnotation) {
-    final String name = StringUtil.notNullize(psiAnnotation.getQualifiedName());
-    final int idx = name.lastIndexOf(".");
-    return idx == -1 ? name : name.substring(idx + 1);
+    return ClassUtil.extractClassName(StringUtil.notNullize(psiAnnotation.getQualifiedName()));
   }
 
   @NotNull
@@ -104,65 +106,83 @@ public class PsiAnnotationUtil {
   }
 
   @Nullable
-  public static String getAnnotationValue(@NotNull PsiAnnotation psiAnnotation) {
-    return getAnnotationValue(psiAnnotation, "value");
-  }
-
-  @Nullable
-  public static String getAnnotationValue(@NotNull PsiAnnotation psiAnnotation, @NotNull String parameter) {
-    String value = null;
-    PsiAnnotationMemberValue attributeValue = psiAnnotation.findAttributeValue(parameter);
-    if (null != attributeValue) {
-      value = resolveElementValue(attributeValue);
-    }
-    return value;
+  public static <T> T getAnnotationValue(@NotNull PsiAnnotation psiAnnotation, Class<T> asClass) {
+    return getAnnotationValue(psiAnnotation, "value", asClass);
   }
 
   @NotNull
-  public static String[] getAnnotationValues(@NotNull PsiAnnotation psiAnnotation, @NotNull String parameter) {
-    String[] value = EMPTY_STRING_ARRAY;
+  public static <T> Collection<T> getAnnotationValues(@NotNull PsiAnnotation psiAnnotation, @NotNull String parameter, @NotNull Class<T> asClass) {
+    Collection<T> result = Collections.emptyList();
     PsiAnnotationMemberValue attributeValue = psiAnnotation.findAttributeValue(parameter);
     if (attributeValue instanceof PsiArrayInitializerMemberValue) {
       final PsiAnnotationMemberValue[] memberValues = ((PsiArrayInitializerMemberValue) attributeValue).getInitializers();
+      result = new ArrayList<T>(memberValues.length);
 
-      value = new String[memberValues.length];
-      for (int i = 0; i < memberValues.length; i++) {
-        value[i] = resolveElementValue(memberValues[i]);
+      for (PsiAnnotationMemberValue memberValue : memberValues) {
+        T value = resolveElementValue(memberValue, asClass);
+        if (null != value) {
+          result.add(value);
+        }
+      }
+    } else if (null != attributeValue) {
+      T value = resolveElementValue(attributeValue, asClass);
+      if (null != value) {
+        result = Collections.singletonList(value);
       }
     }
-    return value;
+    return result;
   }
 
   @Nullable
-  public static String getDeclaredAnnotationValue(@NotNull PsiAnnotation psiAnnotation, @NotNull String parameter) {
-    String value = null;
-    PsiAnnotationMemberValue attributeValue = psiAnnotation.findDeclaredAttributeValue(parameter);
+  public static <T> T getAnnotationValue(@NotNull PsiAnnotation psiAnnotation, @NotNull String parameter, @NotNull Class<T> asClass) {
+    T result = null;
+    PsiAnnotationMemberValue attributeValue = psiAnnotation.findAttributeValue(parameter);
     if (null != attributeValue) {
-      value = resolveElementValue(attributeValue);
+      result = resolveElementValue(attributeValue, asClass);
     }
-    return value;
+    return result;
   }
 
-  private static String resolveElementValue(PsiElement psiElement) {
-    String value = null;
+  @Nullable
+  private static <T> T resolveElementValue(@NotNull PsiElement psiElement, @NotNull Class<T> asClass) {
+    T value = null;
     if (psiElement instanceof PsiReferenceExpression) {
       final PsiElement resolved = ((PsiReferenceExpression) psiElement).resolve();
 
       if (resolved instanceof PsiEnumConstant) {
         final PsiEnumConstant psiEnumConstant = (PsiEnumConstant) resolved;
-        value = psiEnumConstant.getName();
+        //Enums are supported as VALUE-Strings only
+        if (asClass.isAssignableFrom(String.class)) {
+          value = (T) psiEnumConstant.getName();
+        }
       } else if (resolved instanceof PsiVariable) {
         final PsiVariable psiVariable = (PsiVariable) resolved;
-        final PsiExpression initializer = psiVariable.getInitializer();
-        if (null != initializer) {
-          value = resolveElementValue(initializer);
+        Object elementValue = psiVariable.computeConstantValue();
+        if (null != elementValue && asClass.isAssignableFrom(elementValue.getClass())) {
+          value = (T) elementValue;
         }
       }
     } else if (psiElement instanceof PsiLiteralExpression) {
       Object elementValue = ((PsiLiteralExpression) psiElement).getValue();
-      if (null != elementValue) {
-        value = elementValue.toString();
+      if (null != elementValue && asClass.isAssignableFrom(elementValue.getClass())) {
+        value = (T) elementValue;
       }
+    } else if (psiElement instanceof PsiClassObjectAccessExpression) {
+      PsiTypeElement elementValue = ((PsiClassObjectAccessExpression) psiElement).getOperand();
+      //Enums are supported as VALUE-Strings only
+      if (asClass.isAssignableFrom(PsiType.class)) {
+        value = (T) elementValue.getType();
+      }
+    }
+    return value;
+  }
+
+  @Nullable
+  public static <T> T getDeclaredAnnotationValue(@NotNull PsiAnnotation psiAnnotation, @NotNull String parameter, @NotNull Class<T> asClass) {
+    T value = null;
+    PsiAnnotationMemberValue attributeValue = psiAnnotation.findDeclaredAttributeValue(parameter);
+    if (null != attributeValue) {
+      value = resolveElementValue(attributeValue, asClass);
     }
     return value;
   }
@@ -173,26 +193,13 @@ public class PsiAnnotationUtil {
     PsiModifierList modifierList = psiField.getModifierList();
     if (null != modifierList) {
       for (PsiAnnotation psiAnnotation : modifierList.getAnnotations()) {
-        final String qualifiedName = StringUtil.notNullize(psiAnnotation.getQualifiedName());
-        final String annotationName = extractAnnotationName(qualifiedName);
+        final String annotationName = getSimpleNameOf(psiAnnotation);
         if (TransformationsUtil.NON_NULL_PATTERN.matcher(annotationName).matches()) {
-          annotationsToCopy.add(qualifiedName);
+          annotationsToCopy.add(psiAnnotation.getQualifiedName());
         }
       }
     }
     return annotationsToCopy;
-  }
-
-  @NotNull
-  public static String extractAnnotationName(@NotNull String qualifiedName) {
-    final String annotationName;
-    int indexOfLastPoint = qualifiedName.lastIndexOf('.');
-    if (indexOfLastPoint != -1) {
-      annotationName = qualifiedName.substring(indexOfLastPoint + 1);
-    } else {
-      annotationName = qualifiedName;
-    }
-    return annotationName;
   }
 
   @NotNull

@@ -50,8 +50,8 @@ public class GetterFieldProcessor extends AbstractLombokFieldProcessor {
     final String methodVisibity = LombokProcessorUtil.getMethodVisibility(psiAnnotation);
     result = null != methodVisibity;
 
-    final String lazyAsString = PsiAnnotationUtil.getAnnotationValue(psiAnnotation, "lazy");
-    final Boolean lazy = Boolean.valueOf(lazyAsString);
+    final Boolean lazyObj = PsiAnnotationUtil.getAnnotationValue(psiAnnotation, "lazy", Boolean.class);
+    final boolean lazy = null != lazyObj && lazyObj;
     if (null == methodVisibity && lazy) {
       builder.addWarning("'lazy' does not work with AccessLevel.NONE.");
     }

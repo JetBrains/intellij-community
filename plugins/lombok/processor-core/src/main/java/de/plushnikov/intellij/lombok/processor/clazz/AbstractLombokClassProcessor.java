@@ -7,6 +7,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.util.PsiTreeUtil;
 import de.plushnikov.intellij.lombok.LombokConstants;
 import de.plushnikov.intellij.lombok.problem.LombokProblem;
 import de.plushnikov.intellij.lombok.problem.ProblemBuilder;
@@ -14,7 +15,6 @@ import de.plushnikov.intellij.lombok.problem.ProblemEmptyBuilder;
 import de.plushnikov.intellij.lombok.problem.ProblemNewBuilder;
 import de.plushnikov.intellij.lombok.processor.AbstractLombokProcessor;
 import de.plushnikov.intellij.lombok.util.PsiAnnotationUtil;
-import de.plushnikov.intellij.lombok.util.PsiElementUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -37,7 +37,7 @@ public abstract class AbstractLombokClassProcessor extends AbstractLombokProcess
   public Collection<LombokProblem> verifyAnnotation(@NotNull PsiAnnotation psiAnnotation) {
     Collection<LombokProblem> result = Collections.emptyList();
 
-    PsiClass psiClass = PsiElementUtil.getParentOfType(psiAnnotation, PsiClass.class);
+    PsiClass psiClass = PsiTreeUtil.getParentOfType(psiAnnotation, PsiClass.class);
     if (null != psiClass) {
       result = new ArrayList<LombokProblem>(1);
       validate(psiAnnotation, psiClass, new ProblemNewBuilder(result));
@@ -57,8 +57,8 @@ public abstract class AbstractLombokClassProcessor extends AbstractLombokProcess
   protected abstract <Psi extends PsiElement> void processIntern(PsiClass psiClass, PsiAnnotation psiAnnotation, List<Psi> target);
 
   protected void validateCallSuperParam(PsiAnnotation psiAnnotation, PsiClass psiClass, ProblemBuilder builder, String generatedMethodName) {
-    String callSuperProperty = PsiAnnotationUtil.getDeclaredAnnotationValue(psiAnnotation, "callSuper");
-    if (StringUtil.isEmptyOrSpaces(callSuperProperty)) {
+    Boolean callSuperProperty = PsiAnnotationUtil.getDeclaredAnnotationValue(psiAnnotation, "callSuper", Boolean.class);
+    if (null == callSuperProperty) {
       final PsiClass superClass = psiClass.getSuperClass();
       if (null != superClass && !CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName())) {
         builder.addWarning("Generating " + generatedMethodName + " implementation but without a call to superclass, " +
@@ -68,7 +68,7 @@ public abstract class AbstractLombokClassProcessor extends AbstractLombokProcess
     }
   }
 
-  protected void validateOfParam(PsiClass psiClass, ProblemBuilder builder, String[] ofProperty) {
+  protected void validateOfParam(PsiClass psiClass, ProblemBuilder builder, Collection<String> ofProperty) {
     for (String fieldName : ofProperty) {
       if (!StringUtil.isEmptyOrSpaces(fieldName)) {
         PsiField fieldByName = psiClass.findFieldByName(fieldName, false);
@@ -79,7 +79,7 @@ public abstract class AbstractLombokClassProcessor extends AbstractLombokProcess
     }
   }
 
-  protected void validateExcludeParam(PsiClass psiClass, ProblemBuilder builder, String[] excludeProperty) {
+  protected void validateExcludeParam(PsiClass psiClass, ProblemBuilder builder, Collection<String> excludeProperty) {
     for (String fieldName : excludeProperty) {
       if (!StringUtil.isEmptyOrSpaces(fieldName)) {
         PsiField fieldByName = psiClass.findFieldByName(fieldName, false);

@@ -3,12 +3,12 @@ package de.plushnikov.intellij.lombok.processor.field;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
+import com.intellij.psi.util.PsiTreeUtil;
 import de.plushnikov.intellij.lombok.problem.LombokProblem;
 import de.plushnikov.intellij.lombok.problem.ProblemBuilder;
 import de.plushnikov.intellij.lombok.problem.ProblemEmptyBuilder;
 import de.plushnikov.intellij.lombok.problem.ProblemNewBuilder;
 import de.plushnikov.intellij.lombok.processor.AbstractLombokProcessor;
-import de.plushnikov.intellij.lombok.util.PsiElementUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -31,7 +31,7 @@ public abstract class AbstractLombokFieldProcessor extends AbstractLombokProcess
   public Collection<LombokProblem> verifyAnnotation(@NotNull PsiAnnotation psiAnnotation) {
     Collection<LombokProblem> result = Collections.emptyList();
 
-    PsiField psiField = PsiElementUtil.getParentOfType(psiAnnotation, PsiField.class);
+    PsiField psiField = PsiTreeUtil.getParentOfType(psiAnnotation, PsiField.class);
     if (null != psiField) {
       result = new ArrayList<LombokProblem>(1);
       validate(psiAnnotation, psiField, new ProblemNewBuilder(result));

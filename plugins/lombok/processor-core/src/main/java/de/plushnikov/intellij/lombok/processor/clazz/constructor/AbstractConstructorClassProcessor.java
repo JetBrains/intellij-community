@@ -86,9 +86,9 @@ public abstract class AbstractConstructorClassProcessor extends AbstractLombokCl
   protected Collection<PsiMethod> createConstructorMethod(@NotNull PsiClass psiClass, @NotNull String methodVisibility, @NotNull PsiAnnotation psiAnnotation, @NotNull Collection<PsiField> params) {
     //TODO add check if constructor already exists
 
-    final String suppressConstructorProperties = PsiAnnotationUtil.getAnnotationValue(psiAnnotation, "suppressConstructorProperties");
+    final String suppressConstructorProperties = PsiAnnotationUtil.getAnnotationValue(psiAnnotation, "suppressConstructorProperties", String.class);
 
-    final String staticName = PsiAnnotationUtil.getAnnotationValue(psiAnnotation, "staticName");
+    final String staticName = PsiAnnotationUtil.getAnnotationValue(psiAnnotation, "staticName", String.class);
     final boolean staticConstrRequired = !StringUtil.isEmptyOrSpaces(staticName);
 
     final String constrVisibility = staticConstrRequired || psiClass.isEnum() ? PsiModifier.PRIVATE : methodVisibility;

@@ -42,8 +42,8 @@ public class GetterProcessor extends AbstractLombokClassProcessor {
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     final boolean result = validateAnnotationOnRigthType(psiClass, builder) && validateVisibility(psiAnnotation);
 
-    final String lazyAsString = PsiAnnotationUtil.getAnnotationValue(psiAnnotation, "lazy");
-    if (Boolean.valueOf(lazyAsString)) {
+    final Boolean lazy = PsiAnnotationUtil.getAnnotationValue(psiAnnotation, "lazy", Boolean.class);
+    if (null != lazy && lazy) {
       builder.addWarning("'lazy' is not supported for @Getter on a type");
     }
 

@@ -7,10 +7,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.util.PsiTreeUtil;
 import de.plushnikov.intellij.lombok.problem.LombokProblem;
 import de.plushnikov.intellij.lombok.problem.ProblemNewBuilder;
 import de.plushnikov.intellij.lombok.util.PsiAnnotationUtil;
-import de.plushnikov.intellij.lombok.util.PsiElementUtil;
 import lombok.Synchronized;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,13 +36,13 @@ public class SynchronizedProcessor extends AbstractLombokProcessor {
 
     final ProblemNewBuilder problemNewBuilder = new ProblemNewBuilder(result);
 
-    PsiMethod psiMethod = PsiElementUtil.getParentOfType(psiAnnotation, PsiMethod.class);
+    PsiMethod psiMethod = PsiTreeUtil.getParentOfType(psiAnnotation, PsiMethod.class);
     if (null != psiMethod) {
       if (psiMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
         problemNewBuilder.addError("'@Synchronized' is legal only on concrete methods.");//TODO add QuickFix for make method not abstract
       }
 
-      final String lockFieldName = PsiAnnotationUtil.getAnnotationValue(psiAnnotation, "value");
+      final String lockFieldName = PsiAnnotationUtil.getAnnotationValue(psiAnnotation, "value", String.class);
       if (StringUtil.isNotEmpty(lockFieldName)) {
         final PsiClass containingClass = psiMethod.getContainingClass();
 

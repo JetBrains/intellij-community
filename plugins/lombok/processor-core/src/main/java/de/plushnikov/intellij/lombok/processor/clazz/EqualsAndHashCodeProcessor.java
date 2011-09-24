@@ -50,10 +50,10 @@ public class EqualsAndHashCodeProcessor extends AbstractLombokClassProcessor {
     if (result) {
       validateExistingMethods(psiClass, builder);
     }
-    final String[] excludeProperty = PsiAnnotationUtil.getAnnotationValues(psiAnnotation, "exclude");
-    final String[] ofProperty = PsiAnnotationUtil.getAnnotationValues(psiAnnotation, "of");
+    final Collection<String> excludeProperty = PsiAnnotationUtil.getAnnotationValues(psiAnnotation, "exclude", String.class);
+    final Collection<String> ofProperty = PsiAnnotationUtil.getAnnotationValues(psiAnnotation, "of", String.class);
 
-    if (excludeProperty.length > 0 && ofProperty.length > 0) {
+    if (!excludeProperty.isEmpty() && !ofProperty.isEmpty()) {
       builder.addWarning("exclude and of are mutually exclusive; the 'exclude' parameter will be ignored");//TODO add QuickFix  : remove all exclude params
     } else {
       validateExcludeParam(psiClass, builder, excludeProperty);
@@ -67,8 +67,8 @@ public class EqualsAndHashCodeProcessor extends AbstractLombokClassProcessor {
   }
 
   protected void validateCallSuperParamForObject(PsiAnnotation psiAnnotation, PsiClass psiClass, ProblemBuilder builder) {
-    String callSuperProperty = PsiAnnotationUtil.getDeclaredAnnotationValue(psiAnnotation, "callSuper");
-    if (Boolean.valueOf(callSuperProperty)) {
+    Boolean callSuperProperty = PsiAnnotationUtil.getAnnotationValue(psiAnnotation, "callSuper", Boolean.class);
+    if (null != callSuperProperty && callSuperProperty) {
       final PsiClass superClass = psiClass.getSuperClass();
       if (null != superClass && CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName())) {
         builder.addError("Generating equals/hashCode with a supercall to java.lang.Object is pointless.");//TODO add QuickFix : set callSuper param = false

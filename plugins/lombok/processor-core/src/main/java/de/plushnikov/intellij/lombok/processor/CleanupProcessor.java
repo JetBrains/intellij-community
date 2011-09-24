@@ -8,10 +8,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.util.PsiTreeUtil;
 import de.plushnikov.intellij.lombok.problem.LombokProblem;
 import de.plushnikov.intellij.lombok.problem.ProblemNewBuilder;
 import de.plushnikov.intellij.lombok.util.PsiAnnotationUtil;
-import de.plushnikov.intellij.lombok.util.PsiElementUtil;
 import lombok.Cleanup;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,9 +37,9 @@ public class CleanupProcessor extends AbstractLombokProcessor {
     Collection<LombokProblem> result = new ArrayList<LombokProblem>(2);
     final ProblemNewBuilder problemNewBuilder = new ProblemNewBuilder(result);
 
-    PsiLocalVariable psiVariable = PsiElementUtil.getParentOfType(psiAnnotation, PsiLocalVariable.class);
+    PsiLocalVariable psiVariable = PsiTreeUtil.getParentOfType(psiAnnotation, PsiLocalVariable.class);
     if (null != psiVariable) {
-      final String cleanupName = PsiAnnotationUtil.getAnnotationValue(psiAnnotation, "value");
+      final String cleanupName = PsiAnnotationUtil.getAnnotationValue(psiAnnotation, "value", String.class);
 
       if (StringUtil.isEmptyOrSpaces(cleanupName)) {
         problemNewBuilder.addError("'@Cleanup': value cannot be the empty string");
