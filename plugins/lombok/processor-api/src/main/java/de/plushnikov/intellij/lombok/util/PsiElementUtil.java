@@ -1,13 +1,13 @@
 package de.plushnikov.intellij.lombok.util;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -134,8 +134,34 @@ public class PsiElementUtil {
     return type1Text.equals(type2Text);
   }
 
-  @Nullable
-  public static <T extends PsiElement> T getParentOfType(@Nullable final PsiElement psiElement, @NotNull final Class<? extends T>... clazzes) {
-    return PsiTreeUtil.getParentOfType(psiElement, clazzes);
+  public static boolean methodMatches(@NotNull Pair<PsiMethod, PsiSubstitutor> firstPair, @NotNull Pair<PsiMethod, PsiSubstitutor> secondPair) {
+    final PsiMethod firstMethod = firstPair.getFirst();
+    final PsiMethod secondMethod = secondPair.getFirst();
+    if (!firstMethod.getName().equals(secondMethod.getName())) {
+      return false;
+    }
+
+    PsiParameterList firstMethodParameterList = firstMethod.getParameterList();
+    PsiParameterList secondMethodParameterList = secondMethod.getParameterList();
+    if (firstMethodParameterList.getParametersCount() != secondMethodParameterList.getParametersCount()) {
+      return false;
+    }
+
+    PsiParameter[] firstMethodParameterListParameters = firstMethodParameterList.getParameters();
+    PsiParameter[] secondMethodParameterListParameters = secondMethodParameterList.getParameters();
+    PsiSubstitutor firstSubstitutor = firstPair.getSecond();
+    PsiSubstitutor secondSubstitutor = secondPair.getSecond();
+    for (int i = 0; i < firstMethodParameterListParameters.length; i++) {
+      PsiType firstMethodParameterListParameterType = firstSubstitutor.substitute(firstMethodParameterListParameters[i].getType());
+      PsiType secondMethodParameterListParameterType = secondSubstitutor.substitute(secondMethodParameterListParameters[i].getType());
+      if (PsiType.NULL.equals(firstMethodParameterListParameterType)) {
+        continue;
+      }
+      if (!typesAreEquivalent(firstMethodParameterListParameterType, secondMethodParameterListParameterType)) {
+        return false;
+      }
+    }
+
+    return true;
   }
 }
