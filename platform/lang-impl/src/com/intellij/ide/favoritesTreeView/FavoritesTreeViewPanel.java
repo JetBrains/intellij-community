@@ -78,7 +78,6 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
 
   public static final DataKey<String> FAVORITES_LIST_NAME_DATA_KEY = DataKey.create("FavoritesListName");
   protected Project myProject;
-  private final String myHelpId;
   protected DnDAwareTree myTree;
 
   private final MyDeletePSIElementProvider myDeletePSIElementProvider = new MyDeletePSIElementProvider();
@@ -86,10 +85,9 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
 
   private final IdeView myIdeView = new MyIdeView();
 
-  public FavoritesTreeViewPanel(Project project, String helpId) {
+  public FavoritesTreeViewPanel(Project project) {
     super(new BorderLayout());
     myProject = project;
-    myHelpId = helpId;
 
     myFavoritesTreeStructure = new FavoritesTreeStructure(project);
     DefaultMutableTreeNode root = new DefaultMutableTreeNode();
@@ -245,7 +243,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
       return myCopyPasteDelegator.getPasteProvider();
     }
     if (PlatformDataKeys.HELP_ID.is(dataId)) {
-      return myHelpId;
+      return "reference.toolWindows.favorites";
     }
     if (LangDataKeys.PSI_ELEMENT.is(dataId)) {
       PsiElement[] elements = getSelectedPsiElements();

@@ -46,7 +46,7 @@ public class FavoritesPanel {
 
   public FavoritesPanel(Project project) {
     myProject = project;
-    myViewPanel = new FavoritesTreeViewPanel(myProject, null);
+    myViewPanel = new FavoritesTreeViewPanel(myProject);
     myTree = myViewPanel.getTree();
     myTreeBuilder = myViewPanel.getBuilder();
     if (myTreeBuilder != null) {
