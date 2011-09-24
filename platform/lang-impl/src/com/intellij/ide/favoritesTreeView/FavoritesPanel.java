@@ -55,9 +55,9 @@ public class FavoritesPanel {
         @Override
         public int compare(NodeDescriptor nd1, NodeDescriptor nd2) {
           if (nd1 instanceof FavoritesTreeNodeDescriptor && nd2 instanceof FavoritesTreeNodeDescriptor) {
-            FavoritesTreeNodeDescriptor fd1 = (FavoritesTreeNodeDescriptor)nd1;
-            FavoritesTreeNodeDescriptor fd2 = (FavoritesTreeNodeDescriptor)nd2;
-            return 0;//super.compare(fd1.getElement(), fd2.getElement()); todo
+            final AbstractTreeNode e1 = ((FavoritesTreeNodeDescriptor)nd1).getElement();
+            final AbstractTreeNode e2 = ((FavoritesTreeNodeDescriptor)nd2).getElement();
+            return e1 == null || e2 == null ? 0 : e1.getName().compareToIgnoreCase(e2.getName());
           }
           return 0;
         }
