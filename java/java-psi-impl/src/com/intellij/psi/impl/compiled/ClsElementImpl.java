@@ -24,6 +24,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettingsFacade;
 import com.intellij.psi.impl.PsiElementBase;
+import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -123,7 +124,7 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
       ((ClsFileImpl)getContainingFile()).getMirror();
       mirror = myMirror;
     }
-    return mirror.getPsi();
+    return SourceTreeToPsiMap.treeElementToPsi(mirror);
   }
 
   public final TextRange getTextRange() {
