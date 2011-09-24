@@ -17,11 +17,15 @@
 package com.intellij.ide.favoritesTreeView.actions;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.favoritesTreeView.FavoritesListNode;
 import com.intellij.ide.favoritesTreeView.FavoritesManager;
 import com.intellij.ide.favoritesTreeView.FavoritesTreeNodeDescriptor;
 import com.intellij.ide.favoritesTreeView.FavoritesTreeViewPanel;
+import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,11 +47,31 @@ public class SendToFavoritesGroup extends ActionGroup{
     final FavoritesManager favoritesManager = FavoritesManager.getInstance(project);
     final DataContext dataContext = e.getDataContext();
     FavoritesTreeNodeDescriptor[] roots = FavoritesTreeViewPanel.CONTEXT_FAVORITES_ROOTS_DATA_KEY.getData(dataContext);
-    String listName = FavoritesTreeViewPanel.FAVORITES_LIST_NAME_DATA_KEY.getData(dataContext);
-    if (roots == null || roots.length == 0 || listName == null) {
+    
+    if (roots == null || roots.length == 0) {
       return EMPTY_ARRAY;
     }
-
+    
+    String listName = null;
+    for (FavoritesTreeNodeDescriptor root : roots) {
+      final AbstractTreeNode element = root.getElement();
+      if (element instanceof FavoritesListNode) {
+        return EMPTY_ARRAY;
+      }
+      final NodeDescriptor parent = root.getParentDescriptor();
+      if (!(parent instanceof FavoritesTreeNodeDescriptor)) {
+        return EMPTY_ARRAY;
+      }
+      String name = ((FavoritesListNode)parent.getElement()).getName();
+      if (listName == null) {
+        listName = name;
+      }
+      if (!StringUtil.equals(listName, name)) {
+        return EMPTY_ARRAY;
+      }
+    }
+    
+    
     final String[] allLists = favoritesManager.getAvailableFavoritesLists();
     List<AnAction> actions = new ArrayList<AnAction>();
 
