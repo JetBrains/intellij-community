@@ -7,6 +7,7 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiType;
 import com.intellij.util.StringBuilderSpinAllocator;
 import de.plushnikov.intellij.lombok.LombokConstants;
 import de.plushnikov.intellij.lombok.UserMapKeys;
@@ -14,6 +15,8 @@ import de.plushnikov.intellij.lombok.problem.ProblemBuilder;
 import de.plushnikov.intellij.lombok.processor.LombokProcessorUtil;
 import de.plushnikov.intellij.lombok.processor.clazz.AbstractLombokClassProcessor;
 import de.plushnikov.intellij.lombok.util.PsiAnnotationUtil;
+import de.plushnikov.intellij.lombok.util.PsiClassUtil;
+import de.plushnikov.intellij.lombok.util.PsiElementUtil;
 import de.plushnikov.intellij.lombok.util.PsiMethodUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * Base lombok processor class for constructor processing
@@ -60,6 +64,21 @@ public abstract class AbstractConstructorClassProcessor extends AbstractLombokCl
     return result;
   }
 
+  //TODO add check if constructor already exists
+  private boolean checkHasConstructor(PsiClass psiClass, Collection<PsiField> params) {
+    PsiMethod[] classConstructors = PsiClassUtil.collectClassConstructorIntern(psiClass);
+    List<PsiType> paramTypes = new ArrayList<PsiType>(params.size());
+    for (PsiField param : params) {
+      paramTypes.add(param.getType());
+    }
+    for (PsiMethod classConstructor : classConstructors) {
+      if (PsiElementUtil.methodMatches(classConstructor, null, null, psiClass.getName(), paramTypes)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   @NotNull
   protected Collection<PsiField> getAllNotInitializedAndNotStaticFields(@NotNull PsiClass psiClass) {
     Collection<PsiField> allNotInitializedNotStaticFields = new ArrayList<PsiField>();
@@ -84,8 +103,6 @@ public abstract class AbstractConstructorClassProcessor extends AbstractLombokCl
 
   @NotNull
   protected Collection<PsiMethod> createConstructorMethod(@NotNull PsiClass psiClass, @NotNull String methodVisibility, @NotNull PsiAnnotation psiAnnotation, @NotNull Collection<PsiField> params) {
-    //TODO add check if constructor already exists
-
     final String suppressConstructorProperties = PsiAnnotationUtil.getAnnotationValue(psiAnnotation, "suppressConstructorProperties", String.class);
 
     final String staticName = PsiAnnotationUtil.getAnnotationValue(psiAnnotation, "staticName", String.class);

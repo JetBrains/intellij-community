@@ -12,6 +12,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * Copy from com.siyeh.ig.psiutils
  * Classes: PsiElementUtil and EquivalenceChecker
@@ -34,21 +36,21 @@ public class PsiElementUtil {
       @NonNls @Nullable String containingClassName,
       @Nullable PsiType returnType,
       @NonNls @Nullable String methodName,
-      @Nullable PsiType... parameterTypes) {
+      @Nullable List<PsiType> parameterTypes) {
     final String name = method.getName();
     if (methodName != null && !methodName.equals(name)) {
       return false;
     }
     if (parameterTypes != null) {
       final PsiParameterList parameterList = method.getParameterList();
-      if (parameterList.getParametersCount() != parameterTypes.length) {
+      if (parameterList.getParametersCount() != parameterTypes.size()) {
         return false;
       }
       final PsiParameter[] parameters = parameterList.getParameters();
       for (int i = 0; i < parameters.length; i++) {
         final PsiParameter parameter = parameters[i];
         final PsiType type = parameter.getType();
-        final PsiType parameterType = parameterTypes[i];
+        final PsiType parameterType = parameterTypes.get(i);
         if (PsiType.NULL.equals(parameterType)) {
           continue;
         }
