@@ -15,11 +15,9 @@ import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiParameterList;
 import com.intellij.psi.PsiType;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -49,89 +47,88 @@ public abstract class LombokParsingTestCase extends LightCodeInsightFixtureTestC
   }
 
   private void addLombokClassesToFixture() {
-    //added java.lang.Object to 'classpath'
-    myFixture.addClass("package java.lang; public class Object {}");
+    try {
+      //added java.lang.Object to 'classpath'
+      myFixture.addClass("package java.lang; public class Object {}");
 
-    // added some classes used by tests to 'classpath'
-    myFixture.addClass("package java.util; public class Timer {}");
+      // added some classes used by tests to 'classpath'
+      myFixture.addClass("package java.util; public class Timer {}");
 
-    // added lombok classes used by tests to 'classpath'
-    myFixture.addClass(PACKAGE_LOMBOK +
-        "public enum AccessLevel {\n" +
-        "  PUBLIC, MODULE, PROTECTED, PACKAGE, PRIVATE, NONE;\n" +
-        "}");
-    myFixture.addClass(PACKAGE_LOMBOK + ANNOTATION_TYPE +
-        "public @interface AllArgsConstructor {\n" +
-        "  String staticName() default \"\";\n" +
-        "  AccessLevel access() default AccessLevel.PUBLIC;\n" +
-        "  @Deprecated boolean suppressConstructorProperties() default false;\n" +
-        "}\n");
-    myFixture.addClass(PACKAGE_LOMBOK + ANNOTATION_TYPE +
-        "public @interface NoArgsConstructor {  \n" +
-        "  String staticName() default \"\";\n" +
-        "  AccessLevel access() default AccessLevel.PUBLIC;\n" +
-        "}\n");
-    myFixture.addClass(PACKAGE_LOMBOK + ANNOTATION_TYPE +
-        "public @interface RequiredArgsConstructor {\n" +
-        "  String staticName() default \"\";\n" +
-        "  AccessLevel access() default AccessLevel.PUBLIC;\n" +
-        "  @Deprecated boolean suppressConstructorProperties() default false;\n" +
-        "}\n");
-    myFixture.addClass(PACKAGE_LOMBOK + ANNOTATION_TYPE +
-        "public @interface Cleanup {\n" +
-        "  String value() default \"close\";\n" +
-        "}\n");
-    myFixture.addClass(PACKAGE_LOMBOK + ANNOTATION_TYPE +
-        "public @interface Data {  \n" +
-        "  String staticConstructor() default \"\";\n" +
-        "}\n");
-    myFixture.addClass(PACKAGE_LOMBOK + ANNOTATION_TYPE +
-        "public @interface EqualsAndHashCode {\n" +
-        "  String[] exclude() default {};\n" +
-        "  String[] of() default {};\n" +
-        "  boolean callSuper() default false;\n" +
-        "  boolean doNotUseGetters() default false;\n" +
-        "}\n");
-    myFixture.addClass(PACKAGE_LOMBOK + ANNOTATION_TYPE +
-        "public @interface Getter {\n" +
-        "  AccessLevel value() default AccessLevel.PUBLIC;\n" +
-        "  boolean lazy() default false;\n" +
-        "}\n");
-    myFixture.addClass(PACKAGE_LOMBOK + ANNOTATION_TYPE +
-        "public @interface Setter {\n" +
-        "  AccessLevel value() default AccessLevel.PUBLIC;\n" +
-        "}\n");
-    myFixture.addClass(PACKAGE_LOMBOK + ANNOTATION_TYPE +
-        "public @interface Synchronized {  \n" +
-        "  String value() default \"\";\n" +
-        "}\n");
-    myFixture.addClass(PACKAGE_LOMBOK + ANNOTATION_TYPE +
-        "public @interface ToString {  \n" +
-        "  boolean includeFieldNames() default true;\n" +
-        "  String[] exclude() default {};\n" +
-        "  String[] of() default {};\n" +
-        "  boolean callSuper() default false;\n" +
-        "  boolean doNotUseGetters() default false;\n" +
-        "}");
+      // added lombok classes used by tests to 'classpath'
+      myFixture.addClass(PACKAGE_LOMBOK +
+          "public enum AccessLevel {\n" +
+          "  PUBLIC, MODULE, PROTECTED, PACKAGE, PRIVATE, NONE;\n" +
+          "}");
+      myFixture.addClass(PACKAGE_LOMBOK + ANNOTATION_TYPE +
+          "public @interface AllArgsConstructor {\n" +
+          "  String staticName() default \"\";\n" +
+          "  AccessLevel access() default AccessLevel.PUBLIC;\n" +
+          "  @Deprecated boolean suppressConstructorProperties() default false;\n" +
+          "}\n");
+      myFixture.addClass(PACKAGE_LOMBOK + ANNOTATION_TYPE +
+          "public @interface NoArgsConstructor {  \n" +
+          "  String staticName() default \"\";\n" +
+          "  AccessLevel access() default AccessLevel.PUBLIC;\n" +
+          "}\n");
+      myFixture.addClass(PACKAGE_LOMBOK + ANNOTATION_TYPE +
+          "public @interface RequiredArgsConstructor {\n" +
+          "  String staticName() default \"\";\n" +
+          "  AccessLevel access() default AccessLevel.PUBLIC;\n" +
+          "  @Deprecated boolean suppressConstructorProperties() default false;\n" +
+          "}\n");
+      myFixture.addClass(PACKAGE_LOMBOK + ANNOTATION_TYPE +
+          "public @interface Cleanup {\n" +
+          "  String value() default \"close\";\n" +
+          "}\n");
+      myFixture.addClass(PACKAGE_LOMBOK + ANNOTATION_TYPE +
+          "public @interface Data {  \n" +
+          "  String staticConstructor() default \"\";\n" +
+          "}\n");
+      myFixture.addClass(PACKAGE_LOMBOK + ANNOTATION_TYPE +
+          "public @interface EqualsAndHashCode {\n" +
+          "  String[] exclude() default {};\n" +
+          "  String[] of() default {};\n" +
+          "  boolean callSuper() default false;\n" +
+          "  boolean doNotUseGetters() default false;\n" +
+          "}\n");
+      myFixture.addClass(PACKAGE_LOMBOK + ANNOTATION_TYPE +
+          "public @interface Getter {\n" +
+          "  AccessLevel value() default AccessLevel.PUBLIC;\n" +
+          "  boolean lazy() default false;\n" +
+          "}\n");
+      myFixture.addClass(PACKAGE_LOMBOK + ANNOTATION_TYPE +
+          "public @interface Setter {\n" +
+          "  AccessLevel value() default AccessLevel.PUBLIC;\n" +
+          "}\n");
+      myFixture.addClass(PACKAGE_LOMBOK + ANNOTATION_TYPE +
+          "public @interface Synchronized {  \n" +
+          "  String value() default \"\";\n" +
+          "}\n");
+      myFixture.addClass(PACKAGE_LOMBOK + ANNOTATION_TYPE +
+          "public @interface ToString {  \n" +
+          "  boolean includeFieldNames() default true;\n" +
+          "  String[] exclude() default {};\n" +
+          "  String[] of() default {};\n" +
+          "  boolean callSuper() default false;\n" +
+          "  boolean doNotUseGetters() default false;\n" +
+          "}");
 
-    myFixture.addClass("package lombok.extern.apachecommons;\n" + ANNOTATION_TYPE +
-        "public @interface CommonsLog {\n" +
-        "}");
-    myFixture.addClass("package lombok.extern.java;\n" + ANNOTATION_TYPE +
-        "public @interface Log {\n" +
-        "}");
-    myFixture.addClass("package lombok.extern.log4j;\n" + ANNOTATION_TYPE +
-        "public @interface Log4j {\n" +
-        "}");
-    myFixture.addClass("package lombok.extern.slf4j;\n" + ANNOTATION_TYPE +
-        "public @interface Slf4j {\n" +
-        "}");
-  }
-
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_1_6;
+      myFixture.addClass("package lombok.extern.apachecommons;\n" + ANNOTATION_TYPE +
+          "public @interface CommonsLog {\n" +
+          "}");
+      myFixture.addClass("package lombok.extern.java;\n" + ANNOTATION_TYPE +
+          "public @interface Log {\n" +
+          "}");
+      myFixture.addClass("package lombok.extern.log4j;\n" + ANNOTATION_TYPE +
+          "public @interface Log4j {\n" +
+          "}");
+      myFixture.addClass("package lombok.extern.slf4j;\n" + ANNOTATION_TYPE +
+          "public @interface Slf4j {\n" +
+          "}");
+    } catch (IOException ex) {
+      System.err.println("Error occured ");
+      ex.printStackTrace(System.err);
+    }
   }
 
   @Override

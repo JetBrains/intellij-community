@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiReferenceExpression;
 import de.plushnikov.intellij.lombok.problem.LombokProblem;
 import de.plushnikov.intellij.lombok.processor.LombokProcessor;
 import de.plushnikov.intellij.plugin.core.GenericServiceLocator;
@@ -66,6 +67,11 @@ public class LombokInspection extends BaseJavaLocalInspectionTool {
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new JavaElementVisitor() {
+      @Override
+      public void visitReferenceExpression(PsiReferenceExpression expression) {
+        // do nothing, just implement
+      }
+
       @Override
       public void visitAnnotation(PsiAnnotation annotation) {
         super.visitAnnotation(annotation);

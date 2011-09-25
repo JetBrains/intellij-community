@@ -1,6 +1,5 @@
 package de.plushnikov.intellij.lombok.processor.field;
 
-import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
@@ -13,6 +12,7 @@ import com.intellij.util.StringBuilderSpinAllocator;
 import de.plushnikov.intellij.lombok.UserMapKeys;
 import de.plushnikov.intellij.lombok.problem.ProblemBuilder;
 import de.plushnikov.intellij.lombok.processor.LombokProcessorUtil;
+import de.plushnikov.intellij.lombok.quickfix.PsiQuickFixFactory;
 import de.plushnikov.intellij.lombok.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.lombok.util.PsiClassUtil;
 import de.plushnikov.intellij.lombok.util.PsiMethodUtil;
@@ -61,7 +61,7 @@ public class SetterFieldProcessor extends AbstractLombokFieldProcessor {
     boolean result = true;
     if (psiField.hasModifierProperty(PsiModifier.FINAL)) {
       builder.addError("'@Setter' on final field is not allowed",
-          QuickFixFactory.getInstance().createModifierListFix(psiField, PsiModifier.FINAL, false, false));
+          PsiQuickFixFactory.createModifierListFix(psiField, PsiModifier.FINAL, false, false));
       result = false;
     }
     return result;

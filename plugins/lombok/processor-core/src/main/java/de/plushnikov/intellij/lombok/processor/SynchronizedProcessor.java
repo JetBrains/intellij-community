@@ -1,6 +1,5 @@
 package de.plushnikov.intellij.lombok.processor;
 
-import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
@@ -11,6 +10,7 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.util.PsiTreeUtil;
 import de.plushnikov.intellij.lombok.problem.LombokProblem;
 import de.plushnikov.intellij.lombok.problem.ProblemNewBuilder;
+import de.plushnikov.intellij.lombok.quickfix.PsiQuickFixFactory;
 import de.plushnikov.intellij.lombok.util.PsiAnnotationUtil;
 import lombok.Synchronized;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +41,7 @@ public class SynchronizedProcessor extends AbstractLombokProcessor {
     if (null != psiMethod) {
       if (psiMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
         problemNewBuilder.addError("'@Synchronized' is legal only on concrete methods.",
-            QuickFixFactory.getInstance().createModifierListFix(psiMethod, PsiModifier.ABSTRACT, false, false)
+            PsiQuickFixFactory.createModifierListFix(psiMethod, PsiModifier.ABSTRACT, false, false)
         );
       }
 
@@ -54,7 +54,7 @@ public class SynchronizedProcessor extends AbstractLombokProcessor {
           if (null != lockField) {
             if (!lockField.hasModifierProperty(PsiModifier.FINAL)) {
               problemNewBuilder.addWarning(String.format("Synchronization on a non-final field %s.", lockFieldName),
-                  QuickFixFactory.getInstance().createModifierListFix(lockField, PsiModifier.FINAL, true, false));
+                  PsiQuickFixFactory.createModifierListFix(lockField, PsiModifier.FINAL, true, false));
             }
           } else {
             problemNewBuilder.addError(String.format("The field %s does not exist.", lockFieldName));  //TODO add QuickFix for creating this field
