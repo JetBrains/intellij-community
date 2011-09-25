@@ -1,17 +1,38 @@
 <idea-plugin version="2">
-  <name>Lombook Plugin</name>
-  <description>A plugin that adds first-class support for Project Lombok</description>
+  <id>Lombook Plugin</id>
+  <name>Lombok Plugin</name>
   <vendor email="lombokplugin@plushnikov.de">Michail Plushnikov</vendor>
-  <version>0.2</version>
-
+  <version>0.3</version>
   <idea-version since-build="99.18"/>
 
-  <change-notes>
-    Added inspections for lombok annotations.
-    Added some simple QuickFixes for lombok inspections.
-    Fixed bug with not working auto-completion in the same source file with lombok annotations that generate methods.
-    Better support of lombok annotations, especially for 'staticName','types' and 'excludes' properties of @Delegate and @XXXConstructor
-    General bug fixing and many improvements
+  <description><![CDATA[
+    A plugin that adds first-class support for Project Lombok
+    ]]>
+  </description>
+  <category>Tools Integration</category>
+  <change-notes><![CDATA[
+		<ul>
+			<li>0.3
+				<ol>
+					<li>TODO</li>
+				</ol>
+			</li>
+			<li>0.2
+				<ol>
+					<li>Added inspections for lombok annotations.</li>
+          <li>Added some simple QuickFixes for lombok inspections.</li>
+          <li>Fixed bug with not working auto-completion in the same source file with lombok annotations that generate methods.</li>
+          <li>Better support of lombok annotations, especially for 'staticName','types' and 'excludes' properties of @Delegate and @XXXConstructor</li>
+          <li>General bug fixing and many improvements</li>
+				</ol>
+			</li>
+			<li>0.1
+				<ol>
+					<li>Initial Release for IDEA >= 10.0</li>
+				</ol>
+			</li>
+		</ul>
+	]]>
   </change-notes>
 
   <application-components>
