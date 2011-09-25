@@ -65,7 +65,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
 
   public static final DataKey<ProjectStructureConfigurable> KEY = DataKey.create("ProjectStructureConfiguration");
 
-  private final UIState myUiState = new UIState();
+  protected final UIState myUiState = new UIState();
   private Splitter mySplitter;
   private JComponent myToolbarComponent;
   @NonNls public static final String CATEGORY = "category";
