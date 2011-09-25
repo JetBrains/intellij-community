@@ -56,12 +56,26 @@ public class DelegateFieldProcessor extends AbstractLombokFieldProcessor {
       result = false;
     }
 
-    final PsiType psiType = psiField.getType();
-    if (!(psiType instanceof PsiClassType)) {
-      result = false;
-    }
-    //TODO Error: @Delegate can only use concrete class types, not wildcards, arrays, type variables, or primitives.
+    final Collection<PsiType> types = collectDelegateTypes(psiAnnotation, psiField);
+    result &= validateTypes(types, builder);
+
+    final Collection<PsiType> excludes = collectExcludeTypes(psiAnnotation);
+    result &= validateTypes(excludes, builder);
+
     //TODO Error: delegation of methods that doesn't exists on type
+    return result;
+  }
+
+  private boolean validateTypes(Collection<PsiType> excludes, ProblemBuilder builder) {
+    boolean result = true;
+    for (PsiType type : excludes) {
+      if (!(type instanceof PsiClassType)) {
+        builder.addError(String.format(
+            "'@Delegate' can only use concrete class types, not wildcards, arrays, type variables, or primitives. '%s' is wrong class type",
+            type.getCanonicalText()));
+        result = false;
+      }
+    }
     return result;
   }
 
@@ -71,22 +85,16 @@ public class DelegateFieldProcessor extends AbstractLombokFieldProcessor {
     final PsiManager manager = psiField.getContainingFile().getManager();
 
     final Collection<Pair<PsiMethod, PsiSubstitutor>> includesMethods = new HashSet<Pair<PsiMethod, PsiSubstitutor>>();
-    PsiType psiType = psiField.getType();
-    Collection<PsiType> types = PsiAnnotationUtil.getAnnotationValues(psiAnnotation, "types", PsiType.class);
-    if (types.isEmpty()) {
-      types = Collections.singletonList(psiType);
-    }
-    for (PsiType type : types) {
-      addMethodsOfType(type, includesMethods);
-    }
+
+    final Collection<PsiType> types = collectDelegateTypes(psiAnnotation, psiField);
+    addMethodsOfTypes(types, includesMethods);
 
     final Collection<Pair<PsiMethod, PsiSubstitutor>> excludeMethods = new HashSet<Pair<PsiMethod, PsiSubstitutor>>();
     PsiClassType javaLangObjectType = PsiType.getJavaLangObject(manager, GlobalSearchScope.allScope(project));
     addMethodsOfType(javaLangObjectType, excludeMethods);
-    Collection<PsiType> excludes = PsiAnnotationUtil.getAnnotationValues(psiAnnotation, "excludes", PsiType.class);
-    for (PsiType type : excludes) {
-      addMethodsOfType(type, excludeMethods);
-    }
+
+    final Collection<PsiType> excludes = collectExcludeTypes(psiAnnotation);
+    addMethodsOfTypes(excludes, excludeMethods);
 
     final Collection<Pair<PsiMethod, PsiSubstitutor>> methodsToDelegate = findMethodsToDelegate(includesMethods, excludeMethods);
     if (!methodsToDelegate.isEmpty()) {
@@ -94,6 +102,25 @@ public class DelegateFieldProcessor extends AbstractLombokFieldProcessor {
         target.add((Psi) generateDelegateMethod(psiClass, pair.getFirst(), pair.getSecond()));
       }
       UserMapKeys.addGeneralUsageFor(psiField);
+    }
+  }
+
+  private Collection<PsiType> collectDelegateTypes(PsiAnnotation psiAnnotation, PsiField psiField) {
+    Collection<PsiType> types = PsiAnnotationUtil.getAnnotationValues(psiAnnotation, "types", PsiType.class);
+    if (types.isEmpty()) {
+      final PsiType psiType = psiField.getType();
+      types = Collections.singletonList(psiType);
+    }
+    return types;
+  }
+
+  private Collection<PsiType> collectExcludeTypes(PsiAnnotation psiAnnotation) {
+    return PsiAnnotationUtil.getAnnotationValues(psiAnnotation, "excludes", PsiType.class);
+  }
+
+  private void addMethodsOfTypes(Collection<PsiType> types, Collection<Pair<PsiMethod, PsiSubstitutor>> includesMethods) {
+    for (PsiType type : types) {
+      addMethodsOfType(type, includesMethods);
     }
   }
 
