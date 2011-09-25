@@ -6,6 +6,7 @@ import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.util.PsiTreeUtil;
 import de.plushnikov.intellij.lombok.LombokConstants;
@@ -36,11 +37,11 @@ public abstract class AbstractLombokClassProcessor extends AbstractLombokProcess
   @Override
   public Collection<LombokProblem> verifyAnnotation(@NotNull PsiAnnotation psiAnnotation) {
     Collection<LombokProblem> result = Collections.emptyList();
-
-    PsiClass psiClass = PsiTreeUtil.getParentOfType(psiAnnotation, PsiClass.class);
-    if (null != psiClass) {
+    // check first for fields, methods and filter it out, because PsiClass is parent of all annotations and will match other parents too
+    PsiElement psiElement = PsiTreeUtil.getParentOfType(psiAnnotation, PsiField.class, PsiMethod.class, PsiClass.class);
+    if (psiElement instanceof PsiClass) {
       result = new ArrayList<LombokProblem>(1);
-      validate(psiAnnotation, psiClass, new ProblemNewBuilder(result));
+      validate(psiAnnotation, (PsiClass) psiElement, new ProblemNewBuilder(result));
     }
 
     return result;
