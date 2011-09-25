@@ -1,3 +1,4 @@
+New BSD License
 Copyright (c) 2011, Plushnikov Michail
 All rights reserved.
 
