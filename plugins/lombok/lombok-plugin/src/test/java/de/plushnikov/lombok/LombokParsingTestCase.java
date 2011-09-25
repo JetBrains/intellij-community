@@ -125,7 +125,7 @@ public abstract class LombokParsingTestCase extends LightCodeInsightFixtureTestC
       myFixture.addClass("package lombok.extern.slf4j;\n" + ANNOTATION_TYPE +
           "public @interface Slf4j {\n" +
           "}");
-    } catch (IOException ex) {
+    } catch (Exception ex) {
       System.err.println("Error occured ");
       ex.printStackTrace(System.err);
     }
