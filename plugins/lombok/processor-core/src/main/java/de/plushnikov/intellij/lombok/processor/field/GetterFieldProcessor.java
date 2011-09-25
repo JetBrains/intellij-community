@@ -1,5 +1,6 @@
 package de.plushnikov.intellij.lombok.processor.field;
 
+import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
@@ -58,7 +59,9 @@ public class GetterFieldProcessor extends AbstractLombokFieldProcessor {
 
     if (result && lazy) {
       if (!psiField.hasModifierProperty(PsiModifier.FINAL) || !psiField.hasModifierProperty(PsiModifier.PRIVATE)) {
-        builder.addError("'lazy' requires the field to be private and final");
+        builder.addError("'lazy' requires the field to be private and final",
+            QuickFixFactory.getInstance().createModifierListFix(psiField, PsiModifier.PRIVATE, true, false),
+            QuickFixFactory.getInstance().createModifierListFix(psiField, PsiModifier.FINAL, true, false));
       }
       if (null == psiField.getInitializer()) {
         builder.addError("'lazy' requires field initialization.");
