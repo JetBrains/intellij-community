@@ -326,6 +326,21 @@ abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnume
     return false;
   }
 
+  boolean addCustomOutput(OrderEntry forOrderEntry, OrderRootType type, Collection<VirtualFile> result) {
+    for (OrderEnumerationHandler handler : myCustomHandlers) {
+      final List<String> urls = new ArrayList<String>();
+      final boolean added =
+        handler.addCustomOutput(forOrderEntry, type, urls);
+      for (String url : urls) {
+        ContainerUtil.addIfNotNull(VirtualFileManager.getInstance().findFileByUrl(url), result);
+      }
+      if (added) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   boolean addCustomOutputUrls(Module forModule, ModuleRootModel orderEntryRootModel, OrderRootType type, Collection<String> result) {
     for (OrderEnumerationHandler handler : myCustomHandlers) {
       if (handler.addCustomOutput(forModule, orderEntryRootModel, type, this, result)) {
