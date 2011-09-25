@@ -52,7 +52,7 @@ public class SynchronizedProcessor extends AbstractLombokProcessor {
         if (null != containingClass) {
           final PsiField lockField = containingClass.findFieldByName(lockFieldName, true);
           if (null != lockField) {
-            if (lockField.hasModifierProperty(PsiModifier.FINAL)) {
+            if (!lockField.hasModifierProperty(PsiModifier.FINAL)) {
               problemNewBuilder.addWarning(String.format("Synchronization on a non-final field %s.", lockFieldName),
                   QuickFixFactory.getInstance().createModifierListFix(lockField, PsiModifier.FINAL, true, false));
             }
