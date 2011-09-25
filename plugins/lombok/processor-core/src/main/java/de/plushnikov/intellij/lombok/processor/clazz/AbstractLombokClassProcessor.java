@@ -63,7 +63,7 @@ public abstract class AbstractLombokClassProcessor extends AbstractLombokProcess
       if (null != superClass && !CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName())) {
         builder.addWarning("Generating " + generatedMethodName + " implementation but without a call to superclass, " +
             "even though this class does not extend java.lang.Object." +
-            "If this is intentional, add 'callSuper=false' to your type.");//TODO add QuickFix : add callSuper param
+            "If this is intentional, add '(callSuper=false)' to your type.");//TODO add QuickFix : add callSuper param
       }
     }
   }
