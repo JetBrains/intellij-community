@@ -8,7 +8,10 @@
 
   <change-notes>
     Added inspections for lombok annotations.
-    Fixed bug with auto completion in the same class where lombok annotations are used.
+    Added some simple QuickFixes for lombok inspections.
+    Fixed bug with not working auto-completion in the same source file with lombok annotations that generate methods.
+    Better support of lombok annotations, especially for 'staticName','types' and 'excludes' properties of @Delegate and @XXXConstructor
+    General bug fixing and many improvements
   </change-notes>
 
   <application-components>
