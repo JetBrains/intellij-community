@@ -1,5 +1,6 @@
 package de.plushnikov.intellij.lombok.processor;
 
+import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
@@ -7,6 +8,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.util.PsiTreeUtil;
 import de.plushnikov.intellij.lombok.problem.LombokProblem;
 import de.plushnikov.intellij.lombok.problem.ProblemNewBuilder;
@@ -39,7 +41,9 @@ public class SynchronizedProcessor extends AbstractLombokProcessor {
     PsiMethod psiMethod = PsiTreeUtil.getParentOfType(psiAnnotation, PsiMethod.class);
     if (null != psiMethod) {
       if (psiMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        problemNewBuilder.addError("'@Synchronized' is legal only on concrete methods.");//TODO add QuickFix for make method not abstract
+        problemNewBuilder.addError("'@Synchronized' is legal only on concrete methods.",
+            QuickFixFactory.getInstance().createModifierListFix(psiMethod.getModifierList(), PsiModifier.ABSTRACT, false, false)
+        );
       }
 
       final String lockFieldName = PsiAnnotationUtil.getAnnotationValue(psiAnnotation, "value", String.class);
@@ -49,8 +53,10 @@ public class SynchronizedProcessor extends AbstractLombokProcessor {
         if (null != containingClass) {
           final PsiField lockField = containingClass.findFieldByName(lockFieldName, true);
           if (null != lockField) {
-            if (!lockField.hasModifierProperty(PsiModifier.FINAL)) {
-              problemNewBuilder.addWarning(String.format("Synchronization on a non-final field %s.", lockFieldName));  //TODO add QuickFix for make this field final
+            PsiModifierList lockFieldModifierList = lockField.getModifierList();
+            if (null != lockFieldModifierList && !lockFieldModifierList.hasModifierProperty(PsiModifier.FINAL)) {
+              problemNewBuilder.addWarning(String.format("Synchronization on a non-final field %s.", lockFieldName),
+                  QuickFixFactory.getInstance().createModifierListFix(lockFieldModifierList, PsiModifier.FINAL, true, false));
             }
           } else {
             problemNewBuilder.addError(String.format("The field %s does not exist.", lockFieldName));  //TODO add QuickFix for creating this field
