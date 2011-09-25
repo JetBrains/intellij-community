@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>de.plushnikov.lombok-intellij-plugin</groupId>
   <artifactId>parent</artifactId>
-  <version>0.2</version>
+  <version>0.3-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>Parent for IntelliJ IDEA Lombok plugin</name>
@@ -11,9 +11,9 @@
   <url>http://code.google.com/p/lombok-intellij-plugin/</url>
 
   <scm>
-    <connection>scm:svn:http://lombok-intellij-plugin.googlecode.com/svn/tags/parent-0.2</connection>
-    <developerConnection>scm:svn:https://lombok-intellij-plugin.googlecode.com/svn/tags/parent-0.2</developerConnection>
-    <url>http://code.google.com/p/lombok-intellij-plugin/source/browse/tags/parent-0.2</url>
+    <connection>scm:svn:http://lombok-intellij-plugin.googlecode.com/svn/trunk</connection>
+    <developerConnection>scm:svn:https://lombok-intellij-plugin.googlecode.com/svn/trunk</developerConnection>
+    <url>http://code.google.com/p/lombok-intellij-plugin/source/browse/</url>
   </scm>
   <issueManagement>
     <system>Google Code</system>
