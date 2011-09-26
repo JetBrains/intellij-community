@@ -28,7 +28,6 @@ import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.MouseChecker;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
@@ -987,6 +986,7 @@ public class GitLogUI implements Disposable {
       myTagMap = new HashMap<String, Icon>();
       myBranchMap = new HashMap<String, Icon>();
       myPanel = new JPanel();
+      myPanel.setBackground(UIUtil.getTableBackground());
       final BoxLayout layout = new BoxLayout(myPanel, BoxLayout.X_AXIS);
       myPanel.setLayout(layout);
       myCurrentWidth = 0;
