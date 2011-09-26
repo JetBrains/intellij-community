@@ -773,6 +773,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     ConfigurableHit myHits;
 
     boolean myUpdateEnabled = true;
+    private Configurable myLastSelected;
 
     public boolean shouldBeShowing(final SimpleNode value) {
       if (myFiltered == null) return true;
@@ -867,6 +868,15 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
       updateSpotlight(false);
 
+      if ((myFiltered == null || !myFiltered.isEmpty()) && toSelect == null && myLastSelected != null) {
+        toSelect = myLastSelected;
+        myLastSelected = null;
+      }
+      
+      if (toSelect == null && current != null) {
+        myLastSelected = current;
+      }
+      
       final ActionCallback callback = fireUpdate(adjustSelection ? myTree.findNodeFor(toSelect) : null, adjustSelection, now);
 
       myFilterFocumentWasChanged = true;
