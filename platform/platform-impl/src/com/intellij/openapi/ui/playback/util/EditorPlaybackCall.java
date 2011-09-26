@@ -15,18 +15,55 @@
  */
 package com.intellij.openapi.ui.playback.util;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.hint.EditorHintListener;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.LightweightHint;
+import com.intellij.util.messages.MessageBusConnection;
 
 public class EditorPlaybackCall {
 
-  public static AsyncResult<String> waitForEditorHint(PlaybackContext context) {
+  public static AsyncResult<String> assertEditorLine(final PlaybackContext context, final String expected) {
+    final AsyncResult<String> result = new AsyncResult<String>();
+    WindowSystemPlaybackCall.getUiReady(context).doWhenDone(new Runnable() {
+      @Override
+      public void run() {
+        final Editor editor = PlatformDataKeys.EDITOR.getData(DataManager.getInstance().getDataContextFromFocus().getResult());
+        if (editor == null) {
+          result.setRejected("Cannot find editor");
+          return;
+        }
+
+
+        final int line = editor.getCaretModel().getLogicalPosition().line;
+        final int caret = editor.getCaretModel().getOffset();
+        final int start = editor.getDocument().getLineStartOffset(line);
+        final int end = editor.getDocument().getLineEndOffset(line);
+
+        final StringBuffer actualText = new StringBuffer(editor.getDocument().getText(new TextRange(start, caret)));
+        actualText.append("<caret>").append(editor.getDocument().getText(new TextRange(caret, end)));
+        if (expected.equals(actualText.toString())) {
+          result.setDone();
+        } else {
+          result.setRejected("Expected:" + expected + " but was:" + actualText);
+        }
+      }
+    });
+    
+    return result;
+  }
+
+  
+  public static AsyncResult<String> waitDaemonForFinish(final PlaybackContext context) {
     final AsyncResult<String> result = new AsyncResult<String>();
     final Disposable connection = new Disposable() {
       @Override
@@ -40,13 +77,35 @@ public class EditorPlaybackCall {
       }
     });
 
-    ApplicationManager.getApplication().getMessageBus().connect(connection).subscribe(EditorHintListener.TOPIC, new EditorHintListener() {
+
+    WindowSystemPlaybackCall.findProject().doWhenDone(new AsyncResult.Handler<Project>() {
       @Override
-      public void hintShown(Project project, LightweightHint hint, int flags) {
-        result.setDone();
+      public void run(Project project) {
+        final MessageBusConnection bus = project.getMessageBus().connect(connection);
+        bus.subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListener() {
+          @Override
+          public void daemonFinished() {
+            context.flushAwtAndRun(new Runnable() {
+              @Override
+              public void run() {
+                result.setDone();
+              }
+            });
+          }
+
+          @Override
+          public void daemonCancelEventOccurred() {
+            result.setDone();
+          }
+        });
+      }
+    }).doWhenRejected(new Runnable() {
+      @Override
+      public void run() {
+        result.setRejected("Cannot find project");
       }
     });
-
+    
     return result;
   }
 }
