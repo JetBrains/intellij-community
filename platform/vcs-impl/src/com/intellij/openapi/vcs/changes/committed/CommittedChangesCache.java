@@ -559,7 +559,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     return changes;
   }
 
-  private List<CommittedChangeList> loadIncomingChanges(boolean inBackground) {
+  public List<CommittedChangeList> loadIncomingChanges(boolean inBackground) {
     final List<CommittedChangeList> result = new ArrayList<CommittedChangeList>();
     final Collection<ChangesCacheFile> caches = myCachesHolder.getAllCaches();
 
