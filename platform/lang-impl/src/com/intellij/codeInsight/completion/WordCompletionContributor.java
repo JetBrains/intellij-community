@@ -47,12 +47,20 @@ public class WordCompletionContributor extends CompletionContributor implements 
   }
 
   public static void addWordCompletionVariants(CompletionResultSet result, CompletionParameters parameters, Set<String> excludes) {
+    Set<String> realExcludes = new HashSet<String>(excludes);
+    for (String exclude : excludes) {
+      String[] words = exclude.split("[ \\.-]");
+      if (words.length > 0 && StringUtil.isNotEmpty(words[0])) {
+        realExcludes.add(words[0]);
+      }
+    }
+    
     int startOffset = parameters.getOffset();
     PsiElement insertedElement = parameters.getPosition();
     final CompletionResultSet javaResultSet = result.withPrefixMatcher(CompletionUtil.findJavaIdentifierPrefix(parameters));
     final CompletionResultSet plainResultSet = result.withPrefixMatcher(CompletionUtil.findAlphanumericPrefix(parameters));
     for (final String word : getAllWords(insertedElement, startOffset)) {
-      if (!excludes.contains(word)) {
+      if (!realExcludes.contains(word)) {
         final LookupElement item = LookupElementBuilder.create(word);
         javaResultSet.addElement(item);
         plainResultSet.addElement(item);
