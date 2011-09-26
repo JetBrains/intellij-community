@@ -1116,10 +1116,9 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
           myConfigurableToLastOption.containsKey(current) && text.equals(myConfigurableToLastOption.get(current));
 
 
-        if (current == null || !myContext.isHoldingFilter()) {
+        if (current == null) {
           myVisible = false;
           myGP.clear();
-          myOwnDetails.getContentGutter().repaint();
           return true;
         }
 
@@ -1134,7 +1133,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
         
         final Runnable runnable = SearchUtil.lightOptions(searchable, myContentWrapper, text, myGP);
         if (runnable != null) {
-          myVisible = true;
+          myVisible = myContext.isHoldingFilter();
           runnable.run();
 
           boolean pushFilteringFurther = true;
