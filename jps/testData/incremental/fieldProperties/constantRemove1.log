@@ -1,23 +1,23 @@
 Request to make modules:
-module UnsetStaticFinal
+module ConstantRemove1
 End of request
 digraph X {
-  UnsetStaticFinal[label="UnsetStaticFinal"];
+  ConstantRemove1[label="ConstantRemove1"];
 }
 digraph X {
-  UnsetStaticFinal[label="UnsetStaticFinal"];
+  ConstantRemove1[label="ConstantRemove1"];
 }
 Propagated modules:
-module UnsetStaticFinal
+module ConstantRemove1
 End of propagated
 Cleaning output files:
-out/production/UnsetStaticFinal/Server.class
+out/production/ConstantRemove1/Server.class
 End of files
 Compiling files:
 src/Server.java
 End of files
 Cleaning output files:
-out/production/UnsetStaticFinal/Client.class
+out/production/ConstantRemove1/Client.class
 End of files
 Compiling files:
 src/Client.java

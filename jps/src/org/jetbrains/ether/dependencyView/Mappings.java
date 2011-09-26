@@ -132,15 +132,31 @@ public class Mappings {
         return false;
     }
 
-    private void affectSubclasses(final StringCache.S className, final Set<StringCache.S> affectedFiles) {
-        affectedFiles.add(classToSourceFile.get(className));
+    private void affectSubclasses(final StringCache.S className, final Set<StringCache.S> affectedFiles, final Set<UsageRepr.Usage> affectedUsages, final Set<StringCache.S> dependants, final boolean usages) {
+        final StringCache.S fileName = classToSourceFile.get(className);
+
+        if (usages) {
+            affectedUsages.add(reprByName(className).createUsage());
+        }
+
+        dependants.addAll(fileToFileDependency.foxyGet(fileName));
+        affectedFiles.add(fileName);
 
         final Collection<StringCache.S> directSubclasses = classToSubclasses.foxyGet(className);
 
         if (directSubclasses != null) {
             for (StringCache.S subClass : directSubclasses) {
-                affectSubclasses(subClass, affectedFiles);
+                affectSubclasses(subClass, affectedFiles, affectedUsages, dependants, usages);
             }
+        }
+    }
+
+    private void affectFieldUsages(final FieldRepr field, final Collection<StringCache.S> subclasses, final UsageRepr.Usage rootUsage, final Set<UsageRepr.Usage> affectedUsages, final Set<StringCache.S> dependents) {
+        affectedUsages.add(rootUsage);
+
+        for (StringCache.S p : subclasses) {
+            dependents.addAll(fileToFileDependency.foxyGet(classToSourceFile.get(p)));
+            affectedUsages.add(rootUsage instanceof UsageRepr.FieldAssignUsage ? field.createAssignUsage(p) : field.createUsage(p));
         }
     }
 
@@ -210,19 +226,14 @@ public class Mappings {
                 final int addedModifiers = diff.addedModifiers();
                 final int removedModifiers = diff.removedModifiers();
 
-                if ((diff.base() & Difference.SUPERCLASS) > 0) {
-                    affectSubclasses(it.name, affectedFiles);
-                    if (!diff.extendsAdded()) {
-                        affectedUsages.add(it.createUsage());
-                    }
-                }
+                final boolean superClassChanged = (diff.base() & Difference.SUPERCLASS) > 0;
+                final boolean interfacesChanged = !diff.interfaces().unchanged();
 
-                if (!diff.interfaces().unchanged()) {
-                    if (!diff.interfaces().removed().isEmpty()) {
-                        affectedUsages.add(it.createUsage());
-                    }
+                if (superClassChanged || interfacesChanged) {
+                    final boolean extendsChanged = superClassChanged && !diff.extendsAdded();
+                    final boolean interfacesRemoved = interfacesChanged && !diff.interfaces().removed().isEmpty();
 
-                    affectSubclasses(it.name, affectedFiles);
+                    affectSubclasses(it.name, affectedFiles, affectedUsages, dependants, extendsChanged || interfacesRemoved);
                 }
 
                 if ((diff.addedModifiers() & Opcodes.ACC_INTERFACE) > 0 ||
@@ -313,7 +324,7 @@ public class Mappings {
                 final int mask = Opcodes.ACC_STATIC | Opcodes.ACC_FINAL;
 
                 for (FieldRepr f : diff.fields().removed()) {
-                    if ((f.access & mask) == mask) {
+                    if ((f.access & mask) == mask && f.hasValue()) {
                         return false;
                     }
 
@@ -330,26 +341,18 @@ public class Mappings {
                         }
                     }
 
-                    if ((d.base() & Difference.ACCESS) > 0) {
+                    if (d.base() != Difference.NONE) {
                         final Collection<StringCache.S> propagated = propagateFieldAccess(field.name, it.name);
 
-                        if ((d.addedModifiers() & Opcodes.ACC_FINAL) > 0) {
-                            affectedUsages.add(field.createAssignUsage(it.name));
-                            for (StringCache.S p : propagated) {
-                                affectedUsages.add(field.createAssignUsage(p));
+                        if ((d.base() & Difference.TYPE) > 0) {
+                            affectFieldUsages(field, propagated, field.createUsage(it.name), affectedUsages, dependants);
+                        } else if ((d.base() & Difference.ACCESS) > 0) {
+                            if ((d.addedModifiers() & Opcodes.ACC_STATIC) > 0 ||
+                                    (d.removedModifiers() & Opcodes.ACC_STATIC) > 0) {
+                                affectFieldUsages(field, propagated, field.createUsage(it.name), affectedUsages, dependants);
+                            } else if ((d.addedModifiers() & Opcodes.ACC_FINAL) > 0) {
+                                affectFieldUsages(field, propagated, field.createAssignUsage(it.name), affectedUsages, dependants);
                             }
-                        }
-
-                        if ((d.addedModifiers() & Opcodes.ACC_STATIC) > 0 ||
-                            (d.removedModifiers() & Opcodes.ACC_STATIC) > 0) {
-                            affectedUsages.add(field.createUsage(it.name));
-                            for (StringCache.S p : propagated) {
-                                affectedUsages.add(field.createUsage(p));
-                            }
-                        }
-                    } else {
-                        if (d.base() != Difference.NONE) {
-                            affectedUsages.add(field.createUsage(it.name));
                         }
                     }
                 }

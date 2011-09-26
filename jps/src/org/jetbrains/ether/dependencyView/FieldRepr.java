@@ -34,12 +34,12 @@ public class FieldRepr extends ProtoMember {
 
         final FieldRepr fieldRepr = (FieldRepr) o;
 
-        return name.equals(fieldRepr.name) && type.equals(fieldRepr.type);
+        return name.equals(fieldRepr.name);
     }
 
     @Override
     public int hashCode() {
-        return 31 * name.hashCode() + type.hashCode();
+        return 31 * name.hashCode();
     }
 
     public static RW.Reader<FieldRepr> reader = new RW.Reader<FieldRepr>() {

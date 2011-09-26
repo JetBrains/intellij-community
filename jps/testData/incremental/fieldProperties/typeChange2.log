@@ -1,0 +1,18 @@
+Request to make modules:
+module TypeChange2
+End of request
+digraph X {
+  TypeChange2[label="TypeChange2"];
+}
+digraph X {
+  TypeChange2[label="TypeChange2"];
+}
+Propagated modules:
+module TypeChange2
+End of propagated
+Cleaning output files:
+out/production/TypeChange2/A.class
+End of files
+Compiling files:
+src/A.java
+End of files

@@ -28,6 +28,10 @@ public class TestFieldProperties extends IncrementalTestCase {
         doTest();
     }
 
+    public void testConstantRemove1() throws Exception {
+        doTest();
+    }
+
     public void testDoubleConstantChange() throws Exception {
         doTest();
     }
@@ -57,6 +61,18 @@ public class TestFieldProperties extends IncrementalTestCase {
     }
 
     public void testStringConstantLessAccessible() throws Exception {
+        doTest();
+    }
+
+    public void testTypeChange() throws Exception {
+        doTest();
+    }
+
+    public void testTypeChange1() throws Exception {
+        doTest();
+    }
+
+    public void testTypeChange2() throws Exception {
         doTest();
     }
 }
