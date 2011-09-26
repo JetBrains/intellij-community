@@ -143,24 +143,6 @@ public class UiUtils {
         return optionsPanel;
     }
 
-    public static ActionToolbar createAddRemoveTreeAnnotationChooserToolbar(
-            ListTable table, String chooserTitle) {
-        final ClassFilter filter =
-                new ClassFilter() {
-                    public boolean isAccepted(PsiClass psiClass) {
-                        return psiClass.isAnnotationType();
-                    }
-                };
-        final AnAction addAction = new TreeClassChooserAction(table,
-                chooserTitle, filter);
-        final AnAction removeAction = new RemoveAction(table);
-        final ActionGroup group =
-                new DefaultActionGroup(addAction, removeAction);
-        final ActionManager actionManager = ActionManager.getInstance();
-        return actionManager.createActionToolbar(ActionPlaces.UNKNOWN,
-                group, true);
-    }
-
     private static class TreeClassChooserAction extends AnAction {
 
         private final ListTable table;
@@ -208,6 +190,7 @@ public class UiUtils {
                     table.getSelectionModel();
             selectionModel.setSelectionInterval(rowIndex, rowIndex);
             EventQueue.invokeLater(new Runnable() {
+                @Override
                 public void run() {
                     final Rectangle rectangle =
                             table.getCellRect(rowIndex, 0, true);
@@ -232,6 +215,7 @@ public class UiUtils {
             final ListWrappingTableModel tableModel = table.getModel();
             tableModel.addRow();
             EventQueue.invokeLater(new Runnable() {
+                @Override
                 public void run() {
                     final int lastRowIndex = tableModel.getRowCount() - 1;
                     final Rectangle rectangle =
@@ -265,6 +249,7 @@ public class UiUtils {
         @Override
         public void actionPerformed(AnActionEvent anActionEvent) {
             EventQueue.invokeLater(new Runnable() {
+                @Override
                 public void run() {
                     final TableCellEditor editor = table.getCellEditor();
                     if (editor != null) {
@@ -302,6 +287,7 @@ public class UiUtils {
         @Override
         public void update(final AnActionEvent e) {
             EventQueue.invokeLater(new Runnable() {
+                @Override
                 public void run() {
                     final ListSelectionModel selectionModel =
                             table.getSelectionModel();
@@ -325,6 +311,7 @@ public class UiUtils {
             this.ancestorClasses = ancestorClasses;
         }
 
+        @Override
         public boolean isAccepted(PsiClass aClass) {
             for (String ancestorClass : ancestorClasses) {
                 if (InheritanceUtil.isInheritor(aClass, ancestorClass)) {
