@@ -1,0 +1,24 @@
+Request to make modules:
+module ChangeBoundedClass
+End of request
+digraph X {
+  ChangeBoundedClass[label="ChangeBoundedClass"];
+}
+digraph X {
+  ChangeBoundedClass[label="ChangeBoundedClass"];
+}
+Propagated modules:
+module ChangeBoundedClass
+End of propagated
+Cleaning output files:
+out/production/ChangeBoundedClass/Value.class
+End of files
+Compiling files:
+src/Value.java
+End of files
+Cleaning output files:
+out/production/ChangeBoundedClass/A.class
+End of files
+Compiling files:
+src/A.java
+End of files
