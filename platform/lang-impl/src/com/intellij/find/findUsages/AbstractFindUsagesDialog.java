@@ -25,10 +25,12 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.*;
 import com.intellij.usageView.UsageViewManager;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -98,12 +100,14 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
     JPanel panel = new JPanel(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
 
-    gbConstraints.insets = new Insets(4, 4, 4, 4);
-    gbConstraints.fill = GridBagConstraints.BOTH;
+    gbConstraints.insets = new Insets(0, 0, UIUtil.DEFAULT_VGAP, 0);
+    gbConstraints.fill = GridBagConstraints.NONE;
     gbConstraints.weightx = 1;
     gbConstraints.weighty = 1;
-    gbConstraints.anchor = GridBagConstraints.EAST;
+    gbConstraints.anchor = GridBagConstraints.WEST;
     final SimpleColoredComponent coloredComponent = new SimpleColoredComponent();
+    coloredComponent.setIpad(new Insets(0,0,0,0));
+    coloredComponent.setMyBorder(null);
     configureLabelComponent(coloredComponent);
     panel.add(coloredComponent, gbConstraints);
 
@@ -116,7 +120,6 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
     JPanel panel = new JPanel(new GridBagLayout());
 
     JPanel _panel = new JPanel(new BorderLayout());
-    _panel.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 0));
     panel.add(_panel, new GridBagConstraints(0, 1, 1, 1, 1.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
                                              new Insets(0, 0, 0, 0), 0, 0));
 
