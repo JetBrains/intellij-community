@@ -31,6 +31,7 @@ import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 /**
 * @author peter
@@ -48,6 +49,7 @@ public class FileContentQueue {
 
   private final ArrayBlockingQueue<FileContent> myQueue = new ArrayBlockingQueue<FileContent>(256);
   private final Queue<FileContent> myPushbackBuffer = new ArrayDeque<FileContent>();
+  private volatile boolean myContentLoadingThreadTerminated = false;
 
   public void queue(final Collection<VirtualFile> files, @Nullable final ProgressIndicator indicator) {
     final Runnable contentLoadingRunnable = new Runnable() {
@@ -57,7 +59,7 @@ public class FileContentQueue {
             if (indicator != null) {
               indicator.checkCanceled();
             }
-            put(file);
+            addLast(file);
           }
 
           // put end-of-queue marker only if not canceled
@@ -74,13 +76,16 @@ public class FileContentQueue {
         catch (InterruptedException e) {
           LOG.error(e);
         }
+        finally {
+          myContentLoadingThreadTerminated = true;
+        }
       }
     };
 
     ApplicationManager.getApplication().executeOnPooledThread(contentLoadingRunnable);
   }
 
-  private void put(VirtualFile file) throws InterruptedException {
+  private void addLast(VirtualFile file) throws InterruptedException {
     FileContent content = new FileContent(file);
 
     if (file.isValid() && !file.isDirectory()) {
@@ -106,7 +111,7 @@ public class FileContentQueue {
           if (indicator != null) {
             indicator.checkCanceled();
           }
-          wait(300);
+          wait(300L);
         }
         myTotalSize += contentLength;
         counterUpdated = true;
@@ -163,7 +168,7 @@ public class FileContentQueue {
           try {
             if (myLargeSizeRequested && !requestingLargeSize ||
                 myTakenSize + length > Math.max(TAKEN_FILES_THRESHOLD, length))
-              wait(300);
+              wait(300L);
             else {
               myTakenSize += length;
               if (requestingLargeSize) {
@@ -192,7 +197,12 @@ public class FileContentQueue {
     }
 
     try {
-      result = myQueue.take();
+      while (result == null) {
+        result = myQueue.poll(300L, TimeUnit.MILLISECONDS);
+        if (result == null && myContentLoadingThreadTerminated) {
+          return null;
+        }
+      }
     }
     catch (InterruptedException e) {
       throw new RuntimeException(e);
