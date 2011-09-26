@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,9 +31,6 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
 
-/**
- *
- */
 public class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
   private final static Icon ourFileIcon = IconLoader.getIcon("/fileTypes/java.png");
   private final static Icon ourErrorIcon = IconLoader.getIcon("/compiler/error.png");
