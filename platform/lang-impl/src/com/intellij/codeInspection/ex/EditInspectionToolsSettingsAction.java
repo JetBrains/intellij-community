@@ -17,6 +17,7 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionsBundle;
@@ -40,7 +41,7 @@ import javax.swing.*;
  * User: anna
  * Date: Feb 7, 2005
  */
-public class EditInspectionToolsSettingsAction implements IntentionAction, Iconable {
+public class EditInspectionToolsSettingsAction implements IntentionAction, Iconable, HighPriorityAction {
   private final String myShortName;
   private static final Icon ICON = IconLoader.getIcon("/general/ideOptions.png");
 

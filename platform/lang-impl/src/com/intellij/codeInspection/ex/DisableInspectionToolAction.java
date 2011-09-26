@@ -38,7 +38,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.io.IOException;
 
-public class DisableInspectionToolAction implements IntentionAction, Iconable, LowPriorityAction {
+public class DisableInspectionToolAction implements IntentionAction, Iconable {
   private final String myToolId;
   public static final String NAME = InspectionsBundle.message("disable.inspection.action.name");
   private static final Icon ICON = IconLoader.getIcon("/actions/cancel.png");
