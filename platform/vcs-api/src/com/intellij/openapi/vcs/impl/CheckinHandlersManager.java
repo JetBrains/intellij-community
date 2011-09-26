@@ -38,8 +38,9 @@ public abstract class CheckinHandlersManager {
    * VCS checkin operations.
    *
    * @return the list of registered factories.
+   * @param allActiveVcss
    */
-  public abstract List<BaseCheckinHandlerFactory> getRegisteredCheckinHandlerFactories();
+  public abstract List<BaseCheckinHandlerFactory> getRegisteredCheckinHandlerFactories(AbstractVcs[] allActiveVcss);
 
   public abstract List<VcsCheckinHandlerFactory> getMatchingVcsFactories(@NotNull final List<AbstractVcs> keys);
   /**
