@@ -62,12 +62,15 @@ public class OptimizeImportsRefactoringHelper implements RefactoringHelper<Set<P
         final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
         final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
         final SmartPointerManager pointerManager = SmartPointerManager.getInstance(project);
+        int i = 0;
+        final int fileCount = javaFiles.size();
         for (PsiJavaFile file : javaFiles) {
           if (file.isValid()) {
             final VirtualFile virtualFile = file.getVirtualFile();
             if (virtualFile != null) {
               if (progressIndicator != null) {
                 progressIndicator.setText2(virtualFile.getPresentableUrl());
+                progressIndicator.setFraction((double)i++/fileCount);
               }
               final Collection<PsiImportStatementBase> perFile = styleManager.findRedundantImports(file);
               if (perFile != null) {
