@@ -47,7 +47,7 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
     throws RemoteException, IllegalArgumentException, IllegalStateException
   {
     ProjectConnection connection = getConnection(projectPath);
-    IdeaProject project = connection.getModel(downloadLibraries ? IdeaProject.class : OfflineIdeaProject.class);
+    IdeaProject project = connection.getModel(downloadLibraries ? IdeaProject.class : BasicIdeaProject.class);
     GradleProject result = populateProject(project, projectPath);
 
     // We need two different steps ('create' and 'populate') in order to handle module dependencies, i.e. when one module is

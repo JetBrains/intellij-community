@@ -15,8 +15,7 @@
                   area="IDEA_PROJECT"/>
 
   <extensionPoint name="vcsCheckinHandlerFactory"
-                  interface="com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory"
-                  area="IDEA_PROJECT"/>
+                  interface="com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory"/>
 
   <extensionPoint name="changesViewContent"
                   beanClass="com.intellij.openapi.vcs.changes.ui.ChangesViewContentEP"

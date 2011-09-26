@@ -107,7 +107,7 @@ class ProjectViewDropTarget implements DnDNativeTarget {
 
     final Rectangle pathBounds = myTree.getPathBounds(myTree.getPathForLocation(point.x, point.y));
     event.setHighlighting(new RelativeRectangle(myTree, pathBounds), DnDEvent.DropTargetHighlightingType.RECTANGLE);
-    event.setDropPossible(true, null);
+    event.setDropPossible(true);
     return false;
   }
 

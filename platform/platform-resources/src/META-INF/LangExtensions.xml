@@ -162,6 +162,9 @@
   <applicationService serviceInterface="com.intellij.conversion.ConversionService"
                       serviceImplementation="com.intellij.conversion.impl.ConversionServiceImpl"/>
 
+  <applicationService serviceInterface="com.intellij.psi.search.searches.IndexPatternSearch"
+                      serviceImplementation="com.intellij.psi.impl.search.IndexPatternSearchImpl"/>
+
   <projectService serviceInterface="com.intellij.ui.EditorTextFieldProvider"
                   serviceImplementation="com.intellij.ui.EditorTextFieldProviderImpl"/>
 

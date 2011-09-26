@@ -130,4 +130,8 @@ public class GrLightVariable extends GrImplicitVariableImpl implements Navigatab
   public void setCreatorKey(Object creatorKey) {
     myCreatorKey = creatorKey;
   }
+
+  public List<PsiElement> getDeclarations() {
+    return myDeclarations;
+  }
 }

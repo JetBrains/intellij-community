@@ -260,7 +260,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
       public void run() {
         SingleInspectionProfilePanel panel = getSelectedPanel();
         if (panel != null) {
-          panel.filterTree(option);
+          panel.setFilter(option);
         }
       }
     };

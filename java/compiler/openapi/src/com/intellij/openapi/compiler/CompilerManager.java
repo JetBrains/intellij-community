@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -283,5 +284,8 @@ public abstract class CompilerManager {
   public abstract CompileScope createModuleGroupCompileScope(@NotNull Project project, @NotNull Module[] modules, final boolean includeDependentModules);
   @NotNull
   public abstract CompileScope createProjectCompileScope(@NotNull Project project);
-  
+
+  public abstract void setValidationEnabled(ModuleType moduleType, boolean enabled);
+
+  public abstract boolean isValidationEnabled(Module moduleType);
 }

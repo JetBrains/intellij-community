@@ -16,11 +16,7 @@
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.project.DumbAwareRunnable;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.checkin.BaseCheckinHandlerFactory;
 import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory;
@@ -42,37 +38,27 @@ import java.util.List;
 public class CheckinHandlersManagerImpl extends CheckinHandlersManager {
   private final List<BaseCheckinHandlerFactory> myRegisteredBeforeCheckinHandlers;
   private final MultiMap<VcsKey, VcsCheckinHandlerFactory> myVcsMap;
-  private final Project myProject;
-  private final ProjectLevelVcsManager myVcsManager;
 
-  public CheckinHandlersManagerImpl(final Project project, final ProjectLevelVcsManager vcsManager) {
-    myProject = project;
-    myVcsManager = vcsManager;
+  public CheckinHandlersManagerImpl() {
     myVcsMap = new MultiMap<VcsKey, VcsCheckinHandlerFactory>();
     myRegisteredBeforeCheckinHandlers = new ArrayList<BaseCheckinHandlerFactory>();
 
-    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new DumbAwareRunnable() {
-      @Override
-      public void run() {
-        myRegisteredBeforeCheckinHandlers
-          .addAll(Arrays.asList(Extensions.<CheckinHandlerFactory>getExtensions(CheckinHandlerFactory.EP_NAME)));
-        final VcsCheckinHandlerFactory[] vcsCheckinHandlerFactories = Extensions.getExtensions(VcsCheckinHandlerFactory.EP_NAME, myProject);
-        for (VcsCheckinHandlerFactory factory : vcsCheckinHandlerFactories) {
-          myVcsMap.putValue(factory.getKey(), factory);
-        }
-      }
-    });
+    myRegisteredBeforeCheckinHandlers
+      .addAll(Arrays.asList(Extensions.<CheckinHandlerFactory>getExtensions(CheckinHandlerFactory.EP_NAME)));
+    final VcsCheckinHandlerFactory[] vcsCheckinHandlerFactories = Extensions.getExtensions(VcsCheckinHandlerFactory.EP_NAME);
+    for (VcsCheckinHandlerFactory factory : vcsCheckinHandlerFactories) {
+      myVcsMap.putValue(factory.getKey(), factory);
+    }
   }
 
   @Override
-  public List<BaseCheckinHandlerFactory> getRegisteredCheckinHandlerFactories() {
-    final AbstractVcs[] allActiveVcss = myVcsManager.getAllActiveVcss();
+  public List<BaseCheckinHandlerFactory> getRegisteredCheckinHandlerFactories(AbstractVcs[] allActiveVcss) {
     final ArrayList<BaseCheckinHandlerFactory> list =
       new ArrayList<BaseCheckinHandlerFactory>(myRegisteredBeforeCheckinHandlers.size() + allActiveVcss.length);
     list.addAll(myRegisteredBeforeCheckinHandlers);
     for (AbstractVcs vcs : allActiveVcss) {
       final Collection<VcsCheckinHandlerFactory> factories = myVcsMap.get(vcs.getKeyInstanceMethod());
-      if (factories != null && ! factories.isEmpty()) {
+      if (! factories.isEmpty()) {
         list.addAll(factories);
       }
     }
@@ -84,7 +70,7 @@ public class CheckinHandlersManagerImpl extends CheckinHandlersManager {
     final SmartList<VcsCheckinHandlerFactory> result = new SmartList<VcsCheckinHandlerFactory>();
     for (AbstractVcs vcs : vcsList) {
       final Collection<VcsCheckinHandlerFactory> factories = myVcsMap.get(vcs.getKeyInstanceMethod());
-      if (factories != null && ! factories.isEmpty()) {
+      if (! factories.isEmpty()) {
         result.addAll(factories);
       }
     }

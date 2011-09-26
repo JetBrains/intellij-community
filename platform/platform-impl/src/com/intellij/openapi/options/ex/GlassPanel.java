@@ -17,6 +17,7 @@
 package com.intellij.openapi.options.ex;
 
 import com.intellij.ide.ui.search.SearchUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -112,7 +113,7 @@ public class GlassPanel extends JComponent {
     Insets insetsToIgnore = lightComponent.getInsets();
     final boolean isWithBorder = Boolean.TRUE.equals(lightComponent.getClientProperty(SearchUtil.HIGHLIGHT_WITH_BORDER));
 
-    if (insetsToIgnore == null || isWithBorder) {
+    if ((insetsToIgnore == null || (UIUtil.isUnderAquaLookAndFeel() && lightComponent instanceof JButton)) || isWithBorder) {
       insetsToIgnore = EMPTY_INSETS;
     }
 

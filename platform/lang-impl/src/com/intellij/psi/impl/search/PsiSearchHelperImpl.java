@@ -62,10 +62,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   private final PsiManagerEx myManager;
   private static final TodoItem[] EMPTY_TODO_ITEMS = new TodoItem[0];
 
-  static {
-    IndexPatternSearch.INDEX_PATTERN_SEARCH_INSTANCE = new IndexPatternSearchImpl();
-  }
-
   @NotNull
   public SearchScope getUseScope(@NotNull PsiElement element) {
     SearchScope scope = element.getUseScope();

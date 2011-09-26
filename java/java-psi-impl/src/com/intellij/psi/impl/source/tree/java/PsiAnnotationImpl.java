@@ -127,7 +127,7 @@ public class PsiAnnotationImpl extends JavaStubPsiElement<PsiAnnotationStub> imp
     if (member instanceof PsiVariable) {
       typeElement = ((PsiVariable)member).getTypeElement();
     }
-    else if (member instanceof PsiMethod) {
+    else if (member instanceof PsiMethod && !((PsiMethod)member).isConstructor()) {
       typeElement = ((PsiMethod)member).getReturnTypeElement();
     }
     else if (parent instanceof PsiAnnotationOwner) {

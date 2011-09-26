@@ -78,7 +78,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
    * if the component represents a selected item in a focused JList.
    * Border can be <code>null</code>.
    */
-  private final MyBorder myBorder;
+  private MyBorder myBorder;
 
   private int myMainTextLastIndex = -1;
 
@@ -226,6 +226,14 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
     revalidateAndRepaint();
   }
 
+  public MyBorder getMyBorder() {
+    return myBorder;
+  }
+
+  public void setMyBorder(@Nullable MyBorder border) {
+    myBorder = border;
+  }
+
   /**
    * Sets whether focus border is painted or not
    */
@@ -281,7 +289,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
       width += myIcon.getIconWidth() + myIconTextGap;
     }
 
-    final Insets borderInsets = myBorder.getBorderInsets(this);
+    final Insets borderInsets = myBorder != null ? myBorder.getBorderInsets(this) : new Insets(0,0,0,0);
     width += borderInsets.left;
 
     Font font = getFont();
@@ -408,7 +416,9 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
     }
 
     int textStart = xOffset;
-    xOffset += myBorder.getBorderInsets(this).left;
+    if (myBorder != null) {
+      xOffset += myBorder.getBorderInsets(this).left;
+    }
 
     final List<Object[]> searchMatches = new ArrayList<Object[]>();
 
@@ -496,7 +506,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
     }
 
     // Paint focus border around the text and icon (if necessary)
-    if (myPaintFocusBorder) {
+    if (myPaintFocusBorder && myBorder != null) {
       if (myFocusBorderAroundIcon || icon == null) {
         myBorder.paintBorder(this, g, 0, 0, getWidth(), getHeight());
       }
@@ -573,7 +583,9 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
   }
 
   protected void setBorderInsets(Insets insets) {
-    myBorder.setInsets(insets);
+    if (myBorder != null) {
+      myBorder.setInsets(insets);
+    }
 
     revalidateAndRepaint();
   }

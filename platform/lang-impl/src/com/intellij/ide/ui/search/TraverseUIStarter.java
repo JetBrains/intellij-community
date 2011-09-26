@@ -24,6 +24,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationStarter;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.keymap.impl.ui.KeymapConfigurable;
+import com.intellij.openapi.keymap.impl.ui.KeymapPanel;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.JDOMUtil;
@@ -90,7 +91,7 @@ public class TraverseUIStarter implements ApplicationStarter {
       for (OptionDescription option : sortedOptions) {
         append(option.getPath(), option.getHit(), option.getOption(), configurableElement);
       }
-      if (configurable instanceof KeymapConfigurable){
+      if (configurable instanceof KeymapPanel){
         processKeymap(configurableElement);
       } else if (configurable instanceof OptionsContainingConfigurable){
         processOptionsContainingConfigurable((OptionsContainingConfigurable)configurable, configurableElement);

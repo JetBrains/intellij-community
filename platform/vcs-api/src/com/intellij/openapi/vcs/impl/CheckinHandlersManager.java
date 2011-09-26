@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.vcs.impl;
 
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.checkin.BaseCheckinHandlerFactory;
 import com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory;
@@ -29,8 +29,8 @@ import java.util.List;
  *         Time: 6:00 PM
  */
 public abstract class CheckinHandlersManager {
-  public static CheckinHandlersManager getInstance(final Project project) {
-    return project.getComponent(CheckinHandlersManager.class);
+  public static CheckinHandlersManager getInstance() {
+    return ServiceManager.getService(CheckinHandlersManager.class);
   }
 
   /**
@@ -38,8 +38,9 @@ public abstract class CheckinHandlersManager {
    * VCS checkin operations.
    *
    * @return the list of registered factories.
+   * @param allActiveVcss
    */
-  public abstract List<BaseCheckinHandlerFactory> getRegisteredCheckinHandlerFactories();
+  public abstract List<BaseCheckinHandlerFactory> getRegisteredCheckinHandlerFactories(AbstractVcs[] allActiveVcss);
 
   public abstract List<VcsCheckinHandlerFactory> getMatchingVcsFactories(@NotNull final List<AbstractVcs> keys);
   /**

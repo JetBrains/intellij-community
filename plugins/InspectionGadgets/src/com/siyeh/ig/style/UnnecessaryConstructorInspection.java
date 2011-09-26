@@ -79,7 +79,6 @@ public class UnnecessaryConstructorInspection extends BaseInspection {
             extends InspectionGadgetsFix {
         @NotNull
         public String getName() {
-
             return InspectionGadgetsBundle.message(
                     "unnecessary.constructor.remove.quickfix");
         }

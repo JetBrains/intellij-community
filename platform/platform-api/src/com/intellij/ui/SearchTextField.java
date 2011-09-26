@@ -88,6 +88,12 @@ public class SearchTextField extends JPanel {
         onFocusLost();
         super.focusLost(e);
       }
+
+      @Override
+      public void focusGained(FocusEvent e) {
+        onFocusGained();
+        super.focusGained(e);
+      }
     });
     add(myTextField, BorderLayout.CENTER);
     myTextField.addKeyListener(new KeyAdapter() {
@@ -169,6 +175,9 @@ public class SearchTextField extends JPanel {
   }
 
   protected void onFocusLost() {
+  }
+
+  protected void onFocusGained() {
   }
 
   private void updateMenu() {

@@ -27,7 +27,7 @@ public class KeymapConfigurable extends SearchableConfigurable.Parent.Abstract {
   private static final Icon icon = IconLoader.getIcon("/general/keymap.png");
 
   public String getDisplayName() {
-    return KeyMapBundle.message("keymap.display.name");
+    return KeyMapBundle.message("keymap.parent.display.name");
   }
 
   public Icon getIcon() {
