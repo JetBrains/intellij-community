@@ -45,10 +45,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeNode;
-import javax.swing.tree.TreePath;
+import javax.swing.tree.*;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
@@ -137,6 +134,18 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
       public void addNotify() {
         super.addNotify();
         MasterDetailsComponent.this.addNotify();
+
+        TreeModel m = myTree.getModel();
+        if (m instanceof DefaultTreeModel) {
+          DefaultTreeModel model = (DefaultTreeModel)m;
+          for (int eachRow = 0; eachRow < myTree.getRowCount(); eachRow++) {
+            TreePath eachPath = myTree.getPathForRow(eachRow);
+            Object component = eachPath.getLastPathComponent();
+            if (component instanceof TreeNode) {
+              model.nodeChanged((TreeNode)component);
+            }
+          }
+        }
       }
     };
     mySplitter.setHonorComponentsMinimumSize(true);
