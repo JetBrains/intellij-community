@@ -73,7 +73,7 @@ public class SearchUtil {
     for (Configurable configurable : configurables) {
       if (configurable instanceof SearchableConfigurable) {
         TreeSet<OptionDescription> configurableOptions = new TreeSet<OptionDescription>();
-        options.put((SearchableConfigurable)configurable, configurableOptions);
+
         if (configurable instanceof Configurable.Composite) {
           final Configurable[] children = ((Configurable.Composite)configurable).getConfigurables();
           processConfigurables(children, options);
@@ -83,6 +83,9 @@ public class SearchUtil {
         if (configurable instanceof SearchableConfigurable.Parent && !((SearchableConfigurable.Parent)configurable).isVisible()) {
           continue;
         }
+
+        options.put((SearchableConfigurable)configurable, configurableOptions);
+
         if (configurable instanceof MasterDetails) {
           final MasterDetails md = (MasterDetails)configurable;
           md.initUi();
