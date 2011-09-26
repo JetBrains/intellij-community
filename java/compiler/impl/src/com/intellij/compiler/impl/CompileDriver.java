@@ -2162,8 +2162,11 @@ public class CompileDriver {
       final List<String> modulesWithoutJdkAssigned = new ArrayList<String>();
       final Set<File> nonExistingOutputPaths = new HashSet<File>();
       final CompilerConfiguration config = CompilerConfiguration.getInstance(myProject);
-
+      final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
       for (final Module module : scopeModules) {
+        if (!compilerManager.isValidationEnabled(module)) {
+          continue;
+        }
         final boolean hasSources = hasSources(module, false);
         final boolean hasTestSources = hasSources(module, true);
         if (!hasSources && !hasTestSources) {
@@ -2326,7 +2329,7 @@ public class CompileDriver {
           }
         }
       }
-      final Compiler[] allCompilers = CompilerManager.getInstance(myProject).getCompilers(Compiler.class);
+      final Compiler[] allCompilers = compilerManager.getCompilers(Compiler.class);
       for (Compiler compiler : allCompilers) {
         if (!compiler.validateConfiguration(scope)) {
           return false;
