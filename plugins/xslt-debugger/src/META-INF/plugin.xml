@@ -11,6 +11,7 @@
   <idea-version since-build="96.1"/>
 
   <depends>XPathView</depends>
+  <depends>com.intellij.modules.xml</depends>
 
   <change-notes>
     Xalan Support. To debug with Xalan instead of SAXON, a supported Xalan version (2.7.x) should be present in the
