@@ -29,6 +29,8 @@ class Project {
   final Map<String, Artifact> artifacts = [:]
   final Map<String, RunConfiguration> runConfigurations = [:]
 
+  String projectCharset; // contains project charset, if not specified default charset will be used (used by compilers)
+
   String targetFolder = null
   String tempFolder = null
 

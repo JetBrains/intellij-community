@@ -6,5 +6,6 @@
  * To change this template use File | Settings | File Templates.
  */
 public class MyClass {
-  private final static int ��������� = 1;
+  /*  тут что-то написано по русски в кодировке UTF8 */
+  private final static int MY_CONST = 1;
 }

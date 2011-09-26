@@ -5,20 +5,10 @@ package org.jetbrains.jps
  */
 class JavacFileEncodingTest extends JpsBuildTestCase {
   public void test() {
-    doTest("testData/moduleTestOutput/moduleTestOutput.ipr", {}, {
-      dir("artifacts") {
-        dir("tests") {
-          file("MyTest.class")
-        }
-      }
+    doTest("testData/javacFileEncoding/javacFileEncoding.ipr", {}, {
       dir("production") {
-        dir("moduleTestOutput") {
+        dir("javacFileEncoding") {
           file("MyClass.class")
-        }
-      }
-      dir("test") {
-        dir("moduleTestOutput") {
-          file("MyTest.class")
         }
       }
     })
