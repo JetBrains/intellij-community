@@ -32,6 +32,7 @@ import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 /**
 * @author peter
@@ -47,6 +48,7 @@ public class FileContentQueue {
 
   private final ArrayBlockingQueue<FileContent> myQueue = new ArrayBlockingQueue<FileContent>(256);
   private final Queue<FileContent> myPushbackBuffer = new ArrayDeque<FileContent>();
+  private volatile boolean myContentLoadingThreadTerminated = false;
 
   public void queue(final Collection<VirtualFile> files, @Nullable final ProgressIndicator indicator) {
     final Runnable contentLoadingRunnable = new Runnable() {
@@ -72,6 +74,9 @@ public class FileContentQueue {
         }
         catch (InterruptedException e) {
           LOG.error(e);
+        }
+        finally {
+          myContentLoadingThreadTerminated = true;
         }
       }
     };
@@ -106,7 +111,7 @@ public class FileContentQueue {
             if (indicator != null) {
               indicator.checkCanceled();
             }
-            wait(300);
+            wait(300L);
           }
           myTotalSize += contentLength;
           counterUpdated = true;
@@ -151,7 +156,7 @@ public class FileContentQueue {
             indicator.checkCanceled();
           }
           try {
-            wait(300);
+            wait(300L);
           }
           catch (InterruptedException ignore) {
 
@@ -175,7 +180,12 @@ public class FileContentQueue {
     }
 
     try {
-      result = myQueue.take();
+      while (result == null) {
+        result = myQueue.poll(300L, TimeUnit.MILLISECONDS);
+        if (result == null && myContentLoadingThreadTerminated) {
+          return null;
+        }
+      }
     }
     catch (InterruptedException e) {
       throw new RuntimeException(e);
