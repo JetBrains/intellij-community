@@ -162,7 +162,7 @@ public class GitHistoryUtilsTest extends GitTest {
     assertEquals(revisionNumber.getTimestamp(), GitTestRevision.gitTimeStampToDate(output[1]));
   }
 
-  @Test
+  @Test(enabled = false)
   public void testGetLastRevisionForExistingFile() throws Exception {
     final ItemLatestState state = GitHistoryUtils.getLastRevision(myProject, bfilePath);
     assertTrue(state.isItemExists());
@@ -172,7 +172,7 @@ public class GitHistoryUtilsTest extends GitTest {
   }
 
   // TODO: need to configure a remote branch to run this test
-  //@Test
+  @Test(enabled = false)
   public void testGetLastRevisionForNonExistingFile() throws Exception {
     myRepo.config("branch.master.remote", "origin");
     myRepo.config("branch.master.merge", "refs/heads/master");
@@ -253,7 +253,7 @@ public class GitHistoryUtilsTest extends GitTest {
     assertCommitsEqualToTestRevisions(gitCommits, myRevisionsAfterRename);
   }*/
 
-  @Test
+  @Test(enabled = false)
   public void testHashesWithParents() throws Exception {
     final int expectedSize = myRevisionsAfterRename.size();
 
