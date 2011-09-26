@@ -28,6 +28,7 @@ public abstract class RefactoringFactory {
   }
 
   public abstract RenameRefactoring createRename(PsiElement element, String newName);
+  public abstract RenameRefactoring createRename(PsiElement element, String newName, boolean searchInComments, boolean searchInNonJavaFiles);
 
   public abstract SafeDeleteRefactoring createSafeDelete(PsiElement[] elements);
 }

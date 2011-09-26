@@ -78,7 +78,7 @@ public class UnusedCatchParameterInspection extends BaseInspection {
         if (namedIgnoreButUsed) {
             return null;
         }
-        return new RenameFix("ignored");
+        return new RenameFix("ignored", false, false);
     }
 
     @Override
