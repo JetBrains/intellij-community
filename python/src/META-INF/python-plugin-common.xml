@@ -590,6 +590,9 @@
                     interface="com.jetbrains.python.codeInsight.imports.PyImportCandidateProvider"/>
     <extensionPoint qualifiedName="Pythonid.runConfigurationExtension"
                     interface="com.jetbrains.python.run.PythonRunConfigurationExtension"/>
+
+    <extensionPoint qualifiedName="Pythonid.templateLanguageCoreTags"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="Pythonid">
@@ -617,11 +620,15 @@
     <customTargetExpressionStubType implementation="com.jetbrains.django.model.stubs.DjangoForeignKeyStubType"/>
     <knownDecoratorProvider implementation="com.jetbrains.django.codeInsight.DjangoKnownDecoratorProvider"/>
     <documentationLinkProvider implementation="com.jetbrains.django.codeInsight.DjangoDocumentationLinkProvider"/>
+    <templateLanguageCoreTags language="DjangoTemplate" implementationClass="com.jetbrains.django.model.DjangoCoreTags"/>
 
     <!-- App Engine -->
     <typeProvider implementation="com.jetbrains.appengine.model.AppEngineTypeProvider"/>
     <pyModuleMembersProvider implementation="com.jetbrains.appengine.model.AppEngineModuleMembersProvider"/>
     <documentationLinkProvider implementation="com.jetbrains.appengine.AppEngineDocumentationLinkProvider"/>
+
+    <!-- Jinja2 -->
+    <templateLanguageCoreTags language="Jinja2" implementationClass="com.jetbrains.jinja2.tags.Jinja2CoreTags"/>
   </extensions>
 
   <project-components>
