@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 Bas Leijdekkers
+ * Copyright 2007-2011 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,25 +15,20 @@
  */
 package com.siyeh.ig.threading;
 
-import com.intellij.codeInspection.ui.AddAction;
-import com.intellij.codeInspection.ui.RemoveAction;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.intellij.codeInspection.ui.ListTable;
-import com.intellij.codeInspection.ui.ListWrappingTableModel;
-import org.jdom.Element;
+import com.siyeh.ig.ui.ExternalizableStringSet;
+import com.siyeh.ig.ui.UiUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.ArrayList;
+import javax.swing.JComponent;
 import java.util.List;
 
 public class AccessToNonThreadSafeStaticFieldFromInstanceInspection
@@ -41,12 +36,23 @@ public class AccessToNonThreadSafeStaticFieldFromInstanceInspection
 
     @NonNls
     @SuppressWarnings({"PublicField"})
-    public String nonThreadSafeTypes = "java.text.DateFormat" +
-            ',' + "java.util.Calendar";
-    List<String> nonThreadSafeTypeList = new ArrayList();
+    public String nonThreadSafeTypes = "";
+    @SuppressWarnings("PublicField")
+    public final ExternalizableStringSet nonThreadSafeClasses =
+            new ExternalizableStringSet(
+                    "java.text.SimpleDateFormat",
+                    "java.util.Calendar");
 
     public AccessToNonThreadSafeStaticFieldFromInstanceInspection() {
-        parseString(nonThreadSafeTypes, nonThreadSafeTypeList);
+        if (nonThreadSafeTypes.length() != 0) {
+            nonThreadSafeClasses.clear();
+            final List<String> strings =
+                    StringUtil.split(nonThreadSafeTypes, ",");
+            for (String string : strings) {
+                nonThreadSafeClasses.add(string);
+            }
+            nonThreadSafeTypes = "";
+        }
     }
 
     @Override
@@ -73,20 +79,11 @@ public class AccessToNonThreadSafeStaticFieldFromInstanceInspection
     @Override
     @Nullable
     public JComponent createOptionsPanel() {
-        final Form form = new Form();
-        return form.getContentPanel();
-    }
-
-    @Override
-    public void readSettings(Element node) throws InvalidDataException {
-        super.readSettings(node);
-        parseString(nonThreadSafeTypes, nonThreadSafeTypeList);
-    }
-
-    @Override
-    public void writeSettings(Element node) throws WriteExternalException {
-        nonThreadSafeTypes = formatString(nonThreadSafeTypeList);
-        super.writeSettings(node);
+        return UiUtils.createTreeClassChooserList(nonThreadSafeClasses,
+                InspectionGadgetsBundle.message(
+                        "access.to.non.thread.safe.static.field.from.instance.option.title"),
+                InspectionGadgetsBundle.message(
+                        "access.to.non.thread.safe.static.field.from.instance.class.chooser.title"));
     }
 
     @Override
@@ -94,7 +91,7 @@ public class AccessToNonThreadSafeStaticFieldFromInstanceInspection
         return new AccessToNonThreadSafeStaticFieldFromInstanceVisitor();
     }
 
-    private class AccessToNonThreadSafeStaticFieldFromInstanceVisitor
+    class AccessToNonThreadSafeStaticFieldFromInstanceVisitor
             extends BaseInspectionVisitor {
 
         @Override public void visitReferenceExpression(
@@ -127,17 +124,12 @@ public class AccessToNonThreadSafeStaticFieldFromInstanceInspection
                 return;
             }
             final PsiType type = expression.getType();
-            if (type == null) {
+            if (!(type instanceof PsiClassType)) {
                 return;
             }
-            String typeString = null;
-            for (String nonThreadSafeType : nonThreadSafeTypeList) {
-                if (type.equalsToText(nonThreadSafeType)) {
-                    typeString = nonThreadSafeType;
-                    break;
-                }
-            }
-            if (typeString == null) {
+            final PsiClassType classType = (PsiClassType) type;
+            final String className = classType.rawType().getCanonicalText();
+            if (!nonThreadSafeClasses.contains(className)) {
                 return;
             }
             final PsiElement target = expression.resolve();
@@ -148,32 +140,7 @@ public class AccessToNonThreadSafeStaticFieldFromInstanceInspection
             if (!field.hasModifierProperty(PsiModifier.STATIC)) {
                 return;
             }
-            registerError(expression, parent, typeString);
-        }
-    }
-
-    private class Form {
-
-        private ListTable table;
-        private JButton addButton;
-        private JButton removeButton;
-        private JPanel contentPanel;
-
-        Form() {
-            super();
-            addButton.setAction(new AddAction(table));
-            removeButton.setAction(new RemoveAction(table));
-        }
-
-        private void createUIComponents() {
-            table = new ListTable(
-                    new ListWrappingTableModel(nonThreadSafeTypeList,
-                            InspectionGadgetsBundle.message(
-                                    "non.thread.safe.types.column.name")));
-        }
-
-        public JComponent getContentPanel() {
-            return contentPanel;
+            registerError(expression, parent, className);
         }
     }
 }
