@@ -336,7 +336,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   public void reset() {
     super.reset();
     for (final ModuleStructureExtension extension : ModuleStructureExtension.EP_NAME.getExtensions()) {
-      extension.reset();
+      extension.reset(myProject);
     }
   }
 
