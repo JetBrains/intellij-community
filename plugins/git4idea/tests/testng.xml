@@ -1,13 +1,12 @@
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
 <suite name="Git Suite">
   <test name="Git Test">
-    <classes>
-      <class name="git4idea.tests.GitBranchTest"/>
-      <class name="git4idea.tests.GitChangeProviderTest"/>
-      <class name="git4idea.tests.GitMergeTest"/>
-      <class name="git4idea.tests.GitLineSeparatorsConverterTest"/>
-      <class name="git4idea.tests.GitHistoryUtilsTest"/>
-      <class name="git4idea.tests.ChangeListManagerUpdateOnFileChangeTest"/>
-    </classes>
+    <packages>
+      <package name="git4idea.history"/>
+      <package name="git4idea.repo"/>
+
+      <package name="git4idea.tests"/>
+      <package name="git4idea.tests.rebase"/>
+    </packages>
   </test>
 </suite>
