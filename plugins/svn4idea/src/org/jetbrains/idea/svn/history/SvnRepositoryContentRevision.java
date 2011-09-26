@@ -71,6 +71,7 @@ public class SvnRepositoryContentRevision implements ContentRevision {
   @Nullable
   public String getContent() throws VcsException {
     try {
+      myFilePath.hardRefresh();
       return ContentRevisionCache.getOrLoadAsString(myVcs.getProject(), myFilePath, getRevisionNumber(), myVcs.getKeyInstanceMethod(),
                                              ContentRevisionCache.UniqueType.REPOSITORY_CONTENT, new Throwable2Computable<byte[], VcsException, IOException>() {
         @Override

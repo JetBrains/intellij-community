@@ -25,10 +25,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.NotNullFunction;
@@ -47,6 +44,8 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.*;
 
 import java.io.File;
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.util.*;
 
 public class SvnUtil {
@@ -663,5 +662,12 @@ public class SvnUtil {
         repository.closeSession();
       }
     }
+  }
+
+  public static byte[] decode(final Charset charset, final byte[] buffer) {
+    if (charset != null && ! CharsetToolkit.UTF8_CHARSET.equals(charset)) {
+      return CharsetToolkit.UTF8_CHARSET.encode(charset.decode(ByteBuffer.wrap(buffer))).array();
+    }
+    return buffer;
   }
 }
