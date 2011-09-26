@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vfs;
 
-import com.intellij.Patches;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.THashMap;
@@ -393,6 +392,7 @@ public class CharsetToolkit {
    *
    * @return the default <code>Charset</code>.
    */
+  @Nullable
   public static Charset getDefaultSystemCharset() {
     Charset charset = null;
     try {

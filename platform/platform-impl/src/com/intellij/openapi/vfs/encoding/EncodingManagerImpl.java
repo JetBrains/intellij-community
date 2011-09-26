@@ -130,6 +130,7 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
     myChangedDocuments.offer(new WeakReference<Document>(document));
   }
 
+  @Nullable
   public Charset getCachedCharsetFromContent(@NotNull Document document) {
     return document.getUserData(CACHED_CHARSET_FROM_CONTENT);
   }
@@ -206,6 +207,7 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
     EncodingProjectManager.getInstance(project).setNative2AsciiForPropertiesFiles(virtualFile, native2Ascii);
   }
 
+  @Nullable
   public Charset getDefaultCharset() {
     Charset result = myCachedCharset;
     if (result == null) {
@@ -216,6 +218,7 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
     return result;
   }
 
+  @Nullable
   public String getDefaultCharsetName() {
     return myDefaultEncoding;
   }
@@ -225,6 +228,7 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
     myCachedCharset = null;
   }
 
+  @Nullable
   private Charset cacheCharset() {
     Charset result = CharsetToolkit.getDefaultSystemCharset();
     if (!StringUtil.isEmpty(myDefaultEncoding)) {
@@ -239,6 +243,7 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
     return result;
   }
 
+  @Nullable
   public Charset getDefaultCharsetForPropertiesFiles(@Nullable final VirtualFile virtualFile) {
     Project project = guessProject(virtualFile);
     if (project == null) return null;
