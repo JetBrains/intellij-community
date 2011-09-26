@@ -15,11 +15,9 @@
  */
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PsiJavaPatterns;
@@ -28,7 +26,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.statistics.JavaStatisticsManager;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -39,7 +36,10 @@ import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import static com.intellij.patterns.PsiJavaPatterns.psiClass;
@@ -257,9 +257,7 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
 
     tunePreferencePolicy(LookupItemUtil.addLookupItems(set, JavaStatisticsManager
       .getNameSuggestions(var.getType(), JavaStatisticsManager.getContext(var), matcher.getPrefix()), matcher), suggestedNameInfo);
-    tunePreferencePolicy(
-      LookupItemUtil.addLookupItems(set, getUnresolvedReferences(var.getParent(), false),
-                                    matcher), suggestedNameInfo);
+    tunePreferencePolicy(LookupItemUtil.addLookupItems(set, getUnresolvedReferences(var.getParent(), false), matcher), suggestedNameInfo);
   }
 
   public static void completeVariableNameForRefactoring(Project project,
@@ -329,40 +327,10 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
     if (ourClassParent == null) return;
     LookupItemUtil.addLookupItems(set, getUnresolvedReferences(ourClassParent, true), matcher);
 
-    if(!((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.PRIVATE)){
-      LookupItemUtil.addLookupItems(set, getOverrides(ourClassParent, PsiUtil.getTypeByPsiElement(element)),
-                                    matcher);
-      LookupItemUtil.addLookupItems(set, getImplements(ourClassParent, PsiUtil.getTypeByPsiElement(element)),
-                                    matcher);
-    }
     LookupItemUtil.addLookupItems(set, getPropertiesHandlersNames(
       ourClassParent,
       ((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.STATIC),
       PsiUtil.getTypeByPsiElement(element), element), matcher);
-  }
-
-  private static String[] getOverrides(final PsiClass parent, final PsiType typeByPsiElement) {
-    final List<String> overrides = new ArrayList<String>();
-    final Collection<CandidateInfo> methodsToOverrideImplement = OverrideImplementUtil.getMethodsToOverrideImplement(parent, true);
-    for (final CandidateInfo candidateInfo : methodsToOverrideImplement) {
-      final PsiElement element = candidateInfo.getElement();
-      if (Comparing.equal(typeByPsiElement, PsiUtil.getTypeByPsiElement(element)) && element instanceof PsiNamedElement) {
-        overrides.add(((PsiNamedElement)element).getName());
-      }
-    }
-    return ArrayUtil.toStringArray(overrides);
-  }
-
-  private static String[] getImplements(final PsiClass parent, final PsiType typeByPsiElement) {
-    final List<String> overrides = new ArrayList<String>();
-    final Collection<CandidateInfo> methodsToOverrideImplement = OverrideImplementUtil.getMethodsToOverrideImplement(parent, false);
-    for (final CandidateInfo candidateInfo : methodsToOverrideImplement) {
-      final PsiElement element = candidateInfo.getElement();
-      if (Comparing.equal(typeByPsiElement,PsiUtil.getTypeByPsiElement(element)) && element instanceof PsiNamedElement) {
-        overrides.add(((PsiNamedElement)element).getName());
-      }
-    }
-    return ArrayUtil.toStringArray(overrides);
   }
 
   private static String[] getPropertiesHandlersNames(final PsiClass psiClass,
