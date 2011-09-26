@@ -66,23 +66,7 @@ public class PathManager {
       ourHomePath = getAbsolutePath(System.getProperty(PROPERTY_HOME_PATH));
     }
     else {
-      final Class aClass = PathManager.class;
-
-      String rootPath = getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class");
-      if (rootPath != null) {
-        File root = new File(rootPath).getAbsoluteFile();
-
-        do {
-          final String parent = root.getParent();
-          if (parent == null) return null;
-          assert parent != null : "No parent found for " + root + "; " + BIN_FOLDER + " folder with " +
-                                  "idea.properties" + " file not found";
-          root = new File(parent).getAbsoluteFile(); // one step back to get folder
-        }
-        while (root != null && !isIdeaHome(root));
-
-        ourHomePath = root != null ? root.getAbsolutePath() : null;
-      }
+      ourHomePath = getHomePathFor(PathManager.class);
     }
     try {
       if (!SystemInfo.isFileSystemCaseSensitive) {
@@ -94,6 +78,24 @@ public class PathManager {
     }
 
     return ourHomePath;
+  }
+
+  @Nullable
+  public static String getHomePathFor(Class aClass) {
+    String rootPath = getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class");
+    if (rootPath != null) {
+      File root = new File(rootPath).getAbsoluteFile();
+
+      do {
+        final String parent = root.getParent();
+        if (parent == null) return null;
+        root = new File(parent).getAbsoluteFile(); // one step back to get folder
+      }
+      while (root != null && !isIdeaHome(root));
+
+      return root != null ? root.getAbsolutePath() : null;
+    }
+    return null;
   }
 
   private static boolean isIdeaHome(final File root) {
