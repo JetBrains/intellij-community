@@ -56,11 +56,11 @@ class GitLogRecord {
     mySupportsRawBody = supportsRawBody;
   }
 
-  List<String> getPaths() {
+  private List<String> getPaths() {
     return myPaths;
   }
 
-  public List<List<String>> getParts() {
+  private List<List<String>> getParts() {
     return myParts;
   }
 
