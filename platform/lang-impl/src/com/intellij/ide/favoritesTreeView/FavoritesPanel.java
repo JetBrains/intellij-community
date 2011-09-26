@@ -30,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.Comparator;
@@ -72,17 +73,32 @@ public class FavoritesPanel {
   }
 
   private void setupDnD() {
-    DnDSupport.createBuilder(myViewPanel)
+    DnDSupport.createBuilder(myTree)
       .setBeanProvider(new Function<DnDActionInfo, DnDDragStartBean>() {
         @Override
-        public DnDDragStartBean fun(DnDActionInfo dnDActionInfo) {
+        public DnDDragStartBean fun(DnDActionInfo info) {
+          final TreePath path = myTree.getPathForLocation(info.getPoint().x, info.getPoint().y);
+          if (path != null) {
+            return new DnDDragStartBean(path);
+          }
           return new DnDDragStartBean("");
         }
       })
       .setTargetChecker(new DnDTargetChecker() {
         @Override
         public boolean update(DnDEvent event) {
-          final Point p = SwingUtilities.convertPoint(myViewPanel, event.getPoint(), myTree);
+          final Object obj = event.getAttachedObject();
+          if (obj instanceof TreePath) {
+            event.setDropPossible(((TreePath)obj).getPathCount() > 2, null);
+            return true;
+          }
+
+          if ("".equals(obj)) {
+            event.setDropPossible(false, null);
+            return false;
+          }
+
+          final Point p = event.getPoint();
           FavoritesListNode node = findFavoritesListNode(p);
           if (node != null) {
             TreePath pathToList = myTree.getPath(node);
@@ -114,12 +130,37 @@ public class FavoritesPanel {
       .setDropHandler(new DnDDropHandler() {
         @Override
         public void drop(DnDEvent event) {
+          final FavoritesListNode node = findFavoritesListNode(event.getPoint());
+          final FavoritesManager mgr = FavoritesManager.getInstance(myProject);
+
+          if (node == null) return;
+
+          final String listTo = node.getValue();
           final Object obj = event.getAttachedObject();
-          if (obj instanceof TransferableWrapper) {
+
+          if (obj instanceof TreePath) {
+            final TreePath path = (TreePath)obj;
+            final String listFrom = getListNodeFromPath(path).getValue();
+            if (listTo.equals(listFrom)) return;
+            if (path.getPathCount() == 3) {
+              final Object element = ((FavoritesTreeNodeDescriptor)((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject())
+                .getElement().getValue();
+              mgr.removeRoot(listFrom, element);
+              mgr.addRoots(listTo, null, element);
+            }
+          }
+          else if (obj instanceof TransferableWrapper) {
             final PsiElement[] elements = ((TransferableWrapper)obj).getPsiElements();
-            final FavoritesListNode node = findFavoritesListNode(event.getPoint());
-            if (elements != null && elements.length > 0 && node != null) {
-              FavoritesManager.getInstance(myProject).addRoots(node.getValue(), null, elements);
+            if (elements != null && elements.length > 0) {
+              for (PsiElement element : elements) {
+                mgr.addRoots(listTo, null, element);
+              }
+              //ApplicationManager.getApplication().invokeLater(new Runnable() {
+              //  @Override
+              //  public void run() {
+              //    selectElement(elements[0], listTo);
+              //  }
+              //});
             }
           }
         }
@@ -128,9 +169,62 @@ public class FavoritesPanel {
       .install();
   }
 
+  private void selectElement(PsiElement element, String listName) {
+    //todo[kb] no luck here
+    //final TreeNode listNode = findListNode(listName);
+    //if (listNode instanceof DefaultMutableTreeNode) {
+    //  final DefaultMutableTreeNode node = (DefaultMutableTreeNode)listNode;
+    //  final AbstractTreeNode nodes = ((FavoritesTreeNodeDescriptor)node.getUserObject()).getElement();
+    //  for (Object n : nodes.getChildren()) {
+    //    AbstractTreeNode child = (AbstractTreeNode)n;
+    //    final Object value = child.getValue();
+    //    if ((value instanceof SmartPsiElementPointer && element.isEquivalentTo(((SmartPsiElementPointer)value).getElement()))
+    //      || (value instanceof PsiElement && element.isEquivalentTo((PsiElement)value))) {
+    //      final TreePath path = myTree.getPath(child);
+    //      if (path != null) {
+    //        myTree.expandPath(path);
+    //        myTree.setSelectionPath(path);
+    //      }
+    //      return;
+    //    }
+    //  }
+    //}
+  }
+
+  @Nullable
+  private TreeNode findListNode(String listName) {
+    final Object root = myTree.getModel().getRoot();
+    
+    if (root instanceof DefaultMutableTreeNode) {
+      final DefaultMutableTreeNode node = (DefaultMutableTreeNode)root;
+      for (int i = 0; i < node.getChildCount(); i++) {
+        final TreeNode listNode = node.getChildAt(i);
+        if (listName.equals(listNode.toString())) {
+          return listNode; 
+        }
+      }
+    }
+    return null;
+  }
+  
+  @Nullable
+  private TreeNode findElementNode(PsiElement element, String listName) {
+    final TreeNode listNode = findListNode(listName);
+    if (listNode instanceof DefaultMutableTreeNode) {
+      final DefaultMutableTreeNode node = (DefaultMutableTreeNode)listNode;
+    }
+    return null;
+  }
+  
   @Nullable
   private FavoritesListNode findFavoritesListNode(Point point) {
     final TreePath path = myTree.getPathForLocation(point.x, point.y);
+    final FavoritesListNode node = getListNodeFromPath(path);
+    return node == null ? (FavoritesListNode)((FavoritesRootNode)myTreeStructure.getRootElement()).getChildren().iterator().next()
+                        : node;
+  }
+
+  private static FavoritesListNode getListNodeFromPath(TreePath path) {
     if (path != null && path.getPathCount() > 1) {
       final Object o = path.getPath()[1];
       if (o instanceof DefaultMutableTreeNode) {
@@ -143,6 +237,6 @@ public class FavoritesPanel {
         }
       }
     }
-    return (FavoritesListNode)((FavoritesRootNode)myTreeStructure.getRootElement()).getChildren().iterator().next();
+    return null;
   }
 }
