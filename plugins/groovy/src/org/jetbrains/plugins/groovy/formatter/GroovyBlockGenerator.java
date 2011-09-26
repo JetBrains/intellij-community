@@ -188,19 +188,25 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
         for (int i = 0; i < Math.min(table.size(), currentGroup.size()); i++) {
           innerAlignments.put(table.get(i), currentGroup.get(i));
         }
-      } else if (classLevel && psi instanceof GrVariableDeclaration && settings.ALIGN_GROUP_FIELD_DECLARATIONS) {
-        if (currentGroup == null || fieldGroupEnded(settings, psi)) {
+      } else if (psi instanceof GrVariableDeclaration) {
+        if (!classLevel || currentGroup == null || fieldGroupEnded(settings, psi)) {
           currentGroup = Arrays.asList(Alignment.createAlignment(true), Alignment.createAlignment(true), Alignment.createAlignment(true));
         }
 
         GrVariable[] variables = ((GrVariableDeclaration)psi).getVariables();
         if (variables.length > 0) {
-          ContainerUtil.putIfNotNull(((GrVariableDeclaration)psi).getTypeElementGroovy(), currentGroup.get(0), innerAlignments);
-          innerAlignments.put(variables[0].getNameIdentifierGroovy(), currentGroup.get(1));
+          Alignment varName = currentGroup.get(1);
+          for (GrVariable variable : variables) {
+            innerAlignments.put(variable.getNameIdentifierGroovy(), varName);
+          }
 
-          ASTNode eq = variables[variables.length - 1].getNode().findChildByType(GroovyTokenTypes.mASSIGN);
-          if (eq != null) {
-            innerAlignments.put(eq.getPsi(), currentGroup.get(2));
+          if (classLevel && settings.ALIGN_GROUP_FIELD_DECLARATIONS) {
+            ContainerUtil.putIfNotNull(((GrVariableDeclaration)psi).getTypeElementGroovy(), currentGroup.get(0), innerAlignments);
+
+            ASTNode eq = variables[variables.length - 1].getNode().findChildByType(GroovyTokenTypes.mASSIGN);
+            if (eq != null) {
+              innerAlignments.put(eq.getPsi(), currentGroup.get(2));
+            }
           }
         }
       }
@@ -218,6 +224,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
   }
 
   private static boolean fieldGroupEnded(CommonCodeStyleSettings settings, PsiElement psi) {
+    if (!settings.ALIGN_GROUP_FIELD_DECLARATIONS) return true;
     PsiElement prevSibling = psi.getPrevSibling();
     return prevSibling != null && StringUtil.countChars(prevSibling.getText(), '\n') >= settings.KEEP_BLANK_LINES_IN_DECLARATIONS;
   }
