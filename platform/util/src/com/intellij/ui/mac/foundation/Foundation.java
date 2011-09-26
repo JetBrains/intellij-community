@@ -147,7 +147,7 @@ public class Foundation {
     // Turns out about 10% quicker for long strings.
     try {
       byte[] utf16Bytes = s.getBytes("UTF-16LE");
-      return myFoundationLibrary.CFStringCreateWithBytes(null, utf16Bytes, utf16Bytes.length, 0x14000100,
+      return myFoundationLibrary.CFStringCreateWithBytes(null, utf16Bytes, utf16Bytes.length, FoundationLibrary.kCFStringEncodingUTF16LE,
                                                          (byte)0); /* kTextEncodingUnicodeDefault + kUnicodeUTF16LEFormat */
     }
     catch (UnsupportedEncodingException x) {
@@ -163,9 +163,16 @@ public class Foundation {
     int potentialLengthInBytes = 3 * lengthInChars + 1; // UTF8 fully escaped 16 bit chars, plus nul
 
     byte[] buffer = new byte[potentialLengthInBytes];
-    byte ok = myFoundationLibrary.CFStringGetCString(cfString, buffer, buffer.length, 0x08000100);
+    byte ok = myFoundationLibrary.CFStringGetCString(cfString, buffer, buffer.length, FoundationLibrary.kCFStringEncodingUTF8);
     if (ok == 0) throw new RuntimeException("Could not convert string");
     return Native.toString(buffer);
+  }
+
+  @Nullable
+  public static String getEncodingName(long nsStringEncoding) {
+    int cfEncoding = myFoundationLibrary.CFStringConvertNSStringEncodingToEncoding(nsStringEncoding);
+    ID pointer = myFoundationLibrary.CFStringConvertEncodingToIANACharSetName(cfEncoding);
+    return toStringViaUTF8(pointer);
   }
 
   public static void cfRetain(ID id) {
