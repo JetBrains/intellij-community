@@ -54,9 +54,11 @@ public class ExternalizableStringSet extends OrderedSet<String>
         }
     }
 
-    private ExternalizableStringSet() {
+  /*
+  private ExternalizableStringSet() {
       throw new AssertionError("ExternalizableStringSet fields should be declared final");
     }
+    */
 
     private boolean hasDefaultValues() {
         if (size() != defaultValues.length) {
