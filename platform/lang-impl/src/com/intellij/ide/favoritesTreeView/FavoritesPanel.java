@@ -17,6 +17,8 @@ package com.intellij.ide.favoritesTreeView;
 
 import com.intellij.ide.dnd.*;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
+import com.intellij.ide.favoritesTreeView.actions.AddToFavoritesAction;
+import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.TransferableWrapper;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -33,6 +35,8 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 
 /**
@@ -152,43 +156,19 @@ public class FavoritesPanel {
           else if (obj instanceof TransferableWrapper) {
             final PsiElement[] elements = ((TransferableWrapper)obj).getPsiElements();
             if (elements != null && elements.length > 0) {
+              ArrayList<AbstractTreeNode> nodes = new ArrayList<AbstractTreeNode>();
               for (PsiElement element : elements) {
-                mgr.addRoots(listTo, null, element);
+                final Collection<AbstractTreeNode> tmp = AddToFavoritesAction.createNodes(myProject, null, element, true, ViewSettings.DEFAULT);
+                nodes.addAll(tmp);
+                mgr.addRoots(listTo, nodes);
               }
-              //ApplicationManager.getApplication().invokeLater(new Runnable() {
-              //  @Override
-              //  public void run() {
-              //    selectElement(elements[0], listTo);
-              //  }
-              //});
+              myTreeBuilder.select(nodes.toArray(), null);
             }
           }
         }
       })
       .setDisposableParent(myProject)
       .install();
-  }
-
-  private void selectElement(PsiElement element, String listName) {
-    //todo[kb] no luck here
-    //final TreeNode listNode = findListNode(listName);
-    //if (listNode instanceof DefaultMutableTreeNode) {
-    //  final DefaultMutableTreeNode node = (DefaultMutableTreeNode)listNode;
-    //  final AbstractTreeNode nodes = ((FavoritesTreeNodeDescriptor)node.getUserObject()).getElement();
-    //  for (Object n : nodes.getChildren()) {
-    //    AbstractTreeNode child = (AbstractTreeNode)n;
-    //    final Object value = child.getValue();
-    //    if ((value instanceof SmartPsiElementPointer && element.isEquivalentTo(((SmartPsiElementPointer)value).getElement()))
-    //      || (value instanceof PsiElement && element.isEquivalentTo((PsiElement)value))) {
-    //      final TreePath path = myTree.getPath(child);
-    //      if (path != null) {
-    //        myTree.expandPath(path);
-    //        myTree.setSelectionPath(path);
-    //      }
-    //      return;
-    //    }
-    //  }
-    //}
   }
 
   @Nullable
@@ -207,15 +187,7 @@ public class FavoritesPanel {
     return null;
   }
   
-  @Nullable
-  private TreeNode findElementNode(PsiElement element, String listName) {
-    final TreeNode listNode = findListNode(listName);
-    if (listNode instanceof DefaultMutableTreeNode) {
-      final DefaultMutableTreeNode node = (DefaultMutableTreeNode)listNode;
-    }
-    return null;
-  }
-  
+
   @Nullable
   private FavoritesListNode findFavoritesListNode(Point point) {
     final TreePath path = myTree.getPathForLocation(point.x, point.y);
