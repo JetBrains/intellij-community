@@ -83,6 +83,7 @@ public class MismatchedCollectionQueryUpdateInspection
                         InspectionGadgetsBundle.message("query.column.name")));
         final JScrollPane scrollPane1 =
                 ScrollPaneFactory.createScrollPane(table1);
+        UiUtils.setScrollPaneSize(scrollPane1, 10, 15);
         final ActionToolbar toolbar1 = UiUtils.createAddRemoveToolbar(table1);
 
         final ListTable table2 =
@@ -90,6 +91,7 @@ public class MismatchedCollectionQueryUpdateInspection
                         InspectionGadgetsBundle.message("update.column.name")));
         final JScrollPane scrollPane2 =
                 ScrollPaneFactory.createScrollPane(table2);
+        UiUtils.setScrollPaneSize(scrollPane2, 10, 15);
         final ActionToolbar toolbar2 = UiUtils.createAddRemoveToolbar(table2);
 
         final GridBagConstraints constraints = new GridBagConstraints();
@@ -112,7 +114,6 @@ public class MismatchedCollectionQueryUpdateInspection
 
         constraints.gridx = 1;
         panel.add(scrollPane2, constraints);
-        panel.setMinimumSize(new Dimension(-1, 150));
         return panel;
     }
 
