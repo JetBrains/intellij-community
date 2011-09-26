@@ -21,9 +21,11 @@ import com.intellij.notification.impl.NotificationsConfiguration;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.ComboBoxTableRenderer;
 import com.intellij.openapi.ui.StripeTable;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.border.LineBorder;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import java.awt.*;
@@ -46,7 +48,9 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
     setLayout(new BorderLayout());
     myTable = new NotificationsTable();
 
-    add(StripeTable.createScrollPane(myTable), BorderLayout.CENTER);
+    JScrollPane scrollPane = StripeTable.createScrollPane(myTable);
+    scrollPane.setBorder(new LineBorder(UIUtil.getBorderColor()));
+    add(scrollPane, BorderLayout.CENTER);
 
     myTable.getInputMap(WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), REMOVE_KEY);
     myTable.getActionMap().put(REMOVE_KEY, new AbstractAction() {
