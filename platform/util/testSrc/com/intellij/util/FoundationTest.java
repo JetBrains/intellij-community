@@ -15,11 +15,14 @@
  */
 package com.intellij.util;
 
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.mac.foundation.Foundation;
 import junit.framework.TestCase;
 
 public class FoundationTest extends TestCase {
   public void testEncodings() throws Exception {
+    if (!SystemInfo.isMac) return;
+
     assertEquals("utf-8", Foundation.getEncodingName(4));
     assertEquals(null, Foundation.getEncodingName(0));
   }
