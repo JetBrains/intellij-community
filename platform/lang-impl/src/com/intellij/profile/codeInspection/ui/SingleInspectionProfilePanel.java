@@ -288,6 +288,10 @@ public class SingleInspectionProfilePanel extends JPanel {
       return null;
   }
 
+  public void setFilter(String filter) {
+    myProfileFilter.setFilter(filter);
+  }
+  
   public void filterTree(String filter) {
     if (myTree != null) {
       mySelectedProfile.getExpandedNodes().saveVisibleState(myTree);
