@@ -124,6 +124,21 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
         myTree.processTextEvent(e);
       }
     };
+    
+    mySearch.getTextEditor().addMouseListener(new MouseAdapter() {
+      @Override
+      public void mousePressed(MouseEvent e) {
+        boolean hasText = mySearch.getText().length() > 0;
+        if (!myContext.isHoldingFilter() && hasText) {
+          myFilter.reenable();
+        }
+        
+        if (!isSearchFieldFocused() && hasText) {
+          mySearch.selectText();
+        }
+      }
+    });
+    
     myTree = new OptionsTree(myProject, groups, getContext()) {
       @Override
       protected void onTreeKeyEvent(final KeyEvent e) {
@@ -218,7 +233,8 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
       myTree.selectFirst();
     }
 
-    Toolkit.getDefaultToolkit().addAWTEventListener(this, AWTEvent.MOUSE_EVENT_MASK | AWTEvent.KEY_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK);
+    Toolkit.getDefaultToolkit().addAWTEventListener(this,
+                                                    AWTEvent.MOUSE_EVENT_MASK | AWTEvent.KEY_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK);
     
     ActionManager.getInstance().addAnActionListener(new AnActionListener() {
       @Override
@@ -797,8 +813,18 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
       return update(DocumentEvent.EventType.CHANGE, adjustSelection, now);
     }
+    
+    public void clearTemporary() {
+      myContext.setHoldingFilter(false);
+      updateSpotlight(false);
+    }
+    
+    public void reenable() {
+      myContext.setHoldingFilter(true);
+      updateSpotlight(false);
+    }
 
-    public ActionCallback update(DocumentEvent.EventType type, boolean adjustSeection, boolean now) {
+    public ActionCallback update(DocumentEvent.EventType type, boolean adjustSelection, boolean now) {
       if (!myUpdateEnabled) return new ActionCallback.Rejected();
 
       final String text = mySearch.getText();
@@ -841,7 +867,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
       updateSpotlight(false);
 
-      final ActionCallback callback = fireUpdate(adjustSeection ? myTree.findNodeFor(toSelect) : null, adjustSeection, now);
+      final ActionCallback callback = fireUpdate(adjustSelection ? myTree.findNodeFor(toSelect) : null, adjustSelection, now);
 
       myFilterFocumentWasChanged = true;
 
@@ -978,6 +1004,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
       final MouseEvent me = (MouseEvent)event;
       if (SwingUtilities.isDescendingFrom(me.getComponent(), myContentWrapper) || isPopupOverEditor(me.getComponent())) {
         queueModificationCheck();
+        myFilter.clearTemporary();
       }
     }
     else if (event.getID() == KeyEvent.KEY_PRESSED || event.getID() == KeyEvent.KEY_RELEASED) {
@@ -1018,23 +1045,34 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
     @Override
     protected boolean preprocessEventForTextField(final KeyEvent e) {
-      if (getTextEditor().isFocusOwner() && !myDelegatingNow) {
-        try {
-          myDelegatingNow = true;
-          final KeyStroke stroke = KeyStroke.getKeyStrokeForEvent(e);
-          boolean treeNavigation = stroke.getModifiers() == 0 && (stroke.getKeyCode() == KeyEvent.VK_UP || stroke.getKeyCode() == KeyEvent.VK_DOWN);
+      final KeyStroke stroke = KeyStroke.getKeyStrokeForEvent(e);
+      if (!myDelegatingNow) {
+        if ("pressed ESCAPE".equals(stroke.toString()) && getText().length() > 0) {
+          setText(""); // reset filter on ESC
+          return true;
+        }
 
-          final Object action = getTextEditor().getInputMap().get(stroke);
-          if (action == null || treeNavigation) {
-            onTextKeyEvent(e);
-            return true;
+        if (getTextEditor().isFocusOwner()) {
+          try {
+            myDelegatingNow = true;
+            boolean treeNavigation =
+              stroke.getModifiers() == 0 && (stroke.getKeyCode() == KeyEvent.VK_UP || stroke.getKeyCode() == KeyEvent.VK_DOWN);
+
+            if ("pressed ENTER".equals(stroke.toString())) {
+              return true; // avoid closing dialog on ENTER
+            }
+
+            final Object action = getTextEditor().getInputMap().get(stroke);
+            if (action == null || treeNavigation) {
+              onTextKeyEvent(e);
+              return true;
+            }
+          }
+          finally {
+            myDelegatingNow = false;
           }
         }
-        finally {
-          myDelegatingNow = false;
-        }
       }
-
       return false;
     }
 
@@ -1068,9 +1106,10 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
           myConfigurableToLastOption.containsKey(current) && text.equals(myConfigurableToLastOption.get(current));
 
 
-        if (current == null) {
+        if (current == null || !myContext.isHoldingFilter()) {
           myVisible = false;
           myGP.clear();
+          myOwnDetails.getContentGutter().repaint();
           return true;
         }
 
