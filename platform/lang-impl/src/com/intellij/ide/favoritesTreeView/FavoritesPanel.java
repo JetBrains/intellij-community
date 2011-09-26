@@ -93,12 +93,12 @@ public class FavoritesPanel {
         public boolean update(DnDEvent event) {
           final Object obj = event.getAttachedObject();
           if (obj instanceof TreePath) {
-            event.setDropPossible(((TreePath)obj).getPathCount() > 2, null);
+            event.setDropPossible(((TreePath)obj).getPathCount() > 2);
             return true;
           }
 
           if ("".equals(obj)) {
-            event.setDropPossible(false, null);
+            event.setDropPossible(false);
             return false;
           }
 
@@ -124,10 +124,10 @@ public class FavoritesPanel {
                 event.setHighlighting(new RelativeRectangle(myTree, bounds), DnDEvent.DropTargetHighlightingType.RECTANGLE);
               }
             }
-            event.setDropPossible(true, null);
+            event.setDropPossible(true);
             return true;
           }
-          event.setDropPossible(false, null);
+          event.setDropPossible(false);
           return false;
         }
       })

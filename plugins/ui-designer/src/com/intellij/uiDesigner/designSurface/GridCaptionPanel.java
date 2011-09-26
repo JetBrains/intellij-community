@@ -517,7 +517,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
 
   private class MyDnDTarget implements DnDTarget {
     public boolean update(DnDEvent aEvent) {
-      aEvent.setDropPossible(false, null);
+      aEvent.setDropPossible(false);
       if (mySelectedContainer == null) {
         return false;
       }
@@ -530,7 +530,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
       }
       int gridLine = getDropGridLine(aEvent);
       setDropInsertLine(gridLine);
-      aEvent.setDropPossible(gridLine >= 0, null);
+      aEvent.setDropPossible(gridLine >= 0);
       if (gridLine >= 0) {
         FeedbackPainter painter = myIsRow ? HorzInsertFeedbackPainter.INSTANCE : VertInsertFeedbackPainter.INSTANCE;
         Rectangle rcFeedback = new Rectangle(mySelectedContainer.getDelegee().getSize());

@@ -584,7 +584,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
         aEvent.setHighlighting(new RelativeRectangle(ChangesListView.this, tableCellRect), DnDEvent.DropTargetHighlightingType.RECTANGLE);
       }
 
-      aEvent.setDropPossible(true, null);
+      aEvent.setDropPossible(true);
       dragBean.setTargetNode(dropNode);
 
       return false;
