@@ -79,6 +79,10 @@ public class SearchUtil {
           processConfigurables(children, options);
         }
 
+        //ignore invisible root nodes
+        if (configurable instanceof SearchableConfigurable.Parent && !((SearchableConfigurable.Parent)configurable).isVisible()) {
+          continue;
+        }
         if (configurable instanceof MasterDetails) {
           final MasterDetails md = (MasterDetails)configurable;
           md.initUi();
