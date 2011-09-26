@@ -60,9 +60,9 @@ public abstract class OrderEnumerationHandler {
     return false;
   }
 
-  public boolean addCustomOutput(@NotNull OrderEntry forOrderEntry,
-                                 @NotNull OrderRootType type,
-                                 @NotNull Collection<String> urls) {
+  public boolean addCustomRootsForLibrary(@NotNull OrderEntry forOrderEntry,
+                                          @NotNull OrderRootType type,
+                                          @NotNull Collection<String> urls) {
     return false;
   }
 
