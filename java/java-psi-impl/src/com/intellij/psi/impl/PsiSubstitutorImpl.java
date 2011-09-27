@@ -298,7 +298,9 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
         PsiType substitutedBoundType = boundType.accept(mySimpleSubstitutionVisitor);
         PsiWildcardType wildcardType = (PsiWildcardType)substituted;
         if (substitutedBoundType != null && !(substitutedBoundType instanceof PsiWildcardType) && !substitutedBoundType.equalsToText("java.lang.Object")) {
-          if (originalBound == null || !TypeConversionUtil.erasure(substitutedBoundType).isAssignableFrom(TypeConversionUtil.erasure(originalBound))) { //erasure is essential to avoid infinite recursion
+          if (originalBound == null ||
+              (!TypeConversionUtil.erasure(substitutedBoundType).isAssignableFrom(TypeConversionUtil.erasure(originalBound)) &&
+               !TypeConversionUtil.erasure(substitutedBoundType).isAssignableFrom(originalBound))) { //erasure is essential to avoid infinite recursion
             if (wildcardType.isExtends()) {
               final PsiType glb = GenericsUtil.getGreatestLowerBound(wildcardType.getBound(), substitutedBoundType);
               if (glb != null) {
