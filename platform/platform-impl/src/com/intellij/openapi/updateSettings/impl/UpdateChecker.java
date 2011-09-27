@@ -16,6 +16,9 @@
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.RepositoryHelper;
 import com.intellij.ide.reporter.ConnectionException;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.Notification;
@@ -156,21 +159,54 @@ public final class UpdateChecker {
         failed.add(host);
       }
     }
-    if (!failed.isEmpty()) {
-      final String failedMessage = IdeBundle.message("connection.failed.message", StringUtil.join(failed, ","));
-      if (showErrorDialog) {
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            Messages.showErrorDialog(failedMessage, IdeBundle.message("title.connection.error"));
-          }
-        });
-      }
-      else {
-        LOG.info(failedMessage);
+
+    final Map<String, IdeaPluginDescriptor> toUpdate = new HashMap<String, IdeaPluginDescriptor>();
+    final IdeaPluginDescriptor[] installedPlugins = PluginManager.getPlugins();
+    for (IdeaPluginDescriptor installedPlugin : installedPlugins) {
+      if (!installedPlugin.isBundled()) {
+        toUpdate.put(installedPlugin.getPluginId().getIdString(), installedPlugin);
       }
     }
+
+    if (!toUpdate.isEmpty()) {
+      try {
+        final ArrayList<IdeaPluginDescriptor> process = RepositoryHelper.process(null);
+        for (IdeaPluginDescriptor loadedPlugin : process) {
+          final String idString = loadedPlugin.getPluginId().getIdString();
+          final IdeaPluginDescriptor installedPlugin = toUpdate.get(idString);
+          if (installedPlugin != null) {
+            if (StringUtil.compareVersionNumbers(loadedPlugin.getVersion(), installedPlugin.getVersion()) > 0) {
+              final PluginDownloader downloader = PluginDownloader.createDownloader(loadedPlugin);
+              if (downloader.prepareToInstall()) {
+                downloaded.add(downloader);
+              }
+            }
+          }
+        }
+      }
+      catch (Exception e) {
+        showErrorMessage(showErrorDialog, e.getMessage());
+      }
+    }
+
+    if (!failed.isEmpty()) {
+      showErrorMessage(showErrorDialog, IdeBundle.message("connection.failed.message", StringUtil.join(failed, ",")));
+    }
     return downloaded.isEmpty() ? null : downloaded;
+  }
+
+  private static void showErrorMessage(boolean showErrorDialog, final String failedMessage) {
+    if (showErrorDialog) {
+      UIUtil.invokeLaterIfNeeded(new Runnable() {
+        @Override
+        public void run() {
+          Messages.showErrorDialog(failedMessage, IdeBundle.message("title.connection.error"));
+        }
+      });
+    }
+    else {
+      LOG.info(failedMessage);
+    }
   }
 
   private static List<String> getPluginHosts(@Nullable UpdateSettingsConfigurable settingsConfigurable) {

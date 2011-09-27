@@ -24,6 +24,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 import org.xml.sax.SAXException;
 
 import javax.swing.*;
@@ -52,7 +53,7 @@ public class RepositoryHelper {
   @NonNls private static final String FILENAME = "filename=";
   @NonNls public static final String extPluginsFile = "availables.xml";
 
-  public static ArrayList<IdeaPluginDescriptor> process(JLabel label) throws IOException, ParserConfigurationException, SAXException {
+  public static ArrayList<IdeaPluginDescriptor> process(@Nullable JLabel label) throws IOException, ParserConfigurationException, SAXException {
     ArrayList<IdeaPluginDescriptor> plugins = null;
     try {
       BuildNumber buildNumber = ApplicationInfo.getInstance().getBuild();
@@ -85,7 +86,8 @@ public class RepositoryHelper {
     return plugins;
   }
 
-  private static void setLabelText(final JLabel label, final String message) {
+  private static void setLabelText(@Nullable final JLabel label, final String message) {
+    if (label == null) return;
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       public void run() {
         label.setText(message);
