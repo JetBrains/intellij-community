@@ -29,6 +29,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.module.Module;
@@ -81,7 +83,7 @@ public class CreateTestDialog extends DialogWrapper {
 
   private final List<JRadioButton> myLibraryButtons = new ArrayList<JRadioButton>();
   private ComboBox myLanguageCombo;
-  private JTextField myTargetClassNameField;
+  private EditorTextField myTargetClassNameField;
   private ReferenceEditorWithBrowseButton mySuperClassField;
   private ReferenceEditorComboWithBrowseButton myTargetPackageField;
   private JCheckBox myGenerateBeforeBox;
@@ -181,10 +183,10 @@ public class CreateTestDialog extends DialogWrapper {
       }
     }
 
-    myTargetClassNameField = new JTextField(targetClass.getName() + "Test");
-    setPreferredSize(myTargetClassNameField);
+    myTargetClassNameField = new EditorTextField(targetClass.getName() + "Test");
     myTargetClassNameField.getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(DocumentEvent e) {
+      @Override
+      public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
         getOKAction().setEnabled(JavaPsiFacade.getInstance(myProject).getNameHelper().isIdentifier(getClassName()));
       }
     });
@@ -225,13 +227,6 @@ public class CreateTestDialog extends DialogWrapper {
     String superClass = descriptor.getDefaultSuperClass();
     mySuperClassField.setText(superClass == null ? "" : superClass);
     mySelectedFramework = descriptor;
-  }
-
-  private void setPreferredSize(JTextField field) {
-    Dimension size = field.getPreferredSize();
-    FontMetrics fontMetrics = field.getFontMetrics(field.getFont());
-    size.width = fontMetrics.charWidth('a') * 40;
-    field.setPreferredSize(size);
   }
 
   private void updateMethodsTable() {
