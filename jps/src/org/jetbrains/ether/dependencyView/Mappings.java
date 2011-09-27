@@ -107,9 +107,11 @@ public class Mappings {
     private ClassRepr reprByName(final StringCache.S name) {
         final Collection<ClassRepr> reprs = sourceFileToClasses.foxyGet(classToSourceFile.get(name));
 
-        for (ClassRepr repr : reprs) {
-            if (repr.name.equals(name)) {
-                return repr;
+        if (reprs != null) {
+            for (ClassRepr repr : reprs) {
+                if (repr.name.equals(name)) {
+                    return repr;
+                }
             }
         }
 
@@ -123,9 +125,11 @@ public class Mappings {
 
         final ClassRepr repr = reprByName(who);
 
-        for (StringCache.S s : repr.getSupers()) {
-            if (isInheritorOf(s, whom)) {
-                return true;
+        if (repr != null) {
+            for (StringCache.S s : repr.getSupers()) {
+                if (isInheritorOf(s, whom)) {
+                    return true;
+                }
             }
         }
 
@@ -194,7 +198,7 @@ public class Mappings {
 
         @Override
         public boolean checkResidence(final StringCache.S residence) {
-            return !isInheritorOf(rootClass, residence);
+            return !isInheritorOf(residence, rootClass);
         }
     }
 
@@ -348,10 +352,24 @@ public class Mappings {
                             affectFieldUsages(field, propagated, field.createUsage(it.name), affectedUsages, dependants);
                         } else if ((d.base() & Difference.ACCESS) > 0) {
                             if ((d.addedModifiers() & Opcodes.ACC_STATIC) > 0 ||
-                                    (d.removedModifiers() & Opcodes.ACC_STATIC) > 0) {
+                                    (d.removedModifiers() & Opcodes.ACC_STATIC) > 0 ||
+                                    (d.addedModifiers() & Opcodes.ACC_PRIVATE) > 0) {
                                 affectFieldUsages(field, propagated, field.createUsage(it.name), affectedUsages, dependants);
-                            } else if ((d.addedModifiers() & Opcodes.ACC_FINAL) > 0) {
-                                affectFieldUsages(field, propagated, field.createAssignUsage(it.name), affectedUsages, dependants);
+                            } else {
+                                if ((d.addedModifiers() & Opcodes.ACC_FINAL) > 0) {
+                                    affectFieldUsages(field, propagated, field.createAssignUsage(it.name), affectedUsages, dependants);
+                                }
+
+                                if ((d.addedModifiers() & Opcodes.ACC_PROTECTED) > 0 && (d.removedModifiers() & Opcodes.ACC_PUBLIC) > 0) {
+                                    final Set<UsageRepr.Usage> usages = new HashSet<UsageRepr.Usage>();
+                                    affectFieldUsages(field, propagated, field.createUsage(it.name), usages, dependants);
+
+                                    for (UsageRepr.Usage u : usages) {
+                                        usageConstraints.put(u, new InheritanceConstraint(it.name));
+                                    }
+
+                                    affectedUsages.addAll(usages);
+                                }
                             }
                         }
                     }
