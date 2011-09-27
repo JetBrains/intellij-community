@@ -6,6 +6,7 @@ package com.jetbrains.python.parsing;
 public class ParsingScope {
   private boolean myFunction = false;
   private boolean myClass = false;
+  private boolean mySuite = false;
 
   public ParsingScope withFunction(boolean flag) {
     final ParsingScope result = copy();
@@ -19,6 +20,12 @@ public class ParsingScope {
     return result;
   }
 
+  public ParsingScope withSuite(boolean flag) {
+    final ParsingScope result = copy();
+    result.mySuite = flag;
+    return result;
+  }
+
   public boolean isFunction() {
     return myFunction;
   }
@@ -28,7 +35,7 @@ public class ParsingScope {
   }
 
   public boolean isSuite() {
-    return myFunction || myFunction;
+    return mySuite;
   }
 
   protected ParsingScope createInstance() {
@@ -39,6 +46,7 @@ public class ParsingScope {
     final ParsingScope result = createInstance();
     result.myFunction = myFunction;
     result.myClass = myClass;
+    result.mySuite = mySuite;
     return result;
   }
 }

@@ -751,11 +751,11 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
         myBuilder.error("statement expected");
       }
       else {
-        parseSimpleStatement(scope);
+        parseSimpleStatement(scope.withSuite(true));
         while (matchToken(PyTokenTypes.SEMICOLON)) {
           if (matchToken(PyTokenTypes.STATEMENT_BREAK))
             break;
-          parseSimpleStatement(scope);
+          parseSimpleStatement(scope.withSuite(true));
         }
       }
       marker.done(PyElementTypes.STATEMENT_LIST);
