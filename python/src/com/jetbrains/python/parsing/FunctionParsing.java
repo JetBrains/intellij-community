@@ -100,18 +100,22 @@ public class FunctionParsing extends Parsing {
       decorated = true;
     }
     if (decorated) decoListMarker.done(PyElementTypes.DECORATOR_LIST);
-    //else decoListMarker.rollbackTo(); 
+    //else decoListMarker.rollbackTo();
+    parseDeclarationAfterDecorator(decoratorStartMarker, scope);
+  }
+
+  protected void parseDeclarationAfterDecorator(PsiBuilder.Marker endMarker, ParsingScope scope) {
     if (myBuilder.getTokenType() == PyTokenTypes.DEF_KEYWORD) {
-      parseFunctionInnards(decoratorStartMarker); // it calls decoratorStartMarker.done()
+      parseFunctionInnards(endMarker); // it calls endMarker.done()
     }
     else if (myBuilder.getTokenType() == PyTokenTypes.CLASS_KEYWORD) {
-      getStatementParser().parseClassDeclaration(decoratorStartMarker, scope);
+      getStatementParser().parseClassDeclaration(endMarker, scope);
     }
     else {
       myBuilder.error(message("PARSE.expected.@.or.def"));
       PsiBuilder.Marker parameterList = myBuilder.mark(); // To have non-empty parameters list at all the time.
       parameterList.done(getParameterListType());
-      decoratorStartMarker.done(getFunctionType());
+      endMarker.done(getFunctionType());
     }
   }
 
