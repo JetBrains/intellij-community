@@ -16,12 +16,12 @@
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 
+import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod
 import org.jetbrains.plugins.groovy.util.TestUtils
-import com.intellij.psi.JavaPsiFacade
 
 /**
  * @author ven
@@ -243,6 +243,22 @@ public class Test extends MyMap {
     myFixture.addFileToProject "a/Cl.groovy", "package a; class Cl{}"
     myFixture.addFileToProject "b/Cl.groovy", "package b; class Cl{}"
     assertEquals "a.Cl", resolve("a.groovy").qualifiedName
+  }
+
+  void testInnerClassInStaticImport() {
+    myFixture.addClass("package x; public class X{public static class Inner{}}")
+    def resolved = resolve("a.groovy")
+    assertNotNull(resolved)
+  }
+
+  void testInnerClassImportedByStaticImport() {
+    myFixture.addClass("""
+package x;
+public class X{
+  public static class Inner{
+  }
+}""")
+    assertNotNull(resolve("a.groovy"))
   }
 
   private void doTest() {

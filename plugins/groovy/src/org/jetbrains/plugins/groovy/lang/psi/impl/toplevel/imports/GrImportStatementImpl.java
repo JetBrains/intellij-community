@@ -105,6 +105,9 @@ public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImp
             if (!processor.execute(method, state)) return false;
           }
         }
+
+        final PsiClass innerClass = clazz.findInnerClassByName(refName, false);
+        if (innerClass != null && innerClass.hasModifierProperty(PsiModifier.STATIC) && !processor.execute(innerClass, state)) return false;
       }
 
       final PsiMethod getter = GroovyPropertyUtils.findPropertyGetter(clazz, refName, true, true);
@@ -171,9 +174,15 @@ public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImp
     for (PsiField field : clazz.getFields()) {
       if (field.hasModifierProperty(PsiModifier.STATIC) && !ResolveUtil.processElement(processor, field, state)) return false;
     }
+
     for (PsiMethod method : clazz.getMethods()) {
       if (method.hasModifierProperty(PsiModifier.STATIC) && !ResolveUtil.processElement(processor, method, state)) return false;
     }
+
+    for (PsiClass inner : clazz.getInnerClasses()) {
+      if (inner.hasModifierProperty(PsiModifier.STATIC) && !ResolveUtil.processElement(processor, inner, state)) return false;
+    }
+
     return true;
   }
 
