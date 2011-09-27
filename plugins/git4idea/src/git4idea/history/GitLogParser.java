@@ -20,6 +20,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import git4idea.GitVcs;
 import git4idea.config.GitVersionSpecialty;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -122,10 +124,11 @@ class GitLogParser {
   /**
    * Parses the output returned from 'git log' which was executed with '--pretty=format:' pattern retrieved from {@link #getPretty()}.
    * @param output 'git log' output to be parsed.
-   * @return The list of GitLogRecords with information for each revision. The list is sorted as usual for git log - the first is the newest,
-   * the last is the oldest.
+   * @return The list of {@link GitLogRecord GitLogRecords} with information for each revision.
+   *         The list is sorted as usual for git log - the first is the newest, the last is the oldest.
    */
-  List<GitLogRecord> parse(String output) {
+  @NotNull
+  List<GitLogRecord> parse(@NotNull String output) {
     // Here is what git log returns for --pretty=tformat:^%H#%s$
     // ^2c815939f45fbcfda9583f84b14fe9d393ada790#sample commit$
     //
@@ -145,31 +148,35 @@ class GitLogParser {
 
   /**
    * Parses a single record returned by 'git log'. The record contains information from pattern and file status and path (if respective
-   * flags were provided).
+   * flags --name-only or name-status were provided).
    * @param line record to be parsed.
-   * @return GitLogRecord with information about the revision.
+   * @return GitLogRecord with information about the revision or {@code null} if the given line is empty.
    */
-  GitLogRecord parseOneRecord(String line) {
-    // each record is:
-    // <record start> - this may be splitted out in parse().
-    // <commit info, possibly multilined if body is multilined> <record end mark>
+  @Nullable
+  GitLogRecord parseOneRecord(@NotNull String line) {
+    // record format:
+    //
+    // <record start> - this may be splitted out in parse(). But if one calls this method directly, the char will be in place.
+    // <commit info, possibly multilined - if body is multilined>
+    // <record end mark>
     // <blank line (optional)>
-    // <name status (optional)> <path (optional)>
-    // last line appears only if --name-status or --name-only. So is blank line, but it also can absent (e.g. in --pretty=oneline format)
-    // Moreover, the last line may be absent in some cases (deletion) even if --name-status is given.
+    // <name status (optional)>\t<path (optional)>\t<second path (optional)> - status is output in the case of NameStatus.STATUS,
+    // paths are output if NameStatus.NAME or NameStatus.STATUS. Two paths is the rename case.
+    //
+    // Blank line before name-status usually appears, but it also can absent (e.g. in --pretty=oneline format), so we shouldn't rely on this.
     // Example:
     // 2c815939f45fbcfda9583f84b14fe9d393ada790<ITEM_SEPARATOR>sample commit<RECORD_END>
     //
     // D       a.txt
 
     if (line.isEmpty()) { return null; }
+
     // may have <RECORD_START> indicator, may not. If we have, get rid of it.
     if (line.charAt(0) == RECORD_START.charAt(0)) {
       line = line.substring(1);
     }
 
     // parsing status and path (if given)
-    char nameStatus = 0;
     final List<String> paths = new ArrayList<String>(1);
     final boolean includeStatus = myNameStatusOption == NameStatus.STATUS;
     final List<List<String>> parts = includeStatus ? new ArrayList<List<String>>() : null;
