@@ -6,10 +6,10 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.python.PythonLanguage;
-import com.jetbrains.python.highlighting.PySyntaxHighlighterFactory;
+import com.jetbrains.python.PythonFileType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,9 +19,13 @@ import org.jetbrains.annotations.Nullable;
 public class PythonEditorHighlighter extends LexerEditorHighlighter {
 
   public PythonEditorHighlighter(@NotNull EditorColorsScheme scheme, @Nullable Project project, @Nullable VirtualFile file) {
-    super(PySyntaxHighlighterFactory.getSyntaxHighlighter(PythonLanguage.getInstance(), project, file), scheme);
+    super(SyntaxHighlighter.PROVIDER.create(file != null ? file.getFileType() : PythonFileType.INSTANCE,
+                                            project,
+                                            file),
+          scheme);
   }
 
+  @Override
   public void documentChanged(DocumentEvent e) {
     synchronized (this) {
       final Document document = e.getDocument();

@@ -9,6 +9,7 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.lexer.PyStringLiteralLexer;
 import com.jetbrains.python.lexer.PythonHighlightingLexer;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -120,7 +121,7 @@ public class PyHighlighter extends SyntaxHighlighterBase {
     myLanguageLevel = languageLevel;
     keys = new HashMap<IElementType, TextAttributesKey>();
 
-    fillMap(keys, PyTokenTypes.KEYWORDS, PY_KEYWORD);
+    fillMap(keys, PythonDialectsTokenSetProvider.INSTANCE.getKeywordTokens(), PY_KEYWORD);
     fillMap(keys, PyTokenTypes.OPERATIONS, PY_OPERATION_SIGN);
 
     keys.put(PyTokenTypes.INTEGER_LITERAL, PY_NUMBER);

@@ -2,6 +2,7 @@ package com.jetbrains.python;
 
 import com.intellij.psi.tree.TokenSet;
 import static com.jetbrains.python.PyElementTypes.*;
+import static com.jetbrains.python.PyTokenTypes.*;
 
 /**
  * @author vlan
@@ -38,5 +39,19 @@ public class PythonTokenSetContributor implements PythonDialectsTokenSetContribu
                            PyElementTypes.FUNCTION_DECLARATION, PyElementTypes.ASSIGNMENT_STATEMENT, PyElementTypes.PARAMETER_LIST,
                            PyElementTypes.EXCEPT_PART, PyElementTypes.FOR_STATEMENT,
                            PyElementTypes.FROM_IMPORT_STATEMENT);
+  }
+
+  @Override
+  public TokenSet getKeywordTokens() {
+    return TokenSet.create(
+      AND_KEYWORD, AS_KEYWORD, ASSERT_KEYWORD, BREAK_KEYWORD, CLASS_KEYWORD,
+      CONTINUE_KEYWORD, DEF_KEYWORD, DEL_KEYWORD, ELIF_KEYWORD, ELSE_KEYWORD,
+      EXCEPT_KEYWORD, EXEC_KEYWORD, FINALLY_KEYWORD, FOR_KEYWORD,
+      FROM_KEYWORD,
+      GLOBAL_KEYWORD, IF_KEYWORD, IMPORT_KEYWORD, IN_KEYWORD, IS_KEYWORD,
+      LAMBDA_KEYWORD, NOT_KEYWORD, OR_KEYWORD, PASS_KEYWORD, PRINT_KEYWORD,
+      RAISE_KEYWORD, RETURN_KEYWORD, TRY_KEYWORD, WITH_KEYWORD, WHILE_KEYWORD,
+      YIELD_KEYWORD,
+      NONE_KEYWORD, TRUE_KEYWORD, FALSE_KEYWORD, NONLOCAL_KEYWORD);
   }
 }

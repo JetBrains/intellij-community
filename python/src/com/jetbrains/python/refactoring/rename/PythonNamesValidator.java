@@ -3,6 +3,7 @@ package com.jetbrains.python.refactoring.rename;
 import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.project.Project;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.lexer.PythonLexer;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,7 +16,7 @@ public class PythonNamesValidator implements NamesValidator {
   public synchronized boolean isKeyword(@NotNull final String name, final Project project) {
     try {
       ourLexer.start(name);
-      if (!PyTokenTypes.KEYWORDS.contains(ourLexer.getTokenType())) {
+      if (!PythonDialectsTokenSetProvider.INSTANCE.getKeywordTokens().contains(ourLexer.getTokenType())) {
         return false;
       }
       ourLexer.advance();

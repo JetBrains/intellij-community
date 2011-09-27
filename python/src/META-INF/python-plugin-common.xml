@@ -309,8 +309,10 @@
     <treeStructureProvider implementation="com.jetbrains.python.projectView.PyTreeStructureProvider"/>
 
     <project.converterProvider implementation="com.jetbrains.python.testing.converters.PythonTestConverterProvider"/>
-    
+
+    <!-- Cython -->
     <lang.parserDefinition language="Cython" implementationClass="com.jetbrains.cython.parser.CythonParserDefinition"/>
+    <lang.syntaxHighlighterFactory key="Cython" implementationClass="com.jetbrains.cython.CythonSyntaxHighlighterFactory"/>
 
     <!-- Django -->
     <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.django.annotator.ViewMethodLineMarkerProvider"/>
