@@ -55,6 +55,12 @@ public class AccessToNonThreadSafeStaticFieldFromInstanceInspection
         }
     }
 
+    @NotNull
+    @Override
+    public String getID() {
+        return "AccessToNonThreadSafeStaticField";
+    }
+
     @Override
     @Nls
     @NotNull
