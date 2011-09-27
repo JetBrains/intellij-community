@@ -15,6 +15,7 @@
  */
 package git4idea.history;
 
+import com.google.common.collect.ImmutableMap;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
@@ -29,10 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 import static git4idea.history.GitLogParser.*;
 import static git4idea.history.GitLogParser.GitLogOption.*;
@@ -54,58 +52,159 @@ public class GitLogParserTest extends GitTest {
   private GitLogParser myParser;
   private GitTestLogRecord myRecord;
 
+  private static final GitTestLogRecord RECORD1 = new GitTestLogRecord(new ImmutableMap.Builder<GitTestLogRecordInfo, Object>()
+    .put(GitTestLogRecordInfo.HASH,         "2c815939f45fbcfda9583f84b14fe9d393ada790")
+    .put(GitTestLogRecordInfo.AUTHOR_TIME,  new Date(1317027817L * 1000))
+    .put(GitTestLogRecordInfo.AUTHOR_NAME,  "John Doe")
+    .put(GitTestLogRecordInfo.AUTHOR_EMAIL, "John.Doe@example.com")
+    .put(GitTestLogRecordInfo.COMMIT_TIME,  new Date(1315471452L * 1000))
+    .put(GitTestLogRecordInfo.COMMIT_NAME,  "Bob Smith")
+    .put(GitTestLogRecordInfo.COMMIT_EMAIL, "Bob@site.com")
+    .put(GitTestLogRecordInfo.SUBJECT,      "Commit message")
+    .put(GitTestLogRecordInfo.BODY,         "Description goes here\n" +
+                                            "\n" + // empty line
+                                            "Then comes a long long description.\n" +
+                                            "Probably multilined.")
+    .put(GitTestLogRecordInfo.PARENTS,      new String[] {
+                                              "c916c63b89d8fa81ebf23cc5cbcdb75e115623c7",
+                                              "7c1298fd1f93df414ce0d87128532f819de2cbd4"})
+    .put(GitTestLogRecordInfo.CHANGES,      new GitTestChange[]{
+                                              GitTestChange.moved("file2", "file3"),
+                                              GitTestChange.added("readme.txt"),
+                                              GitTestChange.modified("src/CClass.java"),
+                                              GitTestChange.deleted("src/ChildAClass.java")})
+    .build());
+
+  private static final GitTestLogRecord RECORD2 = new GitTestLogRecord(new ImmutableMap.Builder<GitTestLogRecordInfo, Object>()
+    .put(GitTestLogRecordInfo.HASH,         "c916c63b89d8fa81ebf23cc5cbcdb75e115623c7")
+    .put(GitTestLogRecordInfo.AUTHOR_TIME,  new Date(1317027817L * 1000))
+    .put(GitTestLogRecordInfo.AUTHOR_NAME,  "John Doe")
+    .put(GitTestLogRecordInfo.AUTHOR_EMAIL, "John.Doe@example.com")
+    .put(GitTestLogRecordInfo.COMMIT_TIME,  new Date(1315471452L * 1000))
+    .put(GitTestLogRecordInfo.COMMIT_NAME,  "John Doe")
+    .put(GitTestLogRecordInfo.COMMIT_EMAIL, "John.Doe@example.com")
+    .put(GitTestLogRecordInfo.SUBJECT,      "Commit message")
+    .put(GitTestLogRecordInfo.BODY,         "Small description")
+    .put(GitTestLogRecordInfo.PARENTS,      new String[] { "7c1298fd1f93df414ce0d87128532f819de2cbd4" })
+    .put(GitTestLogRecordInfo.CHANGES,      new GitTestChange[] { GitTestChange.modified("src/CClass.java") })
+    .build());
+
+  private static final GitTestLogRecord RECORD3 = new GitTestLogRecord(new ImmutableMap.Builder<GitTestLogRecordInfo, Object>()
+    .put(GitTestLogRecordInfo.HASH,         "c916c63b89d8fa81ebf23cc5cbcdb75e115623c7")
+    .put(GitTestLogRecordInfo.AUTHOR_TIME, new Date(1317027817L * 1000))
+    .put(GitTestLogRecordInfo.AUTHOR_NAME,  "John Doe")
+    .put(GitTestLogRecordInfo.AUTHOR_EMAIL, "John.Doe@example.com")
+    .put(GitTestLogRecordInfo.COMMIT_TIME,  new Date(1315471452L * 1000))
+    .put(GitTestLogRecordInfo.COMMIT_NAME,  "John Doe")
+    .put(GitTestLogRecordInfo.COMMIT_EMAIL, "John.Doe@example.com")
+    .put(GitTestLogRecordInfo.SUBJECT,      "Commit message")
+    .put(GitTestLogRecordInfo.BODY,         "Small description")
+    .put(GitTestLogRecordInfo.PARENTS,      new String[] { "7c1298fd1f93df414ce0d87128532f819de2cbd4" })
+    .put(GitTestLogRecordInfo.CHANGES,      new GitTestChange[] { GitTestChange.modified("src/CClass.java") })
+    .build());
+  public static final List<GitTestLogRecord> ALL_RECORDS = Arrays.asList(RECORD1, RECORD2, RECORD3);
+
+
   @BeforeMethod
   protected void setUp() throws Exception {
     super.setUp();
     myRoot = new LightVirtualFile();
-    myRecord = new GitTestLogRecord();
+    myRecord = RECORD1; // for single record tests
+  }
+  
+  @Test
+  public void parseAllWithoutNameStatus() throws VcsException {
+    doTestAllRecords(GitTestLogRecord.NameStatusOption.NONE);
+  }
+
+  @Test
+  public void parseAllWithName() throws VcsException {
+    doTestAllRecords(GitTestLogRecord.NameStatusOption.NAME);
+  }
+
+  @Test
+  public void parseAllWithNameStatus() throws VcsException {
+    doTestAllRecords(GitTestLogRecord.NameStatusOption.STATUS);
+  }
+
+  private void doTestAllRecords(GitTestLogRecord.NameStatusOption nameStatusOption) throws VcsException {
+    NameStatus option;
+    switch (nameStatusOption) {
+      case NONE:   option = NameStatus.NONE; break;
+      case NAME:   option = NameStatus.NAME; break;
+      case STATUS: option = NameStatus.STATUS; break;
+      default: throw new AssertionError();
+    }
+
+    myParser = new GitLogParser(myProject, option, GIT_LOG_OPTIONS);
+    String output = prepareOutputForAllRecords(nameStatusOption);
+    List<GitLogRecord> actualRecords = myParser.parse(output);
+    List<GitTestLogRecord> expectedRecords = ALL_RECORDS;
+    assertAllRecords(actualRecords, expectedRecords, nameStatusOption);
   }
 
   @Test
   public void parseOneRecordWithoutNameStatus() throws VcsException {
     myParser = new GitLogParser(myProject, GIT_LOG_OPTIONS);
-    doTest(GitTestLogRecord.NameStatusOption.NONE);
+    doTestOneRecord(GitTestLogRecord.NameStatusOption.NONE);
   }
   
   @Test
   public void parseOneRecordWithName() throws VcsException {
     myParser = new GitLogParser(myProject, NameStatus.NAME,  GIT_LOG_OPTIONS);
-    doTest(GitTestLogRecord.NameStatusOption.NAME);
+    doTestOneRecord(GitTestLogRecord.NameStatusOption.NAME);
   }
 
   @Test
   public void parseOneRecordWithNameStatus() throws VcsException {
     myParser = new GitLogParser(myProject, NameStatus.STATUS, GIT_LOG_OPTIONS);
-    doTest(GitTestLogRecord.NameStatusOption.STATUS);
+    doTestOneRecord(GitTestLogRecord.NameStatusOption.STATUS);
   }
   
-  private void doTest(GitTestLogRecord.NameStatusOption option) throws VcsException {
+  private void doTestOneRecord(GitTestLogRecord.NameStatusOption option) throws VcsException {
     String s = myRecord.prepareOutputLine(option);
     GitLogRecord record = myParser.parseOneRecord(s);
     assertRecord(record, myRecord, option);
   }
 
+  private void assertAllRecords(List<GitLogRecord> actualRecords,
+                                List<GitTestLogRecord> expectedRecords,
+                                GitTestLogRecord.NameStatusOption nameStatusOption) throws VcsException {
+    assertEquals(actualRecords.size(), expectedRecords.size());
+    for (int i = 0; i < actualRecords.size(); i++) {
+      assertRecord(actualRecords.get(i), expectedRecords.get(i), nameStatusOption);
+    }
+  }
+
+  private static String prepareOutputForAllRecords(GitTestLogRecord.NameStatusOption nameStatusOption) {
+    StringBuilder sb = new StringBuilder();
+    for (GitTestLogRecord record : ALL_RECORDS) {
+      sb.append(record.prepareOutputLine(nameStatusOption)).append("\n");
+    }
+    return sb.toString();
+  }
+
   private void assertRecord(GitLogRecord actual, GitTestLogRecord expected, GitTestLogRecord.NameStatusOption option) throws VcsException {
-    assertEquals(actual.getHash(), expected.myHash);
+    assertEquals(actual.getHash(), expected.getHash());
     assertEquals(actual.getShortHash(), expected.shortHash());
     
-    assertEquals(actual.getCommitterName(), expected.myCommitterName);
-    assertEquals(actual.getCommitterEmail(), expected.myCommitterEmail);
-    assertEquals(actual.getDate(), expected.myCommitTime);
+    assertEquals(actual.getCommitterName(), expected.getCommitterName());
+    assertEquals(actual.getCommitterEmail(), expected.getCommitterEmail());
+    assertEquals(actual.getDate(), expected.getCommitTime());
     
-    assertEquals(actual.getAuthorName(), expected.myAuthorName);
-    assertEquals(actual.getAuthorEmail(), expected.myAuthorEmail);
-    assertEquals(actual.getAuthorTimeStamp(), expected.myAuthorTime.getTime() / 1000);
+    assertEquals(actual.getAuthorName(), expected.getAuthorName());
+    assertEquals(actual.getAuthorEmail(), expected.getAuthorEmail());
+    assertEquals(actual.getAuthorTimeStamp(), expected.getAuthorTime().getTime() / 1000);
     
-    assertEquals(actual.getAuthorAndCommitter(), GitUtil.adjustAuthorName(String.format("%s <%s>", expected.myAuthorName, expected.myAuthorEmail),
-                                                                          String.format("%s <%s>", expected.myCommitterName, expected.myCommitterEmail)));
+    assertEquals(actual.getAuthorAndCommitter(), GitUtil.adjustAuthorName(String.format("%s <%s>", expected.getAuthorName(), expected.getAuthorEmail()),
+                                                                          String.format("%s <%s>", expected.getCommitterName(), expected.getCommitterEmail())));
 
     
-    assertEquals(actual.getSubject(), expected.mySubject);
-    assertEquals(actual.getBody(), expected.myBody);
+    assertEquals(actual.getSubject(), expected.getSubject());
+    assertEquals(actual.getBody(), expected.getBody());
     assertEquals(actual.getRawBody(), expected.rawBody());
 
-    assertEquals(actual.getParentsHashes(), expected.myParents);
+    assertEquals(actual.getParentsHashes(), expected.getParents());
     assertEquals(actual.getParentsShortHashes(), expected.shortParents());
     
     if (option == GitTestLogRecord.NameStatusOption.NAME) {
@@ -159,40 +258,84 @@ public class GitLogParserTest extends GitTest {
   private String getAfterPath(Change actualChange) {
     return FileUtil.getRelativePath(myRoot.getPath(), actualChange.getAfterRevision().getFile().getPath(), '/');
   }
+  
+  private enum GitTestLogRecordInfo {
+    HASH,
+    COMMIT_TIME,
+    AUTHOR_TIME,
+    AUTHOR_NAME,
+    AUTHOR_EMAIL,
+    COMMIT_NAME,
+    COMMIT_EMAIL,
+    SUBJECT,
+    BODY,
+    PARENTS,
+    CHANGES
+  }
 
   private static class GitTestLogRecord {
-    private static final String PARENT1 = "c916c63b89d8fa81ebf23cc5cbcdb75e115623c7";
-    private static final String PARENT2 = "7c1298fd1f93df414ce0d87128532f819de2cbd4";
 
-    String myHash = "2c815939f45fbcfda9583f84b14fe9d393ada790";
-    Date myCommitTime = new Date(1317027817L * 1000);
-    Date myAuthorTime = new Date(1315471452L * 1000);
-    String myAuthorName = "John Doe";
-    String myAuthorEmail = "John.Doe@example.com";
-    String myCommitterName = "Bob Smith";
-    String myCommitterEmail = "Bob@site.com";
-    
-    String mySubject = "Commit message";
-    String myBody = "Description goes here\n" +
-                    "\n" + // empty line
-                    "Then comes a long long description.\n" +
-                    "Probably multilined.";
+    private final Map<GitTestLogRecordInfo, Object> myData;
 
-    String[] myParents = { PARENT1, PARENT2 };
+    GitTestLogRecord(Map<GitTestLogRecordInfo, Object> data) {
+      myData = data;
+    }
 
-    GitTestChange[] myChanges = {
-      GitTestChange.moved("file2", "file3"),
-      GitTestChange.added("readme.txt"),
-      GitTestChange.modified("src/CClass.java"),
-      GitTestChange.deleted("src/ChildAClass.java")
-    };
+    public String getHash() {
+      return (String)myData.get(GitTestLogRecordInfo.HASH);
+    }
+
+    public Date getCommitTime() {
+      return (Date)myData.get(GitTestLogRecordInfo.COMMIT_TIME);
+    }
+
+    public Date getAuthorTime() {
+      return (Date)myData.get(GitTestLogRecordInfo.AUTHOR_TIME);
+    }
+
+    public String getAuthorName() {
+      return (String)myData.get(GitTestLogRecordInfo.AUTHOR_NAME);
+    }
+
+    public String getAuthorEmail() {
+      return (String)myData.get(GitTestLogRecordInfo.AUTHOR_EMAIL);
+    }
+
+    public String getCommitterName() {
+      return (String)myData.get(GitTestLogRecordInfo.COMMIT_NAME);
+    }
+
+    public String getCommitterEmail() {
+      return (String)myData.get(GitTestLogRecordInfo.COMMIT_EMAIL);
+    }
+
+    public String getSubject() {
+      return (String)myData.get(GitTestLogRecordInfo.SUBJECT);
+    }
+
+    public String getBody() {
+      return (String)myData.get(GitTestLogRecordInfo.BODY);
+    }
+
+    public String[] getParents() {
+      return (String[])myData.get(GitTestLogRecordInfo.PARENTS);
+    }
+
+    public GitTestChange[] getChanges() {
+      return (GitTestChange[])myData.get(GitTestLogRecordInfo.CHANGES);
+    }
 
     String shortHash() {
-      return myHash.substring(0, 7);
+      return getHash().substring(0, 7);
     }
     
     String[] shortParents() {
-      return new String[] { myParents[0].substring(0, 7), myParents[1].substring(0, 7) };
+      String[] parents = getParents();
+      String[] shortParents = new String[parents.length];
+      for (int i = 0 ; i < parents.length; i++) {
+        shortParents[i] = parents[i].substring(0, 7);
+      }
+      return shortParents;
     }
 
     private String shortParentsAsString() {
@@ -200,20 +343,20 @@ public class GitLogParserTest extends GitTest {
     }
 
     private String parentsAsString() {
-      return StringUtil.join(myParents, " ");
+      return StringUtil.join(getParents(), " ");
     }
 
     String rawBody() {
-      return mySubject + "\n\n" + myBody;
+      return getSubject() + "\n\n" + getBody();
     }
 
     List<GitTestChange> changes() {
-      return Arrays.asList(myChanges);
+      return Arrays.asList(getChanges());
     }
 
     private String changesAsString() {
       StringBuilder sb = new StringBuilder();
-      for (GitTestChange change : myChanges) {
+      for (GitTestChange change : getChanges()) {
         sb.append(change.toOutputString());
       }
       return sb.toString();
@@ -221,7 +364,7 @@ public class GitLogParserTest extends GitTest {
 
     public List<String> paths() {
       List<String> paths = new ArrayList<String>();
-      for (GitTestChange change : myChanges) {
+      for (GitTestChange change : getChanges()) {
         switch (change.myType) {
           case MODIFICATION:
           case NEW:
@@ -273,29 +416,29 @@ public class GitLogParserTest extends GitTest {
     private String optionToValue(GitLogOption option) {
       switch (option) {
         case HASH:
-          return myHash;
+          return getHash();
         case SUBJECT:
-          return mySubject;
+          return getSubject();
         case BODY:
-          return myBody;
+          return getBody();
         case RAW_BODY:
           return rawBody();
         case COMMIT_TIME:
-          return String.valueOf(myCommitTime.getTime() / 1000);
+          return String.valueOf(getCommitTime().getTime() / 1000);
         case SHORT_PARENTS:
           return shortParentsAsString();
         case SHORT_HASH:
           return shortHash();
         case AUTHOR_NAME:
-          return myAuthorName;
+          return getAuthorName();
         case AUTHOR_TIME:
-          return String.valueOf(myAuthorTime.getTime() / 1000);
+          return String.valueOf(getAuthorTime().getTime() / 1000);
         case AUTHOR_EMAIL:
-          return myAuthorEmail;
+          return getAuthorEmail();
         case COMMITTER_NAME:
-          return myCommitterName;
+          return getCommitterName();
         case COMMITTER_EMAIL:
-          return myCommitterEmail;
+          return getCommitterEmail();
         case PARENTS:
           return parentsAsString();
         case REF_NAMES:
