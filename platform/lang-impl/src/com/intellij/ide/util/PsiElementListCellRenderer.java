@@ -76,6 +76,9 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
       if (value instanceof PsiElement) {
         T element = (T)value;
         String name = getElementText(element);
+        if (name.length() > 30) { //IDEA-74791
+          name = name.substring(0, 27) + "...";
+        }
         PsiFile psiFile = element.getContainingFile();
         boolean isProblemFile = false;
 
@@ -112,6 +115,10 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
 
         String containerText = getContainerText(element, name + (myModuleName != null ? myModuleName + "        " : ""));
         if (containerText != null) {
+          if (containerText.length() > 40) { //IDEA-74791
+            final String prefix = containerText.startsWith("(") && containerText.endsWith(")") ? "(" : "";
+            containerText = prefix + "..." + containerText.substring(containerText.length() - 37);
+          }
           append(" " + containerText, new SimpleTextAttributes(Font.PLAIN, Color.GRAY));
         }
       }
