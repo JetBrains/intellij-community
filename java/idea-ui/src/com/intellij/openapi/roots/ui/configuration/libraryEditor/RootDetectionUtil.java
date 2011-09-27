@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
@@ -37,6 +38,8 @@ import java.util.List;
  * @author nik
  */
 public class RootDetectionUtil {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.libraryEditor.RootDetectionUtil");
+
   private RootDetectionUtil() {
   }
 
@@ -45,6 +48,7 @@ public class RootDetectionUtil {
                                             @Nullable Project project,
                                             @NotNull final List<? extends RootDetector> detectors,
                                             boolean allowUserToSelectRootTypeIfNothingIsDetected) {
+    LOG.assertTrue(!detectors.isEmpty());
     final List<OrderRoot> result = new ArrayList<OrderRoot>();
     final List<SuggestedChildRootInfo> suggestedRoots = new ArrayList<SuggestedChildRootInfo>();
     new Task.Modal(project, "Scanning for Roots", true) {
@@ -69,14 +73,15 @@ public class RootDetectionUtil {
 
     if (!suggestedRoots.isEmpty()) {
       final DetectedRootsChooserDialog dialog = parentComponent != null
-                                               ? new DetectedRootsChooserDialog(parentComponent, suggestedRoots)
-                                               : new DetectedRootsChooserDialog(project, suggestedRoots);
+                                                ? new DetectedRootsChooserDialog(parentComponent, suggestedRoots)
+                                                : new DetectedRootsChooserDialog(project, suggestedRoots);
       dialog.show();
       if (!dialog.isOK()) {
         return Collections.emptyList();
       }
       for (SuggestedChildRootInfo rootInfo : dialog.getChosenRoots()) {
-        result.add(new OrderRoot(rootInfo.getSuggestedRoot(), rootInfo.getDetector().getRootType(), rootInfo.getDetector().isJarDirectory()));
+        result
+          .add(new OrderRoot(rootInfo.getSuggestedRoot(), rootInfo.getDetector().getRootType(), rootInfo.getDetector().isJarDirectory()));
       }
     }
 
@@ -86,7 +91,7 @@ public class RootDetectionUtil {
         names.add(detector.getPresentableRootTypeName());
       }
       final int i = Messages.showChooseDialog("Choose category for selected files:", "Attach Files",
-                                               ArrayUtil.toStringArray(names), names.get(0), null);
+                                              ArrayUtil.toStringArray(names), names.get(0), null);
       if (i != -1) {
         final RootDetector detector = detectors.get(i);
         for (VirtualFile candidate : rootCandidates) {
