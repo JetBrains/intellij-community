@@ -60,8 +60,8 @@ public abstract class AbstractLogProcessor extends AbstractLombokClassProcessor 
     LightElement loggerField = new MyLightFieldBuilder(manager, loggerName, psiLoggerType)
         .setHasInitializer(true)
         .setContainingClass(psiClass)
-        .setModifiers(PsiModifier.FINAL, PsiModifier.STATIC, PsiModifier.PRIVATE)
-        .setNavigationElement(psiAnnotation);
+        .setModifiers(PsiModifier.FINAL, PsiModifier.STATIC, PsiModifier.PRIVATE);
+    loggerField.setNavigationElement(psiAnnotation);
 
     final String classQualifiedName = psiClass.getQualifiedName();
     final String className = null != classQualifiedName ? classQualifiedName : psiClass.getName();
