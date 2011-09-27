@@ -1013,6 +1013,9 @@ class IntToIntBtree {
           }
           state = hashGetState(index);
           ++total;
+          if (total > length) {
+            break;   // violation of Euler's theorem means index corruption
+          }
         }
         while (state != HASH_FREE &&
                (state == HASH_REMOVED || keyAt(index) != value));
