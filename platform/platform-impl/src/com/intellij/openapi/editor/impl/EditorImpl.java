@@ -4526,8 +4526,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     private String getText(int startIdx, int endIdx) {
-      CharSequence chars = getDocument().getCharsSequence();
-      return chars.subSequence(startIdx, endIdx).toString();
+      if (startIdx >= 0 && endIdx > startIdx) {
+        CharSequence chars = getDocument().getCharsSequence();
+        return chars.subSequence(startIdx, endIdx).toString();
+      }
+
+      return "";
     }
 
     public AttributedCharacterIterator getCommittedText(int beginIndex, int endIndex, AttributedCharacterIterator.Attribute[] attributes) {
