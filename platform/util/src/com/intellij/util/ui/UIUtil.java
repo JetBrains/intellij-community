@@ -94,7 +94,7 @@ public class UIUtil {
                                 MacUIUtil.getInvertedTextCursor(): Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR);
   }
 
-  public enum FontSize { NORMAL, SMALL, MINI }
+  public enum FontSize { NORMAL, TREE, SMALL, MINI }
   public enum ComponentStyle {REGULAR, SMALL, MINI}
   public enum FontColor {NORMAL, BRIGHTER}
 
@@ -275,14 +275,20 @@ public class UIUtil {
     action.putValue(Action.NAME, text);
   }
 
+  public static Font getLabelFont(@NotNull FontSize size) {
+    return getFont(size, null);
+  }
+
   @NotNull
   public static Font getFont(@NotNull FontSize size, @Nullable Font base) {
     Font defFont = getLabelFont();
     if (base == null) base = defFont;
 
     switch (size) {
+      case TREE:
+        return base.deriveFont(Math.max(defFont.getSize() - 2f, 12f));
       case SMALL:
-        return base.deriveFont(defFont.getSize() - 2f);
+        return base.deriveFont(Math.max(defFont.getSize() - 2f, 11f));
       case MINI:
         return base.deriveFont(defFont.getSize() - 4f);
       default:

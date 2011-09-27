@@ -15,7 +15,7 @@
  */
 package com.intellij.refactoring.introduceField;
 
-import com.intellij.codeInsight.TestUtil;
+import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -27,7 +27,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ItemListener;
 
 /**
  * User: anna
@@ -63,10 +65,10 @@ public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
       myInitialisersPlaceModel.removeAllElements();
     }
 
-    final PsiMethod setUpMethod = TestUtil.findSetUpMethod(myParentClass);
+    final PsiMethod setUpMethod = TestFrameworks.getInstance().findSetUpMethod(myParentClass);
     final boolean setupEnabled = myInitialisersPlaceModel.getIndexOf(BaseExpressionToFieldHandler.InitializationPlace.IN_SETUP_METHOD) > -1;
     if (setupEnabled && (myInitializerExpression != null && PsiTreeUtil.isAncestor(setUpMethod, myInitializerExpression, false) ||
-                         TestUtil.isTestClass(myParentClass))) {
+                         TestFrameworks.getInstance().isTestClass(myParentClass))) {
       myInitialisersPlaceModel.setSelectedItem(BaseExpressionToFieldHandler.InitializationPlace.IN_SETUP_METHOD);
     }
     else if (myInitialisersPlaceModel.getIndexOf(BaseExpressionToFieldHandler.InitializationPlace.IN_CONSTRUCTOR) > -1 && myParentClass.getConstructors().length > 0) {
@@ -128,7 +130,7 @@ public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
     myInitialisersPlaceModel.addElement(BaseExpressionToFieldHandler.InitializationPlace.IN_CURRENT_METHOD);
     myInitialisersPlaceModel.addElement(BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION);
     myInitialisersPlaceModel.addElement(BaseExpressionToFieldHandler.InitializationPlace.IN_CONSTRUCTOR);
-    if (TestUtil.isTestClass(myParentClass)) {
+    if (TestFrameworks.getInstance().isTestClass(myParentClass)) {
       myInitialisersPlaceModel.addElement(BaseExpressionToFieldHandler.InitializationPlace.IN_SETUP_METHOD);
     }
     initializeInitializerPlace(myInitializerExpression, InplaceIntroduceFieldPopup.ourLastInitializerPlace);

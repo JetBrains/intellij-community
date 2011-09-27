@@ -16,7 +16,6 @@
 package com.intellij.ide.highlighter;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;

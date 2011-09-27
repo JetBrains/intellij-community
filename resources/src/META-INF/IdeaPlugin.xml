@@ -250,6 +250,9 @@
                         serviceImplementation="com.intellij.psi.impl.source.codeStyle.JavaIndentHelper"
                         overrides="true"/>
 
+    <applicationService serviceInterface="com.intellij.codeInsight.TestFrameworks"
+                        serviceImplementation="com.intellij.codeInsight.TestFrameworksImpl"/>
+
     <projectService serviceInterface="com.intellij.ide.util.TreeClassChooserFactory"
                     serviceImplementation="com.intellij.ide.util.TreeClassChooserFactoryImpl"/>
     <projectService serviceInterface="com.intellij.codeInsight.guess.GuessManager"
@@ -948,6 +951,24 @@
     <programRunner id="defaultDebugRunner" implementation="com.intellij.debugger.impl.GenericDebuggerRunner" order="last"/>
 
     <generation.topLevelFactory language="JAVA" implementationClass="com.intellij.psi.impl.JavaFactoryProvider"/>
+
+    <itemPresentationProvider forClass="com.intellij.psi.PsiClass"
+                              implementationClass="com.intellij.psi.presentation.java.ClassPresentationProvider"/>
+    <itemPresentationProvider forClass="com.intellij.psi.PsiMethod"
+                              implementationClass="com.intellij.psi.presentation.java.MethodPresentationProvider"/>
+    <itemPresentationProvider forClass="com.intellij.psi.PsiField"
+                              implementationClass="com.intellij.psi.presentation.java.FieldPresentationProvider"/>
+    <itemPresentationProvider forClass="com.intellij.psi.PsiLocalVariable"
+                              implementationClass="com.intellij.psi.presentation.java.VariablePresentationProvider"/>
+    <itemPresentationProvider forClass="com.intellij.psi.PsiParameter"
+                              implementationClass="com.intellij.psi.presentation.java.VariablePresentationProvider"/>
+
+    <iconLayerProvider implementation="com.intellij.compiler.CompilerIconLayerProvider"/>
+
+    <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable"/>
+    <projectService serviceInterface="com.intellij.openapi.roots.ui.configuration.ProjectSettingsService"
+                    serviceImplementation="com.intellij.openapi.roots.ui.configuration.IdeaProjectSettingsService"/>
+    <wizardMode implementation="com.intellij.ide.util.newProjectWizard.modes.CreateFromScratchMode" order="first"/>
   </extensions>
 
 </idea-plugin>

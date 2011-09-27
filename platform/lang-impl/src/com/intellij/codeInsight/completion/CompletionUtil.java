@@ -258,7 +258,7 @@ public class CompletionUtil {
   @Nullable
   public static <T extends PsiElement> T getOriginalElement(@NotNull T psi) {
     final PsiFile file = psi.getContainingFile();
-    if (file != null && file != file.getOriginalFile()) {
+    if (file != null && file != file.getOriginalFile() && psi.getTextRange() != null) {
       TextRange range = psi.getTextRange();
       Integer start = range.getStartOffset();
       Integer end = range.getEndOffset();

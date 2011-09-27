@@ -63,10 +63,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
@@ -1052,7 +1049,7 @@ public class CompileDriver {
   }
 
   private static void writeIndex(final BufferedWriter writer, final VirtualFile root, final VirtualFile file) throws IOException {
-    writer.write(VfsUtil.getRelativePath(file, root, '/'));
+    writer.write(VfsUtilCore.getRelativePath(file, root, '/'));
     writer.write('\n');
 
     for (VirtualFile child : file.getChildren()) {
@@ -2165,8 +2162,11 @@ public class CompileDriver {
       final List<String> modulesWithoutJdkAssigned = new ArrayList<String>();
       final Set<File> nonExistingOutputPaths = new HashSet<File>();
       final CompilerConfiguration config = CompilerConfiguration.getInstance(myProject);
-
+      final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
       for (final Module module : scopeModules) {
+        if (!compilerManager.isValidationEnabled(module)) {
+          continue;
+        }
         final boolean hasSources = hasSources(module, false);
         final boolean hasTestSources = hasSources(module, true);
         if (!hasSources && !hasTestSources) {
@@ -2329,7 +2329,7 @@ public class CompileDriver {
           }
         }
       }
-      final Compiler[] allCompilers = CompilerManager.getInstance(myProject).getCompilers(Compiler.class);
+      final Compiler[] allCompilers = compilerManager.getCompilers(Compiler.class);
       for (Compiler compiler : allCompilers) {
         if (!compiler.validateConfiguration(scope)) {
           return false;

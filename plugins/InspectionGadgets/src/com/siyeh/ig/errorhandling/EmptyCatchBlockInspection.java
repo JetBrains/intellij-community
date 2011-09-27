@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig.errorhandling;
 
-import com.intellij.codeInsight.TestUtil;
+import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
@@ -134,7 +134,7 @@ public class EmptyCatchBlockInspection extends BaseInspection {
                 final PsiClass containingClass =
                         PsiTreeUtil.getParentOfType(statement, PsiClass.class);
                 if (containingClass != null &&
-                        TestUtil.isTestClass(containingClass)) {
+                        TestFrameworks.getInstance().isTestClass(containingClass)) {
                     return;
                 }
             }

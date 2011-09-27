@@ -23,7 +23,7 @@ package org.jetbrains.idea.maven.wizards;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.ProjectWizardStepFactory;
 import com.intellij.ide.util.projectWizard.WizardContext;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportProvider;
 import com.intellij.projectImport.SelectImportedProjectsStep;
@@ -45,7 +45,7 @@ public class MavenProjectImportProvider extends ProjectImportProvider {
           stringBuilder.append(project.getMavenId());
           VirtualFile root = ((MavenProjectBuilder)getBuilder()).getRootDirectory();
           if (root != null) {
-            final String relPath = VfsUtil.getRelativePath(project.getDirectoryFile(), root, File.separatorChar);
+            final String relPath = VfsUtilCore.getRelativePath(project.getDirectoryFile(), root, File.separatorChar);
             if (relPath.length() != 0) {
               stringBuilder.append(" [").append(relPath).append("]");
             }

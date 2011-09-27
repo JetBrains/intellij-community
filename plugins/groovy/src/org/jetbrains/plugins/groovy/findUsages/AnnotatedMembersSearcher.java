@@ -15,6 +15,8 @@
  */
 package org.jetbrains.plugins.groovy.findUsages;
 
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.search.AnnotatedElementsSearcher;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -93,17 +95,23 @@ public class AnnotatedMembersSearcher implements QueryExecutor<PsiModifierListOw
     }
 
     for (PsiModifierListOwner candidate : candidates) {
-      if (!AnnotatedElementsSearcher.isInstanceof(candidate, p.getTypes())) {
-        continue;
-      }
+      AccessToken token = ReadAction.start();
+      try {
+        if (!AnnotatedElementsSearcher.isInstanceof(candidate, p.getTypes())) {
+          continue;
+        }
 
-      PsiModifierList list = candidate.getModifierList();
-      if (list != null) {
-        for (PsiAnnotation annotation : list.getAnnotations()) {
-          if (annotationFQN.equals(annotation.getQualifiedName()) && !consumer.process(candidate)) {
-            return false;
+        PsiModifierList list = candidate.getModifierList();
+        if (list != null) {
+          for (PsiAnnotation annotation : list.getAnnotations()) {
+            if (annotationFQN.equals(annotation.getQualifiedName()) && !consumer.process(candidate)) {
+              return false;
+            }
           }
         }
+      }
+      finally {
+        token.finish();
       }
     }
 

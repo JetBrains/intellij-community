@@ -337,11 +337,11 @@ public class PaletteComponentList extends JBList {
       setHoverIndex(-1);
       if (aEvent.getAttachedObject() instanceof PaletteItem) {
         setDropTargetIndex(locationToTargetIndex(aEvent.getPoint()));
-        aEvent.setDropPossible(true, null);
+        aEvent.setDropPossible(true);
       }
       else {
         setDropTargetIndex(-1);
-        aEvent.setDropPossible(false, null);
+        aEvent.setDropPossible(false);
       }
       return false;
     }

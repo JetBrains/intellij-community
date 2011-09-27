@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@ package com.intellij.openapi.roots.ui.configuration.dependencyAnalysis;
 import com.intellij.ide.presentation.VirtualFilePresentation;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.ui.util.CellAppearance;
-import com.intellij.openapi.roots.ui.util.OrderEntryCellAppearanceUtils;
+import com.intellij.openapi.roots.ui.CellAppearanceEx;
+import com.intellij.openapi.roots.ui.OrderEntryAppearanceService;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -202,7 +202,7 @@ public class ModuleDependenciesAnalyzer {
                 if (!myProduction || !myCompile) {
                   CompilerModuleExtension e = CompilerModuleExtension.getInstance(m);
                   final OrderPath p = new OrderPath(myStack);
-                  for (String u : e.getOutputRootUrls(!myCompile ? !myProduction : level > 0 ? !myProduction : false)) {
+                  for (String u : e.getOutputRootUrls(!myCompile ? !myProduction : level > 0 && !myProduction)) {
                     addUrlPath(p, u);
                   }
                   addEntryPath(orderEntry, p);
@@ -307,7 +307,7 @@ public class ModuleDependenciesAnalyzer {
      * @return the appearance to use for rendering
      */
     @NotNull
-    public abstract CellAppearance getAppearance(boolean isSelected);
+    public abstract CellAppearanceEx getAppearance(boolean isSelected);
   }
 
   /**
@@ -368,8 +368,8 @@ public class ModuleDependenciesAnalyzer {
      */
     @NotNull
     @Override
-    public CellAppearance getAppearance(boolean isSelected) {
-      return OrderEntryCellAppearanceUtils.forOrderEntry(myEntry, isSelected);
+    public CellAppearanceEx getAppearance(boolean isSelected) {
+      return OrderEntryAppearanceService.getInstance(myEntry.getOwnerModule().getProject()).forOrderEntry(myEntry, isSelected);
     }
   }
 

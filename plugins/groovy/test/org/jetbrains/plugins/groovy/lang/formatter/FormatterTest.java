@@ -38,9 +38,9 @@ public class FormatterTest extends GroovyFormatterTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myTempSettings.CLASS_BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
-    myTempSettings.METHOD_BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
-    myTempSettings.BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
+    getGroovySettings().CLASS_BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
+    getGroovySettings().METHOD_BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
+    getGroovySettings().BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
   }
 
   public void testAddign1() throws Throwable { doTest(); }
@@ -113,12 +113,13 @@ public class FormatterTest extends GroovyFormatterTestCase {
 
   public void testClosureAfterLineComment() throws Throwable { doTest(); }
   public void testAnnotationOnSeparateLine() throws Throwable { doTest(); }
+  public void testAlignMultipleVariables() throws Throwable { doTest(); }
 
   public void testSpockTable() throws Throwable { doTest(); }
   public void testSpockTableComments() throws Throwable { doTest(); }
 
   public void testElseIfs() throws Throwable {
-    myTempSettings.SPECIAL_ELSE_IF_TREATMENT = false;
+    getGroovySettings().SPECIAL_ELSE_IF_TREATMENT = false;
     doTest();
   }
 
@@ -127,7 +128,7 @@ public class FormatterTest extends GroovyFormatterTestCase {
   public void testPreserveSpaceBeforeClosureParameters() throws Throwable { doTest(); }
   
   public void testCaseInSwitch() throws Throwable {
-    myTempSettings.INDENT_CASE_FROM_SWITCH = false;
+    getGroovySettings().INDENT_CASE_FROM_SWITCH = false;
     doTest();
   }
   public void testCaseInSwitchIndented() throws Throwable { doTest(); }
@@ -135,12 +136,12 @@ public class FormatterTest extends GroovyFormatterTestCase {
   public void testStuffAfterLineComments() throws Throwable { doTest(); }
 
   public void testAnonymousInCall() throws Throwable {
-    myTempSettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    getGroovySettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     doTest();
   }
 
   public void testClosureParametersAligned() throws Throwable {
-    myTempSettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    getGroovySettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     doTest();
   }
 
@@ -152,22 +153,22 @@ public class FormatterTest extends GroovyFormatterTestCase {
   public void testRedundantClosureSpace() throws Throwable { doTest(); }
 
   public void testAlignChainedCalls() throws Throwable {
-    myTempSettings.ALIGN_MULTILINE_CHAINED_METHODS = true;
+    getGroovySettings().ALIGN_MULTILINE_CHAINED_METHODS = true;
     doTest();
   }
 
   public void testAlignBinaries() throws Throwable {
-    myTempSettings.ALIGN_MULTILINE_BINARY_OPERATION = true;
+    getGroovySettings().ALIGN_MULTILINE_BINARY_OPERATION = true;
     doTest();
   }
 
   public void testAlignTernaries() throws Throwable {
-    myTempSettings.ALIGN_MULTILINE_TERNARY_OPERATION = true;
+    getGroovySettings().ALIGN_MULTILINE_TERNARY_OPERATION = true;
     doTest();
   }
 
   public void testAlignAssignments() throws Throwable {
-    myTempSettings.ALIGN_MULTILINE_ASSIGNMENT = true;
+    getGroovySettings().ALIGN_MULTILINE_ASSIGNMENT = true;
     doTest();
   }
 
@@ -183,9 +184,9 @@ public class FormatterTest extends GroovyFormatterTestCase {
   }
 
   public void testFieldInColumnsAlignment() {
-    myTempSettings.ALIGN_GROUP_FIELD_DECLARATIONS = true;
-    myTempSettings.FIELD_ANNOTATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
-    myTempSettings.VARIABLE_ANNOTATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
+    getGroovySettings().ALIGN_GROUP_FIELD_DECLARATIONS = true;
+    getGroovySettings().FIELD_ANNOTATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
+    getGroovySettings().VARIABLE_ANNOTATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
 
     doTest();
   }

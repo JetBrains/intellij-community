@@ -101,7 +101,7 @@ public class FavoritesProjectViewPane extends AbstractProjectViewPane {
 
     final String subId = getSubId();
     LOG.assertTrue(subId != null, getSubIds());
-    myViewPanel = new FavoritesTreeViewPanel(myProject, null);
+    myViewPanel = new FavoritesTreeViewPanel(myProject);
     myTree = myViewPanel.getTree();
     setTreeBuilder(myViewPanel.getBuilder());
     myTreeStructure = myViewPanel.getFavoritesTreeStructure();

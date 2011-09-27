@@ -18,8 +18,6 @@ package com.intellij.psi.filters.classes;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.InheritanceUtil;
 
 /**
  * Created by IntelliJ IDEA.

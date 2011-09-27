@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,16 @@
  */
 package com.intellij.openapi.roots.ui.util;
 
+import com.intellij.openapi.roots.ui.CellAppearanceEx;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.HtmlListCellRenderer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public abstract class BaseTextCommentCellAppearance implements CellAppearance {
+public abstract class BaseTextCommentCellAppearance implements CellAppearanceEx {
   private SimpleTextAttributes myCommentAttributes = SimpleTextAttributes.GRAY_ATTRIBUTES;
   private SimpleTextAttributes myTextAttributes = SimpleTextAttributes.REGULAR_ATTRIBUTES;
 
@@ -30,18 +34,29 @@ public abstract class BaseTextCommentCellAppearance implements CellAppearance {
 
   protected abstract String getPrimaryText();
 
-  public void customize(SimpleColoredComponent component) {
+  public void customize(@NotNull final SimpleColoredComponent component) {
     component.setIcon(getIcon());
     component.append(getPrimaryText(), myTextAttributes);
-    String secondaryText = getSecondaryText();
-    if (secondaryText != null && secondaryText.length() > 0)
+    final String secondaryText = getSecondaryText();
+    if (!StringUtil.isEmptyOrSpaces(secondaryText)) {
       component.append(" (" + secondaryText + ")", myCommentAttributes);
+    }
+  }
+
+  public void customize(@NotNull final HtmlListCellRenderer renderer) {
+    renderer.setIcon(getIcon());
+    renderer.append(getPrimaryText(), myTextAttributes);
+    final String secondaryText = getSecondaryText();
+    if (!StringUtil.isEmptyOrSpaces(secondaryText)) {
+      renderer.append(" (" + secondaryText + ")", myCommentAttributes);
+    }
   }
 
   public String getText() {
     String secondaryText = getSecondaryText();
-    if (secondaryText != null && secondaryText.length() >0)
+    if (secondaryText != null && secondaryText.length() > 0) {
       return getPrimaryText() + " (" + secondaryText + ")";
+    }
     return getPrimaryText();
   }
 

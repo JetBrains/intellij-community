@@ -40,6 +40,11 @@ public class JavaRefactoringFactoryImpl extends JavaRefactoringFactory {
     return new JavaRenameRefactoringImpl(myProject, element, newName, true, true);
   }
 
+  @Override
+  public RenameRefactoring createRename(PsiElement element, String newName, boolean searchInComments, boolean searchInNonJavaFiles) {
+    return new JavaRenameRefactoringImpl(myProject, element, newName, searchInComments, searchInNonJavaFiles);
+  }
+
   public MoveInnerRefactoring createMoveInner(PsiClass innerClass, String newName, boolean passOuterClass, String parameterName) {
     final PsiElement targetContainer = MoveInnerImpl.getTargetContainer(innerClass, false);
     if (targetContainer == null) return null;

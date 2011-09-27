@@ -16,7 +16,7 @@
 package com.siyeh.ig.internationalization;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.TestUtil;
+import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.*;
@@ -206,7 +206,7 @@ public class StringConcatenationInspection extends BaseInspection {
                 final PsiClass containingClass =
                         PsiTreeUtil.getParentOfType(expression, PsiClass.class);
                 if (containingClass != null &&
-                        TestUtil.isTestClass(containingClass)) {
+                    TestFrameworks.getInstance().isTestClass(containingClass)) {
                     return;
                 }
             }

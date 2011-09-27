@@ -84,8 +84,19 @@ public class ParametersList implements Cloneable {
     return Collections.unmodifiableList(params);
   }
 
+  public void clearAll() {
+    myParameters.clear();
+    myGroups.clear();
+  }
+
   public void prepend(@NonNls final String parameter) {
     addAt(0, parameter);
+  }
+
+  public void prependAll(@NonNls final String... parameter) {
+    for (int i = parameter.length - 1; i >= 0; i--) {
+      addAt(0, parameter[i]);
+    }
   }
 
   public void addParametersString(final String parameters) {
@@ -163,7 +174,7 @@ public class ParametersList implements Cloneable {
   }
 
   private void replaceOrAdd(final @NonNls String parameterPrefix, final @NonNls String replacement, final int position) {
-    for (ListIterator<String> iterator = myParameters.listIterator(); iterator.hasNext();) {
+    for (ListIterator<String> iterator = myParameters.listIterator(); iterator.hasNext(); ) {
       final String param = iterator.next();
       if (param.startsWith(parameterPrefix)) {
         if ("".equals(replacement)) {
@@ -175,7 +186,7 @@ public class ParametersList implements Cloneable {
         return;
       }
     }
-    if(!"".equals(replacement)) {
+    if (!"".equals(replacement)) {
       myParameters.add(position, replacement);
     }
   }
@@ -216,20 +227,20 @@ public class ParametersList implements Cloneable {
 
   /**
    * <p>Joins list of parameters into single string, which may be then parsed back into list by {@link #parse(String)}.</p>
-   *
+   * <p/>
    * <p>
-   *   <strong>Conversion rules:</strong>
-   *   <ul>
-   *     <li>double quotes are escaped by backslash (<code>&#92;</code>);</li>
-   *     <li>empty parameters parameters and parameters with spaces inside are surrounded with double quotes (<code>"</code>);</li>
-   *     <li>parameters are separated by single whitespace.</li>
-   *   </ul>
+   * <strong>Conversion rules:</strong>
+   * <ul>
+   * <li>double quotes are escaped by backslash (<code>&#92;</code>);</li>
+   * <li>empty parameters parameters and parameters with spaces inside are surrounded with double quotes (<code>"</code>);</li>
+   * <li>parameters are separated by single whitespace.</li>
+   * </ul>
    * </p>
-   *
+   * <p/>
    * <p><strong>Examples:</strong></p>
    * <p>
-   *   <code>['a', 'b'] => 'a  b'</code><br/>
-   *   <code>['a="1 2"', 'b'] => '"a &#92;"1 2&#92;"" b'</code>
+   * <code>['a', 'b'] => 'a  b'</code><br/>
+   * <code>['a="1 2"', 'b'] => '"a &#92;"1 2&#92;"" b'</code>
    * </p>
    *
    * @param parameters a list of parameters to join.
@@ -247,23 +258,23 @@ public class ParametersList implements Cloneable {
 
   /**
    * <p>Converts single parameter string (as created by {@link #join(java.util.List)}) into list of parameters.</p>
-   *
+   * <p/>
    * <p>
-   *   <strong>Conversion rules:</strong>
-   *   <ul>
-   *     <li>starting/whitespaces are trimmed;</li>
-   *     <li>parameters are split by whitespaces, whitespaces itself are dropped</li>
-   *     <li>parameters inside double quotes (<code>"a b"</code>) are kept as single one;</li>
-   *     <li>double quotes are dropped, escaped double quotes (<code>&#92;"</code>) are un-escaped.</li>
-   *   </ul>
+   * <strong>Conversion rules:</strong>
+   * <ul>
+   * <li>starting/whitespaces are trimmed;</li>
+   * <li>parameters are split by whitespaces, whitespaces itself are dropped</li>
+   * <li>parameters inside double quotes (<code>"a b"</code>) are kept as single one;</li>
+   * <li>double quotes are dropped, escaped double quotes (<code>&#92;"</code>) are un-escaped.</li>
+   * </ul>
    * </p>
-   *
+   * <p/>
    * <p><strong>Examples:</strong></p>
    * <p>
-   *   <code>' a  b ' => ['a', 'b']</code><br/>
-   *   <code>'a="1 2" b' => ['a=1 2', 'b']</code><br/>
-   *   <code>'a " " b' => ['a', ' ', 'b']</code><br/>
-   *   <code>'"a &#92;"1 2&#92;"" b' => ['a="1 2"', 'b']</code>
+   * <code>' a  b ' => ['a', 'b']</code><br/>
+   * <code>'a="1 2" b' => ['a=1 2', 'b']</code><br/>
+   * <code>'a " " b' => ['a', ' ', 'b']</code><br/>
+   * <code>'"a &#92;"1 2&#92;"" b' => ['a="1 2"', 'b']</code>
    * </p>
    *
    * @param string parameter string to split.
@@ -277,11 +288,11 @@ public class ParametersList implements Cloneable {
 
   public String expandMacros(String text) {
     final Map<String, String> macroMap = getMacroMap();
-      final Set<String> set = macroMap.keySet();
-      for (final String from : set) {
-          final String to = macroMap.get(from);
-          text = StringUtil.replace(text, from, to, true);
-      }
+    final Set<String> set = macroMap.keySet();
+    for (final String from : set) {
+      final String to = macroMap.get(from);
+      text = StringUtil.replace(text, from, to, true);
+    }
     return text;
   }
 
@@ -296,7 +307,7 @@ public class ParametersList implements Cloneable {
         final PathMacros pathMacros = PathMacros.getInstance();
         final Set<String> names = pathMacros.getAllMacroNames();
         for (String name : names) {
-            myMacroMap.put("${" + name + "}", pathMacros.getValue(name));
+          myMacroMap.put("${" + name + "}", pathMacros.getValue(name));
         }
         final Map<String, String> env = EnvironmentUtil.getEnviromentProperties();
         for (String name : env.keySet()) {
@@ -316,7 +327,8 @@ public class ParametersList implements Cloneable {
   }
 
   private static class ParametersTokenizer {
-    private ParametersTokenizer() { }
+    private ParametersTokenizer() {
+    }
 
     @NotNull
     public static String encode(@NotNull final List<String> parameters) {

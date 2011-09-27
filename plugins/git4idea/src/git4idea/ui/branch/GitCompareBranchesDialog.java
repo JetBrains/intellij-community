@@ -66,7 +66,7 @@ public class GitCompareBranchesDialog extends DialogWrapper {
   }
 
   private JPanel layoutComponents(String currentBranch) {
-    final ChangesBrowser changesBrowser = new ChangesBrowser(myProject, null, Collections.<Change>emptyList(), null, false, true, null, ChangesBrowser.MyUseCase.COMMITTED_CHANGES);
+    final ChangesBrowser changesBrowser = new ChangesBrowser(myProject, null, Collections.<Change>emptyList(), null, false, true, null, ChangesBrowser.MyUseCase.COMMITTED_CHANGES, null);
 
     myHeadToBranchListPanel = new GitCommitListPanel(myProject, myHeadToBranch);
     myBranchToHeadListPanel = new GitCommitListPanel(myProject, myBranchToHead);

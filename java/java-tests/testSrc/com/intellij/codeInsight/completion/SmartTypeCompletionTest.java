@@ -958,6 +958,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   public void testPrimitiveArrayClassInMethod() throws Throwable { doTest(); }
   public void testPrimitiveClassInAnno() throws Throwable { doTest(); }
   public void testNewInnerClassOfSuper() throws Throwable { doTest(); }
+  public void testAssertThatMatcher() throws Throwable { doTest(); }
 
   public void testInferFromCall() throws Throwable {
     doTest();
@@ -1010,7 +1011,15 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     doItemTest();
   }
 
+  public void testArrayInitializerBeforeVarargs() throws Throwable { doTest(); }
+  public void testInheritorMembers() throws Throwable { doTest(); }
+  public void testInheritorEnumMembers() throws Throwable { doTest(); }
   public void testDuplicateMembersFromSuperClass() throws Throwable { doTest(); }
+
+  public void testNoNewEnum() throws Throwable {
+    configureByTestName();
+    assertStringItems("Foo");
+  }
 
   public void testDuplicateMembersFromSuperClassInAnotherFile() throws Throwable {
     myFixture.addClass("class Super { public static final Super FOO = null; }");

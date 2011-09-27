@@ -20,7 +20,7 @@ import com.intellij.formatting.Spacing;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.formatter.GroovyBlock;
 import org.jetbrains.plugins.groovy.formatter.MethodCallWithoutQualifierBlock;
@@ -54,7 +54,7 @@ public abstract class GroovySpacingProcessorBasic extends SpacingTokens implemen
   private static final Spacing IMPORT_OTHER_SPACING = Spacing.createSpacing(0, 0, 2, true, 100);
   private static final Spacing LAZY_SPACING = Spacing.createSpacing(0, 239, 0, true, 100);
 
-  public static Spacing getSpacing(GroovyBlock child1, GroovyBlock child2, CodeStyleSettings settings) {
+  public static Spacing getSpacing(GroovyBlock child1, GroovyBlock child2, CommonCodeStyleSettings settings) {
 
     ASTNode leftNode = child1.getNode();
     ASTNode rightNode = child2.getNode();

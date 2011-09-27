@@ -95,6 +95,8 @@ public class GroovyParserDefinition implements ParserDefinition {
     if (left.getElementType() == mNLS || left.getElementType() == mGDOC_COMMENT_START) {
       return MAY;
     }
+    
+    if (left.getElementType() == mDOLLAR) return MUST_NOT;
 
     return LanguageUtil.canStickTokensTogetherByLexer(left, right, new GroovyLexer());
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,9 +47,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- *
- */
 public class CodeInsightUtil {
   @Nullable
   public static PsiExpression findExpressionInRange(PsiFile file, int startOffset, int endOffset) {
@@ -252,22 +249,10 @@ public class CodeInsightUtil {
     return CodeInsightUtilBase.preparePsiElementsForWrite(Arrays.asList(elements));
   }
 
-  public static Set<PsiType> addSubtypes(PsiType psiType, final PsiElement context,
-                                         final boolean getRawSubtypes, Condition<String> shortNameCondition) {
-    final Set<PsiType> result = new HashSet<PsiType>();
-    processSubTypes(psiType, context, getRawSubtypes, shortNameCondition, new Consumer<PsiType>() {
-      @Override
-      public void consume(PsiType psiType) {
-        result.add(psiType);
-      }
-    });
-    return result;
-  }
-
   public static void processSubTypes(PsiType psiType,
                                      final PsiElement context,
                                      boolean getRawSubtypes,
-                                     Condition<String> shortNameCondition,
+                                     @NotNull Condition<String> shortNameCondition,
                                      Consumer<PsiType> consumer) {
     int arrayDim = psiType.getArrayDimensions();
 

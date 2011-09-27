@@ -18,9 +18,7 @@ package com.intellij.ide.hierarchy.method;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.psi.util.MethodSignature;
 
 final class MethodHierarchyUtil {
   public static PsiMethod findBaseMethodInClass(final PsiMethod baseMethod, final PsiClass aClass, final boolean checkBases) {

@@ -85,7 +85,7 @@ public class ShowAllAffectedGenericAction extends AnAction {
         } else if (list[0] == null) {
           Messages.showErrorDialog(project, failedText(virtualFile, revision), getTitle());
         } else {
-          instance.showChangesListBrowser(list[0], title);
+          instance.showChangesListBrowser(list[0], virtualFile, title);
         }
       }
     });

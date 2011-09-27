@@ -23,7 +23,6 @@ import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.getters.ClassLiteralGetter;
-import com.intellij.psi.filters.getters.JavaMembersGetter;
 import com.intellij.psi.filters.getters.ThisGetter;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
@@ -85,11 +84,6 @@ public class BasicExpressionCompletionContributor {
 
         final PsiElement parent = position.getParent();
         if (parent != null && !(parent.getParent() instanceof PsiSwitchLabelStatement)) {
-          new JavaMembersGetter(expectedType).addMembers(parameters.getPosition(), result);
-          if (!parameters.getDefaultType().equals(expectedType)) {
-            new JavaMembersGetter(parameters.getDefaultType()).addMembers(parameters.getPosition(), result);
-          }
-
           for (final PsiExpression expression : ThisGetter.getThisExpressionVariants(position)) {
             result.consume(new ExpressionLookupItem(expression));
           }

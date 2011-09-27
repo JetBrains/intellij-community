@@ -21,6 +21,7 @@ import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.analysis.AnalysisUIOptions;
 import com.intellij.analysis.BaseAnalysisActionDialog;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -41,7 +42,7 @@ import org.jetbrains.annotations.NotNull;
  * User: anna
  * Date: 21-Feb-2006
  */
-public class RunInspectionIntention implements IntentionAction {
+public class RunInspectionIntention implements IntentionAction, HighPriorityAction {
   private final String myShortName;
   private final String myDisplayName;
 

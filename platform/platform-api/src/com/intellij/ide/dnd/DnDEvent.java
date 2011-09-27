@@ -15,9 +15,10 @@
  */
 package com.intellij.ide.dnd;
 
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
-import com.intellij.openapi.util.UserDataHolder;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -33,7 +34,9 @@ public interface DnDEvent extends Transferable, UserDataHolder {
 
   Object getAttachedObject();
 
-  void setDropPossible(boolean possible, String aExpectedResult);
+  void setDropPossible(boolean possible, @Nullable String aExpectedResult);
+
+  void setDropPossible(boolean possible);
 
   void setDropPossible(String aExpectedResult, DropActionHandler aHandler);
 

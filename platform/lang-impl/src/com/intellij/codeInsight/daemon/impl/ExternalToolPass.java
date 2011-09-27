@@ -183,9 +183,10 @@ public class ExternalToolPass extends TextEditorHighlightingPass {
     final Runnable r = new Runnable() {
       @Override
       public void run() {
-        UpdateHighlightersUtil
-          .setHighlightersToEditor(myProject, myDocument, myStartOffset, myEndOffset, Collections.<HighlightInfo>emptyList(),
+        if (!myProject.isDisposed()) {
+          UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myStartOffset, myEndOffset, Collections.<HighlightInfo>emptyList(),
                                    getColorsScheme(), getId());
+        }
       }
     };
     if (ApplicationManager.getApplication().isDispatchThread()) {

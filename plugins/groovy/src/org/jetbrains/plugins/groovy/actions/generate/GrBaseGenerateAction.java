@@ -23,7 +23,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
 /**
@@ -33,10 +32,6 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 public abstract class GrBaseGenerateAction extends BaseGenerateAction {
   public GrBaseGenerateAction(CodeInsightActionHandler handler) {
     super(handler);
-  }
-
-  protected String getCommandName() {
-    return GroovyBundle.message("Constructor");
   }
 
   protected boolean isValidForFile(Project project, Editor editor, PsiFile file) {

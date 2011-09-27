@@ -33,6 +33,8 @@ import org.jetbrains.annotations.NotNull;
 public class RenameFix extends InspectionGadgetsFix {
 
     private final String m_targetName;
+    private boolean m_searchInStrings = true;
+    private boolean m_searchInNonJavaFiles = true;
 
     public RenameFix() {
         m_targetName = null;
@@ -40,6 +42,13 @@ public class RenameFix extends InspectionGadgetsFix {
 
     public RenameFix(@NonNls String targetName) {
         m_targetName = targetName;
+    }
+
+
+    public RenameFix(@NonNls String targetName, boolean searchInStrings, boolean searchInNonJavaFiles) {
+        m_targetName = targetName;
+        m_searchInStrings = searchInStrings;
+        m_searchInNonJavaFiles = searchInNonJavaFiles;
     }
 
     @NotNull
@@ -83,7 +92,7 @@ public class RenameFix extends InspectionGadgetsFix {
             final RefactoringFactory factory =
                     RefactoringFactory.getInstance(project);
             final RenameRefactoring renameRefactoring =
-                    factory.createRename(elementToRename, m_targetName);
+                    factory.createRename(elementToRename, m_targetName, m_searchInStrings, m_searchInNonJavaFiles);
             renameRefactoring.run();
         }
     }

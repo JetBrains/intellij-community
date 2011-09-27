@@ -151,7 +151,7 @@ public abstract class JavaCodeContextType extends TemplateContextType {
 
     @Override
     protected boolean isInContext(@NotNull PsiElement element) {
-      if (Statement.isStatementContext(element)) {
+      if (Statement.isStatementContext(element) || Expression.isExpressionContext(element)) {
         return false;
       }
 

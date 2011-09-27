@@ -24,8 +24,7 @@ import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.progress.util.SmoothProgressAdapter;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.psi.PsiLock;
@@ -229,6 +228,30 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
     return runProcessWithProgressSynchronously(process, progressTitle, canBeCanceled, project, null);
   }
 
+  @Override
+  public <T> T runProcessWithProgressSynchronously(@NotNull final ThrowableComputable<T, Exception> process,
+                                                   @NotNull @Nls String progressTitle,
+                                                   boolean canBeCanceled,
+                                                   @Nullable Project project) throws Exception {
+
+    final Ref<T> result = new Ref<T>();
+    final Ref<Exception> exceptionRef = new Ref<Exception>();
+    Task.Modal task = new Task.Modal(project, progressTitle, canBeCanceled) {
+      public void run(@NotNull ProgressIndicator indicator) {
+        try {
+          T compute = process.compute();
+          result.set(compute);
+        }
+        catch (Exception e) {
+          exceptionRef.set(e);
+        }
+      }
+    };
+    runProcessWithProgressSynchronously(task, null);
+    if (!exceptionRef.isNull()) throw exceptionRef.get();
+    return result.get();
+  }
+
   public boolean runProcessWithProgressSynchronously(@NotNull final Runnable process,
                                                      @NotNull String progressTitle,
                                                      boolean canBeCanceled,
@@ -242,7 +265,7 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
     return runProcessWithProgressSynchronously(task, parentComponent);
   }
 
-  private static boolean runProcessWithProgressSynchronously(final Task task, final JComponent parentComponent) {
+  private static boolean runProcessWithProgressSynchronously(final Task task, @Nullable final JComponent parentComponent) {
     final long start = System.currentTimeMillis();
     long time = 0;
     final boolean result = ((ApplicationEx)ApplicationManager.getApplication())

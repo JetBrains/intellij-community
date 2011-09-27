@@ -1,6 +1,6 @@
 
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,9 +22,6 @@ import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.testFramework.DummyFileIdGenerator;
 import org.jetbrains.annotations.NotNull;
 
-/**
- *
- */
 abstract class VirtualFileImpl extends VirtualFile implements VirtualFileWithId {
   private final DummyFileSystem myFileSystem;
   private final VirtualFileDirectoryImpl myParent;

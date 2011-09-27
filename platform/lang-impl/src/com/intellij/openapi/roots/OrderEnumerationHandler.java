@@ -60,6 +60,12 @@ public abstract class OrderEnumerationHandler {
     return false;
   }
 
+  public boolean addCustomRootsForLibrary(@NotNull OrderEntry forOrderEntry,
+                                          @NotNull OrderRootType type,
+                                          @NotNull Collection<String> urls) {
+    return false;
+  }
+
   public void addAdditionalRoots(@NotNull Module forModule,
                                  @NotNull OrderEnumeratorSettings settings,
                                  @NotNull Collection<String> urls) {

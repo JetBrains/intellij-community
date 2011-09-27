@@ -108,7 +108,12 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
     }
     customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
 
-    if (getFont() == null) {
+    if (tree.getUI() instanceof UIUtil.MacTreeUI) {
+      setFont(UIUtil.isUnderAquaLookAndFeel() ? UIUtil.getLabelFont(UIUtil.FontSize.TREE) : getFont());
+      setMyBorder(null);
+      setIpad(new Insets(0, 2,  0, 2));
+    }
+    else if (getFont() == null) {
       setFont(tree.getFont());
     }
 

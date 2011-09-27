@@ -336,7 +336,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   public void reset() {
     super.reset();
     for (final ModuleStructureExtension extension : ModuleStructureExtension.EP_NAME.getExtensions()) {
-      extension.reset();
+      extension.reset(myProject);
     }
   }
 
@@ -345,14 +345,15 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     roots.add(myRoot);
     checkApply(roots, ProjectBundle.message("rename.message.prefix.module"), ProjectBundle.message("rename.module.title"));
 
-    if (myContext.myModulesConfigurator.isModified()) {
-      myContext.myModulesConfigurator.apply();
-    }
-
+    // let's apply extensions first, since they can write to/commit modifiable models
     for (final ModuleStructureExtension extension : ModuleStructureExtension.EP_NAME.getExtensions()) {
       if (extension.isModified()) {
         extension.apply();
       }
+    }
+
+    if (myContext.myModulesConfigurator.isModified()) {
+      myContext.myModulesConfigurator.apply();
     }
   }
 
@@ -579,12 +580,12 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
                                              PlatformIcons.OPENED_MODULE_GROUP_ICON, PlatformIcons.CLOSED_MODULE_GROUP_ICON);
   }
 
-  protected boolean canBeRemoved(final Object editableObject) {
-    if (super.canBeRemoved(editableObject)) {
+  protected boolean canBeRemoved(final Object[] editableObjects) {
+    if (super.canBeRemoved(editableObjects)) {
       return true;
     }
     for (final ModuleStructureExtension extension : ModuleStructureExtension.EP_NAME.getExtensions()) {
-      if (extension.canBeRemoved(editableObject)) {
+      if (extension.canBeRemoved(editableObjects)) {
         return true;
       }
     }

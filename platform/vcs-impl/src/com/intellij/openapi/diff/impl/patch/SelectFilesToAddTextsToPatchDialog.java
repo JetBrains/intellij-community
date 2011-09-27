@@ -82,7 +82,7 @@ public class SelectFilesToAddTextsToPatchDialog extends DialogWrapper {
         myWarningText.setVisible(false);
       }
     };
-    myBrowser = new ChangesBrowser(project, null, changes, null, true, false, myInclusionListener, ChangesBrowser.MyUseCase.LOCAL_CHANGES);
+    myBrowser = new ChangesBrowser(project, null, changes, null, true, false, myInclusionListener, ChangesBrowser.MyUseCase.LOCAL_CHANGES, null);
     myBrowser.getViewer().setChangeDecorator(new ChangeNodeDecorator() {
       @Override
       public void decorate(Change change, SimpleColoredComponent component, boolean isShowFlatten) {

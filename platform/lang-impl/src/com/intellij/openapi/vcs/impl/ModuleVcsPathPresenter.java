@@ -26,7 +26,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.patch.RelativePathCalculator;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -56,7 +56,7 @@ public class ModuleVcsPathPresenter extends VcsPathPresenter {
         result.append(module.getName());
         result.append("] ");
         result.append(contentRoot.getName());
-        String relativePath = VfsUtil.getRelativePath(file, contentRoot, File.separatorChar);
+        String relativePath = VfsUtilCore.getRelativePath(file, contentRoot, File.separatorChar);
         if (relativePath.length() > 0) {
           result.append(File.separatorChar);
           result.append(relativePath);

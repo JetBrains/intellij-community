@@ -100,6 +100,7 @@ abstract class CompletionAutoPopupTestCase extends LightCodeInsightFixtureTestCa
     def start = System.currentTimeMillis()
     while (!committed.get()) {
       if (System.currentTimeMillis() - start >= 10000) {
+        printThreadDump()
         fail('too long waiting for a document to be committed')
       }
       UIUtil.pump();

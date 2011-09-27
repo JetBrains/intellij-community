@@ -175,7 +175,7 @@ public class ClipboardSynchronizer implements ApplicationComponent {
 
     @Nullable
     private Transferable doGetContents() throws IllegalStateException {
-      if (Registry.is("ide.mac.useNativeClipboard") && "true".equals(System.getProperty("ide.mac.useNativeClipboard", "true"))) {
+      if (Registry.is("ide.mac.useNativeClipboard")) {
         final Transferable safe = getContentsSafe();
         if (safe != null) {
           return safe;

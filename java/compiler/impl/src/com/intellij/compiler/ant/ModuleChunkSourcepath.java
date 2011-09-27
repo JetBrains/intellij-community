@@ -23,6 +23,7 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleFileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.ArrayList;
@@ -83,7 +84,7 @@ public class ModuleChunkSourcepath extends CompositeGenerator{
 
           addExcludePatterns(module, root, root, excludedFromModule, true);
 
-          final Include include = new Include(VfsUtil.getRelativePath(root, dirSetRoot, '/'));
+          final Include include = new Include(VfsUtilCore.getRelativePath(root, dirSetRoot, '/'));
           if (moduleFileIndex.isInTestSourceContent(root)) {
             testSourcesDirSet.add(include);
             testSourceRootFiles.add(root);
@@ -147,7 +148,7 @@ public class ModuleChunkSourcepath extends CompositeGenerator{
     }
     final boolean isIncluded = ModuleRootManager.getInstance(module).getFileIndex().isInContent(dir);
     if (isIncluded != parentIncluded) {
-      final String relativePath = VfsUtil.getRelativePath(dir, root, '/');
+      final String relativePath = VfsUtilCore.getRelativePath(dir, root, '/');
       if (isIncluded) {
         generator.add(new Include(relativePath + "/**"));
       }

@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig.errorhandling;
 
-import com.intellij.codeInsight.TestUtil;
+import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class UnusedCatchParameterInspection extends BaseInspection {
 
@@ -78,7 +78,7 @@ public class UnusedCatchParameterInspection extends BaseInspection {
         if (namedIgnoreButUsed) {
             return null;
         }
-        return new RenameFix("ignored");
+        return new RenameFix("ignored", false, false);
     }
 
     @Override
@@ -95,7 +95,7 @@ public class UnusedCatchParameterInspection extends BaseInspection {
                 final PsiClass containingClass =
                         PsiTreeUtil.getParentOfType(statement, PsiClass.class);
                 if(containingClass != null &&
-                        TestUtil.isTestClass(containingClass)){
+                   TestFrameworks.getInstance().isTestClass(containingClass)){
                     return;
                 }
                 if (TestUtils.isPartOfJUnitTestMethod(statement)) {

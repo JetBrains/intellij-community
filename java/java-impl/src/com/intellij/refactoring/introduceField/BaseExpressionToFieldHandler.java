@@ -26,7 +26,7 @@ package com.intellij.refactoring.introduceField;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ChangeContextUtil;
-import com.intellij.codeInsight.TestUtil;
+import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.navigation.NavigationUtil;
@@ -319,7 +319,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
                                                final OccurrenceManager occurrenceManager,
                                                final boolean replaceAll,
                                                final PsiClass parentClass) throws IncorrectOperationException {
-    final PsiMethod setupMethod = TestUtil.findOrCreateSetUpMethod(parentClass);
+    final PsiMethod setupMethod = TestFrameworks.getInstance().findOrCreateSetUpMethod(parentClass);
 
     assert setupMethod != null;
 

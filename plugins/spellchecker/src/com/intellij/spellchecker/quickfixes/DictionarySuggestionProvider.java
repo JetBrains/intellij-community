@@ -15,14 +15,12 @@
  */
 package com.intellij.spellchecker.quickfixes;
 
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.refactoring.rename.NameSuggestionProvider;
 import com.intellij.spellchecker.SpellCheckerManager;
 
-import java.util.Collection;
 import java.util.Set;
 import java.util.TreeSet;
 

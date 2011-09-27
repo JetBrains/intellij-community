@@ -4,6 +4,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.NullableComputable;
@@ -16,7 +17,7 @@ public abstract class ModuleStructureExtension {
   public static final ExtensionPointName<ModuleStructureExtension> EP_NAME =
     ExtensionPointName.create("com.intellij.configuration.ModuleStructureExtension");
 
-  public void reset() {
+  public void reset(Project project) {
   }
 
   public boolean addModuleNodeChildren(Module module, MasterDetailsComponent.MyNode moduleNode, Runnable treeNodeNameUpdater) {
@@ -39,7 +40,7 @@ public abstract class ModuleStructureExtension {
   public void disposeUIResources() {
   }
 
-  public boolean canBeRemoved(final Object editableObject) {
+  public boolean canBeRemoved(final Object[] editableObjects) {
     return false;
   }
 
@@ -52,10 +53,10 @@ public abstract class ModuleStructureExtension {
     return Collections.emptyList();
   }
 
-  public boolean canBeCopied(final NamedConfigurable confugurable) {
+  public boolean canBeCopied(final NamedConfigurable configurable) {
     return false;
   }
 
-  public void copy(final NamedConfigurable confugurable, final Runnable treeNodeNameUpdater) {
+  public void copy(final NamedConfigurable configurable, final Runnable treeNodeNameUpdater) {
   }
 }

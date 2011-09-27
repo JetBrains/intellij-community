@@ -33,7 +33,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
@@ -417,7 +417,7 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<Trinity<Strin
           final String fullPath = myField.getText().trim().replace(File.separatorChar, '/');
           final VirtualFile fileByPath = LocalFileSystem.getInstance().findFileByPath(fullPath);
           LOG.assertTrue(fileByPath != null);
-          myField.setText(VfsUtil.getRelativePath(fileByPath, contentEntryDir, File.separatorChar));
+          myField.setText(VfsUtilCore.getRelativePath(fileByPath, contentEntryDir, File.separatorChar));
         }
       }
     }

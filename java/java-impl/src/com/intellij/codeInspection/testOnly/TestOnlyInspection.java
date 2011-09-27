@@ -16,7 +16,7 @@
 package com.intellij.codeInspection.testOnly;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.TestUtil;
+import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemHighlightType;
@@ -82,7 +82,7 @@ public class TestOnlyInspection extends BaseJavaLocalInspectionTool {
   private boolean isInsideTestClass(PsiCallExpression e) {
     PsiClass c = getTopLevelParentOfType(e, PsiClass.class);
     if (c == null) return false;
-    return TestUtil.isTestClass(c);
+    return TestFrameworks.getInstance().isTestClass(c);
   }
 
   private <T extends PsiElement> T getTopLevelParentOfType(PsiElement e, Class<T> c) {

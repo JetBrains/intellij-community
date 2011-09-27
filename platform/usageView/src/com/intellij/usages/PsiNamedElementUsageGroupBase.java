@@ -82,7 +82,7 @@ public class PsiNamedElementUsageGroupBase<T extends PsiNamedElement & Navigatio
     } else {
       name = o.getText(null);
     }
-    return myName.compareTo(name);
+    return myName.compareToIgnoreCase(name);
   }
 
   public boolean equals(final Object obj) {

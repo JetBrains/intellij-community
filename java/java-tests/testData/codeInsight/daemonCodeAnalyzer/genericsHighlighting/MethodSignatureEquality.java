@@ -73,3 +73,22 @@ class Test {
     abstract void foo(F<? extends Throwable> y);
   }
 }
+
+class Ao {}
+
+class Bo extends Ao {}
+
+class SettingsEditor<T> {
+}
+
+abstract class RunConfigurationExtension<T extends Ao> {
+    protected abstract <P extends T> SettingsEditor<P> createEditor(final P configuration);
+}
+
+class F extends RunConfigurationExtension<Bo> {
+
+    <error descr="Method does not override method from its superclass">@Override</error>
+    protected <P extends Bo> SettingsEditor<P> createEditor(P configuration) {
+        return null;
+    }
+}

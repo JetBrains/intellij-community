@@ -87,7 +87,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
   protected ArrayList<AnAction> createActions(final boolean fromPopup) {
     final ArrayList<AnAction> result = new ArrayList<AnAction>();
     result.add(new MyAddAction(fromPopup));
-    result.add(new MyDeleteAction(new Condition<Object>() {
+    result.add(new MyDeleteAction(forAll(new Condition<Object>() {
       public boolean value(final Object o) {
         if (o instanceof MyNode) {
           final Object editableObject = ((MyNode)o).getConfigurable().getEditableObject();
@@ -95,7 +95,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
         }
         return false;
       }
-    }));
+    })));
     result.add(new MyCopyAction());
     result.add(new MySaveAsAction());
     result.add(new MyMoveAction(ExecutionBundle.message("move.up.action.name"), IconLoader.getIcon("/actions/moveUp.png"), -1));

@@ -89,16 +89,22 @@ public abstract class JBListTable extends JPanel {
       @Override
       protected boolean processKeyBinding(KeyStroke ks, KeyEvent e, int condition, boolean pressed) {
         if (e.getKeyCode() == VK_ENTER) {
-          if (!isEditing() && e.getID() == KEY_PRESSED && e.getModifiers() == 0) {
-            editCellAt(getSelectedRow(), getSelectedColumn());
-          } else if (isEditing() && e.getID() == KEY_PRESSED) {
-            TableUtil.stopEditing(this);
-            if (e.isControlDown() || e.isMetaDown()) {
-              return false;
+          if (e.getID() == KEY_PRESSED) {
+            if (!isEditing() && e.getModifiers() == 0) {
+              editCellAt(getSelectedRow(), getSelectedColumn());
+            } else if (isEditing()) {
+              TableUtil.stopEditing(this);
+              if (e.isControlDown() || e.isMetaDown()) {
+                return false;
+              } else {
+                final int row = getSelectedRow() + 1;
+                if (row < getRowCount()) {
+                  getSelectionModel().setSelectionInterval(row, row);
+                }
+              }
             } else {
-              final int row = getSelectedRow() + 1;
-              if (row < getRowCount()) {
-                getSelectionModel().setSelectionInterval(row, row);
+              if (e.isControlDown() || e.isMetaDown()) {
+                return false;
               }
             }
           }

@@ -16,13 +16,14 @@
 
 package com.intellij.psi.search.searches;
 
-import com.intellij.psi.search.IndexPatternOccurrence;
-import com.intellij.psi.search.IndexPattern;
-import com.intellij.psi.search.IndexPatternProvider;
-import com.intellij.psi.PsiFile;
-import com.intellij.util.QueryFactory;
-import com.intellij.util.Query;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.search.IndexPattern;
+import com.intellij.psi.search.IndexPatternOccurrence;
+import com.intellij.psi.search.IndexPatternProvider;
+import com.intellij.util.Query;
+import com.intellij.util.QueryFactory;
 
 /**
  * Allows to search for occurrences of specified regular expressions in the comments
@@ -34,7 +35,7 @@ import com.intellij.openapi.util.TextRange;
  * @see com.intellij.psi.search.PsiSearchHelper#findFilesWithTodoItems()
  */
 public abstract class IndexPatternSearch extends QueryFactory<IndexPatternOccurrence, IndexPatternSearch.SearchParameters> {
-  public static IndexPatternSearch INDEX_PATTERN_SEARCH_INSTANCE;
+  public static IndexPatternSearch INDEX_PATTERN_SEARCH_INSTANCE = ServiceManager.getService(IndexPatternSearch.class);
 
   public static class SearchParameters {
     private final PsiFile myFile;

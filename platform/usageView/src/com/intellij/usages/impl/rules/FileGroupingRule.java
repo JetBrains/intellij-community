@@ -129,7 +129,7 @@ public class FileGroupingRule implements UsageGroupingRule {
     }
 
     public int compareTo(UsageGroup usageGroup) {
-      return getText(null).compareTo(usageGroup.getText(null));
+      return getText(null).compareToIgnoreCase(usageGroup.getText(null));
     }
 
     public void calcData(final DataKey key, final DataSink sink) {

@@ -28,6 +28,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
@@ -339,6 +340,8 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     if (desiredX >= 0) {
       myDesiredX = desiredX;
     }
+
+    EditorActionUtil.selectNonexpandableFold(myEditor);
   }
 
   public void moveToLogicalPosition(@NotNull LogicalPosition pos) {

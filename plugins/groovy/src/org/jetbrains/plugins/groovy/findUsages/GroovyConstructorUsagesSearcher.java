@@ -351,7 +351,7 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
         }
       });
 
-      GlobalSearchScope withTypedAnno = GlobalSearchScopes.filesScope(project, files);
+      GlobalSearchScope withTypedAnno = GlobalSearchScope.filesScope(project, files);
       return withTypedAnno.union(gppExtensions);
     }
 

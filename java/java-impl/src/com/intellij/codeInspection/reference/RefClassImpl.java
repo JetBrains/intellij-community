@@ -24,7 +24,7 @@
  */
 package com.intellij.codeInspection.reference;
 
-import com.intellij.codeInsight.TestUtil;
+import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
@@ -36,7 +36,10 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 public class RefClassImpl extends RefJavaElementImpl implements RefClass {
   private static final Set<RefElement> EMPTY_SET = Collections.emptySet();
@@ -124,7 +127,7 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
       setServlet(servlet != null && psiClass.isInheritor(servlet, true));
     }
     if (!isApplet() && !isServlet()) {
-      final boolean isTestClass = TestUtil.isTestClass(psiClass);
+      final boolean isTestClass = TestFrameworks.getInstance().isTestClass(psiClass);
       setTestCase(isTestClass);
       if (isTestClass) {
         for (RefClass refBase : getBaseClasses()) {

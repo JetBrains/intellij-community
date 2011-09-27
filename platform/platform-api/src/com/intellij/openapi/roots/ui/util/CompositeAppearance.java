@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,54 +17,80 @@ package com.intellij.openapi.roots.ui.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.roots.ui.ModifiableCellAppearanceEx;
+import com.intellij.ui.HtmlListCellRenderer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-public class CompositeAppearance implements ModifiableCellAppearance {
+// todo: move to lang-impl ?
+public class CompositeAppearance implements ModifiableCellAppearanceEx, ModifiableCellAppearance {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.util.CompositeAppearance");
 
   private Icon myIcon;
   private final ArrayList<TextSection> mySections = new ArrayList<TextSection>();
   private int myInsertionIndex = 0;
 
-  public synchronized void customize(SimpleColoredComponent component) {
-    for (TextSection section : mySections) {
-      TextAttributes attributes = section.ATTRIBUTES;
-      component.append(section.TEXT, SimpleTextAttributes.fromTextAttributes(attributes));
+  public void customize(SimpleColoredComponent component) {
+    synchronized (mySections) {
+      for (TextSection section : mySections) {
+        final TextAttributes attributes = section.getTextAttributes();
+        component.append(section.getText(), SimpleTextAttributes.fromTextAttributes(attributes));
+      }
+      component.setIcon(myIcon);
     }
-    component.setIcon(myIcon);
+  }
+
+  @Override
+  public void customize(@NotNull final HtmlListCellRenderer renderer) {
+    synchronized (mySections) {
+      for (TextSection section : mySections) {
+        final TextAttributes attributes = section.getTextAttributes();
+        renderer.append(section.getText(), SimpleTextAttributes.fromTextAttributes(attributes));
+      }
+      setIcon(myIcon);
+    }
   }
 
   public Icon getIcon() {
-    return myIcon;
-  }
-
-  public void setIcon(Icon icon) {
-    myIcon = icon;
-  }
-
-  public synchronized String getText() {
-    StringBuilder buffer = new StringBuilder();
-    for (TextSection section : mySections) {
-      buffer.append(section.TEXT);
+    synchronized (mySections) {
+      return myIcon;
     }
-    return buffer.toString();
   }
 
-  public synchronized boolean equals(Object obj) {
-    if (!(obj instanceof CompositeAppearance)) return false;
-    CompositeAppearance appearance = (CompositeAppearance)obj;
-    if (SwingUtilities.isEventDispatchThread()) {
-      return appearance.mySections.equals(mySections);
+  public void setIcon(@Nullable final Icon icon) {
+    synchronized (mySections) {
+      myIcon = icon;
     }
-    else {
-      return new ArrayList<TextSection>(appearance.mySections).equals(new ArrayList<TextSection>(mySections));
+  }
+
+  public String getText() {
+    synchronized (mySections) {
+      StringBuilder buffer = new StringBuilder();
+      for (TextSection section : mySections) {
+        buffer.append(section.TEXT);
+      }
+      return buffer.toString();
+    }
+  }
+
+  public boolean equals(Object obj) {
+    synchronized (mySections) {
+      if (!(obj instanceof CompositeAppearance)) return false;
+      CompositeAppearance appearance = (CompositeAppearance)obj;
+      if (SwingUtilities.isEventDispatchThread()) {
+        return appearance.mySections.equals(mySections);
+      }
+      else {
+        return new ArrayList<TextSection>(appearance.mySections).equals(new ArrayList<TextSection>(mySections));
+      }
     }
   }
 
@@ -73,7 +99,7 @@ public class CompositeAppearance implements ModifiableCellAppearance {
   }
 
   protected void addSectionAt(int index, @NotNull TextSection section) {
-    synchronized (this) {
+    synchronized (mySections) {
       mySections.add(index, section);
       for (Iterator<TextSection> iterator = mySections.iterator(); iterator.hasNext();) {
         TextSection textSection = iterator.next();
@@ -116,7 +142,7 @@ public class CompositeAppearance implements ModifiableCellAppearance {
 
   public static CompositeAppearance invalid(String absolutePath) {
     CompositeAppearance appearance = new CompositeAppearance();
-    appearance.setIcon(CellAppearanceUtils.INVALID_ICON);
+    appearance.setIcon(PlatformIcons.INVALID_ENTRY_ICON);
     appearance.getEnding().addText(absolutePath, SimpleTextAttributes.ERROR_ATTRIBUTES);
     return appearance;
   }
@@ -191,7 +217,7 @@ public class CompositeAppearance implements ModifiableCellAppearance {
 
   private class DequeBeginning extends DequeEnd {
     public void addSection(TextSection section) {
-      synchronized (CompositeAppearance.this) {
+      synchronized (mySections) {
         addSectionAt(0, section);
         myInsertionIndex++;
       }
@@ -200,7 +226,7 @@ public class CompositeAppearance implements ModifiableCellAppearance {
 
   private class DequeEnding extends DequeEnd {
     public void addSection(TextSection section) {
-      synchronized (CompositeAppearance.this) {
+      synchronized (mySections) {
         addSectionAt(myInsertionIndex, section);
         myInsertionIndex++;
       }
@@ -209,7 +235,7 @@ public class CompositeAppearance implements ModifiableCellAppearance {
 
   private class DequeSuffix extends DequeEnd {
     public void addSection(TextSection section) {
-      synchronized (CompositeAppearance.this) {
+      synchronized (mySections) {
         addSectionAt(mySections.size(), section);
       }
     }

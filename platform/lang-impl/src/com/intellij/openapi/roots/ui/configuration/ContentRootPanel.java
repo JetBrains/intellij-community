@@ -25,6 +25,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.ui.HoverHyperlinkLabel;
@@ -215,7 +216,7 @@ public abstract class ContentRootPanel extends JPanel {
     final VirtualFile contentEntryFile = getContentEntry().getFile();
     final String packagePrefix = folder instanceof SourceFolder? ((SourceFolder)folder).getPackagePrefix() : "";
     if (folderFile != null && contentEntryFile != null) {
-      String path = folderFile.equals(contentEntryFile)? "." :VfsUtil.getRelativePath(folderFile, contentEntryFile, File.separatorChar);
+      String path = folderFile.equals(contentEntryFile)? "." : VfsUtilCore.getRelativePath(folderFile, contentEntryFile, File.separatorChar);
       if (packagePrefix.length() > 0) {
         path = path + " (" + packagePrefix + ")";
       }

@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.completion;
 
+import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.getters.MembersGetter;
@@ -32,12 +33,12 @@ class GroovyMembersGetter extends MembersGetter {
   private final GroovyPsiElement myContext;
 
   GroovyMembersGetter(PsiClassType expectedType, PsiElement context) {
-    myExpectedType = expectedType;
+    myExpectedType = JavaCompletionUtil.originalize(expectedType);
     myContext = (GroovyPsiElement)context;
   }
 
-  public void processMembers(final Consumer<LookupElement> results) {
-    processMembers(myContext, results, myExpectedType.resolve(), PsiTreeUtil.getParentOfType(myContext, GrAnnotation.class) != null);
+  public void processMembers(boolean searchInheritors, final Consumer<LookupElement> results) {
+    processMembers(myContext, results, myExpectedType.resolve(), PsiTreeUtil.getParentOfType(myContext, GrAnnotation.class) != null, searchInheritors);
   }
 
   @Override

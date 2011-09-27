@@ -29,6 +29,7 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
@@ -458,7 +459,7 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
             final VirtualFile contextFile = context.getVirtualFile();
             assert contextFile != null;
             if (VfsUtil.isAncestor(contextFile, dstVFile, true)) {
-              final String path = VfsUtil.getRelativePath(dstVFile, contextFile, '/');
+              final String path = VfsUtilCore.getRelativePath(dstVFile, contextFile, '/');
               if (path != null) {
                 return rename(path);
               }

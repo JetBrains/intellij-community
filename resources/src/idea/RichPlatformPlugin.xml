@@ -197,9 +197,6 @@
     <projectService serviceInterface="com.intellij.openapi.vcs.impl.VcsPathPresenter"
                     serviceImplementation="com.intellij.openapi.vcs.impl.ModuleVcsPathPresenter"/>
 
-    <projectService serviceInterface="com.intellij.openapi.roots.ui.configuration.ProjectSettingsService"
-                    serviceImplementation="com.intellij.openapi.roots.ui.configuration.IdeaProjectSettingsService"/>
-
     <projectService serviceInterface="com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration"
                     serviceImplementation="com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration"/>
     <projectService serviceInterface="com.intellij.compiler.impl.javaCompiler.api.CompilerAPIConfiguration"
@@ -233,7 +230,6 @@
 
 
     <!-- Project Configurables -->
-    <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable"/>
     <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable"/>
     <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.projectRoot.FacetStructureConfigurable"/>
     <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactsStructureConfigurable"/>
@@ -272,7 +268,6 @@
     <codeStyleSettingsProvider implementation="com.intellij.application.options.CommonCodeStyleSettingsProvider"/>
 
     <!-- new project wizard -->
-    <wizardMode implementation="com.intellij.ide.util.newProjectWizard.modes.CreateFromScratchMode"/>
     <wizardMode implementation="com.intellij.ide.util.newProjectWizard.modes.CreateFromSourcesMode"/>
     <wizardMode implementation="com.intellij.ide.util.newProjectWizard.modes.ImportMode"/>
     <wizardMode implementation="com.intellij.ide.util.newProjectWizard.modes.ImportImlMode"/>

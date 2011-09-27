@@ -26,6 +26,7 @@ import com.intellij.openapi.options.ex.ProjectConfigurablesGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
@@ -72,11 +73,18 @@ public class SearchUtil {
     for (Configurable configurable : configurables) {
       if (configurable instanceof SearchableConfigurable) {
         TreeSet<OptionDescription> configurableOptions = new TreeSet<OptionDescription>();
-        options.put((SearchableConfigurable)configurable, configurableOptions);
+
         if (configurable instanceof Configurable.Composite) {
           final Configurable[] children = ((Configurable.Composite)configurable).getConfigurables();
           processConfigurables(children, options);
         }
+
+        //ignore invisible root nodes
+        if (configurable instanceof SearchableConfigurable.Parent && !((SearchableConfigurable.Parent)configurable).isVisible()) {
+          continue;
+        }
+
+        options.put((SearchableConfigurable)configurable, configurableOptions);
 
         if (configurable instanceof MasterDetails) {
           final MasterDetails md = (MasterDetails)configurable;
@@ -686,15 +694,23 @@ public class SearchUtil {
 
   public static List<Configurable> expandGroup(final ConfigurableGroup group) {
     final Configurable[] configurables = group.getConfigurables();
-    ArrayList<Configurable> result = new ArrayList<Configurable>();
+    List<Configurable> result = new ArrayList<Configurable>();
     ContainerUtil.addAll(result, configurables);
     for (Configurable each : configurables) {
       addChildren(each, result);
     }
+    
+    result = ContainerUtil.filter(result, new Condition<Configurable>() {
+      @Override
+      public boolean value(Configurable configurable) {
+        return !(configurable instanceof SearchableConfigurable.Parent) || ((SearchableConfigurable.Parent)configurable).isVisible();
+      }
+    });
+   
     return result;
   }
 
-  private static void addChildren(Configurable configurable, ArrayList<Configurable> list) {
+  private static void addChildren(Configurable configurable, List<Configurable> list) {
     if (configurable instanceof Configurable.Composite) {
       final Configurable[] kids = ((Configurable.Composite)configurable).getConfigurables();
       for (Configurable eachKid : kids) {

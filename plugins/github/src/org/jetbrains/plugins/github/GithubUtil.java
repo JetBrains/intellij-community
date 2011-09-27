@@ -226,36 +226,22 @@ public class GithubUtil {
    */
   @Nullable
   public static List<RepositoryInfo> getAvailableRepos(final Project project, final boolean ownOnly) {
-    final GithubSettings settings = GithubSettings.getInstance();
-    final String password = settings.getPassword();
-    final boolean validCredentials;
-    try {
-      validCredentials = accessToGithubWithModalProgress(project, new Computable<Boolean>() {
-        @Override
-        public Boolean compute() {
-          ProgressManager.getInstance().getProgressIndicator().setText("Trying to login to GitHub");
-          return testConnection(settings.getHost(), settings.getLogin(), password);
-        }
-      });
-    }
-    catch (CancelledException e) {
-      return null;
-    }
-    if (!validCredentials){
+    while (!checkCredentials(project)){
       final GithubLoginDialog dialog = new GithubLoginDialog(project);
       dialog.show();
-      if (!dialog.isOK()) {
+      if (!dialog.isOK()){
         return null;
       }
     }
     // Otherwise our credentials are valid and they are successfully stored in settings
     try {
-      final String settingsPassword = settings.getPassword();
+      final GithubSettings settings = GithubSettings.getInstance();
+      final String validPassword = settings.getPassword();
       return accessToGithubWithModalProgress(project, new Computable<List<RepositoryInfo>>() {
         @Override
         public List<RepositoryInfo> compute() {
           ProgressManager.getInstance().getProgressIndicator().setText("Extracting info about available repositories");
-          return getAvailableRepos(settings.getHost(), settings.getLogin(), settingsPassword, ownOnly);
+          return getAvailableRepos(settings.getHost(), settings.getLogin(), validPassword, ownOnly);
         }
       });
     }

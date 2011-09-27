@@ -64,6 +64,8 @@ public class GroovyImportOptimizerRefactoringHelper implements RefactoringHelper
     final Runnable findUnusedImports = new Runnable() {
       public void run() {
         final ProgressIndicator progressIndicator = progressManager.getProgressIndicator();
+        final int total = files.size();
+        int i = 0;
         for (final GroovyFile file : files) {
           if (!file.isValid()) continue;
           final VirtualFile virtualFile = file.getVirtualFile();
@@ -72,6 +74,7 @@ public class GroovyImportOptimizerRefactoringHelper implements RefactoringHelper
           }
           if (progressIndicator != null) {
             progressIndicator.setText2(virtualFile.getPresentableUrl());
+            progressIndicator.setFraction((double)i++/total);
           }
           final Set<GrImportStatement> usedImports = new HashSet<GrImportStatement>();
           final List<GrImportStatement> perFile = optimizer.findUnusedImports(file, usedImports);

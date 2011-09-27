@@ -26,8 +26,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
@@ -62,10 +61,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
   private final PsiManagerEx myManager;
   private static final TodoItem[] EMPTY_TODO_ITEMS = new TodoItem[0];
-
-  static {
-    IndexPatternSearch.INDEX_PATTERN_SEARCH_INSTANCE = new IndexPatternSearchImpl();
-  }
 
   @NotNull
   public SearchScope getUseScope(@NotNull PsiElement element) {
@@ -656,7 +651,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
   private MultiMap<VirtualFile, RequestWithProcessor> collectFiles(MultiMap<Set<IdIndexEntry>, RequestWithProcessor> singles,
                                                                    ProgressIndicator progress) {
-    final ProjectFileIndex index = ProjectRootManager.getInstance(myManager.getProject()).getFileIndex();
+    final FileIndexFacade index = FileIndexFacade.getInstance(myManager.getProject());
     final MultiMap<VirtualFile, RequestWithProcessor> result = createMultiMap();
     for (Set<IdIndexEntry> key : singles.keySet()) {
       if (key.isEmpty()) {
@@ -707,7 +702,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   private static MultiMap<VirtualFile, RequestWithProcessor> findFilesWithIndexEntry(final IdIndexEntry entry,
-                                                                                     final ProjectFileIndex index,
+                                                                                     final FileIndexFacade index,
                                                                                      final Collection<RequestWithProcessor> data,
                                                                                      final GlobalSearchScope commonScope,
                                                                                      final ProgressIndicator progress) {

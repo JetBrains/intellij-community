@@ -15,7 +15,6 @@
  */
 package com.intellij.util.xml;
 
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.meta.PsiMetaData;
@@ -24,7 +23,6 @@ import com.intellij.refactoring.rename.NameSuggestionProvider;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.Set;
 
 /**

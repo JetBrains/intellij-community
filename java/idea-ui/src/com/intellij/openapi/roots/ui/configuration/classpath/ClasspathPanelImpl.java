@@ -27,6 +27,8 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.roots.ui.CellAppearanceEx;
+import com.intellij.openapi.roots.ui.OrderEntryAppearanceService;
 import com.intellij.openapi.roots.ui.configuration.*;
 import com.intellij.openapi.roots.ui.configuration.dependencyAnalysis.AnalyzeDependenciesDialog;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryEditingUtil;
@@ -38,8 +40,6 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.LibraryPro
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ModuleProjectStructureElement;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.SdkProjectStructureElement;
-import com.intellij.openapi.roots.ui.util.CellAppearance;
-import com.intellij.openapi.roots.ui.util.OrderEntryCellAppearanceUtils;
 import com.intellij.openapi.ui.ComboBoxTableRenderer;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -625,15 +625,17 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     return elements;
   }
 
-
-  private static CellAppearance getCellAppearance(final ClasspathTableItem<?> item,
-                                                  StructureConfigurableContext context,
-                                                  final boolean selected) {
+  private static CellAppearanceEx getCellAppearance(final ClasspathTableItem<?> item,
+                                                    final StructureConfigurableContext context,
+                                                    final boolean selected) {
+    final OrderEntryAppearanceService service = OrderEntryAppearanceService.getInstance(context.getProject());
     if (item instanceof InvalidJdkItem) {
-      return OrderEntryCellAppearanceUtils.forJdk(null, false, selected);
+      return service.forJdk(null, false, selected, true);
     }
     else {
-      return ProjectStructureDialogCellAppearanceUtils.forOrderEntry(item.getEntry(), context, selected);
+      final OrderEntry entry = item.getEntry();
+      assert entry != null : item;
+      return service.forOrderEntry(entry, selected);
     }
   }
 

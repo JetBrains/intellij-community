@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,9 +28,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.TooManyListenersException;
 
-/**
- *
- */
 public class ErrorViewTextExporter implements ExporterToTextFile {
   private final JCheckBox myCbShowDetails;
   private final ErrorViewStructure myStructure;

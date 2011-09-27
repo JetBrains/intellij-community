@@ -15,7 +15,6 @@
  */
 package com.intellij.refactoring.inheritanceToDelegation;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;

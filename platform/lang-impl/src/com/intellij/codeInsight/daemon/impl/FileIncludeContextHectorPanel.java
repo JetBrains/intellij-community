@@ -20,7 +20,7 @@ import com.intellij.openapi.editor.HectorComponentPanel;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.include.FileIncludeManager;
@@ -105,7 +105,7 @@ public class FileIncludeContextHectorPanel extends HectorComponentPanel {
           root = fileIndex.getContentRootForFile(file);
         }
         if (root != null) {
-          return VfsUtil.getRelativePath(file, root, '/');
+          return VfsUtilCore.getRelativePath(file, root, '/');
         }
       }
       return null;

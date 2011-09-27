@@ -138,7 +138,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
                              final List<CommitExecutor> executors, final boolean showVcsCommit, final String comment) {
     final AbstractVcs[] allActiveVcss = ProjectLevelVcsManager.getInstance(project).getAllActiveVcss();
     final List<VcsCheckinHandlerFactory> factoryList =
-      CheckinHandlersManager.getInstance(project).getMatchingVcsFactories(Arrays.<AbstractVcs>asList(allActiveVcss));
+      CheckinHandlersManager.getInstance().getMatchingVcsFactories(Arrays.<AbstractVcs>asList(allActiveVcss));
     for (BaseCheckinHandlerFactory factory : factoryList) {
       final BeforeCheckinDialogHandler handler = factory.createSystemReadyHandler(project);
       if (handler != null) {
@@ -367,7 +367,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     boolean afterVisible = false;
     Box beforeBox = Box.createVerticalBox();
     Box afterBox = Box.createVerticalBox();
-    final List<BaseCheckinHandlerFactory> handlerFactories = CheckinHandlersManager.getInstance(myProject).getRegisteredCheckinHandlerFactories();
+    final List<BaseCheckinHandlerFactory> handlerFactories = CheckinHandlersManager.getInstance().getRegisteredCheckinHandlerFactories(
+      ProjectLevelVcsManager.getInstance(project).getAllActiveVcss());
     for (BaseCheckinHandlerFactory factory : handlerFactories) {
       final CheckinHandler handler = factory.createHandler(this, myCommitContext);
       if (CheckinHandler.DUMMY.equals(handler)) continue;

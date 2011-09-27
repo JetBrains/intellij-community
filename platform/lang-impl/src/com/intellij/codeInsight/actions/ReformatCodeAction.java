@@ -140,7 +140,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
 
     boolean optimizeImports = ReformatFilesDialog.isOptmizeImportsOptionOn();
     boolean processWholeFile = false;
-    if (EditorSettingsExternalizable.getInstance().getOptions().SHOW_REFORMAT_DIALOG) {
+    if (EditorSettingsExternalizable.getInstance().getOptions().SHOW_REFORMAT_DIALOG || (file == null && dir != null)) {
       final LayoutCodeDialog dialog = new LayoutCodeDialog(project, CodeInsightBundle.message("process.reformat.code"), file, dir,
                                                            hasSelection ? Boolean.TRUE : Boolean.FALSE, HELP_ID);
       dialog.show();

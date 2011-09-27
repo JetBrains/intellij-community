@@ -107,7 +107,7 @@ public abstract class GrBlockImpl extends LazyParseablePsiElement implements GrC
           return Result.create(new ControlFlowBuilder(getProject()).buildControlFlow(GrBlockImpl.this), getContainingFile());
         }
       }, false);
-      putUserData(CONTROL_FLOW, controlFlow);
+      controlFlow = putUserDataIfAbsent(CONTROL_FLOW, controlFlow);
     }
 
     return ControlFlowBuilder.assertValidPsi(controlFlow.getValue());

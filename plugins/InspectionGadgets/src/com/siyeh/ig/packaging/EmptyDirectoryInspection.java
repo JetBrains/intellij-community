@@ -27,6 +27,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiDirectory;
@@ -136,7 +137,7 @@ public class EmptyDirectoryInspection extends BaseGlobalInspection {
                 });
         for (VirtualFile otherRoot : contentRoots) {
             if (VfsUtil.isAncestor(otherRoot, file, false)) {
-                return VfsUtil.getRelativePath(file, otherRoot, '/');
+                return VfsUtilCore.getRelativePath(file, otherRoot, '/');
             }
         }
         return null;

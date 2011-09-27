@@ -100,7 +100,7 @@ public class PackageGroupingRule extends DirectoryGroupingRule {
     }
 
     public int compareTo(UsageGroup usageGroup) {
-      return getText(null).compareTo(usageGroup.getText(null));
+      return getText(null).compareToIgnoreCase(usageGroup.getText(null));
     }
 
     public boolean equals(Object o) {

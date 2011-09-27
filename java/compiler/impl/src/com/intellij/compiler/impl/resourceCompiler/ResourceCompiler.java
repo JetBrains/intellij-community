@@ -36,7 +36,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.Chunk;
@@ -94,7 +94,7 @@ public class ResourceCompiler implements TranslatingCompiler {
             continue;
           }
           final String sourcePath = file.getPath();
-          final String relativePath = VfsUtil.getRelativePath(file, fileRoot, '/');
+          final String relativePath = VfsUtilCore.getRelativePath(file, fileRoot, '/');
           final boolean inTests = ((CompileContextEx)context).isInTestSourceContent(file);
           final VirtualFile outputDir = inTests? context.getModuleOutputDirectoryForTests(module) : context.getModuleOutputDirectory(module);
           if (outputDir == null) {

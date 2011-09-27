@@ -19,6 +19,8 @@ import com.intellij.openapi.diff.impl.patch.ApplyPatchException;
 import com.intellij.openapi.diff.impl.patch.ApplyPatchStatus;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
@@ -79,6 +81,11 @@ public class ApplyPatchForBaseRevisionTexts {
   ApplyPatchForBaseRevisionTexts(final DefaultPatchBaseVersionProvider provider, final FilePath pathBeforeRename, final TextFilePatch patch,
                                  final VirtualFile file) throws VcsException {
     myWarnings = new ArrayList<String>();
+    final FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
+    Document document = fileDocumentManager.getDocument(file);
+    if (document != null) {
+      fileDocumentManager.saveDocument(document);
+    }
     myLocal = LoadTextUtil.loadText(file);
     final StringBuilder newText = new StringBuilder();
     provider.getBaseVersionContent(pathBeforeRename, new Processor<CharSequence>() {

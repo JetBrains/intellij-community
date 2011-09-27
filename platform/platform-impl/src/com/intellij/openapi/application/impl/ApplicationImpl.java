@@ -392,7 +392,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   protected synchronized Object createComponent(Class componentInterface) {
     Object component = super.createComponent(componentInterface);
     if (mySplash != null) {
-      mySplash.showProgress("", (float)(0.75f + myComponentsRegistry.getPercentageOfComponentsLoaded() * 0.25f));
+      mySplash.showProgress("", (float)(0.65f + myComponentsRegistry.getPercentageOfComponentsLoaded() * 0.35f));
     }
     return component;
   }

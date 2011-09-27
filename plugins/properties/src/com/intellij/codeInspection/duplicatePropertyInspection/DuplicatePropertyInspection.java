@@ -39,7 +39,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.search.LowLevelSearchUtil;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.GlobalSearchScopes;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
@@ -153,7 +152,7 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
     Module module = ModuleUtil.findModuleForPsiElement(file);
     if (module == null) return;
     final GlobalSearchScope scope = CURRENT_FILE
-                                    ? GlobalSearchScopes.fileScope(file)
+                                    ? GlobalSearchScope.fileScope(file)
                                     : MODULE_WITH_DEPENDENCIES
                                       ? GlobalSearchScope.moduleWithDependenciesScope(module)
                                       : GlobalSearchScope.projectScope(file.getProject());

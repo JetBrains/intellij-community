@@ -66,7 +66,7 @@ public class HeavyNormalCompletionTest extends CompletionTestCase{
   public void testMapsInvalidation() throws Exception {
     configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
     assert myFile.getVirtualFile().getFileSystem() instanceof LocalFileSystem; // otherwise the completion copy won't be preserved which is critical here
-    assertStringItems("finalize", "foo");
+    assertStringItems("gAnInt", "getAaa", "getBbb");
     myEditor.getCaretModel().moveToOffset(myEditor.getCaretModel().getOffset() + 2);
     complete();
     assertNull(myItems);

@@ -1,7 +1,6 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.vfs.VirtualFile;

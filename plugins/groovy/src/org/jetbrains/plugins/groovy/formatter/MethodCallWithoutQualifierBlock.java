@@ -23,6 +23,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -35,7 +36,7 @@ public class MethodCallWithoutQualifierBlock extends GroovyBlock {
   private final PsiElement myNameElement;
   private final Alignment myAlignment;
   private final Wrap myWrap;
-  private final CodeStyleSettings mySettings;
+  private final CommonCodeStyleSettings mySettings;
   private final boolean myTopLevel;
   private final List<ASTNode> myChildren;
   private final PsiElement myElem;
@@ -43,7 +44,7 @@ public class MethodCallWithoutQualifierBlock extends GroovyBlock {
   public MethodCallWithoutQualifierBlock(PsiElement nameElement,
                                          Alignment alignment,
                                          Wrap wrap,
-                                         CodeStyleSettings settings,
+                                         CommonCodeStyleSettings settings,
                                          boolean topLevel,
                                          List<ASTNode> children, PsiElement elem) {
     super(nameElement.getNode(), alignment, Indent.getContinuationWithoutFirstIndent(), wrap, settings);

@@ -26,7 +26,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.util.TextOccurrencesUtil;
-import com.intellij.ui.IdeBorderFactory;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;

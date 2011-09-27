@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,26 +15,31 @@
  */
 package com.intellij.ide.util.projectWizard;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ui.util.OrderEntryCellAppearanceUtils;
+import com.intellij.openapi.roots.ui.OrderEntryAppearanceService;
 import com.intellij.ui.HtmlListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: May 18, 2005
+ * @since May 18, 2005
  */
 public class ProjectJdkListRenderer extends HtmlListCellRenderer {
-  public ProjectJdkListRenderer(final ListCellRenderer listCellRenderer) {
+  private final Project myProject;
+
+  public ProjectJdkListRenderer(final ListCellRenderer listCellRenderer, @NotNull final Project project) {
     super(listCellRenderer);
+    myProject = project;
   }
 
   @Override
   public void doCustomize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
     if (value == null || value instanceof Sdk) {
-      render(OrderEntryCellAppearanceUtils.forJdk((Sdk)value, false, selected, index != -1));
+      OrderEntryAppearanceService.getInstance(myProject).forJdk((Sdk)value, false, selected, index != -1).customize(this);
     }
     else {
       final String str = value.toString();

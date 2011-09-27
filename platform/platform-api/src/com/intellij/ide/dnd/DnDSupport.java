@@ -113,7 +113,7 @@ public class DnDSupport implements DnDTarget, DnDSource, Disposable {
   @Override
   public boolean update(DnDEvent event) {
     if (myChecker == null) {
-      event.setDropPossible(true, null);
+      event.setDropPossible(true);
       return false;
     }
     return myChecker.update(event);

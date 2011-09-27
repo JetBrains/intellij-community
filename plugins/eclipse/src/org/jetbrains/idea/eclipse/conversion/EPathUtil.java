@@ -31,10 +31,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.eclipse.EclipseXml;
@@ -192,7 +189,7 @@ public class EPathUtil {
     final VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
     for (VirtualFile otherRoot : contentRoots) {
       if (VfsUtil.isAncestor(otherRoot, file, false)) {
-        return "/" + module.getName() + "/" + VfsUtil.getRelativePath(file, otherRoot, '/');
+        return "/" + module.getName() + "/" + VfsUtilCore.getRelativePath(file, otherRoot, '/');
       }
     }
     return null;
@@ -220,7 +217,7 @@ public class EPathUtil {
       }
       LOG.assertTrue(file != null, url);
       if (contentRoot != null && VfsUtil.isAncestor(contentRoot, file, false)) { //inside current project
-        return VfsUtil.getRelativePath(file, contentRoot, '/');
+        return VfsUtilCore.getRelativePath(file, contentRoot, '/');
       } else {
         final String path = collapse2eclipseRelative2OtherModule(project, file); //relative to other project
         if (path != null) {

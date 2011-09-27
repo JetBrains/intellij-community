@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@ package com.intellij.lang.ant.config.impl;
 
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.roots.ui.util.CellAppearanceUtils;
-import com.intellij.openapi.roots.ui.util.CompositeAppearance;
+import com.intellij.openapi.roots.ui.CellAppearanceEx;
+import com.intellij.openapi.roots.ui.FileAppearanceService;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -42,17 +42,17 @@ public class SinglePathEntry implements AntClasspathEntry {
         return fromVirtulaFile(singlePathEntry);
       }
     };
-  @NonNls static final String PATH = "path";
-  private File myFile;
 
-  public SinglePathEntry() {}
+  @NonNls static final String PATH = "path";
+
+  private File myFile;
 
   public SinglePathEntry(File file) {
     myFile = file;
   }
 
-  public SinglePathEntry(final String ospath) {
-    this(new File(ospath));
+  public SinglePathEntry(final String osPath) {
+    this(new File(osPath));
   }
 
   public void readExternal(final Element element) throws InvalidDataException {
@@ -69,8 +69,8 @@ public class SinglePathEntry implements AntClasspathEntry {
     files.add(myFile);
   }
 
-  public CompositeAppearance getAppearance() {
-    return CellAppearanceUtils.forFile(myFile);
+  public CellAppearanceEx getAppearance() {
+    return FileAppearanceService.getInstance().forIoFile(myFile);
   }
 
   public String getPresentablePath() {

@@ -353,12 +353,7 @@ public abstract class ChooseByNameBase {
       caption2Tools.add(label, BorderLayout.WEST);
     }
 
-    GridBagLayout gb = new GridBagLayout();
-    JPanel eastWrapper = new JPanel(gb);
-    gb.setConstraints(hBox, new GridBagConstraints(0, 0, 0, 0, 1, 1, GridBagConstraints.SOUTHEAST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
-    eastWrapper.add(hBox);
-
-    caption2Tools.add(eastWrapper, BorderLayout.CENTER);
+    caption2Tools.add(hBox, BorderLayout.EAST);
 
     myCard = new CardLayout();
     myCardContainer = new JPanel(myCard);
@@ -366,7 +361,11 @@ public abstract class ChooseByNameBase {
     final String checkBoxName = myModel.getCheckBoxName();
     myCheckBox = new JCheckBox(checkBoxName != null ? checkBoxName : "");
     myCheckBox.setAlignmentX(SwingConstants.RIGHT);
-    myCheckBox.setBorder(null);
+    
+    if (!SystemInfo.isMac) {
+      myCheckBox.setBorder(null);
+    }
+    
     myCheckBox.setSelected(myModel.loadInitialCheckBoxState());
 
     if (checkBoxName == null) myCheckBox.setVisible(false);
@@ -413,7 +412,6 @@ public abstract class ChooseByNameBase {
     final JComponent toolbarComponent = actionToolbar.getComponent();
     toolbarComponent.setBorder(null);
 
-    hBox.add(Box.createHorizontalStrut(10));
     hBox.add(toolbarComponent);
 
     if (myToolArea != null) {

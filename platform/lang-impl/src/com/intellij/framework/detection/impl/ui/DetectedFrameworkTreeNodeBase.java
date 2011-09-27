@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
  * @author nik
  */
 abstract class DetectedFrameworkTreeNodeBase extends CheckedTreeNode {
-  public DetectedFrameworkTreeNodeBase(Object userObject) {
+  protected DetectedFrameworkTreeNodeBase(Object userObject) {
     super(userObject);
     setChecked(true);
   }

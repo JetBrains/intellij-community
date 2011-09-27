@@ -23,7 +23,7 @@ import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.tree.ILazyParseableElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,17 +62,17 @@ public class GroovyBlock implements Block, GroovyElementTypes, ASTBlock {
   final protected Alignment myAlignment;
   final protected Indent myIndent;
   final protected Wrap myWrap;
-  final protected CodeStyleSettings mySettings;
+  final protected CommonCodeStyleSettings mySettings;
   final protected Map<PsiElement, Alignment> myInnerAlignments;
 
 
   protected List<Block> mySubBlocks = null;
 
-  public GroovyBlock(@NotNull final ASTNode node, @Nullable final Alignment alignment, @NotNull final Indent indent, @Nullable final Wrap wrap, final CodeStyleSettings settings) {
+  public GroovyBlock(@NotNull final ASTNode node, @Nullable final Alignment alignment, @NotNull final Indent indent, @Nullable final Wrap wrap, final CommonCodeStyleSettings settings) {
     this(node, alignment, indent, wrap, settings, Collections.<PsiElement, Alignment>emptyMap());
   }
 
-  public GroovyBlock(@NotNull final ASTNode node, @Nullable final Alignment alignment, @NotNull final Indent indent, @Nullable final Wrap wrap, final CodeStyleSettings settings,
+  public GroovyBlock(@NotNull final ASTNode node, @Nullable final Alignment alignment, @NotNull final Indent indent, @Nullable final Wrap wrap, final CommonCodeStyleSettings settings,
                      @NotNull Map<PsiElement, Alignment> innerAlignments) {
     myNode = node;
     myAlignment = alignment;
@@ -88,7 +88,7 @@ public class GroovyBlock implements Block, GroovyElementTypes, ASTBlock {
   }
 
   @NotNull
-  public CodeStyleSettings getSettings() {
+  public CommonCodeStyleSettings getSettings() {
     return mySettings;
   }
 
@@ -158,7 +158,8 @@ public class GroovyBlock implements Block, GroovyElementTypes, ASTBlock {
                 return new ChildAttributes(GroovyIndentProcessor.getSwitchCaseIndent(anchorPsi), null);
               }
             }
-            int indentSize = mySettings.getAdditionalIndentOptions(anchorPsi.getContainingFile().getFileType()).INDENT_SIZE;
+            @SuppressWarnings("ConstantConditions")
+            int indentSize = mySettings.getIndentOptions().INDENT_SIZE;
             return new ChildAttributes(Indent.getSpaceIndent(mySettings.INDENT_CASE_FROM_SWITCH ? 2 * indentSize : indentSize), null);
           }
         }

@@ -577,8 +577,8 @@ public class EditorActionUtil {
                                      boolean isWithSelection,
                                      int selectionStart, LogicalPosition blockSelectionStart) {
     SelectionModel selectionModel = editor.getSelectionModel();
+    CaretModel caretModel = editor.getCaretModel();
     if (isWithSelection) {
-      CaretModel caretModel = editor.getCaretModel();
       if (editor.isColumnMode()) {
         selectionModel.setBlockSelection(blockSelectionStart, caretModel.getLogicalPosition());
       }
@@ -589,6 +589,33 @@ public class EditorActionUtil {
     else {
       selectionModel.removeSelection();
     }
+
+    selectNonexpandableFold(editor);
+  }
+
+  private final static Key<LogicalPosition> PREV_POS = Key.create("PREV_POS");
+  public static void selectNonexpandableFold(Editor editor) {
+    final CaretModel caretModel = editor.getCaretModel();
+    final LogicalPosition pos = caretModel.getLogicalPosition();
+
+    LogicalPosition prevPos = editor.getUserData(PREV_POS);
+
+    if (prevPos != null) {
+      int columnShift = pos.line == prevPos.line ? pos.column - prevPos.column : 0;
+
+      final FoldRegion collapsedUndeCaret = editor.getFoldingModel().getCollapsedRegionAtOffset(caretModel.getOffset());
+      if (collapsedUndeCaret != null && collapsedUndeCaret.shouldNeverExpand()) {
+        if (columnShift > 0) {
+          caretModel.moveToOffset(collapsedUndeCaret.getEndOffset());
+        }
+        else if (columnShift < 0) {
+          caretModel.moveToOffset(collapsedUndeCaret.getStartOffset());
+        }
+        editor.getSelectionModel().setSelection(collapsedUndeCaret.getStartOffset(), collapsedUndeCaret.getEndOffset());
+      }
+    }
+
+    editor.putUserData(PREV_POS, pos);
   }
 
   public static void moveCaretToPreviousWord(Editor editor, boolean isWithSelection) {

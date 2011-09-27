@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.formatting.FormattingProgressTask;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -49,9 +50,6 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 
-/**
- *
- */
 public abstract class AbstractLayoutCodeProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.actions.AbstractLayoutCodeProcessor");
 
@@ -183,7 +181,7 @@ public abstract class AbstractLayoutCodeProcessor {
     };
     Runnable writeAction = new Runnable() {
       public void run() {
-        if (resultRunnable[0] != null){
+        if (resultRunnable[0] != null) {
           resultRunnable[0].run();
         }
       }

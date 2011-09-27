@@ -76,9 +76,6 @@ public class OptionGroup implements PanelWithAnchor {
 
     for (int i = 0; i < myOptions.size(); i++) {
       int leftInset = Boolean.TRUE.equals(myIsShifted.get(i)) ? 15 : 5;
-      if (myTitle == null) {
-        leftInset -= 4;
-      }
       Object option = myOptions.get(i);
       if (option instanceof JComponent) {
         JComponent component = (JComponent)option;

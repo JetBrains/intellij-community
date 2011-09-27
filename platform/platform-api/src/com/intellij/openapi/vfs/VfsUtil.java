@@ -61,48 +61,6 @@ public class VfsUtil extends VfsUtilCore {
   }
 
   /**
-   * Gets the relative path of <code>file</code> to its <code>ancestor</code>. Uses <code>separator</code> for
-   * separating files.
-   *
-   * @param file      the file
-   * @param ancestor  parent file
-   * @param separator character to use as files separator
-   * @return the relative path or {@code null} if {@code ancestor} is not ancestor for {@code file}
-   */
-  @Nullable
-  public static String getRelativePath(@NotNull VirtualFile file, @NotNull VirtualFile ancestor, char separator) {
-    if (!file.getFileSystem().equals(ancestor.getFileSystem())) return null;
-
-    int length = 0;
-    VirtualFile parent = file;
-    while (true) {
-      if (parent == null) return null;
-      if (parent.equals(ancestor)) break;
-      if (length > 0) {
-        length++;
-      }
-      length += parent.getName().length();
-      parent = parent.getParent();
-    }
-
-    char[] chars = new char[length];
-    int index = chars.length;
-    parent = file;
-    while (true) {
-      if (parent.equals(ancestor)) break;
-      if (index < length) {
-        chars[--index] = separator;
-      }
-      String name = parent.getName();
-      for (int i = name.length() - 1; i >= 0; i--) {
-        chars[--index] = name.charAt(i);
-      }
-      parent = parent.getParent();
-    }
-    return new String(chars);
-  }
-
-  /**
    * Copies all files matching the <code>filter</code> from <code>fromDir</code> to <code>toDir</code>.
    *
    * @param requestor any object to control who called this method. Note that

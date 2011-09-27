@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.generation;
 
 import com.intellij.CommonBundle;
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;

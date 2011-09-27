@@ -30,6 +30,7 @@
     <orderEntry type="library" name="Groovy" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
+    <orderEntry type="module" module-name="java-psi-impl" exported="" />
   </component>
   <component name="copyright">
     <Base>

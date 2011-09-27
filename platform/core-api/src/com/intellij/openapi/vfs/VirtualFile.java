@@ -478,7 +478,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
     }
   }
 
-  protected boolean isCharsetSet() {
+  public boolean isCharsetSet() {
     return getUserData(CHARSET_KEY) != null;
   }
 

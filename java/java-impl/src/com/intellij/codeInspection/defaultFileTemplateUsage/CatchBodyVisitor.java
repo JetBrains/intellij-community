@@ -69,7 +69,7 @@ class CatchBodyVisitor extends JavaRecursiveElementWalkingVisitor {
     PsiCodeBlock templateCatchBlock;
     final PsiParameter templateParameter;
     try {
-      final PsiJavaParserFacade elementFactory = JavaPsiFacade.getInstance(section.getProject()).getParserFacade();
+      final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(section.getProject()).getElementFactory();
       PsiCatchSection sectionTemplate = elementFactory.createCatchSection(type, parameter.getName(), parameter);
       templateCatchBlock = sectionTemplate.getCatchBlock();
 
@@ -124,7 +124,7 @@ class CatchBodyVisitor extends JavaRecursiveElementWalkingVisitor {
         if (catchBlock == null) return;
         PsiType type = parameter.getType();
         if (!(type instanceof PsiClassType)) return;
-        final PsiJavaParserFacade elementFactory = JavaPsiFacade.getInstance(section.getProject()).getParserFacade();
+        final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(section.getProject()).getElementFactory();
         try {
           PsiCatchSection sectionTemplate = elementFactory.createCatchSection(type, parameter.getName(), parameter);
           section.replace(sectionTemplate);

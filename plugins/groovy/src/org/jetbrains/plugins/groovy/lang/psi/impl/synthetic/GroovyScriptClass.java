@@ -453,7 +453,7 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner, Sy
   @Nullable
   public Icon getIcon(int flags) {
     final Icon icon = myFile.getIcon(flags);
-    RowIcon baseIcon = ElementBase.createLayeredIcon(icon, 0);
+    RowIcon baseIcon = ElementBase.createLayeredIcon(this, icon, 0);
     return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
   }
 

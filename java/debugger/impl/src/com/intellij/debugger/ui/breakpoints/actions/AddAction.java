@@ -16,9 +16,7 @@
 package com.intellij.debugger.ui.breakpoints.actions;
 
 import com.intellij.debugger.ui.breakpoints.BreakpointPanel;
-import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
-import com.intellij.idea.ActionsBundle;
 
 import javax.swing.*;
 import java.awt.event.KeyEvent;

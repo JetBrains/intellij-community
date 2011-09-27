@@ -65,7 +65,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
 
   public static final DataKey<ProjectStructureConfigurable> KEY = DataKey.create("ProjectStructureConfiguration");
 
-  private final UIState myUiState = new UIState();
+  protected final UIState myUiState = new UIState();
   private Splitter mySplitter;
   private JComponent myToolbarComponent;
   @NonNls public static final String CATEGORY = "category";
@@ -130,7 +130,9 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     myGlobalLibrariesConfig.init(myContext);
     myModulesConfig.init(myContext);
     myFacetStructureConfigurable.init(myContext);
-    myArtifactsStructureConfigurable.init(myContext, myModulesConfig, myProjectLibrariesConfig, myGlobalLibrariesConfig);
+    if (!project.isDefault()) {
+      myArtifactsStructureConfigurable.init(myContext, myModulesConfig, myProjectLibrariesConfig, myGlobalLibrariesConfig);
+    }
 
     final PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(myProject);
     myUiState.lastEditedConfigurable = propertiesComponent.getValue("project.structure.last.edited");

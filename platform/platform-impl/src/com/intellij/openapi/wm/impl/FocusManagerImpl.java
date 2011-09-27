@@ -31,6 +31,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
+import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.ui.FocusTrackback;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -735,6 +736,11 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
         if (eachDialog.isModal() && eachDialog.isShowing()) {
           modalDialogs++;
         }
+      } else if (each instanceof JWindow) {
+        final JBPopup popup = (JBPopup)((JWindow)each).getRootPane().getClientProperty(JBPopup.KEY);
+        if (popup != null && popup.isModalContext()) {
+          modalDialogs++;
+        }
       }
     }
     Iterator<Integer> modalityCounts = myModalityCount2FlushCount.keySet().iterator();
@@ -949,6 +955,8 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
 
       if (cmd != null) {
         requestFocus(cmd, true).notify(callback);
+      } else {
+        focusLastFocusedComponent(ideFrame);
       }
     }
 
@@ -960,8 +968,20 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
           c = getComponent(myLastFocused, ideFrame);
         }
 
-        if (c != null && c.isShowing()) {
-          requestFocus(c, false);
+        final boolean mouseEventAhead = IdeEventQueue.isMouseEventAhead(null);
+        if (c != null && c.isShowing() && !mouseEventAhead) {
+          final LayoutFocusTraversalPolicyExt policy = LayoutFocusTraversalPolicyExt.findWindowPolicy(c);
+          if (policy != null) {
+            policy.setNoDefaultComponent(true, FocusManagerImpl.this);
+          }
+          requestFocus(c, false).doWhenProcessed(new Runnable() {
+            @Override
+            public void run() {
+              if (policy != null) {
+                policy.setNoDefaultComponent(false, FocusManagerImpl.this);
+              }
+            }
+          });
         }
       }
 

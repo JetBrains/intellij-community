@@ -20,6 +20,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -71,10 +72,15 @@ public class DnDEventImpl extends UserDataHolderBase implements Transferable, Dn
     return myAttachedObject;
   }
 
-  public void setDropPossible(boolean possible, String aExpectedResult) {
+  public void setDropPossible(boolean possible, @Nullable String aExpectedResult) {
     myDropPossible = possible;
     myExpectedDropResult = aExpectedResult;
     clearDropHandler();
+  }
+
+  @Override
+  public void setDropPossible(boolean possible) {
+    setDropPossible(possible, null);
   }
 
   public void setDropPossible(String aExpectedResult, DropActionHandler aHandler) {
@@ -105,11 +111,16 @@ public class DnDEventImpl extends UserDataHolderBase implements Transferable, Dn
       return ((Transferable)myAttachedObject).getTransferData(flavor);
     }
     else if (myAttachedObject instanceof FileFlavorProvider && flavor == DataFlavor.javaFileListFlavor) {
-      return ((FileFlavorProvider)myAttachedObject).asFileList();
+      final List<File> files = ((FileFlavorProvider)myAttachedObject).asFileList();
+      if (files != null) {
+        return files;
+      }
     }
     else if (myAttachedObject instanceof FileFlavorProvider && flavor == LinuxDragAndDropSupport.uriListFlavor) {
       final List<File> files = ((FileFlavorProvider)myAttachedObject).asFileList();
-      return LinuxDragAndDropSupport.toUriList(files);
+      if (files != null) {
+        return LinuxDragAndDropSupport.toUriList(files);
+      }
     }
 
     return getAttachedObject();

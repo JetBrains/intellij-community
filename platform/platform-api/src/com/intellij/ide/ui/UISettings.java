@@ -87,8 +87,8 @@ public class UISettings implements PersistentStateComponent<UISettings>, Exporta
   public boolean SHOW_ICONS_IN_MENUS = true;
   public boolean DISABLE_MNEMONICS = SystemInfo.isMac; // IDEADEV-33409, should be disabled by default on MacOS
   public boolean SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY = false;
-  public int MAX_LOOKUP_LIST_WIDTH = 500;
-  public int MAX_LOOKUP_ITEM_COUNT = 11;
+  public int MAX_LOOKUP_WIDTH = 500;
+  public int MAX_LOOKUP_LIST_HEIGHT = 11;
 
   /**
    * Defines whether asterisk is shown on modified editor tab or not

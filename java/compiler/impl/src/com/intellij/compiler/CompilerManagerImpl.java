@@ -27,6 +27,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -58,6 +59,7 @@ public class CompilerManagerImpl extends CompilerManager {
   private final Semaphore myCompilationSemaphore = new Semaphore(1, true);
   private final Map<Compiler, Set<FileType>> myCompilerToInputTypes = new HashMap<Compiler, Set<FileType>>();
   private final Map<Compiler, Set<FileType>> myCompilerToOutputTypes = new HashMap<Compiler, Set<FileType>>();
+  private final Set<ModuleType> myValidationDisabledModuleTypes = new HashSet<ModuleType>();
 
   public CompilerManagerImpl(final Project project, CompilerConfigurationImpl compilerConfiguration, MessageBus messageBus) {
     myProject = project;
@@ -366,6 +368,24 @@ public class CompilerManagerImpl extends CompilerManager {
   @NotNull
   public CompileScope createProjectCompileScope(@NotNull final Project project) {
     return new ProjectCompileScope(project);
+  }
+
+  @Override
+  public void setValidationEnabled(ModuleType moduleType, boolean enabled) {
+    if (enabled) {
+      myValidationDisabledModuleTypes.remove(moduleType);
+    }
+    else {
+      myValidationDisabledModuleTypes.add(moduleType);
+    }
+  }
+
+  @Override
+  public boolean isValidationEnabled(Module module) {
+    if (myValidationDisabledModuleTypes.isEmpty()) {
+      return true; // optimization
+    }
+    return !myValidationDisabledModuleTypes.contains(ModuleType.get(module));
   }
 
   private Graph<Compiler> createCompilerGraph(final List<Compiler> compilers) {

@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.search.ThrowSearchUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.StateRestoringCheckBox;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -51,7 +52,7 @@ public class FindThrowUsagesDialog extends JavaFindUsagesDialog<JavaThrowFindUsa
     final JComponent panel = new JPanel(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
 
-    gbConstraints.insets = new Insets(4, 4, 4, 4);
+    gbConstraints.insets = new Insets(0, 0, UIUtil.DEFAULT_VGAP, 0);
     gbConstraints.fill = GridBagConstraints.BOTH;
     gbConstraints.weightx = 1;
     gbConstraints.weighty = 1;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,18 +27,15 @@ import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ModuleSourceOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.ui.CellAppearanceEx;
+import com.intellij.openapi.roots.ui.OrderEntryAppearanceService;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
-import com.intellij.openapi.roots.ui.util.CellAppearance;
-import com.intellij.openapi.roots.ui.util.OrderEntryCellAppearanceUtils;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.ColoredTreeCellRenderer;
-import com.intellij.ui.PopupHandler;
-import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.PathUtil;
@@ -138,7 +135,7 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
         if (value instanceof MyNode && !(value instanceof MyRootNode)) {
           final MyNode node = (MyNode)value;
           PathNode<?> n = (PathNode<?>)node.getUserObject();
-          CellAppearance a = n.getAppearance(selected, node.isDisplayInBold());
+          CellAppearanceEx a = n.getAppearance(selected, node.isDisplayInBold());
           a.customize(this);
         }
       }
@@ -466,13 +463,13 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
     }
 
     /**
-     * Get appearance for renderring in master list
+     * Get appearance for rendering in master list
      *
      * @param selected true if selected
      * @param bold     true if bold
      * @return the result appearance
      */
-    public abstract CellAppearance getAppearance(boolean selected, boolean bold);
+    public abstract CellAppearanceEx getAppearance(boolean selected, boolean bold);
 
     /**
      * @retrun the string cut so it would fit the banner (the prefix is dropped)
@@ -514,7 +511,7 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
         return;
       }
       ModuleDependenciesAnalyzer.OrderPathElement e = (ModuleDependenciesAnalyzer.OrderPathElement)userObject;
-      final CellAppearance appearance = e.getAppearance(selected);
+      final CellAppearanceEx appearance = e.getAppearance(selected);
       appearance.customize(this);
     }
   }
@@ -538,8 +535,8 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
      * {@inheritDoc}
      */
     @Override
-    public CellAppearance getAppearance(boolean selected, final boolean isBold) {
-      return new CellAppearance() {
+    public CellAppearanceEx getAppearance(boolean selected, final boolean isBold) {
+      return new CellAppearanceEx() {
         @Override
         public void customize(SimpleColoredComponent component) {
           component.setIcon(getIcon());
@@ -554,6 +551,11 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
           component.append(PathUtil.getFileName(p),
                            isBold ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
           component.append(" (" + PathUtil.getParentPath(p) + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        }
+
+        @Override
+        public void customize(@NotNull final HtmlListCellRenderer renderer) {
+          throw new UnsupportedOperationException("Rendering in combo box not supported yet.");
         }
 
         @Override
@@ -611,15 +613,20 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
      * {@inheritDoc}
      */
     @Override
-    public CellAppearance getAppearance(boolean selected, final boolean isBold) {
+    public CellAppearanceEx getAppearance(boolean selected, final boolean isBold) {
       if (myExplanation.entry() instanceof ModuleSourceOrderEntry) {
         ModuleSourceOrderEntry e = (ModuleSourceOrderEntry)myExplanation.entry();
         if (e.getOwnerModule() == myModule) {
-          return new CellAppearance() {
+          return new CellAppearanceEx() {
             @Override
             public void customize(SimpleColoredComponent component) {
               component.setIcon(ModuleType.get(myModule).getNodeIcon(false));
               component.append("<This Module>", SimpleTextAttributes.SYNTHETIC_ATTRIBUTES);
+            }
+
+            @Override
+            public void customize(@NotNull final HtmlListCellRenderer renderer) {
+              throw new UnsupportedOperationException("Rendering in combo box not supported yet.");
             }
 
             @Override
@@ -629,10 +636,10 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
           };
         }
         else {
-          return OrderEntryCellAppearanceUtils.forModule(e.getOwnerModule());
+          return OrderEntryAppearanceService.getInstance(myModule.getProject()).forModule(e.getOwnerModule());
         }
       }
-      return OrderEntryCellAppearanceUtils.forOrderEntry(myExplanation.entry(), selected);
+      return OrderEntryAppearanceService.getInstance(myModule.getProject()).forOrderEntry(myExplanation.entry(), selected);
     }
 
     /**
@@ -678,8 +685,7 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
      * The constructor
      */
     public SdkFilterAction() {
-      super("Include SDK", "If selected, the SDK classes are included",
-            IconLoader.findIcon("/general/jdk.png"));    //To change body of overridden methods use File | Settings | File Templates.
+      super("Include SDK", "If selected, the SDK classes are included", IconLoader.findIcon("/general/jdk.png"));
     }
 
     /**

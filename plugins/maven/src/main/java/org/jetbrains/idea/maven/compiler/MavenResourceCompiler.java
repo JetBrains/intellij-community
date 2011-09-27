@@ -34,6 +34,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
@@ -308,7 +309,7 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
                                indicator);
       }
       else {
-        String relPath = VfsUtil.getRelativePath(eachSourceFile, sourceRoot, '/');
+        String relPath = VfsUtilCore.getRelativePath(eachSourceFile, sourceRoot, '/');
         if (fileIndex.isIgnored(eachSourceFile)) continue;
         if (!MavenUtil.isIncluded(relPath, includes, excludes)) continue;
 

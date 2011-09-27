@@ -384,7 +384,7 @@ class RunConfigurable extends BaseConfigurable {
 
     Box box = new Box(BoxLayout.LINE_AXIS);
     box.setBorder(BorderFactory.createEmptyBorder(7, 5, 3, 0));
-    box.add(new JLabel("Temporary configurations limit:"));
+    box.add(new JLabel("<html>Temporary configurations limit:</html>"));
     Dimension size = new Dimension(25, myRecentsLimit.getPreferredSize().height);
     myRecentsLimit.setPreferredSize(size);
     myRecentsLimit.setMaximumSize(size);

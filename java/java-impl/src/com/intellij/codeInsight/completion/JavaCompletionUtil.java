@@ -601,7 +601,7 @@ public class JavaCompletionUtil {
     if (type instanceof PsiArrayType) return true;
 
     final PsiClass psiClass = PsiUtil.resolveClassInType(type);
-    if (psiClass == null) return false;
+    if (psiClass == null || psiClass.isEnum() || psiClass.isAnnotationType()) return false;
 
     if (!(psiClass instanceof PsiCompiledElement)) return true;
 

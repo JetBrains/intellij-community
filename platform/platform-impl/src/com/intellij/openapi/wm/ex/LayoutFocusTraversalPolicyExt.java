@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.wm.ex;
 
+import org.jetbrains.annotations.Nullable;
+
 import javax.swing.*;
 import java.awt.*;
 
@@ -39,6 +41,23 @@ public class LayoutFocusTraversalPolicyExt extends LayoutFocusTraversalPolicy{
         myNoDefaultComponent = false;
         myNoDefaultComponentRequestor = null;
       }
+    }
+  }
+
+  @Nullable
+  public static LayoutFocusTraversalPolicyExt findWindowPolicy(Component c) {
+    Window wnd;
+    if (c instanceof Window) {
+      wnd = (Window)c;
+    } else {
+      wnd = SwingUtilities.getWindowAncestor(c);
+    }
+
+    final FocusTraversalPolicy policy = wnd.getFocusTraversalPolicy();
+    if (policy instanceof LayoutFocusTraversalPolicyExt) {
+      return (LayoutFocusTraversalPolicyExt)policy;
+    } else {
+      return null;
     }
   }
 

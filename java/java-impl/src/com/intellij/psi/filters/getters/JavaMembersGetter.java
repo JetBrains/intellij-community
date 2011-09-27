@@ -35,19 +35,19 @@ public class JavaMembersGetter extends MembersGetter {
   private final PsiType myExpectedType;
 
   public JavaMembersGetter(@NotNull PsiType expectedType) {
-    myExpectedType = expectedType;
+    myExpectedType = JavaCompletionUtil.originalize(expectedType);
   }
 
-  public void addMembers(PsiElement position, Consumer<LookupElement> results) {
-    final PsiClass psiClass = PsiUtil.resolveClassInType(myExpectedType);
-    processMembers(position, results, psiClass, PsiTreeUtil.getParentOfType(position, PsiAnnotation.class) != null);
-
+  public void addMembers(PsiElement position, boolean searchInheritors, Consumer<LookupElement> results) {
     if (myExpectedType instanceof PsiPrimitiveType && PsiType.DOUBLE.isAssignableFrom(myExpectedType)) {
-      addConstantsFromTargetClass(position, results);
+      addConstantsFromTargetClass(position, results, searchInheritors);
     }
+
+    final PsiClass psiClass = PsiUtil.resolveClassInType(myExpectedType);
+    processMembers(position, results, psiClass, PsiTreeUtil.getParentOfType(position, PsiAnnotation.class) != null, searchInheritors);
   }
 
-  private void addConstantsFromTargetClass(PsiElement position, Consumer<LookupElement> results) {
+  private void addConstantsFromTargetClass(PsiElement position, Consumer<LookupElement> results, boolean searchInheritors) {
     PsiElement parent = position.getParent();
     if (!(parent instanceof PsiReferenceExpression)) {
       return;
@@ -60,7 +60,7 @@ public class JavaMembersGetter extends MembersGetter {
       final IElementType op = binaryExpression.getOperationTokenType();
       if (JavaTokenType.EQEQ == op || JavaTokenType.NE == op) {
         if (prev == binaryExpression.getROperand()) {
-          processMembers(position, results, getCalledClass(binaryExpression.getLOperand()), false);
+          processMembers(position, results, getCalledClass(binaryExpression.getLOperand()), false, searchInheritors);
         }
         return;
       }
@@ -68,7 +68,7 @@ public class JavaMembersGetter extends MembersGetter {
       parent = parent.getParent();
     }
     if (parent instanceof PsiExpressionList) {
-      processMembers(position, results, getCalledClass(parent.getParent()), false);
+      processMembers(position, results, getCalledClass(parent.getParent()), false, searchInheritors);
     }
   }
 

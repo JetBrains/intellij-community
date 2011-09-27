@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.overrideImplement;
 
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.lang.LanguageCodeInsightActionHandler;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -35,9 +36,14 @@ public class GroovyOverrideMethodsHandler implements LanguageCodeInsightActionHa
 
   public void invoke(@NotNull final Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     PsiClass aClass = OverrideImplementUtil.getContextClass(project, editor, file, true);
-    if (aClass != null) {
-      OverrideImplementUtil.chooseAndOverrideMethods(project, editor, aClass);
+    if (aClass == null) return;
+
+    if (OverrideImplementUtil.getMethodSignaturesToOverride(aClass).isEmpty()) {
+      HintManager.getInstance().showErrorHint(editor, "No methods to override have been found");
+      return;
     }
+
+    OverrideImplementUtil.chooseAndOverrideMethods(project, editor, aClass);
   }
 
   public boolean startInWriteAction() {

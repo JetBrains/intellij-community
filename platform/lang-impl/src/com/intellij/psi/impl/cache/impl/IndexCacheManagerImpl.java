@@ -24,6 +24,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -35,7 +36,6 @@ import com.intellij.psi.impl.cache.impl.id.IdIndexEntry;
 import com.intellij.psi.impl.cache.impl.todo.TodoIndex;
 import com.intellij.psi.impl.cache.impl.todo.TodoIndexEntry;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.GlobalSearchScopes;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.search.IndexPatternProvider;
 import com.intellij.psi.util.PsiUtilCore;
@@ -73,7 +73,7 @@ public class IndexCacheManagerImpl implements CacheManager{
     return processor.getResults().isEmpty() ? PsiFile.EMPTY_ARRAY : processor.toArray(PsiFile.EMPTY_ARRAY);
   }
 
-  public static boolean shouldBeFound(GlobalSearchScope scope, VirtualFile virtualFile, ProjectFileIndex index) {
+  public static boolean shouldBeFound(GlobalSearchScope scope, VirtualFile virtualFile, FileIndexFacade index) {
     return (scope.isSearchOutsideRootModel() || index.isInContent(virtualFile) || index.isInLibrarySource(virtualFile)) && !virtualFile.getFileType().isBinary();
   }
 
@@ -105,7 +105,7 @@ public class IndexCacheManagerImpl implements CacheManager{
 
     if (vFiles.isEmpty()) return true;
 
-    final ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
+    final FileIndexFacade index = FileIndexFacade.getInstance(myProject);
 
     final Processor<VirtualFile> virtualFileProcessor = new ReadActionProcessor<VirtualFile>() {
       @Override
@@ -192,7 +192,7 @@ public class IndexCacheManagerImpl implements CacheManager{
           count[0] += value.intValue();
           return true;
         }
-      }, GlobalSearchScopes.fileScope(myProject, file));
+      }, GlobalSearchScope.fileScope(myProject, file));
     return count[0];
   }
 }

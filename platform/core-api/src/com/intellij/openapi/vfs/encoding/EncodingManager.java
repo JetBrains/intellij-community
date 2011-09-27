@@ -36,6 +36,7 @@ public abstract class EncodingManager {
   @NonNls public static final String PROP_NATIVE2ASCII_SWITCH = "native2ascii";
   @NonNls public static final String PROP_PROPERTIES_FILES_ENCODING = "propertiesFilesEncoding";
 
+  @NotNull
   public static EncodingManager getInstance() {
     return ServiceManager.getService(EncodingManager.class);
   }
@@ -50,6 +51,7 @@ public abstract class EncodingManager {
    *         if useParentDefaults is true, encoding configured for nearest parent of virtualFile or,
    *         null if there is no configured encoding found.
    */
+  @Nullable
   public abstract Charset getEncoding(@Nullable VirtualFile virtualFile, boolean useParentDefaults);
 
   public abstract void setEncoding(@Nullable VirtualFile virtualFileOrDir, @Nullable Charset charset);
@@ -67,10 +69,13 @@ public abstract class EncodingManager {
   /**
    * @return name of default charset configured in Settings|File Encodings|IDE encoding
    */
+  @Nullable
   public abstract Charset getDefaultCharset();
 
+  @Nullable
   public String getDefaultCharsetName() {
-    return getDefaultCharset().displayName();
+    Charset charset = getDefaultCharset();
+    return charset == null ? null : charset.displayName();
   }
 
   public void setDefaultCharsetName(String name) {
@@ -80,6 +85,7 @@ public abstract class EncodingManager {
   /**
    * @return null for system-default
    */
+  @Nullable
   public abstract Charset getDefaultCharsetForPropertiesFiles(@Nullable VirtualFile virtualFile);
   public abstract void setDefaultCharsetForPropertiesFiles(@Nullable VirtualFile virtualFile, @Nullable Charset charset);
 
@@ -91,6 +97,7 @@ public abstract class EncodingManager {
 
   public abstract void removePropertyChangeListener(@NotNull PropertyChangeListener listener);
 
+  @Nullable
   public abstract Charset getCachedCharsetFromContent(@NotNull Document document);
 
   public static <E extends Throwable> VirtualFile doActionAndRestoreEncoding(@NotNull VirtualFile fileBefore, @NotNull ThrowableComputable<VirtualFile, E> action) throws E {

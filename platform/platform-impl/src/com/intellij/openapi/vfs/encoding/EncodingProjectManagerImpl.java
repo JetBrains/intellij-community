@@ -232,14 +232,17 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager {
       assert charset != null;
       setAndSaveOrReload(virtualFile, charset);
     }
-    for (VirtualFile open : FileEditorManager.getInstance(myProject).getOpenFiles()) {
-      if (!map.containsKey(open)) {
-        saveOrReload(open);
+    if (!myProject.isDefault()) {
+      for (VirtualFile open : FileEditorManager.getInstance(myProject).getOpenFiles()) {
+        if (!map.containsKey(open)) {
+          saveOrReload(open);
+        }
       }
     }
   }
 
   //retrieves encoding for the Project node
+  @Nullable
   public Charset getDefaultCharset() {
     Charset charset = getEncoding(null, false);
     return charset == null ? EncodingManager.getInstance().getDefaultCharset() : charset;
@@ -269,6 +272,7 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager {
     }
   }
 
+  @Nullable
   public Charset getDefaultCharsetForPropertiesFiles(@Nullable final VirtualFile virtualFile) {
     return myDefaultCharsetForPropertiesFiles;
   }
@@ -294,6 +298,7 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager {
     EncodingManager.getInstance().removePropertyChangeListener(listener);
   }
 
+  @Nullable
   public Charset getCachedCharsetFromContent(@NotNull Document document) {
     return EncodingManager.getInstance().getCachedCharsetFromContent(document);
   }

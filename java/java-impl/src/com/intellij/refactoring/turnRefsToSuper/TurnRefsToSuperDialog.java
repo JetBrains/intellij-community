@@ -24,9 +24,9 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.ClassCellRenderer;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.RefactoringHierarchyUtil;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -78,20 +78,12 @@ public class TurnRefsToSuperDialog extends RefactoringDialog {
   }
 
 
-  protected JComponent createNorthPanel() {
+  protected JComponent createCenterPanel() {
     JPanel panel = new JPanel();
-    panel.setLayout(new GridBagLayout());
-    GridBagConstraints gbConstraints = new GridBagConstraints();
+    panel.setLayout(new BorderLayout(UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP));
 
-    gbConstraints.insets = new Insets(4, 8, 4, 8);
-    gbConstraints.weighty = 1;
-    gbConstraints.weightx = 1;
-    gbConstraints.gridy = 0;
-    gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
-    gbConstraints.fill = GridBagConstraints.BOTH;
-    gbConstraints.anchor = GridBagConstraints.WEST;
     final JLabel classListLabel = new JLabel();
-    panel.add(classListLabel, gbConstraints);
+    panel.add(classListLabel, BorderLayout.NORTH);
 
     mySuperClassesList = new JBList(mySuperClasses.toArray());
     mySuperClassesList.setCellRenderer(new ClassCellRenderer(mySuperClassesList.getCellRenderer()));
@@ -104,14 +96,12 @@ public class TurnRefsToSuperDialog extends RefactoringDialog {
       indexToSelect = mySuperClasses.indexOf(nearestBase);
     }
     mySuperClassesList.setSelectedIndex(indexToSelect);
-    gbConstraints.gridy++;
-    panel.add(ScrollPaneFactory.createScrollPane(mySuperClassesList), gbConstraints);
+    panel.add(ScrollPaneFactory.createScrollPane(mySuperClassesList), BorderLayout.CENTER);
 
-    gbConstraints.gridy++;
     myCbReplaceInstanceOf.setText(RefactoringBundle.message("turnRefsToSuper.use.superclass.in.instanceof"));
     myCbReplaceInstanceOf.setSelected(false);
     myCbReplaceInstanceOf.setFocusable(false);
-    panel.add(myCbReplaceInstanceOf, gbConstraints);
+    panel.add(myCbReplaceInstanceOf, BorderLayout.SOUTH);
 
     return panel;
   }
@@ -128,7 +118,7 @@ public class TurnRefsToSuperDialog extends RefactoringDialog {
     }
   }
 
-  protected JComponent createCenterPanel() {
+  protected JComponent createNorthPanel() {
     return null;
   }
 }

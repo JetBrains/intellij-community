@@ -29,6 +29,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 
@@ -188,13 +189,13 @@ public class FilePatternPackageSet extends PatternBasedPackageSet {
                                        VirtualFile projectBaseDir) {
     final VirtualFile contentRootForFile = index.getContentRootForFile(virtualFile);
     if (contentRootForFile != null) {
-      return VfsUtil.getRelativePath(virtualFile, contentRootForFile, '/');
+      return VfsUtilCore.getRelativePath(virtualFile, contentRootForFile, '/');
     }
     final Module module = index.getModuleForFile(virtualFile);
     if (module != null) {
       if (projectBaseDir != null) {
         if (VfsUtil.isAncestor(projectBaseDir, virtualFile, false)){
-          final String projectRelativePath = VfsUtil.getRelativePath(virtualFile, projectBaseDir, '/');
+          final String projectRelativePath = VfsUtilCore.getRelativePath(virtualFile, projectBaseDir, '/');
           return useFQName ? projectRelativePath : projectRelativePath.substring(projectRelativePath.indexOf('/') + 1);
         }
       }

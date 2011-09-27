@@ -19,8 +19,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiBundle;
 import com.intellij.psi.PsiDirectory;
@@ -28,8 +27,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.scope.packageSet.*;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Collection;
 
 /**
  * @author yole
@@ -56,19 +53,6 @@ public class GlobalSearchScopes {
 
   public static GlobalSearchScope directoryScope(@NotNull Project project, @NotNull VirtualFile directory, final boolean withSubdirectories) {
     return new DirectoryScope(project, directory, withSubdirectories);
-  }
-
-  public static GlobalSearchScope fileScope(@NotNull PsiFile psiFile) {
-    return new FileScope(psiFile.getProject(), psiFile.getVirtualFile());
-  }
-
-  public static GlobalSearchScope fileScope(final Project project, final VirtualFile virtualFile) {
-    return new FileScope(project, virtualFile);
-  }
-
-  public static GlobalSearchScope filesScope(final Project project, final Collection<VirtualFile> files) {
-    if (files.isEmpty()) return GlobalSearchScope.EMPTY_SCOPE;
-    return files.size() == 1? fileScope(project, files.iterator().next()) : new FilesScope(project, files);
   }
 
   private static class FilterScopeAdapter extends GlobalSearchScope {
@@ -191,7 +175,7 @@ public class GlobalSearchScopes {
 
     public boolean contains(VirtualFile file) {
       if (myWithSubdirectories) {
-        return VfsUtil.isAncestor(myDirectory, file, false);
+        return VfsUtilCore.isAncestor(myDirectory, file, false);
       }
       else {
         return myDirectory.equals(file.getParent());
@@ -213,76 +197,6 @@ public class GlobalSearchScopes {
     public String toString() {
       //noinspection HardCodedStringLiteral
       return "directory scope: " + myDirectory + "; withSubdirs:"+myWithSubdirectories;
-    }
-  }
-
-  private static class FileScope extends GlobalSearchScope {
-    private final VirtualFile myVirtualFile;
-    private final Module myModule;
-
-    private FileScope(final Project project, final VirtualFile virtualFile) {
-      super(project);
-      myVirtualFile = virtualFile;
-      ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-      myModule = myVirtualFile != null ? fileIndex.getModuleForFile(myVirtualFile) : null;
-    }
-
-    public boolean contains(VirtualFile file) {
-      return Comparing.equal(myVirtualFile, file);
-    }
-
-    public int compare(VirtualFile file1, VirtualFile file2) {
-      return 0;
-    }
-
-    public boolean isSearchInModuleContent(@NotNull Module aModule) {
-      return aModule == myModule;
-    }
-
-    public boolean isSearchInLibraries() {
-      return myModule == null;
-    }
-  }
-
-  private static class FilesScope extends GlobalSearchScope {
-    private final Collection<VirtualFile> myFiles;
-
-    public FilesScope(final Project project, final Collection<VirtualFile> files) {
-      super(project);
-      myFiles = files;
-    }
-
-    @Override
-    public boolean contains(final VirtualFile file) {
-      return myFiles.contains(file);
-    }
-
-    @Override
-    public int compare(final VirtualFile file1, final VirtualFile file2) {
-      return 0;
-    }
-
-    @Override
-    public boolean isSearchInModuleContent(@NotNull Module aModule) {
-      return true;
-    }
-
-    @Override
-    public boolean isSearchInLibraries() {
-      return false;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (!(o instanceof FilesScope)) return false;
-
-      return myFiles.equals(((FilesScope)o).myFiles);
-    }
-
-    @Override
-    public int hashCode() {
-      return myFiles.hashCode();
     }
   }
 }

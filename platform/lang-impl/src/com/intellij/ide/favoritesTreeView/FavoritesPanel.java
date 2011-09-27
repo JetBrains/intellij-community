@@ -17,6 +17,8 @@ package com.intellij.ide.favoritesTreeView;
 
 import com.intellij.ide.dnd.*;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
+import com.intellij.ide.favoritesTreeView.actions.AddToFavoritesAction;
+import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.TransferableWrapper;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -30,8 +32,11 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 
 /**
@@ -46,7 +51,7 @@ public class FavoritesPanel {
 
   public FavoritesPanel(Project project) {
     myProject = project;
-    myViewPanel = new FavoritesTreeViewPanel(myProject, null);
+    myViewPanel = new FavoritesTreeViewPanel(myProject);
     myTree = myViewPanel.getTree();
     myTreeBuilder = myViewPanel.getBuilder();
     if (myTreeBuilder != null) {
@@ -55,9 +60,9 @@ public class FavoritesPanel {
         @Override
         public int compare(NodeDescriptor nd1, NodeDescriptor nd2) {
           if (nd1 instanceof FavoritesTreeNodeDescriptor && nd2 instanceof FavoritesTreeNodeDescriptor) {
-            FavoritesTreeNodeDescriptor fd1 = (FavoritesTreeNodeDescriptor)nd1;
-            FavoritesTreeNodeDescriptor fd2 = (FavoritesTreeNodeDescriptor)nd2;
-            return 0;//super.compare(fd1.getElement(), fd2.getElement()); todo
+            final AbstractTreeNode e1 = ((FavoritesTreeNodeDescriptor)nd1).getElement();
+            final AbstractTreeNode e2 = ((FavoritesTreeNodeDescriptor)nd2).getElement();
+            return e1 == null || e2 == null ? 0 : e1.getName().compareToIgnoreCase(e2.getName());
           }
           return 0;
         }
@@ -75,18 +80,32 @@ public class FavoritesPanel {
     DnDSupport.createBuilder(myTree)
       .setBeanProvider(new Function<DnDActionInfo, DnDDragStartBean>() {
         @Override
-        public DnDDragStartBean fun(DnDActionInfo dnDActionInfo) {
+        public DnDDragStartBean fun(DnDActionInfo info) {
+          final TreePath path = myTree.getPathForLocation(info.getPoint().x, info.getPoint().y);
+          if (path != null) {
+            return new DnDDragStartBean(path);
+          }
           return new DnDDragStartBean("");
         }
       })
       .setTargetChecker(new DnDTargetChecker() {
         @Override
         public boolean update(DnDEvent event) {
-          final Point p = event.getPoint();
+          final Object obj = event.getAttachedObject();
+          if (obj instanceof TreePath) {
+            event.setDropPossible(((TreePath)obj).getPathCount() > 2);
+            return true;
+          }
 
+          if ("".equals(obj)) {
+            event.setDropPossible(false);
+            return false;
+          }
+
+          final Point p = event.getPoint();
           FavoritesListNode node = findFavoritesListNode(p);
           if (node != null) {
-            TreePath pathToList = myTree.getPathForLocation(p.x, p.y);
+            TreePath pathToList = myTree.getPath(node);
             while (pathToList != null) {
               final Object pathObj = pathToList.getLastPathComponent();
               if (pathObj instanceof DefaultMutableTreeNode) {
@@ -105,22 +124,45 @@ public class FavoritesPanel {
                 event.setHighlighting(new RelativeRectangle(myTree, bounds), DnDEvent.DropTargetHighlightingType.RECTANGLE);
               }
             }
-            event.setDropPossible(true, null);
+            event.setDropPossible(true);
             return true;
           }
-          event.setDropPossible(false, null);
+          event.setDropPossible(false);
           return false;
         }
       })
       .setDropHandler(new DnDDropHandler() {
         @Override
         public void drop(DnDEvent event) {
+          final FavoritesListNode node = findFavoritesListNode(event.getPoint());
+          final FavoritesManager mgr = FavoritesManager.getInstance(myProject);
+
+          if (node == null) return;
+
+          final String listTo = node.getValue();
           final Object obj = event.getAttachedObject();
-          if (obj instanceof TransferableWrapper) {
+
+          if (obj instanceof TreePath) {
+            final TreePath path = (TreePath)obj;
+            final String listFrom = getListNodeFromPath(path).getValue();
+            if (listTo.equals(listFrom)) return;
+            if (path.getPathCount() == 3) {
+              final Object element = ((FavoritesTreeNodeDescriptor)((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject())
+                .getElement().getValue();
+              mgr.removeRoot(listFrom, element);
+              mgr.addRoots(listTo, null, element);
+            }
+          }
+          else if (obj instanceof TransferableWrapper) {
             final PsiElement[] elements = ((TransferableWrapper)obj).getPsiElements();
-            final FavoritesListNode node = findFavoritesListNode(event.getPoint());
-            if (elements != null && elements.length > 0 && node != null) {
-              FavoritesManager.getInstance(myProject).addRoots(node.getValue(), null, elements);
+            if (elements != null && elements.length > 0) {
+              ArrayList<AbstractTreeNode> nodes = new ArrayList<AbstractTreeNode>();
+              for (PsiElement element : elements) {
+                final Collection<AbstractTreeNode> tmp = AddToFavoritesAction.createNodes(myProject, null, element, true, ViewSettings.DEFAULT);
+                nodes.addAll(tmp);
+                mgr.addRoots(listTo, nodes);
+              }
+              myTreeBuilder.select(nodes.toArray(), null);
             }
           }
         }
@@ -130,8 +172,31 @@ public class FavoritesPanel {
   }
 
   @Nullable
+  private TreeNode findListNode(String listName) {
+    final Object root = myTree.getModel().getRoot();
+    
+    if (root instanceof DefaultMutableTreeNode) {
+      final DefaultMutableTreeNode node = (DefaultMutableTreeNode)root;
+      for (int i = 0; i < node.getChildCount(); i++) {
+        final TreeNode listNode = node.getChildAt(i);
+        if (listName.equals(listNode.toString())) {
+          return listNode; 
+        }
+      }
+    }
+    return null;
+  }
+  
+
+  @Nullable
   private FavoritesListNode findFavoritesListNode(Point point) {
     final TreePath path = myTree.getPathForLocation(point.x, point.y);
+    final FavoritesListNode node = getListNodeFromPath(path);
+    return node == null ? (FavoritesListNode)((FavoritesRootNode)myTreeStructure.getRootElement()).getChildren().iterator().next()
+                        : node;
+  }
+
+  private static FavoritesListNode getListNodeFromPath(TreePath path) {
     if (path != null && path.getPathCount() > 1) {
       final Object o = path.getPath()[1];
       if (o instanceof DefaultMutableTreeNode) {

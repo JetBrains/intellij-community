@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -43,14 +44,14 @@ import java.util.Comparator;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: May 18, 2005
+ * @since May 18, 2005
  */
 class JdkComboBox extends ComboBoxWithWidePopup {
   private final JButton myEditButton = new JButton(ApplicationBundle.message("button.edit"));
 
-  public JdkComboBox(final ProjectSdksModel jdksModel) {
-    super(new JdkComboBoxModel(jdksModel));
-    setRenderer(new ProjectJdkListRenderer(getRenderer()) {
+  public JdkComboBox(@NotNull final ProjectSdksModel jdkModel, @NotNull final Project project) {
+    super(new JdkComboBoxModel(jdkModel));
+    setRenderer(new ProjectJdkListRenderer(getRenderer(), project) {
       @Override
       public void doCustomize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         if (JdkComboBox.this.isEnabled()) {
@@ -59,7 +60,7 @@ class JdkComboBox extends ComboBoxWithWidePopup {
             append(str, SimpleTextAttributes.ERROR_ATTRIBUTES);
           }
           else if (value instanceof ProjectJdkComboBoxItem){
-            final Sdk jdk = jdksModel.getProjectSdk();
+            final Sdk jdk = jdkModel.getProjectSdk();
             if (jdk != null){
               setIcon(jdk.getSdkType().getIcon());
               append(ProjectBundle.message("project.roots.project.jdk.inherited"), SimpleTextAttributes.REGULAR_ATTRIBUTES);

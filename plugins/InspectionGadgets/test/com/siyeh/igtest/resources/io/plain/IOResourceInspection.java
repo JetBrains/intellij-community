@@ -107,7 +107,7 @@ public class IOResourceInspection {
         return stream;
     }
 
-    public FileInputsStream automaticResouceManagement() throws IOException {
+    public void automaticResouceManagement() throws IOException {
         try (FileInputStream in = new FileInputStream("in")) {
             in.read();
         }
@@ -142,5 +142,9 @@ public class IOResourceInspection {
                 in.close();
             } catch (IOException e) {}
         }
+    }
+
+    void resourceAsStream() {
+        String.class.getResourceAsStream("bla");
     }
 }

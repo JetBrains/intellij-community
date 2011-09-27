@@ -108,6 +108,12 @@ public class FilePathImpl implements FilePath {
     }
   }
 
+  public void hardRefresh() {
+    if (! myNonLocal && (myVirtualFile == null || ! myVirtualFile.isValid())) {
+      myVirtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(myFile);
+    }
+  }
+
   public String getPath() {
     final VirtualFile virtualFile = myVirtualFile;
     if (virtualFile != null && virtualFile.isValid()) {

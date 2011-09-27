@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,14 @@
 package com.intellij.ide.structureView.impl;
 
 import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.openapi.roots.ui.util.CellAppearance;
-import com.intellij.openapi.roots.ui.util.CellAppearanceUtils;
+import com.intellij.openapi.roots.ui.CellAppearanceEx;
+import com.intellij.openapi.roots.ui.FileAppearanceService;
+import com.intellij.openapi.roots.ui.ModifiableCellAppearanceEx;
 import com.intellij.openapi.roots.ui.util.CompositeAppearance;
-import com.intellij.openapi.roots.ui.util.ModifiableCellAppearance;
-import com.intellij.openapi.util.Iconable;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.psi.util.PsiFormatUtilBase;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocCommentOwner;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMember;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 
@@ -32,24 +32,16 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
 
 public class StructureNodeRenderer extends ColoredTreeCellRenderer {
-  public void customizeCellRenderer(
-      JTree tree,
-      Object value,
-      boolean selected,
-      boolean expanded,
-      boolean leaf,
-      int row,
-      boolean hasFocus
-      ) {
+  public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
     forNodeDescriptorInTree(value, expanded).customize(this);
   }
 
-  public static CellAppearance forNodeDescriptorInTree(Object node, boolean expanded) {
+  public static CellAppearanceEx forNodeDescriptorInTree(Object node, boolean expanded) {
     NodeDescriptor descriptor = getNodeDescriptor(node);
-    if (descriptor == null) return CellAppearanceUtils.EMPTY;
+    if (descriptor == null) return FileAppearanceService.getInstance().empty();
     String name = descriptor.toString();
     Object psiElement = descriptor.getElement();
-    ModifiableCellAppearance result;
+    ModifiableCellAppearanceEx result;
     if (psiElement instanceof PsiElement && !((PsiElement)psiElement).isValid()) {
       result = CompositeAppearance.single(name);
     }
@@ -71,32 +63,6 @@ public class StructureNodeRenderer extends ColoredTreeCellRenderer {
     result.setIcon(icon);
     return result;
   }
-
-  public static CellAppearance forElementInClass(PsiMember psiMember, PsiClass psiClass) {
-    boolean isOwnMethod = psiMember.getContainingClass().getQualifiedName().equals(psiClass.getQualifiedName());
-    String name = getNameOf(psiMember);
-    psiMember.getIcon(Iconable.ICON_FLAG_VISIBILITY);
-    if (isOwnMethod) {
-      return CompositeAppearance.single(name, applyDeprecation(psiMember, SimpleTextAttributes.REGULAR_ATTRIBUTES));
-    } else {
-      CompositeAppearance.DequeEnd ending = new CompositeAppearance().getEnding();
-      ending.addText(name, applyDeprecation(psiMember, SimpleTextAttributes.DARK_TEXT));
-      ending.addComment(psiClass.getName(), applyDeprecation(psiClass, SimpleTextAttributes.GRAY_ATTRIBUTES));
-      return ending.getAppearance();
-    }
-  }
-
-  private static String getNameOf(PsiElement psiElement) {
-    if (psiElement instanceof PsiMethod)
-      return PsiFormatUtil.formatMethod((PsiMethod)psiElement,
-                                        PsiSubstitutor.EMPTY,
-                                        PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.TYPE_AFTER |
-                                        PsiFormatUtilBase.SHOW_PARAMETERS,
-                                        PsiFormatUtilBase.SHOW_TYPE
-      );
-    return psiElement.toString();
-  }
-
 
   private static boolean isInheritedMember(Object node, PsiClass psiClass) {
     PsiClass treeParentClass = getTreeParentClass(node);

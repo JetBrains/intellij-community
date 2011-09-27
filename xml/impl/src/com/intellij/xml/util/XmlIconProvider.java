@@ -45,10 +45,10 @@ public class XmlIconProvider extends IconProvider implements DumbAware {
         final String extension = vf.getExtension();
         
         if (XSD_FILE_EXTENSION.equals(extension)) {
-          return ElementBase.createLayeredIcon(ourXsdIcon, ElementBase.transformFlags(element, _flags));
+          return ElementBase.createLayeredIcon(element, ourXsdIcon, ElementBase.transformFlags(element, _flags));
         }
         if (WSDL_FILE_EXTENSION.equals(extension)) {
-          return ElementBase.createLayeredIcon(ourWsdlIcon, ElementBase.transformFlags(element, _flags));
+          return ElementBase.createLayeredIcon(element, ourWsdlIcon, ElementBase.transformFlags(element, _flags));
         }
       }
     }

@@ -23,6 +23,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.CompositeElement;
@@ -45,7 +46,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import static org.jetbrains.plugins.groovy.GroovyFileType.GROOVY_LANGUAGE;
 import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes.mGDOC_TAG_VALUE_COMMA;
 import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes.mGDOC_TAG_VALUE_LPAREN;
-import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.COMMENT_SET;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kELSE;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kNEW;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kSWITCH;
@@ -56,6 +56,7 @@ import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mLPAREN;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mRBRACK;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mRPAREN;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSL_COMMENT;
+import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.COMMENT_SET;
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.*;
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.GDOC_TAG;
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.mCLOSABLE_BLOCK_OP;
@@ -63,6 +64,7 @@ import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.mGDOC_
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.mGDOC_INLINE_TAG_END;
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.mGDOC_INLINE_TAG_START;
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.mGDOC_TAG_VALUE_RPAREN;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.mNLS;
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.mRCURLY;
 
 /**
@@ -70,13 +72,13 @@ import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.mRCURL
  */
 public class GroovySpacingProcessor extends GroovyElementVisitor {
   private PsiElement myParent;
-  private final CodeStyleSettings mySettings;
+  private final CommonCodeStyleSettings mySettings;
 
   private Spacing myResult;
   private ASTNode myChild1;
   private ASTNode myChild2;
 
-  public GroovySpacingProcessor(ASTNode node, CodeStyleSettings settings) {
+  public GroovySpacingProcessor(ASTNode node, CommonCodeStyleSettings settings) {
     mySettings = settings;
 
     _init(node);
@@ -320,7 +322,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
   public void visitDocComment(GrDocComment comment) {
     if (myChild1.getElementType() == GDOC_TAG &&
         myChild2.getElementType() == GDOC_TAG &&
-        mySettings.JD_LEADING_ASTERISKS_ARE_ENABLED) {
+        mySettings.getRootSettings().JD_LEADING_ASTERISKS_ARE_ENABLED) {
       IElementType type = myChild1.getLastChildNode().getElementType();
       if (type == mGDOC_ASTERISKS) {
         myResult = Spacing.createSpacing(1, 1, 0, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
@@ -515,7 +517,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
   }
 
   static ASTNode getPrevElementType(final ASTNode child) {
-    return FormatterUtil.getLeafNonSpaceBefore(child);
+    return FormatterUtil.getPreviousNonWhitespaceLeaf(child);
   }
 }
 

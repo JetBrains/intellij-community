@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,21 +15,22 @@
  */
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
+import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.packaging.artifacts.ArtifactType;
 
 import javax.swing.*;
-import java.awt.*;
 
 /**
-* @author nik
-*/
-public class ArtifactTypeCellRenderer extends DefaultListCellRenderer {
+ * @author nik
+ */
+public class ArtifactTypeCellRenderer extends ListCellRendererWrapper<ArtifactType> {
+  public ArtifactTypeCellRenderer(final ListCellRenderer listCellRenderer) {
+    super(listCellRenderer);
+  }
+
   @Override
-  public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-    final Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-    final ArtifactType type = (ArtifactType)value;
+  public void customize(JList list, ArtifactType type, int index, boolean selected, boolean hasFocus) {
     setIcon(type.getIcon());
     setText(type.getPresentableName());
-    return component;
   }
 }

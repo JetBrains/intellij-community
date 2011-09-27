@@ -251,7 +251,8 @@
     <debuggerEditorTextProvider language="Groovy" implementationClass="org.jetbrains.plugins.groovy.debugger.GroovyEditorTextProvider"/>
 
     <xdebugger.settings implementation="org.jetbrains.plugins.groovy.debugger.filters.GroovyDebuggerSettings"/>
-    <fileTypeIndentOptionsProvider implementation="org.jetbrains.plugins.groovy.formatter.GroovyIndentOptionsProvider"/>
+    <langCodeStyleSettingsProvider implementation="org.jetbrains.plugins.groovy.formatter.GroovyLanguageCodeStyleSettingsProvider"/>
+    <codeStyleSettingsProvider implementation="org.jetbrains.plugins.groovy.formatter.GroovyCodeStyleSettingsProvider"/>
 
     <typeHierarchyProvider language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.GroovyTypeHierarchyProvider"/>
 
@@ -648,7 +649,6 @@
             class="org.jetbrains.plugins.groovy.refactoring.javaToGrovyRename.RenameJavaFileToGroovyFileAction"
             text="Rename To Groovy" description="Rename Java File to Groovy">
       <add-to-group group-id="EditorTabPopupMenu" anchor="last"/>
-      <add-to-group group-id="EditorPopupMenu" anchor="last"/>
     </action>
     <action id="ExcludeFromStubGeneration"
             class="org.jetbrains.plugins.groovy.compiler.ExcludeFromStubGenerationAction"

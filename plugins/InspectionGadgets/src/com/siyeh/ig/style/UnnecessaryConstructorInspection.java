@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
@@ -23,31 +24,53 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.JComponent;
 
 public class UnnecessaryConstructorInspection extends BaseInspection {
 
+    @NonNls
+    private static final String SUPER_CALL_TEXT = PsiKeyword.SUPER + "();";
+
+    @SuppressWarnings("PublicField")
+    public boolean ignoreAnnotations = false;
+
+    @Override
     @NotNull
     public String getID() {
         return "RedundantNoArgConstructor";
     }
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "unnecessary.constructor.display.name");
     }
 
+    @Override
+    public JComponent createOptionsPanel() {
+        return new SingleCheckboxOptionsPanel(
+                InspectionGadgetsBundle.message(
+                        "unnecessary.constructor.annotation.option"),
+                this, "ignoreAnnotations");
+    }
+
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "unnecessary.constructor.problem.descriptor");
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new UnnecessaryConstructorVisitor();
     }
 
+    @Override
     public InspectionGadgetsFix buildFix(Object... infos) {
         return new UnnecessaryConstructorFix();
     }
@@ -56,11 +79,11 @@ public class UnnecessaryConstructorInspection extends BaseInspection {
             extends InspectionGadgetsFix {
         @NotNull
         public String getName() {
-
             return InspectionGadgetsBundle.message(
                     "unnecessary.constructor.remove.quickfix");
         }
 
+        @Override
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiElement nameIdentifier = descriptor.getPsiElement();
@@ -70,7 +93,7 @@ public class UnnecessaryConstructorInspection extends BaseInspection {
         }
     }
 
-    private static class UnnecessaryConstructorVisitor
+    private class UnnecessaryConstructorVisitor
             extends BaseInspectionVisitor {
 
         @Override public void visitClass(@NotNull PsiClass aClass) {
@@ -79,26 +102,35 @@ public class UnnecessaryConstructorInspection extends BaseInspection {
                 return;
             }
             final PsiMethod constructor = constructors[0];
-            if(!constructor.hasModifierProperty(PsiModifier.PRIVATE) &&
-                    aClass.hasModifierProperty(PsiModifier.PRIVATE)){
+            if (!constructor.hasModifierProperty(PsiModifier.PRIVATE) &&
+                    aClass.hasModifierProperty(PsiModifier.PRIVATE)) {
                 return;
             }
-            if(!constructor.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) &&
-                    aClass.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)){
+            if (!constructor.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) &&
+                    aClass.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
                 return;
             }
-            if(!constructor.hasModifierProperty(PsiModifier.PROTECTED) &&
-                    aClass.hasModifierProperty(PsiModifier.PROTECTED)){
+            if (!constructor.hasModifierProperty(PsiModifier.PROTECTED) &&
+                    aClass.hasModifierProperty(PsiModifier.PROTECTED)) {
                 return;
             }
-            if(!constructor.hasModifierProperty(PsiModifier.PUBLIC) &&
-                    aClass.hasModifierProperty(PsiModifier.PUBLIC)){
+            if (!constructor.hasModifierProperty(PsiModifier.PUBLIC) &&
+                    aClass.hasModifierProperty(PsiModifier.PUBLIC)) {
                 return;
             }
             final PsiParameterList parameterList =
                     constructor.getParameterList();
             if (parameterList.getParametersCount() != 0) {
                 return;
+            }
+            if (ignoreAnnotations) {
+                final PsiModifierList modifierList =
+                        constructor.getModifierList();
+                final PsiAnnotation[] annotations =
+                        modifierList.getAnnotations();
+                if (annotations.length > 0) {
+                    return;
+                }
             }
             final PsiReferenceList throwsList = constructor.getThrowsList();
             final PsiJavaCodeReferenceElement[] elements =
@@ -116,7 +148,7 @@ public class UnnecessaryConstructorInspection extends BaseInspection {
             }
             else if (statements.length == 1) {
                 final PsiStatement statement = statements[0];
-                if ((PsiKeyword.SUPER + "();").equals(statement.getText())) {
+                if (SUPER_CALL_TEXT.equals(statement.getText())) {
                     registerMethodError(constructor);
                 }
             }

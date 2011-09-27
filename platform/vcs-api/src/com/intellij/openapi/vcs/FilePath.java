@@ -75,6 +75,8 @@ public interface FilePath {
 
   void refresh();
 
+  void hardRefresh();
+
   String getPath();
 
   /**

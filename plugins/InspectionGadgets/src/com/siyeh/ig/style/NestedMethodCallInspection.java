@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,27 +29,31 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public class NestedMethodCallInspection extends BaseInspection {
 
     /** @noinspection PublicField */
     public boolean m_ignoreFieldInitializations = true;
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "nested.method.call.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "nested.method.call.problem.descriptor");
     }
 
+    @Override
     public JComponent createOptionsPanel() {
         return new SingleCheckboxOptionsPanel(
                 InspectionGadgetsBundle.message(
@@ -57,26 +61,31 @@ public class NestedMethodCallInspection extends BaseInspection {
                 this, "m_ignoreFieldInitializations");
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new NestedMethodCallVisitor();
     }
 
+    @Override
     protected InspectionGadgetsFix buildFix(Object... infos) {
         return new NestedMethodCallFix();
     }
 
+    @Override
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
         return true;
     }
 
     private static class NestedMethodCallFix extends InspectionGadgetsFix {
 
+        @Override
         @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "introduce.variable.quickfix");
         }
 
+        @Override
         public void doFix(final Project project, ProblemDescriptor descriptor) {
             final JavaRefactoringActionHandlerFactory factory =
                     JavaRefactoringActionHandlerFactory.getInstance();
@@ -101,7 +110,8 @@ public class NestedMethodCallInspection extends BaseInspection {
               runnable.run();
             }
             else {
-              ApplicationManager.getApplication().invokeLater(runnable, project.getDisposed());
+              ApplicationManager.getApplication().invokeLater(runnable,
+                      project.getDisposed());
             }
         }
     }
@@ -127,19 +137,10 @@ public class NestedMethodCallInspection extends BaseInspection {
             if (!(grandParent instanceof PsiCallExpression)) {
                 return;
             }
-            if (grandParent instanceof PsiMethodCallExpression) {
-
-                final PsiMethodCallExpression surroundingCall =
-                        (PsiMethodCallExpression)grandParent;
-                final PsiReferenceExpression methodExpression =
-                        surroundingCall.getMethodExpression();
-                final String callName = methodExpression.getReferenceName();
-                if (PsiKeyword.THIS.equals(callName) ||
-                        PsiKeyword.SUPER.equals(callName)) {
-                    //ignore nested method calls at the start of a constructor,
-                    //where they can't be extracted
-                    return;
-                }
+            if (ExpressionUtils.isConstructorInvocation(grandParent)) {
+                //ignore nested method calls at the start of a constructor,
+                //where they can't be extracted
+                return;
             }
             if (m_ignoreFieldInitializations) {
                 final PsiElement field =

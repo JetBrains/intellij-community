@@ -26,7 +26,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.android.facet.AndroidFacet;
@@ -51,7 +51,7 @@ public class AndroidIncludingCompiler implements SourceGeneratingCompiler {
   @Nullable
   @Override
   public VirtualFile getPresentableFile(CompileContext context, Module module, VirtualFile outputRoot, VirtualFile generatedFile) {
-    String generatedFileRelativePath = VfsUtil.getRelativePath(generatedFile, outputRoot, '/');
+    String generatedFileRelativePath = VfsUtilCore.getRelativePath(generatedFile, outputRoot, '/');
     if (generatedFileRelativePath == null) {
       return null;
     }
@@ -118,7 +118,7 @@ public class AndroidIncludingCompiler implements SourceGeneratingCompiler {
           return true;
         }
         if (fileOrDir.getFileType() == StdFileTypes.JAVA) {
-          String relativePath = VfsUtil.getRelativePath(fileOrDir, sourceRoot, '/');
+          String relativePath = VfsUtilCore.getRelativePath(fileOrDir, sourceRoot, '/');
           LOG.assertTrue(relativePath != null);
           MyItem existingItem = relativePath2GenItem.get(relativePath);
           if (existingItem != null) {

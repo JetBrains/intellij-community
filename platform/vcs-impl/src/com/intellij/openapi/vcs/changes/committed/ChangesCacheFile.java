@@ -653,24 +653,28 @@ public class ChangesCacheFile {
           int count = file.readInt();
           if (count > 0) {
             final Collection<Change> changes = data.changeList.getChanges();
-            final Set<String> beforePaths = new HashSet<String>();
-            final Set<String> afterPaths = new HashSet<String>();
+            final Map<String, Change> beforePaths = new HashMap<String, Change>();
+            final Map<String, Change> afterPaths = new HashMap<String, Change>();
             for (Change change : changes) {
               if (change.getBeforeRevision() != null) {
-                beforePaths.add(FilePathsHelper.convertPath(change.getBeforeRevision().getFile()));
+                beforePaths.put(FilePathsHelper.convertPath(change.getBeforeRevision().getFile()), change);
               }
               if (change.getAfterRevision() != null) {
-                afterPaths.add(FilePathsHelper.convertPath(change.getAfterRevision().getFile()));
+                afterPaths.put(FilePathsHelper.convertPath(change.getAfterRevision().getFile()), change);
               }
             }
             for(int i=0; i<count; i++) {
               boolean isAfterRevision = (file.readByte() != 0);
               String path = file.readUTF();
               final String converted = FilePathsHelper.convertPath(path);
-              for (Change c: changes) {
-                if (isAfterRevision && afterPaths.contains(converted) || beforePaths.contains(converted)) {
-                  result.add(c);
-                }
+              final Change change;
+              if (isAfterRevision) {
+                change = afterPaths.get(converted);
+              } else {
+                change = beforePaths.get(converted);
+              }
+              if (change != null) {
+                result.add(change);
               }
             }
           }
@@ -786,7 +790,7 @@ public class ChangesCacheFile {
         }
         if (updated || ! anyChangeFound) {
           myAnyChanges = true;
-          saveIncoming(data, true);
+          saveIncoming(data, ! anyChangeFound);
         }
       }
       return myAnyChanges || hadChanges;

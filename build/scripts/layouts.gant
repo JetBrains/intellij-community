@@ -34,13 +34,14 @@ def layoutFull(String home, String targetDirectory) {
 
   //noinspection GroovyAssignabilityCheck
   List<String> openapiModules = [platformApiModules(),
-          "openapi", "testFramework-java", "debugger-openapi", "compiler-openapi", "dom-openapi", "execution-openapi",
+          "java-psi-api", "openapi", "testFramework-java", "debugger-openapi", "compiler-openapi", "dom-openapi", "execution-openapi",
           "jsp-openapi", "jsp-base-openapi"].flatten()
 
   //noinspection GroovyAssignabilityCheck
   List<String> implementationModules = [platformImplementationModules(),
           "notNull",
           "platform-main",
+          "java-psi-impl",
           "java-impl",
           "compiler-impl",
           "debugger-impl",
@@ -423,6 +424,8 @@ def layout_core(String home, String target) {
       module("core-impl")
       module("boot")
       module("extensions")
+      module("java-psi-api")
+      module("java-psi-impl")
     }
 
     jar("annotations.jar") {

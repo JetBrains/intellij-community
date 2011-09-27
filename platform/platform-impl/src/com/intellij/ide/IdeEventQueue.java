@@ -584,11 +584,7 @@ public class IdeEventQueue extends EventQueue {
       final Component focusOwner = mgr.getFocusOwner();
       if (focusOwner == null || !focusOwner.isShowing() || focusOwner instanceof JFrame || focusOwner instanceof JDialog) {
 
-        IdeEventQueue queue = IdeEventQueue.getInstance();
-        boolean mouseEventsAhead = e instanceof MouseEvent ||
-                                   queue.peekEvent(MouseEvent.MOUSE_PRESSED) != null ||
-                                   queue.peekEvent(MouseEvent.MOUSE_RELEASED) != null ||
-                                   queue.peekEvent(MouseEvent.MOUSE_CLICKED) != null;
+        boolean mouseEventsAhead = isMouseEventAhead(e);
 
         if (!mouseEventsAhead) {
           Window showingWindow = mgr.getActiveWindow();
@@ -634,6 +630,14 @@ public class IdeEventQueue extends EventQueue {
         }
       }
     }
+  }
+
+  public static boolean isMouseEventAhead(@Nullable AWTEvent e) {
+    IdeEventQueue queue = getInstance();
+    return e instanceof MouseEvent ||
+                               queue.peekEvent(MouseEvent.MOUSE_PRESSED) != null ||
+                               queue.peekEvent(MouseEvent.MOUSE_RELEASED) != null ||
+                               queue.peekEvent(MouseEvent.MOUSE_CLICKED) != null;
   }
 
   private void enterSuspendModeIfNeeded(AWTEvent e) {

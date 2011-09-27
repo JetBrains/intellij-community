@@ -414,7 +414,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
   }
 
   public boolean update(DnDEvent aEvent) {
-    aEvent.setDropPossible(false, null);
+    aEvent.setDropPossible(false);
     aEvent.hideHighlighter();
     final Object object = aEvent.getAttachedObject();
     if (object instanceof PackagingElementDraggingObject) {
@@ -429,7 +429,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
             draggingObject.setTargetElement((CompositePackagingElement<?>)element);
             final Rectangle bounds = myTree.getPathBounds(TreeUtil.getPathFromRoot(parent));
             aEvent.setHighlighting(new RelativeRectangle(myTree, bounds), DnDEvent.DropTargetHighlightingType.RECTANGLE);
-            aEvent.setDropPossible(true, null);
+            aEvent.setDropPossible(true);
           }
         }
       }

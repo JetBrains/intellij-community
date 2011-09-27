@@ -38,7 +38,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.Collection;
-import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 public class OptionsEditorDialog extends DialogWrapper implements DataProvider{
@@ -74,7 +74,7 @@ public class OptionsEditorDialog extends DialogWrapper implements DataProvider{
 
   private static Configurable getPreselectedByDisplayName(final ConfigurableGroup[] groups, final String preselectedConfigurableDisplayName,
                                                    final Project project) {
-    Configurable result = findPreselectedByDisplyName(preselectedConfigurableDisplayName, groups);
+    Configurable result = findPreselectedByDisplayName(preselectedConfigurableDisplayName, groups);
 
     return result == null ? findLastSavedConfigurable(groups, project) : result;
   }
@@ -204,8 +204,8 @@ public class OptionsEditorDialog extends DialogWrapper implements DataProvider{
   }
 
   @Nullable
-  private static Configurable findPreselectedByDisplyName(final String preselectedConfigurableDisplayName,ConfigurableGroup[] groups) {
-    final java.util.List<Configurable> all = SearchUtil.expand(groups);
+  private static Configurable findPreselectedByDisplayName(final String preselectedConfigurableDisplayName, ConfigurableGroup[] groups) {
+    final List<Configurable> all = SearchUtil.expand(groups);
     for (Configurable each : all) {
       if (preselectedConfigurableDisplayName.equals(each.getDisplayName())) return each;
     }

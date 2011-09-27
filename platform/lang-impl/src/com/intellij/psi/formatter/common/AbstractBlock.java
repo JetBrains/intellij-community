@@ -99,7 +99,7 @@ public abstract class AbstractBlock implements ASTBlock {
 
   public boolean isIncomplete() {
     if (myIncomplete == null) {
-      myIncomplete = FormatterUtil.isIncompleted(getNode());
+      myIncomplete = FormatterUtil.isIncomplete(getNode());
     }
     return myIncomplete;
   }

@@ -35,7 +35,9 @@ import com.intellij.ui.*;
 import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.Function;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -45,10 +47,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeNode;
-import javax.swing.tree.TreePath;
+import javax.swing.tree.*;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
@@ -137,6 +136,18 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
       public void addNotify() {
         super.addNotify();
         MasterDetailsComponent.this.addNotify();
+
+        TreeModel m = myTree.getModel();
+        if (m instanceof DefaultTreeModel) {
+          DefaultTreeModel model = (DefaultTreeModel)m;
+          for (int eachRow = 0; eachRow < myTree.getRowCount(); eachRow++) {
+            TreePath eachPath = myTree.getPathForRow(eachRow);
+            Object component = eachPath.getLastPathComponent();
+            if (component instanceof TreeNode) {
+              model.nodeChanged((TreeNode)component);
+            }
+          }
+        }
       }
     };
     mySplitter.setHonorComponentsMinimumSize(true);
@@ -751,9 +762,9 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   }
 
   protected class MyDeleteAction extends AnAction implements DumbAware {
-    private final Condition<Object> myCondition;
+    private final Condition<Object[]> myCondition;
 
-    public MyDeleteAction(Condition<Object> availableCondition) {
+    public MyDeleteAction(Condition<Object[]> availableCondition) {
       super(CommonBundle.message("button.delete"), CommonBundle.message("button.delete"), PlatformIcons.DELETE_ICON);
       registerCustomShortcutSet(CommonShortcuts.DELETE, myTree);
       myCondition = availableCondition;
@@ -764,9 +775,13 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
       presentation.setEnabled(false);
       final TreePath[] selectionPath = myTree.getSelectionPaths();
       if (selectionPath != null) {
-        for (TreePath path : selectionPath) {
-          if (!myCondition.value(path.getLastPathComponent())) return;
-        }
+        Object[] nodes = ContainerUtil.map2Array(selectionPath, new Function<TreePath, Object>() {
+          @Override
+          public Object fun(TreePath treePath) {
+            return treePath.getLastPathComponent();
+          }
+        });
+        if (!myCondition.value(nodes)) return;
         presentation.setEnabled(true);
       }
     }
@@ -774,6 +789,18 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     public void actionPerformed(AnActionEvent e) {
       removePaths(myTree.getSelectionPaths());
     }
+  }
+
+  protected static Condition<Object[]> forAll(final Condition<Object> condition) {
+    return new Condition<Object[]>() {
+      @Override
+      public boolean value(Object[] objects) {
+        for (Object object : objects) {
+          if (!condition.value(object)) return false;
+        }
+        return true;
+      }
+    };
   }
 
   public static class MyNode extends DefaultMutableTreeNode {

@@ -35,6 +35,7 @@ import com.intellij.ui.FocusTrackback;
 import com.intellij.ui.PopupBorder;
 import com.intellij.ui.TitlePanel;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -52,8 +53,8 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
 
   /**
    * This constant defines default delay for showing progress dialog (in millis).
-   * 
-   * @see #setDelayInMillis(int) 
+   *
+   * @see #setDelayInMillis(int)
    */
   public static final int DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS = 300;
 
@@ -137,7 +138,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
    * time to show the dialog.
    * <p/>
    * Default value is {@link #DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS}
-   * 
+   *
    * @param delayInMillis   new delay time in milliseconds
    */
   public void setDelayInMillis(int delayInMillis) {
@@ -387,14 +388,13 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
     private JPanel myPanel;
 
     private JLabel myTextLabel;
-    private JLabel myText2Label;
+    private JBLabel myText2Label;
 
     private JButton myCancelButton;
     private JButton myBackgroundButton;
 
     private JProgressBar myProgressBar;
     private boolean myRepaintedFlag = true;
-    private       JPanel        myFunPanel;
     private       TitlePanel    myTitlePanel;
     private       DialogWrapper myPopup;
     private final Window        myParentWindow;
@@ -418,7 +418,12 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
     }
 
     private void initDialog(boolean shouldShowBackground, String cancelText) {
-      myFunPanel.setLayout(new BorderLayout());
+      if (UIUtil.isUnderAquaLookAndFeel()) {
+        UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myTextLabel);
+        UIUtil.applyStyle(UIUtil.ComponentStyle.MINI, myText2Label);
+      }
+      myProgressBar.setPreferredSize(new Dimension(UIUtil.isUnderAquaLookAndFeel() ? 350 : 450, -1));
+
       myCancelButton.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
           doCancelAction();
@@ -569,6 +574,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
                 ? new MyDialogWrapper(myParentWindow, myShouldShowCancel)
                 : new MyDialogWrapper(myProject, myShouldShowCancel);
       myPopup.setUndecorated(true);
+      myPopup.pack();
 
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {

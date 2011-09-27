@@ -24,6 +24,7 @@ import com.intellij.openapi.util.RecursionManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
+import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.MethodProcessorSetupFailedException;
 import com.intellij.psi.scope.processor.MethodCandidatesProcessor;
 import com.intellij.psi.scope.processor.MethodResolverProcessor;
@@ -36,6 +37,9 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Arrays;
+import java.util.List;
 
 public class PsiResolveHelperImpl implements PsiResolveHelper {
   private static final RecursionGuard ourGuard = RecursionManager.createGuard("typeArgInference");
@@ -743,7 +747,8 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     try {
       //can't call resolve() since it obtains full substitution, that may result in infinite recursion
       PsiScopesUtil.setupAndRunProcessor(processor, contextCall, false);
-      int i = ArrayUtil.find(expressionList.getExpressions(), innerMethodCall);
+      PsiExpression[] expressions = expressionList.getExpressions();
+      int i = ArrayUtil.find(expressions, innerMethodCall);
       assert i >= 0;
       final JavaResolveResult[] results = processor.getResult();
       PsiMethod owner = (PsiMethod)typeParameter.getOwner();
@@ -751,6 +756,14 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
 
       final PsiType innerReturnType = owner.getReturnType();
       for (final JavaResolveResult result : results) {
+        final PsiSubstitutor substitutor;
+        if (result instanceof MethodCandidateInfo) {
+          List<PsiExpression> leftArgs = Arrays.asList(expressions).subList(0, i);
+          substitutor = ((MethodCandidateInfo)result).inferTypeArguments(true, leftArgs.toArray(new PsiExpression[leftArgs.size()]));
+        } else {
+          substitutor = result.getSubstitutor();
+        }
+
         final PsiElement element = result.getElement();
         if (element instanceof PsiMethod) {
           final PsiMethod method = (PsiMethod)element;
@@ -764,15 +777,15 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
           }
           if (parameter != null) {
             final PsiParameter finalParameter = parameter;
-            PsiType type = ourGuard
-              .doPreventingRecursion(innerMethodCall, true, new Computable<PsiType>() {
-                @Override
-                public PsiType compute() {
-                  return result.getSubstitutor().substitute(finalParameter.getType());
-                }
-              }) ;
+            PsiType type = ourGuard.doPreventingRecursion(innerMethodCall, true, new Computable<PsiType>() {
+              @Override
+              public PsiType compute() {
+                return substitutor.substitute(finalParameter.getType());
+              }
+            });
             final Pair<PsiType, ConstraintType> constraint =
-              getSubstitutionForTypeParameterConstraint(typeParameter, innerReturnType, type, false, PsiUtil.getLanguageLevel(innerMethodCall));
+              getSubstitutionForTypeParameterConstraint(typeParameter, innerReturnType, type, false,
+                                                        PsiUtil.getLanguageLevel(innerMethodCall));
             if (constraint != null) return constraint;
           }
         }

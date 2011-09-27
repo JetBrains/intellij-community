@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.impl;
 
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -48,8 +49,18 @@ public class DefaultFileIndexFacade extends FileIndexFacade {
     return false;
   }
 
+  @Override
+  public boolean isInLibrarySource(VirtualFile file) {
+    return false;
+  }
+
   public boolean isExcludedFile(final VirtualFile file) {
     return false;
+  }
+
+  @Override
+  public Module getModuleForFile(VirtualFile file) {
+    return null;
   }
 
   public boolean isValidAncestor(final VirtualFile baseDir, final VirtualFile childDir) {

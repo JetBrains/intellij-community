@@ -19,7 +19,7 @@ import com.intellij.framework.detection.DetectedFrameworkDescription;
 import com.intellij.framework.detection.DetectionExcludesConfiguration;
 import com.intellij.framework.detection.FrameworkDetectionContext;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
@@ -89,14 +89,15 @@ class DetectedFrameworkNode extends DetectedFrameworkTreeNodeBase {
   }
 
   private void appendDirectoryPath(ColoredTreeCellRenderer renderer, final VirtualFile dir) {
-    renderer.append(" (" + getRelativePath(dir) + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
+    final String path = getRelativePath(dir);
+    renderer.append(" (" + (path.isEmpty() ? "/" : path) + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
   }
 
   @NotNull
   private String getRelativePath(@NotNull VirtualFile file) {
     final VirtualFile dir = myContext.getBaseDir();
     if (dir != null) {
-      final String path = VfsUtil.getRelativePath(dir, file, File.separatorChar);
+      final String path = VfsUtilCore.getRelativePath(dir, file, File.separatorChar);
       if (path != null) {
         return path;
       }

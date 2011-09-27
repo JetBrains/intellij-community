@@ -36,6 +36,7 @@ import org.tmatesoft.svn.core.wc.*;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.*;
 
 public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAnnotationProvider {
@@ -52,7 +53,7 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
       throw new VcsException("Can not get current revision for file " + file.getPath());
     }
     final SVNRevision svnRevision = currentRevision.getRevision();
-    return annotate(file, new SvnFileRevision(myVcs, svnRevision, svnRevision, null, null, null, null, null), true);
+    return annotate(file, new SvnFileRevision(myVcs, svnRevision, svnRevision, null, null, null, null, null, file.getCharset()), true);
   }
 
   public FileAnnotation annotate(final VirtualFile file, final VcsFileRevision revision) throws VcsException {
@@ -109,7 +110,7 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
                                              SvnUtil.checkRepositoryVersion15(myVcs, url);
           final SVNRevision svnRevision = ((SvnRevisionNumber)revision.getRevisionNumber()).getRevision();
 
-          final MySteppedLogGetter logGetter = new MySteppedLogGetter(myVcs, ioFile, progress, client, endRevision, result, url, calculateMergeinfo);
+          final MySteppedLogGetter logGetter = new MySteppedLogGetter(myVcs, ioFile, progress, client, endRevision, result, url, calculateMergeinfo, file.getCharset());
           logGetter.go();
           final LinkedList<SVNRevision> rp = logGetter.getRevisionPoints();
 
@@ -274,9 +275,14 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
     private final boolean myCalculateMergeinfo;
     private final SvnFileAnnotation myResult;
     private final String myUrl;
+    private final Charset myCharset;
 
     private MySteppedLogGetter(final SvnVcs vcs, final File ioFile, final ProgressIndicator progress, final SVNLogClient client,
-                               final SVNRevision endRevision, final SvnFileAnnotation result, final String url, final boolean calculateMergeinfo) {
+                               final SVNRevision endRevision,
+                               final SvnFileAnnotation result,
+                               final String url,
+                               final boolean calculateMergeinfo,
+                               Charset charset) {
       myVcs = vcs;
       myIoFile = ioFile;
       myProgress = progress;
@@ -285,6 +291,7 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
       myCalculateMergeinfo = calculateMergeinfo;
       myResult = result;
       myUrl = url;
+      myCharset = charset;
       myRevisionPoints = new LinkedList<SVNRevision>();
     }
 
@@ -343,7 +350,7 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
                            myProgress.checkCanceled();
                            myProgress.setText2(SvnBundle.message("progress.text2.revision.processed", logEntry.getRevision()));
                          }
-                         myResult.setRevision(logEntry.getRevision(), new SvnFileRevision(myVcs, SVNRevision.UNDEFINED, logEntry, myUrl, ""));
+                         myResult.setRevision(logEntry.getRevision(), new SvnFileRevision(myVcs, SVNRevision.UNDEFINED, logEntry, myUrl, "", myCharset));
                        }
                      });
     }

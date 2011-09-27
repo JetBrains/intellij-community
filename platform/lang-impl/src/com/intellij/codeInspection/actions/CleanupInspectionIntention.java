@@ -18,6 +18,7 @@ package com.intellij.codeInspection.actions;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
+import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.*;
@@ -41,7 +42,7 @@ import java.util.List;
  * User: anna
  * Date: 21-Feb-2006
  */
-public class CleanupInspectionIntention implements IntentionAction {
+public class CleanupInspectionIntention implements IntentionAction, HighPriorityAction {
   private final LocalInspectionTool myTool;
   private final Class myQuickfixClass;
 

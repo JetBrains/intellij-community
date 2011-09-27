@@ -17,6 +17,7 @@ package com.siyeh.ig.ui;
 
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
@@ -25,15 +26,20 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.ui.*;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.PlatformIcons;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.DefaultListModel;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.TableCellEditor;
 import java.awt.*;
+import java.util.Collection;
 
 public class UiUtils {
 
@@ -77,22 +83,64 @@ public class UiUtils {
                 group, true);
     }
 
-    public static ActionToolbar createAddRemoveTreeAnnotationChooserToolbar(
-            ListTable table, String chooserTitle) {
-        final ClassFilter filter =
-                new ClassFilter() {
-                    public boolean isAccepted(PsiClass psiClass) {
-                        return psiClass.isAnnotationType();
+    public static JPanel createTreeClassChooserList(
+            final Collection<String> collection, String borderTitle,
+            final String chooserTitle, String... ancestorClasses) {
+        final ClassFilter filter;
+        if (ancestorClasses.length == 0) {
+            filter = ClassFilter.ALL;
+        } else {
+            filter = new SubclassFilter(ancestorClasses);
+        }
+        final JPanel optionsPanel = new JPanel(new BorderLayout());
+        final JBList list = new JBList(collection);
+
+        final JPanel panel = ToolbarDecorator.createDecorator(list)
+                .disableUpDownActions()
+                .setAddAction(new AnActionButtonRunnable() {
+                    @Override
+                    public void run(AnActionButton anActionButton) {
+                        final DataContext dataContext =
+                                DataManager.getInstance().getDataContext(list);
+                        final Project project =
+                                DataKeys.PROJECT.getData(dataContext);
+                        if (project == null) {
+                            return;
+                        }
+                        final TreeClassChooser chooser =
+                                TreeClassChooserFactory.getInstance(project)
+                                        .createNoInnerClassesScopeChooser(chooserTitle,
+                                                GlobalSearchScope.allScope(project),
+                                                filter, null);
+                        chooser.showDialog();
+                        final PsiClass selected = chooser.getSelected();
+                        if (selected == null) {
+                            return;
+                        }
+                        final String qualifiedName = selected.getQualifiedName();
+                        final DefaultListModel model =
+                                (DefaultListModel) list.getModel();
+                        final int index = model.indexOf(qualifiedName);
+                        if (index < 0) {
+                            model.addElement(qualifiedName);
+                            collection.add(qualifiedName);
+                        } else {
+                            list.setSelectedIndex(index);
+                        }
                     }
-                };
-        final AnAction addAction = new TreeClassChooserAction(table,
-                chooserTitle, filter);
-        final AnAction removeAction = new RemoveAction(table);
-        final ActionGroup group =
-                new DefaultActionGroup(addAction, removeAction);
-        final ActionManager actionManager = ActionManager.getInstance();
-        return actionManager.createActionToolbar(ActionPlaces.UNKNOWN,
-                group, true);
+                })
+                .setRemoveAction(new AnActionButtonRunnable() {
+                    @Override
+                    public void run(AnActionButton anActionButton) {
+                        final Object selectedValue = list.getSelectedValue();
+                        collection.remove(selectedValue);
+                        ListUtil.removeSelectedItems(list);
+                    }
+                }).createPanel();
+        optionsPanel.setBorder(IdeBorderFactory.createTitledBorder(borderTitle,
+                false, false, true, new Insets(10, 0, 0, 0)));
+        optionsPanel.add(panel);
+        return optionsPanel;
     }
 
     private static class TreeClassChooserAction extends AnAction {
@@ -142,6 +190,7 @@ public class UiUtils {
                     table.getSelectionModel();
             selectionModel.setSelectionInterval(rowIndex, rowIndex);
             EventQueue.invokeLater(new Runnable() {
+                @Override
                 public void run() {
                     final Rectangle rectangle =
                             table.getCellRect(rowIndex, 0, true);
@@ -166,6 +215,7 @@ public class UiUtils {
             final ListWrappingTableModel tableModel = table.getModel();
             tableModel.addRow();
             EventQueue.invokeLater(new Runnable() {
+                @Override
                 public void run() {
                     final int lastRowIndex = tableModel.getRowCount() - 1;
                     final Rectangle rectangle =
@@ -199,6 +249,7 @@ public class UiUtils {
         @Override
         public void actionPerformed(AnActionEvent anActionEvent) {
             EventQueue.invokeLater(new Runnable() {
+                @Override
                 public void run() {
                     final TableCellEditor editor = table.getCellEditor();
                     if (editor != null) {
@@ -236,6 +287,7 @@ public class UiUtils {
         @Override
         public void update(final AnActionEvent e) {
             EventQueue.invokeLater(new Runnable() {
+                @Override
                 public void run() {
                     final ListSelectionModel selectionModel =
                             table.getSelectionModel();
@@ -259,6 +311,7 @@ public class UiUtils {
             this.ancestorClasses = ancestorClasses;
         }
 
+        @Override
         public boolean isAccepted(PsiClass aClass) {
             for (String ancestorClass : ancestorClasses) {
                 if (InheritanceUtil.isInheritor(aClass, ancestorClass)) {

@@ -86,7 +86,7 @@ public class ModuleGroupingRule implements UsageGroupingRule {
 
     public int compareTo(UsageGroup usageGroup) {
       if (usageGroup instanceof ModuleUsageGroup) return 1;
-      return getText(null).compareTo(usageGroup.getText(null));
+      return getText(null).compareToIgnoreCase(usageGroup.getText(null));
     }
 
     public void navigate(boolean requestFocus) {
@@ -165,7 +165,7 @@ public class ModuleGroupingRule implements UsageGroupingRule {
 
     public int compareTo(UsageGroup o) {
       if (o instanceof LibraryUsageGroup) return -1;
-      return getText(null).compareTo(o.getText(null));
+      return getText(null).compareToIgnoreCase(o.getText(null));
     }
 
     public String toString() {

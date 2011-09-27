@@ -161,7 +161,7 @@ public class MethodGroupingRule implements UsageGroupingRule {
         }
       }
 
-      return myName.compareTo(other.myName);
+      return myName.compareToIgnoreCase(other.myName);
     }
 
     public void calcData(final DataKey key, final DataSink sink) {

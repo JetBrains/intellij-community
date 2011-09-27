@@ -528,7 +528,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   private void updateListHeight(ListModel model) {
     myList.setFixedCellHeight(myCellRenderer.getListCellRendererComponent(myList, model.getElementAt(0), 0, false, false).getPreferredSize().height);
 
-    myList.setVisibleRowCount(Math.min(model.getSize(), UISettings.getInstance().MAX_LOOKUP_ITEM_COUNT));
+    myList.setVisibleRowCount(Math.min(model.getSize(), UISettings.getInstance().MAX_LOOKUP_LIST_HEIGHT));
   }
 
   private void addEmptyItem(DefaultListModel model) {
@@ -1357,7 +1357,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
           int maxCellWidth = myLookupTextWidth + myCellRenderer.getIconIndent();
           int width = Math.max(myScrollPane.getPreferredSize().width - myScrollPane.getViewport().getPreferredSize().width + maxCellWidth,
                                myAdComponent.getAdComponent().getPreferredSize().width);
-          return new Dimension(Math.min(width, UISettings.getInstance().MAX_LOOKUP_LIST_WIDTH),
+          return new Dimension(Math.min(width, UISettings.getInstance().MAX_LOOKUP_WIDTH),
                                mainPanel.getPreferredSize().height);
         }
 
@@ -1370,12 +1370,12 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
           if (!myResizePending) {
             Dimension preferredSize = preferredLayoutSize(null);
             if (preferredSize.width != size.width) {
-              UISettings.getInstance().MAX_LOOKUP_LIST_WIDTH = Math.max(300, size.width);
+              UISettings.getInstance().MAX_LOOKUP_WIDTH = Math.max(300, size.width);
             }
 
             int listHeight = myList.getLastVisibleIndex() - myList.getFirstVisibleIndex() + 1;
             if (listHeight != myList.getModel().getSize() && listHeight != myList.getVisibleRowCount() && preferredSize.height != size.height) {
-              UISettings.getInstance().MAX_LOOKUP_ITEM_COUNT = Math.max(5, listHeight);
+              UISettings.getInstance().MAX_LOOKUP_LIST_HEIGHT = Math.max(5, listHeight);
             }
           }
 

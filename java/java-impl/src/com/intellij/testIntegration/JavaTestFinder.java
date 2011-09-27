@@ -15,7 +15,7 @@
  */
 package com.intellij.testIntegration;
 
-import com.intellij.codeInsight.TestUtil;
+import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -72,7 +72,7 @@ public class JavaTestFinder implements TestFinder {
     if (klass.isEnum()
         || klass.isInterface()
         || klass.isAnnotationType()
-        || TestUtil.isTestClass(klass)) {
+        || TestFrameworks.getInstance().isTestClass(klass)) {
       return false;
     }
     return true;
@@ -104,7 +104,7 @@ public class JavaTestFinder implements TestFinder {
     for (String eachName : names) {
       if (pattern.matcher(eachName).matches()) {
         for (PsiClass eachClass : cache.getClassesByName(eachName, scope)) {
-          if (TestUtil.isTestClass(eachClass)) {
+          if (TestFrameworks.getInstance().isTestClass(eachClass)) {
             classesWithProximities.add(
                 new Pair<PsiClass, Integer>(eachClass, TestFinderHelper.calcTestNameProximity(klassName, eachName)));
           }

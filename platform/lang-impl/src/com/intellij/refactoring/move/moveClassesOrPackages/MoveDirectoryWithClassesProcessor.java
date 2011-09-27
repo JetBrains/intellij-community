@@ -24,7 +24,7 @@ import com.intellij.CommonBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -207,7 +207,7 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
                                      PsiDirectory rootDirectory,
                                      @NotNull TargetDirectoryWrapper targetDirectory) {
     final PsiElement[] children = directory.getChildren();
-    final String relativePath = VfsUtil.getRelativePath(directory.getVirtualFile(), rootDirectory.getVirtualFile(), '/');
+    final String relativePath = VfsUtilCore.getRelativePath(directory.getVirtualFile(), rootDirectory.getVirtualFile(), '/');
 
     final TargetDirectoryWrapper newTargetDirectory = relativePath.length() == 0
                                                       ? targetDirectory

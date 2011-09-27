@@ -16,7 +16,7 @@
 package com.siyeh.ig.redundancy;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInsight.TestUtil;
+import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -103,7 +103,7 @@ public class ElementOnlyUsedFromTestCodeInspection
 
     private static boolean isInsideTestClass(@NotNull PsiElement e) {
         final PsiClass aClass = getTopLevelParentClass(e);
-        return aClass != null && TestUtil.isTestClass(aClass);
+        return aClass != null && TestFrameworks.getInstance().isTestClass(aClass);
     }
 
     private static boolean isUnderTestSources(PsiElement e) {

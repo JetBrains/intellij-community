@@ -1,6 +1,6 @@
 
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,6 @@ package com.intellij.find.impl;
 
 import org.jetbrains.annotations.NonNls;
 
-/**
- *
- */
 public interface HelpID {
   @NonNls String FIND_PACKAGE_USAGES = "reference.dialogs.findUsages.package";
   @NonNls String FIND_CLASS_USAGES = "reference.dialogs.findUsages.class";

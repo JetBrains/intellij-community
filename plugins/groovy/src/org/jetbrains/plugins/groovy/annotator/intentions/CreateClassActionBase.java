@@ -60,7 +60,7 @@ public abstract class CreateClassActionBase implements IntentionAction {
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return true;
+    return myRefElement.isValid();
   }
 
   public boolean startInWriteAction() {

@@ -20,8 +20,10 @@ import com.intellij.formatting.Indent;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.formatter.GroovyBlock;
 import org.jetbrains.plugins.groovy.lang.editor.actions.GroovyEditorActionUtil;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
@@ -90,7 +92,7 @@ public abstract class GroovyIndentProcessor implements GroovyElementTypes {
     }
 
     if (CASE_SECTION.equals(astNode.getElementType())) {
-      return indentForCaseSection(psiParent, child);
+      return indentForCaseSection(child);
     }
 
     if (SWITCH_STATEMENT.equals(astNode.getElementType())) {
@@ -177,7 +179,7 @@ public abstract class GroovyIndentProcessor implements GroovyElementTypes {
           return Indent.getNormalIndent();
         }
         if (psi.equals(ifStatement.getElseBranch())) {
-          if (CodeStyleSettingsManager.getSettings(parent.getProject()).SPECIAL_ELSE_IF_TREATMENT && psi instanceof GrIfStatement) {
+          if (getGroovySettings(parent).SPECIAL_ELSE_IF_TREATMENT && psi instanceof GrIfStatement) {
             return Indent.getNoneIndent();
           }
           return Indent.getNormalIndent();
@@ -213,6 +215,10 @@ public abstract class GroovyIndentProcessor implements GroovyElementTypes {
     return Indent.getNoneIndent();
   }
 
+  private static CommonCodeStyleSettings getGroovySettings(PsiElement parent) {
+    return CodeStyleSettingsManager.getSettings(parent.getProject()).getCommonSettings(GroovyFileType.GROOVY_LANGUAGE);
+  }
+
   /**
    * Indent for common block
    *
@@ -231,7 +237,7 @@ public abstract class GroovyIndentProcessor implements GroovyElementTypes {
 
   }
 
-  private static Indent indentForCaseSection(PsiElement psiParent, ASTNode child) {
+  private static Indent indentForCaseSection(ASTNode child) {
     if (CASE_LABEL.equals(child.getElementType())) {
       return Indent.getNoneIndent();
     }
@@ -246,7 +252,7 @@ public abstract class GroovyIndentProcessor implements GroovyElementTypes {
   }
 
   public static Indent getSwitchCaseIndent(PsiElement psiParent) {
-    if (CodeStyleSettingsManager.getSettings(psiParent.getProject()).INDENT_CASE_FROM_SWITCH) {
+    if (getGroovySettings(psiParent).INDENT_CASE_FROM_SWITCH) {
         return Indent.getNormalIndent();
       }
     return Indent.getNoneIndent();

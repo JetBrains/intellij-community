@@ -1,6 +1,6 @@
 
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,9 +25,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 
-/**
- *
- */
 class VirtualFileDirectoryImpl extends VirtualFileImpl {
   private final ArrayList<VirtualFileImpl> myChildren = new ArrayList<VirtualFileImpl>();
 

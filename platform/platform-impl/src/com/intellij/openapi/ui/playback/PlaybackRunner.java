@@ -81,7 +81,7 @@ public class PlaybackRunner {
       @Override
       public void applicationDeactivated(IdeFrame ideFrame) {
         if (myStopOnAppDeactivation) {
-          myCallback.message(null, "App lost focus, stopping...", 0, StatusCallback.Type.message);
+          myCallback.message(null, "App lost focus, stopping...", StatusCallback.Type.message);
           stop();
         }
       }
@@ -138,7 +138,7 @@ public class PlaybackRunner {
     if (cmdIndex < myCommands.size()) {
       final PlaybackCommand cmd = myCommands.get(cmdIndex);
       if (myStopRequested) {
-        myCallback.message(null, "Stopped", cmdIndex, StatusCallback.Type.message);
+        myCallback.message(null, "Stopped", StatusCallback.Type.message);
         myActionCallback.setRejected();
         return;
       }
@@ -180,19 +180,19 @@ public class PlaybackRunner {
             executeFrom(cmdIndex + 1, context.getBaseDir());
           }
           else {
-            myCallback.message(null, "Stopped", cmdIndex, StatusCallback.Type.message);
+            myCallback.message(null, "Stopped", StatusCallback.Type.message);
             myActionCallback.setDone();
           }
         }
       }).doWhenRejected(new Runnable() {
         public void run() {
-          myCallback.message(null, "Stopped", cmdIndex, StatusCallback.Type.message);
+          myCallback.message(null, "Stopped", StatusCallback.Type.message);
           myActionCallback.setRejected();
         }
       });
     }
     else {
-      myCallback.message(null, "Finished OK " + myPassedStages.size() + " tests", myCommands.size() - 1, StatusCallback.Type.message);
+      myCallback.message(null, "Finished OK " + myPassedStages.size() + " tests", StatusCallback.Type.message);
       myActionCallback.setDone();
     }
   }
@@ -314,28 +314,27 @@ public class PlaybackRunner {
 
     enum Type {message, error, code, test}
 
-    void message(@Nullable PlaybackContext context, String text, int currentLine, Type type);
+    void message(@Nullable PlaybackContext context, String text, Type type);
 
     abstract class Edt implements StatusCallback {
 
 
       public final void message(final PlaybackContext context,
                                 final String text,
-                                final int currentLine,
                                 final Type type) {
         if (SwingUtilities.isEventDispatchThread()) {
-          messageEdt(context, text, currentLine, type);
+          messageEdt(context, text, type);
         }
         else {
           SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-              messageEdt(context, text, currentLine, type);
+              messageEdt(context, text, type);
             }
           });
         }
       }
 
-      public abstract void messageEdt(@Nullable PlaybackContext context, String text, int curentLine, Type type);
+      public abstract void messageEdt(@Nullable PlaybackContext context, String text, Type type);
     }
   }
 }

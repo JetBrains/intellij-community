@@ -31,7 +31,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScopes;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -145,7 +145,7 @@ public class TypeMigrationDialog extends RefactoringDialog {
       if (VisibilityUtil.compare(VisibilityUtil.getVisibilityModifier(modifierList), PsiModifier.PRIVATE) < 0) return null;
     }
 
-    for (PsiReference reference : ReferencesSearch.search(root, GlobalSearchScopes.fileScope(root.getContainingFile()))) {
+    for (PsiReference reference : ReferencesSearch.search(root, GlobalSearchScope.fileScope(root.getContainingFile()))) {
       final PsiElement element = reference.getElement();
       final PsiExpression expr = PsiTreeUtil.getParentOfType(element, PsiExpression.class, false);
       if (expr != null) {

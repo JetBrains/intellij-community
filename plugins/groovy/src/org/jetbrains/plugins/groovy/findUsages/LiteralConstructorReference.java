@@ -2,18 +2,22 @@ package org.jetbrains.plugins.groovy.findUsages;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
+import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCastExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTypeCastExpression;
-import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
@@ -43,30 +47,49 @@ public class LiteralConstructorReference extends PsiReferenceBase.Poly<GrListOrM
   }
 
   @Nullable
-  public static PsiClassType getTargetConversionType(@NotNull GrExpression expression) {
+  public static PsiClassType getTargetConversionType(@NotNull final GrExpression expression) {
     //todo hack
-    if (expression.getParent() instanceof GrSafeCastExpression) {
-      final PsiType type = ((GrSafeCastExpression)expression.getParent()).getType();
-      if (type instanceof PsiClassType) {
-        return (PsiClassType)type;
+    final PsiElement parent = PsiUtil.skipParentheses(expression.getParent(), true);
+    
+    PsiType type = null;
+    if (parent instanceof GrSafeCastExpression) {
+      type = ((GrSafeCastExpression)parent).getType();
+    }
+    else if (parent instanceof GrTypeCastExpression) {
+      type = ((GrTypeCastExpression)parent).getType();
+    }
+    else if (parent instanceof GrAssignmentExpression &&
+        PsiTreeUtil.isAncestor(((GrAssignmentExpression)parent).getRValue(), expression, false)) {
+      final PsiElement lValue = PsiUtil.skipParentheses(((GrAssignmentExpression)parent).getLValue(), false);
+      if (lValue instanceof GrReferenceExpression) {
+        type = ((GrReferenceExpression)lValue).getNominalType();
       }
     }
-    if (expression.getParent() instanceof GrTypeCastExpression) {
-      final PsiType type = ((GrTypeCastExpression)expression.getParent()).getType();
-      if (type instanceof PsiClassType) {
-        return (PsiClassType)type;
-      }
+    else if (parent instanceof GrVariable) {
+      type = ((GrVariable)parent).getDeclaredType();
     }
+    else {
+      final GrControlFlowOwner controlFlowOwner = ControlFlowUtils.findControlFlowOwner(expression);
+      if (controlFlowOwner instanceof GrOpenBlock && controlFlowOwner.getParent() instanceof GrMethod) {
+        boolean result = ControlFlowUtils.visitAllExitPoints(controlFlowOwner, new ControlFlowUtils.ExitPointVisitor() {
+          @Override
+          public boolean visitExitPoint(Instruction instruction, @Nullable GrExpression returnValue) {
+            return returnValue != expression;
+          }
+        });
 
-    for (PsiType type : GroovyExpectedTypesProvider.getDefaultExpectedTypes(expression)) {
-      if (type instanceof PsiClassType) {
-        final String text = type.getCanonicalText();
-        if (!CommonClassNames.JAVA_LANG_OBJECT.equals(text) &&
-            !CommonClassNames.JAVA_LANG_STRING.equals(text)) {
-          return (PsiClassType)type;
+        if (!result) {
+          type = ((GrMethod)controlFlowOwner.getParent()).getReturnType();
         }
       }
     }
+
+    if (type instanceof PsiClassType &&
+        !type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) &&
+        !type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+      return (PsiClassType)type;
+    }
+
     return null;
   }
 

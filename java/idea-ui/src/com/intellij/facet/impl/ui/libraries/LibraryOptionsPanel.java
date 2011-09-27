@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,9 +25,12 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.ui.configuration.ProjectStructureDialogCellAppearanceUtils;
+import com.intellij.openapi.roots.ui.OrderEntryAppearanceService;
 import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryPresentationManager;
 import com.intellij.openapi.roots.ui.configuration.libraries.NewLibraryConfiguration;
@@ -41,7 +44,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.HtmlListCellRenderer;
 import com.intellij.ui.SortedComboBoxModel;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PlatformIcons;
@@ -66,6 +69,7 @@ import java.util.List;
  */
 public class LibraryOptionsPanel implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.facet.impl.ui.libraries.LibraryOptionsPanel");
+
   private JLabel myMessageLabel;
   private JPanel myPanel;
   private JButton myConfigureButton;
@@ -85,7 +89,7 @@ public class LibraryOptionsPanel implements Disposable {
   private SortedComboBoxModel<LibraryEditor> myLibraryComboBoxModel;
   private boolean myDisposed;
 
-  private enum Choice {
+  private static enum Choice {
     USE_LIBRARY,
     DOWNLOAD,
     SETUP_LIBRARY_LATER
@@ -93,8 +97,10 @@ public class LibraryOptionsPanel implements Disposable {
 
   private RadioButtonEnumModel<Choice> myButtonEnumModel;
 
-  public LibraryOptionsPanel(final @NotNull CustomLibraryDescription libraryDescription, final @NotNull String baseDirectoryPath,
-                             @Nullable final FrameworkVersion currentFrameworkVersion, @NotNull final LibrariesContainer librariesContainer,
+  public LibraryOptionsPanel(@NotNull final CustomLibraryDescription libraryDescription,
+                             @NotNull final String baseDirectoryPath,
+                             @Nullable final FrameworkVersion currentFrameworkVersion,
+                             @NotNull final LibrariesContainer librariesContainer,
                              final boolean showDoNotCreateOption) {
     myLibrariesContainer = librariesContainer;
     final DownloadableLibraryDescription description = getDownloadableDescription(libraryDescription);
@@ -183,7 +189,24 @@ public class LibraryOptionsPanel implements Disposable {
         updateState();
       }
     });
-    myExistingLibraryComboBox.setRenderer(new LibraryListCellRenderer());
+    myExistingLibraryComboBox.setRenderer(new HtmlListCellRenderer(myExistingLibraryComboBox.getRenderer()) {
+      @Override
+      protected void doCustomize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+        if (value == null) {
+          append("[No library selected]");
+        }
+        else if (value instanceof ExistingLibraryEditor) {
+          final Library library = ((ExistingLibraryEditor)value).getLibrary();
+          final boolean invalid = !((LibraryEx)library).getInvalidRootUrls(OrderRootType.CLASSES).isEmpty();
+          OrderEntryAppearanceService.getInstance(getProject()).forLibrary(library, invalid).customize(this);
+        }
+        else if (value instanceof NewLibraryEditor) {
+          setIcon(PlatformIcons.LIBRARY_ICON);
+          final String name = ((NewLibraryEditor)value).getName();
+          append(name != null ? name : "<unnamed>");
+        }
+      }
+    });
 
     boolean canDownload = mySettings.getDownloadSettings() != null;
     myDownloadRadioButton.setVisible(canDownload);
@@ -211,6 +234,14 @@ public class LibraryOptionsPanel implements Disposable {
     });
     updateState();
     showCard("editing");
+  }
+
+  private Project getProject() {
+    Project project = myLibrariesContainer.getProject();
+    if (project == null) {
+      project = ProjectManager.getInstance().getDefaultProject();
+    }
+    return project;
   }
 
   private void doConfigure() {
@@ -400,22 +431,5 @@ public class LibraryOptionsPanel implements Disposable {
   @Override
   public void dispose() {
     myDisposed = true;
-  }
-
-  private static class LibraryListCellRenderer extends ColoredListCellRenderer {
-    @Override
-    protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-      if (value == null) {
-        append("[No library selected]");
-      }
-      else if (value instanceof ExistingLibraryEditor) {
-        ProjectStructureDialogCellAppearanceUtils.forLibrary(((ExistingLibraryEditor)value).getLibrary(), null).customize(this);
-      }
-      else if (value instanceof NewLibraryEditor) {
-        setIcon(PlatformIcons.LIBRARY_ICON);
-        final String name = ((NewLibraryEditor)value).getName();
-        append(name != null ? name : "<unnamed>");
-      }
-    }
   }
 }

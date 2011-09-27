@@ -1048,7 +1048,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable {
 
   @Nls
   public String getDisplayName() {
-    return "Keymap";
+    return KeyMapBundle.message("keymap.display.name");
   }
 
   public Icon getIcon() {

@@ -15,15 +15,9 @@
  */
 package com.intellij.psi.presentation.java;
 
-import com.intellij.navigation.ColoredItemPresentation;
-import com.intellij.openapi.editor.colors.CodeInsightColors;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
 
 public class ClassPresentationUtil {
   private ClassPresentationUtil() {
@@ -77,37 +71,5 @@ public class ClassPresentationUtil {
       if (parent instanceof PsiFile) return null;
       parent = parent.getParent();
     }
-  }
-
-  @NotNull
-  public static ColoredItemPresentation getPresentation(@NotNull final PsiClass psiClass) {
-    return new ColoredItemPresentation() {
-      public String getPresentableText() {
-        return getNameForClass(psiClass, false);
-      }
-
-      public String getLocationString() {
-        PsiFile file = psiClass.getContainingFile();
-        if (file instanceof PsiClassOwner) {
-          PsiClassOwner classOwner = (PsiClassOwner)file;
-          String packageName = classOwner.getPackageName();
-          if (packageName.length() == 0) return null;
-          return "(" + packageName + ")";
-        }
-        return null;
-      }
-
-      @Override
-      public TextAttributesKey getTextAttributesKey() {
-        if (psiClass.isDeprecated()) {
-          return CodeInsightColors.DEPRECATED_ATTRIBUTES;
-        }
-        return null;
-      }
-
-      public Icon getIcon(boolean open) {
-        return psiClass.getIcon(Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS);
-      }
-    };
   }
 }

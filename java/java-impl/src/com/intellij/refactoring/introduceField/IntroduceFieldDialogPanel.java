@@ -15,7 +15,7 @@
  */
 package com.intellij.refactoring.introduceField;
 
-import com.intellij.codeInsight.TestUtil;
+import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.JavaRefactoringSettings;
@@ -74,9 +74,9 @@ public class IntroduceFieldDialogPanel extends IntroduceFieldCentralPanel {
       if (myRbInSetUp != null) myRbInSetUp.setEnabled(false);
     }
 
-    final PsiMethod setUpMethod = TestUtil.findSetUpMethod(myParentClass);
+    final PsiMethod setUpMethod = TestFrameworks.getInstance().findSetUpMethod(myParentClass);
     if (myInitializerExpression != null && PsiTreeUtil.isAncestor(setUpMethod, myInitializerExpression, false) && myRbInSetUp.isEnabled() ||
-        ourLastInitializerPlace == BaseExpressionToFieldHandler.InitializationPlace.IN_SETUP_METHOD && TestUtil.isTestClass(myParentClass) && myRbInSetUp.isEnabled()) {
+        ourLastInitializerPlace == BaseExpressionToFieldHandler.InitializationPlace.IN_SETUP_METHOD && TestFrameworks.getInstance().isTestClass(myParentClass) && myRbInSetUp.isEnabled()) {
       myRbInSetUp.setSelected(true);
     }
     else if (ourLastInitializerPlace == BaseExpressionToFieldHandler.InitializationPlace.IN_CONSTRUCTOR) {
@@ -159,7 +159,7 @@ public class IntroduceFieldDialogPanel extends IntroduceFieldCentralPanel {
     initializationPanel.add(myRbInFieldDeclaration);
     initializationPanel.add(myRbInConstructor);
 
-    if (TestUtil.isTestClass(myParentClass)) {
+    if (TestFrameworks.getInstance().isTestClass(myParentClass)) {
       myRbInSetUp = new JRadioButton();
       myRbInSetUp.setFocusable(false);
       myRbInSetUp.setText(RefactoringBundle.message("setup.method.radio"));

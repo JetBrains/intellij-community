@@ -2,7 +2,7 @@ asm-commons.jar
 asm.jar
 automaton.jar
 cli-10.jar
-cglib-2.2.jar
+cglib-2.2.2.jar
 commons-codec-1.3.jar
 commons-collections.jar
 commons-httpclient-3.1-patched.jar
@@ -21,7 +21,7 @@ jna-utils.jar
 jna.jar
 jsr173_1.0_api.jar
 junit.jar
-junit-4.8.jar
+junit-4.9.jar
 log4j.jar
 looks-2.2.2.jar
 microba.jar

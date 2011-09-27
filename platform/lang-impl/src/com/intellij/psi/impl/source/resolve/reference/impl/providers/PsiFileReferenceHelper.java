@@ -23,7 +23,7 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -69,7 +69,7 @@ public class PsiFileReferenceHelper extends FileReferenceHelper {
         assert parentFile != null;
         VirtualFile root = index.getSourceRootForFile(parentFile);
         if (root != null) {
-          String path = VfsUtil.getRelativePath(parentFile, root, '.');
+          String path = VfsUtilCore.getRelativePath(parentFile, root, '.');
 
           if (path != null) {
             final Module module = ModuleUtil.findModuleForFile(file, project);

@@ -45,8 +45,6 @@ import java.util.*;
  * To change this template use Options | File Templates.
  */
 public class JavaCompletionProcessor extends BaseScopeProcessor implements ElementClassHint {
-  public static final Key<Condition<String>> NAME_FILTER = Key.create("NAME_FILTER");
-  public static final Key<Boolean> JAVA_COMPLETION = Key.create("JAVA_COMPLETION");
 
   private boolean myStatic = false;
   private PsiElement myDeclarationHolder = null;
@@ -294,10 +292,10 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
     if (hintKey == ElementClassHint.KEY) {
       return (T)this;
     }
-    if (hintKey == NAME_FILTER) {
+    if (hintKey == JavaCompletionHints.NAME_FILTER) {
       return (T)myMatcher;
     }
-    if (hintKey == JAVA_COMPLETION) {
+    if (hintKey == JavaCompletionHints.JAVA_COMPLETION) {
       return (T)Boolean.TRUE;
     }
 

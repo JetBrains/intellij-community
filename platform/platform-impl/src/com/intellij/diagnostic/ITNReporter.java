@@ -81,6 +81,7 @@ public class ITNReporter extends ErrorReportSubmitter {
                                  DiagnosticBundle.message("error.report.new.eap.build.message", newBuild), CommonBundle.getWarningTitle(),
                                  Messages.getWarningIcon());
       callback.consume(new SubmittedReportInfo(null, "0", SubmittedReportInfo.SubmissionStatus.FAILED));
+      return false;
     }
 
     ErrorBean errorBean = new ErrorBean(event.getThrowable(), IdeaLogger.ourLastActionId);

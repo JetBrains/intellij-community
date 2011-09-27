@@ -26,10 +26,7 @@ import com.intellij.psi.filters.ElementExtractorFilter;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.GeneratorFilter;
 import com.intellij.psi.filters.OrFilter;
-import com.intellij.psi.filters.getters.CastTypeGetter;
-import com.intellij.psi.filters.getters.ExpectedTypesGetter;
-import com.intellij.psi.filters.getters.InstanceOfLeftPartTypeGetter;
-import com.intellij.psi.filters.getters.ThrowsListGetter;
+import com.intellij.psi.filters.getters.*;
 import com.intellij.psi.filters.types.AssignableFromFilter;
 import com.intellij.psi.filters.types.AssignableGroupFilter;
 import com.intellij.psi.filters.types.AssignableToFilter;
@@ -209,12 +206,23 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
               }
             }
           }, result.getPrefixMatcher());
-          ReferenceExpressionCompletionContributor.fillCompletionVariants(parameters, new Consumer<LookupElement>() {
+          Consumer<LookupElement> noTypeCheck = new Consumer<LookupElement>() {
             public void consume(final LookupElement lookupElement) {
               result.addElement(decorate(lookupElement, _infos));
             }
-          });
+          };
+          ReferenceExpressionCompletionContributor.fillCompletionVariants(parameters, noTypeCheck);
 
+          PsiElement position = parameters.getPosition();
+          if (!BasicExpressionCompletionContributor.AFTER_DOT.accepts(position)) {
+            final PsiElement parent = position.getParent();
+            if (parent != null && !(parent.getParent() instanceof PsiSwitchLabelStatement)) {
+              new JavaMembersGetter(type).addMembers(position, true, noTypeCheck);
+              if (!parameters.getDefaultType().equals(type)) {
+                new JavaMembersGetter(parameters.getDefaultType()).addMembers(position, true, noTypeCheck);
+              }
+            }
+          }
         }
       }
     });

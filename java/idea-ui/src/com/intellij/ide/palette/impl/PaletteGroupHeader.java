@@ -79,7 +79,7 @@ public class PaletteGroupHeader extends JCheckBox implements DataProvider {
     DnDManager.getInstance().registerTarget(new DnDTarget() {
       public boolean update(DnDEvent aEvent) {
         setBorderPainted(true);
-        aEvent.setDropPossible(aEvent.getAttachedObject() instanceof PaletteItem, null);
+        aEvent.setDropPossible(aEvent.getAttachedObject() instanceof PaletteItem);
         return true;
       }
 

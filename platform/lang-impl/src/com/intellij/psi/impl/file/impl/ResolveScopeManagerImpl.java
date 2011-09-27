@@ -26,7 +26,6 @@ import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.ResolveScopeManager;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.GlobalSearchScopes;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import org.jetbrains.annotations.NotNull;
@@ -188,7 +187,7 @@ public class ResolveScopeManagerImpl extends ResolveScopeManager {
       final VirtualFile vf = f == null ? null : f.getVirtualFile();
 
       return f == null || vf == null || vf.isDirectory() || allScope.contains(vf)
-             ? allScope : GlobalSearchScopes.fileScope(f).uniteWith(allScope);
+             ? allScope : GlobalSearchScope.fileScope(f).uniteWith(allScope);
     }
   }
 }

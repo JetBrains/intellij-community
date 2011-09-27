@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,9 @@ package com.intellij.lang.ant.config.impl;
 
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.roots.ui.util.CellAppearanceUtils;
-import com.intellij.openapi.roots.ui.util.CompositeAppearance;
+import com.intellij.openapi.roots.ui.CellAppearanceEx;
+import com.intellij.openapi.roots.ui.FileAppearanceService;
+import com.intellij.openapi.roots.ui.ModifiableCellAppearanceEx;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.WriteExternalException;
@@ -65,16 +66,18 @@ public class AllJarsUnderDirEntry implements AntClasspathEntry {
 
   public void addFilesTo(final List<File> files) {
     File[] children = myDir.listFiles(new FileFilter() {
-      public boolean accept(File pathname) {
-        return pathname.getName().endsWith(JAR_SUFFIX) && pathname.isFile();
+      public boolean accept(File pathName) {
+        return pathName.getName().endsWith(JAR_SUFFIX) && pathName.isFile();
       }
     });
     if (children != null) ContainerUtil.addAll(files, children);
   }
 
-  public CompositeAppearance getAppearance() {
-    CompositeAppearance appearance = CellAppearanceUtils.forFile(myDir);
-    appearance.setIcon(ALL_JARS_IN_DIR_ICON);
+  public CellAppearanceEx getAppearance() {
+    CellAppearanceEx appearance = FileAppearanceService.getInstance().forIoFile(myDir);
+    if (appearance instanceof ModifiableCellAppearanceEx) {
+      ((ModifiableCellAppearanceEx)appearance).setIcon(ALL_JARS_IN_DIR_ICON);
+    }
     return appearance;
   }
 

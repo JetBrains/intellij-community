@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,55 +15,77 @@
  */
 package com.intellij.openapi.roots.ui.util;
 
+import com.intellij.openapi.roots.ui.ModifiableCellAppearanceEx;
+import com.intellij.ui.HtmlListCellRenderer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class SimpleTextCellAppearance implements ModifiableCellAppearance {
+// todo: move to lang-impl ?
+public class SimpleTextCellAppearance implements ModifiableCellAppearanceEx, ModifiableCellAppearance {
   private Icon myIcon;
   private final SimpleTextAttributes myTextAttributes;
   private final String myText;
 
-  public static SimpleTextCellAppearance invalid(String text, Icon icon) {
+  public static SimpleTextCellAppearance regular(@NotNull final String text, @Nullable final Icon icon) {
+    return new SimpleTextCellAppearance(text, icon, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+  }
+
+  public static SimpleTextCellAppearance invalid(@NotNull final String text, @Nullable final Icon icon) {
     return new SimpleTextCellAppearance(text, icon, SimpleTextAttributes.ERROR_ATTRIBUTES);
   }
 
-  public static CellAppearance normal(String text, Icon icon) {
-    CompositeAppearance result = CompositeAppearance.single(text);
-    result.setIcon(icon);
-    return result;
+  /** @deprecated use {@linkplain #regular(String, javax.swing.Icon)} (to remove in IDEA 12) */
+  public static CellAppearance normal(@NotNull final String text, @Nullable final Icon icon) {
+    return regular(text, icon);
   }
 
-  public static SimpleTextCellAppearance synthetic(String text, Icon icon) {
+  public static SimpleTextCellAppearance synthetic(@NotNull final String text, @Nullable final Icon icon) {
     return new SimpleTextCellAppearance(text, icon, SimpleTextAttributes.SYNTHETIC_ATTRIBUTES);
   }
 
-  public SimpleTextCellAppearance(@NotNull String text, Icon icon, SimpleTextAttributes textAttributes) {
+  public SimpleTextCellAppearance(@NotNull final String text,
+                                  @Nullable final Icon icon,
+                                  @NotNull final SimpleTextAttributes textAttributes) {
     myIcon = icon;
     myTextAttributes = textAttributes;
     myText = text;
   }
 
-  public void customize(SimpleColoredComponent component) {
+  @Override
+  public void customize(@NotNull final SimpleColoredComponent component) {
     component.setIcon(myIcon);
     component.append(myText, myTextAttributes);
   }
 
+  @Override
+  public void customize(@NotNull final HtmlListCellRenderer renderer) {
+    renderer.setIcon(myIcon);
+    renderer.append(myText, myTextAttributes);
+  }
+
+  @Override
+  @NotNull
   public String getText() {
     return myText;
   }
 
+  @NotNull
   public SimpleTextAttributes getTextAttributes() {
     return myTextAttributes;
   }
 
+  @Override
+  @Nullable
   public Icon getIcon() {
     return myIcon;
   }
 
-  public void setIcon(Icon icon) {
+  @Override
+  public void setIcon(@Nullable final Icon icon) {
     myIcon = icon;
   }
 }

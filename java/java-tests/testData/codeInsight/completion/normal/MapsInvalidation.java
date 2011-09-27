@@ -1,9 +1,12 @@
 class Foo extends Super {
-    public void f<caret>oo() {
+  int aaa;
+  int bbb;
+
+    public int g<caret>oo() {
     }
 }
 
 class Super {
-    public void foo() {
+    public int goo() {
     }
 }

@@ -441,8 +441,8 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
     }.start();
   }
 
-  public void message(@Nullable final PlaybackContext context, final String text, final int currentLine, final Type type) {
-    message(context, text, currentLine, type, false);
+  public void message(@Nullable final PlaybackContext context, final String text, final Type type) {
+    message(context, text, context != null ? context.getCurrentLine() : -1, type, false);
   }
 
   private void message(@Nullable final PlaybackContext context, final String text, final int currentLine, final Type type, final boolean forced) {

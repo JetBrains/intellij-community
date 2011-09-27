@@ -130,6 +130,9 @@
   <exportable serviceInterface="com.intellij.openapi.editor.colors.EditorColorsManager"/>
   <schemeOwner serviceInterface="com.intellij.openapi.editor.colors.EditorColorsManager"/>
 
+  <applicationService serviceInterface="com.intellij.openapi.roots.ui.FileAppearanceService"
+                      serviceImplementation="com.intellij.openapi.roots.ui.FileAppearanceServiceImpl"/>
+
   <projectService serviceInterface="com.intellij.openapi.vfs.ReadonlyStatusHandler"
                   serviceImplementation="com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl"/>
   <projectService serviceInterface="com.intellij.openapi.startup.StartupManager"
@@ -165,10 +168,14 @@
                   serviceImplementation="com.intellij.openapi.vcs.changes.RemoteRevisionsCache"/>
 
   <projectService serviceInterface="com.intellij.execution.testframework.export.ExportTestResultsConfiguration"
-                      serviceImplementation="com.intellij.execution.testframework.export.ExportTestResultsConfiguration"/>
+                  serviceImplementation="com.intellij.execution.testframework.export.ExportTestResultsConfiguration"/>
 
   <projectService serviceInterface="com.intellij.execution.testframework.autotest.AutoTestManager"
-                serviceImplementation="com.intellij.execution.testframework.autotest.AutoTestManager"/>
+                  serviceImplementation="com.intellij.execution.testframework.autotest.AutoTestManager"/>
+
+  <projectService serviceInterface="com.intellij.openapi.roots.ui.OrderEntryAppearanceService"
+                  serviceImplementation="com.intellij.openapi.roots.ui.OrderEntryAppearanceServiceImpl"/>
+
   <!-- General -->
   <applicationConfigurable instance="com.intellij.ide.GeneralSettingsConfigurable"/>
 

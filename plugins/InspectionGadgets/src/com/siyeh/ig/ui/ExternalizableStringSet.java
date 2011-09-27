@@ -44,6 +44,7 @@ public class ExternalizableStringSet extends OrderedSet<String>
     private final String[] defaultValues;
 
     /**
+     * note: declare ExternalizableStringSet fields as <b>final</b>!<br>
      * note: reference to defaultValues is retained by this set!
      */
     public ExternalizableStringSet(@NonNls String... defaultValues) {
@@ -52,6 +53,12 @@ public class ExternalizableStringSet extends OrderedSet<String>
             add(defaultValue);
         }
     }
+
+  /*
+  private ExternalizableStringSet() {
+      throw new AssertionError("ExternalizableStringSet fields should be declared final");
+    }
+    */
 
     private boolean hasDefaultValues() {
         if (size() != defaultValues.length) {

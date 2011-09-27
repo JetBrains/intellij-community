@@ -30,7 +30,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -239,8 +238,8 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   }
 
   protected JComponent createCenterPanel() {
-    JPanel iconPanel = new JPanel(new BorderLayout());
-    iconPanel.setBorder(new EmptyBorder(0, 5, 0, 5));
+    final JPanel iconPanel = new JPanel(new BorderLayout());
+    iconPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 8));
     iconPanel.add(myIcon, BorderLayout.CENTER);
 
     final JPanel panel = new JPanel(new BorderLayout());

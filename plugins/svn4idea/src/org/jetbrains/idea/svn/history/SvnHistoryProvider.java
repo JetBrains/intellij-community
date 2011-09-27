@@ -56,6 +56,7 @@ import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.io.File;
+import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -349,7 +350,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
       try {
         client.doLog(new File[]{new File(myFile.getIOFile().getAbsolutePath())}, SVNRevision.HEAD, SVNRevision.create(1), SVNRevision.UNDEFINED,
                      false, true, mySupport15, 0, null,
-                     new MyLogEntryHandler(myVcs, myUrl, pegRevision, relativeUrl, myConsumer, repoRootURL));
+                     new MyLogEntryHandler(myVcs, myUrl, pegRevision, relativeUrl, myConsumer, repoRootURL, myFile.getCharset()));
       } catch (SVNCancelException e) {
         //
       } catch (SVNException e) {
@@ -396,7 +397,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     supports15Ref.set(supports15);
     client.doLog(new File[]{new File(file.getIOFile().getAbsolutePath())}, SVNRevision.HEAD, SVNRevision.create(1), SVNRevision.UNDEFINED,
                  false, true, supports15, 0, null,
-                 new MyLogEntryHandler(myVcs, url, pegRevision, relativeUrl, result, repoRootURL));
+                 new MyLogEntryHandler(myVcs, url, pegRevision, relativeUrl, result, repoRootURL, file.getCharset()));
   }
 
   private static class RepositoryLoader extends LogLoader {
@@ -497,6 +498,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     private final ProgressIndicator myIndicator;
     protected final SvnVcs myVcs;
     private String myLastPath;
+    private final Charset myCharset;
     protected final Consumer<VcsFileRevision> myResult;
     private VcsFileRevision myPrevious;
     private final SVNRevision myPegRevision;
@@ -508,10 +510,11 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
                              final SVNRevision pegRevision,
                              String lastPath,
                              final Consumer<VcsFileRevision> result,
-                             SVNURL repoRootURL)
+                             SVNURL repoRootURL, Charset charset)
       throws SVNException, VcsException {
       myVcs = vcs;
       myLastPath = lastPath;
+      myCharset = charset;
       myIndicator = ProgressManager.getInstance().getProgressIndicator();
       myResult = result;
       myPegRevision = pegRevision;
@@ -584,7 +587,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
       String message = logEntry.getMessage();
       SVNRevision rev = SVNRevision.create(logEntry.getRevision());
       final SVNURL url = myRepositoryRoot.appendPath(myLastPath, true);
-      return new SvnFileRevision(myVcs, myPegRevision, rev, url.toString(), author, date, message, copyPath);
+      return new SvnFileRevision(myVcs, myPegRevision, rev, url.toString(), author, date, message, copyPath, myCharset);
     }
   }
 
@@ -595,12 +598,12 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
                                      final Consumer<VcsFileRevision> result,
                                      SVNURL repoRootURL)
       throws VcsException, SVNException {
-      super(vcs, url, pegRevision, lastPath, result, repoRootURL);
+      super(vcs, url, pegRevision, lastPath, result, repoRootURL, null);
     }
 
     @Override
     protected SvnFileRevision createRevision(final SVNLogEntry logEntry, final String copyPath) {
-      return new SvnFileRevision(myVcs, SVNRevision.UNDEFINED, logEntry, myUrl, copyPath);
+      return new SvnFileRevision(myVcs, SVNRevision.UNDEFINED, logEntry, myUrl, copyPath, null);
     }
   }
 

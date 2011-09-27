@@ -588,11 +588,11 @@ public class ControlFlowUtils {
     boolean visitExitPoint(Instruction instruction, @Nullable GrExpression returnValue);
   }
 
-  public static void visitAllExitPoints(@Nullable GrControlFlowOwner block, ExitPointVisitor visitor) {
-    if (block == null) return;
+  public static boolean visitAllExitPoints(@Nullable GrControlFlowOwner block, ExitPointVisitor visitor) {
+    if (block == null) return true;
     final Instruction[] flow = block.getControlFlow();
     boolean[] visited = new boolean[flow.length];
-    visitAllExitPointsInner(flow[flow.length - 1], flow[0], visited, visitor);
+    return visitAllExitPointsInner(flow[flow.length - 1], flow[0], visited, visitor);
   }
 
   private static boolean visitAllExitPointsInner(Instruction last, Instruction first, boolean[] visited, ExitPointVisitor visitor) {
@@ -652,22 +652,63 @@ public class ControlFlowUtils {
    * @return all write instructions leading to (or preceding) the place
    */
   public static ReadWriteVariableInstruction[] findWriteAccess(GrVariable local, final PsiElement place, boolean ahead) {
+    List<ReadWriteVariableInstruction> res = findAccess(local, place, ahead, true);
+    return res.toArray(new ReadWriteVariableInstruction[res.size()]);
+  }
+
+  public static List<ReadWriteVariableInstruction> findAccess(GrVariable local, final PsiElement place, boolean ahead, boolean writeAccessOnly) {
     LOG.assertTrue(GroovyRefactoringUtil.isLocalVariable(local), local.getClass());
 
     final GrControlFlowOwner owner = findControlFlowOwner(local);
-    LOG.assertTrue(owner != null);
+    assert owner != null;
 
     final Instruction cur = findInstruction(place, owner.getControlFlow());
 
     if (cur == null) throw new IllegalArgumentException("place is not in the flow");
 
+    String name = local.getName();
+    
     final ArrayList<ReadWriteVariableInstruction> result = new ArrayList<ReadWriteVariableInstruction>();
     final HashSet<Instruction> visited = new HashSet<Instruction>();
+    
     visited.add(cur);
-    writeAccess(cur, local.getName(), visited, result, ahead);
-    return result.toArray(new ReadWriteVariableInstruction[result.size()]);
-  }
+    
+    Queue<Instruction> queue = new ArrayDeque<Instruction>();
 
+    for (Instruction i : ahead ? cur.allSucc() : cur.allPred()) {
+      if (visited.add(i)) {
+        queue.add(i);
+      }
+    }
+    
+    while (true) {
+      Instruction instruction = queue.poll();
+      if (instruction == null) break;
+      
+      if (instruction instanceof ReadWriteVariableInstruction) {
+        ReadWriteVariableInstruction rw = (ReadWriteVariableInstruction)instruction;
+        if (name.equals(rw.getVariableName())) {
+          if (rw.isWrite()) {
+            result.add(rw);
+            continue;
+          }
+          
+          if (!writeAccessOnly) {
+            result.add(rw);
+          }
+        }
+      }
+      
+      for (Instruction i : ahead ? instruction.allSucc() : instruction.allPred()) {
+        if (visited.add(i)) {
+          queue.add(i);
+        }
+      }
+    }
+
+    return result;
+  }
+  
   @Nullable
   private static Instruction findInstruction(final PsiElement place, Instruction[] controlFlow) {
     return ContainerUtil.find(controlFlow, new Condition<Instruction>() {
@@ -676,20 +717,6 @@ public class ControlFlowUtils {
         return instruction.getElement() == place;
       }
     });
-  }
-
-  private static void writeAccess(Instruction cur, String name, Set<Instruction> visited, Collection<ReadWriteVariableInstruction> result, boolean ahead) {
-    final Iterable<? extends Instruction> toIterate = ahead ? cur.allSucc() : cur.allPred();
-    for (Instruction i : toIterate) {
-      if (visited.contains(i)) continue;
-      visited.add(i);
-      if (i instanceof ReadWriteVariableInstruction && ((ReadWriteVariableInstruction)i).isWrite() && name.equals(((ReadWriteVariableInstruction)i).getVariableName())) {
-        result.add((ReadWriteVariableInstruction)i);
-      }
-      else {
-        writeAccess(i, name, visited, result, ahead);
-      }
-    }
   }
 
   public static ArrayList<BitSet> inferWriteAccessMap(final Instruction[] flow, final GrVariable var) {

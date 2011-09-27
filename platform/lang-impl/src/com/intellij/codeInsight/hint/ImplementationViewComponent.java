@@ -40,7 +40,6 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;

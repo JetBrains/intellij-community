@@ -53,8 +53,10 @@ public class InlineVariableTest extends LightCodeInsightFixtureTestCase {
   public void testVar4() throws Throwable { doTest(); }
   public void testVar5() throws Throwable { doTest(); }
   public void testVar6() throws Throwable { doTest(); }
-  public void _testVarInGString() throws Throwable { doTest(); }
-  public void _testVarInGString2() throws Throwable { doTest(); }
+  public void testVarInGString() throws Throwable { doTest(); }
+  public void testVarInGString2() throws Throwable { doTest(); }
+  public void testVarInGString3() throws Throwable { doTest(); }
+  public void testVarInGString4() throws Throwable { doTest(); }
 
   public void testField() {doFieldTest();}
 
