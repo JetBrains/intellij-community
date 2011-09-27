@@ -20,6 +20,8 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.ScrollPaneFactory;
@@ -417,7 +419,11 @@ public class PopupChooserBuilder {
                 return list.getPreferredSize();
               } else {
                 final Dimension even = super.preferredLayoutSize(parent);
-                return new Dimension(even.width, even.height + list.getCellBounds(0, 0).height / 2);
+                final IdeFrame ideFrame = WindowManager.getInstance().getIdeFrame(null);
+                final JComponent c = ideFrame.getComponent();
+                final int bordersEtc = 20;
+                final int maxWidth = c.getWidth() - SwingUtilities.convertPoint(myList, new Point(0, 0), c).x - 2 * bordersEtc;
+                return new Dimension(Math.min(maxWidth, even.width) + bordersEtc, even.height + list.getCellBounds(0, 0).height / 2);
               }
             }
           };
