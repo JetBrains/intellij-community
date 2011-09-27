@@ -26,6 +26,7 @@ import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.patterns.PsiJavaElementPattern;
 import com.intellij.patterns.PsiJavaPatterns;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.classes.EnumOrAnnotationTypeFilter;
@@ -38,6 +39,7 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspClassLevelDeclarationStatemen
 import com.intellij.psi.jsp.JspElementType;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NonNls;
@@ -441,8 +443,11 @@ public class JavaCompletionData extends JavaAwareCompletionData{
     variant.addElement(new OverrideableSpace(createKeyword(position, PsiKeyword.TRY), TailType.createSimpleTailType('{')));
     variant.addElement(new OverrideableSpace(createKeyword(position, PsiKeyword.THROW), TailType.SPACE));
     variant.addElement(new OverrideableSpace(createKeyword(position, PsiKeyword.NEW), TailType.SPACE));
-    variant.addElement(new OverrideableSpace(createKeyword(position, PsiKeyword.ASSERT), TailType.SPACE));
     variant.addElement(new OverrideableSpace(createKeyword(position, PsiKeyword.SYNCHRONIZED), TailTypes.SYNCHRONIZED_LPARENTH));
+
+    if (PsiUtil.getLanguageLevel(position).isAtLeast(LanguageLevel.JDK_1_4)) {
+      variant.addElement(new OverrideableSpace(createKeyword(position, PsiKeyword.ASSERT), TailType.SPACE));
+    }
 
     TailType returnTail = getReturnTail(position);
     LookupElement ret = createKeyword(position, PsiKeyword.RETURN);
