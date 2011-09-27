@@ -37,8 +37,8 @@ class GroovyMembersGetter extends MembersGetter {
     myContext = (GroovyPsiElement)context;
   }
 
-  public void processMembers(final Consumer<LookupElement> results) {
-    processMembers(myContext, results, myExpectedType.resolve(), PsiTreeUtil.getParentOfType(myContext, GrAnnotation.class) != null);
+  public void processMembers(boolean searchInheritors, final Consumer<LookupElement> results) {
+    processMembers(myContext, results, myExpectedType.resolve(), PsiTreeUtil.getParentOfType(myContext, GrAnnotation.class) != null, searchInheritors);
   }
 
   @Override
