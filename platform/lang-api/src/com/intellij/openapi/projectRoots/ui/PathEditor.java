@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.projectRoots.ui;
 
-import com.google.common.collect.Lists;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -28,8 +27,6 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.projectRoots.SdkModificator;
-import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -45,7 +42,6 @@ import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -77,20 +73,13 @@ public class PathEditor {
   private boolean myEnabled = false;
   private static final Icon ICON_INVALID = IconLoader.getIcon("/nodes/ppInvalid.png");
   private static final Icon ICON_EMPTY = IconLoader.getIcon("/nodes/emptyNode.png");
-  private final String myDisplayName;
-  private final OrderRootType myOrderRootType;
   private final FileChooserDescriptor myDescriptor;
 
-  public PathEditor(final String displayName,
-                    final OrderRootType orderRootType,
-                    final FileChooserDescriptor descriptor) {
-    myDisplayName = displayName;
-    myOrderRootType = orderRootType;
+  public PathEditor(final FileChooserDescriptor descriptor) {
     myDescriptor = descriptor;
     myDescriptor.putUserData(FileChooserDialog.PREFER_LAST_OVER_TO_SELECT, Boolean.TRUE);
     myModel = createListModel();
   }
-
 
   protected void setEnabled(boolean enabled) {
     myEnabled = enabled;
@@ -103,30 +92,12 @@ public class PathEditor {
   protected void onSpecifyUrlButtonClicked() {
   }
 
-  public String getDisplayName() {
-    return myDisplayName;
-  }
-
   protected void setModified(boolean modified) {
     myModified = modified;
   }
 
   public boolean isModified() {
     return myModified;
-  }
-
-  public OrderRootType getOrderRootType() {
-    return myOrderRootType;
-  }
-
-  public void apply(SdkModificator sdkModificator) {
-    sdkModificator.removeRoots(myOrderRootType);
-    // add all items
-    for (int i = 0; i < getRowCount(); i++) {
-      sdkModificator.addRoot(getValueAt(i), myOrderRootType);
-    }
-    setModified(false);
-    updateButtons();
   }
 
   public VirtualFile[] getRoots() {
@@ -150,15 +121,6 @@ public class PathEditor {
     }
     setModified(false);
     updateButtons();
-  }
-
-  public void reset(@Nullable SdkModificator modificator) {
-    if (modificator != null) {
-      resetPath(Lists.newArrayList(modificator.getRoots(myOrderRootType)));
-    }
-    else {
-      setEnabled(false);
-    }
   }
 
   public JComponent createComponent() {
@@ -282,7 +244,7 @@ public class PathEditor {
     return files;
   }
 
-  protected void updateButtons() {
+  public void updateButtons() {
     Object[] values = getSelectedRoots();
     myRemoveButton.setEnabled((values.length > 0) && myEnabled);
     myAddButton.setEnabled(myEnabled);
@@ -389,11 +351,11 @@ public class PathEditor {
     return myList.getSelectedValues();
   }
 
-  private int getRowCount() {
+  protected int getRowCount() {
     return getListModel().getSize();
   }
 
-  private VirtualFile getValueAt(int row) {
+  protected VirtualFile getValueAt(int row) {
     return (VirtualFile)getListModel().get(row);
   }
 

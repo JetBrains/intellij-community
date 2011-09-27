@@ -17,7 +17,7 @@ package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.ui.PathEditor;
+import com.intellij.openapi.projectRoots.ui.SdkPathEditor;
 import com.intellij.openapi.roots.ui.OrderRootTypeUIFactory;
 import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.Nullable;
@@ -33,7 +33,7 @@ public class DocumentationOrderRootTypeUIFactory implements OrderRootTypeUIFacto
 
   @Override
   @Nullable
-  public PathEditor createPathEditor(Sdk sdk) {
+  public SdkPathEditor createPathEditor(Sdk sdk) {
     return null;
   }
 
