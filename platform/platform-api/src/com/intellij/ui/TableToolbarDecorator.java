@@ -27,6 +27,8 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableModel;
 import java.awt.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 
 /**
  * @author Konstantin Bulenkov
@@ -48,6 +50,12 @@ class TableToolbarDecorator extends ToolbarDecorator {
         updateButtons();
       }
     });
+    myTable.addPropertyChangeListener("enabled", new PropertyChangeListener() {
+      @Override
+      public void propertyChange(PropertyChangeEvent evt) {
+        updateButtons();
+      }
+    });
   }
 
   @Override
@@ -57,21 +65,30 @@ class TableToolbarDecorator extends ToolbarDecorator {
 
   protected void updateButtons() {
     final AddRemoveUpDownPanel p = getPanel();
-    if (myTable.isEnabled() && p != null) {
-      final int index = myTable.getSelectedRow();
-      final int size = myTableModel.getRowCount();
-      if (0 <= index && index < size) {
-        final boolean downEnable = myTable.getSelectionModel().getMaxSelectionIndex() < size - 1;
-        final boolean upEnable = myTable.getSelectionModel().getMinSelectionIndex() > 0;
-        p.setEnabled(AddRemoveUpDownPanel.Buttons.REMOVE, true);
-        p.setEnabled(AddRemoveUpDownPanel.Buttons.UP, upEnable);
-        p.setEnabled(AddRemoveUpDownPanel.Buttons.DOWN, downEnable);
-      } else {
+    if (p != null) {
+      if (myTable.isEnabled()) {
+        final int index = myTable.getSelectedRow();
+        final int size = myTableModel.getRowCount();
+        if (0 <= index && index < size) {
+          final boolean downEnable = myTable.getSelectionModel().getMaxSelectionIndex() < size - 1;
+          final boolean upEnable = myTable.getSelectionModel().getMinSelectionIndex() > 0;
+          p.setEnabled(AddRemoveUpDownPanel.Buttons.REMOVE, true);
+          p.setEnabled(AddRemoveUpDownPanel.Buttons.UP, upEnable);
+          p.setEnabled(AddRemoveUpDownPanel.Buttons.DOWN, downEnable);
+        }
+        else {
+          p.setEnabled(AddRemoveUpDownPanel.Buttons.REMOVE, false);
+          p.setEnabled(AddRemoveUpDownPanel.Buttons.UP, false);
+          p.setEnabled(AddRemoveUpDownPanel.Buttons.DOWN, false);
+        }
+        p.setEnabled(AddRemoveUpDownPanel.Buttons.ADD, true);
+      }
+      else {
+        p.setEnabled(AddRemoveUpDownPanel.Buttons.ADD, false);
         p.setEnabled(AddRemoveUpDownPanel.Buttons.REMOVE, false);
         p.setEnabled(AddRemoveUpDownPanel.Buttons.UP, false);
         p.setEnabled(AddRemoveUpDownPanel.Buttons.DOWN, false);
       }
-      p.setEnabled(AddRemoveUpDownPanel.Buttons.ADD, true);
     }
   }
 
