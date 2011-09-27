@@ -5,7 +5,6 @@ import com.android.sdklib.IAndroidTarget;
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -13,6 +12,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootEvent;
@@ -35,6 +36,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.android.dom.layout.LayoutDomFileDescription;
@@ -53,6 +55,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -242,15 +246,12 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
     myRenderingQueue.queue(new Update("render") {
       @Override
       public void run() {
-        if (showProgress || myToolWindowForm.getPreviewPanel().getImage() == null) {
-          ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-            @Override
-            public void run() {
-              myToolWindowForm.getPreviewPanel().showProgress();
-            }
-          }, ModalityState.defaultModalityState());
-        }
-        doRender(facet, layoutXmlText);
+        ProgressManager.getInstance().runProcess(new Runnable() {
+          @Override
+          public void run() {
+            doRender(facet, layoutXmlText);
+          }
+        }, new MyProgressIndicator());
       }
 
       @Override
@@ -355,7 +356,7 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
       }
     });
   }
-  
+
   private void showStackStace(@NotNull Throwable t) {
     final String stackTrace = getStackTrace(t);
     final DialogWrapper wrapper = new DialogWrapper(myProject, false) {
@@ -372,11 +373,11 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
         panel.add(ScrollPaneFactory.createScrollPane(textArea));
         return panel;
       }
-    }; 
+    };
     wrapper.setTitle("Stack trace");
     wrapper.show();
   }
-  
+
   @NotNull
   private static String getStackTrace(@NotNull Throwable t) {
     final StringWriter stringWriter = new StringWriter();
@@ -515,6 +516,45 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
         }
       }
       processFileEditorChange(layoutXmlEditor);
+    }
+  }
+
+  private class MyProgressIndicator extends ProgressIndicatorBase {
+    private final Object myLock = new Object();
+
+    @Override
+    public void start() {
+      super.start();
+      UIUtil.invokeLaterIfNeeded(new Runnable() {
+        @Override
+        public void run() {
+          final Timer timer = UIUtil.createNamedTimer("Android rendering progress timer", 1000, new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+              synchronized (myLock) {
+                if (isRunning()) {
+                  myToolWindowForm.getPreviewPanel().showProgress();
+                }
+              }
+            }
+          });
+          timer.setRepeats(false);
+          timer.start();
+        }
+      });
+    }
+
+    @Override
+    public void stop() {
+      synchronized (myLock) {
+        super.stop();
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            myToolWindowForm.getPreviewPanel().hideProgress();
+          }
+        });
+      }
     }
   }
 }

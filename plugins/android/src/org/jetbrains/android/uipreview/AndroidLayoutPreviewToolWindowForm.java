@@ -5,10 +5,10 @@ import com.android.ide.common.resources.ResourceResolver;
 import com.android.ide.common.resources.configuration.LanguageQualifier;
 import com.android.ide.common.resources.configuration.RegionQualifier;
 import com.android.ide.common.resources.configuration.ScreenSizeQualifier;
-import com.android.resources.UiMode;
 import com.android.resources.NightMode;
 import com.android.resources.ResourceType;
 import com.android.resources.ScreenSize;
+import com.android.resources.UiMode;
 import com.android.sdklib.IAndroidTarget;
 import com.android.sdklib.SdkConstants;
 import com.intellij.ide.ui.ListCellRendererWrapper;
@@ -23,6 +23,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -97,6 +98,8 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
   private final AndroidLayoutPreviewToolWindowSettings mySettings;
 
   public AndroidLayoutPreviewToolWindowForm(final Project project, AndroidLayoutPreviewToolWindowManager toolWindowManager) {
+    Disposer.register(this, myPreviewPanel);
+
     myToolWindowManager = toolWindowManager;
     mySettings = AndroidLayoutPreviewToolWindowSettings.getInstance(project);
 

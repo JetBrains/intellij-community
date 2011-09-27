@@ -1,9 +1,12 @@
  package org.jetbrains.android.uipreview;
 
+ import com.intellij.openapi.Disposable;
  import com.intellij.openapi.ui.Messages;
  import com.intellij.openapi.ui.VerticalFlowLayout;
+ import com.intellij.openapi.util.Disposer;
  import com.intellij.ui.HyperlinkLabel;
  import com.intellij.ui.components.JBLabel;
+ import com.intellij.util.ui.AsyncProcessIcon;
  import org.jetbrains.annotations.Nullable;
 
  import javax.swing.*;
@@ -15,7 +18,7 @@
 /**
  * @author Eugene.Kudelevsky
  */
-public class AndroidLayoutPreviewPanel extends JPanel {
+public class AndroidLayoutPreviewPanel extends JPanel implements Disposable {
   private static final double EPS = 0.0000001;
   private static final double MAX_ZOOM_FACTOR = 2.0;
   private static final double ZOOM_STEP = 1.25;
@@ -23,7 +26,6 @@ public class AndroidLayoutPreviewPanel extends JPanel {
   private RenderingErrorMessage myErrorMessage;
   private String myWarnMessage;
   private BufferedImage myImage;
-  private JBLabel myProgressLabel;
 
   private final HyperlinkLabel myErrorLabel = new HyperlinkLabel("", Color.BLUE, getBackground(), Color.BLUE);
 
@@ -46,6 +48,8 @@ public class AndroidLayoutPreviewPanel extends JPanel {
     }
   };
 
+  private AsyncProcessIcon myProgressIcon;
+
   public AndroidLayoutPreviewPanel() {
     super(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, true));
     setBackground(Color.WHITE);
@@ -62,12 +66,18 @@ public class AndroidLayoutPreviewPanel extends JPanel {
     });
     myErrorLabel.setOpaque(false);
 
-    myProgressLabel = new JBLabel("Rendering...");
-    myProgressLabel.setIcon(Messages.getInformationIcon());
-    myProgressLabel.setVisible(false);
+    final JPanel progressPanel = new JPanel();
+    progressPanel.setLayout(new BoxLayout(progressPanel, BoxLayout.X_AXIS));
+    myProgressIcon = new AsyncProcessIcon("Android layout rendering");
+    Disposer.register(this, myProgressIcon);
+    progressPanel.add(Box.createHorizontalGlue());
+    progressPanel.add(myProgressIcon);
+    progressPanel.add(new JBLabel(" "));
+    progressPanel.setOpaque(false);
+    myProgressIcon.setVisible(false);
 
+    add(progressPanel);
     add(myErrorLabel);
-    add(myProgressLabel);
     add(new MyImagePanelWrapper());
   }
 
@@ -77,14 +87,13 @@ public class AndroidLayoutPreviewPanel extends JPanel {
   }
 
   public void showProgress() {
-    myProgressLabel.setVisible(true);
-    myErrorLabel.setVisible(false);
-    myImagePanel.setVisible(false);
+    myProgressIcon.setVisible(true);
+    myProgressIcon.resume();
   }
 
-  @Nullable
-  public BufferedImage getImage() {
-    return myImage;
+  public void hideProgress() {
+    myProgressIcon.suspend();
+    myProgressIcon.setVisible(false);
   }
 
   private void doRevalidate() {
@@ -102,7 +111,6 @@ public class AndroidLayoutPreviewPanel extends JPanel {
   }
 
   public void update() {
-    myProgressLabel.setVisible(false);
     myImagePanel.setVisible(true);
     if (myErrorMessage != null) {
       myErrorLabel.setHyperlinkText(myErrorMessage.myBeforeLinkText,
@@ -216,6 +224,10 @@ public class AndroidLayoutPreviewPanel extends JPanel {
 
   public boolean isZoomToFit() {
     return myZoomToFit;
+  }
+
+  @Override
+  public void dispose() {
   }
 
   private class MyImagePanelWrapper extends JLayeredPane {
