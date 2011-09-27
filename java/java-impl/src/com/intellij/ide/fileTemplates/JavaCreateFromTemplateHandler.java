@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.impl.file.JavaDirectoryServiceImpl;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.Properties;
@@ -50,13 +51,7 @@ public class JavaCreateFromTemplateHandler implements CreateFromTemplateHandler 
       CodeStyleManager.getInstance(project).reformat(psiJavaFile);
     }
     String className = createdClass.getName();
-    String fileName = className + "." + extension;
-    if(createdClass.isInterface()){
-      JavaDirectoryService.getInstance().checkCreateInterface(directory, className);
-    }
-    else{
-      JavaDirectoryService.getInstance().checkCreateClass(directory, className);
-    }
+    JavaDirectoryServiceImpl.checkCreateClassOrInterface(directory, className);
 
     final LanguageLevel ll = JavaDirectoryService.getInstance().getLanguageLevel(directory);
     if (ll.compareTo(LanguageLevel.JDK_1_5) < 0) {
@@ -69,7 +64,7 @@ public class JavaCreateFromTemplateHandler implements CreateFromTemplateHandler 
       }
     }
 
-    psiJavaFile = (PsiJavaFile)psiJavaFile.setName(fileName);
+    psiJavaFile = (PsiJavaFile)psiJavaFile.setName(className + "." + extension);
     PsiElement addedElement = directory.add(psiJavaFile);
     if (addedElement instanceof PsiJavaFile) {
       psiJavaFile = (PsiJavaFile)addedElement;

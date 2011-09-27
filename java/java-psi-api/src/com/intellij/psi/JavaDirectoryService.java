@@ -96,16 +96,6 @@ public abstract class JavaDirectoryService {
   public abstract PsiClass createInterface(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException;
 
   /**
-   * Checks if it's possible to create an interface with the specified name in the directory,
-   * and throws an exception if the creation is not possible. Does not actually modify
-   * anything.
-   *
-   * @param name the name of the interface to check creation possibility (not including the file extension).
-   * @throws IncorrectOperationException if the creation is not possible.
-   */
-  public abstract void checkCreateInterface(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException;
-
-  /**
    * Creates an enumeration class with the specified name in the directory.
    *
    * @param name the name of the enumeration class to create (not including the file extension).

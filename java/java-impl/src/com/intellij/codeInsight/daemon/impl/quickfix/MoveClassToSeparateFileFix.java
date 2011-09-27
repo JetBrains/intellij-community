@@ -27,6 +27,7 @@ import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.file.JavaDirectoryServiceImpl;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -55,13 +56,7 @@ public class MoveClassToSeparateFileFix implements IntentionAction {
     PsiDirectory dir = file.getContainingDirectory();
     if (dir == null) return false;
     try {
-      String name = myClass.getName();
-      if (myClass.isInterface()) {
-        JavaDirectoryService.getInstance().checkCreateInterface(dir, name);
-      }
-      else {
-        JavaDirectoryService.getInstance().checkCreateClass(dir, name);
-      }
+      JavaDirectoryServiceImpl.checkCreateClassOrInterface(dir, myClass.getName());
     }
     catch (IncorrectOperationException e) {
       return false;
