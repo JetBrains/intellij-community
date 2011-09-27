@@ -236,11 +236,12 @@ public class GithubUtil {
     // Otherwise our credentials are valid and they are successfully stored in settings
     try {
       final GithubSettings settings = GithubSettings.getInstance();
+      final String validPassword = settings.getPassword();
       return accessToGithubWithModalProgress(project, new Computable<List<RepositoryInfo>>() {
         @Override
         public List<RepositoryInfo> compute() {
           ProgressManager.getInstance().getProgressIndicator().setText("Extracting info about available repositories");
-          return getAvailableRepos(settings.getHost(), settings.getLogin(), settings.getPassword(), ownOnly);
+          return getAvailableRepos(settings.getHost(), settings.getLogin(), validPassword, ownOnly);
         }
       });
     }
