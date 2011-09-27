@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.tests;
+package git4idea.history;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FilePath;
@@ -32,6 +32,7 @@ import git4idea.history.browser.GitCommit;
 import git4idea.history.browser.SHAHash;
 import git4idea.history.wholeTree.AbstractHash;
 import git4idea.history.wholeTree.CommitHashPlusParents;
+import git4idea.tests.GitTest;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
