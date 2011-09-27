@@ -28,6 +28,11 @@
       <add-to-group group-id="ProjectViewPopupMenu"/>
       <add-to-group group-id="EditorTabPopupMenu"/>
     </action>
+    <action id="Github.Create.Gist" class="org.jetbrains.plugins.github.GithubCreateGistAction">
+      <add-to-group group-id="EditorPopupMenu"/>
+      <add-to-group group-id="ProjectViewPopupMenu"/>
+      <add-to-group group-id="EditorTabPopupMenu"/>
+    </action>
     <action id="Github.Rebase.Internal" class="org.jetbrains.plugins.github.GithubRebase"/>
   </actions>
 </idea-plugin>

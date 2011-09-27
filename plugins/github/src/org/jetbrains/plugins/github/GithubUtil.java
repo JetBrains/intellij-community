@@ -117,7 +117,7 @@ public class GithubUtil {
     return method;
   }
 
-  public static HttpClient getHttpClient(final String login, final String password) {
+  public static HttpClient getHttpClient(@Nullable final String login, @Nullable final String password) {
     final HttpClient client = new HttpClient();
     // Configure proxySettings if it is required
     final HttpConfigurable proxySettings = HttpConfigurable.getInstance();
@@ -128,8 +128,10 @@ public class GithubUtil {
                                                                                              proxySettings.getPlainProxyPassword()));
       }
     }
-    client.getParams().setAuthenticationPreemptive(true);
-    client.getState().setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(login, password));
+    if (login != null && password != null) {
+      client.getParams().setAuthenticationPreemptive(true);
+      client.getState().setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(login, password));
+    }
     return client;
   }
 
