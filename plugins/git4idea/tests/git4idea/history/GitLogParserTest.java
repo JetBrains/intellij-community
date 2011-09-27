@@ -58,24 +58,24 @@ public class GitLogParserTest extends GitTest {
   protected void setUp() throws Exception {
     super.setUp();
     myRoot = new LightVirtualFile();
-    myParser = new GitLogParser(myProject, GIT_LOG_OPTIONS);
     myRecord = new GitTestLogRecord();
   }
 
   @Test
   public void parseOneRecordWithoutNameStatus() throws VcsException {
+    myParser = new GitLogParser(myProject, GIT_LOG_OPTIONS);
     doTest(GitTestLogRecord.NameStatusOption.NONE);
   }
   
   @Test
   public void parseOneRecordWithName() throws VcsException {
-    myParser.parseStatusBeforeName(false);
+    myParser = new GitLogParser(myProject, NameStatus.NAME,  GIT_LOG_OPTIONS);
     doTest(GitTestLogRecord.NameStatusOption.NAME);
   }
 
   @Test
   public void parseOneRecordWithNameStatus() throws VcsException {
-    myParser.parseStatusBeforeName(true);
+    myParser = new GitLogParser(myProject, NameStatus.STATUS, GIT_LOG_OPTIONS);
     doTest(GitTestLogRecord.NameStatusOption.STATUS);
   }
   

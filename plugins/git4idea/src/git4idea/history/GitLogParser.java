@@ -61,10 +61,18 @@ class GitLogParser {
 
   private final String myFormat;  // pretty custom format generated in the constructor
   private final GitLogOption[] myOptions;
-  private boolean mySupportsRawBody;
+  private final boolean mySupportsRawBody;
+  private final NameStatus myNameStatusOption;
 
-  private enum NameStatus { NONE, NAME, STATUS } // --name-only, --name-status or no flag
-  private NameStatus myNameStatusOutputted = NameStatus.NONE;
+  // --name-only, --name-status or no flag
+  enum NameStatus {
+    /** No flag. */
+    NONE,
+    /** --name-only */
+    NAME,
+    /** --name-status */
+    STATUS
+  }
 
   /**
    * Options which may be passed to 'git log --pretty=format:' as placeholders and then parsed from the result.
@@ -81,32 +89,34 @@ class GitLogParser {
   }
 
   /**
-   * Constructs new parser with the specified number of options. Only these options will be parsed out and thus will be available from
-   * GitLogRecord.
+   * Constructs new parser with the given options and no names of changed files in the output.
    */
   GitLogParser(Project project, GitLogOption... options) {
+    this(project, NameStatus.NONE, options);
+  }
+
+  /**
+   * Constructs new parser with the specified options.
+   * Only these options will be parsed out and thus will be available from the GitLogRecord.
+   */
+  GitLogParser(Project project, NameStatus nameStatusOption, GitLogOption... options) {
+    myFormat = makeFormatFromOptions(options);
+    myOptions = options;
+    myNameStatusOption = nameStatusOption;
+    mySupportsRawBody = GitVersionSpecialty.STARTED_USING_RAW_BODY_IN_FORMAT.existsIn(GitVcs.getInstance(project).getVersion());
+  }
+
+  private static String makeFormatFromOptions(GitLogOption[] options) {
     Function<GitLogOption,String> function = new Function<GitLogOption, String>() {
       @Override public String fun(GitLogOption option) {
         return "%" + option.getPlaceholder();
       }
     };
-    myFormat = RECORD_START_GIT + StringUtil.join(options, function, ITEMS_SEPARATOR_GIT) + RECORD_END_GIT;
-    myOptions = options;
-    mySupportsRawBody = GitVersionSpecialty.STARTED_USING_RAW_BODY_IN_FORMAT.existsIn(GitVcs.getInstance(project).getVersion());
+    return RECORD_START_GIT + StringUtil.join(options, function, ITEMS_SEPARATOR_GIT) + RECORD_END_GIT;
   }
 
   String getPretty() {
     return "--pretty=format:" + myFormat;
-  }
-
-  /**
-   * Call this method to indicate that "git log" is called with --name-only or --name-status flag.
-   * (Note that these flags are mutually exclusive).
-   * The GitLogParser will parse the output concerning that output contains path or status and path.
-   * @param nameStatus true if --name-status is passed, false if --name-only is passed.
-   */
-  void parseStatusBeforeName(boolean nameStatus) {
-    myNameStatusOutputted = nameStatus ? NameStatus.STATUS : NameStatus.NAME;
   }
 
   /**
@@ -161,10 +171,10 @@ class GitLogParser {
     // parsing status and path (if given)
     char nameStatus = 0;
     final List<String> paths = new ArrayList<String>(1);
-    final boolean includeStatus = myNameStatusOutputted == NameStatus.STATUS;
+    final boolean includeStatus = myNameStatusOption == NameStatus.STATUS;
     final List<List<String>> parts = includeStatus ? new ArrayList<List<String>>() : null;
 
-    if (myNameStatusOutputted != NameStatus.NONE) {
+    if (myNameStatusOption != NameStatus.NONE) {
       final String[] infoAndPath = line.split(RECORD_END);
       line = infoAndPath[0];
       if (infoAndPath.length > 1) {
