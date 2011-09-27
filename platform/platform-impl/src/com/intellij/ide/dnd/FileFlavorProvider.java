@@ -15,6 +15,8 @@
  */
 package com.intellij.ide.dnd;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.io.File;
 import java.util.List;
 
@@ -22,5 +24,6 @@ import java.util.List;
 * @author Konstantin Bulenkov
 */
 public interface FileFlavorProvider {
+  @Nullable
   List<File> asFileList();
 }
