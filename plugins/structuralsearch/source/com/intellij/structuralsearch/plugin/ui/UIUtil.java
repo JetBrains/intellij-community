@@ -194,6 +194,7 @@ public class UIUtil {
   }
 
   static String getShortParamString(Configuration config, String varname) {
+    if (config == null) return "";
     final MatchOptions options = config.getMatchOptions();
 
 
