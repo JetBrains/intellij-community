@@ -62,8 +62,10 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 public class BraceHighlightingHandler {
   private static final Key<List<RangeHighlighter>> BRACE_HIGHLIGHTERS_IN_EDITOR_VIEW_KEY = Key.create("BraceHighlighter.BRACE_HIGHLIGHTERS_IN_EDITOR_VIEW_KEY");
@@ -356,25 +358,25 @@ public class BraceHighlightingHandler {
   }
 
   private void highlightRightBrace(HighlighterIterator iterator, FileType fileType) {
-    int brace1End = iterator.getEnd();
+    TextRange brace1 = TextRange.create(iterator.getStart(), iterator.getEnd());
 
     boolean matched = BraceMatchingUtil.matchBrace(myDocument.getCharsSequence(), fileType, iterator, false);
 
-    int brace2Start = iterator.atEnd() ? -1 : iterator.getStart();
+    TextRange brace2 = iterator.atEnd() ? null : TextRange.create(iterator.getStart(), iterator.getEnd());
 
-    highlightBraces(brace2Start, brace1End - 1, matched, false, fileType);
+    highlightBraces(brace2, brace1, matched, false, fileType);
   }
 
   private void highlightLeftBrace(HighlighterIterator iterator, boolean scopeHighlighting, FileType fileType) {
-    int brace1Start = iterator.getStart();
+    TextRange brace1Start = TextRange.create(iterator.getStart(), iterator.getEnd());
     boolean matched = BraceMatchingUtil.matchBrace(myDocument.getCharsSequence(), fileType, iterator, true);
 
-    int brace2End = iterator.atEnd() ? -1 : iterator.getEnd() - 1;
+    TextRange brace2End = iterator.atEnd() ? null : TextRange.create(iterator.getStart(), iterator.getEnd());
 
     highlightBraces(brace1Start, brace2End, matched, scopeHighlighting, fileType);
   }
 
-  private void highlightBraces(final int lBraceOffset, int rBraceOffset, boolean matched, boolean scopeHighlighting, FileType fileType) {
+  private void highlightBraces(final TextRange lBrace, TextRange rBrace, boolean matched, boolean scopeHighlighting, FileType fileType) {
     if (!matched && fileType == FileTypes.PLAIN_TEXT) {
       return;
     }
@@ -384,21 +386,21 @@ public class BraceHighlightingHandler {
       matched ? scheme.getAttributes(CodeInsightColors.MATCHED_BRACE_ATTRIBUTES)
               : scheme.getAttributes(CodeInsightColors.UNMATCHED_BRACE_ATTRIBUTES);
 
-    if (rBraceOffset >= 0 && !scopeHighlighting) {
-      highlightBrace(rBraceOffset, matched);
+    if (rBrace != null && !scopeHighlighting) {
+      highlightBrace(rBrace, matched);
     }
 
-    if (lBraceOffset >= 0 && !scopeHighlighting) {
-      highlightBrace(lBraceOffset, matched);
+    if (lBrace != null && !scopeHighlighting) {
+      highlightBrace(lBrace, matched);
     }
 
     if (!myEditor.equals(FileEditorManager.getInstance(myProject).getSelectedTextEditor())) {
       return;
     }
 
-    if (lBraceOffset >= 0 && rBraceOffset >= 0) {
-      final int startLine = myEditor.offsetToLogicalPosition(lBraceOffset).line;
-      final int endLine = myEditor.offsetToLogicalPosition(rBraceOffset).line;
+    if (lBrace != null && rBrace !=null) {
+      final int startLine = myEditor.offsetToLogicalPosition(lBrace.getStartOffset()).line;
+      final int endLine = myEditor.offsetToLogicalPosition(rBrace.getEndOffset()).line;
       if (endLine - startLine > 0) {
         final Runnable runnable = new Runnable() {
           public void run() {
@@ -424,7 +426,7 @@ public class BraceHighlightingHandler {
       }
 
       if (!scopeHighlighting) {
-        showScopeHint(lBraceOffset, lBraceOffset + 1);
+        showScopeHint(lBrace.getStartOffset(), lBrace.getEndOffset());
       }
     }
     else {
@@ -434,7 +436,7 @@ public class BraceHighlightingHandler {
     }
   }
 
-  private void highlightBrace(int rBraceOffset, boolean matched) {
+  private void highlightBrace(TextRange braceRange, boolean matched) {
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     final TextAttributes attributes =
         matched ? scheme.getAttributes(CodeInsightColors.MATCHED_BRACE_ATTRIBUTES)
@@ -443,7 +445,7 @@ public class BraceHighlightingHandler {
 
     RangeHighlighter rbraceHighlighter =
         myEditor.getMarkupModel().addRangeHighlighter(
-          rBraceOffset, rBraceOffset + 1, HighlighterLayer.LAST + 1, attributes, HighlighterTargetArea.EXACT_RANGE);
+          braceRange.getStartOffset(), braceRange.getEndOffset(), HighlighterLayer.LAST + 1, attributes, HighlighterTargetArea.EXACT_RANGE);
     rbraceHighlighter.setGreedyToLeft(false);
     rbraceHighlighter.setGreedyToRight(false);
     registerHighlighter(rbraceHighlighter);
