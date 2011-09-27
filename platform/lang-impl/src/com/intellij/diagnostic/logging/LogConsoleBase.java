@@ -58,7 +58,7 @@ import java.util.List;
  */
 public abstract class LogConsoleBase extends AdditionalTabComponent implements LogConsole, LogFilterListener {
   private static final Logger LOG = Logger.getInstance("com.intellij.diagnostic.logging.LogConsoleImpl");
-  @NonNls private static final String APPLYING_FILTER_TITLE = "Applying filter...";
+  @NonNls protected static final String APPLYING_FILTER_TITLE = "Applying filter...";
 
   private ConsoleView myConsole;
   private final LightProcessHandler myProcessHandler = new LightProcessHandler();
@@ -330,8 +330,8 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
       }
     }
     else {
+      Key key = myModel.processLine(text);
       if (myModel.isApplicable(text)) {
-        Key key = myModel.processLine(text);
         if (key != null) {
           myProcessHandler.notifyTextAvailable(text + "\n", key);
         }
@@ -416,9 +416,9 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
         }
       }
     }
-    else if (isApplicable.value(line)) {
+    else {
       Key key = myModel.processLine(line);
-      if (key != null) {
+      if (isApplicable.value(line) && key != null) {
         ConsoleViewContentType type = ConsoleViewContentType.getConsoleViewType(key);
         if (type != null) {
           myConsole.print(line + "\n", type);
@@ -475,8 +475,13 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
       }
     });
     myTextFilterWrapper.removeAll();
-    myTextFilterWrapper.add(myFilter);
+    myTextFilterWrapper.add(getTextFilterComponent());
     return mySearchComponent;
+  }
+
+  @NotNull
+  protected Component getTextFilterComponent() {
+    return myFilter;
   }
 
   public boolean isContentBuiltIn() {
