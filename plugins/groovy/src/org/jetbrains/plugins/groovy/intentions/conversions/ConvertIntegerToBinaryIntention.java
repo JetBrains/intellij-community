@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,12 +28,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 
 import java.math.BigInteger;
 
-public class ConvertIntegerToOctalIntention extends Intention {
-
-
+/**
+ * @author Max Medvedev
+ */
+public class ConvertIntegerToBinaryIntention extends Intention {
   @NotNull
   public PsiElementPredicate getElementPredicate() {
-    return new ConvertIntegerToOctalPredicate();
+    return new ConvertIntegerToBinaryPredicate();
   }
 
   public void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
@@ -50,17 +51,18 @@ public class ConvertIntegerToOctalIntention extends Intention {
       final String rawTextString = textString.substring(2);
       val = new BigInteger(rawTextString, 16);
     }
-    else if (textString.startsWith("0b") || textString.startsWith("0B")) {
+    else if (textString.startsWith("0")) {
       final String rawTextString = textString.substring(2);
-      val = new BigInteger(rawTextString, 2);
+      val = new BigInteger(rawTextString, 8);
     }
     else {
       val = new BigInteger(textString, 10);
     }
-    String octString = '0' + val.toString(8);
+    String octString = "0b" + val.toString(2);
     if (isLong) {
       octString += 'L';
     }
     IntentionUtils.replaceExpression(octString, exp);
   }
 }
+

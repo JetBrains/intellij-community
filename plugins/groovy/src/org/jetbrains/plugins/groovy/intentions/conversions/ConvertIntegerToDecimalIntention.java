@@ -35,9 +35,8 @@ public class ConvertIntegerToDecimalIntention extends Intention {
     return new ConvertIntegerToDecimalPredicate();
   }
 
-  public void processIntention(@NotNull PsiElement element, Project project, Editor editor)
-      throws IncorrectOperationException {
-    final GrLiteral exp = (GrLiteral) element;
+  public void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
+    final GrLiteral exp = (GrLiteral)element;
     @NonNls String textString = exp.getText().replaceAll("_", "");
     final int textLength = textString.length();
     final char lastChar = textString.charAt(textLength - 1);
@@ -46,10 +45,15 @@ public class ConvertIntegerToDecimalIntention extends Intention {
       textString = textString.substring(0, textLength - 1);
     }
     final BigInteger val;
-    if (textString.startsWith("0x")) {
+    if (textString.startsWith("0x") || textString.startsWith("0X")) {
       final String rawIntString = textString.substring(2);
       val = new BigInteger(rawIntString, 16);
-    } else {
+    }
+    else if (textString.startsWith("0b") || textString.startsWith("0B")) {
+      final String rawString = textString.substring(2);
+      val = new BigInteger(rawString, 2);
+    }
+    else {
       final String rawIntString = textString.substring(1);
       val = new BigInteger(rawIntString, 8);
     }

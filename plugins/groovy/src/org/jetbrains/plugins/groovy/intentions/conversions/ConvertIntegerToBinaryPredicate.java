@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 
-class ConvertIntegerToOctalPredicate implements PsiElementPredicate {
+/**
+ * @author Max Medvedev
+ */
+public class ConvertIntegerToBinaryPredicate implements PsiElementPredicate {
   public boolean satisfiedBy(PsiElement element) {
     if (!(element instanceof GrLiteral)) return false;
 
@@ -41,11 +44,12 @@ class ConvertIntegerToOctalPredicate implements PsiElementPredicate {
       return true;
     }
     if (text.startsWith("0b") || text.startsWith("0B")) {
-      return true;
+      return false;
     }
     if ("0".equals(text) || "0L".equals(text)) {
-      return false;
+      return true;
     }
     return text.charAt(0) != '0';
   }
 }
+
