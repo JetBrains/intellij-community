@@ -42,7 +42,7 @@ public class XmlPropertiesFile implements PropertiesFile {
 
   public static PropertiesFile getPropertiesFile(final XmlFile file) {
     CachedValuesManager manager = CachedValuesManager.getManager(file.getProject());
-    return manager.getCachedValue(file, Key.<CachedValue<PropertiesFile>>create(""),
+    return manager.getCachedValue(file, Key.<CachedValue<PropertiesFile>>create("xml properties file"),
                                   new CachedValueProvider<PropertiesFile>() {
                                     @Override
                                     public Result<PropertiesFile> compute() {
