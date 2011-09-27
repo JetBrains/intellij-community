@@ -4,10 +4,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.tools.*;
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -19,6 +16,9 @@ public class EmbeddedJavac {
   private final ExecutorService myTaskRunner;
   private final SequentialTaskExecutor mySequentialTaskExecutor;
   private final List<ClassPostProcessor> myClassProcessors = new ArrayList<ClassPostProcessor>();
+  private static final Set<String> FILTERED_OPTIONS = new HashSet<String>(Arrays.<String>asList(
+    "-d", "-classpath", "-cp", "-bootclasspath"
+  ));
 
   public static interface OutputConsumer extends DiagnosticListener<JavaFileObject> {
     void outputLineAvailable(String line);
@@ -38,11 +38,23 @@ public class EmbeddedJavac {
     myClassProcessors.add(processor);
   }
 
-  public boolean compile(final List<File> sources, final List<String> options, File outputDir, final OutputConsumer outConsumer) {
+  public boolean compile(final List<String> options, final List<File> sources, List<File> classpath, List<File> bootclasspath, File outputDir, final OutputConsumer outConsumer) {
+    return compile(options, sources, classpath, bootclasspath, Collections.singletonMap(outputDir, Collections.<File>emptySet()), outConsumer);
+  }
 
-    final JavacFileManager fileManager = new JavacFileManager(new FileManagerContext(outConsumer));
-    if (!fileManager.setLocation(StandardLocation.CLASS_OUTPUT, Collections.singleton(outputDir))) {
-      return false;
+  public boolean compile(List<String> options, final List<File> sources, List<File> classpath, List<File> platformClasspath, Map<File, Set<File>> outputDirToRoots, final OutputConsumer outConsumer) {
+    final FileManagerContext context = new FileManagerContext(outConsumer);
+    final JavacFileManager fileManager = new JavacFileManager(context);
+    fileManager.setOutputDirectories(outputDirToRoots);
+    if (!classpath.isEmpty()) {
+      if (!fileManager.setLocation(StandardLocation.CLASS_PATH, classpath)) {
+        return false;
+      }
+    }
+    if (!platformClasspath.isEmpty()) {
+      if (!fileManager.setLocation(StandardLocation.PLATFORM_CLASS_PATH, platformClasspath)) {
+        return false;
+      }
     }
     //todo setup file manager to support multiple outputs
 
@@ -51,22 +63,36 @@ public class EmbeddedJavac {
         outConsumer.outputLineAvailable(line);
       }
     };
-    final List<String> _options = new ArrayList<String>();
+
+    try {
+      final JavaCompiler.CompilationTask task = myCompiler.getTask(
+        out, fileManager, outConsumer, filterOptionList(options), null, fileManager.toJavaFileObjects(sources)
+      );
+      return task.call();
+    }
+    finally {
+      context.ensurePendingTasksCompleted();
+      fileManager.cleanupResources();
+    }
+  }
+
+  private static List<String> filterOptionList(final List<String> options) {
+    if (options.isEmpty()) {
+      return options;
+    }
+    final List<String> result = new ArrayList<String>();
     boolean skip = false;
     for (String option : options) {
-      if ("-d".equals(option)) {
+      if (FILTERED_OPTIONS.contains(option)) {
         skip = true;
         continue;
       }
       if (!skip) {
-        _options.add(option);
+        result.add(option);
       }
       skip = false;
     }
-    final JavaCompiler.CompilationTask task = myCompiler.getTask(
-      out, fileManager, outConsumer, _options, null, fileManager.toJavaFileObjects(sources)
-    );
-    return task.call();
+    return result;
   }
 
 
@@ -74,6 +100,8 @@ public class EmbeddedJavac {
 
     private final StandardJavaFileManager myStdManager;
     private final OutputConsumer myOutConsumer;
+    private int myTasksInProgress = 0;
+    private final Object myCounterLock = new Object();
 
     public FileManagerContext(OutputConsumer outConsumer) {
       myOutConsumer = outConsumer;
@@ -89,34 +117,75 @@ public class EmbeddedJavac {
     }
 
     public void consumeOutputFile(final OutputFileObject cls) {
+      incTaskCount();
       myTaskRunner.submit(new Runnable() {
         public void run() {
           try {
-            for (ClassPostProcessor processor : myClassProcessors) {
-              processor.process(cls);
-            }
+            runProcessors(cls);
           }
           finally {
-            mySequentialTaskExecutor.submit(new Runnable() {
-              public void run() {
-                try {
-                  final File file = cls.getFile();
-                  final OutputFileObject.Content content = cls.getContent();
-                  if (content != null) {
-                    writeToFile(file, content.getBuffer(), content.getOffset(), content.getLength(), false);
-                  }
-                  else {
-                    myOutConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, "Missing content for file " + file));
-                  }
-                }
-                catch (IOException e) {
-                  myOutConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, e.getMessage()));
-                }
-              }
-            });
+            //mySequentialTaskExecutor.submit(new Runnable() {
+            //  public void run() {
+            try {
+              save(cls);
+            }
+            finally {
+              decTaskCount();
+            }
+            //}
+            //});
           }
         }
       });
+    }
+
+    private void decTaskCount() {
+      synchronized (myCounterLock) {
+        myTasksInProgress = Math.max(0, myTasksInProgress - 1);
+        if (myTasksInProgress == 0) {
+          myCounterLock.notifyAll();
+        }
+      }
+    }
+
+    private void incTaskCount() {
+      synchronized (myCounterLock) {
+        myTasksInProgress++;
+      }
+    }
+
+    public void ensurePendingTasksCompleted() {
+      synchronized (myCounterLock) {
+        while (myTasksInProgress > 0) {
+          try {
+            myCounterLock.wait();
+          }
+          catch (InterruptedException ignored) {
+          }
+        }
+      }
+    }
+
+    private void runProcessors(OutputFileObject cls) {
+      for (ClassPostProcessor processor : myClassProcessors) {
+        processor.process(cls);
+      }
+    }
+
+    private void save(OutputFileObject cls) {
+      try {
+        final File file = cls.getFile();
+        final OutputFileObject.Content content = cls.getContent();
+        if (content != null) {
+          writeToFile(file, content.getBuffer(), content.getOffset(), content.getLength(), false);
+        }
+        else {
+          myOutConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, "Missing content for file " + file));
+        }
+      }
+      catch (IOException e) {
+        myOutConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, e.getMessage()));
+      }
     }
   }
 
@@ -131,7 +200,7 @@ public class EmbeddedJavac {
     }
   }
 
-  public static boolean createParentDirs(@NotNull File file) {
+  private static boolean createParentDirs(@NotNull File file) {
     if (!file.exists()) {
       String parentDirPath = file.getParent();
       if (parentDirPath != null) {

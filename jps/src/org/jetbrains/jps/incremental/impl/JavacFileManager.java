@@ -6,11 +6,10 @@ import javax.tools.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
-
-import static javax.tools.StandardLocation.CLASS_OUTPUT;
-import static javax.tools.StandardLocation.SOURCE_OUTPUT;
 
 /**
  * @author Eugene Zhuravlev
@@ -19,6 +18,7 @@ import static javax.tools.StandardLocation.SOURCE_OUTPUT;
 class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager> {
 
   private final Context myContext;
+  private Map<File, Set<File>> myOutputsMap = Collections.emptyMap();
 
   public static interface Context {
     StandardJavaFileManager getStandardFileManager();
@@ -26,6 +26,8 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
     void consumeOutputFile(OutputFileObject obj);
 
     void reportMessage(final Diagnostic.Kind kind, String message);
+
+    void ensurePendingTasksCompleted();
   }
 
   public JavacFileManager(Context context) {
@@ -34,6 +36,17 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
   }
 
   // todo: check if reading source files can be optimized
+
+  public boolean setOutputDirectories(final Map<File, Set<File>> outputDirToSrcRoots) {
+    for (File outputDir : outputDirToSrcRoots.keySet()) {
+      // this will validate output dirs
+      if (!setLocation(StandardLocation.CLASS_OUTPUT, Collections.singleton(outputDir))) {
+        return false;
+      }
+    }
+    myOutputsMap = outputDirToSrcRoots;
+    return true;
+  }
 
   public boolean setLocation(Location location, Iterable<? extends File> path) {
     try {
@@ -76,32 +89,46 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
     return getFileForOutput(location, getKind(fileName), fileName, sibling);
   }
 
-  private JavaFileObject getFileForOutput(Location location, JavaFileObject.Kind kind, String fileName, FileObject sibling) throws IOException {
-    File dir = null;
-    if (location == CLASS_OUTPUT) {
-      final File classOutDir = getSingleOutputDirectory(CLASS_OUTPUT);
-      if (classOutDir == null) {
+  private OutputFileObject getFileForOutput(Location location, JavaFileObject.Kind kind, String fileName, FileObject sibling) throws IOException {
+    JavaFileObject src = null;
+    if (sibling instanceof JavaFileObject) {
+      final JavaFileObject javaFileObject = (JavaFileObject)sibling;
+      if (javaFileObject.getKind() == JavaFileObject.Kind.SOURCE) {
+        src = javaFileObject;
+      }
+    }
+
+    File dir = getSingleOutputDirectory(location, src);
+
+    if (location == StandardLocation.CLASS_OUTPUT) {
+      if (dir == null) {
         throw new IOException("Output directory is not specified");
       }
-      dir = classOutDir;
     }
-    else if (location == SOURCE_OUTPUT) {
-      final File sourcesOutput = getSingleOutputDirectory(StandardLocation.SOURCE_OUTPUT);
-      dir = (sourcesOutput != null ? sourcesOutput : getSingleOutputDirectory(CLASS_OUTPUT));
-    }
-    else {
-      Iterable<? extends File> path = getStdManager().getLocation(location);
-      final Iterator<? extends File> it = path.iterator();
-      if (it.hasNext()) {
-        dir = it.next();
+    else if (location == StandardLocation.SOURCE_OUTPUT) {
+      if (dir == null) {
+        dir = getSingleOutputDirectory(StandardLocation.CLASS_OUTPUT, src);
+        if (dir == null) {
+          throw new IOException("Neither class output directory nor source output are not specified");
+        }
       }
     }
-    final File file = (dir == null ? new File(fileName) : new File(dir, fileName));
-    return new OutputFileObject(myContext, file, kind);
+    final File file = (dir == null? new File(fileName) : new File(dir, fileName));
+    return new OutputFileObject(myContext, file, kind, src);
   }
 
-  private File getSingleOutputDirectory(final Location kind) {
-    final Iterable<? extends File> location = getStdManager().getLocation(kind);
+  private File getSingleOutputDirectory(final Location loc, final JavaFileObject sourceFile) {
+    if (loc == StandardLocation.CLASS_OUTPUT) {
+      if (myOutputsMap.size() > 1 && sourceFile != null) {
+        // multiple outputs case
+        final File outputDir = findOutputDir(new File(sourceFile.toUri()));
+        if (outputDir != null) {
+          return outputDir;
+        }
+      }
+    }
+
+    final Iterable<? extends File> location = getStdManager().getLocation(loc);
     if (location != null) {
       final Iterator<? extends File> it = location.iterator();
       if (it.hasNext()) {
@@ -111,13 +138,35 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
     return null;
   }
 
+  private File findOutputDir(File src) {
+    File file = src.getParentFile();
+    while (file != null) {
+      for (Map.Entry<File, Set<File>> entry : myOutputsMap.entrySet()) {
+        if (entry.getValue().contains(file)) {
+          return entry.getKey();
+        }
+      }
+      file = file.getParentFile();
+    }
+    return null;
+  }
+
   @NotNull
-  public StandardJavaFileManager getStdManager() {
+  private StandardJavaFileManager getStdManager() {
     return fileManager;
   }
 
   public Iterable<? extends JavaFileObject> toJavaFileObjects(Iterable<? extends File> files) {
     return getStdManager().getJavaFileObjectsFromFiles(files);
+  }
+
+  public void cleanupResources() {
+    try {
+      fileManager.close();
+    }
+    catch (IOException e) {
+      e.printStackTrace(); // todo
+    }
   }
 
   private static URI toURI(String outputDir, String name, JavaFileObject.Kind kind) {

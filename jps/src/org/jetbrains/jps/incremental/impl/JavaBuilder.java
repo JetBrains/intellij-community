@@ -46,21 +46,33 @@ public class JavaBuilder extends Builder{
     final ExecutorService taskRunner = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
     final EmbeddedJavac javac = new EmbeddedJavac(taskRunner);
 
-    final File srcRoot = new File("C:/tmp/MoveClassProblem/util/src");
+    final File srcRootUtil = new File("C:/tmp/MoveClassProblem/util/src");
+    final File srcRootMain = new File("C:/tmp/MoveClassProblem/main/src");
     final List<File> sources = new ArrayList<File>();
-    collectFiles(srcRoot, sources, new FileFilter() {
+    collectFiles(srcRootUtil, sources, new FileFilter() {
       public boolean accept(File pathname) {
         return pathname.getName().endsWith(".java");
       }
     });
-    final File outputDir = new File("C:/tmp/MoveClassProblem/util/_out_");
-    outputDir.mkdirs();
+    collectFiles(srcRootMain, sources, new FileFilter() {
+      public boolean accept(File pathname) {
+        return pathname.getName().endsWith(".java");
+      }
+    });
+
+    final Map<File, Set<File>> outputs = new HashMap<File, Set<File>>();
+    outputs.put(new File("C:/tmp/MoveClassProblem/_util_out_"), Collections.singleton(srcRootUtil));
+    outputs.put(new File("C:/tmp/MoveClassProblem/_main_out_"), Collections.singleton(srcRootMain));
+    for (File file : outputs.keySet()) {
+      file.mkdirs();
+    }
 
     final List<String> options = Arrays.asList(new String[] {
-      //"-d",
-      //outputDir.getAbsolutePath()
     });
-    javac.compile(sources, options, outputDir, new EmbeddedJavac.OutputConsumer() {
+    final List<File> classpath = Collections.emptyList();
+    final List<File> platformCp = Collections.emptyList();
+
+    javac.compile(options, sources, classpath, platformCp, outputs, new EmbeddedJavac.OutputConsumer() {
       public void outputLineAvailable(String line) {
         System.out.println("OUTPUT: " + line);
       }

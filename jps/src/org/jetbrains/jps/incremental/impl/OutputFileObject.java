@@ -12,16 +12,22 @@ public class OutputFileObject extends SimpleJavaFileObject {
 
   private final JavacFileManager.Context myContext;
   private final File myFile;
+  private final JavaFileObject mySource;
   private volatile Content myContent;
 
-  public OutputFileObject(JavacFileManager.Context context, File file, Kind kind) {
+  public OutputFileObject(JavacFileManager.Context context, File file, Kind kind, JavaFileObject source) {
     super(file.toURI(), kind);
     myContext = context;
     myFile = file;
+    mySource = source;
   }
 
   public File getFile() {
     return myFile;
+  }
+
+  public JavaFileObject getSource() {
+    return mySource;
   }
 
   @Override
