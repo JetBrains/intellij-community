@@ -53,13 +53,18 @@ import java.util.List;
 public class ProjectNameWithTypeStep extends ProjectNameStep {
   private JEditorPane myModuleDescriptionPane;
   private JList myTypesList;
-  private JCheckBox myCreateModuleCb;
+  protected JCheckBox myCreateModuleCb;
   private JPanel myModulePanel;
   private JPanel myInternalPanel;
   private JTextField myModuleName;
   private TextFieldWithBrowseButton myModuleContentRoot;
   private TextFieldWithBrowseButton myModuleFileLocation;
   private JPanel myHeader;
+
+  private JLabel myModuleTypeLabel;
+  private JLabel myDescriptionLabel;
+  private JBScrollPane myModuleTypeScrollPane;
+  private JBScrollPane myDescriptionScrollPane;
 
   private boolean myModuleNameChangedByUser = false;
   private boolean myModuleNameDocListenerEnabled = true;
@@ -179,8 +184,9 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
           myModuleNameChangedByUser = true;
         }
         String path = getDefaultBaseDir(wizardContext);
-        if (path.length() > 0 && !Comparing.strEqual(myModuleName.getText().trim(), myNamePathComponent.getNameValue())) {
-          path += "/" + myModuleName.getText();
+        final String moduleName = getModuleName();
+        if (path.length() > 0 && !Comparing.strEqual(moduleName, myNamePathComponent.getNameValue())) {
+          path += "/" + moduleName;
         }
         if (!myContentRootChangedByUser) {
           final boolean f = myModuleNameChangedByUser;
@@ -320,8 +326,10 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
       super.updateDataModel();
       final ModuleBuilder builder = (ModuleBuilder)myMode.getModuleBuilder();
       assert builder != null;
-      builder.setName(myModuleName.getText());
-      builder.setModuleFilePath(FileUtil.toSystemIndependentName(myModuleFileLocation.getText()) + "/" + myModuleName.getText() + ModuleFileType.DOT_DEFAULT_EXTENSION);
+      final String moduleName = getModuleName();
+      builder.setName(moduleName);
+      builder.setModuleFilePath(
+        FileUtil.toSystemIndependentName(myModuleFileLocation.getText()) + "/" + moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION);
       builder.setContentEntryPath(FileUtil.toSystemIndependentName(myModuleContentRoot.getText()));
     } else {
       mySequence.setType(null);
@@ -329,12 +337,12 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
     }
   }
 
-  private String getSelectedBuilderId() {
+  protected String getSelectedBuilderId() {
     return ((ModuleBuilder)myTypesList.getSelectedValue()).getBuilderId();
   }
 
   public boolean validate() throws ConfigurationException {
-    final String moduleName = myModuleName.getText().trim();
+    final String moduleName = getModuleName();
     if (myCreateModuleCb.isSelected() || !myWizardContext.isCreatingNewProject()) {
       final String moduleFileDirectory = myModuleFileLocation.getText();
       if (moduleFileDirectory.length() == 0) {
@@ -396,5 +404,22 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
 
   public String getHelpId() {
     return "reference.dialogs.new.project.fromScratch";
+  }
+
+  protected String getModuleName() {
+    return myModuleName.getText().trim();
+  }
+  
+  protected void addModuleNameListener(final DocumentListener listener) {
+    myModuleName.getDocument().addDocumentListener(listener);
+  }
+
+  protected void replaceModuleTypeOptions(final Component component) {
+    myModuleTypeLabel.setVisible(false);
+    myDescriptionLabel.setVisible(false);
+    myModuleTypeScrollPane.setVisible(false);
+    myDescriptionScrollPane.setVisible(false);
+    myInternalPanel.add(component, new GridBagConstraints(0, 2, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
+                                                          new Insets(10, 0, 0, 0), 0, 0));
   }
 }

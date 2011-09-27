@@ -475,6 +475,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     myLineSet.clearModificationFlags();
   }
 
+  @NotNull
   private DocumentEvent beforeChangedUpdate(int offset, CharSequence oldString, CharSequence newString, boolean wholeTextReplaced) {
     myChangeInProgress = true;
     try {
@@ -485,22 +486,22 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     }
   }
 
+  @NotNull
   private DocumentEvent doBeforeChangedUpdate(int offset, CharSequence oldString, CharSequence newString, boolean wholeTextReplaced) {
-    if (ShutDownTracker.isShutdownHookRunning()) {
-      return null; // suppress events in shutdown hook
-    }
     DocumentEvent event = new DocumentEventImpl(this, offset, oldString, newString, myModificationStamp, wholeTextReplaced);
     //System.out.printf("%nbefore change: offset=%d, old text='%s', new text='%s'%n document: id=%d, modification stamp=%d%nDocument:'%s'%n",
     //                  event.getOffset(), event.getOldFragment(), event.getNewFragment(), System.identityHashCode(this),
     //                  getModificationStamp(), getText());
 
-    DocumentListener[] listeners = getCachedListeners();
-    for (int i = listeners.length - 1; i >= 0; i--) {
-      try {
-        listeners[i].beforeDocumentChange(event);
-      }
-      catch (Throwable e) {
-        LOG.error(e);
+    if (!ShutDownTracker.isShutdownHookRunning()) {
+      DocumentListener[] listeners = getCachedListeners();
+      for (int i = listeners.length - 1; i >= 0; i--) {
+        try {
+          listeners[i].beforeDocumentChange(event);
+        }
+        catch (Throwable e) {
+          LOG.error(e);
+        }
       }
     }
 
@@ -511,22 +512,21 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private void changedUpdate(DocumentEvent event, long newModificationStamp) {
     //System.out.printf("after change: document id=%d, new modification stamp=%d%ndocument='%s'%n", System.identityHashCode(this),
     //                  getModificationStamp(), getText());
-    if (ShutDownTracker.isShutdownHookRunning()) {
-      return; // suppress events in shutdown hook
-    }
     try {
       if (LOG.isDebugEnabled()) LOG.debug(event.toString());
 
       myLineSet.changedUpdate(event);
       setModificationStamp(newModificationStamp);
 
-      DocumentListener[] listeners = getCachedListeners();
-      for (DocumentListener listener : listeners) {
-        try {
-          listener.documentChanged(event);
-        }
-        catch (Throwable e) {
-          LOG.error(e);
+      if (!ShutDownTracker.isShutdownHookRunning()) {
+        DocumentListener[] listeners = getCachedListeners();
+        for (DocumentListener listener : listeners) {
+          try {
+            listener.documentChanged(event);
+          }
+          catch (Throwable e) {
+            LOG.error(e);
+          }
         }
       }
     }
@@ -736,6 +736,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       super(0);
     }
 
+    @NotNull
     protected DocumentEvent beforeChangedUpdate(DocumentImpl subj,
                                                 int offset,
                                                 CharSequence oldString,
@@ -744,7 +745,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       return subj.beforeChangedUpdate(offset, oldString, newString, wholeTextReplaced);
     }
 
-    protected void afterChangedUpdate(DocumentEvent event, long newModificationStamp) {
+    protected void afterChangedUpdate(@NotNull DocumentEvent event, long newModificationStamp) {
       ((DocumentImpl)event.getDocument()).changedUpdate(event, newModificationStamp);
     }
   }

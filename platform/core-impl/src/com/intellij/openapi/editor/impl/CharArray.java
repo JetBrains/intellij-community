@@ -122,6 +122,7 @@ abstract class CharArray implements CharSequenceBackedByArray {
     if (myDebugDeferredProcessing) {
       
       myDebugArray = new CharArray(bufferSize, new TextChangesStorage(), data == null ? null : Arrays.copyOf(data, data.length), start, end, false) {
+        @NotNull
         @Override
         protected DocumentEvent beforeChangedUpdate(DocumentImpl subj,
                                                     int offset,
@@ -132,7 +133,7 @@ abstract class CharArray implements CharSequenceBackedByArray {
         }
 
         @Override
-        protected void afterChangedUpdate(DocumentEvent event, long newModificationStamp) {
+        protected void afterChangedUpdate(@NotNull DocumentEvent event, long newModificationStamp) {
         }
       };
       myDebugDeferredChanges = new ArrayList<TextChangeImpl>();
@@ -143,12 +144,13 @@ abstract class CharArray implements CharSequenceBackedByArray {
     myBufferSize = bufferSize;
   }
 
+  @NotNull
   protected abstract DocumentEvent beforeChangedUpdate(DocumentImpl subj,
                                                        int offset,
                                                        @Nullable CharSequence oldString,
                                                        @Nullable CharSequence newString,
                                                        boolean wholeTextReplaced);
-  protected abstract void afterChangedUpdate(DocumentEvent event, long newModificationStamp);
+  protected abstract void afterChangedUpdate(@NotNull DocumentEvent event, long newModificationStamp);
 
   public void setText(@Nullable final DocumentImpl subj, final CharSequence chars) {
     myOriginalSequence = chars;
@@ -361,6 +363,7 @@ abstract class CharArray implements CharSequenceBackedByArray {
     }
     if (hasDeferredChanges()) {
       return new CharArray(myBufferSize, myDeferredChangesStorage, myArray, myStart + start, myStart + end) {
+        @NotNull
         @Override
         protected DocumentEvent beforeChangedUpdate(DocumentImpl subj,
                                                     int offset,
@@ -371,7 +374,7 @@ abstract class CharArray implements CharSequenceBackedByArray {
         }
 
         @Override
-        protected void afterChangedUpdate(DocumentEvent event, long newModificationStamp) {
+        protected void afterChangedUpdate(@NotNull DocumentEvent event, long newModificationStamp) {
         }
       };
     }

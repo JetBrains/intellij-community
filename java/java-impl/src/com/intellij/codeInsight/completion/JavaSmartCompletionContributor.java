@@ -217,9 +217,9 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
           if (!BasicExpressionCompletionContributor.AFTER_DOT.accepts(position)) {
             final PsiElement parent = position.getParent();
             if (parent != null && !(parent.getParent() instanceof PsiSwitchLabelStatement)) {
-              new JavaMembersGetter(type).addMembers(position, noTypeCheck);
+              new JavaMembersGetter(type).addMembers(position, true, noTypeCheck);
               if (!parameters.getDefaultType().equals(type)) {
-                new JavaMembersGetter(parameters.getDefaultType()).addMembers(position, noTypeCheck);
+                new JavaMembersGetter(parameters.getDefaultType()).addMembers(position, true, noTypeCheck);
               }
             }
           }

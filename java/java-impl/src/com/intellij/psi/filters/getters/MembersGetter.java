@@ -39,7 +39,7 @@ import java.util.List;
  */
 public abstract class MembersGetter {
 
-  public void processMembers(@NotNull final PsiElement context, final Consumer<LookupElement> results, @Nullable final PsiClass where, final boolean acceptMethods) {
+  public void processMembers(@NotNull final PsiElement context, final Consumer<LookupElement> results, @Nullable final PsiClass where, final boolean acceptMethods, boolean searchInheritors) {
     if (where == null) return;
     
     final List<PsiClass> placeClasses = new ArrayList<PsiClass>();
@@ -70,7 +70,7 @@ public abstract class MembersGetter {
       }
     };
     consumer.consume(baseType);
-    if (!CommonClassNames.JAVA_LANG_OBJECT.equals(where.getQualifiedName())) {
+    if (searchInheritors && !CommonClassNames.JAVA_LANG_OBJECT.equals(where.getQualifiedName())) {
       CodeInsightUtil.processSubTypes(baseType, context, true, Condition.TRUE, consumer);
     }
   }
