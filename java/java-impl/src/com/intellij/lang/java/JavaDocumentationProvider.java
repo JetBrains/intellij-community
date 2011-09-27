@@ -74,10 +74,10 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
       return generateClassInfo((PsiClass)element);
     }
     else if (element instanceof PsiMethod) {
-      return generateMethodInfo((PsiMethod)element);
+      return generateMethodInfo((PsiMethod)element, calcSubstitutor(originalElement));
     }
     else if (element instanceof PsiField) {
-      return generateFieldInfo((PsiField)element);
+      return generateFieldInfo((PsiField)element, calcSubstitutor(originalElement));
     }
     else if (element instanceof PsiVariable) {
       return generateVariableInfo((PsiVariable)element);
@@ -86,9 +86,17 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
       return generatePackageInfo((PsiPackage)element);
     }
     else if (element instanceof BeanPropertyElement) {
-      return generateMethodInfo(((BeanPropertyElement) element).getMethod());
+      return generateMethodInfo(((BeanPropertyElement) element).getMethod(), PsiSubstitutor.EMPTY);
     }
     return null;
+  }
+
+  private static PsiSubstitutor calcSubstitutor(PsiElement originalElement) {
+    PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
+    if (originalElement instanceof PsiReferenceExpression) {
+      substitutor = ((PsiReferenceExpression)originalElement).advancedResolve(true).getSubstitutor();
+    }
+    return substitutor;
   }
 
   public List<String> getUrlFor(final PsiElement element, final PsiElement originalElement) {
@@ -245,7 +253,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  public static String generateMethodInfo(PsiMethod method) {
+  public static String generateMethodInfo(PsiMethod method, PsiSubstitutor substitutor) {
     StringBuilder buffer = new StringBuilder();
 
     PsiClass parentClass = method.getContainingClass();
@@ -288,7 +296,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     }
 
     if (method.getReturnType() != null) {
-      JavaDocInfoGenerator.generateType(buffer, method.getReturnType(), method, false);
+      JavaDocInfoGenerator.generateType(buffer, substitutor.substitute(method.getReturnType()), method, false);
       buffer.append(" ");
     }
 
@@ -298,7 +306,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     PsiParameter[] parms = method.getParameterList().getParameters();
     for (int i = 0; i < parms.length; i++) {
       PsiParameter parm = parms[i];
-      JavaDocInfoGenerator.generateType(buffer, parm.getType(), method, false);
+      JavaDocInfoGenerator.generateType(buffer, substitutor.substitute(parm.getType()), method, false);
       buffer.append(" ");
       if (parm.getName() != null) {
         buffer.append(parm.getName());
@@ -333,7 +341,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     return buffer.toString();
   }
 
-  private static String generateFieldInfo(PsiField field) {
+  private static String generateFieldInfo(PsiField field, PsiSubstitutor substitutor) {
     StringBuilder buffer = new StringBuilder();
     PsiClass parentClass = field.getContainingClass();
 
@@ -344,7 +352,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
 
     generateModifiers(buffer, field);
 
-    JavaDocInfoGenerator.generateType(buffer, field.getType(), field, false);
+    JavaDocInfoGenerator.generateType(buffer, substitutor.substitute(field.getType()), field, false);
     buffer.append(" ");
     buffer.append(field.getName());
 
