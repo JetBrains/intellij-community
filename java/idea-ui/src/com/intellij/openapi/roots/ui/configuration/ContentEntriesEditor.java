@@ -34,7 +34,7 @@ public class ContentEntriesEditor extends JavaContentEntriesEditor {
   }
 
   public void disposeUIResources() {
-    myLanguageLevelConfigurable.disposeUIResources();
+    if (myLanguageLevelConfigurable != null) myLanguageLevelConfigurable.disposeUIResources();
     super.disposeUIResources();
   }
 
