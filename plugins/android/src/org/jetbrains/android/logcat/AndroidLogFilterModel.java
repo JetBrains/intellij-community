@@ -24,17 +24,25 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author Eugene.Kudelevsky
  */
 public abstract class AndroidLogFilterModel extends LogFilterModel {
+  private static final Pattern ANDROID_LOG_MESSAGE_PATTERN =
+    Pattern.compile("\\d\\d-\\d\\d\\s\\d\\d:\\d\\d:\\d\\d\\.\\d+:\\s+[A-Z]+/(\\w+)\\(\\d+\\):.*");
+
   private final List<LogFilterListener> myListeners = new ArrayList<LogFilterListener>();
 
   private Log.LogLevel myPrevMessageLogLevel;
+  
+  private String myPrevTag;
   private LogFilter mySelectedLogFilter;
   private List<AndroidLogFilter> myLogFilters = new ArrayList<AndroidLogFilter>();
 
@@ -54,7 +62,19 @@ public abstract class AndroidLogFilterModel extends LogFilterModel {
     fireTextFilterChange();
   }
 
+  public void updateTagFilter(String tag) {
+    setTagFilter(tag);
+    fireTextFilterChange();
+  }
+
   protected abstract void setCustomFilter(String filter);
+
+  protected void setTagFilter(String tag) {
+  }
+
+  protected String getTagFilter() {
+    return "";
+  }
 
   protected abstract void saveLogLevel(Log.LogLevel logLevel);
 
@@ -98,7 +118,22 @@ public abstract class AndroidLogFilterModel extends LogFilterModel {
 
   public boolean isApplicable(String text) {
     if (!super.isApplicable(text)) return false;
-    return mySelectedLogFilter == null || mySelectedLogFilter.isAcceptable(text);
+    
+    if (!(mySelectedLogFilter == null || mySelectedLogFilter.isAcceptable(text))) {
+      return false;
+    }
+
+    final String tagFilter = getTagFilter();
+    if (tagFilter == null || tagFilter.length() == 0) {
+      return true;
+    }
+
+    String tag = getLogTag(text);
+    if (tag == null) {
+      tag = myPrevTag;
+    }
+
+    return tagFilter.equals(tag);
   }
 
   public List<? extends LogFilter> getLogFilters() {
@@ -136,10 +171,29 @@ public abstract class AndroidLogFilterModel extends LogFilterModel {
   }
 
   public Key processLine(String line) {
+    final String tag = getLogTag(line);
+    
+    if (tag != null) {
+      myPrevTag = tag;
+    }
+    
     Log.LogLevel logLevel = AndroidLogcatUtil.getLogLevel(line);
     if (logLevel != null) {
       myPrevMessageLogLevel = logLevel;
     }
     return myPrevMessageLogLevel != null ? getProcessOutputType(myPrevMessageLogLevel) : ProcessOutputTypes.STDOUT;
+  }
+
+  @Nullable
+  private static String getLogTag(String line) {
+    String prevTag = null;
+    final Matcher matcher = ANDROID_LOG_MESSAGE_PATTERN.matcher(line);
+    if (matcher.matches()) {
+      final String tag = matcher.group(1).trim();
+      if (tag.length() > 0) {
+        prevTag = tag;
+      }
+    }
+    return prevTag;
   }
 }
