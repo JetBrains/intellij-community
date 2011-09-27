@@ -43,7 +43,9 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.navigation.Place;
+import com.intellij.util.Function;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -363,15 +365,21 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
 
   protected class MyRemoveAction extends MyDeleteAction {
     public MyRemoveAction() {
-      super(new Condition<Object>() {
-        public boolean value(final Object object) {
-          if (object instanceof MyNode) {
-            final NamedConfigurable namedConfigurable = ((MyNode)object).getConfigurable();
-            if (namedConfigurable != null) {
-              return canBeRemoved(namedConfigurable.getEditableObject());
+      super(new Condition<Object[]>() {
+        public boolean value(final Object[] objects) {
+          Object[] editableObjects = ContainerUtil.mapNotNull(objects, new Function<Object, Object>() {
+            @Override
+            public Object fun(Object object) {
+              if (object instanceof MyNode) {
+                final NamedConfigurable namedConfigurable = ((MyNode)object).getConfigurable();
+                if (namedConfigurable != null) {
+                  return namedConfigurable.getEditableObject();
+                }
+              }
+              return null;
             }
-          }
-          return false;
+          }, new Object[0]);
+          return editableObjects.length == objects.length && canBeRemoved(editableObjects);
         }
       });
     }
@@ -402,7 +410,14 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
     }
   }
 
-  protected boolean canBeRemoved(final Object editableObject) {
+  protected boolean canBeRemoved(final Object[] editableObjects) {
+    for (Object editableObject : editableObjects) {
+      if (!canObjectBeRemoved(editableObject)) return false;
+    }
+    return true;
+  }
+
+  private static boolean canObjectBeRemoved(Object editableObject) {
     if (editableObject instanceof Sdk ||
         editableObject instanceof Module ||
         editableObject instanceof Facet ||

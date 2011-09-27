@@ -580,12 +580,12 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
                                              PlatformIcons.OPENED_MODULE_GROUP_ICON, PlatformIcons.CLOSED_MODULE_GROUP_ICON);
   }
 
-  protected boolean canBeRemoved(final Object editableObject) {
-    if (super.canBeRemoved(editableObject)) {
+  protected boolean canBeRemoved(final Object[] editableObjects) {
+    if (super.canBeRemoved(editableObjects)) {
       return true;
     }
     for (final ModuleStructureExtension extension : ModuleStructureExtension.EP_NAME.getExtensions()) {
-      if (extension.canBeRemoved(editableObject)) {
+      if (extension.canBeRemoved(editableObjects)) {
         return true;
       }
     }

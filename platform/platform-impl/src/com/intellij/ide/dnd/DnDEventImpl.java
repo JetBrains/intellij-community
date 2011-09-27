@@ -111,11 +111,16 @@ public class DnDEventImpl extends UserDataHolderBase implements Transferable, Dn
       return ((Transferable)myAttachedObject).getTransferData(flavor);
     }
     else if (myAttachedObject instanceof FileFlavorProvider && flavor == DataFlavor.javaFileListFlavor) {
-      return ((FileFlavorProvider)myAttachedObject).asFileList();
+      final List<File> files = ((FileFlavorProvider)myAttachedObject).asFileList();
+      if (files != null) {
+        return files;
+      }
     }
     else if (myAttachedObject instanceof FileFlavorProvider && flavor == LinuxDragAndDropSupport.uriListFlavor) {
       final List<File> files = ((FileFlavorProvider)myAttachedObject).asFileList();
-      return LinuxDragAndDropSupport.toUriList(files);
+      if (files != null) {
+        return LinuxDragAndDropSupport.toUriList(files);
+      }
     }
 
     return getAttachedObject();

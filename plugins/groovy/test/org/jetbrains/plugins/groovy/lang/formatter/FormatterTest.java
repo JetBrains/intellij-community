@@ -113,6 +113,7 @@ public class FormatterTest extends GroovyFormatterTestCase {
 
   public void testClosureAfterLineComment() throws Throwable { doTest(); }
   public void testAnnotationOnSeparateLine() throws Throwable { doTest(); }
+  public void testAlignMultipleVariables() throws Throwable { doTest(); }
 
   public void testSpockTable() throws Throwable { doTest(); }
   public void testSpockTableComments() throws Throwable { doTest(); }

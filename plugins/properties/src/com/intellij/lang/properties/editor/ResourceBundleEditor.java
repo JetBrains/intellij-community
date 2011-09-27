@@ -241,8 +241,11 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
 
       @Override
       public void fileDeleted(VirtualFileEvent event) {
-        if (PropertiesUtil.isPropertiesFile(event.getFile(), myProject)) {
-          recreateEditorsPanel();
+        for (PropertiesFile file : myEditors.keySet()) {
+          if (file.getVirtualFile() == event.getFile()) {
+            recreateEditorsPanel();
+            return;
+          }
         }
       }
 

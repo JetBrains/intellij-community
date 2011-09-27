@@ -25,5 +25,13 @@ public class FoundationTest extends TestCase {
 
     assertEquals("utf-8", Foundation.getEncodingName(4));
     assertEquals(null, Foundation.getEncodingName(0));
+    assertEquals(null, Foundation.getEncodingName(-1));
+
+    assertEquals(4, Foundation.getEncodingCode("utf-8"));
+    assertEquals(4, Foundation.getEncodingCode("UTF-8"));
+
+    assertEquals(-1, Foundation.getEncodingCode(""));
+    assertEquals(-1, Foundation.getEncodingCode("asdasd"));
+    assertEquals(-1, Foundation.getEncodingCode(null));
   }
 }

@@ -28,7 +28,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.SequentialTask;
-import com.intellij.util.containers.HashSet;
+import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -37,8 +38,7 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * Formatting progressable task.  
@@ -86,7 +86,7 @@ public class FormattingProgressTask extends Task.Modal implements FormattingProg
     TOTAL_WEIGHT = weight;
   }
   
-  private final Map<EventType, Collection<Runnable>> myCallbacks = new HashMap<EventType, Collection<Runnable>>();
+  private final ConcurrentMap<EventType, Collection<Runnable>> myCallbacks = new ConcurrentHashMap<EventType, Collection<Runnable>>();
 
   private final WeakReference<VirtualFile> myFile;
   private final WeakReference<Document>    myDocument;
@@ -202,7 +202,10 @@ public class FormattingProgressTask extends Task.Modal implements FormattingProg
   private Collection<Runnable> getCallbacks(@NotNull EventType eventType) {
     Collection<Runnable> result = myCallbacks.get(eventType);
     if (result == null) {
-      myCallbacks.put(eventType, result = new HashSet<Runnable>());
+      Collection<Runnable> candidate = myCallbacks.putIfAbsent(eventType, result = new ConcurrentHashSet<Runnable>());
+      if (candidate != null) {
+        result = candidate;
+      } 
     }
     return result;
   }

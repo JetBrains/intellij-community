@@ -232,9 +232,11 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager {
       assert charset != null;
       setAndSaveOrReload(virtualFile, charset);
     }
-    for (VirtualFile open : FileEditorManager.getInstance(myProject).getOpenFiles()) {
-      if (!map.containsKey(open)) {
-        saveOrReload(open);
+    if (!myProject.isDefault()) {
+      for (VirtualFile open : FileEditorManager.getInstance(myProject).getOpenFiles()) {
+        if (!map.containsKey(open)) {
+          saveOrReload(open);
+        }
       }
     }
   }

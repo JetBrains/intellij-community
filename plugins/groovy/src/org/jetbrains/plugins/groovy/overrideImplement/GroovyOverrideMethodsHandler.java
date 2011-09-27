@@ -38,7 +38,7 @@ public class GroovyOverrideMethodsHandler implements LanguageCodeInsightActionHa
     PsiClass aClass = OverrideImplementUtil.getContextClass(project, editor, file, true);
     if (aClass == null) return;
 
-    if (OverrideImplementUtil.getMethodSignaturesToImplement(aClass).isEmpty()) {
+    if (OverrideImplementUtil.getMethodSignaturesToOverride(aClass).isEmpty()) {
       HintManager.getInstance().showErrorHint(editor, "No methods to override have been found");
       return;
     }

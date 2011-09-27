@@ -35,6 +35,7 @@ public class AndroidLogcatFiltersPreferences implements PersistentStateComponent
   public String TOOL_WINDOW_CUSTOM_FILTER = "";
   public String TAB_LOG_LEVEL = "VERBOSE";
   public String TOOL_WINDOW_LOG_LEVEL = "VERBOSE";
+  public String TOOL_WINDOW_LOG_TAG_FILTER = "";
 
   public static AndroidLogcatFiltersPreferences getInstance(Project project) {
     return ServiceManager.getService(project, AndroidLogcatFiltersPreferences.class);
