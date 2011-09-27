@@ -23,12 +23,13 @@ import com.intellij.util.Processor;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
-public class MostlySingularMultiMap<K, V> {
+public class MostlySingularMultiMap<K, V> implements Serializable {
   private final Map<K, Object> myMap = new THashMap<K, Object>();
 
   public void add(K key, V value) {
