@@ -10,6 +10,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.RenameHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import de.plushnikov.intellij.lombok.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.lombok.psi.MyLightMethod;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,8 +22,7 @@ import org.jetbrains.annotations.Nullable;
 public class LombokElementRenameHandler implements RenameHandler {
   public boolean isAvailableOnDataContext(DataContext dataContext) {
     final PsiElement element = getElement(dataContext);
-    if (element instanceof MyLightMethod) return true;
-    return false;
+    return element instanceof MyLightMethod || element instanceof LombokLightMethodBuilder;
   }
 
   @Nullable

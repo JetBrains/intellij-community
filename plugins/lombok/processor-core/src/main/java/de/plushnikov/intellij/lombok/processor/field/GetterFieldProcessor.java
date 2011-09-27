@@ -1,6 +1,7 @@
 package de.plushnikov.intellij.lombok.processor.field;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.Modifier;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -8,10 +9,10 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
-import com.intellij.util.StringBuilderSpinAllocator;
 import de.plushnikov.intellij.lombok.UserMapKeys;
 import de.plushnikov.intellij.lombok.problem.ProblemBuilder;
 import de.plushnikov.intellij.lombok.processor.LombokProcessorUtil;
+import de.plushnikov.intellij.lombok.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.lombok.quickfix.PsiQuickFixFactory;
 import de.plushnikov.intellij.lombok.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.lombok.util.PsiClassUtil;
@@ -38,7 +39,7 @@ public class GetterFieldProcessor extends AbstractLombokFieldProcessor {
   }
 
   protected <Psi extends PsiElement> void processIntern(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull List<Psi> target) {
-    final String methodVisibility = LombokProcessorUtil.getMethodVisibility(psiAnnotation);
+    final String methodVisibility = LombokProcessorUtil.getMethodModifier(psiAnnotation);
     if (methodVisibility != null) {
       target.add((Psi) createGetterMethod(psiField, methodVisibility));
     }
@@ -48,7 +49,7 @@ public class GetterFieldProcessor extends AbstractLombokFieldProcessor {
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiField psiField, @NotNull ProblemBuilder builder) {
     boolean result;
 
-    final String methodVisibity = LombokProcessorUtil.getMethodVisibility(psiAnnotation);
+    final String methodVisibity = LombokProcessorUtil.getMethodModifier(psiAnnotation);
     result = null != methodVisibity;
 
     final Boolean lazyObj = PsiAnnotationUtil.getAnnotationValue(psiAnnotation, "lazy", Boolean.class);
@@ -96,40 +97,33 @@ public class GetterFieldProcessor extends AbstractLombokFieldProcessor {
   }
 
   @NotNull
-  public PsiMethod createGetterMethod(@NotNull PsiField psiField, @NotNull String methodVisibility) {
-    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-    try {
-      final String fieldName = psiField.getName();
-      final PsiType psiReturnType = psiField.getType();
-      String methodName = TransformationsUtil.toGetterName(fieldName, PsiType.BOOLEAN.equals(psiReturnType));
+  public PsiMethod createGetterMethod(@NotNull PsiField psiField, @Modifier @NotNull String methodModifier) {
+    final String fieldName = psiField.getName();
+    final PsiType psiReturnType = psiField.getType();
+    String methodName = TransformationsUtil.toGetterName(fieldName, PsiType.BOOLEAN.equals(psiReturnType));
 
-      final Collection<String> annotationsToCopy = PsiAnnotationUtil.collectAnnotationsToCopy(psiField);
-      final String annotationsString = PsiAnnotationUtil.buildAnnotationsString(annotationsToCopy);
+    final Collection<String> annotationsToCopy = PsiAnnotationUtil.collectAnnotationsToCopy(psiField);
+    final String annotationsString = PsiAnnotationUtil.buildAnnotationsString(annotationsToCopy);
+    //TODO adapt annotations
 
-      builder.append(methodVisibility);
-      if (StringUtil.isNotEmpty(methodVisibility)) {
-        builder.append(' ');
-      }
-      if (psiField.hasModifierProperty(PsiModifier.STATIC)) {
-        builder.append(PsiModifier.STATIC).append(' ');
-      }
-      builder.append(annotationsString);
-      builder.append(psiReturnType.getCanonicalText());
-      builder.append(' ');
-      builder.append(methodName);
-      builder.append("()");
-      builder.append("{ return this.").append(fieldName).append("; }");
+    PsiClass psiClass = psiField.getContainingClass();
+    assert psiClass != null;
 
-      PsiClass psiClass = psiField.getContainingClass();
-      assert psiClass != null;
+    UserMapKeys.addReadUsageFor(psiField);
 
-      UserMapKeys.addReadUsageFor(psiField);
-
-      return PsiMethodUtil.createMethod(psiClass, builder.toString(), psiField);
-    } finally {
-      StringBuilderSpinAllocator.dispose(builder);
+    //return PsiMethodUtil.createMethod(psiClass, builder.toString(), psiField);
+    //PsiMethod method = PropertyUtil.generateGetterPrototype(psiField);
+    LombokLightMethodBuilder method = new LombokLightMethodBuilder(psiField.getManager(), methodName)
+        .setMethodReturnType(psiReturnType)
+        .setContainingClass(psiClass)
+        .setNavigationElement(psiField);
+    if (StringUtil.isNotEmpty(methodModifier)) {
+      method.addModifier(methodModifier);
     }
+    if (psiField.hasModifierProperty(PsiModifier.STATIC)) {
+      method.addModifier(PsiModifier.STATIC);
+    }
+    return method;
   }
-
 
 }

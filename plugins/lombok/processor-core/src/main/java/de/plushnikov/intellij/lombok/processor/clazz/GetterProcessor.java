@@ -1,5 +1,6 @@
 package de.plushnikov.intellij.lombok.processor.clazz;
 
+import com.intellij.psi.Modifier;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -60,19 +61,19 @@ public class GetterProcessor extends AbstractLombokClassProcessor {
   }
 
   protected boolean validateVisibility(@NotNull PsiAnnotation psiAnnotation) {
-    final String methodVisibility = LombokProcessorUtil.getMethodVisibility(psiAnnotation);
+    final String methodVisibility = LombokProcessorUtil.getMethodModifier(psiAnnotation);
     return null != methodVisibility;
   }
 
   protected <Psi extends PsiElement> void processIntern(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<Psi> target) {
-    final String methodVisibility = LombokProcessorUtil.getMethodVisibility(psiAnnotation);
+    @Modifier final String methodVisibility = LombokProcessorUtil.getMethodModifier(psiAnnotation);
     if (methodVisibility != null) {
       target.addAll((Collection<? extends Psi>) createFieldGetters(psiClass, methodVisibility));
     }
   }
 
   @NotNull
-  public Collection<PsiMethod> createFieldGetters(@NotNull PsiClass psiClass, @NotNull String methodVisibility) {
+  public Collection<PsiMethod> createFieldGetters(@NotNull PsiClass psiClass, @Modifier @NotNull String methodModifier) {
     Collection<PsiMethod> result = new ArrayList<PsiMethod>();
     final PsiMethod[] classMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
 
@@ -91,7 +92,7 @@ public class GetterProcessor extends AbstractLombokClassProcessor {
         createGetter &= !PsiMethodUtil.hasMethodByName(classMethods, methodNames);
       }
       if (createGetter) {
-        result.add(fieldProcessor.createGetterMethod(psiField, methodVisibility));
+        result.add(fieldProcessor.createGetterMethod(psiField, methodModifier));
       }
     }
     return result;

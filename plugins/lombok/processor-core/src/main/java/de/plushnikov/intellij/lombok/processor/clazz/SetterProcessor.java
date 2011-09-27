@@ -1,5 +1,6 @@
 package de.plushnikov.intellij.lombok.processor.clazz;
 
+import com.intellij.psi.Modifier;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -52,18 +53,18 @@ public class SetterProcessor extends AbstractLombokClassProcessor {
   }
 
   protected boolean validateVisibility(@NotNull PsiAnnotation psiAnnotation) {
-    final String methodVisibility = LombokProcessorUtil.getMethodVisibility(psiAnnotation);
+    final String methodVisibility = LombokProcessorUtil.getMethodModifier(psiAnnotation);
     return null != methodVisibility;
   }
 
   protected <Psi extends PsiElement> void processIntern(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<Psi> target) {
-    final String methodVisibility = LombokProcessorUtil.getMethodVisibility(psiAnnotation);
+    @Modifier final String methodVisibility = LombokProcessorUtil.getMethodModifier(psiAnnotation);
     if (methodVisibility != null) {
       target.addAll((Collection<? extends Psi>) createFieldSetters(psiClass, methodVisibility));
     }
   }
 
-  public Collection<PsiMethod> createFieldSetters(PsiClass psiClass, String methodVisibility) {
+  public Collection<PsiMethod> createFieldSetters(@NotNull PsiClass psiClass, @Modifier @NotNull String methodModifier) {
     Collection<PsiMethod> result = new ArrayList<PsiMethod>();
     final PsiMethod[] classMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
 
@@ -84,7 +85,7 @@ public class SetterProcessor extends AbstractLombokClassProcessor {
         createSetter &= !PsiMethodUtil.hasMethodByName(classMethods, methodNames);
       }
       if (createSetter) {
-        result.add(fieldProcessor.createSetterMethod(psiField, methodVisibility));
+        result.add(fieldProcessor.createSetterMethod(psiField, methodModifier));
       }
     }
     return result;
