@@ -9,15 +9,18 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
+import org.jetbrains.plugins.groovy.gpp.GppTypeConverter;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
+import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
@@ -68,6 +71,12 @@ public class LiteralConstructorReference extends PsiReferenceBase.Poly<GrListOrM
     else if (parent instanceof GrVariable) {
       type = ((GrVariable)parent).getDeclaredType();
     }
+    else if (parent instanceof GrArgumentList && GppTypeConverter.hasTypedContext(parent)) {
+      for (PsiType expected : GroovyExpectedTypesProvider.getDefaultExpectedTypes(expression)) {
+        expected = filterOutTrashTypes(expected);
+        if (expected != null) return (PsiClassType)expected;
+      }
+    }
     else {
       final GrControlFlowOwner controlFlowOwner = ControlFlowUtils.findControlFlowOwner(expression);
       if (controlFlowOwner instanceof GrOpenBlock && controlFlowOwner.getParent() instanceof GrMethod) {
@@ -84,13 +93,16 @@ public class LiteralConstructorReference extends PsiReferenceBase.Poly<GrListOrM
       }
     }
 
-    if (type instanceof PsiClassType &&
-        !type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) &&
-        !type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-      return (PsiClassType)type;
-    }
+    return filterOutTrashTypes(type);
+  }
 
-    return null;
+  @Nullable
+  private static PsiClassType filterOutTrashTypes(PsiType type) {
+    if (!(type instanceof PsiClassType)) return null;
+    if (type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) return null;
+    if (type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) return null;
+
+    return (PsiClassType)type;
   }
 
   @NotNull
