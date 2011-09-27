@@ -95,9 +95,11 @@ public class GithubRebaseAction extends DumbAwareAction {
           return GithubUtil.findGitHubRemoteBranch(project, project.getBaseDir());
         }
       });
-      final List<GitRemote> gitRemotes = GitRemote.list(project, root);
-      LOG.assertTrue(githubRemote != null);
+      if (githubRemote == null){
+        return;
+      }
 
+      final List<GitRemote> gitRemotes = GitRemote.list(project, root);
       final String pushUrl = githubRemote.pushUrl();
       final String login = GithubSettings.getInstance().getLogin();
       final int index = pushUrl.lastIndexOf(login);
