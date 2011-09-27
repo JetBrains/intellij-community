@@ -307,6 +307,7 @@
                         serviceImplementation="com.jetbrains.python.documentation.PythonDocumentationMap"/>
     <applicationConfigurable instance="com.jetbrains.python.documentation.PythonDocumentationConfigurable"/>
     <projectConfigurable instance="com.jetbrains.python.configuration.PyIntegratedToolsConfigurable"/>
+    <projectConfigurable instance="com.jetbrains.python.templateLanguages.TemplateLanguageConfigurable"/>
     <projectService serviceInterface="com.jetbrains.python.documentation.PyDocumentationSettings"
                     serviceImplementation="com.jetbrains.python.documentation.PyDocumentationSettings"/>
     <psi.referenceContributor implementation="com.jetbrains.python.documentation.DocStringReferenceContributor"/>
@@ -531,9 +532,9 @@
     <configurationProducer implementation="com.jetbrains.rest.run.sphinx.SphinxConfigurationProducer"/>
 
     <!-- Mako files -->
-    <lang.substitutor language="HTML" implementationClass="com.jetbrains.mako.TemplateLanguageSubstitutor"/>
-    <lang.substitutor language="XHTML" implementationClass="com.jetbrains.mako.TemplateLanguageSubstitutor"/>
-    <lang.substitutor language="XML" implementationClass="com.jetbrains.mako.TemplateLanguageSubstitutor"/>
+    <lang.substitutor language="HTML" implementationClass="com.jetbrains.python.templateLanguages.TemplateLanguageSubstitutor"/>
+    <lang.substitutor language="XHTML" implementationClass="com.jetbrains.python.templateLanguages.TemplateLanguageSubstitutor"/>
+    <lang.substitutor language="XML" implementationClass="com.jetbrains.python.templateLanguages.TemplateLanguageSubstitutor"/>
 
     <colorSettingsPage implementation="com.jetbrains.mako.highlighting.MakoColorsPage"/>
     <lang.syntaxHighlighterFactory key="Mako"
@@ -554,8 +555,8 @@
                   id="MakoBracesHandler"/>
     <annotator language="Mako" implementationClass="com.jetbrains.mako.validation.MakoAnnotatingVisitor"/>
 
-    <projectService serviceInterface="com.jetbrains.mako.TemplatesService"
-                    serviceImplementation="com.jetbrains.mako.TemplatesService"/>
+    <projectService serviceInterface="com.jetbrains.python.templateLanguages.TemplatesService"
+                    serviceImplementation="com.jetbrains.python.templateLanguages.TemplatesService"/>
 
     <!-- Jinja2 -->
     <editorHighlighterProvider filetype="Jinja2" implementationClass="com.jetbrains.jinja2.highlighting.Jinja2EditorHighlighterProvider"/>
