@@ -136,10 +136,7 @@ public class ExpressionParsing extends Parsing {
     while (true) {
       myBuilder.advanceLexer();
       parseExpression(true, true);
-      checkMatches(PyTokenTypes.IN_KEYWORD, message("PARSE.expected.in"));
-      if (!parseTupleExpression(false, false, true)) {
-        myBuilder.error(message("PARSE.expected.expression"));
-      }
+      parseComprehensionRange();
       while (myBuilder.getTokenType() == PyTokenTypes.IF_KEYWORD) {
         myBuilder.advanceLexer();
         parseOldExpression();
@@ -160,6 +157,13 @@ public class ExpressionParsing extends Parsing {
       break;
     }
     expr.done(exprType);
+  }
+
+  protected void parseComprehensionRange() {
+    checkMatches(PyTokenTypes.IN_KEYWORD, "'in' expected");
+    if (!parseTupleExpression(false, false, true)) {
+      myBuilder.error("expression expected");
+    }
   }
 
   private void parseDictOrSetDisplay() {
@@ -535,7 +539,7 @@ public class ExpressionParsing extends Parsing {
     }
   }
 
-  private boolean parseTupleExpression(boolean stopOnIn, boolean isTargetExpression, final boolean oldTest) {
+  protected boolean parseTupleExpression(boolean stopOnIn, boolean isTargetExpression, final boolean oldTest) {
     PsiBuilder.Marker expr = myBuilder.mark();
     boolean exprParseResult = oldTest ? parseOldTestExpression() : parseTestExpression(stopOnIn, isTargetExpression);
     if (!exprParseResult) {
