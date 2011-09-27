@@ -37,6 +37,9 @@ public interface FoundationLibrary extends Library {
   int CFStringConvertNSStringEncodingToEncoding(long nsEncoding);
   ID CFStringConvertEncodingToIANACharSetName(int cfEncoding);
 
+  int CFStringConvertIANACharSetNameToEncoding(Pointer encodingName);
+  long CFStringConvertEncodingToNSStringEncoding(int cfEncoding);
+
   void CFRetain(ID cfTypeRef);
   void CFRelease(ID cfTypeRef);
   int CFGetRetainCount (Pointer cfTypeRef);
@@ -77,4 +80,6 @@ public interface FoundationLibrary extends Library {
   int kCFStringEncodingUTF32 = 0x0c000100;
   int kCFStringEncodingUTF32BE = 0x18000100;
   int kCFStringEncodingUTF32LE = 0x1c000100;
+
+  int kCFStringEncodingInvalidId = 0xffffffff;
 }

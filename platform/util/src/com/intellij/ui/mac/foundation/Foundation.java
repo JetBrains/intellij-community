@@ -15,6 +15,7 @@
  */
 package com.intellij.ui.mac.foundation;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.HashMap;
 import com.sun.jna.Callback;
 import com.sun.jna.Native;
@@ -94,18 +95,18 @@ public class Foundation {
   public static boolean addMethodByID(ID cls, Pointer selectorName, ID impl, String types) {
     return myFoundationLibrary.class_addMethod(cls, selectorName, impl, types);
   }
-  
+
   public static boolean isMetaClass(ID cls) {
     return myFoundationLibrary.class_isMetaClass(cls);
   }
-  
+
   @Nullable
   public static String stringFromSelector(Pointer selector) {
     ID id = myFoundationLibrary.NSStringFromSelector(selector);
     if (id.intValue() > 0) {
       return toStringViaUTF8(id);
     }
-    
+
     return null;
   }
 
@@ -116,11 +117,11 @@ public class Foundation {
   public static String fullUserName() {
     return toStringViaUTF8(myFoundationLibrary.NSFullUserName());
   }
-  
+
   public static ID class_replaceMethod(ID cls, Pointer selector, Callback impl, String types) {
     return myFoundationLibrary.class_replaceMethod(cls, selector, impl, types);
   }
-  
+
   public static ID getMetaClass(String className) {
     return myFoundationLibrary.objc_getMetaClass(className);
   }
@@ -175,6 +176,16 @@ public class Foundation {
     return toStringViaUTF8(pointer);
   }
 
+  public static long getEncodingCode(@Nullable String encodingName) {
+    if (StringUtil.isEmptyOrSpaces(encodingName)) return -1;
+
+    Pointer converted = cfString(encodingName);
+    int cfEncoding = myFoundationLibrary.CFStringConvertIANACharSetNameToEncoding(converted);
+    if (cfEncoding == FoundationLibrary.kCFStringEncodingInvalidId) return -1;
+
+    return myFoundationLibrary.CFStringConvertEncodingToNSStringEncoding(cfEncoding);
+  }
+
   public static void cfRetain(ID id) {
     myFoundationLibrary.CFRetain(id);
   }
@@ -182,11 +193,11 @@ public class Foundation {
   public static void cfRelease(ID id) {
     myFoundationLibrary.CFRelease(id);
   }
-  
+
   public static boolean isMainThread() {
     return invoke("NSThread", "isMainThread").intValue() > 0;
   }
-  
+
   private static Map<String, RunnableInfo> ourMainThreadRunnables = new HashMap<String, RunnableInfo>();
   private static long ourCurrentRunnableCount = 0;
   private static final Object RUNNABLE_LOCK = new Object();
@@ -196,6 +207,7 @@ public class Foundation {
       myRunnable = runnable;
       myUseAutoreleasePool = useAutoreleasePool;
     }
+
     Runnable myRunnable;
     boolean myUseAutoreleasePool;
   }
