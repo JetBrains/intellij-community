@@ -1014,7 +1014,8 @@ class IntToIntBtree {
           state = hashGetState(index);
           ++total;
           if (total > length) {
-            break;   // violation of Euler's theorem means index corruption
+            // violation of Euler's theorem
+            throw new IllegalStateException("Index corrupted");
           }
         }
         while (state != HASH_FREE &&
