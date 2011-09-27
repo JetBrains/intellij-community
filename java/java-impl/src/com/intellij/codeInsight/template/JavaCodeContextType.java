@@ -24,6 +24,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NonNls;
@@ -103,8 +104,8 @@ public abstract class JavaCodeContextType extends TemplateContextType {
         return false;
       }
 
-      PsiElement parent = element.getParent().getParent();
-      return parent instanceof PsiExpressionStatement || parent instanceof PsiTypeElement && parent.getParent() instanceof PsiVariable;
+      PsiStatement statement = PsiTreeUtil.getParentOfType(element, PsiStatement.class);
+      return statement != null && statement.getTextRange().getStartOffset() == element.getTextRange().getStartOffset();
     }
   }
   public static class Expression extends JavaCodeContextType {
