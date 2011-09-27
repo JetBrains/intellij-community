@@ -28,7 +28,6 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.net.HttpConfigurable;
 import git4idea.GitRemote;
-import git4idea.GitUtil;
 import git4idea.config.GitVcsApplicationSettings;
 import git4idea.config.GitVersion;
 import git4idea.i18n.GitBundle;
@@ -293,17 +292,6 @@ public class GithubUtil {
     catch (CancelledException e) {
       return null;
     }
-  }
-
-  @Nullable
-  public static GitRemote getGithubBoundRepository(final Project project){
-    final VirtualFile root = project.getBaseDir();
-    // Check if git is already initialized and presence of remote branch
-    final boolean gitDetected = GitUtil.isUnderGit(root);
-    if (!gitDetected) {
-      return null;
-    }
-    return findGitHubRemoteBranch(project, root);
   }
 
   @Nullable
