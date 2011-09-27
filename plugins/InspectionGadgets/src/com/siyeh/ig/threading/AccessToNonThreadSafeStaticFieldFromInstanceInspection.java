@@ -66,16 +66,11 @@ public class AccessToNonThreadSafeStaticFieldFromInstanceInspection
     @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
-        if (infos[0] instanceof PsiMethod) {
-            return InspectionGadgetsBundle.message(
-                    "access.to.non.thread.safe.static.field.from.instance.method.problem.descriptor",
-                    infos[1]);
-        }
         return InspectionGadgetsBundle.message(
                 "access.to.non.thread.safe.static.field.from.instance.field.problem.descriptor",
-                infos[1]);
+                infos[0]);
     }
-
+    
     @Override
     @Nullable
     public JComponent createOptionsPanel() {
@@ -102,9 +97,6 @@ public class AccessToNonThreadSafeStaticFieldFromInstanceInspection
                             PsiField.class, PsiMethod.class,
                             PsiClassInitializer.class);
             if (parent == null) {
-                return;
-            }
-            if (parent.hasModifierProperty(PsiModifier.STATIC)) {
                 return;
             }
             if (parent instanceof PsiMethod ||
@@ -140,7 +132,7 @@ public class AccessToNonThreadSafeStaticFieldFromInstanceInspection
             if (!field.hasModifierProperty(PsiModifier.STATIC)) {
                 return;
             }
-            registerError(expression, parent, className);
+            registerError(expression, className);
         }
     }
 }
