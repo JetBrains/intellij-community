@@ -535,6 +535,7 @@
     <lang.substitutor language="HTML" implementationClass="com.jetbrains.python.templateLanguages.TemplateLanguageSubstitutor"/>
     <lang.substitutor language="XHTML" implementationClass="com.jetbrains.python.templateLanguages.TemplateLanguageSubstitutor"/>
     <lang.substitutor language="XML" implementationClass="com.jetbrains.python.templateLanguages.TemplateLanguageSubstitutor"/>
+    <lang.substitutor language="JavaScript" implementationClass="com.jetbrains.python.templateLanguages.TemplateLanguageSubstitutor"/>
 
     <colorSettingsPage implementation="com.jetbrains.mako.highlighting.MakoColorsPage"/>
     <lang.syntaxHighlighterFactory key="Mako"
