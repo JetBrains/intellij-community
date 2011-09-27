@@ -170,11 +170,8 @@ class GitLogParser {
     // D       a.txt
 
     if (line.isEmpty()) { return null; }
+    line = removeRecordStartIndicator(line);
 
-    // may have <RECORD_START> indicator, may not. If we have, get rid of it.
-    if (line.charAt(0) == RECORD_START.charAt(0)) {
-      line = line.substring(1);
-    }
 
     // parsing status and path (if given)
     final List<String> paths = new ArrayList<String>(1);
@@ -229,5 +226,15 @@ class GitLogParser {
       res.put(myOptions[i], "");
     }
     return new GitLogRecord(res, paths, parts, mySupportsRawBody);
+  }
+
+  @NotNull
+  private static String removeRecordStartIndicator(@NotNull String line) {
+    // We may have <RECORD_START> indicator at the beginning of the line (if we called parseOneLine directly), may not (if we called parse()).
+    // If we have, get rid of it.
+    if (line.charAt(0) == RECORD_START.charAt(0)) {
+      line = line.substring(RECORD_START.length());
+    }
+    return line;
   }
 }
