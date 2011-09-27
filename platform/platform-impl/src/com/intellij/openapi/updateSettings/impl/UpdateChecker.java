@@ -17,6 +17,7 @@ package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.RepositoryHelper;
 import com.intellij.ide.reporter.ConnectionException;
@@ -163,7 +164,7 @@ public final class UpdateChecker {
     final Map<String, IdeaPluginDescriptor> toUpdate = new HashMap<String, IdeaPluginDescriptor>();
     final IdeaPluginDescriptor[] installedPlugins = PluginManager.getPlugins();
     for (IdeaPluginDescriptor installedPlugin : installedPlugins) {
-      if (!installedPlugin.isBundled()) {
+      if (!installedPlugin.isBundled() && ((IdeaPluginDescriptorImpl)installedPlugin).isEnabled()) {
         toUpdate.put(installedPlugin.getPluginId().getIdString(), installedPlugin);
       }
     }
