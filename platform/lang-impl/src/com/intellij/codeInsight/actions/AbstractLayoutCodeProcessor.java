@@ -18,6 +18,7 @@ package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.formatting.FormattingProgressTask;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -180,7 +181,7 @@ public abstract class AbstractLayoutCodeProcessor {
     };
     Runnable writeAction = new Runnable() {
       public void run() {
-        if (resultRunnable[0] != null){
+        if (resultRunnable[0] != null) {
           resultRunnable[0].run();
         }
       }

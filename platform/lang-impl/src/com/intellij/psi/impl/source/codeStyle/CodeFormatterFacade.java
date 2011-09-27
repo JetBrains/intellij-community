@@ -177,6 +177,7 @@ public class CodeFormatterFacade {
               }
             }
             final PostprocessReformattingAspect component = file.getProject().getComponent(PostprocessReformattingAspect.class);
+            FormattingProgressTask.FORMATTING_CANCELLED_FLAG.set(false);
             component.doPostponedFormatting(file.getViewProvider());
             i = 0;
             for (FormatTextRanges.FormatTextRange range : textRanges) {
@@ -187,8 +188,11 @@ public class CodeFormatterFacade {
               }
               i++;
             }
-
           }
+          if (FormattingProgressTask.FORMATTING_CANCELLED_FLAG.get()) {
+            return;
+          }
+
           final FormattingModel originalModel = builder.createModel(file, mySettings);
           final FormattingModel model = new DocumentBasedFormattingModel(originalModel.getRootBlock(),
                                                                          document,
