@@ -628,6 +628,10 @@ public class ContainerUtil {
     return set;
   }
 
+  public static <T> T[] toArray(@Nullable Collection<T> c, @NotNull ArrayFactory<T> factory) {
+    return c != null ? c.toArray(factory.create(c.size())) : factory.create(0);
+  }
+
   @NotNull
   public static <T> T[] toArray(@NotNull List<T> collection, @NotNull T[] array) {
     final int length = array.length;
