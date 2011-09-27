@@ -59,7 +59,7 @@ public class ShadowBorderPainter {
 
   public static BufferedImage createShadow(final JComponent c, final int width, final int height, boolean isPopup) {
     final GraphicsConfiguration graphicsConfiguration = GraphicsEnvironment.getLocalGraphicsEnvironment().
-        getDefaultScreenDevice().getDefaultConfiguration();
+      getDefaultScreenDevice().getDefaultConfiguration();
 
     final BufferedImage image = graphicsConfiguration.createCompatibleImage(width, height, Transparency.TRANSLUCENT);
     final Graphics2D g = image.createGraphics();
@@ -77,23 +77,22 @@ public class ShadowBorderPainter {
 
 
     topLeft.paintIcon(c, g, 0, 0);
-    topRight.paintIcon(c, g, width - sideSize * 2, 0);
+    topRight.paintIcon(c, g, width - topRight.getIconWidth(), 0);
+    bottomRight.paintIcon(c, g, width - bottomRight.getIconWidth(), height - bottomRight.getIconHeight());
+    bottomLeft.paintIcon(c, g, 0, height - bottomLeft.getIconHeight());
 
-    for (int _x = sideSize * 2; _x < width - sideSize * 2; _x ++) {
+    for (int _x = topLeft.getIconWidth(); _x < width - topRight.getIconWidth(); _x++) {
       top.paintIcon(c, g, _x, 0);
     }
-
-    for (int _x = bottomSize * 2; _x < width - bottomSize * 2; _x ++) {
+    for (int _x = bottomLeft.getIconWidth(); _x < width - bottomLeft.getIconWidth(); _x++) {
       bottom.paintIcon(c, g, _x, height - bottomSize);
     }
-
-    for (int _y = sideSize * 2; _y < height - bottomSize * 2; _y ++) {
+    for (int _y = topLeft.getIconHeight(); _y < height - bottomLeft.getIconHeight(); _y++) {
       left.paintIcon(c, g, 0, _y);
+    }
+    for (int _y = topRight.getIconHeight(); _y < height - bottomRight.getIconHeight(); _y++) {
       right.paintIcon(c, g, width - sideSize, _y);
     }
-
-    bottomRight.paintIcon(c, g, width - bottomSize * 2, height - bottomSize * 2);
-    bottomLeft.paintIcon(c, g, 0, height - bottomSize * 2);
 
     g.dispose();
     return image;
@@ -111,7 +110,7 @@ public class ShadowBorderPainter {
     int size = shadowSize;
     final float w = source.getWidth(null);
     final float h = source.getHeight(null);
-    float ratio = w /h;
+    float ratio = w / h;
     float deltaX = size;
     float deltaY = size / ratio;
 
@@ -157,5 +156,4 @@ public class ShadowBorderPainter {
       return image;
     }
   }
-
 }
