@@ -78,7 +78,7 @@ public class DfaValueFactory {
             PsiExpression initializer = variable.getInitializer();
             if (initializer instanceof PsiPolyadicExpression && variable.hasModifierProperty(PsiModifier.FINAL)) {
               PsiType type = initializer.getType();
-              if (type != null && type.equalsToText("java.lang.String")) {
+              if (type != null && type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
                 return getNotNullFactory().create(type);
               }
             }

@@ -28,6 +28,7 @@ import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiVariable;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -678,6 +679,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   public void flushVariable(@NotNull DfaVariableValue variable) {
+    if (variable.getPsiVariable().hasModifierProperty(PsiModifier.FINAL)) {
+      return;
+    }
+
     final int id = variable.getID();
     int size = myEqClasses.size();
     int interruptCount = 0;

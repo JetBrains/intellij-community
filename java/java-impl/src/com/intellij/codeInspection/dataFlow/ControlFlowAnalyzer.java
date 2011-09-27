@@ -1434,7 +1434,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     if (dfaValue instanceof DfaVariableValue) {
       DfaVariableValue dfaVariable = (DfaVariableValue)dfaValue;
       PsiVariable psiVariable = dfaVariable.getPsiVariable();
-      if (psiVariable instanceof PsiField && !psiVariable.hasModifierProperty(PsiModifier.FINAL)) {
+      if (psiVariable instanceof PsiField) {
         addField(dfaVariable);
       }
     }
