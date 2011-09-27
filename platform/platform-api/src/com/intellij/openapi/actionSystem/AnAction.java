@@ -310,4 +310,9 @@ public abstract class AnAction implements PossiblyDumbAware {
   public static Project getEventProject(AnActionEvent e) {
     return e == null ? null : e.getData(PlatformDataKeys.PROJECT);
   }
+
+  @Override
+  public String toString() {
+    return getTemplatePresentation().toString();
+  }
 }
