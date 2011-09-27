@@ -389,6 +389,7 @@
     </action>
     <action id="GotoRelated">
       <keyboard-shortcut first-keystroke="control meta UP"/>
+      <keyboard-shortcut first-keystroke="alt meta UP"/>
     </action>
     <action id="QuickImplementations">
       <keyboard-shortcut first-keystroke="alt SPACE"/>
