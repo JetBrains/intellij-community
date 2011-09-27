@@ -163,7 +163,7 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
 
 
     });
-    result.add(new MyDeleteAction( new Condition<Object>(){
+    result.add(new MyDeleteAction(forAll(new Condition<Object>(){
       public boolean value(final Object o) {
         if (o instanceof MyNode) {
           final MyNode node = (MyNode) o;
@@ -174,7 +174,7 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
         }
         return false;
       }
-    }) {
+    })) {
       public void actionPerformed(final AnActionEvent e) {
         final TreePath path = myTree.getSelectionPath();
         final MyNode node = (MyNode)path.getLastPathComponent();

@@ -40,7 +40,7 @@ public abstract class ModuleStructureExtension {
   public void disposeUIResources() {
   }
 
-  public boolean canBeRemoved(final Object editableObject) {
+  public boolean canBeRemoved(final Object[] editableObjects) {
     return false;
   }
 

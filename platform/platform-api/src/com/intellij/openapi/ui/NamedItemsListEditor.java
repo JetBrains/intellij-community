@@ -128,12 +128,12 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
         ArrayList<AnAction> result = new ArrayList<AnAction>();
         result.add(new AddAction());
 
-        result.add(new MyDeleteAction(new Condition<Object>() {
+        result.add(new MyDeleteAction(forAll(new Condition<Object>() {
             @SuppressWarnings({"unchecked"})
             public boolean value(Object o) {
                 return canDelete((T) ((MyNode) o).getConfigurable().getEditableObject());
             }
-        }));
+        })));
 
         result.add(new CopyAction());
 

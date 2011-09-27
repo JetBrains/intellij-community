@@ -158,7 +158,7 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
 
 
         });
-        result.add(new MyDeleteAction(Conditions.alwaysTrue()));
+        result.add(new MyDeleteAction(forAll(Conditions.alwaysTrue())));
         result.add(new AnAction("Copy", "Copy", PlatformIcons.COPY_ICON) {
             {
                 registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, KeyEvent.CTRL_MASK)), myTree);
