@@ -54,9 +54,9 @@ class GitLogParser {
   // separators are declared as String instead of char, because String#split() is heavily used in parsing.
   public static final String RECORD_START = "\u0001";
   public static final String RECORD_START_GIT = "%x01";
-  private static final String ITEMS_SEPARATOR = "\u0002";
+  public static final String ITEMS_SEPARATOR = "\u0002";
   private static final String ITEMS_SEPARATOR_GIT = "%x02";
-  private static final String RECORD_END = "\u0003";
+  public static final String RECORD_END = "\u0003";
   private static final String RECORD_END_GIT = "%x03";
 
   private final String myFormat;  // pretty custom format generated in the constructor
