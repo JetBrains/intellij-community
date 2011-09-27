@@ -1,6 +1,7 @@
 package de.plushnikov.intellij.plugin.provider;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -43,13 +44,18 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
   @NotNull
   @Override
   public <Psi extends PsiElement> List<Psi> getAugments(@NotNull PsiElement element, @NotNull Class<Psi> type) {
+    List<Psi> result = Collections.emptyList();
     // Expecting that we are only augmenting an PsiClass
     // Don't filter !isPhysical elements or code autocompletion will not work
     if (!(element instanceof PsiClass) || !element.isValid()) {
-      //noinspection unchecked
-      return Collections.emptyList();
+      return result;
     }
-    final List<Psi> result = new ArrayList<Psi>();
+    // skip processing during index rebuild
+    if (DumbService.isDumb(element.getProject())) {
+      return result;
+    }
+
+    result = new ArrayList<Psi>();
     final PsiClass psiClass = (PsiClass) element;
 
     if (type.isAssignableFrom(PsiField.class)) {
