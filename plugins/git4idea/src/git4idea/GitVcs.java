@@ -346,8 +346,12 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   protected void activate() {
     isActivated = true;
     myExecutableValidator = new GitExecutableValidator(myProject);
-    myExecutableValidator.checkExecutableAndShowDialogIfNeeded();
-    checkVersion();
+
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      myExecutableValidator.checkExecutableAndShowDialogIfNeeded();
+      checkVersion();
+    }
+
     if (!myProject.isDefault() && myRootTracker == null) {
       myRootTracker = new GitRootTracker(this, myProject, myRootListeners.getMulticaster());
     }
