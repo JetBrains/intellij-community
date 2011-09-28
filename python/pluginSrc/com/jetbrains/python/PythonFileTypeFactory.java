@@ -23,7 +23,7 @@ public class PythonFileTypeFactory extends FileTypeFactory {
 
   public void createFileTypes(@NonNls @NotNull final FileTypeConsumer consumer) {
     consumer.consume(PythonFileType.INSTANCE, "py;pyw;");
-    //consumer.consume(CythonFileType.INSTANCE, "pyx;pxd;pxi;");
+    consumer.consume(CythonFileType.INSTANCE, "pyx;pxd;pxi;");
     consumer.consume(QtUIFileType.INSTANCE, "ui");
     consumer.consume(QtTranslationsFileType.INSTANCE, "ts");
     consumer.consume(XmlFileType.INSTANCE, "qrc");
