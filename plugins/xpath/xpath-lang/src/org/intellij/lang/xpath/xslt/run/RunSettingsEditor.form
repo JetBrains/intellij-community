@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="org.intellij.lang.xpath.xslt.run.XsltRunSettingsEditor.Editor">
-  <tabbedpane id="fb52f" binding="myComponent">
+  <tabbedpane id="fb52f" class="com.intellij.ui.components.JBTabbedPane" binding="myComponent">
     <constraints>
       <xy x="115" y="24" width="580" height="497"/>
     </constraints>

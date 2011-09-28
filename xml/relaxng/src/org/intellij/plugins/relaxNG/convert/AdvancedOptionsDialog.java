@@ -18,6 +18,7 @@ package org.intellij.plugins.relaxNG.convert;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.ui.components.JBTabbedPane;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -53,7 +54,7 @@ public class AdvancedOptionsDialog extends DialogWrapper {
   protected JComponent createCenterPanel() {
     JComponent root;
     if (myInputOptions != null && myOutputOptions != null) {
-      root = new JTabbedPane();
+      root = new JBTabbedPane();
       ((JTabbedPane)root).addTab("Input", myInputOptions.getRoot());
       ((JTabbedPane)root).addTab("Output", myOutputOptions.getRoot());
     } else if (myInputOptions != null) {

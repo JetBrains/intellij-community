@@ -37,7 +37,7 @@
         <properties/>
         <border type="none"/>
         <children>
-          <tabbedpane id="b70bc" default-binding="true">
+          <tabbedpane id="b70bc" class="com.intellij.ui.components.JBTabbedPane" default-binding="true">
             <constraints>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false">
                 <preferred-size width="200" height="200"/>
@@ -93,13 +93,13 @@
                         <border type="none"/>
                         <children/>
                       </grid>
-                      <component id="a371c" class="javax.swing.JLabel">
+                      <component id="9988" class="com.intellij.ui.components.JBLabel">
                         <constraints>
-                          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="9" fill="0" indent="0" use-parent-layout="false"/>
+                          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                         </constraints>
                         <properties>
-                          <font size="10"/>
-                          <foreground color="-10066330"/>
+                          <componentStyle value="SMALL"/>
+                          <fontColor value="BRIGHTER"/>
                           <text resource-bundle="com/intellij/spellchecker/util/SpellCheckerBundle" key="dictionaries.panel.description"/>
                         </properties>
                       </component>
@@ -125,13 +125,13 @@
                         <border type="none"/>
                         <children/>
                       </grid>
-                      <component id="be7e9" class="javax.swing.JLabel">
+                      <component id="114cf" class="com.intellij.ui.components.JBLabel">
                         <constraints>
-                          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="9" fill="0" indent="0" use-parent-layout="false"/>
+                          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                         </constraints>
                         <properties>
-                          <font size="10"/>
-                          <foreground color="-10066330"/>
+                          <componentStyle value="SMALL"/>
+                          <fontColor value="BRIGHTER"/>
                           <text resource-bundle="com/intellij/spellchecker/util/SpellCheckerBundle" key="add.directory.description"/>
                         </properties>
                       </component>

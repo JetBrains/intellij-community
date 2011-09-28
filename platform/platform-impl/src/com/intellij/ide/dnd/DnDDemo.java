@@ -16,6 +16,7 @@
 package com.intellij.ide.dnd;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.ui.treeStructure.Tree;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,7 +59,7 @@ public class DnDDemo implements DnDEvent.DropTargetHighlightingType {
     }, source);
 
 
-    JTabbedPane tabs = new JTabbedPane();
+    JTabbedPane tabs = new JBTabbedPane();
 
     JPanel delegates = new JPanel(new FlowLayout());
     final JLabel delegate1Label = new JLabel("Delegate 1");

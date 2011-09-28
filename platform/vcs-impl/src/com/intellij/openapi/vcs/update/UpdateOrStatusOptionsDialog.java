@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.util.ui.OptionsDialog;
 
 import javax.swing.*;
@@ -46,7 +47,7 @@ public abstract class UpdateOrStatusOptionsDialog extends OptionsDialog {
       myMainPanel.add(Box.createVerticalStrut(10), BorderLayout.SOUTH);
     }
     else {
-      myMainPanel = new JTabbedPane();
+      myMainPanel = new JBTabbedPane();
       final ArrayList<AbstractVcs> vcses = new ArrayList<AbstractVcs>(confs.values());
       Collections.sort(vcses, new Comparator<AbstractVcs>() {
         public int compare(final AbstractVcs o1, final AbstractVcs o2) {

@@ -30,6 +30,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
+import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -109,7 +110,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
     if (myTabs == null) {
       myPanel = new JPanel();
       myPanel.setLayout(new BorderLayout());
-      myTabbedPane = new JTabbedPane();
+      myTabbedPane = new JBTabbedPane();
       myTabs = new ArrayList<CodeStyleAbstractPanel>();
       myPanel.add(myTabbedPane);
       initTabs(getSettings());

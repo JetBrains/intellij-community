@@ -27,6 +27,7 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.versionBrowser.DateFilterComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.util.AsynchConsumer;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -127,7 +128,7 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
         VcsCommittedViewAuxiliary auxiliary = provider.createActions(manager, location);
         if (auxiliary != null) {
           if (tabbedPane == null) {
-            tabbedPane = new JTabbedPane();
+            tabbedPane = new JBTabbedPane();
             actions = new ArrayList<AnAction>();
             toolbarActions = new ArrayList<AnAction>();
           }

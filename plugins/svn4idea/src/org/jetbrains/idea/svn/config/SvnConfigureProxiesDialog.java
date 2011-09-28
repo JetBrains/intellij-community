@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
+import com.intellij.ui.components.JBTabbedPane;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnServerFileManager;
@@ -172,7 +173,7 @@ public class SvnConfigureProxiesDialog extends DialogWrapper implements Validati
   }
 
   protected JComponent createCenterPanel() {
-    myTabbedPane = new JTabbedPane();
+    myTabbedPane = new JBTabbedPane();
     myTabbedPane.add(myUserTab.createComponent(), SvnBundle.message("dialog.edit.http.proxies.settings.tab.edit.user.file.title"));
     myTabbedPane.add(mySystemTab.createComponent(), SvnBundle.message("dialog.edit.http.proxies.settings.tab.edit.system.file.title"));
     myPanel.add(myTabbedPane, BorderLayout.NORTH);

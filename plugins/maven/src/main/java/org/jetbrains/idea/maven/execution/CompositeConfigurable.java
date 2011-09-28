@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.execution;
 
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.ui.components.JBTabbedPane;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -41,7 +42,7 @@ public class CompositeConfigurable implements Configurable {
   }
 
   public JComponent createComponent() {
-    tabbedPane = new JTabbedPane();
+    tabbedPane = new JBTabbedPane();
     for (Configurable configurable : configurables) {
       JComponent component = configurable.createComponent();
       component.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));

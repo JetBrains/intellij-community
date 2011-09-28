@@ -2458,5 +2458,22 @@ public class UIUtil {
       }
     }
   }
+  
+  public static void setNotOpaqueRecursively(Component component) {
+    if (component == null) return;
+    if (!isUnderAquaLookAndFeel()) return;
+
+    if (component.getBackground().equals(getPanelBackground()) || component instanceof JScrollPane || component instanceof JViewport) {
+      if (component instanceof JComponent) {
+        ((JComponent)component).setOpaque(false);
+      }
+      if (component instanceof Container) {
+        for (Component c : ((Container)component).getComponents()) {
+          setNotOpaqueRecursively(c);
+        }
+      }
+    }
+  }
+
 }
 

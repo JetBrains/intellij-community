@@ -16,6 +16,7 @@
 package com.intellij.openapi.options;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.ui.components.JBTabbedPane;
 
 import javax.swing.*;
 import java.awt.*;
@@ -52,7 +53,7 @@ public class GroupSettingsBuilder<T> implements CompositeSettingsBuilder<T> {
     if (editors.size() == 0) return new JPanel();
     if (editors.size() == 1) return editors.get(0).getSecond().getComponent();
 
-    JTabbedPane tabs = new JTabbedPane();
+    JTabbedPane tabs = new JBTabbedPane();
     for (int i = 0; i < editors.size(); i++) {
       Pair<String, SettingsEditor<T>> pair = editors.get(i);
       JPanel panel = new JPanel(new BorderLayout());

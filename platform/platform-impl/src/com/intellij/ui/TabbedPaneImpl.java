@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.components.JBTabbedPane;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -33,7 +34,7 @@ import java.awt.event.MouseEvent;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
-public class TabbedPaneImpl extends JTabbedPane implements TabbedPane {
+public class TabbedPaneImpl extends JBTabbedPane implements TabbedPane {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.TabbedPaneImpl");
 

@@ -21,6 +21,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +45,7 @@ class SettingsUI {
 
 
   SettingsUI(@NotNull final Project project, Configuration configuration) {
-    myTabbedPane = new JTabbedPane(JTabbedPane.TOP);
+    myTabbedPane = new JBTabbedPane(JTabbedPane.TOP);
     myRoot.add(myTabbedPane);
 
     final ArrayList<Configurable> configurables = new ArrayList<Configurable>();

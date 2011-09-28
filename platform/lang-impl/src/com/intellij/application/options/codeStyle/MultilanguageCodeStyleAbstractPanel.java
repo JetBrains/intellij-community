@@ -35,6 +35,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
+import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -211,7 +212,7 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
   @Override
   protected void installPreviewPanel(final JPanel previewPanel) {
     if (getSettingsType() != LanguageCodeStyleSettingsProvider.SettingsType.LANGUAGE_SPECIFIC) {
-      tabbedPane = new JTabbedPane();
+      tabbedPane = new JBTabbedPane();
       tabbedPane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
       Language[] langs = LanguageCodeStyleSettingsProvider.getLanguagesWithSharedPreview();
       if (langs.length == 0) return;

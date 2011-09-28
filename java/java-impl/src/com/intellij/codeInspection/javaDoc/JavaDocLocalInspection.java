@@ -31,6 +31,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -212,7 +213,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
       super(new GridBagLayout());
       GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0),0,0 );
       add(createAdditionalJavadocTagsPanel(), gc);
-      JTabbedPane tabs = new JTabbedPane(SwingConstants.BOTTOM);
+      JTabbedPane tabs = new JBTabbedPane(SwingConstants.BOTTOM);
       @NonNls String[] tags = new String[]{"@author", "@version", "@since", "@param"};
       tabs.add(InspectionsBundle.message("inspection.javadoc.option.tab.title"), createOptionsPanel(new String[]{NONE, PUBLIC, PACKAGE_LOCAL},
                                                                                                     tags,
