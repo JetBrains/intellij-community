@@ -27,7 +27,7 @@ public class ParameterListAnnotator extends PyAnnotator {
         int inTuple = 0;
         @Override
         public void visitNamedParameter(PyNamedParameter parameter, boolean first, boolean last) {
-          if (CythonLanguageDialect._isDisabledFor(parameter.getLanguage())) {
+          if (CythonLanguageDialect._isDisabledFor(parameter)) {
             return;
           }
           if (parameterNames.contains(parameter.getName())) {

@@ -43,7 +43,7 @@ public class PyArgumentListInspection extends PyInspection {
 
     @Override
     public void visitPyArgumentList(final PyArgumentList node) {
-      if (CythonLanguageDialect._isDisabledFor(node.getLanguage())) {
+      if (CythonLanguageDialect._isDisabledFor(node)) {
         return;
       }
       // analyze

@@ -50,7 +50,7 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
     return new PyInspectionVisitor(holder){
       @Override
       public void visitPyReferenceExpression(final PyReferenceExpression node) {
-        if (CythonLanguageDialect._isDisabledFor(node.getLanguage())) {
+        if (CythonLanguageDialect._isDisabledFor(node)) {
           return;
         }
         final Set<ScopeOwner> largeFunctions = session.getUserData(LARGE_FUNCTIONS_KEY);
@@ -209,7 +209,7 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
 
       @Override
       public void visitPyNonlocalStatement(final PyNonlocalStatement node) {
-        if (CythonLanguageDialect._isDisabledFor(node.getLanguage())) {
+        if (CythonLanguageDialect._isDisabledFor(node)) {
           return;
         }
         for (PyTargetExpression var : node.getVariables()) {

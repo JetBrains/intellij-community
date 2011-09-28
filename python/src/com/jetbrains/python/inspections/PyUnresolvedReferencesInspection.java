@@ -202,7 +202,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     @Override
     public void visitPyElement(final PyElement node) {
       super.visitPyElement(node);
-      if (CythonLanguageDialect._isDisabledFor(node.getLanguage())) {
+      if (CythonLanguageDialect._isDisabledFor(node)) {
         return;
       }
       if (node instanceof PyReferenceOwner) {

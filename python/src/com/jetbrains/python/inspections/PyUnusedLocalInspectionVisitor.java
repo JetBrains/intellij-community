@@ -74,7 +74,7 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
   static class DontPerformException extends RuntimeException {}
 
   private void processScope(final ScopeOwner owner, final PyElement node) {
-    if (CythonLanguageDialect._isDisabledFor(node.getLanguage())) {
+    if (CythonLanguageDialect._isDisabledFor(node)) {
       return;
     }
 
