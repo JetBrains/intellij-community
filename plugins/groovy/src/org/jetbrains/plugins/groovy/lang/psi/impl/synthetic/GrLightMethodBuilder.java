@@ -416,6 +416,7 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod {
   public GrLightMethodBuilder copy() {
     GrLightMethodBuilder copy = new GrLightMethodBuilder(myManager, myName);
     copy.setMethodKind(myMethodKind);
+    copy.setData(myData);
     copy.setNamedParametersArray(myNamedParametersArray);
     if (getNavigationElement() != this) {
       copy.setNavigationElement(getNavigationElement());
