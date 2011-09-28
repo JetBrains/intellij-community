@@ -26,6 +26,11 @@ import java.util.Collections;
  * @author nik
  */
 public abstract class ProjectConverter {
+
+  public boolean isConversionNeeded() {
+    return true;
+  }
+
   @Nullable
   public ConversionProcessor<ProjectSettings> createProjectFileConverter() {
     return null;

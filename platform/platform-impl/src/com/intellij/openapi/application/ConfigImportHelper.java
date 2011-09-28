@@ -18,6 +18,7 @@ package com.intellij.openapi.application;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.ui.AppUIUtil;
@@ -26,6 +27,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.*;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.PropertyResourceBundle;
 
 /**
@@ -43,12 +46,14 @@ public class ConfigImportHelper {
     File oldConfigDir = findOldConfigDir(newConfigPath);
 
     do {
-      ImportOldConfigsPanel dlg;
-      if (UIUtil.hasJdk6Dialogs()) {
-        dlg = new ImportOldConfigsPanel(oldConfigDir);
-      }
-      else {
-        dlg = new ImportOldConfigsPanel(oldConfigDir, JOptionPane.getRootFrame());
+      ImportOldConfigsPanel dlg = getCustomDialog(oldConfigDir);
+      if (dlg == null) {
+        if (UIUtil.hasJdk6Dialogs()) {
+          dlg = new ImportOldConfigsPanel(oldConfigDir);
+        }
+        else {
+          dlg = new ImportOldConfigsPanel(oldConfigDir, JOptionPane.getRootFrame());
+        }
       }
 
       UIUtil.setToolkitModal(dlg);
@@ -65,6 +70,33 @@ public class ConfigImportHelper {
       break;
     }
     while (true);
+  }
+
+  @Nullable
+  private static ImportOldConfigsPanel getCustomDialog(File oldConfigDir) {
+    try {
+      Class customDialogClass =
+        Class.forName("com.intellij.openapi.application." + PlatformUtils.getPlatformPrefix() + "ImportOldConfigsPanel");
+      if (customDialogClass != null) {
+        if (ImportOldConfigsPanel.class.isAssignableFrom(customDialogClass)) {
+          Constructor constructor = customDialogClass.getDeclaredConstructor(File.class);
+          if (constructor != null) {
+            return (ImportOldConfigsPanel)constructor.newInstance(oldConfigDir);
+          }
+        }
+      }
+    }
+    catch (ClassNotFoundException ignored) {
+    }
+    catch (NoSuchMethodException ignored) {
+    }
+    catch (InvocationTargetException ignored) {
+    }
+    catch (InstantiationException ignored) {
+    }
+    catch (IllegalAccessException ignored) {
+    }
+    return null;
   }
 
   private static File findOldConfigDir(String newConfigPath) {

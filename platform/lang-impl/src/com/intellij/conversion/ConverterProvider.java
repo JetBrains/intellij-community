@@ -20,6 +20,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
@@ -44,5 +45,10 @@ public abstract class ConverterProvider {
   public abstract String getConversionDescription();
 
   @NotNull
-  public abstract ProjectConverter createConverter(@NotNull ConversionContext context); 
+  public abstract ProjectConverter createConverter(@NotNull ConversionContext context);
+
+  @Nullable
+  public String getConversionDialogText(ConversionContext context) {
+    return null;
+  }
 }

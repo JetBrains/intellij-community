@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NonNls;
  * @author dsl
  */
 public class InheritedJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implements InheritedJdkOrderEntry, ClonableOrderEntry, WritableOrderEntry {
-  @NonNls static final String ENTRY_TYPE = "inheritedJdk";
+  @NonNls public static final String ENTRY_TYPE = "inheritedJdk";
   private final MyJdkTableListener myJdkTableListener = new MyJdkTableListener();
   private final MyProjectJdkListener myListener = new MyProjectJdkListener();
 

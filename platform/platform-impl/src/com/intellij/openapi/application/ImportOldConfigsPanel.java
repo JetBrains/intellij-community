@@ -67,17 +67,16 @@ public class ImportOldConfigsPanel extends JDialog {
     group.add(myRbImportAuto);
     myRbDoNotImport.setSelected(true);
 
-    final ApplicationNamesInfo namesInfo = ApplicationNamesInfo.getInstance();
-    final String productName = namesInfo.getProductName().equals("IDEA") ? namesInfo.getFullProductName() : namesInfo.getProductName();
-    mySuggestLabel.setText(ApplicationBundle.message("label.you.can.import", productName));
-    myRbDoNotImport.setText(ApplicationBundle.message("radio.do.not.import", productName));
+    final String productName = getProductName(false);
+    mySuggestLabel.setText(getTitleLabel(productName));
+    myRbDoNotImport.setText(getDoNotImportLabel(productName));
     if(myGuessedOldConfig != null) {
-      myRbImportAuto.setText(ApplicationBundle.message("radio.import.auto", myGuessedOldConfig.getAbsolutePath().replace(SystemProperties.getUserHome(), "~")));
+      myRbImportAuto.setText(getAutoImportLabel(myGuessedOldConfig));
       myRbImportAuto.setSelected(true);
     } else {
       myRbImportAuto.setVisible(false);
     }
-    myHomeLabel.setText(ApplicationBundle.message("editbox.installation.home", productName));
+    myHomeLabel.setText(getHomeLabel(productName));
 
     myRbImport.addChangeListener(new ChangeListener() {
       public void stateChanged(ChangeEvent e) {
@@ -138,6 +137,11 @@ public class ImportOldConfigsPanel extends JDialog {
     setLocation((parentSize.width - ownSize.width) / 2, (parentSize.height - ownSize.height) / 2);
   }
 
+  protected String getProductName(boolean full) {
+    ApplicationNamesInfo namesInfo = ApplicationNamesInfo.getInstance();
+    return full || namesInfo.getProductName().equals("IDEA") ? namesInfo.getFullProductName() : namesInfo.getProductName();
+  }
+
   @Nullable
   private static String findPreviousInstallationWindows(String productName) {
       String programFiles = System.getenv("ProgramFiles");
@@ -178,34 +182,32 @@ public class ImportOldConfigsPanel extends JDialog {
 
   private void close() {
     if (isImportEnabled()) {
-      final String productWithVendor = ApplicationNamesInfo.getInstance().getFullProductName();
+      final String productWithVendor = getProductName(true);
       String instHome = myPrevInstallation.getText();
       if ("".equals(instHome)) {
         JOptionPane.showMessageDialog(this,
-                                      ApplicationBundle.message("error.please.select.previous.installation.home", productWithVendor),
+                                      getEmptyHomeErrorText(productWithVendor),
                                       ApplicationBundle.message("title.installation.home.required"), JOptionPane.ERROR_MESSAGE);
         return;
       }
 
       if (PathManager.getHomePath().equals(instHome)) {
         JOptionPane.showMessageDialog(this,
-                                      ApplicationBundle.message("error.selected.current.installation.home",
-                                                                productWithVendor, productWithVendor),
+                                      getCurrentHomeErrorText(productWithVendor),
                                       ApplicationBundle.message("title.installation.home.required"), JOptionPane.ERROR_MESSAGE);
         return;
       }
 
       if (myRbImport.isSelected() && !ConfigImportHelper.isInstallationHomeOrConfig(instHome)) {
         JOptionPane.showMessageDialog(this,
-                                      ApplicationBundle.message("error.does.not.appear.to.be.installation.home", instHome,
-                                                                productWithVendor),
+                                      getInvalidHomeErrorText(productWithVendor, instHome),
                                       ApplicationBundle.message("title.installation.home.required"), JOptionPane.ERROR_MESSAGE);
         return;
       }
 
       if (!new File(instHome).canRead()) {
         JOptionPane.showMessageDialog(this,
-                                      ApplicationBundle.message("error.no.read.permissions", instHome),
+                                      getInaccessibleHomeErrorText(instHome),
                                       ApplicationBundle.message("title.installation.home.required"), JOptionPane.ERROR_MESSAGE);
         return;
       }
@@ -230,4 +232,39 @@ public class ImportOldConfigsPanel extends JDialog {
     ImportOldConfigsPanel dlg = new ImportOldConfigsPanel(null);
     dlg.setVisible(true);
   }
+
+  protected String getInaccessibleHomeErrorText(String instHome) {
+    return ApplicationBundle.message("error.no.read.permissions", instHome);
+  }
+
+  protected String getInvalidHomeErrorText(String productWithVendor, String instHome) {
+    return ApplicationBundle.message("error.does.not.appear.to.be.installation.home", instHome,
+                                     productWithVendor);
+  }
+
+  protected String getCurrentHomeErrorText(String productWithVendor) {
+    return ApplicationBundle.message("error.selected.current.installation.home",
+                                     productWithVendor, productWithVendor);
+  }
+
+  protected String getEmptyHomeErrorText(String productWithVendor) {
+    return ApplicationBundle.message("error.please.select.previous.installation.home", productWithVendor);
+  }
+
+  protected String getHomeLabel(String productName) {
+    return ApplicationBundle.message("editbox.installation.home", productName);
+  }
+
+  protected String getAutoImportLabel(File guessedOldConfig) {
+    return ApplicationBundle.message("radio.import.auto", guessedOldConfig.getAbsolutePath().replace(SystemProperties.getUserHome(), "~"));
+  }
+
+  protected String getDoNotImportLabel(String productName) {
+    return ApplicationBundle.message("radio.do.not.import", productName);
+  }
+
+  protected String getTitleLabel(String productName) {
+    return ApplicationBundle.message("label.you.can.import", productName);
+  }
+
 }

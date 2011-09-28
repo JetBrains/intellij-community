@@ -118,6 +118,7 @@ public class ConversionContextImpl implements ConversionContext {
     return myProjectBaseDir;
   }
 
+  @Override
   public File[] getModuleFiles() {
     return myModuleFiles;
   }

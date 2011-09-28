@@ -49,6 +49,10 @@ public class ConversionRunner {
   }
 
   public boolean isConversionNeeded() throws CannotConvertException {
+    if (!myConverter.isConversionNeeded()) {
+      return false;
+    }
+
     myProcessProjectFile = myContext.getStorageScheme() == StorageScheme.DEFAULT && myProjectFileConverter != null
                            && myProjectFileConverter.isConversionNeeded(myContext.getProjectSettings());
 

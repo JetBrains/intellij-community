@@ -64,4 +64,6 @@ public interface ModuleSettings extends ComponentManagerSettings {
   Collection<ModuleSettings> getAllModuleDependencies();
 
   boolean hasModuleLibrary(String libraryName);
+
+  List<Element> getOrderEntries();
 }

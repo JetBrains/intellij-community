@@ -57,4 +57,6 @@ public interface ConversionContext {
 
   @Nullable
   ComponentManagerSettings getProjectRootManagerSettings();
+
+  File[] getModuleFiles();
 }

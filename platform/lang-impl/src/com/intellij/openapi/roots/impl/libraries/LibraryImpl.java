@@ -56,10 +56,10 @@ import java.util.*;
 public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.impl.LibraryImpl");
   @NonNls public static final String LIBRARY_NAME_ATTR = "name";
-  @NonNls private static final String LIBRARY_TYPE_ATTR = "type";
-  @NonNls private static final String ROOT_PATH_ELEMENT = "root";
+  @NonNls public static final String LIBRARY_TYPE_ATTR = "type";
+  @NonNls public static final String ROOT_PATH_ELEMENT = "root";
   @NonNls public static final String ELEMENT = "library";
-  @NonNls private static final String PROPERTIES_ELEMENT = "properties";
+  @NonNls public static final String PROPERTIES_ELEMENT = "properties";
   private static final SkipDefaultValuesSerializationFilters SERIALIZATION_FILTERS = new SkipDefaultValuesSerializationFilters();
   private String myName;
   private final LibraryTable myLibraryTable;

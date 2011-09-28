@@ -40,7 +40,7 @@ public class ModuleLibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl imple
   private final Library myLibrary;
   @NonNls public static final String ENTRY_TYPE = "module-library";
   private boolean myExported;
-  @NonNls private static final String EXPORTED_ATTR = "exported";
+  @NonNls public static final String EXPORTED_ATTR = "exported";
 
   //cloning
   private ModuleLibraryOrderEntryImpl(Library library, RootModelImpl rootModel, boolean isExported, DependencyScope scope) {

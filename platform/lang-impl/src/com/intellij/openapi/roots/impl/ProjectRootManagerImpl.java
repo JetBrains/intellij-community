@@ -73,8 +73,8 @@ import java.util.concurrent.ConcurrentMap;
 public class ProjectRootManagerImpl extends ProjectRootManagerEx implements ProjectComponent, JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.impl.ProjectRootManagerImpl");
 
-  @NonNls private static final String PROJECT_JDK_NAME_ATTR = "project-jdk-name";
-  @NonNls private static final String PROJECT_JDK_TYPE_ATTR = "project-jdk-type";
+  @NonNls public static final String PROJECT_JDK_NAME_ATTR = "project-jdk-name";
+  @NonNls public static final String PROJECT_JDK_TYPE_ATTR = "project-jdk-type";
 
   private final ProjectEx myProject;
 

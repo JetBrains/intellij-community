@@ -165,7 +165,8 @@ public class ModuleSettingsImpl extends ComponentManagerSettingsImpl implements 
     return null;
   }
 
-  private List<Element> getOrderEntries() {
+  @Override
+  public List<Element> getOrderEntries() {
     final Element component = getComponentElement(MODULE_ROOT_MANAGER_COMPONENT);
     return JDOMUtil.getChildren(component, OrderEntryFactory.ORDER_ENTRY_ELEMENT_NAME);
   }

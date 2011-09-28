@@ -66,7 +66,7 @@ public class ApplicationLibraryTable extends LibraryTableBase implements Exporta
     return true;
   }
 
-  private static String getExternalFileName() {
+  public static String getExternalFileName() {
     return "applicationLibraries";
   }
 

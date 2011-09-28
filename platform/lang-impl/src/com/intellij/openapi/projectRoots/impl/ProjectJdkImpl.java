@@ -52,16 +52,16 @@ public class ProjectJdkImpl extends UserDataHolderBase implements JDOMExternaliz
   private ProjectJdkImpl myOrigin = null;
   private SdkAdditionalData myAdditionalData = null;
   private SdkType mySdkType;
-  @NonNls private static final String ELEMENT_NAME = "name";
-  @NonNls private static final String ATTRIBUTE_VALUE = "value";
-  @NonNls private static final String ELEMENT_TYPE = "type";
-  @NonNls private static final String ELEMENT_VERSION = "version";
+  @NonNls public static final String ELEMENT_NAME = "name";
+  @NonNls public static final String ATTRIBUTE_VALUE = "value";
+  @NonNls public static final String ELEMENT_TYPE = "type";
+  @NonNls public static final String ELEMENT_VERSION = "version";
   @NonNls private static final String ELEMENT_ROOTS = "roots";
   @NonNls private static final String ELEMENT_ROOT = "root";
   @NonNls private static final String ELEMENT_PROPERTY = "property";
   @NonNls private static final String VALUE_JDKHOME = "jdkHome";
   @NonNls private static final String ATTRIBUTE_FILE = "file";
-  @NonNls private static final String ELEMENT_HOMEPATH = "homePath";
+  @NonNls public static final String ELEMENT_HOMEPATH = "homePath";
   @NonNls private static final String ELEMENT_ADDITIONAL = "additional";
 
   public ProjectJdkImpl(String name, SdkType sdkType) {

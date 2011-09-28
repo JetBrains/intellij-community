@@ -63,7 +63,7 @@ public class ProjectRootUtil {
    */
   @NonNls public static final String EJB_ROOT = "ejb";
   @NonNls private static final String ATTRIBUTE_TYPE = "type";
-  @NonNls private static final String ELEMENT_ROOT = "root";
+  @NonNls public static final String ELEMENT_ROOT = "root";
 
   private ProjectRootUtil() {
   }

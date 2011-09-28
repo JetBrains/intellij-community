@@ -37,9 +37,9 @@ public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implement
                                                                                   ClonableOrderEntry,
                                                                                   ModuleJdkOrderEntry,
                                                                                   ProjectJdkTable.Listener {
-  @NonNls static final String ENTRY_TYPE = "jdk";
-  @NonNls private static final String JDK_NAME_ATTR = "jdkName";
-  @NonNls private static final String JDK_TYPE_ATTR = "jdkType";
+  @NonNls public static final String ENTRY_TYPE = "jdk";
+  @NonNls public static final String JDK_NAME_ATTR = "jdkName";
+  @NonNls public static final String JDK_TYPE_ATTR = "jdkType";
 
   private Sdk myJdk;
   private String myJdkName;

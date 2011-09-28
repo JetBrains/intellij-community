@@ -66,11 +66,17 @@ public class ConvertProjectDialog extends DialogWrapper {
 
     myBackupDir = ProjectConversionUtil.getBackupDir(context.getProjectBaseDir());
     myTextPane.setSize(new Dimension(350, Integer.MAX_VALUE));
-    final String message = IdeBundle.message("label.text.project.has.older.format",
-                                             context.getProjectFile().getName(),
-                                             ApplicationNamesInfo.getInstance().getProductName(),
-                                             myBackupDir.getAbsolutePath());
-    Messages.configureMessagePaneUi(myTextPane, message, false);
+    StringBuilder message = new StringBuilder("<html>");
+    if (myConversionRunners.size() == 1 && myConversionRunners.get(0).getProvider().getConversionDialogText(context) != null) {
+      message.append(myConversionRunners.get(0).getProvider().getConversionDialogText(context));
+    }
+    else {
+      message.append(IdeBundle.message("conversion.dialog.text.1", context.getProjectFile().getName(),
+                                       ApplicationNamesInfo.getInstance().getProductName()));
+    }
+    message.append(IdeBundle.message("conversion.dialog.text.2", myBackupDir.getAbsolutePath()));
+    message.append("</html>");
+    Messages.configureMessagePaneUi(myTextPane, message.toString(), false);
 
     myTextPane.addHyperlinkListener(new HyperlinkListener() {
       public void hyperlinkUpdate(HyperlinkEvent e) {
