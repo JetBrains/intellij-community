@@ -38,7 +38,7 @@ public class JarDirectories implements JDOMExternalizable {
 
   @NonNls private static final String JAR_DIRECTORY_ELEMENT = "jarDirectory";
   @NonNls private static final String URL_ATTR = "url";
-  @NonNls public static final String RECURSIVE_ATTR = "recursive";
+  @NonNls private static final String RECURSIVE_ATTR = "recursive";
   @NonNls private static final String ROOT_TYPE_ATTR = "type";
   public static final OrderRootType DEFAULT_JAR_DIRECTORY_TYPE = OrderRootType.CLASSES;
 
