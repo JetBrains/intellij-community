@@ -17,6 +17,7 @@ package org.jetbrains.plugins.github.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import org.jetbrains.plugins.github.GithubSettings;
 
 import javax.swing.*;
 
@@ -31,6 +32,13 @@ public class GitHubCreateGistDialog extends DialogWrapper {
     super(project, true);
     myGithubCreateGistPanel = new GitHubCreateGistPanel();
     myGithubCreateGistPanel.setCanBePersonal(canBePersonal);
+    // Use saved settings for controls
+    final GithubSettings settings = GithubSettings.getInstance();
+    if (canBePersonal){
+      myGithubCreateGistPanel.setAnonymous(settings.isAnonymous());
+    }
+    myGithubCreateGistPanel.setPrivate(settings.isPrivateGist());
+    myGithubCreateGistPanel.setOpenInBrowser(settings.isOpenInBrowserGist());
     setTitle("Create Gist");
     init();
   }
@@ -50,6 +58,16 @@ public class GitHubCreateGistDialog extends DialogWrapper {
   }
 
   @Override
+  protected void doOKAction() {
+    // Store settings
+    final GithubSettings settings = GithubSettings.getInstance();
+    settings.setAnonymousGist(myGithubCreateGistPanel.isAnonymous());
+    settings.setOpenInBrowserGist(myGithubCreateGistPanel.isOpenInBrowser());
+    settings.setPrivateGist(myGithubCreateGistPanel.isPrivate());
+    super.doOKAction();
+  }
+
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myGithubCreateGistPanel.getDescriptionTextArea();
   }
@@ -64,5 +82,9 @@ public class GitHubCreateGistDialog extends DialogWrapper {
 
   public String getDescription() {
     return myGithubCreateGistPanel.getDescriptionTextArea().getText();
+  }
+
+  public boolean isOpenInBrowser() {
+    return myGithubCreateGistPanel.isOpenInBrowser();
   }
 }

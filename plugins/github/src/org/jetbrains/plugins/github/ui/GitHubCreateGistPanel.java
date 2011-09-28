@@ -27,6 +27,7 @@ public class GitHubCreateGistPanel {
   private JCheckBox myPrivateCheckBox;
   private JPanel myPanel;
   private JCheckBox myAnonymousCheckBox;
+  private JCheckBox myOpenInBrowserCheckBox;
 
   public GitHubCreateGistPanel() {
     myDescriptionTextArea.setBorder(BorderFactory.createEtchedBorder());
@@ -38,6 +39,21 @@ public class GitHubCreateGistPanel {
 
   public boolean isAnonymous(){
     return myAnonymousCheckBox.isSelected();
+  }
+
+  public boolean isOpenInBrowser(){
+    return myOpenInBrowserCheckBox.isSelected();
+  }
+
+  public void setPrivate(final boolean isPrivate){
+    myPrivateCheckBox.setSelected(isPrivate);
+  }
+
+  public void setAnonymous(final boolean anonymous){
+    myAnonymousCheckBox.setSelected(anonymous);
+  }
+  public void setOpenInBrowser(final boolean openInBrowser) {
+    myOpenInBrowserCheckBox.setSelected(openInBrowser);
   }
 
   public JPanel getPanel() {

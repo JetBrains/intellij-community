@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.commons.httpclient.HttpClient;
@@ -106,6 +107,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
     final String description = dialog.getDescription();
     final boolean isPrivate = dialog.isPrivate();
     final boolean anonymous = dialog.isAnonimous();
+    final boolean openInBrowser = dialog.isOpenInBrowser();
     
     final SelectionModel selectionModel = editor.getSelectionModel();
     final String text = selectionModel.hasSelection() ? selectionModel.getSelectedText() : editor.getDocument().getText();
@@ -130,7 +132,12 @@ public class GithubCreateGistAction extends DumbAwareAction {
       // http://developer.github.com/v3/gists/
       final Matcher matcher = Pattern.compile("\\d+").matcher(responce);
       matcher.find();
-      BrowserUtil.launchBrowser("https://gist.github.com/" + matcher.group());
+      final String url = "https://gist.github.com/" + matcher.group();
+      if (openInBrowser) {
+        BrowserUtil.launchBrowser(url);
+      } else {
+        Messages.showInfoMessage(project, "Gist successfully created: " + url, "Gist Created");
+      }
     }
     catch (IOException e1) {
       LOG.error("Failed to create gist: " + e1);
