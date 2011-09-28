@@ -52,7 +52,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
-import java.io.*;
+import java.io.File;
+import java.io.FilenameFilter;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -117,26 +118,33 @@ public class PythonSdkType extends SdkType {
   @NonNls
   @Nullable
   public String suggestHomePath() {
-    Collection<String> candidates = suggestHomePaths();
-    if (candidates.size() > 0) {
-      // return latest version
-      String[] candidateArray = ArrayUtil.toStringArray(candidates);
-      return candidateArray[candidateArray.length - 1];
+    for (PythonSdkFlavor flavor : PythonSdkFlavor.getApplicableFlavors()) {
+      TreeSet<String> candidates = createVersionSet();
+      candidates.addAll(flavor.suggestHomePaths());
+      if (!candidates.isEmpty()) {
+        // return latest version
+        String[] candidateArray = ArrayUtil.toStringArray(candidates);
+        return candidateArray[candidateArray.length - 1];
+      }
     }
     return null;
   }
 
   @Override
   public Collection<String> suggestHomePaths() {
-    TreeSet<String> candidates = new TreeSet<String>(new Comparator<String>() {
-      public int compare(String o1, String o2) {
-        return findDigits(o1).compareTo(findDigits(o2));
-      }
-    });
+    TreeSet<String> candidates = createVersionSet();
     for (PythonSdkFlavor flavor : PythonSdkFlavor.getApplicableFlavors()) {
       candidates.addAll(flavor.suggestHomePaths());
     }
     return candidates;
+  }
+
+  private static TreeSet<String> createVersionSet() {
+    return new TreeSet<String>(new Comparator<String>() {
+        public int compare(String o1, String o2) {
+          return findDigits(o1).compareTo(findDigits(o2));
+        }
+      });
   }
 
   private static String findDigits(String s) {
