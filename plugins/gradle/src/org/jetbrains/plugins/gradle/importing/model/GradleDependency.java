@@ -16,5 +16,6 @@ public interface GradleDependency extends GradleEntity {
   @NotNull
   DependencyScope getScope();
   
-  GradleDependency clone();
+  @NotNull
+  GradleDependency clone(@NotNull GradleEntityCloneContext context);
 }

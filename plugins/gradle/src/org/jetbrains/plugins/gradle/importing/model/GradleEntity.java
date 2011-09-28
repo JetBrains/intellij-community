@@ -15,7 +15,7 @@ import java.io.Serializable;
  * @author Denis Zhdanov
  * @since 8/12/11 12:50 PM
  */
-public interface GradleEntity extends Cloneable, Serializable {
+public interface GradleEntity extends Serializable {
 
   /**
    * Follows contract of {@link PropertyChangeSupport#addPropertyChangeListener(PropertyChangeListener)}  
@@ -25,4 +25,7 @@ public interface GradleEntity extends Cloneable, Serializable {
   void addPropertyChangeListener(@NotNull PropertyChangeListener listener);
   
   void invite(@NotNull GradleEntityVisitor visitor);
+  
+  @NotNull
+  GradleEntity clone(@NotNull GradleEntityCloneContext context);
 }

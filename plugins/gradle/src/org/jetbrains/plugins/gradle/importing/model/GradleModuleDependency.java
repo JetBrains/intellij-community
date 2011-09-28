@@ -54,10 +54,11 @@ public class GradleModuleDependency extends AbstractGradleDependency {
     return super.toString() + ", dependency module: " + getModule();
   }
 
+  @NotNull
   @Override
-  public GradleModuleDependency clone() {
-    GradleModuleDependency result = new GradleModuleDependency(getModule().clone());
-    copyTo(result);
+  public GradleModuleDependency clone(@NotNull GradleEntityCloneContext context) {
+    GradleModuleDependency result = new GradleModuleDependency(getModule().clone(context));
+    copyTo(result); 
     return result;
   }
 }

@@ -174,9 +174,10 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
     Collections.sort(modules, Named.COMPARATOR);
     List<MutableTreeNode> moduleNodes = new ArrayList<MutableTreeNode>();
     Map<GradleModule, GradleModule> moduleMappings = new HashMap<GradleModule, GradleModule>();
-
+    
+    GradleEntityCloneContext cloneContext = new GradleEntityCloneContext();
     for (GradleModule module : modules) {
-      GradleModule moduleCopy = module.clone();
+      GradleModule moduleCopy = module.clone(cloneContext);
       moduleMappings.put(module, moduleCopy);
       DefaultMutableTreeNode moduleNode = buildNode(module, entity2nodes, counter++);
       moduleNodes.add(moduleNode);

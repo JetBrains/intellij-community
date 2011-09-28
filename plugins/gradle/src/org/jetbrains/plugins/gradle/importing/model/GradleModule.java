@@ -97,10 +97,13 @@ public class GradleModule extends AbstractNamedGradleEntity implements Named {
   @Override
   public int hashCode() {
     int result = super.hashCode();
-    result = 31 * result + myModuleFilePath.hashCode();
+    
+    // Sometimes instance fields are not initialised here during deserialization. Seems to be standard library bug. That's why we
+    // do null-check here.
+    result = myModuleFilePath == null ? result : (31 * result + myModuleFilePath.hashCode());
     result = 31 * result + (myInheritProjectCompileOutputPath ? 1 : 0);
-    result = 31 * result + myCompileOutputPaths.hashCode();
-    result = 31 * result + myContentRoots.hashCode();
+    result = myCompileOutputPaths == null ? result : (31 * result + myCompileOutputPaths.hashCode());
+    result = myContentRoots == null ? result : (31 * result + myContentRoots.hashCode());
     
     // We intentionally don't use dependencies here in order to allow module mappings before and after external libraries
     // resolving (downloading)
@@ -116,10 +119,13 @@ public class GradleModule extends AbstractNamedGradleEntity implements Named {
     GradleModule that = (GradleModule)o;
 
     if (!super.equals(that)) return false;
-    if (!myModuleFilePath.equals(that.myModuleFilePath)) return false;
+    // Sometimes instance fields are not initialised here during deserialization. Seems to be standard library bug. That's why we
+    // do null-check here.
+    if (myModuleFilePath == null ? that.myModuleFilePath != null : !myModuleFilePath.equals(that.myModuleFilePath)) return false;
     if (myInheritProjectCompileOutputPath != that.myInheritProjectCompileOutputPath) return false;
-    if (!myCompileOutputPaths.equals(that.myCompileOutputPaths)) return false;
-    if (!myContentRoots.equals(that.myContentRoots)) return false;
+    if (myCompileOutputPaths == null
+        ? that.myCompileOutputPaths != null : !myCompileOutputPaths.equals(that.myCompileOutputPaths)) return false;
+    if (myContentRoots == null ? that.myContentRoots != null : !myContentRoots.equals(that.myContentRoots)) return false;
     
     // We intentionally don't use dependencies here in order to allow module mappings before and after external libraries
     // resolving (downloading)
@@ -135,18 +141,24 @@ public class GradleModule extends AbstractNamedGradleEntity implements Named {
     );
   }
 
+  @NotNull
   @Override
-  public GradleModule clone() {
-    GradleModule result = new GradleModule(getName(), new File(getModuleFilePath()).getParent());
+  public GradleModule clone(@NotNull GradleEntityCloneContext context) {
+    GradleModule result = context.getModule(this);
+    if (result != null) {
+      return result;
+    }
+    result = new GradleModule(getName(), new File(getModuleFilePath()).getParent());
+    context.store(this, result);
     result.setInheritProjectCompileOutputPath(isInheritProjectCompileOutputPath());
     for (GradleContentRoot contentRoot : getContentRoots()) {
-      result.addContentRoot(contentRoot.clone());
+      result.addContentRoot(contentRoot.clone(context));
     }
     for (Map.Entry<SourceType, String> entry : myCompileOutputPaths.entrySet()) {
       result.setCompileOutputPath(entry.getKey(), entry.getValue());
     }
     for (GradleDependency dependency : getDependencies()) {
-      result.addDependency(dependency.clone());
+      result.addDependency(dependency.clone(context));
     }
     return result;
   }

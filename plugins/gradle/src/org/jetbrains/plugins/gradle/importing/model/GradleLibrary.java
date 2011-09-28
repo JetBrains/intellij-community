@@ -56,12 +56,17 @@ public class GradleLibrary extends AbstractNamedGradleEntity implements Named {
     return "library: " + getName();
   }
 
+  @NotNull
   @Override
-  protected GradleLibrary clone() {
-    GradleLibrary result = new GradleLibrary(getName());
-    for (Map.Entry<LibraryPathType, String> entry : myPaths.entrySet()) {
-      result.addPath(entry.getKey(), entry.getValue());
-    }
+  public GradleLibrary clone(@NotNull GradleEntityCloneContext context) {
+    GradleLibrary result = context.getLibrary(this);
+    if (result == null) {
+      result = new GradleLibrary(getName());
+      context.store(this, result);
+      for (Map.Entry<LibraryPathType, String> entry : myPaths.entrySet()) {
+        result.addPath(entry.getKey(), entry.getValue());
+      }
+    } 
     return result;
   }
 }
