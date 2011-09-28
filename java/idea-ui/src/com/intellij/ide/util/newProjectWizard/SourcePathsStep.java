@@ -254,7 +254,7 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<Trinity<Strin
       final String sourceDirectoryPath = getSourceDirectoryPath();
       final String relativePath = myTfSourceDirectoryName.getText().trim();
       if (relativePath.length() == 0) {
-        String text = IdeBundle.message("prompt.relative.path.to.sources.empty", sourceDirectoryPath);
+        String text = IdeBundle.message("prompt.relative.path.to.sources.empty", FileUtil.toSystemDependentName(sourceDirectoryPath));
         final int answer = Messages.showYesNoCancelDialog(myTfSourceDirectoryName, text, IdeBundle.message("title.mark.source.directory"),
                                                IdeBundle.message("action.mark"), IdeBundle.message("action.do.not.mark"),
                                                  CommonBundle.getCancelButtonText(), Messages.getQuestionIcon());
