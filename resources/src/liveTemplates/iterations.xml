@@ -116,6 +116,8 @@
     <context>
       <option name="JAVA_CODE" value="false" />
       <option name="JAVA_STATEMENT" value="true" />
+      <option name="GROOVY" value="false" />
+      <option name="GROOVY_STATEMENT" value="true" />
     </context>
   </template>
 </templateSet>

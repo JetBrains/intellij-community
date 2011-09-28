@@ -155,9 +155,13 @@ public class MacroUtil {
     return array.toArray(new PsiExpression[array.size()]);
   }
 
-  @NotNull public static PsiVariable[] getVariablesVisibleAt(final PsiElement place, String prefix) {
+  @NotNull public static PsiVariable[] getVariablesVisibleAt(@Nullable final PsiElement place, String prefix) {
+    if (place == null) {
+      return new PsiVariable[0];
+    }
+
     final List<PsiVariable> list = new ArrayList<PsiVariable>();
-    VariablesProcessor varproc = new VariablesProcessor(prefix, true, list){
+    VariablesProcessor varproc = new VariablesProcessor(prefix, true, list) {
       public boolean execute(PsiElement pe, ResolveState state) {
         if (pe instanceof PsiVariable) {
           //exclude variables that are initialized in 'place'
