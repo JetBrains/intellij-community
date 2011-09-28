@@ -10,6 +10,6 @@ class Foo {
 public class Bar {
     
     {
-       new Foo(Foo.FOO_BAR);<caret>
+       new Foo(Foo.FOO_BAR)<caret>
     }
 }

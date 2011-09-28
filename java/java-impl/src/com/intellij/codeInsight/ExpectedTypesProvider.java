@@ -1214,13 +1214,13 @@ public class ExpectedTypesProvider {
       return TailTypes.CALL_RPARENTH_SEMICOLON;
     }
 
-    final boolean chainable = !PsiType.VOID.equals(returnType) && returnType != null;
+    final boolean chainable = !PsiType.VOID.equals(returnType) && returnType != null || method.isConstructor() && call instanceof PsiNewExpression;
 
     final PsiElement parent = call.getParent();
     final boolean statementContext = parent instanceof PsiExpressionStatement || parent instanceof PsiVariable ||
-                                     parent instanceof PsiCodeBlock || parent instanceof PsiThrowStatement;
+                                     parent instanceof PsiCodeBlock;
 
-    if (statementContext && !chainable) {
+    if (parent instanceof PsiThrowStatement || statementContext && !chainable) {
       return TailTypes.CALL_RPARENTH_SEMICOLON;
     }
 
