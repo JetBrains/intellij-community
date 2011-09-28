@@ -980,6 +980,9 @@
       <add-to-group group-id="FileMainSettingsGroup" anchor="after" relative-to-action="ShowSettings"/>
       <add-to-group group-id="MainToolBar" anchor="after" relative-to-action="ShowSettings"/>
     </action>
+    <action id="TemplateProjectStructure" class="com.intellij.ide.actions.TemplateProjectStructureAction">
+      <add-to-group group-id="FileSettingsGroup" anchor="last"/>
+    </action>
   </actions>
 
 </idea-plugin>
