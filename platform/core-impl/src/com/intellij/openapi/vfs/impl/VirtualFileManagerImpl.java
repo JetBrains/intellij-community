@@ -210,9 +210,6 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx {
         }
       }
     };
-    if (application.isDispatchThread()) {
-      runnable.run();
-    }
     application.invokeLater(runnable, ModalityState.NON_MODAL);
   }
 
