@@ -10,11 +10,11 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.HashSet;
+import com.jetbrains.cython.CythonLanguageDialect;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.actions.AddGlobalQuickFix;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
@@ -50,6 +50,9 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
     return new PyInspectionVisitor(holder){
       @Override
       public void visitPyReferenceExpression(final PyReferenceExpression node) {
+        if (CythonLanguageDialect._isDisabledFor(node.getLanguage())) {
+          return;
+        }
         final Set<ScopeOwner> largeFunctions = session.getUserData(LARGE_FUNCTIONS_KEY);
         assert largeFunctions != null;
 
@@ -206,6 +209,9 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
 
       @Override
       public void visitPyNonlocalStatement(final PyNonlocalStatement node) {
+        if (CythonLanguageDialect._isDisabledFor(node.getLanguage())) {
+          return;
+        }
         for (PyTargetExpression var : node.getVariables()) {
           final String name = var.getName();
           final ScopeOwner owner = ScopeUtil.getDeclarationScopeOwner(var, name);

@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
+import com.jetbrains.cython.CythonLanguageDialect;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.actions.AddFieldQuickFix;
@@ -73,6 +74,10 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
   static class DontPerformException extends RuntimeException {}
 
   private void processScope(final ScopeOwner owner, final PyElement node) {
+    if (CythonLanguageDialect._isDisabledFor(node.getLanguage())) {
+      return;
+    }
+
     if (owner.getContainingFile() instanceof PyExpressionCodeFragment || PydevConsoleRunner.isInPydevConsole(owner)){
       return;
     }

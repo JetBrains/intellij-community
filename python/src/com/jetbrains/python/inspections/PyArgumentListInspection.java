@@ -5,6 +5,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.cython.CythonLanguageDialect;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
@@ -42,6 +43,9 @@ public class PyArgumentListInspection extends PyInspection {
 
     @Override
     public void visitPyArgumentList(final PyArgumentList node) {
+      if (CythonLanguageDialect._isDisabledFor(node.getLanguage())) {
+        return;
+      }
       // analyze
       inspectPyArgumentList(node, getHolder(), myTypeEvalContext);
     }
