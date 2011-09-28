@@ -18,28 +18,44 @@ package com.intellij.openapi.roots.ui.configuration.artifacts;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ConfigurationErrorQuickFix;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureProblemDescription;
 import com.intellij.packaging.elements.PackagingElement;
+import com.intellij.packaging.ui.ArtifactEditor;
 import com.intellij.packaging.ui.ArtifactProblemQuickFix;
 import com.intellij.ui.navigation.Place;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
  * @author nik
  */
 public class ArtifactProblemDescription extends ProjectStructureProblemDescription {
-  private List<ArtifactProblemQuickFix> myQuickFixes;
-  private List<PackagingElement<?>> myPathToPlace;
+  private final List<ArtifactProblemQuickFix> myQuickFixes;
+  private final List<PackagingElement<?>> myPathToPlace;
 
   public ArtifactProblemDescription(@NotNull String message,
                                     @NotNull Severity severity,
                                     @Nullable List<PackagingElement<?>> pathToPlace,
-                                    @NotNull List<ArtifactProblemQuickFix> quickFixes, @NotNull Place place) {
-    super(message, null, severity, place, Collections.<ConfigurationErrorQuickFix>emptyList());
+                                    @NotNull List<ArtifactProblemQuickFix> quickFixes,
+                                    @NotNull Place place,
+                                    @NotNull ArtifactEditor artifactEditor) {
+    super(message, null, severity, place, convertQuickFixed(quickFixes, artifactEditor));
     myPathToPlace = pathToPlace;
     myQuickFixes = quickFixes;
+  }
+
+  private static List<ConfigurationErrorQuickFix> convertQuickFixed(List<ArtifactProblemQuickFix> quickFixes, final ArtifactEditor artifactEditor) {
+    final List<ConfigurationErrorQuickFix> result = new SmartList<ConfigurationErrorQuickFix>();
+    for (final ArtifactProblemQuickFix fix : quickFixes) {
+      result.add(new ConfigurationErrorQuickFix(fix.getActionName()) {
+        @Override
+        public void performFix() {
+          fix.performFix(artifactEditor);
+        }
+      });
+    }
+    return result;
   }
 
   @NotNull

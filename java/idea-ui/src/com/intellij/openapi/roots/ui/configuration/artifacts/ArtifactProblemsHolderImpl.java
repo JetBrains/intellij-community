@@ -48,7 +48,7 @@ public class ArtifactProblemsHolderImpl extends ArtifactProblemsHolderBase {
                                final ProjectStructureProblemDescription.Severity severity, @NotNull ArtifactProblemQuickFix... quickFixes) {
     final ArtifactEditorContext context = getContext();
     final Place place = ProjectStructureConfigurable.getInstance(context.getProject()).createArtifactPlace(context.getArtifact());
-    myProblemsHolder.registerProblem(new ArtifactProblemDescription(message, severity, pathToPlace, Arrays.asList(quickFixes), place));
+    myProblemsHolder.registerProblem(new ArtifactProblemDescription(message, severity, pathToPlace, Arrays.asList(quickFixes), place, context.getThisArtifactEditor()));
   }
 
   public void registerWarning(@NotNull String message,
