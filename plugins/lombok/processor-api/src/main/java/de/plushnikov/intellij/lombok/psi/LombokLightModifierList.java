@@ -8,7 +8,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.impl.light.LightElement;
@@ -30,12 +29,12 @@ public class LombokLightModifierList extends LightElement implements PsiModifier
       PsiModifier.ABSTRACT, PsiModifier.SYNCHRONIZED, PsiModifier.TRANSIENT, PsiModifier.VOLATILE, PsiModifier.NATIVE));
 
   private final Set<String> myModifiers;
-  private final PsiMethod myParentMethod;
+  private final PsiElement myParentElement;
 
-  public LombokLightModifierList(@NotNull PsiManager manager, @NotNull Language language, @NotNull PsiMethod parent) {
+  public LombokLightModifierList(@NotNull PsiManager manager, @NotNull Language language, @NotNull PsiElement parent) {
     super(manager, language);
     myModifiers = new HashSet<String>();
-    myParentMethod = parent;
+    myParentElement = parent;
   }
 
   public void addModifier(@Modifier @NotNull @NonNls String modifier) {
@@ -59,13 +58,23 @@ public class LombokLightModifierList extends LightElement implements PsiModifier
   }
 
   @Override
+  public String getText() {
+    return null;
+  }
+
+  @Override
+  public PsiElement copy() {
+    return null;
+  }
+
+  @Override
   public PsiElement getParent() {
-    return myParentMethod;
+    return myParentElement;
   }
 
   @Override
   public PsiFile getContainingFile() {
-    return myParentMethod.getContainingFile();
+    return myParentElement.getContainingFile();
   }
 
   public boolean hasModifierProperty(@Modifier @NotNull @NonNls String name) {

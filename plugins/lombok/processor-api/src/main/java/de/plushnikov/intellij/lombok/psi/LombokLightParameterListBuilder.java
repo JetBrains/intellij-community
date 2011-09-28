@@ -33,6 +33,16 @@ public class LombokLightParameterListBuilder extends LightElement implements Psi
     myCachedParameters = null;
   }
 
+  @Override
+  public String getText() {
+    return null;
+  }
+
+  @Override
+  public PsiElement copy() {
+    return null;
+  }
+
   @NotNull
   @Override
   public PsiParameter[] getParameters() {

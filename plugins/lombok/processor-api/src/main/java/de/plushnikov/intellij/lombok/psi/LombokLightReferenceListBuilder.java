@@ -5,7 +5,9 @@ import com.intellij.lang.StdLanguages;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReferenceList;
@@ -48,6 +50,20 @@ public class LombokLightReferenceListBuilder extends LightElement implements Psi
   public void addReference(PsiClassType type) {
     final PsiJavaCodeReferenceElement ref = myFactory.createReferenceElementByType(type);
     myRefs.add(ref);
+  }
+
+  @Override
+  public void accept(@NotNull PsiElementVisitor visitor) {
+  }
+
+  @Override
+  public String getText() {
+    return null;
+  }
+
+  @Override
+  public PsiElement copy() {
+    return null;
   }
 
   @NotNull

@@ -11,10 +11,9 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.impl.light.LightElement;
 import de.plushnikov.intellij.lombok.problem.ProblemBuilder;
 import de.plushnikov.intellij.lombok.processor.clazz.AbstractLombokClassProcessor;
-import de.plushnikov.intellij.lombok.psi.MyLightFieldBuilder;
+import de.plushnikov.intellij.lombok.psi.LombokLightFieldBuilder;
 import de.plushnikov.intellij.lombok.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -57,16 +56,15 @@ public abstract class AbstractLogProcessor extends AbstractLombokClassProcessor 
 
     final PsiElementFactory psiElementFactory = JavaPsiFacade.getElementFactory(project);
     PsiType psiLoggerType = psiElementFactory.createTypeFromText(loggerType, psiClass);
-    LightElement loggerField = new MyLightFieldBuilder(manager, loggerName, psiLoggerType)
-        .setHasInitializer(true)
+    LombokLightFieldBuilder loggerField = new LombokLightFieldBuilder(manager, loggerName, psiLoggerType)
         .setContainingClass(psiClass)
-        .setModifiers(PsiModifier.FINAL, PsiModifier.STATIC, PsiModifier.PRIVATE);
+        .addModifier(PsiModifier.FINAL).addModifier(PsiModifier.STATIC).addModifier(PsiModifier.PRIVATE);
     loggerField.setNavigationElement(psiAnnotation);
 
     final String classQualifiedName = psiClass.getQualifiedName();
     final String className = null != classQualifiedName ? classQualifiedName : psiClass.getName();
     PsiExpression initializer = psiElementFactory.createExpressionFromText(String.format(loggerInitializer, className), psiClass);
-    ((MyLightFieldBuilder) loggerField).setInitializer(initializer);
+    loggerField.setInitializer(initializer);
 
     target.add((Psi) loggerField);
   }

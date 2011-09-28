@@ -34,7 +34,6 @@ import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.impl.light.LightElement;
-import com.intellij.psi.impl.light.LightParameter;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.presentation.java.JavaPresentationUtil;
 import com.intellij.psi.search.SearchScope;
@@ -64,17 +63,65 @@ public class LombokLightMethodBuilder extends LightElement implements PsiMethod 
   private Icon myBaseIcon;
   private PsiClass myContainingClass;
   private boolean myConstructor;
+  protected PsiElement myNavigationElement;
 
-  public LombokLightMethodBuilder(PsiManager manager, String name) {
+  public LombokLightMethodBuilder(@NotNull PsiManager manager, @NotNull String name) {
     this(manager, StdLanguages.JAVA, name);
   }
 
-  public LombokLightMethodBuilder(PsiManager manager, Language language, String name) {
+  public LombokLightMethodBuilder(@NotNull PsiManager manager, @NotNull Language language, @NotNull String name) {
     super(manager, language);
     myName = name;
     myParameterList = new LombokLightParameterListBuilder(manager, language, this);
     myModifierList = new LombokLightModifierList(manager, language, this);
     myThrowsList = new LombokLightReferenceListBuilder(manager, language, PsiReferenceList.Role.THROWS_LIST);
+    myNavigationElement = this;
+  }
+
+  public LombokLightMethodBuilder addModifier(@Modifier @NotNull @NonNls String modifier) {
+    myModifierList.addModifier(modifier);
+    return this;
+  }
+
+  public LombokLightMethodBuilder setMethodReturnType(PsiType returnType) {
+    myReturnType = returnType;
+    if (null != myReturnType) {
+      myConstructor = false;
+    }
+    return this;
+  }
+
+  public LombokLightMethodBuilder addParameter(@NotNull String name, @NotNull PsiType type) {
+    myParameterList.addParameter(new LombokLightParameter(name, type, this, StdLanguages.JAVA));
+    return this;
+  }
+
+//  public LombokLightMethodBuilder addParameter(@NotNull String name, @NotNull PsiType type, boolean isVarArgs) {
+//    if (isVarArgs && !(type instanceof PsiEllipsisType)) {
+//      type = new PsiEllipsisType(type);
+//    }
+//    return addParameter(new LombokLightParameter(name, type, this, StdLanguages.JAVA, isVarArgs));
+//  }
+
+  public LombokLightMethodBuilder addException(@NotNull PsiClassType type) {
+    myThrowsList.addReference(type);
+    return this;
+  }
+
+  public LombokLightMethodBuilder addException(@NotNull String fqName) {
+    myThrowsList.addReference(fqName);
+    return this;
+  }
+
+  public LombokLightMethodBuilder setConstructor(boolean constructor) {
+    myConstructor = constructor;
+    myReturnType = null;
+    return this;
+  }
+
+  public LombokLightMethodBuilder setBaseIcon(Icon baseIcon) {
+    myBaseIcon = baseIcon;
+    return this;
   }
 
   @Override
@@ -128,11 +175,6 @@ public class LombokLightMethodBuilder extends LightElement implements PsiMethod 
     return getModifierList().hasModifierProperty(name);
   }
 
-  public LombokLightMethodBuilder addModifier(@Modifier @NotNull @NonNls String modifier) {
-    myModifierList.addModifier(modifier);
-    return this;
-  }
-
   @Nullable
   public PsiType getReturnType() {
     return myReturnType;
@@ -141,14 +183,6 @@ public class LombokLightMethodBuilder extends LightElement implements PsiMethod 
   @Nullable
   public PsiType getReturnTypeNoResolve() {
     return getReturnType();
-  }
-
-  public LombokLightMethodBuilder setMethodReturnType(PsiType returnType) {
-    myReturnType = returnType;
-    if (null != myReturnType) {
-      myConstructor = false;
-    }
-    return this;
   }
 
   @Nullable
@@ -161,42 +195,19 @@ public class LombokLightMethodBuilder extends LightElement implements PsiMethod 
     return myParameterList;
   }
 
-  public LombokLightMethodBuilder addParameter(@NotNull String name, @NotNull PsiType type) {
-    myParameterList.addParameter(new LightParameter(name, type, this, StdLanguages.JAVA));
-    return this;
-  }
-
-//  public LombokLightMethodBuilder addParameter(@NotNull String name, @NotNull PsiType type, boolean isVarArgs) {
-//    if (isVarArgs && !(type instanceof PsiEllipsisType)) {
-//      type = new PsiEllipsisType(type);
-//    }
-//    return addParameter(new LightParameter(name, type, this, StdLanguages.JAVA, isVarArgs));
-//  }
-
-  public LombokLightMethodBuilder addException(@NotNull PsiClassType type) {
-    myThrowsList.addReference(type);
-    return this;
-  }
-
-  public LombokLightMethodBuilder addException(@NotNull String fqName) {
-    myThrowsList.addReference(fqName);
-    return this;
-  }
-
-  @Override
   public LombokLightMethodBuilder setNavigationElement(PsiElement navigationElement) {
-    super.setNavigationElement(navigationElement);
+    myNavigationElement = navigationElement;
     return this;
+  }
+
+  @NotNull
+  @Override
+  public PsiElement getNavigationElement() {
+    return myNavigationElement;
   }
 
   public LombokLightMethodBuilder setContainingClass(@NotNull PsiClass containingClass) {
     myContainingClass = containingClass;
-    return this;
-  }
-
-  public LombokLightMethodBuilder setConstructor(boolean constructor) {
-    myConstructor = constructor;
-    myReturnType = null;
     return this;
   }
 
@@ -339,14 +350,8 @@ public class LombokLightMethodBuilder extends LightElement implements PsiMethod 
     return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
   }
 
-  @Override
   protected boolean isVisibilitySupported() {
     return true;
-  }
-
-  public LombokLightMethodBuilder setBaseIcon(Icon baseIcon) {
-    myBaseIcon = baseIcon;
-    return this;
   }
 
   @Override
