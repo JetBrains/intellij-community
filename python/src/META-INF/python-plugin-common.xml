@@ -364,7 +364,6 @@
                     serviceImplementation="com.jetbrains.django.model.DjangoTagLibrary"/>
 
     <facetType implementation="com.jetbrains.django.facet.DjangoFacetType"/>
-    <framework.detector implementation="com.jetbrains.django.facet.DjangoFrameworkDetector"/>
 
     <codeInsight.lineMarkerProvider language="DjangoTemplate" implementationClass="com.jetbrains.django.annotator.ViewLineMarkerProvider"/>
     <codeInsight.lineMarkerProvider language="HTML" implementationClass="com.jetbrains.django.annotator.ViewLineMarkerProvider"/>

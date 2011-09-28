@@ -20,6 +20,7 @@
     <moduleType id="PYTHON_MODULE" implementationClass="com.jetbrains.python.module.PythonModuleType"/>
     <facetType implementation="com.jetbrains.python.facet.PythonFacetType"/>
     <framework.detector implementation="com.jetbrains.python.facet.PythonFacetType$PythonFrameworkDetector"/>
+    <framework.detector implementation="com.jetbrains.django.facet.DjangoFrameworkDetector"/>
     <frameworkSupport implementation="com.jetbrains.python.facet.PythonFrameworkSupportProvider"/>
     <frameworkSupport implementation="com.jetbrains.django.facet.DjangoFacetSupportProvider"/>
     <frameworkSupport implementation="com.jetbrains.appengine.facet.AppEngineFacetSupportProvider"/>
