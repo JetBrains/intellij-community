@@ -49,6 +49,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.VisibilityUtil;
+import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.table.JBTableRow;
@@ -258,7 +259,23 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
       private EditorTextField myNameEditor;
       private EditorTextField myDefaultValueEditor;      
       private JCheckBox myAnyVar;
-      
+      private Set<RowDocumentListener> myListeners = new HashSet<RowDocumentListener>();
+
+      class MyDocumentListener extends DocumentAdapter {
+        private int myColumn;
+
+        private MyDocumentListener(int column) {
+          myColumn = column;
+        }
+
+        @Override
+        public void documentChanged(DocumentEvent e) {
+          for (RowDocumentListener listener : myListeners) {
+            listener.documentChanged(e, myColumn);
+          }
+        }
+      }
+
       @Override
       public void prepareEditor(JTable table, int row) {
         setLayout(new BorderLayout());
@@ -270,11 +287,13 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
         typePanel.add(typeLabel);
         typePanel.add(myTypeEditor);
         myTypeEditor.setPreferredWidth(t.getWidth() / 2);
+        myTypeEditor.addDocumentListener(new MyDocumentListener(0));
         add(typePanel, BorderLayout.WEST);
 
         final JPanel namePanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 4, 2, true, false));
         myNameEditor = new EditorTextField(item.parameter.getName(), getProject(), getFileType());
         myNameEditor.addDocumentListener(mySignatureUpdater);
+        myNameEditor.addDocumentListener(new MyDocumentListener(1));
         final JLabel nameLabel = new JLabel("Name");
         namePanel.add(nameLabel);
         namePanel.add(myNameEditor);
@@ -290,6 +309,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
           defaultValuePanel.add(defaultValueLabel);
           defaultValuePanel.add(myDefaultValueEditor);
           myDefaultValueEditor.setPreferredWidth(t.getWidth() / 2);
+          myDefaultValueEditor.addDocumentListener(new MyDocumentListener(2));
           additionalPanel.add(defaultValuePanel, BorderLayout.WEST);
 
           if (!isGenerateDelegate()) {
@@ -347,6 +367,11 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
           focusable.add(myAnyVar);
         }
         return focusable.toArray(new JComponent[focusable.size()]);
+      }
+
+      @Override
+      public void addDocumentListener(RowDocumentListener listener) {
+        myListeners.add(listener);
       }
     };
   }

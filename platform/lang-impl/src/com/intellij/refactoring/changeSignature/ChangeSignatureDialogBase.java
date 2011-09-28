@@ -407,9 +407,20 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
         }
 
         @Override
-        protected JBTableRowEditor getRowEditor(int row) {
+        protected JBTableRowEditor getRowEditor(final int row) {
           final List<ParameterTableModelItemBase<P>> items = myParametersTable.getItems();
-          return getTableEditor(myParametersList.getTable(), items.get(row));
+          JBTableRowEditor editor = getTableEditor(myParametersList.getTable(), items.get(row));
+          editor.addDocumentListener(new JBTableRowEditor.RowDocumentListener() {
+            @Override
+            public void documentChanged(DocumentEvent e, int column) {
+              if (myParametersTableModel.getColumnClass(column).equals(String.class)) {
+                myParametersTableModel.setValueAtWithoutUpdate(e.getDocument().getText(), row, column);
+              }
+
+              updateSignature();
+            }
+          });
+          return editor;
         }
 
         @Override

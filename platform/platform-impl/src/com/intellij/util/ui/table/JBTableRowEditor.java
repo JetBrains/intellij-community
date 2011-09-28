@@ -15,6 +15,7 @@
  */
 package com.intellij.util.ui.table;
 
+import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.wm.IdeFocusManager;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,6 +26,10 @@ import java.awt.event.MouseEvent;
  * @author Konstantin Bulenkov
  */
 public abstract class JBTableRowEditor extends JPanel {
+  public interface RowDocumentListener {
+    void documentChanged(DocumentEvent e, int column);
+  }
+
   private MouseEvent myMouseEvent;
 
   @Override
@@ -49,4 +54,5 @@ public abstract class JBTableRowEditor extends JPanel {
   public abstract JBTableRow getValue();
   public abstract JComponent getPreferredFocusedComponent();
   public abstract JComponent[] getFocusableComponents();
+  public abstract void addDocumentListener(RowDocumentListener listener);
 }
