@@ -92,8 +92,9 @@ public class GithubUtil {
   }
 
   public static boolean testConnection(final String url, final String login, final String password) {
+    HttpMethod method = null;
     try {
-      final HttpMethod method = doREST(url, login, password, "/user/show/" + login, false);
+      method = doREST(url, login, password, "/user/show/" + login, false);
       final InputStream stream = method.getResponseBodyAsStream();
       final Element element = new SAXBuilder(false).build(stream).getRootElement();
       if ("error".equals(element.getName())){
@@ -104,6 +105,11 @@ public class GithubUtil {
     }
     catch (Exception e) {
       // Ignore
+    }
+    finally {
+      if (method!=null) {
+        method.releaseConnection();
+      }
     }
     return false;
   }
@@ -136,9 +142,10 @@ public class GithubUtil {
   }
 
   public static List<RepositoryInfo> getAvailableRepos(final String url, final String login, final String password, final boolean ownOnly) {
+    HttpMethod method = null;
     try {
       final String request = (ownOnly ? "/repos/show/" : "/repos/watched/") + login;
-      final HttpMethod method = doREST(url, login, password, request, false);
+      method = doREST(url, login, password, request, false);
       final InputStream stream = method.getResponseBodyAsStream();
       final Element element = new SAXBuilder(false).build(stream).getRootElement();
       if ("error".equals(element.getName())){
@@ -156,15 +163,21 @@ public class GithubUtil {
     catch (Exception e) {
       // ignore
     }
+    finally {
+      if (method != null){
+        method.releaseConnection();
+      }
+    }
     return Collections.emptyList();
   }
 
 
   @Nullable
   public static RepositoryInfo getDetailedRepoInfo(final String url, final String login, final String password, final String owner, final String name) {
+    HttpMethod method = null;
     try {
       final String request = "/repos/show/" + owner + "/" + name;
-      final HttpMethod method = doREST(url, login, password, request, false);
+      method = doREST(url, login, password, request, false);
       final InputStream stream = method.getResponseBodyAsStream();
       final Element element = new SAXBuilder(false).build(stream).getRootElement();
       if ("error".equals(element.getName())){
@@ -176,13 +189,19 @@ public class GithubUtil {
     catch (Exception e) {
       // ignore
     }
+    finally {
+      if (method != null){
+        method.releaseConnection();
+      }
+    }
     return null;
   }
 
   public static boolean isPrivateRepoAllowed(final String url, final String login, final String password) {
+    HttpMethod method = null;
     try {
       final String request = "/user/show/" + login;
-      final HttpMethod method = doREST(url, login, password, request, false);
+      method = doREST(url, login, password, request, false);
       final InputStream stream = method.getResponseBodyAsStream();
       final Element element = new SAXBuilder(false).build(stream).getRootElement();
       if ("error".equals(element.getName())){
@@ -196,6 +215,11 @@ public class GithubUtil {
     }
     catch (Exception e) {
       // ignore
+    }
+    finally {
+      if (method != null){
+        method.releaseConnection();
+      }
     }
     return false;
   }
