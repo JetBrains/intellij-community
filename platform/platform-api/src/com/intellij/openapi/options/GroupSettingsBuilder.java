@@ -57,7 +57,6 @@ public class GroupSettingsBuilder<T> implements CompositeSettingsBuilder<T> {
     for (int i = 0; i < editors.size(); i++) {
       Pair<String, SettingsEditor<T>> pair = editors.get(i);
       JPanel panel = new JPanel(new BorderLayout());
-      panel.setBorder(BorderFactory.createEmptyBorder(6, 6, 6, 6));
       panel.add(pair.getSecond().getComponent(), BorderLayout.CENTER);
       tabs.add(pair.getFirst(), panel);
     }

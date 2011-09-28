@@ -32,6 +32,7 @@ public class JBTabbedPane extends JTabbedPane implements HierarchyListener {
     super.setComponentAt(index, component);
     component.addHierarchyListener(this);
     UIUtil.setNotOpaqueRecursively(component);
+    setInsets(component);
   }
 
   @Override
@@ -39,6 +40,19 @@ public class JBTabbedPane extends JTabbedPane implements HierarchyListener {
     super.insertTab(title, icon, component, tip, index);
     component.addHierarchyListener(this);
     UIUtil.setNotOpaqueRecursively(component);
+    setInsets(component);
+  }
+
+  private void setInsets(Component component) {
+    if (component instanceof JComponent) {
+      if (((JComponent)component).getBorder() == null) {
+        ((JComponent)component).setBorder(new EmptyBorder(UIUtil.PANEL_SMALL_INSETS));
+      }
+      else {
+        ((JComponent)component)
+          .setBorder(new CompoundBorder(new EmptyBorder(UIUtil.PANEL_SMALL_INSETS), ((JComponent)component).getBorder()));
+      }
+    }
   }
 
   @Override

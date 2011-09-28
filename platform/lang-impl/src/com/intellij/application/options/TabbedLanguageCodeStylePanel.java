@@ -125,7 +125,6 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
   protected final void addTab(CodeStyleAbstractPanel tab) {
     myTabs.add(tab);
     tab.setShouldUpdatePreview(true);
-    tab.getPanel().setBorder(new EmptyBorder(UIUtil.PANEL_SMALL_INSETS));
     addPanelToWatch(tab.getPanel());
     myTabbedPane.addTab(tab.getTabTitle(), tab.getPanel());
     if (myActiveTab == null) {

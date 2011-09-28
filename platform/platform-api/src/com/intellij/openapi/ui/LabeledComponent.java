@@ -34,7 +34,7 @@ public class LabeledComponent<Comp extends JComponent> extends JPanel implements
   private String myLabelConstraints = BorderLayout.NORTH;
 
   public LabeledComponent() {
-    super(new BorderLayout(UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP));
+    super(new BorderLayout(UIUtil.DEFAULT_HGAP, 2));
     insertLabel();
   }
 
