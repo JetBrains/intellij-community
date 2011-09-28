@@ -21,10 +21,12 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.NameValuePair;
@@ -104,47 +106,59 @@ public class GithubCreateGistAction extends DumbAwareAction {
     if (!dialog.isOK()){
       return;
     }
+    final GithubSettings settings = GithubSettings.getInstance();
+    final String password = settings.getPassword();
+    final Ref<String> url = new Ref<String>();
     final String description = dialog.getDescription();
     final boolean isPrivate = dialog.isPrivate();
     final boolean anonymous = dialog.isAnonimous();
     final boolean openInBrowser = dialog.isOpenInBrowser();
     
+    // Text
     final SelectionModel selectionModel = editor.getSelectionModel();
     final String text = selectionModel.hasSelection() ? selectionModel.getSelectedText() : editor.getDocument().getText();
-    final GithubSettings settings = GithubSettings.getInstance();
-    final HttpClient client = anonymous ? GithubUtil.getHttpClient(null, null) : GithubUtil.getHttpClient(settings.getLogin(), settings.getPassword());
-    client.getParams().setContentCharset("UTF-8");
-
-    final PostMethod method = new PostMethod("https://gist.github.com/gists");
-    method.addParameters(new NameValuePair[]{
-      new NameValuePair("description", description),
-      new NameValuePair("file_ext[gistfile1]", "." + file.getExtension()),
-      new NameValuePair("file_name[gistfile1]", file.getNameWithoutExtension()),
-      new NameValuePair("file_contents[gistfile1]", text)
-    });
-    if (isPrivate){
-      method.addParameter("action_button", "private");
-    }
-    try {
-      client.executeMethod(method);
-      final String responce = method.getResponseBodyAsString();
-      // TODO[oleg] fix it when github API v3 becomes public
-      // http://developer.github.com/v3/gists/
-      final Matcher matcher = Pattern.compile("\\d+").matcher(responce);
-      matcher.find();
-      final String url = "https://gist.github.com/" + matcher.group();
-      if (openInBrowser) {
-        BrowserUtil.launchBrowser(url);
-      } else {
-        Messages.showInfoMessage(project, "Gist successfully created: " + url, "Gist Created");
+    
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+      @Override
+      public void run() {
+        final HttpClient client = anonymous ? GithubUtil.getHttpClient(null, null) : GithubUtil.getHttpClient(settings.getLogin(), password);
+        client.getParams().setContentCharset("UTF-8");
+    
+        final PostMethod method = new PostMethod("https://gist.github.com/gists");
+        method.addParameters(new NameValuePair[]{
+          new NameValuePair("description", description),
+          new NameValuePair("file_ext[gistfile1]", "." + file.getExtension()),
+          new NameValuePair("file_name[gistfile1]", file.getNameWithoutExtension()),
+          new NameValuePair("file_contents[gistfile1]", text)
+        });
+        if (isPrivate){
+          method.addParameter("action_button", "private");
+        }
+        try {
+          client.executeMethod(method);
+          final String responce = method.getResponseBodyAsString();
+          // TODO[oleg] fix it when github API v3 becomes public
+          // http://developer.github.com/v3/gists/
+          final Matcher matcher = Pattern.compile("\\d+").matcher(responce);
+          matcher.find();
+          url.set("https://gist.github.com/" + matcher.group());
+        }
+        catch (IOException e1) {
+          LOG.error("Failed to create gist: " + e1);
+          return;
+        }
+        finally {
+          method.releaseConnection();
+        }
       }
-    }
-    catch (IOException e1) {
-      LOG.error("Failed to create gist: " + e1);
+    }, "Communicating With GitHub", false, project);
+    if (url.isNull()){
       return;
     }
-    finally {
-      method.releaseConnection();
+    if (openInBrowser) {
+      BrowserUtil.launchBrowser(url.get());
+    } else {
+      Messages.showInfoMessage(project, "Your gist url: " + url.get(), "Gist Created Successfully");
     }
   }
 }
