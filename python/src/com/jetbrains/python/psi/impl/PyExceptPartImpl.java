@@ -2,6 +2,7 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.stubs.PyExceptPartStub;
 import org.jetbrains.annotations.NotNull;
@@ -28,12 +29,12 @@ public class PyExceptPartImpl extends PyBaseElementImpl<PyExceptPartStub> implem
 
   @Nullable
   public PyExpression getExceptClass() {
-    return childToPsi(PyElementTypes.EXPRESSIONS, 0);
+    return childToPsi(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens(), 0);
   }
 
   @Nullable
   public PyExpression getTarget() {
-    return childToPsi(PyElementTypes.EXPRESSIONS, 1);
+    return childToPsi(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens(), 1);
   }
 
   @NotNull

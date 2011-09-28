@@ -5,10 +5,11 @@ package com.jetbrains.python.psi.impl.stubs;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.stubs.StubInputStream;
-import com.intellij.util.io.PersistentStringEnumerator;
+import com.intellij.psi.stubs.StubOutputStream;
+import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyParameterList;
 import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.impl.PyParameterListImpl;
@@ -18,7 +19,11 @@ import java.io.IOException;
 
 public class PyParameterListElementType extends PyStubElementType<PyParameterListStub, PyParameterList> {
   public PyParameterListElementType() {
-    super("PARAMETER_LIST");
+    this("PARAMETER_LIST");
+  }
+
+  public PyParameterListElementType(String debugName) {
+    super(debugName);
   }
 
   public PyParameterList createPsi(final PyParameterListStub stub) {
@@ -26,7 +31,7 @@ public class PyParameterListElementType extends PyStubElementType<PyParameterLis
   }
 
   public PyParameterListStub createStub(final PyParameterList psi, final StubElement parentStub) {
-    return new PyParameterListStubImpl(parentStub);
+    return new PyParameterListStubImpl(parentStub, getStubElementType());
   }
 
   public PsiElement createElement(final ASTNode node) {
@@ -39,6 +44,10 @@ public class PyParameterListElementType extends PyStubElementType<PyParameterLis
 
   public PyParameterListStub deserialize(final StubInputStream dataStream, final StubElement parentStub)
       throws IOException {
-    return new PyParameterListStubImpl(parentStub);
+    return new PyParameterListStubImpl(parentStub, getStubElementType());
+  }
+
+  protected IStubElementType getStubElementType() {
+    return PyElementTypes.PARAMETER_LIST;
   }
 }

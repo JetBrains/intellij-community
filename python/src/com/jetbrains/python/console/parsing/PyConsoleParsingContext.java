@@ -5,6 +5,7 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.parsing.ExpressionParsing;
 import com.jetbrains.python.parsing.ParsingContext;
+import com.jetbrains.python.parsing.ParsingScope;
 import com.jetbrains.python.parsing.StatementParsing;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.Nullable;
@@ -37,13 +38,13 @@ public class PyConsoleParsingContext extends ParsingContext {
       super(context, futureFlag);
     }
 
-    protected void checkEndOfStatement(boolean inSuite) {
+    protected void checkEndOfStatement(ParsingScope scope) {
       PsiBuilder builder = myContext.getBuilder();
       if (builder.getTokenType() == PyTokenTypes.STATEMENT_BREAK) {
         builder.advanceLexer();
       }
       else if (builder.getTokenType() == PyTokenTypes.SEMICOLON) {
-        if (!inSuite) {
+        if (!scope.isSuite()) {
           builder.advanceLexer();
           if (builder.getTokenType() == PyTokenTypes.STATEMENT_BREAK) {
             builder.advanceLexer();

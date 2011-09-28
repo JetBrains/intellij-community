@@ -24,7 +24,7 @@ public class PyForStatementImpl extends PyPartitionedElementImpl implements PyFo
 
   @NotNull
   public PyForPart getForPart() {
-    return (PyForPart)getPartNotNull(PyElementTypes.FOR_PART);
+    return findNotNullChildByClass(PyForPart.class);
   }
 
   @NotNull

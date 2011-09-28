@@ -10,6 +10,7 @@ import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
@@ -62,7 +63,11 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   }
 
   public PyClassImpl(final PyClassStub stub) {
-    super(stub, PyElementTypes.CLASS_DECLARATION);
+    this(stub, PyElementTypes.CLASS_DECLARATION);
+  }
+
+  public PyClassImpl(final PyClassStub stub, IStubElementType nodeType) {
+    super(stub, nodeType);
   }
 
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {

@@ -37,4 +37,8 @@ public class ParsingContext {
   public LanguageLevel getLanguageLevel() {
     return myLanguageLevel;
   }
+
+  public ParsingScope emptyParsingScope() {
+    return new ParsingScope();
+  }
 }

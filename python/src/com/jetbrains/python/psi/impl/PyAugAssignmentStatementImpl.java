@@ -3,6 +3,7 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
 import com.jetbrains.python.PyElementTypes;
@@ -26,7 +27,7 @@ public class PyAugAssignmentStatementImpl extends PyElementImpl implements PyAug
 
   @NotNull
   public PyExpression getTarget() {
-    final PyExpression target = childToPsi(PyElementTypes.EXPRESSIONS, 0);
+    final PyExpression target = childToPsi(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens(), 0);
     if (target == null) {
       throw new RuntimeException("Target missing in augmented assignment statement");
     }
@@ -35,7 +36,7 @@ public class PyAugAssignmentStatementImpl extends PyElementImpl implements PyAug
 
   @Nullable
   public PyExpression getValue() {
-    return childToPsi(PyElementTypes.EXPRESSIONS, 1);
+    return childToPsi(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens(), 1);
   }
 
   @Nullable

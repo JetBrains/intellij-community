@@ -59,7 +59,7 @@ public class PyStringLiteralLexer extends LexerBase {
     // unicode flag
     char c = buffer.charAt(i);
 
-    if (c == 'u' || c == 'U' || c == 'b' || c == 'B')
+    if (c == 'u' || c == 'U' || c == 'b' || c == 'B' || c == 'c' || c == 'C')
       i += 1;
 
     // raw flag

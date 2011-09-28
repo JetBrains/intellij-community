@@ -52,12 +52,7 @@ public class ExpressionParsing extends Parsing {
       return true;
     }
     else if (PyTokenTypes.STRING_NODES.contains(firstToken)) {
-      final PsiBuilder.Marker marker = myBuilder.mark();
-      while (PyTokenTypes.STRING_NODES.contains(myBuilder.getTokenType())) {
-        myBuilder.advanceLexer();
-      }
-      marker.done(PyElementTypes.STRING_LITERAL_EXPRESSION);
-      return true;
+      return parseStringLiteralExpression();
     }
     else if (firstToken == PyTokenTypes.LPAR) {
       parseParenthesizedExpression(isTargetExpression);
@@ -83,6 +78,19 @@ public class ExpressionParsing extends Parsing {
         return true;
       }
       maybeEllipsis.rollbackTo();
+    }
+    return false;
+  }
+
+  public boolean parseStringLiteralExpression() {
+    final PsiBuilder builder = myContext.getBuilder();
+    if (PyTokenTypes.STRING_NODES.contains(builder.getTokenType())) {
+      final PsiBuilder.Marker marker = builder.mark();
+      while (PyTokenTypes.STRING_NODES.contains(builder.getTokenType())) {
+        nextToken();
+      }
+      marker.done(PyElementTypes.STRING_LITERAL_EXPRESSION);
+      return true;
     }
     return false;
   }
@@ -128,10 +136,7 @@ public class ExpressionParsing extends Parsing {
     while (true) {
       myBuilder.advanceLexer();
       parseExpression(true, true);
-      checkMatches(PyTokenTypes.IN_KEYWORD, message("PARSE.expected.in"));
-      if (!parseTupleExpression(false, false, true)) {
-        myBuilder.error(message("PARSE.expected.expression"));
-      }
+      parseComprehensionRange();
       while (myBuilder.getTokenType() == PyTokenTypes.IF_KEYWORD) {
         myBuilder.advanceLexer();
         parseOldExpression();
@@ -152,6 +157,13 @@ public class ExpressionParsing extends Parsing {
       break;
     }
     expr.done(exprType);
+  }
+
+  protected void parseComprehensionRange() {
+    checkMatches(PyTokenTypes.IN_KEYWORD, "'in' expected");
+    if (!parseTupleExpression(false, false, true)) {
+      myBuilder.error("expression expected");
+    }
   }
 
   private void parseDictOrSetDisplay() {
@@ -527,7 +539,7 @@ public class ExpressionParsing extends Parsing {
     }
   }
 
-  private boolean parseTupleExpression(boolean stopOnIn, boolean isTargetExpression, final boolean oldTest) {
+  protected boolean parseTupleExpression(boolean stopOnIn, boolean isTargetExpression, final boolean oldTest) {
     PsiBuilder.Marker expr = myBuilder.mark();
     boolean exprParseResult = oldTest ? parseOldTestExpression() : parseTestExpression(stopOnIn, isTargetExpression);
     if (!exprParseResult) {
@@ -840,7 +852,7 @@ public class ExpressionParsing extends Parsing {
     return true;
   }
 
-  private boolean parseUnaryExpression(boolean isTargetExpression) {
+  protected boolean parseUnaryExpression(boolean isTargetExpression) {
     final IElementType tokenType = myBuilder.getTokenType();
     if (PyTokenTypes.UNARY_OPERATIONS.contains(tokenType)) {
       final PsiBuilder.Marker expr = myBuilder.mark();

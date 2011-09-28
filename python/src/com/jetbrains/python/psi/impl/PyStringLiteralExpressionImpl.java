@@ -108,7 +108,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
 
   private static int skipEncodingPrefix(String text, int startOffset) {
     char c = Character.toUpperCase(text.charAt(startOffset));
-    if (c == 'U' || c == 'B') {
+    if (c == 'U' || c == 'B' || c == 'C') {
       startOffset++;
     }
     return startOffset;
@@ -125,6 +125,10 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
 
   private static boolean isBytes(String text) {
     return text.length() > 0 && Character.toUpperCase(text.charAt(0)) == 'B';
+  }
+
+  private static boolean isChar(String text) {
+    return text.length() > 0 && Character.toUpperCase(text.charAt(0)) == 'C';
   }
 
   public void iterateCharacterRanges(TextRangeConsumer consumer) {

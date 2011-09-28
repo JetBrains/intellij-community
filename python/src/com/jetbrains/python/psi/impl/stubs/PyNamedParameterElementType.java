@@ -5,10 +5,12 @@ package com.jetbrains.python.psi.impl.stubs;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.util.io.StringRef;
+import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.impl.PyNamedParameterImpl;
@@ -22,7 +24,11 @@ public class PyNamedParameterElementType extends PyStubElementType<PyNamedParame
   private static final int HAS_DEFAULT_VALUE = 4;
 
   public PyNamedParameterElementType() {
-    super("NAMED_PARAMETER");
+    this("NAMED_PARAMETER");
+  }
+
+  public PyNamedParameterElementType(String debugName) {
+    super(debugName);
   }
 
   public PyNamedParameter createPsi(final PyNamedParameterStub stub) {
@@ -30,7 +36,8 @@ public class PyNamedParameterElementType extends PyStubElementType<PyNamedParame
   }
 
   public PyNamedParameterStub createStub(final PyNamedParameter psi, final StubElement parentStub) {
-    return new PyNamedParameterStubImpl(psi.getName(), psi.isPositionalContainer(), psi.isKeywordContainer(), psi.hasDefaultValue(), parentStub);
+    return new PyNamedParameterStubImpl(psi.getName(), psi.isPositionalContainer(), psi.isKeywordContainer(), psi.hasDefaultValue(),
+                                        parentStub, getStubElementType());
   }
 
   public PsiElement createElement(final ASTNode node) {
@@ -55,6 +62,11 @@ public class PyNamedParameterElementType extends PyStubElementType<PyNamedParame
                                         (flags & POSITIONAL_CONTAINER) != 0,
                                         (flags & KEYWORD_CONTAINER) != 0,
                                         (flags & HAS_DEFAULT_VALUE) != 0,
-                                        parentStub);
+                                        parentStub,
+                                        getStubElementType());
+  }
+
+  protected IStubElementType getStubElementType() {
+    return PyElementTypes.NAMED_PARAMETER;
   }
 }

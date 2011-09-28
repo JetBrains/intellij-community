@@ -2,11 +2,9 @@ package com.jetbrains.python.psi.impl.stubs;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.stubs.IndexSink;
-import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.stubs.StubInputStream;
-import com.intellij.psi.stubs.StubOutputStream;
+import com.intellij.psi.stubs.*;
 import com.intellij.util.io.StringRef;
+import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyClassImpl;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
@@ -24,7 +22,11 @@ import java.util.List;
  */
 public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> {
   public PyClassElementType() {
-    super("CLASS_DECLARATION");
+    this("CLASS_DECLARATION");
+  }
+
+  public PyClassElementType(String debugName) {
+    super(debugName);
   }
 
   public PsiElement createElement(final ASTNode node) {
@@ -43,7 +45,8 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
     }
     return new PyClassStubImpl(psi.getName(), parentStub,
                                superClasses.toArray(new PyQualifiedName[superClasses.size()]),
-                               ((PyClassImpl) psi).getOwnSlots());
+                               ((PyClassImpl) psi).getOwnSlots(),
+                               getStubElementType());
   }
 
   public void serialize(final PyClassStub pyClassStub, final StubOutputStream dataStream) throws IOException {
@@ -64,7 +67,7 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
       superClasses[i] = PyQualifiedName.deserialize(dataStream);
     }
     List<String> slots = PyFileElementType.readNullableList(dataStream);
-    return new PyClassStubImpl(name, parentStub, superClasses, slots);
+    return new PyClassStubImpl(name, parentStub, superClasses, slots, getStubElementType());
   }
 
   public void indexStub(final PyClassStub stub, final IndexSink sink) {
@@ -81,5 +84,9 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
         }
       }
     }
+  }
+
+  protected IStubElementType getStubElementType() {
+    return PyElementTypes.CLASS_DECLARATION;
   }
 }

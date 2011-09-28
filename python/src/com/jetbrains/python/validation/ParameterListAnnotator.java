@@ -1,6 +1,7 @@
 package com.jetbrains.python.validation;
 
 import com.intellij.util.containers.HashSet;
+import com.jetbrains.cython.CythonLanguageDialect;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.ParamHelper;
@@ -26,6 +27,9 @@ public class ParameterListAnnotator extends PyAnnotator {
         int inTuple = 0;
         @Override
         public void visitNamedParameter(PyNamedParameter parameter, boolean first, boolean last) {
+          if (CythonLanguageDialect._isDisabledFor(parameter.getLanguage())) {
+            return;
+          }
           if (parameterNames.contains(parameter.getName())) {
             markError(parameter, PyBundle.message("ANN.duplicate.param.name"));
           }

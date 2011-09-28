@@ -1,5 +1,6 @@
 package com.jetbrains.python.psi.impl.stubs;
 
+import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.jetbrains.python.PyElementTypes;
@@ -15,8 +16,9 @@ public class PyFromImportStatementStubImpl extends StubBase<PyFromImportStatemen
   private final boolean myStarImport;
   private final int myRelativeLevel;
 
-  public PyFromImportStatementStubImpl(PyQualifiedName importSourceQName, boolean isStarImport, int relativeLevel, final StubElement parent) {
-    super(parent, PyElementTypes.FROM_IMPORT_STATEMENT);
+  public PyFromImportStatementStubImpl(PyQualifiedName importSourceQName, boolean isStarImport, int relativeLevel,
+                                       final StubElement parent, IStubElementType elementType) {
+    super(parent, elementType);
     myImportSourceQName = importSourceQName;
     myStarImport = isStarImport;
     myRelativeLevel = relativeLevel;

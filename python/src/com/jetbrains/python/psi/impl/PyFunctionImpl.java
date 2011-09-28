@@ -10,6 +10,7 @@ import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -41,7 +42,11 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
   }
 
   public PyFunctionImpl(final PyFunctionStub stub) {
-    super(stub, PyElementTypes.FUNCTION_DECLARATION);
+    this(stub, PyElementTypes.FUNCTION_DECLARATION);
+  }
+
+  public PyFunctionImpl(PyFunctionStub stub, IStubElementType nodeType) {
+    super(stub, nodeType);
   }
 
   @Nullable

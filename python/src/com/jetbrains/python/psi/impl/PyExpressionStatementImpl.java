@@ -1,6 +1,7 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.PyElementVisitor;
 import org.jetbrains.annotations.NotNull;
 import com.jetbrains.python.PyElementTypes;
@@ -17,7 +18,7 @@ public class PyExpressionStatementImpl extends PyElementImpl implements PyExpres
 
   @NotNull
   public PyExpression getExpression() {
-    return childToPsiNotNull(PyElementTypes.EXPRESSIONS, 0);
+    return childToPsiNotNull(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens(), 0);
   }
 
   @Override

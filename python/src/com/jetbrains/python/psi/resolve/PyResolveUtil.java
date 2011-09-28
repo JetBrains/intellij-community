@@ -13,6 +13,7 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,26 +75,9 @@ public class PyResolveUtil {
       return getPrevNodeOf(elt, ((PyClassScopeProcessor)proc).getTargetTokenSet());
     }
     else {
-      return getPrevNodeOf(elt, NAME_DEFINERS);
+      return getPrevNodeOf(elt, PythonDialectsTokenSetProvider.INSTANCE.getNameDefinerTokens());
     }
   }
-
-  public static final TokenSet NAME_DEFINERS = TokenSet.create(PyElementTypes.STAR_IMPORT_ELEMENT,
-                                                               PyElementTypes.IMPORT_ELEMENT,
-                                                               PyElementTypes.CLASS_DECLARATION,
-                                                               PyElementTypes.GLOBAL_STATEMENT,
-                                                               PyElementTypes.GENERATOR_EXPRESSION,
-                                                               PyElementTypes.DICT_COMP_EXPRESSION,
-                                                               PyElementTypes.LIST_COMP_EXPRESSION,
-                                                               PyElementTypes.SET_COMP_EXPRESSION,
-                                                               PyElementTypes.WITH_STATEMENT,
-                                                               PyElementTypes.FUNCTION_DECLARATION,
-                                                               PyElementTypes.ASSIGNMENT_STATEMENT,
-                                                               PyElementTypes.PARAMETER_LIST,
-                                                               PyElementTypes.EXCEPT_PART,
-                                                               PyElementTypes.FOR_STATEMENT,
-                                                               PyElementTypes.FROM_IMPORT_STATEMENT);  // this is not exactly a NameDefiner but needed anyway
-                                                                                                       // in mypackage/__init__.py, 'from mypackage.foo import bar' makes 'foo' name visible
 
   /**
    * Crawls up the PSI tree, checking nodes as if crawling backwards through source lexemes.

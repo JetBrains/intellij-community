@@ -321,7 +321,10 @@
 
     <project.converterProvider implementation="com.jetbrains.python.testing.converters.PythonTestConverterProvider"/>
 
+    <!-- Cython -->
     <lang.parserDefinition language="Cython" implementationClass="com.jetbrains.cython.parser.CythonParserDefinition"/>
+    <lang.syntaxHighlighterFactory key="Cython" implementationClass="com.jetbrains.cython.CythonSyntaxHighlighterFactory"/>
+    <annotator language="Cython" implementationClass="com.jetbrains.cython.CythonBuiltinAnnotator"/>
 
     <coverageEngine implementation="com.jetbrains.python.coverage.PyCoverageEngine"/>
     <coverageRunner implementation="com.jetbrains.python.coverage.PyCoverageRunner"/>
@@ -585,13 +588,9 @@
     <extensionPoint qualifiedName="Pythonid.customTargetExpressionStubType"
                     interface="com.jetbrains.python.psi.impl.stubs.CustomTargetExpressionStubType"/>
     <extensionPoint qualifiedName="Pythonid.knownDecoratorProvider" interface="com.jetbrains.python.psi.PyKnownDecoratorProvider"/>
-    <extensionPoint qualifiedName="Pythonid.documentationLinkProvider"
-                    interface="com.jetbrains.python.documentation.PythonDocumentationLinkProvider"/>
-    <extensionPoint qualifiedName="Pythonid.importCandidateProvider"
-                    interface="com.jetbrains.python.codeInsight.imports.PyImportCandidateProvider"/>
-    <extensionPoint qualifiedName="Pythonid.runConfigurationExtension"
-                    interface="com.jetbrains.python.run.PythonRunConfigurationExtension"/>
-
+    <extensionPoint qualifiedName="Pythonid.documentationLinkProvider" interface="com.jetbrains.python.documentation.PythonDocumentationLinkProvider"/>
+    <extensionPoint qualifiedName="Pythonid.importCandidateProvider" interface="com.jetbrains.python.codeInsight.imports.PyImportCandidateProvider"/>
+    <extensionPoint qualifiedName="Pythonid.dialectsTokenSetContributor" interface="com.jetbrains.python.PythonDialectsTokenSetContributor"/>    
     <extensionPoint qualifiedName="Pythonid.templateLanguageCoreTags"
                     beanClass="com.intellij.lang.LanguageExtensionPoint"/>
   </extensionPoints>
@@ -605,6 +604,8 @@
     <dumbAnnotator implementation="com.jetbrains.python.validation.DocStringAnnotator"/>
     <dumbAnnotator implementation="com.jetbrains.python.validation.PyDefinitionsAnnotator"/>
     <customTargetExpressionStubType implementation="com.jetbrains.python.psi.impl.stubs.PropertyStubType"/>
+    <dialectsTokenSetContributor implementation="com.jetbrains.python.PythonTokenSetContributor"/>
+    <dialectsTokenSetContributor implementation="com.jetbrains.cython.CythonTokenSetContributor"/>
     <runConfigurationExtension implementation="com.jetbrains.python.coverage.PythonCoverageRunConfigurationExtension"/>
 
     <pyClassMembersProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibClassMembersProvider"/>

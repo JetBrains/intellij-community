@@ -5,11 +5,13 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.documentation.StructuredDocString;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.stubs.PyNamedParameterStub;
@@ -32,7 +34,11 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
   }
 
   public PyNamedParameterImpl(final PyNamedParameterStub stub) {
-    super(stub, PyElementTypes.NAMED_PARAMETER);
+    this(stub, PyElementTypes.NAMED_PARAMETER);
+  }
+
+  public PyNamedParameterImpl(final PyNamedParameterStub stub, IStubElementType nodeType) {
+    super(stub, nodeType);
   }
 
   @Nullable
@@ -49,7 +55,7 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
   }
 
   @Nullable
-  private ASTNode getNameIdentifierNode() {
+  protected ASTNode getNameIdentifierNode() {
     return getNode().findChildByType(PyTokenTypes.IDENTIFIER);
   }
 
@@ -94,7 +100,7 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
 
   @Nullable
   public PyExpression getDefaultValue() {
-    ASTNode[] nodes = getNode().getChildren(PyElementTypes.EXPRESSIONS);
+    ASTNode[] nodes = getNode().getChildren(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens());
     if (nodes.length > 0) {
       return (PyExpression)nodes[0].getPsi();
     }

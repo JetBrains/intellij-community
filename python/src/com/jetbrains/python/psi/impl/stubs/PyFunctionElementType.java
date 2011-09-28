@@ -2,11 +2,9 @@ package com.jetbrains.python.psi.impl.stubs;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.stubs.IndexSink;
-import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.stubs.StubInputStream;
-import com.intellij.psi.stubs.StubOutputStream;
+import com.intellij.psi.stubs.*;
 import com.intellij.util.io.StringRef;
+import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.impl.PyFunctionImpl;
@@ -20,7 +18,11 @@ import java.io.IOException;
  */
 public class PyFunctionElementType extends PyStubElementType<PyFunctionStub, PyFunction> {
   public PyFunctionElementType() {
-    super("FUNCTION_DECLARATION");
+    this("FUNCTION_DECLARATION");
+  }
+
+  public PyFunctionElementType(String debugName) {
+    super(debugName);
   }
 
   public PsiElement createElement(final ASTNode node) {
@@ -35,7 +37,7 @@ public class PyFunctionElementType extends PyStubElementType<PyFunctionStub, PyF
     PyFunctionImpl function = (PyFunctionImpl)psi;
     String message = function.extractDeprecationMessage();
     return new PyFunctionStubImpl(psi.getName(), function.extractDocStringReturnType(),
-                                  message == null ? null : StringRef.fromString(message), parentStub);
+                                  message == null ? null : StringRef.fromString(message), parentStub, getStubElementType());
   }
 
   public void serialize(final PyFunctionStub stub, final StubOutputStream dataStream)
@@ -49,7 +51,8 @@ public class PyFunctionElementType extends PyStubElementType<PyFunctionStub, PyF
     String name = StringRef.toString(dataStream.readName());
     StringRef returnType = dataStream.readName();
     StringRef deprecationMessage = dataStream.readName();
-    return new PyFunctionStubImpl(name, returnType != null ? returnType.getString() : null, deprecationMessage, parentStub);
+    return new PyFunctionStubImpl(name, returnType != null ? returnType.getString() : null, deprecationMessage, parentStub,
+                                  getStubElementType());
   }
 
   public void indexStub(final PyFunctionStub stub, final IndexSink sink) {
@@ -57,5 +60,9 @@ public class PyFunctionElementType extends PyStubElementType<PyFunctionStub, PyF
     if (name != null) {
       sink.occurrence(PyFunctionNameIndex.KEY, name);
     }
+  }
+
+  protected IStubElementType getStubElementType() {
+    return PyElementTypes.FUNCTION_DECLARATION;
   }
 }

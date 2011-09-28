@@ -7,6 +7,7 @@ import com.intellij.psi.PsiReference;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.*;
@@ -22,12 +23,12 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
   }
 
   public PyExpression getOperand() {
-    return childToPsiNotNull(PyElementTypes.EXPRESSIONS, 0);
+    return childToPsiNotNull(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens(), 0);
   }
 
   @Nullable
   public PyExpression getIndexExpression() {
-    return childToPsi(PyElementTypes.EXPRESSIONS, 1);
+    return childToPsi(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens(), 1);
   }
 
   @Override

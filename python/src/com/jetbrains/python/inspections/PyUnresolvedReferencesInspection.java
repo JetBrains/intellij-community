@@ -14,6 +14,7 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
+import com.jetbrains.cython.CythonLanguageDialect;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.actions.*;
@@ -201,6 +202,9 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     @Override
     public void visitPyElement(final PyElement node) {
       super.visitPyElement(node);
+      if (CythonLanguageDialect._isDisabledFor(node.getLanguage())) {
+        return;
+      }
       if (node instanceof PyReferenceOwner) {
         final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext);
         processReference(node, ((PyReferenceOwner)node).getReference(resolveContext));
