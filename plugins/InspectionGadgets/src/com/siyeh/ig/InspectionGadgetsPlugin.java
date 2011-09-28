@@ -17,7 +17,6 @@ package com.siyeh.ig;
 
 import com.intellij.codeInspection.GlobalInspectionTool;
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.booleanIsAlwaysInverted.BooleanMethodIsAlwaysInvertedInspection;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
@@ -96,8 +95,7 @@ import java.util.*;
         "OverlyCoupledMethod",
         "OverlyLongMethod",
         "ClassWithTooManyMethods"})
-public class InspectionGadgetsPlugin implements ApplicationComponent,
-        InspectionToolProvider {
+public class InspectionGadgetsPlugin implements ApplicationComponent {
 
     @NonNls private static final String DESCRIPTION_DIRECTORY_NAME =
             "src/inspectionDescriptions/";
@@ -108,6 +106,10 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
             new ArrayList();
     private volatile InspectionGadgetsTelemetry telemetry = null;
     private volatile boolean telemetryEnabled = false;
+
+    public static InspectionGadgetsPlugin getInstance() {
+        return ApplicationManager.getApplication().getComponent(InspectionGadgetsPlugin.class);
+    }
 
     public static void main(String... args) throws FileNotFoundException {
         final PrintStream out;
@@ -272,7 +274,6 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         return "InspectionGadgets";
     }
 
-    @Override
     public Class<? extends InspectionProfileEntry>[] getInspectionClasses() {
         if (m_inspectionClasses.isEmpty()) {
             registerAbstractionInspections();

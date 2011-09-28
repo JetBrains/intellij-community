@@ -18,11 +18,7 @@ package com.siyeh.ig;
 import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.ui.DocumentAdapter;
@@ -49,7 +45,7 @@ public abstract class BaseInspection extends BaseJavaLocalInspectionTool {
 
     private String m_shortName = null;
     private long timestamp = -1L;
-    private InspectionGadgetsPlugin inspectionGadgetsPlugin = null;
+    private final InspectionGadgetsPlugin inspectionGadgetsPlugin = InspectionGadgetsPlugin.getInstance();
 
 
     @Override @NotNull
@@ -209,27 +205,6 @@ public abstract class BaseInspection extends BaseJavaLocalInspectionTool {
             final String displayName = getDisplayName();
             inspectionGadgetsPlugin.getTelemetry().reportRun(displayName, end - timestamp);
             timestamp = -1L;
-        }
-    }
-
-    @Override
-    public void projectOpened(Project project) {
-        super.projectOpened(project);
-        if (inspectionGadgetsPlugin != null) {
-          return;
-        }
-        @NonNls
-        final Application application = ApplicationManager.getApplication();
-        inspectionGadgetsPlugin = (InspectionGadgetsPlugin)
-                application.getComponent("InspectionGadgets");
-    }
-
-    @Override
-    public void projectClosed(Project project) {
-        super.projectClosed(project);
-        final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-        if (openProjects.length == 0) {
-            inspectionGadgetsPlugin = null;
         }
     }
 }

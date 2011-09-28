@@ -15,8 +15,6 @@
  */
 package com.siyeh.ig;
 
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.siyeh.ig.telemetry.TelemetryToolWindow;
@@ -33,10 +31,7 @@ public class InspectionGadgetsProjectComponent implements ProjectComponent{
     }
 
     public void projectOpened(){
-        final Application application = ApplicationManager.getApplication();
-        final InspectionGadgetsPlugin inspectionGadgetsPlugin =
-                (InspectionGadgetsPlugin)
-                        application.getComponent("InspectionGadgets");
+        final InspectionGadgetsPlugin inspectionGadgetsPlugin = InspectionGadgetsPlugin.getInstance();
         telemetryEnabled = inspectionGadgetsPlugin.isTelemetryEnabled();
         if(telemetryEnabled){
             toolWindow = new TelemetryToolWindow(inspectionGadgetsPlugin.getTelemetry());

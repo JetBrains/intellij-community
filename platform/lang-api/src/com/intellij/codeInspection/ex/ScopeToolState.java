@@ -133,12 +133,15 @@ public class ScopeToolState {
   public boolean equalTo(ScopeToolState state2) {
     if (isEnabled() != state2.isEnabled()) return false;
     if (getLevel() != state2.getLevel()) return false;
+    InspectionProfileEntry tool = getTool();
+    InspectionProfileEntry tool2 = state2.getTool();
+    if (!tool.isInitialized() && !tool2.isInitialized()) return true;
     try {
       @NonNls String tempRoot = "root";
       Element oldToolSettings = new Element(tempRoot);
-      getTool().writeSettings(oldToolSettings);
+      tool.writeSettings(oldToolSettings);
       Element newToolSettings = new Element(tempRoot);
-      state2.getTool().writeSettings(newToolSettings);
+      tool2.writeSettings(newToolSettings);
       return JDOMUtil.areElementsEqual(oldToolSettings, newToolSettings);
     }
     catch (WriteExternalException e) {
