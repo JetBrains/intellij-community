@@ -38,6 +38,6 @@ public class GroovyCodeStyleConfigurable extends CodeStyleAbstractConfigurable {
 
     @Override
     public String getHelpTopic() {
-      return null;
+      return "reference.settingsdialog.codestyle.groovy";
     }
 }
