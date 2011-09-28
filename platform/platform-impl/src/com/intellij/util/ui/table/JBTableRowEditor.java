@@ -16,13 +16,17 @@
 package com.intellij.util.ui.table;
 
 import com.intellij.openapi.wm.IdeFocusManager;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.event.MouseEvent;
 
 /**
  * @author Konstantin Bulenkov
  */
 public abstract class JBTableRowEditor extends JPanel {
+  private MouseEvent myMouseEvent;
+
   @Override
   public void addNotify() {
     super.addNotify();
@@ -30,6 +34,15 @@ public abstract class JBTableRowEditor extends JPanel {
     if (c != null && c.isVisible()) {
       IdeFocusManager.getGlobalInstance().requestFocus(c, true);
     }
+  }
+
+  @Nullable
+  public final MouseEvent getMouseEvent() {
+    return myMouseEvent;
+  }
+
+  public final void setMouseEvent(@Nullable MouseEvent e) {
+    myMouseEvent = e;
   }
 
   public abstract void prepareEditor(JTable table, int row);

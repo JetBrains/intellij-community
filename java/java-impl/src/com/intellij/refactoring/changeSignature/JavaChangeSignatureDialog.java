@@ -63,6 +63,7 @@ import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -243,13 +244,19 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     }
     return len;
   }
+  
+  private int getTypesColumnWidth() {
+    Font font = EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN);
+    font = new Font(font.getFontName(), font.getStyle(), 12);
+    return  (getTypesMaxLength() + 1)* Toolkit.getDefaultToolkit().getFontMetrics(font).stringWidth("W");
+  }
 
   @Override
   protected JBTableRowEditor getTableEditor(final JTable t, final ParameterTableModelItemBase<ParameterInfoImpl> item) {
     return new JBTableRowEditor() {
       private EditorTextField myTypeEditor;
       private EditorTextField myNameEditor;
-      private EditorTextField myDefaultValueEditor;
+      private EditorTextField myDefaultValueEditor;      
       private JCheckBox myAnyVar;
       
       @Override
@@ -321,7 +328,11 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
 
       @Override
       public JComponent getPreferredFocusedComponent() {
-        return myTypeEditor;
+        final MouseEvent me = getMouseEvent();
+        if (me == null) {
+          return myTypeEditor;
+        }
+        return me.getPoint().getX() <= getTypesColumnWidth() ? myTypeEditor : myNameEditor;
       }
 
       @Override

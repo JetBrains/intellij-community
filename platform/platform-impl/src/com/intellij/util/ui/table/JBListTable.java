@@ -28,11 +28,10 @@ import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.util.List;
 
-import static java.awt.event.KeyEvent.KEY_PRESSED;
-import static java.awt.event.KeyEvent.VK_ENTER;
-import static java.awt.event.KeyEvent.VK_TAB;
+import static java.awt.event.KeyEvent.*;
 
 /**
  * @author Konstantin Bulenkov
@@ -56,8 +55,11 @@ public abstract class JBListTable extends JPanel {
       }
     };
     mainTable = new JBTable(model) {
+      private MouseEvent myMouseEvent;
       @Override
       protected void processKeyEvent(KeyEvent e) {
+        myMouseEvent = null;
+        
         if (e.isAltDown()) return;
         //todo[kb] JBTabsImpl breaks focus traversal policy. Need a workaround here
         if (e.getKeyCode() == VK_TAB) {
@@ -74,6 +76,12 @@ public abstract class JBListTable extends JPanel {
         }
 
         super.processKeyEvent(e);
+      }
+
+      @Override
+      protected void processMouseEvent(MouseEvent e) {
+        myMouseEvent = e;
+        super.processMouseEvent(e);
       }
 
       @Override
@@ -144,6 +152,7 @@ public abstract class JBListTable extends JPanel {
       public TableCellEditor getCellEditor(final int row, int column) {
         final JBTableRowEditor editor = getRowEditor(row);
         if (editor != null) {
+          editor.setMouseEvent(myMouseEvent);
           editor.prepareEditor(t, row);
           installPaddingAndBordersForEditors(editor);
           editor.setFocusCycleRoot(true);
