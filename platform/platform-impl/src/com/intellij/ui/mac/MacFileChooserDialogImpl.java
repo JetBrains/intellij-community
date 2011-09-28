@@ -26,7 +26,6 @@ import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.ui.mac.foundation.MacUtil;
 import com.sun.jna.Callback;
-import com.sun.jna.Pointer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -130,7 +129,7 @@ public class MacFileChooserDialogImpl implements MacFileChooserDialog {
     public void callback(ID self, String selector, ID toSelect) {
       final ID chooser = invoke("NSOpenPanel", "openPanel");
 
-      invoke(chooser, "setPrompt:", Foundation.cfString("Choose"));
+      invoke(chooser, "setPrompt:", Foundation.nsString("Choose"));
       invoke(chooser, "setCanChooseFiles:", myChooserDescriptor.isChooseFiles());
       invoke(chooser, "setCanChooseDirectories:", myChooserDescriptor.isChooseFolders());
       invoke(chooser, "setAllowsMultipleSelection:", myChooserDescriptor.isChooseMultiple());
@@ -152,8 +151,8 @@ public class MacFileChooserDialogImpl implements MacFileChooserDialog {
 
       invoke(chooser, "setDelegate:", self);
 
-      Object directory = null;
-      Object file = null;
+      ID directory = null;
+      ID file = null;
       final String toSelectPath = toSelect == null || toSelect.intValue() == 0 ? null : Foundation.toStringViaUTF8(toSelect);
       final VirtualFile toSelectFile = toSelectPath == null ? null : LocalFileSystem.getInstance().findFileByPath(toSelectPath);
       if (toSelectFile != null) {
@@ -161,8 +160,8 @@ public class MacFileChooserDialogImpl implements MacFileChooserDialog {
           directory = toSelect;
         }
         else {
-          directory = Foundation.cfString(toSelectFile.getParent().getPath());
-          file = Foundation.cfString(toSelectFile.getName());
+          directory = Foundation.nsString(toSelectFile.getParent().getPath());
+          file = Foundation.nsString(toSelectFile.getName());
         }
       }
 
@@ -181,6 +180,14 @@ public class MacFileChooserDialogImpl implements MacFileChooserDialog {
           if (focusedWindow != null) {
             invoke(chooser, "beginSheetForDirectory:file:types:modalForWindow:modalDelegate:didEndSelector:contextInfo:",
                    directory, file, null, focusedWindow, self, Foundation.createSelector("openPanelDidEnd:returnCode:contextInfo:"), null);
+            
+            if (directory != null) {
+              Foundation.cfRelease(directory);
+            }
+            
+            if (file != null) {
+              Foundation.cfRelease(file);
+            }
           }
         }
       }
@@ -265,7 +272,7 @@ public class MacFileChooserDialogImpl implements MacFileChooserDialog {
     try {
       final ID delegate = invoke(Foundation.getClass("NSOpenPanelDelegate_"), "new");
 
-      final Pointer select = toSelect == null ? null : Foundation.cfString(toSelect.getPath());
+      final ID select = toSelect == null ? null : Foundation.nsString(toSelect.getPath());
       Foundation.cfRetain(delegate);
 
       invoke(delegate, "performSelectorOnMainThread:withObject:waitUntilDone:", Foundation.createSelector("showOpenPanel:"), select, false);
@@ -281,7 +288,7 @@ public class MacFileChooserDialogImpl implements MacFileChooserDialog {
     try {
       final ID delegate = invoke(Foundation.getClass("NSOpenPanelDelegate_"), "new");
 
-      final Pointer select = toSelect == null ? null : Foundation.cfString(toSelect.getPath());
+      final ID select = toSelect == null ? null : Foundation.nsString(toSelect.getPath());
       Foundation.cfRetain(delegate);
 
       invoke(delegate, "performSelectorOnMainThread:withObject:waitUntilDone:", Foundation.createSelector("showOpenPanel:"), select, false);

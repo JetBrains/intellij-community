@@ -30,14 +30,14 @@ public interface FoundationLibrary extends Library {
   ID objc_allocateClassPair(ID supercls, String name, int extraBytes);
   void objc_registerClassPair(ID cls);
 
-  Pointer CFStringCreateWithBytes(Pointer allocator, byte[] bytes, int byteCount, int encoding, byte isExternalRepresentation);
+  ID CFStringCreateWithBytes(Pointer allocator, byte[] bytes, int byteCount, int encoding, byte isExternalRepresentation);
   byte CFStringGetCString(ID theString, byte[] buffer, int bufferSize, int encoding);
   int CFStringGetLength(ID theString);
 
   int CFStringConvertNSStringEncodingToEncoding(long nsEncoding);
   ID CFStringConvertEncodingToIANACharSetName(int cfEncoding);
 
-  int CFStringConvertIANACharSetNameToEncoding(Pointer encodingName);
+  int CFStringConvertIANACharSetNameToEncoding(ID encodingName);
   long CFStringConvertEncodingToNSStringEncoding(int cfEncoding);
 
   void CFRetain(ID cfTypeRef);

@@ -53,10 +53,10 @@ public class MacRestarter {
           final long processId = Foundation.invoke(app, Foundation.createSelector("processIdentifier")).longValue();
 
           final ID args = Foundation.invoke(Foundation.getClass("NSArray"), Foundation.createSelector("arrayWithObjects:"),
-                                            new Object[]{Foundation.cfString(appPath), Foundation.cfString(String.valueOf(processId))});
+                                            new Object[]{Foundation.nsString(appPath), Foundation.nsString(String.valueOf(processId))});
 
           Foundation.invoke(Foundation.getClass("NSTask"), Foundation.createSelector("launchedTaskWithLaunchPath:arguments:"),
-                            Foundation.cfString(relaunchPath), args);
+                            Foundation.nsString(relaunchPath), args);
         }
       }
     }

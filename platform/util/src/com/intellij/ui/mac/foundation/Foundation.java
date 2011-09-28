@@ -128,7 +128,7 @@ public class Foundation {
 
   public static boolean isPackageAtPath(@NotNull final String path) {
     final ID workspace = invoke("NSWorkspace", "sharedWorkspace");
-    final ID result = invoke(workspace, createSelector("isFilePackageAtPath:"), cfString(path));
+    final ID result = invoke(workspace, createSelector("isFilePackageAtPath:"), nsString(path));
 
     return result.intValue() == 1;
   }
@@ -138,18 +138,17 @@ public class Foundation {
     return isPackageAtPath(file.getPath());
   }
 
-  /**
-   * Return a CFString as an ID, toll-free bridged to NSString.
-   * <p/>
-   * Note that the returned string must be freed with {@link #cfRelease(ID)}.
-   */
-  public static Pointer cfString(String s) {
+  public static ID nsString(String s) {
     // Use a byte[] rather than letting jna do the String -> char* marshalling itself.
     // Turns out about 10% quicker for long strings.
     try {
+      if (s.length() == 0) {
+        return invoke("NSString", "string");
+      }
+
       byte[] utf16Bytes = s.getBytes("UTF-16LE");
-      return myFoundationLibrary.CFStringCreateWithBytes(null, utf16Bytes, utf16Bytes.length, FoundationLibrary.kCFStringEncodingUTF16LE,
-                                                         (byte)0); /* kTextEncodingUnicodeDefault + kUnicodeUTF16LEFormat */
+      return invoke(invoke("NSString", "alloc"), "initWithBytes:length:encoding:", utf16Bytes, utf16Bytes.length,
+                    myFoundationLibrary.CFStringConvertEncodingToNSStringEncoding(FoundationLibrary.kCFStringEncodingUTF16LE));
     }
     catch (UnsupportedEncodingException x) {
       throw new RuntimeException(x);
@@ -179,7 +178,7 @@ public class Foundation {
   public static long getEncodingCode(@Nullable String encodingName) {
     if (StringUtil.isEmptyOrSpaces(encodingName)) return -1;
 
-    Pointer converted = cfString(encodingName);
+    ID converted = nsString(encodingName);
     int cfEncoding = myFoundationLibrary.CFStringConvertIANACharSetNameToEncoding(converted);
     if (cfEncoding == FoundationLibrary.kCFStringEncodingInvalidId) return -1;
 
@@ -190,8 +189,10 @@ public class Foundation {
     myFoundationLibrary.CFRetain(id);
   }
 
-  public static void cfRelease(ID id) {
-    myFoundationLibrary.CFRelease(id);
+  public static void cfRelease(ID... id) {
+    for (ID id1 : id) {
+      myFoundationLibrary.CFRelease(id1);
+    }
   }
 
   public static boolean isMainThread() {
@@ -223,7 +224,7 @@ public class Foundation {
     final ID ideaRunnable = getClass("IdeaRunnable");
     final ID runnableObject = invoke(invoke(ideaRunnable, "alloc"), "init");
     invoke(runnableObject, "performSelectorOnMainThread:withObject:waitUntilDone:", createSelector("run:"),
-           cfString(String.valueOf(ourCurrentRunnableCount)), Boolean.valueOf(waitUntilDone));
+           nsString(String.valueOf(ourCurrentRunnableCount)), Boolean.valueOf(waitUntilDone));
     invoke(runnableObject, "release");
   }
 
