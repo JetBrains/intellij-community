@@ -211,12 +211,12 @@ public class XmlTagBlock extends AbstractXmlBlock{
         || syntheticBlock1.isTagDescription() && syntheticBlock2.containsCDATA()) {
       int lineFeeds = 0;
       switch(myXmlFormattingPolicy.getWhiteSpaceAroundCDATAOption()) {
-        case CodeStyleSettings.WS_AROUND_CDATA_NONE:
+        case XmlCodeStyleSettings.WS_AROUND_CDATA_NONE:
           break;
-        case CodeStyleSettings.WS_AROUND_CDATA_NEW_LINES:
+        case XmlCodeStyleSettings.WS_AROUND_CDATA_NEW_LINES:
           lineFeeds = 1;
           break;
-        case CodeStyleSettings.WS_AROUND_CDATA_PRESERVE:
+        case XmlCodeStyleSettings.WS_AROUND_CDATA_PRESERVE:
           return Spacing.getReadOnlySpacing();
         default:
           assert false : "Unexpected whitespace around CDATA code style option.";
