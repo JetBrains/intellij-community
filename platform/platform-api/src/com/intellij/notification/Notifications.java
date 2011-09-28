@@ -43,6 +43,7 @@ public interface Notifications {
      */
     @SuppressWarnings("JavaDoc")
     public static void register(@NotNull final String group_id, @NotNull final NotificationDisplayType defaultDisplayType) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) return;
       //noinspection SSBasedInspection
       SwingUtilities.invokeLater(new Runnable() {
         @Override
@@ -65,6 +66,7 @@ public interface Notifications {
     }
 
     public static void notify(@NotNull final Notification notification, @Nullable final Project project) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) return;
       //noinspection SSBasedInspection
       SwingUtilities.invokeLater(new Runnable() {
         @Override
