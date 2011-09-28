@@ -52,7 +52,7 @@ public class GitHubCreateGistPanel {
     if (!canBePersonal){
       myAnonymousCheckBox.setEnabled(false);
       myAnonymousCheckBox.setSelected(true);
-      myNoticeTextPane.setText("<html><body><b>Note</b> you need to be logged in to github to create personal gists</body></html>");
+      myNoticeTextPane.setText("<html><body><b>Note</b> you must be logged in to github to create personal gists</body></html>");
     }
   }
 }
