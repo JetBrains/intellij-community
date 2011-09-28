@@ -131,7 +131,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private final EditorGutterComponentImpl myGutterComponent;
 
   static {
-    ComplementaryFontsRegistry.getFontAbleToDisplay(' ', 0,0,""); // load costly font info
+    ComplementaryFontsRegistry.getFontAbleToDisplay(' ', 0,0, UIManager.getFont("Label.font").getFamily()); // load costly font info
   }
 
   private final CommandProcessor myCommandProcessor;
