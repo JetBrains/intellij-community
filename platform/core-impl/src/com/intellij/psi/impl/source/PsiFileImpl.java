@@ -525,7 +525,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
 
   @NotNull
-  protected <T> T[] findChildrenByClass(Class<T> aClass) {
+  public <T> T[] findChildrenByClass(Class<T> aClass) {
     List<T> result = new ArrayList<T>();
     for (PsiElement child : getChildren()) {
       if (aClass.isInstance(child)) result.add((T)child);
@@ -534,7 +534,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
 
   @Nullable
-  protected <T> T findChildByClass(Class<T> aClass) {
+  public <T> T findChildByClass(Class<T> aClass) {
     for (PsiElement child : getChildren()) {
       if (aClass.isInstance(child)) return (T)child;
     }
