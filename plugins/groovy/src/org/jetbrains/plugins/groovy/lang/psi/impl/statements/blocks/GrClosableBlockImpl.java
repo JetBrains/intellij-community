@@ -57,7 +57,7 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
  * @author ilyas
  */
 public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock {
-  private volatile GrParameter mySyntheticItParameter;
+  private GrParameter[] mySyntheticItParameter;
 
   public GrClosableBlockImpl(@NotNull IElementType type, CharSequence buffer) {
     super(type, buffer);
@@ -102,7 +102,10 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
       processor.handleEvent(ResolveUtil.DECLARATION_SCOPE_PASSED, this);
     }
 
-    if (!ResolveUtil.processElement(processor, getOwner(), state)) return false;
+    String nameHint = ResolveUtil.getNameHint(processor);
+    if (nameHint == null || nameHint.equals(OWNER_NAME)) {
+      if (!processor.execute(getOwner(), state)) return false;
+    }
 
     final PsiClass closureClass = GroovyPsiManager.getInstance(getProject()).findClassWithCache(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, getResolveScope());
     if (closureClass != null) {
@@ -134,7 +137,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
 
   public GrParameter[] getAllParameters() {
     if (hasParametersSection()) return getParameters();
-    return new GrParameter[]{getSyntheticItParameter()};
+    return getSyntheticItParameter();
   }
 
   @Override
@@ -180,10 +183,10 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     return getType();
   }
 
-  public GrParameter getSyntheticItParameter() {
-    GrParameter res = mySyntheticItParameter;
+  public GrParameter[] getSyntheticItParameter() {
+    GrParameter[] res = mySyntheticItParameter;
     if (res == null) {
-      res = new ClosureSyntheticParameter(this);
+      res = new GrParameter[]{new ClosureSyntheticParameter(this)};
       synchronized (this) {
         if (mySyntheticItParameter == null) {
           mySyntheticItParameter = res;
