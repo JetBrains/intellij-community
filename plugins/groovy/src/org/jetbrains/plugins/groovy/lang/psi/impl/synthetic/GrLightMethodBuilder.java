@@ -217,7 +217,7 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod {
     return null;
   }
 
-  public GrTypeElement setReturnType(PsiType returnType) {
+  public GrTypeElement setReturnType(@Nullable PsiType returnType) {
     myReturnType = returnType;
     return null;
   }
@@ -413,18 +413,25 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod {
   }
 
   @Override
-  public PsiElement copy() {
+  public GrLightMethodBuilder copy() {
     GrLightMethodBuilder copy = new GrLightMethodBuilder(myManager, myName);
     copy.setMethodKind(myMethodKind);
     copy.setNamedParametersArray(myNamedParametersArray);
-    copy.setNavigationElement(getNavigationElement());
+    if (getNavigationElement() != this) {
+      copy.setNavigationElement(getNavigationElement());
+    }
     copy.setBaseIcon(myBaseIcon);
     copy.setReturnType(myReturnType);
 
-    for (Object o : GrModifierListImpl.NAME_TO_MODIFIER_FLAG_MAP.keys()) {
-      String modifier = (String)o;
-      if (myModifierList.hasExplicitModifier(modifier)) {
-        copy.addModifier(modifier);
+    if (myModifierList instanceof GrLightModifierList) {
+      ((GrLightModifierList)copy.getModifierList()).setModifiers(((GrLightModifierList)myModifierList).getModifiersAsInt());
+    }
+    else {
+      for (Object o : GrModifierListImpl.NAME_TO_MODIFIER_FLAG_MAP.keys()) {
+        String modifier = (String)o;
+        if (myModifierList.hasExplicitModifier(modifier)) {
+          copy.addModifier(modifier);
+        }
       }
     }
 
