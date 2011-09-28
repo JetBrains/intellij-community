@@ -157,7 +157,7 @@ public class GitHistoryUtils {
       return null;
     }
     GitLogRecord record = parser.parseOneRecord(result);
-    final List<Change> changes = record.coolChangesParser(project, root);
+    final List<Change> changes = record.parseChanges(project, root);
     boolean exists = ! FileStatus.DELETED.equals(changes.get(0).getFileStatus());
     record.setUsedHandler(h);
     return new ItemLatestState(new GitRevisionNumber(record.getHash(), record.getDate()), exists, false);
@@ -402,7 +402,7 @@ public class GitHistoryUtils {
 
     if (records.isEmpty()) return null;
     // we have information about all changed files of the commit. Extracting information about the file we need.
-    final List<Change> changes = records.get(0).coolChangesParser(project, root);
+    final List<Change> changes = records.get(0).parseChanges(project, root);
     for (Change change : changes) {
       if ((change.isMoved() || change.isRenamed()) && filePath.equals(change.getAfterRevision().getFile())) {
         return change.getBeforeRevision().getFile();
@@ -646,7 +646,7 @@ public class GitHistoryUtils {
                                       new HashSet<String>(Arrays.asList(record.getParentsShortHashes())), record.getFilePaths(root),
                                       record.getAuthorEmail(),
                                       record.getCommitterEmail(), tags, locals, remotes,
-                                      record.coolChangesParser(project, root), record.getAuthorTimeStamp() * 1000
+                                      record.parseChanges(project, root), record.getAuthorTimeStamp() * 1000
     );
     gitCommit.setCurrentBranch(s);
     /*final String current = refs.getCurrent().getName();

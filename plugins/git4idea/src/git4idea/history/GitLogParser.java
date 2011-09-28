@@ -18,12 +18,17 @@ package git4idea.history;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
+import git4idea.GitFormatException;
 import git4idea.GitVcs;
 import git4idea.config.GitVersionSpecialty;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * <p>Parses the 'git log' output basing on the given number of options.
@@ -53,18 +58,41 @@ import java.util.*;
 class GitLogParser {
   // Single records begin with %x01, end with %03. Items of commit information (hash, committer, subject, etc.) are separated by %x02.
   // each character is declared twice - for Git pattern format and for actual character in the output.
-  // separators are declared as String instead of char, because String#split() is heavily used in parsing.
   public static final String RECORD_START = "\u0001";
-  public static final String RECORD_START_GIT = "%x01";
   public static final String ITEMS_SEPARATOR = "\u0002";
-  private static final String ITEMS_SEPARATOR_GIT = "%x02";
   public static final String RECORD_END = "\u0003";
+  private static final String RECORD_START_GIT = "%x01";
+  private static final String ITEMS_SEPARATOR_GIT = "%x02";
   private static final String RECORD_END_GIT = "%x03";
 
   private final String myFormat;  // pretty custom format generated in the constructor
   private final GitLogOption[] myOptions;
   private final boolean mySupportsRawBody;
   private final NameStatus myNameStatusOption;
+
+  /**
+   * Record format:
+   *
+   * One git log record.
+   * RECORD_START - optional: it is split out when calling parse() but it is not when calling parseOneRecord() directly.
+   * commit information separated by ITEMS_SEPARATOR.
+   * RECORD_END
+   * Optionally: changed paths or paths with statuses (if --name-only or --name-status options are given).
+   *
+   * Example:
+   * 2c815939f45fbcfda9583f84b14fe9d393ada790<ITEM_SEPARATOR>sample commit<RECORD_END>
+   * D       a.txt
+   */
+  private static final Pattern ONE_RECORD = Pattern.compile(RECORD_START + "?(.*)" + RECORD_END + "\n*(.*)", Pattern.DOTALL);
+  private static final String SINGLE_PATH = "([^\t\r\n]+)"; // something not empty, not a tab or newline.
+  private static final String EOL = "\\s*(?:\r|\n|\r\n)";
+  private static final String PATHS =
+    SINGLE_PATH +                    // First path - required.
+    "(?:\t" + SINGLE_PATH + ")?" +   // Second path - optional. Paths are separated by tab.
+    EOL;                             // Path(s) information ends with a line terminator.
+
+  private static Pattern NAME_ONLY = Pattern.compile(PATHS);
+  private static Pattern NAME_STATUS = Pattern.compile("([\\S]+)\t" + PATHS);
 
   // --name-only, --name-status or no flag
   enum NameStatus {
@@ -151,72 +179,67 @@ class GitLogParser {
    * flags --name-only or name-status were provided).
    * @param line record to be parsed.
    * @return GitLogRecord with information about the revision or {@code null} if the given line is empty.
+   * @throws GitFormatException if the line is given in unexpected format.
    */
-  @Nullable
+  @NotNull
   GitLogRecord parseOneRecord(@NotNull String line) {
-    // record format:
-    //
-    // <record start> - this may be splitted out in parse(). But if one calls this method directly, the char will be in place.
-    // <commit info, possibly multilined - if body is multilined>
-    // <record end mark>
-    // <blank line (optional)>
-    // <name status (optional)>\t<path (optional)>\t<second path (optional)> - status is output in the case of NameStatus.STATUS,
-    // paths are output if NameStatus.NAME or NameStatus.STATUS. Two paths is the rename case.
-    //
-    // Blank line before name-status usually appears, but it also can absent (e.g. in --pretty=oneline format), so we shouldn't rely on this.
-    // Example:
-    // 2c815939f45fbcfda9583f84b14fe9d393ada790<ITEM_SEPARATOR>sample commit<RECORD_END>
-    //
-    // D       a.txt
-
-    if (line.isEmpty()) { return null; }
-    line = removeRecordStartIndicator(line);
-
+    Matcher matcher = ONE_RECORD.matcher(line);
+    if (!matcher.matches()) {
+      throwGFE("ONE_RECORD didn't match", line);
+    }
+    String commitInfo = matcher.group(1);
+    if (commitInfo == null) {
+      throwGFE("No match for group#1 in", line);
+    }
+    
+    final Map<GitLogOption, String> res = parseCommitInfo(commitInfo);
 
     // parsing status and path (if given)
     final List<String> paths = new ArrayList<String>(1);
-    final boolean includeStatus = myNameStatusOption == NameStatus.STATUS;
-    final List<List<String>> parts = includeStatus ? new ArrayList<List<String>>() : null;
-
+    final List<GitLogStatusInfo> statuses = new ArrayList<GitLogStatusInfo>();    
+    
     if (myNameStatusOption != NameStatus.NONE) {
-      final String[] infoAndPath = line.split(RECORD_END);
-      line = infoAndPath[0];
-      if (infoAndPath.length > 1) {
-        // separator is \n for paths, space for paths and status
-        final List<String> nameAndPathSplit = new ArrayList<String>(Arrays.asList(infoAndPath[infoAndPath.length - 1].split("\n")));
-        for (Iterator<String> it = nameAndPathSplit.iterator(); it.hasNext();) {
-          if (it.next().trim().isEmpty()) {
-            it.remove();
+      String pathsAndStatuses = matcher.group(2);
+      if (pathsAndStatuses == null) {
+        throwGFE("No match for group#2 in", line);
+      }
+
+      if (myNameStatusOption == NameStatus.NAME) {
+        Matcher pathsMatcher = NAME_ONLY.matcher(pathsAndStatuses);
+        while (pathsMatcher.find()) {
+          String path1 = pathsMatcher.group(1);
+          String path2 = pathsMatcher.group(2);
+          assertNotNull(path1, "path", pathsAndStatuses);
+          paths.add(path1);
+          if (path2 != null) { // null is perfectly legal here: second path is given only in case of rename
+            paths.add(path2);
           }
         }
-
-        for (String pathLine : nameAndPathSplit) {
-          String[] partsArr;
-          if (includeStatus) {
-            final int idx = pathLine.indexOf("\t");
-            if (idx != -1) {
-              final String whatLeft = pathLine.substring(idx).trim();
-              partsArr = whatLeft.split("\\t");
-              final List<String> strings = new ArrayList<String>(partsArr.length + 1);
-              strings.add(pathLine.substring(0, 1));
-              strings.addAll(Arrays.asList(partsArr));
-              parts.add(strings);
-            } else {
-              partsArr = pathLine.split("\\t"); // should not
-            }
-          } else {
-            partsArr = pathLine.split("\\t");
+      } else {
+        Matcher nameStatusMatcher = NAME_STATUS.matcher(pathsAndStatuses);
+        while (nameStatusMatcher.find()) {
+          String status = nameStatusMatcher.group(1);
+          String path1 = nameStatusMatcher.group(2);
+          String path2 = nameStatusMatcher.group(3);
+          assertNotNull(status, "status", pathsAndStatuses);
+          assertNotNull(path1, "path1", pathsAndStatuses);
+          paths.add(path1);
+          if (path2 != null) {
+            paths.add(path2);
           }
-          paths.addAll(Arrays.asList(partsArr));
+          statuses.add(new GitLogStatusInfo(GitChangeType.fromString(status), path1, path2));
         }
       }
-    } else {
-      line = line.substring(0, line.length()-1); // removing the last character which is RECORD_END
     }
+    return new GitLogRecord(res, paths, statuses, mySupportsRawBody);
+  }
 
+
+  @NotNull
+  private Map<GitLogOption, String> parseCommitInfo(@NotNull String commitInfo) {
     // parsing revision information
     // we rely on the order of options
-    final String[] values = line.split(ITEMS_SEPARATOR);
+    final String[] values = commitInfo.split(ITEMS_SEPARATOR);
     final Map<GitLogOption, String> res = new HashMap<GitLogOption, String>(values.length);
     int i = 0;
     for (; i < values.length && i < myOptions.length; i++) {  // fill valid values
@@ -225,16 +248,17 @@ class GitLogParser {
     for (; i < myOptions.length; i++) {  // options which were not returned are set to blank string, extra options are ignored.
       res.put(myOptions[i], "");
     }
-    return new GitLogRecord(res, paths, parts, mySupportsRawBody);
+    return res;
   }
 
-  @NotNull
-  private static String removeRecordStartIndicator(@NotNull String line) {
-    // We may have <RECORD_START> indicator at the beginning of the line (if we called parseOneLine directly), may not (if we called parse()).
-    // If we have, get rid of it.
-    if (line.charAt(0) == RECORD_START.charAt(0)) {
-      line = line.substring(RECORD_START.length());
+  private static void assertNotNull(String value, String valueName, String line) {
+    if (value == null) {
+      throwGFE("Unexpectedly null " + valueName + " in ", line);
     }
-    return line;
   }
+
+  private static void throwGFE(String message, String line) {
+    throw new GitFormatException(message + " [" + StringUtil.escapeStringCharacters(line) + "]");
+  }
+
 }

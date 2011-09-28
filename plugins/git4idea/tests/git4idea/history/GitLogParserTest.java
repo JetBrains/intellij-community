@@ -211,7 +211,7 @@ public class GitLogParserTest extends GitTest {
       assertPaths(actual.getFilePaths(myRoot), expected.paths());
     } else if (option == GitTestLogRecord.NameStatusOption.STATUS) {
       assertPaths(actual.getFilePaths(myRoot), expected.paths());
-      assertChanges(actual.coolChangesParser(myProject, myRoot), expected.changes());
+      assertChanges(actual.parseChanges(myProject, myRoot), expected.changes());
     }
   }
 
