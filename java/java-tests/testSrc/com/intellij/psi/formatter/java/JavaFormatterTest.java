@@ -881,16 +881,6 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
      "}");
   }
 
-  public void testSpacesInsideEmptyParentheses() throws Exception {
-    final CommonCodeStyleSettings settings = getSettings();
-    settings.SPACE_WITHIN_METHOD_PARENTHESES = true;
-    settings.SPACE_WITHIN_METHOD_CALL_PARENTHESES = true;
-
-    doTextTest("public class Foo {\n" + "    public void foo(   ) {\n" + "        foo(   );\n" + "    }\n" + "}",
-               "public class Foo {\n" + "    public void foo() {\n" + "        foo();\n" + "    }\n" + "}");
-
-  }
-
   public void testElseOnNewLine() throws Exception {
     doTextTest("class Foo{\n" + "void foo() {\n" + "if (a)\n" + "return;\n" + "else\n" + "return;\n" + "}\n" + "}", "class Foo {\n" +
                                                                                                                     "    void foo() {\n" +
