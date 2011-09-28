@@ -556,7 +556,7 @@
                   id="MakoBracesHandler"/>
     <annotator language="Mako" implementationClass="com.jetbrains.mako.validation.MakoAnnotatingVisitor"/>
 
-    <projectService serviceInterface="com.jetbrains.python.templateLanguages.TemplatesService"
+    <moduleService serviceInterface="com.jetbrains.python.templateLanguages.TemplatesService"
                     serviceImplementation="com.jetbrains.python.templateLanguages.TemplatesService"/>
 
     <!-- Jinja2 -->
