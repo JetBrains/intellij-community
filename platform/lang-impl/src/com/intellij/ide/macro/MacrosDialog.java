@@ -120,7 +120,6 @@ public final class MacrosDialog extends DialogWrapper {
     constr.gridy = 0;
     constr.anchor = GridBagConstraints.WEST;
     constr.fill = GridBagConstraints.HORIZONTAL;
-    constr.insets = new Insets(5, 5, 0, 5);
     panel.add(SeparatorFactory.createSeparator(IdeBundle.message("label.macros"), null), constr);
 
     // macros list
@@ -128,7 +127,6 @@ public final class MacrosDialog extends DialogWrapper {
     constr.gridy = 1;
     constr.weightx = 1;
     constr.weighty = 1;
-    constr.insets = new Insets(0, 5, 0, 5);
     constr.fill = GridBagConstraints.BOTH;
     constr.anchor = GridBagConstraints.WEST;
     panel.add(ScrollPaneFactory.createScrollPane(myMacrosList), constr);
@@ -141,7 +139,6 @@ public final class MacrosDialog extends DialogWrapper {
     constr.gridy = 2;
     constr.anchor = GridBagConstraints.WEST;
     constr.fill = GridBagConstraints.HORIZONTAL;
-    constr.insets = new Insets(5, 5, 0, 5);
     panel.add(SeparatorFactory.createSeparator(IdeBundle.message("label.macro.preview"), null), constr);
 
     // preview
@@ -152,7 +149,6 @@ public final class MacrosDialog extends DialogWrapper {
     constr.weighty = 1;
     constr.fill = GridBagConstraints.BOTH;
     constr.anchor = GridBagConstraints.WEST;
-    constr.insets = new Insets(0, 5, 5, 5);
     panel.add(ScrollPaneFactory.createScrollPane(myPreviewTextarea), constr);
     myPreviewTextarea.setEditable(false);
     myPreviewTextarea.setLineWrap(true);
