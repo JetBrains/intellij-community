@@ -593,6 +593,7 @@
     <extensionPoint qualifiedName="Pythonid.dialectsTokenSetContributor" interface="com.jetbrains.python.PythonDialectsTokenSetContributor"/>    
     <extensionPoint qualifiedName="Pythonid.templateLanguageCoreTags"
                     beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+    <extensionPoint qualifiedName="Pythonid.runConfigurationExtension" interface="com.jetbrains.python.run.PythonRunConfigurationExtension"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="Pythonid">
