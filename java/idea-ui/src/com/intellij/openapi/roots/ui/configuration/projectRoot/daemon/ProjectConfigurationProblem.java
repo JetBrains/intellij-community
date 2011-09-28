@@ -38,7 +38,7 @@ class ProjectConfigurationProblem extends ConfigurationError {
 
   @Override
   public void navigate() {
-    ProjectStructureConfigurable.getInstance(myContext.getProject()).navigateTo(myDescription.getPlace(), true);
+    myDescription.getPlace().navigate();
   }
 
   @Override

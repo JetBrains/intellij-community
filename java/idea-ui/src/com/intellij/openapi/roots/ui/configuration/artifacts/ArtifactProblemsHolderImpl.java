@@ -15,14 +15,13 @@
  */
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
-import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureProblemDescription;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureProblemsHolder;
 import com.intellij.packaging.elements.PackagingElement;
+import com.intellij.packaging.impl.artifacts.PackagingElementPath;
 import com.intellij.packaging.impl.ui.ArtifactProblemsHolderBase;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.ArtifactProblemQuickFix;
-import com.intellij.ui.navigation.Place;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,7 +46,17 @@ public class ArtifactProblemsHolderImpl extends ArtifactProblemsHolderBase {
   private void registerProblem(@NotNull String message, @Nullable List<PackagingElement<?>> pathToPlace,
                                final ProjectStructureProblemDescription.Severity severity, @NotNull ArtifactProblemQuickFix... quickFixes) {
     final ArtifactEditorContext context = getContext();
-    final Place place = ProjectStructureConfigurable.getInstance(context.getProject()).createArtifactPlace(context.getArtifact());
+    String parentPath;
+    PackagingElement<?> element;
+    if (pathToPlace != null && !pathToPlace.isEmpty()) {
+      parentPath = PackagingElementPath.createPath(pathToPlace.subList(0, pathToPlace.size()-1)).getPathString();
+      element = pathToPlace.get(pathToPlace.size() - 1);
+    }
+    else {
+      parentPath = null;
+      element = null;
+    }
+    final PlaceInArtifact place = new PlaceInArtifact(context.getArtifact(), ((ArtifactEditorContextImpl)context).getParent(), parentPath, element);
     myProblemsHolder.registerProblem(new ArtifactProblemDescription(message, severity, pathToPlace, Arrays.asList(quickFixes), place, context.getThisArtifactEditor()));
   }
 

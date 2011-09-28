@@ -53,7 +53,8 @@ public class ArtifactProjectStructureElement extends ProjectStructureElement {
   public void check(final ProjectStructureProblemsHolder problemsHolder) {
     final ArtifactEditorEx artifactEditor = (ArtifactEditorEx)myArtifactsStructureContext.getOrCreateEditor(myOriginalArtifact);
     final Artifact artifact = artifactEditor.getArtifact();
-    artifact.getArtifactType().checkRootElement(artifactEditor.getRootElement(), artifact, new ArtifactProblemsHolderImpl(artifactEditor.getContext(), problemsHolder));
+    final ArtifactProblemsHolderImpl artifactProblemsHolder = new ArtifactProblemsHolderImpl(artifactEditor.getContext(), problemsHolder);
+    artifact.getArtifactType().checkRootElement(artifactEditor.getRootElement(), artifact, artifactProblemsHolder);
   }
 
   public Artifact getOriginalArtifact() {

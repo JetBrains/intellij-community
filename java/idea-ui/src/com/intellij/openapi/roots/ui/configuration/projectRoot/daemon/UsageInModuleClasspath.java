@@ -2,11 +2,6 @@ package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.roots.ModuleRootModel;
-import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.impl.OrderEntryUtil;
-import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
-import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import org.jetbrains.annotations.NotNull;
 
@@ -49,24 +44,8 @@ public class UsageInModuleClasspath extends ProjectStructureElementUsage {
   }
 
   @Override
-  public void navigate() {
-    ModulesConfigurator modulesConfigurator = myContext.getModulesConfigurator();
-
-    ModuleRootModel rootModel = modulesConfigurator.getRootModel(myModule);
-    OrderEntry entry;
-    if (mySourceElement instanceof LibraryProjectStructureElement) {
-      entry = OrderEntryUtil.findLibraryOrderEntry(rootModel, ((LibraryProjectStructureElement)mySourceElement).getLibrary());
-    }
-    else if (mySourceElement instanceof ModuleProjectStructureElement) {
-      entry = OrderEntryUtil.findModuleOrderEntry(rootModel, ((ModuleProjectStructureElement)mySourceElement).getModule());
-    }
-    else if (mySourceElement instanceof SdkProjectStructureElement) {
-      entry = OrderEntryUtil.findJdkOrderEntry(rootModel, ((SdkProjectStructureElement)mySourceElement).getSdk());
-    }
-    else {
-      entry = null;
-    }
-    ProjectStructureConfigurable.getInstance(myContext.getProject()).selectOrderEntry(myModule, entry);
+  public PlaceInProjectStructure getPlace() {
+    return new PlaceInModuleClasspath(myContext, myModule, mySourceElement);
   }
 
   @Override

@@ -81,7 +81,7 @@ public abstract class FindUsagesInProjectStructureActionBase extends AnAction im
     JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<ProjectStructureElementUsage>(ProjectBundle.message("dependencies.used.in.popup.title"), usagesArray) {
       @Override
       public PopupStep onChosen(final ProjectStructureElementUsage selected, final boolean finalChoice) {
-        selected.navigate();
+        selected.getPlace().navigate();
         return FINAL_CHOICE;
       }
 

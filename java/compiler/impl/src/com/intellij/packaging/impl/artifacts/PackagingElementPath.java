@@ -49,15 +49,6 @@ public class PackagingElementPath {
     return new PackagingElementPath(this, element);
   }
 
-  @Nullable
-  public PackagingElementPath getParentPath() {
-    return myParentPath;
-  }
-
-  public PackagingElement<?> getLastElement() {
-    return myLastElement;
-  }
-
   @NotNull
   public String getPathString() {
     return getPathString("/");
@@ -123,10 +114,6 @@ public class PackagingElementPath {
     }
     return null;
   }
-  
-  public boolean isEmpty() {
-    return myParentPath == null;
-  }
 
   @Nullable
   public Artifact findLastArtifact(PackagingElementResolvingContext context) {
@@ -139,5 +126,13 @@ public class PackagingElementPath {
       path = path.myParentPath;
     }
     return null;
+  }
+
+  public static PackagingElementPath createPath(@NotNull List<PackagingElement<?>> elements) {
+    PackagingElementPath path = EMPTY;
+    for (PackagingElement<?> element : elements) {
+      path = new PackagingElementPath(path, element);
+    }
+    return path;
   }
 }

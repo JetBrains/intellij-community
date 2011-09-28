@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,27 @@
  */
 package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
+import com.intellij.openapi.util.ActionCallback;
+import com.intellij.ui.navigation.Place;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
  */
-public interface ProjectStructureProblemsHolder {
-  void registerError(@NotNull String message, @Nullable String description, @NotNull PlaceInProjectStructure place, @Nullable ConfigurationErrorQuickFix fix);
+public class PlaceInProjectStructureBase extends PlaceInProjectStructure {
+  private final Project myProject;
+  private final Place myPlace;
 
-  void registerWarning(@NotNull String message, @Nullable String description, @NotNull PlaceInProjectStructure place, @Nullable ConfigurationErrorQuickFix fix);
+  public PlaceInProjectStructureBase(Project project, Place place) {
+    myProject = project;
+    myPlace = place;
+  }
 
-  void registerProblem(@NotNull ProjectStructureProblemDescription description);
+  @NotNull
+  @Override
+  public ActionCallback navigate() {
+    return ProjectStructureConfigurable.getInstance(myProject).navigateTo(myPlace, true);
+  }
 }

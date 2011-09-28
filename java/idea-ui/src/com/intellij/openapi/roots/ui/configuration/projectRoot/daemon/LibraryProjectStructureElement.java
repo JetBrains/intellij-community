@@ -1,5 +1,6 @@
 package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
@@ -16,7 +17,6 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.LibraryConfigurab
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.ui.navigation.Place;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -80,8 +80,9 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
   }
 
   @NotNull
-  private Place createPlace() {
-    return ProjectStructureConfigurable.getInstance(myContext.getProject()).createProjectOrGlobalLibraryPlace(myLibrary);
+  private PlaceInProjectStructure createPlace() {
+    final Project project = myContext.getProject();
+    return new PlaceInProjectStructureBase(project, ProjectStructureConfigurable.getInstance(project).createProjectOrGlobalLibraryPlace(myLibrary));
   }
 
   @Override
@@ -144,7 +145,7 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
         }
         myContext.getDaemonAnalyzer().queueUpdate(LibraryProjectStructureElement.this);
         final ProjectStructureConfigurable structureConfigurable = ProjectStructureConfigurable.getInstance(myContext.getProject());
-        structureConfigurable.navigateTo(createPlace(), true).doWhenDone(new Runnable() {
+        createPlace().navigate().doWhenDone(new Runnable() {
           @Override
           public void run() {
             final NamedConfigurable configurable = structureConfigurable.getConfigurableFor(myLibrary).getSelectedConfugurable();

@@ -20,7 +20,6 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStr
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.ui.ArtifactEditor;
 import com.intellij.packaging.ui.ArtifactProblemQuickFix;
-import com.intellij.ui.navigation.Place;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,7 +37,7 @@ public class ArtifactProblemDescription extends ProjectStructureProblemDescripti
                                     @NotNull Severity severity,
                                     @Nullable List<PackagingElement<?>> pathToPlace,
                                     @NotNull List<ArtifactProblemQuickFix> quickFixes,
-                                    @NotNull Place place,
+                                    @NotNull PlaceInArtifact place,
                                     @NotNull ArtifactEditor artifactEditor) {
     super(message, null, severity, place, convertQuickFixed(quickFixes, artifactEditor));
     myPathToPlace = pathToPlace;
