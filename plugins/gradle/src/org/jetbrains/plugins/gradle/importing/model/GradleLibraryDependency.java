@@ -46,9 +46,10 @@ public class GradleLibraryDependency extends AbstractGradleDependency {
     return super.toString() + ", dependency library: " + getLibrary();
   }
 
+  @NotNull
   @Override
-  public GradleLibraryDependency clone() {
-    GradleLibraryDependency result = new GradleLibraryDependency(getLibrary().clone());
+  public GradleLibraryDependency clone(@NotNull GradleEntityCloneContext context) {
+    GradleLibraryDependency result = new GradleLibraryDependency(getLibrary().clone(context));
     copyTo(result);
     return result;
   }

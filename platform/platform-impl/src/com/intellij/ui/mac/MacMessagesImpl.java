@@ -158,7 +158,7 @@ public class MacMessagesImpl extends MacMessages {
       
       // it is impossible to override ESCAPE key behavior -> key should be named "Cancel" to be bound to ESC
       //if (!alternateExist) {
-        //invoke(invoke(invoke(alert, "buttons"), "objectAtIndex:", 1), "setKeyEquivalent:", cfString("\\e"));
+        //invoke(invoke(invoke(alert, "buttons"), "objectAtIndex:", 1), "setKeyEquivalent:", nsString("\\e"));
       //}
       
       String doNotAsk = toStringViaUTF8(doNotAskText);
@@ -263,19 +263,21 @@ public class MacMessagesImpl extends MacMessages {
 
             final ID buttonsArray = invoke("NSMutableArray", "array");
             for (String s : buttons) {
-              invoke(buttonsArray, "addObject:", cfString(UIUtil.removeMnemonic(s)));
+              ID s1 = nsString(UIUtil.removeMnemonic(s));
+              invoke(buttonsArray, "addObject:", s);
+              cfRelease(s1);
             }
 
-            ID paramsArray = invoke("NSArray", "arrayWithObjects:", cfString(title),
+            ID paramsArray = invoke("NSArray", "arrayWithObjects:", nsString(title),
                                     // replace % -> %% to avoid formatted parameters (causes SIGTERM)
-                                    cfString(StringUtil.stripHtml(message, true).replace("%", "%%")),
-                                    focusedWindow, cfString(fakeTitle), cfString(errorStyle ? "error" : "-1"),
-                                    cfString(doNotAskDialogOption == null || !doNotAskDialogOption.canBeHidden()
+                                    nsString(StringUtil.stripHtml(message, true).replace("%", "%%")),
+                                    focusedWindow, nsString(fakeTitle), nsString(errorStyle ? "error" : "-1"),
+                                    nsString(doNotAskDialogOption == null || !doNotAskDialogOption.canBeHidden()
                                              // TODO: state=!doNotAsk.shouldBeShown()
                                              ? "-1"
                                              : doNotAskDialogOption.getDoNotShowMessage()), 
-                                    cfString(Integer.toString(defaultOptionIndex)), 
-                                    cfString(Integer.toString(focusedOptionIndex)), buttonsArray, null);
+                                    nsString(Integer.toString(defaultOptionIndex)), 
+                                    nsString(Integer.toString(focusedOptionIndex)), buttonsArray, null);
 
             IdeFocusManager.getGlobalInstance().setTypeaheadEnabled(false);
 
@@ -427,13 +429,13 @@ public class MacMessagesImpl extends MacMessages {
 
             fakeTitle = String.format("MacSheetDialog-%d", delegate.intValue());
 
-            ID paramsArray = invoke("NSArray", "arrayWithObjects:", cfString(title), cfString(UIUtil.removeMnemonic(defaultText)),
-                                    cfString(otherText == null ? "-1" : UIUtil.removeMnemonic(otherText)),
-                                    cfString(alternateText == null ? "-1" : UIUtil.removeMnemonic(alternateText)),
+            ID paramsArray = invoke("NSArray", "arrayWithObjects:", nsString(title), nsString(UIUtil.removeMnemonic(defaultText)),
+                                    nsString(otherText == null ? "-1" : UIUtil.removeMnemonic(otherText)),
+                                    nsString(alternateText == null ? "-1" : UIUtil.removeMnemonic(alternateText)),
                                     // replace % -> %% to avoid formatted parameters (causes SIGTERM)
-                                    cfString(StringUtil.stripHtml(message, true).replace("%", "%%")),
-                                    focusedWindow, cfString(fakeTitle), cfString(errorStyle ? "error" : "-1"),
-                                    cfString(doNotAskDialogOption == null || !doNotAskDialogOption.canBeHidden()
+                                    nsString(StringUtil.stripHtml(message, true).replace("%", "%%")),
+                                    focusedWindow, nsString(fakeTitle), nsString(errorStyle ? "error" : "-1"),
+                                    nsString(doNotAskDialogOption == null || !doNotAskDialogOption.canBeHidden()
                                              // TODO: state=!doNotAsk.shouldBeShown()
                                              ? "-1"
                                              : doNotAskDialogOption.getDoNotShowMessage()), null);

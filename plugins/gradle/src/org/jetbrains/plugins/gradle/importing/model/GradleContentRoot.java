@@ -99,8 +99,9 @@ public class GradleContentRoot extends AbstractGradleEntity {
     return buffer.toString();
   }
 
+  @NotNull
   @Override
-  public GradleContentRoot clone() {
+  public GradleContentRoot clone(@NotNull GradleEntityCloneContext context) {
     GradleContentRoot result = new GradleContentRoot(getRootPath());
     for (Map.Entry<SourceType, Collection<String>> entry : myData.entrySet()) {
       for (String path : entry.getValue()) {

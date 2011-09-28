@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package com.intellij.openapi.ui;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -40,10 +41,10 @@ import java.util.List;
  */
 public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRenderer, TableCellEditor, JBPopupListener {
   private static final Icon ARROW_ICON = IconLoader.getIcon("/general/comboArrow.png");
+
   private final T[] myValues;
   private WeakReference<ListPopup> myPopupRef;
   private ChangeEvent myChangeEvent = null;
-
   private T myValue;
 
   protected EventListenerList myListenerList = new EventListenerList();
@@ -73,8 +74,6 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
     return value.toString();
   }
 
-
-
   protected Runnable onChosen(@NotNull final T value) {
     stopCellEditing(value);
 
@@ -89,24 +88,30 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
   protected void paintComponent(Graphics g) {
     super.paintComponent(g);
 
-    final Rectangle r = getBounds();
-    final Insets i = getInsets();
-
-    if (getText() != null && getText().length() != 0) ARROW_ICON.paintIcon(this, g, r.width - i.right - ARROW_ICON.getIconWidth(), i.top);
+    if (!StringUtil.isEmpty(getText())) {
+      final Rectangle r = getBounds();
+      final Insets i = getInsets();
+      final int x = r.width - i.right - ARROW_ICON.getIconWidth();
+      final int y = i.top + (r.height - i.top - i.bottom - ARROW_ICON.getIconHeight()) / 2;
+      ARROW_ICON.paintIcon(this, g, x, y);
+    }
   }
 
   public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-    customizeComponent((T) value, isSelected);
+    @SuppressWarnings("unchecked") final T t = (T)value;
+    customizeComponent(t, table, isSelected);
     return this;
   }
 
   public Component getTableCellEditorComponent(JTable table, final Object value, boolean isSelected, final int row, final int column) {
-    myValue = (T) value;
-    customizeComponent((T) value, isSelected);
+    @SuppressWarnings("unchecked") final T t = (T)value;
+    myValue = t;
+    customizeComponent(t, table, isSelected);
 
+    //noinspection SSBasedInspection
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        showPopup((T) value, row);
+        showPopup(t, row);
       }
     });
 
@@ -159,6 +164,14 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
     fireEditingCanceled();
   }
 
+  protected void customizeComponent(final T value, final JTable table, final boolean isSelected) {
+    setOpaque(true);
+    setText(value == null ? "" : getTextFor(value));
+    setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
+    setForeground(isSelected ? table.getSelectionForeground() : table.getForeground());
+  }
+
+  /** @deprecated use {@linkplain #customizeComponent(Object, javax.swing.JTable, boolean)} (to remove in IDEA 12) */
   protected void customizeComponent(T value, boolean isSelected) {
     setOpaque(true);
     setText(value == null ? "" : getTextFor(value));
@@ -172,7 +185,7 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
 
   public boolean isCellEditable(EventObject event) {
     if (event instanceof MouseEvent) {
-        return ((MouseEvent)event).getClickCount() >= 2;
+      return ((MouseEvent)event).getClickCount() >= 2;
     }
 
     return true;
@@ -199,33 +212,35 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
   }
 
   protected void fireEditingStopped() {
-      // Guaranteed to return a non-null array
-      Object[] listeners = myListenerList.getListenerList();
-      // Process the listeners last to first, notifying
-      // those that are interested in this event
-      for (int i = listeners.length-2; i>=0; i-=2) {
-          if (listeners[i]==CellEditorListener.class) {
-              // Lazily create the event:
-              if (myChangeEvent == null)
-                  myChangeEvent = new ChangeEvent(this);
-              ((CellEditorListener)listeners[i+1]).editingStopped(myChangeEvent);
-          }
+    // Guaranteed to return a non-null array
+    Object[] listeners = myListenerList.getListenerList();
+    // Process the listeners last to first, notifying
+    // those that are interested in this event
+    for (int i = listeners.length - 2; i >= 0; i -= 2) {
+      if (listeners[i] == CellEditorListener.class) {
+        // Lazily create the event:
+        if (myChangeEvent == null) {
+          myChangeEvent = new ChangeEvent(this);
+        }
+        ((CellEditorListener)listeners[i + 1]).editingStopped(myChangeEvent);
       }
+    }
   }
 
   protected void fireEditingCanceled() {
-      // Guaranteed to return a non-null array
-      Object[] listeners = myListenerList.getListenerList();
-      // Process the listeners last to first, notifying
-      // those that are interested in this event
-      for (int i = listeners.length-2; i>=0; i-=2) {
-          if (listeners[i]==CellEditorListener.class) {
-              // Lazily create the event:
-              if (myChangeEvent == null)
-                  myChangeEvent = new ChangeEvent(this);
-              ((CellEditorListener)listeners[i+1]).editingCanceled(myChangeEvent);
-          }
+    // Guaranteed to return a non-null array
+    Object[] listeners = myListenerList.getListenerList();
+    // Process the listeners last to first, notifying
+    // those that are interested in this event
+    for (int i = listeners.length - 2; i >= 0; i -= 2) {
+      if (listeners[i] == CellEditorListener.class) {
+        // Lazily create the event:
+        if (myChangeEvent == null) {
+          myChangeEvent = new ChangeEvent(this);
+        }
+        ((CellEditorListener)listeners[i + 1]).editingCanceled(myChangeEvent);
       }
+    }
   }
 
   private void hidePopup() {

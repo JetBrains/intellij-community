@@ -194,17 +194,18 @@ public class GradleProject extends AbstractNamedGradleEntity {
                          getName(), getJdkVersion(), getLanguageLevel(), getModules());
   }
 
+  @NotNull
   @Override
-  public GradleProject clone() {
+  public GradleProject clone(@NotNull GradleEntityCloneContext context) {
     GradleProject result = new GradleProject(getProjectFileDirectoryPath(), getCompileOutputPath());
     result.setName(getName());
     result.setJdkVersion(getJdkVersion());
     result.setLanguageLevel(getLanguageLevel());
     for (GradleModule module : getModules()) {
-      result.addModule(module.clone());
+      result.addModule(module.clone(context));
     }
     for (GradleLibrary library : getLibraries()) {
-      result.addLibrary(library.clone());
+      result.addLibrary(library.clone(context));
     }
     return result;
   }

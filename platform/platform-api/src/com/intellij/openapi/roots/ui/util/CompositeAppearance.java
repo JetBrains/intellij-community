@@ -55,7 +55,7 @@ public class CompositeAppearance implements ModifiableCellAppearanceEx, Modifiab
         final TextAttributes attributes = section.getTextAttributes();
         renderer.append(section.getText(), SimpleTextAttributes.fromTextAttributes(attributes));
       }
-      setIcon(myIcon);
+      renderer.setIcon(myIcon);
     }
   }
 

@@ -42,6 +42,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -99,7 +100,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   private RelativePoint myLocationCache;
 
   public NavBarPanel(final Project project) {
-    super(new FlowLayout(FlowLayout.LEFT, 5, 0));
+    super(new FlowLayout(FlowLayout.LEFT, isDecorated() ? 0 : 5, 0));
     myProject = project;
     myModel = new NavBarModel(myProject);
     myIdeView = new NavBarIdeView(this);
@@ -108,7 +109,9 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
 
     PopupHandler.installPopupHandler(this, IdeActions.GROUP_NAVBAR_POPUP, ActionPlaces.NAVIGATION_BAR);
 
-    setBorder(new NavBarBorder(false, -1));
+    if (!isDecorated()) {
+      setBorder(new NavBarBorder(false, -1));
+    }
     setOpaque(false);
 
     myCopyPasteDelegator = new CopyPasteDelegator(myProject, NavBarPanel.this) {
@@ -124,7 +127,9 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     Disposer.register(project, this);
   }
 
-
+  public static boolean isDecorated() {
+    return Registry.is("navbar.is.decorated");
+  }
 
   public boolean isNodePopupActive() {
     return myNodePopup != null && myNodePopup.isVisible();

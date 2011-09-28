@@ -57,7 +57,8 @@ public abstract class AbstractGradleDependency extends AbstractGradleEntity impl
   public String toString() {
     return "scope: " + getScope() + ", exported: " + isExported();
   }
-
+  
+  @NotNull
   @Override
   public GradleDependency clone() {
     try {

@@ -19,7 +19,9 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.Pair;
 import com.intellij.util.*;
+import gnu.trove.THashMap;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
@@ -271,6 +273,22 @@ public class ContainerUtil {
     final HashSet<V> set = new HashSet<V>(collection.size());
     for (final T t : collection) {
       set.add(mapper.fun(t));
+    }
+    return set;
+  }
+
+  @NotNull
+  public static <T, KEY, VALUE> Map<KEY, VALUE> map2Map(@NotNull T[] collection, @NotNull Function<T, Pair<KEY, VALUE>> mapper) {
+    return map2Map(Arrays.asList(collection), mapper);
+  }
+
+  @NotNull
+  public static <T, KEY, VALUE> Map<KEY, VALUE> map2Map(@NotNull Collection<? extends T> collection,
+                                                        @NotNull Function<T, Pair<KEY, VALUE>> mapper) {
+    final Map<KEY, VALUE> set = new THashMap<KEY, VALUE>(collection.size());
+    for (T t : collection) {
+      Pair<KEY, VALUE> pair = mapper.fun(t);
+      set.put(pair.first, pair.second);
     }
     return set;
   }

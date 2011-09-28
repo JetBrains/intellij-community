@@ -87,7 +87,7 @@ abstract class RunConfigurationExtension<T extends Ao> {
 
 class F extends RunConfigurationExtension<Bo> {
 
-    <error descr="Method does not override method from its superclass">@Override</error>
+    @Override
     protected <P extends Bo> SettingsEditor<P> createEditor(P configuration) {
         return null;
     }

@@ -419,8 +419,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
 
     private void initDialog(boolean shouldShowBackground, String cancelText) {
       if (UIUtil.isUnderAquaLookAndFeel()) {
-        UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myTextLabel);
-        UIUtil.applyStyle(UIUtil.ComponentStyle.MINI, myText2Label);
+        UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myText2Label);
       }
       myProgressBar.setPreferredSize(new Dimension(UIUtil.isUnderAquaLookAndFeel() ? 350 : 450, -1));
 

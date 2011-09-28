@@ -170,13 +170,6 @@ public class JavaDirectoryServiceImpl extends JavaDirectoryService {
     checkCreateClassOrInterface(dir, name);
   }
 
-  public void checkCreateInterface(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException {
-    checkCreateClassOrInterface(dir, name);
-  }
-
-  /**
-   * @not_implemented
-   */
   public static void checkCreateClassOrInterface(@NotNull PsiDirectory directory, String name) throws IncorrectOperationException {
     PsiUtil.checkIsIdentifier(directory.getManager(), name);
 

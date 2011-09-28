@@ -23,9 +23,9 @@ package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ui.OrderRootTypeUIFactory;
-import com.intellij.openapi.projectRoots.ui.PathEditor;
+import com.intellij.openapi.projectRoots.ui.SdkPathEditor;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.ui.OrderRootTypeUIFactory;
 import com.intellij.openapi.roots.ui.configuration.PathUIUtils;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -36,8 +36,8 @@ import java.awt.*;
 public class SourcesOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
   private static final Icon ICON = IconLoader.getIcon("/nodes/sourceFolder.png");
 
-  public PathEditor createPathEditor(Sdk sdk) {
-    return new PathEditor(ProjectBundle.message("sdk.configure.sourcepath.tab"), OrderRootType.SOURCES, new FileChooserDescriptor(true, true, true, false, true, true)) {
+  public SdkPathEditor createPathEditor(Sdk sdk) {
+    return new SdkPathEditor(ProjectBundle.message("sdk.configure.sourcepath.tab"), OrderRootType.SOURCES, new FileChooserDescriptor(true, true, true, false, true, true)) {
       @Override
       protected VirtualFile[] adjustAddedFileSet(final Component component, final VirtualFile[] files) {
         return PathUIUtils.scanAndSelectDetectedJavaSourceRoots(component, files);

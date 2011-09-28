@@ -196,18 +196,18 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends
         @Override
         public void visitMethod(PsiMethod method) {
             super.visitMethod(method);
-            if (AnnotationUtil.isAnnotated(method, IGNORE, false) && method.getName().startsWith("test")) {
-              registerMethodError(method, method);
-              return;
-            }
-            if (!TestUtils.isJUnit4TestMethod(method)) {
-                return;
-            }
             final PsiClass containingClass = method.getContainingClass();
             if (containingClass == null) {
-                return;
+              return;
             }
             if (!TestUtils.isJUnitTestClass(containingClass)) {
+              return;
+            }
+            if (AnnotationUtil.isAnnotated(method, IGNORE, false) && method.getName().startsWith("test")) {
+                registerMethodError(method, method);
+                return;
+              }
+            if (!TestUtils.isJUnit4TestMethod(method)) {
                 return;
             }
             final String className = containingClass.getName();

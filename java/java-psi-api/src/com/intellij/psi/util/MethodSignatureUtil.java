@@ -51,7 +51,7 @@ public class MethodSignatureUtil {
         result += 37 * parameterTypes.length;
         PsiType firstParamType = parameterTypes.length == 0 ? null : parameterTypes[0];
         if (firstParamType != null) {
-          firstParamType = TypeConversionUtil.erasure(firstParamType);
+          firstParamType = TypeConversionUtil.erasure(firstParamType, signature.getSubstitutor());
           result = 31*result + firstParamType.hashCode();
         }
         return result;

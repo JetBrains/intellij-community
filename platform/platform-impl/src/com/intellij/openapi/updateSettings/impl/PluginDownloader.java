@@ -19,6 +19,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.RepositoryHelper;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
@@ -40,6 +41,7 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.URLEncoder;
 
 /**
  * @author anna
@@ -311,5 +313,13 @@ public class PluginDownloader {
 
   public String getPluginVersion() {
     return myPluginVersion;
+  }
+
+  public static PluginDownloader createDownloader(IdeaPluginDescriptor pluginDescriptor) throws UnsupportedEncodingException {
+    final BuildNumber buildNumber = ApplicationInfo.getInstance().getBuild();
+    final @NonNls String url = RepositoryHelper.DOWNLOAD_URL +
+                       URLEncoder.encode(pluginDescriptor.getPluginId().getIdString(), "UTF8") +
+                       "&build=" + buildNumber.asString();
+    return new PluginDownloader(pluginDescriptor.getPluginId().getIdString(), url, null, null, pluginDescriptor.getName());
   }
 }

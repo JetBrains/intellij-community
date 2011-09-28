@@ -149,8 +149,9 @@ public class MacOSApplicationProvider implements ApplicationComponent {
       Foundation.registerObjcClassPair(checkForUpdatesClass);
 
       ID checkForUpdates = Foundation.invoke("NSCheckForUpdates", "alloc");
-      Foundation.invoke(checkForUpdates, Foundation.createSelector("initWithTitle:action:keyEquivalent:"), Foundation.cfString("Check for Updates..."),
-                        Foundation.createSelector("checkForUpdates"), Foundation.cfString(""));
+      Foundation.invoke(checkForUpdates, Foundation.createSelector("initWithTitle:action:keyEquivalent:"),
+                        Foundation.nsString("Check for Updates..."),
+                        Foundation.createSelector("checkForUpdates"), Foundation.nsString(""));
       Foundation.invoke(checkForUpdates, Foundation.createSelector("setTarget:"), checkForUpdates);
 
       Foundation.invoke(appMenu, Foundation.createSelector("insertItem:atIndex:"), checkForUpdates, 1);

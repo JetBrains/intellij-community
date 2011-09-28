@@ -18,7 +18,9 @@ package com.intellij.openapi.util;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class TextRange implements Segment{
+import java.io.Serializable;
+
+public class TextRange implements Segment, Serializable {
   public static final TextRange EMPTY_RANGE = new TextRange(0,0);
   private final int myStartOffset;
   private final int myEndOffset;

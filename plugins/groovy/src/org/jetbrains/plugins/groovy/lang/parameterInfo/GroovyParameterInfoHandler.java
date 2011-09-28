@@ -466,7 +466,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
   private static void appendParameterText(PsiParameter parm, PsiSubstitutor substitutor, StringBuffer buffer) {
     if (parm instanceof GrParameter) {
       GrParameter grParam = (GrParameter)parm;
-      buffer.append(GroovyPresentationUtil.getParameterPresentation(grParam, substitutor));
+      buffer.append(GroovyPresentationUtil.getParameterPresentation(grParam, substitutor, true));
 
       final GrExpression initializer = grParam.getDefaultInitializer();
       if (initializer != null) {

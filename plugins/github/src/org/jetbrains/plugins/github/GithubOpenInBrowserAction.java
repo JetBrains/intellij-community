@@ -97,7 +97,7 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
 
 
     // Check that given repository is properly configured git repository
-    final GitRemote githubRemote = GithubUtil.getGithubBoundRepository(project);
+    final GitRemote githubRemote = GithubUtil.findGitHubRemoteBranch(project, project.getBaseDir());
     if (githubRemote == null) {
       Messages.showErrorDialog(project, "Configured github repository is not found", CANNOT_OPEN_IN_BROWSER);
       return;

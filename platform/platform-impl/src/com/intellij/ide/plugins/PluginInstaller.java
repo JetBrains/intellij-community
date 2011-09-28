@@ -18,21 +18,17 @@ package com.intellij.ide.plugins;
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.startup.StartupActionScriptManager;
-import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
-import com.intellij.openapi.util.BuildNumber;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.ArrayUtil;
-import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.io.IOException;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -160,12 +156,7 @@ public class PluginInstaller {
     }
 
     synchronized (PluginManager.lock) {
-      final BuildNumber buildNumber = ApplicationInfo.getInstance().getBuild();
-      final @NonNls String url = RepositoryHelper.DOWNLOAD_URL +
-                         URLEncoder.encode(pluginNode.getPluginId().getIdString(), "UTF8") +
-                         "&build=" + buildNumber.asString();
-      final PluginDownloader downloader =
-        new PluginDownloader(pluginNode.getPluginId().getIdString(), url, null, null, pluginNode.getName());
+      final PluginDownloader downloader = PluginDownloader.createDownloader(pluginNode);
       if (downloader.prepareToInstall(ProgressManager.getInstance().getProgressIndicator())) {
         downloader.install();
         pluginNode.setStatus(PluginNode.STATUS_DOWNLOADED);

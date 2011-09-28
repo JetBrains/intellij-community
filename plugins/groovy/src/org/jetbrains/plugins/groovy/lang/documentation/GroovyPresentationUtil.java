@@ -38,12 +38,12 @@ import java.util.Set;
 public class GroovyPresentationUtil {
   private static final int CONSTRAINTS_NUMBER = 2;
   
-  public static String getParameterPresentation(GrParameter parameter, PsiSubstitutor substitutor) {
+  public static String getParameterPresentation(GrParameter parameter, PsiSubstitutor substitutor, boolean presentable) {
     StringBuilder builder = new StringBuilder();
     PsiType type = parameter.getTypeGroovy();
     if (type != null) {
       type = substitutor.substitute(type);
-      return builder.append(type.getPresentableText()).append(" ").append(parameter.getName()).toString();
+      return builder.append(presentable ? type.getPresentableText() : type.getCanonicalText()).append(" ").append(parameter.getName()).toString();
     } else {
       builder.append(parameter.getName());
       final Set<String> structural = Collections.synchronizedSet(new LinkedHashSet<String>());

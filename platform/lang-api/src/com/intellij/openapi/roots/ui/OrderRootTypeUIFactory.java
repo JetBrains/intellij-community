@@ -22,6 +22,7 @@ package com.intellij.openapi.roots.ui;
 
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ui.PathEditor;
+import com.intellij.openapi.projectRoots.ui.SdkPathEditor;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.KeyedExtensionFactory;
 
@@ -34,7 +35,7 @@ public interface OrderRootTypeUIFactory {
     }
   };
 
-  PathEditor createPathEditor(Sdk sdk);
+  SdkPathEditor createPathEditor(Sdk sdk);
 
   Icon getIcon();
 

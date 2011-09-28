@@ -20,11 +20,11 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.ListScrollingUtil;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBViewport;
 import com.intellij.ui.speedSearch.ListWithFilter;
@@ -251,7 +251,7 @@ public class PopupChooserBuilder {
     builder.setDimensionServiceKey(null, myDimensionServiceKey, false).setRequestFocus(myRequestFocus).setResizable(myForceResizable)
       .setMovable(myForceMovable).setTitle(myForceMovable ? myTitle : null).setCancelCallback(myCancelCallback).setAlpha(myAlpha)
       .setFocusOwners(myFocusOwners).setCancelKeyEnabled(myCancelKeyEnabled && !(myChooserComponent instanceof ListWithFilter)).
-      setAdText(myAd, myAdAlignment).setKeyboardActions(myKeyboardActions).setMayBeParent(myMayBeParent);
+      setAdText(myAd, myAdAlignment).setKeyboardActions(myKeyboardActions).setMayBeParent(myMayBeParent).setLocateWithinScreenBounds(true);
 
     if (myCommandButton != null) {
       builder.setCommandButton(myCommandButton);
@@ -418,12 +418,13 @@ public class PopupChooserBuilder {
               if (size >= 0 && size <= 20) {
                 return list.getPreferredSize();
               } else {
-                final Dimension even = super.preferredLayoutSize(parent);
-                final IdeFrame ideFrame = WindowManager.getInstance().getIdeFrame(null);
-                final JComponent c = ideFrame.getComponent();
+                final Dimension sz = super.preferredLayoutSize(parent);
+                final Point p = RelativePoint.getNorthWestOf(myList).getScreenPoint();
+                final Rectangle screen = ScreenUtil.getScreenRectangle(p);
+
                 final int bordersEtc = 20;
-                final int maxWidth = c.getWidth() - SwingUtilities.convertPoint(myList, new Point(0, 0), c).x - 2 * bordersEtc;
-                return new Dimension(Math.min(maxWidth, even.width) + bordersEtc, even.height + list.getCellBounds(0, 0).height / 2);
+                final int maxWidth = Math.abs(screen.x + screen.width - p.x) - 2 * bordersEtc;
+                return new Dimension(Math.min(maxWidth, sz.width) + bordersEtc, sz.height + list.getCellBounds(0, 0).height / 2);
               }
             }
           };

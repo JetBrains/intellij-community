@@ -55,7 +55,7 @@ public class Growl {
         new Object[]{myProductName, applicationIcon, defaultNotifications, allNotifications});
 
     final ID center = invoke("NSDistributedNotificationCenter", "defaultCenter");
-    final Object notificationName = Foundation.cfString(GROWL_APPLICATION_REGISTRATION_NOTIFICATION);
+    final Object notificationName = Foundation.nsString(GROWL_APPLICATION_REGISTRATION_NOTIFICATION);
     invoke(center, "postNotificationName:object:userInfo:deliverImmediately:", notificationName, null, userDict, true);
     invoke(autoReleasePool, "release");
   }
@@ -66,7 +66,7 @@ public class Growl {
         GROWL_NOTIFICATION_NAME, GROWL_NOTIFICATION_TITLE, GROWL_NOTIFICATION_DESCRIPTION, GROWL_APP_NAME},
         new Object[]{notification, title, description, myProductName});
     final ID center = invoke("NSDistributedNotificationCenter", "defaultCenter");
-    final Object notificationName = Foundation.cfString(GROWL_NOTIFICATION);
+    final Object notificationName = Foundation.nsString(GROWL_NOTIFICATION);
 
     invoke(center, "postNotificationName:object:userInfo:deliverImmediately:", notificationName, null, dict, true);
     invoke(autoReleasePool, "release");
@@ -104,7 +104,7 @@ public class Growl {
     if (o instanceof Pointer || o instanceof ID) {
       return o;
     } else if (o instanceof String) {
-      return Foundation.cfString((String) o);
+      return Foundation.nsString((String)o);
     } else {
       throw new IllegalArgumentException("Unsupported type! " + o.getClass());
     }

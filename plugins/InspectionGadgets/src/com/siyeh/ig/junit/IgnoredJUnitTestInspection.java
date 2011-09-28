@@ -21,6 +21,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class IgnoredJUnitTestInspection extends BaseInspection {
@@ -62,7 +63,6 @@ public class IgnoredJUnitTestInspection extends BaseInspection {
                             PsiModifierListOwner.class);
             if (!(modifierListOwner instanceof PsiClass ||
                     modifierListOwner instanceof PsiMethod)) {
-              System.out.println(1);
                 return;
             }
             final PsiJavaCodeReferenceElement nameReferenceElement =
@@ -72,11 +72,10 @@ public class IgnoredJUnitTestInspection extends BaseInspection {
             }
             final PsiElement target = nameReferenceElement.resolve();
             if (!(target instanceof PsiClass)) {
-              System.out.println(2);
                 return;
             }
             final PsiClass aClass = (PsiClass) target;
-            final String qualifiedName = aClass.getQualifiedName();
+            @NonNls final String qualifiedName = aClass.getQualifiedName();
             if (!"org.junit.Ignore".equals(qualifiedName)) {
                 return;
             }

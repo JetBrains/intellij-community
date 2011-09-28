@@ -28,7 +28,6 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.net.HttpConfigurable;
 import git4idea.GitRemote;
-import git4idea.GitUtil;
 import git4idea.config.GitVcsApplicationSettings;
 import git4idea.config.GitVersion;
 import git4idea.i18n.GitBundle;
@@ -93,8 +92,9 @@ public class GithubUtil {
   }
 
   public static boolean testConnection(final String url, final String login, final String password) {
+    HttpMethod method = null;
     try {
-      final HttpMethod method = doREST(url, login, password, "/user/show/" + login, false);
+      method = doREST(url, login, password, "/user/show/" + login, false);
       final InputStream stream = method.getResponseBodyAsStream();
       final Element element = new SAXBuilder(false).build(stream).getRootElement();
       if ("error".equals(element.getName())){
@@ -105,6 +105,11 @@ public class GithubUtil {
     }
     catch (Exception e) {
       // Ignore
+    }
+    finally {
+      if (method!=null) {
+        method.releaseConnection();
+      }
     }
     return false;
   }
@@ -118,7 +123,7 @@ public class GithubUtil {
     return method;
   }
 
-  public static HttpClient getHttpClient(final String login, final String password) {
+  public static HttpClient getHttpClient(@Nullable final String login, @Nullable final String password) {
     final HttpClient client = new HttpClient();
     // Configure proxySettings if it is required
     final HttpConfigurable proxySettings = HttpConfigurable.getInstance();
@@ -129,15 +134,18 @@ public class GithubUtil {
                                                                                              proxySettings.getPlainProxyPassword()));
       }
     }
-    client.getParams().setAuthenticationPreemptive(true);
-    client.getState().setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(login, password));
+    if (login != null && password != null) {
+      client.getParams().setAuthenticationPreemptive(true);
+      client.getState().setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(login, password));
+    }
     return client;
   }
 
   public static List<RepositoryInfo> getAvailableRepos(final String url, final String login, final String password, final boolean ownOnly) {
+    HttpMethod method = null;
     try {
       final String request = (ownOnly ? "/repos/show/" : "/repos/watched/") + login;
-      final HttpMethod method = doREST(url, login, password, request, false);
+      method = doREST(url, login, password, request, false);
       final InputStream stream = method.getResponseBodyAsStream();
       final Element element = new SAXBuilder(false).build(stream).getRootElement();
       if ("error".equals(element.getName())){
@@ -155,15 +163,21 @@ public class GithubUtil {
     catch (Exception e) {
       // ignore
     }
+    finally {
+      if (method != null){
+        method.releaseConnection();
+      }
+    }
     return Collections.emptyList();
   }
 
 
   @Nullable
   public static RepositoryInfo getDetailedRepoInfo(final String url, final String login, final String password, final String owner, final String name) {
+    HttpMethod method = null;
     try {
       final String request = "/repos/show/" + owner + "/" + name;
-      final HttpMethod method = doREST(url, login, password, request, false);
+      method = doREST(url, login, password, request, false);
       final InputStream stream = method.getResponseBodyAsStream();
       final Element element = new SAXBuilder(false).build(stream).getRootElement();
       if ("error".equals(element.getName())){
@@ -175,13 +189,19 @@ public class GithubUtil {
     catch (Exception e) {
       // ignore
     }
+    finally {
+      if (method != null){
+        method.releaseConnection();
+      }
+    }
     return null;
   }
 
   public static boolean isPrivateRepoAllowed(final String url, final String login, final String password) {
+    HttpMethod method = null;
     try {
       final String request = "/user/show/" + login;
-      final HttpMethod method = doREST(url, login, password, request, false);
+      method = doREST(url, login, password, request, false);
       final InputStream stream = method.getResponseBodyAsStream();
       final Element element = new SAXBuilder(false).build(stream).getRootElement();
       if ("error".equals(element.getName())){
@@ -195,6 +215,11 @@ public class GithubUtil {
     }
     catch (Exception e) {
       // ignore
+    }
+    finally {
+      if (method != null){
+        method.releaseConnection();
+      }
     }
     return false;
   }
@@ -293,17 +318,6 @@ public class GithubUtil {
     catch (CancelledException e) {
       return null;
     }
-  }
-
-  @Nullable
-  public static GitRemote getGithubBoundRepository(final Project project){
-    final VirtualFile root = project.getBaseDir();
-    // Check if git is already initialized and presence of remote branch
-    final boolean gitDetected = GitUtil.isUnderGit(root);
-    if (!gitDetected) {
-      return null;
-    }
-    return findGitHubRemoteBranch(project, root);
   }
 
   @Nullable

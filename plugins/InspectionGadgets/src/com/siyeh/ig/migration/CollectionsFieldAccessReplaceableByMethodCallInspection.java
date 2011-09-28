@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2010 Bas Leijdekkers
+ * Copyright 2008-2011 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,16 +95,30 @@ public class CollectionsFieldAccessReplaceableByMethodCallInspection
             for (int i = 0, parameterTypesLength = parameterTypes.length;
                  i < parameterTypesLength; i++) {
                 final PsiType parameterType = parameterTypes[i];
-                if (!parameterType.equalsToText(
-                        CommonClassNames.JAVA_LANG_OBJECT)) {
-                    useTypeParameter = true;
+                if (parameterType instanceof PsiWildcardType) {
+                    final PsiWildcardType wildcardType =
+                            (PsiWildcardType)parameterType;
+                    final PsiType bound = wildcardType.getBound();
+                    if (bound != null) {
+                        if (!bound.equalsToText(
+                                CommonClassNames.JAVA_LANG_OBJECT)) {
+                            useTypeParameter = true;
+                        }
+                        canonicalTexts[i] = bound.getCanonicalText();
+                    } else {
+                        canonicalTexts[i] = CommonClassNames.JAVA_LANG_OBJECT;
+                    }
+                } else {
+                    if (!parameterType.equalsToText(
+                            CommonClassNames.JAVA_LANG_OBJECT)) {
+                        useTypeParameter = true;
+                    }
+                    canonicalTexts[i] = parameterType.getCanonicalText();
                 }
-                canonicalTexts[i] = parameterType.getCanonicalText();
             }
             if (useTypeParameter) {
                 return "Collections.<" + StringUtil.join(canonicalTexts, ",") +
-                        '>' +
-                        getCollectionsMethodCallText(referenceName);
+                        '>' + getCollectionsMethodCallText(referenceName);
             } else {
                 return getUntypedCollectionsMethodCallText(referenceName);
             }

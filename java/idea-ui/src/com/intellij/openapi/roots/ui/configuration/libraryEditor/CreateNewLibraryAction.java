@@ -28,6 +28,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.roots.libraries.ui.LibraryRootsComponentDescriptor;
 import com.intellij.openapi.roots.libraries.ui.OrderRoot;
+import com.intellij.openapi.roots.libraries.ui.RootDetector;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryEditingUtil;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.BaseLibrariesConfigurable;
@@ -72,17 +73,25 @@ public class CreateNewLibraryAction extends DumbAwareAction {
     if (componentDescriptor == null) {
       componentDescriptor = new DefaultLibraryRootsComponentDescriptor();
     }
-    final FileChooserDescriptor chooserDescriptor = componentDescriptor.createAttachFilesChooserDescriptor();
-    chooserDescriptor.setTitle("Select Library Files");
-    final VirtualFile[] rootCandidates = FileChooser.chooseFiles(myLibrariesConfigurable.getTree(), chooserDescriptor, myProject.getBaseDir());
-    if (rootCandidates.length == 0) {
-      return;
-    }
+    final List<? extends RootDetector> rootDetectors = componentDescriptor.getRootDetectors();
+    final List<OrderRoot> roots;
+    if (!rootDetectors.isEmpty()) {
+      final FileChooserDescriptor chooserDescriptor = componentDescriptor.createAttachFilesChooserDescriptor();
+      chooserDescriptor.setTitle("Select Library Files");
+      final VirtualFile[] rootCandidates = FileChooser.chooseFiles(myLibrariesConfigurable.getTree(), chooserDescriptor,
+                                                                   myProject.getBaseDir());
+      if (rootCandidates.length == 0) {
+        return;
+      }
 
-    final List<OrderRoot> roots = RootDetectionUtil
-        .detectRoots(Arrays.asList(rootCandidates), myLibrariesConfigurable.getTree(), myProject, componentDescriptor.getRootDetectors(),
-                     true);
-    if (roots.isEmpty()) return;
+      roots = RootDetectionUtil
+          .detectRoots(Arrays.asList(rootCandidates), myLibrariesConfigurable.getTree(), myProject, rootDetectors,
+                       true);
+      if (roots.isEmpty()) return;
+    }
+    else {
+      roots = Collections.emptyList();
+    }
 
     final LibrariesModifiableModel modifiableModel = myLibrariesConfigurable.getModelProvider().getModifiableModel();
     final Library library = modifiableModel.createLibrary(LibraryEditingUtil.suggestNewLibraryName(modifiableModel, roots), myType);

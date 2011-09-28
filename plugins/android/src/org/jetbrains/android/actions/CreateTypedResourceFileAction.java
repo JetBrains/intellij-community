@@ -140,14 +140,18 @@ public class CreateTypedResourceFileAction extends CreateElementActionBase {
   protected boolean isAvailable(DataContext context) {
     if (!super.isAvailable(context)) return false;
     final PsiElement element = (PsiElement)context.getData(DataKeys.PSI_ELEMENT.getName());
-    if (element instanceof PsiDirectory) {
-      return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-        public Boolean compute() {
-          return ResourceManager.isResourceSubdirectory((PsiDirectory)element, myResourceType);
+    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+      public Boolean compute() {
+        PsiElement e = element;
+        while (e != null) {
+          if (e instanceof PsiDirectory && ResourceManager.isResourceSubdirectory((PsiDirectory)e, myResourceType)) {
+            return true;
+          }
+          e = e.getParent();
         }
-      });
-    }
-    return false;
+        return false;
+      }
+    });
   }
 
   @Override

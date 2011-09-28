@@ -286,6 +286,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
     PsiField field = (PsiField)resolved;
 
     if (!field.hasModifierProperty(PsiModifier.FINAL)) return false;
+    if (!field.hasModifierProperty(PsiModifier.STATIC)) return false;
 
     PsiElement parent = element.getParent();
     if (parent instanceof PsiPrefixExpression && ((PsiPrefixExpression)parent).getOperationTokenType() == JavaTokenType.EXCL) {

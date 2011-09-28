@@ -16,21 +16,23 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedHashMap;
+import java.util.*;
+import java.util.List;
 
 /**
  * @author max
  */
 public class ComplementaryFontsRegistry {
   private static final Object lock = new String("common lock");
-  private static final ArrayList<String> ourFontNames;
+  private static final List<String> ourFontNames;
+  private static final Set<String> ourStyledFontNames;
   private static final LinkedHashMap<FontKey, FontInfo> ourUsedFonts;
   private static FontKey ourSharedKeyInstance = new FontKey("", 0, 0);
   private static FontInfo ourSharedDefaultFont;
@@ -72,11 +74,22 @@ public class ComplementaryFontsRegistry {
   @NonNls private static final String ITALIC_SUFFIX = ".italic";
 
   static {
+    ourStyledFontNames = new HashSet<String>();
     ourFontNames = new ArrayList<String>();
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       ourFontNames.add("Monospaced");
     } else {
       GraphicsEnvironment graphicsEnvironment = GraphicsEnvironment.getLocalGraphicsEnvironment();
+      if (SystemInfo.isMac) {
+        Font[] allFonts = graphicsEnvironment.getAllFonts();
+        for (Font font : allFonts) {
+          String name = font.getName();
+          if (name.endsWith("-Italic") || name.endsWith("-Bold") || name.endsWith("-BoldItalic")) {
+            ourStyledFontNames.add(font.getName());
+          }
+        }
+      }
+
       String[] fontNames = graphicsEnvironment.getAvailableFontFamilyNames();
       for (final String fontName : fontNames) {
         if (!fontName.endsWith(BOLD_SUFFIX) && !fontName.endsWith(ITALIC_SUFFIX)) {
@@ -87,12 +100,30 @@ public class ComplementaryFontsRegistry {
     ourUsedFonts = new LinkedHashMap<FontKey, FontInfo>();
   }
 
+  private static Pair<String, Integer> fontFamily(String familyName, int style) {
+    if (!SystemInfo.isMac || style == 0) return Pair.create(familyName, style);
+
+    StringBuilder st = new StringBuilder(familyName).append('-');
+    if ((style & Font.BOLD) == Font.BOLD) {
+      st.append("Bold");
+    }
+    
+    if ((style & Font.ITALIC) == Font.ITALIC) {
+      st.append("Italic");
+    }
+    
+    String styledFamilyName = st.toString();
+    boolean found = ourStyledFontNames.contains(styledFamilyName);
+    return Pair.create(found ? styledFamilyName : familyName, found ? Font.PLAIN : style);
+  }
+  
   public static FontInfo getFontAbleToDisplay(char c, int size, int style, @NotNull String defaultFontFamily) {
     synchronized (lock) {
+      Pair<String, Integer> p = fontFamily(defaultFontFamily, style);
       if (ourSharedKeyInstance.mySize == size &&
-          ourSharedKeyInstance.myStyle == style &&
+          ourSharedKeyInstance.myStyle == p.getSecond() &&
           ourSharedKeyInstance.myFamilyName != null &&
-          ourSharedKeyInstance.myFamilyName.equals(defaultFontFamily) &&
+          ourSharedKeyInstance.myFamilyName.equals(p.getFirst()) &&
           ourSharedDefaultFont != null &&
           ( c < 128 ||
             ourSharedDefaultFont.canDisplay(c)
@@ -101,13 +132,13 @@ public class ComplementaryFontsRegistry {
         return ourSharedDefaultFont;
       }
 
-      ourSharedKeyInstance.myFamilyName = defaultFontFamily;
+      ourSharedKeyInstance.myFamilyName = p.getFirst();
       ourSharedKeyInstance.mySize = size;
-      ourSharedKeyInstance.myStyle = style;
+      ourSharedKeyInstance.myStyle = p.getSecond();
 
       FontInfo defaultFont = ourUsedFonts.get(ourSharedKeyInstance);
       if (defaultFont == null) {
-        defaultFont = new FontInfo(defaultFontFamily, size, style);
+        defaultFont = new FontInfo(p.getFirst(), size, p.getSecond());
         ourUsedFonts.put(ourSharedKeyInstance, defaultFont);
         ourSharedKeyInstance = new FontKey("", 0, 0);
       }

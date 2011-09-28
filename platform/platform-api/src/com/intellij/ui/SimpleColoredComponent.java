@@ -43,6 +43,7 @@ import java.util.Map;
  *
  * @author Vladimir Kondratyev
  */
+@SuppressWarnings({"NonPrivateFieldAccessedInSynchronizedContext", "FieldAccessedSynchronizedAndUnsynchronized", "UnusedDeclaration"})
 public class SimpleColoredComponent extends JComponent implements Accessible {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.SimpleColoredComponent");
   public static final Color STYLE_SEARCH_MATCH_BACKGROUND = new Color(250, 250, 250, 140);
@@ -78,7 +79,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
    * if the component represents a selected item in a focused JList.
    * Border can be <code>null</code>.
    */
-  private MyBorder myBorder;
+  private Border myBorder;
 
   private int myMainTextLastIndex = -1;
 
@@ -107,6 +108,8 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
   /**
    * Appends string fragments to existing ones. Appended string
    * will have specified <code>attributes</code>.
+   * @param fragment text fragment
+   * @param attributes text attributes
    */
   public final void append(@NotNull final String fragment, @NotNull final SimpleTextAttributes attributes) {
     append(fragment, attributes, myMainTextLastIndex < 0);
@@ -115,16 +118,21 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
   /**
    * Appends string fragments to existing ones. Appended string
    * will have specified <code>attributes</code>.
+   * @param fragment text fragment
+   * @param attributes text attributes
+   * @param isMainText main text of not
    */
   public void append(@NotNull final String fragment, @NotNull final SimpleTextAttributes attributes, boolean isMainText) {
-    synchronized (this) {
-      myFragments.add(fragment);
-      myAttributes.add(attributes);
-      if (isMainText) {
-        myMainTextLastIndex = myFragments.size() - 1;
-      }
-    }
+    _append(fragment, attributes, isMainText);
     revalidateAndRepaint();
+  }
+  
+  private synchronized void _append(@NotNull final String fragment, @NotNull final SimpleTextAttributes attributes, boolean isMainText) {
+    myFragments.add(fragment);
+    myAttributes.add(attributes);
+    if (isMainText) {
+      myMainTextLastIndex = myFragments.size() - 1;
+    }    
   }
 
   private void revalidateAndRepaint() {
@@ -136,17 +144,19 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
   }
 
   public void append(@NotNull final String fragment, @NotNull final SimpleTextAttributes attributes, Object tag) {
-    synchronized (this) {
-      append(fragment, attributes);
-      if (myFragmentTags == null) {
-        myFragmentTags = new ArrayList<Object>();
-      }
-      while(myFragmentTags.size() < myFragments.size()-1) {
-        myFragmentTags.add(null);
-      }
-      myFragmentTags.add(tag);
-    }
+    _append(fragment, attributes, tag);
     revalidateAndRepaint();
+  }
+
+  private synchronized void _append(String fragment, SimpleTextAttributes attributes, Object tag) {
+    append(fragment, attributes);
+    if (myFragmentTags == null) {
+      myFragmentTags = new ArrayList<Object>();
+    }
+    while(myFragmentTags.size() < myFragments.size()-1) {
+      myFragmentTags.add(null);
+    }
+    myFragmentTags.add(tag);
   }
 
   public synchronized void appendAlign(int alignWidth) {
@@ -159,16 +169,18 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
    * They are icon, text fragments and their attributes, "paint focus border".
    */
   public void clear() {
-    synchronized (this) {
-      myIcon = null;
-      myPaintFocusBorder = false;
-      myFragments.clear();
-      myAttributes.clear();
-      myFragmentTags = null;
-      myMainTextLastIndex = -1;
-      myAligns.clear();
-    }
+    _clear();
     revalidateAndRepaint();
+  }
+
+  private synchronized void _clear() {
+    myIcon = null;
+    myPaintFocusBorder = false;
+    myFragments.clear();
+    myAttributes.clear();
+    myFragmentTags = null;
+    myMainTextLastIndex = -1;
+    myAligns.clear();
   }
 
   /**
@@ -181,6 +193,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
 
   /**
    * Sets a new component icon
+   * @param icon icon
    */
   public final void setIcon(final @Nullable Icon icon) {
     myIcon = icon;
@@ -196,6 +209,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
 
   /**
    * Sets specified internal paddings
+   * @param ipad insets
    */
   public void setIpad(final Insets ipad) {
     myIpad = ipad;
@@ -213,6 +227,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
   /**
    * Sets a new gap between icon and text
    *
+   * @param iconTextGap the gap between text and icon
    * @throws java.lang.IllegalArgumentException
    *          if the <code>iconTextGap</code>
    *          has a negative value
@@ -226,16 +241,17 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
     revalidateAndRepaint();
   }
 
-  public MyBorder getMyBorder() {
+  public Border getMyBorder() {
     return myBorder;
   }
 
-  public void setMyBorder(@Nullable MyBorder border) {
+  public void setMyBorder(@Nullable Border border) {
     myBorder = border;
   }
 
   /**
    * Sets whether focus border is painted or not
+   * @param paintFocusBorder <code>true</code> or <code>false</code>
    */
   protected final void setPaintFocusBorder(final boolean paintFocusBorder) {
     myPaintFocusBorder = paintFocusBorder;
@@ -246,6 +262,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
   /**
    * Sets whether focus border extends to icon or not. If so then
    * component also extends the selection.
+   * @param focusBorderAroundIcon <code>true</code> or <code>false</code>
    */
   protected final void setFocusBorderAroundIcon(final boolean focusBorderAroundIcon) {
     myFocusBorderAroundIcon = focusBorderAroundIcon;
@@ -274,6 +291,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
     return computePreferredSize(false);
   }
 
+  @Nullable
   public synchronized Object getFragmentTag(int index) {
     if (myFragmentTags != null && index < myFragmentTags.size()) {
       return myFragmentTags.get(index);
@@ -368,7 +386,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
 
   protected void paintComponent(final Graphics g) {
     try {
-      doPaint(g);
+      _doPaint(g);
     }
     catch (RuntimeException e) {
       LOG.error(logSwingPath(), e);
@@ -376,55 +394,67 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
     }
   }
 
-  protected synchronized void doPaint(final Graphics g) {
+  private synchronized void _doPaint(final Graphics g) {
     checkCanPaint(g);
-    int xOffset = 0;
-
-    // Paint icon and its background
-    final Icon icon = myIcon;   // guard against concurrent modification (IDEADEV-12635)
+    doPaint((Graphics2D)g);
+  }
+  
+  protected void doPaint(final Graphics2D g) {
+    int offset = 0;
+    final Icon icon = myIcon; // guard against concurrent modification (IDEADEV-12635)
     if (icon != null) {
-      final Container parent = getParent();
-      Color iconBackgroundColor = null;
-      if (isOpaque() || isIconOpaque()) {
-        if (parent != null && !myFocusBorderAroundIcon && !UIUtil.isFullRowSelectionLAF()) {
-          iconBackgroundColor = parent.getBackground();
-        }
-        else {
-          iconBackgroundColor = getBackground();
-        }
-      }
-
-      if (iconBackgroundColor != null) {
-        g.setColor(iconBackgroundColor);
-        g.fillRect(0, 0, icon.getIconWidth() + myIpad.left + myIconTextGap, getHeight());
-      }
-
-      paintIcon(g, icon);
-
-      xOffset += myIpad.left + icon.getIconWidth() + myIconTextGap;
+      doPaintIcon(g, icon);
+      offset += myIpad.left + icon.getIconWidth() + myIconTextGap;
     }
 
+    doPaintTextBackground(g, offset);
+    doPaintText(g, offset, myFocusBorderAroundIcon || icon == null);
+  }
+  
+
+  protected void doPaintTextBackground(Graphics2D g, int offset) {
     if (isOpaque() || shouldDrawBackground()) {
-      // Paint text background
       g.setColor(getBackground());
-      g.fillRect(xOffset, 0, getWidth() - xOffset, getHeight());
+      g.fillRect(offset, 0, getWidth() - offset, getHeight());
+    }
+  }
+
+  protected void doPaintIcon(Graphics2D g, Icon icon) {
+    final Container parent = getParent();
+    Color iconBackgroundColor = null;
+    if (isOpaque() || isIconOpaque()) {
+      if (parent != null && !myFocusBorderAroundIcon && !UIUtil.isFullRowSelectionLAF()) {
+        iconBackgroundColor = parent.getBackground();
+      }
+      else {
+        iconBackgroundColor = getBackground();
+      }
     }
 
+    if (iconBackgroundColor != null) {
+      g.setColor(iconBackgroundColor);
+      g.fillRect(0, 0, icon.getIconWidth() + myIpad.left + myIconTextGap, getHeight());
+    }
+
+    paintIcon(g, icon);
+  }
+
+  protected int doPaintText(Graphics2D g, int offset, boolean focusAroundIcon) {
     // If there is no icon, then we have to add left internal padding
-    if (xOffset == 0) {
-      xOffset = myIpad.left;
+    if (offset == 0) {
+      offset = myIpad.left;
     }
 
-    int textStart = xOffset;
+    int textStart = offset;
     if (myBorder != null) {
-      xOffset += myBorder.getBorderInsets(this).left;
+      offset += myBorder.getBorderInsets(this).left;
     }
 
     final List<Object[]> searchMatches = new ArrayList<Object[]>();
-
-    // Paint text
+    
     UIUtil.applyRenderingHints(g);
     applyAdditionalHints(g);
+
     for (int i = 0; i < myFragments.size(); i++) {
       final SimpleTextAttributes attributes = myAttributes.get(i);
       Font font = g.getFont();
@@ -440,7 +470,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
       final Color bgColor = attributes.getBgColor();
       if (isOpaque() && bgColor != null) {
         g.setColor(bgColor);
-        g.fillRect(xOffset, 0, fragmentWidth, getHeight());
+        g.fillRect(offset, 0, fragmentWidth, getHeight());
       }
 
       Color color = attributes.getFgColor();
@@ -457,17 +487,17 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
       if (!attributes.isSearchMatch()) {
         if (shouldDrawMacShadow()) {
           g.setColor(STYLE_SEARCH_MATCH_BACKGROUND);
-          g.drawString(fragment, xOffset, textBaseline + 1);
+          g.drawString(fragment, offset, textBaseline + 1);
         }
-        
+
         g.setColor(color);
-        g.drawString(fragment, xOffset, textBaseline);
+        g.drawString(fragment, offset, textBaseline);
       }
 
       // 1. Strikeout effect
       if (attributes.isStrikeout()) {
         final int strikeOutAt = textBaseline + (metrics.getDescent() - metrics.getAscent()) / 2;
-        UIUtil.drawLine(g, xOffset, strikeOutAt, xOffset + fragmentWidth, strikeOutAt);
+        UIUtil.drawLine(g, offset, strikeOutAt, offset + fragmentWidth, strikeOutAt);
       }
       // 2. Waved effect
       if (attributes.isWaved()) {
@@ -475,7 +505,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
           g.setColor(attributes.getWaveColor());
         }
         final int wavedAt = textBaseline + 1;
-        for (int x = xOffset; x <= xOffset + fragmentWidth; x += 4) {
+        for (int x = offset; x <= offset + fragmentWidth; x += 4) {
           UIUtil.drawLine(g, x, wavedAt, x + 2, wavedAt + 2);
           UIUtil.drawLine(g, x + 3, wavedAt + 1, x + 4, wavedAt);
         }
@@ -483,41 +513,40 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
       // 3. Underline
       if (attributes.isUnderline()) {
         final int underlineAt = textBaseline + 1;
-        UIUtil.drawLine(g, xOffset, underlineAt, xOffset + fragmentWidth, underlineAt);
+        UIUtil.drawLine(g, offset, underlineAt, offset + fragmentWidth, underlineAt);
       }
       // 4. Bold Dotted Line
       if (attributes.isBoldDottedLine()) {
         final int dottedAt = SystemInfo.isMac ? textBaseline : textBaseline + 1;
         final Color lineColor = attributes.getWaveColor();
-        UIUtil.drawBoldDottedLine((Graphics2D)g, xOffset, xOffset + fragmentWidth, dottedAt, bgColor, lineColor, isOpaque());
+        UIUtil.drawBoldDottedLine(g, offset, offset + fragmentWidth, dottedAt, bgColor, lineColor, isOpaque());
       }
 
       if (attributes.isSearchMatch()) {
-        searchMatches.add(new Object[] {xOffset, xOffset + fragmentWidth, textBaseline, fragment, g.getFont()});
+        searchMatches.add(new Object[] {offset, offset + fragmentWidth, textBaseline, fragment, g.getFont()});
       }
 
       final Integer fixedWidth = myAligns.get(i);
       if (fixedWidth != null && fragmentWidth < fixedWidth.intValue()) {
-      //if (fixedWidth != null) {
-        xOffset += fixedWidth.intValue();
+        //if (fixedWidth != null) {
+        offset += fixedWidth.intValue();
       } else {
-        xOffset += fragmentWidth;
+        offset += fragmentWidth;
       }
     }
 
     // Paint focus border around the text and icon (if necessary)
     if (myPaintFocusBorder && myBorder != null) {
-      if (myFocusBorderAroundIcon || icon == null) {
+      if (focusAroundIcon) {
         myBorder.paintBorder(this, g, 0, 0, getWidth(), getHeight());
-      }
-      else {
+      } else {
         myBorder.paintBorder(this, g, textStart, 0, getWidth() - textStart, getHeight());
       }
     }
 
     // draw search matches after all
     for (final Object[] info: searchMatches) {
-      UIUtil.drawSearchMatch((Graphics2D)g, (Integer) info[0], (Integer) info[1], getHeight());
+      UIUtil.drawSearchMatch(g, (Integer) info[0], (Integer) info[1], getHeight());
       g.setFont((Font) info[4]);
 
       if (shouldDrawMacShadow()) {
@@ -528,8 +557,9 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
       g.setColor(new Color(50, 50, 50));
       g.drawString((String) info[3], (Integer) info[0], (Integer) info[2]);
     }
+    return offset;
   }
-  
+
   protected boolean shouldDrawMacShadow() {
     return false;
   }
@@ -583,8 +613,8 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
   }
 
   protected void setBorderInsets(Insets insets) {
-    if (myBorder != null) {
-      myBorder.setInsets(insets);
+    if (myBorder instanceof MyBorder) {
+      ((MyBorder)myBorder).setInsets(insets);
     }
 
     revalidateAndRepaint();
@@ -617,7 +647,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
 
   @Override
   public String toString() {
-    StringBuffer result = new StringBuffer();
+    final StringBuilder result = new StringBuilder();
     for (String each : myFragments) {
       result.append(each);
     }
@@ -662,6 +692,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
       return 0;
     }
 
+    @Nullable
     @Override
     public Accessible getAccessibleChild(int i) {
       return null;

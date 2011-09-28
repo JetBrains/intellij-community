@@ -24,7 +24,9 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
-import com.intellij.openapi.vfs.newvfs.*;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.CachingVirtualFileSystem;
+import com.intellij.openapi.vfs.newvfs.FileSystemPersistence;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
@@ -193,10 +195,10 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx {
   @Override
   public void notifyPropertyChanged(final VirtualFile virtualFile, final String property, final Object oldValue, final Object newValue) {
     final Application application = ApplicationManager.getApplication();
-    application.invokeLater(new Runnable() {
+    final Runnable runnable = new Runnable() {
       public void run() {
         if (virtualFile.isValid() && !application.isDisposed()) {
-          application.runWriteAction(new Runnable(){
+          application.runWriteAction(new Runnable() {
             public void run() {
               List<VFilePropertyChangeEvent> events = Collections
                 .singletonList(new VFilePropertyChangeEvent(this, virtualFile, property, oldValue, newValue, false));
@@ -207,7 +209,8 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx {
           });
         }
       }
-    }, ModalityState.NON_MODAL);
+    };
+    application.invokeLater(runnable, ModalityState.NON_MODAL);
   }
 
   public void fireBeforeRefreshStart(boolean asynchronous) {

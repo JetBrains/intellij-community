@@ -23,7 +23,7 @@ package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.ui.PathEditor;
+import com.intellij.openapi.projectRoots.ui.SdkPathEditor;
 import com.intellij.openapi.roots.AnnotationOrderRootType;
 import com.intellij.openapi.roots.ui.OrderRootTypeUIFactory;
 import com.intellij.openapi.util.IconLoader;
@@ -43,8 +43,8 @@ public class AnnotationsOrderRootTypeUIFactory implements OrderRootTypeUIFactory
     return ProjectBundle.message("sdk.configure.annotations.tab");
   }
 
-  public PathEditor createPathEditor(Sdk sdk) {
-    return new PathEditor(ProjectBundle.message("sdk.configure.annotations.tab"), AnnotationOrderRootType.getInstance(),
+  public SdkPathEditor createPathEditor(Sdk sdk) {
+    return new SdkPathEditor(ProjectBundle.message("sdk.configure.annotations.tab"), AnnotationOrderRootType.getInstance(),
                           FileChooserDescriptorFactory.createSingleFolderDescriptor());
   }
 }

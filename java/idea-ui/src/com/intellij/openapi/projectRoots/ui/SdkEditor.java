@@ -62,7 +62,7 @@ import java.util.Set;
 public class SdkEditor implements Configurable, Place.Navigator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.ui.SdkEditor");
   private Sdk mySdk;
-  private final Map<OrderRootType, PathEditor> myPathEditors = new HashMap<OrderRootType, PathEditor>();
+  private final Map<OrderRootType, SdkPathEditor> myPathEditors = new HashMap<OrderRootType, SdkPathEditor>();
 
   private TextFieldWithBrowseButton myHomeComponent;
   private final Map<SdkType, AdditionalDataConfigurable> myAdditionalDataConfigurables = new HashMap<SdkType, AdditionalDataConfigurable>();
@@ -131,7 +131,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
     myTabbedPane = new TabbedPaneWrapper(myDisposable);
     for (OrderRootType type : OrderRootType.getAllTypes()) {
       if (mySdk == null || showTabForType(type)) {
-        final PathEditor pathEditor = OrderRootTypeUIFactory.FACTORY.getByKey(type).createPathEditor(mySdk);
+        final SdkPathEditor pathEditor = OrderRootTypeUIFactory.FACTORY.getByKey(type).createPathEditor(mySdk);
         if (pathEditor != null) {
           myTabbedPane.addTab(pathEditor.getDisplayName(), pathEditor.createComponent());
           myPathEditors.put(type, pathEditor);
@@ -201,7 +201,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
       myInitialPath = mySdk.getHomePath();
       final SdkModificator sdkModificator = mySdk.getSdkModificator();
       sdkModificator.setHomePath(getHomeValue().replace(File.separatorChar, '/'));
-      for (PathEditor pathEditor : myPathEditors.values()) {
+      for (SdkPathEditor pathEditor : myPathEditors.values()) {
         pathEditor.apply(sdkModificator);
       }
       ApplicationManager.getApplication().runWriteAction(new Runnable() { // fix SCR #29193
@@ -219,7 +219,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
   public void reset(){
     if (mySdk == null){
       setHomePathValue("");
-      for (PathEditor pathEditor : myPathEditors.values()) {
+      for (SdkPathEditor pathEditor : myPathEditors.values()) {
         pathEditor.reset(null);
       }
     }

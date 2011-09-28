@@ -177,18 +177,18 @@ public class MacMainFrameDecorator implements UISettingsListener, Disposable {
         ID delegate = invoke(invoke("IdeaNSWindowDelegate" + v, "alloc"), "init");
         invoke(notificationCenter, "addObserver:selector:name:object:", delegate, 
                Foundation.createSelector("windowDidEnterFullScreen:"), 
-               Foundation.cfString("NSWindowDidEnterFullScreenNotification"), window);
+               Foundation.nsString("NSWindowDidEnterFullScreenNotification"), window);
 
         //invoke(notificationCenter, "addObserver:selector:name:object:", delegate, 
         //       Foundation.createSelector("windowDidExitFullScreen:"), 
-        //       Foundation.cfString("NSWindowDidExitFullScreenNotification"), window);
+        //       Foundation.nsString("NSWindowDidExitFullScreenNotification"), window);
       } else {
         // toggle toolbar
         String className = "IdeaToolbar" + v;
         final ID ownToolbar = Foundation.registerObjcClass(Foundation.getClass("NSToolbar"), className);
         Foundation.registerObjcClassPair(ownToolbar);
 
-        ID toolbar = invoke(invoke(className, "alloc"), "initWithIdentifier:", Foundation.cfString(className));
+        ID toolbar = invoke(invoke(className, "alloc"), "initWithIdentifier:", Foundation.nsString(className));
         Foundation.cfRetain(toolbar);
 
         invoke(toolbar, "setVisible:", 0); // hide native toolbar by default

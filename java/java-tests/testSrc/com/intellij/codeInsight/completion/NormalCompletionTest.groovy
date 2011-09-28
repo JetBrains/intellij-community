@@ -1115,4 +1115,36 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     myFixture.type '*\n'
     myFixture.checkResult "import java.lang.*<caret>"
   }
+
+  public void testIntersectionTypesSOE() {
+    myFixture.configureByText("a.java", """
+      import java.util.*;
+      import java.io.*;
+      class SOE {
+         public boolean setLocation(Iterable<? extends File> path) {
+           return true;
+         }
+
+         public void compile(List<File> classpath) {
+             setLocation(<caret>);
+         }
+    }
+  """)
+    myFixture.completeBasic()
+    myFixture.type '*\n'
+    myFixture.checkResult """
+      import java.util.*;
+      import java.io.*;
+      class SOE {
+         public boolean setLocation(Iterable<? extends File> path) {
+           return true;
+         }
+
+         public void compile(List<File> classpath) {
+             setLocation(classpath);
+         }
+    }
+  """
+  }
+
 }

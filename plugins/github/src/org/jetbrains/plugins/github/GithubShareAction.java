@@ -125,7 +125,7 @@ public class GithubShareAction extends DumbAwareAction {
       LOG.info("Creating GitHub repository");
       final String escapedDescription = JDOMUtil.escapeText(description, true, true).replace("&#", "%");
       GithubUtil.doREST(settings.getHost(), settings.getLogin(), settings.getPassword(),
-                        "/repos/create?name=" + name + "&public=" + (isPrivate ? "0" : "1") + "&description=" + escapedDescription, true);
+                        "/repos/create?name=" + name + "&public=" + (isPrivate ? "0" : "1") + "&description=" + escapedDescription, true).releaseConnection();
       LOG.info("Successfully created GitHub repository");
     }
     catch (final Exception e1) {

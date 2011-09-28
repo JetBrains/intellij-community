@@ -49,11 +49,18 @@ public class GithubSettings implements PersistentStateComponent<Element> {
   private static final String GITHUB_SETTINGS_TAG = "GithubSettings";
   private static final String LOGIN = "Login";
   private static final String HOST = "Host";
+  private static final String ANONIMOUS_GIST = "Anonymous";
+  private static final String OPEN_IN_BROWSER_GIST = "OpenInBrowser";
+  private static final String PRIVATE_GIST = "Private";
   private static final String GITHUB = "github.com";
   private static final String GITHUB_SETTINGS_PASSWORD_KEY = "GITHUB_SETTINGS_PASSWORD_KEY";
 
   private String myLogin;
   private String myHost;
+  private boolean myAnonymousGist;
+  private boolean myOpenInBrowserGist = true;
+  private boolean myPrivateGist;
+
   private static final Logger LOG = Logger.getInstance(GithubSettings.class.getName());
   private boolean passwordChanged = false;
 
@@ -88,6 +95,9 @@ public class GithubSettings implements PersistentStateComponent<Element> {
     final Element element = new Element(GITHUB_SETTINGS_TAG);
     element.setAttribute(LOGIN, getLogin());
     element.setAttribute(HOST, getHost());
+    element.setAttribute(ANONIMOUS_GIST, String.valueOf(isAnonymous()));
+    element.setAttribute(PRIVATE_GIST, String.valueOf(isPrivateGist()));
+    element.setAttribute(OPEN_IN_BROWSER_GIST, String.valueOf(isOpenInBrowserGist()));
     return element;
   }
 
@@ -96,6 +106,9 @@ public class GithubSettings implements PersistentStateComponent<Element> {
     try {
       setLogin(element.getAttributeValue(LOGIN));
       setHost(element.getAttributeValue(HOST));
+      setAnonymousGist(Boolean.valueOf(element.getAttributeValue(ANONIMOUS_GIST)));
+      setPrivateGist(Boolean.valueOf(element.getAttributeValue(PRIVATE_GIST)));
+      setOpenInBrowserGist(Boolean.valueOf(element.getAttributeValue(OPEN_IN_BROWSER_GIST)));
     }
     catch (Exception e) {
       LOG.error("Error happened while loading github settings: " + e);
@@ -147,6 +160,18 @@ public class GithubSettings implements PersistentStateComponent<Element> {
     return myHost != null ? myHost : GITHUB;
   }
 
+  public boolean isAnonymous() {
+    return myAnonymousGist;
+  }
+
+  public boolean isOpenInBrowserGist() {
+    return myOpenInBrowserGist;
+  }
+
+  public boolean isPrivateGist() {
+    return myPrivateGist;
+  }
+
   public void setLogin(final String login) {
     myLogin = login != null ? login : "";
   }
@@ -168,4 +193,15 @@ public class GithubSettings implements PersistentStateComponent<Element> {
     myHost = host != null ? host : GITHUB;
   }
 
+  public void setAnonymousGist(final boolean anonymousGist) {
+    myAnonymousGist = anonymousGist;
+  }
+
+  public void setPrivateGist(final boolean privateGist) {
+    myPrivateGist = privateGist;
+  }
+
+  public void setOpenInBrowserGist(final boolean openInBrowserGist) {
+    myOpenInBrowserGist = openInBrowserGist;
+  }
 }

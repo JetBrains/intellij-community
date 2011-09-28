@@ -92,12 +92,14 @@ public class GithubRebaseAction extends DumbAwareAction {
         @Override
         public GitRemote compute() {
           ProgressManager.getInstance().getProgressIndicator().setText("Reading branches information");
-          return GithubUtil.getGithubBoundRepository(project);
+          return GithubUtil.findGitHubRemoteBranch(project, project.getBaseDir());
         }
       });
-      final List<GitRemote> gitRemotes = GitRemote.list(project, root);
-      LOG.assertTrue(githubRemote != null);
+      if (githubRemote == null){
+        return;
+      }
 
+      final List<GitRemote> gitRemotes = GitRemote.list(project, root);
       final String pushUrl = githubRemote.pushUrl();
       final String login = GithubSettings.getInstance().getLogin();
       final int index = pushUrl.lastIndexOf(login);

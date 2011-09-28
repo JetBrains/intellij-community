@@ -32,4 +32,6 @@ public class DataFlowInspectionFixtureTest extends JavaCodeInsightFixtureTestCas
   public void testNullableAnonymousVolatile() throws Throwable { doTest(); }
   public void testNullableAnonymousVolatileNotNull() throws Throwable { doTest(); }
 
+  public void testFieldInAnonymous() throws Throwable { doTest(); }
+
 }

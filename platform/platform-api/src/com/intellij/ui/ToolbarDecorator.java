@@ -24,6 +24,7 @@ import com.intellij.util.ui.ElementProducer;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -38,6 +39,18 @@ import java.util.List;
  */
 @SuppressWarnings("UnusedDeclaration")
 public abstract class ToolbarDecorator implements DataProvider, AddRemoveUpDownPanel.ListenerFactory {
+  private static final Comparator<AnAction> ACTION_BUTTONS_SORTER = new Comparator<AnAction>() {
+    @Override
+    public int compare(AnAction a1, AnAction a2) {
+      if (a1 instanceof AnActionButton && a2 instanceof AnActionButton) {
+        final JComponent c1 = ((AnActionButton)a1).getContextComponent();
+        final JComponent c2 = ((AnActionButton)a2).getContextComponent();
+        return c1.hasFocus() ? -1 : c2.hasFocus() ? 1 : 0;
+      }
+      return 0;
+    }
+  };
+
   protected Border myToolbarBorder;
   protected boolean myAddActionEnabled;
   protected boolean myRemoveActionEnabled;
@@ -57,26 +70,13 @@ public abstract class ToolbarDecorator implements DataProvider, AddRemoveUpDownP
   private Dimension myPreferredSize;
   private AddRemoveUpDownPanel myPanel;
 
-  public ToolbarDecorator() {
-  }
-
   protected abstract JComponent getComponent();
+
   protected abstract void updateButtons();
 
   final AddRemoveUpDownPanel getPanel() {
     return myPanel;
   }
-  private static final Comparator<AnAction> ACTION_BUTTONS_SORTER = new Comparator<AnAction>() {
-    @Override
-    public int compare(AnAction a1, AnAction a2) {
-      if (a1 instanceof AnActionButton && a2 instanceof AnActionButton) {
-        final JComponent c1 = ((AnActionButton)a1).getContextComponent();
-        final JComponent c2 = ((AnActionButton)a2).getContextComponent();
-        return c1.hasFocus() ? -1 : c2.hasFocus() ? 1 : 0;
-      }
-      return 0;
-    }
-  };
 
   protected ToolbarDecorator initPositionAndBorder() {
     myToolbarPosition = SystemInfo.isMac ? ActionToolbarPosition.BOTTOM : ActionToolbarPosition.RIGHT;
@@ -240,7 +240,6 @@ public abstract class ToolbarDecorator implements DataProvider, AddRemoveUpDownP
     return null;
   }
 
-
   private Object getPlacement() {
     switch (myToolbarPosition) {
       case TOP: return BorderLayout.NORTH;
@@ -300,23 +299,27 @@ public abstract class ToolbarDecorator implements DataProvider, AddRemoveUpDownP
     };
   }
   
+  @Nullable
   public static AnActionButton findAddButton(@NotNull JComponent container) {
     return findButton(container, AddRemoveUpDownPanel.Buttons.ADD);
   }
 
+  @Nullable
   public static AnActionButton findRemoveButton(@NotNull JComponent container) {
     return findButton(container, AddRemoveUpDownPanel.Buttons.REMOVE);
   }
 
+  @Nullable
   public static AnActionButton findUpButton(@NotNull JComponent container) {
     return findButton(container, AddRemoveUpDownPanel.Buttons.UP);
   }
 
+  @Nullable
   public static AnActionButton findDownButton(@NotNull JComponent container) {
     return findButton(container, AddRemoveUpDownPanel.Buttons.DOWN);
   }
 
-
+  @Nullable
   private static AnActionButton findButton(JComponent comp, AddRemoveUpDownPanel.Buttons type) {
     final AddRemoveUpDownPanel panel = UIUtil.findComponentOfType(comp, AddRemoveUpDownPanel.class);
     if (panel != null) {
