@@ -41,13 +41,16 @@ public abstract class PyElementGenerator {
 
   public abstract PyBinaryExpression createBinaryExpression(String s, PyExpression expr, PyExpression listLiteral);
 
+  @Nullable
   public abstract  PyExpression createExpressionFromText(String text);
 
+  @Nullable
   public abstract PyExpression createExpressionFromText(final LanguageLevel languageLevel, String text);
 
   public abstract PsiElement insertItemIntoList(PyElement list, @Nullable PyExpression afterThis, PyExpression toInsert)
     throws IncorrectOperationException;
-  
+
+  @Nullable
   public abstract PyCallExpression createCallExpression(final LanguageLevel langLevel, String functionName);
 
   public abstract PyImportStatement createImportStatementFromText(String text);
@@ -65,6 +68,7 @@ public abstract class PyElementGenerator {
    * @param path      a sequence of numbers, each telling which child to select at current tree level; 0 means first child, etc.
    * @return the newly created PSI element
    */
+  @Nullable
   public abstract <T> T createFromText(LanguageLevel langLevel, Class<T> aClass, final String text, final int[] path);
 
   public abstract PyNamedParameter createParameter(@NotNull String name);

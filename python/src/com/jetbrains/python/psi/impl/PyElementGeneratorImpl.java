@@ -196,17 +196,24 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
 
   public PyExpression createExpressionFromText(final LanguageLevel languageLevel, final String text) {
     final PsiFile dummyFile = createDummyFile(languageLevel, text);
-    final PyExpressionStatement expressionStatement = (PyExpressionStatement)dummyFile.getFirstChild();
-    return expressionStatement.getExpression();
+    final PsiElement element = dummyFile.getFirstChild();
+    if (element instanceof PyExpressionStatement) {
+      return ((PyExpressionStatement)element).getExpression();
+    }
+    return null;
   }
 
   public PyCallExpression createCallExpression(final LanguageLevel langLevel, String functionName) {
     final PsiFile dummyFile = createDummyFile(langLevel, functionName + "()");
-    final PsiElement element = dummyFile.getFirstChild().getFirstChild();
-    if (!(element instanceof PyCallExpression)) {
-      throw new IllegalArgumentException("Invalid call expression text " + functionName);
+    final PsiElement child = dummyFile.getFirstChild();
+    if (child != null) {
+      final PsiElement element = child.getFirstChild();
+      if (!(element instanceof PyCallExpression)) {
+        throw new IllegalArgumentException("Invalid call expression text " + functionName);
+      }
+      return (PyCallExpression)element;
     }
-    return (PyCallExpression)element;
+    return null;
   }
 
   public PyImportStatement createImportStatementFromText(final String text) {
@@ -233,13 +240,30 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
 
   // TODO: use to generate most other things
   public <T> T createFromText(LanguageLevel langLevel, Class<T> aClass, final String text, final int[] path) {
-    final PsiFile dummyFile = createDummyFile(langLevel, text);
-    PsiElement ret = dummyFile;
+    PsiElement ret = createDummyFile(langLevel, text);
     for (int skip : path) {
-      ret = ret.getFirstChild();
-      for (int i = 0; i < skip; i += 1) ret = ret.getNextSibling();
+      if (ret != null) {
+        ret = ret.getFirstChild();
+        for (int i = 0; i < skip; i += 1) {
+          if (ret != null) {
+            ret = ret.getNextSibling();
+          }
+          else {
+            return null;
+          }
+        }
+      }
+      else {
+        return null;
+      }
     }
-    return (T)ret;
+    try {
+      //noinspection unchecked
+      return (T)ret;
+    }
+    catch (ClassCastException e) {
+      return null;
+    }
   }
 
   public PyExpressionStatement createDocstring(String content) {
