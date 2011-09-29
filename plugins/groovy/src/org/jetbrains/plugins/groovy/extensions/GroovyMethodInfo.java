@@ -7,6 +7,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
+import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.util.ClassInstanceCache;
 
 import java.util.*;
@@ -133,16 +134,32 @@ public class GroovyMethodInfo {
   private static void addMethodDescriptor(Map<String, Map<String, List<GroovyMethodInfo>>> res,
                                           GroovyMethodDescriptor method,
                                           @NotNull String key) {
+    if (method.methodName == null) {
+      addMethodDescriptor(res, method, null, key);
+    }
+    else {
+      for (StringTokenizer st = new StringTokenizer(method.methodName, " \t,;"); st.hasMoreTokens(); ) {
+        String name = st.nextToken();
+        assert GroovyNamesUtil.isIdentifier(name);
+        addMethodDescriptor(res, method, name, key);
+      }
+    }
+  }
+  
+  private static void addMethodDescriptor(Map<String, Map<String, List<GroovyMethodInfo>>> res,
+                                          GroovyMethodDescriptor method,
+                                          @Nullable String methodName,
+                                          @NotNull String key) {
     Map<String, List<GroovyMethodInfo>> methodMap = res.get(key);
     if (methodMap == null) {
       methodMap = new HashMap<String, List<GroovyMethodInfo>>();
       res.put(key, methodMap);
     }
 
-    List<GroovyMethodInfo> methodsList = methodMap.get(method.methodName);
+    List<GroovyMethodInfo> methodsList = methodMap.get(methodName);
     if (methodsList == null) {
       methodsList = new ArrayList<GroovyMethodInfo>();
-      methodMap.put(method.methodName, methodsList);
+      methodMap.put(methodName, methodsList);
     }
 
     methodsList.add(new GroovyMethodInfo(method));
