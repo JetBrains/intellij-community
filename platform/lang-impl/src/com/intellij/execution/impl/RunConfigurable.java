@@ -36,6 +36,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PlatformIcons;
@@ -255,7 +256,10 @@ class RunConfigurable extends BaseConfigurable {
   private void updateRightPanel(final Configurable configurable) {
     myRightPanel.removeAll();
     mySelectedConfigurable = configurable;
-    myRightPanel.add(configurable.createComponent(), BorderLayout.CENTER);
+
+    final JBScrollPane scrollPane = new JBScrollPane(configurable.createComponent());
+    scrollPane.setBorder(null);
+    myRightPanel.add(scrollPane, BorderLayout.CENTER);
 
     if (configurable instanceof SingleConfigurationConfigurable) {
       RunManagerEx.getInstanceEx(myProject)

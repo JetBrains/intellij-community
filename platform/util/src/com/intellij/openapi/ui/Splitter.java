@@ -95,7 +95,7 @@ public class Splitter extends JPanel {
     myDivider = createDivider();
     setProportion(proportion);
     myDividerWidth = 7;
-    setOpaque(false);
+    setOpaque(true);
     super.add(myDivider);
     myFocusWatcher = new FocusWatcher();
     myFocusWatcher.install(this);

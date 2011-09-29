@@ -130,13 +130,11 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
 
   @NotNull
   protected JComponent createEditor() {
-    myComponentPlace.setLayout(new GridBagLayout());
-    myComponentPlace.add(myEditor.getComponent(), new GridBagConstraints(0,0,1,1,1.0,1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0,0,0,0), 0,0));
-    myComponentPlace.doLayout();
+    myComponentPlace.setLayout(new BorderLayout());
+    myComponentPlace.add(myEditor.getComponent(), BorderLayout.CENTER);
+    //myComponentPlace.revalidate();
     DataManager.registerDataProvider(myWholePanel, new TypeSafeDataProviderAdapter(new MyDataProvider()));
-    final JBScrollPane scrollPane = new JBScrollPane(myWholePanel);
-    scrollPane.setBorder(null);
-    return scrollPane;
+    return myWholePanel;
   }
 
   public void updateBeforeRunTaskPanel(@NotNull Key<? extends BeforeRunTask> key) {
