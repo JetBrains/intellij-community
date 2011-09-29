@@ -100,6 +100,11 @@ public abstract class JBListTable extends JPanel {
 
       @Override
       protected boolean processKeyBinding(KeyStroke ks, KeyEvent e, int condition, boolean pressed) {
+        //Mnemonics
+        if (e.isAltDown()) {
+          return false;
+        }
+
         if (e.getKeyCode() == VK_ENTER) {
           if (e.getID() == KEY_PRESSED) {
             if (!isEditing() && e.getModifiers() == 0) {
