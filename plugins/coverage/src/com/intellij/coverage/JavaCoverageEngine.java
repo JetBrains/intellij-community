@@ -642,9 +642,4 @@ public class JavaCoverageEngine extends CoverageEngine {
   public String getPresentableText() {
     return "Java Coverage";
   }
-
-  @Override
-  public boolean coverageProjectViewStatisticsApplicableTo(VirtualFile fileOrDir) {
-    return false;  //To change body of implemented methods use File | Settings | File Templates.
-  }
 }
