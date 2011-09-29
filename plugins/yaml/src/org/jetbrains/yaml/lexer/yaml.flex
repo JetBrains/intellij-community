@@ -125,6 +125,11 @@ STRING=                         '([^\\']|{ESCAPE_SEQUENCE}|(''))*?'?
 {KEY} / ({WHITE_SPACE} | {EOL}) {   yybegin(VALUE);
                                     return SCALAR_KEY;
                                 }
+{KEY}                           {   if (zzMarkedPos == zzEndRead){
+                                      return SCALAR_KEY;
+                                    }
+                                    return TEXT;
+                                }
 }
 
 <YYINITIAL, BRACES>{

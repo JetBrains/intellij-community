@@ -173,4 +173,8 @@ public class YAMLLexerTest extends LexerTestCase {
            "server3: test");
 
   }
+
+  public void testOnlyyamlkey(){
+    doTest("foo:");
+  }
 }
