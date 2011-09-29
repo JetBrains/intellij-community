@@ -1228,4 +1228,8 @@ public class PsiUtil {
     }
     return false;
   }
+
+  public static boolean isInMethodCallContext(GroovyPsiElement context) {
+    return getArgumentsList(context) != null;
+  }
 }

@@ -746,4 +746,8 @@ class Foo {
   void testDontUseQualifierScopeInDGM() {
     assertNull resolve('a.groovy')
   }
+
+  void testInferPlusType() {
+    assertNotNull(resolve('a.groovy'))
+  }
 }
