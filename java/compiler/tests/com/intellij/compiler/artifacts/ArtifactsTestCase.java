@@ -17,6 +17,7 @@ import com.intellij.openapi.roots.ui.configuration.artifacts.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.*;
 import com.intellij.packaging.elements.CompositePackagingElement;
+import com.intellij.packaging.elements.ManifestFileProvider;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import com.intellij.packaging.impl.artifacts.PlainArtifactType;
 import com.intellij.packaging.impl.elements.ManifestFileUtil;
@@ -158,8 +159,9 @@ public abstract class ArtifactsTestCase extends IdeaTestCase {
 
   public class MockArtifactsStructureConfigurableContext implements ArtifactsStructureConfigurableContext {
     private ModifiableArtifactModel myModifiableModel;
-    private Map<Module, ModifiableRootModel> myModifiableRootModels = new HashMap<Module, ModifiableRootModel>();
-    private Map<CompositePackagingElement<?>, ManifestFileConfiguration> myManifestFiles = new HashMap<CompositePackagingElement<?>, ManifestFileConfiguration>();
+    private final Map<Module, ModifiableRootModel> myModifiableRootModels = new HashMap<Module, ModifiableRootModel>();
+    private final Map<CompositePackagingElement<?>, ManifestFileConfiguration> myManifestFiles = new HashMap<CompositePackagingElement<?>, ManifestFileConfiguration>();
+    private final ArtifactEditorManifestFileProvider myManifestFileProvider = new ArtifactEditorManifestFileProvider(this);
 
     @Override
     @NotNull
@@ -227,6 +229,12 @@ public abstract class ArtifactsTestCase extends IdeaTestCase {
     @Override
     public Library findLibrary(@NotNull String level, @NotNull String libraryName) {
       return ArtifactManager.getInstance(myProject).getResolvingContext().findLibrary(level, libraryName);
+    }
+
+    @NotNull
+    @Override
+    public ManifestFileProvider getManifestFileProvider() {
+      return myManifestFileProvider;
     }
 
     @Override
