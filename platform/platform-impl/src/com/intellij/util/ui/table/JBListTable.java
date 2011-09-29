@@ -60,8 +60,12 @@ public abstract class JBListTable extends JPanel {
       protected void processKeyEvent(KeyEvent e) {
         myMouseEvent = null;
         
-        if (e.isAltDown()) return;
-        //todo[kb] JBTabsImpl breaks focus traversal policy. Need a workaround here
+        //Mnemonics
+        if (e.isAltDown()) {
+          super.processKeyEvent(e);
+          return;
+        }
+
         if (e.getKeyCode() == VK_TAB) {
           if (e.getID() == KEY_PRESSED) {
             final KeyboardFocusManager keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
