@@ -62,6 +62,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.inline.InlineMethodConflictSolver;
 import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.java2groovy.FieldConflictsResolver;
@@ -105,7 +106,7 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
 
       @Override
       public String getProcessedElementsHeader() {
-        return RefactoringBundle.message("introduce.parameter.elements.header");
+        return GroovyRefactoringBundle.message("introduce.closure.parameter.elements.header");
       }
     };
   }
@@ -204,6 +205,10 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
         else {
           result.add(new ChangedMethodCallInfo(ref));
         }
+      }
+
+      if (toSearchFor instanceof GrVariable && !((GrVariable)toSearchFor).hasModifierProperty(PsiModifier.FINAL)) {
+        setPreviewUsages(true);
       }
     }
 

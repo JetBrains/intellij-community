@@ -84,4 +84,8 @@ public class GrIntroduceParameterInClosureTest extends LightCodeInsightFixtureTe
   public void testDelegate() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, null, true);
   }
+  
+  public void testVarAssignedToClosure() {
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, null, false);
+  }
 }

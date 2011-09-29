@@ -52,13 +52,16 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyIcons;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -276,7 +279,17 @@ public class GrIntroduceParameterHandler implements RefactoringActionHandler {
   private static GrVariable findVariableToUse(GrParametersOwner owner) {
     final PsiElement parent = owner.getParent();
     if (parent instanceof GrVariable) return (GrVariable)parent;
-
+    if (parent instanceof GrAssignmentExpression &&
+        ((GrAssignmentExpression)parent).getRValue() == owner &&
+        ((GrAssignmentExpression)parent).getOperationToken() == GroovyTokenTypes.mASSIGN) {
+      final GrExpression lValue = ((GrAssignmentExpression)parent).getLValue();
+      if (lValue instanceof GrReferenceExpression) {
+        final PsiElement resolved = ((GrReferenceExpression)lValue).resolve();
+        if (resolved instanceof GrVariable) {
+          return (GrVariable)resolved;
+        }
+      }
+    }
     return null;
   }
 
