@@ -44,7 +44,11 @@ public class ModuleSettingsImpl extends ComponentManagerSettingsImpl implements 
 
   public ModuleSettingsImpl(File moduleFile, ConversionContextImpl context) throws CannotConvertException {
     super(moduleFile, context);
-    myModuleName = StringUtil.trimEnd(moduleFile.getName(), ModuleFileType.DOT_DEFAULT_EXTENSION);
+    myModuleName = getModuleName(moduleFile);
+  }
+
+  public static String getModuleName(File moduleFile) {
+    return StringUtil.trimEnd(moduleFile.getName(), ModuleFileType.DOT_DEFAULT_EXTENSION);
   }
 
   @NotNull
