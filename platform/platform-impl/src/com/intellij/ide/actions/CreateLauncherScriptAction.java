@@ -20,13 +20,13 @@ import com.intellij.execution.util.ExecUtil;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -43,7 +43,7 @@ import static java.util.Arrays.asList;
 /**
  * @author yole
  */
-public class CreateLauncherScriptAction extends AnAction {
+public class CreateLauncherScriptAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.CreateLauncherScriptAction");
 
   public static boolean isAvailable() {
@@ -69,7 +69,20 @@ public class CreateLauncherScriptAction extends AnAction {
       return;
     }
 
-    final File target = new File(dialog.myPathField.getText(), dialog.myNameField.getText());
+    String path = dialog.myPathField.getText();
+    if (!path.startsWith("/")) {
+      final String home = System.getenv("HOME");
+      if (home != null && new File(home).isDirectory()) {
+        if (path.startsWith("~")) {
+          path = home + path.substring(1);
+        }
+        else {
+          path = home + "/" + path;
+        }
+      }
+    }
+
+    final File target = new File(path, dialog.myNameField.getText());
     if (target.exists()) {
       int rc = Messages.showOkCancelDialog(project, ApplicationBundle.message("launcher.script.overwrite", target),
                                            "Create Launcher Script", Messages.getQuestionIcon());
