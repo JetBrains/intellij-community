@@ -303,7 +303,10 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
   private static class DefaultPsiElementListCellRenderer extends PsiElementListCellRenderer {
     public String getElementText(final PsiElement element) {
       if (element instanceof PsiNamedElement) {
-        return ((PsiNamedElement)element).getName();
+        String name = ((PsiNamedElement)element).getName();
+        if (name != null) {
+          return name;
+        }
       }
       return element.getContainingFile().getName();
     }
