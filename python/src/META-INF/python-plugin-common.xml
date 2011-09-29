@@ -211,9 +211,10 @@
 
     <testFinder implementation="com.jetbrains.python.codeInsight.testIntegration.PyTestFinder"/>
     <testCreator language="Python" implementationClass="com.jetbrains.python.codeInsight.testIntegration.PyTestCreator"/>
-    <testGenerator implementation="com.jetbrains.python.codeInsight.testIntegration.PyTestGenerator" />
+    <testGenerator implementation="com.jetbrains.python.codeInsight.testIntegration.PyTestGenerator"/>
 
     <stubElementTypeHolder class="com.jetbrains.python.PyElementTypes"/>
+    <stubElementTypeHolder class="com.jetbrains.cython.CythonElementTypes"/>
     <inspectionToolProvider implementation="com.jetbrains.python.inspections.PythonInspectionToolProvider"/>
 
     <liveTemplateContext implementation="com.jetbrains.python.codeInsight.PythonTemplateContextType"/>
@@ -328,9 +329,6 @@
 
     <coverageEngine implementation="com.jetbrains.python.coverage.PyCoverageEngine"/>
     <coverageRunner implementation="com.jetbrains.python.coverage.PyCoverageRunner"/>
-
-    <!--<applicationService serviceInterface="org.jetbrains.plugins.ruby.coverage.RCovDeserializationService"-->
-    <!--serviceImplementation="org.jetbrains.plugins.ruby.coverage.RCovDeserializationService"/>-->
 
     <projectService serviceInterface="com.jetbrains.python.coverage.PyCoverageAnnotator"
                     serviceImplementation="com.jetbrains.python.coverage.PyCoverageAnnotator"/>
@@ -762,6 +760,14 @@
     <action id="CompuleQrc" class="com.jetbrains.pyqt.CompileQrcAction" text="Compile .qrc file">
       <add-to-group group-id="ProjectViewPopupMenuRunGroup" anchor="first"/>
     </action>
+
+    <group id="PyCoverageMenu">
+      <action id="SwitchPyCoverage" class="com.intellij.coverage.actions.SwitchCoverageSuiteAction" text="Show Code Co_verage Data"/>
+      <action id="GeneratePyCoverageReport" class="com.intellij.coverage.actions.GenerateCoverageReportAction"
+              text="_Generate Coverage Report"/>
+      <separator/>
+      <add-to-group group-id="ToolsMenu" anchor="last"/>
+    </group>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij.spellchecker">
