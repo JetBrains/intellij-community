@@ -443,7 +443,6 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod {
     return copy;
   }
 
-  @Nullable
   public <T> T getData() {
     return (T)myData;
   }
