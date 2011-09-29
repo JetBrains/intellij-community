@@ -81,6 +81,24 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractRunConfig
   public void checkConfiguration() throws RuntimeConfigurationException {
     super.checkConfiguration();
 
+    checkSdk();
+
+    checkExtensions();
+  }
+
+  private void checkExtensions() throws RuntimeConfigurationException {
+    try {
+      PythonRunConfigurationExtensionsManager.getInstance().validateConfiguration(this, false);
+    }
+    catch (RuntimeConfigurationException e) {
+      throw e;
+    }
+    catch (Exception ee) {
+      throw new RuntimeConfigurationException(ee.getMessage());
+    }
+  }
+
+  private void checkSdk() throws RuntimeConfigurationError {
     if (PlatformUtils.isPyCharm()) {
       final String path = getInterpreterPath();
       if (path == null) {

@@ -1,7 +1,19 @@
 """Coverage.py's main entrypoint."""
-from coverage.cmdline import main
+
 import os
 import sys
+import imp
+
+helpers_root = os.getenv('PYCHARM_HELPERS_ROOT')
+if helpers_root:
+    sys_path_backup = sys.path
+    sys.path = [p for p in sys.path if p!=helpers_root]
+    from coverage.cmdline import main
+    sys.path = sys_path_backup
+else:
+    from coverage.cmdline import main
+
+coverage_cmdline = imp.find_module('coverage.cmdline', path)
 
 coverage_file = os.getenv('PYCHARM_COVERAGE_FILE')
 run_cov = os.getenv('PYCHARM_RUN_COVERAGE')

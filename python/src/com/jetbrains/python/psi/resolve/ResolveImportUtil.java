@@ -553,6 +553,13 @@ public class ResolveImportUtil {
     return null;
   }
 
+  public static boolean findInRoots(Module module, Sdk pythonSdk, String name) {
+    ResolveNameVisitor
+      visitor = new ResolveNameVisitor(PsiManager.getInstance(module.getProject()), name);
+    visitRoots(module, pythonSdk, visitor);
+    return visitor.isFound();
+  }
+
   static class ResolveInRootVisitor implements RootVisitor {
     final PsiFile myFootholdFile;
     final boolean myCheckForPackage;
@@ -1039,5 +1046,39 @@ public class ResolveImportUtil {
       }
     }
     return PointInImport.NONE;
+  }
+
+  public static class ResolveNameVisitor implements RootVisitor {
+    final @NotNull PsiManager myPsiManager;
+    private boolean myFound = false;
+    private final String myName;
+
+
+    public ResolveNameVisitor(@NotNull PsiManager psiManager, String name) {
+      myPsiManager = psiManager;
+      myName = name;
+    }
+
+    public boolean visitRoot(final VirtualFile root) {
+      if (!root.isValid()) {
+        return true;
+      }
+      PsiElement module = root.isDirectory() ? myPsiManager.findDirectory(root) : myPsiManager.findFile(root);
+      module =  resolveChild(module, myName, null, root, false, false);
+      if (module != null) {
+        myFound = true;
+        return false;
+      }
+
+      return true;
+    }
+
+    public boolean isFound() {
+      return myFound;
+    }
+
+    public void setFound(boolean found) {
+      myFound = found;
+    }
   }
 }
