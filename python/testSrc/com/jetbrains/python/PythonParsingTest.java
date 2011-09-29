@@ -22,6 +22,7 @@ public class PythonParsingTest extends ParsingTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     registerExtensionPoint(PythonDialectsTokenSetContributor.EP_NAME, PythonDialectsTokenSetContributor.class);
+    registerExtension(PythonDialectsTokenSetContributor.EP_NAME, new PythonTokenSetContributor());
   }
 
   @Override
