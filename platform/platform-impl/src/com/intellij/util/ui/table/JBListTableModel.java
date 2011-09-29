@@ -17,7 +17,6 @@ package com.intellij.util.ui.table;
 
 import com.intellij.util.ui.EditableModel;
 
-import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
 
@@ -25,15 +24,15 @@ import javax.swing.table.TableModel;
  * @author Konstantin Bulenkov
  */
 public abstract class JBListTableModel extends AbstractTableModel implements EditableModel {
-  private final JTable myTable;
+  private final TableModel myModel;
 
-  public JBListTableModel(JTable table) {
-    myTable = table;
+  public JBListTableModel(TableModel model) {
+    myModel = model;
   }
 
   @Override
   public int getRowCount() {
-    return myTable.getRowCount();
+    return myModel.getRowCount();
   }
 
   @Override
@@ -61,38 +60,35 @@ public abstract class JBListTableModel extends AbstractTableModel implements Edi
 
   @Override
   public void setValueAt(Object value, int row, int column) {
-    for (int i = 0; i < myTable.getColumnCount(); i++) {
-      myTable.setValueAt(((JBTableRow)value).getValueAt(i), row, i);
+    for (int i = 0; i < myModel.getColumnCount(); i++) {
+      myModel.setValueAt(((JBTableRow)value).getValueAt(i), row, i);
     }
     fireTableCellUpdated(row, column);
   }
 
   @Override
   public void addRow() {
-    final TableModel model = myTable.getModel();
-    final int count = myTable.getRowCount();
-    if (model instanceof EditableModel) {
-      ((EditableModel)model).addRow();
+    final int count = myModel.getRowCount();
+    if (myModel instanceof EditableModel) {
+      ((EditableModel)myModel).addRow();
     }
-    if (count < myTable.getRowCount()) {
-      fireTableRowsInserted(count, myTable.getRowCount() - 1);
+    if (count < myModel.getRowCount()) {
+      fireTableRowsInserted(count, myModel.getRowCount() - 1);
     }
   }
 
   @Override
   public void removeRow(int index) {
-    final TableModel model = myTable.getModel();
-    if (model instanceof EditableModel) {
-      ((EditableModel)model).removeRow(index);
+    if (myModel instanceof EditableModel) {
+      ((EditableModel)myModel).removeRow(index);
     }
     fireTableRowsDeleted(index, index);
   }
 
   @Override
   public void exchangeRows(int oldIndex, int newIndex) {
-    final TableModel model = myTable.getModel();
-    if (model instanceof EditableModel) {
-      ((EditableModel)model).exchangeRows(oldIndex, newIndex);
+    if (myModel instanceof EditableModel) {
+      ((EditableModel)myModel).exchangeRows(oldIndex, newIndex);
     }
     fireTableRowsUpdated(Math.min(oldIndex, newIndex), Math.max(oldIndex, newIndex));
   }

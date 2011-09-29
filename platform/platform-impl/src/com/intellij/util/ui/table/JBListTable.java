@@ -43,7 +43,7 @@ public abstract class JBListTable extends JPanel {
   public JBListTable(@NotNull final JTable t) {
     super(new BorderLayout());
     myInternalTable = t;
-    final JBListTableModel model = new JBListTableModel(t) {
+    final JBListTableModel model = new JBListTableModel(t.getModel()) {
       @Override
       public JBTableRow getRow(int index) {
         return getRowAt(index);
