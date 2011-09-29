@@ -53,8 +53,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Set;
@@ -77,7 +75,7 @@ public class ProjectConfigurable extends NamedConfigurable<Project> implements D
 
   private JTextField myProjectName;
 
-  private MyJPanel myPanel;
+  private JPanel myPanel;
 
   private final Alarm myUpdateWarningAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
 
@@ -95,7 +93,6 @@ public class ProjectConfigurable extends NamedConfigurable<Project> implements D
     init(model);
   }
 
-
   public DetailsComponent getDetailsComponent() {
     return myDetailsComponent;
   }
@@ -111,7 +108,7 @@ public class ProjectConfigurable extends NamedConfigurable<Project> implements D
   }
 
   private void init(final ProjectSdksModel model) {
-    myPanel = new MyJPanel();
+    myPanel = new JPanel(new GridBagLayout());
     myPanel.setPreferredSize(new Dimension(700, 500));
 
     if (((ProjectEx)myProject).getStateStore().getStorageScheme().equals(StorageScheme.DIRECTORY_BASED)) {
@@ -333,10 +330,6 @@ public class ProjectConfigurable extends NamedConfigurable<Project> implements D
     FileChooserFactory.getInstance().installFileCompletion(myProjectCompilerOutput.getTextField(), outputPathsChooserDescriptor, true, null);
   }
 
-  public void setStartModuleWizardOnShow(final boolean show) {
-    myStartModuleWizardOnShow = show;
-  }
-
   public String getCompilerOutputUrl() {
     return VfsUtil.pathToUrl(myProjectCompilerOutput.getText().trim());
   }
@@ -354,29 +347,4 @@ public class ProjectConfigurable extends NamedConfigurable<Project> implements D
     public void navigate() {
     }
   }
-
-  private class MyJPanel extends JPanel {
-    public MyJPanel() {
-      super(new GridBagLayout());
-    }
-
-    public void addNotify() {
-      super.addNotify();
-      if (myStartModuleWizardOnShow) {
-        final Window parentWindow = (Window)SwingUtilities.getAncestorOfClass(Window.class, this);
-        parentWindow.addWindowListener(new WindowAdapter() {
-          public void windowActivated(WindowEvent e) {
-            parentWindow.removeWindowListener(this);
-            SwingUtilities.invokeLater(new Runnable() {
-              public void run() {
-                myModulesConfigurator.addModule(parentWindow);
-              }
-            });
-          }
-        });
-      }
-    }
-  }
-
-
 }

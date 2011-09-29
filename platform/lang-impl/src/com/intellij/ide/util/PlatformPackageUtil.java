@@ -226,7 +226,7 @@ public class PlatformPackageUtil {
       );
 
       ProjectSettingsService
-        .getInstance(module.getProject()).showModuleConfigurationDialog(module.getName(), CommonContentEntriesEditor.NAME, false);
+        .getInstance(module.getProject()).showModuleConfigurationDialog(module.getName(), CommonContentEntriesEditor.NAME);
 
       sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots();
       if (sourceRoots.length == 0) {

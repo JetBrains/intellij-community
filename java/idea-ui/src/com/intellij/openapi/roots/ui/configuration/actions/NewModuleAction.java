@@ -20,7 +20,6 @@ import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
@@ -72,7 +71,7 @@ public class NewModuleAction extends AnAction implements DumbAware {
       else {
         builder.commit(project, null, ModulesProvider.EMPTY_MODULES_PROVIDER);
         if (builder.isOpenProjectSettingsAfter()) {
-          ModulesConfigurator.showDialog(project, null, null, true);
+          ModulesConfigurator.showDialog(project, null, null);
         }
       }
     }

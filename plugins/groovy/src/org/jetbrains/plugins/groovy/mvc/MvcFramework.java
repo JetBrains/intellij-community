@@ -123,7 +123,7 @@ public abstract class MvcFramework {
                                      "Error", Messages.getErrorIcon()) == 1) {
           return;
         }
-        ProjectSettingsService.getInstance(module.getProject()).showModuleConfigurationDialog(module.getName(), ClasspathEditor.NAME, false);
+        ProjectSettingsService.getInstance(module.getProject()).showModuleConfigurationDialog(module.getName(), ClasspathEditor.NAME);
       }
       module.putUserData(CREATE_APP_STRUCTURE, null);
       final int result = Messages.showYesNoCancelDialog(module.getProject(),

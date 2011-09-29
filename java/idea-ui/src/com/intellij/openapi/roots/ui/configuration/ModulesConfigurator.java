@@ -56,7 +56,6 @@ import com.intellij.util.graph.GraphGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
@@ -118,10 +117,6 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
       }
     });
 
-  }
-
-  public ProjectConfigurable getModulesConfigurable() {
-    return myProjectConfigurable;
   }
 
   @NotNull
@@ -546,24 +541,11 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     });
   }
 
-  public static boolean showDialog(Project project,
-                                   @Nullable final String moduleToSelect,
-                                   @Nullable final String editorNameToSelect,
-                                   final boolean showModuleWizard) {
+  public static boolean showDialog(Project project, @Nullable final String moduleToSelect, @Nullable final String editorNameToSelect) {
     final ProjectStructureConfigurable config = ProjectStructureConfigurable.getInstance(project);
     return ShowSettingsUtil.getInstance().editConfigurable(project, config, new Runnable() {
       public void run() {
-        final ModuleStructureConfigurable modulesConfig = config.getModulesConfig();
-        config.select(moduleToSelect, editorNameToSelect, true).doWhenDone(new Runnable() {
-          public void run() {
-            modulesConfig.setStartModuleWizard(showModuleWizard);
-            SwingUtilities.invokeLater(new Runnable() {
-              public void run() {
-                modulesConfig.setStartModuleWizard(false);
-              }
-            });
-          }
-        });
+        config.select(moduleToSelect, editorNameToSelect, true);
       }
     });
   }

@@ -2485,7 +2485,7 @@ public class CompileDriver {
   }
 
   private void showConfigurationDialog(String moduleNameToSelect, String tabNameToSelect) {
-    ProjectSettingsService.getInstance(myProject).showModuleConfigurationDialog(moduleNameToSelect, tabNameToSelect, false);
+    ProjectSettingsService.getInstance(myProject).showModuleConfigurationDialog(moduleNameToSelect, tabNameToSelect);
   }
 
   private static VirtualFile lookupVFile(final LocalFileSystem lfs, final String path) {

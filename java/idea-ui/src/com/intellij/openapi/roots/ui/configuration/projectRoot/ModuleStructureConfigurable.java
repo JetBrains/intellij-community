@@ -420,10 +420,6 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     return ServiceManager.getService(project, ModuleStructureConfigurable.class);
   }
 
-  public void setStartModuleWizard(final boolean show) {
-    myContext.myModulesConfigurator.getModulesConfigurable().setStartModuleWizardOnShow(show);
-  }
-
   public Project getProject() {
     return myProject;
   }

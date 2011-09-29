@@ -101,7 +101,7 @@ public class ProjectSettingsService {
     return false;
   }
 
-  public void showModuleConfigurationDialog(@Nullable String moduleToSelect, @Nullable String editorNameToSelect, boolean showModuleWizard) {
+  public void showModuleConfigurationDialog(@Nullable String moduleToSelect, @Nullable String editorNameToSelect) {
   }
 
   public Sdk chooseAndSetSdk() {

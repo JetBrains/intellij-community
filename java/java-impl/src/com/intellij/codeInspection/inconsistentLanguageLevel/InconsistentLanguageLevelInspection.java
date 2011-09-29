@@ -135,7 +135,7 @@ public class InconsistentLanguageLevelInspection extends DescriptorProviderInspe
 
     public void applyFix(@NotNull Project project, @NotNull CommonProblemDescriptor descriptor) {
       if (!myModule.isDisposed()) {
-        ProjectSettingsService.getInstance(project).showModuleConfigurationDialog(myModule.getName(), ProjectBundle.message("modules.classpath.title"), false);
+        ProjectSettingsService.getInstance(project).showModuleConfigurationDialog(myModule.getName(), ProjectBundle.message("modules.classpath.title"));
       }
     }
   }

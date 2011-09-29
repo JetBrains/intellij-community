@@ -149,7 +149,7 @@ public class NewProjectUtil {
             public void run() {
               if (newProject.isDisposed()) return;
               if (need2OpenProjectStructure) {
-                ModulesConfigurator.showDialog(newProject, null, null, true);
+                ModulesConfigurator.showDialog(newProject, null, null);
               }
               ApplicationManager.getApplication().invokeLater(new Runnable() {
                 public void run() {

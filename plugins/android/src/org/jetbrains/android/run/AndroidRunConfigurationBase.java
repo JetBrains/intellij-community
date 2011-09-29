@@ -194,7 +194,7 @@ public abstract class AndroidRunConfigurationBase extends ModuleBasedConfigurati
     AndroidPlatform platform = configuration.getAndroidPlatform();
     if (platform == null) {
       Messages.showErrorDialog(project, AndroidBundle.message("specify.platform.error"), CommonBundle.getErrorTitle());
-      ModulesConfigurator.showDialog(project, module.getName(), ClasspathEditor.NAME, false);
+      ModulesConfigurator.showDialog(project, module.getName(), ClasspathEditor.NAME);
       return null;
     }
 

@@ -57,7 +57,7 @@ public class ShowModulePropertiesFix implements IntentionAction {
   }
 
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    ProjectSettingsService.getInstance(project).showModuleConfigurationDialog(myModuleName, null, false);
+    ProjectSettingsService.getInstance(project).showModuleConfigurationDialog(myModuleName, null);
   }
 
   public boolean startInWriteAction() {

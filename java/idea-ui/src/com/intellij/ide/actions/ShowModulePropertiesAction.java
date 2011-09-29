@@ -36,7 +36,7 @@ public class ShowModulePropertiesAction extends AnAction{
     if (module == null) {
       return;
     }
-    ModulesConfigurator.showDialog(project, module.getName(), null, false);
+    ModulesConfigurator.showDialog(project, module.getName(), null);
   }
 
   public void update(AnActionEvent e) {

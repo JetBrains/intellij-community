@@ -54,7 +54,7 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
 
     if (LibrariesUtil.getGroovyHomePath(module) == null) {
       ExecutionUtil.handleExecutionError(project, executor.getToolWindowId(), profile, new ExecutionException("Groovy is not configured"));
-      ModulesConfigurator.showDialog(module.getProject(), module.getName(), ClasspathEditor.NAME, false);
+      ModulesConfigurator.showDialog(module.getProject(), module.getName(), ClasspathEditor.NAME);
       return false;
     }
 
