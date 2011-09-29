@@ -19,7 +19,6 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
@@ -417,16 +416,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     }
 
     return super.handleElementRenameInner(newElementName);
-  }
-
-  public int getTextOffset() {
-    PsiElement parent = getParent();
-    TextRange range = getTextRange();
-    if (!(parent instanceof GrAssignmentExpression) || !this.equals(((GrAssignmentExpression) parent).getLValue())) {
-      return range.getEndOffset(); //need this as a hack against TargetElementUtil
-    }
-
-    return range.getStartOffset();
   }
 
   public String toString() {
