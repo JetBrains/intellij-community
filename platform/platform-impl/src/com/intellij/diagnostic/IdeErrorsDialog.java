@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.PluginsFacade;
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
@@ -50,7 +51,6 @@ import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.io.File;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -360,7 +360,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     final AbstractMessage message = getSelectedMessage();
     updateInfoLabel(message);
     updateCredentialsPane(message);
-    myDisableLink.setVisible(message != null && findPluginId(message.getThrowable()) != null);
+    myDisableLink.setVisible(canDisablePlugin(message));
     updateForeignPluginLabel(message != null ? message : null);
     updateTabs();
 
@@ -369,7 +369,22 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     if (myAnalyzeAction != null) {
       myAnalyzeAction.update();
     }
+  }
 
+  private static boolean canDisablePlugin(AbstractMessage message) {
+    if (message == null) {
+      return false;
+    }
+
+    PluginId pluginId = findPluginId(message.getThrowable());
+    if (pluginId == null) {
+      return false;
+    }
+
+    if (ApplicationInfoEx.getInstanceEx().isEssentialPlugin(pluginId.getIdString())) {
+      return false;
+    }
+    return true;
   }
 
   private void updateCountLabel() {
@@ -415,7 +430,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     StringBuilder text = new StringBuilder("<html>");
     String url = null;
     PluginId pluginId = findPluginId(throwable);
-    if (pluginId == null) {
+    if (pluginId == null || ApplicationInfoEx.getInstanceEx().isEssentialPlugin(pluginId.getIdString())) {
       if (throwable instanceof AbstractMethodError) {
         text.append(DiagnosticBundle.message("error.list.message.blame.unknown.plugin"));
       }
@@ -482,44 +497,46 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       ErrorReportSubmitter submitter = getSubmitter(throwable);
       if (submitter == null) {
         PluginId pluginId = findPluginId(throwable);
-        IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
-        if (plugin == null) {
-          // unknown plugin
-          myForeignPluginWarningPanel.setVisible(false);
+        if (pluginId == null || !ApplicationInfoEx.getInstanceEx().isEssentialPlugin(pluginId.getIdString())) {
+          IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
+          if (plugin == null) {
+            // unknown plugin
+            myForeignPluginWarningPanel.setVisible(false);
+            return;
+          }
+          myForeignPluginWarningPanel.setVisible(true);
+          String vendor = plugin.getVendor();
+          String contactInfo = plugin.getVendorUrl();
+          if (StringUtil.isEmpty(contactInfo)) {
+            contactInfo = plugin.getVendorEmail();
+          }
+          if (StringUtil.isEmpty(vendor)) {
+            if (StringUtil.isEmpty(contactInfo)) {
+              myForeignPluginWarningLabel.setText(DiagnosticBundle.message("error.dialog.foreign.plugin.warning.text"));
+            }
+            else {
+              myForeignPluginWarningLabel
+                .setHyperlinkText(DiagnosticBundle.message("error.dialog.foreign.plugin.warning.text.vendor") + " ",
+                                  contactInfo, ".");
+              myForeignPluginWarningLabel.setHyperlinkTarget(contactInfo);
+            }
+          }
+          else {
+            if (StringUtil.isEmpty(contactInfo)) {
+              myForeignPluginWarningLabel.setText(DiagnosticBundle.message("error.dialog.foreign.plugin.warning.text.vendor") +
+                                                  " " + vendor + ".");
+            }
+            else {
+              myForeignPluginWarningLabel
+                .setHyperlinkText(
+                  DiagnosticBundle.message("error.dialog.foreign.plugin.warning.text.vendor") + " " + vendor + " (",
+                  contactInfo, ").");
+              myForeignPluginWarningLabel.setHyperlinkTarget(contactInfo);
+            }
+          }
+          myForeignPluginWarningPanel.setVisible(true);
           return;
         }
-        myForeignPluginWarningPanel.setVisible(true);
-        String vendor = plugin.getVendor();
-        String contactInfo = plugin.getVendorUrl();
-        if (StringUtil.isEmpty(contactInfo)) {
-          contactInfo = plugin.getVendorEmail();
-        }
-        if (StringUtil.isEmpty(vendor)) {
-          if (StringUtil.isEmpty(contactInfo)) {
-            myForeignPluginWarningLabel.setText(DiagnosticBundle.message("error.dialog.foreign.plugin.warning.text"));
-          }
-          else {
-            myForeignPluginWarningLabel
-              .setHyperlinkText(DiagnosticBundle.message("error.dialog.foreign.plugin.warning.text.vendor") + " ",
-                                contactInfo, ".");
-            myForeignPluginWarningLabel.setHyperlinkTarget(contactInfo);
-          }
-        }
-        else {
-          if (StringUtil.isEmpty(contactInfo)) {
-            myForeignPluginWarningLabel.setText(DiagnosticBundle.message("error.dialog.foreign.plugin.warning.text.vendor") +
-                                                " " + vendor + ".");
-          }
-          else {
-            myForeignPluginWarningLabel
-              .setHyperlinkText(
-                DiagnosticBundle.message("error.dialog.foreign.plugin.warning.text.vendor") + " " + vendor + " (",
-                contactInfo, ").");
-            myForeignPluginWarningLabel.setHyperlinkTarget(contactInfo);
-          }
-        }
-        myForeignPluginWarningPanel.setVisible(true);
-        return;
       }
     }
     myForeignPluginWarningPanel.setVisible(false);
@@ -906,10 +923,10 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
   }
 
-  private static String md5 (String buffer, @NonNls String key) throws NoSuchAlgorithmException {
+  private static String md5(String buffer, @NonNls String key) throws NoSuchAlgorithmException {
     MessageDigest md5 = MessageDigest.getInstance("MD5");
     md5.update(buffer.getBytes());
-    byte [] code = md5.digest(key.getBytes());
+    byte[] code = md5.digest(key.getBytes());
     BigInteger bi = new BigInteger(code).abs();
     return bi.abs().toString(16);
   }

@@ -21,6 +21,10 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -72,6 +76,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   @NonNls private String myHelpRootName = "idea";
   @NonNls private String myWebHelpUrl = "http://www.jetbrains.com/idea/webhelp/";
   private List<PluginChooserPage> myPluginChooserPages = new ArrayList<PluginChooserPage>();
+  private String[] myEssentialPluginsIds;
 
   @NonNls private static final String IDEA_PATH = "/idea/";
   @NonNls private static final String ELEMENT_VERSION = "version";
@@ -121,6 +126,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   @NonNls private static final String ATTRIBUTE_WINDOWS_URL = "win";
   @NonNls private static final String ATTRIBUTE_MAC_URL = "mac";
   @NonNls private static final String DEFAULT_PLUGINS_HOST = "http://plugins.intellij.net";
+  @NonNls private static final String ESSENTIAL_PLUGIN = "essential-plugin";
 
   public void initComponent() { }
 
@@ -467,6 +473,16 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     for(Object child: children) {
       myPluginChooserPages.add(new PluginChooserPageImpl((Element) child));
     }
+
+    List<Element> essentialPluginsElements = JDOMUtil.getChildren(parentNode, ESSENTIAL_PLUGIN);
+    Collection<String> essentialPluginsIds = ContainerUtil.mapNotNull(essentialPluginsElements, new Function<Element, String>() {
+      @Override
+      public String fun(Element element) {
+        String id = element.getTextTrim();
+        return StringUtil.isNotEmpty(id) ? id : null;
+      }
+    });
+    myEssentialPluginsIds = ArrayUtil.toStringArray(essentialPluginsIds);
   }
 
   private static GregorianCalendar parseDate(String dateString) {
@@ -493,6 +509,11 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
 
   public List<PluginChooserPage> getPluginChooserPages() {
     return myPluginChooserPages;
+  }
+
+  @Override
+  public boolean isEssentialPlugin(@NotNull String pluginId) {
+    return ArrayUtil.contains(pluginId, myEssentialPluginsIds);
   }
 
   @NotNull

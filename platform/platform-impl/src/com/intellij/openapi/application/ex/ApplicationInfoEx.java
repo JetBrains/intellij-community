@@ -102,4 +102,7 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
   }
 
   public abstract List<PluginChooserPage> getPluginChooserPages();
+
+  public abstract boolean isEssentialPlugin(String pluginId);
+
 }

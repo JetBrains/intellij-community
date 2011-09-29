@@ -17,6 +17,7 @@ package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -58,9 +59,10 @@ public class InstalledPluginsTableModel extends PluginTableModel {
     view = new ArrayList<IdeaPluginDescriptor>(Arrays.asList(PluginManager.getPlugins()));
     reset(view);
 
-    for (Iterator<IdeaPluginDescriptor> iterator = view.iterator(); iterator.hasNext();) {
+    ApplicationInfoEx applicationInfo = ApplicationInfoEx.getInstanceEx();
+    for (Iterator<IdeaPluginDescriptor> iterator = view.iterator(); iterator.hasNext(); ) {
       @NonNls final String s = iterator.next().getPluginId().getIdString();
-      if ("com.intellij".equals(s)) iterator.remove();
+      if ("com.intellij".equals(s) || applicationInfo.isEssentialPlugin(s)) iterator.remove();
     }
 
     setSortKey(new RowSorter.SortKey(getNameColumn(), SortOrder.ASCENDING));
