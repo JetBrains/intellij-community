@@ -48,7 +48,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(GithubCreateGistAction.class);
 
   protected GithubCreateGistAction() {
-    super("Create gist", "Create github gist", ICON);
+    super("Create Gist...", "Create github gist", ICON);
   }
 
   @Override
