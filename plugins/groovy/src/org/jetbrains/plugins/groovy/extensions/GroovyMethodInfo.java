@@ -7,6 +7,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
 
 import java.util.*;
 
@@ -15,7 +16,8 @@ import java.util.*;
  */
 public class GroovyMethodInfo {
   
-  private volatile static Map<String, Map<String, List<GroovyMethodInfo>>> MAP;
+  private static volatile Map<String, Map<String, List<GroovyMethodInfo>>> METHOD_INFOS;
+  private static Map<String, Map<String, List<GroovyMethodInfo>>> LIGHT_METHOD_INFOS;
   
   private final List<String> myParams;
   
@@ -27,54 +29,94 @@ public class GroovyMethodInfo {
   private final  String myNamedArgProviderClassName;
   private GroovyMethodDescriptor.NamedArgumentProvider myNamedArgProviderInstance;
 
-  public static Map<String, Map<String, List<GroovyMethodInfo>>> getMethodMap() {
-    Map<String, Map<String, List<GroovyMethodInfo>>> res = MAP;
-    
-    if (res == null) {
-      res = new HashMap<String, Map<String, List<GroovyMethodInfo>>>();
+  private static void ensureInit() {
+    if (METHOD_INFOS != null) return;
 
-      for (GroovyClassDescriptor classDescriptor : GroovyClassDescriptor.EP_NAME.getExtensions()) {
-        for (GroovyMethodDescriptor method : classDescriptor.methods) {
-          addMethodDescriptor(res, method, classDescriptor.className);
-        }
+    Map<String, Map<String, List<GroovyMethodInfo>>> methodInfos = new HashMap<String, Map<String, List<GroovyMethodInfo>>>();
+    Map<String, Map<String, List<GroovyMethodInfo>>> lightMethodInfos = new HashMap<String, Map<String, List<GroovyMethodInfo>>>();
+
+    for (GroovyClassDescriptor classDescriptor : GroovyClassDescriptor.EP_NAME.getExtensions()) {
+      for (GroovyMethodDescriptor method : classDescriptor.methods) {
+        addMethodDescriptor(methodInfos, method, classDescriptor.className);
       }
+    }
 
-      for (GroovyMethodDescriptorExtension methodDescriptor : GroovyMethodDescriptorExtension.EP_NAME.getExtensions()) {
-        addMethodDescriptor(res, methodDescriptor, methodDescriptor.className);
+    for (GroovyMethodDescriptorExtension methodDescriptor : GroovyMethodDescriptorExtension.EP_NAME.getExtensions()) {
+      if (methodDescriptor.className != null) {
+        assert methodDescriptor.lightMethodKey == null;
+        addMethodDescriptor(methodInfos, methodDescriptor, methodDescriptor.className);
       }
+      else {
+        assert methodDescriptor.className == null;
+        addMethodDescriptor(lightMethodInfos, methodDescriptor, methodDescriptor.lightMethodKey);
+      }
+    }
 
-      for (Map<String, List<GroovyMethodInfo>> methodMap : res.values()) {
-        List<GroovyMethodInfo> unnamedMethodDescriptors = methodMap.get(null);
-        if (unnamedMethodDescriptors != null) {
-          for (Map.Entry<String, List<GroovyMethodInfo>> entry : methodMap.entrySet()) {
-            if (entry.getKey() != null) {
-              entry.getValue().addAll(unnamedMethodDescriptors);
-            }
+    processUnnamedDescriptors(lightMethodInfos);
+    processUnnamedDescriptors(methodInfos);
+
+    LIGHT_METHOD_INFOS = lightMethodInfos;
+    METHOD_INFOS = methodInfos;
+  }
+
+  private static void processUnnamedDescriptors(Map<String, Map<String, List<GroovyMethodInfo>>> map) {
+    for (Map<String, List<GroovyMethodInfo>> methodMap : map.values()) {
+      List<GroovyMethodInfo> unnamedMethodDescriptors = methodMap.get(null);
+      if (unnamedMethodDescriptors != null) {
+        for (Map.Entry<String, List<GroovyMethodInfo>> entry : methodMap.entrySet()) {
+          if (entry.getKey() != null) {
+            entry.getValue().addAll(unnamedMethodDescriptors);
           }
         }
       }
-      
-      MAP = res;
     }
+ }
 
+  @Nullable
+  private static List<GroovyMethodInfo> getInfos(Map<String, Map<String, List<GroovyMethodInfo>>> map, String key, PsiMethod method) {
+    Map<String, List<GroovyMethodInfo>> methodMap = map.get(key);
+    if (methodMap == null) return null;
+
+    List<GroovyMethodInfo> res = methodMap.get(method.getName());
+    if (res == null) {
+      res = methodMap.get(null);
+    }
+    
     return res;
   }
-
+  
   public static List<GroovyMethodInfo> getInfos(PsiMethod method) {
-    PsiClass containingClass = method.getContainingClass();
-    if (containingClass == null) return Collections.emptyList();
+    ensureInit();
 
-    Map<String, Map<String, List<GroovyMethodInfo>>> map = getMethodMap();
-
-    Map<String, List<GroovyMethodInfo>> methodMap = map.get(containingClass.getQualifiedName());
-    if (methodMap == null) return Collections.emptyList();
-
-    List<GroovyMethodInfo> methodInfos = methodMap.get(method.getName());
-    if (methodInfos == null) {
-      methodInfos = methodMap.get(null);
+    List<GroovyMethodInfo> lightMethodInfos = null;
+    if (method instanceof GrLightMethodBuilder) {
+      Object methodKind = ((GrLightMethodBuilder)method).getMethodKind();
+      if (methodKind instanceof String) {
+        lightMethodInfos = getInfos(LIGHT_METHOD_INFOS, (String)methodKind, method);
+      }
     }
-
-    return methodInfos == null ? Collections.<GroovyMethodInfo>emptyList() : methodInfos;
+    
+    List<GroovyMethodInfo> methodInfos = null;
+    
+    PsiClass containingClass = method.getContainingClass();
+    if (containingClass != null) {
+      methodInfos = getInfos(METHOD_INFOS, containingClass.getQualifiedName(), method);
+    }
+    
+    if (methodInfos == null) {
+      return lightMethodInfos == null ? Collections.<GroovyMethodInfo>emptyList() : lightMethodInfos;
+    }
+    else {
+      if (lightMethodInfos == null) {
+        return methodInfos;
+      }
+      else {
+        List<GroovyMethodInfo> res = new ArrayList<GroovyMethodInfo>(lightMethodInfos.size() + methodInfos.size());
+        res.addAll(lightMethodInfos);
+        res.addAll(methodInfos);
+        return res;
+      }
+    }
   }
 
   public GroovyMethodInfo(GroovyMethodDescriptor method) {
@@ -90,11 +132,11 @@ public class GroovyMethodInfo {
 
   private static void addMethodDescriptor(Map<String, Map<String, List<GroovyMethodInfo>>> res,
                                           GroovyMethodDescriptor method,
-                                          @NotNull String className) {
-    Map<String, List<GroovyMethodInfo>> methodMap = res.get(className);
+                                          @NotNull String key) {
+    Map<String, List<GroovyMethodInfo>> methodMap = res.get(key);
     if (methodMap == null) {
       methodMap = new HashMap<String, List<GroovyMethodInfo>>();
-      res.put(className, methodMap);
+      res.put(key, methodMap);
     }
 
     List<GroovyMethodInfo> methodsList = methodMap.get(method.methodName);

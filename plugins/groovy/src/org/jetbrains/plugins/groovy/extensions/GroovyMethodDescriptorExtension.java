@@ -14,4 +14,7 @@ public class GroovyMethodDescriptorExtension extends GroovyMethodDescriptor {
   @Attribute("class")
   public String className;
 
+  @Attribute("lightMethodKey")
+  public String lightMethodKey;
+  
 }
