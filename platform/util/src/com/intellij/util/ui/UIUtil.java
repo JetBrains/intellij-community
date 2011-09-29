@@ -119,8 +119,8 @@ public class UIUtil {
   private static final Color ACTIVE_HEADER_COLOR = new Color(160, 186, 213);
   private static final Color INACTIVE_HEADER_COLOR = new Color(128, 128, 128);
   private static final Color BORDER_COLOR = Color.LIGHT_GRAY;
-  public static final Color SEPARATOR_FOREGROUND_COLOR = new Color(200, 200, 200);
-  public static final Color SEPARATOR_BACKGROUND_COLOR = new Color(250, 250, 250);
+  public static Color AQUA_SEPARATOR_FOREGROUND_COLOR = new Color(190, 190, 190);
+  public static Color AQUA_SEPARATOR_BACKGROUND_COLOR = new Color(240, 240, 240);
 
   public static final int DEFAULT_HGAP = 10;
   public static final int DEFAULT_VGAP = 5;

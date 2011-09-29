@@ -443,8 +443,8 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
 
   private static void fixSeparatorColor(UIDefaults uiDefaults) {
     if (UIUtil.isUnderAquaLookAndFeel()) {
-      uiDefaults.put("Separator.background", UIUtil.SEPARATOR_BACKGROUND_COLOR);
-      uiDefaults.put("Separator.foreground", UIUtil.SEPARATOR_FOREGROUND_COLOR);
+      uiDefaults.put("Separator.background", UIUtil.AQUA_SEPARATOR_BACKGROUND_COLOR);
+      uiDefaults.put("Separator.foreground", UIUtil.AQUA_SEPARATOR_FOREGROUND_COLOR);
     }
   }
 
