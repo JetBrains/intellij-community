@@ -1,12 +1,11 @@
 package org.jetbrains.plugins.groovy.extensions;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiParameter;
-import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.*;
+import com.intellij.util.PairFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 import java.util.*;
@@ -18,14 +17,15 @@ public class GroovyMethodInfo {
   
   private volatile static Map<String, Map<String, List<GroovyMethodInfo>>> MAP;
   
-  private List<String> myParams;
+  private final List<String> myParams;
   
-  private String myReturnType;
+  private final String myReturnType;
+  private final String myReturnTypeCalculatorClassName;
+  private PairFunction<GrMethodCall, PsiMethod, PsiType> myReturnTypeCalculatorInstance;
 
-  private Map<String, GroovyNamedArgumentProvider.ArgumentDescriptor> myNamedArguments;
-
+  private final Map<String, GroovyNamedArgumentProvider.ArgumentDescriptor> myNamedArguments;
+  private final  String myNamedArgProviderClassName;
   private GroovyMethodDescriptor.NamedArgumentProvider myNamedArgProviderInstance;
-  private String myNamedArgProviderClassName;
 
   public static Map<String, Map<String, List<GroovyMethodInfo>>> getMethodMap() {
     Map<String, Map<String, List<GroovyMethodInfo>>> res = MAP;
@@ -41,6 +41,17 @@ public class GroovyMethodInfo {
 
       for (GroovyMethodDescriptorExtension methodDescriptor : GroovyMethodDescriptorExtension.EP_NAME.getExtensions()) {
         addMethodDescriptor(res, methodDescriptor, methodDescriptor.className);
+      }
+
+      for (Map<String, List<GroovyMethodInfo>> methodMap : res.values()) {
+        List<GroovyMethodInfo> unnamedMethodDescriptors = methodMap.get(null);
+        if (unnamedMethodDescriptors != null) {
+          for (Map.Entry<String, List<GroovyMethodInfo>> entry : methodMap.entrySet()) {
+            if (entry.getKey() != null) {
+              entry.getValue().addAll(unnamedMethodDescriptors);
+            }
+          }
+        }
       }
       
       MAP = res;
@@ -59,9 +70,24 @@ public class GroovyMethodInfo {
     if (methodMap == null) return Collections.emptyList();
 
     List<GroovyMethodInfo> methodInfos = methodMap.get(method.getName());
+    if (methodInfos == null) {
+      methodInfos = methodMap.get(null);
+    }
+
     return methodInfos == null ? Collections.<GroovyMethodInfo>emptyList() : methodInfos;
   }
-  
+
+  public GroovyMethodInfo(GroovyMethodDescriptor method) {
+    myParams = method.getParams();
+    myReturnType = method.returnType;
+    myReturnTypeCalculatorClassName = method.returnTypeCalculator;
+    assert myReturnType == null || myReturnTypeCalculatorClassName == null;
+
+    myNamedArguments = method.getArgumentsMap();
+    myNamedArgProviderClassName = method.namedArgsProvider;
+    assert myNamedArguments == null || myNamedArgProviderClassName == null;
+  }
+
   private static void addMethodDescriptor(Map<String, Map<String, List<GroovyMethodInfo>>> res,
                                           GroovyMethodDescriptor method,
                                           @NotNull String className) {
@@ -77,43 +103,31 @@ public class GroovyMethodInfo {
       methodMap.put(method.methodName, methodsList);
     }
 
-    GroovyMethodInfo info = null;
-    
-    List<String> params = method.getParams();
-    
-    for (GroovyMethodInfo methodInfo : methodsList) {
-      if (params == null ? methodInfo.myParams == null : params.equals(methodInfo.myParams)) {
-        info = methodInfo;
-        break;
-      }
-    }
-    
-    if (info == null) {
-      info = new GroovyMethodInfo();
-      info.myParams = params;
-      methodsList.add(info);
-    }
-
-    if (method.returnType != null) {
-      assert info.myReturnType == null;
-      info.myReturnType = method.returnType;
-    }
-
-    Map<String, GroovyNamedArgumentProvider.ArgumentDescriptor> namedArgumentsMap = method.getArgumentsMap();
-    if (namedArgumentsMap != null) {
-      assert !info.isProvideNamedArguments();
-      info.myNamedArguments = namedArgumentsMap;
-    }
-
-    if (method.namedArgsProvider != null) {
-      assert !info.isProvideNamedArguments();
-      info.myNamedArgProviderClassName = method.namedArgsProvider;
-    }
+    methodsList.add(new GroovyMethodInfo(method));
   }
 
   @Nullable
   public String getReturnType() {
     return myReturnType;
+  }
+
+  public String getReturnTypeCalculatorClassName() {
+    return myReturnTypeCalculatorClassName;
+  }
+
+  public PairFunction<GrMethodCall, PsiMethod, PsiType> getReturnTypeCalculator() {
+    if (myReturnTypeCalculatorClassName == null) return null;
+    
+    if (myReturnTypeCalculatorInstance == null) {
+      try {
+        myReturnTypeCalculatorInstance = (PairFunction<GrMethodCall, PsiMethod, PsiType>)Class.forName(myReturnTypeCalculatorClassName).newInstance();
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
+    
+    return myReturnTypeCalculatorInstance;
   }
 
   public void addNamedArguments(Map<String, GroovyNamedArgumentProvider.ArgumentDescriptor> res, @NotNull GrCall call, @NotNull PsiMethod method) {

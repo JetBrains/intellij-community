@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path;
 
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.JavaPsiFacade;
@@ -25,8 +25,18 @@ public class GrDescriptorReturnTypeCalculator extends GrCallExpressionTypeCalcul
   public PsiType calculateReturnType(@NotNull GrMethodCall callExpression, @NotNull PsiMethod method) {
     for (GroovyMethodInfo methodInfo : GroovyMethodInfo.getInfos(method)) {
       String returnType = methodInfo.getReturnType();
-      if (returnType != null && methodInfo.isApplicable(method)) {
-        return typeFromText(returnType, callExpression);
+      if (returnType != null) {
+        if (methodInfo.isApplicable(method)) {
+          return typeFromText(returnType, callExpression);
+        }
+      }
+      else {
+        if (methodInfo.getReturnTypeCalculatorClassName() != null && methodInfo.isApplicable(method)) {
+          PsiType result = methodInfo.getReturnTypeCalculator().fun(callExpression, method);
+          if (result != null) {
+            return result;
+          }
+        }
       }
     }
 
@@ -50,7 +60,7 @@ public class GrDescriptorReturnTypeCalculator extends GrCallExpressionTypeCalcul
 
       final GrClosableBlock finalClosure = closure;
 
-      return ourGuard.doPreventingRecursion(callExpression, true, new Computable<PsiType>() {
+      return ourGuard.doPreventingRecursion(callExpression, true, new NullableComputable<PsiType>() {
         @Override
         public PsiType compute() {
           PsiType returnType = finalClosure.getReturnType();

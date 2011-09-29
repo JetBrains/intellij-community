@@ -41,6 +41,9 @@ public class GroovyMethodDescriptor {
   @Attribute("returnType")
   public String returnType;
 
+  @Attribute("returnTypeCalculator")
+  public String returnTypeCalculator;
+
   @Attribute("namedArgs")
   public String namedArgs;
 
