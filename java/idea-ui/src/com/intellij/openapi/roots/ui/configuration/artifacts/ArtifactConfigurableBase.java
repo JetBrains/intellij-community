@@ -28,13 +28,13 @@ import javax.swing.*;
  */
 public abstract class ArtifactConfigurableBase extends ProjectStructureElementConfigurable<Artifact> {
   protected final Artifact myOriginalArtifact;
-  protected final ArtifactsStructureConfigurableContext myArtifactsStructureContext;
-  protected final ProjectStructureElement myProjectStructureElement;
+  protected final ArtifactsStructureConfigurableContextImpl myArtifactsStructureContext;
+  private final ProjectStructureElement myProjectStructureElement;
 
-  public ArtifactConfigurableBase(Artifact originalArtifact,
-                                  ArtifactsStructureConfigurableContextImpl artifactsStructureContext,
-                                  Runnable updateTree,
-                                  final boolean nameEditable) {
+  protected ArtifactConfigurableBase(Artifact originalArtifact,
+                                     ArtifactsStructureConfigurableContextImpl artifactsStructureContext,
+                                     Runnable updateTree,
+                                     final boolean nameEditable) {
     super(nameEditable, updateTree);
     myOriginalArtifact = originalArtifact;
     myArtifactsStructureContext = artifactsStructureContext;

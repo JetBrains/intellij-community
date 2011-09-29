@@ -30,19 +30,17 @@ import java.awt.event.ActionListener;
  * @author nik
  */
 public class ArtifactConfigurable extends ArtifactConfigurableBase {
-  private final ArtifactEditorImpl myEditor;
   private boolean myIsInUpdateName;
 
   public ArtifactConfigurable(Artifact originalArtifact, ArtifactsStructureConfigurableContextImpl artifactsStructureContext, final Runnable updateTree) {
     super(originalArtifact, artifactsStructureContext, updateTree, true);
-    myEditor = artifactsStructureContext.getOrCreateEditor(originalArtifact);
   }
 
   public void setDisplayName(String name) {
     final String oldName = getArtifact().getName();
     if (name != null && !name.equals(oldName) && !myIsInUpdateName) {
       myArtifactsStructureContext.getOrCreateModifiableArtifactModel().getOrCreateModifiableArtifact(myOriginalArtifact).setName(name);
-      myEditor.updateOutputPath(oldName, name);
+      getEditor().updateOutputPath(oldName, name);
     }
   }
 
@@ -58,7 +56,7 @@ public class ArtifactConfigurable extends ArtifactConfigurableBase {
   }
 
   public JComponent createOptionsPanel() {
-    return myEditor.createMainComponent();
+    return getEditor().createMainComponent();
   }
 
   @Override
@@ -75,7 +73,7 @@ public class ArtifactConfigurable extends ArtifactConfigurableBase {
       public void actionPerformed(ActionEvent e) {
         final ArtifactType selected = (ArtifactType)artifactTypeBox.getSelectedItem();
         if (selected != null && !Comparing.equal(selected, getArtifact().getArtifactType())) {
-          myEditor.setArtifactType(selected);
+          getEditor().setArtifactType(selected);
         }
       }
     });
@@ -87,17 +85,21 @@ public class ArtifactConfigurable extends ArtifactConfigurableBase {
   }
 
   public boolean isModified() {
-    return myEditor.isModified();
+    return getEditor().isModified();
   }
 
   public void apply() throws ConfigurationException {
-    myEditor.apply();
+    getEditor().apply();
   }
 
   public void reset() {
   }
 
   public String getHelpTopic() {
-    return myEditor.getHelpTopic();
+    return getEditor().getHelpTopic();
+  }
+
+  private ArtifactEditorImpl getEditor() {
+    return myArtifactsStructureContext.getOrCreateEditor(myOriginalArtifact);
   }
 }
