@@ -13,8 +13,6 @@ if helpers_root:
 else:
     from coverage.cmdline import main
 
-coverage_cmdline = imp.find_module('coverage.cmdline', path)
-
 coverage_file = os.getenv('PYCHARM_COVERAGE_FILE')
 run_cov = os.getenv('PYCHARM_RUN_COVERAGE')
 os.environ['COVERAGE_FILE'] = coverage_file
@@ -24,5 +22,3 @@ if run_cov:
 main()
 if run_cov:
     main(["xml", "-o", coverage_file + ".xml"])
-
-
