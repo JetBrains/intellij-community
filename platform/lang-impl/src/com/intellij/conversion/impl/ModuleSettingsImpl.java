@@ -84,7 +84,7 @@ public class ModuleSettingsImpl extends ComponentManagerSettingsImpl implements 
 
   @NotNull
   public String expandPath(@NotNull String path) {
-    return myContext.expandPath(path, this); 
+    return myContext.expandPath(path, this);
   }
 
   @NotNull
@@ -113,6 +113,14 @@ public class ModuleSettingsImpl extends ComponentManagerSettingsImpl implements 
       result.add(new File(FileUtil.toSystemDependentName(expandPath(path))));
     }
     return result;
+  }
+
+  @Nullable
+  public String getProjectOutputUrl() {
+    final ComponentManagerSettings rootManagerSettings = myContext.getProjectRootManagerSettings();
+    final Element projectRootManager = rootManagerSettings == null ? null : rootManagerSettings.getComponentElement("ProjectRootManager");
+    final Element outputElement = projectRootManager == null ? null : projectRootManager.getChild("output");
+    return outputElement == null ? null : outputElement.getAttributeValue("url");
   }
 
   public void addExcludedFolder(@NotNull File directory) {

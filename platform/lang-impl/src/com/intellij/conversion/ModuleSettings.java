@@ -58,6 +58,8 @@ public interface ModuleSettings extends ComponentManagerSettings {
   @NotNull
   Collection<File> getContentRoots();
 
+  String getProjectOutputUrl();
+
   void addExcludedFolder(@NotNull File directory);
 
   @NotNull
