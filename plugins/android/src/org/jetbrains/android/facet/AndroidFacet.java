@@ -34,7 +34,6 @@ import com.intellij.facet.FacetManager;
 import com.intellij.facet.FacetTypeId;
 import com.intellij.facet.FacetTypeRegistry;
 import com.intellij.lang.properties.IProperty;
-import com.intellij.lang.properties.psi.PropertiesElementFactory;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -72,6 +71,7 @@ import com.intellij.util.xml.DomElement;
 import org.jetbrains.android.compiler.AndroidAptCompiler;
 import org.jetbrains.android.compiler.AndroidCompileUtil;
 import org.jetbrains.android.compiler.AndroidIdlCompiler;
+import org.jetbrains.android.compiler.AndroidRenderscriptCompiler;
 import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.android.resourceManagers.LocalResourceManager;
 import org.jetbrains.android.resourceManagers.ResourceManager;
@@ -356,6 +356,7 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
             if (getConfiguration().REGENERATE_JAVA_BY_AIDL) {
               AndroidCompileUtil.generate(module, new AndroidIdlCompiler(project));
             }
+            AndroidCompileUtil.generate(module, new AndroidRenderscriptCompiler());
           }
         });
       }
