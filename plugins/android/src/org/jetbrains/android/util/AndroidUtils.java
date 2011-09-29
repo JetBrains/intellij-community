@@ -875,4 +875,18 @@ public class AndroidUtils {
     }
     return xmlFiles;
   }
+
+  public static String command2string(@NotNull Collection<String> command) {
+    final StringBuilder builder = new StringBuilder();
+    for (Iterator<String> it = command.iterator(); it.hasNext(); ) {
+      String s = it.next();
+      builder.append('[');
+      builder.append(s);
+      builder.append(']');
+      if (it.hasNext()) {
+        builder.append(' ');
+      }
+    }
+    return builder.toString();
+  }
 }

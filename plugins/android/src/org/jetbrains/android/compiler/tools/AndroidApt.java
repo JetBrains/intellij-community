@@ -17,7 +17,9 @@ package org.jetbrains.android.compiler.tools;
 
 import com.android.sdklib.IAndroidTarget;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.android.util.ExecutionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,6 +36,8 @@ import java.util.Map;
  * @author Alexey Efimov
  */
 public final class AndroidApt {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.compiler.tools.AndroidApt");
+  
   private AndroidApt() {
   }
 
@@ -61,6 +65,7 @@ public final class AndroidApt {
       Collections.addAll(args, "-A", assertsDir);
     }
     Collections.addAll(args, "-I", target.getPath(IAndroidTarget.ANDROID_JAR));
+    LOG.info(AndroidUtils.command2string(args));
     return ExecutionUtil.execute(ArrayUtil.toStringArray(args));
   }
 
