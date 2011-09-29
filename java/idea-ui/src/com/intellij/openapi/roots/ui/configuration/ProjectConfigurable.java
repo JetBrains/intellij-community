@@ -16,7 +16,6 @@
 
 package com.intellij.openapi.roots.ui.configuration;
 
-import com.intellij.compiler.ModuleCompilerUtil;
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.StorageScheme;
@@ -31,10 +30,11 @@ import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectConfigurationProblems;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectStructureElementConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.*;
 import com.intellij.openapi.ui.DetailsComponent;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.IconLoader;
@@ -44,30 +44,26 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
 import com.intellij.ui.InsertPathAction;
-import com.intellij.util.Alarm;
-import com.intellij.util.Chunk;
-import com.intellij.util.graph.Graph;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
  *         Date: Dec 15, 2003
  */
-public class ProjectConfigurable extends NamedConfigurable<Project> implements DetailsComponent.Facade {
+public class ProjectConfigurable extends ProjectStructureElementConfigurable<Project> implements DetailsComponent.Facade {
 
   private final Project myProject;
 
   private static final Icon PROJECT_ICON = IconLoader.getIcon("/nodes/project.png");
 
-  private boolean myStartModuleWizardOnShow;
   private LanguageLevelCombo myLanguageLevelCombo;
   private ProjectJdkConfigurable myProjectJdkConfigurable;
 
@@ -77,20 +73,67 @@ public class ProjectConfigurable extends NamedConfigurable<Project> implements D
 
   private JPanel myPanel;
 
-  private final Alarm myUpdateWarningAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
-
   private final JLabel myWarningLabel = new JLabel("");
+  private final StructureConfigurableContext myContext;
   private final ModulesConfigurator myModulesConfigurator;
   private JPanel myWholePanel;
 
   private boolean myFreeze = false;
   private DetailsComponent myDetailsComponent;
-  private CircularDependencyWarning myCircularDependencyWarning;
+  private final GeneralProjectSettingsElement mySettingsElement;
 
-  public ProjectConfigurable(Project project, ModulesConfigurator configurator, ProjectSdksModel model) {
+  public ProjectConfigurable(Project project,
+                             final StructureConfigurableContext context,
+                             ModulesConfigurator configurator,
+                             ProjectSdksModel model) {
     myProject = project;
+    myContext = context;
     myModulesConfigurator = configurator;
+    mySettingsElement = new GeneralProjectSettingsElement(context);
+    final ProjectStructureDaemonAnalyzer daemonAnalyzer = context.getDaemonAnalyzer();
+    myModulesConfigurator.addAllModuleChangeListener(new ModuleEditor.ChangeListener() {
+      @Override
+      public void moduleStateChanged(ModifiableRootModel moduleRootModel) {
+        daemonAnalyzer.queueUpdate(mySettingsElement);
+      }
+    });
+    daemonAnalyzer.addListener(new ProjectStructureDaemonAnalyzerListener() {
+      @Override
+      public void usagesCollected(@NotNull ProjectStructureElement containingElement) {
+      }
+
+      @Override
+      public void problemsChanged(@NotNull ProjectStructureElement element) {
+        if (element instanceof GeneralProjectSettingsElement) {
+          updateCircularDependencyWarning();
+        }
+      }
+
+      @Override
+      public void allProblemsChanged() {
+        updateCircularDependencyWarning();
+      }
+    });
     init(model);
+  }
+
+  private void updateCircularDependencyWarning() {
+    ProjectStructureProblemsHolderImpl holder = myContext.getDaemonAnalyzer().getProblemsHolder(mySettingsElement);
+    final ProjectStructureProblemDescription item = holder != null ? ContainerUtil.getFirstItem(holder.getProblemDescriptions()) : null;
+    if (item != null) {
+      myWarningLabel.setIcon(Messages.getWarningIcon());
+      myWarningLabel.setText(item.getDescription());
+    }
+    else {
+      myWarningLabel.setIcon(null);
+      myWarningLabel.setText("");
+    }
+    myWarningLabel.repaint();
+  }
+
+  @Override
+  public ProjectStructureElement getProjectStructureElement() {
+    return mySettingsElement;
   }
 
   public DetailsComponent getDetailsComponent() {
@@ -155,7 +198,6 @@ public class ProjectConfigurable extends NamedConfigurable<Project> implements D
   }
 
   public void disposeUIResources() {
-    myUpdateWarningAlarm.cancelAllRequests();
     if (myProjectJdkConfigurable != null) {
       myProjectJdkConfigurable.disposeUIResources();
     }
@@ -165,12 +207,11 @@ public class ProjectConfigurable extends NamedConfigurable<Project> implements D
     myFreeze = true;
     try {
       myProjectJdkConfigurable.reset();
-      final String compilerOutput = CompilerProjectExtension.getInstance(myProject).getCompilerOutputUrl();
+      final String compilerOutput = getOriginalCompilerOutputUrl();
       if (compilerOutput != null) {
         myProjectCompilerOutput.setText(FileUtil.toSystemDependentName(VfsUtil.urlToPath(compilerOutput)));
       }
       myLanguageLevelCombo.reset(myProject);
-      updateCircularDependencyWarning();
 
       if (myProjectName != null) {
         myProjectName.setText(myProject.getName());
@@ -179,55 +220,8 @@ public class ProjectConfigurable extends NamedConfigurable<Project> implements D
     finally {
       myFreeze = false;
     }
-  }
 
-  void updateCircularDependencyWarning() {
-    myUpdateWarningAlarm.cancelAllRequests();
-    myUpdateWarningAlarm.addRequest(new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().runReadAction(new Runnable(){
-          public void run() {
-            final Graph<Chunk<ModifiableRootModel>> graph = ModuleCompilerUtil.toChunkGraph(myModulesConfigurator.createGraphGenerator());
-            final Collection<Chunk<ModifiableRootModel>> chunks = graph.getNodes();
-            String cycles = "";
-            int count = 0;
-            for (Chunk<ModifiableRootModel> chunk : chunks) {
-              final Set<ModifiableRootModel> modules = chunk.getNodes();
-              String cycle = "";
-              for (ModifiableRootModel model : modules) {
-                cycle += ", " + model.getModule().getName();
-              }
-              if (modules.size() > 1) {
-                @NonNls final String br = "<br>&nbsp;&nbsp;&nbsp;&nbsp;";
-                cycles += br + (++count) + ". " + cycle.substring(2);
-              }
-            }
-            @NonNls final String leftBrace = "<html>";
-            @NonNls final String rightBrace = "</html>";
-            final String warningMessage =
-              leftBrace + (count > 0 ? ProjectBundle.message("module.circular.dependency.warning", cycles, count) : "") + rightBrace;
-            if (ProjectConfigurationProblems.isVisible()) {
-              if (myCircularDependencyWarning != null) {
-                ConfigurationErrors.Bus.removeError(myCircularDependencyWarning, myProject);
-              }
-              if (count > 0) {
-                myCircularDependencyWarning = new CircularDependencyWarning("Circular dependencies", warningMessage);
-                ConfigurationErrors.Bus.addError(myCircularDependencyWarning, myProject);
-              }
-            }
-            final Icon icon = count > 0 ? Messages.getWarningIcon() : null;
-            //noinspection SSBasedInspection
-            SwingUtilities.invokeLater(new Runnable() {
-              public void run() {
-                myWarningLabel.setIcon(icon);
-                myWarningLabel.setText(warningMessage);
-                myWarningLabel.repaint();
-              }
-            });
-          }
-        });
-      }
-    }, 300);
+    myContext.getDaemonAnalyzer().queueUpdate(mySettingsElement);
   }
 
 
@@ -307,8 +301,7 @@ public class ProjectConfigurable extends NamedConfigurable<Project> implements D
     if (!LanguageLevelProjectExtension.getInstance(myProject).getLanguageLevel().equals(myLanguageLevelCombo.getSelectedItem())) {
       return true;
     }
-    final CompilerProjectExtension compilerProjectExtension = CompilerProjectExtension.getInstance(myProject);
-    final String compilerOutput = compilerProjectExtension.getCompilerOutputUrl();
+    final String compilerOutput = getOriginalCompilerOutputUrl();
     if (!Comparing.strEqual(FileUtil.toSystemIndependentName(VfsUtil.urlToPath(compilerOutput)),
                             FileUtil.toSystemIndependentName(myProjectCompilerOutput.getText()))) return true;
     if (myProjectJdkConfigurable.isModified()) return true;
@@ -317,6 +310,12 @@ public class ProjectConfigurable extends NamedConfigurable<Project> implements D
     }
 
     return false;
+  }
+
+  @Nullable
+  private String getOriginalCompilerOutputUrl() {
+    final CompilerProjectExtension extension = CompilerProjectExtension.getInstance(myProject);
+    return extension != null ? extension.getCompilerOutputUrl() : null;
   }
 
   private void createUIComponents() {
@@ -332,19 +331,5 @@ public class ProjectConfigurable extends NamedConfigurable<Project> implements D
 
   public String getCompilerOutputUrl() {
     return VfsUtil.pathToUrl(myProjectCompilerOutput.getText().trim());
-  }
-
-  private static class CircularDependencyWarning extends ConfigurationError {
-    private CircularDependencyWarning(String plainTextTitle, String description) {
-      super(plainTextTitle, description);
-    }
-
-    @Override
-    public void fix(JComponent contextComponent) {
-    }
-
-    @Override
-    public void navigate() {
-    }
   }
 }

@@ -68,7 +68,6 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   private static final Logger LOG = Logger.getInstance("#" + ModulesConfigurator.class.getName());
 
   private final Project myProject;
-  private final ProjectConfigurable myProjectConfigurable;
   private final List<ModuleEditor> myModuleEditors = new ArrayList<ModuleEditor>();
   private final Comparator<ModuleEditor> myModuleEditorComparator = new Comparator<ModuleEditor>() {
     public int compare(ModuleEditor editor1, ModuleEditor editor2) {
@@ -91,7 +90,6 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   public ModulesConfigurator(Project project, ProjectSdksModel projectJdksModel) {
     myProject = project;
     myModuleModel = ModuleManager.getInstance(myProject).getModifiableModel();
-    myProjectConfigurable = new ProjectConfigurable(project, this, projectJdksModel);
   }
 
   public void setContext(final StructureConfigurableContext context) {
@@ -202,7 +200,6 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
   public void moduleStateChanged(final ModifiableRootModel moduleRootModel) {
-    myProjectConfigurable.updateCircularDependencyWarning();
     for (ModuleEditor.ChangeListener listener : myAllModulesChangeListeners) {
       listener.moduleStateChanged(moduleRootModel);
     }

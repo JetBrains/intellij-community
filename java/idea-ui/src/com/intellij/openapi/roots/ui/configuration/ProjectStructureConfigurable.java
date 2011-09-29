@@ -248,7 +248,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
   }
 
   private void addProjectConfig() {
-    myProjectConfig = new ProjectConfigurable(myProject, myModuleConfigurator, myProjectJdksModel);
+    myProjectConfig = new ProjectConfigurable(myProject, myContext, myModuleConfigurator, myProjectJdksModel);
     addConfigurable(myProjectConfig);
   }
 
@@ -373,7 +373,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
   }
 
   public ActionCallback select(@Nullable final String moduleToSelect, @Nullable String editorNameToSelect, final boolean requestFocus) {
-    Place place = createPlaceFor(myModulesConfig);
+    Place place = createModulesPlace();
     if (moduleToSelect != null) {
       final Module module = ModuleManager.getInstance(myProject).findModuleByName(moduleToSelect);
       assert module != null;
@@ -382,12 +382,16 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     return navigateTo(place, requestFocus);
   }
 
+  public Place createModulesPlace() {
+    return createPlaceFor(myModulesConfig);
+  }
+
   public Place createModulePlace(@NotNull Module module) {
-    return createPlaceFor(myModulesConfig).putPath(ModuleStructureConfigurable.TREE_OBJECT, module);
+    return createModulesPlace().putPath(ModuleStructureConfigurable.TREE_OBJECT, module);
   }
 
   public ActionCallback select(@Nullable final Facet facetToSelect, final boolean requestFocus) {
-    Place place = createPlaceFor(myModulesConfig);
+    Place place = createModulesPlace();
     if (facetToSelect != null) {
       place = place.putPath(ModuleStructureConfigurable.TREE_OBJECT, facetToSelect);
     }
