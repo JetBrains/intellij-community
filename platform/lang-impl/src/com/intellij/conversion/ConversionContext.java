@@ -59,4 +59,6 @@ public interface ConversionContext {
   ComponentManagerSettings getProjectRootManagerSettings();
 
   File[] getModuleFiles();
+
+  ComponentManagerSettings getModulesSettings();
 }

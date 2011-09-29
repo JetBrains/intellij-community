@@ -65,6 +65,7 @@ public class ConversionContextImpl implements ConversionContext {
   private File mySettingsBaseDir;
   private ComponentManagerSettings myCompilerManagerSettings;
   private ComponentManagerSettings myProjectRootManagerSettings;
+  private ComponentManagerSettingsImpl myModulesSettings;
 
   public ConversionContextImpl(String projectPath) throws CannotConvertException {
     myProjectFile = new File(projectPath);
@@ -225,6 +226,14 @@ public class ConversionContextImpl implements ConversionContext {
     return myProjectRootManagerSettings;
   }
 
+  @Override
+  public ComponentManagerSettings getModulesSettings() {
+    if (myModulesSettings == null) {
+      myModulesSettings = createProjectSettings("modules.xml");
+    }
+    return myModulesSettings;
+  }
+  
   @Nullable
   private ComponentManagerSettingsImpl createProjectSettings(final String fileName) {
     try {
