@@ -105,9 +105,6 @@ public class MethodSignatureUtil {
     return new MethodSignatureHandMade(name, parameterTypes, typeParameterList, substitutor, isConstructor);
   }
 
-  /**
-   * @deprecated use areSignaturesEqual() which takes correct substitutors
-   */
   public static boolean areSignaturesEqual(PsiMethod method1, PsiMethod method2) {
     return method1.getSignature(PsiSubstitutor.EMPTY).equals(method2.getSignature(PsiSubstitutor.EMPTY));
   }
