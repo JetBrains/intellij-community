@@ -214,6 +214,7 @@
     <testGenerator implementation="com.jetbrains.python.codeInsight.testIntegration.PyTestGenerator"/>
 
     <stubElementTypeHolder class="com.jetbrains.python.PyElementTypes"/>
+    <stubElementTypeHolder class="com.jetbrains.cython.CythonElementTypes"/>
     <inspectionToolProvider implementation="com.jetbrains.python.inspections.PythonInspectionToolProvider"/>
 
     <liveTemplateContext implementation="com.jetbrains.python.codeInsight.PythonTemplateContextType"/>
