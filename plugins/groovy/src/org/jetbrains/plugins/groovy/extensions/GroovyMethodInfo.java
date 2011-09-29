@@ -8,6 +8,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
+import org.jetbrains.plugins.groovy.util.ClassInstanceCache;
 
 import java.util.*;
 
@@ -157,16 +158,10 @@ public class GroovyMethodInfo {
     return myReturnTypeCalculatorClassName;
   }
 
+  @NotNull
   public PairFunction<GrMethodCall, PsiMethod, PsiType> getReturnTypeCalculator() {
-    if (myReturnTypeCalculatorClassName == null) return null;
-    
     if (myReturnTypeCalculatorInstance == null) {
-      try {
-        myReturnTypeCalculatorInstance = (PairFunction<GrMethodCall, PsiMethod, PsiType>)Class.forName(myReturnTypeCalculatorClassName).newInstance();
-      }
-      catch (Exception e) {
-        throw new RuntimeException(e);
-      }
+      myReturnTypeCalculatorInstance = ClassInstanceCache.getInstance(myReturnTypeCalculatorClassName);
     }
     
     return myReturnTypeCalculatorInstance;
@@ -178,12 +173,7 @@ public class GroovyMethodInfo {
     }
     else if (myNamedArgProviderClassName != null) {
       if (myNamedArgProviderInstance == null) {
-        try {
-          myNamedArgProviderInstance = (GroovyMethodDescriptor.NamedArgumentProvider)Class.forName(myNamedArgProviderClassName).newInstance();
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
+        myNamedArgProviderInstance = ClassInstanceCache.getInstance(myNamedArgProviderClassName);
       }
 
       myNamedArgProviderInstance.collectNamedArguments(res, call, method);
