@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.packaging.ui;
+package com.intellij.packaging.elements;
 
-import com.intellij.packaging.elements.PackagingElement;
-import com.intellij.packaging.elements.PackagingElementResolvingContext;
+import com.intellij.packaging.artifacts.ArtifactType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,13 +24,8 @@ import java.util.List;
 /**
  * @author nik
  */
-public interface ArtifactProblemsHolder {
+public interface ManifestFileProvider {
+  @Nullable
+  List<String> getClasspathFromManifest(@NotNull CompositePackagingElement<?> archiveRoot, @NotNull ArtifactType artifactType);
 
-  PackagingElementResolvingContext getContext();
-
-  void registerError(@NotNull String message);
-
-  void registerError(@NotNull String message, @Nullable List<PackagingElement<?>> pathToPlace, @NotNull ArtifactProblemQuickFix... quickFixes);
-
-  void registerWarning(@NotNull String message, @Nullable List<PackagingElement<?>> pathToPlace, @NotNull ArtifactProblemQuickFix... quickFixes);
 }

@@ -35,6 +35,7 @@ import com.intellij.packaging.artifacts.ArtifactModel;
 import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.packaging.elements.CompositePackagingElement;
+import com.intellij.packaging.elements.ManifestFileProvider;
 import com.intellij.packaging.impl.ui.ChooseArtifactsDialog;
 import com.intellij.packaging.ui.ArtifactEditor;
 import com.intellij.packaging.ui.ArtifactEditorContext;
@@ -156,6 +157,12 @@ public class ArtifactEditorContextImpl implements ArtifactEditorContext {
 
   public Library findLibrary(@NotNull String level, @NotNull String libraryName) {
     return myParent.findLibrary(level, libraryName);
+  }
+
+  @NotNull
+  @Override
+  public ManifestFileProvider getManifestFileProvider() {
+    return myParent.getManifestFileProvider();
   }
 
   public void queueValidation() {

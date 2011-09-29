@@ -15,7 +15,7 @@
  */
 package com.intellij.packaging.impl.ui;
 
-import com.intellij.packaging.ui.ArtifactEditorContext;
+import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import com.intellij.packaging.ui.ArtifactProblemsHolder;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,13 +23,13 @@ import org.jetbrains.annotations.NotNull;
  * @author nik
  */
 public abstract class ArtifactProblemsHolderBase implements ArtifactProblemsHolder {
-  private final ArtifactEditorContext myContext;
+  private final PackagingElementResolvingContext myContext;
 
-  protected ArtifactProblemsHolderBase(ArtifactEditorContext context) {
+  protected ArtifactProblemsHolderBase(PackagingElementResolvingContext context) {
     myContext = context;
   }
 
-  public ArtifactEditorContext getContext() {
+  public PackagingElementResolvingContext getContext() {
     return myContext;
   }
 

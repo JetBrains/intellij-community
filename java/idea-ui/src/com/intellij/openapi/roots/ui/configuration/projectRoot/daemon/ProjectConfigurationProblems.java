@@ -27,7 +27,7 @@ import java.util.List;
  * @author nik
  */
 public class ProjectConfigurationProblems {
-  private MultiValuesMap<ProjectStructureElement, ConfigurationError> myErrors = new MultiValuesMap<ProjectStructureElement, ConfigurationError>();
+  private final MultiValuesMap<ProjectStructureElement, ConfigurationError> myErrors = new MultiValuesMap<ProjectStructureElement, ConfigurationError>();
   private final ProjectStructureDaemonAnalyzer myAnalyzer;
   private final StructureConfigurableContext myContext;
 
@@ -67,7 +67,7 @@ public class ProjectConfigurationProblems {
       final List<ProjectStructureProblemDescription> descriptions = problemsHolder.getProblemDescriptions();
       if (descriptions != null) {
         for (ProjectStructureProblemDescription description : descriptions) {
-          final ProjectConfigurationProblem error = new ProjectConfigurationProblem(myContext, description);
+          final ProjectConfigurationProblem error = new ProjectConfigurationProblem(description);
           myErrors.put(element, error);
           ConfigurationErrors.Bus.addError(error, myContext.getProject());
         }

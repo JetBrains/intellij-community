@@ -13,8 +13,6 @@
 package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
 import com.intellij.openapi.roots.ui.configuration.ConfigurationError;
-import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
@@ -27,12 +25,10 @@ import java.util.List;
 * @author nik
 */
 class ProjectConfigurationProblem extends ConfigurationError {
-  private final StructureConfigurableContext myContext;
   private final ProjectStructureProblemDescription myDescription;
 
-  public ProjectConfigurationProblem(StructureConfigurableContext context, ProjectStructureProblemDescription description) {
+  public ProjectConfigurationProblem(ProjectStructureProblemDescription description) {
     super(description.getMessage(), description.getDescription() != null ? description.getDescription() : description.getMessage());
-    myContext = context;
     myDescription = description;
   }
 
@@ -47,7 +43,7 @@ class ProjectConfigurationProblem extends ConfigurationError {
   }
 
   @Override
-  public void fix(JComponent contextComponent) {
+  public void fix(final JComponent contextComponent) {
     final List<ConfigurationErrorQuickFix> fixes = myDescription.getFixes();
     if (fixes.size() == 1) {
       fixes.get(0).performFix();

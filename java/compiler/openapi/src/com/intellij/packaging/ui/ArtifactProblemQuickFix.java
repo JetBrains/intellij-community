@@ -33,5 +33,5 @@ public abstract class ArtifactProblemQuickFix {
     return myActionName;
   }
 
-  public abstract void performFix(ArtifactEditor artifactEditor);
+  public abstract void performFix(ArtifactEditorContext artifactEditorContext);
 }

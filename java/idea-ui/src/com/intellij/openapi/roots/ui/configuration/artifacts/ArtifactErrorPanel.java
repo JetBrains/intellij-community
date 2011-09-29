@@ -15,11 +15,11 @@
  */
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ConfigurationErrorQuickFix;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.packaging.ui.ArtifactProblemQuickFix;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -37,7 +37,7 @@ public class ArtifactErrorPanel {
   private JPanel myMainPanel;
   private JButton myFixButton;
   private JLabel myErrorLabel;
-  private List<ArtifactProblemQuickFix> myCurrentQuickFixes;
+  private List<ConfigurationErrorQuickFix> myCurrentQuickFixes;
   private String myErrorText;
 
   public ArtifactErrorPanel(final ArtifactEditorImpl artifactEditor) {
@@ -58,15 +58,15 @@ public class ArtifactErrorPanel {
             performFix(ContainerUtil.getFirstItem(myCurrentQuickFixes, null), artifactEditor);
           }
           else {
-            JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<ArtifactProblemQuickFix>(null, myCurrentQuickFixes) {
+            JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<ConfigurationErrorQuickFix>(null, myCurrentQuickFixes) {
               @NotNull
               @Override
-              public String getTextFor(ArtifactProblemQuickFix value) {
+              public String getTextFor(ConfigurationErrorQuickFix value) {
                 return value.getActionName();
               }
 
               @Override
-              public PopupStep onChosen(ArtifactProblemQuickFix selectedValue, boolean finalChoice) {
+              public PopupStep onChosen(ConfigurationErrorQuickFix selectedValue, boolean finalChoice) {
                 performFix(selectedValue, artifactEditor);
                 return FINAL_CHOICE;
               }
@@ -78,12 +78,12 @@ public class ArtifactErrorPanel {
     clearError();
   }
 
-  private static void performFix(ArtifactProblemQuickFix quickFix, ArtifactEditorImpl artifactEditor) {
-    quickFix.performFix(artifactEditor);
+  private static void performFix(ConfigurationErrorQuickFix quickFix, ArtifactEditorImpl artifactEditor) {
+    quickFix.performFix();
     artifactEditor.queueValidation();
   }
 
-  public void showError(@NotNull String message, @NotNull List<ArtifactProblemQuickFix> quickFixes) {
+  public void showError(@NotNull String message, @NotNull List<ConfigurationErrorQuickFix> quickFixes) {
     myErrorLabel.setVisible(true);
     final String errorText = "<html>" + message + "</html>";
     if (myErrorLabel.isShowing()) {
