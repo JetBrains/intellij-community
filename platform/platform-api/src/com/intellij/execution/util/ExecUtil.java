@@ -79,6 +79,14 @@ public class ExecUtil {
     }
     return tempFile;
   }
+  
+  public static String getOsascriptPath() {
+    return "/usr/bin/osascript";
+  }
+  
+  public static String getOpenCommandPath() {
+    return "/usr/bin/open";
+  }
 
   public static int sudoAndGetResult(@NotNull final String scriptPath,
                                      @NotNull final String prompt) throws IOException, ExecutionException, ScriptException, InterruptedException {
@@ -92,7 +100,7 @@ public class ExecUtil {
       */
       final String script = "do shell script \"" + scriptPath + "\" with administrator privileges";
       Runtime runtime = Runtime.getRuntime();
-      String[] args = {"osascript", "-e", script};
+      String[] args = {getOsascriptPath(), "-e", script};
       runtime.exec(args);
       return 0;
     }

@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.browsers;
 
+import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.browsers.chrome.ChromeSettings;
 import com.intellij.ide.browsers.firefox.FirefoxSettings;
@@ -249,7 +250,7 @@ public class BrowsersConfiguration implements PersistentStateComponent<Element> 
     final String[] command = BrowserUtil.getOpenBrowserCommand(browserPath);
     String[] args = {url};
     if (browserArgs.length > 0) {
-      if (SystemInfo.isMac && "open".equals(command[0])) {
+      if (SystemInfo.isMac && ExecUtil.getOpenCommandPath().equals(command[0])) {
         if (BrowserUtil.isOpenCommandSupportArgs()) {
           args = ArrayUtil.mergeArrays(new String[]{url, "--args"}, browserArgs);
         }

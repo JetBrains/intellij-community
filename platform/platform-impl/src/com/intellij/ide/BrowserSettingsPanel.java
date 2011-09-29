@@ -21,6 +21,8 @@ import com.intellij.openapi.options.AbstractConfigurableEP;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.IdeBorderFactory;
 
 import javax.swing.*;
@@ -82,7 +84,13 @@ public class BrowserSettingsPanel extends JPanel {
 
     outerPanel.add(genericPanel);
 
-    FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor();
+    FileChooserDescriptor descriptor = SystemInfo.isMac ?
+                                       new FileChooserDescriptor(false, true, false, false, false, false) {
+                                         @Override
+                                         public boolean isFileSelectable(VirtualFile file) {
+                                           return file.getName().endsWith(".app");
+                                         }
+                                       } : FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor();
     myBrowserPathField.addBrowseFolderListener(IdeBundle.message("title.select.path.to.browser"), null, null, descriptor);
 
     if (BrowserUtil.canStartDefaultBrowser()) {

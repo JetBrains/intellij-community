@@ -17,6 +17,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -193,7 +194,7 @@ public class ShowFilePathAction extends AnAction {
         "\treveal {\"%s\"} as POSIX file\n" +
         "\tactivate\n" +
         "end tell", path);
-      new GeneralCommandLine("osascript", "-e", script).createProcess();
+      new GeneralCommandLine(ExecUtil.getOpenCommandPath(), "-e", script).createProcess();
     }
     else if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN)) {
       Desktop.getDesktop().open(new File(path));

@@ -16,6 +16,7 @@
 package com.intellij.ide;
 
 import com.intellij.CommonBundle;
+import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -375,7 +376,7 @@ public class BrowserUtil {
       return new String[]{"cmd.exe", "/c", "start"};
     }
     else if (SystemInfo.isMac) {
-      return new String[]{"open"};
+      return new String[]{ExecUtil.getOpenCommandPath()};
     }
     else if (SystemInfo.isUnix) {
       return new String[]{"mozilla"};
@@ -417,7 +418,7 @@ public class BrowserUtil {
         command = new String[] {browserPath};
       }
       else {
-        command = new String[]{"open", "-a", browserPath};
+        command = new String[]{ExecUtil.getOpenCommandPath(), "-a", browserPath};
       }
     }
     else if (SystemInfo.isWindows9x) {

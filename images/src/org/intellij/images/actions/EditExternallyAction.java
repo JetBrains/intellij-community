@@ -18,6 +18,7 @@ package org.intellij.images.actions;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -74,7 +75,7 @@ public final class EditExternallyAction extends AnAction {
         GeneralCommandLine commandLine = new GeneralCommandLine();
         final String path = executable.exists() ? executable.getAbsolutePath() : executablePath;
         if (SystemInfo.isMac) {
-          commandLine.setExePath("open");
+          commandLine.setExePath(ExecUtil.getOpenCommandPath());
           commandLine.addParameter("-a");
           commandLine.addParameter(path);
         } else {
