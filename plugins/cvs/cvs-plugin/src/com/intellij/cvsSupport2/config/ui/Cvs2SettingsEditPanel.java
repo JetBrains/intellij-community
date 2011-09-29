@@ -27,7 +27,6 @@ import com.intellij.cvsSupport2.connections.local.ui.LocalConnectionSettingsPane
 import com.intellij.cvsSupport2.connections.login.CvsLoginWorker;
 import com.intellij.cvsSupport2.connections.ssh.ui.SshConnectionSettingsPanel;
 import com.intellij.cvsSupport2.connections.ui.ProxySettingsPanel;
-import com.intellij.cvsSupport2.cvsExecution.ModalityContextImpl;
 import com.intellij.cvsSupport2.cvsoperations.common.LoginPerformer;
 import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.TagsProviderOnEnvironment;
 import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.ui.DateOrRevisionOrTagSettings;
@@ -79,7 +78,7 @@ public class Cvs2SettingsEditPanel {
       protected CvsEnvironment getEnv() {
         return createConfigurationWithCurrentSettings();
       }
-    }, project, true);
+    }, project);
     myPanel.setSize(myPanel.getPreferredSize());
     myCvsRootConfigurationPanel.setLayout(new BorderLayout());
     myCvsRootConfigurationPanel.add(myCvsRootConfigurationPanelView.getPanel(), BorderLayout.CENTER);
@@ -196,8 +195,7 @@ public class Cvs2SettingsEditPanel {
 
   public static void testConnection(CvsRootConfiguration configuration, Component component, Project project) {
     try {
-      final ModalityContextImpl executor = new ModalityContextImpl(true);
-      final CvsLoginWorker loginWorker = configuration.getLoginWorker(executor, project);
+      final CvsLoginWorker loginWorker = configuration.getLoginWorker(project);
 
       final ThreeState checkResult = LoginPerformer.checkLoginWorker(loginWorker, true);
       if (ThreeState.NO.equals(checkResult)) {

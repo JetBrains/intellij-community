@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,12 +36,13 @@ public class IDEARootFormatter implements CvsRootSettingsBuilder<CvsConnectionSe
     return new RootFormatter<CvsConnectionSettings>(this).createConfiguration(myCvsRootConfiguration.getCvsRootAsString());
   }
 
+  @Override
   public CvsConnectionSettings createSettings(final CvsMethod method, final String cvsRootAsString) {
     if (method == null) {
       throw new CvsRootException(CvsBundle.message("message.error.missing.cvs.root", cvsRootAsString));
     }
     if (method.equals(CvsMethod.LOCAL_METHOD)) {
-      return new LocalConnectionSettings(cvsRootAsString, myCvsRootConfiguration);
+      return new LocalConnectionSettings(myCvsRootConfiguration);
     }
     else if (method.equals(CvsMethod.PSERVER_METHOD)) {
       return new PServerCvsSettings(myCvsRootConfiguration);
@@ -56,9 +57,8 @@ public class IDEARootFormatter implements CvsRootSettingsBuilder<CvsConnectionSe
     throw new CvsRootException(CvsBundle.message("exception.text.unsupported.method", method, cvsRootAsString));
   }
 
+  @Override
   public String getPServerPassword(final String cvsRoot) {
     return PServerLoginProvider.getInstance().getScrambledPasswordForCvsRoot(cvsRoot);
   }
-
-
 }

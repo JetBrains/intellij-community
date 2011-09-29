@@ -29,18 +29,13 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ModalityContextImpl implements ModalityContext {
   private final ModalityState myDefaultModalityState;
-  public static final ModalityContext NON_MODAL = new ModalityContextImpl(ModalityState.NON_MODAL, false);
-  private final boolean myIsForTemporaryConfiguration;
+  public static final ModalityContext NON_MODAL = new ModalityContextImpl(ModalityState.NON_MODAL);
 
-  public ModalityContextImpl(boolean forTemp) {
-    this(ModalityState.current(), forTemp);
-  }
-
-  public ModalityContextImpl(ModalityState defaultModalityState, boolean forTemp) {
+  public ModalityContextImpl(ModalityState defaultModalityState) {
     myDefaultModalityState = defaultModalityState;
-    myIsForTemporaryConfiguration = forTemp;
   }
 
+  @Override
   public void runInDispatchThread(@NotNull Runnable action, Project project) {
     Application application = ApplicationManager.getApplication();
     if (application.isUnitTestMode() || application.isDispatchThread()) {
@@ -58,9 +53,5 @@ public class ModalityContextImpl implements ModalityContext {
                                   : progressIndicator.getModalityState();
     if (modalityState == null) modalityState = ModalityState.defaultModalityState();
     return modalityState;
-  }
-
-  public boolean isForTemporaryConfiguration(){
-    return myIsForTemporaryConfiguration;
   }
 }

@@ -52,9 +52,9 @@ public class TagsHelper {
   }
 
   @Nullable
-  public static String chooseBranch(TagsProvider tagsProvider, Project project, boolean forTemporaryConfiguration) {
+  public static String chooseBranch(TagsProvider tagsProvider, Project project) {
     try {
-      BranchesProvider branchesProvider = getBranchesProvider(tagsProvider.getOperation(), project, forTemporaryConfiguration);
+      BranchesProvider branchesProvider = getBranchesProvider(tagsProvider.getOperation(), project);
       return chooseFrom(branchesProvider.getAllBranches(), branchesProvider.getAllRevisions());
     }
     catch (VcsException e1) {
@@ -64,9 +64,9 @@ public class TagsHelper {
   }
 
   @Nullable
-  public static String chooseBranch(Collection<FilePath> files, Project project, boolean forTemporaryConfiguration) {
+  public static String chooseBranch(Collection<FilePath> files, Project project) {
     try {
-      return chooseFrom(collectAllBranches(files, project, forTemporaryConfiguration), new ArrayList<CvsRevisionNumber>());
+      return chooseFrom(collectAllBranches(files, project), new ArrayList<CvsRevisionNumber>());
     }
     catch (VcsException e1) {
       showErrorMessage(e1);
@@ -76,8 +76,9 @@ public class TagsHelper {
 
   public static void addChooseBranchAction(final TextFieldWithBrowseButton field, final Collection<FilePath> files, final Project project) {
     field.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
-        String branchName = TagsHelper.chooseBranch(files, project, false);
+        String branchName = TagsHelper.chooseBranch(files, project);
         if (branchName != null) field.setText(branchName);
       }
     });
@@ -108,11 +109,11 @@ public class TagsHelper {
     }
   }
 
-  private static BranchesProvider getBranchesProvider(CvsOperation operation, Project project, boolean forTemporaryConfiguration) throws VcsException {
+  private static BranchesProvider getBranchesProvider(CvsOperation operation, Project project) throws VcsException {
     LOG.assertTrue(operation instanceof BranchesProvider);
     CvsOperationExecutor executor = new CvsOperationExecutor(true, project,
-                                                             new ModalityContextImpl(ModalityState.defaultModalityState(),
-                                                                                     forTemporaryConfiguration));
+                                                             new ModalityContextImpl(ModalityState.defaultModalityState()
+                                                             ));
     CommandCvsHandler handler = new CommandCvsHandler(CvsBundle.message("load.tags.operation.name"), operation, true);
     executor.performActionSync(handler, CvsOperationExecutorCallback.EMPTY);
     CvsResult executionResult = executor.getResult();
@@ -121,13 +122,12 @@ public class TagsHelper {
   }
 
   private static Collection<String> collectAllBranches(Collection<FilePath> files,
-                                                       Project project,
-                                                       boolean forTemporaryConfiguration) throws VcsException {
+                                                       Project project) throws VcsException {
     ArrayList<String> result = new ArrayList<String>();
     if (files.isEmpty()) {
       return result;
     }
-    return getBranchesProvider(new LogOperation(files), project, forTemporaryConfiguration).getAllBranches();
+    return getBranchesProvider(new LogOperation(files), project).getAllBranches();
   }
 
   private static void showErrorMessage(VcsException e1) {
@@ -164,6 +164,7 @@ public class TagsHelper {
     if (revisions == null) return new ArrayList<String>();
     ArrayList<CvsRevisionNumber> list = new ArrayList<CvsRevisionNumber>(revisions);
     Collections.sort(list, new Comparator<CvsRevisionNumber>() {
+      @Override
       public int compare(CvsRevisionNumber o, CvsRevisionNumber o1) {
         return o.compareTo(o1);
       }

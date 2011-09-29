@@ -20,7 +20,6 @@ import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.cvsSupport2.connections.login.CvsLoginWorker;
 import com.intellij.cvsSupport2.connections.login.CvsLoginWorkerImpl;
 import com.intellij.cvsSupport2.connections.ssh.SolveableAuthenticationException;
-import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.javacvsImpl.io.ReadWriteStatistics;
 import com.intellij.cvsSupport2.javacvsImpl.io.StreamLogger;
 import com.intellij.cvsSupport2.util.CvsFileUtil;
@@ -44,6 +43,7 @@ public class PServerLoginProviderImpl extends PServerLoginProvider {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.connections.pserver.PServerLoginProviderImpl");
 
+  @Override
   @Nullable
   public String getScrambledPasswordForCvsRoot(String cvsroot) {
     return getPassword(cvsroot);
@@ -58,13 +58,14 @@ public class PServerLoginProviderImpl extends PServerLoginProvider {
     return PServerPasswordScrambler.getInstance().scramble(passwordDialog.getPassword());
   }
 
-  public CvsLoginWorker getLoginWorker(final ModalityContext executor, final Project project, final PServerCvsSettings pServerCvsSettings) {
-    return new PServerLoginWorker(project, pServerCvsSettings, executor);
+  @Override
+  public CvsLoginWorker getLoginWorker(final Project project, final PServerCvsSettings pServerCvsSettings) {
+    return new PServerLoginWorker(project, pServerCvsSettings);
   }
 
   private static class PServerLoginWorker extends CvsLoginWorkerImpl<PServerCvsSettings> {
-    private PServerLoginWorker(final Project project, final PServerCvsSettings settings, final ModalityContext executor) {
-      super(project, settings, executor);
+    private PServerLoginWorker(final Project project, final PServerCvsSettings settings) {
+      super(project, settings);
     }
 
     @Override

@@ -22,7 +22,6 @@ import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.connections.CvsRootProvider;
 import com.intellij.cvsSupport2.connections.pserver.PServerCvsSettings;
-import com.intellij.cvsSupport2.cvsExecution.ModalityContextImpl;
 import com.intellij.cvsSupport2.cvsIgnore.IgnoreFileFilterBasedOnCvsEntriesManager;
 import com.intellij.cvsSupport2.cvsoperations.cvsMessages.CvsMessagesListener;
 import com.intellij.cvsSupport2.cvsoperations.cvsMessages.CvsMessagesTranslator;
@@ -102,6 +101,7 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
   abstract protected Command createCommand(CvsRootProvider root,
                                            CvsExecutionEnvironment cvsExecutionEnvironment);
 
+  @Override
   public void execute(CvsExecutionEnvironment executionEnvironment, boolean underReadAction) throws VcsException,
                                                                            CommandAbortedException {
     CvsEntriesManager.getInstance().lockSynchronizationActions();
@@ -271,9 +271,11 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
       catch (AuthenticationException e) {
         if (! root.isOffline()) {
           ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+            @Override
             public void run() {
               final LoginPerformer performer =
                 new LoginPerformer(executionEnvironment.getProject(), Collections.<CvsEnvironment>singletonList(root), new Consumer<VcsException>() {
+                  @Override
                   public void consume(VcsException e) {
                     executionEnvironment.getErrorProcessor().addError(e);
                     LOG.info(e);
@@ -281,7 +283,7 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
                 });
               // for pserver to check password matches connection
               performer.setForceCheck(true);                       
-              performer.loginAll(ModalityContextImpl.NON_MODAL);
+              performer.loginAll();
             }
           });
           return;
@@ -381,6 +383,7 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
     return root.getLocalRoot();
   }
 
+  @Override
   public void fileInfoGenerated(Object info) {
     if (info instanceof UpdateFileInfo) {
       final UpdateFileInfo updateFileInfo = ((UpdateFileInfo)info);
@@ -390,24 +393,30 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
     }
   }
 
+  @Override
   public void gotEntry(FileObject fileObject, Entry entry) {
   }
 
+  @Override
   public void messageSent(String message, final byte[] byteMessage, boolean error, boolean tagged) {
   }
 
+  @Override
   public void moduleExpanded(String module) {
 
   }
 
+  @Override
   public boolean fileIsUnderProject(final VirtualFile file) {
     return true;
   }
 
+  @Override
   public boolean fileIsUnderProject(File file) {
     return true;
   }
 
+  @Override
   public String getLastProcessedCvsRoot() {
     return myLastProcessedCvsRoot;
   }
@@ -426,6 +435,7 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
       myUpdatedFilesManager = mergedFilesCollector;
     }
 
+    @Override
     public void gotEntry(FileObject fileObject, Entry entry) {
       final IFileSystem localFileSystem = myClientEnvironment.getCvsFileSystem().getLocalFileSystem();
       final File file = localFileSystem.getFile(fileObject);
@@ -463,6 +473,7 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
     }
   }
 
+  @Override
   public void binaryMessageSent(final byte[] bytes) {
   }
 }

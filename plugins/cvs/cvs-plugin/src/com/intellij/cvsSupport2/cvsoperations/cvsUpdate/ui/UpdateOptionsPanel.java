@@ -75,7 +75,7 @@ public class UpdateOptionsPanel {
     myKeywordSubstitutionPanel.setLayout(new BorderLayout());
     myKeywordSubstitutionPanel.add(myChangeKeywordSubstitutionPanel.getPanel(), BorderLayout.CENTER);
     myDateOrRevisionOrTagSettings = new DateOrRevisionOrTagSettings(new TagsProviderOnVirtualFiles(files),
-                                                                    project, false);
+                                                                    project);
     myDateOrRevisionOrTagSettings.setHeadCaption(CvsBundle.message("label.default.update.branch"));
     myDateOrRevisionPanel.setLayout(new BorderLayout());
     myDateOrRevisionPanel.add(myDateOrRevisionOrTagSettings.getPanel(), BorderLayout.CENTER);
@@ -100,6 +100,7 @@ public class UpdateOptionsPanel {
 
     for (JRadioButton jRadioButton : myMergingGroup) {
       jRadioButton.addItemListener(new ItemListener() {
+        @Override
         public void itemStateChanged(ItemEvent e) {
           enableBranchField();
         }

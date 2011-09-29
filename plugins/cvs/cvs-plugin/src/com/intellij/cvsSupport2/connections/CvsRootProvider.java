@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.cvsSupport2.connections;
 
 import com.intellij.cvsSupport2.connections.login.CvsLoginWorker;
-import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.errorHandling.CannotFindCvsRootException;
 import com.intellij.cvsSupport2.javacvsImpl.io.ReadWriteStatistics;
 import com.intellij.openapi.project.Project;
@@ -54,18 +53,22 @@ public abstract class CvsRootProvider implements CvsEnvironment{
     myLocalRoot = localRoot;
   }
 
+  @Override
   public IConnection createConnection(ReadWriteStatistics statistics) {
     return myCvsEnvironment.createConnection(statistics);
   }
 
-  public CvsLoginWorker getLoginWorker(ModalityContext executor, Project project) {
-    return myCvsEnvironment.getLoginWorker(executor, project);
+  @Override
+  public CvsLoginWorker getLoginWorker(Project project) {
+    return myCvsEnvironment.getLoginWorker(project);
   }
 
+  @Override
   public CvsRoot getCvsRoot() {
     return myCvsEnvironment.getCvsRoot();
   }
 
+  @Override
   public String getCvsRootAsString() {
     return myCvsEnvironment.getCvsRootAsString();
   }
@@ -82,14 +85,17 @@ public abstract class CvsRootProvider implements CvsEnvironment{
     myAdminRoot = directory;
   }
 
+  @Override
   public boolean isValid() {
     return myCvsEnvironment.isValid();
   }
 
+  @Override
   public CommandException processException(CommandException t) {
     return myCvsEnvironment.processException(t);
   }
 
+  @Override
   public boolean isOffline() {
     return myCvsEnvironment.isOffline();
   }
@@ -121,7 +127,7 @@ public abstract class CvsRootProvider implements CvsEnvironment{
   }
 
   @NotNull
-  private ThreeState checkNulls(final Object one, final Object two) {
+  private static ThreeState checkNulls(final Object one, final Object two) {
     if ((one == null) ^ (two == null)) return ThreeState.NO;
     if (one == null) return ThreeState.YES;
     return ThreeState.UNSURE;

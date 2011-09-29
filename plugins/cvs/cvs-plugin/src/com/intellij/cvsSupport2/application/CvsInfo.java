@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.cvsSupport2.config.CvsRootConfiguration;
 import com.intellij.cvsSupport2.connections.CvsConnectionSettings;
 import com.intellij.cvsSupport2.connections.login.CvsLoginWorker;
-import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.cvsIgnore.IgnoredFilesInfo;
 import com.intellij.cvsSupport2.cvsIgnore.IgnoredFilesInfoImpl;
 import com.intellij.cvsSupport2.errorHandling.ErrorRegistry;
@@ -259,18 +258,22 @@ public class CvsInfo {
       super(CvsApplicationLevelConfiguration.createNewConfiguration(CvsApplicationLevelConfiguration.getInstance()));
     }
 
+    @Override
     public int getDefaultPort() {
       return 0;
     }
 
+    @Override
     public IConnection createConnection(ReadWriteStatistics statistics) {
       throw new RuntimeException(CvsBundle.message("exception.text.cannot.connect.with.invalid.root"));
     }
 
+    @Override
     protected IConnection createOriginalConnection(ErrorRegistry errorRegistry, CvsRootConfiguration cvsRootConfiguration) {
       throw new RuntimeException(CvsBundle.message("exception.text.cannot.connect.with.invalid.root"));
     }
 
+    @Override
     public CommandException processException(CommandException t) {
       return t;
     }
@@ -285,24 +288,29 @@ public class CvsInfo {
       return true;
     }
 
-    public CvsLoginWorker getLoginWorker(ModalityContext executor, final Project project) {
+    @Override
+    public CvsLoginWorker getLoginWorker(final Project project) {
       return new CvsLoginWorker() {
+        @Override
         public boolean promptForPassword() {
           return true;
         }
 
+        @Override
         public ThreeState silentLogin(boolean forceCheck) {
           VcsBalloonProblemNotifier.showOverChangesView(
             project, CvsBundle.message("message.error.invalid.cvs.root", getCvsRootAsString()), MessageType.ERROR);
           return ThreeState.NO;
         }
 
+        @Override
         public void goOffline() {
           setOffline(true);
         }
       };
     }
 
+    @Override
     public boolean isValid() {
       return false;
     }
@@ -314,36 +322,45 @@ public class CvsInfo {
       super(null, null);
     }
 
+    @Override
     public CvsConnectionSettings getConnectionSettings() {
       return getAbsentSettings();
     }
 
+    @Override
     public IgnoredFilesInfo getIgnoreFilter() {
       return IgnoredFilesInfoImpl.EMPTY_FILTER;
     }
 
+    @Override
     public Collection<Entry> getEntries() {
       return new ArrayList<Entry>();
     }
 
+    @Override
     public void clearFilter() {
     }
 
+    @Override
     public boolean isLoaded() {
       return true;
     }
 
+    @Override
     public Entry setEntryAndReturnReplacedEntry(Entry entry) {
       return null;
     }
 
+    @Override
     public void removeEntryNamed(String fileName) {
     }
 
+    @Override
     public VirtualFile getKey() {
       return null;
     }
 
+    @Override
     public Entry getEntryNamed(String name) {
       return null;
     }

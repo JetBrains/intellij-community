@@ -19,7 +19,6 @@ import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.CvsResultEx;
 import com.intellij.cvsSupport2.connections.*;
 import com.intellij.cvsSupport2.connections.login.CvsLoginWorker;
-import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.cvsoperations.common.CvsExecutionEnvironment;
 import com.intellij.cvsSupport2.cvsoperations.common.PostCvsActivity;
 import com.intellij.cvsSupport2.cvsoperations.cvsContent.GetModulesListOperation;
@@ -80,10 +79,12 @@ public class CvsRootConfiguration extends AbstractConfiguration implements CvsEn
   }
 
 
+  @Override
   public IConnection createConnection(ReadWriteStatistics statistics) {
     return getSettings().createConnection(statistics);
   }
 
+  @Override
   public String getCvsRootAsString() {
     return CVS_ROOT;
   }
@@ -163,6 +164,7 @@ public class CvsRootConfiguration extends AbstractConfiguration implements CvsEn
     final CvsResult result = new CvsResultEx();
     try {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+        @Override
         public void run() {
           final GetModulesListOperation operation = new GetModulesListOperation(settings);
 
@@ -222,22 +224,27 @@ public class CvsRootConfiguration extends AbstractConfiguration implements CvsEn
            Comparing.equal(EXT_CONFIGURATION, another.EXT_CONFIGURATION);
   }
 
-  public CvsLoginWorker getLoginWorker(ModalityContext executor, Project project) {
-    return getSettings().getLoginWorker(executor, project);
+  @Override
+  public CvsLoginWorker getLoginWorker(Project project) {
+    return getSettings().getLoginWorker(project);
   }
 
+  @Override
   public RevisionOrDate getRevisionOrDate() {
     return RevisionOrDateImpl.createOn(DATE_OR_REVISION_SETTINGS);
   }
 
+  @Override
   public String getRepository() {
     return getSettings().getRepository();
   }
 
+  @Override
   public CvsRoot getCvsRoot() {
     return getSettings().getCvsRoot();
   }
 
+  @Override
   public boolean isValid() {
     return getSettings().isValid();
   }
@@ -256,16 +263,19 @@ public class CvsRootConfiguration extends AbstractConfiguration implements CvsEn
     return result;
   }
 
+  @Override
   protected Object clone() throws CloneNotSupportedException {
     final CvsRootConfiguration result = (CvsRootConfiguration)super.clone();
     result.DATE_OR_REVISION_SETTINGS = (DateOrRevisionSettings)DATE_OR_REVISION_SETTINGS.clone();
     return result;
   }
 
+  @Override
   public CommandException processException(CommandException t) {
     return getSettings().processException(t);
   }
 
+  @Override
   public boolean isOffline() {
     return getSettings().isOffline();
   }

@@ -107,14 +107,17 @@ public class CommandCvsHandler extends CvsHandler {
     myBackgroundOption = backgroundOption;
   }
 
-  public boolean login(Project project, ModalityContext executor) {
-    return loginAll(project, executor);
+  @Override
+  public boolean login(Project project) {
+    return loginAll(project);
   }
 
+  @Override
   public boolean canBeCanceled() {
     return myCanBeCanceled;
   }
 
+  @Override
   public PerformInBackgroundOption getBackgroundOption(final Project project) {
     return myBackgroundOption;
   }
@@ -140,6 +143,7 @@ public class CommandCvsHandler extends CvsHandler {
                                         useAltCheckoutDir, makeNewFilesReadOnly);
     return new CommandCvsHandler(CvsBundle.message("operation.name.check.out.project"), checkoutOperation, FileSetToBeUpdated.allFiles(),
                                  (option == null) ? PerformInBackgroundOption.DEAF : option) {
+      @Override
       public void finish() {
         CvsEntriesManager.getInstance().clearAll();
       }
@@ -186,6 +190,7 @@ public class CommandCvsHandler extends CvsHandler {
     }
     if (!dirsToPrune.isEmpty()) {
       operation.addFinishAction(new Runnable() {
+        @Override
         public void run() {
           final IOFilesBasedDirectoryPruner pruner = new IOFilesBasedDirectoryPruner(null);
           for(File dir: dirsToPrune) {
@@ -259,6 +264,7 @@ public class CommandCvsHandler extends CvsHandler {
       new CommandCvsHandler(CvsBundle.message("operation.name.restore"), operation, FileSetToBeUpdated.EMPTY);
 
     operation.addFinishAction(new Runnable() {
+      @Override
       public void run() {
         final List<VcsException> errors = cvsHandler.getErrors();
         if (errors != null && (! errors.isEmpty())) return;
@@ -309,11 +315,12 @@ public class CommandCvsHandler extends CvsHandler {
     return result;
   }
 
+  @Override
   public boolean isCanceled() {
     return myIsCanceled;
   }
 
-  private boolean loginAll(Project project, final ModalityContext executor) {
+  private boolean loginAll(Project project) {
     final Set<CvsEnvironment> allRoots = new HashSet<CvsEnvironment>();
     try {
       myCvsOperation.appendSelfCvsRootProvider(allRoots);
@@ -327,17 +334,18 @@ public class CommandCvsHandler extends CvsHandler {
     }
 
     final LoginPerformer performer = new LoginPerformer(project, allRoots, new Consumer<VcsException>() {
+      @Override
       public void consume(VcsException e) {
         myErrorMessageProcessor.addError(e);
       }
     });
     performer.setForceCheck(true);
-    return performer.loginAll(executor);
+    return performer.loginAll();
   }
 
   @Override
   public void internalRun(Project project, final ModalityContext executor, final boolean runInReadAction) {
-    if (! login(project, executor)) return;
+    if (! login(project)) return;
 
     final CvsExecutionEnvironment executionEnvironment = new CvsExecutionEnvironment(myCompositeListener,
                                                                                      getProgressListener(),
@@ -401,6 +409,7 @@ public class CommandCvsHandler extends CvsHandler {
     return PostCvsActivity.DEAF;
   }
 
+  @Override
   protected int getFilesToProcessCount() {
     return myCvsOperation.getFilesToProcessCount();
   }

@@ -72,7 +72,7 @@ public class CvsOperationExecutor {
   public CvsOperationExecutor(boolean showProgress, Project project, ModalityState modalityState) {
     myProject = project;
     myShowProgress = showProgress;
-    myExecutor = new ModalityContextImpl(modalityState, false);
+    myExecutor = new ModalityContextImpl(modalityState);
     myConfiguration = project != null ? CvsConfiguration.getInstance(project) : null;
   }
 
@@ -97,6 +97,7 @@ public class CvsOperationExecutor {
     final CvsTabbedWindow tabbedWindow = myIsQuietOperation ? null : openTabbedWindow(handler);
 
     final Runnable finish = new Runnable() {
+      @Override
       public void run() {
         try {
           myResult.addAllErrors(handler.getErrorsExceptAborted());
@@ -127,6 +128,7 @@ public class CvsOperationExecutor {
     };
 
     final Runnable cvsAction = new Runnable() {
+      @Override
       public void run() {
         try {
           if (handler == CvsHandler.NULL) return;
@@ -159,6 +161,7 @@ public class CvsOperationExecutor {
       final PerformInBackgroundOption backgroundOption = handler.getBackgroundOption(myProject);
       if (backgroundOption != null) {
         final Task.Backgroundable task = new Task.Backgroundable(myProject, handler.getTitle(), handler.canBeCanceled(), backgroundOption) {
+          @Override
           public void run(@NotNull final ProgressIndicator indicator) {
             cvsAction.run();
           }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,8 +50,9 @@ public class CreateTagDialog extends CvsTagDialog {
       isTag ? CvsBundle.message("checkbox.switch.to.this.tag") : CvsBundle.message("checkbox.switch.to.this.branch"));
 
     myTagName.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
-        String branchName = TagsHelper.chooseBranch(collectVcsRoots(project, files), project, false);
+        String branchName = TagsHelper.chooseBranch(collectVcsRoots(project, files), project);
         if (branchName != null)
           myTagName.setText(branchName);        
       }
@@ -82,14 +83,17 @@ public class CreateTagDialog extends CvsTagDialog {
     return myOverrideExisting.isSelected();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return myPanel;
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myTagName.getTextField();
   }
 
+  @Override
   protected String getDimensionServiceKey() {
     return "CVS.CreateTagDialog";
   }
@@ -98,6 +102,7 @@ public class CreateTagDialog extends CvsTagDialog {
     return mySwitchToThisTag.isSelected();
   }
 
+  @Override
   public boolean tagFieldIsActive() {
     return true;
   }

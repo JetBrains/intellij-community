@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.cvsSupport2.ui;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.config.CvsConfiguration;
 import com.intellij.cvsSupport2.config.DateOrRevisionSettings;
 import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.TagsProviderOnVirtualFiles;
@@ -38,13 +39,14 @@ public class SelectFileVersionDialog extends DialogWrapper {
     myProject = project;
     myDateOrRevisionOrTagSettings =
     new DateOrRevisionOrTagSettings(new TagsProviderOnVirtualFiles(Collections.singleton(file)),
-                                    myProject, false);
+                                    myProject);
 
     myDateOrRevisionOrTagSettings.updateFrom(CvsConfiguration.getInstance(project).SHOW_CHANGES_REVISION_SETTINGS);
-    setTitle(com.intellij.CvsBundle.message("dialog.title.select.tag.or.date"));
+    setTitle(CvsBundle.message("dialog.title.select.tag.or.date"));
     init();
   }
 
+  @Override
   protected void doOKAction() {
     try {
       myDateOrRevisionOrTagSettings.saveTo(CvsConfiguration.getInstance(myProject).SHOW_CHANGES_REVISION_SETTINGS);
@@ -54,6 +56,7 @@ public class SelectFileVersionDialog extends DialogWrapper {
     }
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return myDateOrRevisionOrTagSettings.getPanel();
   }

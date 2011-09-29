@@ -20,7 +20,6 @@ import com.intellij.cvsSupport2.config.CvsRootConfiguration;
 import com.intellij.cvsSupport2.connections.CvsConnectionSettings;
 import com.intellij.cvsSupport2.connections.CvsConnectionUtil;
 import com.intellij.cvsSupport2.connections.login.CvsLoginWorker;
-import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.errorHandling.ErrorRegistry;
 import com.intellij.openapi.project.Project;
 import org.netbeans.lib.cvsclient.command.CommandException;
@@ -35,6 +34,7 @@ public class PServerCvsSettings extends CvsConnectionSettings {
     super(cvsRootConfiguration);
   }
 
+  @Override
   protected IConnection createOriginalConnection(ErrorRegistry errorRegistry, CvsRootConfiguration cvsRootConfiguration) {
     if (PASSWORD == null) {
       PASSWORD = PServerLoginProvider.getInstance().getScrambledPasswordForCvsRoot(getCvsRootAsString());
@@ -47,12 +47,14 @@ public class PServerCvsSettings extends CvsConnectionSettings {
     return CvsApplicationLevelConfiguration.getInstance().TIMEOUT * 1000;
   }
 
+  @Override
   public int getDefaultPort() {
     return 2401;
   }
 
-  public CvsLoginWorker getLoginWorker(ModalityContext executor, Project project) {
-    return PServerLoginProvider.getInstance().getLoginWorker(executor, project, this);
+  @Override
+  public CvsLoginWorker getLoginWorker(Project project) {
+    return PServerLoginProvider.getInstance().getLoginWorker(project, this);
   }
 
   public void releasePassword() {
@@ -63,6 +65,7 @@ public class PServerCvsSettings extends CvsConnectionSettings {
     PASSWORD = password;
   }
 
+  @Override
   public CommandException processException(CommandException t) {
     return t;
   }  

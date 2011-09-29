@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,12 +54,13 @@ public class DateOrRevisionOrTagSettings {
   private final TagsProvider myTagsProvider;
   private static final String EMPTY_DATE = "";
 
-  public DateOrRevisionOrTagSettings(TagsProvider tagsProvider, Project project, final boolean forTemporaryConfiguration) {
+  public DateOrRevisionOrTagSettings(TagsProvider tagsProvider, Project project) {
     myTagsProvider = tagsProvider;
     myProject = project;
     myDatePicker.setDateFormat(DateFormatUtil.getDateTimeFormat().getDelegate());
 
     myUseBranch.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         refreshEnabling();
         if (myUseBranch.isEnabled()){
@@ -70,12 +71,14 @@ public class DateOrRevisionOrTagSettings {
     });
 
     myUseHead.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         refreshEnabling();
       }
     });
 
     myUseDate.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         if (myUseDate.isSelected() && getDateString().equals(EMPTY_DATE)) {
           setDate(new Date());
@@ -89,8 +92,9 @@ public class DateOrRevisionOrTagSettings {
     });
 
     myBranch.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
-        String tagName = TagsHelper.chooseBranch(myTagsProvider, myProject, forTemporaryConfiguration);
+        String tagName = TagsHelper.chooseBranch(myTagsProvider, myProject);
         if (tagName != null) myBranch.setText(tagName);
       }
     });

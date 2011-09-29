@@ -23,7 +23,6 @@ import com.intellij.cvsSupport2.connections.CvsConnectionSettings;
 import com.intellij.cvsSupport2.connections.CvsConnectionUtil;
 import com.intellij.cvsSupport2.connections.CvsRootData;
 import com.intellij.cvsSupport2.connections.login.CvsLoginWorkerImpl;
-import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.errorHandling.ErrorRegistry;
 import com.intellij.cvsSupport2.javacvsImpl.io.ReadWriteStatistics;
 import com.intellij.cvsSupport2.javacvsImpl.io.StreamLogger;
@@ -46,10 +45,12 @@ public class SshConnectionSettings extends CvsConnectionSettings {
     super(cvsRootConfiguration);
   }
 
+  @Override
   public int getDefaultPort() {
     return 22;
   }
 
+  @Override
   protected IConnection createOriginalConnection(ErrorRegistry errorRegistry, CvsRootConfiguration cvsRootConfiguration) {
 
     return createSshConnection(cvsRootConfiguration, this, cvsRootConfiguration.SSH_CONFIGURATION);
@@ -67,15 +68,16 @@ public class SshConnectionSettings extends CvsConnectionSettings {
     return CvsConnectionUtil.createSshConnection(settings, sshConfiguration, proxy_settings, SSHPasswordProviderImpl.getInstance(),timeout);
   }
 
-  public CvsLoginWorkerImpl getLoginWorker(ModalityContext executor, Project project) {
-    return new SshLoginWorker(project, executor, getCvsRootAsString(), this);
+  @Override
+  public CvsLoginWorkerImpl getLoginWorker(Project project) {
+    return new SshLoginWorker(project, getCvsRootAsString(), this);
   }
 
   private class SshLoginWorker extends CvsLoginWorkerImpl<SshConnectionSettings> {
     private final String myCvsRoot;
 
-    private SshLoginWorker(Project project, ModalityContext executor, String cvsRoot, final SshConnectionSettings sshConnectionSettings) {
-      super(project, sshConnectionSettings, executor);
+    private SshLoginWorker(Project project, String cvsRoot, final SshConnectionSettings sshConnectionSettings) {
+      super(project, sshConnectionSettings);
       myCvsRoot = cvsRoot;
     }
 
@@ -100,11 +102,13 @@ public class SshConnectionSettings extends CvsConnectionSettings {
         }
     }
 
+    @Override
     public boolean promptForPassword() {
       return SshConnectionUtil.promptForPassword(getSshConfiguration(), myCvsRoot);
     }
   }
 
+  @Override
   public CommandException processException(CommandException t) {
     return t;
   }

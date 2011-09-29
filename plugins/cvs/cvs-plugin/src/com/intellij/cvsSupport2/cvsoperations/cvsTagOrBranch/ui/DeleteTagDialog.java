@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ public class DeleteTagDialog extends CvsTagDialog {
     myFiles = files;
     myProject = project;
     myTagName.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         selectTag();
       }
@@ -52,7 +53,7 @@ public class DeleteTagDialog extends CvsTagDialog {
   }
 
   private void selectTag() {
-    String branchName = TagsHelper.chooseBranch(CreateTagDialog.collectVcsRoots(myProject, myFiles), myProject, false);
+    String branchName = TagsHelper.chooseBranch(CreateTagDialog.collectVcsRoots(myProject, myFiles), myProject);
     if (branchName != null)
       myTagName.setText(branchName);            
   }
@@ -61,18 +62,22 @@ public class DeleteTagDialog extends CvsTagDialog {
     return myTagName.getText();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return myPanel;
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myTagName.getTextField();
   }
 
+  @Override
   protected String getDimensionServiceKey() {
     return "CVS.DeleteTagDialog";
   }
 
+  @Override
   public boolean tagFieldIsActive() {
     return true;
   }

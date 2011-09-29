@@ -17,7 +17,6 @@ package com.intellij.cvsSupport2.cvsoperations.common;
 
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.connections.login.CvsLoginWorker;
-import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.errorHandling.CvsException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -46,13 +45,13 @@ public class LoginPerformer {
     myForceCheck = forceCheck;
   }
 
-  public boolean loginAll(final ModalityContext executor) {
-    return loginAll(executor, true);
+  public boolean loginAll() {
+    return loginAll(true);
   }
 
-  public boolean loginAll(final ModalityContext executor, final boolean goOffline) {
+  public boolean loginAll(final boolean goOffline) {
     for (CvsEnvironment root : myRoots) {
-      final CvsLoginWorker worker = root.getLoginWorker(executor, myProject);
+      final CvsLoginWorker worker = root.getLoginWorker(myProject);
 
       try {
         final ThreeState checkResult = checkLoginWorker(worker, myForceCheck);

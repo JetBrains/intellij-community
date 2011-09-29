@@ -21,8 +21,6 @@ import com.intellij.cvsSupport2.config.CvsRootConfiguration;
 import com.intellij.cvsSupport2.config.ui.SelectCvsConfigurationDialog;
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.cvsBrowser.ui.BrowserPanel;
-import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
-import com.intellij.cvsSupport2.cvsExecution.ModalityContextImpl;
 import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
 import com.intellij.cvsSupport2.cvshandlers.FileSetToBeUpdated;
 import com.intellij.cvsSupport2.cvsoperations.common.LoginPerformer;
@@ -30,7 +28,6 @@ import com.intellij.cvsSupport2.ui.CvsTabbedWindow;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -52,6 +49,7 @@ public class BrowseCvsRepositoryAction extends AbstractAction implements DumbAwa
     super(false);
   }
 
+  @Override
   public void update(AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     final boolean projectExists = e.getData(PlatformDataKeys.PROJECT) != null;
@@ -59,10 +57,12 @@ public class BrowseCvsRepositoryAction extends AbstractAction implements DumbAwa
     presentation.setEnabled(projectExists);
   }
 
+  @Override
   protected String getTitle(VcsContext context) {
     return TITLE;
   }
 
+  @Override
   protected CvsHandler getCvsHandler(CvsContext context) {
     final SelectCvsConfigurationDialog selectCvsConfigurationDialog = new SelectCvsConfigurationDialog(context.getProject());
     selectCvsConfigurationDialog.show();
@@ -72,20 +72,22 @@ public class BrowseCvsRepositoryAction extends AbstractAction implements DumbAwa
     return new MyCvsHandler();
   }
 
+  @Override
   protected void onActionPerformed(CvsContext context,
                                    CvsTabbedWindow tabbedWindow,
                                    boolean successfully,
                                    CvsHandler handler) {
     if (mySelectedConfiguration == null) return;
-    if (! loginImpl(context.getProject(), new ModalityContextImpl(ModalityState.NON_MODAL, false),
+    final Project project = context.getProject();
+    if (! loginImpl(context.getProject(),
                     new Consumer<VcsException>() {
+                      @Override
                       public void consume(VcsException e) {
-                        //
+                        VcsBalloonProblemNotifier.showOverChangesView(project, e.getMessage(), MessageType.WARNING);
                       }
                     })) return;
     super.onActionPerformed(context, tabbedWindow, successfully, handler);
     if (successfully){
-      final Project project = context.getProject();
       LOG.assertTrue(project != null);
       LOG.assertTrue(mySelectedConfiguration != null);
       final BrowserPanel browserPanel = new BrowserPanel(mySelectedConfiguration, project, new Consumer<VcsException>() {
@@ -106,16 +108,19 @@ public class BrowseCvsRepositoryAction extends AbstractAction implements DumbAwa
       super(TITLE, FileSetToBeUpdated.EMPTY);
     }
 
+    @Override
     public boolean isCanceled() {
       return false;
     }
 
+    @Override
     protected int getFilesToProcessCount() {
       return 0;
     }
 
-    public boolean login(Project project, ModalityContext executor) {
-      return loginImpl(project, executor, new Consumer<VcsException>() {
+    @Override
+    public boolean login(Project project) {
+      return loginImpl(project, new Consumer<VcsException>() {
         public void consume(VcsException e) {
           myErrors.add(e);
         }
@@ -123,11 +128,11 @@ public class BrowseCvsRepositoryAction extends AbstractAction implements DumbAwa
     }
   }
 
-  private boolean loginImpl(final Project project, final ModalityContext executor, final Consumer<VcsException> exceptionConsumer) {
+  private boolean loginImpl(final Project project, final Consumer<VcsException> exceptionConsumer) {
     final LoginPerformer performer =
       new LoginPerformer(project, Collections.<CvsEnvironment>singletonList(mySelectedConfiguration), exceptionConsumer);
     try {
-      return performer.loginAll(executor, false);
+      return performer.loginAll(false);
     } catch (Exception e) {
       VcsBalloonProblemNotifier.showOverChangesView(project, e.getMessage(), MessageType.ERROR);
       return false;

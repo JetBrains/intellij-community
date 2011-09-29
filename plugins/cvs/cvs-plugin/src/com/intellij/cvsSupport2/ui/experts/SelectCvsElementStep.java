@@ -21,9 +21,7 @@ import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.connections.CvsRootException;
 import com.intellij.cvsSupport2.cvsBrowser.CvsElement;
 import com.intellij.cvsSupport2.cvsBrowser.CvsTree;
-import com.intellij.cvsSupport2.cvsExecution.ModalityContextImpl;
 import com.intellij.cvsSupport2.cvsoperations.common.LoginPerformer;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
@@ -65,6 +63,7 @@ public class SelectCvsElementStep extends WizardStep {
     init();
   }
 
+  @Override
   public boolean nextIsEnabled() {
     return myCvsTree.getCurrentSelection().length > 0;
   }
@@ -74,12 +73,13 @@ public class SelectCvsElementStep extends WizardStep {
     final LoginPerformer performer = new LoginPerformer(
       myProject, Collections.<CvsEnvironment>singletonList(selectedConfiguration),
       new Consumer<VcsException>() {
+        @Override
         public void consume(VcsException e) {
           errors.set(Boolean.TRUE);
         }
       });
     try {
-      final boolean logged = performer.loginAll(new ModalityContextImpl(ModalityState.current(), false), false);
+      final boolean logged = performer.loginAll(false);
       return logged && errors.isNull();
     } catch (CvsRootException e) {
       Messages.showErrorDialog(e.getMessage(), CvsBundle.message("error.title.invalid.cvs.root"));
@@ -97,10 +97,12 @@ public class SelectCvsElementStep extends WizardStep {
     return logged;
   }
 
+  @Override
   public boolean setActive() {
     return true;
   }
 
+  @Override
   protected void dispose() {
     if (myCvsTree != null) {
       myCvsTree.deactivated();
@@ -113,6 +115,7 @@ public class SelectCvsElementStep extends WizardStep {
     return selection[0];
   }
 
+  @Override
   protected JComponent createComponent() {
     myCvsTree = new CvsTree(myProject, myAllowRootSelection, mySelectionMode, myShowModules, myShowFiles, new Consumer<VcsException>() {
       @Override
@@ -122,6 +125,7 @@ public class SelectCvsElementStep extends WizardStep {
     });
     myCvsTree.init();
     myCvsTree.addSelectionObserver(new Observer() {
+      @Override
       public void update(Observable o, Object arg) {
         if (CvsTree.SELECTION_CHANGED.equals(arg)) {
           getWizard().updateStep();
@@ -135,6 +139,7 @@ public class SelectCvsElementStep extends WizardStep {
     return myCvsTree.getCurrentSelection();
   }
 
+  @Override
   public Component getPreferredFocusedComponent() {
     return myCvsTree.getTree();
   }

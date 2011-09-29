@@ -25,7 +25,6 @@ import com.intellij.cvsSupport2.connections.login.CvsLoginWorker;
 import com.intellij.cvsSupport2.connections.login.CvsLoginWorkerImpl;
 import com.intellij.cvsSupport2.connections.ssh.SSHPasswordProviderImpl;
 import com.intellij.cvsSupport2.connections.ssh.SshConnectionUtil;
-import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.errorHandling.ErrorRegistry;
 import com.intellij.cvsSupport2.javacvsImpl.io.ReadWriteStatistics;
 import com.intellij.cvsSupport2.javacvsImpl.io.StreamLogger;
@@ -53,6 +52,7 @@ public class ExtConnectionCvsSettings extends CvsConnectionSettings {
     mySshSettings = cvsRootConfiguration.SSH_FOR_EXT_CONFIGURATION;
   }
 
+  @Override
   protected IConnection createOriginalConnection(ErrorRegistry errorRegistry, CvsRootConfiguration cvsRootConfiguration) {
     return CvsConnectionUtil.createExtConnection(this, getExtConfiguration(), mySshSettings,
                                                  SSHPasswordProviderImpl.getInstance(),
@@ -61,18 +61,20 @@ public class ExtConnectionCvsSettings extends CvsConnectionSettings {
                                                  CvsApplicationLevelConfiguration.getInstance().TIMEOUT * 1000);
   }
 
+  @Override
   public int getDefaultPort() {
     return 22;
   }
 
-  public CvsLoginWorker getLoginWorker(ModalityContext executor, Project project) {
-    return new ExtLoginWorker(project, this, executor);
+  @Override
+  public CvsLoginWorker getLoginWorker(Project project) {
+    return new ExtLoginWorker(project, this);
   }
 
   private class ExtLoginWorker extends CvsLoginWorkerImpl<ExtConnectionCvsSettings> {
 
-    public ExtLoginWorker(final Project project, final ExtConnectionCvsSettings settings, final ModalityContext executor) {
-      super(project, settings, executor);
+    public ExtLoginWorker(final Project project, final ExtConnectionCvsSettings settings) {
+      super(project, settings);
     }
 
     @Override
@@ -110,6 +112,7 @@ public class ExtConnectionCvsSettings extends CvsConnectionSettings {
     }
   }
 
+  @Override
   public CommandException processException(CommandException t) {
     Exception sourceException = t.getUnderlyingException();
     if (!(sourceException instanceof IOException)) return t;

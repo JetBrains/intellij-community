@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.cvsSupport2.connections.pserver;
 
 import com.intellij.cvsSupport2.connections.login.CvsLoginWorker;
-import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,5 +37,5 @@ public abstract class PServerLoginProvider {
   @Nullable
   public abstract String getScrambledPasswordForCvsRoot(String cvsroot);
 
-  public abstract CvsLoginWorker getLoginWorker(final ModalityContext executor, final Project project, final PServerCvsSettings pServerCvsSettings);
+  public abstract CvsLoginWorker getLoginWorker(final Project project, final PServerCvsSettings pServerCvsSettings);
 }

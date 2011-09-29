@@ -39,15 +39,18 @@ public abstract class CvsHandler extends CvsMessagesAdapter{
   @NonNls private static final String NULL_HANDLER_NAME = "Null";
   public static final CvsHandler NULL = new CvsHandler(NULL_HANDLER_NAME, FileSetToBeUpdated.EMPTY) {
 
+    @Override
     protected int getFilesToProcessCount() {
       return 0;
     }
 
+    @Override
     public boolean isCanceled() {
       return true;
     }
 
-    public boolean login(Project project, ModalityContext executor) {
+    @Override
+    public boolean login(Project project) {
       return false;
     }
   };
@@ -103,11 +106,13 @@ public abstract class CvsHandler extends CvsMessagesAdapter{
     return myErrorMessageProcessor.getWarnings();
   }
 
+  @Override
   public void addFileMessage(String message, ICvsFileSystem cvsFileSystem) {
     setText2(message);
     incProgress();
   }
 
+  @Override
   public void addMessage(String message) {
     setText2(message);
   }
@@ -182,7 +187,7 @@ public abstract class CvsHandler extends CvsMessagesAdapter{
 
   public void beforeLogin() {}
 
-  public abstract boolean login(Project project, ModalityContext executor);
+  public abstract boolean login(Project project);
 
   public FileSetToBeUpdated getFiles() {
     return myFiles;
