@@ -114,6 +114,7 @@
     <moduleConfigurationEditorProvider implementation="org.jetbrains.android.newProject.AndroidModuleConfigurationEditorProvider"/>
 
     <compiler implementation="org.jetbrains.android.compiler.AndroidIncludingCompiler"/>
+    <compiler implementation="org.jetbrains.android.compiler.AndroidRenderscriptCompiler"/>
     <compiler implementation="org.jetbrains.android.compiler.AndroidAptCompiler"/>
     <compiler implementation="org.jetbrains.android.compiler.AndroidIdlCompiler"/>
     <compiler implementation="org.jetbrains.android.compiler.AndroidDexCompiler"/>

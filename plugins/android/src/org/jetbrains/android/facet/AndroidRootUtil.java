@@ -77,13 +77,39 @@ public class AndroidRootUtil {
   }
 
   @Nullable
+  private static String suggestResourceDirPath(@NotNull AndroidFacet facet) {
+    final Module module = facet.getModule();
+    
+    final VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
+    if (contentRoots.length == 0) {
+      return null;
+    }
+    
+    VirtualFile root = contentRoots[0];
+
+    if (contentRoots.length > 1) {
+      final String moduleFileParentDirPath = FileUtil.toSystemIndependentName(new File(module.getModuleFilePath()).getParent());
+      final VirtualFile moduleFileParentDir = LocalFileSystem.getInstance().findFileByPath(moduleFileParentDirPath);
+      if (moduleFileParentDir != null) {
+        for (VirtualFile contentRoot : contentRoots) {
+          if (contentRoot == moduleFileParentDir) {
+            root = contentRoot;
+          }
+        }
+      }
+    }
+    return root.getPath() + facet.getConfiguration().RES_FOLDER_RELATIVE_PATH;
+  }
+  
+  @Nullable
+  public static String getResourceDirPath(@NotNull AndroidFacet facet) {
+    final VirtualFile resourceDir = getResourceDir(facet.getModule());
+    return resourceDir != null ? resourceDir.getPath() : suggestResourceDirPath(facet);
+  }
+
+  @Nullable
   public static VirtualFile getFileByRelativeModulePath(Module module, String relativePath, boolean lookInContentRoot) {
     VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
-
-    /*if (contentRoots.length == 1) {
-      String absPath = FileUtil.toSystemIndependentName(contentRoots[0].getPath() + relativePath);
-      return LocalFileSystem.getInstance().findFileByPath(absPath);
-    }*/
 
     String moduleDirPath = new File(module.getModuleFilePath()).getParent();
     if (moduleDirPath != null) {
@@ -105,17 +131,6 @@ public class AndroidRootUtil {
     }
     return null;
   }
-
-  /*@Nullable
-  private static VirtualFile getManifestBrotherDir(@NotNull Module module, @NotNull String path) {
-    VirtualFile manifestFile = getManifestFile(module);
-    if (manifestFile == null) return null;
-    VirtualFile parent = manifestFile.getParent();
-    if (parent != null) {
-      return parent.findChild(path);
-    }
-    return parent;
-  }*/
 
   @Nullable
   public static VirtualFile getAssetsDir(@NotNull Module module) {
