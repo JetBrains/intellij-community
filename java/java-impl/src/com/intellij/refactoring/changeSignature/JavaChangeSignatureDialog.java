@@ -49,7 +49,6 @@ import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.VisibilityUtil;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.table.JBTableRow;
@@ -259,7 +258,6 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
       private EditorTextField myNameEditor;
       private EditorTextField myDefaultValueEditor;      
       private JCheckBox myAnyVar;
-      private Set<RowDocumentListener> myListeners = new HashSet<RowDocumentListener>();
 
       class MyDocumentListener extends DocumentAdapter {
         private int myColumn;
@@ -270,9 +268,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
 
         @Override
         public void documentChanged(DocumentEvent e) {
-          for (RowDocumentListener listener : myListeners) {
-            listener.documentChanged(e, myColumn);
-          }
+          fireDocumentChanged(e, myColumn);
         }
       }
 
@@ -367,11 +363,6 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
           focusable.add(myAnyVar);
         }
         return focusable.toArray(new JComponent[focusable.size()]);
-      }
-
-      @Override
-      public void addDocumentListener(RowDocumentListener listener) {
-        myListeners.add(listener);
       }
     };
   }

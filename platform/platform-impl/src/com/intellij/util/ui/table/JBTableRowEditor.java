@@ -17,10 +17,12 @@ package com.intellij.util.ui.table;
 
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;
+import java.util.Set;
 
 /**
  * @author Konstantin Bulenkov
@@ -30,7 +32,20 @@ public abstract class JBTableRowEditor extends JPanel {
     void documentChanged(DocumentEvent e, int column);
   }
 
+  private Set<RowDocumentListener> myListeners = new HashSet<RowDocumentListener>();
   private MouseEvent myMouseEvent;
+
+  public abstract void prepareEditor(JTable table, int row);
+
+  public abstract JBTableRow getValue();
+
+  public abstract JComponent getPreferredFocusedComponent();
+
+  public abstract JComponent[] getFocusableComponents();
+
+  public final void addDocumentListener(RowDocumentListener listener) {
+    myListeners.add(listener);
+  }
 
   @Override
   public void addNotify() {
@@ -38,6 +53,12 @@ public abstract class JBTableRowEditor extends JPanel {
     final JComponent c = getPreferredFocusedComponent();
     if (c != null && c.isVisible()) {
       IdeFocusManager.getGlobalInstance().requestFocus(c, true);
+    }
+  }
+
+  public void fireDocumentChanged(DocumentEvent e, int column) {
+    for (RowDocumentListener listener : myListeners) {
+      listener.documentChanged(e, column);
     }
   }
 
@@ -49,10 +70,4 @@ public abstract class JBTableRowEditor extends JPanel {
   public final void setMouseEvent(@Nullable MouseEvent e) {
     myMouseEvent = e;
   }
-
-  public abstract void prepareEditor(JTable table, int row);
-  public abstract JBTableRow getValue();
-  public abstract JComponent getPreferredFocusedComponent();
-  public abstract JComponent[] getFocusableComponents();
-  public abstract void addDocumentListener(RowDocumentListener listener);
 }
