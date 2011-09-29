@@ -17,6 +17,7 @@
 package com.intellij.conversion;
 
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,6 +29,8 @@ import java.util.List;
  * @author nik
  */
 public interface ModuleSettings extends ComponentManagerSettings {
+
+  @NonNls String MODULE_ROOT_MANAGER_COMPONENT = "NewModuleRootManager";
 
   @NotNull
   String getModuleName();
