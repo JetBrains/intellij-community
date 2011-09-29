@@ -275,6 +275,7 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
               final LoginPerformer performer =
                 new LoginPerformer(executionEnvironment.getProject(), Collections.<CvsEnvironment>singletonList(root), new Consumer<VcsException>() {
                   public void consume(VcsException e) {
+                    executionEnvironment.getErrorProcessor().addError(e);
                     LOG.info(e);
                   }
                 });

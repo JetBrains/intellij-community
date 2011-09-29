@@ -199,7 +199,7 @@ public class Cvs2SettingsEditPanel {
       final ModalityContextImpl executor = new ModalityContextImpl(true);
       final CvsLoginWorker loginWorker = configuration.getLoginWorker(executor, project);
 
-      final ThreeState checkResult = LoginPerformer.checkLoginWorker(loginWorker, executor, project, true);
+      final ThreeState checkResult = LoginPerformer.checkLoginWorker(loginWorker, true);
       if (ThreeState.NO.equals(checkResult)) {
         Messages.showMessageDialog(component, CvsBundle.message("test.connection.login.failed.text"), CvsBundle.message("operation.name.test.connection"), Messages.getErrorIcon());
         return;

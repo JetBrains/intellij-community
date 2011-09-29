@@ -15,24 +15,18 @@
  */
 package com.intellij.cvsSupport2.cvsoperations.common;
 
-import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.connections.login.CvsLoginWorker;
 import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.errorHandling.CvsException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.Consumer;
 import com.intellij.util.ThreeState;
+import com.intellij.util.ui.UIUtil;
 import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 
-import java.net.ConnectException;
-import java.net.NoRouteToHostException;
-import java.net.SocketTimeoutException;
-import java.net.UnknownHostException;
 import java.util.Collection;
 
 public class LoginPerformer {
@@ -61,7 +55,7 @@ public class LoginPerformer {
       final CvsLoginWorker worker = root.getLoginWorker(executor, myProject);
 
       try {
-        final ThreeState checkResult = checkLoginWorker(worker, executor, myProject, myForceCheck);
+        final ThreeState checkResult = checkLoginWorker(worker, myForceCheck);
         if (! ThreeState.YES.equals(checkResult)) {
           if (ThreeState.UNSURE.equals(checkResult)) {
             if (goOffline) {
@@ -72,35 +66,15 @@ public class LoginPerformer {
           return false;
         }
       } catch (AuthenticationException e) {
-        reportException(myProject, e);
+        myExceptionConsumer.consume(new CvsException(e, root.getCvsRootAsString()));
         return false;
       }
     }
     return true;
   }
 
-  private static void reportException(Project project, AuthenticationException e) {
-    Throwable cause = e.getCause();
-    if (cause instanceof SocketTimeoutException) {
-      VcsBalloonProblemNotifier.showOverChangesView(project, CvsBundle.message("error.message.timeout.error"), MessageType.ERROR);
-    }
-    else if (cause instanceof UnknownHostException) {
-      VcsBalloonProblemNotifier.showOverChangesView(project, CvsBundle.message("error.message.unknown.host", cause.getMessage()),
-                                                    MessageType.ERROR);
-    }
-    else if (cause instanceof ConnectException || cause instanceof NoRouteToHostException) {
-      VcsBalloonProblemNotifier.showOverChangesView(project, CvsBundle.message("error.message.connection.error", cause.getMessage()),
-                                                    MessageType.ERROR);
-    } else {
-      String localizedMessage = e.getLocalizedMessage();
-      localizedMessage = (localizedMessage == null) ? e.getMessage() : localizedMessage;
-      localizedMessage = (localizedMessage == null) ? CvsBundle.message("error.dialog.title.cannot.connect.to.cvs") : localizedMessage;
-      VcsBalloonProblemNotifier.showOverChangesView(project, localizedMessage, MessageType.ERROR);
-    }
-  }
-
-  public static ThreeState checkLoginWorker(final CvsLoginWorker worker, final ModalityContext executor, final Project project,
-                                            final boolean forceCheckParam) throws AuthenticationException {
+  public static ThreeState checkLoginWorker(final CvsLoginWorker worker, final boolean forceCheckParam)
+    throws AuthenticationException {
     boolean forceCheck = forceCheckParam;
     final Ref<Boolean> promptResult = new Ref<Boolean>();
     final Runnable prompt = new Runnable() {
@@ -112,7 +86,7 @@ public class LoginPerformer {
       final ThreeState state = worker.silentLogin(forceCheck);
       if (ThreeState.YES.equals(state)) return ThreeState.YES;
       if (ThreeState.NO.equals(state)) return state;
-      executor.runInDispatchThread(prompt, project);
+      UIUtil.invokeAndWaitIfNeeded(prompt);
       if (! Boolean.TRUE.equals(promptResult.get())) {
         return ThreeState.UNSURE; // canceled
       }

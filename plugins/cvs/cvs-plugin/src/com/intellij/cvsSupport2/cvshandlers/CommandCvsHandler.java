@@ -328,9 +328,10 @@ public class CommandCvsHandler extends CvsHandler {
 
     final LoginPerformer performer = new LoginPerformer(project, allRoots, new Consumer<VcsException>() {
       public void consume(VcsException e) {
-        myErrors.add(e);
+        myErrorMessageProcessor.addError(e);
       }
     });
+    performer.setForceCheck(true);
     return performer.loginAll(executor);
   }
 
@@ -354,8 +355,8 @@ public class CommandCvsHandler extends CvsHandler {
   }
 
   private boolean runOperation(final CvsExecutionEnvironment executionEnvironment,
-                            final boolean runInReadAction,
-                            final CvsOperation cvsOperation) {
+                               final boolean runInReadAction,
+                               final CvsOperation cvsOperation) {
     try {
       cvsOperation.execute(executionEnvironment, runInReadAction);
       return true;
