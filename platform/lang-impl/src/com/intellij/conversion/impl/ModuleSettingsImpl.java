@@ -42,7 +42,7 @@ import java.util.*;
  */
 public class ModuleSettingsImpl extends ComponentManagerSettingsImpl implements ModuleSettings {
   private final String myModuleName;
-  @NonNls private static final String MODULE_ROOT_MANAGER_COMPONENT = "NewModuleRootManager";
+  @NonNls public static final String MODULE_ROOT_MANAGER_COMPONENT = "NewModuleRootManager";
 
   public ModuleSettingsImpl(File moduleFile, ConversionContextImpl context) throws CannotConvertException {
     super(moduleFile, context);
