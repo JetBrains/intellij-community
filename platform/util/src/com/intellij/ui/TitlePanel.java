@@ -30,6 +30,8 @@ public class TitlePanel extends CaptionPanel {
   private final Icon myRegular;
   private final Icon myInactive;
 
+  private boolean myHtml;
+  
   public TitlePanel() {
     this(null, null);
   }
@@ -57,6 +59,7 @@ public class TitlePanel extends CaptionPanel {
   }
 
   public void setText(String titleText) {
+    myHtml = titleText.indexOf('<') >= 0;
     myLabel.setText(titleText);
   }
 
@@ -72,8 +75,8 @@ public class TitlePanel extends CaptionPanel {
     }
 
     final Dimension preferredSize = super.getPreferredSize();
-    if (preferredSize.width > 300) { // do not allow caption to extend parent container
-      return new Dimension(300, preferredSize.height);
+    if (!myHtml && preferredSize.width > 350) { // do not allow caption to extend parent container
+      return new Dimension(350, preferredSize.height);
     }
     
     return preferredSize;
