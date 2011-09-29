@@ -134,6 +134,10 @@ public abstract class JavaCodeContextType extends TemplateContextType {
         return false;
       }
 
+      if (JavaCompletionData.INSIDE_PARAMETER_LIST.accepts(element)) {
+        return false;
+      }
+
       ProcessingContext context = new ProcessingContext();
       if (psiElement().inside(PsiExpression.class).afterLeaf(psiElement().inside(psiElement(PsiExpression.class).save("prevExpr"))).accepts(element, context)) {
         PsiExpression prevExpr = (PsiExpression)context.get("prevExpr");
