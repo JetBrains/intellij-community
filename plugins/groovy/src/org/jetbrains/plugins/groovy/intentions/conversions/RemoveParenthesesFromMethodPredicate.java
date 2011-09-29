@@ -17,58 +17,49 @@ package org.jetbrains.plugins.groovy.intentions.conversions;
 
 import com.intellij.psi.PsiElement;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCommandArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 class RemoveParenthesesFromMethodPredicate implements PsiElementPredicate {
 
   public boolean satisfiedBy(PsiElement element) {
-    if (!(element instanceof GrMethodCallExpression)) {
-      return false;
+    if (!(element instanceof GrMethodCallExpression)) return false;
+    if (!PsiUtil.isExpressionStatement(element)) return false;
+
+    final GrMethodCallExpression expression = (GrMethodCallExpression)element;
+
+    if (expression.getClosureArguments().length > 0) return false;
+
+    final StringBuilder newStatementText = new StringBuilder();
+    newStatementText.append(expression.getInvokedExpression().getText()).append(' ');
+    GrArgumentList argumentList = expression.getArgumentList();
+
+    final GroovyPsiElement[] allArguments = argumentList != null ? argumentList.getAllArguments() : GroovyPsiElement.EMPTY_ARRAY;
+
+    if (argumentList != null) {
+      argumentList = (GrArgumentList)argumentList.copy();
+      final PsiElement leftParen = argumentList.getLeftParen();
+      final PsiElement rightParen = argumentList.getRightParen();
+      if (leftParen != null) leftParen.delete();
+      if (rightParen != null) rightParen.delete();
+      newStatementText.append(argumentList.getText());
     }
-    final GrMethodCallExpression methodCallExpression = (GrMethodCallExpression)element;
-
-    if (methodCallExpression.getClosureArguments().length > 0) return false;
-
-    final GrArgumentList argumentList = methodCallExpression.getArgumentList();
-    if (argumentList == null) return false;
-
-    final GrExpression[] arguments = argumentList.getExpressionArguments();
-    if (arguments.length == 0) return false;
-
-    GrExpression firstArg = arguments[0];
-    if (firstArg instanceof GrListOrMap) return false;
-
-    final PsiElement parent = element.getParent();
-
-    if (firstArg instanceof GrMethodCallExpression) {
-      GrMethodCallExpression call = (GrMethodCallExpression)firstArg;
-
-      GrExpression invokedExpression = call.getInvokedExpression();
-
-      if (invokedExpression instanceof GrReferenceExpression) {
-        invokedExpression = getDeepestInvocationExpression(invokedExpression);
+    final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(element.getProject());
+    final GrStatement newStatement = factory.createStatementFromText(newStatementText.toString());
+    if (newStatement instanceof GrApplicationStatement) {
+      final GrCommandArgumentList newArgList = ((GrApplicationStatement)newStatement).getArgumentList();
+      if (newArgList == null && argumentList == null ||
+          newArgList != null && newArgList.getAllArguments().length == allArguments.length) {
+        return true;
       }
-
-      if (invokedExpression instanceof GrParenthesizedExpression) return false;
     }
 
-    return parent instanceof GrOpenBlock || parent instanceof GroovyFile || parent instanceof GrClosableBlock;
-  }
-
-  private GrExpression getDeepestInvocationExpression(GrExpression invokedExpression) {
-    if (invokedExpression instanceof GrReferenceExpression) {
-      GrReferenceExpression refElement = (GrReferenceExpression)invokedExpression;
-
-      return getDeepestInvocationExpression(refElement.getQualifierExpression());
-    }
-    return invokedExpression;
+    return false;
   }
 }
