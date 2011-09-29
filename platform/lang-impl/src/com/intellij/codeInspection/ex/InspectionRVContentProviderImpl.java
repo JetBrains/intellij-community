@@ -100,7 +100,7 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
         merge(model, node, toolNode, true);
       }
     }
-    merge(model, toolNode, parentNode, true);
+    merge(model, toolNode, parentNode, false);
   }
 
   protected void appendDescriptor(final InspectionTool tool,

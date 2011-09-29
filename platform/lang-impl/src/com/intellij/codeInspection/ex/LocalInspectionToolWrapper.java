@@ -107,6 +107,8 @@ public final class LocalInspectionToolWrapper extends InspectionToolWrapper<Loca
       if (myToolNode == null) {
         final HighlightSeverity currentSeverity = getCurrentSeverity((RefElement)refElement);
         view.addTool(this, HighlightDisplayLevel.find(currentSeverity), getContext().getUIOptions().GROUP_BY_SEVERITY);
+      }  else if (myToolNode.getProblemCount() > 1000) {
+        return;
       }
       final HashMap<RefEntity, CommonProblemDescriptor[]> problems = new HashMap<RefEntity, CommonProblemDescriptor[]>();
       problems.put(refElement, descriptions);

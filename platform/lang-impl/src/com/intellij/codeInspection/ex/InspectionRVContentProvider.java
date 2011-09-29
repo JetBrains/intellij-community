@@ -293,7 +293,9 @@ public abstract class InspectionRVContentProvider {
       parent.add(child);
     }
     else {
-      model.insertNodeInto(child, parent, child.getParent() == parent ? parent.getChildCount() - 1 : parent.getChildCount());
+      if (parent.getIndex(child) < 0) {
+        model.insertNodeInto(child, parent, child.getParent() == parent ? parent.getChildCount() - 1 : parent.getChildCount());
+      }
     }
   }
 
