@@ -16,6 +16,7 @@
 package com.intellij.ui.treeStructure;
 
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
+import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.ide.util.treeView.TreeVisitor;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -43,16 +44,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SimpleTree extends Tree implements CellEditorListener {
-
-  private final MouseListener myMouseListener = new MyMouseListener();
+  private static final SimpleNode NULL_NODE = new NullNode();
+  private static final int INVALID = -1;
 
   private ActionGroup myPopupGroup;
   private String myPlace;
 
-  private static final SimpleNode NULL_NODE = new NullNode();
-
-  // From FTree:
-  private static final int INVALID = -1;
   private JComponent myEditorComponent;
   private boolean myEscapePressed;
   private int myEditingRow;
@@ -70,8 +67,8 @@ public class SimpleTree extends Tree implements CellEditorListener {
 
     configureUiHelper(TreeUIHelper.getInstance());
 
-    addMouseListener(myMouseListener);
-    setCellRenderer(new SimpleNodeRenderer());
+    addMouseListener(new MyMouseListener());
+    setCellRenderer(new NodeRenderer());
 
     setEditable(false);
     getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
@@ -101,7 +98,7 @@ public class SimpleTree extends Tree implements CellEditorListener {
       setUI(new BasicTreeUI());   // In WindowsXP UI handles are not shown :(
     }
 
-    setOpaque(false);
+    setOpaque(UIUtil.isUnderGTKLookAndFeel());
   }
 
   public SimpleTree(TreeModel aModel) {
