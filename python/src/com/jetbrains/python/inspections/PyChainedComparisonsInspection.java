@@ -107,7 +107,9 @@ public class PyChainedComparisonsInspection extends PyInspection {
 
     static private PyExpression getLeftExpression(PyBinaryExpression expression) {
       PyExpression result = expression;
-      while (result instanceof PyBinaryExpression) {
+      while (result instanceof PyBinaryExpression && (
+        PyTokenTypes.RELATIONAL_OPERATIONS.contains(((PyBinaryExpression)result).getOperator())
+        || PyTokenTypes.EQUALITY_OPERATIONS.contains(((PyBinaryExpression)result).getOperator()))) {
         result = ((PyBinaryExpression)result).getLeftExpression();
       }
       return result;
@@ -115,7 +117,9 @@ public class PyChainedComparisonsInspection extends PyInspection {
 
     static private PyExpression getSmallestRight(PyBinaryExpression expression) {
       PyExpression result = expression;
-      while (result instanceof PyBinaryExpression) {
+      while (result instanceof PyBinaryExpression && (
+        PyTokenTypes.RELATIONAL_OPERATIONS.contains(((PyBinaryExpression)result).getOperator())
+        || PyTokenTypes.EQUALITY_OPERATIONS.contains(((PyBinaryExpression)result).getOperator()))) {
         result = ((PyBinaryExpression)result).getRightExpression();
       }
       return result;
