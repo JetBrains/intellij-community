@@ -71,6 +71,22 @@ public class InspectionToolRegistrar {
       ContainerUtil.addAll(providers, ApplicationManager.getApplication().getComponents(InspectionToolProvider.class));
       ContainerUtil.addAll(providers, Extensions.getExtensions(InspectionToolProvider.EXTENSION_POINT_NAME));
       registerTools(providers.toArray(new InspectionToolProvider[providers.size()]));
+      for (final LocalInspectionEP ep : Extensions.getExtensions(LocalInspectionEP.LOCAL_INSPECTION)) {
+        myInspectionToolFactories.add(new Factory<InspectionTool>() {
+          @Override
+          public InspectionTool create() {
+            return new LocalInspectionToolWrapper(ep);
+          }
+        });
+      }
+      for (final InspectionEP ep : Extensions.getExtensions(InspectionEP.GLOBAL_INSPECTION)) {
+        myInspectionToolFactories.add(new Factory<InspectionTool>() {
+          @Override
+          public InspectionTool create() {
+            return new GlobalInspectionToolWrapper(ep);
+          }
+        });
+      }
       for (InspectionToolsFactory factory : Extensions.getExtensions(InspectionToolsFactory.EXTENSION_POINT_NAME)) {
         for (final InspectionProfileEntry profileEntry : factory.createTools()) {
           myInspectionToolFactories.add(new Factory<InspectionTool>() {
@@ -91,12 +107,55 @@ public class InspectionToolRegistrar {
 
   public void registerTools(final InspectionToolProvider[] providers) {
     for (InspectionToolProvider provider : providers) {
+//      System.out.println("***** " + provider.getClass().getName());
       Class[] classes = provider.getInspectionClasses();
       for (Class aClass : classes) {
-        registerInspectionTool(aClass, true);
+        Factory<InspectionTool> factory = registerInspectionTool(aClass, true);
+        InspectionTool tool = factory.create();
+//        printExtension(aClass, tool);
       }
     }
   }
+  /*
+
+  private void printExtension(Class aClass, InspectionTool tool) {
+    StringBuilder builder = new StringBuilder(tool instanceof LocalInspectionToolWrapper ? "<localInspection" : "<globalInspection");
+    if (tool instanceof LocalInspectionToolWrapper) {
+      String id = ((LocalInspectionToolWrapper)tool).getID();
+      if (!id.equals(tool.getShortName())) {
+        builder.append(" suppressId=\"").append(id).append('"');
+      }
+      String alternativeID = ((LocalInspectionToolWrapper)tool).getAlternativeID();
+      if (alternativeID != null) {
+        builder.append(" alternativeId=\"").append(alternativeID).append('"');
+      }
+    }
+    builder.append(" shortName=\"").append(tool.getShortName()).append('"');
+
+    CommonBundle.lastKey = null;
+    String displayName = tool.getDisplayName();
+    String lastBundle = CommonBundle.lastBundle;
+    if (CommonBundle.lastKey != null) {
+      builder.append(" bundle=\"").append(lastBundle).append("\" key=\"").append(CommonBundle.lastKey).append('"');
+    }
+    else {
+      builder.append(" displayName=\"").append(displayName).append('"');
+    }
+    CommonBundle.lastKey = null;
+    String groupName = tool.getGroupDisplayName();
+    if (CommonBundle.lastKey != null) {
+      builder.append(" groupBundle=\"").append(CommonBundle.lastBundle).append('"');
+      builder.append(" groupKey=\"").append(CommonBundle.lastKey).append('"');
+    }
+    else {
+      builder.append(" groupName=\"").append(groupName).append('"');
+    }
+    builder.append(" enabledByDefault=\"" + tool.isEnabledByDefault() + "\" ");
+    builder.append(" level=\"").append(tool.getDefaultLevel()).append('"');
+    builder.append(" implementationClass=\"" + aClass.getName() + "\"/>");
+    System.out.println(builder);
+  }
+  */
 
   private Factory<InspectionTool> registerInspectionTool(final Class aClass, boolean store) {
     if (LocalInspectionTool.class.isAssignableFrom(aClass)) {
@@ -245,10 +304,9 @@ public class InspectionToolRegistrar {
 
   private static boolean checkTool(@NotNull final InspectionTool toolWrapper) {
     if (toolWrapper instanceof LocalInspectionToolWrapper) {
-      final LocalInspectionTool localTool = ((LocalInspectionToolWrapper)toolWrapper).getTool();
-      if (!LocalInspectionTool.isValidID(localTool.getID())) {
+      if (!LocalInspectionTool.isValidID(((LocalInspectionToolWrapper)toolWrapper).getID())) {
         final String message = InspectionsBundle.message("inspection.disabled.wrong.id",
-                                                         localTool.getShortName(), localTool.getID(), LocalInspectionTool.VALID_ID_PATTERN);
+                                                         toolWrapper.getShortName(), ((LocalInspectionToolWrapper)toolWrapper).getID(), LocalInspectionTool.VALID_ID_PATTERN);
         showNotification(message);
         return false;
       }

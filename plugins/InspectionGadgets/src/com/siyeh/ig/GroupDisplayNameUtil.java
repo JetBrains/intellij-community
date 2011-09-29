@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig;
 
-import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInspection.InspectionsBundle;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.HashMap;
@@ -26,46 +26,47 @@ public class GroupDisplayNameUtil {
     private static final Map<String, String> packageGroupDisplayNameMap = new HashMap<String, String>();
 
     static {
-        packageGroupDisplayNameMap.put("abstraction", GroupNames.ABSTRACTION_GROUP_NAME);
-        packageGroupDisplayNameMap.put("assignment", GroupNames.ASSIGNMENT_GROUP_NAME);
-        packageGroupDisplayNameMap.put("bitwise", GroupNames.BITWISE_GROUP_NAME);
-        packageGroupDisplayNameMap.put("bugs", GroupNames.BUGS_GROUP_NAME);
-        packageGroupDisplayNameMap.put("classlayout", GroupNames.CLASS_LAYOUT_GROUP_NAME);
-        packageGroupDisplayNameMap.put("classmetrics", GroupNames.CLASS_METRICS_GROUP_NAME);
-        packageGroupDisplayNameMap.put("cloneable", GroupNames.CLONEABLE_GROUP_NAME);
-        packageGroupDisplayNameMap.put("controlflow", GroupNames.CONTROL_FLOW_GROUP_NAME);
-        packageGroupDisplayNameMap.put("dataflow", GroupNames.DATA_FLOW_ISSUES);
-        packageGroupDisplayNameMap.put("dependency", GroupNames.DEPENDENCY_GROUP_NAME);
-        packageGroupDisplayNameMap.put("encapsulation", GroupNames.ENCAPSULATION_GROUP_NAME);
-        packageGroupDisplayNameMap.put("errorhandling", GroupNames.ERROR_HANDLING_GROUP_NAME);
-        packageGroupDisplayNameMap.put("finalization", GroupNames.FINALIZATION_GROUP_NAME);
-        packageGroupDisplayNameMap.put("imports", GroupNames.IMPORTS_GROUP_NAME);
-        packageGroupDisplayNameMap.put("inheritance", GroupNames.INHERITANCE_GROUP_NAME);
-        packageGroupDisplayNameMap.put("initialization", GroupNames.INITIALIZATION_GROUP_NAME);
-        packageGroupDisplayNameMap.put("internationalization", GroupNames.INTERNATIONALIZATION_GROUP_NAME);
-        packageGroupDisplayNameMap.put("j2me", GroupNames.J2ME_GROUP_NAME);
-        packageGroupDisplayNameMap.put("javabeans", GroupNames.JAVABEANS_GROUP_NAME);
-        packageGroupDisplayNameMap.put("javadoc", GroupNames.JAVADOC_GROUP_NAME);
-        packageGroupDisplayNameMap.put("jdk", GroupNames.JDK_GROUP_NAME);
-        packageGroupDisplayNameMap.put("migration", GroupNames.LANGUAGE_LEVEL_SPECIFIC_GROUP_NAME);
-        packageGroupDisplayNameMap.put("junit", GroupNames.JUNIT_GROUP_NAME);
-        packageGroupDisplayNameMap.put("logging", GroupNames.LOGGING_GROUP_NAME);
-        packageGroupDisplayNameMap.put("maturity", GroupNames.MATURITY_GROUP_NAME);
-        packageGroupDisplayNameMap.put("memory", GroupNames.MEMORY_GROUP_NAME);
-        packageGroupDisplayNameMap.put("methodmetrics", GroupNames.METHOD_METRICS_GROUP_NAME);
-        packageGroupDisplayNameMap.put("modularization", GroupNames.MODULARIZATION_GROUP_NAME);
-        packageGroupDisplayNameMap.put("naming", GroupNames.NAMING_CONVENTIONS_GROUP_NAME);
-        packageGroupDisplayNameMap.put("numeric", GroupNames.NUMERIC_GROUP_NAME);
-        packageGroupDisplayNameMap.put("packaging", GroupNames.PACKAGING_GROUP_NAME);
-        packageGroupDisplayNameMap.put("performance", GroupNames.PERFORMANCE_GROUP_NAME);
-        packageGroupDisplayNameMap.put("portability", GroupNames.PORTABILITY_GROUP_NAME);
-        packageGroupDisplayNameMap.put("redundancy", GroupNames.DECLARATION_REDUNDANCY);
-        packageGroupDisplayNameMap.put("resources", GroupNames.RESOURCE_GROUP_NAME);
-        packageGroupDisplayNameMap.put("security", GroupNames.SECURITY_GROUP_NAME);
-        packageGroupDisplayNameMap.put("serialization", GroupNames.SERIALIZATION_GROUP_NAME);
-        packageGroupDisplayNameMap.put("style", GroupNames.STYLE_GROUP_NAME);
-        packageGroupDisplayNameMap.put("threading", GroupNames.THREADING_GROUP_NAME);
-        packageGroupDisplayNameMap.put("visibility", GroupNames.VISIBILITY_GROUP_NAME);
+        packageGroupDisplayNameMap.put("abstraction", "group.names.abstraction.issues");
+        packageGroupDisplayNameMap.put("assignment", "group.names.assignment.issues");
+        packageGroupDisplayNameMap.put("bitwise", "group.names.bitwise.operation.issues");
+        packageGroupDisplayNameMap.put("bugs", "group.names.probable.bugs");
+        packageGroupDisplayNameMap.put("classlayout", "group.names.class.structure");
+        packageGroupDisplayNameMap.put("classmetrics", "group.names.class.metrics");
+        packageGroupDisplayNameMap.put("cloneable", "group.names.cloning.issues");
+        packageGroupDisplayNameMap.put("controlflow", "group.names.control.flow.issues");
+        packageGroupDisplayNameMap.put("dataflow", "group.names.data.flow.issues");
+        packageGroupDisplayNameMap.put("dependency", "group.names.dependency.issues");
+        packageGroupDisplayNameMap.put("encapsulation", "group.names.encapsulation.issues");
+        packageGroupDisplayNameMap.put("errorhandling", "group.names.error.handling");
+        packageGroupDisplayNameMap.put("finalization", "group.names.finalization.issues");
+        packageGroupDisplayNameMap.put("imports", "group.names.imports");
+        packageGroupDisplayNameMap.put("inheritance", "group.names.inheritance.issues");
+        packageGroupDisplayNameMap.put("initialization", "group.names.initialization.issues");
+        packageGroupDisplayNameMap.put("internationalization", "group.names.internationalization.issues");
+        packageGroupDisplayNameMap.put("j2me", "group.names.j2me.issues");
+        packageGroupDisplayNameMap.put("javabeans", "group.names.javabeans.issues");
+        packageGroupDisplayNameMap.put("javadoc", "group.names.javadoc.issues");
+        packageGroupDisplayNameMap.put("jdk", "group.names.java.language.level.issues");
+        packageGroupDisplayNameMap.put("migration",
+                                       "group.names.language.level.specific.issues.and.migration.aids");
+        packageGroupDisplayNameMap.put("junit", "group.names.junit.issues");
+        packageGroupDisplayNameMap.put("logging", "group.names.logging.issues");
+        packageGroupDisplayNameMap.put("maturity", "group.names.code.maturity.issues");
+        packageGroupDisplayNameMap.put("memory", "group.names.memory.issues");
+        packageGroupDisplayNameMap.put("methodmetrics", "group.names.method.metrics");
+        packageGroupDisplayNameMap.put("modularization", "group.names.modularization.issues");
+        packageGroupDisplayNameMap.put("naming", "group.names.naming.conventions");
+        packageGroupDisplayNameMap.put("numeric", "group.names.numeric.issues");
+        packageGroupDisplayNameMap.put("packaging", "group.names.packaging.issues");
+        packageGroupDisplayNameMap.put("performance", "group.names.performance.issues");
+        packageGroupDisplayNameMap.put("portability", "group.names.portability.issues");
+        packageGroupDisplayNameMap.put("redundancy", "group.names.declaration.redundancy");
+        packageGroupDisplayNameMap.put("resources", "group.names.resource.management.issues");
+        packageGroupDisplayNameMap.put("security", "group.names.security.issues");
+        packageGroupDisplayNameMap.put("serialization", "group.names.serialization.issues");
+        packageGroupDisplayNameMap.put("style", "group.names.code.style.issues");
+        packageGroupDisplayNameMap.put("threading", "group.names.threading.issues");
+        packageGroupDisplayNameMap.put("visibility", "group.names.visibility.issues");
     }
 
     private GroupDisplayNameUtil() {}
@@ -80,6 +81,6 @@ public class GroupDisplayNameUtil {
         final String key = name.substring(index + 1);
         final String groupDisplayName = packageGroupDisplayNameMap.get(key);
         assert groupDisplayName != null : "No display name found for " + key;
-        return groupDisplayName;
+        return InspectionsBundle.message(groupDisplayName);
     }
 }

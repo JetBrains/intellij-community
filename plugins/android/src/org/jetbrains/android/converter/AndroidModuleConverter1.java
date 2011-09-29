@@ -18,7 +18,6 @@ package org.jetbrains.android.converter;
 import com.intellij.conversion.CannotConvertException;
 import com.intellij.conversion.ConversionProcessor;
 import com.intellij.conversion.ModuleSettings;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.OrderRootType;
@@ -45,7 +44,6 @@ import java.util.List;
  */
 public class AndroidModuleConverter1 extends ConversionProcessor<ModuleSettings> {
   private static final String PLATFORM_NAME_ATTRIBUTE = "PLATFORM_NAME";
-  private static final String NEW_MODULE_MANAGER = "NewModuleRootManager";
   @NonNls private static final String OPTION_VALUE_ATTRIBUTE = "value";
 
   @Override
@@ -131,7 +129,7 @@ public class AndroidModuleConverter1 extends ConversionProcessor<ModuleSettings>
   }
 
   private static void addNewDependency(ModuleSettings moduleSettings, @NotNull String jdkName) {
-    Element moduleManagerElement = moduleSettings.getComponentElement(NEW_MODULE_MANAGER);
+    Element moduleManagerElement = moduleSettings.getComponentElement(ModuleSettings.MODULE_ROOT_MANAGER_COMPONENT);
     if (moduleManagerElement != null) {
       Element newEntryElement = new Element(OrderEntryFactory.ORDER_ENTRY_ELEMENT_NAME);
       newEntryElement.setAttribute("type", "jdk");
@@ -142,7 +140,7 @@ public class AndroidModuleConverter1 extends ConversionProcessor<ModuleSettings>
   }
 
   private static void removeOldDependencies(ModuleSettings moduleSettings, @NotNull String libName) {
-    Element moduleManagerElement = moduleSettings.getComponentElement(NEW_MODULE_MANAGER);
+    Element moduleManagerElement = moduleSettings.getComponentElement(ModuleSettings.MODULE_ROOT_MANAGER_COMPONENT);
     if (moduleManagerElement != null) {
       for (Element entryElement : getChildren(moduleManagerElement, OrderEntryFactory.ORDER_ENTRY_ELEMENT_NAME)) {
 

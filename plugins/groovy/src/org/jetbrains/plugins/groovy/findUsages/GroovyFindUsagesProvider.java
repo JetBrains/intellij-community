@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLabeledStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.refactoring.rename.PropertyForRename;
 
@@ -61,6 +62,7 @@ public class GroovyFindUsagesProvider implements FindUsagesProvider {
         if (element instanceof PsiVariable || element instanceof GrReferenceExpression) return "variable";
         if (element instanceof GrLabeledStatement) return "label";
         if (element instanceof PropertyForRename) return "property";
+        if (element instanceof GrClosableBlock) return "closure";
         return "";
     }
 
@@ -90,6 +92,8 @@ public class GroovyFindUsagesProvider implements FindUsagesProvider {
             return ((GrLabeledStatement)element).getLabelName();
         } else if (element instanceof PropertyForRename) {
           return ((PropertyForRename)element).getPropertyName();
+        } else if (element instanceof GrClosableBlock) {
+          return "closure";
         }
 
         return "";

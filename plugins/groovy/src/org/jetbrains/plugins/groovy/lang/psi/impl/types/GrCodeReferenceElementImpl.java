@@ -267,6 +267,12 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
                 consumer.consume(method);
               }
             }
+
+            for (PsiClass inner : clazz.getInnerClasses()) {
+              if (inner.hasModifierProperty(PsiModifier.STATIC)) {
+                consumer.consume(inner);
+              }
+            }
             return;
           }
         }
@@ -470,6 +476,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
               final PsiClass clazz = (PsiClass) resolve;
               PsiResolveHelper helper = JavaPsiFacade.getInstance(clazz.getProject()).getResolveHelper();
               List<GroovyResolveResult> result = new ArrayList<GroovyResolveResult>();
+              
               final PsiField field = clazz.findFieldByName(refName, false);
               if (field != null && field.hasModifierProperty(PsiModifier.STATIC)) {
                 result.add(new GroovyResolveResultImpl(field, helper.isAccessible(field, ref, null)));
@@ -479,6 +486,12 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
               for (PsiMethod method : methods) {
                 result.add(new GroovyResolveResultImpl(method, helper.isAccessible(method, ref, null)));
               }
+
+              final PsiClass innerClass = clazz.findInnerClassByName(refName, false);
+              if (innerClass != null && innerClass.hasModifierProperty(PsiModifier.STATIC)) {
+                result.add(new GroovyResolveResultImpl(innerClass, helper.isAccessible(innerClass, ref, null)));
+              }
+
 
               return result.toArray(new GroovyResolveResult[result.size()]);
             }

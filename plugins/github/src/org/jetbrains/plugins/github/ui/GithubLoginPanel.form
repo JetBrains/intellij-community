@@ -37,10 +37,7 @@
       </component>
       <component id="28ddd" class="javax.swing.JTextPane" binding="mySignupTextField">
         <constraints>
-          <grid row="3" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false">
-            <minimum-size width="-1" height="20"/>
-            <preferred-size width="150" height="20"/>
-          </grid>
+          <grid row="3" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
           <contentType value="text/html"/>

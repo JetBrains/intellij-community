@@ -309,7 +309,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     for (Tools toolList : myTools.values()) {
       final InspectionProfileEntry tool = toolList.getInspectionTool(element);
       String toolId =
-        tool instanceof LocalInspectionToolWrapper ? ((LocalInspectionToolWrapper)tool).getTool().getID() : tool.getShortName();
+        tool instanceof LocalInspectionToolWrapper ? ((LocalInspectionToolWrapper)tool).getID() : tool.getShortName();
       if (id.equals(toolId)) return tool;
     }
     return null;
@@ -451,8 +451,8 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
       if (key == null) {
         if (tool instanceof LocalInspectionToolWrapper) {
-          key = HighlightDisplayKey.register(shortName, tool.getDisplayName(), ((LocalInspectionToolWrapper)tool).getTool().getID(),
-                                             ((LocalInspectionToolWrapper)tool).getTool().getAlternativeID());
+          key = HighlightDisplayKey.register(shortName, tool.getDisplayName(), ((LocalInspectionToolWrapper)tool).getID(),
+                                             ((LocalInspectionToolWrapper)tool).getAlternativeID());
         }
         else {
           key = HighlightDisplayKey.register(shortName, tool.getDisplayName());

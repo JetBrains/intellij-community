@@ -12,7 +12,7 @@ public abstract class ProjectStructureElementUsage {
 
   public abstract String getPresentableName();
 
-  public abstract void navigate();
+  public abstract PlaceInProjectStructure getPlace();
 
   @Override
   public abstract int hashCode();

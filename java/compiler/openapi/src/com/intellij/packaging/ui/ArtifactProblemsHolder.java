@@ -16,6 +16,7 @@
 package com.intellij.packaging.ui;
 
 import com.intellij.packaging.elements.PackagingElement;
+import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,7 +27,7 @@ import java.util.List;
  */
 public interface ArtifactProblemsHolder {
 
-  ArtifactEditorContext getContext();
+  PackagingElementResolvingContext getContext();
 
   void registerError(@NotNull String message);
 

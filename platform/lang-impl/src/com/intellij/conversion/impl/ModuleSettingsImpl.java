@@ -30,7 +30,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,7 +41,6 @@ import java.util.*;
  */
 public class ModuleSettingsImpl extends ComponentManagerSettingsImpl implements ModuleSettings {
   private final String myModuleName;
-  @NonNls private static final String MODULE_ROOT_MANAGER_COMPONENT = "NewModuleRootManager";
 
   public ModuleSettingsImpl(File moduleFile, ConversionContextImpl context) throws CannotConvertException {
     super(moduleFile, context);

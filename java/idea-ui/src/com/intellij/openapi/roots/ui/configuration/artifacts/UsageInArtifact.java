@@ -1,6 +1,6 @@
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
-import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.PlaceInProjectStructure;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElementUsage;
 import com.intellij.packaging.artifacts.Artifact;
@@ -40,17 +40,6 @@ public class UsageInArtifact extends ProjectStructureElementUsage {
     return myContainingElement;
   }
 
-  @Override
-  public void navigate() {
-    final Artifact artifact = myContext.getArtifactModel().getArtifactByOriginal(myOriginalArtifact);
-    ProjectStructureConfigurable.getInstance(myContext.getProject()).select(myOriginalArtifact, true).doWhenDone(new Runnable() {
-      public void run() {
-        final ArtifactEditorEx artifactEditor = (ArtifactEditorEx)myContext.getOrCreateEditor(artifact);
-        artifactEditor.getLayoutTreeComponent().selectNode(myParentPath, myPackagingElement);
-      }
-    });
-  }
-
   public void removeElement() {
     getOrCreateEditor().removePackagingElement(myParentPath, myPackagingElement);
   }
@@ -66,6 +55,11 @@ public class UsageInArtifact extends ProjectStructureElementUsage {
   @Override
   public String getPresentableName() {
     return myOriginalArtifact.getName();
+  }
+
+  @Override
+  public PlaceInProjectStructure getPlace() {
+    return new PlaceInArtifact(myOriginalArtifact, myContext, myParentPath, myPackagingElement);
   }
 
   @Override

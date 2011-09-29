@@ -32,7 +32,9 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.ArtifactModel;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
+import com.intellij.packaging.elements.ManifestFileProvider;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
+import com.intellij.packaging.impl.artifacts.DefaultManifestFileProvider;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -131,6 +133,7 @@ public abstract class MavenBaseModifiableModelsProvider implements MavenModifiab
   private class MyPackagingElementResolvingContext implements PackagingElementResolvingContext {
     private final ModulesProvider myModulesProvider = new MavenModulesProvider();
     private final MavenFacetsProvider myFacetsProvider = new MavenFacetsProvider();
+    private final DefaultManifestFileProvider myManifestFileProvider = new DefaultManifestFileProvider(this);
 
     @NotNull
     public Project getProject() {
@@ -158,6 +161,12 @@ public abstract class MavenBaseModifiableModelsProvider implements MavenModifiab
       }
       final LibraryTable table = LibraryTablesRegistrar.getInstance().getLibraryTableByLevel(level, myProject);
       return table != null ? table.getLibraryByName(libraryName) : null;
+    }
+
+    @NotNull
+    @Override
+    public ManifestFileProvider getManifestFileProvider() {
+      return myManifestFileProvider;
     }
   }
 

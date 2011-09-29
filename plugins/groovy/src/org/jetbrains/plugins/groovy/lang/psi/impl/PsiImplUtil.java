@@ -105,13 +105,14 @@ public class PsiImplUtil {
 
     // check priorities
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(oldExpr.getProject());
-    if (oldExpr.getParent() instanceof GrStringInjection) {
+    if (oldParent instanceof GrStringInjection) {
       if (newExpr instanceof GrString || newExpr instanceof GrLiteral && ((GrLiteral)newExpr).getValue() instanceof String) {
-        return GrStringUtil.replaceStringInjectionByLiteral((GrStringInjection)oldExpr.getParent(), (GrLiteral)newExpr);
+        return GrStringUtil.replaceStringInjectionByLiteral((GrStringInjection)oldParent, (GrLiteral)newExpr);
       }
       else {
         newExpr = factory.createExpressionFromText("{" + newExpr.getText() + "}");
-        return (GrExpression)((GrClosableBlock)oldExpr.replace(newExpr)).getStatements()[0];
+        oldParent.getNode().replaceChild(oldExpr.getNode(), newExpr.getNode());
+        return newExpr;
       }
     }
     else if (PsiTreeUtil.getParentOfType(oldExpr, GrStringInjection.class, false, GrCodeBlock.class) != null) {

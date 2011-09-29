@@ -370,10 +370,9 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
       final boolean prevIcon = p instanceof IconPresentationWrapper || p instanceof IconLikeCustomStatusBarWidget;
       final boolean nextIcon = n instanceof IconPresentationWrapper || n instanceof IconLikeCustomStatusBarWidget;
 
+      // 2peter: please do not touch it anymore :)
       self.setBorder(prevIcon ? BorderFactory.createEmptyBorder(2, 2, 2, 2) : StatusBarWidget.WidgetBorder.INSTANCE);
-      if (nextIcon) {
-        n.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
-      }
+      if (nextIcon) n.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
     }
   }
 

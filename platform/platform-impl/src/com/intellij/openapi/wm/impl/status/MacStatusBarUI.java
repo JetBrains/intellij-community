@@ -111,59 +111,6 @@ public class MacStatusBarUI extends StatusBarUI implements Activatable {
     BACKGROUND_PAINTER.paintBorder(c, g, 0, 0, bounds.width, bounds.height);
   }
 
-  static final class MacPressedBackgroundPainter implements Border {
-    private static final Color TOP_COLOR = new Color(90, 90, 90);
-    private static final Color BOTTOM_COLOR = new Color(130, 130, 130);
-
-    private static final Color TOP_LEFT_COLOR = new Color(90, 90, 90);
-    private static final Color BOTTOM_LEFT_COLOR = new Color(120, 120, 120);
-
-    public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-      final Graphics2D g2d = (Graphics2D) g.create();
-
-      g2d.setPaint(new GradientPaint(0, 1, TOP_COLOR, 0, height - 2, BOTTOM_COLOR));
-      g2d.fillRect(x, y, width, height);
-
-      g2d.setPaint(new GradientPaint(0, 0, TOP_LEFT_COLOR, 0, height, BOTTOM_LEFT_COLOR));
-      g2d.drawLine(0, 0, 0, height);
-
-      g2d.setColor(new Color(200, 200, 200));
-      g2d.drawLine(width - 1, 0, width - 1, height);
-
-      g2d.dispose();
-    }
-
-    public Insets getBorderInsets(Component c) {
-      return new Insets(1, 1, 1, 1);
-    }
-
-    public boolean isBorderOpaque() {
-      return true;
-    }
-  }
-
-  static final class MacHoverBackgroundPainter implements Border {
-    private static final Color TOP_COLOR = new Color(240, 240, 240);
-    private static final Color BOTTOM_COLOR = new Color(190, 190, 190);
-    private static final Insets INSETS = new Insets(0, 0, 0, 0);
-
-    public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-      final Graphics2D g2d = (Graphics2D) g.create();
-      final GradientPaint paint = new GradientPaint(0, 1, TOP_COLOR, 0, height - 2, BOTTOM_COLOR);
-      g2d.setPaint(paint);
-      g2d.fillRect(x + 2, y, width - 4, height);
-      g2d.dispose();
-    }
-
-    public Insets getBorderInsets(Component c) {
-      return INSETS;
-    }
-
-    public boolean isBorderOpaque() {
-      return true;
-    }
-  }
-
   private static final class MacBackgroundPainter implements Border {
     private static final Color ACTIVE_TOP_COLOR = new Color(202, 202, 202);
     private static final Color ACTIVE_BOTTOM_COLOR = new Color(167, 167, 167);
@@ -178,58 +125,55 @@ public class MacStatusBarUI extends StatusBarUI implements Activatable {
 
     private static final Insets INSETS = new Insets(0, 0, 0, 0);
     
-    private static BufferedImage ACTIVE_CACHE;
-    private static BufferedImage INACTIVE_CACHE;
+    private BufferedImage[] myCache = new BufferedImage[2];
 
     public void paintBorder(final Component c, final Graphics g, final int x, final int y, final int width, final int height) {
       final Graphics2D g2d = (Graphics2D) g;
-      final Rectangle clip = g.getClipBounds();
-      final boolean active = isActive(c);
 
-      BufferedImage img = active ? ACTIVE_CACHE : INACTIVE_CACHE;
+      Rectangle r = g2d.getClipBounds();
+      Image img = getCachedImage(c, g2d);
+      int step = img.getWidth(null);
+      for (int i = r.x; i < r.x + r.width; i += step) {
+        g2d.drawImage(img, i, y, null);
+      }
+    }
+    
+    private Image getCachedImage(Component c, Graphics2D g2d) {
+      boolean active = isActive(c);
+      int ndx = active ? 0 : 1;
+      BufferedImage image = myCache[ndx];
+      if (image == null || image.getHeight(null) != c.getHeight()) {
+        int width = 50;
+        int height = c.getHeight();
+        image = g2d.getDeviceConfiguration().createCompatibleImage(width, height, Transparency.OPAQUE);
+        Graphics2D g = image.createGraphics();
 
-      if (img == null || img.getHeight() != height) {
         final Color top = active ? ACTIVE_TOP_COLOR : INACTIVE_TOP_COLOR;
         final Color bottom = active ? ACTIVE_BOTTOM_COLOR : INACTIVE_BOTTOM_COLOR;
-        img = getSample(height, top, bottom);
+
+        final GradientPaint paint = new GradientPaint(0, 0, top, 0, height, bottom);
+        g.setPaint(paint);
+        g.fillRect(0, 0, width, height);
 
         if (active) {
-          ACTIVE_CACHE = img;
+          g.setColor(ACTIVE_BORDER_TOP_COLOR);
+          g.drawLine(0, 0, width, 0);
+
+          g.setColor(ACTIVE_BORDER2_TOP_COLOR);
+          g.drawLine(0, 1, width, 1);
         }
         else {
-          INACTIVE_CACHE = img;
+          g.setColor(INACTIVE_BORDER_TOP_COLOR);
+          g.drawLine(0, 0, width, 0);
+
+          g.setColor(INACTIVE_BORDER2_TOP_COLOR);
+          g.drawLine(0, 1, width, 1);
         }
+
+        myCache[ndx] = image;
       }
 
-
-      final Graphics2D g2 = (Graphics2D)g;
-      for (int i = clip.x; i < clip.x + clip.width; i += 50) {
-        g2.drawImage(img, null, i, y);
-      }
-
-      if (active) {
-        g2d.setColor(ACTIVE_BORDER_TOP_COLOR);
-        g2d.drawLine(clip.x, 0, clip.width, 0);
-
-        g2d.setColor(ACTIVE_BORDER2_TOP_COLOR);
-        g2d.drawLine(clip.x, 1, clip.width, 1);
-      } else {
-        g2d.setColor(INACTIVE_BORDER_TOP_COLOR);
-        g2d.drawLine(clip.x, 0, clip.width, 0);
-
-        g2d.setColor(INACTIVE_BORDER2_TOP_COLOR);
-        g2d.drawLine(clip.x, 1, clip.width, 1);
-      }
-
-      g2d.dispose();
-    }
-
-    private static BufferedImage getSample(int height, Color top, Color bottom) {
-      BufferedImage img = new BufferedImage(50, height, BufferedImage.TYPE_INT_RGB);
-      Graphics2D imageGraphics = (Graphics2D)img.getGraphics();
-      imageGraphics.setPaint(new GradientPaint(0, 0, top, 0, height, bottom));
-      imageGraphics.fillRect(0, 0, 50, height);
-      return img;
+      return image;
     }
 
     public Insets getBorderInsets(Component c) {

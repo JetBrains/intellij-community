@@ -18,35 +18,32 @@ package com.intellij.formatting;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.command.undo.UndoManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.SequentialModelProgressTask;
 import com.intellij.util.SequentialTask;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.WeakReference;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentMap;
 
 /**
- * Formatting progressable task.  
- * 
+ * Formatting progressable task.
+ *
  * @author Denis Zhdanov
  * @since 2/10/11 3:00 PM
  */
-public class FormattingProgressTask extends Task.Modal implements FormattingProgressCallback {
+public class FormattingProgressTask extends SequentialModelProgressTask implements FormattingProgressCallback {
 
   /**
    * Holds flag that indicates whether formatting was cancelled by end-user or not.
@@ -57,27 +54,13 @@ public class FormattingProgressTask extends Task.Modal implements FormattingProg
       return false;
     }
   };
-  
-  private static final Logger LOG = Logger.getInstance("#" + FormattingProgressTask.class.getName());
 
-  /**
-   * We want to perform formatting by big chunks at EDT. However, there is a possible case that particular formatting iteration
-   * is executed in short amount of time. Hence, we may want to execute more than one formatting action during single EDT iteration.
-   * Current collection contains mappings between min amount of time allowed for particular state iteration processing from EDT.
-   */
-  private static final TObjectIntHashMap<FormattingStateId> ITERATION_MIN_TIMES_MILLIS = new TObjectIntHashMap<FormattingStateId>();
-  static {
-    ITERATION_MIN_TIMES_MILLIS.put(FormattingStateId.WRAPPING_BLOCKS, 500);
-    ITERATION_MIN_TIMES_MILLIS.put(FormattingStateId.PROCESSING_BLOCKS, 500);
-    ITERATION_MIN_TIMES_MILLIS.put(FormattingStateId.APPLYING_CHANGES, 1000);
-    assert ITERATION_MIN_TIMES_MILLIS.size() == FormattingStateId.values().length;
-  }
-  
   /**
    * Holds max allowed progress bar value (defined at ProgressWindow.MyDialog.initDialog()).
    */
   private static final double MAX_PROGRESS_VALUE = 1;
   private static final double TOTAL_WEIGHT;
+
   static {
     double weight = 0;
     for (FormattingStateId state : FormattingStateId.values()) {
@@ -85,7 +68,7 @@ public class FormattingProgressTask extends Task.Modal implements FormattingProg
     }
     TOTAL_WEIGHT = weight;
   }
-  
+
   private final ConcurrentMap<EventType, Collection<Runnable>> myCallbacks = new ConcurrentHashMap<EventType, Collection<Runnable>>();
 
   private final WeakReference<VirtualFile> myFile;
@@ -93,23 +76,20 @@ public class FormattingProgressTask extends Task.Modal implements FormattingProg
   private final int                        myFileTextLength;
 
   @NotNull
-  private          FormattingStateId myLastState                       = FormattingStateId.WRAPPING_BLOCKS;
-  private          long              myDocumentModificationStampBefore = -1;
-  private volatile boolean           myRunning                         = true;
+  private FormattingStateId myLastState                       = FormattingStateId.WRAPPING_BLOCKS;
+  private long              myDocumentModificationStampBefore = -1;
 
-  private ProgressIndicator myIndicator;
-  private SequentialTask    myTask;
-  private int               myBlocksToModifyNumber;
-  private int               myModifiedBlocksNumber;
-  
+  private int myBlocksToModifyNumber;
+  private int myModifiedBlocksNumber;
+
   public FormattingProgressTask(@Nullable Project project, @NotNull PsiFile file, @NotNull Document document) {
-    super(project, getTitle(file), true);
+    super(project, getTitle(file));
     myFile = new WeakReference<VirtualFile>(file.getVirtualFile());
     myDocument = new WeakReference<Document>(document);
     myFileTextLength = file.getTextLength();
     addCallback(EventType.CANCEL, new MyCancelCallback());
   }
-  
+
   @NotNull
   private static String getTitle(@NotNull PsiFile file) {
     VirtualFile virtualFile = file.getOriginalFile().getVirtualFile();
@@ -122,26 +102,7 @@ public class FormattingProgressTask extends Task.Modal implements FormattingProg
   }
 
   @Override
-  public void run(@NotNull ProgressIndicator indicator) {
-    try {
-      doRun(indicator);
-    }
-    catch (Exception e) {
-      LOG.info("Unexpected exception occurred during reformatting file " + myFile, e);
-    }
-    finally {
-      if (myIndicator != null) {
-        myIndicator.stop();
-      }
-    }
-  }
-
-  public void doRun(@NotNull ProgressIndicator indicator) throws InvocationTargetException, InterruptedException {
-    final SequentialTask task = myTask;
-    if (task == null) {
-      return;
-    }
-
+  protected void prepare(@NotNull final SequentialTask task) {
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
@@ -152,30 +113,6 @@ public class FormattingProgressTask extends Task.Modal implements FormattingProg
         task.prepare();
       }
     });
-
-    // We need to sync background thread and EDT here in order to avoid situation when event queue is full of processing requests.
-    myIndicator = indicator;
-    while (myRunning && !task.isDone()) {
-      if (indicator.isCanceled()) {
-        task.stop();
-        break;
-      }
-      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          long start = System.currentTimeMillis();
-          try {
-            while (!task.isDone() && System.currentTimeMillis() - start < ITERATION_MIN_TIMES_MILLIS.get(myLastState)) {
-              task.iteration();
-            }
-          }
-          catch (RuntimeException e) {
-            task.stop();
-            throw e;
-          }
-        }
-      });
-    }
   }
 
   @Override
@@ -205,7 +142,7 @@ public class FormattingProgressTask extends Task.Modal implements FormattingProg
       Collection<Runnable> candidate = myCallbacks.putIfAbsent(eventType, result = new ConcurrentHashSet<Runnable>());
       if (candidate != null) {
         result = candidate;
-      } 
+      }
     }
     return result;
   }
@@ -214,73 +151,69 @@ public class FormattingProgressTask extends Task.Modal implements FormattingProg
   public void afterWrappingBlock(@NotNull LeafBlockWrapper wrapped) {
     update(FormattingStateId.WRAPPING_BLOCKS, MAX_PROGRESS_VALUE * wrapped.getEndOffset() / myFileTextLength);
   }
-  
+
   @Override
   public void afterProcessingBlock(@NotNull LeafBlockWrapper block) {
     update(FormattingStateId.PROCESSING_BLOCKS, MAX_PROGRESS_VALUE * block.getEndOffset() / myFileTextLength);
   }
-  
+
   @Override
   public void beforeApplyingFormatChanges(@NotNull Collection<LeafBlockWrapper> modifiedBlocks) {
     myBlocksToModifyNumber = modifiedBlocks.size();
     updateTextIfNecessary(FormattingStateId.APPLYING_CHANGES);
     setCancelText(IdeBundle.message("action.stop"));
   }
-  
+
   @Override
   public void afterApplyingChange(@NotNull LeafBlockWrapper block) {
     if (myModifiedBlocksNumber++ >= myBlocksToModifyNumber) {
       return;
     }
-    
-    update(FormattingStateId.APPLYING_CHANGES, MAX_PROGRESS_VALUE * myModifiedBlocksNumber / myBlocksToModifyNumber);
-  }
 
-  @Override
-  public void setTask(@Nullable SequentialTask task) {
-    myTask = task;
+    update(FormattingStateId.APPLYING_CHANGES, MAX_PROGRESS_VALUE * myModifiedBlocksNumber / myBlocksToModifyNumber);
   }
 
   /**
    * Updates current progress state if necessary.
-   * 
-   * @param state           current state
-   * @param completionRate  completion rate of the given state. Is assumed to belong to <code>[0; 1]</code> interval
+   *
+   * @param state          current state
+   * @param completionRate completion rate of the given state. Is assumed to belong to <code>[0; 1]</code> interval
    */
   private void update(@NotNull FormattingStateId state, double completionRate) {
-    if (myIndicator == null) {
+    ProgressIndicator indicator = getIndicator();
+    if (indicator == null) {
       return;
     }
 
     updateTextIfNecessary(state);
-    
+
     myLastState = state;
     double newFraction = 0;
     for (FormattingStateId prevState : state.getPreviousStates()) {
       newFraction += MAX_PROGRESS_VALUE * prevState.getProgressWeight() / TOTAL_WEIGHT;
     }
     newFraction += completionRate * state.getProgressWeight() / TOTAL_WEIGHT;
-    
+
     // We don't bother about imprecise floating point arithmetic here because that is enough for progress representation.
-    double currentFraction = myIndicator.getFraction();
+    double currentFraction = indicator.getFraction();
     if (newFraction - currentFraction < MAX_PROGRESS_VALUE / 100) {
       return;
     }
-    
-    myIndicator.setFraction(newFraction);
+
+    indicator.setFraction(newFraction);
   }
-  
+
   private void updateTextIfNecessary(@NotNull FormattingStateId currentState) {
-    if (myLastState != currentState && myIndicator != null) {
-      myIndicator.setText(currentState.getDescription());
+    ProgressIndicator indicator = getIndicator();
+    if (myLastState != currentState && indicator != null) {
+      indicator.setText(currentState.getDescription());
     }
   }
-  
+
   private class MyCancelCallback implements Runnable {
     @Override
     public void run() {
       FORMATTING_CANCELLED_FLAG.set(true);
-      myRunning = false;
       VirtualFile file = myFile.get();
       Document document = myDocument.get();
       if (file == null || document == null || myDocumentModificationStampBefore < 0) {
@@ -290,7 +223,7 @@ public class FormattingProgressTask extends Task.Modal implements FormattingProg
       if (editor == null) {
         return;
       }
-      
+
       UndoManager manager = UndoManager.getInstance(myProject);
       while (manager.isUndoAvailable(editor) && document.getModificationStamp() != myDocumentModificationStampBefore) {
         manager.undo(editor);

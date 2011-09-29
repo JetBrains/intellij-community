@@ -25,6 +25,7 @@ import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.artifacts.ArtifactModel;
+import com.intellij.packaging.elements.ManifestFileProvider;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,6 +64,12 @@ public class DefaultPackagingElementResolvingContext implements PackagingElement
 
   public Library findLibrary(@NotNull String level, @NotNull String libraryName) {
     return findLibrary(myProject, level, libraryName);
+  }
+
+  @NotNull
+  @Override
+  public ManifestFileProvider getManifestFileProvider() {
+    return new DefaultManifestFileProvider(this);
   }
 
   @Nullable

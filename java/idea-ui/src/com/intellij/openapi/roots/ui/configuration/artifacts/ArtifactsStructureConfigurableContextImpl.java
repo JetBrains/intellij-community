@@ -32,16 +32,14 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStr
 import com.intellij.openapi.util.Disposer;
 import com.intellij.packaging.artifacts.*;
 import com.intellij.packaging.elements.CompositePackagingElement;
+import com.intellij.packaging.elements.ManifestFileProvider;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.packaging.impl.artifacts.DefaultPackagingElementResolvingContext;
 import com.intellij.packaging.ui.ManifestFileConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
 * @author nik
@@ -57,6 +55,7 @@ public class ArtifactsStructureConfigurableContextImpl implements ArtifactsStruc
   private final Map<ArtifactPointer, ArtifactEditorSettings> myEditorSettings = new HashMap<ArtifactPointer, ArtifactEditorSettings>();
   private final Map<Artifact, ArtifactProjectStructureElement> myArtifactElements = new HashMap<Artifact, ArtifactProjectStructureElement>();
   private final ArtifactEditorSettings myDefaultSettings;
+  private final ManifestFileProvider myManifestFileProvider = new ArtifactEditorManifestFileProvider(this);
 
   public ArtifactsStructureConfigurableContextImpl(StructureConfigurableContext context, Project project,
                                                    ArtifactEditorSettings defaultSettings, final ArtifactAdapter modifiableModelListener) {
@@ -201,6 +200,12 @@ public class ArtifactsStructureConfigurableContextImpl implements ArtifactsStruc
   public Library findLibrary(@NotNull String level, @NotNull String libraryName) {
     final Library library = DefaultPackagingElementResolvingContext.findLibrary(myProject, level, libraryName);
     return library != null ? myContext.getLibraryModel(library) : myContext.getLibrary(libraryName, level);
+  }
+
+  @NotNull
+  @Override
+  public ManifestFileProvider getManifestFileProvider() {
+    return myManifestFileProvider;
   }
 
   public ManifestFileConfiguration getManifestFile(CompositePackagingElement<?> element, ArtifactType artifactType) {

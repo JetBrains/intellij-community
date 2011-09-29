@@ -36,9 +36,8 @@ public class ConvertIntegerToOctalIntention extends Intention {
     return new ConvertIntegerToOctalPredicate();
   }
 
-  public void processIntention(@NotNull PsiElement element, Project project, Editor editor)
-      throws IncorrectOperationException {
-    final GrLiteral exp = (GrLiteral) element;
+  public void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
+    final GrLiteral exp = (GrLiteral)element;
     @NonNls String textString = exp.getText().replaceAll("_", "");
     final int textLength = textString.length();
     final char lastChar = textString.charAt(textLength - 1);
@@ -47,10 +46,15 @@ public class ConvertIntegerToOctalIntention extends Intention {
       textString = textString.substring(0, textLength - 1);
     }
     final BigInteger val;
-    if (textString.startsWith("0x")) {
+    if (textString.startsWith("0x") || textString.startsWith("0X")) {
       final String rawTextString = textString.substring(2);
       val = new BigInteger(rawTextString, 16);
-    } else {
+    }
+    else if (textString.startsWith("0b") || textString.startsWith("0B")) {
+      final String rawTextString = textString.substring(2);
+      val = new BigInteger(rawTextString, 2);
+    }
+    else {
       val = new BigInteger(textString, 10);
     }
     String octString = '0' + val.toString(8);

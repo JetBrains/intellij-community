@@ -21,38 +21,45 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.MethodSignatureUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author max
  */
 public class EqualsAndHashcode extends BaseJavaLocalInspectionTool {
 
-  private PsiMethod myHashCode;
-  private PsiMethod myEquals;
-  private final AtomicBoolean myInitialized = new AtomicBoolean();
-
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
-    if (!myInitialized.getAndSet(true)) {
-      final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(holder.getProject());
-      final PsiClass psiObjectClass = ApplicationManager.getApplication().runReadAction(
-          new Computable<PsiClass>() {
-            @Nullable
-            public PsiClass compute() {
-              return psiFacade.findClass("java.lang.Object");
+
+    final Project project = holder.getProject();
+    Pair<PsiMethod, PsiMethod> pair = CachedValuesManager.getManager(project).getCachedValue(project, new CachedValueProvider<Pair<PsiMethod, PsiMethod>>() {
+      @Override
+      public Result<Pair<PsiMethod, PsiMethod>> compute() {
+        final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+        final PsiClass psiObjectClass = ApplicationManager.getApplication().runReadAction(
+            new Computable<PsiClass>() {
+              @Nullable
+              public PsiClass compute() {
+                return psiFacade.findClass("java.lang.Object", GlobalSearchScope.allScope(project));
+              }
             }
-          }
-      );
-      if (psiObjectClass != null) {
+        );
+        if (psiObjectClass == null) {
+          return Result.create(null, ProjectRootManager.getInstance(project));
+        }
         PsiMethod[] methods = psiObjectClass.getMethods();
+        PsiMethod myEquals = null;
+        PsiMethod myHashCode = null;
         for (PsiMethod method : methods) {
           @NonNls final String name = method.getName();
           if ("equals".equals(name)) {
@@ -62,10 +69,15 @@ public class EqualsAndHashcode extends BaseJavaLocalInspectionTool {
             myHashCode = method;
           }
         }
+        return Result.create(Pair.create(myEquals, myHashCode), psiObjectClass);
       }
-    }
+    });
+
+    if (pair == null) return new PsiElementVisitor() {};
 
     //jdk wasn't configured for the project
+    final PsiMethod myEquals = pair.first;
+    final PsiMethod myHashCode = pair.second;
     if (myEquals == null || myHashCode == null || !myEquals.isValid() || !myHashCode.isValid()) return new PsiElementVisitor() {};
 
     return new JavaElementVisitor() {
@@ -73,7 +85,7 @@ public class EqualsAndHashcode extends BaseJavaLocalInspectionTool {
         super.visitClass(aClass);
         boolean [] hasEquals = new boolean[] {false};
         boolean [] hasHashCode = new boolean[] {false};
-        processClass(aClass, hasEquals, hasHashCode);
+        processClass(aClass, hasEquals, hasHashCode, myEquals, myHashCode);
         if (hasEquals[0] != hasHashCode[0]) {
           PsiIdentifier identifier = aClass.getNameIdentifier();
           holder.registerProblem(identifier != null ? identifier : aClass,
@@ -90,13 +102,16 @@ public class EqualsAndHashcode extends BaseJavaLocalInspectionTool {
     };
   }
 
-  private void processClass(final PsiClass aClass, final boolean[] hasEquals, final boolean[] hasHashCode) {
+  private static void processClass(final PsiClass aClass,
+                                   final boolean[] hasEquals,
+                                   final boolean[] hasHashCode,
+                                   PsiMethod equals, PsiMethod hashcode) {
     final PsiMethod[] methods = aClass.getMethods();
     for (PsiMethod method : methods) {
-      if (MethodSignatureUtil.areSignaturesEqual(method, myEquals)) {
+      if (MethodSignatureUtil.areSignaturesEqual(method, equals)) {
         hasEquals[0] = true;
       }
-      else if (MethodSignatureUtil.areSignaturesEqual(method, myHashCode)) {
+      else if (MethodSignatureUtil.areSignaturesEqual(method, hashcode)) {
         hasHashCode[0] = true;
       }
     }
@@ -115,10 +130,5 @@ public class EqualsAndHashcode extends BaseJavaLocalInspectionTool {
   @NotNull
   public String getShortName() {
     return "EqualsAndHashcode";
-  }
-
-  public void projectClosed(Project project) {
-    myEquals = null;
-    myHashCode = null;
   }
 }

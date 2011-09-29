@@ -17,12 +17,12 @@ package com.intellij.openapi.roots.ui.configuration.artifacts;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.PackagingElementNode;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ConfigurationErrorQuickFix;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureProblemDescription;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureProblemsHolderImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.packaging.elements.PackagingElement;
-import com.intellij.packaging.ui.ArtifactProblemQuickFix;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -73,16 +73,16 @@ public class ArtifactValidationManagerImpl implements Disposable {
       if (problemDescriptions != null) {
         for (ProjectStructureProblemDescription description : problemDescriptions) {
           final String message = description.getMessage();
-          List<ArtifactProblemQuickFix> quickFix = Collections.emptyList();
+          List<ConfigurationErrorQuickFix> quickFixes = Collections.emptyList();
           if (description instanceof ArtifactProblemDescription) {
             final ArtifactProblemDescription artifactProblem = (ArtifactProblemDescription)description;
-            quickFix = artifactProblem.getQuickFixes();
+            quickFixes = artifactProblem.getFixes();
             if (artifactProblem.getPathToPlace() != null) {
               myProblems.add(artifactProblem);
               showProblemInTree(artifactProblem);
             }
           }
-          myErrorPanel.showError(message, quickFix);
+          myErrorPanel.showError(message, quickFixes);
         }
       }
     }

@@ -36,9 +36,8 @@ public class ConvertIntegerToHexIntention extends Intention {
     return new ConvertIntegerToHexPredicate();
   }
 
-  public void processIntention(@NotNull PsiElement element, Project project, Editor editor)
-      throws IncorrectOperationException {
-    final GrLiteral exp = (GrLiteral) element;
+  public void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
+    final GrLiteral exp = (GrLiteral)element;
     String textString = exp.getText().replaceAll("_", "");
     final int textLength = textString.length();
     final char lastChar = textString.charAt(textLength - 1);
@@ -48,9 +47,13 @@ public class ConvertIntegerToHexIntention extends Intention {
     }
 
     final BigInteger val;
-    if (textString.charAt(0) == '0') {
+    if (textString.startsWith("0b") || textString.startsWith("0B")) {
+      val = new BigInteger(textString.substring(2), 2);
+    }
+    else if (textString.charAt(0) == '0') {
       val = new BigInteger(textString, 8);
-    } else {
+    }
+    else {
       val = new BigInteger(textString, 10);
     }
     @NonNls String hexString = "0x" + val.toString(16);
@@ -59,5 +62,4 @@ public class ConvertIntegerToHexIntention extends Intention {
     }
     IntentionUtils.replaceExpression(hexString, exp);
   }
-
 }

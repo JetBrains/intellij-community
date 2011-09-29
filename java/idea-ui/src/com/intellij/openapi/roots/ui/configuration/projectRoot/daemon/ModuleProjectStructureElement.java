@@ -2,6 +2,7 @@ package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
@@ -9,7 +10,6 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
-import com.intellij.ui.navigation.Place;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -52,10 +52,11 @@ public class ModuleProjectStructureElement extends ProjectStructureElement {
     for (OrderEntry entry : entries) {
       if (!entry.isValid()){
         if (entry instanceof JdkOrderEntry && ((JdkOrderEntry)entry).getJdkName() == null) {
-          problemsHolder.registerError(ProjectBundle.message("project.roots.module.jdk.problem.message"), null, createPlace(), null);
-        } else {
+          problemsHolder.registerError(ProjectBundle.message("project.roots.module.jdk.problem.message"), null, createPlace(entry), null);
+        }
+        else {
           problemsHolder.registerError(ProjectBundle.message("project.roots.library.problem.message", entry.getPresentableName()), null,
-                                       createPlace(),
+                                       createPlace(entry),
                                        null);
         }
       }
@@ -74,8 +75,13 @@ public class ModuleProjectStructureElement extends ProjectStructureElement {
     }
   }
 
-  private Place createPlace() {
-    return ProjectStructureConfigurable.getInstance(myContext.getProject()).createModulePlace(myModule);
+  private PlaceInProjectStructure createPlace() {
+    final Project project = myContext.getProject();
+    return new PlaceInProjectStructureBase(project, ProjectStructureConfigurable.getInstance(project).createModulePlace(myModule));
+  }
+
+  private PlaceInProjectStructure createPlace(OrderEntry entry) {
+    return new PlaceInModuleClasspath(myContext, myModule, entry);
   }
 
   @Override

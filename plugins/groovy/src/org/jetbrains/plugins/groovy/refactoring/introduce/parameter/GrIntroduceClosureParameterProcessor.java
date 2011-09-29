@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.refactoring.introduce.parameter;
 
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
@@ -35,11 +36,13 @@ import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -48,10 +51,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
@@ -59,15 +59,19 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAc
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.inline.InlineMethodConflictSolver;
 import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.java2groovy.FieldConflictsResolver;
 import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.java2groovy.OldReferencesResolver;
 
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.Collection;
 import java.util.List;
 
@@ -105,7 +109,7 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
 
       @Override
       public String getProcessedElementsHeader() {
-        return RefactoringBundle.message("introduce.parameter.elements.header");
+        return GroovyRefactoringBundle.message("introduce.closure.parameter.elements.header");
       }
     };
   }
@@ -188,12 +192,19 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
     ArrayList<UsageInfo> result = new ArrayList<UsageInfo>();
 
     if (!mySettings.generateDelegate() && toSearchFor != null) {
-      Collection<PsiReference> refs = ReferencesSearch.search(toSearchFor, toSearchFor.getResolveScope(), true).findAll();
+      Collection<PsiReference> refs;
       if (toSearchFor instanceof GrField) {
+        refs = ReferencesSearch.search(toSearchFor, toSearchFor.getResolveScope(), true).findAll();
         final GrAccessorMethod[] getters = ((GrField)toSearchFor).getGetters();
         for (GrAccessorMethod getter : getters) {
           refs.addAll(MethodReferencesSearch.search(getter, getter.getResolveScope(), true).findAll());
         }
+      }
+      else if (toSearchFor instanceof GrVariable) {
+        refs = findUsagesForLocal(toReplaceIn, ((GrVariable)toSearchFor));
+      }
+      else {
+        refs = ReferencesSearch.search(toSearchFor, toSearchFor.getResolveScope(), true).findAll();
       }
 
       for (PsiReference ref1 : refs) {
@@ -204,6 +215,10 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
         else {
           result.add(new ChangedMethodCallInfo(ref));
         }
+      }
+
+      if (toSearchFor instanceof GrVariable && !((GrVariable)toSearchFor).hasModifierProperty(PsiModifier.FINAL)) {
+        setPreviewUsages(true);
       }
     }
 
@@ -221,6 +236,60 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
 
     final UsageInfo[] usageInfos = result.toArray(new UsageInfo[result.size()]);
     return UsageViewUtil.removeDuplicatedUsages(usageInfos);
+  }
+
+  private static Collection<PsiReference> findUsagesForLocal(GrClosableBlock initializer, final GrVariable var) {
+    final Instruction[] flow = ControlFlowUtils.findControlFlowOwner(initializer).getControlFlow();
+    final ArrayList<BitSet> writes = ControlFlowUtils.inferWriteAccessMap(flow, var);
+
+    Instruction writeInstr = null;
+
+    final PsiElement parent = initializer.getParent();
+    if (parent instanceof GrVariable) {
+      writeInstr = ContainerUtil.find(flow, new Condition<Instruction>() {
+        @Override
+        public boolean value(Instruction instruction) {
+          return instruction.getElement() == var;
+        }
+      });
+    }
+    else if (parent instanceof GrAssignmentExpression) {
+      final GrReferenceExpression refExpr = (GrReferenceExpression)((GrAssignmentExpression)parent).getLValue();
+      final Instruction instruction = ContainerUtil.find(flow, new Condition<Instruction>() {
+        @Override
+        public boolean value(Instruction instruction) {
+          return instruction.getElement() == refExpr;
+        }
+      });
+
+      LOG.assertTrue(instruction != null);
+      final BitSet prev = writes.get(instruction.num());
+      if (prev.cardinality() == 1) {
+        writeInstr = flow[prev.nextSetBit(0)];
+      }
+    }
+
+    LOG.assertTrue(writeInstr != null);
+
+    Collection<PsiReference> result = new ArrayList<PsiReference>();
+    for (Instruction instruction : flow) {
+      if (!(instruction instanceof ReadWriteVariableInstruction)) continue;
+      if (((ReadWriteVariableInstruction)instruction).isWrite()) continue;
+
+      final PsiElement element = instruction.getElement();
+      if (element instanceof GrVariable && element != var) continue;
+      if (!(element instanceof GrReferenceExpression)) continue;
+
+      final GrReferenceExpression ref = (GrReferenceExpression)element;
+      if (ref.isQualified() || ref.resolve() != var) continue;
+
+      final BitSet prev = writes.get(instruction.num());
+      if (prev.cardinality() == 1 && prev.get(writeInstr.num())) {
+        result.add(ref);
+      }
+    }
+
+    return result;
   }
 
   @Override

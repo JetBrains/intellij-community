@@ -23,14 +23,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 
 class ConvertIntegerToOctalPredicate implements PsiElementPredicate {
   public boolean satisfiedBy(PsiElement element) {
-    if (!(element instanceof GrLiteral)) {
-      return false;
-    }
-    final GrLiteral expression = (GrLiteral) element;
+    if (!(element instanceof GrLiteral)) return false;
+
+    final GrLiteral expression = (GrLiteral)element;
     final PsiType type = expression.getType();
-    if (type == null) {
-      return false;
-    }
+    if (type == null) return false;
+
     if (!PsiType.INT.equals(type) && !PsiType.LONG.equals(type) &&
         !type.equalsToText("java.lang.Integer") && !type.equalsToText("java.lang.Long")) {
       return false;
@@ -40,6 +38,9 @@ class ConvertIntegerToOctalPredicate implements PsiElementPredicate {
       return false;
     }
     if (text.startsWith("0x") || text.startsWith("0X")) {
+      return true;
+    }
+    if (text.startsWith("0b") || text.startsWith("0B")) {
       return true;
     }
     if ("0".equals(text) || "0L".equals(text)) {

@@ -18,36 +18,24 @@ package com.intellij.openapi.roots.ui.configuration.artifacts;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ConfigurationErrorQuickFix;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureProblemDescription;
 import com.intellij.packaging.elements.PackagingElement;
-import com.intellij.packaging.ui.ArtifactProblemQuickFix;
-import com.intellij.ui.navigation.Place;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
  * @author nik
  */
 public class ArtifactProblemDescription extends ProjectStructureProblemDescription {
-  private List<ArtifactProblemQuickFix> myQuickFixes;
-  private List<PackagingElement<?>> myPathToPlace;
+  private final List<PackagingElement<?>> myPathToPlace;
 
-  public ArtifactProblemDescription(@NotNull String message,
-                                    @NotNull Severity severity,
-                                    @Nullable List<PackagingElement<?>> pathToPlace,
-                                    @NotNull List<ArtifactProblemQuickFix> quickFixes, @NotNull Place place) {
-    super(message, null, severity, place, Collections.<ConfigurationErrorQuickFix>emptyList());
+  public ArtifactProblemDescription(@NotNull String message, @NotNull Severity severity, @Nullable List<PackagingElement<?>> pathToPlace,
+                                    @NotNull PlaceInArtifact place, final List<ConfigurationErrorQuickFix> quickFixList) {
+    super(message, null, severity, place, quickFixList);
     myPathToPlace = pathToPlace;
-    myQuickFixes = quickFixes;
   }
 
-  @NotNull
-  public List<ArtifactProblemQuickFix> getQuickFixes() {
-    return myQuickFixes;
-  }
-
-  @Nullable 
+  @Nullable
   public List<PackagingElement<?>> getPathToPlace() {
     return myPathToPlace;
   }

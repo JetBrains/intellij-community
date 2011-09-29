@@ -23,42 +23,32 @@ import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.codeInspection.ui.InspectionResultsView;
-import com.intellij.codeInspection.ui.InspectionTree;
 import com.intellij.codeInspection.ui.InspectionTreeNode;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.util.TripleFunction;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 import java.util.*;
-import java.util.HashMap;
 
 /**
  * @author max
  */
-public final class LocalInspectionToolWrapper extends DescriptorProviderInspection {
+public final class LocalInspectionToolWrapper extends InspectionToolWrapper<LocalInspectionTool, LocalInspectionEP> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.LocalInspectionToolWrapper");
 
-  @NotNull private final LocalInspectionTool myTool;
-
   public LocalInspectionToolWrapper(@NotNull LocalInspectionTool tool) {
-    myTool = tool;
+    super(tool);
   }
 
-  @NotNull
-  public LocalInspectionTool getTool() {
-    return myTool;
+  public LocalInspectionToolWrapper(LocalInspectionEP ep) {
+    super(ep);
   }
 
   public void processFile(PsiFile file, final boolean filterSuppressed, final InspectionManager manager) {
@@ -68,10 +58,10 @@ public final class LocalInspectionToolWrapper extends DescriptorProviderInspecti
   public void processFile(final PsiFile file, final boolean filterSuppressed, final InspectionManager manager, final boolean isOnTheFly) {
     final ProblemsHolder holder = new ProblemsHolder(manager, file, isOnTheFly);
     LocalInspectionToolSession session = new LocalInspectionToolSession(file, 0, file.getTextLength());
-    final PsiElementVisitor customVisitor = myTool.buildVisitor(holder, isOnTheFly, session);
+    final PsiElementVisitor customVisitor = getTool().buildVisitor(holder, isOnTheFly, session);
     LOG.assertTrue(!(customVisitor instanceof PsiRecursiveElementVisitor), "The visitor returned from LocalInspectionTool.buildVisitor() must not be recursive");
 
-    myTool.inspectionStarted(session, isOnTheFly);
+    getTool().inspectionStarted(session, isOnTheFly);
 
     file.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override public void visitElement(PsiElement element) {
@@ -80,7 +70,7 @@ public final class LocalInspectionToolWrapper extends DescriptorProviderInspecti
       }
     });
 
-    myTool.inspectionFinished(session, holder);
+    getTool().inspectionFinished(session, holder);
 
     addProblemDescriptors(holder.getResults(), filterSuppressed);
   }
@@ -93,7 +83,7 @@ public final class LocalInspectionToolWrapper extends DescriptorProviderInspecti
   public void addProblemDescriptors(List<ProblemDescriptor> descriptors, final boolean filterSuppressed) {
     final GlobalInspectionContextImpl context = getContext();
     if (context != null) { //can be already closed
-      addProblemDescriptors(descriptors, filterSuppressed, context, myTool, CONVERT, this);
+      addProblemDescriptors(descriptors, filterSuppressed, context, getTool(), CONVERT, this);
     }
   }
   private static final TripleFunction<LocalInspectionTool, PsiElement, GlobalInspectionContext,RefElement> CONVERT = new TripleFunction<LocalInspectionTool, PsiElement, GlobalInspectionContext,RefElement>() {
@@ -192,75 +182,16 @@ public final class LocalInspectionToolWrapper extends DescriptorProviderInspecti
     });
   }
 
-  @NotNull
-  public String getDisplayName() {
-    return myTool.getDisplayName();
-  }
-
-  @NotNull
-  public String getGroupDisplayName() {
-    return myTool.getGroupDisplayName();
-  }
-
-  @NotNull
-  public String getShortName() {
-    return myTool.getShortName();
-  }
-
-  public boolean isEnabledByDefault() {
-    return myTool.isEnabledByDefault();
-  }
-
-  @NotNull
-   @Override
-   public String[] getGroupPath() {
-     return myTool.getGroupPath();
-   }
-
-
-  @NotNull
-  public HighlightDisplayLevel getDefaultLevel() {
-    return myTool.getDefaultLevel();
-  }
-
-  public void readSettings(Element element) throws InvalidDataException {
-    myTool.readSettings(element);
-  }
-
-  public void writeSettings(Element element) throws WriteExternalException {
-    myTool.writeSettings(element);
-  }
-
-  public JComponent createOptionsPanel() {
-    return myTool.createOptionsPanel();    
-  }
-
-  public void projectOpened(Project project) {
-    myTool.projectOpened(project);
-  }
-
-  public void projectClosed(Project project) {
-    myTool.projectClosed(project);
-  }
-
-  protected Class<? extends InspectionProfileEntry> getDescriptionContextClass() {
-    return myTool.getClass();
-  }
-
-  @Nullable
-  public String getStaticDescription() {
-    return myTool.getStaticDescription();
-  }
-
-  @Nullable
-  public SuppressIntentionAction[] getSuppressActions() {
-    if (myTool instanceof CustomSuppressableInspectionTool) {
-      return ((CustomSuppressableInspectionTool)myTool).getSuppressActions(null);
-    }
-    return super.getSuppressActions();
-  }
-
   public boolean isUnfair() {
-    return myTool instanceof UnfairLocalInspectionTool;
+    return getTool() instanceof UnfairLocalInspectionTool;
+  }
+
+  public String getID() {
+    return myEP == null ? getTool().getID() : myEP.id == null ? myEP.shortName : myEP.id;
+  }
+
+  @Nullable
+  public String getAlternativeID() {
+    return myEP == null ? getTool().getAlternativeID() : myEP.alternativeId;
   }
 }

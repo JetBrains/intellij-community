@@ -1,2 +1,2 @@
 Closure clos = {println <selection>"test"</selection> }
-[1, 2, 3].each {clos.call()}
+if ([1, 2, 3].length()>1) {clos.call()}

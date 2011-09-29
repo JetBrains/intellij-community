@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
-import com.intellij.ui.navigation.Place;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,9 +22,9 @@ import org.jetbrains.annotations.Nullable;
  * @author nik
  */
 public interface ProjectStructureProblemsHolder {
-  void registerError(@NotNull String message, @Nullable String description, @NotNull Place place, @Nullable ConfigurationErrorQuickFix fix);
+  void registerError(@NotNull String message, @Nullable String description, @NotNull PlaceInProjectStructure place, @Nullable ConfigurationErrorQuickFix fix);
 
-  void registerWarning(@NotNull String message, @Nullable String description, @NotNull Place place, @Nullable ConfigurationErrorQuickFix fix);
+  void registerWarning(@NotNull String message, @Nullable String description, @NotNull PlaceInProjectStructure place, @Nullable ConfigurationErrorQuickFix fix);
 
   void registerProblem(@NotNull ProjectStructureProblemDescription description);
 }

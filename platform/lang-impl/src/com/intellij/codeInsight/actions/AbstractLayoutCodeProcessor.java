@@ -18,7 +18,6 @@ package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtilBase;
-import com.intellij.formatting.FormattingProgressTask;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -41,6 +40,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SequentialModelProgressTask;
+import com.intellij.util.SequentialTask;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -237,25 +238,11 @@ public abstract class AbstractLayoutCodeProcessor {
 
     return new Runnable() {
       public void run() {
-        for (FutureTask<Boolean> task : tasks) {
-          if (task == null) {
-            continue;
-          }
-          task.run();
-          try {
-            if (!task.get() || task.isCancelled()) {
-              break;
-            }
-          }
-          catch (InterruptedException e) {
-            LOG.error("Got unexpected during formatting", e);
-            break;
-          }
-          catch (ExecutionException e) {
-            LOG.error("Got unexpected during formatting", e);
-            break;
-          }
-        }
+        SequentialModelProgressTask progressTask = new SequentialModelProgressTask(myProject, myCommandName);
+        ReformatFilesTask reformatFilesTask = new ReformatFilesTask(tasks);
+        reformatFilesTask.setCompositeTask(progressTask);
+        progressTask.setTask(reformatFilesTask);
+        ProgressManager.getInstance().run(progressTask);
       }
     };
   }
@@ -442,5 +429,70 @@ public abstract class AbstractLayoutCodeProcessor {
   public void runWithoutProgress() throws IncorrectOperationException {
     final Runnable runnable = preprocessFile(myFile);
     runnable.run();
+  }
+  
+  private class ReformatFilesTask implements SequentialTask {
+
+    private final List<FutureTask<Boolean>> myTasks;
+    private final int                       myTotalTasksNumber;
+    
+    private SequentialModelProgressTask myCompositeTask;
+
+    ReformatFilesTask(@NotNull List<FutureTask<Boolean>> tasks) {
+      myTasks = tasks;
+      myTotalTasksNumber = myTasks.size();
+    }
+
+    @Override
+    public void prepare() {
+    }
+
+    @Override
+    public boolean isDone() {
+      return myTasks.isEmpty();
+    }
+
+    @Override
+    public boolean iteration() {
+      if (myTasks.isEmpty()) {
+        return true;
+      }
+      FutureTask<Boolean> task = myTasks.remove(myTasks.size() - 1);
+      if (task == null) {
+        return myTasks.isEmpty();
+      }
+      task.run();
+      try {
+        if (!task.get() || task.isCancelled()) {
+          myTasks.clear();
+          return true;
+        }
+      }
+      catch (InterruptedException e) {
+        LOG.error("Got unexpected during formatting", e);
+        return true;
+      }
+      catch (ExecutionException e) {
+        LOG.error("Got unexpected during formatting", e);
+        return true;
+      }
+      if (myCompositeTask != null) {
+        ProgressIndicator indicator = myCompositeTask.getIndicator();
+        if (indicator != null) {
+          indicator.setText(myProgressText + (myTotalTasksNumber - myTasks.size()) + "/" + myTotalTasksNumber);
+          indicator.setFraction((double)(myTotalTasksNumber - myTasks.size()) / myTotalTasksNumber);
+        } 
+      }
+      return myTasks.isEmpty();
+    }
+
+    @Override
+    public void stop() {
+      myTasks.clear(); 
+    }
+
+    public void setCompositeTask(@Nullable SequentialModelProgressTask compositeTask) {
+      myCompositeTask = compositeTask;
+    }
   }
 }

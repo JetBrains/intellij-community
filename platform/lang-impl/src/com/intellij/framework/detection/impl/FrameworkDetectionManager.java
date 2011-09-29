@@ -36,6 +36,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -108,12 +109,16 @@ public class FrameworkDetectionManager extends AbstractProjectComponent implemen
 
   @Override
   public void projectOpened() {
-    final Collection<Integer> ids = FrameworkDetectorRegistry.getInstance().getAllDetectorIds();
-    synchronized (myLock) {
-      myDetectorsToProcess.clear();
-      myDetectorsToProcess.addAll(ids);
-    }
-    queueDetection();
+    StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
+      public void run() {
+        final Collection<Integer> ids = FrameworkDetectorRegistry.getInstance().getAllDetectorIds();
+        synchronized (myLock) {
+          myDetectorsToProcess.clear();
+          myDetectorsToProcess.addAll(ids);
+        }
+        queueDetection();
+      }
+    });
   }
 
   @Override

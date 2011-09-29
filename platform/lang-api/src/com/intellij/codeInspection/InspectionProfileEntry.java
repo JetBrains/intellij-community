@@ -197,6 +197,7 @@ public abstract class InspectionProfileEntry {
    * Initialize inspection with project. Is called on project opened for all profiles as well as on profile creation.
    *
    * @param project to be associated with this entry
+   * @deprecated this won't work for inspections configured via {@link InspectionEP}
    */
   public void projectOpened(Project project) {
   }
@@ -205,6 +206,7 @@ public abstract class InspectionProfileEntry {
    * Cleanup inspection settings corresponding to the project. Is called on project closed for all profiles as well as on profile deletion.
    *
    * @param project to be disassociated from this entry
+   * @deprecated this won't work for inspections configured via {@link InspectionEP}
    */
   public void projectClosed(Project project) {
   }
@@ -213,19 +215,23 @@ public abstract class InspectionProfileEntry {
    * Override this method to return a html inspection description. Otherwise it will be loaded from resources using ID.
    *
    * @return hard-code inspection description.
+   * @deprecated this won't work for inspections configured via {@link InspectionEP}
    */
   @Nullable
   public String getStaticDescription() {
     return null;
   }
 
+  /**
+   * @deprecated this won't work for inspections configured via {@link InspectionEP}
+   */
   @Nullable
   public String getDescriptionFileName() {
     return null;
   }
 
   @Nullable
-  private URL getDescriptionUrl() {
+  protected URL getDescriptionUrl() {
     final String fileName = getDescriptionFileName();
     if (fileName == null) return null;
     return ResourceUtil.getResource(getDescriptionContextClass(), "/inspectionDescriptions", fileName);
@@ -233,6 +239,10 @@ public abstract class InspectionProfileEntry {
 
   protected Class<? extends InspectionProfileEntry> getDescriptionContextClass() {
     return getClass();
+  }
+
+  public boolean isInitialized() {
+    return true;
   }
 
   @Nullable

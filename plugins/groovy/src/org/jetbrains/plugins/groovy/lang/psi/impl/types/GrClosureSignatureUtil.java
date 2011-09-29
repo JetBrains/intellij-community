@@ -147,7 +147,8 @@ public class GrClosureSignatureUtil {
   public static boolean isSignatureApplicable(GrClosureSignature signature, PsiType[] args, GroovyPsiElement context) {
     if (mapArgTypesToParameters(signature, args, context, false) != null) return true;
 
-    if (args.length == 1) {
+    // check for the case foo([1, 2, 3]) if foo(int, int, int)
+    if (args.length == 1 && PsiUtil.isInMethodCallContext(context)) {
       final GrClosureParameter[] parameters = signature.getParameters();
       if (parameters.length == 1 && parameters[0].getType() instanceof PsiArrayType) return false;
       PsiType arg = args[0];

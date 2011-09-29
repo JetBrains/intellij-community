@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
-import com.intellij.ui.navigation.Place;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,10 +27,10 @@ public class ProjectStructureProblemDescription {
   private final String myMessage;
   private final String myDescription;
   private final Severity mySeverity;
-  private final Place myPlace;
+  private final PlaceInProjectStructure myPlace;
   private final List<ConfigurationErrorQuickFix> myFixes;
 
-  public ProjectStructureProblemDescription(@NotNull String message, @Nullable String description, @NotNull Severity severity, @NotNull Place place,
+  public ProjectStructureProblemDescription(@NotNull String message, @Nullable String description, @NotNull Severity severity, @NotNull PlaceInProjectStructure place,
                                             @NotNull List<ConfigurationErrorQuickFix> fixes) {
     myMessage = message;
     myDescription = description;
@@ -57,7 +56,7 @@ public class ProjectStructureProblemDescription {
     return mySeverity;
   }
 
-  public Place getPlace() {
+  public PlaceInProjectStructure getPlace() {
     return myPlace;
   }
 

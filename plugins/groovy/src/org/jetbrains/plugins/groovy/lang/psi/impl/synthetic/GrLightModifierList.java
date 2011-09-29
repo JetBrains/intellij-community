@@ -73,6 +73,10 @@ public class GrLightModifierList extends LightElement implements GrModifierList 
     }
   }
 
+  public int getModifiersAsInt() {
+    return myModifiers;
+  }
+  
   public boolean hasModifierProperty(@NotNull String name){
     return GrModifierListImpl.checkModifierProperty(this, name);
   }
