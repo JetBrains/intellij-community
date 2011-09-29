@@ -19,6 +19,12 @@ public class PythonParsingTest extends ParsingTestCase {
   }
 
   @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    registerExtensionPoint(PythonDialectsTokenSetContributor.EP_NAME, PythonDialectsTokenSetContributor.class);
+  }
+
+  @Override
   protected String getTestDataPath() {
     return PythonTestUtil.getTestDataPath();
   }
