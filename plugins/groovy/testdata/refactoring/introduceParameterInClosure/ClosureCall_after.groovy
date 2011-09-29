@@ -1,2 +1,2 @@
 Closure clos = {String anObject -> println anObject }
-[1, 2, 3].each {clos.call("test")}
+if ([1, 2, 3].length()>1) {clos.call("test")}
