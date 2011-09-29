@@ -179,6 +179,9 @@
                   beanClass="com.intellij.codeInspection.LocalInspectionEP"/>
   <extensionPoint name="globalInspection"
                   beanClass="com.intellij.codeInspection.InspectionEP"/>
+  <!-- please use localInspection or globalInspection instead-->
+  <extensionPoint name="specialTool"
+                  beanClass="com.intellij.codeInspection.InspectionEP"/>
   <extensionPoint name="inspectionToolProvider"
                   interface="com.intellij.codeInspection.InspectionToolProvider"/>
   <extensionPoint name="inspectionToolsFactory"

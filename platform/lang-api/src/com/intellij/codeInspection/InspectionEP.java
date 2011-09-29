@@ -32,9 +32,11 @@ import java.util.ResourceBundle;
 /**
  * @author Dmitry Avdeev
  *         Date: 9/27/11
+ * @see LocalInspectionEP
  */
 public class InspectionEP extends LanguageExtensionPoint {
 
+  /** @see GlobalInspectionTool */
   public final static ExtensionPointName<InspectionEP> GLOBAL_INSPECTION = ExtensionPointName.create("com.intellij.globalInspection");
 
   @Attribute("shortName")

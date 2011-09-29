@@ -27,6 +27,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Factory;
@@ -61,6 +62,9 @@ public class InspectionToolRegistrar {
   private static final Pattern HTML_PATTERN = Pattern.compile("<[^<>]*>");
   public final SearchableOptionsRegistrar myOptionsRegistrar;
 
+  private static final ExtensionPointName<InspectionEP> SPECIAL_TOOL = ExtensionPointName.create("com.intellij.specialTool");
+
+
   public InspectionToolRegistrar(SearchableOptionsRegistrar registrar) {
     myOptionsRegistrar = registrar;
   }
@@ -84,6 +88,14 @@ public class InspectionToolRegistrar {
           @Override
           public InspectionTool create() {
             return new GlobalInspectionToolWrapper(ep);
+          }
+        });
+      }
+      for (final InspectionEP ep : Extensions.getExtensions(SPECIAL_TOOL)) {
+        myInspectionToolFactories.add(new Factory<InspectionTool>() {
+          @Override
+          public InspectionTool create() {
+            return (InspectionTool)ep.instantiateTool();
           }
         });
       }
@@ -111,15 +123,14 @@ public class InspectionToolRegistrar {
       Class[] classes = provider.getInspectionClasses();
       for (Class aClass : classes) {
         Factory<InspectionTool> factory = registerInspectionTool(aClass, true);
-        InspectionTool tool = factory.create();
-//        printExtension(aClass, tool);
+//        printExtension(aClass, factory.create());
       }
     }
   }
-  /*
 
+  /*
   private void printExtension(Class aClass, InspectionTool tool) {
-    StringBuilder builder = new StringBuilder(tool instanceof LocalInspectionToolWrapper ? "<localInspection" : "<globalInspection");
+    StringBuilder builder = new StringBuilder(tool instanceof GlobalInspectionToolWrapper ? "<globalInspection" : "<localInspection");
     if (tool instanceof LocalInspectionToolWrapper) {
       String id = ((LocalInspectionToolWrapper)tool).getID();
       if (!id.equals(tool.getShortName())) {
@@ -144,7 +155,9 @@ public class InspectionToolRegistrar {
     CommonBundle.lastKey = null;
     String groupName = tool.getGroupDisplayName();
     if (CommonBundle.lastKey != null) {
-      builder.append(" groupBundle=\"").append(CommonBundle.lastBundle).append('"');
+      if (lastBundle == null || !lastBundle.equals(CommonBundle.lastBundle) ) {
+        builder.append(" groupBundle=\"").append(CommonBundle.lastBundle).append('"');
+      }
       builder.append(" groupKey=\"").append(CommonBundle.lastKey).append('"');
     }
     else {
