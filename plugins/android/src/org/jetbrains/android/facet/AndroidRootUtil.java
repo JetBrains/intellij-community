@@ -159,6 +159,12 @@ public class AndroidRootUtil {
     return null;
   }
 
+  @Nullable
+  public static VirtualFile getRenderscriptGenDir(@NotNull Module module) {
+    final String path = getRenderscriptGenSourceRootPath(module);
+    return path != null ? LocalFileSystem.getInstance().findFileByPath(path) : null;
+  }
+
   // works even if there is no Android facet in a module
 
   @Nullable
@@ -299,5 +305,14 @@ public class AndroidRootUtil {
       moduleDirPath = FileUtil.toSystemIndependentName(moduleDirPath);
     }
     return moduleDirPath;
+  }
+
+  @Nullable
+  public static String getRenderscriptGenSourceRootPath(@NotNull Module module) {
+    // todo: return correct path for mavenized module
+    final String moduleDirPath = getModuleDirPath(module);
+    return moduleDirPath != null
+           ? moduleDirPath + '/' + SdkConstants.FD_GEN_SOURCES
+           : null;
   }
 }

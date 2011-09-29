@@ -113,13 +113,8 @@ public class AndroidRenderscriptCompiler implements SourceGeneratingCompiler {
                               @NotNull final String packageName,
                               @NotNull final List<GenerationItem> items) {
     final Module module = facet.getModule();
-
-    // todo: make separate setting
-    final String sourceRootPath = facet.getAidlGenSourceRootPath();
-
+    final String sourceRootPath = AndroidRootUtil.getRenderscriptGenSourceRootPath(module);
     if (sourceRootPath == null) {
-      context.addMessage(CompilerMessageCategory.ERROR,
-                         AndroidBundle.message("android.compilation.error.apt.gen.not.specified", module.getName()), null, -1, -1);
       return;
     }
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(context.getProject()).getFileIndex();
