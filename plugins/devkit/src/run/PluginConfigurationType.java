@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.devkit.run;
 
+import com.intellij.diagnostic.VMOptions;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
@@ -22,9 +23,8 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 
 import javax.swing.*;
@@ -88,10 +88,10 @@ public class PluginConfigurationType implements ConfigurationType {
     if (myVmParameters == null) {
       myVmParameters = "";
 
-      String vmParameters = readFile("idea.plugins.vmoptions");
+      String vmParameters = readFile(new File(PathManager.getBinPath(), "idea.plugins.vmoptions"));
       if (vmParameters != null) {
         myVmParameters = vmParameters;
-      } else if ((vmParameters = readFile("idea.exe.vmoptions")) != null) {
+      } else if ((vmParameters = readFile(new File(VMOptions.getSettingsFilePath()))) != null) {
         myVmParameters = vmParameters;
       }
     }
@@ -99,10 +99,9 @@ public class PluginConfigurationType implements ConfigurationType {
   }
 
   @Nullable
-  private static String readFile(@NonNls String fileName) {
-    final File file = new File(PathManager.getBinPath(), fileName);
+  private static String readFile(@NotNull File file) {
     if (file.exists()) {
-      final StringBuffer lines = new StringBuffer();
+      final StringBuilder lines = new StringBuilder();
       BufferedReader reader = null;
       try {
         reader = new BufferedReader(new FileReader(file));
