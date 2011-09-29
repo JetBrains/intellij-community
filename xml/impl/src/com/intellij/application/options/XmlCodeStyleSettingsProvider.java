@@ -34,7 +34,7 @@ public class XmlCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
   public Configurable createSettingsPage(final CodeStyleSettings settings, final CodeStyleSettings originalSettings) {
     return new CodeStyleAbstractConfigurable(settings, originalSettings, ApplicationBundle.message("title.xml")){
       protected CodeStyleAbstractPanel createPanel(final CodeStyleSettings settings) {
-        return new CodeStyleXmlPanel(settings);
+        return new XmlCodeStyleMainPanel(getCurrentSettings(), settings);
       }
       public Icon getIcon() {
         return StdFileTypes.XML.getIcon();
