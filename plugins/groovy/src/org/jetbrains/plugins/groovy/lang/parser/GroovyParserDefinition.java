@@ -26,6 +26,7 @@ import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.TokenType;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -83,20 +84,24 @@ public class GroovyParserDefinition implements ParserDefinition {
   }
 
   public SpaceRequirements spaceExistanceTypeBetweenTokens(ASTNode left, ASTNode right) {
-    if (right.getElementType() == kIMPORT && left.getElementType() != TokenType.WHITE_SPACE) {
+    final IElementType lType = left.getElementType();
+    final IElementType rType = right.getElementType();
+
+    if (rType == kIMPORT && lType != TokenType.WHITE_SPACE) {
       return MUST_LINE_BREAK;
     }
-    else if (left.getElementType() == MODIFIERS && right.getElementType() == MODIFIERS) {
+    else if (lType == MODIFIERS && rType == MODIFIERS) {
       return MUST;
     }
-    if (left.getElementType() == mSEMI || left.getElementType() == mSL_COMMENT) {
+    if (lType == mSEMI || lType == mSL_COMMENT) {
       return MUST_LINE_BREAK;
     }    
-    if (left.getElementType() == mNLS || left.getElementType() == mGDOC_COMMENT_START) {
+    if (lType == mNLS || lType == mGDOC_COMMENT_START) {
       return MAY;
     }
-    
-    if (left.getElementType() == mDOLLAR) return MUST_NOT;
+
+    final IElementType parentType = left.getTreeParent().getElementType();
+    if (parentType == GSTRING || parentType == REGEX || parentType == GSTRING_INJECTION) return MUST_NOT;
 
     return LanguageUtil.canStickTokensTogetherByLexer(left, right, new GroovyLexer());
   }
