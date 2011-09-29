@@ -138,7 +138,9 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
     editorComboBox.addDocumentListener(new DocumentAdapter() {
       @Override
       public void documentChanged(DocumentEvent e) {
-        setComboboxModel(getComboBox(), initialSourceRoot, fileIndex, mySourceRoots, project, false, errorMessageUpdater);
+        JComboBox comboBox = getComboBox();
+        DirectoryChooser.ItemWrapper selectedItem = (DirectoryChooser.ItemWrapper)comboBox.getSelectedItem();
+        setComboboxModel(comboBox, selectedItem != null ? fileIndex.getSourceRootForFile(selectedItem.getDirectory().getVirtualFile()) : initialSourceRoot, fileIndex, mySourceRoots, project, false, errorMessageUpdater);
       }
     });
     setComboboxModel(getComboBox(), initialSourceRoot, fileIndex, mySourceRoots, project, false, errorMessageUpdater);
