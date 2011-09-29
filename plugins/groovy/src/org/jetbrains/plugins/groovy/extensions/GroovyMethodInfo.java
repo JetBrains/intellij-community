@@ -153,7 +153,7 @@ public class GroovyMethodInfo {
     Map<String, List<GroovyMethodInfo>> methodMap = res.get(key);
     if (methodMap == null) {
       methodMap = new HashMap<String, List<GroovyMethodInfo>>();
-      res.put(key, methodMap);
+      res.put(key.intern(), methodMap);
     }
 
     List<GroovyMethodInfo> methodsList = methodMap.get(methodName);
