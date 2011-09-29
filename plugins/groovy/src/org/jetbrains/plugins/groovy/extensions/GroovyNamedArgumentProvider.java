@@ -68,6 +68,7 @@ public abstract class GroovyNamedArgumentProvider {
           super.put(key, oldValue);
         }
 
+        //noinspection ConstantConditions
         return oldValue;
       }
     };
@@ -90,7 +91,18 @@ public abstract class GroovyNamedArgumentProvider {
 
           if (!method.isConstructor() && !(parameters.length > 0 && canBeMap(parameters[0]))) continue;
 
-          collectVariantsFromSimpleDescriptors(namedArguments, call, method);
+          for (GroovyMethodInfo methodInfo : GroovyMethodInfo.getInfos(method)) {
+            if (methodInfo.getNamedArguments() != null) {
+              if (methodInfo.isApplicable(method)) {
+                namedArguments.putAll(methodInfo.getNamedArguments());
+              }
+            }
+            else if (methodInfo.isNamedArgumentProviderDefined()) {
+              if (methodInfo.isApplicable(method)) {
+                methodInfo.getNamedArgProvider().getNamedArguments(call, element, argumentName, forCompletion, namedArguments);
+              }
+            }
+          }
         }
 
         for (GroovyNamedArgumentProvider namedArgumentProvider : EP_NAME.getExtensions()) {
@@ -100,15 +112,6 @@ public abstract class GroovyNamedArgumentProvider {
     }
 
     return namedArguments;
-  }
-
-  private static void collectVariantsFromSimpleDescriptors(Map<String, ArgumentDescriptor> res, @NotNull GrCall call, @NotNull PsiMethod method) {
-    for (GroovyMethodInfo methodInfo : GroovyMethodInfo.getInfos(method)) {
-      if (methodInfo.isProvideNamedArguments() && methodInfo.isApplicable(method)) {
-        methodInfo.addNamedArguments(res, call, method);
-        break;
-      }
-    }
   }
 
   public static boolean canBeMap(PsiParameter parameter) {

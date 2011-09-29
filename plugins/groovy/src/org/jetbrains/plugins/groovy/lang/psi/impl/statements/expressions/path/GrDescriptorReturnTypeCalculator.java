@@ -31,10 +31,12 @@ public class GrDescriptorReturnTypeCalculator extends GrCallExpressionTypeCalcul
         }
       }
       else {
-        if (methodInfo.getReturnTypeCalculatorClassName() != null && methodInfo.isApplicable(method)) {
-          PsiType result = methodInfo.getReturnTypeCalculator().fun(callExpression, method);
-          if (result != null) {
-            return result;
+        if (methodInfo.isReturnTypeCalculatorDefined()) {
+          if (methodInfo.isApplicable(method)) {
+            PsiType result = methodInfo.getReturnTypeCalculator().fun(callExpression, method);
+            if (result != null) {
+              return result;
+            }
           }
         }
       }

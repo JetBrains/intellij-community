@@ -4,7 +4,6 @@ import com.intellij.psi.*;
 import com.intellij.util.PairFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
@@ -28,7 +27,7 @@ public class GroovyMethodInfo {
 
   private final Map<String, GroovyNamedArgumentProvider.ArgumentDescriptor> myNamedArguments;
   private final  String myNamedArgProviderClassName;
-  private GroovyMethodDescriptor.NamedArgumentProvider myNamedArgProviderInstance;
+  private GroovyNamedArgumentProvider myNamedArgProviderInstance;
 
   private static void ensureInit() {
     if (METHOD_INFOS != null) return;
@@ -154,8 +153,8 @@ public class GroovyMethodInfo {
     return myReturnType;
   }
 
-  public String getReturnTypeCalculatorClassName() {
-    return myReturnTypeCalculatorClassName;
+  public boolean isReturnTypeCalculatorDefined() {
+    return myReturnTypeCalculatorClassName != null;
   }
 
   @NotNull
@@ -163,25 +162,23 @@ public class GroovyMethodInfo {
     if (myReturnTypeCalculatorInstance == null) {
       myReturnTypeCalculatorInstance = ClassInstanceCache.getInstance(myReturnTypeCalculatorClassName);
     }
-    
     return myReturnTypeCalculatorInstance;
   }
 
-  public void addNamedArguments(Map<String, GroovyNamedArgumentProvider.ArgumentDescriptor> res, @NotNull GrCall call, @NotNull PsiMethod method) {
-    if (myNamedArguments != null) {
-      res.putAll(myNamedArguments);
-    }
-    else if (myNamedArgProviderClassName != null) {
-      if (myNamedArgProviderInstance == null) {
-        myNamedArgProviderInstance = ClassInstanceCache.getInstance(myNamedArgProviderClassName);
-      }
-
-      myNamedArgProviderInstance.collectNamedArguments(res, call, method);
-    }
+  @Nullable
+  public Map<String, GroovyNamedArgumentProvider.ArgumentDescriptor> getNamedArguments() {
+    return myNamedArguments;
   }
 
-  public boolean isProvideNamedArguments() {
-    return myNamedArguments != null || myNamedArgProviderClassName != null;
+  public boolean isNamedArgumentProviderDefined() {
+    return myNamedArgProviderClassName != null;
+  }
+
+  public GroovyNamedArgumentProvider getNamedArgProvider() {
+    if (myNamedArgProviderInstance == null) {
+      myNamedArgProviderInstance = ClassInstanceCache.getInstance(myNamedArgProviderClassName);
+    }
+    return myNamedArgProviderInstance;
   }
 
   public boolean isApplicable(@NotNull PsiMethod method) {

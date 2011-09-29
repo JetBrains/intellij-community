@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.groovy.util;
 
 import com.intellij.util.containers.ConcurrentHashMap;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Sergey Evdokimov
@@ -13,7 +14,7 @@ public class ClassInstanceCache {
   }
 
   @SuppressWarnings("unchecked")
-  public static <T> T getInstance(String className) {
+  public static <T> T getInstance(@NotNull String className) {
     Object res = CACHE.get(className);
     if (res != null) return (T)res;
 

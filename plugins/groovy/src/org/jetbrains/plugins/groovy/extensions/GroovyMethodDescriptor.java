@@ -158,8 +158,4 @@ public class GroovyMethodDescriptor {
 
     return descriptor;
   }
-
-  public interface NamedArgumentProvider {
-    void collectNamedArguments(Map<String, GroovyNamedArgumentProvider.ArgumentDescriptor> res, @NotNull GrCall callExpression, @NotNull PsiMethod method);
-  }
 }
