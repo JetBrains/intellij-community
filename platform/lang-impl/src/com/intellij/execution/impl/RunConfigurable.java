@@ -380,10 +380,9 @@ class RunConfigurable extends BaseConfigurable {
     pane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     leftPanel.add(pane, BorderLayout.CENTER);
     final JPanel bottomPanel = new JPanel(new BorderLayout());
-    bottomPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
 
     Box box = new Box(BoxLayout.LINE_AXIS);
-    box.setBorder(BorderFactory.createEmptyBorder(7, 5, 3, 0));
+    box.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
     box.add(new JLabel("<html>Temporary configurations limit:</html>"));
     Dimension size = new Dimension(25, myRecentsLimit.getPreferredSize().height);
     myRecentsLimit.setPreferredSize(size);

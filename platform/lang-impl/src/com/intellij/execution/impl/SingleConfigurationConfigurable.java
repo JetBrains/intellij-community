@@ -205,9 +205,9 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     private JTextField myNameText;
     private JComponent myWholePanel;
     private JPanel myComponentPlace;
-    private JPanel myOutlinePanel;
     private JLabel myWarningLabel;
     private JButton myFixButton;
+    private JSeparator mySeparator;
     private Runnable myQuickFix = null;
 
     public MyValidatableComponent() {
@@ -257,7 +257,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       final ValidationResult configurationException = getValidationResult();
 
       if (configurationException != null) {
-        myOutlinePanel.setVisible(true);
+        mySeparator.setVisible(true);
         myWarningLabel.setVisible(true);
         myWarningLabel.setText(generateWarningLabelText(configurationException));
         final Runnable quickFix = configurationException.getQuickFix();
@@ -271,7 +271,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
 
       }
       else {
-        myOutlinePanel.setVisible(false);
+        mySeparator.setVisible(false);
         myWarningLabel.setVisible(false);
         myFixButton.setVisible(false);
       }
