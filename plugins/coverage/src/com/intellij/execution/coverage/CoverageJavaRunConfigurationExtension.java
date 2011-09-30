@@ -33,7 +33,6 @@ import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -64,11 +63,6 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
   @Override
   public String getName() {
     return "coverage";
-  }
-
-  @Nullable
-  public Icon getIcon(RunConfigurationBase runConfiguration) {
-    return null;
   }
 
   public void updateJavaParameters(RunConfigurationBase configuration, JavaParameters params, RunnerSettings runnerSettings) {
