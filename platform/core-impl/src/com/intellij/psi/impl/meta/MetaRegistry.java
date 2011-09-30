@@ -113,6 +113,10 @@ public class MetaRegistry extends MetaDataRegistrar {
     return ourCachedMetaCache.get(META_DATA_KEY, element, null).getValue();
   }
 
+  /**
+   * @deprecated
+   * @see MetaDataContributor
+   */
   public static <T extends PsiMetaData> void addMetadataBinding(ElementFilter filter, Class<T> aMetadataClass, Disposable parentDisposable) {
     final MyBinding binding = new MyBinding(filter, aMetadataClass);
     addBinding(binding);
@@ -123,6 +127,10 @@ public class MetaRegistry extends MetaDataRegistrar {
     });
   }
 
+  /**
+   * @deprecated
+   * @see MetaDataContributor
+   */
   public static <T extends PsiMetaData> void addMetadataBinding(ElementFilter filter, Class<T> aMetadataClass) {
     addBinding(new MyBinding(filter, aMetadataClass));
   }
