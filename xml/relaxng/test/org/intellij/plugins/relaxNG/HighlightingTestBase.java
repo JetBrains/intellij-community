@@ -21,6 +21,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionToolProvider;
+import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
 import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.mock.MockProgressIndicator;
@@ -42,6 +43,7 @@ import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
+import com.intellij.util.ArrayUtil;
 import org.intellij.plugins.relaxNG.inspections.RngDomInspection;
 import org.intellij.plugins.testUtil.IdeaCodeInsightTestCase;
 import org.intellij.plugins.testUtil.ResourceUtil;
@@ -92,22 +94,14 @@ public abstract class HighlightingTestBase extends UsefulTestCase implements Ide
 
     myTestFixture.setTestDataPath(getTestDataBasePath() + getTestDataPath());
 
-    InspectionToolProvider[] loaders;
+    Class<? extends LocalInspectionTool>[] inspectionClasses = new DefaultInspectionProvider().getInspectionClasses();
     if (getName().contains("Inspection")) {
-      loaders = new InspectionToolProvider[]{
-        new ApplicationLoader(),
-        new DefaultInspectionProvider()
-      };
-    }
-    else {
-      loaders = new InspectionToolProvider[]{
-        new DefaultInspectionProvider()
-      };
+      inspectionClasses = ArrayUtil.mergeArrays(inspectionClasses, ApplicationLoader.getInspectionClasses());
     }
 
     myTestFixture.setUp();
 
-    myTestFixture.enableInspections(loaders);
+    myTestFixture.enableInspections(inspectionClasses);
 
     new WriteAction() {
       protected void run(Result result) throws Throwable {
