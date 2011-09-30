@@ -503,7 +503,7 @@ public class NameUtil {
       }
 
       String nextChar = String.valueOf(myPattern[patternIndex]);
-      boolean wordStart = Character.isUpperCase(myPattern[patternIndex]);
+      boolean upper = Character.isUpperCase(myPattern[patternIndex]);
 
       int fromIndex = nameIndex;
       while (true) {
@@ -511,7 +511,7 @@ public class NameUtil {
         if (next < 0) {
           break;
         }
-        if (wordStart && next > 0 && !Character.isUpperCase(name.charAt(next))) {
+        if (upper && next > 0 && !Character.isUpperCase(name.charAt(next))) {
           fromIndex = next + 1;
           continue;
         }
