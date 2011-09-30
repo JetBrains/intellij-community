@@ -29,6 +29,7 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.junit.RefactoringListeners;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.SourceScope;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
@@ -60,6 +61,8 @@ public class TestNGConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
   protected transient Project project;
   public boolean ALTERNATIVE_JRE_PATH_ENABLED;
   public String ALTERNATIVE_JRE_PATH;
+  
+  private static final Object PARSE_LOCK = new Object();
 
   public static final String DEFAULT_PACKAGE_NAME = ExecutionBundle.message("default.package.presentable.name");
   public static final String DEFAULT_PACKAGE_CONFIGURATION_NAME = ExecutionBundle.message("default.package.configuration.name");
@@ -296,7 +299,9 @@ public class TestNGConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
       try {
         final Parser parser = new Parser(data.getSuiteName());
         parser.setLoadClasses(false);
-        parser.parse();//try to parse suite.xml
+        synchronized (PARSE_LOCK) {
+          parser.parse();//try to parse suite.xml
+        }
       }
       catch (Exception e) {
         throw new RuntimeConfigurationException("Unable to parse '" + data.getSuiteName() + "' specified");
