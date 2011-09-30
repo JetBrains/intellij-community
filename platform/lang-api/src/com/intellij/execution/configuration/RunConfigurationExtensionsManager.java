@@ -86,11 +86,6 @@ public class RunConfigurationExtensionsManager<U extends AbstractRunConfiguratio
     }
   }
 
-  public Icon getIcon(@NotNull final U configuration, @NotNull final Icon icon) {
-
-    return icon;
-  }
-
   public <V extends U> void appendEditors(@NotNull final U configuration,
                                           @NotNull final SettingsEditorGroup<V> group) {
     for (T extension : getApplicableExtensions(configuration)) {

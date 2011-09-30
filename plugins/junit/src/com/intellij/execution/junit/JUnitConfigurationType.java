@@ -45,7 +45,7 @@ public class JUnitConfigurationType implements ConfigurationType {
 
       @Override
       public Icon getIcon(@NotNull final RunConfiguration configuration) {
-        return RunConfigurationExtension.getIcon((JUnitConfiguration)configuration, getIcon());
+        return getIcon();
       }
 
       @Override

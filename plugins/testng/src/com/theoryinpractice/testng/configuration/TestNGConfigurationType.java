@@ -59,7 +59,7 @@ public class TestNGConfigurationType implements ConfigurationType
 
           @Override
           public Icon getIcon(@NotNull final RunConfiguration configuration) {
-            return RunConfigurationExtension.getIcon((TestNGConfiguration)configuration, ICON);
+            return ICON;
           }
 
           @Override
@@ -73,11 +73,7 @@ public class TestNGConfigurationType implements ConfigurationType
         return ConfigurationTypeUtil.findConfigurationType(TestNGConfigurationType.class);
     }
 
-    public RunnerAndConfigurationSettings createConfigurationByLocation(Location location) {
-      return null;
-    }
-
-    public boolean isConfigurationByLocation(RunConfiguration runConfiguration, Location location) {
+  public boolean isConfigurationByLocation(RunConfiguration runConfiguration, Location location) {
         TestNGConfiguration config = (TestNGConfiguration) runConfiguration;
         TestData testobject = config.getPersistantData();
         if (testobject == null)

@@ -45,7 +45,6 @@ import gnu.trove.THashMap;
 import org.jdom.Document;
 import org.jdom.Element;
 
-import javax.swing.*;
 import java.io.IOException;
 import java.util.Set;
 import java.util.TreeSet;
@@ -129,11 +128,6 @@ public class SnapShooterConfigurationExtension extends RunConfigurationExtension
   @Override
   public String getName() {
     return "snapshooter";
-  }
-
-  @Override
-  public Icon getIcon(RunConfigurationBase runConfiguration) {
-    return null;
   }
 
   @Override

@@ -53,8 +53,7 @@ public abstract class RunConfigurationExtension {
   public abstract SettingsEditor createEditor(RunConfigurationBase configuration);
   public abstract String getEditorTitle();
   public abstract String getName();
-  @Nullable
-  public abstract Icon getIcon(RunConfigurationBase runConfiguration);
+
   public abstract <T extends RunConfigurationBase > void updateJavaParameters(final T configuration, final JavaParameters params, RunnerSettings runnerSettings);
 
   protected abstract void readExternal(RunConfigurationBase runConfiguration, Element element) throws InvalidDataException;
@@ -94,15 +93,7 @@ public abstract class RunConfigurationExtension {
     }
   }
 
-  public static Icon getIcon(RunConfigurationBase configuration, Icon icon) {
-    for (RunConfigurationExtension extension : Extensions.getExtensions(EP_NAME)) {
-      final Icon extIcon = extension.getIcon(configuration);
-      if (extIcon != null) {
-        return LayeredIcon.create(icon, extIcon);
-      }
-    }
-    return icon;
-  }
+
 
   public static void readSettings(RunConfigurationBase runConfiguration, Element parentNode) throws InvalidDataException {
     final List children = parentNode.getChildren("extension");

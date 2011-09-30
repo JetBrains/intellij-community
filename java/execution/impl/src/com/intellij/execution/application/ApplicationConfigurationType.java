@@ -50,7 +50,7 @@ public class ApplicationConfigurationType implements ConfigurationType {
 
       @Override
       public Icon getIcon(@NotNull final RunConfiguration configuration) {
-        return RunConfigurationExtension.getIcon((ApplicationConfiguration)configuration, getIcon());
+        return getIcon();
       }
 
       @Override
