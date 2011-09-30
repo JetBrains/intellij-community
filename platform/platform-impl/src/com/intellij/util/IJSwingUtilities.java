@@ -18,12 +18,16 @@ package com.intellij.util;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.ui.EditorTextField;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FilteringIterator;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntStack;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.CompoundBorder;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.util.Iterator;
 
@@ -173,5 +177,26 @@ public class IJSwingUtilities {
   @Nullable
   public static <T extends Component> T findParentOfType(Component focusOwner, Class<T> aClass) {
     return (T)ContainerUtil.find(getParents(focusOwner), (FilteringIterator.InstanceOf<T>)FilteringIterator.instanceOf(aClass));
+  }
+
+  public static void adjustComponentsOnMac(JLabel label, JComponent component) {
+    if (label == null || component == null) return;
+    if (!UIUtil.isUnderAquaLookAndFeel()) return;
+
+    if (component instanceof JComboBox) {
+      addInsets(component, new Insets(0,-2,0,0));
+      addInsets(label, new Insets(0,2,0,0));
+    }
+    if (component instanceof JTextField || component instanceof EditorTextField) {
+      addInsets(label, new Insets(0,3,0,0));
+    }
+  }
+
+  public static void addInsets(JComponent component, Insets insets) {
+    if (component.getBorder() != null) {
+      component.setBorder(new CompoundBorder(new EmptyBorder(insets), component.getBorder()));
+    } else {
+      component.setBorder(new EmptyBorder(insets));
+    }
   }
 }

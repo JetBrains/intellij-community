@@ -17,6 +17,7 @@ package com.intellij.refactoring.ui;
 
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.UpDownHandler;
@@ -24,6 +25,7 @@ import com.intellij.util.ui.UpDownHandler;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
@@ -39,11 +41,12 @@ public class ComboBoxVisibilityPanel extends VisibilityPanelBase {
   private final Map<String, String> myNamesMap = new HashMap<String, String>();
 
   public ComboBoxVisibilityPanel(String name, String[] options, String[] presentableNames) {
-    setLayout(new VerticalFlowLayout(VerticalFlowLayout.TOP, 4, 2, true, false));
+    setLayout(new BorderLayout(0,2));
     myLabel = new JLabel(name);
-    add(myLabel);
+    add(myLabel, BorderLayout.NORTH);
     myComboBox = new JComboBox(presentableNames);
-    add(myComboBox);
+    IJSwingUtilities.adjustComponentsOnMac(myLabel, myComboBox);
+    add(myComboBox, BorderLayout.SOUTH);
     for (int i = 0; i < options.length; i++) {
       myNamesMap.put(options[i], presentableNames[i]);
     }
