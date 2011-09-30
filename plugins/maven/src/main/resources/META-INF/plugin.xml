@@ -61,7 +61,13 @@
                                 order="first"/>
     <elementDescriptionProvider implementation="org.jetbrains.idea.maven.dom.MavenModelDocumentationProvider" order="first"/>
 
-    <inspectionToolProvider implementation="org.jetbrains.idea.maven.dom.inspections.MavenInspectionToolProvider"/>
+    <localInspection shortName="MavenModelInspection" bundle="DomBundle" key="inspection.name" groupKey="inspection.group"
+                     enabledByDefault="true" level="ERROR"
+                     implementationClass="org.jetbrains.idea.maven.dom.inspections.MavenModelInspection"/>
+    <localInspection shortName="MavenDuplicateDependenciesInspection" bundle="DomBundle" key="inspection.duplicate.dependencies.name"
+                     groupKey="inspection.group" enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.maven.dom.inspections.MavenDuplicateDependenciesInspection"/>
+
     <dom.extender domClass="org.jetbrains.idea.maven.dom.model.MavenDomConfiguration"
                   extenderClass="org.jetbrains.idea.maven.dom.MavenPluginConfigurationDomExtender"/>
     <dom.extender domClass="org.jetbrains.idea.maven.dom.model.MavenDomConfigurationParameter"
