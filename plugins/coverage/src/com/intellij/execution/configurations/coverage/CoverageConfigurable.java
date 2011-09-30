@@ -136,7 +136,7 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
         myCoverageRunnerCb.setSelectedIndex(0);
       }
     }
-    UIUtil.setEnabled(myRunnerPanel, isJre50 && configuration.isCoverageEnabled(), true);
+    UIUtil.setEnabled(myRunnerPanel, isJre50, true);
 
 
     myClassFilterEditor.setFilters(configuration.getCoveragePatterns());

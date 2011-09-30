@@ -41,12 +41,12 @@ import java.util.List;
  * Registers "Coverage" tab in Java run configurations
  */
 public class CoverageJavaRunConfigurationExtension extends RunConfigurationExtension {
-  public void handleStartProcess(final RunConfigurationBase configuration, OSProcessHandler handler) {
+  public void handleStartProcess(final RunConfigurationBase configuration, OSProcessHandler handler, RunnerSettings runnerSettings) {
     if (!isApplicableFor(configuration)) {
       return;
     }
 
-    CoverageDataManager.getInstance(configuration.getProject()).attachToProcess(handler, configuration);
+    CoverageDataManager.getInstance(configuration.getProject()).attachToProcess(handler, configuration, runnerSettings);
   }
 
   @Nullable
@@ -68,10 +68,7 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
 
   @Nullable
   public Icon getIcon(RunConfigurationBase runConfiguration) {
-    if (!isApplicableFor(runConfiguration)) {
-      return null;
-    }
-    return CoverageEngine.getIcon(runConfiguration);
+    return null;
   }
 
   public void updateJavaParameters(RunConfigurationBase configuration, JavaParameters params, RunnerSettings runnerSettings) {
@@ -138,15 +135,6 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
   @Override
   public void checkConfiguration(RunConfigurationBase runJavaConfiguration)
     throws RuntimeConfigurationException {
-    if (!isApplicableFor(runJavaConfiguration)) {
-      return;
-    }
-
-    final CoverageEnabledConfiguration configuration = JavaCoverageEnabledConfiguration.getFrom(runJavaConfiguration);
-    assert configuration != null;
-    if (configuration.isCoverageEnabled() && configuration.getCoverageRunner() == null) {
-      throw new RuntimeConfigurationException("Coverage runner is not set");
-    }
   }
 
   @Override
@@ -225,7 +213,7 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
   public boolean isListenerDisabled(RunConfigurationBase configuration, Object listener) {
     if (listener instanceof CoverageListener) {
       final CoverageEnabledConfiguration coverageEnabledConfiguration = CoverageEnabledConfiguration.getOrCreate(configuration);
-      return !(coverageEnabledConfiguration.isCoverageEnabled() && coverageEnabledConfiguration.getCoverageRunner() instanceof IDEACoverageRunner);
+      return !(coverageEnabledConfiguration.getCoverageRunner() instanceof IDEACoverageRunner);
     }
     return false;
   }
