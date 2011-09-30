@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReference;
+import com.jetbrains.cython.CythonLanguageDialect;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.psi.*;
@@ -35,6 +36,9 @@ public class PyTypeCheckerInspection extends PyInspection {
       // TODO: Visit decorators with arguments
       @Override
       public void visitPyCallExpression(PyCallExpression node) {
+        if (CythonLanguageDialect._isDisabledFor(node)) {
+          return;
+        }
         final PyArgumentList args = node.getArgumentList();
         if (args != null) {
           final CallArgumentsMapping res = args.analyzeCall(resolveWithoutImplicits());
@@ -55,6 +59,9 @@ public class PyTypeCheckerInspection extends PyInspection {
       @Override
       public void visitPyBinaryExpression(PyBinaryExpression node) {
         // TODO: Support operators besides PyBinaryExpression
+        if (CythonLanguageDialect._isDisabledFor(node)) {
+          return;
+        }
         final PsiReference ref = node.getReference(PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext));
         if (ref != null) {
           final PsiElement resolved = ref.resolve();
@@ -69,6 +76,9 @@ public class PyTypeCheckerInspection extends PyInspection {
       @Override
       public void visitPySubscriptionExpression(PySubscriptionExpression node) {
         // TODO: Support slice PySliceExpressions
+        if (CythonLanguageDialect._isDisabledFor(node)) {
+          return;
+        }
         final PsiReference ref = node.getReference(PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext));
         if (ref != null) {
           final PsiElement resolved = ref.resolve();

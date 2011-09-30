@@ -414,13 +414,17 @@ public class PySkeletonRefresher {
     SkeletonVersionChecker checker, List<String> binaries,
     Map<String, Pair<Integer, Long>> blacklist
   ) {
-    List<UpdateResult> error_list = new SmartList<UpdateResult>();
-    Iterator<String> bin_iter = binaries.iterator();
+    final List<UpdateResult> error_list = new SmartList<UpdateResult>();
+    final Iterator<String> bin_iter = binaries.iterator();
     bin_iter.next(); // skip version number. if it weren't here, we'd already die up in regenerateSkeletons()
+    final int count = Math.max(0, binaries.size() - 1);
+    int i = 0;
     while (bin_iter.hasNext()) {
       checkCanceled();
-
-      String line = bin_iter.next(); // line = "mod_name path"
+      if (myIndicator != null) {
+        myIndicator.setFraction((double)i / count);
+      }
+      final String line = bin_iter.next(); // line = "mod_name path"
       int cutpos = line.indexOf(' ');
       if (cutpos < 0) LOG.error("Bad binaries line: '" + line + "', SDK " + binaryPath); // but don't die yet
       else {
@@ -464,6 +468,7 @@ public class PySkeletonRefresher {
           }
         }
       }
+      i++;
     }
     return error_list;
   }

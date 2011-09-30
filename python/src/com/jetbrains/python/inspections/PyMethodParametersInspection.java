@@ -126,7 +126,10 @@ public class PyMethodParametersInspection extends PyInspection {
         else { // fix: rename
           PyNamedParameter first_param = params[0].getAsNamed();
           if (first_param != null) {
-            String pname = first_param.getText();
+            String pname = first_param.getName();
+            if (pname == null) {
+              return;
+            }
             // every dup, swap, drop, or dup+drop of "self"
             @NonNls String[] mangled = {"eslf", "sself", "elf", "felf", "slef", "seelf", "slf", "sslf", "sefl", "sellf", "sef", "seef"};
             if (PyUtil.among(pname, mangled)) {

@@ -1,6 +1,7 @@
 package com.jetbrains.python.codeInsight.testIntegration;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -127,9 +128,18 @@ public class CreateTestDialog extends DialogWrapper {
     List<String> res = new ArrayList<String>();
 
     for (int i = 0; i != myTableModel.getRowCount(); ++i) {
-      if ((Boolean)myTableModel.getValueAt(i, 0) == true)
+      Object val = myTableModel.getValueAt(i, 0);
+      if (val != null && (Boolean)val == true)
         res.add((String)myTableModel.getValueAt(i, 1));
     }
     return res;
+  }
+
+  protected Action[] createActions() {
+    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
+  }
+
+  protected void doHelpAction() {
+    HelpManager.getInstance().invokeHelp("reference.dialogs.createTestsFromGoTo");
   }
 }
