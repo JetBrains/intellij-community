@@ -17,7 +17,6 @@ package com.intellij.spellchecker.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.intention.IntentionManager;
-import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionProfileWrapper;
@@ -26,7 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.spellchecker.inspections.SpellCheckerInspectionToolProvider;
+import com.intellij.spellchecker.inspections.SpellCheckingInspection;
 import com.intellij.ui.AbstractEditorCustomization;
 import com.intellij.util.Function;
 import com.intellij.util.containers.WeakHashMap;
@@ -54,9 +53,8 @@ public class SpellCheckingEditorCustomization extends AbstractEditorCustomizatio
   private static boolean init() {
     // It's assumed that default spell checking inspection settings are just fine for processing all types of data.
     // Please perform corresponding settings tuning if that assumption is broken at future.
-    InspectionToolProvider provider = new SpellCheckerInspectionToolProvider();
 
-    Class<LocalInspectionTool>[] inspectionClasses = (Class<LocalInspectionTool>[])provider.getInspectionClasses();
+    Class<LocalInspectionTool>[] inspectionClasses = (Class<LocalInspectionTool>[])new Class<?>[] {SpellCheckingInspection.class};
     for (Class<LocalInspectionTool> inspectionClass : inspectionClasses) {
       try {
         LocalInspectionTool tool = inspectionClass.newInstance();

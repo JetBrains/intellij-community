@@ -15,8 +15,6 @@
  */
 package com.intellij.spellchecker.inspection;
 
-import com.intellij.spellchecker.inspections.SpellCheckerInspectionToolProvider;
-
 /**
  * Created by IntelliJ IDEA.
  * User: Ekaterina Shliakhovetskaja
@@ -29,7 +27,7 @@ public class GroovyFileWithTypos extends SpellcheckerInspectionTestCase {
   }
 
   public void testGroovy() throws Throwable {
-    doTest("Test.groovy",SpellCheckerInspectionToolProvider.getInspectionTools());
+    doTest("Test.groovy", getInspectionTools());
   }
 
 

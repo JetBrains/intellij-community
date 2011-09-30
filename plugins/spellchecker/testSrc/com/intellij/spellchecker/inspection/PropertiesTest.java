@@ -15,8 +15,6 @@
  */
 package com.intellij.spellchecker.inspection;
 
-import com.intellij.spellchecker.inspections.SpellCheckerInspectionToolProvider;
-
 /**
  * @author Konstantin Bulenkov
  */
@@ -27,6 +25,6 @@ public class PropertiesTest extends SpellcheckerInspectionTestCase {
   }
 
   public void testProperties() throws Throwable {
-    doTest("test.properties", SpellCheckerInspectionToolProvider.getInspectionTools());
+    doTest("test.properties", getInspectionTools());
   }
 }
