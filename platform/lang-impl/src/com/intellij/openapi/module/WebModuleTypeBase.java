@@ -28,7 +28,9 @@ import javax.swing.*;
 public abstract class WebModuleTypeBase<T extends ModuleBuilder> extends ModuleType<T> {
   @NonNls public static final String WEB_MODULE = "WEB_MODULE";
 
-  private static final Icon WEB_MODULE_ICON = IconLoader.getIcon("/javaee/webModuleBig.png");
+  private static final Icon MODULE_ICON = IconLoader.getIcon("/javaee/webModuleBig.png");
+  private static final Icon MODULE_NODE_ICON_OPEN = IconLoader.getIcon("/nodes/ModuleOpen.png");
+  private static final Icon MODULE_NODE_ICON_CLOSED = IconLoader.getIcon("/nodes/ModuleClosed.png");
 
   public WebModuleTypeBase() {
     super(WEB_MODULE);
@@ -43,10 +45,10 @@ public abstract class WebModuleTypeBase<T extends ModuleBuilder> extends ModuleT
   }
 
   public Icon getBigIcon() {
-    return WEB_MODULE_ICON;
+    return MODULE_ICON;
   }
 
-  public Icon getNodeIcon(boolean isOpened) {
-    return getBigIcon();
+  public Icon getNodeIcon(final boolean isOpened) {
+    return isOpened ? MODULE_NODE_ICON_OPEN : MODULE_NODE_ICON_CLOSED;
   }
 }
