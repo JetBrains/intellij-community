@@ -55,6 +55,8 @@ public abstract class IdeFocusManager implements FocusRequestor {
 
   public abstract void typeAheadUntil(ActionCallback done);
 
+  @Deprecated
+  //todo to remove if no usages
   public abstract void suspendKeyProcessingUntil(@NotNull ActionCallback done);
 
   public abstract boolean isFocusBeingTransferred();
