@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,25 +27,24 @@ import java.util.Arrays;
 import java.util.List;
 
 public class BaseListPopupStep<T> extends BaseStep<T> implements ListPopupStep<T> {
-
   private String myTitle;
   private List<T> myValues;
   private List<Icon> myIcons;
-
   private int myDefaultOptionIndex = -1;
 
-  public BaseListPopupStep(String aTitle, T[] aValues) {
+  public BaseListPopupStep(@Nullable String aTitle, T[] aValues) {
     this(aTitle, aValues, new Icon[]{});
   }
-  public BaseListPopupStep(String aTitle, List<? extends T> aValues) {
+
+  public BaseListPopupStep(@Nullable String aTitle, List<? extends T> aValues) {
     this(aTitle, aValues, new ArrayList<Icon>());
   }
 
-  public BaseListPopupStep(String aTitle, T[] aValues, Icon[] aIcons) {
+  public BaseListPopupStep(@Nullable String aTitle, T[] aValues, Icon[] aIcons) {
     this(aTitle, Arrays.asList(aValues), Arrays.asList(aIcons));
   }
 
-  public BaseListPopupStep(String aTitle, @NotNull List<? extends T> aValues, Icon aSameIcon) {
+  public BaseListPopupStep(@Nullable String aTitle, @NotNull List<? extends T> aValues, Icon aSameIcon) {
     List<Icon> icons = new ArrayList<Icon>();
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < aValues.size(); i++) {
@@ -54,12 +53,11 @@ public class BaseListPopupStep<T> extends BaseStep<T> implements ListPopupStep<T
     init(aTitle, aValues, icons);
   }
 
-  public BaseListPopupStep(String aTitle, @NotNull List<? extends T> aValues, List<Icon> aIcons) {
+  public BaseListPopupStep(@Nullable String aTitle, @NotNull List<? extends T> aValues, List<Icon> aIcons) {
     init(aTitle, aValues, aIcons);
   }
 
-  protected BaseListPopupStep() {
-  }
+  protected BaseListPopupStep() { }
 
   protected final void init(@Nullable String aTitle, @NotNull List<? extends T> aValues, @Nullable List<Icon> aIcons) {
     myTitle = aTitle;
