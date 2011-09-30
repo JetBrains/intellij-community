@@ -449,6 +449,11 @@ public class NameUtil {
         }
         i++;
       }
+
+      if (myPattern[patternIndex + i] == '*') {
+        nextStart = nameIndex + i;
+      }
+
       // there's more in the pattern, but no more words
       if (nextStart == name.length()) {
         if (patternIndex + i == myPattern.length - 1) {
