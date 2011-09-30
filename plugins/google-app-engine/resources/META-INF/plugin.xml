@@ -33,7 +33,6 @@
     <applicationService serviceInterface="com.intellij.appengine.sdk.AppEngineSdkManager"
                         serviceImplementation="com.intellij.appengine.sdk.impl.AppEngineSdkManagerImpl"/>
 
-    <inspectionToolProvider implementation="com.intellij.appengine.inspections.AppEngineInspectionsProvider"/>
     <frameworkSupport implementation="com.intellij.appengine.facet.AppEngineSupportProvider"/>
     <fileTemplateGroup implementation="com.intellij.appengine.facet.AppEngineTemplateGroupDescriptorFactory"/>
     <facetType implementation="com.intellij.appengine.facet.AppEngineFacetType"/>
@@ -42,6 +41,11 @@
 
     <xml.schemaProvider implementation="com.intellij.appengine.descriptor.AppEngineWebSchemaProvider"/>
     <dom.fileDescription implementation="com.intellij.appengine.descriptor.dom.AppEngineWebFileDescription"/>
+
+    <localInspection shortName="AppEngineForbiddenCode" displayName="Forbidden code in App Engine applications"
+                     groupName="Google App Engine" enabledByDefault="true" level="ERROR"
+                     implementationClass="com.intellij.appengine.inspections.AppEngineForbiddenCodeInspection"/>
+
   </extensions>
 
   <actions>
