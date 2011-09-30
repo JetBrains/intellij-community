@@ -24,6 +24,7 @@ import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -127,32 +128,36 @@ public class GroovyPositionManager implements PositionManager {
 
   @Nullable
   private static String findEnclosingName(final SourcePosition position) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-      @Nullable
-      public String compute() {
-        GrTypeDefinition typeDefinition = findEnclosingTypeDefinition(position);
-        if (typeDefinition != null) {
-          return getClassNameForJvm(typeDefinition);
-        }
-        return getScriptQualifiedName(position);
+    AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
+
+    try {
+      GrTypeDefinition typeDefinition = findEnclosingTypeDefinition(position);
+      if (typeDefinition != null) {
+        return getClassNameForJvm(typeDefinition);
       }
-    });
+      return getScriptQualifiedName(position);
+    }
+    finally {
+      accessToken.finish();
+    }
   }
 
   @Nullable
   private static String getOuterClassName(final SourcePosition position) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-      @Nullable
-      public String compute() {
-        GroovyPsiElement sourceImage = findReferenceTypeSourceImage(position);
-        if (sourceImage instanceof GrTypeDefinition) {
-          return getClassNameForJvm((GrTypeDefinition)sourceImage);
-        } else if (sourceImage == null) {
-          return getScriptQualifiedName(position);
-        }
-        return null;
+    AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
+
+    try {
+      GroovyPsiElement sourceImage = findReferenceTypeSourceImage(position);
+      if (sourceImage instanceof GrTypeDefinition) {
+        return getClassNameForJvm((GrTypeDefinition)sourceImage);
+      } else if (sourceImage == null) {
+        return getScriptQualifiedName(position);
       }
-    });
+      return null;
+    }
+    finally {
+      accessToken.finish();
+    }
   }
 
   @Nullable

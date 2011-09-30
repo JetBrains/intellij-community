@@ -16,7 +16,8 @@
 
 package org.jetbrains.plugins.groovy.refactoring;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -89,21 +90,24 @@ public class GroovyImportOptimizerRefactoringHelper implements RefactoringHelper
       return;
     }
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        for (GroovyFile groovyFile : redundants.keySet()) {
-          if (!groovyFile.isValid()) continue;
-          final Pair<List<GrImportStatement>, Set<GrImportStatement>> pair = redundants.get(groovyFile);
-          final List<GrImportStatement> redundantPerFile = pair.getFirst();
-          final Set<GrImportStatement> usedInFile = pair.getSecond();
-          for (GrImportStatement importStatement : redundantPerFile) {
-            if (!usedInFile.contains(importStatement)) {
-              groovyFile.removeImport(importStatement);
-            }
+    AccessToken accessToken = WriteAction.start();
+
+    try {
+      for (GroovyFile groovyFile : redundants.keySet()) {
+        if (!groovyFile.isValid()) continue;
+        final Pair<List<GrImportStatement>, Set<GrImportStatement>> pair = redundants.get(groovyFile);
+        final List<GrImportStatement> redundantPerFile = pair.getFirst();
+        final Set<GrImportStatement> usedInFile = pair.getSecond();
+        for (GrImportStatement importStatement : redundantPerFile) {
+          if (!usedInFile.contains(importStatement)) {
+            groovyFile.removeImport(importStatement);
           }
         }
       }
-    });
+    }
+    finally {
+      accessToken.finish();
+    }
   }
 
 }

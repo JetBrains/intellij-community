@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiClass;
@@ -74,11 +75,16 @@ class GroovyDirectInheritorsSearcher implements QueryExecutor<PsiClass, DirectCl
         }
       });
       for (final PsiClass candidate : candidates) {
-        final boolean isInheritor = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-          public Boolean compute() {
-            return candidate.isInheritor(clazz, false);
-          }
-        });
+        final boolean isInheritor;
+        AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
+
+        try {
+          isInheritor = candidate.isInheritor(clazz, false);
+        }
+        finally {
+          accessToken.finish();
+        }
+
         if (isInheritor) {
           if (!consumer.process(candidate)) {
             return false;

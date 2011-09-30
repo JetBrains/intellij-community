@@ -16,10 +16,11 @@
 package org.jetbrains.plugins.groovy.testIntegration;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -45,34 +46,37 @@ public class GroovyTestGenerator implements TestGenerator {
   public PsiElement generateTest(final Project project, final CreateTestDialog d) {
     final PsiClass test = (PsiClass)new JavaTestGenerator().generateTest(project, d);
     if (test == null) return null;
-    return ApplicationManager.getApplication().runWriteAction(new Computable<PsiElement>() {
-      @Override
-      public PsiElement compute() {
-        final PsiFile file = test.getContainingFile();
-        final String name = file.getName();
-        final String newName = FileUtil.getNameWithoutExtension(name) + "." + GroovyFileType.DEFAULT_EXTENSION;
 
-        final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
-        try {
-          final PsiElement element = file.setName(newName);
+    AccessToken accessToken = WriteAction.start();
 
-          final GroovyFile newFile = (GroovyFile)codeStyleManager.reformat(element);
-          GroovyUnusedImportPass.optimizeImports(project, newFile);
-          return newFile.getClasses()[0];
-        }
-        catch (IncorrectOperationException e) {
-          file.delete();
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-              Messages.showErrorDialog(project,
-                                       CodeInsightBundle.message("intention.error.cannot.create.class.message", d.getClassName()),
-                                       CodeInsightBundle.message("intention.error.cannot.create.class.title"));
-            }
-          });
-          return null;
-        }
+    try {
+      final PsiFile file = test.getContainingFile();
+      final String name = file.getName();
+      final String newName = FileUtil.getNameWithoutExtension(name) + "." + GroovyFileType.DEFAULT_EXTENSION;
+
+      final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
+      try {
+        final PsiElement element = file.setName(newName);
+
+        final GroovyFile newFile = (GroovyFile)codeStyleManager.reformat(element);
+        GroovyUnusedImportPass.optimizeImports(project, newFile);
+        return newFile.getClasses()[0];
       }
-    });
+      catch (IncorrectOperationException e) {
+        file.delete();
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            Messages.showErrorDialog(project,
+                                     CodeInsightBundle.message("intention.error.cannot.create.class.message", d.getClassName()),
+                                     CodeInsightBundle.message("intention.error.cannot.create.class.title"));
+          }
+        });
+        return null;
+      }
+    }
+    finally {
+      accessToken.finish();
+    }
   }
 
   @Override

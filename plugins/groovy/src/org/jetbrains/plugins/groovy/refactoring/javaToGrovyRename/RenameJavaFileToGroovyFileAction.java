@@ -21,7 +21,9 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
@@ -54,19 +56,22 @@ public class RenameJavaFileToGroovyFileAction extends AnAction implements DumbAw
     final Project project = e.getData(DataKeys.PROJECT);
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
       public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            try {
-              file.setName(newName);
-            } catch (final IncorrectOperationException e1) {
-              ApplicationManager.getApplication().invokeLater(new Runnable() {
-                public void run() {
-                  Messages.showErrorDialog(project, "Cannot rename java file" + e1.getMessage(), "Canot Rename");
-                }
-              });
-            }
+        AccessToken accessToken = WriteAction.start();
+
+        try {
+          try {
+            file.setName(newName);
+          } catch (final IncorrectOperationException e1) {
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              public void run() {
+                Messages.showErrorDialog(project, "Cannot rename java file" + e1.getMessage(), "Canot Rename");
+              }
+            });
           }
-        });
+        }
+        finally {
+          accessToken.finish();
+        }
       }
     }, "Rename File", null);
   }

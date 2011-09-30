@@ -16,6 +16,7 @@
 
 package org.jetbrains.plugins.groovy.util;
 
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
@@ -51,11 +52,14 @@ public class LibrariesUtil {
   public static Library[] getLibrariesByCondition(final Module module, final Condition<Library> condition) {
     if (module == null) return new Library[0];
     final ArrayList<Library> libraries = new ArrayList<Library>();
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        populateOrderEntries(module, condition, libraries, false, new THashSet<Module>());
-      }
-    });
+
+    AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
+    try {
+      populateOrderEntries(module, condition, libraries, false, new THashSet<Module>());
+    }
+    finally {
+      accessToken.finish();
+    }
 
     return libraries.toArray(new Library[libraries.size()]);
   }

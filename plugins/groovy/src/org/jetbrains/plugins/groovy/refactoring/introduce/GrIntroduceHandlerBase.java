@@ -14,7 +14,8 @@ package org.jetbrains.plugins.groovy.refactoring.introduce;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -24,7 +25,6 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.wm.WindowManager;
@@ -258,11 +258,13 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
 
       CommandProcessor.getInstance().executeCommand(context.project, new Runnable() {
       public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Computable<GrVariable>() {
-          public GrVariable compute() {
-            return runRefactoring(context, settings);
-          }
-        });
+        AccessToken accessToken = WriteAction.start();
+        try {
+          runRefactoring(context, settings);
+        }
+        finally {
+          accessToken.finish();
+        }
       }
     }, getRefactoringName(), null);
 

@@ -20,7 +20,8 @@ import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.ide.util.MethodCellRenderer;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -144,20 +145,22 @@ public class GroovyStaticImportMethodFix implements IntentionAction {
   private void doImport(final PsiMethod toImport) {
     CommandProcessor.getInstance().executeCommand(toImport.getProject(), new Runnable() {
       public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            try {
-              GrMethodCall element = myMethodCall.getElement();
-              if (element != null) {
-                getMethodExpression(element).bindToElementViaStaticImport(toImport.getContainingClass());
-              }
-            }
-            catch (IncorrectOperationException e) {
-              LOG.error(e);
+        AccessToken accessToken = WriteAction.start();
+
+        try {
+          try {
+            GrMethodCall element = myMethodCall.getElement();
+            if (element != null) {
+              getMethodExpression(element).bindToElementViaStaticImport(toImport.getContainingClass());
             }
           }
-        });
-
+          catch (IncorrectOperationException e) {
+            LOG.error(e);
+          }
+        }
+        finally {
+          accessToken.finish();
+        }
       }
     }, getText(), this);
 

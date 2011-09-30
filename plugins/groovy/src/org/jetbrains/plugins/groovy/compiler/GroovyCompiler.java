@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.compiler;
 
 import com.intellij.compiler.CompilerConfiguration;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileScope;
@@ -35,7 +36,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.ClasspathEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -112,11 +112,13 @@ public class GroovyCompiler extends GroovyCompilerBase {
         goForIntermediateFiles(aClass, allToCompile, new FactoryMap<VirtualFile, Set<VirtualFile>>() {
           @Override
           protected Set<VirtualFile> create(final VirtualFile key) {
-            return ApplicationManager.getApplication().runReadAction(new Computable<Set<VirtualFile>>() {
-              public Set<VirtualFile> compute() {
-                return calcCodeReferenceDependencies(key, groovyFiles);
-              }
-            });
+            AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
+            try {
+              return calcCodeReferenceDependencies(key, groovyFiles);
+            }
+            finally {
+              accessToken.finish();
+            }
           }
         }, visited);
       }
@@ -129,14 +131,17 @@ public class GroovyCompiler extends GroovyCompilerBase {
       public boolean processFile(final VirtualFile vfile) {
         if (!vfile.isDirectory() &&
             GroovyFileType.GROOVY_FILE_TYPE.equals(vfile.getFileType())) {
-          ApplicationManager.getApplication().runReadAction(new Runnable() {
-            public void run() {
-              if (PsiManager.getInstance(myProject).findFile(vfile) instanceof GroovyFile) {
-                moduleClasses.add(vfile);
-              }
-            }
-          });
 
+          AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
+
+          try {
+            if (PsiManager.getInstance(myProject).findFile(vfile) instanceof GroovyFile) {
+              moduleClasses.add(vfile);
+            }
+          }
+          finally {
+            accessToken.finish();
+          }
         }
         return true;
       }

@@ -25,6 +25,7 @@ import com.intellij.compiler.make.DependencyCache;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.compiler.CompileContext;
@@ -49,7 +50,6 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -127,15 +127,16 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
 
     final List<String> patchers = new SmartList<String>();
 
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        for (final GroovyCompilerExtension extension : GroovyCompilerExtension.EP_NAME.getExtensions()) {
-          extension.enhanceCompilationClassPath(chunk, classPathBuilder);
-          patchers.addAll(extension.getCompilationUnitPatchers(chunk));
-        }
+    AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
+    try {
+      for (final GroovyCompilerExtension extension : GroovyCompilerExtension.EP_NAME.getExtensions()) {
+        extension.enhanceCompilationClassPath(chunk, classPathBuilder);
+        patchers.addAll(extension.getCompilationUnitPatchers(chunk));
       }
-    });
+    }
+    finally {
+      accessToken.finish();
+    }
 
     final boolean profileGroovyc = "true".equals(System.getProperty("profile.groovy.compiler"));
     if (profileGroovyc) {
@@ -316,16 +317,20 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
     for (final VirtualFile item : virtualFiles) {
       printer.println(GroovycRunner.SRC_FILE);
       printer.println(FileUtil.toSystemDependentName(item.getPath()));
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        public void run() {
-          final PsiFile file = PsiManager.getInstance(myProject).findFile(item);
-          if (file instanceof GroovyFileBase) {
-            for (PsiClass psiClass : ((GroovyFileBase)file).getClasses()) {
-              printer.println(psiClass.getQualifiedName());
-            }
+
+      AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
+      try {
+        final PsiFile file = PsiManager.getInstance(myProject).findFile(item);
+        if (file instanceof GroovyFileBase) {
+          for (PsiClass psiClass : ((GroovyFileBase)file).getClasses()) {
+            printer.println(psiClass.getQualifiedName());
           }
         }
-      });
+      } 
+      finally {
+        accessToken.finish();
+      }
+
       printer.println(GroovycRunner.END);
     }
 
@@ -410,16 +415,19 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
 
     final FileType fileType = file.getFileType();
     if (fileType == GroovyFileType.GROOVY_FILE_TYPE) {
-      return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-        public Boolean compute() {
-          PsiFile psiFile = manager.findFile(file);
-          if (psiFile instanceof GroovyFile && ((GroovyFile)psiFile).isScript()) {
-            final GroovyScriptType scriptType = GroovyScriptTypeDetector.getScriptType((GroovyFile)psiFile);
-            return scriptType.shouldBeCompiled((GroovyFile)psiFile);
-          }
-          return true;
+      AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
+
+      try {
+        PsiFile psiFile = manager.findFile(file);
+        if (psiFile instanceof GroovyFile && ((GroovyFile)psiFile).isScript()) {
+          final GroovyScriptType scriptType = GroovyScriptTypeDetector.getScriptType((GroovyFile)psiFile);
+          return scriptType.shouldBeCompiled((GroovyFile)psiFile);
         }
-      });
+        return true;
+      }
+      finally {
+        accessToken.finish();
+      }
     }
 
     return fileType == StdFileTypes.JAVA;

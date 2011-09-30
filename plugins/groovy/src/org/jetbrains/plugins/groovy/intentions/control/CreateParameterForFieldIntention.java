@@ -17,7 +17,9 @@ package org.jetbrains.plugins.groovy.intentions.control;
 
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.ide.util.MethodCellRenderer;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -114,15 +116,16 @@ public class CreateParameterForFieldIntention extends Intention {
           CommandProcessor.getInstance().executeCommand(project, new Runnable() {
             @Override
             public void run() {
-              ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                @Override
-                public void run() {
-                  for (Object selectedValue : selectedValues) {
-                    LOG.assertTrue(((GrMethod)selectedValue).isValid());
-                    addParameter(field, ((GrMethod)selectedValue), project);
-                  }
+              AccessToken accessToken = WriteAction.start();
+              try{
+                for (Object selectedValue : selectedValues) {
+                  LOG.assertTrue(((GrMethod)selectedValue).isValid());
+                  addParameter(field, ((GrMethod)selectedValue), project);
                 }
-              });
+              }
+              finally {
+                accessToken.finish();
+              }
             }
           }, GroovyIntentionsBundle.message("create.parameter.for.field.intention.name"), null);
         }
@@ -149,15 +152,16 @@ public class CreateParameterForFieldIntention extends Intention {
           CommandProcessor.getInstance().executeCommand(project, new Runnable() {
             @Override
             public void run() {
-              ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                @Override
-                public void run() {
-                  for (Object selectedValue : selectedValues) {
-                    LOG.assertTrue(((GrField)selectedValue).isValid());
-                    addParameter(((GrField)selectedValue), constructor, project);
-                  }
+              AccessToken accessToken = WriteAction.start();
+              try {
+                for (Object selectedValue : selectedValues) {
+                  LOG.assertTrue(((GrField)selectedValue).isValid());
+                  addParameter(((GrField)selectedValue), constructor, project);
                 }
-              });
+              }
+              finally {
+                accessToken.finish();
+              }
             }
           }, GroovyIntentionsBundle.message("create.parameter.for.field.intention.name"), null);
         }

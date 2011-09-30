@@ -5,6 +5,7 @@ import com.intellij.debugger.PositionManager;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiClass;
@@ -87,26 +88,28 @@ public class SpringLoadedPositionManager implements PositionManager {
 
   @Nullable
   private static String findEnclosingName(final SourcePosition position) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-      @Nullable
-      public String compute() {
-        PsiElement element = findElementAt(position);
-        while (true) {
-          element = PsiTreeUtil.getParentOfType(element, GrTypeDefinition.class, PsiClassImpl.class);
-          if (element == null
-              || (element instanceof GrTypeDefinition && !((GrTypeDefinition)element).isAnonymous())
-              || (element instanceof PsiClassImpl && ((PsiClassImpl)element).getName() != null)
-            ) {
-            break;
-          }
-        }
+    AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
 
-        if (element != null) {
-          return getClassNameForJvm((PsiClass)element);
+    try {
+      PsiElement element = findElementAt(position);
+      while (true) {
+        element = PsiTreeUtil.getParentOfType(element, GrTypeDefinition.class, PsiClassImpl.class);
+        if (element == null
+            || (element instanceof GrTypeDefinition && !((GrTypeDefinition)element).isAnonymous())
+            || (element instanceof PsiClassImpl && ((PsiClassImpl)element).getName() != null)
+          ) {
+          break;
         }
-        return null;
       }
-    });
+
+      if (element != null) {
+        return getClassNameForJvm((PsiClass)element);
+      }
+      return null;
+    }
+    finally {
+      accessToken.finish();
+    }
   }
 
   @Nullable
@@ -121,19 +124,21 @@ public class SpringLoadedPositionManager implements PositionManager {
 
   @Nullable
   private static String getOuterClassName(final SourcePosition position) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-      @Nullable
-      public String compute() {
-        PsiElement element = findElementAt(position);
-        if (element == null) return null;
-        PsiElement sourceImage = PsiTreeUtil.getParentOfType(element, GrClosableBlock.class, GrTypeDefinition.class, PsiClassImpl.class);
+    AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
 
-        if (sourceImage instanceof PsiClass) {
-          return getClassNameForJvm((PsiClass)sourceImage);
-        }
-        return null;
+    try {
+      PsiElement element = findElementAt(position);
+      if (element == null) return null;
+      PsiElement sourceImage = PsiTreeUtil.getParentOfType(element, GrClosableBlock.class, GrTypeDefinition.class, PsiClassImpl.class);
+
+      if (sourceImage instanceof PsiClass) {
+        return getClassNameForJvm((PsiClass)sourceImage);
       }
-    });
+      return null;
+    }
+    finally {
+      accessToken.finish();
+    }
   }
 
   @Nullable

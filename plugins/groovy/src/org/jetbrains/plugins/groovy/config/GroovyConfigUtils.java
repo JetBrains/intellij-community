@@ -16,7 +16,8 @@
 
 package org.jetbrains.plugins.groovy.config;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
@@ -26,7 +27,6 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Function;
@@ -141,20 +141,20 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
       int result = Messages
         .showOkCancelDialog(GroovyBundle.message("groovy.like.library.found.text", module.getName(), library.getName(), getSDKLibVersion(library)),
                             GroovyBundle.message("groovy.like.library.found"), GroovyIcons.GROOVY_ICON_32x32);
-      final Ref<Boolean> ref = new Ref<Boolean>();
-      ref.set(false);
       if (result == 0) {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-            LibraryOrderEntry entry = model.addLibraryEntry(libraries[0]);
-            LibrariesUtil.placeEntryToCorrectPlace(model, entry);
-            model.commit();
-            ref.set(true);
-          }
-        });
+        AccessToken accessToken = WriteAction.start();
+
+        try {
+          ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+          LibraryOrderEntry entry = model.addLibraryEntry(libraries[0]);
+          LibrariesUtil.placeEntryToCorrectPlace(model, entry);
+          model.commit();
+          return true;
+        }
+        finally {
+          accessToken.finish();
+        }
       }
-      return ref.get().booleanValue();
     }
     return false;
   }

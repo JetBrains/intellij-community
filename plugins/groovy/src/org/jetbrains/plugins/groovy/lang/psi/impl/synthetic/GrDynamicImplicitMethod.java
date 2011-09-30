@@ -15,9 +15,9 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -127,13 +127,14 @@ public class GrDynamicImplicitMethod extends LightElement implements PsiMethod, 
   }
 
   public boolean hasModifierProperty(@NotNull final String name) {
-      final Ref<Boolean> res = new Ref<Boolean>();
-      ApplicationManager.getApplication().runReadAction(new Runnable(){
-          public void run() {
-              res.set(myMethod.hasModifierProperty(name));
-          }
-      });
-      return res.get();
+    AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
+
+    try {
+      return myMethod.hasModifierProperty(name);
+    }
+    finally {
+      accessToken.finish();
+    }
   }
 
   @NotNull
@@ -239,24 +240,22 @@ public class GrDynamicImplicitMethod extends LightElement implements PsiMethod, 
 
   @Nullable
   public PsiClass getContainingClass() {
-    final Ref<PsiClass> aclass = new Ref<PsiClass>(null);
+    AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
+    try {
+      final GrTypeElement typeElement = GroovyPsiElementFactory.getInstance(myProject).createTypeElement(myContainingClassName);
+      if (typeElement == null) return null;
 
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        try {
-          final GrTypeElement typeElement = GroovyPsiElementFactory.getInstance(myProject).createTypeElement(myContainingClassName);
-          if (typeElement == null) return;
+      final PsiType type = typeElement.getType();
+      if (!(type instanceof PsiClassType)) return null;
 
-          final PsiType type = typeElement.getType();
-          if (!(type instanceof PsiClassType)) return;
-
-          aclass.set(((PsiClassType) type).resolve());
-        } catch (IncorrectOperationException e) {
-        }
-      }
-    });
-
-    return aclass.get();
+      return ((PsiClassType)type).resolve();
+    }
+    catch (IncorrectOperationException e) {
+      return null;
+    }
+    finally {
+      accessToken.finish();
+    }
   }
 
   public String toString() {

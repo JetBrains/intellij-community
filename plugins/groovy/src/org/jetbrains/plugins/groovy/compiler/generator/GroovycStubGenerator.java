@@ -19,6 +19,7 @@ package org.jetbrains.plugins.groovy.compiler.generator;
 import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.compiler.impl.FileSetCompileScope;
 import com.intellij.compiler.impl.TranslatingCompilerFilesMonitor;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileScope;
@@ -32,7 +33,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -204,11 +204,17 @@ public class GroovycStubGenerator extends GroovyCompilerBase {
       LOG.debug("Generating stubs for " + item.getName() + "...");
     }
 
-    final Map<String, CharSequence> output = ApplicationManager.getApplication().runReadAction(new Computable<Map<String, CharSequence>>() {
-      public Map<String, CharSequence> compute() {
-        return generator.generateStubs((GroovyFile)PsiManager.getInstance(project).findFile(item));
-      }
-    });
+    final Map<String, CharSequence> output;
+
+    AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
+
+    try {
+      output = generator.generateStubs((GroovyFile)PsiManager.getInstance(project).findFile(item));
+    }
+    finally {
+      accessToken.finish();
+    }
+
     return writeStubs(outputRootDirectory, output, item);
   }
 

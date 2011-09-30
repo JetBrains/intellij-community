@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.completion.CompletionData;
 import com.intellij.codeInsight.completion.CompletionVariant;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -41,21 +42,23 @@ public class CompositeCompletionData extends CompletionData {
   public void addKeywordVariants(final Set<CompletionVariant> set, final PsiElement position, final PsiFile file) {
     if (!ourShouldCompleteKeywords) return;
 
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        Set<CompletionVariant> toAdd = new HashSet<CompletionVariant>();
-        outer:
-        for (final CompletionData completionData : myDataByPriority) {
-          completionData.addKeywordVariants(toAdd, position, file);
-          for (CompletionVariant completionVariant : toAdd) {
-            if (completionVariant.hasKeywordCompletions()) {
-              break outer;
-            }
+    AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
+    try {
+      Set<CompletionVariant> toAdd = new HashSet<CompletionVariant>();
+      outer:
+      for (final CompletionData completionData : myDataByPriority) {
+        completionData.addKeywordVariants(toAdd, position, file);
+        for (CompletionVariant completionVariant : toAdd) {
+          if (completionVariant.hasKeywordCompletions()) {
+            break outer;
           }
         }
-        set.addAll(toAdd);
       }
-    });
+      set.addAll(toAdd);
+    }
+    finally {
+      accessToken.finish();
+    }
   }
 
   @TestOnly

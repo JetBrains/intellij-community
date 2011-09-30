@@ -18,8 +18,8 @@ package org.jetbrains.plugins.groovy.codeInspection;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.*;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiComment;
@@ -61,39 +61,41 @@ public abstract class GroovySuppressableInspectionTool extends LocalInspectionTo
   @Nullable
   private static PsiElement getElementToolSuppressedIn(final PsiElement place, final String toolId) {
     if (place == null) return null;
-    return ApplicationManager.getApplication().runReadAction(new Computable<PsiElement>() {
-      @Nullable
-      public PsiElement compute() {
-        final PsiElement statement = PsiUtil.findEnclosingStatement(place);
-        if (statement != null) {
-          PsiElement prev = statement.getPrevSibling();
-          while (prev != null && StringUtil.isEmpty(prev.getText().trim())) {
-            prev = prev.getPrevSibling();
-          }
-          if (prev instanceof PsiComment) {
-            String text = prev.getText();
-            Matcher matcher = SuppressionUtil.SUPPRESS_IN_LINE_COMMENT_PATTERN.matcher(text);
-            if (matcher.matches() && SuppressionUtil.isInspectionToolIdMentioned(matcher.group(1), toolId)) {
-              return prev;
-            }
+    AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
+
+    try {
+      final PsiElement statement = PsiUtil.findEnclosingStatement(place);
+      if (statement != null) {
+        PsiElement prev = statement.getPrevSibling();
+        while (prev != null && StringUtil.isEmpty(prev.getText().trim())) {
+          prev = prev.getPrevSibling();
+        }
+        if (prev instanceof PsiComment) {
+          String text = prev.getText();
+          Matcher matcher = SuppressionUtil.SUPPRESS_IN_LINE_COMMENT_PATTERN.matcher(text);
+          if (matcher.matches() && SuppressionUtil.isInspectionToolIdMentioned(matcher.group(1), toolId)) {
+            return prev;
           }
         }
-
-        GrMember member = PsiTreeUtil.getNonStrictParentOfType(place, GrMember.class);
-        while (member != null) {
-          GrModifierList modifierList = member.getModifierList();
-          for (String ids : getInspectionIdsSuppressedInAnnotation(modifierList)) {
-            if (SuppressionUtil.isInspectionToolIdMentioned(ids, toolId)) {
-              return modifierList;
-            }
-          }
-
-          member = PsiTreeUtil.getParentOfType(member, GrMember.class);
-        }
-
-        return null;
       }
-    });
+
+      GrMember member = PsiTreeUtil.getNonStrictParentOfType(place, GrMember.class);
+      while (member != null) {
+        GrModifierList modifierList = member.getModifierList();
+        for (String ids : getInspectionIdsSuppressedInAnnotation(modifierList)) {
+          if (SuppressionUtil.isInspectionToolIdMentioned(ids, toolId)) {
+            return modifierList;
+          }
+        }
+
+        member = PsiTreeUtil.getParentOfType(member, GrMember.class);
+      }
+
+      return null;
+    }
+    finally {
+      accessToken.finish();
+    }
   }
 
   @NotNull
