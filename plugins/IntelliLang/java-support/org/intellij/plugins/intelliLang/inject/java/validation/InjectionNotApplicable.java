@@ -22,6 +22,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.intellij.plugins.intelliLang.Configuration;
+import org.intellij.plugins.intelliLang.pattern.PatternValidator;
 import org.intellij.plugins.intelliLang.util.PsiUtilEx;
 import org.intellij.plugins.intelliLang.util.RemoveAnnotationFix;
 import org.jetbrains.annotations.NonNls;
@@ -40,7 +41,7 @@ public class InjectionNotApplicable extends LocalInspectionTool {
 
   @NotNull
   public String getGroupDisplayName() {
-    return InspectionProvider.LANGUAGE_INJECTION;
+    return PatternValidator.LANGUAGE_INJECTION;
   }
 
   @NotNull
