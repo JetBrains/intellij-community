@@ -87,12 +87,7 @@ public class RunConfigurationExtensionsManager<U extends AbstractRunConfiguratio
   }
 
   public Icon getIcon(@NotNull final U configuration, @NotNull final Icon icon) {
-    for (T extension : getApplicableExtensions(configuration)) {
-      final Icon extIcon = extension.getIcon(configuration);
-      if (extIcon != null) {
-        return LayeredIcon.create(icon, extIcon);
-      }
-    }
+
     return icon;
   }
 

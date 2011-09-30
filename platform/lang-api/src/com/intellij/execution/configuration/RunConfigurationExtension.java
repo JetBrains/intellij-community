@@ -42,9 +42,6 @@ public abstract class RunConfigurationExtension<T extends AbstractRunConfigurati
                                         @NotNull final Element element) throws WriteExternalException;
 
   @Nullable
-  protected abstract Icon getIcon(@NotNull final T configuration);
-
-  @Nullable
   protected abstract <P extends T> SettingsEditor<P> createEditor(@NotNull final P configuration);
 
   @Nullable
