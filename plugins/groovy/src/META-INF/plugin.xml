@@ -616,6 +616,9 @@
     <localInspection shortName="GroovyConstructorNamedArguments" displayName="Named arguments of constructor call" groupName="Probable bugs"
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyConstructorNamedArgumentsInspection"/>
+    <localInspection shortName="GroovyDocCheck" displayName="GroovyDoc issues" groupName="Probable bugs"
+                     enabledByDefault="true" level="ERROR" key="groovy.doc.issues"
+                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyDocCheckInspection"/>
     <localInspection shortName="GroovyRangeTypeCheck" bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
                      key="incorrect.range.argument" groupName="Probable bugs" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyRangeTypeCheckInspection"/>

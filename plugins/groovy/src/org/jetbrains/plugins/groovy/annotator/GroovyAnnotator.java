@@ -54,10 +54,8 @@ import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.extensions.GroovyUnresolvedHighlightFilter;
 import org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter;
 import org.jetbrains.plugins.groovy.lang.documentation.GroovyPresentationUtil;
-import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocFieldReference;
-import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMemberReference;
-import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMethodReference;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GroovyDocPsiElement;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.*;
@@ -147,6 +145,8 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
 
   @Override
   public void visitCodeReferenceElement(GrCodeReferenceElement refElement) {
+    if (PsiTreeUtil.getParentOfType(refElement, GroovyDocPsiElement.class) != null) return;
+
     final PsiElement parent = refElement.getParent();
     GroovyResolveResult resolveResult = refElement.advancedResolve();
     highlightAnnotation(myHolder, refElement, resolveResult);
@@ -457,9 +457,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     final PsiParameterList parameterList = method.getParameterList();
 
     final TextRange textRange = modifierList.getTextRange();
-    if (textRange==null) {
-      System.out.println(method.getClass() + ":" + method.getText());
-    }
+    LOG.assertTrue(textRange != null, method.getClass() + ":" + method.getText());
     int startOffset = textRange.getStartOffset();
     int endOffset = parameterList.getTextRange().getEndOffset() + 1;
 
@@ -716,16 +714,6 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   @Override
   public void visitArgumentList(GrArgumentList list) {
     checkNamedArgs(list.getNamedArguments(), true);
-  }
-
-  @Override
-  public void visitDocMethodReference(GrDocMethodReference reference) {
-    checkGrDocMemberReference(reference, myHolder);
-  }
-
-  @Override
-  public void visitDocFieldReference(GrDocFieldReference reference) {
-    checkGrDocMemberReference(reference, myHolder);
   }
 
   @Override
@@ -1401,13 +1389,6 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     }
   }
 
-  private static void checkGrDocMemberReference(final GrDocMemberReference reference, AnnotationHolder holder) {
-    PsiElement resolved = reference.resolve();
-    if (resolved == null) {
-      Annotation annotation = holder.createErrorAnnotation(reference, GroovyBundle.message("cannot.resolve", reference.getReferenceName()));
-      annotation.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
-    }
-  }
 
   private static void registerReferenceFixes(GrReferenceExpression refExpr, Annotation annotation) {
     PsiClass targetClass = QuickfixUtil.findTargetClass(refExpr);
