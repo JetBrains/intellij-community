@@ -15,6 +15,9 @@
  */
 package com.intellij.codeInsight.generation.surroundWith;
 
+import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
+import com.intellij.idea.Bombed;
 import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LightCodeInsightTestCase;
@@ -90,6 +93,16 @@ public class JavaSurroundWithTest extends LightCodeInsightTestCase {
     doTest(getTestName(false), new JavaWithCastSurrounder());
   }
 
+  @Bombed(month = 10, day = 3, user = "denis.zhdanov")
+  public void testSurroundExpressionWithCastEmptyLineAfter() throws Exception {
+    doTestWithTemplateFinish(getTestName(false), new JavaWithCastSurrounder(), "var");
+  }
+
+  @Bombed(month = 10, day = 3, user = "denis.zhdanov")
+  public void testSurroundExpressionWithCastEmptyLineAfter_2() throws Exception {
+    doTestWithTemplateFinish(getTestName(false), new JavaWithCastSurrounder(), null);
+  }
+
   public void testSurroundNonExpressionWithNot() throws Exception {
     doTest(getTestName(false), new JavaWithNotSurrounder());
   }
@@ -99,4 +112,16 @@ public class JavaSurroundWithTest extends LightCodeInsightTestCase {
     SurroundWithHandler.invoke(getProject(), getEditor(), getFile(), surrounder);
     checkResultByFile(BASE_PATH + fileName + "_after.java");
   }
+
+  private void doTestWithTemplateFinish(@NotNull String fileName, final Surrounder surrounder, String type) throws Exception {
+    ((TemplateManagerImpl)TemplateManager.getInstance(getProject())).setTemplateTesting(true);
+    configureByFile(BASE_PATH + fileName + ".java");
+    SurroundWithHandler.invoke(getProject(), getEditor(), getFile(), surrounder);
+    if (type != null) {
+      type("var");
+    }
+    ((TemplateManagerImpl)TemplateManager.getInstance(getProject())).getTemplateState(getEditor()).nextTab();
+    checkResultByFile(BASE_PATH + fileName + "_after.java");
+  }
+
 }

@@ -17,6 +17,7 @@ package com.intellij.openapi.roots.ui.configuration.artifacts;
 
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.PlaceInProjectStructure;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.PackagingElement;
@@ -38,6 +39,21 @@ public class PlaceInArtifact extends PlaceInProjectStructure {
     myContext = context;
     myParentPath = parentPath;
     myPackagingElement = packagingElement;
+  }
+
+  @NotNull
+  @Override
+  public ProjectStructureElement getContainingElement() {
+    return myContext.getOrCreateArtifactElement(myArtifact);
+  }
+
+  @Override
+  public String getPlacePath() {
+    if (myParentPath != null && myPackagingElement != null) {
+      //todo[nik] use id of element?
+      return myParentPath + "/" + myPackagingElement.getType().getId();
+    }
+    return null;
   }
 
   @NotNull

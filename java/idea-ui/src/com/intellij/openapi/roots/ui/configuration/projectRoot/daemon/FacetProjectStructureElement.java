@@ -16,6 +16,7 @@
 package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
 import com.intellij.facet.Facet;
+import com.intellij.facet.pointers.FacetPointersManager;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,6 +49,16 @@ public class FacetProjectStructureElement extends ProjectStructureElement {
   }
 
   @Override
+  public String getPresentableName() {
+    return "Facet '" + myFacet.getName() + "' in module '" + myFacet.getModule().getName() + "'";
+  }
+
+  @Override
+  public String getId() {
+    return "facet:" + FacetPointersManager.constructId(myFacet);
+  }
+
+  @Override
   public boolean equals(Object obj) {
     return obj instanceof FacetProjectStructureElement && myFacet.equals(((FacetProjectStructureElement)obj).myFacet);
   }
@@ -55,10 +66,5 @@ public class FacetProjectStructureElement extends ProjectStructureElement {
   @Override
   public int hashCode() {
     return myFacet.hashCode();
-  }
-
-  @Override
-  public String toString() {
-    return "facet:" + myFacet.getName() + " in " + myFacet.getModule().getName();
   }
 }

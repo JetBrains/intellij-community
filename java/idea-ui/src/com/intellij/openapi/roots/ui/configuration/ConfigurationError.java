@@ -23,8 +23,8 @@ import javax.swing.*;
  * User: spLeaner
  */
 public abstract class ConfigurationError implements Comparable<ConfigurationError> {
-  protected String myPlainTextTitle;
-  protected String myDescription;
+  private final String myPlainTextTitle;
+  private final String myDescription;
   private boolean myIgnored;
 
   protected ConfigurationError(final String plainTextTitle, final String description) {

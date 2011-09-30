@@ -115,11 +115,6 @@ public class ArtifactProjectStructureElement extends ProjectStructureElement {
   }
 
   @Override
-  public String toString() {
-    return "artifact:" + myOriginalArtifact.getName();
-  }
-
-  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof ArtifactProjectStructureElement)) return false;
@@ -138,4 +133,17 @@ public class ArtifactProjectStructureElement extends ProjectStructureElement {
     return false;
   }
 
+  @Override
+  public String getPresentableName() {
+    return "Artifact '" + getActualArtifactName() + "'";
+  }
+
+  @Override
+  public String getId() {
+    return "artifact:" + getActualArtifactName();
+  }
+
+  private String getActualArtifactName() {
+    return myArtifactsStructureContext.getArtifactModel().getArtifactByOriginal(myOriginalArtifact).getName();
+  }
 }

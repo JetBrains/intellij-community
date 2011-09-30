@@ -17,6 +17,7 @@ package com.intellij.codeInspection.internal;
 
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.ide.ui.ListCellRendererWrapper;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -50,6 +51,8 @@ public class GtkPreferredJComboBoxRendererInspection extends InternalInspection 
 
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+    if (!ApplicationManagerEx.getApplicationEx().isInternal()) return new JavaElementVisitor() {};
+
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(final PsiMethodCallExpression expression) {

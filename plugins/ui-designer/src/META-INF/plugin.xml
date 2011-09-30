@@ -39,7 +39,29 @@
     <implicitUsageProvider implementation="com.intellij.uiDesigner.binding.UIDesignerImplicitUsageProvider"/>
     <runConfigurationExtension implementation="com.intellij.uiDesigner.snapShooter.SnapShooterConfigurationExtension"/>
     <usageTypeProvider implementation="com.intellij.uiDesigner.binding.FormUsageTypeProvider"/>
-    <inspectionToolProvider implementation="com.intellij.uiDesigner.inspections.FormInspectionProvider"/>
+
+    <localInspection shortName="DuplicateMnemonic" bundle="messages.UIDesignerBundle" key="inspection.duplicate.mnemonics"
+                     groupKey="form.inspections.group" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.uiDesigner.inspections.DuplicateMnemonicInspection"/>
+    <localInspection shortName="MissingMnemonic" bundle="messages.UIDesignerBundle" key="inspection.missing.mnemonics"
+                     groupKey="form.inspections.group" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.uiDesigner.inspections.MissingMnemonicInspection"/>
+    <localInspection shortName="NoLabelFor" bundle="messages.UIDesignerBundle" key="inspection.no.label.for"
+                     groupKey="form.inspections.group" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.uiDesigner.inspections.NoLabelForInspection"/>
+    <localInspection shortName="NoButtonGroup" bundle="messages.UIDesignerBundle" key="inspection.no.button.group"
+                     groupKey="form.inspections.group" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.uiDesigner.inspections.NoButtonGroupInspection"/>
+    <localInspection shortName="OneButtonGroup" bundle="messages.UIDesignerBundle" key="inspection.one.button.group"
+                     groupKey="form.inspections.group" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.uiDesigner.inspections.OneButtonGroupInspection"/>
+    <localInspection shortName="NoScrollPane" bundle="messages.UIDesignerBundle" key="inspection.no.scroll.pane"
+                     groupKey="form.inspections.group" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.uiDesigner.inspections.NoScrollPaneInspection"/>
+    <localInspection shortName="BoundFieldAssignment" bundle="messages.UIDesignerBundle" key="inspection.bound.field.title"
+                     groupKey="form.inspections.group" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.uiDesigner.inspections.BoundFieldAssignmentInspection"/>
+
     <fileEditorProvider implementation="com.intellij.uiDesigner.editor.UIFormEditorProvider"/>
 
     <applicationService serviceInterface="com.intellij.uiDesigner.Properties"

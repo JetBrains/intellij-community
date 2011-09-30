@@ -807,11 +807,11 @@ public class PluginManager {
             ourBuildNumber = BuildNumber.fromString(FileUtil.loadFile(buildTxtFile).trim());
           }
           else {
-            ourBuildNumber = BuildNumber.fromString("108.SNAPSHOT");
+            ourBuildNumber = BuildNumber.fromString("999.SNAPSHOT");
           }
         }
         catch (IOException e) {
-          ourBuildNumber = BuildNumber.fromString("108.SNAPSHOT");
+          ourBuildNumber = BuildNumber.fromString("999.SNAPSHOT");
         }
       }
     }

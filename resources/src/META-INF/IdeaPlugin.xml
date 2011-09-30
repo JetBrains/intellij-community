@@ -181,7 +181,12 @@
     <definitionsSearch implementation="com.intellij.codeInsight.navigation.MethodImplementationsSearch"/>
     <definitionsSearch implementation="com.intellij.codeInsight.navigation.ClassImplementationsSearch"/>
 
-    <inspectionToolProvider implementation="com.intellij.codeInspection.internal.InternalInspectionToolsProvider"/>
+    <localInspection shortName="UndesirableClassUsage" displayName="Undesirable Class Usage" groupName="IDEA Platform Inspections"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.internal.UndesirableClassUsageInspection"/>
+    <localInspection shortName="GtkPreferredJComboBoxRenderer" displayName="Preferred JComboBox renderer"
+                     groupName="IDEA Platform Inspections" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.internal.GtkPreferredJComboBoxRendererInspection"/>
 
     <fileTypeFactory implementation="com.intellij.openapi.fileTypes.impl.JavaFileTypeFactory"/>
 
@@ -1115,6 +1120,8 @@
     <iconLayerProvider implementation="com.intellij.compiler.CompilerIconLayerProvider"/>
 
     <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable"/>
+    <projectService serviceInterface="com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureProblemsSettings"
+                    serviceImplementation="com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureProblemsSettingsImpl"/>
     <projectService serviceInterface="com.intellij.openapi.roots.ui.configuration.ProjectSettingsService"
                     serviceImplementation="com.intellij.openapi.roots.ui.configuration.IdeaProjectSettingsService"/>
     <wizardMode implementation="com.intellij.ide.util.newProjectWizard.modes.CreateFromScratchMode" id="CreateFromScratchMode" order="first"/>

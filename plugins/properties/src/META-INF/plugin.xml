@@ -45,7 +45,17 @@
     <fileTypeFactory implementation="com.intellij.lang.properties.editor.ResourceBundleEditorProvider" />
     <referencesSearch implementation="com.intellij.psi.impl.search.PropertyReferenceViaLastWordSearcher"/>
     <favoriteNodeProvider implementation="com.intellij.ide.favoritesTreeView.ResourcesFavoriteNodeProvider"/>
-    <inspectionToolProvider implementation="com.intellij.lang.properties.PropertiesInspectionToolsProvider"/>
+
+    <localInspection shortName="UnusedProperty" bundle="messages.PropertiesBundle" key="unused.property.inspection.display.name"
+                     groupKey="properties.files.inspection.group.display.name" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.intellij.lang.properties.UnusedPropertyInspection"/>
+    <globalInspection shortName="DuplicatePropertyInspection" bundle="messages.InspectionsBundle" key="duplicate.property.display.name"
+                      groupKey="group.names.internationalization.issues" enabledByDefault="false" level="WARNING"
+                      implementationClass="com.intellij.codeInspection.duplicatePropertyInspection.DuplicatePropertyInspection"/>
+    <localInspection shortName="TrailingSpacesInProperty" bundle="messages.PropertiesBundle"
+                     key="trail.spaces.property.inspection.display.name" groupKey="properties.files.inspection.group.display.name"
+                     enabledByDefault="false" level="WARNING"
+                     implementationClass="com.intellij.lang.properties.TrailingSpacesInPropertyInspection"/>
 
     <idIndexer filetype="Properties" implementationClass="com.intellij.psi.impl.cache.impl.idCache.PropertiesIdIndexer"/>
     <todoIndexer filetype="Properties" implementationClass="com.intellij.psi.impl.cache.impl.idCache.PropertiesTodoIndexer"/>

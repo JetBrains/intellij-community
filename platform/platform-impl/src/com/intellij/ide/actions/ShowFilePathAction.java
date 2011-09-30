@@ -194,7 +194,7 @@ public class ShowFilePathAction extends AnAction {
         "\treveal {\"%s\"} as POSIX file\n" +
         "\tactivate\n" +
         "end tell", path);
-      new GeneralCommandLine(ExecUtil.getOpenCommandPath(), "-e", script).createProcess();
+      new GeneralCommandLine(ExecUtil.getOsascriptPath(), "-e", script).createProcess();
     }
     else if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN)) {
       Desktop.getDesktop().open(new File(path));

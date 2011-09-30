@@ -45,7 +45,7 @@ public class UsageInModuleClasspath extends ProjectStructureElementUsage {
 
   @Override
   public PlaceInProjectStructure getPlace() {
-    return new PlaceInModuleClasspath(myContext, myModule, mySourceElement);
+    return new PlaceInModuleClasspath(myContext, myModule, myContainingElement, mySourceElement);
   }
 
   @Override

@@ -45,45 +45,48 @@ public abstract class RunConfigurationExtension<T extends AbstractRunConfigurati
 
   @Nullable
   protected abstract <P extends T> SettingsEditor<P> createEditor(@NotNull final P configuration);
-  
+
   @Nullable
   protected abstract String getEditorTitle();
 
   /**
    * @param configuration Run configuration
    * @return True if extension in general applicable to given run configuration - just to attach settings tab, etc. But extension may be
-   * turned off in it's settings. E.g. RCov in general available for given run configuration, but may be turned off.
+   *         turned off in it's settings. E.g. RCov in general available for given run configuration, but may be turned off.
    */
   protected abstract boolean isApplicableFor(@NotNull final T configuration);
 
   /**
    * @param applicableConfiguration Applicable run configuration
    * @return True if extension is tuned on in configuration extension settings.
-   * E.g. RCov is turned on for given run configuration.
+   *         E.g. RCov is turned on for given run configuration.
    */
   protected abstract boolean isEnabledFor(@NotNull final T applicableConfiguration);
 
   protected abstract void patchCommandLine(@NotNull final T configuration,
-                                             @NotNull final GeneralCommandLine cmdLine,
-                                             @NotNull final AbstractRunConfiguration.RunnerType type);
+                                           @NotNull final GeneralCommandLine cmdLine,
+                                           @NotNull final AbstractRunConfiguration.RunnerType type);
 
   /**
    * Validate extensions after general configuration validation passed
+   *
    * @param configuration
    * @param isExecution
    * @param <T>
    * @throws com.intellij.execution.ExecutionException
+   *
    */
   protected abstract void validateConfiguration(@NotNull final T configuration,
-                                                                                        final boolean isExecution) throws Exception;
+                                                final boolean isExecution) throws Exception;
 
   /**
    * Setup extension settings for created run configuration
+   *
    * @param configuration Configuration
    * @param location
    */
   protected abstract void extendCreatedConfiguration(@NotNull final T configuration,
-                                                                                              @NotNull final Location location);
+                                                     @NotNull final Location location);
 
   protected abstract void extendTemplateConfiguration(@NotNull final T configuration);
 

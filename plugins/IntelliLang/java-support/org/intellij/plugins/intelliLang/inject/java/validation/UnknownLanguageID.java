@@ -24,6 +24,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.InjectedLanguage;
+import org.intellij.plugins.intelliLang.pattern.PatternValidator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,7 +41,7 @@ public class UnknownLanguageID extends LocalInspectionTool {
 
   @NotNull
   public String getGroupDisplayName() {
-    return InspectionProvider.LANGUAGE_INJECTION;
+    return PatternValidator.LANGUAGE_INJECTION;
   }
 
   @NotNull

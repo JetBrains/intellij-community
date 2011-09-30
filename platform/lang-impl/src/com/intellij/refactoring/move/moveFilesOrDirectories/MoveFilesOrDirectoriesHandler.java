@@ -57,6 +57,10 @@ public class MoveFilesOrDirectoriesHandler extends MoveHandlerDelegate {
   }
 
   public boolean isValidTarget(final PsiElement psiElement, PsiElement[] sources) {
+    return isValidTarget(psiElement);
+  }
+
+  public static boolean isValidTarget(PsiElement psiElement) {
     return (psiElement instanceof PsiDirectory || psiElement instanceof PsiDirectoryContainer) && psiElement.getManager().isInProject(psiElement);
   }
 

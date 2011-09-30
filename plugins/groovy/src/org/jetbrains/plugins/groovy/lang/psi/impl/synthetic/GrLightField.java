@@ -193,4 +193,12 @@ public class GrLightField extends GrLightVariable implements GrField {
 
     return false;
   }
+
+  @Override
+  public PsiElement copy() {
+    assert getNavigationElement() != this;
+    GrLightField copy = new GrLightField(myContainingClass, getName(), getType(), getNavigationElement());
+    copy.setCreatorKey(getCreatorKey());
+    return copy;
+  }
 }

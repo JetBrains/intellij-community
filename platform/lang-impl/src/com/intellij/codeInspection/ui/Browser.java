@@ -322,6 +322,7 @@ public class Browser extends JPanel {
     InspectionTool tool = getTool();
     assert tool != null;
     final GlobalInspectionContextImpl manager = tool.getContext();
+    if (manager == null) return tool;
     if (refEntity instanceof RefElement){
       PsiElement element = ((RefElement)refEntity).getElement();
       if (element == null) return tool;

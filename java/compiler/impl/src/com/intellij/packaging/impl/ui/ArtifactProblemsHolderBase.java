@@ -29,11 +29,12 @@ public abstract class ArtifactProblemsHolderBase implements ArtifactProblemsHold
     myContext = context;
   }
 
+  @NotNull
   public PackagingElementResolvingContext getContext() {
     return myContext;
   }
 
-  public void registerError(@NotNull String message) {
-    registerError(message, null);
+  public void registerError(@NotNull String message, @NotNull String problemTypeId) {
+    registerError(message, problemTypeId, null);
   }
 }
