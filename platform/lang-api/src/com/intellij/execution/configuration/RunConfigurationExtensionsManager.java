@@ -95,7 +95,7 @@ public class RunConfigurationExtensionsManager<U extends AbstractRunConfiguratio
   }
 
   public <V extends U> void appendEditors(@NotNull final U configuration,
-                            @NotNull final SettingsEditorGroup<V> group) {
+                                          @NotNull final SettingsEditorGroup<V> group) {
     for (T extension : getApplicableExtensions(configuration)) {
       @SuppressWarnings("unchecked")
       final SettingsEditor<V> editor = extension.createEditor((V)configuration);
