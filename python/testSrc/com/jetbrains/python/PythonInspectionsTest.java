@@ -101,17 +101,6 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
     doHighlightingTest(PyDictCreationInspection.class, LanguageLevel.PYTHON26);
   }
 
-  public void testPyDeprecatedModulesInspection() {
-    setLanguageLevel(LanguageLevel.PYTHON25);
-    try {
-      LocalInspectionTool inspection = new PyDeprecatedModulesInspection();
-      doTest(getTestName(false), inspection);
-    }
-    finally {
-      setLanguageLevel(null);
-    }
-  }
-
   public void testPyTupleAssignmentBalanceInspection() {
     LocalInspectionTool inspection = new PyTupleAssignmentBalanceInspection();
     doTest(getTestName(false), inspection);
