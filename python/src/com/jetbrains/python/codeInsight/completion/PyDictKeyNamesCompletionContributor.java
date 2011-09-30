@@ -37,7 +37,9 @@ public class PyDictKeyNamesCompletionContributor extends CompletionContributor {
           int offset = parameters.getOffset();
           final CompletionResultSet dictCompletion = createResult(original, result, offset);
 
-          PsiElement operand = PsiTreeUtil.getParentOfType(original, PySubscriptionExpression.class).getOperand();
+          PySubscriptionExpression subscription = PsiTreeUtil.getParentOfType(original, PySubscriptionExpression.class);
+          if (subscription == null) return;
+          PsiElement operand = subscription.getOperand();
           if (operand != null) {
             PsiReference reference = operand.getReference();
             if (reference != null) {
