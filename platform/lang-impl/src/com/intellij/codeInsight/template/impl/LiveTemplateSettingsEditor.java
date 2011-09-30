@@ -84,7 +84,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
   public LiveTemplateSettingsEditor(TemplateImpl template,
                                     final String defaultShortcut,
                                     Map<TemplateOptionalProcessor, Boolean> options,
-                                    Map<TemplateContextType, Boolean> context, final Runnable nodeChanged) {
+                                    Map<TemplateContextType, Boolean> context, final Runnable nodeChanged, boolean allowNoContext) {
     super(new BorderLayout());
     myOptions = options;
     myContext = context;
@@ -97,7 +97,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
     myTemplateEditor = TemplateEditorUtil.createEditor(false, myTemplate.getString(), context);
     myTemplate.setId(null);
 
-    createComponents();
+    createComponents(allowNoContext);
     
     reset();
 
@@ -136,7 +136,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
     EditorFactory.getInstance().releaseEditor(myTemplateEditor);
   }
 
-  private void createComponents() {
+  private void createComponents(boolean allowNoContexts) {
     JPanel panel = new JPanel(new GridBagLayout());
 
     GridBag gb = new GridBag().setDefaultInsets(4, 4, 4, 4).setDefaultWeightY(1).setDefaultFill(GridBagConstraints.BOTH);
@@ -154,7 +154,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
 
     panel.add(createTemplateOptionsPanel(), gb.nextLine().next().next().coverColumn(2).weighty(1));
 
-    panel.add(createShortContextPanel(), gb.nextLine().next().fillCellNone().anchor(GridBagConstraints.WEST));
+    panel.add(createShortContextPanel(allowNoContexts), gb.nextLine().next().fillCellNone().anchor(GridBagConstraints.WEST));
 
     myTemplateEditor.getDocument().addDocumentListener(
       new DocumentAdapter() {
@@ -286,7 +286,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
     return result;
   }
 
-  private JPanel createShortContextPanel() {
+  private JPanel createShortContextPanel(final boolean allowNoContexts) {
     JPanel panel = new JPanel(new BorderLayout());
 
     final JLabel ctxLabel = new JLabel();
@@ -318,8 +318,8 @@ public class LiveTemplateSettingsEditor extends JPanel {
           sb.append(ownName);
         }
         final boolean noContexts = sb.length() == 0;
-        ctxLabel.setText((noContexts ? "No applicable contexts yet" : "Applicable in " + sb.toString()) + ".  ");
-        ctxLabel.setForeground(noContexts ? Color.GRAY : UIUtil.getLabelForeground());
+        ctxLabel.setText((noContexts ? "No applicable contexts" + (allowNoContexts ? "" : " yet") : "Applicable in " + sb.toString()) + ".  ");
+        ctxLabel.setForeground(noContexts ? allowNoContexts ? Color.GRAY : Color.RED : UIUtil.getLabelForeground());
         change.setText(noContexts ? "Define" : "Change");
       }
     };
