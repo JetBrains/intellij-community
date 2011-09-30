@@ -1,6 +1,7 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
@@ -53,6 +54,9 @@ public class PyOldStyleClassesInspection extends PyInspection {
     public void visitPyCallExpression(final PyCallExpression node) {
       PyClass klass = PsiTreeUtil.getParentOfType(node, PyClass.class);
       if (klass != null && !klass.isNewStyleClass()) {
+        PyExpression[] superClassExprs = klass.getSuperClassExpressions();
+        PsiElement[] superClasses = klass.getSuperClassElements();
+        if (superClasses.length != superClassExprs.length) return;
         if (PyUtil.isSuperCall(node))
           registerProblem(node.getCallee(), "Old-style class contains call for super method");
       }
