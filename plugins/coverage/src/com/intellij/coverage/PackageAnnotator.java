@@ -270,7 +270,7 @@ public class PackageAnnotator {
                                                final String toplevelClassSrcFQName) {
     final ClassCoverageInfo toplevelClassCoverageInfo = new ClassCoverageInfo();
 
-    final ClassData classData = projectInfo.getClassData(SrcFileAnnotator.getFilePath(className));
+    final ClassData classData = projectInfo.getClassData(className);
 
     if (classData != null && classData.getLines() != null) {
       final Object[] lines = classData.getLines();
