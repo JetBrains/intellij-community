@@ -40,7 +40,7 @@ public class IterableVariableMacro extends VariableTypeMacroBase {
     return "iterableVariable";
   }
 
-  public String getDescription() {
+  public String getPresentableName() {
     return CodeInsightBundle.message("macro.iterable.variable");
   }
 

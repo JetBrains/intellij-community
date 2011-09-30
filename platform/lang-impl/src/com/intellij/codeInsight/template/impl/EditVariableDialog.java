@@ -234,11 +234,11 @@ class EditVariableDialog extends DialogWrapper {
 
     Arrays.sort(macros, new Comparator<Macro> () {
       public int compare(Macro m1, Macro m2) {
-        return m1.getDescription().compareTo(m2.getDescription());
+        return m1.getPresentableName().compareTo(m2.getPresentableName());
       }
     });
     for (Macro macro : macros) {
-      comboField.addItem(macro.getDescription());
+      comboField.addItem(macro.getPresentableName());
     }
     comboField.setEditable(true);
     DefaultCellEditor cellEditor = new DefaultCellEditor(comboField);

@@ -36,7 +36,7 @@ class CurrentPackageMacro extends Macro {
     return "currentPackage";
   }
 
-  public String getDescription() {
+  public String getPresentableName() {
     return CodeInsightBundle.message("macro.current.package");
   }
 

@@ -33,7 +33,7 @@ public class SuggestFirstVariableNameMacro extends VariableOfTypeMacro {
     return "suggestFirstVariableName";
   }
 
-  public String getDescription() {
+  public String getPresentableName() {
     String s = "";
     String ss = "";
     if (ss instanceof Object) {

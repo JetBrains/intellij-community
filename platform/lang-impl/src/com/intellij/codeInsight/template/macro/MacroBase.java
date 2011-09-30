@@ -50,7 +50,7 @@ public abstract class MacroBase extends Macro {
   }
 
   @Override
-  public String getDescription() {
+  public String getPresentableName() {
     return myDescription;
   }
 

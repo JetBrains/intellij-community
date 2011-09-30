@@ -32,7 +32,7 @@ public class MethodReturnTypeMacro extends Macro {
     return "methodReturnType";
   }
 
-  public String getDescription() {
+  public String getPresentableName() {
     return "methodReturnType()";
   }
 

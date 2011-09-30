@@ -35,7 +35,7 @@ public class SubtypesMacro extends Macro {
     return "subtypes";
   }
 
-  public String getDescription() {
+  public String getPresentableName() {
     return "subtypes(TYPE)";
   }
 

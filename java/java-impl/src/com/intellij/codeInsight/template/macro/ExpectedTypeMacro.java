@@ -39,7 +39,7 @@ public class ExpectedTypeMacro extends Macro {
     return "expectedType";
   }
 
-  public String getDescription() {
+  public String getPresentableName() {
     return CodeInsightBundle.message("macro.expected.type");
   }
 

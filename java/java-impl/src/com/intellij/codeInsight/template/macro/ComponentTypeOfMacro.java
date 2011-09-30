@@ -30,7 +30,7 @@ public class ComponentTypeOfMacro extends Macro {
     return "componentTypeOf";
   }
 
-  public String getDescription() {
+  public String getPresentableName() {
     return CodeInsightBundle.message("macro.component.type.of.array");
   }
 

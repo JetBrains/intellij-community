@@ -32,7 +32,7 @@ public class EnumMacro extends Macro {
     return "enum";
   }
 
-  public String getDescription() {
+  public String getPresentableName() {
     return CodeInsightBundle.message("macro.enum");
   }
 

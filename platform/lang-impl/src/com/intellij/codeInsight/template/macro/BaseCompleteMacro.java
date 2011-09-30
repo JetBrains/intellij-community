@@ -47,7 +47,7 @@ public abstract class BaseCompleteMacro extends Macro {
     return myName;
   }
 
-  public String getDescription() {
+  public String getPresentableName() {
     return myName + "()";
   }
 

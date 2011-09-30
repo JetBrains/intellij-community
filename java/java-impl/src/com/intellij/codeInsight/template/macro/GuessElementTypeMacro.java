@@ -38,7 +38,7 @@ public class GuessElementTypeMacro extends Macro {
     return "guessElementType";
   }
 
-  public String getDescription() {
+  public String getPresentableName() {
     return CodeInsightBundle.message("macro.guess.element.type.of.container");
   }
 

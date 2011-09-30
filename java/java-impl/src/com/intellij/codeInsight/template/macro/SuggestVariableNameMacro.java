@@ -35,7 +35,7 @@ public class SuggestVariableNameMacro extends Macro {
     return "suggestVariableName";
   }
 
-  public String getDescription() {
+  public String getPresentableName() {
     return CodeInsightBundle.message("macro.suggest.variable.name");
   }
 

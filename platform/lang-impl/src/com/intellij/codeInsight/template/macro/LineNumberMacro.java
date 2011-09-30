@@ -25,7 +25,7 @@ public class LineNumberMacro extends Macro {
     return "lineNumber";
   }
 
-  public String getDescription() {
+  public String getPresentableName() {
     return CodeInsightBundle.message("macro.linenumber");
   }
 

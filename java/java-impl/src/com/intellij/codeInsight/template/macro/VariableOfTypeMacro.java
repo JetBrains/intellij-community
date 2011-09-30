@@ -38,7 +38,7 @@ public class VariableOfTypeMacro extends Macro {
     return "variableOfType";
   }
 
-  public String getDescription() {
+  public String getPresentableName() {
     return CodeInsightBundle.message("macro.variable.of.type");
   }
 

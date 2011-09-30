@@ -32,7 +32,7 @@ public class CastToLeftSideTypeMacro extends Macro {
     return "castToLeftSideType";
   }
 
-  public String getDescription() {
+  public String getPresentableName() {
     return CodeInsightBundle.message("macro.cast.to.left.side.type");
   }
 

@@ -37,7 +37,7 @@ public class GroovyScriptMacro extends Macro {
     return "groovyScript";
   }
 
-  public String getDescription() {
+  public String getPresentableName() {
     return CodeInsightBundle.message("macro.groovy.script");
   }
 

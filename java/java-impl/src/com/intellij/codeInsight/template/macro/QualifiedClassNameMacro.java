@@ -27,7 +27,7 @@ public class QualifiedClassNameMacro extends Macro {
     return "qualifiedClassName";
   }
 
-  public String getDescription() {
+  public String getPresentableName() {
     return CodeInsightBundle.message("macro.qualified.class.name");
   }
 

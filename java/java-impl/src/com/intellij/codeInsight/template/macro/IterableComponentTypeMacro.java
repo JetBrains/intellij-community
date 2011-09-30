@@ -30,7 +30,7 @@ public class IterableComponentTypeMacro extends Macro {
     return "iterableComponentType";
   }
 
-  public String getDescription() {
+  public String getPresentableName() {
     return CodeInsightBundle.message("macro.iterable.component.type");
   }
 

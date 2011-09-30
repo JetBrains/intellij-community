@@ -33,7 +33,7 @@ public class RightSideTypeMacro extends Macro {
     return "rightSideType";
   }
 
-  public String getDescription() {
+  public String getPresentableName() {
     return CodeInsightBundle.message("macro.right.side.type");
   }
 

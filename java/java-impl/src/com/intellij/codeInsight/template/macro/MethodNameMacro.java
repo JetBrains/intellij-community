@@ -29,7 +29,7 @@ public class MethodNameMacro extends Macro {
     return "methodName";
   }
 
-  public String getDescription() {
+  public String getPresentableName() {
     return CodeInsightBundle.message("macro.methodname");
   }
 

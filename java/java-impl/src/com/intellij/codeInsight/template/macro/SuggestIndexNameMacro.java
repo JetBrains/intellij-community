@@ -28,7 +28,7 @@ public class SuggestIndexNameMacro extends Macro {
     return "suggestIndexName";
   }
 
-  public String getDescription() {
+  public String getPresentableName() {
     return CodeInsightBundle.message("macro.suggest.index.name");
   }
 

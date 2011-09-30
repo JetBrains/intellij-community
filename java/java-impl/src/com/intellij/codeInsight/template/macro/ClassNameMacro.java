@@ -27,7 +27,7 @@ public class ClassNameMacro extends Macro {
     return "className";
   }
 
-  public String getDescription() {
+  public String getPresentableName() {
     return CodeInsightBundle.message("macro.classname");
   }
 

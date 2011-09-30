@@ -44,7 +44,7 @@ public class AnnotatedMacro extends Macro {
     return "annotated";
   }
 
-  public String getDescription() {
+  public String getPresentableName() {
     return "annotated(\"annotation qname\")";
   }
 

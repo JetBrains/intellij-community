@@ -37,7 +37,7 @@ public class DescendantClassesEnumMacro extends Macro {
     return "descendantClassesEnum";
   }
 
-  public String getDescription() {
+  public String getPresentableName() {
     return CodeInsightBundle.message("macro.descendant.classes.enum");
   }
 

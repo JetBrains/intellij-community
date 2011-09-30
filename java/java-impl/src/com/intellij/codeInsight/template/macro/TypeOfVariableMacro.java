@@ -29,7 +29,7 @@ public class TypeOfVariableMacro extends Macro {
     return "typeOfVariable";
   }
 
-  public String getDescription() {
+  public String getPresentableName() {
     return "typeOfVariable(VAR)";
   }
 

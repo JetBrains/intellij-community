@@ -34,7 +34,7 @@ public abstract class Macro {
   /**
    * @return a presentable string that will be shown in the combobox in Edit Template Variables dialog
    */
-  public abstract String getDescription();
+  public abstract String getPresentableName();
 
   @NonNls
   @NotNull
