@@ -64,7 +64,7 @@ target('default': 'The default target') {
   ant.xmlproperty(file: appInfoFile(), collapseAttributes: "true")
 
   layoutAll(
-          buildNumber: "IC-108.SNAPSHOT",
+          buildNumber: "IC-$snapshot",
           version: "IdeaX",
           system_selector: "IdeaIC${p("component.version.major")}",
           system_selector_mac: "IntelliJIdea${p("component.version.major")}CE",

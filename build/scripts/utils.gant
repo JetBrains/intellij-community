@@ -108,6 +108,17 @@ binding.setVariable("printUnusedModules", {Set<String> usedModules ->
 
 requireProperty("home", guessHome())
 
+String readSnapshotBuild() {
+  def file = new File("$home/community/build.txt")
+  if (!file.exists()) {
+    file = new File("$home/build.txt")
+  }
+
+  return file.readLines().get(0)
+}
+
+binding.setVariable("snapshot", readSnapshotBuild())
+
 project.builder.buildInfoPrinter = new org.jetbrains.jps.teamcity.TeamcityBuildInfoPrinter()
 project.builder.compressJars = false
 
