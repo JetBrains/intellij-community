@@ -7,9 +7,12 @@
  import com.intellij.ui.HyperlinkLabel;
  import com.intellij.ui.components.JBLabel;
  import com.intellij.util.ui.AsyncProcessIcon;
+ import org.jetbrains.annotations.NonNls;
+ import org.jetbrains.annotations.NotNull;
  import org.jetbrains.annotations.Nullable;
 
  import javax.swing.*;
+ import javax.swing.border.EmptyBorder;
  import javax.swing.event.HyperlinkEvent;
  import javax.swing.event.HyperlinkListener;
  import java.awt.*;
@@ -49,6 +52,10 @@ public class AndroidLayoutPreviewPanel extends JPanel implements Disposable {
   };
 
   private AsyncProcessIcon myProgressIcon;
+  @NonNls private static final String PROGRESS_ICON_CARD_NAME = "Progress";
+  @NonNls private static final String EMPTY_CARD_NAME = "Empty";
+  private JPanel myProgressIconWrapper = new JPanel();
+  private final JBLabel myFileNameLabel = new JBLabel();
 
   public AndroidLayoutPreviewPanel() {
     super(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, true));
@@ -66,33 +73,49 @@ public class AndroidLayoutPreviewPanel extends JPanel implements Disposable {
     });
     myErrorLabel.setOpaque(false);
 
+    myFileNameLabel.setHorizontalAlignment(SwingConstants.CENTER);
+    myFileNameLabel.setBorder(new EmptyBorder(5, 0, 5, 0));
+
     final JPanel progressPanel = new JPanel();
     progressPanel.setLayout(new BoxLayout(progressPanel, BoxLayout.X_AXIS));
     myProgressIcon = new AsyncProcessIcon("Android layout rendering");
+    myProgressIconWrapper.setLayout(new CardLayout());
+    myProgressIconWrapper.add(PROGRESS_ICON_CARD_NAME, myProgressIcon);
+    myProgressIconWrapper.add(EMPTY_CARD_NAME, new JBLabel(" "));
+    myProgressIconWrapper.setOpaque(false);
+
     Disposer.register(this, myProgressIcon);
-    progressPanel.add(Box.createHorizontalGlue());
-    progressPanel.add(myProgressIcon);
+    progressPanel.add(myProgressIconWrapper);
     progressPanel.add(new JBLabel(" "));
     progressPanel.setOpaque(false);
-    myProgressIcon.setVisible(false);
 
-    add(progressPanel);
+    final JPanel titlePanel = new JPanel(new BorderLayout());
+    titlePanel.setOpaque(false);
+    titlePanel.add(myFileNameLabel, BorderLayout.CENTER);
+    titlePanel.add(progressPanel, BorderLayout.EAST);
+
+    ((CardLayout)myProgressIconWrapper.getLayout()).show(myProgressIconWrapper, EMPTY_CARD_NAME);
+
+    add(titlePanel);
     add(myErrorLabel);
     add(new MyImagePanelWrapper());
   }
 
-  public void setImage(@Nullable final BufferedImage image) {
+  public void setImage(@Nullable final BufferedImage image, @NotNull final String fileName) {
     myImage = image;
+    myFileNameLabel.setText(fileName);
     doRevalidate();
   }
 
   public void showProgress() {
+    ((CardLayout)myProgressIconWrapper.getLayout()).show(myProgressIconWrapper, PROGRESS_ICON_CARD_NAME);
     myProgressIcon.setVisible(true);
     myProgressIcon.resume();
   }
 
   public void hideProgress() {
     myProgressIcon.suspend();
+    ((CardLayout)myProgressIconWrapper.getLayout()).show(myProgressIconWrapper, EMPTY_CARD_NAME);
     myProgressIcon.setVisible(false);
   }
 
