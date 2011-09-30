@@ -113,10 +113,6 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
       final Ref<T> created = Ref.create(null);
       myDialog.getKindCombo().setSelectedName(selectedTemplateName);
       myDialog.myCreator = new ElementCreator(myProject, errorTitle) {
-        @Override
-        protected void checkBeforeCreate(String newName) throws IncorrectOperationException {
-          creator.checkBeforeCreate(newName, myDialog.getKindCombo().getSelectedName());
-        }
 
         @Override
         protected PsiElement[] create(String newName) throws Exception {
@@ -157,7 +153,6 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
   }
 
   public interface FileCreator<T> {
-    void checkBeforeCreate(@NotNull String name, @NotNull String templateName) throws IncorrectOperationException;
 
     @Nullable
     T createFile(@NotNull String name, @NotNull String templateName);

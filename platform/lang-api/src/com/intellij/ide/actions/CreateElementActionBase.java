@@ -49,8 +49,6 @@ public abstract class CreateElementActionBase extends AnAction {
   @NotNull
   protected abstract PsiElement[] invokeDialog(Project project, PsiDirectory directory);
 
-  protected abstract void checkBeforeCreate(String newName, PsiDirectory directory) throws IncorrectOperationException;
-
   /**
    * @return created elements. Never null.
    */
@@ -134,11 +132,6 @@ public abstract class CreateElementActionBase extends AnAction {
 
     public boolean checkInput(final String inputString) {
       return true;
-    }
-
-    @Override
-    public void checkBeforeCreate(String newName) throws IncorrectOperationException {
-      CreateElementActionBase.this.checkBeforeCreate(newName, myDirectory);
     }
 
     @Override

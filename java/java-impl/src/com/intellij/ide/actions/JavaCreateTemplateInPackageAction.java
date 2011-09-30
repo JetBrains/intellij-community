@@ -18,7 +18,6 @@ package com.intellij.ide.actions;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.IncorrectOperationException;
 
 import javax.swing.*;
 
@@ -32,9 +31,4 @@ public abstract class JavaCreateTemplateInPackageAction<T extends PsiElement> ex
   protected boolean checkPackageExists(PsiDirectory directory) {
     return JavaDirectoryService.getInstance().getPackage(directory) != null;
   }
-
-  protected void doCheckCreate(PsiDirectory dir, String className, String templateName) throws IncorrectOperationException {
-    JavaDirectoryService.getInstance().checkCreateClass(dir, className);
-  }
-
 }

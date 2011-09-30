@@ -129,7 +129,7 @@ public class JavaDirectoryServiceImpl extends JavaDirectoryService {
                                                   String name,
                                                   String templateName,
                                                   boolean askToDefineVariables) throws IncorrectOperationException {
-    checkCreateClassOrInterface(dir, name);
+    //checkCreateClassOrInterface(dir, name);
 
     FileTemplate template = FileTemplateManager.getInstance().getInternalTemplate(templateName);
 
@@ -152,7 +152,7 @@ public class JavaDirectoryServiceImpl extends JavaDirectoryService {
       LOG.error(e);
       return null;
     }
-
+    if (element == null) return null;
     final PsiJavaFile file = (PsiJavaFile)element.getContainingFile();
     PsiClass[] classes = file.getClasses();
     if (classes.length < 1) {

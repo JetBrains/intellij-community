@@ -63,11 +63,6 @@ public class NewScriptAction extends JavaCreateTemplateInPackageAction<GroovyFil
     return createdFile.getLastChild();
   }
 
-  @Override
-  protected void doCheckCreate(PsiDirectory dir, String className, String templateName) throws IncorrectOperationException {
-    dir.checkCreateFile(className + "." + extractExtension(templateName));
-  }
-
   @NotNull
   protected GroovyFile doCreate(PsiDirectory directory, String newName, String templateName) throws IncorrectOperationException {
     PsiFile file =

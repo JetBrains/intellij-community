@@ -17,7 +17,6 @@ package org.jetbrains.idea.devkit.actions;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -42,11 +41,6 @@ public abstract class GenerateClassAndPatchPluginXmlActionBase extends GenerateP
     MyInputValidator validator = new MyInputValidator(project, directory);
     Messages.showInputDialog(project, getClassNamePrompt(), getClassNamePromptTitle(), Messages.getQuestionIcon(), "", validator);
     return validator.getCreatedElements();
-  }
-
-  protected void checkBeforeCreate(String newName, PsiDirectory directory) throws IncorrectOperationException {
-    JavaDirectoryService.getInstance().checkCreateClass(directory, newName);
-    super.checkBeforeCreate(newName, directory);
   }
 
   protected abstract ComponentType getComponentType();

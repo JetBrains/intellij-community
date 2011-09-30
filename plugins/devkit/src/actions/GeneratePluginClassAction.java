@@ -73,44 +73,6 @@ public abstract class GeneratePluginClassAction extends CreateElementActionBase 
     if (pluginXml != null) myFilesToPatch.add(pluginXml);
   }
 
-  protected void checkBeforeCreate(String newName, PsiDirectory directory) throws IncorrectOperationException {
-    final Project project = directory.getProject();
-    final Module module = getModule(directory);
-
-    if (module != null) {
-      if (ModuleType.get(module) == PluginModuleType.getInstance()) {
-        addPluginModule(module);
-      } else {
-        final List<Module> candidateModules = PluginModuleType.getCandidateModules(module);
-        final Iterator<Module> it = candidateModules.iterator();
-        while (it.hasNext()) {
-          Module m = it.next();
-          if (PluginModuleType.getPluginXml(m) == null) it.remove();
-        }
-
-        if (candidateModules.size() == 1) {
-          addPluginModule(candidateModules.get(0));
-        } else {
-          final ChooseModulesDialog dialog = new ChooseModulesDialog(project, candidateModules, getTemplatePresentation().getDescription());
-          dialog.show();
-          if (!dialog.isOK()) {
-            // create() should return CANCELED now
-            return;
-          } else {
-            final List<Module> modules = dialog.getSelectedModules();
-            for (Module m : modules) {
-              addPluginModule(m);
-            }
-          }
-        }
-      }
-    }
-
-    if (myFilesToPatch.size() == 0) {
-      throw new IncorrectOperationException(DevKitBundle.message("error.no.plugin.xml"));
-    }
-  }
-
   public void update(final AnActionEvent e) {
     super.update(e);
     final Presentation presentation = e.getPresentation();
@@ -161,7 +123,46 @@ public abstract class GeneratePluginClassAction extends CreateElementActionBase 
     return fileIndex.getModuleForFile(vFile);
   }
 
-  @NotNull protected PsiElement[] create(String newName, PsiDirectory directory) throws Exception {
+  @NotNull
+  protected PsiElement[] create(String newName, PsiDirectory directory) throws Exception {
+    final Project project = directory.getProject();
+    final Module module = getModule(directory);
+
+    if (module != null) {
+      if (ModuleType.get(module) == PluginModuleType.getInstance()) {
+        addPluginModule(module);
+      }
+      else {
+        final List<Module> candidateModules = PluginModuleType.getCandidateModules(module);
+        final Iterator<Module> it = candidateModules.iterator();
+        while (it.hasNext()) {
+          Module m = it.next();
+          if (PluginModuleType.getPluginXml(m) == null) it.remove();
+        }
+
+        if (candidateModules.size() == 1) {
+          addPluginModule(candidateModules.get(0));
+        }
+        else {
+          final ChooseModulesDialog dialog = new ChooseModulesDialog(project, candidateModules, getTemplatePresentation().getDescription());
+          dialog.show();
+          if (!dialog.isOK()) {
+            // create() should return CANCELED now
+            return CANCELED;
+          }
+          else {
+            final List<Module> modules = dialog.getSelectedModules();
+            for (Module m : modules) {
+              addPluginModule(m);
+            }
+          }
+        }
+      }
+    }
+
+    if (myFilesToPatch.size() == 0) {
+      throw new IncorrectOperationException(DevKitBundle.message("error.no.plugin.xml"));
+    }
     if (myFilesToPatch.size() == 0) {
       // user canceled module selection
       return CANCELED;

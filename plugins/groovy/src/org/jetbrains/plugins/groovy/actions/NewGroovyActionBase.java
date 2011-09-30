@@ -23,10 +23,8 @@ import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
@@ -76,9 +74,5 @@ public abstract class NewGroovyActionBase extends CreateElementActionBase {
 
   protected String getErrorTitle() {
     return CommonBundle.getErrorTitle();
-  }
-
-  protected void checkBeforeCreate(String newName, PsiDirectory directory) throws IncorrectOperationException {
-    JavaDirectoryService.getInstance().checkCreateClass(directory, newName);
   }
 }

@@ -36,7 +36,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PsiNavigateUtil;
 import com.intellij.xml.refactoring.XmlTagInplaceRenamer;
 import org.jetbrains.android.AndroidFileTemplateProvider;
@@ -87,11 +86,6 @@ public class CreateTypedResourceFileAction extends CreateElementActionBase {
     MyInputValidator validator = new MyInputValidator(project, directory);
     Messages.showInputDialog(project, AndroidBundle.message("new.file.dialog.text"), getCommandName(), Messages.getQuestionIcon(), "", validator);
     return validator.getCreatedElements();
-  }
-
-  @Override
-  protected void checkBeforeCreate(String name, PsiDirectory directory) throws IncorrectOperationException {
-    directory.checkCreateFile(AndroidFileTemplateProvider.getFileNameByNewElementName(name));
   }
 
   @NotNull

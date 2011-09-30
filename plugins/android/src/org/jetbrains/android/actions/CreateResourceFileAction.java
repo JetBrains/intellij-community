@@ -33,7 +33,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.android.resourceManagers.ResourceManager;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.annotations.NotNull;
@@ -129,11 +128,6 @@ public class CreateResourceFileAction extends CreateElementActionBase {
       });
     }
     return new MyInputValidator(project, resSubdir);
-  }
-
-  @Override
-  protected void checkBeforeCreate(String newName, PsiDirectory directory) throws IncorrectOperationException {
-    directory.checkCreateFile(newName);
   }
 
   @NotNull

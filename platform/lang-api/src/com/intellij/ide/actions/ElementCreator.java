@@ -50,7 +50,6 @@ public abstract class ElementCreator {
     myErrorTitle = errorTitle;
   }
 
-  protected abstract void checkBeforeCreate(String newName) throws IncorrectOperationException;
   protected abstract PsiElement[] create(String newName) throws Exception;
   protected abstract String getActionName(String newName);
 
@@ -58,14 +57,6 @@ public abstract class ElementCreator {
     if (inputString.length() == 0) {
       Messages.showMessageDialog(myProject, IdeBundle.message("error.name.should.be.specified"), CommonBundle.getErrorTitle(),
                                  Messages.getErrorIcon());
-      return PsiElement.EMPTY_ARRAY;
-    }
-
-    try {
-      checkBeforeCreate(inputString);
-    }
-    catch (IncorrectOperationException e) {
-      Messages.showMessageDialog(myProject, CreateElementActionBase.filterMessage(e.getMessage()), myErrorTitle, Messages.getErrorIcon());
       return PsiElement.EMPTY_ARRAY;
     }
 

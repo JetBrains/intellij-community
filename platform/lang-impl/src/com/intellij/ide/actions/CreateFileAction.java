@@ -27,7 +27,6 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,10 +64,6 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
                                IdeBundle.message("title.new.file"), Messages.getQuestionIcon(), null, validator);
       return validator.getCreatedElements();
     }
-  }
-
-  protected void checkBeforeCreate(String newName, PsiDirectory directory) throws IncorrectOperationException {
-    directory.checkCreateFile(getFileName(newName));
   }
 
   @NotNull

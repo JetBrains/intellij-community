@@ -46,12 +46,7 @@ public abstract class CreateTemplateInPackageAction<T extends PsiElement> extend
   @Override
   @Nullable
   protected T createFile(String name, String templateName, PsiDirectory dir) {
-    return checkOrCreate(name, dir, templateName, false);
-  }
-
-  @Override
-  protected void checkBeforeCreate(String name, String templateName, PsiDirectory dir) {
-    checkOrCreate(name, dir, templateName, true);
+    return checkOrCreate(name, dir, templateName);
   }
 
   @Nullable
@@ -82,7 +77,7 @@ public abstract class CreateTemplateInPackageAction<T extends PsiElement> extend
   protected abstract boolean checkPackageExists(PsiDirectory directory);
 
   @Nullable
-  private T checkOrCreate(String newName, PsiDirectory directory, String templateName, boolean check) throws IncorrectOperationException {
+  private T checkOrCreate(String newName, PsiDirectory directory, String templateName) throws IncorrectOperationException {
     PsiDirectory dir = directory;
     String className = newName;
 
@@ -99,11 +94,6 @@ public abstract class CreateTemplateInPackageAction<T extends PsiElement> extend
         PsiDirectory subDir = dir.findSubdirectory(name);
 
         if (subDir == null) {
-          if (check) {
-            dir.checkCreateSubdirectory(name);
-            return null;
-          }
-
           subDir = dir.createSubdirectory(name);
         }
 
@@ -113,14 +103,8 @@ public abstract class CreateTemplateInPackageAction<T extends PsiElement> extend
       className = names[names.length - 1];
     }
 
-    if (check) {
-      doCheckCreate(dir, className, templateName);
-      return null;
-    }
     return doCreate(dir, className, templateName);
   }
-
-  protected abstract void doCheckCreate(PsiDirectory dir, String className, String templateName) throws IncorrectOperationException;
 
   @Nullable
   protected abstract T doCreate(final PsiDirectory dir, final String className, String templateName) throws IncorrectOperationException;

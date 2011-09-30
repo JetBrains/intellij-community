@@ -21,7 +21,6 @@ import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -77,17 +76,5 @@ public abstract class CreateFileFromTemplateAction extends CreateFromTemplateAct
   protected PsiFile createFile(String name, String templateName, PsiDirectory dir) {
     final FileTemplate template = FileTemplateManager.getInstance().getInternalTemplate(templateName);
     return createFileFromTemplate(name, template, dir);
-  }
-
-  @Override
-  protected void checkBeforeCreate(String name, String templateName, PsiDirectory dir) {
-    final FileTemplate template = FileTemplateManager.getInstance().getInternalTemplate(templateName);
-    if (template != null) {
-    String extension = FileUtil.getExtension(name);
-      if (!extension.equals(template.getExtension())) {
-        name = name + '.' + extension;
-      }
-    }
-    super.checkBeforeCreate(name, templateName, dir);
   }
 }

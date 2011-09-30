@@ -26,7 +26,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.android.AndroidFileTemplateProvider;
 import org.jetbrains.android.dom.manifest.Action;
@@ -78,10 +77,6 @@ public class NewAndroidComponentDialog extends DialogWrapper {
     init();
     setTitle(AndroidBundle.message("android.new.component.action.command.name"));
     myCreator = new ElementCreator(module.getProject(), CommonBundle.getErrorTitle()) {
-      @Override
-      protected void checkBeforeCreate(String newName) throws IncorrectOperationException {
-        JavaDirectoryService.getInstance().checkCreateClass(directory, newName);
-      }
 
       @Override
       protected PsiElement[] create(String newName) throws Exception {

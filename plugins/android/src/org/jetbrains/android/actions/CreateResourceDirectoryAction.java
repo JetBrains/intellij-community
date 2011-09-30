@@ -10,7 +10,6 @@ import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.android.resourceManagers.ResourceManager;
 import org.jetbrains.android.util.AndroidBundle;
@@ -49,11 +48,6 @@ public class CreateResourceDirectoryAction extends CreateElementActionBase {
   @NotNull
   private MyInputValidator createValidator(Project project, final PsiDirectory resDir) {
     return new MyInputValidator(project, resDir);
-  }
-
-  @Override
-  protected void checkBeforeCreate(String newName, PsiDirectory directory) throws IncorrectOperationException {
-    directory.checkCreateSubdirectory(newName);
   }
 
   @NotNull

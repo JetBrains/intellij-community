@@ -86,10 +86,6 @@ public final class CreateDialogAction extends AbstractCreateFormAction {
     return UIDesignerBundle.message("command.create.dialog");
   }
 
-  protected void checkBeforeCreate(final String newName, final PsiDirectory directory) throws IncorrectOperationException {
-    JavaDirectoryService.getInstance().checkCreateClass(directory, newName);
-  }
-
   protected String getErrorTitle() {
     return UIDesignerBundle.message("error.cannot.create.dialog");
   }

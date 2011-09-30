@@ -76,12 +76,6 @@ public class CreateFormAction extends AbstractCreateFormAction {
     return validator.getCreatedElements();
   }
 
-  protected void checkBeforeCreate(String newName, PsiDirectory directory) throws IncorrectOperationException {
-    if (myLastClassName != null) {
-      JavaDirectoryService.getInstance().checkCreateClass(directory, myLastClassName);
-    }
-  }
-
   @NotNull
   protected PsiElement[] create(String newName, PsiDirectory directory) throws Exception {
     PsiElement createdFile;

@@ -17,7 +17,6 @@ package org.jetbrains.idea.devkit.actions;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -48,11 +47,6 @@ public class NewActionAction extends GeneratePluginClassAction {
     }
     myDialog = null;
     return PsiElement.EMPTY_ARRAY;
-  }
-
-  protected void checkBeforeCreate(String newName, PsiDirectory directory) throws IncorrectOperationException {
-    JavaDirectoryService.getInstance().checkCreateClass(directory, newName);
-    super.checkBeforeCreate(newName, directory);
   }
 
   protected String getClassTemplateName() {
