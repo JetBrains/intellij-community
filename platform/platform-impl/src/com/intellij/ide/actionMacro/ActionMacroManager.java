@@ -210,7 +210,7 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
 
       public void messageEdt(PlaybackContext context, String text, Type type) {
         if (type == Type.message || type == Type.error) {
-          frame.getStatusBar().setInfo("Line " + context.getCurrentLine() + ": " + text);
+          frame.getStatusBar().setInfo((context != null ? "Line " + context.getCurrentLine() + ": " : "") + text);
         }
       }
 
