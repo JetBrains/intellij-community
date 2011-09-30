@@ -85,6 +85,7 @@
     <programRunner implementation="com.jetbrains.python.run.PythonRunner"/>
     <programRunner implementation="com.jetbrains.python.debugger.PyDebugRunner"/>
     <programRunner implementation="com.jetbrains.python.debugger.remote.PyRemoteDebugRunner"/>
+    <programRunner implementation="com.jetbrains.python.coverage.PythonCoverageRunner"/>
     <configurationProducer implementation="com.jetbrains.python.run.PythonRunConfigurationProducer"/>
     <xdebugger.breakpointType implementation="com.jetbrains.python.debugger.PyLineBreakpointType"/>
     <xdebugger.breakpointType implementation="com.jetbrains.python.debugger.DjangoTemplateLineBreakpointType"/>
