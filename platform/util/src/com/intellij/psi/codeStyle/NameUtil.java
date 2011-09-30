@@ -503,7 +503,7 @@ public class NameUtil {
       }
 
       String nextChar = String.valueOf(myPattern[patternIndex]);
-      boolean wordStart = isWordStart(myPattern[patternIndex]);
+      boolean wordStart = Character.isUpperCase(myPattern[patternIndex]);
 
       int fromIndex = nameIndex;
       while (true) {
