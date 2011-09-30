@@ -18,7 +18,9 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
-    <inspectionToolProvider implementation="com.intellij.structuralsearch.inspection.highlightTemplate.SSRInspectionsLoader"/>
+    <localInspection shortName="SSBasedInspection" bundle="messages.SSRBundle" key="SSRInspection.display.name" groupName="General"
+                     enabledByDefault="false" level="WARNING"
+                     implementationClass="com.intellij.structuralsearch.inspection.highlightTemplate.SSBasedInspection"/>
     <!--<fileBasedIndex implementation="com.intellij.tokenindex.TokenIndex"/>-->
   </extensions>
 
