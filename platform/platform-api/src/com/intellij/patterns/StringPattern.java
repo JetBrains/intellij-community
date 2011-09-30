@@ -137,7 +137,7 @@ public class StringPattern extends ObjectPattern<String, StringPattern> {
         sb.append("<whitespace>");
       }
       else
-      //This is really stupid and inconvinient builder - it breaks any normal pattern with uppercase
+      //This is really stupid and inconvenient builder - it breaks any normal pattern with uppercase
       if(Character.isUpperCase(c)) {
         sb.append('[').append(Character.toUpperCase(c)).append(Character.toLowerCase(c)).append(']');
       }
@@ -146,12 +146,15 @@ public class StringPattern extends ObjectPattern<String, StringPattern> {
         sb.append(c);
       }
     }
+    System.out.println("\nsb = " + sb);
     final RegExp regExp = new RegExp(sb.toString());
     final Automaton automaton = regExp.toAutomaton(new DatatypesAutomatonProvider());
     final RunAutomaton runAutomaton = new RunAutomaton(automaton, true);
 
     return with(new ValuePatternCondition<String>("matchesBrics") {
-      public boolean accepts(@NotNull final String str, final ProcessingContext context) {
+      public boolean accepts(@NotNull String str, final ProcessingContext context) {
+        System.out.println("str = " + str);
+        if(str.charAt(0)=='"' || str.charAt(0)=='\'') str = str.substring(1);
         return runAutomaton.run(str);
       }
 
