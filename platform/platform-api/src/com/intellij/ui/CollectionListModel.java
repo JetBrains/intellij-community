@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,55 +16,57 @@
 
 package com.intellij.ui;
 
+import org.jetbrains.annotations.NotNull;
+
 import javax.swing.*;
 import java.util.*;
 
 /**
  * @author yole
-*/
-public class CollectionListModel extends AbstractListModel {
-  private final List myItems;
+ */
+public class CollectionListModel<T> extends AbstractListModel {
+  private final List<T> myItems;
 
-  public CollectionListModel(final List items) {
-    myItems = items;
+  public CollectionListModel(@NotNull final List<? extends T> items) {
+    myItems = new ArrayList<T>(items);
   }
 
-  public CollectionListModel(final Object... items) {
-    myItems = new ArrayList(Arrays.asList(items));
+  public CollectionListModel(final T... items) {
+    myItems = new ArrayList<T>(Arrays.asList(items));
   }
 
   public int getSize() {
     return myItems.size();
   }
 
-  public Object getElementAt(int index) {
+  public T getElementAt(final int index) {
     return myItems.get(index);
   }
 
-  public void add(Object element) {
+  public void add(final T element) {
     int i = myItems.size();
     myItems.add(element);
     fireIntervalAdded(this, i, i);
   }
 
-  public void add(List elements) {
+  public void add(@NotNull final List<? extends T> elements) {
     int i = myItems.size();
     myItems.addAll(elements);
     fireIntervalAdded(this, i, i + elements.size() - 1);
   }
 
-  public void remove(Object element) {
+  public void remove(@NotNull final T element) {
     int i = myItems.indexOf(element);
     myItems.remove(element);
     fireIntervalRemoved(this, i, i);
   }
 
-  public void setElementAt(Object element, int index) {
+  public void setElementAt(@NotNull final T element, final int index) {
     myItems.set(index, element);
     fireContentsChanged(this, index, index);
   }
 
-  public void remove(int index) {
+  public void remove(final int index) {
     myItems.remove(index);
     fireIntervalRemoved(this, index, index);
   }
@@ -75,20 +77,20 @@ public class CollectionListModel extends AbstractListModel {
     fireIntervalRemoved(this, 0, size - 1);
   }
 
-  public void contentsChanged(Object element) {
+  public void contentsChanged(@NotNull final T element) {
     int i = myItems.indexOf(element);
     fireContentsChanged(this, i, i);
   }
 
-  public void sort(final Comparator<?> comparator) {
+  public void sort(final Comparator<T> comparator) {
     Collections.sort(myItems, comparator);
   }
 
-  public List getItems() {
+  public List<T> getItems() {
     return Collections.unmodifiableList(myItems);
   }
 
-  public void replaceAll(List elements) {
+  public void replaceAll(@NotNull final List<? extends T> elements) {
     myItems.clear();
     myItems.addAll(elements);
     fireIntervalAdded(this, 0, elements.size() - 1);
