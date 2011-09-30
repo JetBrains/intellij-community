@@ -66,9 +66,9 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
   }
 
   public static void showTemplatesLookup(final Project project, final Editor editor, String prefix, List<TemplateImpl> matchingTemplates) {
-    ArrayList<LookupItem> array = new ArrayList<LookupItem>();
+    List<LookupElement> array = new ArrayList<LookupElement>();
     for (TemplateImpl template : matchingTemplates) {
-      array.add(new LookupItem(template, template.getKey()));
+      array.add(new LiveTemplateLookupElement(template));
     }
     LookupElement[] items = array.toArray(new LookupElement[array.size()]);
 
@@ -133,8 +133,8 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
     public void itemSelected(LookupEvent event) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.liveTemplates");
       LookupElement item = event.getItem();
-      if (item != null) {
-        final TemplateImpl template = (TemplateImpl)item.getObject();
+      if (item instanceof LiveTemplateLookupElement) {
+        final TemplateImpl template = ((LiveTemplateLookupElement)item).getTemplate();
         final String argument = myTemplate2Argument != null ? myTemplate2Argument.get(template) : null;
         new WriteCommandAction(myProject) {
           protected void run(Result result) throws Throwable {
