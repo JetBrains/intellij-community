@@ -20,6 +20,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -67,7 +68,7 @@ public class ImportOldConfigsPanel extends JDialog {
     group.add(myRbImportAuto);
     myRbDoNotImport.setSelected(true);
 
-    final String productName = getProductName(false);
+    final String productName = getProductName(ThreeState.UNSURE);
     mySuggestLabel.setText(getTitleLabel(productName));
     myRbDoNotImport.setText(getDoNotImportLabel(productName));
     if(myGuessedOldConfig != null) {
@@ -137,9 +138,20 @@ public class ImportOldConfigsPanel extends JDialog {
     setLocation((parentSize.width - ownSize.width) / 2, (parentSize.height - ownSize.height) / 2);
   }
 
-  protected String getProductName(boolean full) {
+  protected String getProductName(ThreeState full) {
     ApplicationNamesInfo namesInfo = ApplicationNamesInfo.getInstance();
-    return full || namesInfo.getProductName().equals("IDEA") ? namesInfo.getFullProductName() : namesInfo.getProductName();
+    if (full == ThreeState.YES) {
+      return namesInfo.getFullProductName();
+    }
+    else if (full == ThreeState.NO) {
+      return namesInfo.getProductName();
+    }
+    else {
+      return namesInfo.getProductName().equals("IDEA") ? namesInfo.getFullProductName() : namesInfo.getProductName();
+    }
+  }
+
+  public void importFinished(String newConfigPath) {
   }
 
   @Nullable
@@ -182,7 +194,7 @@ public class ImportOldConfigsPanel extends JDialog {
 
   private void close() {
     if (isImportEnabled()) {
-      final String productWithVendor = getProductName(true);
+      final String productWithVendor = getProductName(ThreeState.YES);
       String instHome = myPrevInstallation.getText();
       if ("".equals(instHome)) {
         JOptionPane.showMessageDialog(this,
@@ -198,7 +210,7 @@ public class ImportOldConfigsPanel extends JDialog {
         return;
       }
 
-      if (myRbImport.isSelected() && !ConfigImportHelper.isInstallationHomeOrConfig(instHome)) {
+      if (myRbImport.isSelected() && !ConfigImportHelper.isInstallationHomeOrConfig(instHome, getProductName(ThreeState.NO))) {
         JOptionPane.showMessageDialog(this,
                                       getInvalidHomeErrorText(productWithVendor, instHome),
                                       ApplicationBundle.message("title.installation.home.required"), JOptionPane.ERROR_MESSAGE);

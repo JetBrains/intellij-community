@@ -65,6 +65,7 @@ public class ConfigImportHelper {
         if (!validateOldConfigDir(instHome, oldConfigDir)) continue;
 
         doImport(newConfigPath, oldConfigDir);
+        dlg.importFinished(newConfigPath);
       }
 
       break;
@@ -324,10 +325,10 @@ public class ConfigImportHelper {
     return dir;
   }
 
-  public static boolean isInstallationHomeOrConfig(String installationHome) {
+  public static boolean isInstallationHomeOrConfig(String installationHome, String productName) {
     if (new File(installationHome, OPTIONS_XML).exists()) return true;
 
-    String mainJarName = StringUtil.toLowerCase(ApplicationNamesInfo.getInstance().getProductName()) + ".jar";
+    String mainJarName = StringUtil.toLowerCase(productName) + ".jar";
     //noinspection HardCodedStringLiteral
     boolean quickTest = new File(new File(installationHome, "lib"), mainJarName).exists() &&
                         new File(installationHome, BIN_FOLDER).exists();
