@@ -22,6 +22,6 @@ import com.intellij.codeInsight.lookup.LookupItem;
 */
 class EmptyLookupItem extends LookupItem<String> {
   public EmptyLookupItem(final String s) {
-    super(s, "                       ");
+    super(s, "           ");
   }
 }
