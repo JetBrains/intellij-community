@@ -22,6 +22,7 @@
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <projectService serviceInterface="com.intellij.coverage.JavaCoverageAnnotator"
                     serviceImplementation="com.intellij.coverage.JavaCoverageAnnotator"/>
+    <programRunner implementation="com.intellij.coverage.DefaultJavaCoverageRunner"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.theoryinpractice.testng">

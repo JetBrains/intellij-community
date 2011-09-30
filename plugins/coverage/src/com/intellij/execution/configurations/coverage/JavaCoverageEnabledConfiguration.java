@@ -16,6 +16,7 @@
 
 package com.intellij.execution.configurations.coverage;
 
+import com.intellij.coverage.CoverageEngine;
 import com.intellij.coverage.CoverageRunner;
 import com.intellij.coverage.JavaCoverageEngine;
 import com.intellij.coverage.JavaCoverageRunner;

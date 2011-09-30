@@ -62,7 +62,6 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
   private final JreVersionDetector myVersionDetector = new JreVersionDetector();
   Project myProject;
   private MyClassFilterEditor myClassFilterEditor;
-  private JCheckBox myCoverageEnabledCheckbox;
   private JLabel myCoverageNotSupportedLabel;
   private JComboBox myCoverageRunnerCb;
   private JPanel myRunnerPanel;
@@ -120,8 +119,6 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
 
     myCoverageNotSupportedLabel.setVisible(!isJre50);
 
-    myCoverageEnabledCheckbox.setEnabled(isJre50);
-
     final JavaCoverageEnabledConfiguration configuration = (JavaCoverageEnabledConfiguration)CoverageEnabledConfiguration.getOrCreate(runConfiguration);
     final CoverageRunner runner = configuration.getCoverageRunner();
     if (runner != null) {
@@ -142,9 +139,6 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
     UIUtil.setEnabled(myRunnerPanel, isJre50 && configuration.isCoverageEnabled(), true);
 
 
-    myCoverageEnabledCheckbox.setSelected(isJre50 && configuration.isCoverageEnabled());
-    myClassFilterEditor.setEnabled(myCoverageEnabledCheckbox.isSelected());
-
     myClassFilterEditor.setFilters(configuration.getCoveragePatterns());
     final boolean isCoverageByTestApplicable = runner != null && runner.isCoverageByTestApplicable();
     myTracingRb.setEnabled(myTracingRb.isEnabled() && isCoverageByTestApplicable);
@@ -163,7 +157,6 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
 
   protected void applyEditorTo(final RunConfigurationBase runConfiguration) throws ConfigurationException {
     final JavaCoverageEnabledConfiguration configuration = (JavaCoverageEnabledConfiguration)CoverageEnabledConfiguration.getOrCreate(runConfiguration);
-    configuration.setCoverageEnabled(myCoverageEnabledCheckbox.isSelected());
     configuration.setCoveragePatterns(myClassFilterEditor.getFilters());
     configuration.setCoverageRunner(getSelectedRunner());
     configuration.setTrackPerTestCoverage(myTrackPerTestCoverageCb.isSelected());
@@ -174,9 +167,6 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
   @NotNull
   protected JComponent createEditor() {
     JPanel result = new JPanel(new VerticalFlowLayout());
-
-    myCoverageEnabledCheckbox = new JCheckBox(ExecutionBundle.message("enable.coverage.with.emma"));
-    result.add(myCoverageEnabledCheckbox);
 
     final DefaultComboBoxModel runnersModel = new DefaultComboBoxModel();
     myCoverageRunnerCb = new JComboBox(runnersModel);
@@ -205,8 +195,8 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
       }
     });
     myRunnerPanel = new JPanel(new GridBagLayout());
-    myRunnerPanel.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 0));
-    myRunnerPanel.add(new JLabel("Choose coverage runner:"), new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0,8,0,10), 0, 0));
+    myRunnerPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
+    myRunnerPanel.add(new JLabel("Choose coverage runner:"), new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0,0,0,10), 0, 0));
     myRunnerPanel.add(myCoverageRunnerCb, new GridBagConstraints(1, 0, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0,0,0,0), 0, 0));
     final JPanel cPanel = new JPanel(new VerticalFlowLayout());
 
@@ -245,17 +235,6 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
     myTrackTestSourcesCb = new JCheckBox("Enable coverage in test folders");
     panel.add(myTrackTestSourcesCb);
     result.add(panel);
-
-    myCoverageEnabledCheckbox.addActionListener(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        final boolean isCoverageEnabled = myCoverageEnabledCheckbox.isSelected();
-        myClassFilterEditor.setEnabled(isCoverageEnabled);
-        UIUtil.setEnabled(myRunnerPanel, isCoverageEnabled, true);
-        final CoverageRunner runner = getSelectedRunner();
-        enableTracingPanel(isCoverageEnabled && runner != null && runner.isCoverageByTestApplicable());
-        myTrackPerTestCoverageCb.setEnabled(myTracingRb.isSelected() && isCoverageEnabled && canHavePerTestCoverage() && runner != null && runner.isCoverageByTestApplicable());
-      }
-    });
 
     myCoverageNotSupportedLabel = new JLabel(CodeInsightBundle.message("code.coverage.is.not.supported"));
     myCoverageNotSupportedLabel.setIcon(UIUtil.getOptionPanelWarningIcon());

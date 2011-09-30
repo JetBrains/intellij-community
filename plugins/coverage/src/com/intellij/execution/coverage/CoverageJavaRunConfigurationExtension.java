@@ -83,17 +83,10 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
     //noinspection ConstantConditions
     coverageConfig.setCurrentCoverageSuite(null);
     final CoverageRunner coverageRunner = coverageConfig.getCoverageRunner();
-    if (coverageConfig.isCoverageEnabled() && coverageRunner != null) {
-      if (!(runnerSettings.getData() instanceof DebuggingRunnerData) || coverageRunner instanceof IDEACoverageRunner) {
-        final CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(configuration.getProject());
-        coverageConfig.setCurrentCoverageSuite(coverageDataManager.addCoverageSuite(coverageConfig));
-        coverageConfig.appendCoverageArgument(params);
-      }
-      else if (runnerSettings.getData() instanceof DebuggingRunnerData) {
-        Notifications.Bus.notify(new Notification("Coverage", "Coverage was not enabled",
-                                                  coverageRunner.getPresentableName() + " coverage is disabled in the debug mode",
-                                                  NotificationType.WARNING));
-      }
+    if (runnerSettings.getData() instanceof CoverageRunnerData && coverageRunner != null) {
+      final CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(configuration.getProject());
+      coverageConfig.setCurrentCoverageSuite(coverageDataManager.addCoverageSuite(coverageConfig));
+      coverageConfig.appendCoverageArgument(params);
       if (!(coverageRunner instanceof IDEACoverageRunner)) {
         final Sdk jdk = params.getJdk();
         if (jdk != null && JavaSdk.getInstance().isOfVersionOrHigher(jdk, JavaSdkVersion.JDK_1_7)) {
