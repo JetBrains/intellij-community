@@ -29,6 +29,7 @@ import javax.swing.*;
 import java.io.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.util.MissingResourceException;
 import java.util.PropertyResourceBundle;
 
 /**
@@ -246,6 +247,8 @@ public class ConfigImportHelper {
             return bundle.getString("idea.config.path");
           } catch (IOException e) {
               return null;
+          } catch (MissingResourceException e) {
+            // property is missing or commented out, go on with this file
           }
       }
 
