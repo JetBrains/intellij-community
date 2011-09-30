@@ -511,7 +511,7 @@ public class NameUtil {
         if (next < 0) {
           break;
         }
-        if (wordStart && next > 0 && next != nextWord(name, next - 1)) {
+        if (wordStart && next > 0 && !Character.isUpperCase(name.charAt(next))) {
           fromIndex = next + 1;
           continue;
         }

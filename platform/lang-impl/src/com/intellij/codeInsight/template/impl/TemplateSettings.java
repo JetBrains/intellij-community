@@ -490,16 +490,16 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
     }
   }
 
-  public static String getDefaultTemplateName(String defTemplate) {
+  private static String getDefaultTemplateName(String defTemplate) {
     return defTemplate.substring(defTemplate.lastIndexOf("/") + 1);
   }
 
-  public void readDefTemplateFile(InputStream inputStream, String defGroupName, ClassLoader classLoader, boolean registerTemplate) throws JDOMException, InvalidDataException, IOException {
+  private void readDefTemplateFile(InputStream inputStream, String defGroupName, ClassLoader classLoader, boolean registerTemplate) throws JDOMException, InvalidDataException, IOException {
     readTemplateFile(JDOMUtil.loadDocument(inputStream), defGroupName, true, registerTemplate, classLoader);
   }
 
   @Nullable
-  public TemplateGroup readTemplateFile(Document document, @NonNls String defGroupName, boolean isDefault, boolean registerTemplate, ClassLoader classLoader) throws InvalidDataException {
+  private TemplateGroup readTemplateFile(Document document, @NonNls String defGroupName, boolean isDefault, boolean registerTemplate, ClassLoader classLoader) throws InvalidDataException {
     if (document == null) {
       throw new InvalidDataException();
     }
@@ -554,12 +554,6 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
 
     return result.isEmpty() ? null : result;
 
-  }
-
-  /** Use {@link com.intellij.codeInsight.template.impl.DefaultLiveTemplatesProvider} instead */
-  @Deprecated()
-  public void readHiddenTemplateFile(Document document) throws InvalidDataException {
-    readTemplateFile(document, null, false, false, getClass().getClassLoader());
   }
 
   private TemplateImpl readTemplateFromElement(final boolean isDefault,
