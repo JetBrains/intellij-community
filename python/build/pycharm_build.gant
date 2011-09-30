@@ -8,7 +8,7 @@ includeTargets << new File("${guessHome(this)}/build/scripts/libLicenses.gant")
 includeTargets << new File("${guessHome(this)}/python/build/python_common.gant")
 includeTool << Jps
 
-requireProperty("buildNumber", requireProperty("build.number", "108.SNAPSHOT"))
+requireProperty("buildNumber", requireProperty("build.number", snapshot))
 
 // load ApplicationInfo.xml properties
 ant.xmlproperty(file: "$home/python/resources/idea/PythonApplicationInfo.xml", collapseAttributes: "true")
