@@ -100,7 +100,7 @@ public class FrameWrapper implements Disposable, DataProvider {
     myFocusedCallback = new ActionCallback();
 
     if (myProject != null) {
-      IdeFocusManager.getInstance(myProject).suspendKeyProcessingUntil(myFocusedCallback);
+      IdeFocusManager.getInstance(myProject).typeAheadUntil(myFocusedCallback);
     }
 
     final JFrame frame = getFrame();

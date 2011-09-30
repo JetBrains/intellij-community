@@ -689,6 +689,8 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
 
   @Override
   public void typeAheadUntil(final ActionCallback done) {
+    assertDispatchThread();
+
     if (!isTypeaheadEnabled()) return;
 
     myTypeAheadRequestors.add(done);
@@ -755,14 +757,8 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   }
 
   public void suspendKeyProcessingUntil(@NotNull final ActionCallback done) {
-    assertDispatchThread();
-
-    requestFocus(new FocusCommand(done) {
-      public ActionCallback run() {
-        return done;
-      }
-    }.saveAllocation(), true);
-  }
+    typeAheadUntil(done);
+ }
 
   public Expirable getTimestamp(final boolean trackOnlyForcedCommands) {
     assertDispatchThread();

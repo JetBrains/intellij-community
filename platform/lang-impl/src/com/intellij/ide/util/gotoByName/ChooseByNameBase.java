@@ -681,7 +681,7 @@ public abstract class ChooseByNameBase {
     final String text = myTextField.getText();
     if (ok && !myListIsUpToDate && text != null && text.trim().length() > 0) {
       myPosponedOkAction = new ActionCallback();
-      IdeFocusManager.getInstance(myProject).suspendKeyProcessingUntil(myPosponedOkAction);
+      IdeFocusManager.getInstance(myProject).typeAheadUntil(myPosponedOkAction);
       return true;
     }
 
