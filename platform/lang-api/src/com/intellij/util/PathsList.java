@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,32 +37,30 @@ public class PathsList  {
   private final List<String> myPathTail = new ArrayList<String>();
   private final Set<String> myPathSet = new HashSet<String>();
 
-  private static final Function<String, VirtualFile> PATH_TO_LOCAL_VFILE = new Function<String, VirtualFile>() {
+  private static final Function<String, VirtualFile> PATH_TO_LOCAL_VFILE = new NullableFunction<String, VirtualFile>() {
     public VirtualFile fun(String path) {
       return LocalFileSystem.getInstance().findFileByPath(path.replace(File.separatorChar, '/'));
     }
   };
 
-  private static final Function<VirtualFile, String> LOCAL_PATH =
-    new Function<VirtualFile, String>() {
-      public String fun(VirtualFile file) {
-        return PathUtil.getLocalPath(file);
-      }
-    };
+  private static final Function<VirtualFile, String> LOCAL_PATH = new Function<VirtualFile, String>() {
+    public String fun(VirtualFile file) {
+      return PathUtil.getLocalPath(file);
+    }
+  };
 
-  private static final Function<String,VirtualFile> PATH_TO_DIR =
-    new Function<String, VirtualFile>() {
-      public VirtualFile fun(String s) {
-        final FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(s);
-        final VirtualFile localFile = PATH_TO_LOCAL_VFILE.fun(s);
-        if (localFile == null) return null;
-        
-        if (FileTypes.ARCHIVE.equals(fileType) && !localFile.isDirectory()) {
-          return JarFileSystem.getInstance().getJarRootForLocalFile(localFile);
-        }
-        return localFile;
+  private static final Function<String, VirtualFile> PATH_TO_DIR = new NullableFunction<String, VirtualFile>() {
+    public VirtualFile fun(String s) {
+      final FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(s);
+      final VirtualFile localFile = PATH_TO_LOCAL_VFILE.fun(s);
+      if (localFile == null) return null;
+
+      if (FileTypes.ARCHIVE.equals(fileType) && !localFile.isDirectory()) {
+        return JarFileSystem.getInstance().getJarRootForLocalFile(localFile);
       }
-    };
+      return localFile;
+    }
+  };
 
   public void add(@NonNls String path) {
     addAllLast(chooseFirstTimeItems(path), myPath);
@@ -116,14 +114,15 @@ public class PathsList  {
     });
   }
 
-  private void addAllLast(Iterator<String> elememts, List<String> toArray) {
-    while (elememts.hasNext()) {
-      final String element = elememts.next();
+  private void addAllLast(Iterator<String> elements, List<String> toArray) {
+    while (elements.hasNext()) {
+      final String element = elements.next();
       toArray.add(element);
       myPathSet.add(element);
     }
   }
 
+  @NotNull
   public String getPathsString() {
     final StringBuilder buffer = StringBuilderSpinAllocator.alloc();
     try {
