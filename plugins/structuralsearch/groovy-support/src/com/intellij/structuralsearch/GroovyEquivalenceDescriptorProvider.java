@@ -1,10 +1,10 @@
 package com.intellij.structuralsearch;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.dupLocator.equivalence.EquivalenceDescriptor;
 import com.intellij.dupLocator.equivalence.EquivalenceDescriptorBuilder;
 import com.intellij.dupLocator.equivalence.EquivalenceDescriptorProvider;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
@@ -63,7 +63,7 @@ public class GroovyEquivalenceDescriptorProvider extends EquivalenceDescriptorPr
       final GrTypeDefinitionBody b = (GrTypeDefinitionBody)e;
       return builder
         .inAnyOrder(b.getFields())
-        .inAnyOrder(b.getGroovyMethods())
+        .inAnyOrder(b.getMethods())
         .inAnyOrder(b.getInitializers())
         .inAnyOrder(b.getInnerClasses());
     }
