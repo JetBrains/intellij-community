@@ -45,6 +45,7 @@ import com.intellij.ui.table.TableView;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
+import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.table.JBListTable;
@@ -188,31 +189,31 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
 
 
   protected JComponent createNorthPanel() {
-    JPanel panel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, -4, 0, true, false));
-    final JPanel methodPanel = new JPanel(new BorderLayout());
-    final JPanel typePanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 4, 2, true, false));
-    myNamePanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 4, 2, true, false));
+    final JPanel panel = new JPanel(new GridBagLayout());
+    GridBagConstraints gbc = new GridBagConstraints(0,0,1,1,0,1, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0), 0,0);
 
-    final JLabel nameLabel = new JLabel(RefactoringBundle.message("changeSignature.name.prompt"));
+    myNamePanel = new JPanel(new BorderLayout(0,2));
     myNameField = new EditorTextField(myMethod.getName());
+    final JLabel nameLabel = new JLabel(RefactoringBundle.message("changeSignature.name.prompt"));
     nameLabel.setLabelFor(myNameField);
-    myNamePanel.add(nameLabel);
-    myNamePanel.add(myNameField);
     myNameField.setEnabled(myMethod.canChangeName());
     if (myMethod.canChangeName()) {
       myNameField.addDocumentListener(mySignatureUpdater);
+      myNameField.setPreferredWidth(200);
     }
+    myNamePanel.add(nameLabel, BorderLayout.NORTH);
+    IJSwingUtilities.adjustComponentsOnMac(nameLabel, myNameField);
+    myNamePanel.add(myNameField, BorderLayout.SOUTH);
 
     createVisibilityPanel();
 
+    final JPanel typePanel = new JPanel(new BorderLayout(0,2));
     if (myMethod.canChangeReturnType() != MethodDescriptor.ReadWriteOption.None) {
       final JLabel typeLabel = new JLabel(RefactoringBundle.message("changeSignature.return.type.prompt"));
-      typePanel.add(typeLabel);
       myReturnTypeCodeFragment = createReturnTypeCodeFragment();
       final Document document = PsiDocumentManager.getInstance(myProject).getDocument(myReturnTypeCodeFragment);
       myReturnTypeField = createReturnTypeTextField(document);
       typeLabel.setLabelFor(myReturnTypeField);
-      typePanel.add(myReturnTypeField);
 
       if (myMethod.canChangeReturnType() == MethodDescriptor.ReadWriteOption.ReadWrite) {
         myReturnTypeField.setPreferredWidth(200);
@@ -221,17 +222,24 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
       else {
         myReturnTypeField.setEnabled(false);
       }
+
+      typePanel.add(typeLabel, BorderLayout.NORTH);
+      IJSwingUtilities.adjustComponentsOnMac(typeLabel, myReturnTypeField);
+      typePanel.add(myReturnTypeField, BorderLayout.SOUTH);
     }
 
-    final JPanel p = new JPanel(new BorderLayout());
     if (myMethod.canChangeVisibility() && myVisibilityPanel instanceof ComboBoxVisibilityPanel) {
-      p.add(myVisibilityPanel, BorderLayout.WEST);
       ((ComboBoxVisibilityPanel)myVisibilityPanel).registerUpDownActionsFor(myNameField);
+      panel.add(myVisibilityPanel, gbc);
     }
-    p.add(typePanel, BorderLayout.EAST);
-    methodPanel.add(p, BorderLayout.WEST);
-    methodPanel.add(myNamePanel, BorderLayout.CENTER);
-    panel.add(methodPanel);
+
+    gbc.insets.left = 8;
+    gbc.weightx = 1;
+    gbc.gridx++;
+    panel.add(typePanel, gbc);
+
+    gbc.gridx++;
+    panel.add(myNamePanel, gbc);
 
     return panel;
   }
@@ -490,20 +498,21 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
     updateSignature();
     return panel;
   }
-  
+
   private static Container findTraversalRoot(Container container) {
     Container current = KeyboardFocusManager.getCurrentKeyboardFocusManager().getCurrentFocusCycleRoot();
     Container root;
-    
+
     if (current == container) {
       root = container;
-    } else {
+    }
+    else {
       root = container.getFocusCycleRootAncestor();
       if (root == null) {
         root = container;
       }
     }
-    
+
     if (root != current) {
       KeyboardFocusManager.getCurrentKeyboardFocusManager().setGlobalCurrentFocusCycleRoot(root);
     }

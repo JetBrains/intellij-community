@@ -42,13 +42,11 @@ import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.table.JBTable;
 import com.intellij.ui.table.TableView;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.Consumer;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.PlatformIcons;
-import com.intellij.util.VisibilityUtil;
+import com.intellij.util.*;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.table.JBTableRow;
@@ -279,7 +277,8 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
         final Document document = PsiDocumentManager.getInstance(getProject()).getDocument(item.typeCodeFragment);
         myTypeEditor = new EditorTextField(document, getProject(), getFileType());
         myTypeEditor.addDocumentListener(mySignatureUpdater);
-        final JLabel typeLabel = new JLabel("Type");
+        final JBLabel typeLabel = new JBLabel("Type:", UIUtil.ComponentStyle.SMALL);
+        IJSwingUtilities.adjustComponentsOnMac(typeLabel, myTypeEditor);
         typePanel.add(typeLabel);
         typePanel.add(myTypeEditor);
         myTypeEditor.setPreferredWidth(t.getWidth() / 2);
@@ -290,7 +289,8 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
         myNameEditor = new EditorTextField(item.parameter.getName(), getProject(), getFileType());
         myNameEditor.addDocumentListener(mySignatureUpdater);
         myNameEditor.addDocumentListener(new MyDocumentListener(1));
-        final JLabel nameLabel = new JLabel("Name");
+        final JBLabel nameLabel = new JBLabel("Name:", UIUtil.ComponentStyle.SMALL);
+        IJSwingUtilities.adjustComponentsOnMac(nameLabel, myNameEditor);
         namePanel.add(nameLabel);
         namePanel.add(myNameEditor);
         add(namePanel, BorderLayout.CENTER);
@@ -301,7 +301,8 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
           final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(item.defaultValueCodeFragment);
           myDefaultValueEditor = new EditorTextField(doc, getProject(), getFileType());
           ((PsiExpressionCodeFragment)item.defaultValueCodeFragment).setExpectedType(getRowType(item));
-          final JLabel defaultValueLabel = new JLabel("Default value");
+          final JBLabel defaultValueLabel = new JBLabel("Default value:", UIUtil.ComponentStyle.SMALL);
+          IJSwingUtilities.adjustComponentsOnMac(defaultValueLabel, myDefaultValueEditor);
           defaultValuePanel.add(defaultValueLabel);
           defaultValuePanel.add(myDefaultValueEditor);
           myDefaultValueEditor.setPreferredWidth(t.getWidth() / 2);
@@ -310,6 +311,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
 
           if (!isGenerateDelegate()) {
             myAnyVar = new JCheckBox("&Use Any Var");
+            UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myAnyVar);
             DialogUtil.registerMnemonic(myAnyVar, '&');
             myAnyVar.addActionListener(new ActionListener() {
               @Override
@@ -319,6 +321,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
             });
             final JPanel anyVarPanel = new JPanel(new BorderLayout());
             anyVarPanel.add(myAnyVar, BorderLayout.SOUTH);
+            IJSwingUtilities.addInsets(anyVarPanel, new Insets(0,0,8,0));
             additionalPanel.add(anyVarPanel, BorderLayout.CENTER);
             //additionalPanel.setPreferredSize(new Dimension(t.getWidth() / 3, -1));
             add(additionalPanel, BorderLayout.SOUTH);
