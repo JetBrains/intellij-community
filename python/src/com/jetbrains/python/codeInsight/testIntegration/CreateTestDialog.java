@@ -127,7 +127,8 @@ public class CreateTestDialog extends DialogWrapper {
     List<String> res = new ArrayList<String>();
 
     for (int i = 0; i != myTableModel.getRowCount(); ++i) {
-      if ((Boolean)myTableModel.getValueAt(i, 0) == true)
+      Object val = myTableModel.getValueAt(i, 0);
+      if (val != null && (Boolean)val == true)
         res.add((String)myTableModel.getValueAt(i, 1));
     }
     return res;

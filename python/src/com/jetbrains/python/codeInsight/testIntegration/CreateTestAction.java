@@ -59,8 +59,10 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
         d.methodsSize(srcClass.getMethods().length);
         int i = 0;
         for (PyFunction f : srcClass.getMethods()) {
-          d.addMethod("test_"+f.getName(), i);
-          ++i;
+          if (f.getName() != null && !f.getName().startsWith("__")) {
+            d.addMethod("test_"+f.getName(), i);
+            ++i;
+          }
         }
       }
     }
