@@ -56,6 +56,11 @@ public abstract class JBListTable extends JPanel {
     };
     mainTable = new JBTable(model) {
       private MouseEvent myMouseEvent;
+
+      {
+        setRowHeight(20);
+      }
+
       @Override
       protected void processKeyEvent(KeyEvent e) {
         myMouseEvent = null;
@@ -101,7 +106,7 @@ public abstract class JBListTable extends JPanel {
       @Override
       protected boolean processKeyBinding(KeyStroke ks, KeyEvent e, int condition, boolean pressed) {
         //Mnemonics
-        if (e.isAltDown()) {
+        if (e.isAltDown() || e.isMetaDown() || e.isShiftDown() || e.isControlDown()) {
           return false;
         }
 

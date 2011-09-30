@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -28,17 +27,13 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author ven
  */
-public class RightSideTypeMacro implements Macro {
+public class RightSideTypeMacro extends Macro {
   public String getName() {
     return "rightSideType";
   }
 
-  public String getDescription() {
+  public String getPresentableName() {
     return CodeInsightBundle.message("macro.right.side.type");
-  }
-
-  public String getDefaultValue() {
-    return "A";
   }
 
   public Result calculateResult(@NotNull Expression[] params, ExpressionContext context) {
@@ -66,11 +61,9 @@ public class RightSideTypeMacro implements Macro {
     return null;
   }
 
-  public Result calculateQuickResult(@NotNull Expression[] params, ExpressionContext context) {
-    return null;
+  @Override
+  public boolean isAcceptableInContext(TemplateContextType context) {
+    return context instanceof JavaCodeContextType;
   }
 
-  public LookupElement[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
-    return LookupElement.EMPTY_ARRAY;
-  }
 }

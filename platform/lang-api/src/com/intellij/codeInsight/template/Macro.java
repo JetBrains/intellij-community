@@ -25,21 +25,37 @@ import org.jetbrains.annotations.Nullable;
 /**
  * A macro which can be used in live templates.
  */
-public interface Macro {
-  ExtensionPointName<Macro> EP_NAME = ExtensionPointName.create("com.intellij.liveTemplateMacro");
+public abstract class Macro {
+  public static final ExtensionPointName<Macro> EP_NAME = ExtensionPointName.create("com.intellij.liveTemplateMacro");
   
-  @NonNls String getName();
+  @NonNls
+  public abstract String getName();
 
-  String getDescription ();
+  /**
+   * @return a presentable string that will be shown in the combobox in Edit Template Variables dialog
+   */
+  public abstract String getPresentableName();
 
-  @NonNls String getDefaultValue();
+  @NonNls
+  @NotNull
+  public String getDefaultValue() {
+    return "";
+  }
 
   @Nullable
-  Result calculateResult(@NotNull Expression[] params, ExpressionContext context);
+  public abstract Result calculateResult(@NotNull Expression[] params, ExpressionContext context);
 
   @Nullable
-  Result calculateQuickResult(@NotNull Expression[] params, ExpressionContext context);
+  public Result calculateQuickResult(@NotNull Expression[] params, ExpressionContext context) {
+    return null;
+  }
 
   @Nullable
-  LookupElement[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context);
+  public LookupElement[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
+    return null;
+  }
+
+  public boolean isAcceptableInContext(TemplateContextType context) {
+    return true;
+  }
 }

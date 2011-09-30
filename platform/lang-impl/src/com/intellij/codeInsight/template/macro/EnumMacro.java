@@ -27,17 +27,13 @@ import org.jetbrains.annotations.NotNull;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-public class EnumMacro implements Macro{
+public class EnumMacro extends Macro {
   public String getName() {
     return "enum";
   }
 
-  public String getDescription() {
+  public String getPresentableName() {
     return CodeInsightBundle.message("macro.enum");
-  }
-
-  public String getDefaultValue() {
-    return "";
   }
 
   public Result calculateResult(@NotNull Expression[] params, ExpressionContext context) {

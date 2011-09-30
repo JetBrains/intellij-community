@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -26,15 +25,16 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author ven
  */
-public class IterableComponentTypeMacro implements Macro {
+public class IterableComponentTypeMacro extends Macro {
   public String getName() {
     return "iterableComponentType";
   }
 
-  public String getDescription() {
+  public String getPresentableName() {
     return CodeInsightBundle.message("macro.iterable.component.type");
   }
 
+  @NotNull
   public String getDefaultValue() {
     return "a";
   }
@@ -90,7 +90,9 @@ public class IterableComponentTypeMacro implements Macro {
     return calculateResult(params, context);
   }
 
-  public LookupElement[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
-    return LookupElement.EMPTY_ARRAY;
+  @Override
+  public boolean isAcceptableInContext(TemplateContextType context) {
+    return context instanceof JavaCodeContextType;
   }
+
 }

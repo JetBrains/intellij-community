@@ -25,17 +25,13 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 
-public class ComponentTypeOfMacro implements Macro {
+public class ComponentTypeOfMacro extends Macro {
   public String getName() {
     return "componentTypeOf";
   }
 
-  public String getDescription() {
+  public String getPresentableName() {
     return CodeInsightBundle.message("macro.component.type.of.array");
-  }
-
-  public String getDefaultValue() {
-    return "A";
   }
 
   public LookupElement[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
@@ -53,10 +49,6 @@ public class ComponentTypeOfMacro implements Macro {
     }
 
     return lookupItems;
-  }
-
-  public Result calculateQuickResult(@NotNull Expression[] params, ExpressionContext context) {
-    return null;
   }
 
   public Result calculateResult(@NotNull Expression[] params, final ExpressionContext context) {
@@ -86,5 +78,11 @@ public class ComponentTypeOfMacro implements Macro {
 
     return new PsiElementResult(null);
   }
+
+  @Override
+  public boolean isAcceptableInContext(TemplateContextType context) {
+    return context instanceof JavaCodeContextType;
+  }
+
 }
 

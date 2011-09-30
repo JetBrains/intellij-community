@@ -16,22 +16,22 @@
 package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class SuggestIndexNameMacro implements Macro{
+public class SuggestIndexNameMacro extends Macro {
   public String getName() {
     return "suggestIndexName";
   }
 
-  public String getDescription() {
+  public String getPresentableName() {
     return CodeInsightBundle.message("macro.suggest.index.name");
   }
 
+  @NotNull
   public String getDefaultValue() {
     return "a";
   }
@@ -72,11 +72,9 @@ public class SuggestIndexNameMacro implements Macro{
     return null;
   }
 
-  public Result calculateQuickResult(@NotNull Expression[] params, ExpressionContext context) {
-    return null;
+  @Override
+  public boolean isAcceptableInContext(TemplateContextType context) {
+    return context instanceof JavaCodeContextType;
   }
 
-  public LookupElement[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
-    return null;
-  }
 }

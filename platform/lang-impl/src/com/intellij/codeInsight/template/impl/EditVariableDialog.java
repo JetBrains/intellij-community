@@ -19,6 +19,7 @@ package com.intellij.codeInsight.template.impl;
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.Macro;
+import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.codeInsight.template.macro.MacroFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -28,7 +29,6 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.Table;
 
 import javax.swing.*;
@@ -53,14 +53,11 @@ class EditVariableDialog extends DialogWrapper {
 
   private JTable myTable;
   private Editor myEditor;
-  private boolean hasMoveVars;
-  private List<Macro> additionalMacros;
+  private final List<TemplateContextType> myContextTypes;
 
-  public EditVariableDialog(Editor editor, Component parent, ArrayList<Variable> variables, boolean _hasMoveVars, List<Macro> _additionalMacros) {
+  public EditVariableDialog(Editor editor, Component parent, ArrayList<Variable> variables, List<TemplateContextType> contextTypes) {
     super(parent, true);
-
-    hasMoveVars = _hasMoveVars;
-    additionalMacros = _additionalMacros;
+    myContextTypes = contextTypes;
     setButtonsMargin(null);
     myVariables = variables;
     myEditor = editor;
@@ -68,10 +65,6 @@ class EditVariableDialog extends DialogWrapper {
     setTitle(CodeInsightBundle.message("templates.dialog.edit.variables.title"));
     setOKButtonText(CommonBundle.getOkButtonText());
     updateButtons();
-  }
-
-  public EditVariableDialog(Editor editor, Component parent, ArrayList<Variable> variables) {
-    this(editor,parent,variables,true,null);
   }
 
   protected Action[] createActions() {
@@ -96,7 +89,7 @@ class EditVariableDialog extends DialogWrapper {
       CodeInsightBundle.message("templates.dialog.edit.variables.border.title"), false, false, true));
     panel.setLayout(new BorderLayout());
     panel.add(createVariablesTable(), BorderLayout.CENTER);
-    if (hasMoveVars) panel.add(createTableButtonPanel(), BorderLayout.EAST);
+    panel.add(createTableButtonPanel(), BorderLayout.EAST);
     return panel;
   }
 
@@ -224,21 +217,19 @@ class EditVariableDialog extends DialogWrapper {
 
     JComboBox comboField = new JComboBox();
     Macro[] macros = MacroFactory.getMacros();
-
-    if (additionalMacros!=null) {
-      ArrayList<Macro> list = new ArrayList<Macro>(macros.length + additionalMacros.size());
-      ContainerUtil.addAll(list, macros);
-      list.addAll(additionalMacros);
-      macros = list.toArray(new Macro[0]);
-    }
-
     Arrays.sort(macros, new Comparator<Macro> () {
       public int compare(Macro m1, Macro m2) {
-        return m1.getDescription().compareTo(m2.getDescription());
+        return m1.getPresentableName().compareTo(m2.getPresentableName());
       }
     });
+    eachMacro:
     for (Macro macro : macros) {
-      comboField.addItem(macro.getDescription());
+      for (TemplateContextType contextType : myContextTypes) {
+        if (macro.isAcceptableInContext(contextType)) {
+          comboField.addItem(macro.getPresentableName());
+          continue eachMacro;
+        }
+      }
     }
     comboField.setEditable(true);
     DefaultCellEditor cellEditor = new DefaultCellEditor(comboField);

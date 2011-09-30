@@ -15,8 +15,6 @@
  */
 package com.intellij.codeInsight.template.macro;
 
-import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
@@ -25,15 +23,16 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiVariable;
 import org.jetbrains.annotations.NotNull;
 
-public class TypeOfVariableMacro implements Macro {
+public class TypeOfVariableMacro extends Macro {
   public String getName() {
     return "typeOfVariable";
   }
 
-  public String getDescription() {
+  public String getPresentableName() {
     return "typeOfVariable(VAR)";
   }
 
+  @NotNull
   public String getDefaultValue() {
     return "A";
   }
@@ -65,8 +64,9 @@ public class TypeOfVariableMacro implements Macro {
     return calculateResult(params, context);
   }
 
-  public LookupElement[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
-    return LookupElement.EMPTY_ARRAY;
+  @Override
+  public boolean isAcceptableInContext(TemplateContextType context) {
+    return context instanceof JavaCodeContextType;
   }
 
 }

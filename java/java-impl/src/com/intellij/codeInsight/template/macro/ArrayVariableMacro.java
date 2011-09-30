@@ -28,7 +28,7 @@ public class ArrayVariableMacro extends VariableTypeMacroBase {
     return "arrayVariable";
   }
 
-  public String getDescription() {
+  public String getPresentableName() {
     return CodeInsightBundle.message("macro.array.variable");
   }
 

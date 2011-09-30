@@ -30,15 +30,16 @@ import org.jetbrains.annotations.NotNull;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-public class SubtypesMacro implements Macro {
+public class SubtypesMacro extends Macro {
   public String getName() {
     return "subtypes";
   }
 
-  public String getDescription() {
+  public String getPresentableName() {
     return "subtypes(TYPE)";
   }
 
+  @NotNull
   public String getDefaultValue() {
     return "A";
   }
@@ -72,4 +73,10 @@ public class SubtypesMacro implements Macro {
     }
     return LookupElement.EMPTY_ARRAY;
   }
+
+  @Override
+  public boolean isAcceptableInContext(TemplateContextType context) {
+    return context instanceof JavaCodeContextType;
+  }
+
 }

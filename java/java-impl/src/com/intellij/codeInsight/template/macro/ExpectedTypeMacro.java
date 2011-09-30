@@ -33,16 +33,17 @@ import org.jetbrains.annotations.Nullable;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-public class ExpectedTypeMacro implements Macro{
+public class ExpectedTypeMacro extends Macro {
 
   public String getName() {
     return "expectedType";
   }
 
-  public String getDescription() {
+  public String getPresentableName() {
     return CodeInsightBundle.message("macro.expected.type");
   }
 
+  @NotNull
   public String getDefaultValue() {
     return "A";
   }
@@ -51,10 +52,6 @@ public class ExpectedTypeMacro implements Macro{
     PsiType[] types = getExpectedTypes(params, context);
     if (types == null || types.length == 0) return null;
     return new PsiTypeResult(types[0], context.getProject());
-  }
-
-  public Result calculateQuickResult(@NotNull Expression[] params, ExpressionContext context) {
-    return null;
   }
 
   public LookupElement[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
@@ -101,4 +98,10 @@ public class ExpectedTypeMacro implements Macro{
 
     return types;
   }
+
+  @Override
+  public boolean isAcceptableInContext(TemplateContextType context) {
+    return context instanceof JavaCodeContextType;
+  }
+
 }

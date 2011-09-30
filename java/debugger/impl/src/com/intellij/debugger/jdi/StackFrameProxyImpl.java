@@ -261,6 +261,17 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
       }
       return Collections.emptyList();
     }
+    catch (InternalException e) {
+      // From Oracle's forums:
+      // This could be a JPDA bug. Unexpected JDWP Error: 32 means that an 'opaque' frame was detected at the lower JPDA levels,
+      // typically a native frame.
+      if (e.errorCode() == 32 /*opaque frame JDI bug*/ ) {
+        return Collections.emptyList();
+      }
+      else {
+        throw e;
+      }
+    }
     catch (InvalidStackFrameException e) {
       clearCaches();
       return getArgumentValues();

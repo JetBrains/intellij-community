@@ -32,17 +32,13 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-public class DescendantClassesEnumMacro implements Macro {
+public class DescendantClassesEnumMacro extends Macro {
   public String getName() {
     return "descendantClassesEnum";
   }
 
-  public String getDescription() {
+  public String getPresentableName() {
     return CodeInsightBundle.message("macro.descendant.classes.enum");
-  }
-
-  public String getDefaultValue() {
-    return "";
   }
 
   public Result calculateResult(@NotNull Expression[] params, ExpressionContext context) {
@@ -131,4 +127,10 @@ public class DescendantClassesEnumMacro implements Macro {
   private static boolean isAllowAbstract(final ExpressionContext context, final Expression[] params) {
       return params.length > 2 ? Boolean.valueOf(params[2].calculateResult(context).toString()) : true;
   }
+
+  @Override
+  public boolean isAcceptableInContext(TemplateContextType context) {
+    return context instanceof JavaCodeContextType;
+  }
+
 }

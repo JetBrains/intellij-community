@@ -20,6 +20,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.ThreeState;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.ui.AppUIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -29,6 +30,7 @@ import javax.swing.*;
 import java.io.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.util.MissingResourceException;
 import java.util.PropertyResourceBundle;
 
 /**
@@ -38,22 +40,21 @@ public class ConfigImportHelper {
   @NonNls private static final String BUILD_NUMBER_FILE = "build.txt";
   @NonNls private static final String PLUGINS_PATH = "plugins";
   @NonNls private static final String BIN_FOLDER = "bin";
-  @NonNls private static final String OPTIONS_XML = "options/options.xml";
+  @NonNls private static final String OPTIONS_XML = SystemInfo.isMac ? "options/options.xml" : "config/options/options.xml";
 
   private ConfigImportHelper() {}
 
   public static void importConfigsTo(String newConfigPath) {
-    File oldConfigDir = findOldConfigDir(newConfigPath);
+    ConfigImportSettings settings = getConfigImportSettings();
 
+    File oldConfigDir = findOldConfigDir(newConfigPath, settings.getCustomPathsSelector());
     do {
-      ImportOldConfigsPanel dlg = getCustomDialog(oldConfigDir);
-      if (dlg == null) {
-        if (UIUtil.hasJdk6Dialogs()) {
-          dlg = new ImportOldConfigsPanel(oldConfigDir);
-        }
-        else {
-          dlg = new ImportOldConfigsPanel(oldConfigDir, JOptionPane.getRootFrame());
-        }
+      ImportOldConfigsPanel dlg;
+      if (UIUtil.hasJdk6Dialogs()) {
+        dlg = new ImportOldConfigsPanel(oldConfigDir, settings);
+      }
+      else {
+        dlg = new ImportOldConfigsPanel(oldConfigDir, JOptionPane.getRootFrame(), settings);
       }
 
       UIUtil.setToolkitModal(dlg);
@@ -62,10 +63,10 @@ public class ConfigImportHelper {
       if (dlg.isImportEnabled()) {
         File instHome = dlg.getSelectedFile();
         oldConfigDir = getOldConfigDir(instHome);
-        if (!validateOldConfigDir(instHome, oldConfigDir)) continue;
+        if (!validateOldConfigDir(instHome, oldConfigDir, settings)) continue;
 
         doImport(newConfigPath, oldConfigDir);
-        dlg.importFinished(newConfigPath);
+        settings.importFinished(newConfigPath);
       }
 
       break;
@@ -73,16 +74,15 @@ public class ConfigImportHelper {
     while (true);
   }
 
-  @Nullable
-  private static ImportOldConfigsPanel getCustomDialog(File oldConfigDir) {
+  private static ConfigImportSettings getConfigImportSettings() {
     try {
-      Class customDialogClass =
-        Class.forName("com.intellij.openapi.application." + PlatformUtils.getPlatformPrefix() + "ImportOldConfigsPanel");
-      if (customDialogClass != null) {
-        if (ImportOldConfigsPanel.class.isAssignableFrom(customDialogClass)) {
-          Constructor constructor = customDialogClass.getDeclaredConstructor(File.class);
+      Class customProviderClass =
+        Class.forName("com.intellij.openapi.application." + PlatformUtils.getPlatformPrefix() + "ConfigImportSettings");
+      if (customProviderClass != null) {
+        if (ConfigImportSettings.class.isAssignableFrom(customProviderClass)) {
+          Constructor constructor = customProviderClass.getDeclaredConstructor();
           if (constructor != null) {
-            return (ImportOldConfigsPanel)constructor.newInstance(oldConfigDir);
+            return (ConfigImportSettings)constructor.newInstance();
           }
         }
       }
@@ -97,23 +97,29 @@ public class ConfigImportHelper {
     }
     catch (IllegalAccessException ignored) {
     }
-    return null;
+    return new ConfigImportSettings();
   }
 
-  private static File findOldConfigDir(String newConfigPath) {
+  private static File findOldConfigDir(String newConfigPath, @Nullable String customPathSelector) {
     final File configDir = new File(newConfigPath);
     final File selectorDir = SystemInfo.isMac ? configDir : configDir.getParentFile();
     final File parent = selectorDir.getParentFile();
     if (parent == null || !parent.exists()) return null;
     File maxFile = null;
     long lastModified = 0;
-    final String selector = PathManager.getPathsSelector() != null ? PathManager.getPathsSelector() : selectorDir.getName();
+    final String selector;
+    if (customPathSelector != null) {
+      selector = customPathSelector;
+    }
+    else {
+      selector = PathManager.getPathsSelector() != null ? PathManager.getPathsSelector() : selectorDir.getName();
+    }
+
+    final String prefix = selector.replaceAll("\\d", "");
     for (File file : parent.listFiles(new FilenameFilter() {
       @Override
       public boolean accept(File file, String name) {
-        return name.length() == selector.length() &&
-               name.startsWith(selector.replaceAll("\\d",""));
-
+        return name.length() == selector.length() && name.startsWith(prefix);
       }
     })) {
       final File options = new File(file, OPTIONS_XML);
@@ -138,15 +144,14 @@ public class ConfigImportHelper {
     }
   }
 
-  public static boolean validateOldConfigDir(final File instHome, final File oldConfigDir) {
+  public static boolean validateOldConfigDir(final File instHome, final File oldConfigDir, ConfigImportSettings settings) {
     if (oldConfigDir == null) {
       final String message = !instHome.equals(oldConfigDir) ?
                              ApplicationBundle.message("error.invalid.installation.home", instHome.getAbsolutePath(),
-                                                       ApplicationNamesInfo.getInstance().getFullProductName()) :
+                                                       settings.getProductName(ThreeState.YES)) :
                              ApplicationBundle.message("error.invalid.config.folder", instHome.getAbsolutePath(),
-                                                       ApplicationNamesInfo.getInstance().getFullProductName()) ;
-      JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
-                                    message);
+                                                       settings.getProductName(ThreeState.YES)) ;
+      JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), message);
       return false;
     }
 
@@ -246,6 +251,8 @@ public class ConfigImportHelper {
             return bundle.getString("idea.config.path");
           } catch (IOException e) {
               return null;
+          } catch (MissingResourceException e) {
+            // property is missing or commented out, go on with this file
           }
       }
 

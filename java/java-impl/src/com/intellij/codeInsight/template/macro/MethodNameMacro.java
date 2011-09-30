@@ -16,23 +16,23 @@
 package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.*;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.lang.LangBundle;
 import org.jetbrains.annotations.NotNull;
 
-public class MethodNameMacro implements Macro {
+public class MethodNameMacro extends Macro {
 
   public String getName() {
     return "methodName";
   }
 
-  public String getDescription() {
+  public String getPresentableName() {
     return CodeInsightBundle.message("macro.methodname");
   }
 
+  @NotNull
   public String getDefaultValue() {
     return "a";
   }
@@ -59,11 +59,9 @@ public class MethodNameMacro implements Macro {
     return null;
   }
 
-  public Result calculateQuickResult(@NotNull Expression[] params, ExpressionContext context) {
-    return null;
+  @Override
+  public boolean isAcceptableInContext(TemplateContextType context) {
+    return context instanceof JavaCodeContextType;
   }
 
-  public LookupElement[] calculateLookupItems(@NotNull Expression[] params, final ExpressionContext context) {
-    return null;
-  }
 }

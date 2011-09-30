@@ -29,16 +29,17 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Arrays;
 import java.util.LinkedList;
 
-public class SuggestVariableNameMacro implements Macro {
+public class SuggestVariableNameMacro extends Macro {
 
   public String getName() {
     return "suggestVariableName";
   }
 
-  public String getDescription() {
+  public String getPresentableName() {
     return CodeInsightBundle.message("macro.suggest.variable.name");
   }
 
+  @NotNull
   public String getDefaultValue() {
     return "a";
   }
@@ -47,10 +48,6 @@ public class SuggestVariableNameMacro implements Macro {
     String[] names = getNames(context);
     if (names == null || names.length == 0) return null;
     return new TextResult(names[0]);
-  }
-
-  public Result calculateQuickResult(@NotNull Expression[] params, ExpressionContext context) {
-    return null;
   }
 
   public LookupElement[] calculateLookupItems(@NotNull Expression[] params, final ExpressionContext context) {
@@ -90,5 +87,11 @@ public class SuggestVariableNameMacro implements Macro {
 
     return ArrayUtil.toStringArray(namesList);
   }
+
+  @Override
+  public boolean isAcceptableInContext(TemplateContextType context) {
+    return context instanceof JavaCodeContextType;
+  }
+
 
 }

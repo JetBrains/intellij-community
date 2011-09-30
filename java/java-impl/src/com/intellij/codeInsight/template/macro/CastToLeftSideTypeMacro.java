@@ -20,22 +20,22 @@
 package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class CastToLeftSideTypeMacro implements Macro {
+public class CastToLeftSideTypeMacro extends Macro {
   public String getName() {
     return "castToLeftSideType";
   }
 
-  public String getDescription() {
+  public String getPresentableName() {
     return CodeInsightBundle.message("macro.cast.to.left.side.type");
   }
 
+  @NotNull
   public String getDefaultValue() {
     return "(A)";
   }
@@ -68,11 +68,9 @@ public class CastToLeftSideTypeMacro implements Macro {
     return new TextResult("");
   }
 
-  public Result calculateQuickResult(@NotNull Expression[] params, ExpressionContext context) {
-    return null;
+  @Override
+  public boolean isAcceptableInContext(TemplateContextType context) {
+    return context instanceof JavaCodeContextType;
   }
 
-  public LookupElement[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
-    return LookupElement.EMPTY_ARRAY;
-  }
 }
