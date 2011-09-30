@@ -94,7 +94,7 @@ public class MoveHandler implements RefactoringActionHandler {
     final PsiElement targetContainer = dataContext == null ? null : LangDataKeys.TARGET_PSI_ELEMENT.getData(dataContext);
     final Set<PsiElement> filesOrDirs = new HashSet<PsiElement>();
     for(MoveHandlerDelegate delegate: Extensions.getExtensions(MoveHandlerDelegate.EP_NAME)) {
-      if (delegate.canMove(dataContext)) {
+      if (delegate.canMove(dataContext) && delegate.isValidTarget(targetContainer, elements)) {
         delegate.collectFilesOrDirsFromContext(dataContext, filesOrDirs);
       }
     }

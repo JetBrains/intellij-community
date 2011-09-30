@@ -23,6 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.move.MoveHandlerDelegate;
+import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesHandler;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -42,6 +43,11 @@ public class ResourceBundleMoveProvider extends MoveHandlerDelegate {
 
   public boolean canMove(PsiElement[] elements, @Nullable final PsiElement targetContainer) {
     return false;
+  }
+
+  @Override
+  public boolean isValidTarget(PsiElement psiElement, PsiElement[] sources) {
+    return MoveFilesOrDirectoriesHandler.isValidTarget(psiElement);
   }
 
   @Override
