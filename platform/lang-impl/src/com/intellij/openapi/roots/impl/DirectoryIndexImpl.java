@@ -151,7 +151,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     myInitialized = true;
     long l = System.currentTimeMillis();
     doInitialize();
-    LOG.info("Directory index initialized in " + (System.currentTimeMillis() - l) + " ms");
+    LOG.info("Directory index initialized in " + (System.currentTimeMillis() - l) + " ms, indexed " + myState.myDirToInfoMap.size() + " directories");
   }
 
   private void subscribeToFileChanges() {
