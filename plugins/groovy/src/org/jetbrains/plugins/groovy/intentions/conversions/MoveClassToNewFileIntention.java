@@ -41,7 +41,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 public class MoveClassToNewFileIntention extends Intention {
   @Override
   protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
-    final GrTypeDefinition psiClass = (GrTypeDefinition)element;
+    final GrTypeDefinition psiClass = (GrTypeDefinition)element.getParent();
     final String name = psiClass.getName();
 
     final PsiFile file = psiClass.getContainingFile();
