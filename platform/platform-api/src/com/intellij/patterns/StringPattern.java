@@ -146,14 +146,12 @@ public class StringPattern extends ObjectPattern<String, StringPattern> {
         sb.append(c);
       }
     }
-    System.out.println("\nsb = " + sb);
     final RegExp regExp = new RegExp(sb.toString());
     final Automaton automaton = regExp.toAutomaton(new DatatypesAutomatonProvider());
     final RunAutomaton runAutomaton = new RunAutomaton(automaton, true);
 
     return with(new ValuePatternCondition<String>("matchesBrics") {
       public boolean accepts(@NotNull String str, final ProcessingContext context) {
-        System.out.println("str = " + str);
         if(str.charAt(0)=='"' || str.charAt(0)=='\'') str = str.substring(1);
         return runAutomaton.run(str);
       }
