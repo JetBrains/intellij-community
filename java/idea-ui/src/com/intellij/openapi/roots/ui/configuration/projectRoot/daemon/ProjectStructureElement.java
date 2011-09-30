@@ -15,6 +15,10 @@ public abstract class ProjectStructureElement {
     myContext = context;
   }
 
+  public abstract String getPresentableName();
+
+  public abstract String getId();
+
   public abstract void check(ProjectStructureProblemsHolder problemsHolder);
 
   public abstract List<ProjectStructureElementUsage> getUsagesInElement();
@@ -26,4 +30,9 @@ public abstract class ProjectStructureElement {
 
   @Override
   public abstract int hashCode();
+
+  @Override
+  public String toString() {
+    return getId();
+  }
 }

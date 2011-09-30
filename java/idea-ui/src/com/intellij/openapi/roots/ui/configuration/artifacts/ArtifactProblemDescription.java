@@ -17,6 +17,7 @@ package com.intellij.openapi.roots.ui.configuration.artifacts;
 
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ConfigurationErrorQuickFix;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureProblemDescription;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureProblemType;
 import com.intellij.packaging.elements.PackagingElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,9 +30,10 @@ import java.util.List;
 public class ArtifactProblemDescription extends ProjectStructureProblemDescription {
   private final List<PackagingElement<?>> myPathToPlace;
 
-  public ArtifactProblemDescription(@NotNull String message, @NotNull Severity severity, @Nullable List<PackagingElement<?>> pathToPlace,
-                                    @NotNull PlaceInArtifact place, final List<ConfigurationErrorQuickFix> quickFixList) {
-    super(message, null, severity, place, quickFixList);
+  public ArtifactProblemDescription(@NotNull String message, @NotNull ProjectStructureProblemType problemType,
+                                    @Nullable List<PackagingElement<?>> pathToPlace, @NotNull PlaceInArtifact place,
+                                    final List<ConfigurationErrorQuickFix> quickFixList) {
+    super(message, null, place, quickFixList, problemType);
     myPathToPlace = pathToPlace;
   }
 

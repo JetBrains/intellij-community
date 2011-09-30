@@ -15,20 +15,37 @@
  */
 package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
-import com.intellij.openapi.util.ActionCallback;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
  */
-public abstract class PlaceInProjectStructure {
-  @NotNull
-  public abstract ProjectStructureElement getContainingElement();
+public class ProjectStructureProblemType {
+  public enum Severity { ERROR, WARNING }
 
-  @Nullable
-  public abstract String getPlacePath();
+  private final String myId;
+  private final Severity mySeverity;
+
+  public ProjectStructureProblemType(@NotNull String id, @NotNull Severity severity) {
+    myId = id;
+    mySeverity = severity;
+  }
+
+  public static ProjectStructureProblemType error(@NotNull String id) {
+    return new ProjectStructureProblemType(id, Severity.ERROR);
+  }
+
+  public static ProjectStructureProblemType warning(@NotNull String id) {
+    return new ProjectStructureProblemType(id, Severity.WARNING);
+  }
 
   @NotNull
-  public abstract ActionCallback navigate();
+  public String getId() {
+    return myId;
+  }
+
+  @NotNull
+  public Severity getSeverity() {
+    return mySeverity;
+  }
 }

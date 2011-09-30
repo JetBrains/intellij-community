@@ -26,17 +26,20 @@ import java.util.List;
 public class ProjectStructureProblemDescription {
   private final String myMessage;
   private final String myDescription;
-  private final Severity mySeverity;
   private final PlaceInProjectStructure myPlace;
   private final List<ConfigurationErrorQuickFix> myFixes;
+  private final ProjectStructureProblemType myProblemType;
 
-  public ProjectStructureProblemDescription(@NotNull String message, @Nullable String description, @NotNull Severity severity, @NotNull PlaceInProjectStructure place,
-                                            @NotNull List<ConfigurationErrorQuickFix> fixes) {
+  public ProjectStructureProblemDescription(@NotNull String message,
+                                            @Nullable String description,
+                                            @NotNull PlaceInProjectStructure place,
+                                            @NotNull List<ConfigurationErrorQuickFix> fixes,
+                                            @NotNull ProjectStructureProblemType problemType) {
     myMessage = message;
     myDescription = description;
-    mySeverity = severity;
     myPlace = place;
     myFixes = fixes;
+    myProblemType = problemType;
   }
 
   public String getMessage() {
@@ -52,13 +55,16 @@ public class ProjectStructureProblemDescription {
     return myFixes;
   }
 
-  public Severity getSeverity() {
-    return mySeverity;
+  public ProjectStructureProblemType.Severity getSeverity() {
+    return myProblemType.getSeverity();
   }
 
   public PlaceInProjectStructure getPlace() {
     return myPlace;
   }
 
-  public enum Severity { ERROR, WARNING }
+  public String getId() {
+    final String placePath = myPlace.getPlacePath();
+    return myProblemType.getId() + "(" + myPlace.getContainingElement().getId() + (placePath != null ? "," + placePath : "") + ")";
+  }
 }

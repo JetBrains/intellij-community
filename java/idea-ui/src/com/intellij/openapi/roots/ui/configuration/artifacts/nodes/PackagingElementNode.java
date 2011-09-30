@@ -20,7 +20,7 @@ import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorImpl;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactProblemDescription;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureProblemDescription;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureProblemType;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
@@ -107,7 +107,7 @@ public class PackagingElementNode<E extends PackagingElement<?>> extends Artifac
     try {
       buffer.append("<html>");
       for (ArtifactProblemDescription problem : problems) {
-        isError |= problem.getSeverity() == ProjectStructureProblemDescription.Severity.ERROR;
+        isError |= problem.getSeverity() == ProjectStructureProblemType.Severity.ERROR;
         buffer.append(problem.getMessage()).append("<br>");
       }
       buffer.append("</html>");

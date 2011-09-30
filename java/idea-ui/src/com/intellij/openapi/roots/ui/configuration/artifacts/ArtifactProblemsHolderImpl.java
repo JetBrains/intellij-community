@@ -16,7 +16,7 @@
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ConfigurationErrorQuickFix;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureProblemDescription;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureProblemType;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureProblemsHolder;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.PackagingElement;
@@ -47,12 +47,21 @@ public class ArtifactProblemsHolderImpl extends ArtifactProblemsHolderBase {
     myProblemsHolder = problemsHolder;
   }
 
-  public void registerError(@NotNull String message, @Nullable List<PackagingElement<?>> pathToPlace, @NotNull ArtifactProblemQuickFix... quickFixes) {
-    registerProblem(message, pathToPlace, ProjectStructureProblemDescription.Severity.ERROR, quickFixes);
+  public void registerError(@NotNull String message,
+                            @NotNull String problemTypeId,
+                            @Nullable List<PackagingElement<?>> pathToPlace,
+                            @NotNull ArtifactProblemQuickFix... quickFixes) {
+    registerProblem(message, pathToPlace, ProjectStructureProblemType.error(problemTypeId), quickFixes);
+  }
+
+  public void registerWarning(@NotNull String message,
+                              @NotNull String problemTypeId, @Nullable List<PackagingElement<?>> pathToPlace,
+                              @NotNull ArtifactProblemQuickFix... quickFixes) {
+    registerProblem(message, pathToPlace, ProjectStructureProblemType.warning(problemTypeId), quickFixes);
   }
 
   private void registerProblem(@NotNull String message, @Nullable List<PackagingElement<?>> pathToPlace,
-                               final ProjectStructureProblemDescription.Severity severity, @NotNull ArtifactProblemQuickFix... quickFixes) {
+                               final ProjectStructureProblemType problemType, @NotNull ArtifactProblemQuickFix... quickFixes) {
     String parentPath;
     PackagingElement<?> element;
     if (pathToPlace != null && !pathToPlace.isEmpty()) {
@@ -65,13 +74,7 @@ public class ArtifactProblemsHolderImpl extends ArtifactProblemsHolderBase {
     }
     final Artifact artifact = myContext.getArtifactModel().getArtifactByOriginal(myOriginalArtifact);
     final PlaceInArtifact place = new PlaceInArtifact(artifact, myContext, parentPath, element);
-    myProblemsHolder.registerProblem(new ArtifactProblemDescription(message, severity, pathToPlace, place, convertQuickFixes(quickFixes)));
-  }
-
-  public void registerWarning(@NotNull String message,
-                              @Nullable List<PackagingElement<?>> pathToPlace,
-                              @NotNull ArtifactProblemQuickFix... quickFixes) {
-    registerProblem(message, pathToPlace, ProjectStructureProblemDescription.Severity.WARNING, quickFixes);
+    myProblemsHolder.registerProblem(new ArtifactProblemDescription(message, problemType, pathToPlace, place, convertQuickFixes(quickFixes)));
   }
 
   private List<ConfigurationErrorQuickFix> convertQuickFixes(ArtifactProblemQuickFix[] quickFixes) {

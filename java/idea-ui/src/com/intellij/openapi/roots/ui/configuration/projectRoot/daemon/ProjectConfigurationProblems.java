@@ -67,7 +67,7 @@ public class ProjectConfigurationProblems {
       final List<ProjectStructureProblemDescription> descriptions = problemsHolder.getProblemDescriptions();
       if (descriptions != null) {
         for (ProjectStructureProblemDescription description : descriptions) {
-          final ProjectConfigurationProblem error = new ProjectConfigurationProblem(description);
+          final ProjectConfigurationProblem error = new ProjectConfigurationProblem(description, myContext.getProject());
           myErrors.put(element, error);
           ConfigurationErrors.Bus.addError(error, myContext.getProject());
         }

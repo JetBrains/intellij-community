@@ -12,10 +12,12 @@
  */
 package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ConfigurationError;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -26,10 +28,28 @@ import java.util.List;
 */
 class ProjectConfigurationProblem extends ConfigurationError {
   private final ProjectStructureProblemDescription myDescription;
+  private final Project myProject;
 
-  public ProjectConfigurationProblem(ProjectStructureProblemDescription description) {
-    super(description.getMessage(), description.getDescription() != null ? description.getDescription() : description.getMessage());
+  public ProjectConfigurationProblem(ProjectStructureProblemDescription description, Project project) {
+    super(computeMessage(description), computeDescription(description),
+          ProjectStructureProblemsSettings.getInstance(project).isIgnored(description));
     myDescription = description;
+    myProject = project;
+  }
+
+  private static String computeDescription(ProjectStructureProblemDescription description) {
+    final String descriptionString = description.getDescription();
+    return descriptionString != null ? descriptionString : computeMessage(description);
+  }
+
+  private static String computeMessage(ProjectStructureProblemDescription description) {
+    return description.getPlace().getContainingElement().getPresentableName() + ": " + StringUtil.decapitalize(description.getMessage());
+  }
+
+  @Override
+  public void ignore(boolean b) {
+    super.ignore(b);
+    ProjectStructureProblemsSettings.getInstance(myProject).setIgnored(myDescription, b);
   }
 
   @Override

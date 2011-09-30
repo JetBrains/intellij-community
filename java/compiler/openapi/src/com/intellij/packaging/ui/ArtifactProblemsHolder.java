@@ -26,12 +26,14 @@ import java.util.List;
  * @author nik
  */
 public interface ArtifactProblemsHolder {
-
+  @NotNull
   PackagingElementResolvingContext getContext();
 
-  void registerError(@NotNull String message);
+  void registerError(@NotNull String message, @NotNull String problemTypeId);
 
-  void registerError(@NotNull String message, @Nullable List<PackagingElement<?>> pathToPlace, @NotNull ArtifactProblemQuickFix... quickFixes);
+  void registerError(@NotNull String message, @NotNull String problemTypeId, @Nullable List<PackagingElement<?>> pathToPlace,
+                     @NotNull ArtifactProblemQuickFix... quickFixes);
 
-  void registerWarning(@NotNull String message, @Nullable List<PackagingElement<?>> pathToPlace, @NotNull ArtifactProblemQuickFix... quickFixes);
+  void registerWarning(@NotNull String message, @NotNull String problemTypeId, @Nullable List<PackagingElement<?>> pathToPlace,
+                       @NotNull ArtifactProblemQuickFix... quickFixes);
 }

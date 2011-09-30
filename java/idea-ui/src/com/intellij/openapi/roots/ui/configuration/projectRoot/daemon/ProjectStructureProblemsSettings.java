@@ -15,20 +15,18 @@
  */
 package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
-import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
  */
-public abstract class PlaceInProjectStructure {
-  @NotNull
-  public abstract ProjectStructureElement getContainingElement();
+public abstract class ProjectStructureProblemsSettings {
+  public static ProjectStructureProblemsSettings getInstance(@NotNull Project project) {
+    return ServiceManager.getService(project, ProjectStructureProblemsSettings.class);
+  }
 
-  @Nullable
-  public abstract String getPlacePath();
-
-  @NotNull
-  public abstract ActionCallback navigate();
+  public abstract boolean isIgnored(@NotNull ProjectStructureProblemDescription description);
+  public abstract void setIgnored(@NotNull ProjectStructureProblemDescription description, boolean ignored);
 }

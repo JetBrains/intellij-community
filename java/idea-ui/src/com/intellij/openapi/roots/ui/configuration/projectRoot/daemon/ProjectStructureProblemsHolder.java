@@ -22,9 +22,8 @@ import org.jetbrains.annotations.Nullable;
  * @author nik
  */
 public interface ProjectStructureProblemsHolder {
-  void registerError(@NotNull String message, @Nullable String description, @NotNull PlaceInProjectStructure place, @Nullable ConfigurationErrorQuickFix fix);
-
-  void registerWarning(@NotNull String message, @Nullable String description, @NotNull PlaceInProjectStructure place, @Nullable ConfigurationErrorQuickFix fix);
+  void registerProblem(@NotNull String message, @Nullable String description, @NotNull ProjectStructureProblemType problemType,
+                       @NotNull PlaceInProjectStructure place, @Nullable ConfigurationErrorQuickFix fix);
 
   void registerProblem(@NotNull ProjectStructureProblemDescription description);
 }
