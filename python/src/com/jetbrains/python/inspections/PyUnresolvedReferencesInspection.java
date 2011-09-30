@@ -343,8 +343,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
               }
             }
             for (PyFunction method : containedClass.getMethods()) {
-              Property property = method.getProperty();
-              if (property != null && method.getName().equals(refex.getText())) {
+              if (method.getName().equals(refex.getText())) {
                 actions.add(new UnresolvedReferenceAddSelfQuickFix(refex));
               }
             }
