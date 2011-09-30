@@ -68,7 +68,7 @@ public class ReplaceAbstractClassInstanceByMapIntention extends Intention {
     GrTypeDefinitionBody body = anonymous.getBody();
 
     List<Pair<PsiMethod, GrOpenBlock>> methods = new ArrayList<Pair<PsiMethod, GrOpenBlock>>();
-    for (GrMethod method : body.getGroovyMethods()) {
+    for (GrMethod method : body.getMethods()) {
       methods.add(new Pair<PsiMethod, GrOpenBlock>(method, method.getBlock()));
     }
         

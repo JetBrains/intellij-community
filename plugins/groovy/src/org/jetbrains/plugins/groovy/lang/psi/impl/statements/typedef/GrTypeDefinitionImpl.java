@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -27,6 +28,7 @@ import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -59,6 +61,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
@@ -83,9 +86,10 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
   private static final LightCacheKey<List<GrField>> AST_TRANSFORM_FIELD = LightCacheKey.createByJavaModificationCount();
 
   private volatile PsiClass[] myInnerClasses;
-  private volatile PsiMethod[] myMethods;
   private volatile GrMethod[] myGroovyMethods;
   private volatile GrMethod[] myConstructors;
+  
+  Key<CachedValue<PsiMethod[]>> CACHED_METHODS = Key.create("cached.type.definition.methods");
 
   public GrTypeDefinitionImpl(@NotNull ASTNode node) {
     super(node);
@@ -368,28 +372,46 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
 
   @NotNull
   public PsiMethod[] getMethods() {
-    PsiMethod[] cached = myMethods;
+    CachedValue<PsiMethod[]> cached = getUserData(CACHED_METHODS);
     if (cached == null) {
-      GrTypeDefinitionBody body = getBody();
-      if (body != null) {
-        cached = body.getMethods();
-      }
-      else {
-        cached = PsiMethod.EMPTY_ARRAY;
-      }
+      cached = CachedValuesManager.getManager(getProject()).createCachedValue(new CachedValueProvider<PsiMethod[]>() {
+        @Override
+        public Result<PsiMethod[]> compute() {
+          GrTypeDefinitionBody body = getBody();
+          List<PsiMethod> result = new ArrayList<PsiMethod>();
+          if (body != null) {
+            GrMethod[] groovyMethods = body.getMethods();
+            GrField[] fields = body.getFields();
+            for (GrMethod method : groovyMethods) {
+              final GrReflectedMethod[] reflectedMethods = method.getReflectedMethods();
+              if (reflectedMethods.length > 0) {
+                result.addAll(Arrays.asList(reflectedMethods));
+              }
+              else {
+                result.add(method);
+              }
+            }
 
-      myMethods = cached;
+            for (GrField field : fields) {
+              if (!field.isProperty()) continue;
+              ContainerUtil.addAll(result, field.getGetters());
+              ContainerUtil.addIfNotNull(result, field.getSetter());
+            }
+          }
+
+          AstTransformContributor.runContributorsForMethods(GrTypeDefinitionImpl.this, result);
+
+          for (GrField field : getSyntheticFields()) {
+            ContainerUtil.addIfNotNull(result, field.getSetter());
+            Collections.addAll(result, field.getGetters());
+          }
+          return Result.create(result.toArray(new PsiMethod[result.size()]), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+        }
+      }, false);
     }
 
-    List<PsiMethod> result = new ArrayList<PsiMethod>(Arrays.asList(cached));
-    AstTransformContributor.runContributorsForMethods(this, result);
 
-    for (GrField field : getSyntheticFields()) {
-      ContainerUtil.addIfNotNull(result, field.getSetter());
-      Collections.addAll(result, field.getGetters());
-    }
-
-    return result.toArray(new PsiMethod[result.size()]);
+    return cached.getValue();
   }
 
   @NotNull
@@ -397,13 +419,13 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
     GrMethod[] cached = myGroovyMethods;
     if (cached == null) {
       GrTypeDefinitionBody body = getBody();
-      myGroovyMethods = cached = body != null ? body.getGroovyMethods() : GrMethod.EMPTY_ARRAY;
+      cached = body != null ? body.getMethods() : GrMethod.EMPTY_ARRAY;
+      myGroovyMethods = cached;
     }
     return cached;
   }
 
   public void subtreeChanged() {
-    myMethods = null;
     myInnerClasses = null;
     myConstructors = null;
     myGroovyMethods = null;

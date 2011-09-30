@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer;
@@ -34,9 +33,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner
 public interface GrTypeDefinitionBody extends GrVariableDeclarationOwner {
   GrField[] getFields();
 
-  PsiMethod[] getMethods();
-
-  GrMethod[] getGroovyMethods();
+  GrMethod[] getMethods();
 
   GrMembersDeclaration[] getMemberDeclarations();
 

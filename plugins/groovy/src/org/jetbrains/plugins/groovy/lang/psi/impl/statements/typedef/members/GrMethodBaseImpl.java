@@ -511,7 +511,7 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
       cached = CachedValuesManager.getManager(getProject()).createCachedValue(new CachedValueProvider<GrReflectedMethod[]>() {
         @Override
         public Result<GrReflectedMethod[]> compute() {
-          return Result.create(GrReflectedMethodImpl.createReflectedMethods(GrMethodBaseImpl.this), GrMethodBaseImpl.this);
+          return Result.create(GrReflectedMethodImpl.createReflectedMethods(GrMethodBaseImpl.this), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
         }
       });
     }
