@@ -138,7 +138,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     ProcessTerminatedListener.attach(processHandler);
 
     // attach extensions
-    PythonRunConfigurationExtensionsManager.getInstance().attachExtensionsToProcess(myConfig, processHandler, getRunnerType());
+    PythonRunConfigurationExtensionsManager.getInstance().attachExtensionsToProcess(myConfig, processHandler, getRunnerType(), getRunnerSettings());
 
     return processHandler;
   }
