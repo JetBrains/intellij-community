@@ -33,10 +33,7 @@ import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.ex.WeakKeymapManagerListener;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.ui.popup.*;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -782,7 +779,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   }
 
   private void updateActions(boolean now, final boolean transparrentOnly, final boolean forced) {
-    final Runnable updateRunnable = new Runnable() {
+    final IdRunnable updateRunnable = new IdRunnable(this) {
       public void run() {
         myNewVisibleActions.clear();
         final DataContext dataContext = getDataContext();
