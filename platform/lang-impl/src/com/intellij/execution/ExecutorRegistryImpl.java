@@ -192,7 +192,6 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
 
       if (project == null || !project.isInitialized() || project.isDisposed() || DumbService.getInstance(project).isDumb()) {
         presentation.setEnabled(false);
-        presentation.setVisible(false);
         return;
       }
 
@@ -213,7 +212,6 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
       }
 
       presentation.setEnabled(enabled);
-      presentation.setVisible(enabled);
       presentation.setText(text);
     }
 
