@@ -266,8 +266,9 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     @Override
     protected OSProcessHandler startProcess() throws ExecutionException {
       final OSProcessHandler handler = super.startProcess();
+      RunnerSettings runnerSettings = getRunnerSettings();
       for(RunConfigurationExtension ext: Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
-        ext.handleStartProcess(ApplicationConfiguration.this, handler);
+        ext.handleStartProcess(ApplicationConfiguration.this, handler, runnerSettings);
       }
 
       return handler;

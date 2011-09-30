@@ -46,7 +46,9 @@ import java.util.TreeMap;
 public abstract class RunConfigurationExtension {
   public static final ExtensionPointName<RunConfigurationExtension> EP_NAME = new ExtensionPointName<RunConfigurationExtension>("com.intellij.runConfigurationExtension");
   public static final Key<List> RUN_EXTENSIONS = Key.create("run.extension.elemnts");
-  public abstract void handleStartProcess(final RunConfigurationBase configuration, final OSProcessHandler handler);
+  public abstract void handleStartProcess(final RunConfigurationBase configuration,
+                                          final OSProcessHandler handler,
+                                          RunnerSettings runnerSettings);
   @Nullable  
   public abstract SettingsEditor createEditor(RunConfigurationBase configuration);
   public abstract String getEditorTitle();

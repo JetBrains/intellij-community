@@ -15,6 +15,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.ui.LayeredIcon;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -109,7 +110,7 @@ public class RunConfigurationExtensionsManager<U extends AbstractRunConfiguratio
   public void validateConfiguration(@NotNull final U configuration,
                                     final boolean isExecution) throws Exception {
     // only for enabled extensions
-    for (T extension : getEnabledExtensions(configuration)) {
+    for (T extension : getEnabledExtensions(configuration, null)) {
       extension.validateConfiguration(configuration, isExecution);
     }
   }
@@ -128,20 +129,20 @@ public class RunConfigurationExtensionsManager<U extends AbstractRunConfiguratio
   }
 
   public void patchCommandLine(@NotNull final U configuration,
-                               RunnerSettings runnerSettings, @NotNull final GeneralCommandLine cmdLine,
+                               final RunnerSettings runnerSettings, @NotNull final GeneralCommandLine cmdLine,
                                @NotNull final AbstractRunConfiguration.RunnerType type) {
     // only for enabled extensions
-    for (T extension : getEnabledExtensions(configuration)) {
+    for (T extension : getEnabledExtensions(configuration, runnerSettings)) {
       extension.patchCommandLine(configuration, runnerSettings, cmdLine, type);
     }
   }
 
   public void attachExtensionsToProcess(@NotNull final U configuration,
                                         @NotNull final ProcessHandler handler,
-                                        @NotNull final AbstractRunConfiguration.RunnerType type) {
+                                        @NotNull final AbstractRunConfiguration.RunnerType type, RunnerSettings runnerSettings) {
     // only for enabled extensions
-    for (T extension : getEnabledExtensions(configuration)) {
-      extension.attachToProcess(configuration, handler, type);
+    for (T extension : getEnabledExtensions(configuration, runnerSettings)) {
+      extension.attachToProcess(configuration, handler, type, runnerSettings);
     }
   }
 
@@ -155,10 +156,10 @@ public class RunConfigurationExtensionsManager<U extends AbstractRunConfiguratio
     return extensions;
   }
 
-  private List<T> getEnabledExtensions(@NotNull final U configuration) {
+  private List<T> getEnabledExtensions(@NotNull final U configuration, @Nullable RunnerSettings runnerSettings) {
     final List<T> extensions = new ArrayList<T>();
     for (T extension : Extensions.getExtensions(myExtensionPointName)) {
-      if (extension.isApplicableFor(configuration) && extension.isEnabledFor(configuration)) {
+      if (extension.isApplicableFor(configuration) && extension.isEnabledFor(configuration, runnerSettings)) {
         extensions.add(extension);
       }
     }

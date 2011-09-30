@@ -272,8 +272,9 @@ public abstract class MvcRunConfiguration extends ModuleBasedConfiguration<RunCo
     @Override
     protected OSProcessHandler startProcess() throws ExecutionException {
       final OSProcessHandler handler = super.startProcess();
+      final RunnerSettings runnerSettings = getRunnerSettings();
       for(RunConfigurationExtension ext: Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
-        ext.handleStartProcess(MvcRunConfiguration.this, handler);
+        ext.handleStartProcess(MvcRunConfiguration.this, handler, runnerSettings);
       }
 
       return handler;

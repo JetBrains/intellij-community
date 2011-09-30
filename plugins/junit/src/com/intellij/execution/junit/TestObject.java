@@ -254,12 +254,13 @@ public abstract class TestObject implements JavaCommandLine {
 
   public ExecutionResult execute(final Executor executor, @NotNull final ProgramRunner runner) throws ExecutionException {
     final JUnitProcessHandler handler = createHandler();
+    final RunnerSettings runnerSettings = getRunnerSettings();
     for(final RunConfigurationExtension ext: Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
-      ext.handleStartProcess(myConfiguration, handler);
+      ext.handleStartProcess(myConfiguration, handler, runnerSettings);
     }
     final TestProxy unboundOutputRoot = new TestProxy(new RootTestInfo());
     final JUnitConsoleProperties consoleProperties = new JUnitConsoleProperties(myConfiguration, executor);
-    final JUnitTreeConsoleView consoleView = new JUnitTreeConsoleView(consoleProperties, getRunnerSettings(), getConfigurationSettings(), unboundOutputRoot);
+    final JUnitTreeConsoleView consoleView = new JUnitTreeConsoleView(consoleProperties, runnerSettings, getConfigurationSettings(), unboundOutputRoot);
     consoleView.initUI();
     consoleView.attachToProcess(handler);
     unboundOutputRoot.setPrinter(consoleView.getPrinter());

@@ -101,7 +101,7 @@ public class SnapShooterConfigurationExtension extends RunConfigurationExtension
     }
   }
 
-  public void handleStartProcess(final RunConfigurationBase configuration, final OSProcessHandler handler) {
+  public void handleStartProcess(final RunConfigurationBase configuration, final OSProcessHandler handler, RunnerSettings runnerSettings) {
     SnapShooterConfigurationSettings settings = configuration.getUserData(SnapShooterConfigurationSettings.SNAP_SHOOTER_KEY);
     if (settings != null) {
       final Runnable runnable = settings.getNotifyRunnable();

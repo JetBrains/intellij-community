@@ -58,11 +58,13 @@ public abstract class RunConfigurationExtension<T extends AbstractRunConfigurati
   protected abstract boolean isApplicableFor(@NotNull final T configuration);
 
   /**
+   *
    * @param applicableConfiguration Applicable run configuration
+   * @param runnerSettings
    * @return True if extension is tuned on in configuration extension settings.
    *         E.g. RCov is turned on for given run configuration.
    */
-  protected abstract boolean isEnabledFor(@NotNull final T applicableConfiguration);
+  protected abstract boolean isEnabledFor(@NotNull final T applicableConfiguration, @Nullable RunnerSettings runnerSettings);
 
   protected abstract void patchCommandLine(@NotNull final T configuration,
                                            RunnerSettings runnerSettings, @NotNull final GeneralCommandLine cmdLine,
@@ -93,5 +95,5 @@ public abstract class RunConfigurationExtension<T extends AbstractRunConfigurati
 
   protected abstract void attachToProcess(@NotNull final T configuration,
                                           @NotNull final ProcessHandler handler,
-                                          @NotNull final AbstractRunConfiguration.RunnerType type);
+                                          @NotNull final AbstractRunConfiguration.RunnerType type, RunnerSettings runnerSettings);
 }
