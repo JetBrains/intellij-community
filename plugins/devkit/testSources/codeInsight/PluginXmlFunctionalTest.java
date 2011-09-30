@@ -17,6 +17,7 @@ package org.jetbrains.idea.devkit.codeInsight;
 
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInspection.internal.InternalInspectionToolsProvider;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -28,8 +29,12 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.usageView.UsageViewNodeTextLocation;
 import com.intellij.usageView.UsageViewTypeLocation;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.xml.DeprecatedClassUsageInspection;
-import org.jetbrains.idea.devkit.DevKitInspectionToolProvider;
+import org.jetbrains.idea.devkit.inspections.ComponentNotRegisteredInspection;
+import org.jetbrains.idea.devkit.inspections.InspectionDescriptionNotFoundInspection;
+import org.jetbrains.idea.devkit.inspections.IntentionDescriptionNotFoundInspection;
+import org.jetbrains.idea.devkit.inspections.PluginXmlDomInspection;
 
 import java.io.IOException;
 
@@ -43,7 +48,7 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     myTempDirFixture = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture();
-    myFixture.enableInspections(new DevKitInspectionToolProvider());
+    myFixture.enableInspections(getInspectionClasses());
   }
 
   @Override
@@ -160,4 +165,14 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     assertEquals("Extension Point bar", ElementDescriptionUtil.getElementDescription(element, UsageViewNodeTextLocation.INSTANCE));
   }
 
+  public static Class[] getInspectionClasses() {
+    Class[] result = {
+      //RegistrationProblemsInspection.class,
+      PluginXmlDomInspection.class,
+      ComponentNotRegisteredInspection.class,
+      InspectionDescriptionNotFoundInspection.class,
+      IntentionDescriptionNotFoundInspection.class,
+    };
+    return ArrayUtil.mergeArrays(result, InternalInspectionToolsProvider.getPublicClasses());
+  }
 }
