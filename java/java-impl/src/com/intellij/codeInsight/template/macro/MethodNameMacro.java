@@ -16,11 +16,10 @@
 package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.*;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.lang.LangBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class MethodNameMacro extends Macro {
@@ -58,6 +57,11 @@ public class MethodNameMacro extends Macro {
       place = place.getParent();
     }
     return null;
+  }
+
+  @Override
+  public boolean isAcceptableInContext(TemplateContextType context) {
+    return context instanceof JavaCodeContextType;
   }
 
 }

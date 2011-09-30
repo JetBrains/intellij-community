@@ -87,4 +87,10 @@ public class GuessElementTypeMacro extends Macro {
     }
     return types;
   }
+
+  @Override
+  public boolean isAcceptableInContext(TemplateContextType context) {
+    return context instanceof JavaCodeContextType;
+  }
+
 }

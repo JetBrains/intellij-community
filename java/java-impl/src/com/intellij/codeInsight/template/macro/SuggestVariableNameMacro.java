@@ -88,4 +88,10 @@ public class SuggestVariableNameMacro extends Macro {
     return ArrayUtil.toStringArray(namesList);
   }
 
+  @Override
+  public boolean isAcceptableInContext(TemplateContextType context) {
+    return context instanceof JavaCodeContextType;
+  }
+
+
 }

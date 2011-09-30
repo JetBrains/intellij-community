@@ -78,5 +78,11 @@ public class ComponentTypeOfMacro extends Macro {
 
     return new PsiElementResult(null);
   }
+
+  @Override
+  public boolean isAcceptableInContext(TemplateContextType context) {
+    return context instanceof JavaCodeContextType;
+  }
+
 }
 

@@ -127,4 +127,10 @@ public class DescendantClassesEnumMacro extends Macro {
   private static boolean isAllowAbstract(final ExpressionContext context, final Expression[] params) {
       return params.length > 2 ? Boolean.valueOf(params[2].calculateResult(context).toString()) : true;
   }
+
+  @Override
+  public boolean isAcceptableInContext(TemplateContextType context) {
+    return context instanceof JavaCodeContextType;
+  }
+
 }

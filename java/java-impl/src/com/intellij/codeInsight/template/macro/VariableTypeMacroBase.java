@@ -53,4 +53,9 @@ public abstract class VariableTypeMacroBase extends Macro {
     return "a";
   }
 
+  @Override
+  public boolean isAcceptableInContext(TemplateContextType context) {
+    return context instanceof JavaCodeContextType;
+  }
+
 }

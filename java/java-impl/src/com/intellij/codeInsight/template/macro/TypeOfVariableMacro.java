@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.template.macro;
 
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
@@ -63,6 +62,11 @@ public class TypeOfVariableMacro extends Macro {
 
   public Result calculateQuickResult(@NotNull Expression[] params, ExpressionContext context) {
     return calculateResult(params, context);
+  }
+
+  @Override
+  public boolean isAcceptableInContext(TemplateContextType context) {
+    return context instanceof JavaCodeContextType;
   }
 
 }

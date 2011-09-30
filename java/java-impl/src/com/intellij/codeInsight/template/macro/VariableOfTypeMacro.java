@@ -104,5 +104,10 @@ public class VariableOfTypeMacro extends Macro {
     ContainerUtil.addAll(array, expressions);
     return PsiUtilBase.toPsiElementArray(array);
   }
+
+  @Override
+  public boolean isAcceptableInContext(TemplateContextType context) {
+    return context instanceof JavaCodeContextType;
+  }
 }
 

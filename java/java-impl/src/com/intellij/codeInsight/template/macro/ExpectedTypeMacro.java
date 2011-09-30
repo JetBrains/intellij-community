@@ -98,4 +98,10 @@ public class ExpectedTypeMacro extends Macro {
 
     return types;
   }
+
+  @Override
+  public boolean isAcceptableInContext(TemplateContextType context) {
+    return context instanceof JavaCodeContextType;
+  }
+
 }

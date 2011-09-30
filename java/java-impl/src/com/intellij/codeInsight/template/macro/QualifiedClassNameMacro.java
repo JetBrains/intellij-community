@@ -51,4 +51,10 @@ public class QualifiedClassNameMacro extends Macro {
     return null;
   }
 
+  @Override
+  public boolean isAcceptableInContext(TemplateContextType context) {
+    return context instanceof JavaCodeContextType;
+  }
+
+
 }

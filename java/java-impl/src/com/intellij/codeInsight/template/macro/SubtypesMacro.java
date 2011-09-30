@@ -73,4 +73,10 @@ public class SubtypesMacro extends Macro {
     }
     return LookupElement.EMPTY_ARRAY;
   }
+
+  @Override
+  public boolean isAcceptableInContext(TemplateContextType context) {
+    return context instanceof JavaCodeContextType;
+  }
+
 }

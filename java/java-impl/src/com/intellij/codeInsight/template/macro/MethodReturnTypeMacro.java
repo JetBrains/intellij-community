@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.template.macro;
 
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
@@ -58,5 +57,11 @@ public class MethodReturnTypeMacro extends Macro {
     }
     return null;
   }
+
+  @Override
+  public boolean isAcceptableInContext(TemplateContextType context) {
+    return context instanceof JavaCodeContextType;
+  }
+
 
 }

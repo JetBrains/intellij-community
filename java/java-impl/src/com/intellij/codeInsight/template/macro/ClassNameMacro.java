@@ -69,4 +69,10 @@ public class ClassNameMacro extends Macro {
     return new TextResult(result);
   }
 
+  @Override
+  public boolean isAcceptableInContext(TemplateContextType context) {
+    return context instanceof JavaCodeContextType;
+  }
+
+
 }

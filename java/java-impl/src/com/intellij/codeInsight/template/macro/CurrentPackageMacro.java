@@ -52,4 +52,10 @@ class CurrentPackageMacro extends Macro {
     return calculateResult(params, context);
   }
 
+  @Override
+  public boolean isAcceptableInContext(TemplateContextType context) {
+    return context instanceof JavaCodeContextType;
+  }
+
+
 }
