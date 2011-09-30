@@ -39,16 +39,19 @@ public abstract class PackagingValidationTestCase extends PackagingElementsTestC
     }
 
     @Override
-    public void registerError(@NotNull String message, @Nullable List<PackagingElement<?>> pathToPlace, @NotNull ArtifactProblemQuickFix... quickFixes) {
+    public void registerError(@NotNull String message,
+                              @NotNull String problemTypeId,
+                              @Nullable List<PackagingElement<?>> pathToPlace,
+                              @NotNull ArtifactProblemQuickFix... quickFixes) {
       myProblems.add(message);
       myQuickFixes.put(message, quickFixes);
     }
 
     @Override
     public void registerWarning(@NotNull String message,
-                                @Nullable List<PackagingElement<?>> pathToPlace,
+                                @NotNull String problemTypeId, @Nullable List<PackagingElement<?>> pathToPlace,
                                 @NotNull ArtifactProblemQuickFix... quickFixes) {
-      registerError(message, pathToPlace, quickFixes);
+      registerError(message, problemTypeId, pathToPlace, quickFixes);
     }
 
     public void assertNoProblems() {
