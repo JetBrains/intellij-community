@@ -120,9 +120,9 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
   private void updateCircularDependencyWarning() {
     ProjectStructureProblemsHolderImpl holder = myContext.getDaemonAnalyzer().getProblemsHolder(mySettingsElement);
     final ProjectStructureProblemDescription item = holder != null ? ContainerUtil.getFirstItem(holder.getProblemDescriptions()) : null;
-    if (item != null) {
+    if (item instanceof GeneralProjectSettingsElement.CircularDependencyProblemDescription) {
       myWarningLabel.setIcon(Messages.getWarningIcon());
-      myWarningLabel.setText(item.getDescription());
+      myWarningLabel.setText(((GeneralProjectSettingsElement.CircularDependencyProblemDescription)item).getFullDescription());
     }
     else {
       myWarningLabel.setIcon(null);

@@ -15,18 +15,16 @@
  */
 package com.intellij.codeInspection.internal;
 
-import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.util.ArrayUtil;
 
-public class InternalInspectionToolsProvider implements InspectionToolProvider {
+public class InternalInspectionToolsProvider {
   public static final String GROUP_NAME = "IDEA Platform Inspections";
   private static final Class[] CLASSES = new Class[] {
     UndesirableClassUsageInspection.class,
     GtkPreferredJComboBoxRendererInspection.class
   };
 
-  @Override
   public Class[] getInspectionClasses() {
     if (!isActive()) return ArrayUtil.EMPTY_CLASS_ARRAY;
     return CLASSES;

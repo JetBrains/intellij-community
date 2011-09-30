@@ -171,7 +171,7 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
         if (selectedItem instanceof LayoutDevice) {
           updateDeviceConfigurations((LayoutDevice)selectedItem);
           saveState();
-          myToolWindowManager.render(false);
+          myToolWindowManager.render();
         }
       }
     });
@@ -290,7 +290,7 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
       @Override
       public void actionPerformed(ActionEvent e) {
         saveState();
-        myToolWindowManager.render(false);
+        myToolWindowManager.render();
       }
     };
 
@@ -320,7 +320,7 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
       public void actionPerformed(ActionEvent e) {
         updateThemes();
         saveState();
-        myToolWindowManager.render(true);
+        myToolWindowManager.render();
       }
     });
 
@@ -585,8 +585,8 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
     myPreviewPanel.setWarnMessage(warnMessage);
   }
 
-  public void setImage(BufferedImage image) {
-    myPreviewPanel.setImage(image);
+  public void setImage(@Nullable BufferedImage image, @NotNull String fileName) {
+    myPreviewPanel.setImage(image, fileName);
   }
 
   @NotNull
@@ -832,7 +832,7 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
             @Override
             public void run() {
               doApplyThemes(themes, addedThemes);
-              myToolWindowManager.render(false);
+              myToolWindowManager.render();
             }
           });
         }

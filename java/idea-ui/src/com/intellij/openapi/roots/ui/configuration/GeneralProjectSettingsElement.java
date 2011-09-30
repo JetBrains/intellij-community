@@ -40,6 +40,11 @@ public class GeneralProjectSettingsElement extends ProjectStructureElement {
   }
 
   @Override
+  public String getPresentableName() {
+    return "Project";
+  }
+
+  @Override
   public void check(ProjectStructureProblemsHolder problemsHolder) {
     final Graph<Chunk<ModifiableRootModel>> graph = ModuleCompilerUtil.toChunkGraph(myContext.getModulesConfigurator().createGraphGenerator());
     final Collection<Chunk<ModifiableRootModel>> chunks = graph.getNodes();
@@ -59,10 +64,20 @@ public class GeneralProjectSettingsElement extends ProjectStructureElement {
     if (count > 0) {
       @NonNls final String leftBrace = "<html>";
       @NonNls final String rightBrace = "</html>";
-      final String warningMessage = leftBrace + ProjectBundle.message("module.circular.dependency.warning", cycles, count) + rightBrace;
+      final String fullDescription = leftBrace + ProjectBundle.message("module.circular.dependency.warning", cycles, count) + rightBrace;
       final Project project = myContext.getProject();
-      final PlaceInProjectStructureBase place = new PlaceInProjectStructureBase(project, ProjectStructureConfigurable.getInstance(project).createModulesPlace());
-      problemsHolder.registerWarning("Circular dependencies", warningMessage, place, null);
+      for (Chunk<ModifiableRootModel> chunk : chunks) {
+        final Set<ModifiableRootModel> nodes = chunk.getNodes();
+        if (nodes.size() > 1) {
+          final PlaceInProjectStructureBase place = new PlaceInProjectStructureBase(project, ProjectStructureConfigurable.getInstance(project).createModulesPlace(), this);
+          StringBuilder names = new StringBuilder();
+          for (ModifiableRootModel model : nodes) {
+            if (names.length() > 0) names.append(", ");
+            names.append(model.getModule().getName());
+          }
+          problemsHolder.registerProblem(new CircularDependencyProblemDescription("Circular dependency between modules " + names, fullDescription, place));
+        }
+      }
     }
   }
 
@@ -77,6 +92,11 @@ public class GeneralProjectSettingsElement extends ProjectStructureElement {
   }
 
   @Override
+  public String getId() {
+    return "project:general";
+  }
+
+  @Override
   public boolean equals(Object obj) {
     return obj instanceof GeneralProjectSettingsElement;
   }
@@ -84,5 +104,21 @@ public class GeneralProjectSettingsElement extends ProjectStructureElement {
   @Override
   public int hashCode() {
     return 0;
+  }
+
+  public static class CircularDependencyProblemDescription extends ProjectStructureProblemDescription {
+    @NotNull private final String myFullDescription;
+
+    public CircularDependencyProblemDescription(@NotNull String message,
+                                                @NotNull String fullDescription,
+                                                @NotNull PlaceInProjectStructure place) {
+      super(message, null, place, Collections.<ConfigurationErrorQuickFix>emptyList(), ProjectStructureProblemType.warning("module-circular-dependency"));
+      myFullDescription = fullDescription;
+    }
+
+    @NotNull
+    public String getFullDescription() {
+      return myFullDescription;
+    }
   }
 }

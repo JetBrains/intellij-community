@@ -15,13 +15,13 @@
  */
 package org.intellij.plugins.intelliLang.inject.java.validation;
 
-import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.intellij.plugins.intelliLang.Configuration;
+import org.intellij.plugins.intelliLang.pattern.PatternValidator;
 import org.intellij.plugins.intelliLang.util.AnnotateFix;
 import org.intellij.plugins.intelliLang.util.AnnotationUtilEx;
 import org.intellij.plugins.intelliLang.util.PsiUtilEx;
@@ -45,7 +45,7 @@ public class LanguageMismatch extends LocalInspectionTool {
 
   @NotNull
   public String getGroupDisplayName() {
-    return InspectionProvider.LANGUAGE_INJECTION;
+    return PatternValidator.LANGUAGE_INJECTION;
   }
 
   @NotNull

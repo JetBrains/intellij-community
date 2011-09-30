@@ -1,7 +1,6 @@
 package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
@@ -17,14 +16,11 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.LibraryConfigurab
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -49,22 +45,38 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
     final LibraryEx library = (LibraryEx)myContext.getLibraryModel(myLibrary);
     if (library == null || library.isDisposed()) return;
 
-    final String libraryName = library.getName();
-    final List<String> invalidClasses = library.getInvalidRootUrls(OrderRootType.CLASSES);
-    if (!invalidClasses.isEmpty()) {
-      final String description = createInvalidRootsDescription(invalidClasses, libraryName);
-      problemsHolder.registerError(ProjectBundle.message("project.roots.tooltip.library.misconfigured", libraryName), description, createPlace(),
-                                   new RemoveInvalidRootsQuickFix(Collections.singletonMap(OrderRootType.CLASSES, invalidClasses), library));
-    }
-    final List<String> invalidJavadocs = library.getInvalidRootUrls(JavadocOrderRootType.getInstance());
-    final List<String> invalidSources = library.getInvalidRootUrls(OrderRootType.SOURCES);
-    if (!invalidJavadocs.isEmpty() || !invalidSources.isEmpty()) {
-      final Map<OrderRootType, List<String>> invalidRoots = new HashMap<OrderRootType, List<String>>();
-      invalidRoots.put(OrderRootType.SOURCES, invalidSources);
-      invalidRoots.put(JavadocOrderRootType.getInstance(), invalidJavadocs);
-      final String description = createInvalidRootsDescription(ContainerUtil.concat(invalidJavadocs, invalidSources), libraryName);
-      problemsHolder.registerWarning(ProjectBundle.message("project.roots.tooltip.library.misconfigured", libraryName), description, createPlace(),
-                                     new RemoveInvalidRootsQuickFix(invalidRoots, library));
+    //final String libraryName = library.getName();
+    reportInvalidRoots(problemsHolder, library, OrderRootType.CLASSES, ProjectStructureProblemType.error("library-invalid-classes-path"));
+    reportInvalidRoots(problemsHolder, library, OrderRootType.SOURCES, ProjectStructureProblemType.warning("library-invalid-source-javadoc-path"));
+    reportInvalidRoots(problemsHolder, library, JavadocOrderRootType.getInstance(), ProjectStructureProblemType.warning("library-invalid-source-javadoc-path"));
+    //if (!invalidClasses.isEmpty()) {
+    //  final String description = createInvalidRootsDescription(invalidClasses, libraryName);
+    //  problemsHolder.registerProblem(ProjectBundle.message("project.roots.error.message.invalid.classes.roots", invalidClasses.size()), description, ProjectStructureProblemType.error("library-invalid-classes-path"),
+    //                                 createPlace(),
+    //                                 new RemoveInvalidRootsQuickFix(Collections.singletonMap(OrderRootType.CLASSES, invalidClasses),
+    //                                                                library));
+    //}
+    //final List<String> invalidJavadocs = library.getInvalidRootUrls(JavadocOrderRootType.getInstance());
+    //final List<String> invalidSources = library.getInvalidRootUrls(OrderRootType.SOURCES);
+    //if (!invalidJavadocs.isEmpty() || !invalidSources.isEmpty()) {
+    //  final Map<OrderRootType, List<String>> invalidRoots = new HashMap<OrderRootType, List<String>>();
+    //  invalidRoots.put(OrderRootType.SOURCES, invalidSources);
+    //  invalidRoots.put(JavadocOrderRootType.getInstance(), invalidJavadocs);
+    //  final String description = createInvalidRootsDescription(ContainerUtil.concat(invalidJavadocs, invalidSources), libraryName);
+    //  problemsHolder.registerProblem(ProjectBundle.message("project.roots.error.message.invalid.source.javadoc.roots", invalidJavadocs.size()+invalidSources.size()), description,
+    //                                 ProjectStructureProblemType.warning("library-invalid-source-javadoc-path"),
+    //                                 createPlace(),
+    //                                 new RemoveInvalidRootsQuickFix(invalidRoots, library));
+    //}
+  }
+
+  private void reportInvalidRoots(ProjectStructureProblemsHolder problemsHolder,
+                                  LibraryEx library,
+                                  final OrderRootType type, final ProjectStructureProblemType problemType) {
+    final List<String> invalidClasses = library.getInvalidRootUrls(type);
+    for (String url : invalidClasses) {
+      problemsHolder.registerProblem("invalid path '" + url + "'", null, problemType,
+                                     createPlace(), new RemoveInvalidRootsQuickFix(Collections.singletonMap(type, Collections.singletonList(url)), library));
     }
   }
 
@@ -83,7 +95,7 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
   @NotNull
   private PlaceInProjectStructure createPlace() {
     final Project project = myContext.getProject();
-    return new PlaceInProjectStructureBase(project, ProjectStructureConfigurable.getInstance(project).createProjectOrGlobalLibraryPlace(myLibrary));
+    return new PlaceInProjectStructureBase(project, ProjectStructureConfigurable.getInstance(project).createProjectOrGlobalLibraryPlace(myLibrary), this);
   }
 
   @Override
@@ -114,14 +126,19 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
   }
 
   @Override
-  public String toString() {
-    return "library:" + myLibrary.getName();
-  }
-
-  @Override
   public boolean highlightIfUnused() {
     final LibraryTable libraryTable = myLibrary.getTable();
     return libraryTable != null && LibraryTablesRegistrar.PROJECT_LEVEL.equals(libraryTable.getTableLevel());
+  }
+
+  @Override
+  public String getPresentableName() {
+    return "Library '" + myLibrary.getName() + "'";
+  }
+
+  @Override
+  public String getId() {
+    return "library:" + myLibrary.getTable().getTableLevel() + ":" + myLibrary.getName();
   }
 
   private class RemoveInvalidRootsQuickFix extends ConfigurationErrorQuickFix {

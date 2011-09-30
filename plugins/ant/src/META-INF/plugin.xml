@@ -34,7 +34,16 @@
     <declarationRangeHandler key="com.intellij.lang.ant.psi.AntStructuredElement"
                              implementationClass="com.intellij.lang.ant.AntDeclarationRangeHandler"/>
     <refactoring.elementListenerProvider implementation="com.intellij.lang.ant.refactoring.AntTargetRenameListenerProvider"/>
-    <inspectionToolProvider implementation="com.intellij.lang.ant.AntInspectionToolProvider"/>
+
+    <localInspection shortName="AntDuplicateTargetsInspection" bundle="messages.AntBundle" key="ant.duplicate.targets.inspection"
+                     groupKey="ant.inspections.display.name" enabledByDefault="true" level="ERROR"
+                     implementationClass="com.intellij.lang.ant.validation.AntDuplicateTargetsInspection"/>
+    <localInspection shortName="AntMissingPropertiesFileInspection" bundle="messages.AntBundle" key="ant.missing.properties.file.inspection"
+                     groupKey="ant.inspections.display.name" enabledByDefault="true" level="ERROR"
+                     implementationClass="com.intellij.lang.ant.validation.AntMissingPropertiesFileInspection"/>
+    <localInspection shortName="AntResolveInspection" displayName="Reference resolve problems" bundle="messages.AntBundle"
+                     groupKey="ant.inspections.display.name"
+                     enabledByDefault="true" level="ERROR" implementationClass="com.intellij.lang.ant.dom.AntResolveInspection"/>
 
     <dom.fileDescription implementation="com.intellij.lang.ant.dom.AntDomFileDescription"/>
     <dom.fileDescription implementation="com.intellij.lang.ant.dom.AntlibDomFileDescription"/>

@@ -36,7 +36,7 @@ public class PatternOverriddenByNonAnnotatedMethod extends LocalInspectionTool {
 
   @NotNull
   public String getGroupDisplayName() {
-    return InspectionProvider.PATTERN_VALIDATION;
+    return PatternValidator.PATTERN_VALIDATION;
   }
 
   @NotNull

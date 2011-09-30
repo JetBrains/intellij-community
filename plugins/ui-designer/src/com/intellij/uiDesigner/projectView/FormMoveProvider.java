@@ -19,10 +19,9 @@ package com.intellij.uiDesigner.projectView;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.refactoring.move.MoveHandlerDelegate;
+import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesHandler;
 import com.intellij.uiDesigner.GuiFormFileType;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,6 +37,11 @@ public class FormMoveProvider extends MoveHandlerDelegate {
   public boolean canMove(DataContext dataContext) {
     Form[] forms = Form.DATA_KEY.getData(dataContext);
     return forms != null && forms.length > 0;
+  }
+
+  @Override
+  public boolean isValidTarget(PsiElement psiElement, PsiElement[] sources) {
+    return MoveFilesOrDirectoriesHandler.isValidTarget(psiElement);
   }
 
   public boolean canMove(PsiElement[] elements, @Nullable final PsiElement targetContainer) {

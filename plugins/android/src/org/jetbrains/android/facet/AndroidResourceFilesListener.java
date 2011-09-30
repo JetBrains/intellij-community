@@ -29,8 +29,10 @@ import com.intellij.util.ui.update.Update;
 import org.jetbrains.android.compiler.AndroidAptCompiler;
 import org.jetbrains.android.compiler.AndroidCompileUtil;
 import org.jetbrains.android.compiler.AndroidIdlCompiler;
+import org.jetbrains.android.compiler.AndroidRenderscriptCompiler;
 import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.android.fileTypes.AndroidIdlFileType;
+import org.jetbrains.android.fileTypes.AndroidRenderscriptFileType;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -107,6 +109,7 @@ class AndroidResourceFilesListener extends VirtualFileAdapter {
     VirtualFile gp = parent != null ? parent.getParent() : null;
     VirtualFile file = e.getFile();
     if (file.getFileType() == AndroidIdlFileType.ourFileType ||
+        file.getFileType() == AndroidRenderscriptFileType.INSTANCE ||
         getManifestFileName().equals(file.getName()) ||
         (gp != null && gp.isDirectory() && getResDirName().equals(gp.getName()))) {
       ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
@@ -129,9 +132,6 @@ class AndroidResourceFilesListener extends VirtualFileAdapter {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         return;
       }
-      if (!myFacet.getConfiguration().REGENERATE_JAVA_BY_AIDL && !myFacet.getConfiguration().REGENERATE_JAVA_BY_AIDL) {
-        return;
-      }
       final GeneratingCompiler compilerToRun = ApplicationManager.getApplication().runReadAction(new Computable<GeneratingCompiler>() {
         @Nullable
         public GeneratingCompiler compute() {
@@ -145,24 +145,31 @@ class AndroidResourceFilesListener extends VirtualFileAdapter {
             VirtualFile parent = myEvent.getParent();
             if (parent != null) {
               parent = parent.getParent();
-              if (AndroidAptCompiler.isToCompileModule(module, myFacet.getConfiguration())) {
-                if (myFacet.getConfiguration().REGENERATE_R_JAVA && parent == AndroidRootUtil.getResourceDir(module) ||
-                    AndroidRootUtil.getManifestFile(module) == file) {
-                  Manifest manifest = myFacet.getManifest();
-                  String aPackage = manifest != null ? manifest.getPackage().getValue() : null;
-                  if (myCachedPackage != null && !myCachedPackage.equals(aPackage)) {
-                    String aptGenDirPath = myFacet.getAptGenSourceRootPath();
-                    AndroidCompileUtil.removeDuplicatingClasses(myModule, myCachedPackage, AndroidUtils.R_CLASS_NAME, null, aptGenDirPath);
-                  }
-                  myCachedPackage = aPackage;
-                  myFacet.getLocalResourceManager().invalidateAttributeDefinitions();
-                  return new AndroidAptCompiler();
+              if (AndroidAptCompiler.isToCompileModule(module, myFacet.getConfiguration()) &&
+                  (myFacet.getConfiguration().REGENERATE_R_JAVA && parent == AndroidRootUtil.getResourceDir(module) ||
+                   AndroidRootUtil.getManifestFile(module) == file)) {
+                Manifest manifest = myFacet.getManifest();
+                String aPackage = manifest != null ? manifest.getPackage().getValue() : null;
+                if (myCachedPackage != null && !myCachedPackage.equals(aPackage)) {
+                  String aptGenDirPath = myFacet.getAptGenSourceRootPath();
+                  AndroidCompileUtil.removeDuplicatingClasses(myModule, myCachedPackage, AndroidUtils.R_CLASS_NAME, null, aptGenDirPath);
                 }
+                myCachedPackage = aPackage;
+                myFacet.getLocalResourceManager().invalidateAttributeDefinitions();
+                return new AndroidAptCompiler();
               }
+
               if (myFacet.getConfiguration().REGENERATE_JAVA_BY_AIDL && file.getFileType() == AndroidIdlFileType.ourFileType) {
                 VirtualFile sourceRoot = findSourceRoot(myModule, file);
                 if (sourceRoot != null && AndroidRootUtil.getAidlGenDir(module, myFacet) != sourceRoot) {
                   return new AndroidIdlCompiler(project);
+                }
+              }
+
+              if (file.getFileType() == AndroidRenderscriptFileType.INSTANCE) {
+                final VirtualFile sourceRoot = findSourceRoot(myModule, file);
+                if (sourceRoot != null && AndroidRootUtil.getRenderscriptGenDir(myModule) != sourceRoot) {
+                  return new AndroidRenderscriptCompiler();
                 }
               }
             }

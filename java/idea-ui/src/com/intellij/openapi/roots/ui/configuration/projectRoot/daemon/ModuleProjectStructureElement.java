@@ -41,7 +41,8 @@ public class ModuleProjectStructureElement extends ProjectStructureElement {
 
     for (Module each : all) {
       if (each != myModule && myContext.getRealName(each).equals(myContext.getRealName(myModule))) {
-        problemsHolder.registerError(ProjectBundle.message("project.roots.module.duplicate.name.message"), null, createPlace(), null);
+        problemsHolder.registerProblem(ProjectBundle.message("project.roots.module.duplicate.name.message"), null, ProjectStructureProblemType.error("duplicate-module-name"), createPlace(),
+                                       null);
         break;
       }
     }
@@ -52,12 +53,13 @@ public class ModuleProjectStructureElement extends ProjectStructureElement {
     for (OrderEntry entry : entries) {
       if (!entry.isValid()){
         if (entry instanceof JdkOrderEntry && ((JdkOrderEntry)entry).getJdkName() == null) {
-          problemsHolder.registerError(ProjectBundle.message("project.roots.module.jdk.problem.message"), null, createPlace(entry), null);
+          problemsHolder.registerProblem(ProjectBundle.message("project.roots.module.jdk.problem.message"), null, ProjectStructureProblemType.error("module-sdk-not-defined"), createPlace(entry),
+                                         null);
         }
         else {
-          problemsHolder.registerError(ProjectBundle.message("project.roots.library.problem.message", entry.getPresentableName()), null,
-                                       createPlace(entry),
-                                       null);
+          problemsHolder.registerProblem(ProjectBundle.message("project.roots.library.problem.message", entry.getPresentableName()), null,
+                                         ProjectStructureProblemType.error("invalid-module-dependency"), createPlace(entry),
+                                         null);
         }
       }
       //todo[nik] highlight libraries with invalid paths in ClasspathEditor
@@ -77,11 +79,11 @@ public class ModuleProjectStructureElement extends ProjectStructureElement {
 
   private PlaceInProjectStructure createPlace() {
     final Project project = myContext.getProject();
-    return new PlaceInProjectStructureBase(project, ProjectStructureConfigurable.getInstance(project).createModulePlace(myModule));
+    return new PlaceInProjectStructureBase(project, ProjectStructureConfigurable.getInstance(project).createModulePlace(myModule), this);
   }
 
   private PlaceInProjectStructure createPlace(OrderEntry entry) {
-    return new PlaceInModuleClasspath(myContext, myModule, entry);
+    return new PlaceInModuleClasspath(myContext, myModule, this, entry);
   }
 
   @Override
@@ -128,12 +130,17 @@ public class ModuleProjectStructureElement extends ProjectStructureElement {
   }
 
   @Override
-  public String toString() {
-    return "module:" + myModule.getName();
+  public boolean highlightIfUnused() {
+    return false;
   }
 
   @Override
-  public boolean highlightIfUnused() {
-    return false;
+  public String getPresentableName() {
+    return "Module '" + myModule.getName() + "'";
+  }
+
+  @Override
+  public String getId() {
+    return "module:" + myModule.getName();
   }
 }

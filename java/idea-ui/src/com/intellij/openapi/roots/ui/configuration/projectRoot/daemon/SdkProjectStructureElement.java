@@ -44,12 +44,17 @@ public class SdkProjectStructureElement extends ProjectStructureElement {
   }
 
   @Override
-  public String toString() {
-    return "sdk:" + mySdk.getName();
+  public boolean highlightIfUnused() {
+    return false;
   }
 
   @Override
-  public boolean highlightIfUnused() {
-    return false;
+  public String getPresentableName() {
+    return "SDK '" + mySdk.getName() + "'";
+  }
+
+  @Override
+  public String getId() {
+    return "sdk:" + mySdk.getName();
   }
 }

@@ -101,17 +101,15 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       return;
     }
 
-    final Map<Object, PsiElementListCellRenderer> targetsWithRenderers = new THashMap<Object, PsiElementListCellRenderer>(targets.length);
-
     for (PsiElement eachTarget : targets) {
-      targetsWithRenderers.put(eachTarget, createRenderer(gotoData, eachTarget));
+      gotoData.renderers.put(eachTarget, createRenderer(gotoData, eachTarget));
     }
 
     String name = ((PsiNamedElement)gotoData.source).getName();
     String title = getChooserTitle(gotoData.source, name, targets.length);
 
     if (shouldSortTargets()) {
-      Arrays.sort(targets, createComparator(targetsWithRenderers, gotoData));
+      Arrays.sort(targets, createComparator(gotoData.renderers, gotoData));
     }
 
     List<Object> allElements = new ArrayList<Object>(targets.length + additionalActions.size());
@@ -132,7 +130,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
         if (value instanceof AdditionalAction) {
           return myActionElementRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         }
-        PsiElementListCellRenderer renderer = getRenderer(value, targetsWithRenderers, gotoData);
+        PsiElementListCellRenderer renderer = getRenderer(value, gotoData.renderers, gotoData);
         return renderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
       }
     });
@@ -163,7 +161,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
         if (o instanceof AdditionalAction) {
           return ((AdditionalAction)o).getText();
         }
-        return getRenderer(o, targetsWithRenderers, gotoData).getElementText((PsiElement)o);
+        return getRenderer(o, gotoData.renderers, gotoData).getElementText((PsiElement)o);
       }
     });
 
@@ -303,7 +301,10 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
   private static class DefaultPsiElementListCellRenderer extends PsiElementListCellRenderer {
     public String getElementText(final PsiElement element) {
       if (element instanceof PsiNamedElement) {
-        return ((PsiNamedElement)element).getName();
+        String name = ((PsiNamedElement)element).getName();
+        if (name != null) {
+          return name;
+        }
       }
       return element.getContainingFile().getName();
     }

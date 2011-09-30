@@ -129,7 +129,11 @@
     <intentionAction>
       <className>org.jetbrains.android.intentions.AndroidAddStringResourceAction</className>
     </intentionAction>
-    <inspectionToolProvider implementation="org.jetbrains.android.inspections.AndroidInspectionToolProvider"/>
+
+    <localInspection shortName="AndroidDomInspection" bundle="messages.AndroidBundle" key="android.inspections.dom.name"
+                     groupKey="android.inspections.group.name" enabledByDefault="true" level="ERROR"
+                     implementationClass="org.jetbrains.android.inspections.AndroidDomInspection"/>
+
     <colorSettingsPage implementation="org.jetbrains.android.logcat.AndroidLogcatColorPage"/>
     <findUsagesHandlerFactory implementation="org.jetbrains.android.AndroidFindUsagesHandlerFactory"/>
     <xml.schemaProvider implementation="org.jetbrains.android.AndroidXmlSchemaProvider"/>

@@ -126,7 +126,7 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
     if (myToolWindowForm != null) {
       final PsiFile file = event.getFile();
       if (file != null && myToolWindowForm.getFile() == file) {
-        render(false);
+        render();
       }
     }
   }
@@ -219,7 +219,7 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
         if (myToolWindowForm.getFile() != psiFile) {
           ApplicationManager.getApplication().saveAll();
           myToolWindowForm.setFile(psiFile);
-          render(false);
+          render();
         }
 
         myToolWindow.setAvailable(true, null);
@@ -231,13 +231,15 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
     });
   }
 
-  public void render(final boolean showProgress) {
+  public void render() {
     final PsiFile psiFile = myToolWindowForm.getFile();
     if (psiFile == null) {
       return;
     }
 
     final String layoutXmlText = psiFile.getText();
+    final String fileName = psiFile.getName();
+    
     final AndroidFacet facet = AndroidFacet.getInstance(psiFile);
     if (facet == null) {
       return;
@@ -249,7 +251,7 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
         ProgressManager.getInstance().runProcess(new Runnable() {
           @Override
           public void run() {
-            doRender(facet, layoutXmlText);
+            doRender(facet, layoutXmlText, fileName);
           }
         }, new MyProgressIndicator());
       }
@@ -261,7 +263,7 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
     });
   }
 
-  private void doRender(final AndroidFacet facet, String layoutXmlText) {
+  private void doRender(@NotNull final AndroidFacet facet, @NotNull String layoutXmlText, @NotNull final String fileName) {
     BufferedImage image = null;
     RenderingErrorMessage errorMessage = null;
     String warnMessage = null;
@@ -350,7 +352,7 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
         myToolWindowForm.setErrorMessage(finalErrorMessage);
         myToolWindowForm.setWarnMessage(finalWarnMessage);
         if (finalErrorMessage == null) {
-          myToolWindowForm.setImage(finalImage);
+          myToolWindowForm.setImage(finalImage, fileName);
         }
         myToolWindowForm.updatePreviewPanel();
       }
@@ -451,7 +453,7 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
 
       if (parent != null && ResourceManager.isResourceDirectory(parent, myProject)) {
         myToolWindowForm.updateLocales();
-        render(false);
+        render();
       }
     }
   }
@@ -485,7 +487,7 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
             myToolWindowForm.updateDevicesAndTargets(newPlatform);
             myToolWindowForm.updateThemes();
 
-            render(true);
+            render();
           }
         }
       }

@@ -20,7 +20,6 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
-    <inspectionToolProvider implementation="com.intellij.codeInspection.JavaInspectionToolProvider"/>
     <referenceProviderType key="Properties File Key Provider"
                            implementationClass="com.intellij.lang.properties.PropertiesReferenceProvider"/>
     <psi.referenceContributor implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaReferenceContributor"/>
@@ -28,6 +27,25 @@
     <lang.foldingBuilder language="JAVA" implementationClass="com.intellij.codeInspection.i18n.folding.PropertyFoldingBuilder" />
     <gotoDeclarationHandler implementation="com.intellij.codeInspection.i18n.folding.I18nMessageGotoDeclarationHandler" order="FIRST"/>
     <spellchecker.support implementation="com.intellij.spellchecker.JavaSpellcheckingStrategy"/>
+
+    <localInspection shortName="HardCodedStringLiteral" bundle="messages.CodeInsightBundle" key="inspection.i18n.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.javadoc.issues" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.i18n.I18nInspection"/>
+    <localInspection shortName="UnresolvedPropertyKey" bundle="messages.CodeInsightBundle"
+                     key="inspection.unresolved.property.key.reference.name" groupName="Internationalization issues" enabledByDefault="true"
+                     level="ERROR" implementationClass="com.intellij.codeInspection.i18n.InvalidPropertyKeyInspection"/>
+    <globalInspection shortName="InconsistentResourceBundle" bundle="messages.InspectionsBundle"
+                      key="inconsistent.resource.bundle.display.name" groupBundle="messages.PropertiesBundle"
+                      groupKey="properties.files.inspection.group.display.name" enabledByDefault="true" level="ERROR"
+                      implementationClass="com.intellij.codeInspection.i18n.InconsistentResourceBundleInspection"/>
+    <localInspection shortName="UnusedMessageFormatParameter" bundle="messages.PropertiesBundle"
+                     key="unused.message.format.parameter.display.name" groupKey="properties.files.inspection.group.display.name"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.lang.properties.UnusedMessageFormatParameterInspection"/>
+    <localInspection shortName="DuplicateStringLiteralInspection" bundle="messages.InspectionsBundle"
+                     key="inspection.duplicates.display.name" groupName="Internationalization issues" enabledByDefault="false"
+                     level="WARNING"
+                     implementationClass="com.intellij.codeInspection.duplicateStringLiteral.DuplicateStringLiteralInspection"/>
   </extensions>
   <actions>
     <action id="I18nize" class="com.intellij.codeInspection.i18n.I18nizeAction">

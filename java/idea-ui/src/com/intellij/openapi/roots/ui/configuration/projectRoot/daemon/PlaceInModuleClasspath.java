@@ -28,19 +28,22 @@ import org.jetbrains.annotations.NotNull;
  * @author nik
  */
 public class PlaceInModuleClasspath extends PlaceInProjectStructure {
-  private StructureConfigurableContext myContext;
-  private Module myModule;
-  private OrderEntry myOrderEntry;
+  private final StructureConfigurableContext myContext;
+  private final Module myModule;
+  private final ProjectStructureElement myElement;
+  private final OrderEntry myOrderEntry;
 
-  public PlaceInModuleClasspath(StructureConfigurableContext context, Module module, OrderEntry orderEntry) {
+  public PlaceInModuleClasspath(StructureConfigurableContext context, Module module, ProjectStructureElement element, OrderEntry orderEntry) {
     myContext = context;
     myModule = module;
+    myElement = element;
     myOrderEntry = orderEntry;
   }
 
-  public PlaceInModuleClasspath(@NotNull StructureConfigurableContext context, @NotNull Module module, @NotNull ProjectStructureElement elementInClasspath) {
+  public PlaceInModuleClasspath(@NotNull StructureConfigurableContext context, @NotNull Module module, ProjectStructureElement element, @NotNull ProjectStructureElement elementInClasspath) {
     myContext = context;
     myModule = module;
+    myElement = element;
     ModuleRootModel rootModel = myContext.getModulesConfigurator().getRootModel(myModule);
     if (elementInClasspath instanceof LibraryProjectStructureElement) {
       myOrderEntry = OrderEntryUtil.findLibraryOrderEntry(rootModel, ((LibraryProjectStructureElement)elementInClasspath).getLibrary());
@@ -54,6 +57,17 @@ public class PlaceInModuleClasspath extends PlaceInProjectStructure {
     else {
       myOrderEntry = null;
     }
+  }
+
+  @NotNull
+  @Override
+  public ProjectStructureElement getContainingElement() {
+    return myElement;
+  }
+
+  @Override
+  public String getPlacePath() {
+    return myOrderEntry != null ? myOrderEntry.getPresentableName() : null;
   }
 
   @NotNull

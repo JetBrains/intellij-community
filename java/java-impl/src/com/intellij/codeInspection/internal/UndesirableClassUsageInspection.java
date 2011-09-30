@@ -18,6 +18,7 @@ package com.intellij.codeInspection.internal;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.application.QueryExecutorBase;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.psi.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
@@ -57,6 +58,7 @@ public class UndesirableClassUsageInspection extends InternalInspection {
 
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+    if (!ApplicationManagerEx.getApplicationEx().isInternal()) return new JavaElementVisitor() {};
     return new JavaElementVisitor() {
       @Override
       public void visitReferenceExpression(PsiReferenceExpression expression) {

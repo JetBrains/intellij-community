@@ -196,14 +196,14 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
               if (problemsHolder == null) {
                 daemonAnalyzer.queueUpdate(projectStructureElement, true, false);
               }
-              final ProjectStructureProblemDescription.Severity level = problemsHolder != null ? problemsHolder.getSeverity() : null;
+              final ProjectStructureProblemType.Severity level = problemsHolder != null ? problemsHolder.getSeverity() : null;
               final boolean invalid = level != null;
               if (unused || invalid) {
                 Color fg = unused
                            ? UIUtil.getInactiveTextColor()
                            : selected && hasFocus ? UIUtil.getTreeSelectionForeground() : UIUtil.getTreeForeground();
                 textAttributes = new SimpleTextAttributes(invalid ? SimpleTextAttributes.STYLE_WAVED : SimpleTextAttributes.STYLE_PLAIN, fg,
-                                                          level == ProjectStructureProblemDescription.Severity.ERROR ? Color.RED : Color.GRAY);
+                                                          level == ProjectStructureProblemType.Severity.ERROR ? Color.RED : Color.GRAY);
                 String text = problemsHolder != null ? problemsHolder.composeTooltipMessage() : "";
                 if (unused) {
                   text += ProjectBundle.message("project.roots.tooltip.unused", displayName);

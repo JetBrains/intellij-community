@@ -16,7 +16,6 @@
 
 package org.intellij.plugins.relaxNG;
 
-import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.javaee.ResourceRegistrar;
 import com.intellij.javaee.StandardResourceProvider;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -47,7 +46,7 @@ import org.jetbrains.annotations.NotNull;
  * User: sweinreuter
  * Date: 18.07.2007
  */
-public class ApplicationLoader implements ApplicationComponent, InspectionToolProvider {
+public class ApplicationLoader implements ApplicationComponent {
   private static final String RNG_EXT = "rng";
   private static final String VALIDATE_XML = "ValidateXml";
   public static final String RNG_NAMESPACE = "http://relaxng.org/ns/structure/1.0";
@@ -103,7 +102,7 @@ public class ApplicationLoader implements ApplicationComponent, InspectionToolPr
   public void disposeComponent() {
   }
 
-  public Class[] getInspectionClasses() {
+  public static Class[] getInspectionClasses() {
     return new Class[]{
             RngDomInspection.class,
             UnusedDefineInspection.class

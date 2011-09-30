@@ -27,10 +27,23 @@ import org.jetbrains.annotations.NotNull;
 public class PlaceInProjectStructureBase extends PlaceInProjectStructure {
   private final Project myProject;
   private final Place myPlace;
+  private final ProjectStructureElement myElement;
 
-  public PlaceInProjectStructureBase(Project project, Place place) {
+  public PlaceInProjectStructureBase(Project project, Place place, ProjectStructureElement element) {
     myProject = project;
     myPlace = place;
+    myElement = element;
+  }
+
+  @Override
+  public String getPlacePath() {
+    return null;
+  }
+
+  @NotNull
+  @Override
+  public ProjectStructureElement getContainingElement() {
+    return myElement;
   }
 
   @NotNull

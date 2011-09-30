@@ -18,7 +18,22 @@
     <moduleType id="PLUGIN_MODULE" implementationClass="org.jetbrains.idea.devkit.module.PluginModuleType" classpathProvider="true"/>
     <sdkType implementation="org.jetbrains.idea.devkit.projectRoots.IdeaJdk"/>
     <fileTemplateGroup implementation="org.jetbrains.idea.devkit.DevKitFileTemplatesFactory"/>
-    <inspectionToolProvider implementation="org.jetbrains.idea.devkit.DevKitInspectionToolProvider"/>
+
+    <localInspection shortName="PluginXmlValidity" displayName="Plugin.xml Validity" groupBundle="org.jetbrains.idea.devkit.DevKitBundle"
+                     groupKey="inspections.group.name" enabledByDefault="true" level="ERROR"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.PluginXmlDomInspection"/>
+    <localInspection shortName="ComponentNotRegistered" bundle="org.jetbrains.idea.devkit.DevKitBundle"
+                     key="inspections.component.not.registered.name" groupKey="inspections.group.name" enabledByDefault="true"
+                     level="WARNING" implementationClass="org.jetbrains.idea.devkit.inspections.ComponentNotRegisteredInspection"/>
+    <localInspection shortName="InspectionDescriptionNotFoundInspection" displayName="Inspection Description Checker"
+                     bundle="org.jetbrains.idea.devkit.DevKitBundle"
+                     groupKey="inspections.group.name" enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.InspectionDescriptionNotFoundInspection"/>
+    <localInspection shortName="IntentionDescriptionNotFoundInspection" displayName="Intention Description Checker"
+                     bundle="org.jetbrains.idea.devkit.DevKitBundle"
+                     groupKey="inspections.group.name" enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.IntentionDescriptionNotFoundInspection"/>
+
     <moduleConfigurationEditorProvider implementation="org.jetbrains.idea.devkit.module.PluginModuleEditorsProvider"/>
     <implicitUsageProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitEntryPoints"/>
   </extensions>

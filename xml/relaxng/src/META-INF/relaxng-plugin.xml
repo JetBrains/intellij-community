@@ -44,6 +44,12 @@
     <dom.implementation interfaceClass="org.intellij.plugins.relaxNG.xml.dom.RngRef" implementationClass="org.intellij.plugins.relaxNG.xml.dom.impl.RngRefImpl"/>
     <xml.html5SchemaProvider implementation="org.intellij.plugins.relaxNG.xml.RngHtml5SchemaProvider"/>
     <metaDataContributor implementation="org.intellij.html.RngHtml5MetaDataContributor"/>
+
+    <localInspection shortName="UnresolvedReference" displayName="Unresolved References" groupName="RELAX NG" enabledByDefault="true"
+                     level="ERROR" implementationClass="org.intellij.plugins.relaxNG.inspections.RngDomInspection"/>
+    <localInspection shortName="UnusedDefine" displayName="Unused Define" groupName="RELAX NG" enabledByDefault="false" level="WARNING"
+                     implementationClass="org.intellij.plugins.relaxNG.inspections.UnusedDefineInspection"/>
+
   </extensions>
 
   <project-components>

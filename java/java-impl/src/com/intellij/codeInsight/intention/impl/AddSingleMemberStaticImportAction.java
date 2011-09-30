@@ -63,7 +63,7 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
       PsiElement resolved = refExpr.resolve();
       if (resolved instanceof PsiMember && ((PsiModifierListOwner)resolved).hasModifierProperty(PsiModifier.STATIC)) {
         PsiClass aClass = getResolvedClass(element, (PsiMember)resolved);
-        if (aClass != null && !PsiTreeUtil.isAncestor(aClass, element, true)) {
+        if (aClass != null && !PsiTreeUtil.isAncestor(aClass, element, true) && !aClass.hasModifierProperty(PsiModifier.PRIVATE)) {
           String qName = aClass.getQualifiedName();
           if (qName != null && !Comparing.strEqual(qName, aClass.getName())) {
             qName = qName + "." +refExpr.getReferenceName();

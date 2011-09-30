@@ -58,6 +58,8 @@ import java.util.regex.PatternSyntaxException;
  */
 public class PatternValidator extends LocalInspectionTool {
   private static final Key<CachedValue<Pattern>> COMPLIED_PATTERN = Key.create("COMPILED_PATTERN");
+  public static final String PATTERN_VALIDATION = "Pattern Validation";
+  public static final String LANGUAGE_INJECTION = "Language Injection";
 
   public boolean CHECK_NON_CONSTANT_VALUES = true;
 
@@ -73,7 +75,7 @@ public class PatternValidator extends LocalInspectionTool {
 
   @NotNull
   public String getGroupDisplayName() {
-    return InspectionProvider.PATTERN_VALIDATION;
+    return PATTERN_VALIDATION;
   }
 
   @NotNull

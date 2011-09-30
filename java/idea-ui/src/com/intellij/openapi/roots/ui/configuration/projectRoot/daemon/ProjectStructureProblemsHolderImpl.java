@@ -15,14 +15,12 @@ import java.util.List;
 public class ProjectStructureProblemsHolderImpl implements ProjectStructureProblemsHolder {
   private List<ProjectStructureProblemDescription> myProblemDescriptions;
 
-  public void registerError(@NotNull String message, String description, @NotNull PlaceInProjectStructure place, @Nullable ConfigurationErrorQuickFix fix) {
+  public void registerProblem(@NotNull String message, @Nullable String description,
+                              @NotNull ProjectStructureProblemType problemType,
+                              @NotNull PlaceInProjectStructure place,
+                              @Nullable ConfigurationErrorQuickFix fix) {
     final List<ConfigurationErrorQuickFix> fixes = fix != null ? Collections.singletonList(fix) : Collections.<ConfigurationErrorQuickFix>emptyList();
-    registerProblem(new ProjectStructureProblemDescription(message, description, ProjectStructureProblemDescription.Severity.ERROR, place, fixes));
-  }
-
-  public void registerWarning(@NotNull String message, String description, @NotNull PlaceInProjectStructure place, @Nullable ConfigurationErrorQuickFix fix) {
-    final List<ConfigurationErrorQuickFix> fixes = Collections.singletonList(fix);
-    registerProblem(new ProjectStructureProblemDescription(message, description, ProjectStructureProblemDescription.Severity.WARNING, place, fixes));
+    registerProblem(new ProjectStructureProblemDescription(message, description, place, fixes, problemType));
   }
 
   public void registerProblem(final @NotNull ProjectStructureProblemDescription description) {
@@ -33,16 +31,16 @@ public class ProjectStructureProblemsHolderImpl implements ProjectStructureProbl
   }
 
   @Nullable
-  public ProjectStructureProblemDescription.Severity getSeverity() {
+  public ProjectStructureProblemType.Severity getSeverity() {
     if (myProblemDescriptions == null || myProblemDescriptions.isEmpty()) {
       return null;
     }
     for (ProjectStructureProblemDescription description : myProblemDescriptions) {
-      if (description.getSeverity() == ProjectStructureProblemDescription.Severity.ERROR) {
-        return ProjectStructureProblemDescription.Severity.ERROR;
+      if (description.getSeverity() == ProjectStructureProblemType.Severity.ERROR) {
+        return ProjectStructureProblemType.Severity.ERROR;
       }
     }
-    return ProjectStructureProblemDescription.Severity.WARNING;
+    return ProjectStructureProblemType.Severity.WARNING;
   }
 
   public String composeTooltipMessage() {
