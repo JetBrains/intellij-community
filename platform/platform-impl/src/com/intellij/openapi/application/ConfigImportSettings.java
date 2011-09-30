@@ -1,0 +1,68 @@
+package com.intellij.openapi.application;
+
+import com.intellij.util.SystemProperties;
+import com.intellij.util.ThreeState;
+import org.jetbrains.annotations.Nullable;
+
+import java.io.File;
+
+/**
+ * User: ksafonov
+ */
+public class ConfigImportSettings {
+
+  protected String getProductName(ThreeState full) {
+    ApplicationNamesInfo namesInfo = ApplicationNamesInfo.getInstance();
+    if (full == ThreeState.YES) {
+      return namesInfo.getFullProductName();
+    }
+    else if (full == ThreeState.NO) {
+      return namesInfo.getProductName();
+    }
+    else {
+      return namesInfo.getProductName().equals("IDEA") ? namesInfo.getFullProductName() : namesInfo.getProductName();
+    }
+  }
+
+  protected String getInaccessibleHomeErrorText(String instHome) {
+    return ApplicationBundle.message("error.no.read.permissions", instHome);
+  }
+
+  protected String getInvalidHomeErrorText(String productWithVendor, String instHome) {
+    return ApplicationBundle.message("error.does.not.appear.to.be.installation.home", instHome,
+                                     productWithVendor);
+  }
+
+  protected String getCurrentHomeErrorText(String productWithVendor) {
+    return ApplicationBundle.message("error.selected.current.installation.home",
+                                     productWithVendor, productWithVendor);
+  }
+
+  protected String getEmptyHomeErrorText(String productWithVendor) {
+    return ApplicationBundle.message("error.please.select.previous.installation.home", productWithVendor);
+  }
+
+  protected String getHomeLabel(String productName) {
+    return ApplicationBundle.message("editbox.installation.home", productName);
+  }
+
+  protected String getAutoImportLabel(File guessedOldConfig) {
+    return ApplicationBundle.message("radio.import.auto", guessedOldConfig.getAbsolutePath().replace(SystemProperties.getUserHome(), "~"));
+  }
+
+  protected String getDoNotImportLabel(String productName) {
+    return ApplicationBundle.message("radio.do.not.import", productName);
+  }
+
+  protected String getTitleLabel(String productName) {
+    return ApplicationBundle.message("label.you.can.import", productName);
+  }
+
+  @Nullable
+  public String getCustomPathsSelector() {
+    return null;
+  }
+
+  public void importFinished(String newConfigPath) {
+  }
+}
