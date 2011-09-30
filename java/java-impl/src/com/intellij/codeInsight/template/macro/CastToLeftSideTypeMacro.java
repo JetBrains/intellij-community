@@ -27,7 +27,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class CastToLeftSideTypeMacro implements Macro {
+public class CastToLeftSideTypeMacro extends Macro {
   public String getName() {
     return "castToLeftSideType";
   }
@@ -36,6 +36,7 @@ public class CastToLeftSideTypeMacro implements Macro {
     return CodeInsightBundle.message("macro.cast.to.left.side.type");
   }
 
+  @NotNull
   public String getDefaultValue() {
     return "(A)";
   }
@@ -68,11 +69,4 @@ public class CastToLeftSideTypeMacro implements Macro {
     return new TextResult("");
   }
 
-  public Result calculateQuickResult(@NotNull Expression[] params, ExpressionContext context) {
-    return null;
-  }
-
-  public LookupElement[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
-    return LookupElement.EMPTY_ARRAY;
-  }
 }

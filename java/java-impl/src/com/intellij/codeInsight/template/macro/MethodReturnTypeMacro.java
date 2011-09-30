@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author yole
  */
-public class MethodReturnTypeMacro implements Macro {
+public class MethodReturnTypeMacro extends Macro {
   public String getName() {
     return "methodReturnType";
   }
@@ -36,6 +36,7 @@ public class MethodReturnTypeMacro implements Macro {
     return "methodReturnType()";
   }
 
+  @NotNull
   public String getDefaultValue() {
     return "a";
   }
@@ -58,11 +59,4 @@ public class MethodReturnTypeMacro implements Macro {
     return null;
   }
 
-  public Result calculateQuickResult(@NotNull final Expression[] params, final ExpressionContext context) {
-    return null;
-  }
-
-  public LookupElement[] calculateLookupItems(@NotNull final Expression[] params, final ExpressionContext context) {
-    return null;
-  }
 }

@@ -32,7 +32,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-public class VariableOfTypeMacro implements Macro {
+public class VariableOfTypeMacro extends Macro {
 
   public String getName() {
     return "variableOfType";
@@ -42,6 +42,7 @@ public class VariableOfTypeMacro implements Macro {
     return CodeInsightBundle.message("macro.variable.of.type");
   }
 
+  @NotNull
   public String getDefaultValue() {
     return "a";
   }
@@ -50,10 +51,6 @@ public class VariableOfTypeMacro implements Macro {
     final PsiElement[] vars = getVariables(params, context);
     if (vars == null || vars.length == 0) return null;
     return new JavaPsiElementResult(vars[0]);
-  }
-
-  public Result calculateQuickResult(@NotNull Expression[] params, ExpressionContext context) {
-    return null;
   }
 
   public LookupElement[] calculateLookupItems(@NotNull Expression[] params, final ExpressionContext context) {

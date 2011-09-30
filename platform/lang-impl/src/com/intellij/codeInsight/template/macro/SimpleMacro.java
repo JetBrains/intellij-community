@@ -16,7 +16,6 @@
 
 package com.intellij.codeInsight.template.macro;
 
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author yole
  */
-public abstract class SimpleMacro implements Macro {
+public abstract class SimpleMacro extends Macro {
   private final String myName;
 
   protected SimpleMacro(final String name) {
@@ -40,6 +39,7 @@ public abstract class SimpleMacro implements Macro {
     return myName + "()";
   }
 
+  @NotNull
   @NonNls
   public String getDefaultValue() {
     return "11.11.1111";
@@ -51,10 +51,6 @@ public abstract class SimpleMacro implements Macro {
 
   public Result calculateQuickResult(@NotNull final Expression[] params, final ExpressionContext context) {
     return calculateResult(params, context);
-  }
-
-  public LookupElement[] calculateLookupItems(@NotNull final Expression[] params, final ExpressionContext context) {
-    return LookupElement.EMPTY_ARRAY;
   }
 
   protected abstract String evaluate();

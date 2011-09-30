@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.template.macro;
 
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Konstantin Bulenkov
  */
-public abstract class MacroBase implements Macro {
+public abstract class MacroBase extends Macro {
   private final String myName;
   private final String myDescription;
 
@@ -55,13 +54,10 @@ public abstract class MacroBase implements Macro {
     return myDescription;
   }
 
+  @NotNull
   @Override
   public String getDefaultValue() {
     return "a";
-  }
-
-  public LookupElement[] calculateLookupItems(@NotNull Expression[] params, final ExpressionContext context) {
-    return LookupElement.EMPTY_ARRAY;
   }
 
   @Nullable

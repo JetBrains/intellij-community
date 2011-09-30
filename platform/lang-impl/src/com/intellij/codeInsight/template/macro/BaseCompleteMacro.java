@@ -34,7 +34,7 @@ import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class BaseCompleteMacro implements Macro {
+public abstract class BaseCompleteMacro extends Macro {
   private final String myName;
 
   protected BaseCompleteMacro(@NonNls String name) {
@@ -51,6 +51,7 @@ public abstract class BaseCompleteMacro implements Macro {
     return myName + "()";
   }
 
+  @NotNull
   public String getDefaultValue() {
     return "a";
   }
@@ -114,14 +115,6 @@ public abstract class BaseCompleteMacro implements Macro {
         );
       }
     });
-  }
-
-  public Result calculateQuickResult(@NotNull Expression[] params, ExpressionContext context) {
-    return null;
-  }
-
-  public LookupElement[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
-    return null;
   }
 
   private static class MyLookupListener extends LookupAdapter {

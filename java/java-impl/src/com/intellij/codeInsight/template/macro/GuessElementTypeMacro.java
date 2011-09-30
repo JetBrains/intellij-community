@@ -33,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-public class GuessElementTypeMacro implements Macro {
+public class GuessElementTypeMacro extends Macro {
   public String getName() {
     return "guessElementType";
   }
@@ -42,6 +42,7 @@ public class GuessElementTypeMacro implements Macro {
     return CodeInsightBundle.message("macro.guess.element.type.of.container");
   }
 
+  @NotNull
   public String getDefaultValue() {
     return "A";
   }
@@ -50,10 +51,6 @@ public class GuessElementTypeMacro implements Macro {
     PsiType[] types = guessTypes(params, context);
     if (types == null || types.length == 0) return null;
     return new PsiTypeResult(types[0], context.getProject());
-  }
-
-  public Result calculateQuickResult(@NotNull Expression[] params, ExpressionContext context) {
-    return null;
   }
 
   public LookupElement[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {

@@ -23,7 +23,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class SuggestIndexNameMacro implements Macro{
+public class SuggestIndexNameMacro extends Macro {
   public String getName() {
     return "suggestIndexName";
   }
@@ -32,6 +32,7 @@ public class SuggestIndexNameMacro implements Macro{
     return CodeInsightBundle.message("macro.suggest.index.name");
   }
 
+  @NotNull
   public String getDefaultValue() {
     return "a";
   }
@@ -72,11 +73,4 @@ public class SuggestIndexNameMacro implements Macro{
     return null;
   }
 
-  public Result calculateQuickResult(@NotNull Expression[] params, ExpressionContext context) {
-    return null;
-  }
-
-  public LookupElement[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
-    return null;
-  }
 }

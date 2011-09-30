@@ -17,21 +17,16 @@
 package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.*;
 import org.jetbrains.annotations.NotNull;
 
-public class LineNumberMacro implements Macro{
+public class LineNumberMacro extends Macro {
   public String getName() {
     return "lineNumber";
   }
 
   public String getDescription() {
     return CodeInsightBundle.message("macro.linenumber");
-  }
-
-  public String getDefaultValue() {
-    return "";
   }
 
   public Result calculateResult(@NotNull Expression[] params, ExpressionContext context) {
@@ -42,10 +37,6 @@ public class LineNumberMacro implements Macro{
 
   public Result calculateQuickResult(@NotNull Expression[] params, ExpressionContext context) {
     return calculateResult(params, context);
-  }
-
-  public LookupElement[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
-    return LookupElement.EMPTY_ARRAY;
   }
 
 }

@@ -16,13 +16,12 @@
 package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-public class QualifiedClassNameMacro implements Macro {
+public class QualifiedClassNameMacro extends Macro {
 
   public String getName() {
     return "qualifiedClassName";
@@ -30,10 +29,6 @@ public class QualifiedClassNameMacro implements Macro {
 
   public String getDescription() {
     return CodeInsightBundle.message("macro.qualified.class.name");
-  }
-
-  public String getDefaultValue() {
-    return "";
   }
 
   public Result calculateResult(@NotNull Expression[] params, final ExpressionContext context) {
@@ -56,11 +51,4 @@ public class QualifiedClassNameMacro implements Macro {
     return null;
   }
 
-  public Result calculateQuickResult(@NotNull Expression[] params, ExpressionContext context) {
-    return null;
-  }
-
-  public LookupElement[] calculateLookupItems(@NotNull Expression[] params, final ExpressionContext context) {
-    return null;
-  }
 }

@@ -32,17 +32,13 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-public class DescendantClassesEnumMacro implements Macro {
+public class DescendantClassesEnumMacro extends Macro {
   public String getName() {
     return "descendantClassesEnum";
   }
 
   public String getDescription() {
     return CodeInsightBundle.message("macro.descendant.classes.enum");
-  }
-
-  public String getDefaultValue() {
-    return "";
   }
 
   public Result calculateResult(@NotNull Expression[] params, ExpressionContext context) {

@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
@@ -32,17 +31,13 @@ import org.jetbrains.annotations.NotNull;
  * Time: 8:36:42 PM
  * To change this template use Options | File Templates.
  */
-class CurrentPackageMacro implements Macro {
+class CurrentPackageMacro extends Macro {
   public String getName() {
     return "currentPackage";
   }
 
   public String getDescription() {
     return CodeInsightBundle.message("macro.current.package");
-  }
-
-  public String getDefaultValue() {
-    return "";
   }
 
   public Result calculateResult(@NotNull Expression[] params, ExpressionContext context) {
@@ -56,10 +51,5 @@ class CurrentPackageMacro implements Macro {
   public Result calculateQuickResult(@NotNull Expression[] params, ExpressionContext context) {
     return calculateResult(params, context);
   }
-
-  public LookupElement[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
-    return LookupElement.EMPTY_ARRAY;
-  }
-
 
 }

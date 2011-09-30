@@ -37,7 +37,7 @@ import java.util.Set;
 /**
  * @author Maxim.Mossienko
  */
-public class AnnotatedMacro implements Macro {
+public class AnnotatedMacro extends Macro {
 
   @NonNls
   public String getName() {
@@ -46,11 +46,6 @@ public class AnnotatedMacro implements Macro {
 
   public String getDescription() {
     return "annotated(\"annotation qname\")";
-  }
-
-  @NonNls
-  public String getDefaultValue() {
-    return "";
   }
 
   @Nullable

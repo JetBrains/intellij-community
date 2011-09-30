@@ -28,7 +28,7 @@ import java.util.Set;
 /**
  * @author ven
  */
-public abstract class VariableTypeMacroBase implements Macro {
+public abstract class VariableTypeMacroBase extends Macro {
   @Nullable
   protected abstract PsiElement[] getVariables(Expression[] params, final ExpressionContext context);
 
@@ -48,10 +48,7 @@ public abstract class VariableTypeMacroBase implements Macro {
     return new JavaPsiElementResult(vars[0]);
   }
 
-  public Result calculateQuickResult(@NotNull Expression[] params, ExpressionContext context) {
-    return null;
-  }
-
+  @NotNull
   public String getDefaultValue() {
     return "a";
   }

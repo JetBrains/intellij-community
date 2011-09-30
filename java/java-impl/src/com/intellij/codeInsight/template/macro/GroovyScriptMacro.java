@@ -32,17 +32,13 @@ import java.util.Set;
 /**
  * @author Maxim.Mossienko
  */
-public class GroovyScriptMacro implements Macro {
+public class GroovyScriptMacro extends Macro {
   public String getName() {
     return "groovyScript";
   }
 
   public String getDescription() {
     return CodeInsightBundle.message("macro.groovy.script");
-  }
-
-  public String getDefaultValue() {
-    return "";
   }
 
   public Result calculateResult(@NotNull Expression[] params, ExpressionContext context) {
