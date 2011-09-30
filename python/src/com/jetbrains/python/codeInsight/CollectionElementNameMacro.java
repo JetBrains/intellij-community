@@ -12,15 +12,16 @@ import java.util.List;
 /**
  * @author yole
  */
-public class CollectionElementNameMacro implements Macro {
+public class CollectionElementNameMacro extends Macro {
   public String getName() {
     return "collectionElementName";
   }
 
-  public String getDescription() {
+  public String getPresentableName() {
     return "collectionElementName()";
   }
 
+  @NotNull
   public String getDefaultValue() {
     return "a";
   }
@@ -48,10 +49,6 @@ public class CollectionElementNameMacro implements Macro {
     }
     final String result = StringUtil.unpluralize(param);
     return result == null ? param : result;
-  }
-
-  public Result calculateQuickResult(@NotNull Expression[] params, ExpressionContext context) {
-    return null;
   }
 
   public LookupElement[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {

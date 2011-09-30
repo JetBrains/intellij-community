@@ -70,6 +70,11 @@ public class PyQuickFixTest extends PyLightFixtureTestCase {
     doInspectionTest("AddSelf.py", PyMethodParametersInspection.class, PyBundle.message("QFIX.add.parameter.self", "self"), true, true);
   }
 
+  public void testAddSelfFunction() { //PY-4556
+    doInspectionTest("AddSelfFunction.py",
+                     PyUnresolvedReferencesInspection.class, PyBundle.message("QFIX.unresolved.reference", "get_a"), true, true);
+  }
+
   public void testAddCls() {
     doInspectionTest("AddCls.py", PyMethodParametersInspection.class, PyBundle.message("QFIX.add.parameter.self", "cls"), true, true);
   }

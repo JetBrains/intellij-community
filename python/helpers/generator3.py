@@ -2369,7 +2369,9 @@ if __name__ == "__main__":
             report("Expected no args with -L, got %d args", len(args))
             sys.exit(1)
         say(VERSION)
-        for name, path in find_binaries(sys.path):
+        results = list(find_binaries(sys.path))
+        results.sort()
+        for name, path in results:
             say("%s %s", name, path)
         sys.exit(0)
 

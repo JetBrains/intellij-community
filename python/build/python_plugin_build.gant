@@ -14,7 +14,7 @@ setProperty("ideaHome", "${ideaDir}/jdk16")
 
 setProperty("pluginHelp", "${outDir}/help")
 
-setProperty("buildNumber", requireProperty("build.number", "108.SNAPSHOT"))
+setProperty("buildNumber", requireProperty("build.number", snapshot))
 
 setProperty("pluginHome", "${basedir}/..")
 setProperty("pluginRevision", "${buildNumber}")

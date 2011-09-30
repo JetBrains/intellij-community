@@ -17,3 +17,7 @@ def super(a, b):
 class C:
   def __init__(self):
     super(C, self)
+
+class C(D):
+  def meth(self, arg):
+      super(C, self).meth(arg)
