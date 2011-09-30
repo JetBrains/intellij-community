@@ -26,7 +26,7 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashSet;
-import git4idea.GitRemote;
+import git4idea.GitDeprecatedRemote;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.actions.BasicAction;
@@ -75,7 +75,7 @@ public class GithubShareAction extends DumbAwareAction {
     final boolean gitDetected = GitUtil.isUnderGit(root);
     if (gitDetected) {
       try {
-        final List<GitRemote> gitRemotes = GitRemote.list(project, root);
+        final List<GitDeprecatedRemote> gitRemotes = GitDeprecatedRemote.list(project, root);
         if (!gitRemotes.isEmpty()) {
           Messages.showErrorDialog(project, "Project is already under git with configured remote", "Cannot create new GitHub repository");
           return;

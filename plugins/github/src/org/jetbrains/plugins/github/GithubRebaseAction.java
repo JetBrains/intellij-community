@@ -30,7 +30,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
-import git4idea.GitRemote;
+import git4idea.GitDeprecatedRemote;
 import git4idea.GitUtil;
 import git4idea.actions.BasicAction;
 import git4idea.commands.GitCommand;
@@ -88,9 +88,9 @@ public class GithubRebaseAction extends DumbAwareAction {
 
     try {
       // Check that given repository is properly configured git repository
-      final GitRemote githubRemote = GithubUtil.accessToGithubWithModalProgress(project, new Computable<GitRemote>(){
+      final GitDeprecatedRemote githubRemote = GithubUtil.accessToGithubWithModalProgress(project, new Computable<GitDeprecatedRemote>(){
         @Override
-        public GitRemote compute() {
+        public GitDeprecatedRemote compute() {
           ProgressManager.getInstance().getProgressIndicator().setText("Reading branches information");
           return GithubUtil.findGitHubRemoteBranch(project, project.getBaseDir());
         }
@@ -99,7 +99,7 @@ public class GithubRebaseAction extends DumbAwareAction {
         return;
       }
 
-      final List<GitRemote> gitRemotes = GitRemote.list(project, root);
+      final List<GitDeprecatedRemote> gitRemotes = GitDeprecatedRemote.list(project, root);
       final String pushUrl = githubRemote.pushUrl();
       final String login = GithubSettings.getInstance().getLogin();
       final int index = pushUrl.lastIndexOf(login);
@@ -132,7 +132,7 @@ public class GithubRebaseAction extends DumbAwareAction {
 
       // Check that corresponding remote branch is configured for the fork origin repo
       final Ref<String> remoteForForkParentRepo = new Ref<String>();
-      for (GitRemote gitRemote : gitRemotes) {
+      for (GitDeprecatedRemote gitRemote : gitRemotes) {
         final String fetchUrl = gitRemote.fetchUrl();
         if (fetchUrl.endsWith(parent + ".git")) {
           remoteForForkParentRepo.set(gitRemote.name());

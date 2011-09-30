@@ -10,7 +10,7 @@ import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.github.GitHubRepository;
 import com.intellij.tasks.github.GitHubRepositoryType;
 import com.intellij.tasks.impl.TaskManagerImpl;
-import git4idea.GitRemote;
+import git4idea.GitDeprecatedRemote;
 import git4idea.GitUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,7 +43,7 @@ public class GithubCheckoutListener implements CheckoutListener {
     // Check if git is already initialized and presence of remote branch
     final boolean gitDetected = GitUtil.isUnderGit(root);
     if (gitDetected) {
-      final GitRemote gitRemote = GithubUtil.findGitHubRemoteBranch(project, root);
+      final GitDeprecatedRemote gitRemote = GithubUtil.findGitHubRemoteBranch(project, root);
       if (gitRemote == null) {
         return null;
       }

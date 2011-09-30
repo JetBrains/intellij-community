@@ -20,7 +20,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitBranch;
-import git4idea.GitRemote;
+import git4idea.GitDeprecatedRemote;
 import git4idea.i18n.GitBundle;
 
 import javax.swing.*;
@@ -132,7 +132,7 @@ public class CurrentBranchDialog extends DialogWrapper {
     myRepositoryComboBox.addItem(REMOTE_NONE);
     if (current != null) {
       myRepositoryComboBox.addItem(REMOTE_THIS);
-      for (GitRemote r : GitRemote.list(myProject, root)) {
+      for (GitDeprecatedRemote r : GitDeprecatedRemote.list(myProject, root)) {
         myRepositoryComboBox.addItem(r.name());
       }
     }

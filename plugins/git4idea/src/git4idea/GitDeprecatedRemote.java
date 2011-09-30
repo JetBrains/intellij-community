@@ -37,9 +37,12 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
+ * @deprecated Use {@link git4idea.repo.GitRemote} to work with remotes. Use {@link GitRepository#getConfig#getRemotes()} to get the list
+ * of remotes.
+ * 
  * A git remotes
  */
-public final class GitRemote {
+public final class GitDeprecatedRemote {
   /**
    * The name of the remote
    */
@@ -87,7 +90,7 @@ public final class GitRemote {
    * @param name the name
    * @param url  the url
    */
-  public GitRemote(@NotNull final String name, final String url) {
+  public GitDeprecatedRemote(@NotNull final String name, final String url) {
     this(name, url, url);
   }
 
@@ -98,7 +101,7 @@ public final class GitRemote {
    * @param fetchUrl the fetch url
    * @param pushUrl  the fetch url
    */
-  public GitRemote(String name, String fetchUrl, String pushUrl) {
+  public GitDeprecatedRemote(String name, String fetchUrl, String pushUrl) {
     myName = name;
     myFetchUrl = fetchUrl;
     myPushUrl = pushUrl;
@@ -138,7 +141,7 @@ public final class GitRemote {
    */
   @Override
   public boolean equals(final Object obj) {
-    return (obj instanceof GitRemote) && myName.equals(((GitRemote)obj).myName);
+    return (obj instanceof GitDeprecatedRemote) && myName.equals(((GitDeprecatedRemote)obj).myName);
   }
 
   /**
@@ -157,7 +160,7 @@ public final class GitRemote {
    * @return a list of registered remotes
    * @throws VcsException in case of git error
    */
-  public static List<GitRemote> list(Project project, VirtualFile root) throws VcsException {
+  public static List<GitDeprecatedRemote> list(Project project, VirtualFile root) throws VcsException {
     GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.REMOTE);
     handler.setNoSSH(true);
     handler.setSilent(true);
@@ -172,8 +175,8 @@ public final class GitRemote {
    * @param output the output to parse
    * @return list of remotes
    */
-  public static List<GitRemote> parseRemoteListInternal(String output) {
-    ArrayList<GitRemote> remotes = new ArrayList<GitRemote>();
+  public static List<GitDeprecatedRemote> parseRemoteListInternal(String output) {
+    ArrayList<GitDeprecatedRemote> remotes = new ArrayList<GitDeprecatedRemote>();
     StringScanner s = new StringScanner(output);
     String name = null;
     String fetch = null;
@@ -184,7 +187,7 @@ public final class GitRemote {
         if (push == null) {
           push = fetch;
         }
-        remotes.add(new GitRemote(name, fetch, push));
+        remotes.add(new GitDeprecatedRemote(name, fetch, push));
         fetch = null;
         push = null;
       }
@@ -205,7 +208,7 @@ public final class GitRemote {
       if (push == null) {
         push = fetch;
       }
-      remotes.add(new GitRemote(name, fetch, push));
+      remotes.add(new GitDeprecatedRemote(name, fetch, push));
     }
     return remotes;
   }
@@ -220,7 +223,7 @@ public final class GitRemote {
    * @throws VcsException if there is a problem with running git
    */
   @Nullable
-  public static GitRemote find(@NotNull Project project, @NotNull VirtualFile root, @NotNull String name) throws VcsException {
+  public static GitDeprecatedRemote find(@NotNull Project project, @NotNull VirtualFile root, @NotNull String name) throws VcsException {
     GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.REMOTE);
     handler.setNoSSH(true);
     handler.setSilent(true);
@@ -240,7 +243,7 @@ public final class GitRemote {
    * @param output the output of "git remote show -n {name}" command
    * @return the parsed remote
    */
-  public static GitRemote parseRemoteInternal(String name, String output) {
+  public static GitDeprecatedRemote parseRemoteInternal(String name, String output) {
     StringScanner in = new StringScanner(output);
     if (!in.tryConsume("* ")) {
       throw new IllegalStateException("Unexpected format for 'git remote show'");
@@ -267,7 +270,7 @@ public final class GitRemote {
     else {
       throw new IllegalStateException("Unexpected format for 'git remote show':\n" + output);
     }
-    return new GitRemote(name, fetch, push);
+    return new GitDeprecatedRemote(name, fetch, push);
   }
 
 
@@ -410,8 +413,8 @@ public final class GitRemote {
     /**
      * @return a remote for this information object
      */
-    public GitRemote remote() {
-      return GitRemote.this;
+    public GitDeprecatedRemote remote() {
+      return GitDeprecatedRemote.this;
     }
 
     /**

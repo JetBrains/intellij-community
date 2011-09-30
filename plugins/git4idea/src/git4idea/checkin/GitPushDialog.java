@@ -25,7 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.containers.HashMap;
 import git4idea.GitBranch;
-import git4idea.GitRemote;
+import git4idea.GitDeprecatedRemote;
 import git4idea.GitTag;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
@@ -266,11 +266,11 @@ public class GitPushDialog extends DialogWrapper {
     // select remote listener
     final DocumentAdapter listener = new DocumentAdapter() {
       VirtualFile myPreviousRoot;
-      GitRemote myPreviousRemote = null;
+      GitDeprecatedRemote myPreviousRemote = null;
 
       protected void textChanged(final DocumentEvent e) {
         final VirtualFile newRoot = getGitRoot();
-        final GitRemote newRemote = getRemote(getRemoteTextField().getText());
+        final GitDeprecatedRemote newRemote = getRemote(getRemoteTextField().getText());
         if (newRoot == null) {
           return;
         }
@@ -324,7 +324,7 @@ public class GitPushDialog extends DialogWrapper {
     Boolean rc = myMirrorChecks.get(name);
     if (rc == null) {
       rc = false;
-      GitRemote remote = getRemote(name);
+      GitDeprecatedRemote remote = getRemote(name);
       if (remote != null) {
         try {
           rc = GitConfigUtil.getBoolValue(myProject, getGitRoot(), "remote." + name + ".mirror");
@@ -348,9 +348,9 @@ public class GitPushDialog extends DialogWrapper {
    * @return the remote or null
    */
   @Nullable
-  private GitRemote getRemote(final String name) {
+  private GitDeprecatedRemote getRemote(final String name) {
     for (int i = myRemoteComboBox.getItemCount() - 1; i >= 0; i--) {
-      final GitRemote r = (GitRemote)myRemoteComboBox.getItemAt(i);
+      final GitDeprecatedRemote r = (GitDeprecatedRemote)myRemoteComboBox.getItemAt(i);
       if (name.equals(r.toString())) {
         return r;
       }

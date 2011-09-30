@@ -27,7 +27,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.net.HttpConfigurable;
-import git4idea.GitRemote;
+import git4idea.GitDeprecatedRemote;
 import git4idea.config.GitVcsApplicationSettings;
 import git4idea.config.GitVersion;
 import git4idea.i18n.GitBundle;
@@ -322,7 +322,7 @@ public class GithubUtil {
   }
 
   @Nullable
-  public static GitRemote findGitHubRemoteBranch(final Project project, final VirtualFile root) {
+  public static GitDeprecatedRemote findGitHubRemoteBranch(final Project project, final VirtualFile root) {
     // i.e. find origin which points on my github repo
     try {
       // Check that given repository is properly configured git repository
@@ -333,8 +333,8 @@ public class GithubUtil {
       final String userRepoMarkerSSHProtocol = host + ":" + username + "/";
       final String userRepoMarkerOtherProtocols = host + "/" + username + "/";
 
-      final List<GitRemote> gitRemotes = GitRemote.list(project, root);
-      for (GitRemote gitRemote : gitRemotes) {
+      final List<GitDeprecatedRemote> gitRemotes = GitDeprecatedRemote.list(project, root);
+      for (GitDeprecatedRemote gitRemote : gitRemotes) {
         final String pushUrl = gitRemote.pushUrl();
         if (pushUrl.contains(userRepoMarkerSSHProtocol) || pushUrl.contains(userRepoMarkerOtherProtocols)) {
           return gitRemote;

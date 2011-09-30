@@ -17,7 +17,7 @@
 package git4idea.tests;
 
 import com.intellij.openapi.util.io.FileUtil;
-import git4idea.GitRemote;
+import git4idea.GitDeprecatedRemote;
 import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 
@@ -46,21 +46,21 @@ public class GitRemoteTest {
   @Test
   public void testFindRemote() throws IOException {
     String out161 = getOutput("1_6_1", "show");
-    GitRemote r1 = GitRemote.parseRemoteInternal("origin", out161);
+    GitDeprecatedRemote r1 = GitDeprecatedRemote.parseRemoteInternal("origin", out161);
     assertEquals(r1.name(), "origin");
     assertEquals(r1.fetchUrl(), "git@host/dir.git");
     assertEquals(r1.pushUrl(), "git@host/dir.git");
-    GitRemote.Info ri1 = r1.parseInfoInternal(out161);
+    GitDeprecatedRemote.Info ri1 = r1.parseInfoInternal(out161);
     TreeSet<String> branches = new TreeSet<String>();
     branches.add("master");
     assertEquals(branches, ri1.trackedBranches());
     assertEquals("master", ri1.getRemoteForLocal("master"));
     String out164 = getOutput("1_6_4", "show");
-    GitRemote r2 = GitRemote.parseRemoteInternal("origin", out164);
+    GitDeprecatedRemote r2 = GitDeprecatedRemote.parseRemoteInternal("origin", out164);
     assertEquals(r2.name(), "origin");
     assertEquals(r2.fetchUrl(), "git://host/dir.git");
     assertEquals(r2.pushUrl(), "git@host/dir.git");
-    GitRemote.Info ri2 = r1.parseInfoInternal(out164);
+    GitDeprecatedRemote.Info ri2 = r1.parseInfoInternal(out164);
     branches.add("master");
     assertEquals(branches, ri2.trackedBranches());
     assertEquals("master", ri2.getRemoteForLocal("master"));
@@ -69,16 +69,16 @@ public class GitRemoteTest {
   @Test
   public void testListRemote() throws IOException {
     String out161 = getOutput("1_6_1", "list");
-    List<GitRemote> list = GitRemote.parseRemoteListInternal(out161);
+    List<GitDeprecatedRemote> list = GitDeprecatedRemote.parseRemoteListInternal(out161);
     assertEquals(1, list.size());
-    GitRemote r1 = list.get(0);
+    GitDeprecatedRemote r1 = list.get(0);
     assertEquals("origin", r1.name());
     assertEquals("git@host/dir.git", r1.fetchUrl());
     assertEquals("git@host/dir.git", r1.pushUrl());
     String out164 = getOutput("1_6_4", "list");
-    List<GitRemote> list2 = GitRemote.parseRemoteListInternal(out164);
+    List<GitDeprecatedRemote> list2 = GitDeprecatedRemote.parseRemoteListInternal(out164);
     assertEquals(1, list2.size());
-    GitRemote r2 = list2.get(0);
+    GitDeprecatedRemote r2 = list2.get(0);
     assertEquals("git://host/dir.git", r2.fetchUrl());
     assertEquals("git@host/dir.git", r2.pushUrl());
   }

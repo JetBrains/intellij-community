@@ -22,7 +22,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.ArrayUtil;
-import git4idea.GitRemote;
+import git4idea.GitDeprecatedRemote;
 import git4idea.GitVcs;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitHandlerUtil;
@@ -227,10 +227,10 @@ public class GitPullDialog extends DialogWrapper {
     try {
       String item = getRemote();
       myBranchChooser.removeAllElements();
-      GitRemote r = null;
+      GitDeprecatedRemote r = null;
       final int count = myRemote.getItemCount();
       for (int i = 0; i < count; i++) {
-        GitRemote candidate = (GitRemote)myRemote.getItemAt(i);
+        GitDeprecatedRemote candidate = (GitDeprecatedRemote)myRemote.getItemAt(i);
         if (candidate.name().equals(item)) {
           r = candidate;
           break;
@@ -239,7 +239,7 @@ public class GitPullDialog extends DialogWrapper {
       if (r == null) {
         return;
       }
-      GitRemote.Info ri = r.localInfo(myProject, gitRoot());
+      GitDeprecatedRemote.Info ri = r.localInfo(myProject, gitRoot());
       String toSelect = ri.getRemoteForLocal(currentBranch());
       for (String trackedBranch : ri.trackedBranches()) {
         myBranchChooser.addElement(trackedBranch, trackedBranch.equals(toSelect));

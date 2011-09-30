@@ -25,7 +25,7 @@ import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitBranch;
-import git4idea.GitRemote;
+import git4idea.GitDeprecatedRemote;
 import git4idea.GitVcs;
 import git4idea.config.GitConfigUtil;
 import git4idea.i18n.GitBundle;
@@ -169,9 +169,9 @@ public class GitUIUtil {
    */
   public static ListCellRenderer getGitRemoteListCellRenderer(final String defaultRemote, final boolean fetchUrl,
                                                               final ListCellRenderer listCellRenderer) {
-    return new ListCellRendererWrapper<GitRemote>(listCellRenderer) {
+    return new ListCellRendererWrapper<GitDeprecatedRemote>(listCellRenderer) {
       @Override
-      public void customize(final JList list, final GitRemote remote, final int index, final boolean selected, final boolean hasFocus) {
+      public void customize(final JList list, final GitDeprecatedRemote remote, final int index, final boolean selected, final boolean hasFocus) {
         final String text;
         if (remote == null) {
           text = GitBundle.getString("util.remote.renderer.none");
@@ -335,15 +335,15 @@ public class GitUIUtil {
                                   final JComboBox remoteCombobox,
                                   final boolean fetchUrl) {
     try {
-      List<GitRemote> remotes = GitRemote.list(project, root);
+      List<GitDeprecatedRemote> remotes = GitDeprecatedRemote.list(project, root);
       String remote = null;
       if (currentBranch != null) {
         remote = GitConfigUtil.getValue(project, root, "branch." + currentBranch + ".remote");
       }
       remoteCombobox.setRenderer(getGitRemoteListCellRenderer(remote, fetchUrl, remoteCombobox.getRenderer()));
-      GitRemote toSelect = null;
+      GitDeprecatedRemote toSelect = null;
       remoteCombobox.removeAllItems();
-      for (GitRemote r : remotes) {
+      for (GitDeprecatedRemote r : remotes) {
         remoteCombobox.addItem(r);
         if (r.name().equals(remote)) {
           toSelect = r;

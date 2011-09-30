@@ -27,7 +27,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitBranch;
-import git4idea.GitRemote;
+import git4idea.GitDeprecatedRemote;
 import git4idea.GitUtil;
 import org.jetbrains.plugins.github.ui.GithubLoginDialog;
 
@@ -97,7 +97,7 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
 
 
     // Check that given repository is properly configured git repository
-    final GitRemote githubRemote = GithubUtil.findGitHubRemoteBranch(project, project.getBaseDir());
+    final GitDeprecatedRemote githubRemote = GithubUtil.findGitHubRemoteBranch(project, project.getBaseDir());
     if (githubRemote == null) {
       Messages.showErrorDialog(project, "Configured github repository is not found", CANNOT_OPEN_IN_BROWSER);
       return;

@@ -36,7 +36,7 @@ import com.intellij.util.AsynchConsumer;
 import com.intellij.util.Consumer;
 import git4idea.GitBranch;
 import git4idea.GitFileRevision;
-import git4idea.GitRemote;
+import git4idea.GitDeprecatedRemote;
 import git4idea.GitUtil;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.history.GitHistoryUtils;
@@ -113,7 +113,7 @@ public class GitCommittedChangeListProvider implements CommittedChangesProvider<
         return new GitRepositoryLocation(gitRoot.getUrl(), rootFile);
       }
       else {
-        GitRemote r = GitRemote.find(myProject, gitRoot, remote);
+        GitDeprecatedRemote r = GitDeprecatedRemote.find(myProject, gitRoot, remote);
         return r == null ? null : new GitRepositoryLocation(r.fetchUrl(), rootFile);
       }
     }

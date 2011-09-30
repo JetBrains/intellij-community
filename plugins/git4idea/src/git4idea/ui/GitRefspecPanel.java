@@ -22,7 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.containers.HashMap;
 import git4idea.GitBranch;
-import git4idea.GitRemote;
+import git4idea.GitDeprecatedRemote;
 import git4idea.GitTag;
 import git4idea.commands.StringScanner;
 import git4idea.i18n.GitBundle;
@@ -54,7 +54,7 @@ public class GitRefspecPanel extends JPanel {
   /**
    * Named remotes associated with the current git root
    */
-  private final HashMap<String, GitRemote> myRemotes = new HashMap<String, GitRemote>();
+  private final HashMap<String, GitDeprecatedRemote> myRemotes = new HashMap<String, GitDeprecatedRemote>();
   /**
    * The project
    */
@@ -314,7 +314,7 @@ public class GitRefspecPanel extends JPanel {
     myRemotes.clear();
     if (myGitRoot != null) {
       try {
-        for (GitRemote r : GitRemote.list(myProject, myGitRoot)) {
+        for (GitDeprecatedRemote r : GitDeprecatedRemote.list(myProject, myGitRoot)) {
           myRemotes.put(r.name(), r);
         }
       }
@@ -338,7 +338,7 @@ public class GitRefspecPanel extends JPanel {
     }
     myRemote = name;
     myAddButton.setEnabled(myRemote != null && myRemote.length() != 0);
-    final GitRemote remote = myRemotes.get(name);
+    final GitDeprecatedRemote remote = myRemotes.get(name);
     if (remote != null) {
       myRemoteNameTextField.setText(name);
       myRemoteNameTextField.setEditable(false);
@@ -358,11 +358,11 @@ public class GitRefspecPanel extends JPanel {
    * Set default mapping
    */
   private void setDefaultMapping() {
-    final GitRemote remote = myRemotes.get(myRemote);
+    final GitDeprecatedRemote remote = myRemotes.get(myRemote);
     myReferencesModel.clear();
     if (remote != null && myReferenceSource == ReferenceSource.FETCH) {
       try {
-        for (String ref : GitRemote.getFetchSpecs(myProject, myGitRoot, remote.name())) {
+        for (String ref : GitDeprecatedRemote.getFetchSpecs(myProject, myGitRoot, remote.name())) {
           StringScanner s = new StringScanner(ref);
           boolean force = s.tryConsume('+');
           String remotePart = s.boundedToken(':');
