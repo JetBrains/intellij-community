@@ -54,4 +54,8 @@ public abstract class Macro {
   public LookupElement[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
     return null;
   }
+
+  public boolean isAcceptableInContext(TemplateContextType context) {
+    return true;
+  }
 }

@@ -276,6 +276,16 @@ public class LiveTemplateSettingsEditor extends JPanel {
     return panel;
   }
 
+  private List<TemplateContextType> getApplicableContexts() {
+    ArrayList<TemplateContextType> result = new ArrayList<TemplateContextType>();
+    for (TemplateContextType type : myContext.keySet()) {
+      if (myContext.get(type).booleanValue()) {
+        result.add(type);
+      }
+    }
+    return result;
+  }
+
   private JPanel createShortContextPanel() {
     JPanel panel = new JPanel(new BorderLayout());
 
@@ -290,24 +300,22 @@ public class LiveTemplateSettingsEditor extends JPanel {
       public void run() {
         StringBuilder sb = new StringBuilder();
         String oldPrefix = "";
-        for (TemplateContextType type : myContext.keySet()) {
-          if (myContext.get(type).booleanValue()) {
-            final TemplateContextType base = type.getBaseContextType();
-            String ownName = UIUtil.removeMnemonic(type.getPresentableName());
-            String prefix = "";
-            if (base != null && !(base instanceof EverywhereContextType)) {
-              prefix = UIUtil.removeMnemonic(base.getPresentableName()) + ": ";
-              ownName = StringUtil.decapitalize(ownName);
-            }
-            if (sb.length() > 0) {
-              sb.append(oldPrefix.equals(prefix) ? ", " : "; ");
-            }
-            if (!oldPrefix.equals(prefix)) {
-              sb.append(prefix);
-              oldPrefix = prefix;
-            }
-            sb.append(ownName);
+        for (TemplateContextType type : getApplicableContexts()) {
+          final TemplateContextType base = type.getBaseContextType();
+          String ownName = UIUtil.removeMnemonic(type.getPresentableName());
+          String prefix = "";
+          if (base != null && !(base instanceof EverywhereContextType)) {
+            prefix = UIUtil.removeMnemonic(base.getPresentableName()) + ": ";
+            ownName = StringUtil.decapitalize(ownName);
           }
+          if (sb.length() > 0) {
+            sb.append(oldPrefix.equals(prefix) ? ", " : "; ");
+          }
+          if (!oldPrefix.equals(prefix)) {
+            sb.append(prefix);
+            oldPrefix = prefix;
+          }
+          sb.append(ownName);
         }
         final boolean noContexts = sb.length() == 0;
         ctxLabel.setText((noContexts ? "No applicable contexts yet" : "Applicable in " + sb.toString()) + ".  ");
@@ -424,27 +432,23 @@ public class LiveTemplateSettingsEditor extends JPanel {
 
   private boolean isExpandableFromEditor() {
     boolean hasNonExpandable = false;
-    for (TemplateContextType type : myContext.keySet()) {
-      if (myContext.get(type)) {
-        if (type.isExpandableFromEditor()) {
-          return true;
-        }
-        hasNonExpandable = true;
+    for (TemplateContextType type : getApplicableContexts()) {
+      if (type.isExpandableFromEditor()) {
+        return true;
       }
+      hasNonExpandable = true;
     }
     
     return !hasNonExpandable;
   }
 
   private void updateHighlighter() {
-    for (TemplateContextType contextType : myContext.keySet()) {
-      final Boolean enabled = myContext.get(contextType);
-      if (enabled != null && enabled.booleanValue()) {
-        TemplateContext contextByType = new TemplateContext();
-        contextByType.setEnabled(contextType, true);
-        TemplateEditorUtil.setHighlighter(myTemplateEditor, contextByType);
-        break;
-      }
+    List<TemplateContextType> applicableContexts = getApplicableContexts();
+    if (!applicableContexts.isEmpty()) {
+      TemplateContext contextByType = new TemplateContext();
+      contextByType.setEnabled(applicableContexts.get(0), true);
+      TemplateEditorUtil.setHighlighter(myTemplateEditor, contextByType);
+      return;
     }
     ((EditorEx) myTemplateEditor).repaint(0, myTemplateEditor.getDocument().getTextLength());
   }
@@ -502,7 +506,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
   private void editVariables() {
     ArrayList<Variable> newVariables = updateVariablesByTemplateText();
 
-    EditVariableDialog editVariableDialog = new EditVariableDialog(myTemplateEditor, myEditVariablesButton, newVariables);
+    EditVariableDialog editVariableDialog = new EditVariableDialog(myTemplateEditor, myEditVariablesButton, newVariables, getApplicableContexts());
     editVariableDialog.show();
     if (editVariableDialog.isOK()) {
       applyVariables(newVariables);
