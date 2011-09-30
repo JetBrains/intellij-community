@@ -532,6 +532,11 @@ public class NameUtil {
         }
         i++;
       }
+
+      if (myPattern[patternIndex + i] == '*') {
+        nextStart = nameIndex + i;
+      }
+
       // there's more in the pattern, but no more words
       if (nextStart == name.length()) {
         if (patternIndex + i == myPattern.length - 1) {
@@ -586,7 +591,7 @@ public class NameUtil {
       }
 
       String nextChar = String.valueOf(myPattern[patternIndex]);
-      boolean wordStart = isWordStart(myPattern[patternIndex]);
+      boolean upper = Character.isUpperCase(myPattern[patternIndex]);
 
       int fromIndex = nameIndex;
       while (true) {
@@ -594,7 +599,7 @@ public class NameUtil {
         if (next < 0) {
           break;
         }
-        if (wordStart && next > 0 && next != nextWord(name, next - 1)) {
+        if (upper && next > 0 && !Character.isUpperCase(name.charAt(next))) {
           fromIndex = next + 1;
           continue;
         }
