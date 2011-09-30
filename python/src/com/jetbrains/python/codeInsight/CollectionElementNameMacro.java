@@ -17,7 +17,7 @@ public class CollectionElementNameMacro extends Macro {
     return "collectionElementName";
   }
 
-  public String getDescription() {
+  public String getPresentableName() {
     return "collectionElementName()";
   }
 
