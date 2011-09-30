@@ -20,7 +20,7 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
   private final Context myContext;
   private Map<File, Set<File>> myOutputsMap = Collections.emptyMap();
 
-  public static interface Context {
+  static interface Context {
     StandardJavaFileManager getStandardFileManager();
 
     void consumeOutputFile(OutputFileObject obj);

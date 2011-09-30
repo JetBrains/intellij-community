@@ -1,10 +1,10 @@
 package org.jetbrains.jps.incremental;
 
-import org.jetbrains.jps.ClasspathKind;
-import org.jetbrains.jps.ModuleChunk;
-import org.jetbrains.jps.Project;
-import org.jetbrains.jps.ProjectChunks;
+import org.jetbrains.jps.*;
+import org.jetbrains.jps.incremental.messages.BuildMessage;
+import org.jetbrains.jps.incremental.messages.ProgressMessage;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -17,6 +17,7 @@ public class IncProjectBuilder {
   private final BuilderRegistry myBuilderRegistry;
   private ProjectChunks myProductionChunks;
   private ProjectChunks myTestChunks;
+  private final List<MessageHandler> myMessageHandlers = new ArrayList<MessageHandler>();
 
   public IncProjectBuilder(Project project, BuilderRegistry builderRegistry) {
     myProject = project;
@@ -25,19 +26,36 @@ public class IncProjectBuilder {
     myTestChunks = new ProjectChunks(project, ClasspathKind.TEST_COMPILE);
   }
 
+  public void addMessageHandler(MessageHandler handler) {
+    myMessageHandlers.add(handler);
+  }
+
   public void build(CompileScope scope) {
-    final CompileContext context = new CompileContext(scope);
+    final CompileContext context = new CompileContext(scope) {
+      public void processMessage(BuildMessage msg) {
+        for (MessageHandler h : myMessageHandlers) {
+          h.processMessage(msg);
+        }
+      }
+    };
     try {
+      for (Module module : scope.getAffectedModules()) {
+        //context.processMessage(new ProgressMessage("Cleaning module " + module.getName()));
+        //myProject.cleanModule(module);
+      }
+
       runTasks(context, myBuilderRegistry.getBeforeTasks());
 
+      context.setCompilingTests(false);
       buildChunks(context, myProductionChunks);
 
+      context.setCompilingTests(true);
       buildChunks(context, myTestChunks);
 
       runTasks(context, myBuilderRegistry.getAfterTasks());
     }
     catch (ProjectBuildException e) {
-      e.printStackTrace(); // todo
+      context.processMessage(new ProgressMessage(e.getMessage()));
     }
   }
 
@@ -67,6 +85,10 @@ public class IncProjectBuilder {
     do {
       nextPassRequired = false;
       for (Builder builder : builders) {
+
+        final String sourcesKind = context.isCompilingTests() ? " on test sources of " : " on production sources of ";
+        context.processMessage(new ProgressMessage("Running " + builder.getDescription() + sourcesKind + chunk.getName()));
+
         final Builder.ExitCode buildResult = builder.build(context, chunk);
         if (buildResult == Builder.ExitCode.ABORT) {
           throw new ProjectBuildException("Builder " + builder.getDescription() + " requested build stop");

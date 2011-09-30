@@ -14,6 +14,10 @@ enum ClasspathKind {
   boolean isTestsIncluded() {
     return this == TEST_COMPILE || this == TEST_RUNTIME
   }
+
+  boolean isRuntime() {
+    return this == PRODUCTION_RUNTIME || this == TEST_RUNTIME
+  }
 }
 
 class DependencyScope {

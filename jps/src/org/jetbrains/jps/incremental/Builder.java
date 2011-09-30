@@ -14,4 +14,8 @@ public abstract class Builder {
   public abstract ExitCode build(CompileContext context, ModuleChunk chunk) throws ProjectBuildException;
 
   public abstract String getDescription();
+
+  public void cleanupResources() {
+
+  }
 }

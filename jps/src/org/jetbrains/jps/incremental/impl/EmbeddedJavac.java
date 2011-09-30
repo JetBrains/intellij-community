@@ -14,7 +14,7 @@ import java.util.concurrent.ExecutorService;
 public class EmbeddedJavac {
   private final JavaCompiler myCompiler;
   private final ExecutorService myTaskRunner;
-  private final SequentialTaskExecutor mySequentialTaskExecutor;
+  //private final SequentialTaskExecutor mySequentialTaskExecutor;
   private final List<ClassPostProcessor> myClassProcessors = new ArrayList<ClassPostProcessor>();
   private static final Set<String> FILTERED_OPTIONS = new HashSet<String>(Arrays.<String>asList(
     "-d", "-classpath", "-cp", "-bootclasspath"
@@ -30,7 +30,7 @@ public class EmbeddedJavac {
 
   public EmbeddedJavac(ExecutorService taskRunner) {
     myTaskRunner = taskRunner;
-    mySequentialTaskExecutor = new SequentialTaskExecutor(taskRunner);
+    //mySequentialTaskExecutor = new SequentialTaskExecutor(taskRunner);
     myCompiler = ToolProvider.getSystemJavaCompiler();
   }
 
@@ -38,12 +38,15 @@ public class EmbeddedJavac {
     myClassProcessors.add(processor);
   }
 
-  public boolean compile(final List<String> options, final List<File> sources, List<File> classpath, List<File> bootclasspath, File outputDir, final OutputConsumer outConsumer) {
+  public boolean compile(final Collection<String> options, final Collection<File> sources, Collection<File> classpath, Collection<File> bootclasspath, File outputDir, final OutputConsumer outConsumer) {
     return compile(options, sources, classpath, bootclasspath, Collections.singletonMap(outputDir, Collections.<File>emptySet()), outConsumer);
   }
 
-  public boolean compile(List<String> options, final List<File> sources, List<File> classpath, List<File> platformClasspath, Map<File, Set<File>> outputDirToRoots, final OutputConsumer outConsumer) {
+  public boolean compile(Collection<String> options, final Collection<File> sources, Collection<File> classpath, Collection<File> platformClasspath, Map<File, Set<File>> outputDirToRoots, final OutputConsumer outConsumer) {
     final FileManagerContext context = new FileManagerContext(outConsumer);
+    for (File outputDir : outputDirToRoots.keySet()) {
+      outputDir.mkdirs();
+    }
     final JavacFileManager fileManager = new JavacFileManager(context);
     fileManager.setOutputDirectories(outputDirToRoots);
     if (!classpath.isEmpty()) {
@@ -76,7 +79,7 @@ public class EmbeddedJavac {
     }
   }
 
-  private static List<String> filterOptionList(final List<String> options) {
+  private static Collection<String> filterOptionList(final Collection<String> options) {
     if (options.isEmpty()) {
       return options;
     }

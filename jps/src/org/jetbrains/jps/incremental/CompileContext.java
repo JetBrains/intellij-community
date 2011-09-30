@@ -12,13 +12,21 @@ import java.util.Set;
  * @author Eugene Zhuravlev
  *         Date: 9/17/11
  */
-public class CompileContext {
+public abstract class CompileContext implements MessageHandler {
   private final CompileScope myScope;
+  private boolean myCompilingTests = false;
 
   public CompileContext(CompileScope scope) {
     myScope = scope;
   }
 
+  public boolean isCompilingTests() {
+    return myCompilingTests;
+  }
+
+  public void setCompilingTests(boolean compilingTests) {
+    myCompilingTests = compilingTests;
+  }
 
   public CompileScope getScope() {
     return myScope;
@@ -36,13 +44,15 @@ public class CompileContext {
     }
   }
 
+  /** @noinspection unchecked*/
   private boolean processModule(Module module, FileProcessor processor) {
     final Set<File> excludes = new HashSet<File>();
     for (String excludePath : (Collection<String>)module.getExcludes()) {
       excludes.add(new File(excludePath));
     }
 
-    for (String root : (Collection<String>)module.getSourceRoots()) {
+    final Collection<String> roots = myCompilingTests? (Collection<String>)module.getTestRoots() : (Collection<String>)module.getSourceRoots();
+    for (String root : roots) {
       if (!processRootRecursively(module, new File(root), processor, excludes)) {
         return false;
       }

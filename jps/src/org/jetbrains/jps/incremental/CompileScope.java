@@ -2,6 +2,7 @@ package org.jetbrains.jps.incremental;
 
 import org.jetbrains.jps.Module;
 import org.jetbrains.jps.ModuleChunk;
+import org.jetbrains.jps.Project;
 
 import java.util.Collection;
 import java.util.Set;
@@ -11,6 +12,12 @@ import java.util.Set;
  *         Date: 9/17/11
  */
 public abstract class CompileScope {
+
+  private final Project myProject;
+
+  protected CompileScope(Project project) {
+    myProject = project;
+  }
 
   public abstract Collection<Module> getAffectedModules();
 
@@ -22,5 +29,9 @@ public abstract class CompileScope {
       }
     }
     return false;
+  }
+
+  public Project getProject() {
+    return myProject;
   }
 }

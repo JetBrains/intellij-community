@@ -1,13 +1,16 @@
 package org.jetbrains.jps.server;
 
-import org.apache.tools.ant.BuildEvent;
 import org.codehaus.gant.GantBinding;
 import org.jetbrains.ether.ProjectWrapper;
 import org.jetbrains.jps.Module;
 import org.jetbrains.jps.Project;
-import org.jetbrains.jps.listeners.BuildInfoPrinter;
+import org.jetbrains.jps.incremental.BuilderRegistry;
+import org.jetbrains.jps.incremental.CompileScope;
+import org.jetbrains.jps.incremental.IncProjectBuilder;
+import org.jetbrains.jps.incremental.MessageHandler;
+import org.jetbrains.jps.incremental.messages.BuildMessage;
+import org.jetbrains.jps.incremental.messages.CompilerMessage;
 
-import java.io.PrintStream;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -32,113 +35,95 @@ public class Facade {
   public void startBuild(String projectPath, Set<String> modules, final BuildParameters params, final MessagesConsumer consumer) throws Throwable {
     ProjectWrapper pw = myProjects.get(projectPath);
     if (pw == null) {
-      pw = ProjectWrapper.load(new GantBinding(), projectPath, getStartupScript(), myPathVariables, true);
+      pw = ProjectWrapper.load(new GantBinding(), projectPath, getStartupScript(), myPathVariables, false);
       myProjects.put(projectPath, pw);
     }
 
     configureProject(pw, params, consumer);
 
-    List<Module> toCompile = null;
+    final Project project = pw.getProject();
+
+    final List<Module> toCompile = new ArrayList<Module>();
     if (modules != null && modules.size() > 0) {
-      for (Module m : pw.getProject().getModules().values()) {
+      for (Module m : project.getModules().values()) {
         if (modules.contains(m.getName())){
-          if (toCompile == null) {
-            toCompile = new ArrayList<Module>();
-          }
           toCompile.add(m);
         }
       }
     }
+    else {
+      toCompile.addAll(project.getModules().values());
+    }
 
-    switch (params.buildType) {
-      case REBUILD:
-        if (toCompile == null || toCompile.isEmpty()) {
-          pw.rebuild();
+    final CompileScope compileScope = new CompileScope(project) {
+      public Collection<Module> getAffectedModules() {
+        return toCompile;
+      }
+    };
+
+    final IncProjectBuilder builder = new IncProjectBuilder(project, BuilderRegistry.getInstance());
+    builder.addMessageHandler(new MessageHandler() {
+      public void processMessage(BuildMessage msg) {
+        if (msg instanceof CompilerMessage) {
+          consumer.consumeCompilerMessage(((CompilerMessage)msg).getCompilerName(), msg.getMessageText());
         }
         else {
-          pw.makeModules(toCompile, new ProjectWrapper.Flags() {
-            public boolean tests() {
-              return true;
-            }
-
-            public boolean incremental() {
-              return false;
-            }
-
-            public boolean force() {
-              return true;
-            }
-
-            public PrintStream logStream() {
-              return null; // todo
-            }
-          });
+          consumer.consumeProgressMessage(msg.getMessageText());
         }
+      }
+    });
+    switch (params.buildType) {
+      case REBUILD:
+        builder.build(compileScope);
         break;
 
       case MAKE:
-        pw.makeModules(toCompile, new ProjectWrapper.Flags() {
-          public boolean tests() {
-            return true;
-          }
-
-          public boolean incremental() {
-            return true;
-          }
-
-          public boolean force() {
-            return false;
-          }
-
-          public PrintStream logStream() {
-            return null; // todo
-          }
-        });
+        builder.build(compileScope);
         break;
 
       case CLEAN:
-        pw.clean();
+        project.clean();
         break;
     }
-    pw.save();
+    //pw.save();
   }
 
   private void configureProject(ProjectWrapper pw, BuildParameters params, final MessagesConsumer consumer) {
-    pw.getProject().getBuilder().setUseInProcessJavac(params.useInProcessJavac);
-    pw.getProject().getBuilder().setBuildInfoPrinter(new BuildInfoPrinter() {
-      public Object printProgressMessage(Project project, String message) {
-        consumer.consumeProgressMessage(message);
-        return null;
-      }
-
-      public Object printCompilationErrors(Project project, String compilerName, String messages) {
-        consumer.consumeCompilerMessage(compilerName, messages);
-        return null;
-      }
-    });
-    pw.getProject().getBinding().addBuildListener(new org.apache.tools.ant.BuildListener() {
-      public void buildStarted(BuildEvent buildEvent) {
-      }
-
-      public void buildFinished(BuildEvent buildEvent) {
-      }
-
-      public void targetStarted(BuildEvent buildEvent) {
-      }
-
-      public void targetFinished(BuildEvent buildEvent) {
-      }
-
-      public void taskStarted(BuildEvent buildEvent) {
-      }
-
-      public void taskFinished(BuildEvent buildEvent) {
-      }
-
-      public void messageLogged(BuildEvent buildEvent) {
-        consumer.consumeCompilerMessage("ANT", buildEvent.getMessage());
-      }
-    });
+    //pw.getProject().getBuilder().setUseInProcessJavac(params.useInProcessJavac);
+    //pw.getProject().getBuilder().setBuildInfoPrinter(new BuildInfoPrinter() {
+    //  public Object printProgressMessage(Project project, String message) {
+    //    consumer.consumeProgressMessage(message);
+    //    return null;
+    //  }
+    //
+    //  public Object printCompilationErrors(Project project, String compilerName, String messages) {
+    //    consumer.consumeCompilerMessage(compilerName, messages);
+    //    return null;
+    //  }
+    //});
+    //pw.getProject().getBinding().addBuildListener(new org.apache.tools.ant.BuildListener() {
+    //  public void buildStarted(BuildEvent buildEvent) {
+    //  }
+    //
+    //  public void buildFinished(BuildEvent buildEvent) {
+    //  }
+    //
+    //  public void targetStarted(BuildEvent buildEvent) {
+    //  }
+    //
+    //  public void targetFinished(BuildEvent buildEvent) {
+    //  }
+    //
+    //  public void taskStarted(BuildEvent buildEvent) {
+    //  }
+    //
+    //  public void taskFinished(BuildEvent buildEvent) {
+    //  }
+    //
+    //  public void messageLogged(BuildEvent buildEvent) {
+    //    consumer.consumeCompilerMessage("ANT", buildEvent.getMessage());
+    //  }
+    //});
   }
 
   private String getStartupScript() {
