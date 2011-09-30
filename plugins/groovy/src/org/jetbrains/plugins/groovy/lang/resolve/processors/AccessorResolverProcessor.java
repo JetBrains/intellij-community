@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
-import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 
 /**
@@ -51,16 +50,13 @@ public class AccessorResolverProcessor extends ResolverProcessor {
   }
 
   public boolean execute(PsiElement element, ResolveState state) {
-    final GroovyPsiElement resolveContext = state.get(RESOLVE_CONTEXT);
-    boolean usedInCategory = GdkMethodUtil.isInUseScope(resolveContext, element);
-
     if (mySearchForGetter) {
-      if (element instanceof PsiMethod && GroovyPropertyUtils.isSimplePropertyGetter((PsiMethod)element, null, usedInCategory)) {
+      if (element instanceof PsiMethod && GroovyPropertyUtils.isSimplePropertyGetter((PsiMethod)element, null)) {
         return addAccessor((PsiMethod)element, state);
       }
     }
     else {
-      if (element instanceof PsiMethod && GroovyPropertyUtils.isSimplePropertySetter((PsiMethod)element, null, usedInCategory)) {
+      if (element instanceof PsiMethod && GroovyPropertyUtils.isSimplePropertySetter((PsiMethod)element, null)) {
         return addAccessor((PsiMethod)element, state);
       }
     }

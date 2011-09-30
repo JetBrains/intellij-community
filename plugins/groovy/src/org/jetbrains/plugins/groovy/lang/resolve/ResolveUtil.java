@@ -369,32 +369,33 @@ public class ResolveUtil {
     return resolveLabelTargets(labelName, element, isBreak).first;
   }
 
-  public static boolean processCategoryMembers(PsiElement place, PsiScopeProcessor processor) {
+  public static boolean processCategoryMembers(GroovyPsiElement place, PsiScopeProcessor processor) {
     boolean gpp = GppTypeConverter.hasTypedContext(place);
     if (gpp && !processUseAnnotation(place, processor)) return false;
 
     boolean inCodeBlock = true;
-    while (place != null) {
-      if (place instanceof GrMember) {
+    PsiElement run = place;
+    while (run != null) {
+      if (run instanceof GrMember) {
         inCodeBlock = false;
       }
-      if (place instanceof GrClosableBlock) {
-        if (inCodeBlock && !GdkMethodUtil.categoryIteration((GrClosableBlock)place, processor)) return false;
+      if (run instanceof GrClosableBlock) {
+        if (inCodeBlock && !GdkMethodUtil.categoryIteration((GrClosableBlock)run, processor)) return false;
 
-        PsiClass superClass = getLiteralSuperClass((GrClosableBlock)place);
-        if (superClass != null && !GdkMethodUtil.processCategoryMethods(place, processor, null, superClass)) return false;
+        PsiClass superClass = getLiteralSuperClass((GrClosableBlock)run);
+        if (superClass != null && !GdkMethodUtil.processCategoryMethods(((GrClosableBlock)run), processor, null, superClass)) return false;
       }
-      if (gpp && place instanceof GrTypeDefinition) {
-        GrTypeDefinition typeDefinition = (GrTypeDefinition)place;
-        if (!GdkMethodUtil.processCategoryMethods(place, processor, typeDefinition, typeDefinition)) return false;
+      if (gpp && run instanceof GrTypeDefinition) {
+        final GrTypeDefinition typeDefinition = (GrTypeDefinition)run;
+        if (!GdkMethodUtil.processCategoryMethods(typeDefinition, processor, typeDefinition, typeDefinition)) return false;
       }
-      place = place.getContext();
+      run = run.getContext();
     }
 
     return true;
   }
 
-  private static boolean processUseAnnotation(PsiElement place, PsiScopeProcessor processor) {
+  private static boolean processUseAnnotation(GroovyPsiElement place, PsiScopeProcessor processor) {
     PsiAnnotation use = AnnotatedContextFilter.findContextAnnotation(place, GroovyCommonClassNames.GROOVY_LANG_USE);
     if (use != null) {
       for (PsiElement element : PsiElementCategory.asList(use.findDeclaredAttributeValue("value"))) {

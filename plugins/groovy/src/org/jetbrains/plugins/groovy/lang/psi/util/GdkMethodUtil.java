@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -33,6 +32,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceResolveUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
 import java.util.Set;
@@ -63,6 +63,9 @@ public class GdkMethodUtil {
   }
 
   public static boolean categoryIteration(GrClosableBlock place, final PsiScopeProcessor processor) {
+    final ClassHint classHint = processor.getHint(ClassHint.KEY);
+    if (classHint != null && !classHint.shouldProcess(ClassHint.ResolveKind.METHOD)) return true;
+    
     final GrMethodCall call = checkMethodCall(place, USE);
     if (call == null) return true;
 
@@ -87,16 +90,25 @@ public class GdkMethodUtil {
     return true;
   }
 
-  public static boolean processCategoryMethods(PsiElement place,
-                                                final PsiScopeProcessor processor,
-                                                @Nullable GroovyPsiElement resolveContext,
-                                                @NotNull PsiClass categoryClass) {
+  /**
+   *
+   * @param place - context of processing
+   * @param processor - processor to use
+   * @param resolveContext - qualifier of <code>use</code> call
+   * @param categoryClass - category class to process
+   * @return
+   */
+  public static boolean processCategoryMethods(final GroovyPsiElement place,
+                                               final PsiScopeProcessor processor,
+                                               @Nullable GroovyPsiElement resolveContext,
+                                               @NotNull PsiClass categoryClass) {
     final DelegatingScopeProcessor delegate = new DelegatingScopeProcessor(processor) {
       @Override
       public boolean execute(PsiElement element, ResolveState state) {
         if (element instanceof PsiMethod) {
           if (!((PsiMethod)element).hasModifierProperty(PsiModifier.STATIC)) return true;
-          if (((PsiMethod)element).getParameterList().getParametersCount() == 0) return true;
+          final PsiParameter[] parameters = ((PsiMethod)element).getParameterList().getParameters();
+          if (parameters.length == 0) return true;
           return processor.execute(new GrGdkMethodImpl((PsiMethod)element, false), state);
         }
         else {
@@ -104,8 +116,8 @@ public class GdkMethodUtil {
         }
       }
     };
-    return categoryClass
-      .processDeclarations(delegate, ResolveState.initial().put(ResolverProcessor.RESOLVE_CONTEXT, resolveContext), null, place);
+    final ResolveState state = ResolveState.initial().put(ResolverProcessor.RESOLVE_CONTEXT, resolveContext);
+    return categoryClass.processDeclarations(delegate, state, null, place);
   }
 
   public static boolean withIteration(GrClosableBlock block, final PsiScopeProcessor processor, GroovyPsiElement place) {
@@ -139,25 +151,6 @@ public class GdkMethodUtil {
       return null;
     }
     return call;
-  }
-
-  public static boolean isInUseScope(GroovyResolveResult resolveResult) {
-    if (resolveResult != null && resolveResult.getElement() instanceof GrGdkMethod) return false;
-    return resolveResult != null && isInUseScope(resolveResult.getCurrentFileResolveContext(), resolveResult.getElement());
-  }
-
-  public static boolean isInUseScope(@Nullable PsiElement context, @Nullable PsiElement method) {
-    if (method instanceof GrGdkMethod) return false;
-    if (context instanceof GrMethodCall && context.isValid()) {
-      final GrExpression expression = ((GrMethodCall)context).getInvokedExpression();
-      if (expression instanceof GrReferenceExpression) {
-        final PsiElement resolved = ((GrReferenceExpression)expression).resolve();
-        if (resolved instanceof GrGdkMethod && USE.equals(((GrGdkMethod)resolved).getStaticMethod().getName())) {
-          return true;
-        }
-      }
-    }
-    return false;
   }
 
   /**

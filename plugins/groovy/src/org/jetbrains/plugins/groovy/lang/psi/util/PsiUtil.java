@@ -49,7 +49,6 @@ import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -138,14 +137,13 @@ public class PsiUtil {
   public static boolean isApplicable(@Nullable PsiType[] argumentTypes,
                                      PsiMethod method,
                                      PsiSubstitutor substitutor,
-                                     boolean isInUseCategory, GroovyPsiElement place, final boolean eraseParameterTypes) {
+                                     GroovyPsiElement place,
+                                     final boolean eraseParameterTypes) {
     if (argumentTypes == null) return true;
 
     GrClosureSignature signature = eraseParameterTypes
-                                   ? GrClosureSignatureUtil.createSignatureWithErasedParameterTypes(method) : GrClosureSignatureUtil.createSignature(method, substitutor);
-    if (isInUseCategory && method.hasModifierProperty(PsiModifier.STATIC) && method.getParameterList().getParametersCount() > 0) {
-      signature = GrClosureSignatureUtil.removeParam(signature, 0);
-    }
+                                   ? GrClosureSignatureUtil.createSignatureWithErasedParameterTypes(method)
+                                   : GrClosureSignatureUtil.createSignature(method, substitutor);
 
     //check for default constructor
     if (method.isConstructor()) {
@@ -164,8 +162,7 @@ public class PsiUtil {
       return true;
     }
 
-    if (method instanceof GrBuilderMethod &&
-        !((GrBuilderMethod)method).hasObligatoryNamedArguments()) {
+    if (method instanceof GrBuilderMethod &&!((GrBuilderMethod)method).hasObligatoryNamedArguments()) {
       final PsiParameter[] parameters = method.getParameterList().getParameters();
       if (parameters.length > 0 && parameters[0].getType() instanceof GrMapType &&
           (argumentTypes.length == 0 || !(argumentTypes[0] instanceof GrMapType))) {
@@ -314,7 +311,7 @@ public class PsiUtil {
     GrExpression qualifier = ((GrReferenceExpression)place).getQualifierExpression();
     final PsiClass containingClass = ((PsiMember)member).getContainingClass();
     if (qualifier != null) {
-      final boolean isStatic = member.hasModifierProperty(PsiModifier.STATIC) && !(GdkMethodUtil.isInUseScope(resolveContext, member));
+      final boolean isStatic = member.hasModifierProperty(PsiModifier.STATIC);
       if (qualifier instanceof GrReferenceExpression) {
         if ("class".equals(((GrReferenceExpression)qualifier).getReferenceName())) {
           //invoke static members of class from A.class.foo()
@@ -325,7 +322,7 @@ public class PsiUtil {
               final PsiType[] params = ((PsiClassType)type).getParameters();
               if (params.length == 1 && params[0] instanceof PsiClassType) {
                 if (place.getManager().areElementsEquivalent(containingClass, ((PsiClassType)params[0]).resolve())) {
-                  return member.hasModifierProperty(GrModifier.STATIC);
+                  return member.hasModifierProperty(PsiModifier.STATIC);
                 }
               }
             }
@@ -370,9 +367,9 @@ public class PsiUtil {
         //static members may be invoked from this.<...>
         final boolean isInStatic = isInStaticContext((GrThisReferenceExpression)qualifier);
         if (containingClass != null && CommonClassNames.JAVA_LANG_CLASS.equals(containingClass.getQualifiedName())) {
-          return !(member.hasModifierProperty(GrModifier.STATIC) && !CodeInsightSettings.getInstance().SHOW_STATIC_AFTER_INSTANCE);
+          return !(member.hasModifierProperty(PsiModifier.STATIC) && !CodeInsightSettings.getInstance().SHOW_STATIC_AFTER_INSTANCE);
         }
-        else if (isInStatic) return member.hasModifierProperty(GrModifier.STATIC);
+        else if (isInStatic) return member.hasModifierProperty(PsiModifier.STATIC);
       }
 
       //instance context
@@ -384,7 +381,7 @@ public class PsiUtil {
     else {
       if (containingClass == null) return true;
       if (member instanceof GrVariable && !(member instanceof GrField)) return true;
-      if (member.hasModifierProperty(GrModifier.STATIC)) return true;
+      if (member.hasModifierProperty(PsiModifier.STATIC)) return true;
 
       if (resolveContext != null) {
         PsiElement stopAt = PsiTreeUtil.findCommonParent(place, resolveContext);
@@ -394,10 +391,10 @@ public class PsiUtil {
         }
         if (place == null || place instanceof PsiFile || place == stopAt) return true;
         if (place instanceof GrTypeDefinition) {
-          return !(((GrTypeDefinition)place).hasModifierProperty(GrModifier.STATIC) ||
+          return !(((GrTypeDefinition)place).hasModifierProperty(PsiModifier.STATIC) ||
                    ((GrTypeDefinition)place).getContainingClass() == null);
         }
-        return !((GrMember)place).hasModifierProperty(GrModifier.STATIC);
+        return !((GrMember)place).hasModifierProperty(PsiModifier.STATIC);
       }
       else {
         while (place != null) {
@@ -875,7 +872,7 @@ public class PsiUtil {
     assert clazz != null;
 
     final PsiElement replaced;
-    if (member.hasModifierProperty(GrModifier.STATIC)) {
+    if (member.hasModifierProperty(PsiModifier.STATIC)) {
       final GrReferenceExpression newRefExpr = GroovyPsiElementFactory.getInstance(member.getProject())
         .createReferenceExpressionFromText(clazz.getQualifiedName() + "." + name);
       replaced = refExpr.replace(newRefExpr);
@@ -970,7 +967,7 @@ public class PsiUtil {
   }
 
 
-  private static String[] visibilityModifiers = new String[]{GrModifier.PRIVATE, GrModifier.PROTECTED, GrModifier.PUBLIC};
+  private static String[] visibilityModifiers = new String[]{PsiModifier.PRIVATE, PsiModifier.PROTECTED, PsiModifier.PUBLIC};
 
   public static void escalateVisibility(PsiMember owner, PsiElement place) {
     final String visibilityModifier = VisibilityUtil.getVisibilityModifier(owner.getModifierList());

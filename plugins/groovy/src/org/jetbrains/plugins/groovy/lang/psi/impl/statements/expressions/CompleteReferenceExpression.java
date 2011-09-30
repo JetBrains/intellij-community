@@ -46,7 +46,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
-import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ClosureMissingMethodContributor;
@@ -159,12 +158,11 @@ public class CompleteReferenceExpression {
                                                                  @Nullable PrefixMatcher matcher) {
     String propName;
     PsiType propType;
-    final boolean inUseScope = GdkMethodUtil.isInUseScope(resolveResult);
-    final boolean getter = isSimplePropertyGetter(accessor, null, inUseScope);
+    final boolean getter = isSimplePropertyGetter(accessor, null);
     if (getter) {
       propName = getPropertyNameByGetter(accessor);
     }
-    else if (isSimplePropertySetter(accessor, null, inUseScope)) {
+    else if (isSimplePropertySetter(accessor, null)) {
       propName = getPropertyNameBySetter(accessor);
     }
     else {
@@ -182,7 +180,7 @@ public class CompleteReferenceExpression {
     if (getter) {
       propType = PsiUtil.getSmartReturnType(accessor);
     } else {
-      propType = accessor.getParameterList().getParameters()[inUseScope ? 1 : 0].getType();
+      propType = accessor.getParameterList().getParameters()[0].getType();
     }
 
     final PsiType substituted = resolveResult != null ? resolveResult.getSubstitutor().substitute(propType) : propType;

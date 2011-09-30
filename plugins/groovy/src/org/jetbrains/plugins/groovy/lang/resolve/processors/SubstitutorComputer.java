@@ -140,12 +140,6 @@ public abstract class SubstitutorComputer {
         method = ((GrGdkMethod)method).getStaticMethod();
         LOG.assertTrue(method.isValid());
       }
-      else if (GdkMethodUtil.isInUseScope(resolveContext, method)) {
-        PsiType[] newArgTypes = new PsiType[argTypes.length + 1];
-        newArgTypes[0] = myThisType;
-        System.arraycopy(argTypes, 0, newArgTypes, 1, argTypes.length);
-        argTypes = newArgTypes;
-      }
 
       return inferMethodTypeParameters(method, substitutor, typeParameters, argTypes);
     }

@@ -247,14 +247,7 @@ public class GroovyCompletionUtil {
       }
     }
     else if (element instanceof PsiMethod) {
-      final PsiMethod method;
-      if (GdkMethodUtil.isInUseScope(candidate)) {
-        method = generateMethodInCategory(candidate);
-      }
-      else {
-        method = (PsiMethod)element;
-      }
-      return setupLookupBuilder(method, candidate.getSubstitutor(), LookupElementBuilder.create(candidate, ((PsiMethod)element).getName()));
+      return setupLookupBuilder(element, candidate.getSubstitutor(), LookupElementBuilder.create(candidate, ((PsiMethod)element).getName()));
     }
     if (element instanceof PsiClass) {
       return createClassLookupItem((PsiClass)element);

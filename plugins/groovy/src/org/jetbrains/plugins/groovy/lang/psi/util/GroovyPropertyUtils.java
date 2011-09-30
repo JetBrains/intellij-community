@@ -179,19 +179,6 @@ public class GroovyPropertyUtils {
 
 
   @Nullable
-  public static PsiMethod findPropertyGetter(@NotNull PsiType type, @NotNull String propertyName, @NotNull GroovyPsiElement context) {
-    final String[] getterNames = suggestGettersName(propertyName);
-    for (String getterName : getterNames) {
-      final AccessorResolverProcessor processor = new AccessorResolverProcessor(getterName, context, true);
-      ResolveUtil.processAllDeclarations(type, processor, ResolveState.initial(), context);
-      final GroovyResolveResult[] getterCandidates = processor.getCandidates();
-      final PsiMethod method = PsiImplUtil.extractUniqueElement(getterCandidates);
-      if (method != null) return method;
-    }
-    return null;
-  }
-
-  @Nullable
   public static PsiMethod findPropertyGetter(@Nullable PsiClass aClass,
                                              String propertyName,
                                              @Nullable Boolean isStatic,
@@ -227,18 +214,8 @@ public class GroovyPropertyUtils {
   }//do not check return type
 
   public static boolean isSimplePropertyGetter(PsiMethod method, @Nullable String propertyName) {
-    return isSimplePropertyGetter(method, propertyName, false);
-  }
-
-  public static boolean isSimplePropertyGetter(PsiMethod method,
-                                               @Nullable String propertyName,
-                                               boolean isUsedInCategory) {
     if (method == null || method.isConstructor()) return false;
-    if (isUsedInCategory) {
-      if (method.getParameterList().getParametersCount() != 1) return false;
-    } else {
-      if (method.getParameterList().getParametersCount() != 0) return false;
-    }
+    if (method.getParameterList().getParametersCount() != 0) return false;
     if (!isGetterName(method.getName())) return false;
     if (method.getName().startsWith(IS_PREFIX) && !PsiType.BOOLEAN.equals(method.getReturnType())) {
       return false;
@@ -251,19 +228,8 @@ public class GroovyPropertyUtils {
   }
 
   public static boolean isSimplePropertySetter(PsiMethod method, @Nullable String propertyName) {
-    return isSimplePropertySetter(method, propertyName, false);
-  }
-
-  public static boolean isSimplePropertySetter(PsiMethod method,
-                                               @Nullable String propertyName,
-                                               boolean isUsedInCategory) {
     if (method == null || method.isConstructor()) return false;
-    if (isUsedInCategory) {
-      if (method.getParameterList().getParametersCount() != 2) return false;
-    } else {
-      if (method.getParameterList().getParametersCount() != 1) return false;
-    }
-
+    if (method.getParameterList().getParametersCount() != 1) return false;
     if (!isSetterName(method.getName())) return false;
     return propertyName == null || propertyName.equals(getPropertyNameBySetter(method));
   }
