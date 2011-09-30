@@ -39,9 +39,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashSet;
+import java.util.*;
 
 /**
  * User: anna
@@ -104,11 +102,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
         if (itemWrapper != null) {
           setIcon(itemWrapper.getIcon(fileIndex));
 
-          final PsiDirectory directory = itemWrapper.getDirectory();
-          final VirtualFile virtualFile = directory != null ? directory.getVirtualFile() : null;
-          setText(virtualFile != null
-                  ? ProjectUtil.calcRelativeToProjectPath(virtualFile, project, true, true)
-                  : itemWrapper.getPresentableUrl());
+          setText(getPresentableText(itemWrapper, project));
         }
         else {
           setText("Leave in same source root");
@@ -152,6 +146,14 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
     });
   }
 
+  private static String getPresentableText(DirectoryChooser.ItemWrapper itemWrapper, Project project) {
+    final PsiDirectory directory = itemWrapper.getDirectory();
+    final VirtualFile virtualFile = directory != null ? directory.getVirtualFile() : null;
+    return virtualFile != null
+                  ? ProjectUtil.calcRelativeToProjectPath(virtualFile, project, true, true)
+                  : itemWrapper.getPresentableUrl();
+  }
+
   @Nullable
   public MoveDestination selectDirectory(final PackageWrapper targetPackage, final boolean showChooserWhenDefault) {
     final DirectoryChooser.ItemWrapper selectedItem = (DirectoryChooser.ItemWrapper)getComboBox().getSelectedItem();
@@ -185,12 +187,13 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
     }
   }
 
-  private void setComboboxModel(JComboBox comboBox, VirtualFile initialTargetDirectorySourceRoot,
-                                ProjectFileIndex fileIndex,
-                                VirtualFile[] sourceRoots,
-                                Project project,
-                                boolean forceIncludeAll,
-                                Pass<String> updateErrorMessage) {
+  private void setComboboxModel(final JComboBox comboBox,
+                                final VirtualFile initialTargetDirectorySourceRoot,
+                                final ProjectFileIndex fileIndex,
+                                final VirtualFile[] sourceRoots,
+                                final Project project,
+                                final boolean forceIncludeAll,
+                                final Pass<String> updateErrorMessage) {
     final LinkedHashSet<PsiDirectory> targetDirectories = new LinkedHashSet<PsiDirectory>();
     final HashMap<PsiDirectory, String> pathsToCreate = new HashMap<PsiDirectory, String>();
     MoveClassesOrPackagesUtil
@@ -231,6 +234,12 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
       }
     }
     updateErrorMessage(updateErrorMessage, fileIndex, selection);
+    Collections.sort(items, new Comparator<DirectoryChooser.ItemWrapper>() {
+      @Override
+      public int compare(DirectoryChooser.ItemWrapper o1, DirectoryChooser.ItemWrapper o2) {
+        return getPresentableText(o1, project).compareToIgnoreCase(getPresentableText(o2, project));
+      }
+    });
     comboBox.setModel(new CollectionComboBoxModel(items, selection));
   }
 
