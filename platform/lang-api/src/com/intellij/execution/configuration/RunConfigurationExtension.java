@@ -17,6 +17,7 @@ package com.intellij.execution.configuration;
 
 import com.intellij.execution.Location;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.util.InvalidDataException;
@@ -64,7 +65,7 @@ public abstract class RunConfigurationExtension<T extends AbstractRunConfigurati
   protected abstract boolean isEnabledFor(@NotNull final T applicableConfiguration);
 
   protected abstract void patchCommandLine(@NotNull final T configuration,
-                                           @NotNull final GeneralCommandLine cmdLine,
+                                           RunnerSettings runnerSettings, @NotNull final GeneralCommandLine cmdLine,
                                            @NotNull final AbstractRunConfiguration.RunnerType type);
 
   /**

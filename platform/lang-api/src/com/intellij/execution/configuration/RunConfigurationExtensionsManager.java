@@ -3,6 +3,7 @@ package com.intellij.execution.configuration;
 import com.google.common.collect.Maps;
 import com.intellij.execution.Location;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
@@ -127,11 +128,11 @@ public class RunConfigurationExtensionsManager<U extends AbstractRunConfiguratio
   }
 
   public void patchCommandLine(@NotNull final U configuration,
-                               @NotNull final GeneralCommandLine cmdLine,
+                               RunnerSettings runnerSettings, @NotNull final GeneralCommandLine cmdLine,
                                @NotNull final AbstractRunConfiguration.RunnerType type) {
     // only for enabled extensions
     for (T extension : getEnabledExtensions(configuration)) {
-      extension.patchCommandLine(configuration, cmdLine, type);
+      extension.patchCommandLine(configuration, runnerSettings, cmdLine, type);
     }
   }
 
