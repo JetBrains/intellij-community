@@ -115,6 +115,10 @@ public class MethodResolverProcessor extends ResolverProcessor {
     return true;
   }
 
+  public PsiType getThisType() {
+    return myThisType;
+  }
+
   @NotNull
   public GroovyResolveResult[] getCandidates() {
     if (!myAllVariants && super.hasCandidates()) {

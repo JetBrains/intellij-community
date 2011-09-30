@@ -25,6 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl
 import org.jetbrains.plugins.groovy.util.TestUtils
 import com.intellij.psi.*
@@ -749,5 +750,11 @@ class Foo {
 
   void testInferPlusType() {
     assertNotNull(resolve('a.groovy'))
+  }
+
+  void testCategoryClassMethod() {
+    def resolved = resolve('a.groovy')
+    assertInstanceOf(resolved, GrReflectedMethod)
+    assertTrue(resolved.modifierList.hasModifierProperty(PsiModifier.STATIC))
   }
 }
