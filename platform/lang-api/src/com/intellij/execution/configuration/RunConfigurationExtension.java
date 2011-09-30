@@ -92,5 +92,5 @@ public abstract class RunConfigurationExtension<T extends AbstractRunConfigurati
 
   protected abstract void attachToProcess(@NotNull final T configuration,
                                           @NotNull final ProcessHandler handler,
-                                          @NotNull final AbstractRunConfiguration.RunnerType type, RunnerSettings runnerSettings);
+                                          RunnerSettings runnerSettings);
 }

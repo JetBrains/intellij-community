@@ -12,12 +12,10 @@ import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.ui.LayeredIcon;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -129,10 +127,10 @@ public class RunConfigurationExtensionsManager<U extends AbstractRunConfiguratio
 
   public void attachExtensionsToProcess(@NotNull final U configuration,
                                         @NotNull final ProcessHandler handler,
-                                        @NotNull final AbstractRunConfiguration.RunnerType type, RunnerSettings runnerSettings) {
+                                        RunnerSettings runnerSettings) {
     // only for enabled extensions
     for (T extension : getEnabledExtensions(configuration, runnerSettings)) {
-      extension.attachToProcess(configuration, handler, type, runnerSettings);
+      extension.attachToProcess(configuration, handler, runnerSettings);
     }
   }
 
