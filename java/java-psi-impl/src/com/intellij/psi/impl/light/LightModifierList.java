@@ -16,7 +16,7 @@
 package com.intellij.psi.impl.light;
 
 import com.intellij.lang.Language;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -35,7 +35,7 @@ public class LightModifierList extends LightElement implements PsiModifierList {
   }
 
   public LightModifierList(PsiManager manager) {
-    this(manager, StdLanguages.JAVA);
+    this(manager, JavaLanguage.INSTANCE);
   }
 
   public LightModifierList(PsiManager manager, final Language language, String... modifiers) {
