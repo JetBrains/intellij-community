@@ -16,7 +16,6 @@
 package com.intellij.lang.properties.parsing;
 
 import com.intellij.lexer.FlexAdapter;
-import com.intellij.lang.properties.parsing._PropertiesLexer;
 
 import java.io.Reader;
 
