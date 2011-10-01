@@ -38,6 +38,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiCachedValuesFactory;
 import com.intellij.psi.impl.PsiFileFactoryImpl;
 import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.CachedValuesManagerImpl;
@@ -86,6 +87,7 @@ public class CoreEnvironment {
 
     final MutablePicoContainer projectContainer = myProject.getPicoContainer();
     PsiManagerImpl psiManager = new PsiManagerImpl(myProject, null, null, null, null);
+    ((FileManagerImpl) psiManager.getFileManager()).markInitialized();
     registerComponentInstance(projectContainer, PsiManager.class, psiManager);
 
     myProject.registerService(PsiFileFactory.class, new PsiFileFactoryImpl(psiManager));
