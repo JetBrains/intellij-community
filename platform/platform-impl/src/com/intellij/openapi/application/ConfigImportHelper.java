@@ -40,7 +40,8 @@ public class ConfigImportHelper {
   @NonNls private static final String BUILD_NUMBER_FILE = "build.txt";
   @NonNls private static final String PLUGINS_PATH = "plugins";
   @NonNls private static final String BIN_FOLDER = "bin";
-  @NonNls private static final String OPTIONS_XML = SystemInfo.isMac ? "options/options.xml" : "config/options/options.xml";
+  @NonNls private static final String CONFIG_RELATED_PATH = SystemInfo.isMac ? "" : "config/";
+  @NonNls private static final String OPTIONS_XML = "options/options.xml";
 
   private ConfigImportHelper() {}
 
@@ -102,7 +103,7 @@ public class ConfigImportHelper {
 
   private static File findOldConfigDir(String newConfigPath, @Nullable String customPathSelector) {
     final File configDir = new File(newConfigPath);
-    final File selectorDir = SystemInfo.isMac ? configDir : configDir.getParentFile();
+    final File selectorDir = CONFIG_RELATED_PATH.length() == 0 ? configDir : configDir.getParentFile();
     final File parent = selectorDir.getParentFile();
     if (parent == null || !parent.exists()) return null;
     File maxFile = null;
@@ -122,7 +123,7 @@ public class ConfigImportHelper {
         return name.length() == selector.length() && name.startsWith(prefix);
       }
     })) {
-      final File options = new File(file, OPTIONS_XML);
+      final File options = new File(file, CONFIG_RELATED_PATH + OPTIONS_XML);
       if (!options.exists()) continue;
       final long modified = options.lastModified();
       if (modified > lastModified) {
@@ -130,7 +131,7 @@ public class ConfigImportHelper {
         maxFile = file;
       }
     }
-    return maxFile;
+    return new File(maxFile, CONFIG_RELATED_PATH);
   }
 
   public static void doImport(final String newConfigPath, final File oldConfigDir) {
@@ -189,6 +190,9 @@ public class ConfigImportHelper {
     // check if it's already config dir
     if (new File(oldInstallHome, OPTIONS_XML).exists()) {
       return oldInstallHome;
+    }
+    if (new File(oldInstallHome, CONFIG_RELATED_PATH + OPTIONS_XML).exists()) {
+      return new File(oldInstallHome, CONFIG_RELATED_PATH);
     }
 
     int oldBuildNumber = getBuildNumber(oldInstallHome);
@@ -334,6 +338,7 @@ public class ConfigImportHelper {
 
   public static boolean isInstallationHomeOrConfig(String installationHome, String productName) {
     if (new File(installationHome, OPTIONS_XML).exists()) return true;
+    if (new File(installationHome, CONFIG_RELATED_PATH + OPTIONS_XML).exists()) return true;
 
     String mainJarName = StringUtil.toLowerCase(productName) + ".jar";
     //noinspection HardCodedStringLiteral

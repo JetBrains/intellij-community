@@ -185,28 +185,28 @@ public class ImportOldConfigsPanel extends JDialog {
       if ("".equals(instHome)) {
         JOptionPane.showMessageDialog(this,
                                       mySettings.getEmptyHomeErrorText(productWithVendor),
-                                      ApplicationBundle.message("title.installation.home.required"), JOptionPane.ERROR_MESSAGE);
+                                      mySettings.getInstallationHomeRequiredTitle(), JOptionPane.ERROR_MESSAGE);
         return;
       }
 
       if (PathManager.getHomePath().equals(instHome)) {
         JOptionPane.showMessageDialog(this,
                                       mySettings.getCurrentHomeErrorText(productWithVendor),
-                                      ApplicationBundle.message("title.installation.home.required"), JOptionPane.ERROR_MESSAGE);
+                                      mySettings.getInstallationHomeRequiredTitle(), JOptionPane.ERROR_MESSAGE);
         return;
       }
 
       if (myRbImport.isSelected() && !ConfigImportHelper.isInstallationHomeOrConfig(instHome, mySettings.getProductName(ThreeState.NO))) {
         JOptionPane.showMessageDialog(this,
                                       mySettings.getInvalidHomeErrorText(productWithVendor, instHome),
-                                      ApplicationBundle.message("title.installation.home.required"), JOptionPane.ERROR_MESSAGE);
+                                      mySettings.getInstallationHomeRequiredTitle(), JOptionPane.ERROR_MESSAGE);
         return;
       }
 
       if (!new File(instHome).canRead()) {
         JOptionPane.showMessageDialog(this,
                                       mySettings.getInaccessibleHomeErrorText(instHome),
-                                      ApplicationBundle.message("title.installation.home.required"), JOptionPane.ERROR_MESSAGE);
+                                      mySettings.getInstallationHomeRequiredTitle(), JOptionPane.ERROR_MESSAGE);
         return;
       }
     }

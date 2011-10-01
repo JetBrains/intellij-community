@@ -63,6 +63,10 @@ public class ConfigImportSettings {
     return null;
   }
 
+  public String getInstallationHomeRequiredTitle() {
+    return ApplicationBundle.message("title.installation.home.required");
+  }
+
   public void importFinished(String newConfigPath) {
   }
 }
