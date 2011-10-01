@@ -69,4 +69,9 @@ public class ConfigImportSettings {
 
   public void importFinished(String newConfigPath) {
   }
+
+  @Nullable
+  public String fixConfigDir(String configDir) {
+    return null;
+  }
 }
