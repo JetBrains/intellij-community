@@ -29,138 +29,143 @@ import java.util.Set;
 
 public class RedundantImportInspection extends BaseInspection {
 
-    @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "redundant.import.display.name");
-    }
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "redundant.import.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "redundant.import.problem.descriptor");
+  }
+
+  @Override
+  public InspectionGadgetsFix buildFix(Object... infos) {
+    return new DeleteImportFix();
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new RedundantImportVisitor();
+  }
+
+  private static class RedundantImportVisitor extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "redundant.import.problem.descriptor");
+    public void visitFile(PsiFile file) {
+      super.visitFile(file);
+      if (!(file instanceof PsiJavaFile)) {
+        return;
+      }
+      final PsiJavaFile javaFile = (PsiJavaFile)file;
+      if (JspPsiUtil.isInJspFile(file)) {
+        return;
+      }
+      final PsiImportList importList = javaFile.getImportList();
+      if (importList == null) {
+        return;
+      }
+      checkNonStaticImports(importList, javaFile);
+      checkStaticImports(importList, javaFile);
     }
 
-    @Override
-    public InspectionGadgetsFix buildFix(Object... infos) {
-        return new DeleteImportFix();
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new RedundantImportVisitor();
-    }
-
-    private static class RedundantImportVisitor extends BaseInspectionVisitor {
-
-        @Override public void visitFile(PsiFile file) {
-            super.visitFile(file);
-            if (!(file instanceof PsiJavaFile)) {
-                return;
-            }
-            final PsiJavaFile javaFile = (PsiJavaFile)file;
-            if (JspPsiUtil.isInJspFile(file)) {
-                return;
-            }
-            final PsiImportList importList = javaFile.getImportList();
-            if (importList == null) {
-                return;
-            }
-            checkNonStaticImports(importList, javaFile);
-            checkStaticImports(importList, javaFile);
+    private void checkStaticImports(PsiImportList importList,
+                                    PsiJavaFile javaFile) {
+      final PsiImportStaticStatement[] importStaticStatements =
+        importList.getImportStaticStatements();
+      final Set<String> staticImports =
+        new HashSet<String>(importStaticStatements.length);
+      for (PsiImportStaticStatement importStaticStatement :
+        importStaticStatements) {
+        final String referenceName =
+          importStaticStatement.getReferenceName();
+        final PsiClass targetClass =
+          importStaticStatement.resolveTargetClass();
+        if (targetClass == null) {
+          continue;
         }
-
-        private void checkStaticImports(PsiImportList importList,
-                                        PsiJavaFile javaFile) {
-            final PsiImportStaticStatement[] importStaticStatements =
-                    importList.getImportStaticStatements();
-            final Set<String> staticImports =
-                    new HashSet<String>(importStaticStatements.length);
-            for (PsiImportStaticStatement importStaticStatement :
-                    importStaticStatements) {
-                final String referenceName =
-                        importStaticStatement.getReferenceName();
-                final PsiClass targetClass =
-                        importStaticStatement.resolveTargetClass();
-                if (targetClass == null) {
-                    continue;
-                }
-                final String qualifiedName = targetClass.getQualifiedName();
-                if (referenceName == null) {
-                    if (staticImports.contains(qualifiedName)) {
-                        registerError(importStaticStatement);
-                        continue;
-                    }
-                    staticImports.add(qualifiedName);
-                } else {
-                    final String qualifiedReferenceName =
-                            qualifiedName + '.' + referenceName;
-                    if (staticImports.contains(qualifiedReferenceName)) {
-                        registerError(importStaticStatement);
-                        continue;
-                    }
-                    if (staticImports.contains(qualifiedName)) {
-                        if (!ImportUtils.hasOnDemandImportConflict(
-                                qualifiedReferenceName, javaFile)) {
-                            registerError(importStaticStatement);
-                        }
-                    }
-                    staticImports.add(qualifiedReferenceName);
-                }
-            }
+        final String qualifiedName = targetClass.getQualifiedName();
+        if (referenceName == null) {
+          if (staticImports.contains(qualifiedName)) {
+            registerError(importStaticStatement);
+            continue;
+          }
+          staticImports.add(qualifiedName);
         }
-
-        private void checkNonStaticImports(PsiImportList importList,
-                                           PsiJavaFile javaFile) {
-            final PsiImportStatement[] importStatements =
-                    importList.getImportStatements();
-            final Set<String> onDemandImports = new HashSet();
-            final Set<String> singleClassImports = new HashSet();
-            for(final PsiImportStatement importStatement : importStatements) {
-                final String qualifiedName = importStatement.getQualifiedName();
-                if(qualifiedName == null) {
-                    continue;
-                }
-                if (importStatement.isOnDemand()) {
-                    if (onDemandImports.contains(qualifiedName)) {
-                        registerError(importStatement);
-                    }
-                    onDemandImports.add(qualifiedName);
-                } else {
-                    if (singleClassImports.contains(qualifiedName)) {
-                        registerError(importStatement);
-                        continue;
-                    }
-                    final PsiElement element = importStatement.resolve();
-                    if (!(element instanceof PsiClass)) {
-                        continue;
-                    }
-	                final PsiElement context = element.getContext();
-                    if (context == null) {
-                        continue;
-                    }
-                    final String contextName;
-                    if (context instanceof PsiJavaFile) {
-	                    final PsiJavaFile file = (PsiJavaFile)context;
-	                    contextName = file.getPackageName();
-                    } else if (context instanceof PsiClass) {
-                        final PsiClass aClass = (PsiClass)context;
-                        contextName = aClass.getQualifiedName();
-                    } else {
-                        continue;
-                    }
-                    if (onDemandImports.contains(contextName) &&
-                            !ImportUtils.hasOnDemandImportConflict(qualifiedName,
-                                    javaFile) &&
-                            !ImportUtils.hasDefaultImportConflict(qualifiedName,
-                                    javaFile)) {
-                        registerError(importStatement);
-                    }
-                    singleClassImports.add(qualifiedName);
-                }
+        else {
+          final String qualifiedReferenceName =
+            qualifiedName + '.' + referenceName;
+          if (staticImports.contains(qualifiedReferenceName)) {
+            registerError(importStaticStatement);
+            continue;
+          }
+          if (staticImports.contains(qualifiedName)) {
+            if (!ImportUtils.hasOnDemandImportConflict(
+              qualifiedReferenceName, javaFile)) {
+              registerError(importStaticStatement);
             }
+          }
+          staticImports.add(qualifiedReferenceName);
         }
+      }
     }
+
+    private void checkNonStaticImports(PsiImportList importList,
+                                       PsiJavaFile javaFile) {
+      final PsiImportStatement[] importStatements =
+        importList.getImportStatements();
+      final Set<String> onDemandImports = new HashSet();
+      final Set<String> singleClassImports = new HashSet();
+      for (final PsiImportStatement importStatement : importStatements) {
+        final String qualifiedName = importStatement.getQualifiedName();
+        if (qualifiedName == null) {
+          continue;
+        }
+        if (importStatement.isOnDemand()) {
+          if (onDemandImports.contains(qualifiedName)) {
+            registerError(importStatement);
+          }
+          onDemandImports.add(qualifiedName);
+        }
+        else {
+          if (singleClassImports.contains(qualifiedName)) {
+            registerError(importStatement);
+            continue;
+          }
+          final PsiElement element = importStatement.resolve();
+          if (!(element instanceof PsiClass)) {
+            continue;
+          }
+          final PsiElement context = element.getContext();
+          if (context == null) {
+            continue;
+          }
+          final String contextName;
+          if (context instanceof PsiJavaFile) {
+            final PsiJavaFile file = (PsiJavaFile)context;
+            contextName = file.getPackageName();
+          }
+          else if (context instanceof PsiClass) {
+            final PsiClass aClass = (PsiClass)context;
+            contextName = aClass.getQualifiedName();
+          }
+          else {
+            continue;
+          }
+          if (onDemandImports.contains(contextName) &&
+              !ImportUtils.hasOnDemandImportConflict(qualifiedName,
+                                                     javaFile) &&
+              !ImportUtils.hasDefaultImportConflict(qualifiedName,
+                                                    javaFile)) {
+            registerError(importStatement);
+          }
+          singleClassImports.add(qualifiedName);
+        }
+      }
+    }
+  }
 }

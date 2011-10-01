@@ -21,45 +21,45 @@ import org.jetbrains.annotations.Nullable;
 
 public class LibraryUtil {
 
-    private LibraryUtil() {
-        super();
-    }
+  private LibraryUtil() {
+    super();
+  }
 
-    public static boolean classIsInLibrary(@Nullable PsiClass aClass) {
-        return aClass instanceof PsiCompiledElement;
-    }
+  public static boolean classIsInLibrary(@Nullable PsiClass aClass) {
+    return aClass instanceof PsiCompiledElement;
+  }
 
-    public static boolean callOnLibraryMethod(
-            @NotNull PsiMethodCallExpression expression) {
-        final PsiMethod method = expression.resolveMethod();
-        return method instanceof PsiCompiledElement;
-    }
+  public static boolean callOnLibraryMethod(
+    @NotNull PsiMethodCallExpression expression) {
+    final PsiMethod method = expression.resolveMethod();
+    return method instanceof PsiCompiledElement;
+  }
 
-    public static boolean isOverrideOfLibraryMethod(@NotNull PsiMethod method){
-        final PsiMethod[] superMethods = method.findSuperMethods();
-        for(PsiMethod superMethod : superMethods){
-            final PsiClass containingClass = superMethod.getContainingClass();
-            if(classIsInLibrary(containingClass)){
-                return true;
-            }
-            if(isOverrideOfLibraryMethod(superMethod)){
-                return true;
-            }
-        }
-        return false;
+  public static boolean isOverrideOfLibraryMethod(@NotNull PsiMethod method) {
+    final PsiMethod[] superMethods = method.findSuperMethods();
+    for (PsiMethod superMethod : superMethods) {
+      final PsiClass containingClass = superMethod.getContainingClass();
+      if (classIsInLibrary(containingClass)) {
+        return true;
+      }
+      if (isOverrideOfLibraryMethod(superMethod)) {
+        return true;
+      }
     }
+    return false;
+  }
 
-    public static boolean isOverrideOfLibraryMethodParameter(
-            @Nullable PsiVariable variable) {
-        if (!(variable instanceof PsiParameter)) {
-            return false;
-        }
-        final PsiParameter parameter = (PsiParameter)variable;
-        final PsiElement scope = parameter.getDeclarationScope();
-        if (!(scope instanceof PsiMethod)) {
-            return false;
-        }
-        final PsiMethod method = (PsiMethod)scope;
-        return isOverrideOfLibraryMethod(method);
+  public static boolean isOverrideOfLibraryMethodParameter(
+    @Nullable PsiVariable variable) {
+    if (!(variable instanceof PsiParameter)) {
+      return false;
     }
+    final PsiParameter parameter = (PsiParameter)variable;
+    final PsiElement scope = parameter.getDeclarationScope();
+    if (!(scope instanceof PsiMethod)) {
+      return false;
+    }
+    final PsiMethod method = (PsiMethod)scope;
+    return isOverrideOfLibraryMethod(method);
+  }
 }

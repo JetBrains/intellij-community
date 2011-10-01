@@ -32,102 +32,103 @@ import java.util.Collection;
 
 public class InnerClassMayBeStaticInspection extends BaseInspection {
 
-    @Override
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "inner.class.may.be.static.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "inner.class.may.be.static.problem.descriptor");
+  }
+
+  @Override
+  public boolean runForWholeFile() {
+    return true;
+  }
+
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new InnerClassMayBeStaticFix();
+  }
+
+  private static class InnerClassMayBeStaticFix extends InspectionGadgetsFix {
+
     @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "inner.class.may.be.static.display.name");
+    public String getName() {
+      return InspectionGadgetsBundle.message("make.static.quickfix");
     }
 
     @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "inner.class.may.be.static.problem.descriptor");
-    }
-
-    @Override
-    public boolean runForWholeFile() {
-        return true;
-    }
-
-    @Override
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        return new InnerClassMayBeStaticFix();
-    }
-
-    private static class InnerClassMayBeStaticFix extends InspectionGadgetsFix {
-
-        @NotNull
-        public String getName() {
-            return InspectionGadgetsBundle.message("make.static.quickfix");
+    public void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiJavaToken classNameToken =
+        (PsiJavaToken)descriptor.getPsiElement();
+      final PsiClass innerClass = (PsiClass)classNameToken.getParent();
+      assert innerClass != null;
+      final SearchScope useScope = innerClass.getUseScope();
+      final Query<PsiReference> query =
+        ReferencesSearch.search(innerClass, useScope);
+      final Collection<PsiReference> references = query.findAll();
+      for (final PsiReference reference : references) {
+        final PsiElement element = reference.getElement();
+        final PsiElement parent = element.getParent();
+        if (!(parent instanceof PsiNewExpression)) {
+          continue;
         }
-
-        @Override
-        public void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
-            final PsiJavaToken classNameToken =
-                    (PsiJavaToken)descriptor.getPsiElement();
-            final PsiClass innerClass = (PsiClass)classNameToken.getParent();
-            assert innerClass != null;
-            final SearchScope useScope = innerClass.getUseScope();
-            final Query<PsiReference> query =
-                    ReferencesSearch.search(innerClass, useScope);
-            final Collection<PsiReference> references = query.findAll();
-            for (final PsiReference reference : references) {
-                final PsiElement element = reference.getElement();
-                final PsiElement parent = element.getParent();
-                if (!(parent instanceof PsiNewExpression)) {
-                    continue;
-                }
-                final PsiNewExpression newExpression =
-                        (PsiNewExpression)parent;
-                final PsiExpression qualifier =
-                        newExpression.getQualifier();
-                if (qualifier == null) {
-                    continue;
-                }
-                qualifier.delete();
-            }
-            final PsiModifierList modifiers = innerClass.getModifierList();
-            if (modifiers == null) {
-                return;
-            }
-            modifiers.setModifierProperty(PsiModifier.STATIC, true);
+        final PsiNewExpression newExpression =
+          (PsiNewExpression)parent;
+        final PsiExpression qualifier =
+          newExpression.getQualifier();
+        if (qualifier == null) {
+          continue;
         }
+        qualifier.delete();
+      }
+      final PsiModifierList modifiers = innerClass.getModifierList();
+      if (modifiers == null) {
+        return;
+      }
+      modifiers.setModifierProperty(PsiModifier.STATIC, true);
     }
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new InnerClassMayBeStaticVisitor();
+  }
+
+  private static class InnerClassMayBeStaticVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new InnerClassMayBeStaticVisitor();
-    }
-
-    private static class InnerClassMayBeStaticVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitClass(@NotNull PsiClass aClass) {
-            // no call to super, so that it doesn't drill down to inner classes
-            if (aClass.getContainingClass() != null &&
-                    !aClass.hasModifierProperty(PsiModifier.STATIC)) {
-                // inner class cannot have static declarations
-                return;
-            }
-            if (aClass instanceof PsiAnonymousClass) {
-                return;
-            }
-            final PsiClass[] innerClasses = aClass.getInnerClasses();
-            for (final PsiClass innerClass : innerClasses) {
-                if (innerClass.hasModifierProperty(PsiModifier.STATIC)) {
-                    continue;
-                }
-                final InnerClassReferenceVisitor visitor =
-                        new InnerClassReferenceVisitor(innerClass);
-                innerClass.accept(visitor);
-                if (!visitor.canInnerClassBeStatic()) {
-                    continue;
-                }
-                registerClassError(innerClass);
-            }
+    public void visitClass(@NotNull PsiClass aClass) {
+      // no call to super, so that it doesn't drill down to inner classes
+      if (aClass.getContainingClass() != null &&
+          !aClass.hasModifierProperty(PsiModifier.STATIC)) {
+        // inner class cannot have static declarations
+        return;
+      }
+      if (aClass instanceof PsiAnonymousClass) {
+        return;
+      }
+      final PsiClass[] innerClasses = aClass.getInnerClasses();
+      for (final PsiClass innerClass : innerClasses) {
+        if (innerClass.hasModifierProperty(PsiModifier.STATIC)) {
+          continue;
         }
+        final InnerClassReferenceVisitor visitor =
+          new InnerClassReferenceVisitor(innerClass);
+        innerClass.accept(visitor);
+        if (!visitor.canInnerClassBeStatic()) {
+          continue;
+        }
+        registerClassError(innerClass);
+      }
     }
+  }
 }

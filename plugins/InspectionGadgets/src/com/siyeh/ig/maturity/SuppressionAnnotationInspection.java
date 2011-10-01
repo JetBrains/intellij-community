@@ -28,51 +28,53 @@ import org.jetbrains.annotations.NotNull;
 
 public class SuppressionAnnotationInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName(){
-        return InspectionGadgetsBundle.message(
-                "inspection.suppression.annotation.display.name");
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "inspection.suppression.annotation.display.name");
+  }
+
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "inspection.suppression.annotation.problem.descriptor");
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new SuppressionAnnotationVisitor();
+  }
+
+  private static class SuppressionAnnotationVisitor
+    extends BaseInspectionVisitor {
+    @Override
+    public void visitComment(PsiComment comment) {
+      super.visitComment(comment);
+      final String commentText = comment.getText();
+      final IElementType tokenType = comment.getTokenType();
+      if (!tokenType.equals(JavaTokenType.END_OF_LINE_COMMENT)
+          && !tokenType.equals(JavaTokenType.C_STYLE_COMMENT)) {
+        return;
+      }
+      @NonNls final String strippedComment =
+        commentText.substring(2).trim();
+      if (strippedComment.startsWith("noinspection")) {
+        registerError(comment);
+      }
     }
 
-    @NotNull
-    public String buildErrorString(Object... infos){
-        return InspectionGadgetsBundle.message(
-                "inspection.suppression.annotation.problem.descriptor");
+    @Override
+    public void visitAnnotation(PsiAnnotation annotation) {
+      super.visitAnnotation(annotation);
+      final PsiJavaCodeReferenceElement reference =
+        annotation.getNameReferenceElement();
+      if (reference == null) {
+        return;
+      }
+      @NonNls final String text = reference.getText();
+      if ("SuppressWarnings".equals(text) ||
+          "java.lang.SuppressWarnings".equals(text)) {
+        registerError(annotation);
+      }
     }
-
-    public BaseInspectionVisitor buildVisitor(){
-        return new SuppressionAnnotationVisitor();
-    }
-
-    private static class SuppressionAnnotationVisitor
-            extends BaseInspectionVisitor{
-        @Override public void visitComment(PsiComment comment){
-            super.visitComment(comment);
-            final String commentText = comment.getText();
-            final IElementType tokenType = comment.getTokenType();
-            if(!tokenType.equals(JavaTokenType.END_OF_LINE_COMMENT)
-               && !tokenType.equals(JavaTokenType.C_STYLE_COMMENT)){
-                return;
-            }
-            @NonNls final String strippedComment =
-                    commentText.substring(2).trim();
-            if(strippedComment.startsWith("noinspection")){
-                registerError(comment);
-            }
-        }
-
-        @Override public void visitAnnotation(PsiAnnotation annotation){
-            super.visitAnnotation(annotation);
-            final PsiJavaCodeReferenceElement reference =
-                    annotation.getNameReferenceElement();
-            if(reference == null){
-                return;
-            }
-            @NonNls final String text = reference.getText();
-            if("SuppressWarnings".equals(text) ||
-               "java.lang.SuppressWarnings".equals(text)){
-                registerError(annotation);
-            }
-        }
-    }
+  }
 }

@@ -36,143 +36,143 @@ import java.util.List;
 
 public class CharUsedInArithmeticContextInspection extends BaseInspection {
 
-    @Override
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "char.used.in.arithmetic.context.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "char.used.in.arithmetic.context.problem.descriptor");
+  }
+
+  @NotNull
+  @Override
+  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+    final List<InspectionGadgetsFix> result =
+      new ArrayList<InspectionGadgetsFix>();
+    final PsiElement expression = (PsiElement)infos[0];
+    PsiElement parent = expression.getParent();
+    if (parent instanceof PsiExpression) {
+      final PsiExpression binaryExpression =
+        (PsiExpression)parent;
+      final PsiType type = binaryExpression.getType();
+      if (type instanceof PsiPrimitiveType &&
+          !type.equals(PsiType.CHAR)) {
+        final String typeText = type.getCanonicalText();
+        result.add(new CharUsedInArithmeticContentCastFix(typeText));
+      }
+    }
+    if (!(expression instanceof PsiLiteralExpression)) {
+      return result.toArray(new InspectionGadgetsFix[result.size()]);
+    }
+    while (parent instanceof PsiPolyadicExpression) {
+      if (TypeUtils.expressionHasType((PsiExpression)parent,
+                                      CommonClassNames.JAVA_LANG_STRING)) {
+        result.add(new CharUsedInArithmeticContentFix());
+        break;
+      }
+      parent = parent.getParent();
+    }
+
+    return result.toArray(new InspectionGadgetsFix[result.size()]);
+  }
+
+  private static class CharUsedInArithmeticContentFix
+    extends InspectionGadgetsFix {
+
     @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "char.used.in.arithmetic.context.display.name");
+    public String getName() {
+      return InspectionGadgetsBundle.message(
+        "char.used.in.arithmetic.context.quickfix");
     }
 
     @Override
+    protected void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiElement element = descriptor.getPsiElement();
+      if (!(element instanceof PsiLiteralExpression)) {
+        return;
+      }
+      final PsiLiteralExpression literalExpression =
+        (PsiLiteralExpression)element;
+      final Object literal = literalExpression.getValue();
+      if (!(literal instanceof Character)) {
+        return;
+      }
+      final String escaped = StringUtil.escapeStringCharacters(
+        literal.toString());
+      replaceExpression(literalExpression, '\"' + escaped + '"');
+    }
+  }
+
+  private static class CharUsedInArithmeticContentCastFix
+    extends InspectionGadgetsFix {
+
+    private final String typeText;
+
+    CharUsedInArithmeticContentCastFix(String typeText) {
+      this.typeText = typeText;
+    }
+
     @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "char.used.in.arithmetic.context.problem.descriptor");
-    }
-
-    @NotNull
-    @Override
-    protected InspectionGadgetsFix[] buildFixes(Object... infos) {
-        final List<InspectionGadgetsFix> result =
-                new ArrayList<InspectionGadgetsFix>();
-        final PsiElement expression = (PsiElement)infos[0];
-        PsiElement parent = expression.getParent();
-        if (parent instanceof PsiExpression) {
-            final PsiExpression binaryExpression =
-                    (PsiExpression)parent;
-            final PsiType type = binaryExpression.getType();
-            if (type instanceof PsiPrimitiveType &&
-                    !type.equals(PsiType.CHAR)) {
-                final String typeText = type.getCanonicalText();
-                result.add(new CharUsedInArithmeticContentCastFix(typeText));
-            }
-        }
-        if (!(expression instanceof PsiLiteralExpression)) {
-            return result.toArray(new InspectionGadgetsFix[result.size()]);
-        }
-        while (parent instanceof PsiPolyadicExpression) {
-            if (TypeUtils.expressionHasType((PsiExpression)parent,
-                    CommonClassNames.JAVA_LANG_STRING)) {
-                result.add(new CharUsedInArithmeticContentFix());
-                break;
-            }
-            parent = parent.getParent();
-        }
-
-        return result.toArray(new InspectionGadgetsFix[result.size()]);
-    }
-
-    private static class CharUsedInArithmeticContentFix
-            extends InspectionGadgetsFix {
-
-        @NotNull
-        public String getName() {
-            return InspectionGadgetsBundle.message(
-                    "char.used.in.arithmetic.context.quickfix");
-        }
-
-        @Override
-        protected void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
-            final PsiElement element = descriptor.getPsiElement();
-            if (!(element instanceof PsiLiteralExpression)) {
-                return;
-            }
-            final PsiLiteralExpression literalExpression =
-                    (PsiLiteralExpression) element;
-            final Object literal = literalExpression.getValue();
-            if (!(literal instanceof Character)) {
-                return;
-            }
-            final String escaped = StringUtil.escapeStringCharacters(
-                    literal.toString());
-            replaceExpression(literalExpression, '\"' + escaped + '"');
-        }
-    }
-
-    private static class CharUsedInArithmeticContentCastFix
-            extends InspectionGadgetsFix {
-
-        private final String typeText;
-
-        CharUsedInArithmeticContentCastFix(String typeText) {
-            this.typeText = typeText;
-        }
-
-        @NotNull
-        public String getName() {
-            return InspectionGadgetsBundle.message(
-                    "char.used.in.arithmetic.context.cast.quickfix", typeText);
-        }
-
-        @Override
-        protected void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
-            final PsiElement element = descriptor.getPsiElement();
-            if (!(element instanceof PsiExpression)) {
-                return;
-            }
-            final PsiExpression expression = (PsiExpression)element;
-            final String expressionText = expression.getText();
-            replaceExpression(expression,
-                    '(' + typeText + ')' + expressionText);
-        }
+    public String getName() {
+      return InspectionGadgetsBundle.message(
+        "char.used.in.arithmetic.context.cast.quickfix", typeText);
     }
 
     @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new CharUsedInArithmeticContextVisitor();
+    protected void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiElement element = descriptor.getPsiElement();
+      if (!(element instanceof PsiExpression)) {
+        return;
+      }
+      final PsiExpression expression = (PsiExpression)element;
+      final String expressionText = expression.getText();
+      replaceExpression(expression,
+                        '(' + typeText + ')' + expressionText);
     }
+  }
 
-    private static class CharUsedInArithmeticContextVisitor
-            extends BaseInspectionVisitor {
-        @Override
-        public void visitPolyadicExpression(PsiPolyadicExpression expression) {
-            super.visitPolyadicExpression(expression);
-            final IElementType tokenType = expression.getOperationTokenType();
-            if (ComparisonUtils.isComparisonOperation(tokenType)) {
-                return;
-            }
-            final PsiExpression[] operands = expression.getOperands();
-            PsiType leftType = operands[0].getType();
-            for (int i = 1; i < operands.length; i++) {
-                final PsiExpression operand = operands[i];
-                final PsiType rightType = operand.getType();
-                final PsiType expressionType =
-                        TypeConversionUtil.calcTypeForBinaryExpression(
-                                leftType, rightType, tokenType, true);
-                if (expressionType == null ||
-                        expressionType.equalsToText("java.lang.String")) {
-                    return;
-                }
-                if (PsiType.CHAR.equals(rightType)) {
-                    registerError(operand, operand);
-                }
-                if (PsiType.CHAR.equals(leftType) && i == 1) {
-                    registerError(operands[0], operands[0]);
-                }
-                leftType = rightType;
-            }
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new CharUsedInArithmeticContextVisitor();
+  }
+
+  private static class CharUsedInArithmeticContextVisitor
+    extends BaseInspectionVisitor {
+    @Override
+    public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+      super.visitPolyadicExpression(expression);
+      final IElementType tokenType = expression.getOperationTokenType();
+      if (ComparisonUtils.isComparisonOperation(tokenType)) {
+        return;
+      }
+      final PsiExpression[] operands = expression.getOperands();
+      PsiType leftType = operands[0].getType();
+      for (int i = 1; i < operands.length; i++) {
+        final PsiExpression operand = operands[i];
+        final PsiType rightType = operand.getType();
+        final PsiType expressionType =
+          TypeConversionUtil.calcTypeForBinaryExpression(
+            leftType, rightType, tokenType, true);
+        if (expressionType == null ||
+            expressionType.equalsToText("java.lang.String")) {
+          return;
         }
+        if (PsiType.CHAR.equals(rightType)) {
+          registerError(operand, operand);
+        }
+        if (PsiType.CHAR.equals(leftType) && i == 1) {
+          registerError(operands[0], operands[0]);
+        }
+        leftType = rightType;
+      }
     }
+  }
 }

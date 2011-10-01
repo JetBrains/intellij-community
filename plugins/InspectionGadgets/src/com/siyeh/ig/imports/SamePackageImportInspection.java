@@ -25,73 +25,75 @@ import org.jetbrains.annotations.NotNull;
 
 public class SamePackageImportInspection extends BaseInspection {
 
-    @Override
-    @NotNull
-    public String getDisplayName(){
-        return InspectionGadgetsBundle.message(
-                "import.from.same.package.display.name");
-    }
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "import.from.same.package.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "import.from.same.package.problem.descriptor");
+  }
+
+  @Override
+  public InspectionGadgetsFix buildFix(Object... infos) {
+    return new DeleteImportFix();
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new SamePackageImportVisitor();
+  }
+
+  private static class SamePackageImportVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String buildErrorString(Object... infos){
-        return InspectionGadgetsBundle.message(
-                "import.from.same.package.problem.descriptor");
-    }
-
-    @Override
-    public InspectionGadgetsFix buildFix(Object... infos){
-        return new DeleteImportFix();
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor(){
-        return new SamePackageImportVisitor();
-    }
-
-    private static class SamePackageImportVisitor
-            extends BaseInspectionVisitor {
-
-        @Override
-        public void visitImportList(PsiImportList importList) {
-            final PsiElement parent = importList.getParent();
-            if (!(parent instanceof PsiJavaFile)) {
-                return;
-            }
-            if (JspPsiUtil.isInJspFile(importList)) {
-                return;
-            }
-            final PsiJavaFile javaFile = (PsiJavaFile) parent;
-            final String packageName = javaFile.getPackageName();
-            final PsiImportStatement[] importStatements =
-                    importList.getImportStatements();
-            for(final PsiImportStatement importStatement : importStatements){
-                final PsiJavaCodeReferenceElement reference =
-                        importStatement.getImportReference();
-                if (reference == null) {
-                    continue;
-                }
-                final String text = importStatement.getQualifiedName();
-                if(importStatement.isOnDemand()){
-                    if(packageName.equals(text)){
-                        registerError(importStatement);
-                    }
-                } else {
-                    if (text == null) {
-                        return;
-                    }
-                    final int classNameIndex = text.lastIndexOf((int)'.');
-                    final String parentName;
-                    if (classNameIndex < 0) {
-                        parentName = "";
-                    } else {
-                        parentName = text.substring(0, classNameIndex);
-                    }
-                    if (packageName.equals(parentName)) {
-                        registerError(importStatement);
-                    }
-                }
-            }
+    public void visitImportList(PsiImportList importList) {
+      final PsiElement parent = importList.getParent();
+      if (!(parent instanceof PsiJavaFile)) {
+        return;
+      }
+      if (JspPsiUtil.isInJspFile(importList)) {
+        return;
+      }
+      final PsiJavaFile javaFile = (PsiJavaFile)parent;
+      final String packageName = javaFile.getPackageName();
+      final PsiImportStatement[] importStatements =
+        importList.getImportStatements();
+      for (final PsiImportStatement importStatement : importStatements) {
+        final PsiJavaCodeReferenceElement reference =
+          importStatement.getImportReference();
+        if (reference == null) {
+          continue;
         }
+        final String text = importStatement.getQualifiedName();
+        if (importStatement.isOnDemand()) {
+          if (packageName.equals(text)) {
+            registerError(importStatement);
+          }
+        }
+        else {
+          if (text == null) {
+            return;
+          }
+          final int classNameIndex = text.lastIndexOf((int)'.');
+          final String parentName;
+          if (classNameIndex < 0) {
+            parentName = "";
+          }
+          else {
+            parentName = text.substring(0, classNameIndex);
+          }
+          if (packageName.equals(parentName)) {
+            registerError(importStatement);
+          }
+        }
+      }
     }
+  }
 }

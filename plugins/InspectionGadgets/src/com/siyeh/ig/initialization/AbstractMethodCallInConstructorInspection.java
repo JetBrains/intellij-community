@@ -24,67 +24,68 @@ import org.jetbrains.annotations.NotNull;
 
 public class AbstractMethodCallInConstructorInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "abstract.method.call.in.constructor.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "abstract.method.call.in.constructor.display.name");
+  }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "abstract.method.call.in.constructor.problem.descriptor");
-    }
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "abstract.method.call.in.constructor.problem.descriptor");
+  }
 
-    public BaseInspectionVisitor buildVisitor(){
-        return new AbstractMethodCallInConstructorVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new AbstractMethodCallInConstructorVisitor();
+  }
 
-    private static class AbstractMethodCallInConstructorVisitor
-            extends BaseInspectionVisitor{
+  private static class AbstractMethodCallInConstructorVisitor
+    extends BaseInspectionVisitor {
 
-        @Override public void visitMethodCallExpression(
-                @NotNull PsiMethodCallExpression call){
-            super.visitMethodCallExpression(call);
-            final PsiMethod method =
-                    PsiTreeUtil.getParentOfType(call, PsiMethod.class);
-            if(method == null){
-                return;
-            }
-            if(!method.isConstructor()){
-                return;
-            }
-            final PsiReferenceExpression methodExpression =
-                    call.getMethodExpression();
-            final PsiExpression qualifier =
-                    methodExpression.getQualifierExpression();
-            if (qualifier != null) {
-                if (!(qualifier instanceof PsiThisExpression) &&
-                        !(qualifier instanceof PsiSuperExpression)) {
-                    return;
-                }
-            }
-            final PsiMethod calledMethod =
-                    (PsiMethod) methodExpression.resolve();
-            if(calledMethod == null){
-                return;
-            }
-            if(calledMethod.isConstructor()){
-                return;
-            }
-            if(!calledMethod.hasModifierProperty(PsiModifier.ABSTRACT)){
-                return;
-            }
-            final PsiClass calledMethodClass =
-                    calledMethod.getContainingClass();
-            if(calledMethodClass == null){
-                return;
-            }
-            final PsiClass methodClass = method.getContainingClass();
-            if(!calledMethodClass.equals(methodClass)){
-                return;
-            }
-            registerMethodCallError(call);
+    @Override
+    public void visitMethodCallExpression(
+      @NotNull PsiMethodCallExpression call) {
+      super.visitMethodCallExpression(call);
+      final PsiMethod method =
+        PsiTreeUtil.getParentOfType(call, PsiMethod.class);
+      if (method == null) {
+        return;
+      }
+      if (!method.isConstructor()) {
+        return;
+      }
+      final PsiReferenceExpression methodExpression =
+        call.getMethodExpression();
+      final PsiExpression qualifier =
+        methodExpression.getQualifierExpression();
+      if (qualifier != null) {
+        if (!(qualifier instanceof PsiThisExpression) &&
+            !(qualifier instanceof PsiSuperExpression)) {
+          return;
         }
+      }
+      final PsiMethod calledMethod =
+        (PsiMethod)methodExpression.resolve();
+      if (calledMethod == null) {
+        return;
+      }
+      if (calledMethod.isConstructor()) {
+        return;
+      }
+      if (!calledMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        return;
+      }
+      final PsiClass calledMethodClass =
+        calledMethod.getContainingClass();
+      if (calledMethodClass == null) {
+        return;
+      }
+      final PsiClass methodClass = method.getContainingClass();
+      if (!calledMethodClass.equals(methodClass)) {
+        return;
+      }
+      registerMethodCallError(call);
     }
+  }
 }

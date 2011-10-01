@@ -4,8 +4,8 @@ import com.siyeh.ig.IGInspectionTestCase;
 
 public class LengthOneStringsInConcatenationInspectionTest extends IGInspectionTestCase {
 
-    public void test() throws Exception {
-        doTest("com/siyeh/igtest/performance/length_one_strings_in_concatenation",
-                new LengthOneStringsInConcatenationInspection());
-    }
+  public void test() throws Exception {
+    doTest("com/siyeh/igtest/performance/length_one_strings_in_concatenation",
+           new LengthOneStringsInConcatenationInspection());
+  }
 }

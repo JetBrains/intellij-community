@@ -66,7 +66,7 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new CollapseCatchSectionsFix((Integer) infos[0]);
+    return new CollapseCatchSectionsFix((Integer)infos[0]);
   }
 
   private static class TryWithIdenticalCatchesVisitor extends BaseInspectionVisitor {
@@ -89,7 +89,7 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
                                                            statement.getProject(),
                                                            new LocalSearchScope(catchBlock),
                                                            false);
-        DuplicatesFinder finder = new DuplicatesFinder(new PsiElement[] {catchBlock},
+        DuplicatesFinder finder = new DuplicatesFinder(new PsiElement[]{catchBlock},
                                                        inputVariables, null, Collections.<PsiVariable>emptyList());
         for (int j = 0; j < catchSections.length; j++) {
           if (i == j || duplicates[j]) continue;
@@ -102,7 +102,7 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
             if (parameterValues == null || (parameterValues.size() == 1 && parameterValues.get(0) instanceof PsiReferenceExpression)) {
               PsiJavaToken rParenth = otherSection.getRParenth();
               if (rParenth != null) {
-                  registerError(otherSection, 0, rParenth.getStartOffsetInParent() + 1, i);
+                registerError(otherSection, 0, rParenth.getStartOffsetInParent() + 1, i);
               }
               duplicates[i] = true;
               duplicates[j] = true;
@@ -122,8 +122,8 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
 
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
-      PsiCatchSection section = (PsiCatchSection) descriptor.getPsiElement();
-      PsiTryStatement stmt = (PsiTryStatement) section.getParent();
+      PsiCatchSection section = (PsiCatchSection)descriptor.getPsiElement();
+      PsiTryStatement stmt = (PsiTryStatement)section.getParent();
       PsiCatchSection[] catchSections = stmt.getCatchSections();
       if (myCollapseIntoIndex >= catchSections.length) {
         return;   // something has gone stale
@@ -137,12 +137,13 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
       String typeText = parameter1.getTypeElement().getText() + " | " + parameter2.getTypeElement().getText() + " e";
       if (TypeConversionUtil.isAssignable(parameter1.getType(), parameter2.getType())) {
         typeText = parameter1.getText();
-      } else if (TypeConversionUtil.isAssignable(parameter2.getType(), parameter1.getType())) {
+      }
+      else if (TypeConversionUtil.isAssignable(parameter2.getType(), parameter1.getType())) {
         typeText = parameter2.getText();
       }
       @NonNls String text = "try { } catch(" + typeText + ") { }";
       PsiTryStatement newTryCatch = (PsiTryStatement)JavaPsiFacade.getElementFactory(project).createStatementFromText(text, stmt);
-      parameter1.getTypeElement().replace(newTryCatch.getCatchSections() [0].getParameter().getTypeElement());
+      parameter1.getTypeElement().replace(newTryCatch.getCatchSections()[0].getParameter().getTypeElement());
       section.delete();
     }
 

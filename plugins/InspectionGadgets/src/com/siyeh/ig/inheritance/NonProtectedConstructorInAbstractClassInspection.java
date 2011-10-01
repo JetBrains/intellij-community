@@ -29,79 +29,80 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public class NonProtectedConstructorInAbstractClassInspection
-        extends BaseInspection {
+  extends BaseInspection {
 
-    /**
-     * @noinspection PublicField
-     */
-    public boolean m_ignoreNonPublicClasses = false;
+  /**
+   * @noinspection PublicField
+   */
+  public boolean m_ignoreNonPublicClasses = false;
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "non.protected.constructor.in.abstract.class.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String getID() {
+    return "ConstructorNotProtectedInAbstractClass";
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "non.protected.constructor.in.abstract.class.problem.descriptor");
+  }
+
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(
+      InspectionGadgetsBundle.message(
+        "non.protected.constructor.in.abstract.class.ignore.option"),
+      this, "m_ignoreNonPublicClasses");
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new NonProtectedConstructorInAbstractClassVisitor();
+  }
+
+  @Override
+  public InspectionGadgetsFix buildFix(Object... infos) {
+    return new ChangeModifierFix(PsiModifier.PROTECTED);
+  }
+
+  private class NonProtectedConstructorInAbstractClassVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "non.protected.constructor.in.abstract.class.display.name");
+    public void visitMethod(@NotNull PsiMethod method) {
+      //no call to super, so we don't drill into anonymous classes
+      if (!method.isConstructor()) {
+        return;
+      }
+      if (method.hasModifierProperty(PsiModifier.PROTECTED)
+          || method.hasModifierProperty(PsiModifier.PRIVATE)
+          || method.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
+        return;
+      }
+      final PsiClass containingClass = method.getContainingClass();
+      if (containingClass == null) {
+        return;
+      }
+      if (m_ignoreNonPublicClasses &&
+          !containingClass.hasModifierProperty(PsiModifier.PUBLIC)) {
+        return;
+      }
+      if (!containingClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        return;
+      }
+      if (containingClass.isEnum()) {
+        return;
+      }
+      registerMethodError(method);
     }
-
-    @Override
-    @NotNull
-    public String getID() {
-        return "ConstructorNotProtectedInAbstractClass";
-    }
-
-    @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "non.protected.constructor.in.abstract.class.problem.descriptor");
-    }
-
-    @Override
-    public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel(
-                InspectionGadgetsBundle.message(
-                        "non.protected.constructor.in.abstract.class.ignore.option"),
-                this, "m_ignoreNonPublicClasses");
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new NonProtectedConstructorInAbstractClassVisitor();
-    }
-
-    @Override
-    public InspectionGadgetsFix buildFix(Object... infos) {
-        return new ChangeModifierFix(PsiModifier.PROTECTED);
-    }
-
-    private class NonProtectedConstructorInAbstractClassVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitMethod(@NotNull PsiMethod method) {
-            //no call to super, so we don't drill into anonymous classes
-            if (!method.isConstructor()) {
-                return;
-            }
-            if (method.hasModifierProperty(PsiModifier.PROTECTED)
-                || method.hasModifierProperty(PsiModifier.PRIVATE)
-                    || method.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
-                return;
-            }
-            final PsiClass containingClass = method.getContainingClass();
-            if (containingClass == null) {
-                return;
-            }
-            if (m_ignoreNonPublicClasses &&
-                !containingClass.hasModifierProperty(PsiModifier.PUBLIC)) {
-                return;
-            }
-            if (!containingClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-                return;
-            }
-            if (containingClass.isEnum()) {
-                return;
-            }
-            registerMethodError(method);
-        }
-    }
+  }
 }

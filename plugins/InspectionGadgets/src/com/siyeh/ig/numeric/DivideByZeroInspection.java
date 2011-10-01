@@ -25,72 +25,74 @@ import org.jetbrains.annotations.NotNull;
 
 public class DivideByZeroInspection extends BaseInspection {
 
-    @NotNull
-    public String getID() {
-        return "divzero";
+  @NotNull
+  public String getID() {
+    return "divzero";
+  }
+
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("divide.by.zero.display.name");
+  }
+
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "divide.by.zero.problem.descriptor");
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new DivisionByZeroVisitor();
+  }
+
+  private static class DivisionByZeroVisitor extends BaseInspectionVisitor {
+
+    @Override
+    public void visitBinaryExpression(
+      @NotNull PsiBinaryExpression expression) {
+      super.visitBinaryExpression(expression);
+      final PsiExpression rhs = expression.getROperand();
+      if (rhs == null) {
+        return;
+      }
+      final IElementType tokenType = expression.getOperationTokenType();
+      if (!tokenType.equals(JavaTokenType.DIV) &&
+          !tokenType.equals(JavaTokenType.PERC)) {
+        return;
+      }
+      final Object value =
+        ConstantExpressionUtil.computeCastTo(rhs, PsiType.DOUBLE);
+      if (value == null || !(value instanceof Double)) {
+        return;
+      }
+      final double constantValue = ((Double)value).doubleValue();
+      if (constantValue == 0.0 || constantValue == -0.0) {
+        registerError(expression);
+      }
     }
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message("divide.by.zero.display.name");
+    @Override
+    public void visitAssignmentExpression(
+      PsiAssignmentExpression expression) {
+      super.visitAssignmentExpression(expression);
+      final PsiExpression rhs = expression.getRExpression();
+      if (rhs == null) {
+        return;
+      }
+      final IElementType tokenType = expression.getOperationTokenType();
+      if (!tokenType.equals(JavaTokenType.DIVEQ)
+          && !tokenType.equals(JavaTokenType.PERCEQ)) {
+        return;
+      }
+      final Object value = ConstantExpressionUtil.computeCastTo(rhs,
+                                                                PsiType.DOUBLE);
+      if (value == null || !(value instanceof Double)) {
+        return;
+      }
+      final double constantValue = ((Double)value).doubleValue();
+      if (constantValue == 0.0 || constantValue == -0.0) {
+        registerError(expression);
+      }
     }
-
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "divide.by.zero.problem.descriptor");
-    }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new DivisionByZeroVisitor();
-    }
-
-    private static class DivisionByZeroVisitor extends BaseInspectionVisitor {
-
-        @Override public void visitBinaryExpression(
-                @NotNull PsiBinaryExpression expression) {
-            super.visitBinaryExpression(expression);
-            final PsiExpression rhs = expression.getROperand();
-            if (rhs == null) {
-                return;
-            }
-          final IElementType tokenType = expression.getOperationTokenType();
-            if (!tokenType.equals(JavaTokenType.DIV) &&
-                    !tokenType.equals(JavaTokenType.PERC)) {
-                return;
-            }
-            final Object value =
-                    ConstantExpressionUtil.computeCastTo(rhs, PsiType.DOUBLE);
-            if (value == null || !(value instanceof Double)) {
-                return;
-            }
-            final double constantValue = ((Double)value).doubleValue();
-            if (constantValue == 0.0 || constantValue == -0.0) {
-                registerError(expression);
-            }
-        }
-
-        @Override public void visitAssignmentExpression(
-                PsiAssignmentExpression expression) {
-            super.visitAssignmentExpression(expression);
-            final PsiExpression rhs = expression.getRExpression();
-            if (rhs == null) {
-                return;
-            }
-          final IElementType tokenType = expression.getOperationTokenType();
-            if (!tokenType.equals(JavaTokenType.DIVEQ)
-                    && !tokenType.equals(JavaTokenType.PERCEQ)) {
-                return;
-            }
-            final Object value = ConstantExpressionUtil.computeCastTo(rhs,
-                    PsiType.DOUBLE);
-            if (value == null || !(value instanceof Double)) {
-                return;
-            }
-            final double constantValue = ((Double)value).doubleValue();
-            if (constantValue == 0.0 || constantValue == -0.0) {
-                registerError(expression);
-            }
-        }
-    }
+  }
 }

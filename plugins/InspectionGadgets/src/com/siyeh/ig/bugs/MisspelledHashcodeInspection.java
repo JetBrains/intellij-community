@@ -28,40 +28,41 @@ import org.jetbrains.annotations.NotNull;
 
 public class MisspelledHashcodeInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName(){
-        return InspectionGadgetsBundle.message(
-                "misspelled.hashcode.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "misspelled.hashcode.display.name");
+  }
 
-    @NotNull
-    public String buildErrorString(Object... infos){
-        return InspectionGadgetsBundle.message(
-                "misspelled.hashcode.problem.descriptor");
-    }
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "misspelled.hashcode.problem.descriptor");
+  }
 
-    protected InspectionGadgetsFix buildFix(Object... infos){
-        return new RenameFix(HardcodedMethodConstants.HASH_CODE);
-    }
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new RenameFix(HardcodedMethodConstants.HASH_CODE);
+  }
 
-    public BaseInspectionVisitor buildVisitor(){
-        return new MisspelledHashcodeVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new MisspelledHashcodeVisitor();
+  }
 
-    private static class MisspelledHashcodeVisitor
-            extends BaseInspectionVisitor{
+  private static class MisspelledHashcodeVisitor
+    extends BaseInspectionVisitor {
 
-        @Override public void visitMethod(@NotNull PsiMethod method){
-            //note: no call to super
-            @NonNls final String methodName = method.getName();
-            if(!"hashcode".equals(methodName)){
-                return;
-            }
-            final PsiParameterList parameterList = method.getParameterList();
-            if(parameterList.getParametersCount() != 0){
-                return;
-            }
-            registerMethodError(method);
-        }
+    @Override
+    public void visitMethod(@NotNull PsiMethod method) {
+      //note: no call to super
+      @NonNls final String methodName = method.getName();
+      if (!"hashcode".equals(methodName)) {
+        return;
+      }
+      final PsiParameterList parameterList = method.getParameterList();
+      if (parameterList.getParametersCount() != 0) {
+        return;
+      }
+      registerMethodError(method);
     }
+  }
 }

@@ -23,66 +23,67 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
 public class ClassNestingDepthInspection
-        extends ClassMetricInspection {
+  extends ClassMetricInspection {
 
-    private static final int CLASS_NESTING_LIMIT = 1;
+  private static final int CLASS_NESTING_LIMIT = 1;
 
-    @NotNull
-    public String getID() {
-        return "InnerClassTooDeeplyNested";
+  @NotNull
+  public String getID() {
+    return "InnerClassTooDeeplyNested";
+  }
+
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "inner.class.too.deeply.nested.display.name");
+  }
+
+  protected int getDefaultLimit() {
+    return CLASS_NESTING_LIMIT;
+  }
+
+  protected String getConfigurationLabel() {
+    return InspectionGadgetsBundle.message(
+      "inner.class.too.deeply.nested.nesting.limit.option");
+  }
+
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    final Integer nestingLevel = (Integer)infos[0];
+    return InspectionGadgetsBundle.message(
+      "inner.class.too.deeply.nested.problem.descriptor",
+      nestingLevel);
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new ClassNestingLevel();
+  }
+
+  private class ClassNestingLevel extends BaseInspectionVisitor {
+
+    @Override
+    public void visitClass(@NotNull PsiClass aClass) {
+      // note: no call to super
+      if (aClass instanceof PsiTypeParameter) {
+        return;
+      }
+      final int nestingLevel = getNestingLevel(aClass);
+      if (nestingLevel <= getLimit()) {
+        return;
+      }
+      registerClassError(aClass, Integer.valueOf(nestingLevel));
     }
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "inner.class.too.deeply.nested.display.name");
-    }
-
-    protected int getDefaultLimit() {
-        return CLASS_NESTING_LIMIT;
-    }
-
-    protected String getConfigurationLabel() {
-        return InspectionGadgetsBundle.message(
-                "inner.class.too.deeply.nested.nesting.limit.option");
-    }
-
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        final Integer nestingLevel = (Integer)infos[0];
-        return InspectionGadgetsBundle.message(
-                "inner.class.too.deeply.nested.problem.descriptor",
-                nestingLevel);
-    }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new ClassNestingLevel();
-    }
-
-    private class ClassNestingLevel extends BaseInspectionVisitor {
-     
-        @Override public void visitClass(@NotNull PsiClass aClass) {
-            // note: no call to super
-            if (aClass instanceof PsiTypeParameter) {
-                return;
-            }
-            final int nestingLevel = getNestingLevel(aClass);
-            if (nestingLevel <= getLimit()) {
-                return;
-            }
-            registerClassError(aClass, Integer.valueOf(nestingLevel));
+    private int getNestingLevel(PsiClass aClass) {
+      PsiElement ancestor = aClass.getParent();
+      int nestingLevel = 0;
+      while (ancestor != null) {
+        if (ancestor instanceof PsiClass) {
+          nestingLevel++;
         }
-
-        private int getNestingLevel(PsiClass aClass) {
-            PsiElement ancestor = aClass.getParent();
-            int nestingLevel = 0;
-            while (ancestor != null) {
-                if (ancestor instanceof PsiClass) {
-                    nestingLevel++;
-                }
-                ancestor = ancestor.getParent();
-            }
-            return nestingLevel;
-        }
+        ancestor = ancestor.getParent();
+      }
+      return nestingLevel;
     }
+  }
 }

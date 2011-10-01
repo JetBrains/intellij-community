@@ -27,73 +27,74 @@ import org.jetbrains.annotations.NotNull;
 
 public class ResultSetIndexZeroInspection extends BaseInspection {
 
-    @Override
-    @NotNull
-    public String getID(){
-        return "UseOfIndexZeroInJDBCResultSet";
-    }
+  @Override
+  @NotNull
+  public String getID() {
+    return "UseOfIndexZeroInJDBCResultSet";
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "use.0index.in.jdbc.resultset.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "use.0index.in.jdbc.resultset.problem.descriptor");
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new ResultSetIndexZeroVisitor();
+  }
+
+  private static class ResultSetIndexZeroVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "use.0index.in.jdbc.resultset.display.name");
+    public void visitMethodCallExpression(
+      @NotNull PsiMethodCallExpression expression) {
+      super.visitMethodCallExpression(expression);
+      final PsiReferenceExpression methodExpression =
+        expression.getMethodExpression();
+      @NonNls final String methodName =
+        methodExpression.getReferenceName();
+      if (methodName == null) {
+        return;
+      }
+      if (!methodName.startsWith("get") &&
+          !methodName.startsWith("update")) {
+        return;
+      }
+      final PsiExpressionList argumentList = expression.getArgumentList();
+      final PsiExpression[] arguments = argumentList.getExpressions();
+      if (arguments.length == 0) {
+        return;
+      }
+      final PsiExpression argument = arguments[0];
+      if (!TypeUtils.expressionHasType(argument, PsiKeyword.INT)) {
+        return;
+      }
+      if (!PsiUtil.isConstantExpression(argument)) {
+        return;
+      }
+      final Integer val =
+        (Integer)ConstantExpressionUtil.computeCastTo(argument,
+                                                      PsiType.INT);
+      if (val == null || val.intValue() != 0) {
+        return;
+      }
+      final PsiExpression qualifier =
+        methodExpression.getQualifierExpression();
+      if (!TypeUtils.expressionHasTypeOrSubtype(qualifier,
+                                                "java.sql.ResultSet")) {
+        return;
+      }
+      registerError(argument);
     }
-
-    @Override
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "use.0index.in.jdbc.resultset.problem.descriptor");
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new ResultSetIndexZeroVisitor();
-    }
-
-    private static class ResultSetIndexZeroVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitMethodCallExpression(
-                @NotNull PsiMethodCallExpression expression) {
-            super.visitMethodCallExpression(expression);
-            final PsiReferenceExpression methodExpression =
-                    expression.getMethodExpression();
-            @NonNls final String methodName =
-                    methodExpression.getReferenceName();
-            if(methodName == null){
-                return;
-            }
-            if (!methodName.startsWith("get") &&
-                    !methodName.startsWith("update") ) {
-                return;
-            }
-            final PsiExpressionList argumentList = expression.getArgumentList();
-            final PsiExpression[] arguments = argumentList.getExpressions();
-            if(arguments.length== 0){
-                return;
-            }
-            final PsiExpression argument = arguments[0];
-            if (!TypeUtils.expressionHasType(argument, PsiKeyword.INT)) {
-                return;
-            }
-            if(!PsiUtil.isConstantExpression(argument)) {
-                return;
-            }
-            final Integer val =
-                    (Integer) ConstantExpressionUtil.computeCastTo(argument,
-                            PsiType.INT);
-            if(val == null || val.intValue() != 0) {
-                return;
-            }
-            final PsiExpression qualifier =
-                    methodExpression.getQualifierExpression();
-            if (!TypeUtils.expressionHasTypeOrSubtype(qualifier, 
-                    "java.sql.ResultSet")) {
-                return;
-            }
-            registerError(argument);
-        }
-    }
+  }
 }

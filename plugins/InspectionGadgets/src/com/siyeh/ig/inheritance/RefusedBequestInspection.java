@@ -28,173 +28,178 @@ import javax.swing.JComponent;
 
 public class RefusedBequestInspection extends BaseInspection {
 
-    /** @noinspection PublicField*/
-    public boolean ignoreEmptySuperMethods = false;
+  /**
+   * @noinspection PublicField
+   */
+  public boolean ignoreEmptySuperMethods = false;
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("refused.bequest.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "refused.bequest.problem.descriptor");
+  }
+
+  @Override
+  public JComponent createOptionsPanel() {
+    //noinspection HardCodedStringLiteral
+    return new SingleCheckboxOptionsPanel(
+      "<html>" + InspectionGadgetsBundle.message(
+        "refused.bequest.ignore.empty.super.methods.option") +
+      "</html>", this, "ignoreEmptySuperMethods");
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new RefusedBequestVisitor();
+  }
+
+  private class RefusedBequestVisitor extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String getDisplayName(){
-        return InspectionGadgetsBundle.message("refused.bequest.display.name");
+    public void visitMethod(@NotNull PsiMethod method) {
+      super.visitMethod(method);
+      final PsiCodeBlock body = method.getBody();
+      if (body == null) {
+        return;
+      }
+      if (method.getNameIdentifier() == null) {
+        return;
+      }
+      final PsiMethod leastConcreteSuperMethod =
+        getLeastConcreteSuperMethod(method);
+      if (leastConcreteSuperMethod == null) {
+        return;
+      }
+      final PsiClass containingClass =
+        leastConcreteSuperMethod.getContainingClass();
+      if (containingClass == null) {
+        return;
+      }
+      final String className = containingClass.getQualifiedName();
+      if (CommonClassNames.JAVA_LANG_OBJECT.equals(className)) {
+        return;
+      }
+      if (ignoreEmptySuperMethods) {
+        final PsiMethod superMethod = (PsiMethod)
+          leastConcreteSuperMethod.getNavigationElement();
+        if (isTrivial(superMethod)) {
+          return;
+        }
+      }
+      if (TestUtils.isJUnit4BeforeOrAfterMethod(method)) {
+        return;
+      }
+      if (containsSuperCall(body, leastConcreteSuperMethod)) {
+        return;
+      }
+      registerMethodError(method);
+    }
+
+    private boolean isTrivial(PsiMethod method) {
+      final PsiCodeBlock body = method.getBody();
+      if (body == null) {
+        return true;
+      }
+      final PsiStatement[] statements = body.getStatements();
+      if (statements.length == 0) {
+        return true;
+      }
+      if (statements.length > 1) {
+        return false;
+      }
+      final PsiStatement statement = statements[0];
+      if (statement instanceof PsiThrowStatement) {
+        return true;
+      }
+      if (statement instanceof PsiReturnStatement) {
+        final PsiReturnStatement returnStatement =
+          (PsiReturnStatement)statement;
+        final PsiExpression returnValue =
+          returnStatement.getReturnValue();
+        if (returnValue instanceof PsiLiteralExpression) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    @Nullable
+    private PsiMethod getLeastConcreteSuperMethod(PsiMethod method) {
+      PsiMethod leastConcreteSuperMethod = null;
+      final PsiMethod[] superMethods = method.findSuperMethods(true);
+      for (final PsiMethod superMethod : superMethods) {
+        final PsiClass containingClass =
+          superMethod.getContainingClass();
+        if (containingClass != null &&
+            !superMethod.hasModifierProperty(PsiModifier.ABSTRACT) &&
+            !containingClass.isInterface()) {
+          leastConcreteSuperMethod = superMethod;
+          return leastConcreteSuperMethod;
+        }
+      }
+      return leastConcreteSuperMethod;
+    }
+
+    private boolean containsSuperCall(@NotNull PsiElement context,
+                                      @NotNull PsiMethod method) {
+      final SuperCallVisitor visitor = new SuperCallVisitor(method);
+      context.accept(visitor);
+      return visitor.hasSuperCall();
+    }
+  }
+
+  private static class SuperCallVisitor extends JavaRecursiveElementVisitor {
+
+    private final PsiMethod methodToSearchFor;
+    private boolean hasSuperCall = false;
+
+    SuperCallVisitor(PsiMethod methodToSearchFor) {
+      this.methodToSearchFor = methodToSearchFor;
     }
 
     @Override
-    @NotNull
-    public String buildErrorString(Object... infos){
-        return InspectionGadgetsBundle.message(
-                "refused.bequest.problem.descriptor");
+    public void visitElement(@NotNull PsiElement element) {
+      if (!hasSuperCall) {
+        super.visitElement(element);
+      }
     }
 
     @Override
-    public JComponent createOptionsPanel() {
-        //noinspection HardCodedStringLiteral
-        return new SingleCheckboxOptionsPanel(
-                "<html>" + InspectionGadgetsBundle.message(
-                        "refused.bequest.ignore.empty.super.methods.option") +
-                        "</html>", this, "ignoreEmptySuperMethods");
+    public void visitMethodCallExpression(
+      @NotNull PsiMethodCallExpression expression) {
+      if (hasSuperCall) {
+        return;
+      }
+      super.visitMethodCallExpression(expression);
+      final PsiReferenceExpression methodExpression =
+        expression.getMethodExpression();
+      final PsiExpression qualifier =
+        methodExpression.getQualifierExpression();
+      if (qualifier == null) {
+        return;
+      }
+      final String text = qualifier.getText();
+      if (!PsiKeyword.SUPER.equals(text)) {
+        return;
+      }
+      final PsiMethod method = expression.resolveMethod();
+      if (method == null) {
+        return;
+      }
+      if (method.equals(methodToSearchFor)) {
+        hasSuperCall = true;
+      }
     }
 
-    @Override
-    public BaseInspectionVisitor buildVisitor(){
-        return new RefusedBequestVisitor();
+    public boolean hasSuperCall() {
+      return hasSuperCall;
     }
-
-    private class RefusedBequestVisitor extends BaseInspectionVisitor{
-
-        @Override public void visitMethod(@NotNull PsiMethod method){
-            super.visitMethod(method);
-            final PsiCodeBlock body = method.getBody();
-            if(body == null){
-                return;
-            }
-            if(method.getNameIdentifier() == null){
-                return;
-            }
-            final PsiMethod leastConcreteSuperMethod =
-                    getLeastConcreteSuperMethod(method);
-            if(leastConcreteSuperMethod == null){
-                return;
-            }
-            final PsiClass containingClass =
-                    leastConcreteSuperMethod.getContainingClass();
-            if(containingClass == null){
-                return;
-            }
-            final String className = containingClass.getQualifiedName();
-            if(CommonClassNames.JAVA_LANG_OBJECT.equals(className)){
-                return;
-            }
-            if(ignoreEmptySuperMethods){
-                final PsiMethod superMethod = (PsiMethod)
-                        leastConcreteSuperMethod.getNavigationElement();
-                if(isTrivial(superMethod)){
-                    return;
-                }
-            }
-            if(TestUtils.isJUnit4BeforeOrAfterMethod(method)){
-                return;
-            }
-            if(containsSuperCall(body, leastConcreteSuperMethod)){
-                return;
-            }
-            registerMethodError(method);
-        }
-
-        private boolean isTrivial(PsiMethod method){
-            final PsiCodeBlock body = method.getBody();
-            if(body == null){
-                return true;
-            }
-            final PsiStatement[] statements = body.getStatements();
-            if(statements.length == 0){
-                return true;
-            }
-            if(statements.length > 1){
-                return false;
-            }
-            final PsiStatement statement = statements[0];
-            if(statement instanceof PsiThrowStatement){
-                return true;
-            }
-            if(statement instanceof PsiReturnStatement){
-                final PsiReturnStatement returnStatement =
-                        (PsiReturnStatement) statement;
-                final PsiExpression returnValue =
-                        returnStatement.getReturnValue();
-                if(returnValue instanceof PsiLiteralExpression){
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        @Nullable
-        private PsiMethod getLeastConcreteSuperMethod(PsiMethod method){
-            PsiMethod leastConcreteSuperMethod = null;
-            final PsiMethod[] superMethods = method.findSuperMethods(true);
-            for(final PsiMethod superMethod : superMethods){
-                final PsiClass containingClass =
-                        superMethod.getContainingClass();
-                if(containingClass != null &&
-                   !superMethod.hasModifierProperty(PsiModifier.ABSTRACT) &&
-                        !containingClass.isInterface()){
-                    leastConcreteSuperMethod = superMethod;
-                    return leastConcreteSuperMethod;
-                }
-            }
-            return leastConcreteSuperMethod;
-        }
-
-        private boolean containsSuperCall(@NotNull PsiElement context,
-                                          @NotNull PsiMethod method){
-            final SuperCallVisitor visitor = new SuperCallVisitor(method);
-            context.accept(visitor);
-            return visitor.hasSuperCall();
-        }
-    }
-
-    private static class SuperCallVisitor extends JavaRecursiveElementVisitor{
-
-        private final PsiMethod methodToSearchFor;
-        private boolean hasSuperCall = false;
-
-        SuperCallVisitor(PsiMethod methodToSearchFor){
-            this.methodToSearchFor = methodToSearchFor;
-        }
-
-        @Override public void visitElement(@NotNull PsiElement element){
-            if(!hasSuperCall){
-                super.visitElement(element);
-            }
-        }
-
-        @Override public void visitMethodCallExpression(
-                @NotNull PsiMethodCallExpression expression){
-            if(hasSuperCall){
-                return;
-            }
-            super.visitMethodCallExpression(expression);
-            final PsiReferenceExpression methodExpression =
-                    expression.getMethodExpression();
-            final PsiExpression qualifier =
-                    methodExpression.getQualifierExpression();
-            if(qualifier == null){
-                return;
-            }
-            final String text = qualifier.getText();
-            if(!PsiKeyword.SUPER.equals(text)){
-                return;
-            }
-            final PsiMethod method = expression.resolveMethod();
-            if(method == null){
-                return;
-            }
-            if(method.equals(methodToSearchFor)){
-                hasSuperCall = true;
-            }
-        }
-
-        public boolean hasSuperCall(){
-            return hasSuperCall;
-        }
-    }
+  }
 }

@@ -26,60 +26,61 @@ import org.jetbrains.annotations.Nullable;
 
 public class SynchronizeOnNonFinalFieldInspection extends BaseInspection {
 
-    @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "synchronize.on.non.final.field.display.name");
-    }
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "synchronize.on.non.final.field.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "synchronize.on.non.final.field.problem.descriptor");
+  }
+
+  @Override
+  public boolean isEnabledByDefault() {
+    return true;
+  }
+
+  @Override
+  @Nullable
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    final PsiField field = (PsiField)infos[0];
+    return MakeFieldFinalFix.buildFix(field);
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new SynchronizeOnNonFinalFieldVisitor();
+  }
+
+  private static class SynchronizeOnNonFinalFieldVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "synchronize.on.non.final.field.problem.descriptor");
+    public void visitSynchronizedStatement(
+      @NotNull PsiSynchronizedStatement statement) {
+      super.visitSynchronizedStatement(statement);
+      final PsiExpression lockExpression = statement.getLockExpression();
+      if (!(lockExpression instanceof PsiReferenceExpression)) {
+        return;
+      }
+      final PsiReference reference = lockExpression.getReference();
+      if (reference == null) {
+        return;
+      }
+      final PsiElement element = reference.resolve();
+      if (!(element instanceof PsiField)) {
+        return;
+      }
+      final PsiField field = (PsiField)element;
+      if (field.hasModifierProperty(PsiModifier.FINAL)) {
+        return;
+      }
+      registerError(lockExpression, field);
     }
-
-    @Override
-    public boolean isEnabledByDefault() {
-        return true;
-    }
-
-    @Override
-    @Nullable
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        final PsiField field = (PsiField) infos[0];
-        return MakeFieldFinalFix.buildFix(field);
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new SynchronizeOnNonFinalFieldVisitor();
-    }
-
-    private static class SynchronizeOnNonFinalFieldVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitSynchronizedStatement(
-                @NotNull PsiSynchronizedStatement statement) {
-            super.visitSynchronizedStatement(statement);
-            final PsiExpression lockExpression = statement.getLockExpression();
-            if (!(lockExpression instanceof PsiReferenceExpression)) {
-                return;
-            }
-            final PsiReference reference = lockExpression.getReference();
-            if (reference == null) {
-                return;
-            }
-            final PsiElement element = reference.resolve();
-            if (!(element instanceof PsiField)) {
-                return;
-            }
-            final PsiField field = (PsiField)element;
-            if (field.hasModifierProperty(PsiModifier.FINAL)) {
-                return;
-            }
-            registerError(lockExpression, field);
-        }
-    }
+  }
 }

@@ -27,87 +27,88 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
 public class UnnecessaryLabelOnContinueStatementInspection
-        extends BaseInspection {
+  extends BaseInspection {
+
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "unnecessary.label.on.continue.statement.display.name");
+  }
+
+  public boolean isEnabledByDefault() {
+    return true;
+  }
+
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "unnecessary.label.on.continue.statement.problem.descriptor");
+  }
+
+  public InspectionGadgetsFix buildFix(Object... infos) {
+    return new UnnecessaryLabelOnContinueStatementFix();
+  }
+
+  private static class UnnecessaryLabelOnContinueStatementFix
+    extends InspectionGadgetsFix {
 
     @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "unnecessary.label.on.continue.statement.display.name");
+    public String getName() {
+      return InspectionGadgetsBundle.message(
+        "unnecessary.label.remove.quickfix");
     }
 
-    public boolean isEnabledByDefault() {
-        return true;
+    public void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiElement continueKeywordElement =
+        descriptor.getPsiElement();
+      final PsiContinueStatement continueStatement =
+        (PsiContinueStatement)continueKeywordElement.getParent();
+      final PsiIdentifier labelIdentifier =
+        continueStatement.getLabelIdentifier();
+      if (labelIdentifier == null) {
+        return;
+      }
+      labelIdentifier.delete();
     }
+  }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "unnecessary.label.on.continue.statement.problem.descriptor");
+  public BaseInspectionVisitor buildVisitor() {
+    return new UnnecessaryLabelOnContinueStatementVisitor();
+  }
+
+  private static class UnnecessaryLabelOnContinueStatementVisitor
+    extends BaseInspectionVisitor {
+
+    @Override
+    public void visitContinueStatement(
+      @NotNull PsiContinueStatement statement) {
+      final PsiIdentifier labelIdentifier =
+        statement.getLabelIdentifier();
+      if (labelIdentifier == null) {
+        return;
+      }
+      final String labelText = labelIdentifier.getText();
+      if (labelText == null || labelText.length() == 0) {
+        return;
+      }
+      final PsiStatement exitedStatement =
+        statement.findContinuedStatement();
+      if (exitedStatement == null) {
+        return;
+      }
+      final PsiStatement labelEnabledParent =
+        PsiTreeUtil.getParentOfType(statement,
+                                    PsiForStatement.class, PsiDoWhileStatement.class,
+                                    PsiForeachStatement.class, PsiWhileStatement.class,
+                                    PsiSwitchStatement.class);
+      if (labelEnabledParent == null) {
+        return;
+      }
+      if (!exitedStatement.equals(labelEnabledParent)) {
+        return;
+      }
+      registerStatementError(statement);
     }
-
-    public InspectionGadgetsFix buildFix(Object... infos) {
-        return new UnnecessaryLabelOnContinueStatementFix();
-    }
-
-    private static class UnnecessaryLabelOnContinueStatementFix
-            extends InspectionGadgetsFix {
-
-        @NotNull
-        public String getName() {
-            return InspectionGadgetsBundle.message(
-                    "unnecessary.label.remove.quickfix");
-        }
-
-        public void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
-            final PsiElement continueKeywordElement =
-                    descriptor.getPsiElement();
-            final PsiContinueStatement continueStatement =
-                    (PsiContinueStatement)continueKeywordElement.getParent();
-            final PsiIdentifier labelIdentifier =
-                    continueStatement.getLabelIdentifier();
-            if (labelIdentifier == null) {
-                return;
-            }
-            labelIdentifier.delete();
-        }
-    }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new UnnecessaryLabelOnContinueStatementVisitor();
-    }
-
-    private static class UnnecessaryLabelOnContinueStatementVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitContinueStatement(
-                @NotNull PsiContinueStatement statement) {
-            final PsiIdentifier labelIdentifier =
-                    statement.getLabelIdentifier();
-            if (labelIdentifier == null) {
-                return;
-            }
-            final String labelText = labelIdentifier.getText();
-            if (labelText == null || labelText.length() == 0) {
-                return;
-            }
-            final PsiStatement exitedStatement =
-                    statement.findContinuedStatement();
-            if (exitedStatement == null) {
-                return;
-            }
-            final PsiStatement labelEnabledParent =
-                    PsiTreeUtil.getParentOfType(statement,
-                            PsiForStatement.class, PsiDoWhileStatement.class,
-                            PsiForeachStatement.class, PsiWhileStatement.class,
-                            PsiSwitchStatement.class);
-            if (labelEnabledParent == null) {
-                return;
-            }
-            if (!exitedStatement.equals(labelEnabledParent)) {
-                return;
-            }
-            registerStatementError(statement);
-        }
-    }
+  }
 }

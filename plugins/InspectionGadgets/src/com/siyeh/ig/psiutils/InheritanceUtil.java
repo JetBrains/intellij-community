@@ -25,61 +25,62 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
 
-public class InheritanceUtil{
+public class InheritanceUtil {
 
-    private InheritanceUtil(){
-        super();
+  private InheritanceUtil() {
+    super();
+  }
+
+  public static boolean existsMutualSubclass(PsiClass class1,
+                                             final PsiClass class2) {
+    if (class1 instanceof PsiTypeParameter) {
+      final PsiClass[] superClasses = class1.getSupers();
+      for (PsiClass superClass : superClasses) {
+        if (!existsMutualSubclass(superClass, class2)) {
+          return false;
+        }
+      }
+      return true;
+    }
+    else if (class2 instanceof PsiTypeParameter) {
+      return existsMutualSubclass(class2, class1);
     }
 
-    public static boolean existsMutualSubclass(PsiClass class1,
-                                               final PsiClass class2){
-        if (class1 instanceof PsiTypeParameter) {
-            final PsiClass[] superClasses = class1.getSupers();
-            for (PsiClass superClass : superClasses) {
-                if (!existsMutualSubclass(superClass, class2)) {
-                    return false;
-                }
-            }
-            return true;
-        } else if (class2 instanceof PsiTypeParameter) {
-            return existsMutualSubclass(class2, class1);
-        }
-
-        final String className = class1.getQualifiedName();
-        if(CommonClassNames.JAVA_LANG_OBJECT.equals(className)){
-            return true;
-        }
-        final String class2Name = class2.getQualifiedName();
-        if(CommonClassNames.JAVA_LANG_OBJECT.equals(class2Name)){
-            return true;
-        }
-        if(class1.isInheritor(class2, true) ||
-                class2.isInheritor(class1, true)){
-            return true;
-        }
-        final SearchScope scope =
-                GlobalSearchScope.allScope(class1.getProject());
-        final Query<PsiClass> search =
-                ClassInheritorsSearch.search(class1, scope, true, true);
-        return !search.forEach(new Processor<PsiClass>() {
-            public boolean process(PsiClass inheritor) {
-                return !inheritor.equals(class2) &&
-                        !inheritor.isInheritor(class2, true);
-            }
-        });
+    final String className = class1.getQualifiedName();
+    if (CommonClassNames.JAVA_LANG_OBJECT.equals(className)) {
+      return true;
     }
-
-    public static boolean hasImplementation(PsiClass aClass) {
-        final SearchScope scope =
-                GlobalSearchScope.projectScope(aClass.getProject());
-        final Query<PsiClass> search =
-                ClassInheritorsSearch.search(aClass, scope, true, true);
-        for (PsiClass inheritor : search) {
-            if (!(inheritor.isInterface() || inheritor.isAnnotationType() ||
-                    inheritor.hasModifierProperty(PsiModifier.ABSTRACT))) {
-                return true;
-            }
-        }
-        return false;
+    final String class2Name = class2.getQualifiedName();
+    if (CommonClassNames.JAVA_LANG_OBJECT.equals(class2Name)) {
+      return true;
     }
+    if (class1.isInheritor(class2, true) ||
+        class2.isInheritor(class1, true)) {
+      return true;
+    }
+    final SearchScope scope =
+      GlobalSearchScope.allScope(class1.getProject());
+    final Query<PsiClass> search =
+      ClassInheritorsSearch.search(class1, scope, true, true);
+    return !search.forEach(new Processor<PsiClass>() {
+      public boolean process(PsiClass inheritor) {
+        return !inheritor.equals(class2) &&
+               !inheritor.isInheritor(class2, true);
+      }
+    });
+  }
+
+  public static boolean hasImplementation(PsiClass aClass) {
+    final SearchScope scope =
+      GlobalSearchScope.projectScope(aClass.getProject());
+    final Query<PsiClass> search =
+      ClassInheritorsSearch.search(aClass, scope, true, true);
+    for (PsiClass inheritor : search) {
+      if (!(inheritor.isInterface() || inheritor.isAnnotationType() ||
+            inheritor.hasModifierProperty(PsiModifier.ABSTRACT))) {
+        return true;
+      }
+    }
+    return false;
+  }
 }

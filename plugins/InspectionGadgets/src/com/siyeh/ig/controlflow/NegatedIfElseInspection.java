@@ -34,111 +34,114 @@ import javax.swing.*;
 
 public class NegatedIfElseInspection extends BaseInspection {
 
-    /** @noinspection PublicField*/
-    public boolean m_ignoreNegatedNullComparison = true;
+  /**
+   * @noinspection PublicField
+   */
+  public boolean m_ignoreNegatedNullComparison = true;
+
+  @NotNull
+  public String getID() {
+    return "IfStatementWithNegatedCondition";
+  }
+
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("negated.if.else.display.name");
+  }
+
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "negated.if.else.problem.descriptor");
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new NegatedIfElseVisitor();
+  }
+
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+      "negated.if.else.ignore.option"),
+                                          this, "m_ignoreNegatedNullComparison");
+  }
+
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new NegatedIfElseFix();
+  }
+
+  private static class NegatedIfElseFix extends InspectionGadgetsFix {
 
     @NotNull
-    public String getID() {
-        return "IfStatementWithNegatedCondition";
+    public String getName() {
+      return InspectionGadgetsBundle.message(
+        "negated.if.else.invert.quickfix");
     }
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message("negated.if.else.display.name");
-    }
-
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "negated.if.else.problem.descriptor");
-    }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new NegatedIfElseVisitor();
-    }
-
-    public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-                "negated.if.else.ignore.option"),
-                this, "m_ignoreNegatedNullComparison");
-    }
-
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        return new NegatedIfElseFix();
-    }
-
-    private static class NegatedIfElseFix extends InspectionGadgetsFix {
-
-        @NotNull
-        public String getName(){
-            return InspectionGadgetsBundle.message(
-                    "negated.if.else.invert.quickfix");
+    public void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiElement ifToken = descriptor.getPsiElement();
+      final PsiIfStatement ifStatement =
+        (PsiIfStatement)ifToken.getParent();
+      assert ifStatement != null;
+      final PsiStatement elseBranch = ifStatement.getElseBranch();
+      if (elseBranch == null) {
+        return;
+      }
+      final PsiStatement thenBranch = ifStatement.getThenBranch();
+      if (thenBranch == null) {
+        return;
+      }
+      final PsiExpression condition = ifStatement.getCondition();
+      if (condition == null) {
+        return;
+      }
+      final String negatedCondition =
+        BoolUtils.getNegatedExpressionText(condition);
+      String elseText = elseBranch.getText();
+      final PsiElement lastChild = elseBranch.getLastChild();
+      if (lastChild instanceof PsiComment) {
+        final PsiComment comment = (PsiComment)lastChild;
+        final IElementType tokenType = comment.getTokenType();
+        if (JavaTokenType.END_OF_LINE_COMMENT.equals(tokenType)) {
+          elseText += '\n';
         }
-
-        public void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
-            final PsiElement ifToken = descriptor.getPsiElement();
-            final PsiIfStatement ifStatement =
-                    (PsiIfStatement) ifToken.getParent();
-            assert ifStatement != null;
-            final PsiStatement elseBranch = ifStatement.getElseBranch();
-            if (elseBranch == null) {
-                return;
-            }
-            final PsiStatement thenBranch = ifStatement.getThenBranch();
-            if (thenBranch == null) {
-                return;
-            }
-            final PsiExpression condition = ifStatement.getCondition();
-            if (condition == null) {
-                return;
-            }
-            final String negatedCondition =
-                    BoolUtils.getNegatedExpressionText(condition);
-            String elseText = elseBranch.getText();
-            final PsiElement lastChild = elseBranch.getLastChild();
-            if (lastChild instanceof PsiComment ) {
-                final PsiComment comment = (PsiComment)lastChild;
-                final IElementType tokenType = comment.getTokenType();
-                if (JavaTokenType.END_OF_LINE_COMMENT.equals(tokenType)) {
-                    elseText += '\n';
-                }
-            }
-            @NonNls final String newStatement = "if("+ negatedCondition + ')' +
-                    elseText + " else " + thenBranch.getText();
-            replaceStatement(ifStatement, newStatement);
-        }
+      }
+      @NonNls final String newStatement = "if(" + negatedCondition + ')' +
+                                          elseText + " else " + thenBranch.getText();
+      replaceStatement(ifStatement, newStatement);
     }
+  }
 
-    private class NegatedIfElseVisitor extends BaseInspectionVisitor {
+  private class NegatedIfElseVisitor extends BaseInspectionVisitor {
 
-        @Override public void visitIfStatement(@NotNull PsiIfStatement statement) {
-            super.visitIfStatement(statement);
-            final PsiStatement thenBranch = statement.getThenBranch();
-            if (thenBranch == null) {
-                return;
-            }
-            final PsiStatement elseBranch = statement.getElseBranch();
-            if (elseBranch == null) {
-                return;
-            }
-            if (elseBranch instanceof PsiIfStatement) {
-                return;
-            }
+    @Override
+    public void visitIfStatement(@NotNull PsiIfStatement statement) {
+      super.visitIfStatement(statement);
+      final PsiStatement thenBranch = statement.getThenBranch();
+      if (thenBranch == null) {
+        return;
+      }
+      final PsiStatement elseBranch = statement.getElseBranch();
+      if (elseBranch == null) {
+        return;
+      }
+      if (elseBranch instanceof PsiIfStatement) {
+        return;
+      }
 
-            final PsiExpression condition = statement.getCondition();
-            if (condition == null) {
-                return;
-            }
-            if (!ExpressionUtils.isNegation(condition,
-                    m_ignoreNegatedNullComparison)) {
-                return;
-            }
-            final PsiElement parent = statement.getParent();
-            if (parent instanceof PsiIfStatement) {
-                return;
-            }
-            registerStatementError(statement);
-        }
+      final PsiExpression condition = statement.getCondition();
+      if (condition == null) {
+        return;
+      }
+      if (!ExpressionUtils.isNegation(condition,
+                                      m_ignoreNegatedNullComparison)) {
+        return;
+      }
+      final PsiElement parent = statement.getParent();
+      if (parent instanceof PsiIfStatement) {
+        return;
+      }
+      registerStatementError(statement);
     }
+  }
 }

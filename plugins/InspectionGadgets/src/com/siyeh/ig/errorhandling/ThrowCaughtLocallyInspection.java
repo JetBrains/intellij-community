@@ -29,107 +29,110 @@ import javax.swing.*;
 
 public class ThrowCaughtLocallyInspection extends BaseInspection {
 
-    /** @noinspection PublicField*/
-    public boolean ignoreRethrownExceptions = false;
+  /**
+   * @noinspection PublicField
+   */
+  public boolean ignoreRethrownExceptions = false;
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "throw.caught.locally.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "throw.caught.locally.display.name");
+  }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "throw.caught.locally.problem.descriptor");
-    }
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "throw.caught.locally.problem.descriptor");
+  }
 
-    @Nullable
-    public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-                "throw.caught.locally.ignore.option"), this,
-                "ignoreRethrownExceptions");
-    }
+  @Nullable
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+      "throw.caught.locally.ignore.option"), this,
+                                          "ignoreRethrownExceptions");
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new ThrowCaughtLocallyVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new ThrowCaughtLocallyVisitor();
+  }
 
-    private class ThrowCaughtLocallyVisitor
-            extends BaseInspectionVisitor {
+  private class ThrowCaughtLocallyVisitor
+    extends BaseInspectionVisitor {
 
-        @Override public void visitThrowStatement(PsiThrowStatement statement) {
-            super.visitThrowStatement(statement);
-            final PsiExpression exception = statement.getException();
-            if (exception == null) {
-                return;
-            }
-            final PsiType exceptionType = exception.getType();
-            if (exceptionType == null) {
-                return;
-            }
-            PsiTryStatement containingTryStatement =
-                    PsiTreeUtil.getParentOfType(statement,
-                            PsiTryStatement.class);
-            while (containingTryStatement != null) {
-                final PsiCodeBlock tryBlock =
-                        containingTryStatement.getTryBlock();
-                if (tryBlock == null) {
-                    return;
-                }
-                if (PsiTreeUtil.isAncestor(tryBlock, statement, true)) {
-                    final PsiParameter[] catchBlockParameters =
-                            containingTryStatement.getCatchBlockParameters();
-                    for (PsiParameter parameter : catchBlockParameters) {
-                        final PsiType parameterType = parameter.getType();
-                        if (!parameterType.isAssignableFrom(exceptionType)) {
-                            continue;
-                        }
-                        if (ignoreRethrownExceptions) {
-                            final PsiCatchSection section =
-                                    (PsiCatchSection)parameter.getParent();
-                            final PsiCodeBlock catchBlock =
-                                    section.getCatchBlock();
-                            if (isExceptionRethrown(parameter, catchBlock)) {
-                                return;
-                            }
-                        }
-                        final PsiClass containingClass =
-                                ClassUtils.getContainingClass(statement);
-                        if (PsiTreeUtil.isAncestor(containingClass,
-                                containingTryStatement, true)) {
-                            registerStatementError(statement);
-                            return;
-                        }
-                    }
-                }
-                containingTryStatement =
-                        PsiTreeUtil.getParentOfType(containingTryStatement,
-                                PsiTryStatement.class);
-            }
+    @Override
+    public void visitThrowStatement(PsiThrowStatement statement) {
+      super.visitThrowStatement(statement);
+      final PsiExpression exception = statement.getException();
+      if (exception == null) {
+        return;
+      }
+      final PsiType exceptionType = exception.getType();
+      if (exceptionType == null) {
+        return;
+      }
+      PsiTryStatement containingTryStatement =
+        PsiTreeUtil.getParentOfType(statement,
+                                    PsiTryStatement.class);
+      while (containingTryStatement != null) {
+        final PsiCodeBlock tryBlock =
+          containingTryStatement.getTryBlock();
+        if (tryBlock == null) {
+          return;
         }
-
-        private boolean isExceptionRethrown(PsiParameter parameter,
-                                            PsiCodeBlock catchBlock) {
-            final PsiStatement[] statements = catchBlock.getStatements();
-            if (statements.length <= 0) {
-                return false;
+        if (PsiTreeUtil.isAncestor(tryBlock, statement, true)) {
+          final PsiParameter[] catchBlockParameters =
+            containingTryStatement.getCatchBlockParameters();
+          for (PsiParameter parameter : catchBlockParameters) {
+            final PsiType parameterType = parameter.getType();
+            if (!parameterType.isAssignableFrom(exceptionType)) {
+              continue;
             }
-            final PsiStatement lastStatement =
-                    statements[statements.length - 1];
-            if (!(lastStatement instanceof PsiThrowStatement)) {
-                return false;
+            if (ignoreRethrownExceptions) {
+              final PsiCatchSection section =
+                (PsiCatchSection)parameter.getParent();
+              final PsiCodeBlock catchBlock =
+                section.getCatchBlock();
+              if (isExceptionRethrown(parameter, catchBlock)) {
+                return;
+              }
             }
-            final PsiThrowStatement throwStatement =
-                    (PsiThrowStatement)lastStatement;
-            final PsiExpression expression = throwStatement.getException();
-            if (!(expression instanceof PsiReferenceExpression)) {
-                return false;
+            final PsiClass containingClass =
+              ClassUtils.getContainingClass(statement);
+            if (PsiTreeUtil.isAncestor(containingClass,
+                                       containingTryStatement, true)) {
+              registerStatementError(statement);
+              return;
             }
-            final PsiReferenceExpression referenceExpression =
-                    (PsiReferenceExpression)expression;
-            final PsiElement element = referenceExpression.resolve();
-            return parameter.equals(element);
+          }
         }
+        containingTryStatement =
+          PsiTreeUtil.getParentOfType(containingTryStatement,
+                                      PsiTryStatement.class);
+      }
     }
+
+    private boolean isExceptionRethrown(PsiParameter parameter,
+                                        PsiCodeBlock catchBlock) {
+      final PsiStatement[] statements = catchBlock.getStatements();
+      if (statements.length <= 0) {
+        return false;
+      }
+      final PsiStatement lastStatement =
+        statements[statements.length - 1];
+      if (!(lastStatement instanceof PsiThrowStatement)) {
+        return false;
+      }
+      final PsiThrowStatement throwStatement =
+        (PsiThrowStatement)lastStatement;
+      final PsiExpression expression = throwStatement.getException();
+      if (!(expression instanceof PsiReferenceExpression)) {
+        return false;
+      }
+      final PsiReferenceExpression referenceExpression =
+        (PsiReferenceExpression)expression;
+      final PsiElement element = referenceExpression.resolve();
+      return parameter.equals(element);
+    }
+  }
 }

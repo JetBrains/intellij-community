@@ -26,78 +26,79 @@ import org.jetbrains.annotations.NotNull;
 
 public class CollectionAddedToSelfInspection extends BaseInspection {
 
-    @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "collection.added.to.self.display.name");
-    }
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "collection.added.to.self.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "collection.added.to.self.problem.descriptor");
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new CollectionAddedToSelfVisitor();
+  }
+
+  private static class CollectionAddedToSelfVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "collection.added.to.self.problem.descriptor");
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new CollectionAddedToSelfVisitor();
-    }
-
-    private static class CollectionAddedToSelfVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitMethodCallExpression(
-                @NotNull PsiMethodCallExpression call) {
-            super.visitMethodCallExpression(call);
-            final PsiReferenceExpression methodExpression =
-                    call.getMethodExpression();
-            @NonNls final String methodName =
-                    methodExpression.getReferenceName();
-            if (!"put".equals(methodName) && !"set".equals(methodName) &&
-                !"add".equals(methodName)) {
-                return;
-            }
-            final PsiExpression qualifier =
-                    methodExpression.getQualifierExpression();
-            if(qualifier ==null) {
-                return;
-            }
-            if(!(qualifier instanceof PsiReferenceExpression)){
-                return;
-            }
-            final PsiElement referent = ((PsiReference) qualifier).resolve();
-            if(!(referent instanceof PsiVariable)){
-                return;
-            }
-            final PsiExpressionList argumentList = call.getArgumentList();
-            boolean hasMatchingArg=false;
-            final PsiExpression[] args = argumentList.getExpressions();
-            for(PsiExpression arg : args){
-                if(EquivalenceChecker.expressionsAreEquivalent(qualifier, arg)){
-                    hasMatchingArg = true;
-                }
-            }
-            if(!hasMatchingArg){
-                return;
-            }
-            final PsiType qualifierType = qualifier.getType();
-            if(!(qualifierType instanceof PsiClassType)){
-                return ;
-            }
-            final PsiClassType classType = (PsiClassType)qualifierType;
-            final PsiClass qualifierClass = classType.resolve();
-            if(qualifierClass == null){
-                return;
-            }
-            if(!InheritanceUtil.isInheritor(qualifierClass,
-                    CommonClassNames.JAVA_UTIL_COLLECTION) &&
-               !InheritanceUtil.isInheritor(qualifierClass,
-                       CommonClassNames.JAVA_UTIL_MAP)) {
-                return;
-            }
-            registerError(qualifier);
+    public void visitMethodCallExpression(
+      @NotNull PsiMethodCallExpression call) {
+      super.visitMethodCallExpression(call);
+      final PsiReferenceExpression methodExpression =
+        call.getMethodExpression();
+      @NonNls final String methodName =
+        methodExpression.getReferenceName();
+      if (!"put".equals(methodName) && !"set".equals(methodName) &&
+          !"add".equals(methodName)) {
+        return;
+      }
+      final PsiExpression qualifier =
+        methodExpression.getQualifierExpression();
+      if (qualifier == null) {
+        return;
+      }
+      if (!(qualifier instanceof PsiReferenceExpression)) {
+        return;
+      }
+      final PsiElement referent = ((PsiReference)qualifier).resolve();
+      if (!(referent instanceof PsiVariable)) {
+        return;
+      }
+      final PsiExpressionList argumentList = call.getArgumentList();
+      boolean hasMatchingArg = false;
+      final PsiExpression[] args = argumentList.getExpressions();
+      for (PsiExpression arg : args) {
+        if (EquivalenceChecker.expressionsAreEquivalent(qualifier, arg)) {
+          hasMatchingArg = true;
         }
+      }
+      if (!hasMatchingArg) {
+        return;
+      }
+      final PsiType qualifierType = qualifier.getType();
+      if (!(qualifierType instanceof PsiClassType)) {
+        return;
+      }
+      final PsiClassType classType = (PsiClassType)qualifierType;
+      final PsiClass qualifierClass = classType.resolve();
+      if (qualifierClass == null) {
+        return;
+      }
+      if (!InheritanceUtil.isInheritor(qualifierClass,
+                                       CommonClassNames.JAVA_UTIL_COLLECTION) &&
+          !InheritanceUtil.isInheritor(qualifierClass,
+                                       CommonClassNames.JAVA_UTIL_MAP)) {
+        return;
+      }
+      registerError(qualifier);
     }
+  }
 }

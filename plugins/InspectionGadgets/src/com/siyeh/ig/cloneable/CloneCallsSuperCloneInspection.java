@@ -26,65 +26,66 @@ import org.jetbrains.annotations.NotNull;
 
 public class CloneCallsSuperCloneInspection extends BaseInspection {
 
-    @NotNull
-    public String getID() {
-        return "CloneDoesntCallSuperClone";
-    }
+  @NotNull
+  public String getID() {
+    return "CloneDoesntCallSuperClone";
+  }
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "clone.doesnt.call.super.clone.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "clone.doesnt.call.super.clone.display.name");
+  }
 
-    @NotNull
-    public String buildErrorString(Object... infos) {
-      return InspectionGadgetsBundle.message(
-              "clone.doesnt.call.super.clone.problem.descriptor");
-    }
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "clone.doesnt.call.super.clone.problem.descriptor");
+  }
 
-    public boolean isEnabledByDefault() {
-        return true;
-    }
+  public boolean isEnabledByDefault() {
+    return true;
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new NoExplicitCloneCallsVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new NoExplicitCloneCallsVisitor();
+  }
 
-    private static class NoExplicitCloneCallsVisitor
-            extends BaseInspectionVisitor {
+  private static class NoExplicitCloneCallsVisitor
+    extends BaseInspectionVisitor {
 
-        @Override public void visitMethod(@NotNull PsiMethod method) {
-            //note: no call to super;
-            if (!CloneUtils.isClone(method)) {
-                return;
-            }
-            if(method.hasModifierProperty(PsiModifier.ABSTRACT) ||
-                    method.hasModifierProperty(PsiModifier.NATIVE)) {
-                return;
-            }
-            final PsiClass containingClass = method.getContainingClass();
-            if(containingClass == null) {
-                return;
-            }
-            if (containingClass.isInterface() ||
-                containingClass.isAnnotationType()) {
-                return;
-            }
-            if (CloneUtils.onlyThrowsCloneNotSupportedException(method)) {
-                if (method.hasModifierProperty(PsiModifier.FINAL) ||
-                        containingClass.hasModifierProperty(
-                                PsiModifier.FINAL)) {
-                    return;
-                }
-            }
-            final CallToSuperCloneVisitor visitor =
-                    new CallToSuperCloneVisitor();
-            method.accept(visitor);
-            if (visitor.isCallToSuperCloneFound()) {
-                return;
-            }
-            registerMethodError(method);
+    @Override
+    public void visitMethod(@NotNull PsiMethod method) {
+      //note: no call to super;
+      if (!CloneUtils.isClone(method)) {
+        return;
+      }
+      if (method.hasModifierProperty(PsiModifier.ABSTRACT) ||
+          method.hasModifierProperty(PsiModifier.NATIVE)) {
+        return;
+      }
+      final PsiClass containingClass = method.getContainingClass();
+      if (containingClass == null) {
+        return;
+      }
+      if (containingClass.isInterface() ||
+          containingClass.isAnnotationType()) {
+        return;
+      }
+      if (CloneUtils.onlyThrowsCloneNotSupportedException(method)) {
+        if (method.hasModifierProperty(PsiModifier.FINAL) ||
+            containingClass.hasModifierProperty(
+              PsiModifier.FINAL)) {
+          return;
         }
+      }
+      final CallToSuperCloneVisitor visitor =
+        new CallToSuperCloneVisitor();
+      method.accept(visitor);
+      if (visitor.isCallToSuperCloneFound()) {
+        return;
+      }
+      registerMethodError(method);
     }
+  }
 }

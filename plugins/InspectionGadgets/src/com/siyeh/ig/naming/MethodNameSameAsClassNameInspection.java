@@ -31,91 +31,93 @@ import org.jetbrains.annotations.NotNull;
 
 public class MethodNameSameAsClassNameInspection extends BaseInspection {
 
-    @Override
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "method.name.same.as.class.name.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "method.name.same.as.class.name.problem.descriptor");
+  }
+
+  @Override
+  @NotNull
+  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+    final Boolean onTheFly = (Boolean)infos[0];
+    if (onTheFly.booleanValue()) {
+      return new InspectionGadgetsFix[]{
+        new RenameFix(), new MethodNameSameAsClassNameFix()};
+    }
+    else {
+      return new InspectionGadgetsFix[]{
+        new MethodNameSameAsClassNameFix()
+      };
+    }
+  }
+
+  @Override
+  public boolean isEnabledByDefault() {
+    return true;
+  }
+
+  private static class MethodNameSameAsClassNameFix
+    extends InspectionGadgetsFix {
+
     @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "method.name.same.as.class.name.display.name");
+    public String getName() {
+      return InspectionGadgetsBundle.message("make.method.ctr.quickfix");
     }
 
     @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "method.name.same.as.class.name.problem.descriptor");
+    protected void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiElement element = descriptor.getPsiElement();
+      final PsiElement parent = element.getParent();
+      if (!(parent instanceof PsiMethod)) {
+        return;
+      }
+      final PsiMethod method = (PsiMethod)parent;
+      final PsiTypeElement returnTypeElement =
+        method.getReturnTypeElement();
+      if (returnTypeElement == null) {
+        return;
+      }
+      returnTypeElement.delete();
     }
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new MethodNameSameAsClassNameVisitor();
+  }
+
+  private static class MethodNameSameAsClassNameVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    protected InspectionGadgetsFix[] buildFixes(Object... infos) {
-        final Boolean onTheFly = (Boolean)infos[0];
-        if (onTheFly.booleanValue()) {
-            return new InspectionGadgetsFix[]{
-                    new RenameFix(), new MethodNameSameAsClassNameFix()};
-        } else {
-            return new InspectionGadgetsFix[]{
-                    new MethodNameSameAsClassNameFix()
-            };
-        }
+    public void visitMethod(@NotNull PsiMethod method) {
+      // no call to super, so it doesn't drill down into inner classes
+      if (method.isConstructor()) {
+        return;
+      }
+      final String methodName = method.getName();
+      final PsiClass containingClass = method.getContainingClass();
+      if (containingClass == null) {
+        return;
+      }
+      final String className = containingClass.getName();
+      if (className == null) {
+        return;
+      }
+      if (!methodName.equals(className)) {
+        return;
+      }
+      registerMethodError(method, Boolean.valueOf(isOnTheFly()));
     }
-
-    @Override
-    public boolean isEnabledByDefault() {
-        return true;
-    }
-
-    private static class MethodNameSameAsClassNameFix
-            extends InspectionGadgetsFix {
-
-        @NotNull
-        public String getName() {
-            return InspectionGadgetsBundle.message("make.method.ctr.quickfix");
-        }
-
-        @Override
-        protected void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
-            final PsiElement element = descriptor.getPsiElement();
-            final PsiElement parent = element.getParent();
-            if (!(parent instanceof PsiMethod)) {
-                return;
-            }
-            final PsiMethod method = (PsiMethod)parent;
-            final PsiTypeElement returnTypeElement =
-                    method.getReturnTypeElement();
-            if (returnTypeElement == null) {
-                return;
-            }
-            returnTypeElement.delete();
-        }
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new MethodNameSameAsClassNameVisitor();
-    }
-
-    private static class MethodNameSameAsClassNameVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitMethod(@NotNull PsiMethod method) {
-            // no call to super, so it doesn't drill down into inner classes
-            if (method.isConstructor()) {
-                return;
-            }
-            final String methodName = method.getName();
-            final PsiClass containingClass = method.getContainingClass();
-            if (containingClass == null) {
-                return;
-            }
-            final String className = containingClass.getName();
-            if (className == null) {
-                return;
-            }
-            if (!methodName.equals(className)) {
-                return;
-            }
-            registerMethodError(method, Boolean.valueOf(isOnTheFly()));
-        }
-    }
+  }
 }

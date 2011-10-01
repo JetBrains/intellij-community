@@ -25,45 +25,46 @@ import org.jetbrains.annotations.NotNull;
 
 public class InfiniteRecursionInspection extends BaseInspection {
 
-    @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "infinite.recursion.display.name");
-    }
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "infinite.recursion.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "infinite.recursion.problem.descriptor");
+  }
+
+  @Override
+  public boolean isEnabledByDefault() {
+    return true;
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new InfiniteRecursionVisitor();
+  }
+
+  private static class InfiniteRecursionVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "infinite.recursion.problem.descriptor");
+    public void visitMethod(@NotNull PsiMethod method) {
+      super.visitMethod(method);
+      if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        return;
+      }
+      if (!RecursionUtils.methodMayRecurse(method)) {
+        return;
+      }
+      if (!RecursionUtils.methodDefinitelyRecurses(method)) {
+        return;
+      }
+      registerMethodError(method);
     }
-
-    @Override
-    public boolean isEnabledByDefault(){
-        return true;
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new InfiniteRecursionVisitor();
-    }
-
-    private static class InfiniteRecursionVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitMethod(@NotNull PsiMethod method) {
-            super.visitMethod(method);
-            if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
-                return;
-            }
-            if (!RecursionUtils.methodMayRecurse(method)) {
-                return;
-            }
-            if (!RecursionUtils.methodDefinitelyRecurses(method)) {
-                return;
-            }
-            registerMethodError(method);
-        }
-    }
+  }
 }

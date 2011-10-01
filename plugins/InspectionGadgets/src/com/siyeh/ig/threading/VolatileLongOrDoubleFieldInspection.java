@@ -25,36 +25,37 @@ import org.jetbrains.annotations.NotNull;
 
 public class VolatileLongOrDoubleFieldInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "volatile.long.or.double.field.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "volatile.long.or.double.field.display.name");
+  }
 
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        final PsiType type = (PsiType)infos[0];
-        final String typeString = type.getPresentableText();
-        return InspectionGadgetsBundle.message(
-                "volatile.field.problem.descriptor", typeString);
-    }
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    final PsiType type = (PsiType)infos[0];
+    final String typeString = type.getPresentableText();
+    return InspectionGadgetsBundle.message(
+      "volatile.field.problem.descriptor", typeString);
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new VolatileLongOrDoubleFieldVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new VolatileLongOrDoubleFieldVisitor();
+  }
 
-    private static class VolatileLongOrDoubleFieldVisitor
-            extends BaseInspectionVisitor {
+  private static class VolatileLongOrDoubleFieldVisitor
+    extends BaseInspectionVisitor {
 
-        @Override public void visitField(@NotNull PsiField field) {
-            super.visitField(field);
-            if (!field.hasModifierProperty(PsiModifier.VOLATILE)) {
-                return;
-            }
-            final PsiType type = field.getType();
-            if (PsiType.LONG.equals(type) || PsiType.DOUBLE.equals(type)) {
-                registerFieldError(field, type);
-            }
-        }
+    @Override
+    public void visitField(@NotNull PsiField field) {
+      super.visitField(field);
+      if (!field.hasModifierProperty(PsiModifier.VOLATILE)) {
+        return;
+      }
+      final PsiType type = field.getType();
+      if (PsiType.LONG.equals(type) || PsiType.DOUBLE.equals(type)) {
+        registerFieldError(field, type);
+      }
     }
+  }
 }

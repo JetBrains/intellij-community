@@ -25,36 +25,37 @@ import org.jetbrains.annotations.NotNull;
 
 public class AbstractClassNeverImplementedInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "abstract.class.never.implemented.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "abstract.class.never.implemented.display.name");
+  }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "abstract.class.never.implemented.problem.descriptor");
-    }
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "abstract.class.never.implemented.problem.descriptor");
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new AbstractClassNeverImplementedVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new AbstractClassNeverImplementedVisitor();
+  }
 
-    private static class AbstractClassNeverImplementedVisitor
-            extends BaseInspectionVisitor {
+  private static class AbstractClassNeverImplementedVisitor
+    extends BaseInspectionVisitor {
 
-        @Override public void visitClass(@NotNull PsiClass aClass) {
-            if (aClass.isInterface() || aClass.isAnnotationType()) {
-                return;
-            }
-            if (!aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-                return;
-            }
-            if (InheritanceUtil.hasImplementation(aClass)) {
-                return;
-            }
-            registerClassError(aClass);
-        }
+    @Override
+    public void visitClass(@NotNull PsiClass aClass) {
+      if (aClass.isInterface() || aClass.isAnnotationType()) {
+        return;
+      }
+      if (!aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        return;
+      }
+      if (InheritanceUtil.hasImplementation(aClass)) {
+        return;
+      }
+      registerClassError(aClass);
     }
+  }
 }

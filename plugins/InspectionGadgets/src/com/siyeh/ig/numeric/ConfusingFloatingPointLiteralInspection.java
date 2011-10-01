@@ -29,210 +29,216 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ConfusingFloatingPointLiteralInspection
-        extends BaseInspection {
+  extends BaseInspection {
 
-    @Override
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "confusing.floating.point.literal.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "confusing.floating.point.literal.problem.descriptor");
+  }
+
+  @Override
+  public InspectionGadgetsFix buildFix(Object... infos) {
+    return new ConfusingFloatingPointLiteralFix();
+  }
+
+  private static class ConfusingFloatingPointLiteralFix
+    extends InspectionGadgetsFix {
+
     @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "confusing.floating.point.literal.display.name");
+    public String getName() {
+      return InspectionGadgetsBundle.message(
+        "confusing.floating.point.literal.change.quickfix");
     }
 
     @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "confusing.floating.point.literal.problem.descriptor");
+    public void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiExpression literalExpression =
+        (PsiExpression)descriptor.getPsiElement();
+      final String text = literalExpression.getText();
+      final String newText = getCanonicalForm(text);
+      replaceExpression(literalExpression, newText);
     }
+
+    private static String getCanonicalForm(String text) {
+      final boolean isHexadecimal =
+        text.startsWith("0x") || text.startsWith("0X");
+      int breakPoint = text.indexOf((int)'e');
+      if (breakPoint < 0) {
+        breakPoint = text.indexOf((int)'E');
+      }
+      if (breakPoint < 0) {
+        breakPoint = text.indexOf((int)'f');
+      }
+      if (breakPoint < 0) {
+        breakPoint = text.indexOf((int)'F');
+      }
+      if (breakPoint < 0) {
+        breakPoint = text.indexOf((int)'p');
+      }
+      if (breakPoint < 0) {
+        breakPoint = text.indexOf((int)'P');
+      }
+      if (breakPoint < 0) {
+        breakPoint = text.indexOf((int)'d');
+      }
+      if (breakPoint < 0) {
+        breakPoint = text.indexOf((int)'D');
+      }
+      final String suffix;
+      final String prefix;
+      if (breakPoint < 0) {
+        suffix = "";
+        prefix = text;
+      }
+      else {
+        suffix = text.substring(breakPoint);
+        prefix = text.substring(0, breakPoint);
+      }
+      final int indexPoint = prefix.indexOf((int)'.');
+      if (indexPoint < 0) {
+        return prefix + ".0" + suffix;
+      }
+      else if (isHexadecimal && indexPoint == 2) {
+        return prefix.substring(0, 2) + '0' + prefix.substring(2) + suffix;
+      }
+      else if (indexPoint == 0) {
+        return '0' + prefix + suffix;
+      }
+      else {
+        return prefix + '0' + suffix;
+      }
+    }
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new ConfusingFloatingPointLiteralVisitor();
+  }
+
+  private static class ConfusingFloatingPointLiteralVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    public InspectionGadgetsFix buildFix(Object... infos) {
-        return new ConfusingFloatingPointLiteralFix();
+    public void visitLiteralExpression(
+      @NotNull PsiLiteralExpression literal) {
+      super.visitLiteralExpression(literal);
+      final PsiType type = literal.getType();
+      if (type == null) {
+        return;
+      }
+      if (!(type.equals(PsiType.FLOAT) || type.equals(PsiType.DOUBLE))) {
+        return;
+      }
+      final String text = literal.getText();
+      if (text == null) {
+        return;
+      }
+      if (!isConfusing(text)) {
+        return;
+      }
+      registerError(literal);
     }
 
-    private static class ConfusingFloatingPointLiteralFix
-            extends InspectionGadgetsFix {
 
-        @NotNull
-        public String getName() {
-            return InspectionGadgetsBundle.message(
-                    "confusing.floating.point.literal.change.quickfix");
+    private static boolean isConfusing(@Nullable CharSequence text) {
+      if (text == null) {
+        return false;
+      }
+      final int length = text.length();
+      if (length < 3) {
+        return true;
+      }
+      boolean hexadecimal = true;
+      final char firstChar = text.charAt(0);
+      if (firstChar != '0') {
+        hexadecimal = false;
+      }
+      else if (firstChar < '0' && firstChar > '9') {
+        return true;
+      }
+      final char secondChar = text.charAt(1);
+      if (hexadecimal) {
+        if (secondChar != 'x' && secondChar != 'X') {
+          hexadecimal = false;
         }
-
-        @Override
-        public void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
-            final PsiExpression literalExpression =
-                    (PsiExpression)descriptor.getPsiElement();
-            final String text = literalExpression.getText();
-            final String newText = getCanonicalForm(text);
-            replaceExpression(literalExpression, newText);
+      }
+      int index = hexadecimal ? 2 : 1;
+      char nextChar = text.charAt(index);
+      if (hexadecimal && (nextChar < '0' || nextChar > '9')) {
+        return true;
+      }
+      while (nextChar >= '0' && nextChar <= '9') {
+        index++;
+        if (index >= length) {
+          return true;
         }
-
-        private static String getCanonicalForm(String text) {
-            final boolean isHexadecimal =
-                    text.startsWith("0x") || text.startsWith("0X");
-            int breakPoint = text.indexOf((int)'e');
-            if (breakPoint < 0) {
-                breakPoint = text.indexOf((int)'E');
-            }
-            if (breakPoint < 0) {
-                breakPoint = text.indexOf((int)'f');
-            }
-            if (breakPoint < 0) {
-                breakPoint = text.indexOf((int)'F');
-            }
-            if (breakPoint < 0) {
-                breakPoint = text.indexOf((int)'p');
-            }
-            if (breakPoint < 0) {
-                breakPoint = text.indexOf((int)'P');
-            }
-            if (breakPoint < 0) {
-                breakPoint = text.indexOf((int)'d');
-            }
-            if (breakPoint < 0) {
-                breakPoint = text.indexOf((int)'D');
-            }
-            final String suffix;
-            final String prefix;
-            if (breakPoint < 0) {
-                suffix = "";
-                prefix = text;
-            } else {
-                suffix = text.substring(breakPoint);
-                prefix = text.substring(0, breakPoint);
-            }
-            final int indexPoint = prefix.indexOf((int)'.');
-            if (indexPoint < 0) {
-                return prefix + ".0" + suffix;
-            } else if (isHexadecimal && indexPoint == 2) {
-                return prefix.substring(0, 2) + '0' + prefix.substring(2) + suffix;
-            } else if (indexPoint == 0) {
-                return '0' + prefix + suffix;
-            } else {
-                return prefix + '0' + suffix;
-            }
-
+        nextChar = text.charAt(index);
+      }
+      if (nextChar != '.') {
+        return true;
+      }
+      index++;
+      if (index >= length) {
+        return true;
+      }
+      nextChar = text.charAt(index);
+      if (nextChar < '0' || nextChar > '9') {
+        return true;
+      }
+      while (nextChar >= '0' && nextChar <= '9') {
+        index++;
+        if (index >= length) {
+          return hexadecimal;
         }
+        nextChar = text.charAt(index);
+      }
+      if (hexadecimal) {
+        if (nextChar != 'p' && nextChar != 'P') {
+          return true;
+        }
+      }
+      else {
+        if (nextChar != 'e' && nextChar != 'E') {
+          if (nextChar == 'f' || nextChar == 'F' ||
+              nextChar == 'd' || nextChar == 'D') {
+            if (index == length - 1) {
+              return false;
+            }
+          }
+          return true;
+        }
+      }
+      index++;
+      if (index >= length) {
+        return true;
+      }
+      nextChar = text.charAt(index);
+      if (nextChar == '-') {
+        index++;
+        if (index >= length) {
+          return true;
+        }
+        nextChar = text.charAt(index);
+      }
+      while (nextChar >= '0' && nextChar <= '9') {
+        index++;
+        if (index >= length) {
+          return false;
+        }
+        nextChar = text.charAt(index);
+      }
+      // ignore trailing f, F, d or D
+      return false;
     }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new ConfusingFloatingPointLiteralVisitor();
-    }
-
-    private static class ConfusingFloatingPointLiteralVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitLiteralExpression(
-                @NotNull PsiLiteralExpression literal) {
-            super.visitLiteralExpression(literal);
-            final PsiType type = literal.getType();
-            if (type == null) {
-                return;
-            }
-            if (!(type.equals(PsiType.FLOAT) || type.equals(PsiType.DOUBLE))) {
-                return;
-            }
-            final String text = literal.getText();
-            if (text == null) {
-                return;
-            }
-            if (!isConfusing(text)) {
-                return;
-            }
-            registerError(literal);
-        }
-
-
-        private static boolean isConfusing(@Nullable CharSequence text) {
-            if (text == null) {
-                return false;
-            }
-            final int length = text.length();
-            if (length < 3) {
-                return true;
-            }
-            boolean hexadecimal = true;
-            final char firstChar = text.charAt(0);
-            if (firstChar != '0') {
-                hexadecimal = false;
-            } else if (firstChar < '0' && firstChar > '9'){
-                return true;
-            }
-            final char secondChar = text.charAt(1);
-            if (hexadecimal) {
-                if (secondChar != 'x' && secondChar != 'X') {
-                    hexadecimal = false;
-                }
-            }
-            int index = hexadecimal ? 2 : 1;
-            char nextChar = text.charAt(index);
-            if (hexadecimal && (nextChar < '0' || nextChar > '9')) {
-                return true;
-            }
-            while (nextChar >= '0' && nextChar <='9') {
-                index++;
-                if (index >= length) {
-                    return true;
-                }
-                nextChar = text.charAt(index);
-            }
-            if (nextChar != '.') {
-                return true;
-            }
-            index++;
-            if (index >= length) {
-                return true;
-            }
-            nextChar = text.charAt(index);
-            if (nextChar < '0' || nextChar > '9') {
-                return true;
-            }
-            while (nextChar >= '0' && nextChar <= '9') {
-                index++;
-                if (index >= length) {
-                    return hexadecimal;
-                }
-                nextChar = text.charAt(index);
-            }
-            if (hexadecimal) {
-                if (nextChar != 'p' && nextChar != 'P') {
-                    return true;
-                }
-            } else {
-                if (nextChar != 'e' && nextChar != 'E') {
-                    if (nextChar =='f' || nextChar == 'F' ||
-                            nextChar == 'd' || nextChar == 'D') {
-                        if (index == length - 1) {
-                            return false;
-                        }
-                    }
-                    return true;
-                }
-            }
-            index++;
-            if (index >= length) {
-                return true;
-            }
-            nextChar = text.charAt(index);
-            if (nextChar == '-') {
-                index++;
-                if (index >= length) {
-                    return true;
-                }
-                nextChar = text.charAt(index);
-            }
-            while (nextChar >= '0' && nextChar <= '9') {
-                index++;
-                if (index >= length) {
-                    return false;
-                }
-                nextChar = text.charAt(index);
-            }
-            // ignore trailing f, F, d or D
-            return false;
-        }
-    }
+  }
 }

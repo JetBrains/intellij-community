@@ -25,58 +25,59 @@ import org.jetbrains.annotations.NotNull;
 
 public class NumericToStringInspection extends BaseInspection {
 
-    @NotNull
-    public String getID(){
-        return "CallToNumericToString";
-    }
+  @NotNull
+  public String getID() {
+    return "CallToNumericToString";
+  }
 
-    @NotNull
-    public String getDisplayName(){
-        return InspectionGadgetsBundle.message(
-                "call.to.numeric.tostring.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "call.to.numeric.tostring.display.name");
+  }
 
-    @NotNull
-    public String buildErrorString(Object... infos){
-        return InspectionGadgetsBundle.message(
-                "call.to.numeric.tostring.problem.descriptor");
-    }
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "call.to.numeric.tostring.problem.descriptor");
+  }
 
-    public BaseInspectionVisitor buildVisitor(){
-        return new NumericToStringVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new NumericToStringVisitor();
+  }
 
-    private static class NumericToStringVisitor extends BaseInspectionVisitor{
+  private static class NumericToStringVisitor extends BaseInspectionVisitor {
 
-        @Override public void visitMethodCallExpression(
-                @NotNull PsiMethodCallExpression expression){
-            super.visitMethodCallExpression(expression);
-            final PsiReferenceExpression methodExpression =
-                    expression.getMethodExpression();
-            final String methodName = methodExpression.getReferenceName();
-            if(!HardcodedMethodConstants.TO_STRING.equals(methodName)) {
-              return;
-            }
-            final PsiMethod method = expression.resolveMethod();
-            if(method == null){
-                return;
-            }
-            final PsiParameterList parameterList = method.getParameterList();
-            if(parameterList.getParametersCount() != 0){
-                return;
-            }
-            final PsiClass aClass = method.getContainingClass();
-            if(aClass == null){
-                return;
-            }
-            final String className = aClass.getQualifiedName();
-            if(!TypeConversionUtil.isPrimitiveWrapper(className)){
-                return;
-            }
-            if (NonNlsUtils.isNonNlsAnnotatedUse(expression)) {
-                return;
-            }
-            registerMethodCallError(expression);
-        }
+    @Override
+    public void visitMethodCallExpression(
+      @NotNull PsiMethodCallExpression expression) {
+      super.visitMethodCallExpression(expression);
+      final PsiReferenceExpression methodExpression =
+        expression.getMethodExpression();
+      final String methodName = methodExpression.getReferenceName();
+      if (!HardcodedMethodConstants.TO_STRING.equals(methodName)) {
+        return;
+      }
+      final PsiMethod method = expression.resolveMethod();
+      if (method == null) {
+        return;
+      }
+      final PsiParameterList parameterList = method.getParameterList();
+      if (parameterList.getParametersCount() != 0) {
+        return;
+      }
+      final PsiClass aClass = method.getContainingClass();
+      if (aClass == null) {
+        return;
+      }
+      final String className = aClass.getQualifiedName();
+      if (!TypeConversionUtil.isPrimitiveWrapper(className)) {
+        return;
+      }
+      if (NonNlsUtils.isNonNlsAnnotatedUse(expression)) {
+        return;
+      }
+      registerMethodCallError(expression);
     }
+  }
 }

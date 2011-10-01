@@ -27,48 +27,48 @@ import org.jetbrains.annotations.NotNull;
 
 public class FieldMayBeFinalInspection extends BaseInspection {
 
-    @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "field.may.be.final.display.name");
-    }
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "field.may.be.final.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "field.may.be.final.problem.descriptor");
+  }
+
+  @Override
+  public boolean runForWholeFile() {
+    return true;
+  }
+
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return MakeFieldFinalFix.buildFixUnconditional((PsiField)infos[0]);
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new FieldMayBeFinalVisitor();
+  }
+
+  private static class FieldMayBeFinalVisitor extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "field.may.be.final.problem.descriptor");
+    public void visitField(PsiField field) {
+      super.visitField(field);
+      if (field.hasModifierProperty(PsiModifier.FINAL) ||
+          !field.hasModifierProperty(PsiModifier.PRIVATE)) {
+        return;
+      }
+      if (!FinalUtils.canBeFinal(field)) {
+        return;
+      }
+      registerVariableError(field, field);
     }
-
-    @Override
-    public boolean runForWholeFile() {
-        return true;
-    }
-
-    @Override
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        return MakeFieldFinalFix.buildFixUnconditional((PsiField)infos[0]);
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new FieldMayBeFinalVisitor();
-    }
-
-    private static class FieldMayBeFinalVisitor extends BaseInspectionVisitor {
-
-        @Override
-        public void visitField(PsiField field) {
-            super.visitField(field);
-            if (field.hasModifierProperty(PsiModifier.FINAL) ||
-                    !field.hasModifierProperty(PsiModifier.PRIVATE)) {
-                return;
-            }
-            if (!FinalUtils.canBeFinal(field)) {
-                return;
-            }
-            registerVariableError(field, field);
-        }
-    }
+  }
 }

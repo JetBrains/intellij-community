@@ -29,78 +29,80 @@ import org.jetbrains.annotations.Nullable;
 
 public class FallthruInSwitchStatementInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "fallthru.in.switch.statement.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "fallthru.in.switch.statement.display.name");
+  }
+
+  @NotNull
+  public String getID() {
+    return "fallthrough";
+  }
+
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "fallthru.in.switch.statement.problem.descriptor");
+  }
+
+  @Nullable
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new FallthruInSwitchStatementFix();
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new FallthroughInSwitchStatementVisitor();
+  }
+
+  private static class FallthruInSwitchStatementFix
+    extends InspectionGadgetsFix {
 
     @NotNull
-    public String getID() {
-        return "fallthrough";
+    public String getName() {
+      return InspectionGadgetsBundle.message(
+        "fallthru.in.switch.statement.quickfix");
     }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "fallthru.in.switch.statement.problem.descriptor");
+    protected void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiSwitchLabelStatement labelStatement =
+        (PsiSwitchLabelStatement)descriptor.getPsiElement();
+      final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+      final PsiElementFactory factory = psiFacade.getElementFactory();
+      final PsiStatement breakStatement =
+        factory.createStatementFromText("break;", labelStatement);
+      final PsiElement parent = labelStatement.getParent();
+      parent.addBefore(breakStatement, labelStatement);
     }
+  }
 
-    @Nullable
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        return new FallthruInSwitchStatementFix();
-    }
+  private static class FallthroughInSwitchStatementVisitor
+    extends BaseInspectionVisitor {
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new FallthroughInSwitchStatementVisitor();
-    }
-
-    private static class FallthruInSwitchStatementFix
-            extends InspectionGadgetsFix {
-
-        @NotNull
-        public String getName() {
-            return InspectionGadgetsBundle.message(
-                    "fallthru.in.switch.statement.quickfix");
+    @Override
+    public void visitSwitchStatement(
+      @NotNull PsiSwitchStatement statement) {
+      super.visitSwitchStatement(statement);
+      final PsiCodeBlock body = statement.getBody();
+      if (body == null) {
+        return;
+      }
+      boolean switchLabelValid = true;
+      final PsiStatement[] statements = body.getStatements();
+      for (final PsiStatement child : statements) {
+        if (child instanceof PsiSwitchLabelStatement) {
+          if (!switchLabelValid) {
+            registerError(child);
+          }
+          switchLabelValid = true;
         }
-
-        protected void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
-            final PsiSwitchLabelStatement labelStatement =
-                    (PsiSwitchLabelStatement) descriptor.getPsiElement();
-            final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-            final PsiElementFactory factory = psiFacade.getElementFactory();
-            final PsiStatement breakStatement =
-                    factory.createStatementFromText("break;", labelStatement);
-            final PsiElement parent = labelStatement.getParent();
-            parent.addBefore(breakStatement, labelStatement);
+        else {
+          switchLabelValid =
+            !ControlFlowUtils.statementMayCompleteNormally(
+              child);
         }
+      }
     }
-
-    private static class FallthroughInSwitchStatementVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitSwitchStatement(
-                @NotNull PsiSwitchStatement statement) {
-            super.visitSwitchStatement(statement);
-            final PsiCodeBlock body = statement.getBody();
-            if (body == null) {
-                return;
-            }
-            boolean switchLabelValid = true;
-            final PsiStatement[] statements = body.getStatements();
-            for (final PsiStatement child : statements) {
-                if (child instanceof PsiSwitchLabelStatement) {
-                    if (!switchLabelValid) {
-                        registerError(child);
-                    }
-                    switchLabelValid = true;
-                } else {
-                    switchLabelValid =
-                            !ControlFlowUtils.statementMayCompleteNormally(
-                                    child);
-                }
-            }
-        }
-    }
+  }
 }

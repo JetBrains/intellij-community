@@ -28,7 +28,7 @@ import java.util.List;
 /**
  * Always assign instances of this class to a final field to prevent an InstantiationException
  * from DefaultJDOMExternalizer.
- *
+ * <p/>
  * The constructor of this class takes parameters. This means an instance of this class
  * cannot be constructed by {@link com.intellij.openapi.util.DefaultJDOMExternalizer}.
  * If instances of this class are assigned to a final field, DefaultJDOMExternalizer will
@@ -36,23 +36,23 @@ import java.util.List;
  */
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class ExternalizableStringSet extends OrderedSet<String>
-        implements JDOMExternalizable {
+  implements JDOMExternalizable {
 
-    private static final String ITEM = "item";
-    private static final String VALUE = "value";
+  private static final String ITEM = "item";
+  private static final String VALUE = "value";
 
-    private final String[] defaultValues;
+  private final String[] defaultValues;
 
-    /**
-     * note: declare ExternalizableStringSet fields as <b>final</b>!<br>
-     * note: reference to defaultValues is retained by this set!
-     */
-    public ExternalizableStringSet(@NonNls String... defaultValues) {
-        this.defaultValues = defaultValues;
-        for (String defaultValue : defaultValues) {
-            add(defaultValue);
-        }
+  /**
+   * note: declare ExternalizableStringSet fields as <b>final</b>!<br>
+   * note: reference to defaultValues is retained by this set!
+   */
+  public ExternalizableStringSet(@NonNls String... defaultValues) {
+    this.defaultValues = defaultValues;
+    for (String defaultValue : defaultValues) {
+      add(defaultValue);
     }
+  }
 
   /*
   private ExternalizableStringSet() {
@@ -60,41 +60,41 @@ public class ExternalizableStringSet extends OrderedSet<String>
     }
     */
 
-    private boolean hasDefaultValues() {
-        if (size() != defaultValues.length) {
-            return false;
-        }
-        for (String defaultValue : defaultValues) {
-            if (!contains(defaultValue)) {
-                return false;
-            }
-        }
-        return true;
+  private boolean hasDefaultValues() {
+    if (size() != defaultValues.length) {
+      return false;
     }
+    for (String defaultValue : defaultValues) {
+      if (!contains(defaultValue)) {
+        return false;
+      }
+    }
+    return true;
+  }
 
-    @Override
-    public void readExternal(Element element) throws InvalidDataException {
-        boolean dataFound = false;
-        for (Element item : (List<Element>) element.getChildren(ITEM)) {
-            if (!dataFound) {
-                clear();
-                dataFound = true;
-            }
-            add(StringUtil.unescapeXml(item.getAttributeValue(VALUE)));
-        }
+  @Override
+  public void readExternal(Element element) throws InvalidDataException {
+    boolean dataFound = false;
+    for (Element item : (List<Element>)element.getChildren(ITEM)) {
+      if (!dataFound) {
+        clear();
+        dataFound = true;
+      }
+      add(StringUtil.unescapeXml(item.getAttributeValue(VALUE)));
     }
+  }
 
-    @Override
-    public void writeExternal(Element element) throws WriteExternalException {
-        if (hasDefaultValues()) {
-            return;
-        }
-        for (String value : this) {
-            if (value != null) {
-                final Element item = new Element(ITEM);
-                item.setAttribute(VALUE, StringUtil.escapeXml(value));
-                element.addContent(item);
-            }
-        }
+  @Override
+  public void writeExternal(Element element) throws WriteExternalException {
+    if (hasDefaultValues()) {
+      return;
     }
+    for (String value : this) {
+      if (value != null) {
+        final Element item = new Element(ITEM);
+        item.setAttribute(VALUE, StringUtil.escapeXml(value));
+        element.addContent(item);
+      }
+    }
+  }
 }

@@ -24,50 +24,51 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
 public class AbstractClassExtendsConcreteClassInspection
-        extends BaseInspection {
+  extends BaseInspection {
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "abstract.class.extends.concrete.class.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "abstract.class.extends.concrete.class.problem.descriptor");
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new AbstractClassExtendsConcreteClassVisitor();
+  }
+
+  private static class AbstractClassExtendsConcreteClassVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "abstract.class.extends.concrete.class.display.name");
+    public void visitClass(@NotNull PsiClass aClass) {
+      // no call to super, so that it doesn't drill down to inner classes
+      if (aClass.isInterface() || aClass.isAnnotationType()) {
+        return;
+      }
+      if (!aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        return;
+      }
+      final PsiClass superClass = aClass.getSuperClass();
+      if (superClass == null) {
+        return;
+      }
+      if (superClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        return;
+      }
+      final String superclassName = superClass.getQualifiedName();
+      if (CommonClassNames.JAVA_LANG_OBJECT.equals(superclassName)) {
+        return;
+      }
+      registerClassError(aClass);
     }
-
-    @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "abstract.class.extends.concrete.class.problem.descriptor");
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new AbstractClassExtendsConcreteClassVisitor();
-    }
-
-    private static class AbstractClassExtendsConcreteClassVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitClass(@NotNull PsiClass aClass) {
-            // no call to super, so that it doesn't drill down to inner classes
-            if (aClass.isInterface() || aClass.isAnnotationType()) {
-                return;
-            }
-            if (!aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-                return;
-            }
-            final PsiClass superClass = aClass.getSuperClass();
-            if (superClass == null) {
-                return;
-            }
-            if (superClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-                return;
-            }
-            final String superclassName = superClass.getQualifiedName();
-            if (CommonClassNames.JAVA_LANG_OBJECT.equals(superclassName)) {
-                return;
-            }
-            registerClassError(aClass);
-        }
-    }
+  }
 }

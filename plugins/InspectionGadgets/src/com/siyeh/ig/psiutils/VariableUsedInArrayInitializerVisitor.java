@@ -18,38 +18,40 @@ package com.siyeh.ig.psiutils;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-class VariableUsedInArrayInitializerVisitor extends JavaRecursiveElementVisitor{
+class VariableUsedInArrayInitializerVisitor extends JavaRecursiveElementVisitor {
 
-    @NotNull
-    private final PsiVariable variable;
-    private boolean passed = false;
+  @NotNull
+  private final PsiVariable variable;
+  private boolean passed = false;
 
-    public VariableUsedInArrayInitializerVisitor(@NotNull PsiVariable variable){
-        super();
-        this.variable = variable;
+  public VariableUsedInArrayInitializerVisitor(@NotNull PsiVariable variable) {
+    super();
+    this.variable = variable;
+  }
+
+  @Override
+  public void visitElement(@NotNull PsiElement element) {
+    if (!passed) {
+      super.visitElement(element);
     }
+  }
 
-    @Override public void visitElement(@NotNull PsiElement element){
-        if(!passed){
-            super.visitElement(element);
-        }
+  @Override
+  public void visitArrayInitializerExpression(
+    PsiArrayInitializerExpression expression) {
+    if (passed) {
+      return;
     }
+    super.visitArrayInitializerExpression(expression);
+    final PsiExpression[] initializers = expression.getInitializers();
+    for (final PsiExpression initializer : initializers) {
+      if (VariableAccessUtils.mayEvaluateToVariable(initializer, variable)) {
+        passed = true;
+      }
+    }
+  }
 
-    @Override public void visitArrayInitializerExpression(
-            PsiArrayInitializerExpression expression){
-        if(passed){
-            return;
-        }
-        super.visitArrayInitializerExpression(expression);
-        final PsiExpression[] initializers = expression.getInitializers();
-        for(final PsiExpression initializer : initializers){
-            if(VariableAccessUtils.mayEvaluateToVariable(initializer, variable)){
-                passed = true;
-            }
-        }
-    }
-
-    public boolean isPassed(){
-        return passed;
-    }
+  public boolean isPassed() {
+    return passed;
+  }
 }

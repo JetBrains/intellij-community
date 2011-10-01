@@ -30,47 +30,48 @@ import org.jetbrains.annotations.Nullable;
 
 public class ComparatorNotSerializableInspection extends BaseInspection {
 
-    @Override
-    @NotNull
-    public String getDisplayName(){
-        return InspectionGadgetsBundle.message(
-                "comparator.not.serializable.display.name");
-    }
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "comparator.not.serializable.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "comparator.not.serializable.problem.descriptor");
+  }
+
+  @Override
+  @Nullable
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new MakeSerializableFix();
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new ComparatorNotSerializableVisitor();
+  }
+
+  private static class ComparatorNotSerializableVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String buildErrorString(Object... infos){
-        return InspectionGadgetsBundle.message(
-                "comparator.not.serializable.problem.descriptor");
+    public void visitClass(PsiClass aClass) {
+      //note, no call to super, avoiding drilldown
+      if (aClass instanceof PsiAnonymousClass) {
+        return;
+      }
+      if (!InheritanceUtil.isInheritor(aClass,
+                                       CommonClassNames.JAVA_UTIL_COMPARATOR)) {
+        return;
+      }
+      if (SerializationUtils.isSerializable(aClass)) {
+        return;
+      }
+      registerClassError(aClass);
     }
-
-    @Override
-    @Nullable
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        return new MakeSerializableFix();
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor(){
-        return new ComparatorNotSerializableVisitor();
-    }
-
-    private static class ComparatorNotSerializableVisitor
-            extends BaseInspectionVisitor{
-
-        @Override public void visitClass(PsiClass aClass) {
-            //note, no call to super, avoiding drilldown
-            if (aClass instanceof PsiAnonymousClass) {
-                return;
-            }
-            if (!InheritanceUtil.isInheritor(aClass,
-                    CommonClassNames.JAVA_UTIL_COMPARATOR)) {
-                return;
-            }
-            if (SerializationUtils.isSerializable(aClass)) {
-                return;
-            }
-            registerClassError(aClass);
-        }
-    }
+  }
 }

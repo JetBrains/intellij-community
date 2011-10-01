@@ -25,59 +25,60 @@ import org.jetbrains.annotations.NotNull;
 
 public class TeardownIsPublicVoidNoArgInspection extends BaseInspection {
 
-    @Override
-    @NotNull
-    public String getID() {
-        return "TearDownWithIncorrectSignature";
-    }
+  @Override
+  @NotNull
+  public String getID() {
+    return "TearDownWithIncorrectSignature";
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "teardown.is.public.void.no.arg.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "teardown.is.public.void.no.arg.problem.descriptor");
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new TeardownIsPublicVoidNoArgVisitor();
+  }
+
+  private static class TeardownIsPublicVoidNoArgVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "teardown.is.public.void.no.arg.display.name");
+    public void visitMethod(@NotNull PsiMethod method) {
+      //note: no call to super;
+      @NonNls final String methodName = method.getName();
+      if (!"tearDown".equals(methodName)) {
+        return;
+      }
+      final PsiType returnType = method.getReturnType();
+      if (returnType == null) {
+        return;
+      }
+      final PsiClass targetClass = method.getContainingClass();
+      if (targetClass == null) {
+        return;
+      }
+      if (!InheritanceUtil.isInheritor(targetClass,
+                                       "junit.framework.TestCase")) {
+        return;
+      }
+      final PsiParameterList parameterList = method.getParameterList();
+      if (parameterList.getParametersCount() != 0 ||
+          !returnType.equals(PsiType.VOID) ||
+          !method.hasModifierProperty(PsiModifier.PUBLIC) &&
+          !method.hasModifierProperty(PsiModifier.PROTECTED)) {
+        registerMethodError(method);
+      }
     }
-
-    @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "teardown.is.public.void.no.arg.problem.descriptor");
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new TeardownIsPublicVoidNoArgVisitor();
-    }
-
-    private static class TeardownIsPublicVoidNoArgVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitMethod(@NotNull PsiMethod method) {
-            //note: no call to super;
-            @NonNls final String methodName = method.getName();
-            if (!"tearDown".equals(methodName)) {
-                return;
-            }
-            final PsiType returnType = method.getReturnType();
-            if (returnType == null) {
-                return;
-            }
-            final PsiClass targetClass = method.getContainingClass();
-            if (targetClass == null) {
-                return;
-            }
-            if (!InheritanceUtil.isInheritor(targetClass,
-                    "junit.framework.TestCase")) {
-                return;
-            }
-            final PsiParameterList parameterList = method.getParameterList();
-            if (parameterList.getParametersCount() != 0 ||
-                    !returnType.equals(PsiType.VOID) ||
-                    !method.hasModifierProperty(PsiModifier.PUBLIC) &&
-                    !method.hasModifierProperty(PsiModifier.PROTECTED)) {
-                registerMethodError(method);
-            }
-        }
-    }
+  }
 }

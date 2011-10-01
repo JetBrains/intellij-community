@@ -32,69 +32,70 @@ import java.util.Set;
 
 public class MethodOverridesStaticMethodInspection extends BaseInspection {
 
-    @NotNull
-    public String getID(){
-        return "MethodOverridesStaticMethodOfSuperclass";
-    }
+  @NotNull
+  public String getID() {
+    return "MethodOverridesStaticMethodOfSuperclass";
+  }
 
-    @NotNull
-    public String getDisplayName(){
-        return InspectionGadgetsBundle.message(
-                "method.overrides.static.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "method.overrides.static.display.name");
+  }
 
-    @NotNull
-    public String buildErrorString(Object... infos){
-        return InspectionGadgetsBundle.message(
-                "method.overrides.static.problem.descriptor");
-    }
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "method.overrides.static.problem.descriptor");
+  }
 
-    protected InspectionGadgetsFix buildFix(Object... infos){
-        return new RenameFix();
-    }
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new RenameFix();
+  }
 
-    protected boolean buildQuickFixesOnlyForOnTheFlyErrors(){
-        return true;
-    }
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return true;
+  }
 
-    public BaseInspectionVisitor buildVisitor(){
-        return new MethodOverridesStaticMethodVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new MethodOverridesStaticMethodVisitor();
+  }
 
-    private static class MethodOverridesStaticMethodVisitor
-            extends BaseInspectionVisitor{
+  private static class MethodOverridesStaticMethodVisitor
+    extends BaseInspectionVisitor {
 
-        @Override public void visitMethod(@NotNull PsiMethod method){
-            final PsiClass aClass = method.getContainingClass();
-            if(aClass == null){
-                return;
-            }
-            if (method.getNameIdentifier() == null) {
-                return;
-            }
-            final String methodName = method.getName();
-            final MethodSignature signature = method.getSignature(PsiSubstitutor.EMPTY);
-            PsiClass ancestorClass = aClass.getSuperClass();
-            final Set<PsiClass> visitedClasses = new HashSet<PsiClass>();
-            while(ancestorClass != null){
-                if(!visitedClasses.add(ancestorClass)){
-                    return;
-                }
-                final PsiMethod[] methods =
-                        ancestorClass.findMethodsByName(methodName, false);
-                for(final PsiMethod testMethod : methods){
-                    final MethodSignature testSignature = testMethod.getSignature(PsiSubstitutor.EMPTY);
-                    if(!signature.equals(testSignature)){
-                        continue;
-                    }
-                    if(testMethod.hasModifierProperty(PsiModifier.STATIC) &&
-                            !testMethod.hasModifierProperty(PsiModifier.PRIVATE)){
-                        registerMethodError(method);
-                        return;
-                    }
-                }
-                ancestorClass = ancestorClass.getSuperClass();
-            }
+    @Override
+    public void visitMethod(@NotNull PsiMethod method) {
+      final PsiClass aClass = method.getContainingClass();
+      if (aClass == null) {
+        return;
+      }
+      if (method.getNameIdentifier() == null) {
+        return;
+      }
+      final String methodName = method.getName();
+      final MethodSignature signature = method.getSignature(PsiSubstitutor.EMPTY);
+      PsiClass ancestorClass = aClass.getSuperClass();
+      final Set<PsiClass> visitedClasses = new HashSet<PsiClass>();
+      while (ancestorClass != null) {
+        if (!visitedClasses.add(ancestorClass)) {
+          return;
         }
+        final PsiMethod[] methods =
+          ancestorClass.findMethodsByName(methodName, false);
+        for (final PsiMethod testMethod : methods) {
+          final MethodSignature testSignature = testMethod.getSignature(PsiSubstitutor.EMPTY);
+          if (!signature.equals(testSignature)) {
+            continue;
+          }
+          if (testMethod.hasModifierProperty(PsiModifier.STATIC) &&
+              !testMethod.hasModifierProperty(PsiModifier.PRIVATE)) {
+            registerMethodError(method);
+            return;
+          }
+        }
+        ancestorClass = ancestorClass.getSuperClass();
+      }
     }
+  }
 }

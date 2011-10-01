@@ -19,14 +19,14 @@ import com.intellij.psi.PsiAssignmentExpression;
 import com.intellij.psi.PsiExpression;
 import org.jetbrains.annotations.NotNull;
 
-public class WellFormednessUtils{
-    private WellFormednessUtils(){
-        super();
-    }
+public class WellFormednessUtils {
+  private WellFormednessUtils() {
+    super();
+  }
 
-    public static boolean isWellFormed(@NotNull PsiAssignmentExpression expression){
+  public static boolean isWellFormed(@NotNull PsiAssignmentExpression expression) {
 
-        final PsiExpression rhs = expression.getRExpression();
-        return rhs != null;
-    }
+    final PsiExpression rhs = expression.getRExpression();
+    return rhs != null;
+  }
 }

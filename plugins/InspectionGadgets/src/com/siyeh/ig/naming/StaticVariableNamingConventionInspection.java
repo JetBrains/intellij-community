@@ -31,100 +31,102 @@ import java.util.Arrays;
 import java.util.Collection;
 
 public class StaticVariableNamingConventionInspection
-        extends ConventionInspection {
+  extends ConventionInspection {
 
-    private static final int DEFAULT_MIN_LENGTH = 5;
-    private static final int DEFAULT_MAX_LENGTH = 32;
+  private static final int DEFAULT_MIN_LENGTH = 5;
+  private static final int DEFAULT_MAX_LENGTH = 32;
 
-    @SuppressWarnings({"PublicField"})
-    public boolean checkMutableFinals = false;
+  @SuppressWarnings({"PublicField"})
+  public boolean checkMutableFinals = false;
 
-    @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "static.variable.naming.convention.display.name");
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "static.variable.naming.convention.display.name");
+  }
+
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new RenameFix();
+  }
+
+  @Override
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return true;
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    final String fieldName = (String)infos[0];
+    if (fieldName.length() < getMinLength()) {
+      return InspectionGadgetsBundle.message(
+        "static.variable.naming.convention.problem.descriptor.short");
     }
-
-    @Override
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        return new RenameFix();
+    else if (fieldName.length() > getMaxLength()) {
+      return InspectionGadgetsBundle.message(
+        "static.variable.naming.convention.problem.descriptor.long");
     }
+    return InspectionGadgetsBundle.message(
+      "static.variable.naming.convention.problem.descriptor.regex.mismatch",
+      getRegex());
+  }
+
+  @Override
+  protected String getDefaultRegex() {
+    return "s_[a-z][A-Za-z\\d]*";
+  }
+
+  @Override
+  protected int getDefaultMinLength() {
+    return DEFAULT_MIN_LENGTH;
+  }
+
+  @Override
+  protected int getDefaultMaxLength() {
+    return DEFAULT_MAX_LENGTH;
+  }
+
+  @Override
+  public Collection<? extends JComponent> createExtraOptions() {
+    return Arrays.asList(
+      new CheckBox(InspectionGadgetsBundle.message(
+        "static.variable.naming.convention.mutable.option"),
+                   this, "checkMutableFinals"));
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new NamingConventionsVisitor();
+  }
+
+  private class NamingConventionsVisitor extends BaseInspectionVisitor {
 
     @Override
-    protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
-        return true;
-    }
-
-    @Override
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        final String fieldName = (String)infos[0];
-        if (fieldName.length() < getMinLength()) {
-            return InspectionGadgetsBundle.message(
-                    "static.variable.naming.convention.problem.descriptor.short");
+    public void visitField(@NotNull PsiField field) {
+      if (!field.hasModifierProperty(PsiModifier.STATIC)) {
+        return;
+      }
+      if (field.hasModifierProperty(PsiModifier.FINAL)) {
+        if (!checkMutableFinals) {
+          return;
         }
-        else if (fieldName.length() > getMaxLength()) {
-            return InspectionGadgetsBundle.message(
-                    "static.variable.naming.convention.problem.descriptor.long");
+        else {
+          final PsiType type = field.getType();
+          if (ClassUtils.isImmutable(type)) {
+            return;
+          }
         }
-        return InspectionGadgetsBundle.message(
-                "static.variable.naming.convention.problem.descriptor.regex.mismatch",
-                getRegex());
+      }
+      final String name = field.getName();
+      if (name == null) {
+        return;
+      }
+      if (isValid(name)) {
+        return;
+      }
+      registerFieldError(field, name);
     }
-
-    @Override
-    protected String getDefaultRegex() {
-        return "s_[a-z][A-Za-z\\d]*";
-    }
-
-    @Override
-    protected int getDefaultMinLength() {
-        return DEFAULT_MIN_LENGTH;
-    }
-
-    @Override
-    protected int getDefaultMaxLength() {
-        return DEFAULT_MAX_LENGTH;
-    }
-
-    @Override
-    public Collection<? extends JComponent> createExtraOptions() {
-        return Arrays.asList(
-                new CheckBox(InspectionGadgetsBundle.message(
-                        "static.variable.naming.convention.mutable.option"),
-                        this, "checkMutableFinals"));
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new NamingConventionsVisitor();
-    }
-
-    private class NamingConventionsVisitor extends BaseInspectionVisitor {
-
-        @Override public void visitField(@NotNull PsiField field) {
-            if (!field.hasModifierProperty(PsiModifier.STATIC)) {
-                return;
-            }
-            if (field.hasModifierProperty(PsiModifier.FINAL)) {
-                if (!checkMutableFinals) {
-                    return;
-                } else {
-                    final PsiType type = field.getType();
-                    if (ClassUtils.isImmutable(type)) {
-                        return;
-                    }
-                }
-            }
-            final String name = field.getName();
-            if (name == null) {
-                return;
-            }
-            if (isValid(name)) {
-                return;
-            }
-            registerFieldError(field, name);
-        }
-    }
+  }
 }

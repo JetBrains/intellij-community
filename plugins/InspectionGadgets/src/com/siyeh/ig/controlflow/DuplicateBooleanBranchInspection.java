@@ -29,106 +29,107 @@ import java.util.Set;
 
 public class DuplicateBooleanBranchInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "duplicate.boolean.branch.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "duplicate.boolean.branch.display.name");
+  }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "duplicate.boolean.branch.problem.descriptor");
-    }
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "duplicate.boolean.branch.problem.descriptor");
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new DuplicateBooleanBranchVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new DuplicateBooleanBranchVisitor();
+  }
 
-    private static class DuplicateBooleanBranchVisitor
-            extends BaseInspectionVisitor {
+  private static class DuplicateBooleanBranchVisitor
+    extends BaseInspectionVisitor {
 
-        @Override public void visitBinaryExpression(PsiBinaryExpression expression) {
-            super.visitBinaryExpression(expression);
-            final IElementType tokenType = expression.getOperationTokenType();
-            if (!tokenType.equals(JavaTokenType.ANDAND) &&
-                    !tokenType.equals(JavaTokenType.OROR)) {
-                return;
-            }
+    @Override
+    public void visitBinaryExpression(PsiBinaryExpression expression) {
+      super.visitBinaryExpression(expression);
+      final IElementType tokenType = expression.getOperationTokenType();
+      if (!tokenType.equals(JavaTokenType.ANDAND) &&
+          !tokenType.equals(JavaTokenType.OROR)) {
+        return;
+      }
 
-            PsiElement parent = expression.getParent();
-            while (parent instanceof PsiParenthesizedExpression) {
-                parent = parent.getParent();
-            }
-            if (parent instanceof PsiBinaryExpression) {
-                final PsiBinaryExpression parentExpression =
-                        (PsiBinaryExpression) parent;
-                if (tokenType.equals(parentExpression.getOperationTokenType())) {
-                    return;
-                }
-            }
-            final Set<PsiExpression> conditions = new HashSet<PsiExpression>();
-            collectConditions(expression, conditions, tokenType);
-            final int numConditions = conditions.size();
-            if (numConditions < 2) {
-                return;
-            }
-            final PsiExpression[] conditionArray =
-                    conditions.toArray(new PsiExpression[numConditions]);
-            final boolean[] matched = new boolean[conditionArray.length];
-            Arrays.fill(matched, false);
-            for (int i = 0; i < conditionArray.length; i++) {
-                if (matched[i]) {
-                    continue;
-                }
-                final PsiExpression condition = conditionArray[i];
-                for (int j = i + 1; j < conditionArray.length; j++) {
-                    if (matched[j]) {
-                        continue;
-                    }
-                    final PsiExpression testCondition = conditionArray[j];
-                    final boolean areEquivalent =
-                            EquivalenceChecker.expressionsAreEquivalent(
-                                    condition, testCondition);
-                    if (areEquivalent) {
-                        registerError(testCondition);
-                        if (!matched[i]) {
-                            registerError(condition);
-                        }
-                        matched[i] = true;
-                        matched[j] = true;
-                    }
-                }
-            }
+      PsiElement parent = expression.getParent();
+      while (parent instanceof PsiParenthesizedExpression) {
+        parent = parent.getParent();
+      }
+      if (parent instanceof PsiBinaryExpression) {
+        final PsiBinaryExpression parentExpression =
+          (PsiBinaryExpression)parent;
+        if (tokenType.equals(parentExpression.getOperationTokenType())) {
+          return;
         }
-
-        private static void collectConditions(PsiExpression condition,
-                                              Set<PsiExpression> conditions,
-                                              IElementType tokenType) {
-            if (condition == null) {
-                return;
-            }
-            if (condition instanceof PsiParenthesizedExpression) {
-                final PsiParenthesizedExpression parenthesizedExpression =
-                        (PsiParenthesizedExpression) condition;
-                final PsiExpression contents =
-                        parenthesizedExpression.getExpression();
-                collectConditions(contents, conditions, tokenType);
-                return;
-            }
-            if (condition instanceof PsiBinaryExpression) {
-                final PsiBinaryExpression binaryExpression =
-                        (PsiBinaryExpression) condition;
-              final IElementType testTokeType = binaryExpression.getOperationTokenType();
-                if (testTokeType.equals(tokenType)) {
-                    final PsiExpression lhs = binaryExpression.getLOperand();
-                    collectConditions(lhs, conditions, tokenType);
-                    final PsiExpression rhs = binaryExpression.getROperand();
-                    collectConditions(rhs, conditions, tokenType);
-                    return;
-                }
-            }
-            conditions.add(condition);
+      }
+      final Set<PsiExpression> conditions = new HashSet<PsiExpression>();
+      collectConditions(expression, conditions, tokenType);
+      final int numConditions = conditions.size();
+      if (numConditions < 2) {
+        return;
+      }
+      final PsiExpression[] conditionArray =
+        conditions.toArray(new PsiExpression[numConditions]);
+      final boolean[] matched = new boolean[conditionArray.length];
+      Arrays.fill(matched, false);
+      for (int i = 0; i < conditionArray.length; i++) {
+        if (matched[i]) {
+          continue;
         }
+        final PsiExpression condition = conditionArray[i];
+        for (int j = i + 1; j < conditionArray.length; j++) {
+          if (matched[j]) {
+            continue;
+          }
+          final PsiExpression testCondition = conditionArray[j];
+          final boolean areEquivalent =
+            EquivalenceChecker.expressionsAreEquivalent(
+              condition, testCondition);
+          if (areEquivalent) {
+            registerError(testCondition);
+            if (!matched[i]) {
+              registerError(condition);
+            }
+            matched[i] = true;
+            matched[j] = true;
+          }
+        }
+      }
     }
+
+    private static void collectConditions(PsiExpression condition,
+                                          Set<PsiExpression> conditions,
+                                          IElementType tokenType) {
+      if (condition == null) {
+        return;
+      }
+      if (condition instanceof PsiParenthesizedExpression) {
+        final PsiParenthesizedExpression parenthesizedExpression =
+          (PsiParenthesizedExpression)condition;
+        final PsiExpression contents =
+          parenthesizedExpression.getExpression();
+        collectConditions(contents, conditions, tokenType);
+        return;
+      }
+      if (condition instanceof PsiBinaryExpression) {
+        final PsiBinaryExpression binaryExpression =
+          (PsiBinaryExpression)condition;
+        final IElementType testTokeType = binaryExpression.getOperationTokenType();
+        if (testTokeType.equals(tokenType)) {
+          final PsiExpression lhs = binaryExpression.getLOperand();
+          collectConditions(lhs, conditions, tokenType);
+          final PsiExpression rhs = binaryExpression.getROperand();
+          collectConditions(rhs, conditions, tokenType);
+          return;
+        }
+      }
+      conditions.add(condition);
+    }
+  }
 }

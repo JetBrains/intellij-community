@@ -19,7 +19,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.IGInspectionTestCase;
 
 public class OverloadedMethodsWithSameNumberOfParametersInspectionTest
-  extends IGInspectionTestCase{
+  extends IGInspectionTestCase {
 
   public void testIgnoreInconvertibleTypes() throws Exception {
     doTest(new OverloadedMethodsWithSameNumberOfParametersInspection());

@@ -26,37 +26,38 @@ import org.jetbrains.annotations.NotNull;
 
 public class LimitedScopeInnerClassInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "limited.scope.inner.class.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "limited.scope.inner.class.display.name");
+  }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "limited.scope.inner.class.problem.descriptor");
-    }
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "limited.scope.inner.class.problem.descriptor");
+  }
 
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        return new MoveClassFix();
-    }
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new MoveClassFix();
+  }
 
-    protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
-        return true;
-    }
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return true;
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new LimitedScopeInnerClassVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new LimitedScopeInnerClassVisitor();
+  }
 
-    private static class LimitedScopeInnerClassVisitor
-            extends BaseInspectionVisitor {
+  private static class LimitedScopeInnerClassVisitor
+    extends BaseInspectionVisitor {
 
-        @Override public void visitClass(@NotNull PsiClass aClass) {
-            if (aClass.getParent() instanceof PsiDeclarationStatement) {
-                registerClassError(aClass);
-            }
-        }
+    @Override
+    public void visitClass(@NotNull PsiClass aClass) {
+      if (aClass.getParent() instanceof PsiDeclarationStatement) {
+        registerClassError(aClass);
+      }
     }
+  }
 }

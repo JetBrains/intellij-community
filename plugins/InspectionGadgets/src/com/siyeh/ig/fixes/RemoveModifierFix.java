@@ -25,21 +25,21 @@ import org.jetbrains.annotations.NotNull;
 
 public class RemoveModifierFix extends InspectionGadgetsFix {
 
-    private final String modifierText;
+  private final String modifierText;
 
-    public RemoveModifierFix(String modifierText) {
-        this.modifierText = modifierText;
-    }
+  public RemoveModifierFix(String modifierText) {
+    this.modifierText = modifierText;
+  }
 
-    @NotNull
-    public String getName() {
-      return InspectionGadgetsBundle.message("remove.modifier.quickfix",
-              modifierText);
-    }
+  @NotNull
+  public String getName() {
+    return InspectionGadgetsBundle.message("remove.modifier.quickfix",
+                                           modifierText);
+  }
 
-    public void doFix(Project project, ProblemDescriptor descriptor)
-            throws IncorrectOperationException {
-        final PsiElement modifierElement = descriptor.getPsiElement();
-        deleteElement(modifierElement);
-    }
+  public void doFix(Project project, ProblemDescriptor descriptor)
+    throws IncorrectOperationException {
+    final PsiElement modifierElement = descriptor.getPsiElement();
+    deleteElement(modifierElement);
+  }
 }

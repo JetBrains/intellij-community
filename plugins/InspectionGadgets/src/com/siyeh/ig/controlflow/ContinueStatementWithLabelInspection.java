@@ -24,40 +24,41 @@ import org.jetbrains.annotations.NotNull;
 
 public class ContinueStatementWithLabelInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "continue.statement.with.label.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "continue.statement.with.label.display.name");
+  }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "continue.statement.with.label.problem.descriptor");
-    }
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "continue.statement.with.label.problem.descriptor");
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new ContinueStatementWithLabelVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new ContinueStatementWithLabelVisitor();
+  }
 
-    private static class ContinueStatementWithLabelVisitor
-            extends BaseInspectionVisitor {
+  private static class ContinueStatementWithLabelVisitor
+    extends BaseInspectionVisitor {
 
-        @Override public void visitContinueStatement(
-                @NotNull PsiContinueStatement statement) {
-            super.visitContinueStatement(statement);
-            final PsiIdentifier label = statement.getLabelIdentifier();
-            if (label == null) {
-                return;
-            }
-            final String labelText = label.getText();
-            if (labelText == null) {
-                return;
-            }
-            if (labelText.length() == 0) {
-                return;
-            }
-            registerStatementError(statement);
-        }
+    @Override
+    public void visitContinueStatement(
+      @NotNull PsiContinueStatement statement) {
+      super.visitContinueStatement(statement);
+      final PsiIdentifier label = statement.getLabelIdentifier();
+      if (label == null) {
+        return;
+      }
+      final String labelText = label.getText();
+      if (labelText == null) {
+        return;
+      }
+      if (labelText.length() == 0) {
+        return;
+      }
+      registerStatementError(statement);
     }
+  }
 }

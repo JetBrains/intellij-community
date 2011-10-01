@@ -30,127 +30,132 @@ import org.jetbrains.annotations.NotNull;
 
 public class ComparisonToNaNInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "comparison.to.nan.display.name");
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "comparison.to.nan.display.name");
+  }
+
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    final PsiBinaryExpression comparison = (PsiBinaryExpression)infos[0];
+    final IElementType tokenType = comparison.getOperationTokenType();
+    if (tokenType.equals(JavaTokenType.EQEQ)) {
+      return InspectionGadgetsBundle.message(
+        "comparison.to.nan.problem.descriptor1");
     }
+    else {
+      return InspectionGadgetsBundle.message(
+        "comparison.to.nan.problem.descriptor2");
+    }
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new ComparisonToNaNVisitor();
+  }
+
+  public InspectionGadgetsFix buildFix(Object... infos) {
+    return new ComparisonToNaNFix();
+  }
+
+  private static class ComparisonToNaNFix extends InspectionGadgetsFix {
 
     @NotNull
-    public String buildErrorString(Object... infos) {
-        final PsiBinaryExpression comparison = (PsiBinaryExpression)infos[0];
+    public String getName() {
+      return InspectionGadgetsBundle.message(
+        "comparison.to.nan.replace.quickfix");
+    }
+
+    public void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiReferenceExpression NaNExpression =
+        (PsiReferenceExpression)descriptor.getPsiElement();
+      final PsiElement qualifier = NaNExpression.getQualifier();
+      if (qualifier == null) {
+        return;
+      }
+      final String typeString = qualifier.getText();
+      final PsiBinaryExpression comparison =
+        (PsiBinaryExpression)NaNExpression.getParent();
+      final PsiExpression lhs = comparison.getLOperand();
+      final PsiExpression rhs = comparison.getROperand();
+      final PsiExpression operand;
+      if (NaNExpression.equals(lhs)) {
+        operand = rhs;
+      }
+      else {
+        operand = lhs;
+      }
+      assert operand != null;
+      final String operandText = operand.getText();
       final IElementType tokenType = comparison.getOperationTokenType();
-        if (tokenType.equals(JavaTokenType.EQEQ)) {
-            return InspectionGadgetsBundle.message(
-                    "comparison.to.nan.problem.descriptor1");
-        } else {
-            return InspectionGadgetsBundle.message(
-                    "comparison.to.nan.problem.descriptor2");
-        }
+      final String negationString;
+      if (tokenType.equals(JavaTokenType.EQEQ)) {
+        negationString = "";
+      }
+      else {
+        negationString = "!";
+      }
+      @NonNls final String newExpressionText = negationString +
+                                               typeString + ".isNaN(" + operandText + ')';
+      replaceExpression(comparison, newExpressionText);
+    }
+  }
+
+  private static class ComparisonToNaNVisitor extends BaseInspectionVisitor {
+
+    @Override
+    public void visitBinaryExpression(
+      @NotNull PsiBinaryExpression expression) {
+      super.visitBinaryExpression(expression);
+      if (!(expression.getROperand() != null)) {
+        return;
+      }
+      if (!ComparisonUtils.isEqualityComparison(expression)) {
+        return;
+      }
+      final PsiExpression lhs = expression.getLOperand();
+      final PsiExpression rhs = expression.getROperand();
+      if (!isFloatingPointType(lhs) && !isFloatingPointType(rhs)) {
+        return;
+      }
+      if (isNaN(lhs)) {
+        registerError(lhs, expression);
+      }
+      else if (rhs != null && isNaN(rhs)) {
+        registerError(rhs, expression);
+      }
     }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new ComparisonToNaNVisitor();
+    private static boolean isFloatingPointType(PsiExpression expression) {
+      if (expression == null) {
+        return false;
+      }
+      final PsiType type = expression.getType();
+      if (type == null) {
+        return false;
+      }
+      return PsiType.DOUBLE.equals(type) || PsiType.FLOAT.equals(type);
     }
 
-    public InspectionGadgetsFix buildFix(Object... infos) {
-        return new ComparisonToNaNFix();
+    private static boolean isNaN(PsiExpression expression) {
+      if (!(expression instanceof PsiReferenceExpression)) {
+        return false;
+      }
+      final PsiReferenceExpression referenceExpression =
+        (PsiReferenceExpression)expression;
+      @NonNls final String referenceName =
+        referenceExpression.getReferenceName();
+      if (!"NaN".equals(referenceName)) {
+        return false;
+      }
+      final PsiElement qualifier = referenceExpression.getQualifier();
+      if (qualifier == null) {
+        return false;
+      }
+      @NonNls final String qualifierText = qualifier.getText();
+      return "Double".equals(qualifierText) ||
+             "Float".equals(qualifierText);
     }
-
-    private static class ComparisonToNaNFix extends InspectionGadgetsFix {
-
-        @NotNull
-        public String getName() {
-            return InspectionGadgetsBundle.message(
-                    "comparison.to.nan.replace.quickfix");
-        }
-
-        public void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
-            final PsiReferenceExpression NaNExpression =
-                    (PsiReferenceExpression)descriptor.getPsiElement();
-            final PsiElement qualifier = NaNExpression.getQualifier();
-            if (qualifier == null) {
-                return;
-            }
-            final String typeString = qualifier.getText();
-            final PsiBinaryExpression comparison =
-                    (PsiBinaryExpression)NaNExpression.getParent();
-            final PsiExpression lhs = comparison.getLOperand();
-            final PsiExpression rhs = comparison.getROperand();
-            final PsiExpression operand;
-            if (NaNExpression.equals(lhs)) {
-                operand = rhs;
-            } else {
-                operand = lhs;
-            }
-            assert operand != null;
-            final String operandText = operand.getText();
-          final IElementType tokenType = comparison.getOperationTokenType();
-            final String negationString;
-            if (tokenType.equals(JavaTokenType.EQEQ)) {
-                negationString = "";
-            } else {
-                negationString = "!";
-            }
-            @NonNls final String newExpressionText = negationString +
-                    typeString + ".isNaN(" + operandText + ')';
-            replaceExpression(comparison, newExpressionText);
-        }
-    }
-
-    private static class ComparisonToNaNVisitor extends BaseInspectionVisitor {
-
-        @Override public void visitBinaryExpression(
-                @NotNull PsiBinaryExpression expression) {
-            super.visitBinaryExpression(expression);
-            if (!(expression.getROperand() != null)) {
-                return;
-            }
-            if (!ComparisonUtils.isEqualityComparison(expression)) {
-                return;
-            }
-            final PsiExpression lhs = expression.getLOperand();
-            final PsiExpression rhs = expression.getROperand();
-            if (!isFloatingPointType(lhs) && !isFloatingPointType(rhs)) {
-                return;
-            }
-            if (isNaN(lhs)) {
-                registerError(lhs, expression);
-            } else if (rhs != null && isNaN(rhs)) {
-                registerError(rhs, expression);
-            }
-        }
-
-        private static boolean isFloatingPointType(PsiExpression expression) {
-            if (expression == null) {
-                return false;
-            }
-            final PsiType type = expression.getType();
-            if (type == null) {
-                return false;
-            }
-            return PsiType.DOUBLE.equals(type) || PsiType.FLOAT.equals(type);
-        }
-
-        private static boolean isNaN(PsiExpression expression) {
-            if (!(expression instanceof PsiReferenceExpression)) {
-                return false;
-            }
-            final PsiReferenceExpression referenceExpression =
-                    (PsiReferenceExpression)expression;
-            @NonNls final String referenceName =
-                    referenceExpression.getReferenceName();
-            if (!"NaN".equals(referenceName)) {
-                return false;
-            }
-            final PsiElement qualifier = referenceExpression.getQualifier();
-            if (qualifier == null) {
-                return false;
-            }
-            @NonNls final String qualifierText = qualifier.getText();
-            return "Double".equals(qualifierText) ||
-                    "Float" .equals(qualifierText);
-        }
-    }
+  }
 }

@@ -26,40 +26,41 @@ import org.jetbrains.annotations.NotNull;
 
 public class EmptySynchronizedStatementInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "empty.synchronized.statement.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "empty.synchronized.statement.display.name");
+  }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "empty.synchronized.statement.problem.descriptor");
-    }
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "empty.synchronized.statement.problem.descriptor");
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new EmptySynchronizedStatementVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new EmptySynchronizedStatementVisitor();
+  }
 
-    private static class EmptySynchronizedStatementVisitor
-            extends BaseInspectionVisitor {
+  private static class EmptySynchronizedStatementVisitor
+    extends BaseInspectionVisitor {
 
-        @Override public void visitSynchronizedStatement(
-                @NotNull PsiSynchronizedStatement statement) {
-            super.visitSynchronizedStatement(statement);
-            if (JspPsiUtil.isInJspFile(statement.getContainingFile())) {
-                return;
-            }
-            final PsiCodeBlock body = statement.getBody();
-            if (body == null) {
-                return;
-            }
-            final PsiStatement[] statements = body.getStatements();
-            if (statements.length > 0) {
-                return;
-            }
-            registerStatementError(statement);
-        }
+    @Override
+    public void visitSynchronizedStatement(
+      @NotNull PsiSynchronizedStatement statement) {
+      super.visitSynchronizedStatement(statement);
+      if (JspPsiUtil.isInJspFile(statement.getContainingFile())) {
+        return;
+      }
+      final PsiCodeBlock body = statement.getBody();
+      if (body == null) {
+        return;
+      }
+      final PsiStatement[] statements = body.getStatements();
+      if (statements.length > 0) {
+        return;
+      }
+      registerStatementError(statement);
     }
+  }
 }

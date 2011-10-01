@@ -20,92 +20,96 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 
-class VariableAssignedVisitor extends JavaRecursiveElementVisitor{
+class VariableAssignedVisitor extends JavaRecursiveElementVisitor {
 
-    @NotNull private final PsiVariable variable;
-    private final boolean recurseIntoClasses;
-    private final boolean checkUnaryExpressions;
-    private boolean assigned = false;
+  @NotNull private final PsiVariable variable;
+  private final boolean recurseIntoClasses;
+  private final boolean checkUnaryExpressions;
+  private boolean assigned = false;
 
-    public VariableAssignedVisitor(@NotNull PsiVariable variable,
-                                   boolean recurseIntoClasses){
-        this.variable = variable;
-        final PsiType type = variable.getType();
-        checkUnaryExpressions = TypeConversionUtil.isNumericType(type);
-        this.recurseIntoClasses = recurseIntoClasses;
+  public VariableAssignedVisitor(@NotNull PsiVariable variable,
+                                 boolean recurseIntoClasses) {
+    this.variable = variable;
+    final PsiType type = variable.getType();
+    checkUnaryExpressions = TypeConversionUtil.isNumericType(type);
+    this.recurseIntoClasses = recurseIntoClasses;
+  }
+
+  @Override
+  public void visitElement(@NotNull PsiElement element) {
+    if (assigned) {
+      return;
     }
+    super.visitElement(element);
+  }
 
-    @Override public void visitElement(@NotNull PsiElement element){
-        if(assigned){
-            return;
-        }
-        super.visitElement(element);
+  @Override
+  public void visitAssignmentExpression(
+    @NotNull PsiAssignmentExpression assignment) {
+    if (assigned) {
+      return;
     }
+    super.visitAssignmentExpression(assignment);
+    final PsiExpression arg = assignment.getLExpression();
+    if (VariableAccessUtils.mayEvaluateToVariable(arg, variable)) {
+      assigned = true;
+    }
+  }
 
-    @Override public void visitAssignmentExpression(
-            @NotNull PsiAssignmentExpression assignment){
-        if(assigned){
-            return;
-        }
-        super.visitAssignmentExpression(assignment);
-        final PsiExpression arg = assignment.getLExpression();
-        if(VariableAccessUtils.mayEvaluateToVariable(arg, variable)){
-            assigned = true;
-        }
+  @Override
+  public void visitClass(PsiClass aClass) {
+    if (!recurseIntoClasses) {
+      return;
     }
+    if (assigned) {
+      return;
+    }
+    super.visitClass(aClass);
+  }
 
-    @Override
-    public void visitClass(PsiClass aClass) {
-        if(!recurseIntoClasses){
-            return;
-        }
-        if(assigned){
-            return;
-        }
-        super.visitClass(aClass);
+  @Override
+  public void visitPrefixExpression(
+    @NotNull PsiPrefixExpression prefixExpression) {
+    if (assigned) {
+      return;
     }
+    if (!checkUnaryExpressions) {
+      return;
+    }
+    super.visitPrefixExpression(prefixExpression);
+    final IElementType tokenType = prefixExpression.getOperationTokenType();
+    if (!tokenType.equals(JavaTokenType.PLUSPLUS) &&
+        !tokenType.equals(JavaTokenType.MINUSMINUS)) {
+      return;
+    }
+    final PsiExpression operand = prefixExpression.getOperand();
+    if (VariableAccessUtils.mayEvaluateToVariable(operand, variable)) {
+      assigned = true;
+    }
+  }
 
-    @Override public void visitPrefixExpression(
-            @NotNull PsiPrefixExpression prefixExpression){
-        if(assigned){
-            return;
-        }
-        if(!checkUnaryExpressions){
-            return;
-        }
-        super.visitPrefixExpression(prefixExpression);
-      final IElementType tokenType = prefixExpression.getOperationTokenType();
-        if(!tokenType.equals(JavaTokenType.PLUSPLUS) &&
-                   !tokenType.equals(JavaTokenType.MINUSMINUS)){
-            return;
-        }
-        final PsiExpression operand = prefixExpression.getOperand();
-        if(VariableAccessUtils.mayEvaluateToVariable(operand, variable)){
-            assigned = true;
-        }
+  @Override
+  public void visitPostfixExpression(
+    @NotNull PsiPostfixExpression postfixExpression) {
+    if (assigned) {
+      return;
     }
+    if (!checkUnaryExpressions) {
+      return;
+    }
+    super.visitPostfixExpression(postfixExpression);
+    final IElementType tokenType = postfixExpression.getOperationTokenType();
+    if (!tokenType.equals(JavaTokenType.PLUSPLUS) &&
+        !tokenType.equals(JavaTokenType.MINUSMINUS)) {
+      return;
+    }
+    final PsiExpression operand = postfixExpression.getOperand();
+    if (VariableAccessUtils.mayEvaluateToVariable(operand, variable)) {
+      assigned = true;
+    }
+  }
 
-    @Override public void visitPostfixExpression(
-            @NotNull PsiPostfixExpression postfixExpression){
-        if(assigned){
-            return;
-        }
-        if(!checkUnaryExpressions){
-            return;
-        }
-        super.visitPostfixExpression(postfixExpression);
-      final IElementType tokenType = postfixExpression.getOperationTokenType();
-        if(!tokenType.equals(JavaTokenType.PLUSPLUS) &&
-                   !tokenType.equals(JavaTokenType.MINUSMINUS)){
-            return;
-        }
-        final PsiExpression operand = postfixExpression.getOperand();
-        if(VariableAccessUtils.mayEvaluateToVariable(operand, variable)){
-            assigned = true;
-        }
-    }
-
-    public boolean isAssigned(){
-        return assigned;
-    }
+  public boolean isAssigned() {
+    return assigned;
+  }
 }

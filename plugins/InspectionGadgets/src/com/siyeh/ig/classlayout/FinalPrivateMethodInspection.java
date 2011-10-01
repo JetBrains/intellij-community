@@ -26,45 +26,46 @@ import org.jetbrains.annotations.NotNull;
 
 public class FinalPrivateMethodInspection extends BaseInspection {
 
-    @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "final.private.method.display.name");
-    }
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "final.private.method.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "final.private.method.problem.descriptor");
+  }
+
+  @Override
+  public boolean isEnabledByDefault() {
+    return true;
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new FinalPrivateMethodVisitor();
+  }
+
+  @Override
+  public InspectionGadgetsFix buildFix(Object... infos) {
+    return new RemoveModifierFix((String)infos[0]);
+  }
+
+  private static class FinalPrivateMethodVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "final.private.method.problem.descriptor");
+    public void visitMethod(@NotNull PsiMethod method) {
+      //no call to super, so we don't drill into anonymous classes
+      if (!method.hasModifierProperty(PsiModifier.FINAL)
+          || !method.hasModifierProperty(PsiModifier.PRIVATE)) {
+        return;
+      }
+      registerModifierError(PsiModifier.FINAL, method, PsiModifier.FINAL);
     }
-
-    @Override
-    public boolean isEnabledByDefault() {
-        return true;
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new FinalPrivateMethodVisitor();
-    }
-
-    @Override
-    public InspectionGadgetsFix buildFix(Object... infos) {
-        return new RemoveModifierFix((String) infos[0]);
-    }
-
-    private static class FinalPrivateMethodVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitMethod(@NotNull PsiMethod method) {
-            //no call to super, so we don't drill into anonymous classes
-            if (!method.hasModifierProperty(PsiModifier.FINAL)
-                    || !method.hasModifierProperty(PsiModifier.PRIVATE)) {
-                return;
-            }
-            registerModifierError(PsiModifier.FINAL, method, PsiModifier.FINAL);
-        }
-    }
+  }
 }

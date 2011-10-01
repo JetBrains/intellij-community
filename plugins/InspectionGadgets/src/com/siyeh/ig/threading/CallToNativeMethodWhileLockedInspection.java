@@ -23,51 +23,52 @@ import com.siyeh.ig.psiutils.SynchronizationUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class CallToNativeMethodWhileLockedInspection
-        extends BaseInspection {
+  extends BaseInspection {
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "call.to.native.method.while.locked.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "call.to.native.method.while.locked.problem.descriptor");
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new CallToNativeMethodWhileLockedVisitor();
+  }
+
+  private static class CallToNativeMethodWhileLockedVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "call.to.native.method.while.locked.display.name");
+    public void visitMethodCallExpression(
+      @NotNull PsiMethodCallExpression expression) {
+      final PsiMethod method = expression.resolveMethod();
+      if (method == null) {
+        return;
+      }
+      if (!method.hasModifierProperty(PsiModifier.NATIVE)) {
+        return;
+      }
+      final PsiClass containingClass = method.getContainingClass();
+      if (containingClass == null) {
+        return;
+      }
+      final String className = containingClass.getQualifiedName();
+      if (CommonClassNames.JAVA_LANG_OBJECT.equals(className)) {
+        return;
+      }
+      if (!SynchronizationUtil.isInSynchronizedContext(expression)) {
+        return;
+      }
+      registerMethodCallError(expression);
     }
-
-    @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "call.to.native.method.while.locked.problem.descriptor");
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new CallToNativeMethodWhileLockedVisitor();
-    }
-
-    private static class CallToNativeMethodWhileLockedVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitMethodCallExpression(
-                @NotNull PsiMethodCallExpression expression) {
-            final PsiMethod method = expression.resolveMethod();
-            if (method == null) {
-                return;
-            }
-            if (!method.hasModifierProperty(PsiModifier.NATIVE)) {
-                return;
-            }
-            final PsiClass containingClass = method.getContainingClass();
-            if (containingClass == null) {
-                return;
-            }
-            final String className = containingClass.getQualifiedName();
-            if (CommonClassNames.JAVA_LANG_OBJECT.equals(className)) {
-                return;
-            }
-            if (!SynchronizationUtil.isInSynchronizedContext(expression)) {
-                return;
-            }
-            registerMethodCallError(expression);
-        }
-    }
+  }
 }

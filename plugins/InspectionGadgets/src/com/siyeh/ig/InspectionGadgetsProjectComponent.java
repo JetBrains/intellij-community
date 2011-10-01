@@ -20,39 +20,39 @@ import com.intellij.openapi.project.Project;
 import com.siyeh.ig.telemetry.TelemetryToolWindow;
 import org.jetbrains.annotations.NotNull;
 
-public class InspectionGadgetsProjectComponent implements ProjectComponent{
+public class InspectionGadgetsProjectComponent implements ProjectComponent {
 
-    private TelemetryToolWindow toolWindow = null;
-    private boolean telemetryEnabled = true;
-    private final Project project;
+  private TelemetryToolWindow toolWindow = null;
+  private boolean telemetryEnabled = true;
+  private final Project project;
 
-    public InspectionGadgetsProjectComponent(Project project){
-        this.project = project;
+  public InspectionGadgetsProjectComponent(Project project) {
+    this.project = project;
+  }
+
+  public void projectOpened() {
+    final InspectionGadgetsPlugin inspectionGadgetsPlugin = InspectionGadgetsPlugin.getInstance();
+    telemetryEnabled = inspectionGadgetsPlugin.isTelemetryEnabled();
+    if (telemetryEnabled) {
+      toolWindow = new TelemetryToolWindow(inspectionGadgetsPlugin.getTelemetry());
+      toolWindow.register(project);
     }
+  }
 
-    public void projectOpened(){
-        final InspectionGadgetsPlugin inspectionGadgetsPlugin = InspectionGadgetsPlugin.getInstance();
-        telemetryEnabled = inspectionGadgetsPlugin.isTelemetryEnabled();
-        if(telemetryEnabled){
-            toolWindow = new TelemetryToolWindow(inspectionGadgetsPlugin.getTelemetry());
-            toolWindow.register(project);
-        }
+  public void projectClosed() {
+    if (telemetryEnabled && toolWindow != null) {
+      TelemetryToolWindow.unregister(project);
     }
+  }
 
-    public void projectClosed(){
-        if(telemetryEnabled && toolWindow != null){
-            TelemetryToolWindow.unregister(project);
-        }
-    }
+  @NotNull
+  public String getComponentName() {
+    return "InspectionGadgetsProjectComponent";
+  }
 
-    @NotNull
-    public String getComponentName(){
-        return "InspectionGadgetsProjectComponent";
-    }
+  public void initComponent() {
+  }
 
-    public void initComponent(){
-    }
-
-    public void disposeComponent(){
-    }
+  public void disposeComponent() {
+  }
 }

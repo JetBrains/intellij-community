@@ -23,24 +23,24 @@ import org.jetbrains.annotations.NotNull;
 
 public class DelegatingFix extends InspectionGadgetsFix {
 
-    private final LocalQuickFix delegate;
+  private final LocalQuickFix delegate;
 
-    public DelegatingFix(LocalQuickFix delegate) {
-        this.delegate = delegate;
-    }
+  public DelegatingFix(LocalQuickFix delegate) {
+    this.delegate = delegate;
+  }
 
-    @NotNull
-    public String getName() {
-        return delegate.getName();
-    }
+  @NotNull
+  public String getName() {
+    return delegate.getName();
+  }
 
-    @NotNull
-    public String getFamilyName() {
-        return delegate.getName();
-    }
+  @NotNull
+  public String getFamilyName() {
+    return delegate.getName();
+  }
 
-    protected void doFix(Project project, ProblemDescriptor descriptor)
-            throws IncorrectOperationException {
-        delegate.applyFix(project, descriptor);
-    }
+  protected void doFix(Project project, ProblemDescriptor descriptor)
+    throws IncorrectOperationException {
+    delegate.applyFix(project, descriptor);
+  }
 }

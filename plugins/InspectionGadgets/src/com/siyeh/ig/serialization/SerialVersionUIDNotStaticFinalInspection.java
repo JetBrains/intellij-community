@@ -29,94 +29,95 @@ import org.jetbrains.annotations.NotNull;
 
 public class SerialVersionUIDNotStaticFinalInspection extends BaseInspection {
 
-    @Override
+  @Override
+  @NotNull
+  public String getID() {
+    return "SerialVersionUIDWithWrongSignature";
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "serialversionuid.private.static.final.long.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "serialversionuid.private.static.final.long.problem.descriptor");
+  }
+
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    if (((Boolean)infos[0]).booleanValue()) {
+      return null;
+    }
+    return new SerialVersionUIDNotStaticFinalFix();
+  }
+
+  private static class SerialVersionUIDNotStaticFinalFix
+    extends InspectionGadgetsFix {
+
     @NotNull
-    public String getID(){
-        return "SerialVersionUIDWithWrongSignature";
+    public String getName() {
+      return InspectionGadgetsBundle.message(
+        "serialversionuid.private.static.final.long.quickfix");
     }
 
     @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "serialversionuid.private.static.final.long.display.name");
+    protected void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiElement element = descriptor.getPsiElement();
+      final PsiElement parent = element.getParent();
+      if (!(parent instanceof PsiField)) {
+        return;
+      }
+      final PsiField field = (PsiField)parent;
+      final PsiModifierList modifierList = field.getModifierList();
+      if (modifierList == null) {
+        return;
+      }
+      modifierList.setModifierProperty(PsiModifier.PRIVATE, true);
+      modifierList.setModifierProperty(PsiModifier.STATIC, true);
+      modifierList.setModifierProperty(PsiModifier.FINAL, true);
     }
+  }
+
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new SerialVersionUIDNotStaticFinalVisitor();
+  }
+
+  private static class SerialVersionUIDNotStaticFinalVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "serialversionuid.private.static.final.long.problem.descriptor");
+    public void visitClass(@NotNull PsiClass aClass) {
+      // no call to super, so it doesn't drill down
+      if (aClass.isInterface() || aClass.isAnnotationType()) {
+        return;
+      }
+      final PsiField field =
+        aClass.findFieldByName(
+          HardcodedMethodConstants.SERIAL_VERSION_UID, false);
+      if (field == null) {
+        return;
+      }
+      final PsiType type = field.getType();
+      final boolean wrongType = !PsiType.LONG.equals(type);
+      if (field.hasModifierProperty(PsiModifier.STATIC) &&
+          field.hasModifierProperty(PsiModifier.PRIVATE) &&
+          field.hasModifierProperty(PsiModifier.FINAL) &&
+          !wrongType) {
+        return;
+      }
+      if (!SerializationUtils.isSerializable(aClass)) {
+        return;
+      }
+      registerFieldError(field, Boolean.valueOf(wrongType));
     }
-
-    @Override
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        if (((Boolean)infos[0]).booleanValue()) {
-            return null;
-        }
-        return new SerialVersionUIDNotStaticFinalFix();
-    }
-
-    private static class SerialVersionUIDNotStaticFinalFix
-            extends InspectionGadgetsFix {
-
-        @NotNull
-        public String getName() {
-            return InspectionGadgetsBundle.message(
-                    "serialversionuid.private.static.final.long.quickfix");
-        }
-
-        @Override
-        protected void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
-            final PsiElement element = descriptor.getPsiElement();
-            final PsiElement parent = element.getParent();
-            if (!(parent instanceof PsiField)) {
-                return;
-            }
-            final PsiField field = (PsiField) parent;
-            final PsiModifierList modifierList = field.getModifierList();
-            if (modifierList == null) {
-                return;
-            }
-            modifierList.setModifierProperty(PsiModifier.PRIVATE, true);
-            modifierList.setModifierProperty(PsiModifier.STATIC, true);
-            modifierList.setModifierProperty(PsiModifier.FINAL, true);
-        }
-    }
-
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new SerialVersionUIDNotStaticFinalVisitor();
-    }
-
-    private static class SerialVersionUIDNotStaticFinalVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitClass(@NotNull PsiClass aClass) {
-            // no call to super, so it doesn't drill down
-            if (aClass.isInterface() || aClass.isAnnotationType()) {
-                return;
-            }
-            final PsiField field =
-                    aClass.findFieldByName(
-                            HardcodedMethodConstants.SERIAL_VERSION_UID, false);
-            if (field == null) {
-                return;
-            }
-            final PsiType type = field.getType();
-            final boolean wrongType = !PsiType.LONG.equals(type);
-            if (field.hasModifierProperty(PsiModifier.STATIC) &&
-                    field.hasModifierProperty(PsiModifier.PRIVATE) &&
-                    field.hasModifierProperty(PsiModifier.FINAL) &&
-                    !wrongType) {
-                return;
-            }
-            if(!SerializationUtils.isSerializable(aClass)){
-                return;
-            }
-            registerFieldError(field, Boolean.valueOf(wrongType));
-        }
-    }
+  }
 }

@@ -30,151 +30,158 @@ import javax.swing.*;
 
 public class RawUseOfParameterizedTypeInspection extends BaseInspection {
 
-    /** @noinspection PublicField*/
-    public boolean ignoreObjectConstruction = true;
+  /**
+   * @noinspection PublicField
+   */
+  public boolean ignoreObjectConstruction = true;
 
-    /** @noinspection PublicField*/
-    public boolean ignoreTypeCasts = false;
+  /**
+   * @noinspection PublicField
+   */
+  public boolean ignoreTypeCasts = false;
 
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "raw.use.of.parameterized.type.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "raw.use.of.parameterized.type.problem.descriptor");
+  }
+
+  @Override
+  @Nullable
+  public JComponent createOptionsPanel() {
+    final MultipleCheckboxOptionsPanel optionsPanel =
+      new MultipleCheckboxOptionsPanel(this);
+    optionsPanel.addCheckbox(
+      InspectionGadgetsBundle.message(
+        "raw.use.of.parameterized.type.ignore.new.objects.option"),
+      "ignoreObjectConstruction");
+    optionsPanel.addCheckbox(
+      InspectionGadgetsBundle.message(
+        "raw.use.of.parameterized.type.ignore.type.casts.option"),
+      "ignoreTypeCasts");
+    return optionsPanel;
+  }
+
+  @Override
+  public String getAlternativeID() {
+    return "unchecked";
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new RawUseOfParameterizedTypeVisitor();
+  }
+
+  private class RawUseOfParameterizedTypeVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "raw.use.of.parameterized.type.display.name");
+    public void visitNewExpression(
+      @NotNull PsiNewExpression expression) {
+      if (!hasNeededLanguageLevel(expression)) {
+        return;
+      }
+      super.visitNewExpression(expression);
+      if (ignoreObjectConstruction) {
+        return;
+      }
+      if (expression.getArrayInitializer() != null ||
+          expression.getArrayDimensions().length > 0) {
+        // array creation cannot be generic
+        return;
+      }
+      final PsiJavaCodeReferenceElement classReference =
+        expression.getClassOrAnonymousClassReference();
+      checkReferenceElement(classReference);
     }
 
     @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "raw.use.of.parameterized.type.problem.descriptor");
+    public void visitTypeElement(@NotNull PsiTypeElement typeElement) {
+      if (!hasNeededLanguageLevel(typeElement)) {
+        return;
+      }
+      super.visitTypeElement(typeElement);
+      final PsiElement parent = typeElement.getParent();
+      if (parent instanceof PsiInstanceOfExpression ||
+          parent instanceof PsiClassObjectAccessExpression) {
+        return;
+      }
+      if (ignoreTypeCasts && parent instanceof PsiTypeCastExpression) {
+        return;
+      }
+      if (PsiTreeUtil.getParentOfType(typeElement, PsiComment.class)
+          != null) {
+        return;
+      }
+      final PsiJavaCodeReferenceElement referenceElement =
+        typeElement.getInnermostComponentReferenceElement();
+      checkReferenceElement(referenceElement);
     }
 
     @Override
-    @Nullable
-    public JComponent createOptionsPanel() {
-        final MultipleCheckboxOptionsPanel optionsPanel =
-                new MultipleCheckboxOptionsPanel(this);
-        optionsPanel.addCheckbox(
-                InspectionGadgetsBundle.message(
-                        "raw.use.of.parameterized.type.ignore.new.objects.option"),
-                "ignoreObjectConstruction");
-        optionsPanel.addCheckbox(
-                InspectionGadgetsBundle.message(
-                        "raw.use.of.parameterized.type.ignore.type.casts.option"),
-                "ignoreTypeCasts");
-        return optionsPanel;
+    public void visitReferenceElement(
+      PsiJavaCodeReferenceElement reference) {
+      if (!hasNeededLanguageLevel(reference)) {
+        return;
+      }
+      super.visitReferenceElement(reference);
+      final PsiElement referenceParent = reference.getParent();
+      if (!(referenceParent instanceof PsiReferenceList)) {
+        return;
+      }
+      final PsiReferenceList referenceList =
+        (PsiReferenceList)referenceParent;
+      final PsiElement listParent = referenceList.getParent();
+      if (!(listParent instanceof PsiClass)) {
+        return;
+      }
+      checkReferenceElement(reference);
     }
 
-    @Override
-    public String getAlternativeID() {
-      return "unchecked";
+    private void checkReferenceElement(
+      PsiJavaCodeReferenceElement reference) {
+      if (reference == null) {
+        return;
+      }
+      final PsiType[] typeParameters = reference.getTypeParameters();
+      if (typeParameters.length > 0) {
+        return;
+      }
+      final PsiElement element = reference.resolve();
+      if (!(element instanceof PsiClass)) {
+        return;
+      }
+      final PsiClass aClass = (PsiClass)element;
+      final PsiElement qualifier = reference.getQualifier();
+      if (qualifier instanceof PsiJavaCodeReferenceElement) {
+        final PsiJavaCodeReferenceElement qualifierReference =
+          (PsiJavaCodeReferenceElement)qualifier;
+        if (!aClass.hasModifierProperty(PsiModifier.STATIC) &&
+            !aClass.isInterface() && !aClass.isEnum()) {
+          checkReferenceElement(qualifierReference);
+        }
+      }
+      if (!aClass.hasTypeParameters()) {
+        return;
+      }
+      registerError(reference);
     }
 
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new RawUseOfParameterizedTypeVisitor();
+    private boolean hasNeededLanguageLevel(PsiElement element) {
+      if (element.getLanguage() != StdLanguages.JAVA) {
+        return false;
+      }
+      return PsiUtil.isLanguageLevel5OrHigher(element);
     }
-
-    private class RawUseOfParameterizedTypeVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitNewExpression(
-                @NotNull PsiNewExpression expression) {
-            if (!hasNeededLanguageLevel(expression)) {
-                return;
-            }
-            super.visitNewExpression(expression);
-            if (ignoreObjectConstruction) {
-                return;
-            }
-            if (expression.getArrayInitializer() != null ||
-                expression.getArrayDimensions().length > 0) {
-                // array creation cannot be generic
-                return;
-            }
-            final PsiJavaCodeReferenceElement classReference =
-                    expression.getClassOrAnonymousClassReference();
-            checkReferenceElement(classReference);
-        }
-
-        @Override public void visitTypeElement(@NotNull PsiTypeElement typeElement) {
-            if (!hasNeededLanguageLevel(typeElement)) {
-                return;
-            }
-            super.visitTypeElement(typeElement);
-            final PsiElement parent = typeElement.getParent();
-            if (parent instanceof PsiInstanceOfExpression ||
-                    parent instanceof PsiClassObjectAccessExpression) {
-                return;
-            }
-            if (ignoreTypeCasts && parent instanceof PsiTypeCastExpression) {
-                return;
-            }
-            if (PsiTreeUtil.getParentOfType(typeElement, PsiComment.class)
-                    != null) {
-                return;
-            }
-            final PsiJavaCodeReferenceElement referenceElement =
-                    typeElement.getInnermostComponentReferenceElement();
-            checkReferenceElement(referenceElement);
-        }
-
-        @Override public void visitReferenceElement(
-                PsiJavaCodeReferenceElement reference) {
-            if (!hasNeededLanguageLevel(reference)) {
-                return;
-            }
-            super.visitReferenceElement(reference);
-            final PsiElement referenceParent = reference.getParent();
-            if (!(referenceParent instanceof PsiReferenceList)) {
-                return;
-            }
-            final PsiReferenceList referenceList =
-                    (PsiReferenceList)referenceParent;
-            final PsiElement listParent = referenceList.getParent();
-            if (!(listParent instanceof PsiClass)) {
-                return;
-            }
-            checkReferenceElement(reference);
-        }
-
-        private void checkReferenceElement(
-                PsiJavaCodeReferenceElement reference) {
-            if (reference == null) {
-                return;
-            }
-            final PsiType[] typeParameters = reference.getTypeParameters();
-            if (typeParameters.length > 0) {
-                return;
-            }
-            final PsiElement element = reference.resolve();
-            if (!(element instanceof PsiClass)) {
-                return;
-            }
-            final PsiClass aClass = (PsiClass)element;
-            final PsiElement qualifier = reference.getQualifier();
-            if (qualifier instanceof PsiJavaCodeReferenceElement) {
-                final PsiJavaCodeReferenceElement qualifierReference =
-                        (PsiJavaCodeReferenceElement)qualifier;
-                if (!aClass.hasModifierProperty(PsiModifier.STATIC) &&
-                        !aClass.isInterface() && !aClass.isEnum()) {
-                    checkReferenceElement(qualifierReference);
-                }
-            }
-            if (!aClass.hasTypeParameters()) {
-                return;
-            }
-            registerError(reference);
-        }
-
-        private boolean hasNeededLanguageLevel(PsiElement element) {
-            if (element.getLanguage() != StdLanguages.JAVA) {
-                return false;
-            }
-            return PsiUtil.isLanguageLevel5OrHigher(element);
-        }
-    }
+  }
 }
 

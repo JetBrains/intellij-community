@@ -23,35 +23,36 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
 public class NestedConditionalExpressionInspection
-        extends BaseInspection {
+  extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "nested.conditional.expression.display.name");
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "nested.conditional.expression.display.name");
+  }
+
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "nested.conditional.expression.problem.descriptor");
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new NestedConditionalExpressionVisitor();
+  }
+
+  private static class NestedConditionalExpressionVisitor
+    extends BaseInspectionVisitor {
+
+    @Override
+    public void visitConditionalExpression(
+      PsiConditionalExpression expression) {
+      super.visitConditionalExpression(expression);
+      if (PsiTreeUtil.getParentOfType(expression,
+                                      PsiConditionalExpression.class) == null) {
+        return;
+      }
+      registerError(expression);
     }
-
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "nested.conditional.expression.problem.descriptor");
-    }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new NestedConditionalExpressionVisitor();
-    }
-
-    private static class NestedConditionalExpressionVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitConditionalExpression(
-                PsiConditionalExpression expression) {
-            super.visitConditionalExpression(expression);
-            if (PsiTreeUtil.getParentOfType(expression,
-                    PsiConditionalExpression.class) == null) {
-                return;
-            }
-            registerError(expression);
-        }
-    }
+  }
 }

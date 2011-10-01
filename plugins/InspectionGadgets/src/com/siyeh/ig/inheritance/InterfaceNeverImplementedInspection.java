@@ -28,50 +28,53 @@ import javax.swing.*;
 
 public class InterfaceNeverImplementedInspection extends BaseInspection {
 
-    /** @noinspection PublicField*/
-    public boolean ignoreInterfacesThatOnlyDeclareConstants = false;
+  /**
+   * @noinspection PublicField
+   */
+  public boolean ignoreInterfacesThatOnlyDeclareConstants = false;
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "interface.never.implemented.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "interface.never.implemented.display.name");
+  }
 
-    @Nullable
-    public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel(
-                InspectionGadgetsBundle.message(
-                        "interface.never.implemented.option"), this,
-                "ignoreInterfacesThatOnlyDeclareConstants");
-    }
+  @Nullable
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(
+      InspectionGadgetsBundle.message(
+        "interface.never.implemented.option"), this,
+      "ignoreInterfacesThatOnlyDeclareConstants");
+  }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "interface.never.implemented.problem.descriptor");
-    }
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "interface.never.implemented.problem.descriptor");
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new InterfaceNeverImplementedVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new InterfaceNeverImplementedVisitor();
+  }
 
-    private class InterfaceNeverImplementedVisitor
-            extends BaseInspectionVisitor {
+  private class InterfaceNeverImplementedVisitor
+    extends BaseInspectionVisitor {
 
-        @Override public void visitClass(@NotNull PsiClass aClass) {
-            if (!aClass.isInterface() || aClass.isAnnotationType()) {
-                return;
-            }
-            if (ignoreInterfacesThatOnlyDeclareConstants &&
-                    aClass.getMethods().length == 0) {
-                if (aClass.getFields().length != 0) {
-                    return;
-                }
-            }
-            if (InheritanceUtil.hasImplementation(aClass)) {
-                return;
-            }
-            registerClassError(aClass);
+    @Override
+    public void visitClass(@NotNull PsiClass aClass) {
+      if (!aClass.isInterface() || aClass.isAnnotationType()) {
+        return;
+      }
+      if (ignoreInterfacesThatOnlyDeclareConstants &&
+          aClass.getMethods().length == 0) {
+        if (aClass.getFields().length != 0) {
+          return;
         }
+      }
+      if (InheritanceUtil.hasImplementation(aClass)) {
+        return;
+      }
+      registerClassError(aClass);
     }
+  }
 }

@@ -26,61 +26,65 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class HashCodeUsesNonFinalVariableInspection
-        extends BaseInspection {
+  extends BaseInspection {
 
-    @NotNull
-    public String getID(){
-        return "NonFinalFieldReferencedInHashCode";
-    }
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "non.final.field.in.hashcode.display.name");
-    }
+  @NotNull
+  public String getID() {
+    return "NonFinalFieldReferencedInHashCode";
+  }
 
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "non.final.field.in.hashcode.problem.descriptor");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "non.final.field.in.hashcode.display.name");
+  }
 
-    @Nullable
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        final PsiField field = (PsiField) infos[0];
-        return MakeFieldFinalFix.buildFix(field);
-    }
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "non.final.field.in.hashcode.problem.descriptor");
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new HashCodeUsesNonFinalVariableVisitor();
-    }
+  @Nullable
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    final PsiField field = (PsiField)infos[0];
+    return MakeFieldFinalFix.buildFix(field);
+  }
 
-    private static class HashCodeUsesNonFinalVariableVisitor
-            extends BaseInspectionVisitor {
+  public BaseInspectionVisitor buildVisitor() {
+    return new HashCodeUsesNonFinalVariableVisitor();
+  }
 
-        @Override public void visitMethod(@NotNull PsiMethod method) {
-            final boolean isHashCode = MethodUtils.isHashCode(method);
-            if (isHashCode) {
-                method.accept(new JavaRecursiveElementVisitor() {
+  private static class HashCodeUsesNonFinalVariableVisitor
+    extends BaseInspectionVisitor {
 
-                    @Override public void visitClass(PsiClass aClass) {
-                        // Do not recurse into.
-                    }
+    @Override
+    public void visitMethod(@NotNull PsiMethod method) {
+      final boolean isHashCode = MethodUtils.isHashCode(method);
+      if (isHashCode) {
+        method.accept(new JavaRecursiveElementVisitor() {
 
-                    @Override public void visitReferenceExpression(
-                            @NotNull PsiReferenceExpression expression) {
-                        super.visitReferenceExpression(expression);
-                        final PsiElement element = expression.resolve();
-                        if (!(element instanceof PsiField)) {
-                            return;
-                        }
-                        final PsiField field = (PsiField) element;
-                        if (field.hasModifierProperty(PsiModifier.FINAL)) {
-                            return;
-                        }
-                        registerError(expression, field);
-                    }
-                });
+          @Override
+          public void visitClass(PsiClass aClass) {
+            // Do not recurse into.
+          }
+
+          @Override
+          public void visitReferenceExpression(
+            @NotNull PsiReferenceExpression expression) {
+            super.visitReferenceExpression(expression);
+            final PsiElement element = expression.resolve();
+            if (!(element instanceof PsiField)) {
+              return;
             }
-        }
+            final PsiField field = (PsiField)element;
+            if (field.hasModifierProperty(PsiModifier.FINAL)) {
+              return;
+            }
+            registerError(expression, field);
+          }
+        });
+      }
     }
+  }
 }

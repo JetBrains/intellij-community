@@ -34,173 +34,182 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class MultiplyOrDivideByPowerOfTwoInspection
-        extends BaseInspection {
+  extends BaseInspection {
 
-    /** @noinspection PublicField*/
-    public boolean checkDivision = false;
+  /**
+   * @noinspection PublicField
+   */
+  public boolean checkDivision = false;
+
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "multiply.or.divide.by.power.of.two.display.name");
+  }
+
+  @Nullable
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+      "multiply.or.divide.by.power.of.two.divide.option"), this,
+                                          "checkDivision");
+  }
+
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "expression.can.be.replaced.problem.descriptor",
+      calculateReplacementShift((PsiExpression)infos[0]));
+  }
+
+  static String calculateReplacementShift(PsiExpression expression) {
+    final PsiExpression lhs;
+    final PsiExpression rhs;
+    final String operator;
+    if (expression instanceof PsiAssignmentExpression) {
+      final PsiAssignmentExpression exp =
+        (PsiAssignmentExpression)expression;
+      lhs = exp.getLExpression();
+      rhs = exp.getRExpression();
+      final IElementType tokenType = exp.getOperationTokenType();
+      if (tokenType.equals(JavaTokenType.ASTERISKEQ)) {
+        operator = "<<=";
+      }
+      else {
+        operator = ">>=";
+      }
+    }
+    else {
+      final PsiBinaryExpression exp = (PsiBinaryExpression)expression;
+      lhs = exp.getLOperand();
+      rhs = exp.getROperand();
+      final IElementType tokenType = exp.getOperationTokenType();
+      if (tokenType.equals(JavaTokenType.ASTERISK)) {
+        operator = "<<";
+      }
+      else {
+        operator = ">>";
+      }
+    }
+    final String lhsText;
+    if (ParenthesesUtils.getPrecedence(lhs) >
+        ParenthesesUtils.SHIFT_PRECEDENCE) {
+      lhsText = '(' + lhs.getText() + ')';
+    }
+    else {
+      lhsText = lhs.getText();
+    }
+    String expString =
+      lhsText + operator + ShiftUtils.getLogBaseTwo(rhs);
+    final PsiElement parent = expression.getParent();
+    if (parent instanceof PsiExpression) {
+      if (!(parent instanceof PsiParenthesizedExpression) &&
+          ParenthesesUtils.getPrecedence((PsiExpression)parent) <
+          ParenthesesUtils.SHIFT_PRECEDENCE) {
+        expString = '(' + expString + ')';
+      }
+    }
+    return expString;
+  }
+
+  public InspectionGadgetsFix buildFix(Object... infos) {
+    final PsiExpression expression = (PsiExpression)infos[0];
+    if (expression instanceof PsiBinaryExpression) {
+      final PsiBinaryExpression binaryExpression =
+        (PsiBinaryExpression)expression;
+      final IElementType operationTokenType =
+        binaryExpression.getOperationTokenType();
+      if (JavaTokenType.DIV.equals(operationTokenType)) {
+        return null;
+      }
+    }
+    else if (expression instanceof PsiAssignmentExpression) {
+      final PsiAssignmentExpression assignmentExpression =
+        (PsiAssignmentExpression)expression;
+      final IElementType operationTokenType =
+        assignmentExpression.getOperationTokenType();
+      if (JavaTokenType.DIVEQ.equals(operationTokenType)) {
+        return null;
+      }
+    }
+    return new MultiplyByPowerOfTwoFix();
+  }
+
+  private static class MultiplyByPowerOfTwoFix extends InspectionGadgetsFix {
 
     @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "multiply.or.divide.by.power.of.two.display.name");
+    public String getName() {
+      return InspectionGadgetsBundle.message(
+        "multiply.or.divide.by.power.of.two.replace.quickfix");
     }
 
-    @Nullable
-    public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-                "multiply.or.divide.by.power.of.two.divide.option"), this,
-                "checkDivision");
+    public void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiExpression expression =
+        (PsiExpression)descriptor.getPsiElement();
+      final String newExpression = calculateReplacementShift(expression);
+      replaceExpression(expression, newExpression);
+    }
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new ConstantShiftVisitor();
+  }
+
+  private class ConstantShiftVisitor extends BaseInspectionVisitor {
+
+    @Override
+    public void visitBinaryExpression(
+      @NotNull PsiBinaryExpression expression) {
+      super.visitBinaryExpression(expression);
+      final PsiExpression rhs = expression.getROperand();
+      if (rhs == null) {
+        return;
+      }
+
+      final IElementType tokenType = expression.getOperationTokenType();
+      if (!tokenType.equals(JavaTokenType.ASTERISK)) {
+        if (!checkDivision || !tokenType.equals(JavaTokenType.DIV)) {
+          return;
+        }
+      }
+      if (!ShiftUtils.isPowerOfTwo(rhs)) {
+        return;
+      }
+      final PsiType type = expression.getType();
+      if (type == null) {
+        return;
+      }
+      if (!ClassUtils.isIntegral(type)) {
+        return;
+      }
+      registerError(expression, expression);
     }
 
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "expression.can.be.replaced.problem.descriptor",
-                calculateReplacementShift((PsiExpression)infos[0]));
+    @Override
+    public void visitAssignmentExpression(
+      @NotNull PsiAssignmentExpression expression) {
+      super.visitAssignmentExpression(expression);
+      if (!WellFormednessUtils.isWellFormed(expression)) {
+        return;
+      }
+      final IElementType tokenType = expression.getOperationTokenType();
+      if (!tokenType.equals(JavaTokenType.ASTERISKEQ)) {
+        if (!checkDivision || !tokenType.equals(JavaTokenType.DIVEQ)) {
+          return;
+        }
+      }
+      final PsiExpression rhs = expression.getRExpression();
+      if (!ShiftUtils.isPowerOfTwo(rhs)) {
+        return;
+      }
+      final PsiType type = expression.getType();
+      if (type == null) {
+        return;
+      }
+      if (!ClassUtils.isIntegral(type)) {
+        return;
+      }
+      registerError(expression, expression);
     }
-
-    static String calculateReplacementShift(PsiExpression expression) {
-        final PsiExpression lhs;
-        final PsiExpression rhs;
-        final String operator;
-        if (expression instanceof PsiAssignmentExpression) {
-            final PsiAssignmentExpression exp =
-                    (PsiAssignmentExpression)expression;
-          lhs = exp.getLExpression();
-            rhs = exp.getRExpression();
-          final IElementType tokenType = exp.getOperationTokenType();
-            if (tokenType.equals(JavaTokenType.ASTERISKEQ)) {
-                operator = "<<=";
-            } else {
-                operator = ">>=";
-            }
-        } else {
-            final PsiBinaryExpression exp = (PsiBinaryExpression)expression;
-          lhs = exp.getLOperand();
-            rhs = exp.getROperand();
-          final IElementType tokenType = exp.getOperationTokenType();
-            if (tokenType.equals(JavaTokenType.ASTERISK)) {
-                operator = "<<";
-            } else {
-                operator = ">>";
-            }
-        }
-        final String lhsText;
-        if (ParenthesesUtils.getPrecedence(lhs) >
-                ParenthesesUtils.SHIFT_PRECEDENCE) {
-            lhsText = '(' + lhs.getText() + ')';
-        } else {
-            lhsText = lhs.getText();
-        }
-        String expString =
-                lhsText + operator + ShiftUtils.getLogBaseTwo(rhs);
-        final PsiElement parent = expression.getParent();
-        if (parent instanceof PsiExpression) {
-            if (!(parent instanceof PsiParenthesizedExpression) &&
-                    ParenthesesUtils.getPrecedence((PsiExpression)parent) <
-                            ParenthesesUtils.SHIFT_PRECEDENCE) {
-                expString = '(' + expString + ')';
-            }
-        }
-        return expString;
-    }
-
-    public InspectionGadgetsFix buildFix(Object... infos) {
-        final PsiExpression expression = (PsiExpression) infos[0];
-        if (expression instanceof PsiBinaryExpression) {
-            final PsiBinaryExpression binaryExpression =
-                    (PsiBinaryExpression)expression;
-            final IElementType operationTokenType =
-                    binaryExpression.getOperationTokenType();
-            if (JavaTokenType.DIV.equals(operationTokenType)) {
-                return null;
-            }
-        } else if (expression instanceof PsiAssignmentExpression) {
-            final PsiAssignmentExpression assignmentExpression =
-                    (PsiAssignmentExpression)expression;
-            final IElementType operationTokenType =
-                    assignmentExpression.getOperationTokenType();
-            if (JavaTokenType.DIVEQ.equals(operationTokenType)) {
-                return null;
-            }
-        }
-        return new MultiplyByPowerOfTwoFix();
-    }
-
-    private static class MultiplyByPowerOfTwoFix extends InspectionGadgetsFix {
-
-        @NotNull
-        public String getName() {
-            return InspectionGadgetsBundle.message(
-                    "multiply.or.divide.by.power.of.two.replace.quickfix");
-        }
-
-        public void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
-            final PsiExpression expression =
-                    (PsiExpression)descriptor.getPsiElement();
-            final String newExpression = calculateReplacementShift(expression);
-            replaceExpression(expression, newExpression);
-        }
-    }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new ConstantShiftVisitor();
-    }
-
-    private class ConstantShiftVisitor extends BaseInspectionVisitor {
-
-        @Override public void visitBinaryExpression(
-                @NotNull PsiBinaryExpression expression) {
-            super.visitBinaryExpression(expression);
-            final PsiExpression rhs = expression.getROperand();
-            if (rhs == null) {
-                return;
-            }
-
-          final IElementType tokenType = expression.getOperationTokenType();
-            if (!tokenType.equals(JavaTokenType.ASTERISK)) {
-                if (!checkDivision || !tokenType.equals(JavaTokenType.DIV)) {
-                    return;
-                }
-            }
-            if (!ShiftUtils.isPowerOfTwo(rhs)) {
-                return;
-            }
-            final PsiType type = expression.getType();
-            if (type == null) {
-                return;
-            }
-            if (!ClassUtils.isIntegral(type)) {
-                return;
-            }
-            registerError(expression, expression);
-        }
-
-        @Override public void visitAssignmentExpression(
-                @NotNull PsiAssignmentExpression expression) {
-            super.visitAssignmentExpression(expression);
-            if (!WellFormednessUtils.isWellFormed(expression)) {
-                return;
-            }
-          final IElementType tokenType = expression.getOperationTokenType();
-            if (!tokenType.equals(JavaTokenType.ASTERISKEQ)) {
-                if (!checkDivision || !tokenType.equals(JavaTokenType.DIVEQ)) {
-                    return;
-                }
-            }
-            final PsiExpression rhs = expression.getRExpression();
-            if (!ShiftUtils.isPowerOfTwo(rhs)) {
-                return;
-            }
-            final PsiType type = expression.getType();
-            if (type == null) {
-                return;
-            }
-            if (!ClassUtils.isIntegral(type)) {
-                return;
-            }
-            registerError(expression, expression);
-        }
-    }
+  }
 }

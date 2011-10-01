@@ -25,40 +25,41 @@ import org.jetbrains.annotations.NotNull;
 
 public class UncheckedExceptionClassInspection extends BaseInspection {
 
-    @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "unchecked.exception.class.display.name");
-    }
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "unchecked.exception.class.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "unchecked.exception.class.problem.descriptor");
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new UncheckedExceptionClassVisitor();
+  }
+
+  private static class UncheckedExceptionClassVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "unchecked.exception.class.problem.descriptor");
+    public void visitClass(@NotNull PsiClass aClass) {
+      if (!InheritanceUtil.isInheritor(aClass,
+                                       CommonClassNames.JAVA_LANG_THROWABLE)) {
+        return;
+      }
+      if (InheritanceUtil.isInheritor(aClass,
+                                      CommonClassNames.JAVA_LANG_EXCEPTION) &&
+          !InheritanceUtil.isInheritor(aClass,
+                                       CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION)) {
+        return;
+      }
+      registerClassError(aClass);
     }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new UncheckedExceptionClassVisitor();
-    }
-
-    private static class UncheckedExceptionClassVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitClass(@NotNull PsiClass aClass) {
-            if (!InheritanceUtil.isInheritor(aClass,
-                    CommonClassNames.JAVA_LANG_THROWABLE)) {
-                return;
-            }
-            if (InheritanceUtil.isInheritor(aClass,
-                    CommonClassNames.JAVA_LANG_EXCEPTION) &&
-                !InheritanceUtil.isInheritor(aClass,
-                        CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION)) {
-                return;
-            }
-            registerClassError(aClass);
-        }
-    }
+  }
 }

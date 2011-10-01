@@ -31,94 +31,95 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PublicConstructorInNonPublicClassInspection
-        extends BaseInspection {
+  extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "public.constructor.in.non.public.class.display.name");
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "public.constructor.in.non.public.class.display.name");
+  }
+
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    final PsiMethod method = (PsiMethod)infos[0];
+    return InspectionGadgetsBundle.message(
+      "public.constructor.in.non.public.class.problem.descriptor",
+      method.getName());
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new PublicConstructorInNonPublicClassVisitor();
+  }
+
+  @NotNull
+  public InspectionGadgetsFix[] buildFixes(Object... infos) {
+    final List<InspectionGadgetsFix> fixes = new ArrayList();
+    final PsiMethod constructor = (PsiMethod)infos[0];
+    final PsiClass aClass = constructor.getContainingClass();
+    if (aClass.hasModifierProperty(PsiModifier.PROTECTED)) {
+      fixes.add(new SetConstructorModifierFix(PsiModifier.PROTECTED));
+    }
+    else if (aClass.hasModifierProperty(PsiModifier.PRIVATE)) {
+      fixes.add(new SetConstructorModifierFix(PsiModifier.PRIVATE));
+    }
+    fixes.add(new RemoveModifierFix(PsiModifier.PUBLIC));
+    return fixes.toArray(new InspectionGadgetsFix[fixes.size()]);
+  }
+
+  private static class SetConstructorModifierFix
+    extends InspectionGadgetsFix {
+
+    @Modifier private final String modifier;
+
+    SetConstructorModifierFix(@Modifier String modifier) {
+      this.modifier = modifier;
     }
 
     @NotNull
-    public String buildErrorString(Object... infos) {
-        final PsiMethod method = (PsiMethod)infos[0];
-        return InspectionGadgetsBundle.message(
-                "public.constructor.in.non.public.class.problem.descriptor",
-                method.getName());
+    public String getName() {
+      return InspectionGadgetsBundle.message(
+        "public.constructor.in.non.public.class.quickfix",
+        modifier
+      );
     }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new PublicConstructorInNonPublicClassVisitor();
+    protected void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiElement element = descriptor.getPsiElement();
+      final PsiModifierList modifierList =
+        (PsiModifierList)element.getParent();
+      modifierList.setModifierProperty(PsiModifier.PUBLIC, false);
+      modifierList.setModifierProperty(modifier, true);
     }
+  }
 
-    @NotNull
-    public InspectionGadgetsFix[] buildFixes(Object... infos) {
-        final List<InspectionGadgetsFix> fixes = new ArrayList();
-        final PsiMethod constructor = (PsiMethod)infos[0];
-        final PsiClass aClass = constructor.getContainingClass();
-        if (aClass.hasModifierProperty(PsiModifier.PROTECTED)) {
-            fixes.add(new SetConstructorModifierFix(PsiModifier.PROTECTED));
-        } else if (aClass.hasModifierProperty(PsiModifier.PRIVATE)) {
-            fixes.add(new SetConstructorModifierFix(PsiModifier.PRIVATE));
+  private static class PublicConstructorInNonPublicClassVisitor
+    extends BaseInspectionVisitor {
+
+    @Override
+    public void visitMethod(@NotNull PsiMethod method) {
+      //no call to super, so we don't drill into anonymous classes
+      if (!method.isConstructor()) {
+        return;
+      }
+      if (!method.hasModifierProperty(PsiModifier.PUBLIC)) {
+        return;
+      }
+      final PsiClass containingClass = method.getContainingClass();
+      if (containingClass == null) {
+        return;
+      }
+      if (containingClass.hasModifierProperty(PsiModifier.PUBLIC)) {
+        return;
+      }
+      if (SerializationUtils.isExternalizable(containingClass)) {
+        final PsiParameterList parameterList =
+          method.getParameterList();
+        if (parameterList.getParametersCount() == 0) {
+          return;
         }
-        fixes.add(new RemoveModifierFix(PsiModifier.PUBLIC));
-        return fixes.toArray(new InspectionGadgetsFix[fixes.size()]);
+      }
+      registerModifierError(PsiModifier.PUBLIC, method, method);
     }
-
-    private static class SetConstructorModifierFix
-            extends InspectionGadgetsFix {
-
-        @Modifier private final String modifier;
-
-        SetConstructorModifierFix(@Modifier String modifier) {
-            this.modifier = modifier;
-        }
-
-        @NotNull
-        public String getName() {
-            return InspectionGadgetsBundle.message(
-                    "public.constructor.in.non.public.class.quickfix",
-                    modifier
-            );
-        }
-
-        protected void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
-            final PsiElement element = descriptor.getPsiElement();
-            final PsiModifierList modifierList =
-                    (PsiModifierList) element.getParent();
-            modifierList.setModifierProperty(PsiModifier.PUBLIC, false);
-            modifierList.setModifierProperty(modifier, true);
-        }
-
-    }
-
-    private static class PublicConstructorInNonPublicClassVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitMethod(@NotNull PsiMethod method) {
-            //no call to super, so we don't drill into anonymous classes
-            if (!method.isConstructor()) {
-                return;
-            }
-            if (!method.hasModifierProperty(PsiModifier.PUBLIC)) {
-                return;
-            }
-            final PsiClass containingClass = method.getContainingClass();
-            if (containingClass == null) {
-                return;
-            }
-            if (containingClass.hasModifierProperty(PsiModifier.PUBLIC)) {
-                return;
-            }
-            if (SerializationUtils.isExternalizable(containingClass)) {
-                final PsiParameterList parameterList =
-                        method.getParameterList();
-                if (parameterList.getParametersCount() == 0) {
-                    return;
-                }
-            }
-            registerModifierError(PsiModifier.PUBLIC, method, method);
-        }
-    }
+  }
 }

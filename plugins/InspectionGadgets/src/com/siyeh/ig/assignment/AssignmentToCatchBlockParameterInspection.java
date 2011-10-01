@@ -25,57 +25,58 @@ import com.siyeh.ig.psiutils.WellFormednessUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class AssignmentToCatchBlockParameterInspection
-        extends BaseInspection {
+  extends BaseInspection {
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "assignment.to.catch.block.parameter.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "assignment.to.catch.block.parameter.problem.descriptor");
+  }
+
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new ExtractParameterAsLocalVariableFix();
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new AssignmentToCatchBlockParameterVisitor();
+  }
+
+  private static class AssignmentToCatchBlockParameterVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String getDisplayName(){
-        return InspectionGadgetsBundle.message(
-                "assignment.to.catch.block.parameter.display.name");
+    public void visitAssignmentExpression(
+      @NotNull PsiAssignmentExpression expression) {
+      super.visitAssignmentExpression(expression);
+      if (!WellFormednessUtils.isWellFormed(expression)) {
+        return;
+      }
+      final PsiExpression lhs = expression.getLExpression();
+      if (!(lhs instanceof PsiReferenceExpression)) {
+        return;
+      }
+      final PsiReferenceExpression reference =
+        (PsiReferenceExpression)lhs;
+      final PsiElement variable = reference.resolve();
+      if (!(variable instanceof PsiParameter)) {
+        return;
+      }
+      final PsiParameter parameter = (PsiParameter)variable;
+      final PsiElement declarationScope = parameter.getDeclarationScope();
+      if (!(declarationScope instanceof PsiCatchSection)) {
+        return;
+      }
+      registerError(lhs);
     }
-
-    @Override
-    @NotNull
-    public String buildErrorString(Object... infos){
-        return InspectionGadgetsBundle.message(
-                "assignment.to.catch.block.parameter.problem.descriptor");
-    }
-
-    @Override
-    protected InspectionGadgetsFix buildFix(Object... infos){
-        return new ExtractParameterAsLocalVariableFix();
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor(){
-        return new AssignmentToCatchBlockParameterVisitor();
-    }
-
-    private static class AssignmentToCatchBlockParameterVisitor
-            extends BaseInspectionVisitor{
-
-        @Override public void visitAssignmentExpression(
-                @NotNull PsiAssignmentExpression expression){
-            super.visitAssignmentExpression(expression);
-            if(!WellFormednessUtils.isWellFormed(expression)){
-                return;
-            }
-            final PsiExpression lhs = expression.getLExpression();
-            if(!(lhs instanceof PsiReferenceExpression)){
-                return;
-            }
-            final PsiReferenceExpression reference =
-                    (PsiReferenceExpression) lhs;
-            final PsiElement variable = reference.resolve();
-            if(!(variable instanceof PsiParameter)){
-                return;
-            }
-            final PsiParameter parameter = (PsiParameter)variable;
-            final PsiElement declarationScope = parameter.getDeclarationScope();
-            if(!(declarationScope instanceof PsiCatchSection)){
-                return;
-            }
-            registerError(lhs);
-        }
-    }
+  }
 }

@@ -27,40 +27,41 @@ import org.jetbrains.annotations.NotNull;
 
 public class ObjectEqualsNullInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "object.equals.null.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "object.equals.null.display.name");
+  }
 
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "object.equals.null.problem.descriptor");
-    }
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "object.equals.null.problem.descriptor");
+  }
 
-    public boolean isEnabledByDefault(){
-        return true;
-    }
+  public boolean isEnabledByDefault() {
+    return true;
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new ObjectEqualsNullVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new ObjectEqualsNullVisitor();
+  }
 
-    private static class ObjectEqualsNullVisitor extends BaseInspectionVisitor {
+  private static class ObjectEqualsNullVisitor extends BaseInspectionVisitor {
 
-        @Override public void visitMethodCallExpression(
-                @NotNull PsiMethodCallExpression call) {
-            super.visitMethodCallExpression(call);
-            if(!MethodCallUtils.isEqualsCall(call)){
-                return;
-            }
-            final PsiExpressionList argumentList = call.getArgumentList();
-            final PsiExpression[] args = argumentList.getExpressions();
-            if (args.length == 0 || !ExpressionUtils.isNullLiteral(args[0])) {
-                return;
-            }
-            registerError(args[0]);
-        }
+    @Override
+    public void visitMethodCallExpression(
+      @NotNull PsiMethodCallExpression call) {
+      super.visitMethodCallExpression(call);
+      if (!MethodCallUtils.isEqualsCall(call)) {
+        return;
+      }
+      final PsiExpressionList argumentList = call.getArgumentList();
+      final PsiExpression[] args = argumentList.getExpressions();
+      if (args.length == 0 || !ExpressionUtils.isNullLiteral(args[0])) {
+        return;
+      }
+      registerError(args[0]);
     }
+  }
 }

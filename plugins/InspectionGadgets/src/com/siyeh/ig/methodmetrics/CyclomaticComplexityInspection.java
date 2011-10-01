@@ -22,52 +22,53 @@ import org.jetbrains.annotations.NotNull;
 
 public class CyclomaticComplexityInspection extends MethodMetricInspection {
 
-    @NotNull
-    public String getID() {
-        return "OverlyComplexMethod";
-    }
+  @NotNull
+  public String getID() {
+    return "OverlyComplexMethod";
+  }
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "cyclomatic.complexity.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "cyclomatic.complexity.display.name");
+  }
 
-    protected int getDefaultLimit() {
-        return 10;
-    }
+  protected int getDefaultLimit() {
+    return 10;
+  }
 
-    protected String getConfigurationLabel() {
-        return InspectionGadgetsBundle.message(
-                "method.complexity.limit.option");
-    }
+  protected String getConfigurationLabel() {
+    return InspectionGadgetsBundle.message(
+      "method.complexity.limit.option");
+  }
 
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        final Integer complexity = (Integer)infos[0];
-        return InspectionGadgetsBundle.message(
-                "cyclomatic.complexity.problem.descriptor", complexity);
-    }
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    final Integer complexity = (Integer)infos[0];
+    return InspectionGadgetsBundle.message(
+      "cyclomatic.complexity.problem.descriptor", complexity);
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new MethodComplexityVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new MethodComplexityVisitor();
+  }
 
-    private class MethodComplexityVisitor extends BaseInspectionVisitor {
+  private class MethodComplexityVisitor extends BaseInspectionVisitor {
 
-        @Override public void visitMethod(@NotNull PsiMethod method) {
-            // note: no call to super
-            if (method.getNameIdentifier() == null) {
-                return;
-            }
-            final CyclomaticComplexityVisitor visitor =
-                    new CyclomaticComplexityVisitor();
-            method.accept(visitor);
-            final int complexity = visitor.getComplexity();
-            if (complexity <= getLimit()) {
-                return;
-            }
-            registerMethodError(method, Integer.valueOf(complexity));
-        }
+    @Override
+    public void visitMethod(@NotNull PsiMethod method) {
+      // note: no call to super
+      if (method.getNameIdentifier() == null) {
+        return;
+      }
+      final CyclomaticComplexityVisitor visitor =
+        new CyclomaticComplexityVisitor();
+      method.accept(visitor);
+      final int complexity = visitor.getComplexity();
+      if (complexity <= getLimit()) {
+        return;
+      }
+      registerMethodError(method, Integer.valueOf(complexity));
     }
+  }
 }

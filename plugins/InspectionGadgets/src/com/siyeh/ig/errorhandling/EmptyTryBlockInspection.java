@@ -25,41 +25,42 @@ import org.jetbrains.annotations.NotNull;
 
 public class EmptyTryBlockInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message("empty.try.block.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("empty.try.block.display.name");
+  }
 
-    public boolean isEnabledByDefault() {
-        return true;
-    }
+  public boolean isEnabledByDefault() {
+    return true;
+  }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "empty.try.block.problem.descriptor");
-    }
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "empty.try.block.problem.descriptor");
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new EmptyTryBlockVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new EmptyTryBlockVisitor();
+  }
 
-    private static class EmptyTryBlockVisitor
-            extends BaseInspectionVisitor {
+  private static class EmptyTryBlockVisitor
+    extends BaseInspectionVisitor {
 
-        @Override public void visitTryStatement(@NotNull PsiTryStatement statement) {
-            super.visitTryStatement(statement);
-            if (JspPsiUtil.isInJspFile(statement.getContainingFile())) {
-                return;
-            }
-            final PsiCodeBlock finallyBlock = statement.getTryBlock();
-            if (finallyBlock == null) {
-                return;
-            }
-            if (finallyBlock.getStatements().length != 0) {
-                return;
-            }
-            registerStatementError(statement);
-        }
+    @Override
+    public void visitTryStatement(@NotNull PsiTryStatement statement) {
+      super.visitTryStatement(statement);
+      if (JspPsiUtil.isInJspFile(statement.getContainingFile())) {
+        return;
+      }
+      final PsiCodeBlock finallyBlock = statement.getTryBlock();
+      if (finallyBlock == null) {
+        return;
+      }
+      if (finallyBlock.getStatements().length != 0) {
+        return;
+      }
+      registerStatementError(statement);
     }
+  }
 }

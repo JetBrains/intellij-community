@@ -30,59 +30,60 @@ import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class TransientFieldInNonSerializableClassInspection
-        extends BaseInspection {
+  extends BaseInspection {
+
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "transient.field.in.non.serializable.class.display.name");
+  }
+
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    final PsiField field = (PsiField)infos[0];
+    return InspectionGadgetsBundle.message(
+      "transient.field.in.non.serializable.class.problem.descriptor",
+      field.getName());
+  }
+
+  public InspectionGadgetsFix buildFix(Object... infos) {
+    return new TransientFieldInNonSerializableClassFix();
+  }
+
+
+  private static class TransientFieldInNonSerializableClassFix
+    extends InspectionGadgetsFix {
 
     @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "transient.field.in.non.serializable.class.display.name");
+    public String getName() {
+      return InspectionGadgetsBundle.message(
+        "transient.field.in.non.serializable.class.remove.quickfix");
     }
 
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        final PsiField field = (PsiField)infos[0];
-        return InspectionGadgetsBundle.message(
-                "transient.field.in.non.serializable.class.problem.descriptor",
-                field.getName());
+    public void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiElement transientModifier = descriptor.getPsiElement();
+      deleteElement(transientModifier);
     }
+  }
 
-    public InspectionGadgetsFix buildFix(Object... infos) {
-        return new TransientFieldInNonSerializableClassFix();
+  public BaseInspectionVisitor buildVisitor() {
+    return new TransientFieldInNonSerializableClassVisitor();
+  }
+
+  private static class TransientFieldInNonSerializableClassVisitor
+    extends BaseInspectionVisitor {
+
+    @Override
+    public void visitField(@NotNull PsiField field) {
+      if (!field.hasModifierProperty(PsiModifier.TRANSIENT)) {
+        return;
+      }
+      final PsiClass aClass = field.getContainingClass();
+      if (SerializationUtils.isSerializable(aClass)) {
+        return;
+      }
+      registerModifierError(PsiModifier.TRANSIENT, field, field);
     }
-
-
-    private static class TransientFieldInNonSerializableClassFix
-            extends InspectionGadgetsFix {
-
-        @NotNull
-        public String getName() {
-            return InspectionGadgetsBundle.message(
-                    "transient.field.in.non.serializable.class.remove.quickfix");
-        }
-
-        public void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException{
-            final PsiElement transientModifier = descriptor.getPsiElement();
-            deleteElement(transientModifier);
-        }
-    }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new TransientFieldInNonSerializableClassVisitor();
-    }
-
-    private static class TransientFieldInNonSerializableClassVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitField(@NotNull PsiField field) {
-            if (!field.hasModifierProperty(PsiModifier.TRANSIENT)) {
-                return;
-            }
-            final PsiClass aClass = field.getContainingClass();
-            if (SerializationUtils.isSerializable(aClass)) {
-                return;
-            }
-            registerModifierError(PsiModifier.TRANSIENT, field, field);
-        }
-    }
+  }
 }

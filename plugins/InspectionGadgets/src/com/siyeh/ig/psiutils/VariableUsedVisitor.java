@@ -23,36 +23,38 @@ import org.jetbrains.annotations.NotNull;
 
 class VariableUsedVisitor extends JavaRecursiveElementVisitor {
 
-    private boolean used = false;
-    @NotNull private final PsiVariable variable;
+  private boolean used = false;
+  @NotNull private final PsiVariable variable;
 
-    public VariableUsedVisitor(@NotNull PsiVariable variable){
-        this.variable = variable;
-    }
+  public VariableUsedVisitor(@NotNull PsiVariable variable) {
+    this.variable = variable;
+  }
 
-    @Override public void visitElement(@NotNull PsiElement element){
-        if (used) {
-            return;
-        }
-        super.visitElement(element);
+  @Override
+  public void visitElement(@NotNull PsiElement element) {
+    if (used) {
+      return;
     }
+    super.visitElement(element);
+  }
 
-    @Override public void visitReferenceExpression(
-            @NotNull PsiReferenceExpression referenceExpression){
-        if(used){
-            return;
-        }
-        super.visitReferenceExpression(referenceExpression);
-        final PsiElement target = referenceExpression.resolve();
-        if(target == null){
-            return;
-        }
-        if(target.equals(variable)){
-            used = true;
-        }
+  @Override
+  public void visitReferenceExpression(
+    @NotNull PsiReferenceExpression referenceExpression) {
+    if (used) {
+      return;
     }
+    super.visitReferenceExpression(referenceExpression);
+    final PsiElement target = referenceExpression.resolve();
+    if (target == null) {
+      return;
+    }
+    if (target.equals(variable)) {
+      used = true;
+    }
+  }
 
-    public boolean isUsed(){
-        return used;
-    }
+  public boolean isUsed() {
+    return used;
+  }
 }

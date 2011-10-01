@@ -26,76 +26,78 @@ import org.jetbrains.annotations.NotNull;
 
 public class ReadObjectInitializationInspection extends BaseInspection {
 
-    @NotNull
-    public String getID() {
-        return "InstanceVariableMayNotBeInitializedByReadObject";
-    }
+  @NotNull
+  public String getID() {
+    return "InstanceVariableMayNotBeInitializedByReadObject";
+  }
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "readobject.initialization.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "readobject.initialization.display.name");
+  }
 
-    @NotNull
-    public String buildErrorString(Object... infos) {
-      return InspectionGadgetsBundle.message(
-              "readobject.initialization.problem.descriptor");
-    }
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "readobject.initialization.problem.descriptor");
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new ReadObjectInitializationVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new ReadObjectInitializationVisitor();
+  }
 
-    private static class ReadObjectInitializationVisitor
-            extends BaseInspectionVisitor {
+  private static class ReadObjectInitializationVisitor
+    extends BaseInspectionVisitor {
 
-        @Override public void visitMethod(@NotNull PsiMethod method) {
-            // no call to super, so it doesn't drill down
-            final PsiClass aClass = method.getContainingClass();
-            if (aClass == null) {
-                return;
-            }
-            if (aClass.isInterface() || aClass.isAnnotationType()) {
-                return;
-            }
-            if (!SerializationUtils.isSerializable(aClass)) {
-                return;
-            }
-            if (!SerializationUtils.isReadObject(method)) {
-                return;
-            }
-            final boolean defaultReadObjectCalled =
-                    ControlFlowUtils.elementContainsCallToMethod(method, "java.io.ObjectInputStream",
-                            PsiType.VOID, "defaultReadObject");
-            final PsiField[] fields = aClass.getFields();
-            if (defaultReadObjectCalled) {
-                for (final PsiField field : fields) {
-                    if (field.hasModifierProperty(PsiModifier.TRANSIENT) &&
-                            !isFieldInitialized(field, method)) {
-                        registerFieldError(field);
-                    }
-                }
-            } else {
-                for (final PsiField field : fields) {
-                    if(!isFieldInitialized(field, method)) {
-                        registerFieldError(field);
-                    }
-                }
-            }
+    @Override
+    public void visitMethod(@NotNull PsiMethod method) {
+      // no call to super, so it doesn't drill down
+      final PsiClass aClass = method.getContainingClass();
+      if (aClass == null) {
+        return;
+      }
+      if (aClass.isInterface() || aClass.isAnnotationType()) {
+        return;
+      }
+      if (!SerializationUtils.isSerializable(aClass)) {
+        return;
+      }
+      if (!SerializationUtils.isReadObject(method)) {
+        return;
+      }
+      final boolean defaultReadObjectCalled =
+        ControlFlowUtils.elementContainsCallToMethod(method, "java.io.ObjectInputStream",
+                                                     PsiType.VOID, "defaultReadObject");
+      final PsiField[] fields = aClass.getFields();
+      if (defaultReadObjectCalled) {
+        for (final PsiField field : fields) {
+          if (field.hasModifierProperty(PsiModifier.TRANSIENT) &&
+              !isFieldInitialized(field, method)) {
+            registerFieldError(field);
+          }
         }
-
-        public static boolean isFieldInitialized(@NotNull PsiField field,
-                                                 @NotNull PsiMethod method) {
-            if (field.hasModifierProperty(PsiModifier.STATIC)) {
-                return true;
-            }
-            if (field.hasModifierProperty(PsiModifier.FINAL) &&
-                field.getInitializer() != null) {
-                return true;
-            }
-            return InitializationUtils.methodAssignsVariableOrFails(method,
-                    field);
+      }
+      else {
+        for (final PsiField field : fields) {
+          if (!isFieldInitialized(field, method)) {
+            registerFieldError(field);
+          }
         }
+      }
     }
+
+    public static boolean isFieldInitialized(@NotNull PsiField field,
+                                             @NotNull PsiMethod method) {
+      if (field.hasModifierProperty(PsiModifier.STATIC)) {
+        return true;
+      }
+      if (field.hasModifierProperty(PsiModifier.FINAL) &&
+          field.getInitializer() != null) {
+        return true;
+      }
+      return InitializationUtils.methodAssignsVariableOrFails(method,
+                                                              field);
+    }
+  }
 }

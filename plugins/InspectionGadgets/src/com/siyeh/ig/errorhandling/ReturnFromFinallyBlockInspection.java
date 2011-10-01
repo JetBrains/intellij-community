@@ -24,40 +24,41 @@ import org.jetbrains.annotations.NotNull;
 
 public class ReturnFromFinallyBlockInspection extends BaseInspection {
 
-    @NotNull
-    public String getID() {
-        return "ReturnInsideFinallyBlock";
-    }
+  @NotNull
+  public String getID() {
+    return "ReturnInsideFinallyBlock";
+  }
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "return.from.finally.block.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "return.from.finally.block.display.name");
+  }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "return.from.finally.block.problem.descriptor");
-    }
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "return.from.finally.block.problem.descriptor");
+  }
 
-    public boolean isEnabledByDefault() {
-        return true;
-    }
+  public boolean isEnabledByDefault() {
+    return true;
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new ReturnFromFinallyBlockVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new ReturnFromFinallyBlockVisitor();
+  }
 
-    private static class ReturnFromFinallyBlockVisitor
-            extends BaseInspectionVisitor {
+  private static class ReturnFromFinallyBlockVisitor
+    extends BaseInspectionVisitor {
 
-        @Override public void visitReturnStatement(@NotNull PsiReturnStatement statement) {
-            super.visitReturnStatement(statement);
-            if (!ControlFlowUtils.isInFinallyBlock(statement)) {
-                return;
-            }
-            registerStatementError(statement);
-        }
+    @Override
+    public void visitReturnStatement(@NotNull PsiReturnStatement statement) {
+      super.visitReturnStatement(statement);
+      if (!ControlFlowUtils.isInFinallyBlock(statement)) {
+        return;
+      }
+      registerStatementError(statement);
     }
+  }
 }

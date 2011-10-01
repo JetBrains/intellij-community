@@ -28,32 +28,32 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class ChangeModifierFix extends InspectionGadgetsFix{
+public class ChangeModifierFix extends InspectionGadgetsFix {
 
-    @Modifier private final String modifierText;
+  @Modifier private final String modifierText;
 
-    public ChangeModifierFix(@NonNls @Modifier String modifierText) {
-        this.modifierText = modifierText;
+  public ChangeModifierFix(@NonNls @Modifier String modifierText) {
+    this.modifierText = modifierText;
+  }
+
+  @NotNull
+  public String getName() {
+    return InspectionGadgetsBundle.message("change.modifier.quickfix",
+                                           modifierText);
+  }
+
+  public void doFix(Project project, ProblemDescriptor descriptor)
+    throws IncorrectOperationException {
+    final PsiElement element = descriptor.getPsiElement();
+    final PsiModifierListOwner modifierListOwner =
+      PsiTreeUtil.getParentOfType(element, PsiModifierListOwner.class);
+    if (modifierListOwner == null) {
+      return;
     }
-
-    @NotNull
-    public String getName(){
-        return InspectionGadgetsBundle.message("change.modifier.quickfix", 
-                modifierText);
+    final PsiModifierList modifiers = modifierListOwner.getModifierList();
+    if (modifiers == null) {
+      return;
     }
-
-    public void doFix(Project project, ProblemDescriptor descriptor)
-            throws IncorrectOperationException{
-        final PsiElement element = descriptor.getPsiElement();
-        final PsiModifierListOwner modifierListOwner =
-                PsiTreeUtil.getParentOfType(element, PsiModifierListOwner.class);
-        if (modifierListOwner == null) {
-            return;
-        }
-        final PsiModifierList modifiers = modifierListOwner.getModifierList();
-        if (modifiers == null) {
-            return;
-        }
-        modifiers.setModifierProperty(modifierText, true);
-    }
+    modifiers.setModifierProperty(modifierText, true);
+  }
 }

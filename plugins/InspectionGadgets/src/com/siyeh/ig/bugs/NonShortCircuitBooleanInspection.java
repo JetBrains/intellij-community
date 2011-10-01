@@ -28,86 +28,86 @@ import org.jetbrains.annotations.NotNull;
 
 public class NonShortCircuitBooleanInspection extends BaseInspection {
 
-    @NotNull
-    public String getID(){
-        return "NonShortCircuitBooleanExpression";
-    }
+  @NotNull
+  public String getID() {
+    return "NonShortCircuitBooleanExpression";
+  }
+
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "non.short.circuit.boolean.expression.display.name");
+  }
+
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "non.short.circuit.boolean.expression.problem.descriptor");
+  }
+
+  public InspectionGadgetsFix buildFix(Object... infos) {
+    return new NonShortCircuitBooleanFix();
+  }
+
+  private static class NonShortCircuitBooleanFix
+    extends InspectionGadgetsFix {
 
     @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "non.short.circuit.boolean.expression.display.name");
+    public String getName() {
+      return InspectionGadgetsBundle.message(
+        "non.short.circuit.boolean.expression.replace.quickfix");
     }
 
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "non.short.circuit.boolean.expression.problem.descriptor");
+    public void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiBinaryExpression expression =
+        (PsiBinaryExpression)descriptor.getPsiElement();
+      final PsiExpression lhs = expression.getLOperand();
+      final PsiExpression rhs = expression.getROperand();
+      final IElementType tokenType = expression.getOperationTokenType();
+      assert rhs != null;
+      final String newExpression = lhs.getText() +
+                                   getShortCircuitOperand(tokenType) + rhs.getText();
+      replaceExpression(expression, newExpression);
     }
 
-    public InspectionGadgetsFix buildFix(Object... infos) {
-        return new NonShortCircuitBooleanFix();
+    private static String getShortCircuitOperand(IElementType tokenType) {
+      if (tokenType.equals(JavaTokenType.AND)) {
+        return "&&";
+      }
+      else {
+        return "||";
+      }
     }
+  }
 
-    private static class NonShortCircuitBooleanFix
-            extends InspectionGadgetsFix {
+  public BaseInspectionVisitor buildVisitor() {
+    return new NonShortCircuitBooleanVisitor();
+  }
 
-        @NotNull
-        public String getName() {
-            return InspectionGadgetsBundle.message(
-                    "non.short.circuit.boolean.expression.replace.quickfix");
-        }
+  private static class NonShortCircuitBooleanVisitor
+    extends BaseInspectionVisitor {
 
-        public void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException{
-            final PsiBinaryExpression expression =
-                    (PsiBinaryExpression) descriptor.getPsiElement();
-            final PsiExpression lhs = expression.getLOperand();
-            final PsiExpression rhs = expression.getROperand();
-          final IElementType tokenType = expression.getOperationTokenType();
-            assert rhs != null;
-            final String newExpression = lhs.getText() +
-                    getShortCircuitOperand(tokenType) + rhs.getText();
-            replaceExpression(expression, newExpression);
-        }
-
-        private static String getShortCircuitOperand(IElementType tokenType) {
-            if (tokenType.equals(JavaTokenType.AND)) {
-                return "&&";
-            }
-            else {
-                return "||";
-            }
-        }
-
+    @Override
+    public void visitBinaryExpression(
+      @NotNull PsiBinaryExpression expression) {
+      super.visitBinaryExpression(expression);
+      if (!(expression.getROperand() != null)) {
+        return;
+      }
+      final IElementType tokenType = expression.getOperationTokenType();
+      if (!tokenType.equals(JavaTokenType.AND) &&
+          !tokenType.equals(JavaTokenType.OR)) {
+        return;
+      }
+      final PsiType type = expression.getType();
+      if (type == null) {
+        return;
+      }
+      if (!type.equals(PsiType.BOOLEAN)) {
+        return;
+      }
+      registerError(expression);
     }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new NonShortCircuitBooleanVisitor();
-    }
-
-    private static class NonShortCircuitBooleanVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitBinaryExpression(
-                @NotNull PsiBinaryExpression expression) {
-            super.visitBinaryExpression(expression);
-            if(!(expression.getROperand() != null)){
-                return;
-            }
-          final IElementType tokenType = expression.getOperationTokenType();
-            if (!tokenType.equals(JavaTokenType.AND) &&
-                    !tokenType.equals(JavaTokenType.OR)) {
-                return;
-            }
-            final PsiType type = expression.getType();
-            if (type == null) {
-                return;
-            }
-            if (!type.equals(PsiType.BOOLEAN)) {
-                return;
-            }
-            registerError(expression);
-        }
-    }
+  }
 }

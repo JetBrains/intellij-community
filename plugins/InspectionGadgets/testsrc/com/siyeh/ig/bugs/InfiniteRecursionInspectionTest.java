@@ -19,8 +19,8 @@ import com.siyeh.ig.IGInspectionTestCase;
 
 public class InfiniteRecursionInspectionTest extends IGInspectionTestCase {
 
-    public void test() throws Exception {
-        doTest("com/siyeh/igtest/bugs/infinite_recursion",
-                new InfiniteRecursionInspection());
-    }
+  public void test() throws Exception {
+    doTest("com/siyeh/igtest/bugs/infinite_recursion",
+           new InfiniteRecursionInspection());
+  }
 }

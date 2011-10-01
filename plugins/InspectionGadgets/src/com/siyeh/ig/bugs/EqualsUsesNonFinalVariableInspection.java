@@ -27,59 +27,62 @@ import org.jetbrains.annotations.Nullable;
 
 public class EqualsUsesNonFinalVariableInspection extends BaseInspection {
 
-    @NotNull
-    public String getID(){
-        return "NonFinalFieldReferenceInEquals";
-    }
+  @NotNull
+  public String getID() {
+    return "NonFinalFieldReferenceInEquals";
+  }
 
-    @NotNull
-    public String getDisplayName(){
-        return InspectionGadgetsBundle.message(
-                "non.final.field.in.equals.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "non.final.field.in.equals.display.name");
+  }
 
-    @NotNull
-    public String buildErrorString(Object... infos){
-        return InspectionGadgetsBundle.message(
-                "non.final.field.in.equals.problem.descriptor");
-    }
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "non.final.field.in.equals.problem.descriptor");
+  }
 
-    @Nullable
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        final PsiField field = (PsiField) infos[0];
-        return MakeFieldFinalFix.buildFix(field);
-    }
+  @Nullable
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    final PsiField field = (PsiField)infos[0];
+    return MakeFieldFinalFix.buildFix(field);
+  }
 
-    public BaseInspectionVisitor buildVisitor(){
-        return new EqualsUsesNonFinalVariableVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new EqualsUsesNonFinalVariableVisitor();
+  }
 
-    private static class EqualsUsesNonFinalVariableVisitor
-            extends BaseInspectionVisitor {
+  private static class EqualsUsesNonFinalVariableVisitor
+    extends BaseInspectionVisitor {
 
-        @Override public void visitMethod(@NotNull PsiMethod method){
-            if(MethodUtils.isEquals(method)){
-                method.accept(new JavaRecursiveElementVisitor() {
+    @Override
+    public void visitMethod(@NotNull PsiMethod method) {
+      if (MethodUtils.isEquals(method)) {
+        method.accept(new JavaRecursiveElementVisitor() {
 
-                    @Override public void visitClass(PsiClass aClass) {
-                        // Do not recurse into.
-                    }
+          @Override
+          public void visitClass(PsiClass aClass) {
+            // Do not recurse into.
+          }
 
-                    @Override public void visitReferenceExpression(
-                            @NotNull PsiReferenceExpression expression) {
-                        super.visitReferenceExpression(expression);
-                        final PsiElement element = expression.resolve();
-                        if (!(element instanceof PsiField)) {
-                            return;
-                        }
-                        final PsiField field = (PsiField) element;
-                        if (field.hasModifierProperty(PsiModifier.FINAL)) {
-                            return;
-                        }
-                        registerError(expression, field);
-                    }
-                });
+          @Override
+          public void visitReferenceExpression(
+            @NotNull PsiReferenceExpression expression) {
+            super.visitReferenceExpression(expression);
+            final PsiElement element = expression.resolve();
+            if (!(element instanceof PsiField)) {
+              return;
             }
-        }
+            final PsiField field = (PsiField)element;
+            if (field.hasModifierProperty(PsiModifier.FINAL)) {
+              return;
+            }
+            registerError(expression, field);
+          }
+        });
+      }
     }
+  }
 }

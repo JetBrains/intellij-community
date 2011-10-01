@@ -23,52 +23,53 @@ import org.jetbrains.annotations.NotNull;
 
 public class ParametersPerConstructorInspection extends MethodMetricInspection {
 
-    @NotNull
-    public String getID() {
-        return "ConstructorWithTooManyParameters";
-    }
+  @NotNull
+  public String getID() {
+    return "ConstructorWithTooManyParameters";
+  }
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "parameters.per.constructor.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "parameters.per.constructor.display.name");
+  }
 
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        final Integer parameterCount = (Integer)infos[0];
-        return InspectionGadgetsBundle.message(
-                "parameters.per.constructor.problem.descriptor", parameterCount);
-    }
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    final Integer parameterCount = (Integer)infos[0];
+    return InspectionGadgetsBundle.message(
+      "parameters.per.constructor.problem.descriptor", parameterCount);
+  }
 
-    protected int getDefaultLimit() {
-        return 5;
-    }
+  protected int getDefaultLimit() {
+    return 5;
+  }
 
-    protected String getConfigurationLabel() {
-        return InspectionGadgetsBundle.message("parameter.limit.option");
-    }
+  protected String getConfigurationLabel() {
+    return InspectionGadgetsBundle.message("parameter.limit.option");
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new ParametersPerMethodVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new ParametersPerMethodVisitor();
+  }
 
-    private class ParametersPerMethodVisitor extends BaseInspectionVisitor {
+  private class ParametersPerMethodVisitor extends BaseInspectionVisitor {
 
-        @Override public void visitMethod(@NotNull PsiMethod method) {
-            // note: no call to super
-            if (method.getNameIdentifier() == null) {
-                return;
-            }
-            if (!method.isConstructor()) {
-                return;
-            }
-            final PsiParameterList parameterList = method.getParameterList();
-            final int parametersCount = parameterList.getParametersCount();
-            if (parametersCount <= getLimit()) {
-                return;
-            }
-            registerMethodError(method, Integer.valueOf(parametersCount));
-        }
+    @Override
+    public void visitMethod(@NotNull PsiMethod method) {
+      // note: no call to super
+      if (method.getNameIdentifier() == null) {
+        return;
+      }
+      if (!method.isConstructor()) {
+        return;
+      }
+      final PsiParameterList parameterList = method.getParameterList();
+      final int parametersCount = parameterList.getParametersCount();
+      if (parametersCount <= getLimit()) {
+        return;
+      }
+      registerMethodError(method, Integer.valueOf(parametersCount));
     }
+  }
 }

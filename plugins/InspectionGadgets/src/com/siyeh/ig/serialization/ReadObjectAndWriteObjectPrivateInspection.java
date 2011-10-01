@@ -27,55 +27,57 @@ import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class ReadObjectAndWriteObjectPrivateInspection
-        extends BaseInspection {
+  extends BaseInspection {
 
-    @NotNull
-    public String getID(){
-        return "NonPrivateSerializationMethod";
-    }
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "readwriteobject.private.display.name");
-    }
+  @NotNull
+  public String getID() {
+    return "NonPrivateSerializationMethod";
+  }
 
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "readwriteobject.private.problem.descriptor");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "readwriteobject.private.display.name");
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new ReadObjectWriteObjectPrivateVisitor();
-    }
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "readwriteobject.private.problem.descriptor");
+  }
 
-    public InspectionGadgetsFix buildFix(Object... infos) {
-        return new ChangeModifierFix(PsiModifier.PRIVATE);
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new ReadObjectWriteObjectPrivateVisitor();
+  }
 
-    private static class ReadObjectWriteObjectPrivateVisitor
-            extends BaseInspectionVisitor {
+  public InspectionGadgetsFix buildFix(Object... infos) {
+    return new ChangeModifierFix(PsiModifier.PRIVATE);
+  }
 
-        @Override public void visitMethod(@NotNull PsiMethod method) {
-            // no call to super, so it doesn't drill down
-            final PsiClass aClass = method.getContainingClass();
-            if(aClass == null) {
-                return;
-            }
-            if (aClass.isInterface() || aClass.isAnnotationType()) {
-                return;
-            }
-            if (method.hasModifierProperty(PsiModifier.PRIVATE)) {
-                return;
-            }
-            if(!SerializationUtils.isReadObject(method) &&
-                       !SerializationUtils.isWriteObject(method)){
-                return;
-            }
-            if(!SerializationUtils.isSerializable(aClass)){
-                return;
-            }
-            registerMethodError(method);
-        }
+  private static class ReadObjectWriteObjectPrivateVisitor
+    extends BaseInspectionVisitor {
+
+    @Override
+    public void visitMethod(@NotNull PsiMethod method) {
+      // no call to super, so it doesn't drill down
+      final PsiClass aClass = method.getContainingClass();
+      if (aClass == null) {
+        return;
+      }
+      if (aClass.isInterface() || aClass.isAnnotationType()) {
+        return;
+      }
+      if (method.hasModifierProperty(PsiModifier.PRIVATE)) {
+        return;
+      }
+      if (!SerializationUtils.isReadObject(method) &&
+          !SerializationUtils.isWriteObject(method)) {
+        return;
+      }
+      if (!SerializationUtils.isSerializable(aClass)) {
+        return;
+      }
+      registerMethodError(method);
     }
+  }
 }

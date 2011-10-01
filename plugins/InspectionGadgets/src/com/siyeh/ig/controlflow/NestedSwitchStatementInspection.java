@@ -26,45 +26,46 @@ import org.jetbrains.annotations.NotNull;
 
 public class NestedSwitchStatementInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "nested.switch.statement.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "nested.switch.statement.display.name");
+  }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "nested.switch.statement.problem.descriptor");
-    }
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "nested.switch.statement.problem.descriptor");
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new NestedSwitchStatementVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new NestedSwitchStatementVisitor();
+  }
 
-    private static class NestedSwitchStatementVisitor
-            extends BaseInspectionVisitor {
+  private static class NestedSwitchStatementVisitor
+    extends BaseInspectionVisitor {
 
-        @Override public void visitSwitchStatement(
-                @NotNull PsiSwitchStatement statement) {
-            super.visitSwitchStatement(statement);
-            final PsiElement containingSwitchStatement =
-                    PsiTreeUtil.getParentOfType(statement,
-                            PsiSwitchStatement.class);
-            if (containingSwitchStatement == null) {
-                return;
-            }
-            final PsiMethod containingMethod =
-                    PsiTreeUtil.getParentOfType(statement, PsiMethod.class);
-            final PsiMethod containingContainingMethod =
-                    PsiTreeUtil.getParentOfType(containingSwitchStatement,
-                    PsiMethod.class);
-            if (containingMethod == null ||
-                    containingContainingMethod == null ||
-                    !containingMethod.equals(containingContainingMethod)) {
-                return;
-            }
-            registerStatementError(statement);
-        }
+    @Override
+    public void visitSwitchStatement(
+      @NotNull PsiSwitchStatement statement) {
+      super.visitSwitchStatement(statement);
+      final PsiElement containingSwitchStatement =
+        PsiTreeUtil.getParentOfType(statement,
+                                    PsiSwitchStatement.class);
+      if (containingSwitchStatement == null) {
+        return;
+      }
+      final PsiMethod containingMethod =
+        PsiTreeUtil.getParentOfType(statement, PsiMethod.class);
+      final PsiMethod containingContainingMethod =
+        PsiTreeUtil.getParentOfType(containingSwitchStatement,
+                                    PsiMethod.class);
+      if (containingMethod == null ||
+          containingContainingMethod == null ||
+          !containingMethod.equals(containingContainingMethod)) {
+        return;
+      }
+      registerStatementError(statement);
     }
+  }
 }

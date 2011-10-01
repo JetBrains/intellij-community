@@ -19,34 +19,39 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 class LoopCountVisitor extends JavaRecursiveElementVisitor {
-    private int m_count = 0;
+  private int m_count = 0;
 
 
-    @Override public void visitForStatement(@NotNull PsiForStatement psiForStatement) {
-        super.visitForStatement(psiForStatement);
-        m_count++;
-    }
+  @Override
+  public void visitForStatement(@NotNull PsiForStatement psiForStatement) {
+    super.visitForStatement(psiForStatement);
+    m_count++;
+  }
 
-    @Override public void visitForeachStatement(@NotNull PsiForeachStatement psiForStatement) {
-        super.visitForeachStatement(psiForStatement);
-        m_count++;
-    }
+  @Override
+  public void visitForeachStatement(@NotNull PsiForeachStatement psiForStatement) {
+    super.visitForeachStatement(psiForStatement);
+    m_count++;
+  }
 
-    @Override public void visitWhileStatement(@NotNull PsiWhileStatement psiWhileStatement) {
-        super.visitWhileStatement(psiWhileStatement);
-        m_count++;
-    }
+  @Override
+  public void visitWhileStatement(@NotNull PsiWhileStatement psiWhileStatement) {
+    super.visitWhileStatement(psiWhileStatement);
+    m_count++;
+  }
 
-    @Override public void visitDoWhileStatement(@NotNull PsiDoWhileStatement psiDoWhileStatement) {
-        super.visitDoWhileStatement(psiDoWhileStatement);
-        m_count++;
-    }
+  @Override
+  public void visitDoWhileStatement(@NotNull PsiDoWhileStatement psiDoWhileStatement) {
+    super.visitDoWhileStatement(psiDoWhileStatement);
+    m_count++;
+  }
 
-    @Override public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) {
-        // no call to super, to keep it from drilling into anonymous classes
-    }
+  @Override
+  public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) {
+    // no call to super, to keep it from drilling into anonymous classes
+  }
 
-    public int getCount() {
-        return m_count;
-    }
+  public int getCount() {
+    return m_count;
+  }
 }

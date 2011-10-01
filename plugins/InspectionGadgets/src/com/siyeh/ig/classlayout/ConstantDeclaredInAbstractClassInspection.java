@@ -25,45 +25,46 @@ import org.jetbrains.annotations.NotNull;
 
 public class ConstantDeclaredInAbstractClassInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "constant.declared.in.abstract.class.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "constant.declared.in.abstract.class.display.name");
+  }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "constant.declared.in.abstract.class.problem.descriptor");
-    }
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "constant.declared.in.abstract.class.problem.descriptor");
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new ConstantDeclaredInAbstractClassVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new ConstantDeclaredInAbstractClassVisitor();
+  }
 
-    private static class ConstantDeclaredInAbstractClassVisitor
-            extends BaseInspectionVisitor {
+  private static class ConstantDeclaredInAbstractClassVisitor
+    extends BaseInspectionVisitor {
 
-        @Override public void visitField(@NotNull PsiField field) {
-            //no call to super, so we don't drill into anonymous classes
-            if (!field.hasModifierProperty(PsiModifier.STATIC) ||
-                    !field.hasModifierProperty(PsiModifier.PUBLIC) ||
-                    !field.hasModifierProperty(PsiModifier.FINAL)) {
-                return;
-            }
-            final PsiClass containingClass = field.getContainingClass();
-            if (containingClass == null) {
-                return;
-            }
-            if (containingClass.isInterface() ||
-                    containingClass.isAnnotationType() ||
-                    containingClass.isEnum()) {
-                return;
-            }
-            if (!containingClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-                return;
-            }
-            registerFieldError(field);
-        }
+    @Override
+    public void visitField(@NotNull PsiField field) {
+      //no call to super, so we don't drill into anonymous classes
+      if (!field.hasModifierProperty(PsiModifier.STATIC) ||
+          !field.hasModifierProperty(PsiModifier.PUBLIC) ||
+          !field.hasModifierProperty(PsiModifier.FINAL)) {
+        return;
+      }
+      final PsiClass containingClass = field.getContainingClass();
+      if (containingClass == null) {
+        return;
+      }
+      if (containingClass.isInterface() ||
+          containingClass.isAnnotationType() ||
+          containingClass.isEnum()) {
+        return;
+      }
+      if (!containingClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        return;
+      }
+      registerFieldError(field);
     }
+  }
 }

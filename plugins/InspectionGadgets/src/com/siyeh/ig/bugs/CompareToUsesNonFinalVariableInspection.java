@@ -26,57 +26,60 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class CompareToUsesNonFinalVariableInspection
-        extends BaseInspection {
+  extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "non.final.field.compareto.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "non.final.field.compareto.display.name");
+  }
 
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "non.final.field.compareto.problem.descriptor");
-    }
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "non.final.field.compareto.problem.descriptor");
+  }
 
-    @Nullable
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        final PsiField field = (PsiField) infos[0];
-        return MakeFieldFinalFix.buildFix(field);
-    }
+  @Nullable
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    final PsiField field = (PsiField)infos[0];
+    return MakeFieldFinalFix.buildFix(field);
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new CompareToUsesNonFinalVariableVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new CompareToUsesNonFinalVariableVisitor();
+  }
 
-    private static class CompareToUsesNonFinalVariableVisitor
-            extends BaseInspectionVisitor {
+  private static class CompareToUsesNonFinalVariableVisitor
+    extends BaseInspectionVisitor {
 
-        @Override public void visitMethod(@NotNull PsiMethod method) {
-            final boolean isCompareTo = MethodUtils.isCompareTo(method);
-            if (isCompareTo) {
-                method.accept(new JavaRecursiveElementVisitor() {
+    @Override
+    public void visitMethod(@NotNull PsiMethod method) {
+      final boolean isCompareTo = MethodUtils.isCompareTo(method);
+      if (isCompareTo) {
+        method.accept(new JavaRecursiveElementVisitor() {
 
-                    @Override public void visitClass(PsiClass aClass) {
-                        // Do not recurse into.
-                    }
+          @Override
+          public void visitClass(PsiClass aClass) {
+            // Do not recurse into.
+          }
 
-                    @Override public void visitReferenceExpression(
-                            @NotNull PsiReferenceExpression expression) {
-                        super.visitReferenceExpression(expression);
-                        final PsiElement element = expression.resolve();
-                        if (!(element instanceof PsiField)) {
-                            return;
-                        }
-                        final PsiField field = (PsiField) element;
-                        if (field.hasModifierProperty(PsiModifier.FINAL)) {
-                            return;
-                        }
-                        registerError(expression, field);
-                    }
-                });
+          @Override
+          public void visitReferenceExpression(
+            @NotNull PsiReferenceExpression expression) {
+            super.visitReferenceExpression(expression);
+            final PsiElement element = expression.resolve();
+            if (!(element instanceof PsiField)) {
+              return;
             }
-        }
+            final PsiField field = (PsiField)element;
+            if (field.hasModifierProperty(PsiModifier.FINAL)) {
+              return;
+            }
+            registerError(expression, field);
+          }
+        });
+      }
     }
+  }
 }

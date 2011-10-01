@@ -30,73 +30,76 @@ import javax.swing.*;
 
 public class InnerClassOnInterfaceInspection extends BaseInspection {
 
-    /** @noinspection PublicField */
-    public boolean m_ignoreInnerInterfaces = false;
+  /**
+   * @noinspection PublicField
+   */
+  public boolean m_ignoreInnerInterfaces = false;
 
-    @NotNull
-    public String getID() {
-        return "InnerClassOfInterface";
-    }
+  @NotNull
+  public String getID() {
+    return "InnerClassOfInterface";
+  }
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "inner.class.on.interface.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "inner.class.on.interface.display.name");
+  }
 
-    public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-                "inner.class.on.interface.ignore.option"),
-                this, "m_ignoreInnerInterfaces");
-    }
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+      "inner.class.on.interface.ignore.option"),
+                                          this, "m_ignoreInnerInterfaces");
+  }
 
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        final PsiClass parentInterface = (PsiClass)infos[0];
-        final String interfaceName = parentInterface.getName();
-        return InspectionGadgetsBundle.message(
-                "inner.class.on.interface.problem.descriptor", interfaceName);
-    }
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    final PsiClass parentInterface = (PsiClass)infos[0];
+    final String interfaceName = parentInterface.getName();
+    return InspectionGadgetsBundle.message(
+      "inner.class.on.interface.problem.descriptor", interfaceName);
+  }
 
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        return new MoveClassFix();
-    }
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new MoveClassFix();
+  }
 
-    protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
-        return true;
-    }
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return true;
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new InnerClassOnInterfaceVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new InnerClassOnInterfaceVisitor();
+  }
 
-    private class InnerClassOnInterfaceVisitor extends BaseInspectionVisitor {
+  private class InnerClassOnInterfaceVisitor extends BaseInspectionVisitor {
 
-        @Override public void visitClass(@NotNull PsiClass aClass) {
-            // no call to super, so that it doesn't drill down to inner classes
-            if (!aClass.isInterface() || aClass.isAnnotationType()) {
-                return;
-            }
-            final PsiClass[] innerClasses = aClass.getInnerClasses();
-            for (final PsiClass innerClass : innerClasses) {
-                if (isInnerClass(innerClass)) {
-                    registerClassError(innerClass, aClass);
-                }
-            }
+    @Override
+    public void visitClass(@NotNull PsiClass aClass) {
+      // no call to super, so that it doesn't drill down to inner classes
+      if (!aClass.isInterface() || aClass.isAnnotationType()) {
+        return;
+      }
+      final PsiClass[] innerClasses = aClass.getInnerClasses();
+      for (final PsiClass innerClass : innerClasses) {
+        if (isInnerClass(innerClass)) {
+          registerClassError(innerClass, aClass);
         }
-
-        private boolean isInnerClass(PsiClass innerClass) {
-            if (innerClass.isEnum()) {
-                return false;
-            }
-            if (innerClass.isAnnotationType()) {
-                return false;
-            }
-            if (innerClass instanceof PsiTypeParameter ||
-                    innerClass instanceof PsiAnonymousClass) {
-                return false;
-            }
-            return !(innerClass.isInterface() && m_ignoreInnerInterfaces);
-        }
+      }
     }
+
+    private boolean isInnerClass(PsiClass innerClass) {
+      if (innerClass.isEnum()) {
+        return false;
+      }
+      if (innerClass.isAnnotationType()) {
+        return false;
+      }
+      if (innerClass instanceof PsiTypeParameter ||
+          innerClass instanceof PsiAnonymousClass) {
+        return false;
+      }
+      return !(innerClass.isInterface() && m_ignoreInnerInterfaces);
+    }
+  }
 }

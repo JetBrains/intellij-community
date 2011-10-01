@@ -27,92 +27,93 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class OctalAndDecimalIntegersMixedInspection
-        extends BaseInspection {
+  extends BaseInspection {
+
+  @Override
+  @NotNull
+  public String getID() {
+    return "OctalAndDecimalIntegersInSameArray";
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "octal.and.decimal.integers.in.same.array.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "octal.and.decimal.integers.in.same.array.problem.descriptor");
+  }
+
+  @NotNull
+  @Override
+  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+    return new InspectionGadgetsFix[]{
+      new ConvertOctalLiteralToDecimalFix(),
+      new RemoveLeadingZeroFix()
+    };
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new OctalAndDecimalIntegersMixedVisitor();
+  }
+
+  private static class OctalAndDecimalIntegersMixedVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String getID() {
-        return "OctalAndDecimalIntegersInSameArray";
-    }
-
-    @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "octal.and.decimal.integers.in.same.array.display.name");
-    }
-
-    @Override
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "octal.and.decimal.integers.in.same.array.problem.descriptor");
-    }
-
-    @NotNull
-    @Override
-    protected InspectionGadgetsFix[] buildFixes(Object... infos) {
-        return new InspectionGadgetsFix[] {
-                new ConvertOctalLiteralToDecimalFix(),
-                new RemoveLeadingZeroFix()
-        };
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new OctalAndDecimalIntegersMixedVisitor();
-    }
-
-    private static class OctalAndDecimalIntegersMixedVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitArrayInitializerExpression(
-                PsiArrayInitializerExpression expression) {
-            super.visitArrayInitializerExpression(expression);
-            final PsiExpression[] initializers = expression.getInitializers();
-            boolean hasDecimalLiteral = false;
-            boolean hasOctalLiteral = false;
-            for(final PsiExpression initializer : initializers){
-                if(initializer instanceof PsiLiteralExpression){
-                    final PsiLiteralExpression literal =
-                            (PsiLiteralExpression) initializer;
-                    if(isDecimalLiteral(literal)){
-                        hasDecimalLiteral = true;
-                    }
-                    if(isOctalLiteral(literal)){
-                        hasOctalLiteral = true;
-                    }
-                }
-            }
-            if (hasOctalLiteral && hasDecimalLiteral) {
-                registerError(expression);
-            }
+    public void visitArrayInitializerExpression(
+      PsiArrayInitializerExpression expression) {
+      super.visitArrayInitializerExpression(expression);
+      final PsiExpression[] initializers = expression.getInitializers();
+      boolean hasDecimalLiteral = false;
+      boolean hasOctalLiteral = false;
+      for (final PsiExpression initializer : initializers) {
+        if (initializer instanceof PsiLiteralExpression) {
+          final PsiLiteralExpression literal =
+            (PsiLiteralExpression)initializer;
+          if (isDecimalLiteral(literal)) {
+            hasDecimalLiteral = true;
+          }
+          if (isOctalLiteral(literal)) {
+            hasOctalLiteral = true;
+          }
         }
-
-        private static boolean isDecimalLiteral(PsiLiteralExpression literal) {
-            final PsiType type = literal.getType();
-            if (!PsiType.INT.equals(type) &&
-                !PsiType.LONG.equals(type)) {
-                return false;
-            }
-            final String text = literal.getText();
-            if ("0".equals(text)) {
-                return false;
-            }
-            return text.charAt(0) != '0';
-        }
-
-        private static boolean isOctalLiteral(PsiLiteralExpression literal) {
-            final PsiType type = literal.getType();
-            if (!PsiType.INT.equals(type) && !PsiType.LONG.equals(type)) {
-                return false;
-            }
-            @NonNls final String text = literal.getText();
-            if ("0".equals(text) || "0L".equals(text)) {
-                return false;
-            }
-            return text.charAt(0) == '0' && !text.startsWith("0x") &&
-                    !text.startsWith("0X");
-        }
+      }
+      if (hasOctalLiteral && hasDecimalLiteral) {
+        registerError(expression);
+      }
     }
+
+    private static boolean isDecimalLiteral(PsiLiteralExpression literal) {
+      final PsiType type = literal.getType();
+      if (!PsiType.INT.equals(type) &&
+          !PsiType.LONG.equals(type)) {
+        return false;
+      }
+      final String text = literal.getText();
+      if ("0".equals(text)) {
+        return false;
+      }
+      return text.charAt(0) != '0';
+    }
+
+    private static boolean isOctalLiteral(PsiLiteralExpression literal) {
+      final PsiType type = literal.getType();
+      if (!PsiType.INT.equals(type) && !PsiType.LONG.equals(type)) {
+        return false;
+      }
+      @NonNls final String text = literal.getText();
+      if ("0".equals(text) || "0L".equals(text)) {
+        return false;
+      }
+      return text.charAt(0) == '0' && !text.startsWith("0x") &&
+             !text.startsWith("0X");
+    }
+  }
 }

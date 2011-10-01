@@ -26,32 +26,33 @@ import org.jetbrains.annotations.NotNull;
 
 public class UnaryPlusInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message("unary.plus.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("unary.plus.display.name");
+  }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "unary.plus.problem.descriptor");
-    }
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "unary.plus.problem.descriptor");
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new UnaryPlusVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new UnaryPlusVisitor();
+  }
 
-    private static class UnaryPlusVisitor extends BaseInspectionVisitor {
+  private static class UnaryPlusVisitor extends BaseInspectionVisitor {
 
-        @Override public void visitPrefixExpression(
-                PsiPrefixExpression prefixExpression) {
-            super.visitPrefixExpression(prefixExpression);
-            final PsiJavaToken token = prefixExpression.getOperationSign();
-            final IElementType tokenType = token.getTokenType();
-            if (!tokenType.equals(JavaTokenType.PLUS)) {
-                return;
-            }
-            registerError(token);
-        }
+    @Override
+    public void visitPrefixExpression(
+      PsiPrefixExpression prefixExpression) {
+      super.visitPrefixExpression(prefixExpression);
+      final PsiJavaToken token = prefixExpression.getOperationSign();
+      final IElementType tokenType = token.getTokenType();
+      if (!tokenType.equals(JavaTokenType.PLUS)) {
+        return;
+      }
+      registerError(token);
     }
+  }
 }

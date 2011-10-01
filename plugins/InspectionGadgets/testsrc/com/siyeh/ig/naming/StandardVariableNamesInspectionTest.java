@@ -3,11 +3,11 @@ package com.siyeh.ig.naming;
 import com.siyeh.ig.IGInspectionTestCase;
 
 public class StandardVariableNamesInspectionTest
-        extends IGInspectionTestCase {
+  extends IGInspectionTestCase {
 
-    public void test() throws Exception {
-      final StandardVariableNamesInspection inspection = new StandardVariableNamesInspection();
-      inspection.ignoreParameterNameSameAsSuper = true;
-      doTest("com/siyeh/igtest/naming/standard_variable_names", inspection);
-    }
+  public void test() throws Exception {
+    final StandardVariableNamesInspection inspection = new StandardVariableNamesInspection();
+    inspection.ignoreParameterNameSameAsSuper = true;
+    doTest("com/siyeh/igtest/naming/standard_variable_names", inspection);
+  }
 }

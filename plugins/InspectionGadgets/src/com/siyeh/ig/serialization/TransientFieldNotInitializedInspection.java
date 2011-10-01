@@ -25,75 +25,76 @@ import org.jetbrains.annotations.NotNull;
 
 public class TransientFieldNotInitializedInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "transient.field.not.initialized.display.name");
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "transient.field.not.initialized.display.name");
+  }
+
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "transient.field.not.initialized.problem.descriptor");
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new ReadObjectInitializationVisitor();
+  }
+
+  private static class ReadObjectInitializationVisitor
+    extends BaseInspectionVisitor {
+
+    @Override
+    public void visitField(PsiField field) {
+      super.visitField(field);
+      if (!field.hasModifierProperty(PsiModifier.TRANSIENT)) {
+        return;
+      }
+      final PsiClass containingClass = field.getContainingClass();
+      if (!SerializationUtils.isSerializable(containingClass)) {
+        return;
+      }
+      final PsiExpression initializer = field.getInitializer();
+      if (initializer == null &&
+          !isInitializedInInitializer(field, containingClass) &&
+          !isInitializedInConstructors(field, containingClass)) {
+        return;
+      }
+      if (SerializationUtils.hasReadObject(containingClass)) {
+        return;
+      }
+      registerFieldError(field);
     }
 
-    @NotNull
-    public String buildErrorString(Object... infos) {
-      return InspectionGadgetsBundle.message(
-              "transient.field.not.initialized.problem.descriptor");
-    }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new ReadObjectInitializationVisitor();
-    }
-
-    private static class ReadObjectInitializationVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitField(PsiField field) {
-            super.visitField(field);
-            if (!field.hasModifierProperty(PsiModifier.TRANSIENT)) {
-                return;
-            }
-            final PsiClass containingClass = field.getContainingClass();
-            if (!SerializationUtils.isSerializable(containingClass)) {
-                return;
-            }
-            final PsiExpression initializer = field.getInitializer();
-            if (initializer == null &&
-                    !isInitializedInInitializer(field, containingClass) &&
-                    !isInitializedInConstructors(field, containingClass)) {
-                return;
-            }
-            if (SerializationUtils.hasReadObject(containingClass)) {
-                return;
-            }
-            registerFieldError(field);
+    private static boolean isInitializedInConstructors(
+      @NotNull PsiField field, @NotNull PsiClass aClass) {
+      final PsiMethod[] constructors = aClass.getConstructors();
+      if (constructors.length == 0) {
+        return false;
+      }
+      for (final PsiMethod constructor : constructors) {
+        if (!InitializationUtils.methodAssignsVariableOrFails(
+          constructor, field)) {
+          return false;
         }
-
-        private static boolean isInitializedInConstructors(
-                @NotNull PsiField field, @NotNull PsiClass aClass) {
-            final PsiMethod[] constructors = aClass.getConstructors();
-            if(constructors.length == 0){
-                return false;
-            }
-            for(final PsiMethod constructor : constructors){
-                if(!InitializationUtils.methodAssignsVariableOrFails(
-                        constructor, field)) {
-                    return false;
-                }
-            }
-            return true;
-        }
-
-        private static boolean isInitializedInInitializer(
-                @NotNull PsiField field, @NotNull PsiClass aClass) {
-            final PsiClassInitializer[] initializers = aClass.getInitializers();
-            for(final PsiClassInitializer initializer : initializers){
-                if (initializer.hasModifierProperty(PsiModifier.STATIC)) {
-                    continue;
-                }
-                final PsiCodeBlock body = initializer.getBody();
-                if(InitializationUtils.blockAssignsVariableOrFails(body,
-                            field)) {
-                    return true;
-                }
-            }
-            return false;
-        }
+      }
+      return true;
     }
+
+    private static boolean isInitializedInInitializer(
+      @NotNull PsiField field, @NotNull PsiClass aClass) {
+      final PsiClassInitializer[] initializers = aClass.getInitializers();
+      for (final PsiClassInitializer initializer : initializers) {
+        if (initializer.hasModifierProperty(PsiModifier.STATIC)) {
+          continue;
+        }
+        final PsiCodeBlock body = initializer.getBody();
+        if (InitializationUtils.blockAssignsVariableOrFails(body,
+                                                            field)) {
+          return true;
+        }
+      }
+      return false;
+    }
+  }
 }

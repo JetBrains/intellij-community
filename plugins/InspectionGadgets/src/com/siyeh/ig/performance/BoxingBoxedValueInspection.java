@@ -34,175 +34,175 @@ import java.util.Map;
 
 public class BoxingBoxedValueInspection extends BaseInspection {
 
-    @NonNls
-    static final Map<String, String> boxedPrimitiveMap =
-            new HashMap<String, String>(8);
+  @NonNls
+  static final Map<String, String> boxedPrimitiveMap =
+    new HashMap<String, String>(8);
 
-    static {
-        boxedPrimitiveMap.put(CommonClassNames.JAVA_LANG_INTEGER, "int");
-        boxedPrimitiveMap.put(CommonClassNames.JAVA_LANG_SHORT, "short");
-        boxedPrimitiveMap.put(CommonClassNames.JAVA_LANG_BOOLEAN, "boolean");
-        boxedPrimitiveMap.put(CommonClassNames.JAVA_LANG_LONG, "long");
-        boxedPrimitiveMap.put(CommonClassNames.JAVA_LANG_BYTE, "byte");
-        boxedPrimitiveMap.put(CommonClassNames.JAVA_LANG_FLOAT, "float");
-        boxedPrimitiveMap.put(CommonClassNames.JAVA_LANG_DOUBLE, "double");
-        boxedPrimitiveMap.put(CommonClassNames.JAVA_LANG_CHARACTER, "char");
-    }
+  static {
+    boxedPrimitiveMap.put(CommonClassNames.JAVA_LANG_INTEGER, "int");
+    boxedPrimitiveMap.put(CommonClassNames.JAVA_LANG_SHORT, "short");
+    boxedPrimitiveMap.put(CommonClassNames.JAVA_LANG_BOOLEAN, "boolean");
+    boxedPrimitiveMap.put(CommonClassNames.JAVA_LANG_LONG, "long");
+    boxedPrimitiveMap.put(CommonClassNames.JAVA_LANG_BYTE, "byte");
+    boxedPrimitiveMap.put(CommonClassNames.JAVA_LANG_FLOAT, "float");
+    boxedPrimitiveMap.put(CommonClassNames.JAVA_LANG_DOUBLE, "double");
+    boxedPrimitiveMap.put(CommonClassNames.JAVA_LANG_CHARACTER, "char");
+  }
 
-    @Override
-    public boolean isEnabledByDefault() {
-        return true;
-    }
+  @Override
+  public boolean isEnabledByDefault() {
+    return true;
+  }
 
-    @Nls
+  @Nls
+  @NotNull
+  @Override
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "boxing.boxed.value.display.name");
+  }
+
+  @NotNull
+  @Override
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "boxing.boxed.value.problem.descriptor");
+  }
+
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new BoxingBoxedValueFix();
+  }
+
+  private static class BoxingBoxedValueFix extends InspectionGadgetsFix {
+
     @NotNull
-    @Override
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "boxing.boxed.value.display.name");
-    }
-
-    @NotNull
-    @Override
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "boxing.boxed.value.problem.descriptor");
+    public String getName() {
+      return InspectionGadgetsBundle.message(
+        "boxing.boxed.value.quickfix");
     }
 
     @Override
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        return new BoxingBoxedValueFix();
+    protected void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiElement element = descriptor.getPsiElement();
+      final PsiCallExpression parent = PsiTreeUtil.getParentOfType(
+        element, PsiMethodCallExpression.class,
+        PsiNewExpression.class);
+      if (parent == null) {
+        return;
+      }
+      parent.replace(element);
     }
+  }
 
-    private static class BoxingBoxedValueFix extends InspectionGadgetsFix {
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new BoxingBoxedValueVisitor();
+  }
 
-        @NotNull
-        public String getName() {
-            return InspectionGadgetsBundle.message(
-                    "boxing.boxed.value.quickfix");
-        }
+  private static class BoxingBoxedValueVisitor extends BaseInspectionVisitor {
 
-        @Override
-        protected void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
-            final PsiElement element = descriptor.getPsiElement();
-            final PsiCallExpression parent = PsiTreeUtil.getParentOfType(
-                    element, PsiMethodCallExpression.class,
-                    PsiNewExpression.class);
-            if (parent == null) {
-                return;
-            }
-            parent.replace(element);
-        }
+    @Override
+    public void visitNewExpression(PsiNewExpression expression) {
+      if (!PsiUtil.isLanguageLevel5OrHigher(expression)) {
+        return;
+      }
+      super.visitNewExpression(expression);
+      final PsiType constructorType = expression.getType();
+      if (constructorType == null) {
+        return;
+      }
+      final String constructorTypeText =
+        constructorType.getCanonicalText();
+      if (!boxedPrimitiveMap.containsKey(constructorTypeText)) {
+        return;
+      }
+      final PsiMethod constructor = expression.resolveConstructor();
+      if (constructor == null) {
+        return;
+      }
+      final PsiParameterList parameterList =
+        constructor.getParameterList();
+      if (parameterList.getParametersCount() != 1) {
+        return;
+      }
+      final PsiParameter[] parameters = parameterList.getParameters();
+      final PsiParameter parameter = parameters[0];
+      final PsiType parameterType = parameter.getType();
+      final String parameterTypeText = parameterType.getCanonicalText();
+      final String boxableConstructorType =
+        boxedPrimitiveMap.get(constructorTypeText);
+      if (!boxableConstructorType.equals(parameterTypeText)) {
+        return;
+      }
+      final PsiExpressionList argumentList = expression.getArgumentList();
+      if (argumentList == null) {
+        return;
+      }
+      final PsiExpression[] arguments = argumentList.getExpressions();
+      if (arguments.length != 1) {
+        return;
+      }
+      final PsiExpression argument = arguments[0];
+      final PsiType argumentType = argument.getType();
+      if (argumentType == null) {
+        return;
+      }
+      final String argumentTypeText = argumentType.getCanonicalText();
+      if (!constructorTypeText.equals(argumentTypeText)) {
+        return;
+      }
+      registerError(argument);
     }
 
     @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new BoxingBoxedValueVisitor();
+    public void visitMethodCallExpression(
+      PsiMethodCallExpression expression) {
+      if (!PsiUtil.isLanguageLevel5OrHigher(expression)) {
+        return;
+      }
+      super.visitMethodCallExpression(expression);
+      final PsiReferenceExpression methodExpression =
+        expression.getMethodExpression();
+      @NonNls
+      final String referenceName = methodExpression.getReferenceName();
+      if (!"valueOf".equals(referenceName)) {
+        return;
+      }
+      final PsiMethod method = expression.resolveMethod();
+      if (method == null) {
+        return;
+      }
+      final PsiClass containingClass = method.getContainingClass();
+      if (containingClass == null) {
+        return;
+      }
+      final String className = containingClass.getQualifiedName();
+      if (className == null) {
+        return;
+      }
+      if (!boxedPrimitiveMap.containsKey(className)) {
+        return;
+      }
+      if (method.getParameterList().getParametersCount() != 1) {
+        return;
+      }
+      final PsiExpressionList argumentList = expression.getArgumentList();
+      final PsiExpression[] arguments = argumentList.getExpressions();
+      if (arguments.length != 1) {
+        return;
+      }
+      final PsiExpression argument = arguments[0];
+      final PsiType argumentType = argument.getType();
+      if (argumentType == null) {
+        return;
+      }
+      final String argumentTypeText = argumentType.getCanonicalText();
+      if (!className.equals(argumentTypeText)) {
+        return;
+      }
+      registerError(argument);
     }
-
-    private static class BoxingBoxedValueVisitor extends BaseInspectionVisitor {
-
-        @Override
-        public void visitNewExpression(PsiNewExpression expression) {
-            if (!PsiUtil.isLanguageLevel5OrHigher(expression)) {
-                return;
-            }
-            super.visitNewExpression(expression);
-            final PsiType constructorType = expression.getType();
-            if (constructorType == null) {
-                return;
-            }
-            final String constructorTypeText =
-                    constructorType.getCanonicalText();
-            if (!boxedPrimitiveMap.containsKey(constructorTypeText)) {
-                return;
-            }
-            final PsiMethod constructor = expression.resolveConstructor();
-            if (constructor == null) {
-                return;
-            }
-            final PsiParameterList parameterList =
-                    constructor.getParameterList();
-            if (parameterList.getParametersCount() != 1) {
-                return;
-            }
-            final PsiParameter[] parameters = parameterList.getParameters();
-            final PsiParameter parameter = parameters[0];
-            final PsiType parameterType = parameter.getType();
-            final String parameterTypeText = parameterType.getCanonicalText();
-            final String boxableConstructorType =
-                    boxedPrimitiveMap.get(constructorTypeText);
-            if (!boxableConstructorType.equals(parameterTypeText)) {
-                return;
-            }
-            final PsiExpressionList argumentList = expression.getArgumentList();
-            if (argumentList == null) {
-                return;
-            }
-            final PsiExpression[] arguments = argumentList.getExpressions();
-            if (arguments.length != 1) {
-                return;
-            }
-            final PsiExpression argument = arguments[0];
-            final PsiType argumentType = argument.getType();
-            if (argumentType == null) {
-                return;
-            }
-            final String argumentTypeText = argumentType.getCanonicalText();
-            if (!constructorTypeText.equals(argumentTypeText)) {
-                return;
-            }
-            registerError(argument);
-        }
-
-        @Override
-        public void visitMethodCallExpression(
-                PsiMethodCallExpression expression) {
-            if (!PsiUtil.isLanguageLevel5OrHigher(expression)) {
-                return;
-            }
-            super.visitMethodCallExpression(expression);
-            final PsiReferenceExpression methodExpression =
-                    expression.getMethodExpression();
-            @NonNls
-            final String referenceName = methodExpression.getReferenceName();
-            if (!"valueOf".equals(referenceName)) {
-                return;
-            }
-            final PsiMethod method = expression.resolveMethod();
-            if (method == null) {
-                return;
-            }
-            final PsiClass containingClass = method.getContainingClass();
-            if (containingClass == null) {
-                return;
-            }
-            final String className = containingClass.getQualifiedName();
-            if (className == null) {
-                return;
-            }
-            if (!boxedPrimitiveMap.containsKey(className)) {
-                return;
-            }
-            if (method.getParameterList().getParametersCount() != 1) {
-                return;
-            }
-            final PsiExpressionList argumentList = expression.getArgumentList();
-            final PsiExpression[] arguments = argumentList.getExpressions();
-            if (arguments.length != 1) {
-                return;
-            }
-            final PsiExpression argument = arguments[0];
-            final PsiType argumentType = argument.getType();
-            if (argumentType == null) {
-                return;
-            }
-            final String argumentTypeText = argumentType.getCanonicalText();
-            if (!className.equals(argumentTypeText)) {
-                return;
-            }
-            registerError(argument);
-        }
-    }
+  }
 }

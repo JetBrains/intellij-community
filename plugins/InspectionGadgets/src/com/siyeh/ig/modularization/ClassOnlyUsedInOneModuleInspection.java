@@ -37,76 +37,77 @@ import java.util.Set;
 
 public class ClassOnlyUsedInOneModuleInspection extends BaseGlobalInspection {
 
-    @Nls
-    @NotNull
-    @Override
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "class.only.used.in.one.module.display.name");
-    }
+  @Nls
+  @NotNull
+  @Override
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "class.only.used.in.one.module.display.name");
+  }
 
-    @Nullable
-    @Override
-    public CommonProblemDescriptor[] checkElement(
-            RefEntity refEntity,
-            AnalysisScope scope,
-            InspectionManager manager,
-            GlobalInspectionContext globalContext) {
-        if (!(refEntity instanceof RefClass)) {
-            return null;
-        }
-        final RefClass refClass = (RefClass) refEntity;
-        final RefEntity owner = refClass.getOwner();
-        if (!(owner instanceof RefPackage)) {
-            return null;
-        }
-        final Set<RefClass> dependencies =
-                DependencyUtils.calculateDependenciesForClass(refClass);
-        RefModule otherModule = null;
-        for (RefClass dependency : dependencies) {
-            final RefModule module = dependency.getModule();
-            if (refClass.getModule() == module) {
-                return null;
-            }
-            if (otherModule != module) {
-                if (otherModule == null) {
-                    otherModule = module;
-                } else {
-                    return null;
-                }
-            }
-        }
-        final Set<RefClass> dependents =
-                DependencyUtils.calculateDependentsForClass(refClass);
-        for (RefClass dependent : dependents) {
-            final RefModule module = dependent.getModule();
-            if (refClass.getModule() == module) {
-                return null;
-            }
-            if (otherModule != module) {
-                if (otherModule == null) {
-                    otherModule = module;
-                } else {
-                    return null;
-                }
-            }
-        }
+  @Nullable
+  @Override
+  public CommonProblemDescriptor[] checkElement(
+    RefEntity refEntity,
+    AnalysisScope scope,
+    InspectionManager manager,
+    GlobalInspectionContext globalContext) {
+    if (!(refEntity instanceof RefClass)) {
+      return null;
+    }
+    final RefClass refClass = (RefClass)refEntity;
+    final RefEntity owner = refClass.getOwner();
+    if (!(owner instanceof RefPackage)) {
+      return null;
+    }
+    final Set<RefClass> dependencies =
+      DependencyUtils.calculateDependenciesForClass(refClass);
+    RefModule otherModule = null;
+    for (RefClass dependency : dependencies) {
+      final RefModule module = dependency.getModule();
+      if (refClass.getModule() == module) {
+        return null;
+      }
+      if (otherModule != module) {
         if (otherModule == null) {
-            return null;
+          otherModule = module;
         }
-        final PsiClass aClass = refClass.getElement();
-        final PsiIdentifier identifier = aClass.getNameIdentifier();
-        if (identifier == null) {
-            return null;
+        else {
+          return null;
         }
-        final String moduleName = otherModule.getName();
-        return new CommonProblemDescriptor[]{
-                manager.createProblemDescriptor(identifier,
-                        InspectionGadgetsBundle.message(
-                                "class.only.used.in.one.module.problem.descriptor",
-                        moduleName),
-                        true, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false)
-        };
+      }
     }
-
+    final Set<RefClass> dependents =
+      DependencyUtils.calculateDependentsForClass(refClass);
+    for (RefClass dependent : dependents) {
+      final RefModule module = dependent.getModule();
+      if (refClass.getModule() == module) {
+        return null;
+      }
+      if (otherModule != module) {
+        if (otherModule == null) {
+          otherModule = module;
+        }
+        else {
+          return null;
+        }
+      }
+    }
+    if (otherModule == null) {
+      return null;
+    }
+    final PsiClass aClass = refClass.getElement();
+    final PsiIdentifier identifier = aClass.getNameIdentifier();
+    if (identifier == null) {
+      return null;
+    }
+    final String moduleName = otherModule.getName();
+    return new CommonProblemDescriptor[]{
+      manager.createProblemDescriptor(identifier,
+                                      InspectionGadgetsBundle.message(
+                                        "class.only.used.in.one.module.problem.descriptor",
+                                        moduleName),
+                                      true, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false)
+    };
+  }
 }

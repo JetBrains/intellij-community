@@ -28,60 +28,61 @@ import com.siyeh.ig.psiutils.EquivalenceChecker;
 import org.jetbrains.annotations.NotNull;
 
 public class ConditionalExpressionWithIdenticalBranchesInspection
-        extends BaseInspection {
+  extends BaseInspection {
+
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "conditional.expression.with.identical.branches.display.name");
+  }
+
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "conditional.expression.with.identical.branches.problem.descriptor");
+  }
+
+  public InspectionGadgetsFix buildFix(Object... infos) {
+    return new CollapseConditional();
+  }
+
+  private static class CollapseConditional extends InspectionGadgetsFix {
 
     @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "conditional.expression.with.identical.branches.display.name");
+    public String getName() {
+      return InspectionGadgetsBundle.message(
+        "conditional.expression.with.identical.branches.collapse.quickfix");
     }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "conditional.expression.with.identical.branches.problem.descriptor");
+    public void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiConditionalExpression expression =
+        (PsiConditionalExpression)descriptor.getPsiElement();
+
+      final PsiExpression thenExpression = expression.getThenExpression();
+      assert thenExpression != null;
+      final String bodyText = thenExpression.getText();
+      replaceExpression(expression, bodyText);
     }
+  }
 
-    public InspectionGadgetsFix buildFix(Object... infos) {
-        return new CollapseConditional();
+  public BaseInspectionVisitor buildVisitor() {
+    return new ConditionalExpressionWithIdenticalBranchesVisitor();
+  }
+
+  private static class ConditionalExpressionWithIdenticalBranchesVisitor
+    extends BaseInspectionVisitor {
+
+    @Override
+    public void visitConditionalExpression(
+      PsiConditionalExpression expression) {
+      super.visitConditionalExpression(expression);
+      final PsiExpression thenExpression = expression.getThenExpression();
+      final PsiExpression elseExpression = expression.getElseExpression();
+      if (EquivalenceChecker.expressionsAreEquivalent(thenExpression,
+                                                      elseExpression)) {
+        registerError(expression);
+      }
     }
-
-    private static class CollapseConditional extends InspectionGadgetsFix {
-
-        @NotNull
-        public String getName() {
-            return InspectionGadgetsBundle.message(
-                    "conditional.expression.with.identical.branches.collapse.quickfix");
-        }
-
-        public void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
-            final PsiConditionalExpression expression =
-                    (PsiConditionalExpression)descriptor.getPsiElement();
-
-            final PsiExpression thenExpression = expression.getThenExpression();
-            assert thenExpression != null;
-            final String bodyText = thenExpression.getText();
-            replaceExpression(expression, bodyText);
-        }
-    }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new ConditionalExpressionWithIdenticalBranchesVisitor();
-    }
-
-    private static class ConditionalExpressionWithIdenticalBranchesVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitConditionalExpression(
-                PsiConditionalExpression expression) {
-            super.visitConditionalExpression(expression);
-            final PsiExpression thenExpression = expression.getThenExpression();
-            final PsiExpression elseExpression = expression.getElseExpression();
-            if (EquivalenceChecker.expressionsAreEquivalent(thenExpression,
-                    elseExpression)) {
-                registerError(expression);
-            }
-        }
-    }
+  }
 }

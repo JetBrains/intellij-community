@@ -34,115 +34,120 @@ import org.jetbrains.annotations.NotNull;
 
 public class TrivialStringConcatenationInspection extends BaseInspection {
 
-    @Override
+  @Override
+  @NotNull
+  public String getID() {
+    return "ConcatenationWithEmptyString";
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "trivial.string.concatenation.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    final String replacementString =
+      calculateReplacementExpression((PsiElement)infos[0]);
+    return InspectionGadgetsBundle.message(
+      "string.can.be.simplified.problem.descriptor",
+      replacementString);
+  }
+
+  @NonNls
+  static String calculateReplacementExpression(PsiElement location) {
+    final PsiBinaryExpression expression = (PsiBinaryExpression)location;
+    final PsiExpression lOperand = expression.getLOperand();
+    final PsiExpression rOperand = expression.getROperand();
+    final PsiExpression replacement;
+    if (ExpressionUtils.isEmptyStringLiteral(lOperand)) {
+      replacement = rOperand;
+    }
+    else {
+      replacement = lOperand;
+    }
+    @NonNls final String replacementText;
+    if (replacement == null) {
+      replacementText = "";
+    }
+    else {
+      if (ExpressionUtils.isNullLiteral(replacement)) {
+        replacementText = "(Object)null";
+      }
+      else {
+        replacementText = replacement.getText();
+      }
+      if (TypeUtils.expressionHasType(replacement,
+                                      CommonClassNames.JAVA_LANG_STRING)) {
+        return replacementText;
+      }
+    }
+    return "String.valueOf(" + replacementText + ')';
+  }
+
+  @Override
+  public InspectionGadgetsFix buildFix(Object... infos) {
+    return new UnnecessaryTemporaryObjectFix((PsiBinaryExpression)infos[0]);
+  }
+
+  private static class UnnecessaryTemporaryObjectFix
+    extends InspectionGadgetsFix {
+
+    private final String m_name;
+
+    private UnnecessaryTemporaryObjectFix(PsiBinaryExpression expression) {
+      m_name = InspectionGadgetsBundle.message("string.replace.quickfix",
+                                               calculateReplacementExpression(expression));
+    }
+
     @NotNull
-    public String getID() {
-        return "ConcatenationWithEmptyString";
+    public String getName() {
+      return m_name;
     }
 
     @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "trivial.string.concatenation.display.name");
+    public void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiBinaryExpression expression =
+        (PsiBinaryExpression)descriptor.getPsiElement();
+      final String newExpression =
+        calculateReplacementExpression(expression);
+      replaceExpression(expression, newExpression);
     }
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new TrivialStringConcatenationVisitor();
+  }
+
+  private static class TrivialStringConcatenationVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        final String replacementString =
-                calculateReplacementExpression((PsiElement)infos[0]);
-        return InspectionGadgetsBundle.message(
-                "string.can.be.simplified.problem.descriptor",
-                replacementString);
+    public void visitBinaryExpression(
+      @NotNull PsiBinaryExpression expression) {
+      super.visitBinaryExpression(expression);
+      if (!(expression.getROperand() != null)) {
+        return;
+      }
+      if (!TypeUtils.expressionHasType(expression,
+                                       CommonClassNames.JAVA_LANG_STRING)) {
+        return;
+      }
+      final PsiExpression lhs = expression.getLOperand();
+      final PsiExpression rhs = expression.getROperand();
+      if (!ExpressionUtils.isEmptyStringLiteral(lhs) &&
+          !ExpressionUtils.isEmptyStringLiteral(rhs)) {
+        return;
+      }
+      if (PsiUtil.isConstantExpression(expression)) {
+        return;
+      }
+      registerError(expression, expression);
     }
-
-    @NonNls static String calculateReplacementExpression(PsiElement location) {
-        final PsiBinaryExpression expression = (PsiBinaryExpression) location;
-        final PsiExpression lOperand = expression.getLOperand();
-        final PsiExpression rOperand = expression.getROperand();
-        final PsiExpression replacement;
-        if(ExpressionUtils.isEmptyStringLiteral(lOperand)) {
-            replacement = rOperand;
-        } else {
-            replacement = lOperand;
-        }
-        @NonNls final String replacementText;
-        if (replacement == null) {
-            replacementText = "";
-        } else {
-            if (ExpressionUtils.isNullLiteral(replacement)) {
-                replacementText = "(Object)null";
-            } else {
-                replacementText = replacement.getText();
-            }
-            if (TypeUtils.expressionHasType(replacement,
-                    CommonClassNames.JAVA_LANG_STRING)) {
-                return replacementText;
-            }
-        }
-        return "String.valueOf(" + replacementText + ')';
-    }
-
-    @Override
-    public InspectionGadgetsFix buildFix(Object... infos) {
-        return new UnnecessaryTemporaryObjectFix((PsiBinaryExpression)infos[0]);
-    }
-
-    private static class UnnecessaryTemporaryObjectFix
-            extends InspectionGadgetsFix {
-
-        private final String m_name;
-
-        private UnnecessaryTemporaryObjectFix(PsiBinaryExpression expression) {
-            m_name = InspectionGadgetsBundle.message("string.replace.quickfix",
-                            calculateReplacementExpression(expression));
-        }
-
-        @NotNull
-        public String getName() {
-            return m_name;
-        }
-
-        @Override
-        public void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
-            final PsiBinaryExpression expression =
-                    (PsiBinaryExpression)descriptor.getPsiElement();
-            final String newExpression =
-                    calculateReplacementExpression(expression);
-            replaceExpression(expression, newExpression);
-        }
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new TrivialStringConcatenationVisitor();
-    }
-
-    private static class TrivialStringConcatenationVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitBinaryExpression(
-                @NotNull PsiBinaryExpression expression) {
-            super.visitBinaryExpression(expression);
-            if (!(expression.getROperand() != null)) {
-                return;
-            }
-            if (!TypeUtils.expressionHasType(expression,
-                    CommonClassNames.JAVA_LANG_STRING)) {
-                return;
-            }
-            final PsiExpression lhs = expression.getLOperand();
-            final PsiExpression rhs = expression.getROperand();
-            if (!ExpressionUtils.isEmptyStringLiteral(lhs) &&
-                    !ExpressionUtils.isEmptyStringLiteral(rhs)) {
-                return;
-            }
-            if (PsiUtil.isConstantExpression(expression)) {
-                return;
-            }
-            registerError(expression, expression);
-        }
-    }
+  }
 }

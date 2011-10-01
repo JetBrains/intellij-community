@@ -36,120 +36,123 @@ import javax.swing.JComponent;
 
 public class NestedMethodCallInspection extends BaseInspection {
 
-    /** @noinspection PublicField */
-    public boolean m_ignoreFieldInitializations = true;
+  /**
+   * @noinspection PublicField
+   */
+  public boolean m_ignoreFieldInitializations = true;
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "nested.method.call.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "nested.method.call.problem.descriptor");
+  }
+
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(
+      InspectionGadgetsBundle.message(
+        "nested.method.call.ignore.option"),
+      this, "m_ignoreFieldInitializations");
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new NestedMethodCallVisitor();
+  }
+
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new NestedMethodCallFix();
+  }
+
+  @Override
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return true;
+  }
+
+  private static class NestedMethodCallFix extends InspectionGadgetsFix {
 
     @Override
     @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "nested.method.call.display.name");
+    public String getName() {
+      return InspectionGadgetsBundle.message(
+        "introduce.variable.quickfix");
     }
 
     @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "nested.method.call.problem.descriptor");
-    }
-
-    @Override
-    public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel(
-                InspectionGadgetsBundle.message(
-                        "nested.method.call.ignore.option"),
-                this, "m_ignoreFieldInitializations");
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new NestedMethodCallVisitor();
-    }
-
-    @Override
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        return new NestedMethodCallFix();
-    }
-
-    @Override
-    protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
-        return true;
-    }
-
-    private static class NestedMethodCallFix extends InspectionGadgetsFix {
-
-        @Override
-        @NotNull
-        public String getName() {
-            return InspectionGadgetsBundle.message(
-                    "introduce.variable.quickfix");
+    public void doFix(final Project project, ProblemDescriptor descriptor) {
+      final JavaRefactoringActionHandlerFactory factory =
+        JavaRefactoringActionHandlerFactory.getInstance();
+      final RefactoringActionHandler introduceHandler =
+        factory.createIntroduceVariableHandler();
+      final PsiElement methodNameElement = descriptor.getPsiElement();
+      final PsiElement methodExpression = methodNameElement.getParent();
+      if (methodExpression == null) {
+        return;
+      }
+      final PsiElement methodCallExpression =
+        methodExpression.getParent();
+      final DataManager dataManager = DataManager.getInstance();
+      final DataContext dataContext = dataManager.getDataContext();
+      final Runnable runnable = new Runnable() {
+        public void run() {
+          introduceHandler.invoke(project,
+                                  new PsiElement[]{methodCallExpression}, dataContext);
         }
-
-        @Override
-        public void doFix(final Project project, ProblemDescriptor descriptor) {
-            final JavaRefactoringActionHandlerFactory factory =
-                    JavaRefactoringActionHandlerFactory.getInstance();
-            final RefactoringActionHandler introduceHandler =
-                    factory.createIntroduceVariableHandler();
-            final PsiElement methodNameElement = descriptor.getPsiElement();
-            final PsiElement methodExpression = methodNameElement.getParent();
-            if (methodExpression == null) {
-                return;
-            }
-            final PsiElement methodCallExpression =
-                    methodExpression.getParent();
-            final DataManager dataManager = DataManager.getInstance();
-            final DataContext dataContext = dataManager.getDataContext();
-            final Runnable runnable = new Runnable() {
-              public void run() {
-                introduceHandler.invoke(project,
-                        new PsiElement[]{methodCallExpression}, dataContext);
-              }
-            };
-            if (ApplicationManager.getApplication().isUnitTestMode()) {
-              runnable.run();
-            }
-            else {
-              ApplicationManager.getApplication().invokeLater(runnable,
-                      project.getDisposed());
-            }
-        }
+      };
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        runnable.run();
+      }
+      else {
+        ApplicationManager.getApplication().invokeLater(runnable,
+                                                        project.getDisposed());
+      }
     }
+  }
 
-    private class NestedMethodCallVisitor extends BaseInspectionVisitor {
+  private class NestedMethodCallVisitor extends BaseInspectionVisitor {
 
-        @Override public void visitMethodCallExpression(
-                @NotNull PsiMethodCallExpression expression) {
-            super.visitMethodCallExpression(expression);
-            PsiExpression outerExpression = expression;
-            while (outerExpression != null &&
-                    outerExpression.getParent() instanceof PsiExpression) {
-                outerExpression = (PsiExpression)outerExpression.getParent();
-            }
-            if (outerExpression == null) {
-                return;
-            }
-            final PsiElement parent = outerExpression.getParent();
-            if (!(parent instanceof PsiExpressionList)) {
-                return;
-            }
-            final PsiElement grandParent = parent.getParent();
-            if (!(grandParent instanceof PsiCallExpression)) {
-                return;
-            }
-            if (ExpressionUtils.isConstructorInvocation(grandParent)) {
-                //ignore nested method calls at the start of a constructor,
-                //where they can't be extracted
-                return;
-            }
-            if (m_ignoreFieldInitializations) {
-                final PsiElement field =
-                        PsiTreeUtil.getParentOfType(expression, PsiField.class);
-                if (field != null) {
-                    return;
-                }
-            }
-            registerMethodCallError(expression);
+    @Override
+    public void visitMethodCallExpression(
+      @NotNull PsiMethodCallExpression expression) {
+      super.visitMethodCallExpression(expression);
+      PsiExpression outerExpression = expression;
+      while (outerExpression != null &&
+             outerExpression.getParent() instanceof PsiExpression) {
+        outerExpression = (PsiExpression)outerExpression.getParent();
+      }
+      if (outerExpression == null) {
+        return;
+      }
+      final PsiElement parent = outerExpression.getParent();
+      if (!(parent instanceof PsiExpressionList)) {
+        return;
+      }
+      final PsiElement grandParent = parent.getParent();
+      if (!(grandParent instanceof PsiCallExpression)) {
+        return;
+      }
+      if (ExpressionUtils.isConstructorInvocation(grandParent)) {
+        //ignore nested method calls at the start of a constructor,
+        //where they can't be extracted
+        return;
+      }
+      if (m_ignoreFieldInitializations) {
+        final PsiElement field =
+          PsiTreeUtil.getParentOfType(expression, PsiField.class);
+        if (field != null) {
+          return;
         }
+      }
+      registerMethodCallError(expression);
     }
+  }
 }

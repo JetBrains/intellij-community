@@ -26,50 +26,51 @@ import org.jetbrains.annotations.NotNull;
 
 public class NestedTryStatementInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "nested.try.statement.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "nested.try.statement.display.name");
+  }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "nested.try.statement.problem.descriptor");
-    }
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "nested.try.statement.problem.descriptor");
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new NestedTryStatementVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new NestedTryStatementVisitor();
+  }
 
-    private static class NestedTryStatementVisitor
-            extends BaseInspectionVisitor {
+  private static class NestedTryStatementVisitor
+    extends BaseInspectionVisitor {
 
-        @Override public void visitTryStatement(@NotNull PsiTryStatement statement) {
-            super.visitTryStatement(statement);
-            final PsiTryStatement parentTry =
-                    PsiTreeUtil.getParentOfType(statement,
-                            PsiTryStatement.class);
-            if (parentTry == null) {
-                return;
-            }
-            final PsiCodeBlock tryBlock = parentTry.getTryBlock();
-            if (tryBlock == null) {
-                return;
-            }
-            if (!PsiTreeUtil.isAncestor(tryBlock, statement, true)) {
-                return;
-            }
-            final PsiMethod containingMethod =
-                    PsiTreeUtil.getParentOfType(statement, PsiMethod.class);
-            final PsiMethod containingContainingMethod =
-                    PsiTreeUtil.getParentOfType(parentTry, PsiMethod.class);
-            if (containingMethod == null ||
-                    containingContainingMethod == null ||
-                    !containingMethod.equals(containingContainingMethod)) {
-                return;
-            }
-            registerStatementError(statement);
-        }
+    @Override
+    public void visitTryStatement(@NotNull PsiTryStatement statement) {
+      super.visitTryStatement(statement);
+      final PsiTryStatement parentTry =
+        PsiTreeUtil.getParentOfType(statement,
+                                    PsiTryStatement.class);
+      if (parentTry == null) {
+        return;
+      }
+      final PsiCodeBlock tryBlock = parentTry.getTryBlock();
+      if (tryBlock == null) {
+        return;
+      }
+      if (!PsiTreeUtil.isAncestor(tryBlock, statement, true)) {
+        return;
+      }
+      final PsiMethod containingMethod =
+        PsiTreeUtil.getParentOfType(statement, PsiMethod.class);
+      final PsiMethod containingContainingMethod =
+        PsiTreeUtil.getParentOfType(parentTry, PsiMethod.class);
+      if (containingMethod == null ||
+          containingContainingMethod == null ||
+          !containingMethod.equals(containingContainingMethod)) {
+        return;
+      }
+      registerStatementError(statement);
     }
+  }
 }

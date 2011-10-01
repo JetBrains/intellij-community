@@ -17,4 +17,5 @@ package com.siyeh.ig.ui;
 
 import javax.swing.JComponent;
 
-public class BlankFiller extends JComponent {}
+public class BlankFiller extends JComponent {
+}

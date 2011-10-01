@@ -27,115 +27,115 @@ import javax.swing.*;
 
 public class SocketResourceInspection extends ResourceInspection {
 
-    @SuppressWarnings({"PublicField"})
-    public boolean insideTryAllowed = false;
+  @SuppressWarnings({"PublicField"})
+  public boolean insideTryAllowed = false;
+
+  @Override
+  @NotNull
+  public String getID() {
+    return "SocketOpenedButNotSafelyClosed";
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "socket.opened.not.closed.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    final PsiExpression expression = (PsiExpression)infos[0];
+    final PsiType type = expression.getType();
+    assert type != null;
+    final String text = type.getPresentableText();
+    return InspectionGadgetsBundle.message(
+      "resource.opened.not.closed.problem.descriptor", text);
+  }
+
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+      "allow.resource.to.be.opened.inside.a.try.block"),
+                                          this, "insideTryAllowed");
+  }
+
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new SocketResourceVisitor();
+  }
+
+  private class SocketResourceVisitor extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String getID() {
-        return "SocketOpenedButNotSafelyClosed";
+    public void visitMethodCallExpression(
+      @NotNull PsiMethodCallExpression expression) {
+      super.visitMethodCallExpression(expression);
+      if (!isSocketFactoryMethod(expression)) {
+        return;
+      }
+      final PsiElement parent = getExpressionParent(expression);
+      if (parent instanceof PsiReturnStatement ||
+          parent instanceof PsiResourceVariable) {
+        return;
+      }
+      final PsiVariable boundVariable = getVariable(parent);
+      if (isSafelyClosed(boundVariable, expression, insideTryAllowed)) {
+        return;
+      }
+      if (isResourceEscapedFromMethod(boundVariable, expression)) {
+        return;
+      }
+      registerError(expression, expression);
     }
 
     @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "socket.opened.not.closed.display.name");
+    public void visitNewExpression(
+      @NotNull PsiNewExpression expression) {
+      super.visitNewExpression(expression);
+      if (!isSocketResource(expression)) {
+        return;
+      }
+      final PsiElement parent = getExpressionParent(expression);
+      if (parent instanceof PsiReturnStatement ||
+          parent instanceof PsiResourceVariable) {
+        return;
+      }
+      final PsiVariable boundVariable = getVariable(parent);
+      if (isSafelyClosed(boundVariable, expression, insideTryAllowed)) {
+        return;
+      }
+      if (isResourceEscapedFromMethod(boundVariable, expression)) {
+        return;
+      }
+      registerError(expression, expression);
     }
 
-    @Override
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        final PsiExpression expression = (PsiExpression) infos[0];
-        final PsiType type = expression.getType();
-        assert type != null;
-        final String text = type.getPresentableText();
-        return InspectionGadgetsBundle.message(
-                "resource.opened.not.closed.problem.descriptor", text);
+    private boolean isSocketResource(PsiNewExpression expression) {
+      return TypeUtils.expressionHasTypeOrSubtype(expression,
+                                                  "java.net.Socket",
+                                                  "java.net.DatagramSocket",
+                                                  "java.net.ServerSocket") != null;
     }
 
-    @Override
-    public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-                "allow.resource.to.be.opened.inside.a.try.block"),
-                this, "insideTryAllowed");
+    private boolean isSocketFactoryMethod(
+      PsiMethodCallExpression expression) {
+      final PsiReferenceExpression methodExpression =
+        expression.getMethodExpression();
+      @NonNls final String methodName =
+        methodExpression.getReferenceName();
+      if (!"accept".equals(methodName)) {
+        return false;
+      }
+      final PsiExpression qualifier =
+        methodExpression.getQualifierExpression();
+      if (qualifier == null) {
+        return false;
+      }
+      return TypeUtils.expressionHasTypeOrSubtype(qualifier,
+                                                  "java.net.ServerSocket");
     }
-
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new SocketResourceVisitor();
-    }
-
-    private class SocketResourceVisitor extends BaseInspectionVisitor {
-
-        @Override
-        public void visitMethodCallExpression(
-                @NotNull PsiMethodCallExpression expression) {
-            super.visitMethodCallExpression(expression);
-            if (!isSocketFactoryMethod(expression)) {
-                return;
-            }
-            final PsiElement parent = getExpressionParent(expression);
-            if (parent instanceof PsiReturnStatement ||
-                    parent instanceof PsiResourceVariable) {
-                return;
-            }
-            final PsiVariable boundVariable = getVariable(parent);
-            if (isSafelyClosed(boundVariable, expression, insideTryAllowed)) {
-                return;
-            }
-            if (isResourceEscapedFromMethod(boundVariable, expression)) {
-                return;
-            }
-            registerError(expression, expression);
-        }
-
-        @Override
-        public void visitNewExpression(
-                @NotNull PsiNewExpression expression) {
-            super.visitNewExpression(expression);
-            if (!isSocketResource(expression)) {
-                return;
-            }
-            final PsiElement parent = getExpressionParent(expression);
-            if (parent instanceof PsiReturnStatement ||
-                    parent instanceof PsiResourceVariable) {
-                return;
-            }
-            final PsiVariable boundVariable = getVariable(parent);
-            if (isSafelyClosed(boundVariable, expression, insideTryAllowed)) {
-                return;
-            }
-            if (isResourceEscapedFromMethod(boundVariable, expression)) {
-                return;
-            }
-            registerError(expression, expression);
-        }
-
-        private boolean isSocketResource(PsiNewExpression expression) {
-            return TypeUtils.expressionHasTypeOrSubtype(expression,
-                    "java.net.Socket",
-                    "java.net.DatagramSocket",
-                    "java.net.ServerSocket") != null;
-        }
-
-        private boolean isSocketFactoryMethod(
-                PsiMethodCallExpression expression) {
-            final PsiReferenceExpression methodExpression =
-                    expression.getMethodExpression();
-            @NonNls final String methodName =
-                    methodExpression.getReferenceName();
-            if (!"accept".equals(methodName)) {
-                return false;
-            }
-            final PsiExpression qualifier =
-                    methodExpression.getQualifierExpression();
-            if (qualifier == null) {
-                return false;
-            }
-            return TypeUtils.expressionHasTypeOrSubtype(qualifier,
-                    "java.net.ServerSocket");
-        }
-    }
+  }
 }

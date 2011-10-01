@@ -27,84 +27,85 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
 public class UnnecessaryLabelOnBreakStatementInspection
-        extends BaseInspection {
+  extends BaseInspection {
+
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "unnecessary.label.on.break.statement.display.name");
+  }
+
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "unnecessary.label.on.break.statement.problem.descriptor");
+  }
+
+  public boolean isEnabledByDefault() {
+    return true;
+  }
+
+  public InspectionGadgetsFix buildFix(Object... infos) {
+    return new UnnecessaryLabelOnBreakStatementFix();
+  }
+
+  private static class UnnecessaryLabelOnBreakStatementFix
+    extends InspectionGadgetsFix {
 
     @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "unnecessary.label.on.break.statement.display.name");
+    public String getName() {
+      return InspectionGadgetsBundle.message(
+        "unnecessary.label.remove.quickfix");
     }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "unnecessary.label.on.break.statement.problem.descriptor");
+    public void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiElement breakKeywordElement = descriptor.getPsiElement();
+      final PsiBreakStatement breakStatement =
+        (PsiBreakStatement)breakKeywordElement.getParent();
+      final PsiIdentifier identifier =
+        breakStatement.getLabelIdentifier();
+      if (identifier == null) {
+        return;
+      }
+      identifier.delete();
     }
+  }
 
-    public boolean isEnabledByDefault() {
-        return true;
+  public BaseInspectionVisitor buildVisitor() {
+    return new UnnecessaryLabelOnBreakStatementVisitor();
+  }
+
+  private static class UnnecessaryLabelOnBreakStatementVisitor
+    extends BaseInspectionVisitor {
+
+    @Override
+    public void visitBreakStatement(@NotNull PsiBreakStatement statement) {
+      final PsiIdentifier labelIdentifier =
+        statement.getLabelIdentifier();
+      if (labelIdentifier == null) {
+        return;
+      }
+      final String labelText = labelIdentifier.getText();
+      if (labelText == null || labelText.length() == 0) {
+        return;
+      }
+      final PsiStatement exitedStatement =
+        statement.findExitedStatement();
+      if (exitedStatement == null) {
+        return;
+      }
+      final PsiStatement labelEnabledParent =
+        PsiTreeUtil.getParentOfType(statement,
+                                    PsiForStatement.class, PsiDoWhileStatement.class,
+                                    PsiForeachStatement.class, PsiWhileStatement.class,
+                                    PsiSwitchStatement.class);
+      if (labelEnabledParent == null) {
+        return;
+      }
+      if (exitedStatement.equals(labelEnabledParent)) {
+        registerStatementError(statement);
+      }
     }
-
-    public InspectionGadgetsFix buildFix(Object... infos) {
-        return new UnnecessaryLabelOnBreakStatementFix();
-    }
-
-    private static class UnnecessaryLabelOnBreakStatementFix
-            extends InspectionGadgetsFix {
-
-        @NotNull
-        public String getName() {
-            return InspectionGadgetsBundle.message(
-                    "unnecessary.label.remove.quickfix");
-        }
-
-        public void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
-            final PsiElement breakKeywordElement = descriptor.getPsiElement();
-            final PsiBreakStatement breakStatement =
-                    (PsiBreakStatement)breakKeywordElement.getParent();
-            final PsiIdentifier identifier =
-                    breakStatement.getLabelIdentifier();
-            if (identifier == null) {
-                return;
-            }
-            identifier.delete();
-        }
-    }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new UnnecessaryLabelOnBreakStatementVisitor();
-    }
-
-    private static class UnnecessaryLabelOnBreakStatementVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitBreakStatement(@NotNull PsiBreakStatement statement) {
-            final PsiIdentifier labelIdentifier =
-                    statement.getLabelIdentifier();
-            if (labelIdentifier == null) {
-                return;
-            }
-            final String labelText = labelIdentifier.getText();
-            if (labelText == null || labelText.length() == 0) {
-                return;
-            }
-            final PsiStatement exitedStatement =
-                    statement.findExitedStatement();
-            if (exitedStatement == null) {
-                return;
-            }
-            final PsiStatement labelEnabledParent =
-                    PsiTreeUtil.getParentOfType(statement,
-                            PsiForStatement.class, PsiDoWhileStatement.class,
-                            PsiForeachStatement.class, PsiWhileStatement.class,
-                            PsiSwitchStatement.class);
-            if (labelEnabledParent == null) {
-                return;
-            }
-            if (exitedStatement.equals(labelEnabledParent)) {
-                registerStatementError(statement);
-            }
-        }
-    }
+  }
 }

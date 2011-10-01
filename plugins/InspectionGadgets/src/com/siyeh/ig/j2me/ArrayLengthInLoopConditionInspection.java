@@ -24,83 +24,86 @@ import org.jetbrains.annotations.NotNull;
 
 public class ArrayLengthInLoopConditionInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "array.length.in.loop.condition.display.name");
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "array.length.in.loop.condition.display.name");
+  }
+
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "array.length.in.loop.condition.problem.descriptor");
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new ArrayLengthInLoopConditionVisitor();
+  }
+
+  private static class ArrayLengthInLoopConditionVisitor
+    extends BaseInspectionVisitor {
+
+    @Override
+    public void visitForStatement(@NotNull PsiForStatement statement) {
+      super.visitForStatement(statement);
+      final PsiExpression condition = statement.getCondition();
+      if (condition == null) {
+        return;
+      }
+      checkForMethodCalls(condition);
     }
 
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "array.length.in.loop.condition.problem.descriptor");
+    @Override
+    public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
+      super.visitWhileStatement(statement);
+      final PsiExpression condition = statement.getCondition();
+      if (condition == null) {
+        return;
+      }
+      checkForMethodCalls(condition);
     }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new ArrayLengthInLoopConditionVisitor();
+    @Override
+    public void visitDoWhileStatement(
+      @NotNull PsiDoWhileStatement statement) {
+      super.visitDoWhileStatement(statement);
+      final PsiExpression condition = statement.getCondition();
+      if (condition == null) {
+        return;
+      }
+      checkForMethodCalls(condition);
     }
 
-    private static class ArrayLengthInLoopConditionVisitor
-            extends BaseInspectionVisitor {
+    private void checkForMethodCalls(PsiExpression condition) {
+      final PsiElementVisitor visitor =
+        new JavaRecursiveElementVisitor() {
 
-        @Override public void visitForStatement(@NotNull PsiForStatement statement) {
-            super.visitForStatement(statement);
-            final PsiExpression condition = statement.getCondition();
-            if(condition== null)
-            {
-                return;
+          @Override
+          public void visitReferenceExpression(
+            @NotNull PsiReferenceExpression expression) {
+            super.visitReferenceExpression(expression);
+            final String name = expression.getReferenceName();
+            if (!HardcodedMethodConstants.LENGTH.equals(name)) {
+              return;
             }
-            checkForMethodCalls(condition);
-        }
-
-        @Override public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
-            super.visitWhileStatement(statement);
-            final PsiExpression condition = statement.getCondition();
-            if(condition == null){
-                return;
+            final PsiExpression qualifier =
+              expression.getQualifierExpression();
+            if (qualifier == null) {
+              return;
             }
-            checkForMethodCalls(condition);
-        }
-
-        @Override public void visitDoWhileStatement(
-                @NotNull PsiDoWhileStatement statement) {
-            super.visitDoWhileStatement(statement);
-            final PsiExpression condition = statement.getCondition();
-            if(condition == null){
-                return;
+            final PsiType type = qualifier.getType();
+            if (!(type instanceof PsiArrayType)) {
+              return;
             }
-            checkForMethodCalls(condition);
-        }
-
-        private void checkForMethodCalls(PsiExpression condition){
-            final PsiElementVisitor visitor =
-                    new JavaRecursiveElementVisitor(){
-
-                @Override public void visitReferenceExpression(
-                        @NotNull PsiReferenceExpression expression){
-                    super.visitReferenceExpression(expression);
-                    final String name = expression.getReferenceName();
-                    if(!HardcodedMethodConstants.LENGTH.equals(name)){
-                        return;
-                    }
-                    final PsiExpression qualifier =
-                            expression.getQualifierExpression();
-                    if(qualifier == null){
-                        return;
-                    }
-                    final PsiType type = qualifier.getType();
-                    if(!(type instanceof PsiArrayType)){
-                        return;
-                    }
-                    final PsiElement lengthElement =
-                            expression.getReferenceNameElement();
-                    if (lengthElement == null) {
-                        return;
-                    }
-                    registerError(lengthElement);
-                }
-            };
-            condition.accept(visitor);
-        }
+            final PsiElement lengthElement =
+              expression.getReferenceNameElement();
+            if (lengthElement == null) {
+              return;
+            }
+            registerError(lengthElement);
+          }
+        };
+      condition.accept(visitor);
     }
+  }
 }

@@ -25,27 +25,27 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class NonFinalStaticVariableUsedInClassInitializationInspection
-        extends BaseInspection {
+  extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName(){
-        return InspectionGadgetsBundle.message(
-                "non.final.static.variable.initialization.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "non.final.static.variable.initialization.display.name");
+  }
 
-    @NotNull
-    public String buildErrorString(Object... infos){
-        return InspectionGadgetsBundle.message(
-                "non.final.static.variable.initialization.problem.descriptor");
-    }
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "non.final.static.variable.initialization.problem.descriptor");
+  }
 
-    @Nullable
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        final PsiField field = (PsiField) infos[0];
-        return MakeFieldFinalFix.buildFix(field);
-    }
+  @Nullable
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    final PsiField field = (PsiField)infos[0];
+    return MakeFieldFinalFix.buildFix(field);
+  }
 
-    public BaseInspectionVisitor buildVisitor(){
-        return new NonFinalStaticVariableUsedInClassInitializationVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new NonFinalStaticVariableUsedInClassInitializationVisitor();
+  }
 }

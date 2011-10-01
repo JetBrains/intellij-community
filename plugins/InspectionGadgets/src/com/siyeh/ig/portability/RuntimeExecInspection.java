@@ -27,53 +27,53 @@ import org.jetbrains.annotations.NotNull;
 
 public class RuntimeExecInspection extends BaseInspection {
 
-    @NotNull
-    public String getID() {
-        return "CallToRuntimeExec";
-    }
+  @NotNull
+  public String getID() {
+    return "CallToRuntimeExec";
+  }
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "runtime.exec.call.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "runtime.exec.call.display.name");
+  }
 
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "runtime.exec.call.problem.descriptor");
-    }
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "runtime.exec.call.problem.descriptor");
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new RuntimeExecVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new RuntimeExecVisitor();
+  }
 
-    private static class RuntimeExecVisitor extends BaseInspectionVisitor {
+  private static class RuntimeExecVisitor extends BaseInspectionVisitor {
 
-        @Override public void visitMethodCallExpression(
-                @NotNull PsiMethodCallExpression expression) {
-            super.visitMethodCallExpression(expression);
-            final PsiReferenceExpression methodExpression =
-                    expression.getMethodExpression();
-            final String methodName = methodExpression.getReferenceName();
-            @NonNls final String exec = "exec";
-            if (!exec.equals(methodName)) {
-                return;
-            }
-            final PsiMethod method = expression.resolveMethod();
-            if (method == null) {
-                return;
-            }
-            final PsiClass aClass = method.getContainingClass();
-            if(aClass == null)
-            {
-                return;
-            }
-            final String className = aClass.getQualifiedName();
-            if (!"java.lang.Runtime".equals(className)) {
-                return;
-            }
-            registerMethodCallError(expression);
-        }
+    @Override
+    public void visitMethodCallExpression(
+      @NotNull PsiMethodCallExpression expression) {
+      super.visitMethodCallExpression(expression);
+      final PsiReferenceExpression methodExpression =
+        expression.getMethodExpression();
+      final String methodName = methodExpression.getReferenceName();
+      @NonNls final String exec = "exec";
+      if (!exec.equals(methodName)) {
+        return;
+      }
+      final PsiMethod method = expression.resolveMethod();
+      if (method == null) {
+        return;
+      }
+      final PsiClass aClass = method.getContainingClass();
+      if (aClass == null) {
+        return;
+      }
+      final String className = aClass.getQualifiedName();
+      if (!"java.lang.Runtime".equals(className)) {
+        return;
+      }
+      registerMethodCallError(expression);
     }
+  }
 }

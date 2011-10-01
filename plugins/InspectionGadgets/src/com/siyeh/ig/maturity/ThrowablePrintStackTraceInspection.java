@@ -26,43 +26,44 @@ import org.jetbrains.annotations.NotNull;
 
 public class ThrowablePrintStackTraceInspection extends BaseInspection {
 
-    @NotNull
-    public String getID(){
-        return "CallToPrintStackTrace";
-    }
+  @NotNull
+  public String getID() {
+    return "CallToPrintStackTrace";
+  }
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "printstacktrace.call.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "printstacktrace.call.display.name");
+  }
 
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "printstacktrace.call.problem.descriptor");
-    }
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "printstacktrace.call.problem.descriptor");
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new ThrowablePrintStackTraceVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new ThrowablePrintStackTraceVisitor();
+  }
 
-    private static class ThrowablePrintStackTraceVisitor
-            extends BaseInspectionVisitor {
-       
-        @Override public void visitMethodCallExpression(
-                @NotNull PsiMethodCallExpression expression) {
-            super.visitMethodCallExpression(expression);
-            final String methodName = MethodCallUtils.getMethodName(expression);
-            if (!HardcodedMethodConstants.PRINT_STACK_TRACE.equals(
-                    methodName)) {
-                return;
-            }
-            final PsiExpressionList argumentList = expression.getArgumentList();
-            if (argumentList.getExpressions().length != 0) {
-                return;
-            }
-            registerMethodCallError(expression);
-        }
+  private static class ThrowablePrintStackTraceVisitor
+    extends BaseInspectionVisitor {
+
+    @Override
+    public void visitMethodCallExpression(
+      @NotNull PsiMethodCallExpression expression) {
+      super.visitMethodCallExpression(expression);
+      final String methodName = MethodCallUtils.getMethodName(expression);
+      if (!HardcodedMethodConstants.PRINT_STACK_TRACE.equals(
+        methodName)) {
+        return;
+      }
+      final PsiExpressionList argumentList = expression.getArgumentList();
+      if (argumentList.getExpressions().length != 0) {
+        return;
+      }
+      registerMethodCallError(expression);
     }
+  }
 }

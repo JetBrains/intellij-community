@@ -27,70 +27,71 @@ import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class UnnecessaryQualifierForThisInspection
-        extends BaseInspection {
+  extends BaseInspection {
+
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "unnecessary.qualifier.for.this.display.name");
+  }
+
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "unnecessary.qualifier.for.this.problem.descriptor");
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new UnnecessaryQualifierForThisVisitor();
+  }
+
+  public InspectionGadgetsFix buildFix(Object... infos) {
+    return new UnnecessaryQualifierForThisFix();
+  }
+
+  private static class UnnecessaryQualifierForThisFix
+    extends InspectionGadgetsFix {
 
     @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "unnecessary.qualifier.for.this.display.name");
+    public String getName() {
+      return InspectionGadgetsBundle.message(
+        "unnecessary.qualifier.for.this.remove.quickfix");
     }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "unnecessary.qualifier.for.this.problem.descriptor");
+    public void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiElement qualifier = descriptor.getPsiElement();
+      final PsiThisExpression thisExpression =
+        (PsiThisExpression)qualifier.getParent();
+      replaceExpression(thisExpression, PsiKeyword.THIS);
     }
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new UnnecessaryQualifierForThisVisitor();
+  private static class UnnecessaryQualifierForThisVisitor
+    extends BaseInspectionVisitor {
+
+    @Override
+    public void visitThisExpression(
+      @NotNull PsiThisExpression thisExpression) {
+      super.visitThisExpression(thisExpression);
+      final PsiJavaCodeReferenceElement qualifier =
+        thisExpression.getQualifier();
+      if (qualifier == null) {
+        return;
+      }
+      final PsiElement referent = qualifier.resolve();
+      if (!(referent instanceof PsiClass)) {
+        return;
+      }
+      final PsiClass containingClass =
+        ClassUtils.getContainingClass(thisExpression);
+      if (containingClass == null) {
+        return;
+      }
+      if (!containingClass.equals(referent)) {
+        return;
+      }
+      registerError(qualifier);
     }
-
-    public InspectionGadgetsFix buildFix(Object... infos) {
-        return new UnnecessaryQualifierForThisFix();
-    }
-
-    private static class UnnecessaryQualifierForThisFix
-            extends InspectionGadgetsFix {
-
-        @NotNull
-        public String getName() {
-            return InspectionGadgetsBundle.message(
-                    "unnecessary.qualifier.for.this.remove.quickfix");
-        }
-
-        public void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
-            final PsiElement qualifier = descriptor.getPsiElement();
-            final PsiThisExpression thisExpression =
-                    (PsiThisExpression)qualifier.getParent();
-            replaceExpression(thisExpression, PsiKeyword.THIS);
-        }
-    }
-
-    private static class UnnecessaryQualifierForThisVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitThisExpression(
-                @NotNull PsiThisExpression thisExpression) {
-            super.visitThisExpression(thisExpression);
-            final PsiJavaCodeReferenceElement qualifier =
-                    thisExpression.getQualifier();
-            if (qualifier == null) {
-                return;
-            }
-            final PsiElement referent = qualifier.resolve();
-            if (!(referent instanceof PsiClass)) {
-                return;
-            }
-            final PsiClass containingClass =
-                    ClassUtils.getContainingClass(thisExpression);
-            if (containingClass == null) {
-                return;
-            }
-            if (!containingClass.equals(referent)) {
-                return;
-            }
-            registerError(qualifier);
-        }
-    }
+  }
 }

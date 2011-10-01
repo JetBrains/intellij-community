@@ -32,43 +32,43 @@ import java.util.Set;
 
 public class CyclicClassInitializationInspection extends BaseGlobalInspection {
 
-    @NotNull
-    @Override
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "cyclic.class.initialization.display.name");
-    }
+  @NotNull
+  @Override
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "cyclic.class.initialization.display.name");
+  }
 
-    @Nullable
-    public CommonProblemDescriptor[] checkElement(
-            RefEntity refEntity,
-            AnalysisScope analysisScope,
-            InspectionManager inspectionManager,
-            GlobalInspectionContext globalInspectionContext) {
-        if (!(refEntity instanceof RefClass)) {
-            return null;
-        }
-        final RefClass refClass = (RefClass) refEntity;
-        final PsiClass aClass = refClass.getElement();
-        if (aClass.getContainingClass() != null) {
-            return null;
-        }
-        final Set<RefClass> dependencies =
-                InitializationDependencyUtils.calculateTransitiveInitializationDependentsForClass(refClass);
-        final Set<RefClass> dependents =
-                InitializationDependencyUtils.calculateTransitiveInitializationDependenciesForClass(refClass);
-        final Set<RefClass> mutualDependents = new HashSet<RefClass>(dependencies);
-        mutualDependents.retainAll(dependents);
-
-        final int numMutualDependents = mutualDependents.size();
-        if (numMutualDependents == 0) {
-            return null;
-        }
-        final String errorString = InspectionGadgetsBundle.message(
-                "cyclic.class.initialization.problem.descriptor",
-                refEntity.getName(), numMutualDependents);
-        return new CommonProblemDescriptor[]{
-                inspectionManager.createProblemDescriptor(errorString)
-        };
+  @Nullable
+  public CommonProblemDescriptor[] checkElement(
+    RefEntity refEntity,
+    AnalysisScope analysisScope,
+    InspectionManager inspectionManager,
+    GlobalInspectionContext globalInspectionContext) {
+    if (!(refEntity instanceof RefClass)) {
+      return null;
     }
+    final RefClass refClass = (RefClass)refEntity;
+    final PsiClass aClass = refClass.getElement();
+    if (aClass.getContainingClass() != null) {
+      return null;
+    }
+    final Set<RefClass> dependencies =
+      InitializationDependencyUtils.calculateTransitiveInitializationDependentsForClass(refClass);
+    final Set<RefClass> dependents =
+      InitializationDependencyUtils.calculateTransitiveInitializationDependenciesForClass(refClass);
+    final Set<RefClass> mutualDependents = new HashSet<RefClass>(dependencies);
+    mutualDependents.retainAll(dependents);
+
+    final int numMutualDependents = mutualDependents.size();
+    if (numMutualDependents == 0) {
+      return null;
+    }
+    final String errorString = InspectionGadgetsBundle.message(
+      "cyclic.class.initialization.problem.descriptor",
+      refEntity.getName(), numMutualDependents);
+    return new CommonProblemDescriptor[]{
+      inspectionManager.createProblemDescriptor(errorString)
+    };
+  }
 }

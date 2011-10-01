@@ -30,63 +30,64 @@ import java.util.Set;
 
 public class MethodOverridesPrivateMethodInspection extends BaseInspection {
 
-    @NotNull
-    public String getID(){
-        return "MethodOverridesPrivateMethodOfSuperclass";
-    }
+  @NotNull
+  public String getID() {
+    return "MethodOverridesPrivateMethodOfSuperclass";
+  }
 
-    @NotNull
-    public String getDisplayName(){
-        return InspectionGadgetsBundle.message(
-                "method.overrides.private.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "method.overrides.private.display.name");
+  }
 
-    @NotNull
-    public String buildErrorString(Object... infos){
-        return InspectionGadgetsBundle.message(
-                "method.overrides.private.display.name.problem.descriptor");
-    }
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "method.overrides.private.display.name.problem.descriptor");
+  }
 
-    protected InspectionGadgetsFix buildFix(Object... infos){
-        return new RenameFix();
-    }
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new RenameFix();
+  }
 
-    protected boolean buildQuickFixesOnlyForOnTheFlyErrors(){
-        return true;
-    }
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return true;
+  }
 
-    public BaseInspectionVisitor buildVisitor(){
-        return new MethodOverridesPrivateMethodVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new MethodOverridesPrivateMethodVisitor();
+  }
 
-    private static class MethodOverridesPrivateMethodVisitor
-            extends BaseInspectionVisitor{
+  private static class MethodOverridesPrivateMethodVisitor
+    extends BaseInspectionVisitor {
 
-        @Override public void visitMethod(@NotNull PsiMethod method){
-            final PsiClass aClass = method.getContainingClass();
-            if(aClass == null){
-                return;
-            }
-            if (method.getNameIdentifier() == null) {
-                return;
-            }
-            PsiClass ancestorClass = aClass.getSuperClass();
-            final Set<PsiClass> visitedClasses = new HashSet<PsiClass>();
-            while(ancestorClass != null){
-                if(!visitedClasses.add(ancestorClass)){
-                    return;
-                }
-                final PsiMethod overridingMethod =
-                        ancestorClass.findMethodBySignature(method, false);
-                if(overridingMethod != null){
-                    if(overridingMethod.hasModifierProperty(
-                            PsiModifier.PRIVATE)){
-                        registerMethodError(method);
-                        return;
-                    }
-                }
-                ancestorClass = ancestorClass.getSuperClass();
-            }
+    @Override
+    public void visitMethod(@NotNull PsiMethod method) {
+      final PsiClass aClass = method.getContainingClass();
+      if (aClass == null) {
+        return;
+      }
+      if (method.getNameIdentifier() == null) {
+        return;
+      }
+      PsiClass ancestorClass = aClass.getSuperClass();
+      final Set<PsiClass> visitedClasses = new HashSet<PsiClass>();
+      while (ancestorClass != null) {
+        if (!visitedClasses.add(ancestorClass)) {
+          return;
         }
+        final PsiMethod overridingMethod =
+          ancestorClass.findMethodBySignature(method, false);
+        if (overridingMethod != null) {
+          if (overridingMethod.hasModifierProperty(
+            PsiModifier.PRIVATE)) {
+            registerMethodError(method);
+            return;
+          }
+        }
+        ancestorClass = ancestorClass.getSuperClass();
+      }
     }
+  }
 }

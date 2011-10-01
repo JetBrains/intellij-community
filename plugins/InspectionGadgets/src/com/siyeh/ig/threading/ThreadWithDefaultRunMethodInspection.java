@@ -25,109 +25,111 @@ import org.jetbrains.annotations.NotNull;
 
 public class ThreadWithDefaultRunMethodInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "thread.with.default.run.method.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "thread.with.default.run.method.display.name");
+  }
 
-    @NotNull
-    public String getID() {
-        return "InstantiatingAThreadWithDefaultRunMethod";
-    }
+  @NotNull
+  public String getID() {
+    return "InstantiatingAThreadWithDefaultRunMethod";
+  }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "thread.with.default.run.method.problem.descriptor");
-    }
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "thread.with.default.run.method.problem.descriptor");
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new ThreadWithDefaultRunMethodVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new ThreadWithDefaultRunMethodVisitor();
+  }
 
-    private static class ThreadWithDefaultRunMethodVisitor
-            extends BaseInspectionVisitor {
+  private static class ThreadWithDefaultRunMethodVisitor
+    extends BaseInspectionVisitor {
 
-        @Override public void visitNewExpression(@NotNull PsiNewExpression expression) {
-            super.visitNewExpression(expression);
-            final PsiAnonymousClass anonymousClass =
-                    expression.getAnonymousClass();
+    @Override
+    public void visitNewExpression(@NotNull PsiNewExpression expression) {
+      super.visitNewExpression(expression);
+      final PsiAnonymousClass anonymousClass =
+        expression.getAnonymousClass();
 
-            if (anonymousClass != null) {
-                final PsiJavaCodeReferenceElement baseClassReference =
-                        anonymousClass.getBaseClassReference();
-                final PsiElement referent = baseClassReference.resolve();
-                if (referent == null) {
-                    return;
-                }
-                final PsiClass referencedClass = (PsiClass)referent;
-                final String referencedClassName =
-                        referencedClass.getQualifiedName();
-                if (!"java.lang.Thread".equals(referencedClassName)) {
-                    return;
-                }
-                if (definesRun(anonymousClass)) {
-                    return;
-                }
-                final PsiExpressionList argumentList =
-                        expression.getArgumentList();
-                if (argumentList == null) {
-                    return;
-                }
-                final PsiExpression[] arguments = argumentList.getExpressions();
-                for (PsiExpression argument : arguments) {
-                    if (TypeUtils.expressionHasTypeOrSubtype(argument,
-		                    "java.lang.Runnable")) {
-	                    return;
-                    }
-                }
-                registerNewExpressionError(expression);
-            } else {
-                final PsiJavaCodeReferenceElement classReference =
-                        expression.getClassReference();
-                if (classReference == null) {
-                    return;
-                }
-                final PsiElement referent = classReference.resolve();
-                if (referent == null) {
-                    return;
-                }
-                final PsiClass referencedClass = (PsiClass)referent;
-                final String referencedClassName =
-                        referencedClass.getQualifiedName();
-                if (!"java.lang.Thread".equals(referencedClassName)) {
-                    return;
-                }
-                final PsiExpressionList argumentList =
-                        expression.getArgumentList();
-                if (argumentList == null) {
-                    return;
-                }
-                final PsiExpression[] arguments = argumentList.getExpressions();
-                for (PsiExpression argument : arguments) {
-                    if (TypeUtils.expressionHasTypeOrSubtype(argument,
-		                    "java.lang.Runnable")) {
-	                    return;
-                    }
-                }
-                registerNewExpressionError(expression);
-            }
+      if (anonymousClass != null) {
+        final PsiJavaCodeReferenceElement baseClassReference =
+          anonymousClass.getBaseClassReference();
+        final PsiElement referent = baseClassReference.resolve();
+        if (referent == null) {
+          return;
         }
-
-        private static boolean definesRun(PsiAnonymousClass aClass) {
-            final PsiMethod[] methods = aClass.getMethods();
-            for (final PsiMethod method : methods) {
-                final String methodName = method.getName();
-                if (HardcodedMethodConstants.RUN.equals(methodName)) {
-                    final PsiParameterList parameterList =
-                            method.getParameterList();
-                    if (parameterList.getParametersCount() == 0) {
-                        return true;
-                    }
-                }
-            }
-            return false;
+        final PsiClass referencedClass = (PsiClass)referent;
+        final String referencedClassName =
+          referencedClass.getQualifiedName();
+        if (!"java.lang.Thread".equals(referencedClassName)) {
+          return;
         }
+        if (definesRun(anonymousClass)) {
+          return;
+        }
+        final PsiExpressionList argumentList =
+          expression.getArgumentList();
+        if (argumentList == null) {
+          return;
+        }
+        final PsiExpression[] arguments = argumentList.getExpressions();
+        for (PsiExpression argument : arguments) {
+          if (TypeUtils.expressionHasTypeOrSubtype(argument,
+                                                   "java.lang.Runnable")) {
+            return;
+          }
+        }
+        registerNewExpressionError(expression);
+      }
+      else {
+        final PsiJavaCodeReferenceElement classReference =
+          expression.getClassReference();
+        if (classReference == null) {
+          return;
+        }
+        final PsiElement referent = classReference.resolve();
+        if (referent == null) {
+          return;
+        }
+        final PsiClass referencedClass = (PsiClass)referent;
+        final String referencedClassName =
+          referencedClass.getQualifiedName();
+        if (!"java.lang.Thread".equals(referencedClassName)) {
+          return;
+        }
+        final PsiExpressionList argumentList =
+          expression.getArgumentList();
+        if (argumentList == null) {
+          return;
+        }
+        final PsiExpression[] arguments = argumentList.getExpressions();
+        for (PsiExpression argument : arguments) {
+          if (TypeUtils.expressionHasTypeOrSubtype(argument,
+                                                   "java.lang.Runnable")) {
+            return;
+          }
+        }
+        registerNewExpressionError(expression);
+      }
     }
+
+    private static boolean definesRun(PsiAnonymousClass aClass) {
+      final PsiMethod[] methods = aClass.getMethods();
+      for (final PsiMethod method : methods) {
+        final String methodName = method.getName();
+        if (HardcodedMethodConstants.RUN.equals(methodName)) {
+          final PsiParameterList parameterList =
+            method.getParameterList();
+          if (parameterList.getParametersCount() == 0) {
+            return true;
+          }
+        }
+      }
+      return false;
+    }
+  }
 }

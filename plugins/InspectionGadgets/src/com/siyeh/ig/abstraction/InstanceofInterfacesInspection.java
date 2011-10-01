@@ -27,50 +27,51 @@ import javax.swing.JComponent;
 
 public class InstanceofInterfacesInspection extends BaseInspection {
 
-    @SuppressWarnings("PublicField")
-    public boolean ignoreAbstractClasses = false;
+  @SuppressWarnings("PublicField")
+  public boolean ignoreAbstractClasses = false;
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "instanceof.concrete.class.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "instanceof.concrete.class.problem.descriptor");
+  }
+
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(
+      InspectionGadgetsBundle.message("instanceof.interfaces.option"),
+      this, "ignoreAbstractClasses");
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new InstanceofInterfacesVisitor();
+  }
+
+  private class InstanceofInterfacesVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "instanceof.concrete.class.display.name");
+    public void visitInstanceOfExpression(
+      @NotNull PsiInstanceOfExpression expression) {
+      super.visitInstanceOfExpression(expression);
+      final PsiTypeElement typeElement = expression.getCheckType();
+      if (!ConcreteClassUtil.typeIsConcreteClass(typeElement,
+                                                 ignoreAbstractClasses)) {
+        return;
+      }
+      if (typeElement == null) {
+        return;
+      }
+      registerError(typeElement);
     }
-
-    @Override
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "instanceof.concrete.class.problem.descriptor");
-    }
-
-    @Override
-    public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel(
-                InspectionGadgetsBundle.message("instanceof.interfaces.option"),
-                this, "ignoreAbstractClasses");
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new InstanceofInterfacesVisitor();
-    }
-
-    private class InstanceofInterfacesVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitInstanceOfExpression(
-                @NotNull PsiInstanceOfExpression expression) {
-            super.visitInstanceOfExpression(expression);
-            final PsiTypeElement typeElement = expression.getCheckType();
-            if (!ConcreteClassUtil.typeIsConcreteClass(typeElement,
-                    ignoreAbstractClasses)) {
-                return;
-            }
-            if (typeElement == null) {
-                return;
-            }
-            registerError(typeElement);
-        }
-    }
+  }
 }

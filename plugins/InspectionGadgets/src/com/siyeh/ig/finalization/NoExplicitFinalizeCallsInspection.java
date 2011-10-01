@@ -29,51 +29,52 @@ import org.jetbrains.annotations.NotNull;
 
 public class NoExplicitFinalizeCallsInspection extends BaseInspection {
 
-    @NotNull
-    public String getID(){
-        return "FinalizeCalledExplicitly";
-    }
+  @NotNull
+  public String getID() {
+    return "FinalizeCalledExplicitly";
+  }
 
-    @NotNull
-    public String getDisplayName(){
-        return InspectionGadgetsBundle.message(
-                "finalize.called.explicitly.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "finalize.called.explicitly.display.name");
+  }
 
-    @NotNull
-    public String buildErrorString(Object... infos){
-        return InspectionGadgetsBundle.message(
-                "finalize.called.explicitly.problem.descriptor");
-    }
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "finalize.called.explicitly.problem.descriptor");
+  }
 
-    public boolean isEnabledByDefault(){
-        return true;
-    }
+  public boolean isEnabledByDefault() {
+    return true;
+  }
 
-    public BaseInspectionVisitor buildVisitor(){
-        return new NoExplicitFinalizeCallsVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new NoExplicitFinalizeCallsVisitor();
+  }
 
-    private static class NoExplicitFinalizeCallsVisitor
-            extends BaseInspectionVisitor{
+  private static class NoExplicitFinalizeCallsVisitor
+    extends BaseInspectionVisitor {
 
-        @Override public void visitMethodCallExpression(
-                @NotNull PsiMethodCallExpression expression){
-            super.visitMethodCallExpression(expression);
-            if (!MethodCallUtils.isCallToMethod(expression, null, PsiType.VOID,
-                    HardcodedMethodConstants.FINALIZE)) {
-                return;
-            }
-            final PsiMethod containingMethod =
-                    PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
-            if(containingMethod == null){
-                return;
-            }
-            if (MethodUtils.methodMatches(containingMethod, null, PsiType.VOID,
-                    HardcodedMethodConstants.FINALIZE)) {
-                return;
-            }
-            registerMethodCallError(expression);
-        }
+    @Override
+    public void visitMethodCallExpression(
+      @NotNull PsiMethodCallExpression expression) {
+      super.visitMethodCallExpression(expression);
+      if (!MethodCallUtils.isCallToMethod(expression, null, PsiType.VOID,
+                                          HardcodedMethodConstants.FINALIZE)) {
+        return;
+      }
+      final PsiMethod containingMethod =
+        PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
+      if (containingMethod == null) {
+        return;
+      }
+      if (MethodUtils.methodMatches(containingMethod, null, PsiType.VOID,
+                                    HardcodedMethodConstants.FINALIZE)) {
+        return;
+      }
+      registerMethodCallError(expression);
     }
+  }
 }

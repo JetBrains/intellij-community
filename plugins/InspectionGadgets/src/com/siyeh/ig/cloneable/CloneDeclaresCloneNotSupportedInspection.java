@@ -29,96 +29,97 @@ import org.jetbrains.annotations.NotNull;
 
 public class CloneDeclaresCloneNotSupportedInspection extends BaseInspection {
 
-    @NotNull
-    public String getID(){
-        return "CloneDoesntDeclareCloneNotSupportedException";
-    }
+  @NotNull
+  public String getID() {
+    return "CloneDoesntDeclareCloneNotSupportedException";
+  }
+
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "clone.doesnt.declare.clonenotsupportedexception.display.name");
+  }
+
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "clone.doesnt.declare.clonenotsupportedexception.problem.descriptor");
+  }
+
+  public boolean isEnabledByDefault() {
+    return true;
+  }
+
+  public InspectionGadgetsFix buildFix(Object... infos) {
+    return new CloneDeclaresCloneNotSupportedInspectionFix();
+  }
+
+  private static class CloneDeclaresCloneNotSupportedInspectionFix
+    extends InspectionGadgetsFix {
 
     @NotNull
-    public String getDisplayName(){
-        return InspectionGadgetsBundle.message(
-                "clone.doesnt.declare.clonenotsupportedexception.display.name");
+    public String getName() {
+      return InspectionGadgetsBundle.message(
+        "clone.doesnt.declare.clonenotsupportedexception.declare.quickfix");
     }
 
-    @NotNull
-    public String buildErrorString(Object... infos){
-        return InspectionGadgetsBundle.message(
-                "clone.doesnt.declare.clonenotsupportedexception.problem.descriptor");
+    public void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiElement methodNameIdentifier = descriptor.getPsiElement();
+      final PsiMethod method =
+        (PsiMethod)methodNameIdentifier.getParent();
+      PsiUtil.addException(method,
+                           "java.lang.CloneNotSupportedException");
+    }
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new CloneDeclaresCloneNotSupportedExceptionVisitor();
+  }
+
+  private static class CloneDeclaresCloneNotSupportedExceptionVisitor
+    extends BaseInspectionVisitor {
+
+    @Override
+    public void visitMethod(@NotNull PsiMethod method) {
+      //note: no call to super;
+      if (!CloneUtils.isClone(method)) {
+        return;
+      }
+      if (method.hasModifierProperty(PsiModifier.FINAL)) {
+        return;
+      }
+      final PsiClass containingClass = method.getContainingClass();
+      if (containingClass == null) {
+        return;
+      }
+      if (containingClass.hasModifierProperty(PsiModifier.FINAL)) {
+        return;
+      }
+      if (hasThrowsCloneNotSupportedException(method)) {
+        return;
+      }
+      final PsiMethod[] superMethods = method.findSuperMethods();
+      if (superMethods.length < 1) {
+        return;
+      }
+      if (!hasThrowsCloneNotSupportedException(superMethods[0])) {
+        return;
+      }
+      registerMethodError(method);
     }
 
-    public boolean isEnabledByDefault(){
-        return true;
-    }
-
-    public InspectionGadgetsFix buildFix(Object... infos){
-        return new CloneDeclaresCloneNotSupportedInspectionFix();
-    }
-
-    private static class CloneDeclaresCloneNotSupportedInspectionFix
-            extends InspectionGadgetsFix{
-
-        @NotNull
-        public String getName(){
-            return InspectionGadgetsBundle.message(
-                    "clone.doesnt.declare.clonenotsupportedexception.declare.quickfix");
+    public static boolean hasThrowsCloneNotSupportedException(
+      @NotNull PsiMethod method) {
+      final PsiReferenceList throwsList = method.getThrowsList();
+      final PsiClassType[] thrownTypes = throwsList.getReferencedTypes();
+      for (final PsiClassType thrownType : thrownTypes) {
+        if (thrownType.equalsToText(
+          "java.lang.CloneNotSupportedException")) {
+          return true;
         }
-
-        public void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException{
-            final PsiElement methodNameIdentifier = descriptor.getPsiElement();
-            final PsiMethod method =
-                    (PsiMethod) methodNameIdentifier.getParent();
-            PsiUtil.addException(method,
-                                 "java.lang.CloneNotSupportedException");
-        }
+      }
+      return false;
     }
-
-    public BaseInspectionVisitor buildVisitor(){
-        return new CloneDeclaresCloneNotSupportedExceptionVisitor();
-    }
-
-    private static class CloneDeclaresCloneNotSupportedExceptionVisitor
-            extends BaseInspectionVisitor{
-
-        @Override public void visitMethod(@NotNull PsiMethod method){
-            //note: no call to super;
-            if(!CloneUtils.isClone(method)){
-                return;
-            }
-            if(method.hasModifierProperty(PsiModifier.FINAL)){
-                return;
-            }
-            final PsiClass containingClass = method.getContainingClass();
-            if(containingClass == null){
-                return;
-            }
-            if(containingClass.hasModifierProperty(PsiModifier.FINAL)){
-                return;
-            }
-            if(hasThrowsCloneNotSupportedException(method)){
-                return;
-            }
-            final PsiMethod[] superMethods = method.findSuperMethods();
-            if (superMethods.length < 1){
-                return;
-            }
-            if(!hasThrowsCloneNotSupportedException(superMethods[0])){
-                return;
-            }
-            registerMethodError(method);
-        }
-
-        public static boolean hasThrowsCloneNotSupportedException(
-                @NotNull PsiMethod method){
-            final PsiReferenceList throwsList = method.getThrowsList();
-            final PsiClassType[] thrownTypes = throwsList.getReferencedTypes();
-            for(final PsiClassType thrownType : thrownTypes){
-                if (thrownType.equalsToText(
-                        "java.lang.CloneNotSupportedException")){
-                    return true;
-                }
-            }
-            return false;
-        }
-    }
+  }
 }

@@ -29,53 +29,54 @@ import org.jetbrains.annotations.NotNull;
 
 public class DateToStringInspection extends BaseInspection {
 
-    @Override
-    @NotNull
-    public String getID() {
-        return "CallToDateToString";
-    }
+  @Override
+  @NotNull
+  public String getID() {
+    return "CallToDateToString";
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "call.to.date.tostring.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "call.to.date.tostring.problem.descriptor");
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new DateToStringVisitor();
+  }
+
+  private static class DateToStringVisitor extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "call.to.date.tostring.display.name");
+    public void visitMethodCallExpression(
+      @NotNull PsiMethodCallExpression expression) {
+      super.visitMethodCallExpression(expression);
+      final String methodName = MethodCallUtils.getMethodName(expression);
+      if (!HardcodedMethodConstants.TO_STRING.equals(methodName)) {
+        return;
+      }
+      final PsiType targetType = MethodCallUtils.getTargetType(expression);
+      if (!TypeUtils.typeEquals(CommonClassNames.JAVA_UTIL_DATE,
+                                targetType)) {
+        return;
+      }
+      final PsiExpressionList argumentList = expression.getArgumentList();
+      if (argumentList.getExpressions().length != 0) {
+        return;
+      }
+      if (NonNlsUtils.isNonNlsAnnotatedUse(expression)) {
+        return;
+      }
+      registerMethodCallError(expression);
     }
-
-    @Override
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "call.to.date.tostring.problem.descriptor");
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new DateToStringVisitor();
-    }
-
-    private static class DateToStringVisitor extends BaseInspectionVisitor {
-
-        @Override public void visitMethodCallExpression(
-                @NotNull PsiMethodCallExpression expression) {
-            super.visitMethodCallExpression(expression);
-            final String methodName = MethodCallUtils.getMethodName(expression);
-            if (!HardcodedMethodConstants.TO_STRING.equals(methodName)) {
-                return;
-            }
-            final PsiType targetType = MethodCallUtils.getTargetType(expression);
-            if (!TypeUtils.typeEquals(CommonClassNames.JAVA_UTIL_DATE,
-                    targetType)) {
-                return;
-            }
-            final PsiExpressionList argumentList = expression.getArgumentList();
-            if (argumentList.getExpressions().length != 0) {
-                return;
-            }
-            if (NonNlsUtils.isNonNlsAnnotatedUse(expression)) {
-                return;
-            }
-            registerMethodCallError(expression);
-        }
-    }
+  }
 }

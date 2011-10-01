@@ -32,112 +32,118 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class IntegerMultiplicationImplicitCastToLongInspection extends
-        BaseInspection {
+                                                               BaseInspection {
 
-    /** @noinspection StaticCollection*/
-    @NonNls
-    private static final Set<String> s_typesToCheck = new HashSet<String>(4);
-    static {
-        s_typesToCheck.add("int");
-        s_typesToCheck.add("short");
-        s_typesToCheck.add("byte");
-        s_typesToCheck.add("char");
-    }
+  /**
+   * @noinspection StaticCollection
+   */
+  @NonNls
+  private static final Set<String> s_typesToCheck = new HashSet<String>(4);
 
-    @SuppressWarnings({"PublicField"})
-    public boolean ignoreNonOverflowingCompileTimeConstants = true;
+  static {
+    s_typesToCheck.add("int");
+    s_typesToCheck.add("short");
+    s_typesToCheck.add("byte");
+    s_typesToCheck.add("char");
+  }
+
+  @SuppressWarnings({"PublicField"})
+  public boolean ignoreNonOverflowingCompileTimeConstants = true;
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "integer.multiplication.implicit.cast.to.long.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "integer.multiplication.implicit.cast.to.long.problem.descriptor");
+  }
+
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+      "integer.multiplication.implicit.cast.to.long.option"),
+                                          this, "ignoreNonOverflowingCompileTimeConstants");
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new IntegerMultiplicationImplicitlyCastToLongVisitor();
+  }
+
+  private class IntegerMultiplicationImplicitlyCastToLongVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "integer.multiplication.implicit.cast.to.long.display.name");
-    }
-
-    @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "integer.multiplication.implicit.cast.to.long.problem.descriptor");
-    }
-
-    @Override
-    public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-                "integer.multiplication.implicit.cast.to.long.option"),
-                this, "ignoreNonOverflowingCompileTimeConstants");
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new IntegerMultiplicationImplicitlyCastToLongVisitor();
-    }
-
-    private class IntegerMultiplicationImplicitlyCastToLongVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitBinaryExpression(
-                @NotNull PsiBinaryExpression expression) {
-            super.visitBinaryExpression(expression);
-          final IElementType tokenType = expression.getOperationTokenType();
-            if (!tokenType.equals(JavaTokenType.ASTERISK)
-                    && !tokenType.equals(JavaTokenType.LTLT)) {
-                return;
-            }
-            final PsiType type = expression.getType();
-            if (!isNonLongInteger(type)) {
-                return;
-            }
-            final PsiExpression rhs = expression.getROperand();
-            if(rhs== null) {
-                return;
-            }
-            final PsiType rhsType = rhs.getType();
-            if (!isNonLongInteger(rhsType)) {
-                return;
-            }
-            final PsiExpression context = getContainingExpression(expression);
-            if (context == null) {
-                return;
-            }
-            final PsiType contextType =
-                    ExpectedTypeUtils.findExpectedType(context, true);
-            if (contextType == null) {
-                return;
-            }
-            if (!contextType.equals(PsiType.LONG)) {
-                return;
-            }
-            try {
-                final Object result =
-                        ExpressionUtils.computeConstantExpression(expression,
-                                true);
-                if (ignoreNonOverflowingCompileTimeConstants &&
-                        result != null) {
-                    return;
-                }
-            } catch (ConstantEvaluationOverflowException ignore) {}
-            registerError(expression);
+    public void visitBinaryExpression(
+      @NotNull PsiBinaryExpression expression) {
+      super.visitBinaryExpression(expression);
+      final IElementType tokenType = expression.getOperationTokenType();
+      if (!tokenType.equals(JavaTokenType.ASTERISK)
+          && !tokenType.equals(JavaTokenType.LTLT)) {
+        return;
+      }
+      final PsiType type = expression.getType();
+      if (!isNonLongInteger(type)) {
+        return;
+      }
+      final PsiExpression rhs = expression.getROperand();
+      if (rhs == null) {
+        return;
+      }
+      final PsiType rhsType = rhs.getType();
+      if (!isNonLongInteger(rhsType)) {
+        return;
+      }
+      final PsiExpression context = getContainingExpression(expression);
+      if (context == null) {
+        return;
+      }
+      final PsiType contextType =
+        ExpectedTypeUtils.findExpectedType(context, true);
+      if (contextType == null) {
+        return;
+      }
+      if (!contextType.equals(PsiType.LONG)) {
+        return;
+      }
+      try {
+        final Object result =
+          ExpressionUtils.computeConstantExpression(expression,
+                                                    true);
+        if (ignoreNonOverflowingCompileTimeConstants &&
+            result != null) {
+          return;
         }
-
-        private PsiExpression getContainingExpression(
-                PsiExpression expression) {
-            final PsiElement parent = expression.getParent();
-            if (parent instanceof PsiBinaryExpression ||
-                parent instanceof PsiParenthesizedExpression ||
-                parent instanceof PsiPrefixExpression ||
-                parent instanceof PsiConditionalExpression) {
-                return getContainingExpression((PsiExpression) parent);
-            }
-            return expression;
-        }
-
-        private boolean isNonLongInteger(PsiType type) {
-            if (type == null) {
-                return false;
-            }
-            final String text = type.getCanonicalText();
-            return text != null && s_typesToCheck.contains(text);
-        }
+      }
+      catch (ConstantEvaluationOverflowException ignore) {
+      }
+      registerError(expression);
     }
+
+    private PsiExpression getContainingExpression(
+      PsiExpression expression) {
+      final PsiElement parent = expression.getParent();
+      if (parent instanceof PsiBinaryExpression ||
+          parent instanceof PsiParenthesizedExpression ||
+          parent instanceof PsiPrefixExpression ||
+          parent instanceof PsiConditionalExpression) {
+        return getContainingExpression((PsiExpression)parent);
+      }
+      return expression;
+    }
+
+    private boolean isNonLongInteger(PsiType type) {
+      if (type == null) {
+        return false;
+      }
+      final String text = type.getCanonicalText();
+      return text != null && s_typesToCheck.contains(text);
+    }
+  }
 }

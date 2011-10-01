@@ -4,8 +4,8 @@ import com.siyeh.ig.IGInspectionTestCase;
 
 public class UnnecessaryThisInspectionTest extends IGInspectionTestCase {
 
-    public void test() throws Exception {
-        doTest("com/siyeh/igtest/style/unnecessary_this", 
-                new UnnecessaryThisInspection());
-    }
+  public void test() throws Exception {
+    doTest("com/siyeh/igtest/style/unnecessary_this",
+           new UnnecessaryThisInspection());
+  }
 }

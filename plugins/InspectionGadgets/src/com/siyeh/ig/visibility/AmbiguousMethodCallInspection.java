@@ -29,90 +29,90 @@ import org.jetbrains.annotations.Nullable;
 
 public class AmbiguousMethodCallInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "ambiguous.method.call.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "ambiguous.method.call.display.name");
+  }
+
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    final PsiClass superClass = (PsiClass)infos[0];
+    final PsiClass outerClass = (PsiClass)infos[1];
+    return InspectionGadgetsBundle.message(
+      "ambiguous.method.call.problem.descriptor",
+      superClass.getName(), outerClass.getName());
+  }
+
+  @Nullable
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new AmbiguousMethodCallFix();
+  }
+
+  private static class AmbiguousMethodCallFix extends InspectionGadgetsFix {
 
     @NotNull
-    protected String buildErrorString(Object... infos) {
-        final PsiClass superClass = (PsiClass)infos[0];
-        final PsiClass outerClass = (PsiClass)infos[1];
-        return InspectionGadgetsBundle.message(
-                "ambiguous.method.call.problem.descriptor",
-                superClass.getName(), outerClass.getName());
+    public String getName() {
+      return InspectionGadgetsBundle.message(
+        "ambiguous.method.call.quickfix");
     }
 
-    @Nullable
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        return new AmbiguousMethodCallFix();
+    protected void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiElement element = descriptor.getPsiElement();
+      final PsiElement parent = element.getParent();
+      final PsiMethodCallExpression methodCallExpression =
+        (PsiMethodCallExpression)parent.getParent();
+      final String newExpressionText =
+        "this." + methodCallExpression.getText();
+      replaceExpression(methodCallExpression, newExpressionText);
     }
+  }
 
-    private static class AmbiguousMethodCallFix extends InspectionGadgetsFix {
+  public BaseInspectionVisitor buildVisitor() {
+    return new AmbiguousMethodCallVisitor();
+  }
 
-        @NotNull
-        public String getName() {
-            return InspectionGadgetsBundle.message(
-                    "ambiguous.method.call.quickfix");
+  private static class AmbiguousMethodCallVisitor
+    extends BaseInspectionVisitor {
+
+    public void visitMethodCallExpression(
+      PsiMethodCallExpression expression) {
+      super.visitMethodCallExpression(expression);
+      final PsiReferenceExpression methodExpression =
+        expression.getMethodExpression();
+      final PsiExpression qualifier =
+        methodExpression.getQualifierExpression();
+      if (qualifier != null) {
+        return;
+      }
+      PsiClass containingClass =
+        ClassUtils.getContainingClass(expression);
+      if (containingClass == null) {
+        return;
+      }
+      final PsiMethod method = expression.resolveMethod();
+      if (method == null) {
+        return;
+      }
+      final PsiClass methodClass = method.getContainingClass();
+      if (!containingClass.isInheritor(methodClass, true)) {
+        return;
+      }
+      containingClass = ClassUtils.getContainingClass(containingClass);
+      final String methodName = methodExpression.getReferenceName();
+      while (containingClass != null) {
+        final PsiMethod[] methods =
+          containingClass.findMethodsByName(methodName, false);
+        if (methods.length > 0 &&
+            !methodClass.equals(containingClass)) {
+          registerMethodCallError(expression, methodClass,
+                                  containingClass);
+          return;
         }
-
-        protected void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
-            final PsiElement element = descriptor.getPsiElement();
-            final PsiElement parent = element.getParent();
-            final PsiMethodCallExpression methodCallExpression =
-                    (PsiMethodCallExpression) parent.getParent();
-            final String newExpressionText =
-                    "this." + methodCallExpression.getText();
-            replaceExpression(methodCallExpression, newExpressionText);
-        }
+        containingClass =
+          ClassUtils.getContainingClass(containingClass);
+      }
     }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new AmbiguousMethodCallVisitor();
-    }
-
-    private static class AmbiguousMethodCallVisitor
-            extends BaseInspectionVisitor {
-
-        public void visitMethodCallExpression(
-                PsiMethodCallExpression expression) {
-            super.visitMethodCallExpression(expression);
-            final PsiReferenceExpression methodExpression =
-                    expression.getMethodExpression();
-            final PsiExpression qualifier =
-                    methodExpression.getQualifierExpression();
-            if (qualifier != null) {
-                return;
-            }
-            PsiClass containingClass =
-                    ClassUtils.getContainingClass(expression);
-            if (containingClass == null) {
-                return;
-            }
-            final PsiMethod method = expression.resolveMethod();
-            if (method == null) {
-                return;
-            }
-            final PsiClass methodClass = method.getContainingClass();
-            if (!containingClass.isInheritor(methodClass, true)) {
-                return;
-            }
-            containingClass = ClassUtils.getContainingClass(containingClass);
-            final String methodName = methodExpression.getReferenceName();
-            while (containingClass != null) {
-                final PsiMethod[] methods =
-                        containingClass.findMethodsByName(methodName, false);
-                if (methods.length > 0 &&
-                        !methodClass.equals(containingClass)) {
-                    registerMethodCallError(expression, methodClass,
-                            containingClass);
-                    return;
-                }
-                containingClass =
-                        ClassUtils.getContainingClass(containingClass);
-            }
-        }
-    }
+  }
 }

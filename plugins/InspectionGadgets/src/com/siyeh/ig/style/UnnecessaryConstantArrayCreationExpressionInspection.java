@@ -27,95 +27,95 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class UnnecessaryConstantArrayCreationExpressionInspection
-        extends BaseInspection {
+  extends BaseInspection {
 
-    @Override
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "unnecessary.constant.array.creation.expression.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "unnecessary.constant.array.creation.expression.problem.descriptor");
+  }
+
+  @Override
+  @Nullable
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new UnnecessaryConstantArrayCreationExpressionFix();
+  }
+
+  private static class UnnecessaryConstantArrayCreationExpressionFix
+    extends InspectionGadgetsFix {
+
     @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "unnecessary.constant.array.creation.expression.display.name");
+    public String getName() {
+      return InspectionGadgetsBundle.message(
+        "unnecessary.constant.array.creation.expression.quickfix");
     }
 
     @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "unnecessary.constant.array.creation.expression.problem.descriptor");
+    protected void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiElement element = descriptor.getPsiElement();
+      if (!(element instanceof PsiNewExpression)) {
+        return;
+      }
+      final PsiNewExpression newExpression = (PsiNewExpression)element;
+      final PsiArrayInitializerExpression arrayInitializer =
+        newExpression.getArrayInitializer();
+      if (arrayInitializer == null) {
+        return;
+      }
+      newExpression.replace(arrayInitializer);
     }
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new UnnecessaryConstantArrayCreationExpressionVisitor();
+  }
+
+  private static class UnnecessaryConstantArrayCreationExpressionVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @Nullable
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        return new UnnecessaryConstantArrayCreationExpressionFix();
+    public void visitArrayInitializerExpression(
+      PsiArrayInitializerExpression expression) {
+      super.visitArrayInitializerExpression(expression);
+      final PsiElement parent = expression.getParent();
+      if (!(parent instanceof PsiNewExpression)) {
+        return;
+      }
+      final PsiElement grandParent = parent.getParent();
+      if (!(grandParent instanceof PsiVariable)) {
+        return;
+      }
+      final PsiVariable variable = (PsiVariable)grandParent;
+      if (hasGenericTypeParameters(variable)) {
+        return;
+      }
+      registerError(parent);
     }
 
-    private static class UnnecessaryConstantArrayCreationExpressionFix
-            extends InspectionGadgetsFix {
-
-        @NotNull
-        public String getName() {
-            return InspectionGadgetsBundle.message(
-                    "unnecessary.constant.array.creation.expression.quickfix");
+    private static boolean hasGenericTypeParameters(PsiVariable variable) {
+      final PsiType type = variable.getType();
+      final PsiType componentType = type.getDeepComponentType();
+      if (!(componentType instanceof PsiClassType)) {
+        return false;
+      }
+      final PsiClassType classType = (PsiClassType)componentType;
+      final PsiType[] parameterTypes = classType.getParameters();
+      for (PsiType parameterType : parameterTypes) {
+        if (parameterType != null) {
+          return true;
         }
-
-        @Override
-        protected void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
-            final PsiElement element = descriptor.getPsiElement();
-            if (!(element instanceof PsiNewExpression)) {
-                return;
-            }
-            final PsiNewExpression newExpression = (PsiNewExpression) element;
-            final PsiArrayInitializerExpression arrayInitializer =
-                    newExpression.getArrayInitializer();
-            if (arrayInitializer == null) {
-                return;
-            }
-            newExpression.replace(arrayInitializer);
-        }
+      }
+      return false;
     }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new UnnecessaryConstantArrayCreationExpressionVisitor();
-    }
-
-    private static class UnnecessaryConstantArrayCreationExpressionVisitor
-            extends BaseInspectionVisitor {
-
-        @Override
-        public void visitArrayInitializerExpression(
-                PsiArrayInitializerExpression expression) {
-            super.visitArrayInitializerExpression(expression);
-            final PsiElement parent = expression.getParent();
-            if (!(parent instanceof PsiNewExpression)) {
-                return;
-            }
-            final PsiElement grandParent = parent.getParent();
-            if (!(grandParent instanceof PsiVariable)) {
-                return;
-            }
-            final PsiVariable variable = (PsiVariable)grandParent;
-            if (hasGenericTypeParameters(variable)) {
-                return;
-            }
-            registerError(parent);
-        }
-
-        private static boolean hasGenericTypeParameters(PsiVariable variable) {
-            final PsiType type = variable.getType();
-            final PsiType componentType = type.getDeepComponentType();
-            if (!(componentType instanceof PsiClassType)) {
-                return false;
-            }
-            final PsiClassType classType = (PsiClassType)componentType;
-            final PsiType[] parameterTypes = classType.getParameters();
-            for (PsiType parameterType : parameterTypes) {
-                if (parameterType != null) {
-                    return true;
-                }
-            }
-            return false;
-        }
-    }
+  }
 }

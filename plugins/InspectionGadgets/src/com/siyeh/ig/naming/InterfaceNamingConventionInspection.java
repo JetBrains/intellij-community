@@ -24,69 +24,70 @@ import org.jetbrains.annotations.NotNull;
 
 public class InterfaceNamingConventionInspection extends ConventionInspection {
 
-    private static final int DEFAULT_MIN_LENGTH = 8;
-    private static final int DEFAULT_MAX_LENGTH = 64;
+  private static final int DEFAULT_MIN_LENGTH = 8;
+  private static final int DEFAULT_MAX_LENGTH = 64;
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "interface.naming.convention.display.name");
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "interface.naming.convention.display.name");
+  }
+
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new RenameFix();
+  }
+
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return true;
+  }
+
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    final String interfaceName = (String)infos[0];
+    if (interfaceName.length() < getMinLength()) {
+      return InspectionGadgetsBundle.message(
+        "interface.name.convention.problem.descriptor.short");
     }
-
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        return new RenameFix();
+    else if (interfaceName.length() > getMaxLength()) {
+      return InspectionGadgetsBundle.message(
+        "interface.name.convention.problem.descriptor.long");
     }
+    return InspectionGadgetsBundle.message(
+      "interface.name.convention.problem.descriptor.regex.mismatch",
+      getRegex());
+  }
 
-    protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
-        return true;
+  protected String getDefaultRegex() {
+    return "[A-Z][A-Za-z\\d]*";
+  }
+
+  protected int getDefaultMinLength() {
+    return DEFAULT_MIN_LENGTH;
+  }
+
+  protected int getDefaultMaxLength() {
+    return DEFAULT_MAX_LENGTH;
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new NamingConventionsVisitor();
+  }
+
+  private class NamingConventionsVisitor extends BaseInspectionVisitor {
+
+    @Override
+    public void visitClass(@NotNull PsiClass aClass) {
+      if (!aClass.isInterface() || aClass.isAnnotationType()) {
+        return;
+      }
+      final String name = aClass.getName();
+      if (name == null) {
+        return;
+      }
+      if (isValid(name)) {
+        return;
+      }
+      registerClassError(aClass, name);
     }
-
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        final String interfaceName = (String)infos[0];
-        if (interfaceName.length() < getMinLength()) {
-            return InspectionGadgetsBundle.message(
-                    "interface.name.convention.problem.descriptor.short");
-        }
-        else if (interfaceName.length() > getMaxLength()) {
-            return InspectionGadgetsBundle.message(
-                    "interface.name.convention.problem.descriptor.long");
-        }
-        return InspectionGadgetsBundle.message(
-                "interface.name.convention.problem.descriptor.regex.mismatch",
-                getRegex());
-    }
-
-    protected String getDefaultRegex() {
-        return "[A-Z][A-Za-z\\d]*";
-    }
-
-    protected int getDefaultMinLength() {
-        return DEFAULT_MIN_LENGTH;
-    }
-
-    protected int getDefaultMaxLength() {
-        return DEFAULT_MAX_LENGTH;
-    }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new NamingConventionsVisitor();
-    }
-
-    private class NamingConventionsVisitor extends BaseInspectionVisitor {
-
-        @Override public void visitClass(@NotNull PsiClass aClass) {
-            if (!aClass.isInterface() || aClass.isAnnotationType()) {
-                return;
-            }
-            final String name = aClass.getName();
-            if (name == null) {
-                return;
-            }
-            if (isValid(name)) {
-                return;
-            }
-            registerClassError(aClass, name);
-        }
-    }
+  }
 }

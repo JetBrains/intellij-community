@@ -25,61 +25,63 @@ import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class ContinueOrBreakFromFinallyBlockInspection
-        extends BaseInspection {
+  extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "continue.or.break.from.finally.block.display.name");
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "continue.or.break.from.finally.block.display.name");
+  }
+
+  public boolean isEnabledByDefault() {
+    return true;
+  }
+
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "continue.or.break.from.finally.block.problem.descriptor");
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new ContinueOrBreakFromFinallyBlockVisitor();
+  }
+
+  private static class ContinueOrBreakFromFinallyBlockVisitor
+    extends BaseInspectionVisitor {
+
+    @Override
+    public void visitContinueStatement(
+      @NotNull PsiContinueStatement statement) {
+      super.visitContinueStatement(statement);
+      if (!ControlFlowUtils.isInFinallyBlock(statement)) {
+        return;
+      }
+      final PsiStatement continuedStatement =
+        statement.findContinuedStatement();
+      if (continuedStatement == null) {
+        return;
+      }
+      if (ControlFlowUtils.isInFinallyBlock(continuedStatement)) {
+        return;
+      }
+      registerStatementError(statement);
     }
 
-    public boolean isEnabledByDefault() {
-        return true;
+    @Override
+    public void visitBreakStatement(@NotNull PsiBreakStatement statement) {
+      super.visitBreakStatement(statement);
+      if (!ControlFlowUtils.isInFinallyBlock(statement)) {
+        return;
+      }
+      final PsiStatement exitedStatement = statement.findExitedStatement();
+      if (exitedStatement == null) {
+        return;
+      }
+      if (ControlFlowUtils.isInFinallyBlock(exitedStatement)) {
+        return;
+      }
+      registerStatementError(statement);
     }
-
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "continue.or.break.from.finally.block.problem.descriptor");
-    }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new ContinueOrBreakFromFinallyBlockVisitor();
-    }
-
-    private static class ContinueOrBreakFromFinallyBlockVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitContinueStatement(
-                @NotNull PsiContinueStatement statement) {
-            super.visitContinueStatement(statement);
-            if (!ControlFlowUtils.isInFinallyBlock(statement)) {
-                return;
-            }
-            final PsiStatement continuedStatement =
-                    statement.findContinuedStatement();
-            if (continuedStatement == null) {
-                return;
-            }
-            if (ControlFlowUtils.isInFinallyBlock(continuedStatement)) {
-                return;
-            }
-            registerStatementError(statement);
-        }
-
-        @Override public void visitBreakStatement(@NotNull PsiBreakStatement statement) {
-            super.visitBreakStatement(statement);
-            if (!ControlFlowUtils.isInFinallyBlock(statement)) {
-                return;
-            }
-            final PsiStatement exitedStatement = statement.findExitedStatement();
-            if (exitedStatement == null) {
-                return;
-            }
-            if (ControlFlowUtils.isInFinallyBlock(exitedStatement)) {
-                return;
-            }
-            registerStatementError(statement);
-        }
-    }
+  }
 }

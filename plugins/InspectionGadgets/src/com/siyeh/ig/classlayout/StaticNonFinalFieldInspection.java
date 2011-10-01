@@ -27,37 +27,38 @@ import org.jetbrains.annotations.Nullable;
 
 public class StaticNonFinalFieldInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "static.non.final.field.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "static.non.final.field.display.name");
+  }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "static.non.final.field.problem.descriptor");
-    }
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "static.non.final.field.problem.descriptor");
+  }
 
-    @Nullable
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        final PsiField field = (PsiField) infos[0];
-        return MakeFieldFinalFix.buildFix(field);
-    }
+  @Nullable
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    final PsiField field = (PsiField)infos[0];
+    return MakeFieldFinalFix.buildFix(field);
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new StaticNonFinalFieldVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new StaticNonFinalFieldVisitor();
+  }
 
-    private static class StaticNonFinalFieldVisitor
-            extends BaseInspectionVisitor {
+  private static class StaticNonFinalFieldVisitor
+    extends BaseInspectionVisitor {
 
-        @Override public void visitField(@NotNull PsiField field) {
-            if (!field.hasModifierProperty(PsiModifier.STATIC) ||
-                field.hasModifierProperty(PsiModifier.FINAL)) {
-                return;
-            }
-            registerFieldError(field, field);
-        }
+    @Override
+    public void visitField(@NotNull PsiField field) {
+      if (!field.hasModifierProperty(PsiModifier.STATIC) ||
+          field.hasModifierProperty(PsiModifier.FINAL)) {
+        return;
+      }
+      registerFieldError(field, field);
     }
+  }
 }

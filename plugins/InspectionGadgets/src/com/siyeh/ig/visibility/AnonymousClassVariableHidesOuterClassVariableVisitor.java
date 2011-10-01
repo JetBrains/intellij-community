@@ -25,92 +25,97 @@ import java.util.List;
 import java.util.Map;
 
 class AnonymousClassVariableHidesOuterClassVariableVisitor
-        extends BaseInspectionVisitor {
+  extends BaseInspectionVisitor {
 
-    @Override public void visitAnonymousClass(PsiAnonymousClass aClass) {
-        super.visitAnonymousClass(aClass);
-        final PsiCodeBlock codeBlock =
-                PsiTreeUtil.getParentOfType(aClass, PsiCodeBlock.class);
-        if (codeBlock == null) {
-            return;
-        }
-        final VariableCollector collector = new VariableCollector();
-        aClass.acceptChildren(collector);
-        final PsiStatement[] statements = codeBlock.getStatements();
-        final int offset = aClass.getTextOffset();
-        for (PsiStatement statement : statements) {
-            if (statement.getTextOffset() >= offset) {
-                break;
-            }
-            if (!(statement instanceof PsiDeclarationStatement)) {
-                continue;
-            }
-            final PsiDeclarationStatement declarationStatement =
-                    (PsiDeclarationStatement) statement;
-            final PsiElement[] declaredElements =
-                    declarationStatement.getDeclaredElements();
-            for (PsiElement declaredElement : declaredElements) {
-                if (!(declaredElement instanceof PsiLocalVariable)) {
-                    continue;
-                }
-                final PsiLocalVariable localVariable =
-                        (PsiLocalVariable) declaredElement;
-                final String name = localVariable.getName();
-                final PsiVariable[] variables =
-                        collector.getVariables(name);
-                for (PsiVariable variable : variables) {
-                    registerVariableError(variable, variable);
-                }
-            }
-        }
-        final PsiMethod containingMethod =
-                PsiTreeUtil.getParentOfType(codeBlock, PsiMethod.class);
-        if (containingMethod == null) {
-            return;
-        }
-        final PsiParameterList parameterList =
-                containingMethod.getParameterList();
-        final PsiParameter[] parameters = parameterList.getParameters();
-        for (PsiParameter parameter : parameters) {
-            final String name = parameter.getName();
-            final PsiVariable[] variables = collector.getVariables(name);
-            for (PsiVariable variable : variables) {
-                registerVariableError(variable, variable);
-            }
-        }
+  @Override
+  public void visitAnonymousClass(PsiAnonymousClass aClass) {
+    super.visitAnonymousClass(aClass);
+    final PsiCodeBlock codeBlock =
+      PsiTreeUtil.getParentOfType(aClass, PsiCodeBlock.class);
+    if (codeBlock == null) {
+      return;
     }
+    final VariableCollector collector = new VariableCollector();
+    aClass.acceptChildren(collector);
+    final PsiStatement[] statements = codeBlock.getStatements();
+    final int offset = aClass.getTextOffset();
+    for (PsiStatement statement : statements) {
+      if (statement.getTextOffset() >= offset) {
+        break;
+      }
+      if (!(statement instanceof PsiDeclarationStatement)) {
+        continue;
+      }
+      final PsiDeclarationStatement declarationStatement =
+        (PsiDeclarationStatement)statement;
+      final PsiElement[] declaredElements =
+        declarationStatement.getDeclaredElements();
+      for (PsiElement declaredElement : declaredElements) {
+        if (!(declaredElement instanceof PsiLocalVariable)) {
+          continue;
+        }
+        final PsiLocalVariable localVariable =
+          (PsiLocalVariable)declaredElement;
+        final String name = localVariable.getName();
+        final PsiVariable[] variables =
+          collector.getVariables(name);
+        for (PsiVariable variable : variables) {
+          registerVariableError(variable, variable);
+        }
+      }
+    }
+    final PsiMethod containingMethod =
+      PsiTreeUtil.getParentOfType(codeBlock, PsiMethod.class);
+    if (containingMethod == null) {
+      return;
+    }
+    final PsiParameterList parameterList =
+      containingMethod.getParameterList();
+    final PsiParameter[] parameters = parameterList.getParameters();
+    for (PsiParameter parameter : parameters) {
+      final String name = parameter.getName();
+      final PsiVariable[] variables = collector.getVariables(name);
+      for (PsiVariable variable : variables) {
+        registerVariableError(variable, variable);
+      }
+    }
+  }
 
   private static class VariableCollector extends JavaRecursiveElementVisitor {
 
-        private static final PsiVariable[] EMPTY_VARIABLE_LIST = {};
+    private static final PsiVariable[] EMPTY_VARIABLE_LIST = {};
 
-        private final Map<String, List<PsiVariable>> variableMap = new HashMap();
+    private final Map<String, List<PsiVariable>> variableMap = new HashMap();
 
-        @Override public void visitVariable(PsiVariable variable) {
-            super.visitVariable(variable);
-            final String name = variable.getName();
-            final List<PsiVariable> variableList = variableMap.get(name);
-            if (variableList == null) {
-                final List<PsiVariable> list = new ArrayList();
-                list.add(variable);
-                variableMap.put(name, list);
-            } else {
-                variableList.add(variable);
-            }
-        }
-
-        @Override public void visitClass(PsiClass aClass) {
-            // don't drill down in classes
-        }
-
-        public PsiVariable[] getVariables(String name) {
-            final List<PsiVariable> variableList = variableMap.get(name);
-            if (variableList == null) {
-                return EMPTY_VARIABLE_LIST;
-            } else {
-                return variableList.toArray(
-                        new PsiVariable[variableList.size()]);
-            }
-        }
+    @Override
+    public void visitVariable(PsiVariable variable) {
+      super.visitVariable(variable);
+      final String name = variable.getName();
+      final List<PsiVariable> variableList = variableMap.get(name);
+      if (variableList == null) {
+        final List<PsiVariable> list = new ArrayList();
+        list.add(variable);
+        variableMap.put(name, list);
+      }
+      else {
+        variableList.add(variable);
+      }
     }
+
+    @Override
+    public void visitClass(PsiClass aClass) {
+      // don't drill down in classes
+    }
+
+    public PsiVariable[] getVariables(String name) {
+      final List<PsiVariable> variableList = variableMap.get(name);
+      if (variableList == null) {
+        return EMPTY_VARIABLE_LIST;
+      }
+      else {
+        return variableList.toArray(
+          new PsiVariable[variableList.size()]);
+      }
+    }
+  }
 }

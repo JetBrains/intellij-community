@@ -24,64 +24,65 @@ import org.jetbrains.annotations.NotNull;
 
 public class SetReplaceableByEnumSetInspection extends BaseInspection {
 
-    @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "set.replaceable.by.enum.set.display.name");
-    }
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "set.replaceable.by.enum.set.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "set.replaceable.by.enum.set.problem.descriptor");
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new SetReplaceableByEnumSetVisitor();
+  }
+
+  private static class SetReplaceableByEnumSetVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "set.replaceable.by.enum.set.problem.descriptor");
+    public void visitNewExpression(
+      @NotNull PsiNewExpression expression) {
+      super.visitNewExpression(expression);
+      final PsiType type = expression.getType();
+      if (!(type instanceof PsiClassType)) {
+        return;
+      }
+      final PsiClassType classType = (PsiClassType)type;
+      if (!classType.hasParameters()) {
+        return;
+      }
+      final PsiType[] typeArguments = classType.getParameters();
+      if (typeArguments.length != 1) {
+        return;
+      }
+      final PsiType argumentType = typeArguments[0];
+      if (!(argumentType instanceof PsiClassType)) {
+        return;
+      }
+      if (!TypeUtils.expressionHasTypeOrSubtype(expression,
+                                                CommonClassNames.JAVA_UTIL_SET)) {
+        return;
+      }
+      if (TypeUtils.expressionHasTypeOrSubtype(expression,
+                                               "java.util.EnumSet")) {
+        return;
+      }
+      final PsiClassType argumentClassType = (PsiClassType)argumentType;
+      final PsiClass argumentClass = argumentClassType.resolve();
+      if (argumentClass == null) {
+        return;
+      }
+      if (!argumentClass.isEnum()) {
+        return;
+      }
+      registerNewExpressionError(expression);
     }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new SetReplaceableByEnumSetVisitor();
-    }
-
-    private static class SetReplaceableByEnumSetVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitNewExpression(
-                @NotNull PsiNewExpression expression) {
-            super.visitNewExpression(expression);
-            final PsiType type = expression.getType();
-            if (!(type instanceof PsiClassType)) {
-                return;
-            }
-            final PsiClassType classType = (PsiClassType)type;
-            if (!classType.hasParameters()) {
-                return;
-            }
-            final PsiType[] typeArguments = classType.getParameters();
-            if (typeArguments.length != 1) {
-                return;
-            }
-            final PsiType argumentType = typeArguments[0];
-            if (!(argumentType instanceof PsiClassType)) {
-                return;
-            }
-            if (!TypeUtils.expressionHasTypeOrSubtype(expression,
-                    CommonClassNames.JAVA_UTIL_SET)) {
-                return;
-            }
-            if (TypeUtils.expressionHasTypeOrSubtype(expression,
-                    "java.util.EnumSet")) {
-                return;
-            }
-            final PsiClassType argumentClassType = (PsiClassType)argumentType;
-            final PsiClass argumentClass = argumentClassType.resolve();
-            if (argumentClass == null) {
-                return;
-            }
-            if (!argumentClass.isEnum()) {
-                return;
-            }
-           registerNewExpressionError(expression);
-        }
-    }
+  }
 }

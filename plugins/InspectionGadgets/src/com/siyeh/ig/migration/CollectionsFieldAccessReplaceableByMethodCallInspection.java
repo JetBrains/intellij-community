@@ -32,175 +32,185 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class CollectionsFieldAccessReplaceableByMethodCallInspection
-        extends BaseInspection {
+  extends BaseInspection {
 
-    @Override
-    @Nls @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "collections.field.access.replaceable.by.method.call.display.name");
+  @Override
+  @Nls
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "collections.field.access.replaceable.by.method.call.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "collections.field.access.replaceable.by.method.call.problem.descriptor",
+      infos[1]);
+  }
+
+  @Override
+  @Nullable
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    final PsiReferenceExpression expression =
+      (PsiReferenceExpression)infos[0];
+    return new CollectionsFieldAccessReplaceableByMethodCallFix(
+      expression.getReferenceName());
+  }
+
+  private static class CollectionsFieldAccessReplaceableByMethodCallFix
+    extends InspectionGadgetsFix {
+
+    private final String replacementText;
+
+    private CollectionsFieldAccessReplaceableByMethodCallFix(
+      String referenceName) {
+      replacementText = getCollectionsMethodCallText(referenceName);
     }
 
-    @Override
     @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "collections.field.access.replaceable.by.method.call.problem.descriptor",
-                infos[1]);
+    public String getName() {
+      return InspectionGadgetsBundle.message(
+        "collections.field.access.replaceable.by.method.call.quickfix",
+        replacementText);
+    }
+
+    @NonNls
+    private static String getCollectionsMethodCallText(
+      PsiReferenceExpression referenceExpression) {
+      final String referenceName = referenceExpression.getReferenceName();
+      final PsiElement parent = referenceExpression.getParent();
+      if (!(parent instanceof PsiExpressionList)) {
+        return getUntypedCollectionsMethodCallText(referenceName);
+      }
+      final PsiType type = ExpectedTypeUtils.findExpectedType(
+        referenceExpression, false);
+      if (!(type instanceof PsiClassType)) {
+        return getUntypedCollectionsMethodCallText(referenceName);
+      }
+      final PsiClassType classType = (PsiClassType)type;
+      final PsiType[] parameterTypes = classType.getParameters();
+      boolean useTypeParameter = false;
+      final String[] canonicalTexts = new String[parameterTypes.length];
+      for (int i = 0, parameterTypesLength = parameterTypes.length;
+           i < parameterTypesLength; i++) {
+        final PsiType parameterType = parameterTypes[i];
+        if (parameterType instanceof PsiWildcardType) {
+          final PsiWildcardType wildcardType =
+            (PsiWildcardType)parameterType;
+          final PsiType bound = wildcardType.getBound();
+          if (bound != null) {
+            if (!bound.equalsToText(
+              CommonClassNames.JAVA_LANG_OBJECT)) {
+              useTypeParameter = true;
+            }
+            canonicalTexts[i] = bound.getCanonicalText();
+          }
+          else {
+            canonicalTexts[i] = CommonClassNames.JAVA_LANG_OBJECT;
+          }
+        }
+        else {
+          if (!parameterType.equalsToText(
+            CommonClassNames.JAVA_LANG_OBJECT)) {
+            useTypeParameter = true;
+          }
+          canonicalTexts[i] = parameterType.getCanonicalText();
+        }
+      }
+      if (useTypeParameter) {
+        return "Collections.<" + StringUtil.join(canonicalTexts, ",") +
+               '>' + getCollectionsMethodCallText(referenceName);
+      }
+      else {
+        return getUntypedCollectionsMethodCallText(referenceName);
+      }
+    }
+
+    @NonNls
+    private static String getUntypedCollectionsMethodCallText(
+      String referenceName) {
+      return "Collections." + getCollectionsMethodCallText(referenceName);
+    }
+
+    @NonNls
+    private static String getCollectionsMethodCallText(
+      @NonNls String referenceName) {
+      if ("EMPTY_LIST".equals(referenceName)) {
+        return "emptyList()";
+      }
+      else if ("EMPTY_MAP".equals(referenceName)) {
+        return "emptyMap()";
+      }
+      else if ("EMPTY_SET".equals(referenceName)) {
+        return "emptySet()";
+      }
+      else {
+        throw new AssertionError("unknown collections field name: " +
+                                 referenceName);
+      }
     }
 
     @Override
-    @Nullable
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        final PsiReferenceExpression expression =
-                (PsiReferenceExpression) infos[0];
-        return new CollectionsFieldAccessReplaceableByMethodCallFix(
-                expression.getReferenceName());
+    protected void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiElement element = descriptor.getPsiElement();
+      if (!(element instanceof PsiReferenceExpression)) {
+        return;
+      }
+      final PsiReferenceExpression referenceExpression =
+        (PsiReferenceExpression)element;
+      final String newMethodCallText =
+        getCollectionsMethodCallText(referenceExpression);
+      replaceExpression(referenceExpression,
+                        "java.util." + newMethodCallText);
     }
+  }
 
-    private static class CollectionsFieldAccessReplaceableByMethodCallFix
-            extends InspectionGadgetsFix {
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new CollectionsFieldAccessReplaceableByMethodCallVisitor();
+  }
 
-        private final String replacementText;
-
-        private CollectionsFieldAccessReplaceableByMethodCallFix(
-                String referenceName) {
-            replacementText = getCollectionsMethodCallText(referenceName);
-        }
-
-        @NotNull
-        public String getName() {
-            return InspectionGadgetsBundle.message(
-                    "collections.field.access.replaceable.by.method.call.quickfix",
-                    replacementText);
-        }
-
-        @NonNls
-        private static String getCollectionsMethodCallText(
-                PsiReferenceExpression referenceExpression) {
-            final String referenceName = referenceExpression.getReferenceName();
-            final PsiElement parent = referenceExpression.getParent();
-            if (!(parent instanceof PsiExpressionList)) {
-                return getUntypedCollectionsMethodCallText(referenceName);
-            }
-            final PsiType type = ExpectedTypeUtils.findExpectedType(
-                    referenceExpression, false);
-            if (!(type instanceof PsiClassType)) {
-                return getUntypedCollectionsMethodCallText(referenceName);
-            }
-            final PsiClassType classType = (PsiClassType) type;
-            final PsiType[] parameterTypes = classType.getParameters();
-            boolean useTypeParameter = false;
-            final String[] canonicalTexts = new String[parameterTypes.length];
-            for (int i = 0, parameterTypesLength = parameterTypes.length;
-                 i < parameterTypesLength; i++) {
-                final PsiType parameterType = parameterTypes[i];
-                if (parameterType instanceof PsiWildcardType) {
-                    final PsiWildcardType wildcardType =
-                            (PsiWildcardType)parameterType;
-                    final PsiType bound = wildcardType.getBound();
-                    if (bound != null) {
-                        if (!bound.equalsToText(
-                                CommonClassNames.JAVA_LANG_OBJECT)) {
-                            useTypeParameter = true;
-                        }
-                        canonicalTexts[i] = bound.getCanonicalText();
-                    } else {
-                        canonicalTexts[i] = CommonClassNames.JAVA_LANG_OBJECT;
-                    }
-                } else {
-                    if (!parameterType.equalsToText(
-                            CommonClassNames.JAVA_LANG_OBJECT)) {
-                        useTypeParameter = true;
-                    }
-                    canonicalTexts[i] = parameterType.getCanonicalText();
-                }
-            }
-            if (useTypeParameter) {
-                return "Collections.<" + StringUtil.join(canonicalTexts, ",") +
-                        '>' + getCollectionsMethodCallText(referenceName);
-            } else {
-                return getUntypedCollectionsMethodCallText(referenceName);
-            }
-        }
-
-        @NonNls
-        private static String getUntypedCollectionsMethodCallText(
-                String referenceName) {
-            return "Collections." + getCollectionsMethodCallText(referenceName);
-        }
-
-        @NonNls
-        private static String getCollectionsMethodCallText(
-                @NonNls String referenceName) {
-            if ("EMPTY_LIST".equals(referenceName)) {
-                return "emptyList()";
-            } else if ("EMPTY_MAP".equals(referenceName)) {
-                return "emptyMap()";
-            } else if ("EMPTY_SET".equals(referenceName)) {
-                return "emptySet()";
-            } else {
-                throw new AssertionError("unknown collections field name: " +
-                        referenceName);
-            }
-        }
-
-        @Override
-        protected void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
-            final PsiElement element = descriptor.getPsiElement();
-            if (!(element instanceof PsiReferenceExpression)) {
-                return;
-            }
-            final PsiReferenceExpression referenceExpression =
-                    (PsiReferenceExpression) element;
-            final String newMethodCallText =
-                    getCollectionsMethodCallText(referenceExpression);
-            replaceExpression(referenceExpression,
-                    "java.util." + newMethodCallText);
-        }
-    }
+  private static class CollectionsFieldAccessReplaceableByMethodCallVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new CollectionsFieldAccessReplaceableByMethodCallVisitor();
+    public void visitReferenceExpression(
+      PsiReferenceExpression expression) {
+      if (!PsiUtil.isLanguageLevel5OrHigher(expression)) {
+        return;
+      }
+      super.visitReferenceExpression(expression);
+      @NonNls final String name = expression.getReferenceName();
+      @NonNls final String replacement;
+      if ("EMPTY_LIST".equals(name)) {
+        replacement = "emptyList()";
+      }
+      else if ("EMPTY_MAP".equals(name)) {
+        replacement = "emptyMap()";
+      }
+      else if ("EMPTY_SET".equals(name)) {
+        replacement = "emptySet()";
+      }
+      else {
+        return;
+      }
+      final PsiElement target = expression.resolve();
+      if (!(target instanceof PsiField)) {
+        return;
+      }
+      final PsiField field = (PsiField)target;
+      final PsiClass containingClass = field.getContainingClass();
+      if (containingClass == null) {
+        return;
+      }
+      final String qualifiedName = containingClass.getQualifiedName();
+      if (!CommonClassNames.JAVA_UTIL_COLLECTIONS.equals(qualifiedName)) {
+        return;
+      }
+      registerError(expression, expression, replacement);
     }
-
-    private static class CollectionsFieldAccessReplaceableByMethodCallVisitor
-            extends BaseInspectionVisitor {
-
-        @Override
-        public void visitReferenceExpression(
-                PsiReferenceExpression expression) {
-            if (!PsiUtil.isLanguageLevel5OrHigher(expression)) {
-                return;
-            }
-            super.visitReferenceExpression(expression);
-            @NonNls final String name = expression.getReferenceName();
-            @NonNls final String replacement;
-            if ("EMPTY_LIST".equals(name)) {
-                replacement = "emptyList()";
-            } else if ("EMPTY_MAP".equals(name)) {
-                replacement = "emptyMap()";
-            } else if ("EMPTY_SET".equals(name)) {
-                replacement = "emptySet()";
-            } else {
-                return;
-            }
-            final PsiElement target = expression.resolve();
-            if (!(target instanceof PsiField)) {
-                return;
-            }
-            final PsiField field = (PsiField) target;
-            final PsiClass containingClass = field.getContainingClass();
-            if (containingClass == null) {
-                return;
-            }
-            final String qualifiedName = containingClass.getQualifiedName();
-            if (!CommonClassNames.JAVA_UTIL_COLLECTIONS.equals(qualifiedName)) {
-                return;
-            }
-            registerError(expression, expression, replacement);
-        }
-    }
+  }
 }

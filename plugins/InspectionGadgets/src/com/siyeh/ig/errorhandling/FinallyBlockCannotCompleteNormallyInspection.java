@@ -26,53 +26,54 @@ import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class FinallyBlockCannotCompleteNormallyInspection
-        extends BaseInspection {
+  extends BaseInspection {
 
-    @NotNull
-    public String getID() {
-        return "finally";
-    }
+  @NotNull
+  public String getID() {
+    return "finally";
+  }
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "finally.block.cannot.complete.normally.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "finally.block.cannot.complete.normally.display.name");
+  }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "finally.block.cannot.complete.normally.problem.descriptor");
-    }
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "finally.block.cannot.complete.normally.problem.descriptor");
+  }
 
-    public boolean isEnabledByDefault() {
-        return true;
-    }
+  public boolean isEnabledByDefault() {
+    return true;
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new FinallyBlockCannotCompleteNormallyVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new FinallyBlockCannotCompleteNormallyVisitor();
+  }
 
-    private static class FinallyBlockCannotCompleteNormallyVisitor
-            extends BaseInspectionVisitor {
+  private static class FinallyBlockCannotCompleteNormallyVisitor
+    extends BaseInspectionVisitor {
 
-        @Override public void visitTryStatement(@NotNull PsiTryStatement statement) {
-            super.visitTryStatement(statement);
-            final PsiCodeBlock finallyBlock = statement.getFinallyBlock();
-            if (finallyBlock == null) {
-                return;
-            }
-            if (ControlFlowUtils.codeBlockMayCompleteNormally(finallyBlock)) {
-                return;
-            }
-            final PsiElement[] children = statement.getChildren();
-            for (final PsiElement child : children) {
-                final String childText = child.getText();
-                if (PsiKeyword.FINALLY.equals(childText)) {
-                    registerError(child);
-                    return;
-                }
-            }
+    @Override
+    public void visitTryStatement(@NotNull PsiTryStatement statement) {
+      super.visitTryStatement(statement);
+      final PsiCodeBlock finallyBlock = statement.getFinallyBlock();
+      if (finallyBlock == null) {
+        return;
+      }
+      if (ControlFlowUtils.codeBlockMayCompleteNormally(finallyBlock)) {
+        return;
+      }
+      final PsiElement[] children = statement.getChildren();
+      for (final PsiElement child : children) {
+        final String childText = child.getText();
+        if (PsiKeyword.FINALLY.equals(childText)) {
+          registerError(child);
+          return;
         }
+      }
     }
+  }
 }

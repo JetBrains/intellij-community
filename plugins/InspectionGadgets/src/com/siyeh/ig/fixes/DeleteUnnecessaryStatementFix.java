@@ -27,35 +27,36 @@ import org.jetbrains.annotations.NotNull;
 
 public class DeleteUnnecessaryStatementFix extends InspectionGadgetsFix {
 
-    private final String name;
+  private final String name;
 
-    public DeleteUnnecessaryStatementFix(@NonNls String name) {
-        this.name = name;
-    }
+  public DeleteUnnecessaryStatementFix(@NonNls String name) {
+    this.name = name;
+  }
 
-    @NotNull
-    public String getName() {
-        return InspectionGadgetsBundle.message(
-                "smth.unnecessary.remove.quickfix", name);
-    }
+  @NotNull
+  public String getName() {
+    return InspectionGadgetsBundle.message(
+      "smth.unnecessary.remove.quickfix", name);
+  }
 
-    protected void doFix(Project project, ProblemDescriptor descriptor)
-            throws IncorrectOperationException {
-        final PsiElement keywordElement = descriptor.getPsiElement();
-        final PsiStatement statement = PsiTreeUtil.getParentOfType(keywordElement,
-                PsiStatement.class);
-        if (statement == null) {
-            return;
-        }
-        final PsiElement parent = statement.getParent();
-        if (parent instanceof PsiIfStatement ||
-                parent instanceof PsiWhileStatement ||
-                parent instanceof PsiDoWhileStatement ||
-                parent instanceof PsiForeachStatement ||
-                parent instanceof PsiForStatement) {
-            replaceStatement(statement, "{}");
-        } else {
-            deleteElement(statement);
-        }
+  protected void doFix(Project project, ProblemDescriptor descriptor)
+    throws IncorrectOperationException {
+    final PsiElement keywordElement = descriptor.getPsiElement();
+    final PsiStatement statement = PsiTreeUtil.getParentOfType(keywordElement,
+                                                               PsiStatement.class);
+    if (statement == null) {
+      return;
     }
+    final PsiElement parent = statement.getParent();
+    if (parent instanceof PsiIfStatement ||
+        parent instanceof PsiWhileStatement ||
+        parent instanceof PsiDoWhileStatement ||
+        parent instanceof PsiForeachStatement ||
+        parent instanceof PsiForStatement) {
+      replaceStatement(statement, "{}");
+    }
+    else {
+      deleteElement(statement);
+    }
+  }
 }

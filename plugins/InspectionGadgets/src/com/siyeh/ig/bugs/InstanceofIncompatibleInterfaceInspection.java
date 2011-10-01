@@ -23,63 +23,64 @@ import com.siyeh.ig.psiutils.InheritanceUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class InstanceofIncompatibleInterfaceInspection
-        extends BaseInspection {
+  extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName(){
-        return InspectionGadgetsBundle.message(
-                "instanceof.with.incompatible.interface.display.name");
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "instanceof.with.incompatible.interface.display.name");
+  }
+
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "instanceof.with.incompatible.interface.problem.descriptor");
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new InstanceofIncompatibleInterfaceVisitor();
+  }
+
+  private static class InstanceofIncompatibleInterfaceVisitor
+    extends BaseInspectionVisitor {
+
+    @Override
+    public void visitInstanceOfExpression(
+      @NotNull PsiInstanceOfExpression expression) {
+      super.visitInstanceOfExpression(expression);
+      final PsiTypeElement castTypeElement = expression.getCheckType();
+      if (castTypeElement == null) {
+        return;
+      }
+      final PsiType castType = castTypeElement.getType();
+      if (!(castType instanceof PsiClassType)) {
+        return;
+      }
+      final PsiClassType castClassType = (PsiClassType)castType;
+      final PsiExpression operand = expression.getOperand();
+      final PsiType operandType = operand.getType();
+      if (!(operandType instanceof PsiClassType)) {
+        return;
+      }
+      final PsiClassType operandClassType = (PsiClassType)operandType;
+      final PsiClass castClass = castClassType.resolve();
+      if (castClass == null) {
+        return;
+      }
+      if (!castClass.isInterface()) {
+        return;
+      }
+      final PsiClass operandClass = operandClassType.resolve();
+      if (operandClass == null) {
+        return;
+      }
+      if (operandClass.isInterface()) {
+        return;
+      }
+      if (InheritanceUtil.existsMutualSubclass(operandClass, castClass)) {
+        return;
+      }
+      registerError(castTypeElement);
     }
-
-    @NotNull
-    public String buildErrorString(Object... infos){
-        return InspectionGadgetsBundle.message(
-                "instanceof.with.incompatible.interface.problem.descriptor");
-    }
-
-    public BaseInspectionVisitor buildVisitor(){
-        return new InstanceofIncompatibleInterfaceVisitor();
-    }
-
-    private static class InstanceofIncompatibleInterfaceVisitor
-            extends BaseInspectionVisitor{
-
-        @Override public void visitInstanceOfExpression(
-                @NotNull PsiInstanceOfExpression expression){
-            super.visitInstanceOfExpression(expression);
-            final PsiTypeElement castTypeElement = expression.getCheckType();
-            if(castTypeElement == null){
-                return;
-            }
-            final PsiType castType = castTypeElement.getType();
-            if(!(castType instanceof PsiClassType)){
-                return;
-            }
-            final PsiClassType castClassType = (PsiClassType)castType;
-            final PsiExpression operand = expression.getOperand();
-            final PsiType operandType = operand.getType();
-            if(!(operandType instanceof PsiClassType)){
-                return;
-            }
-            final PsiClassType operandClassType = (PsiClassType)operandType;
-            final PsiClass castClass = castClassType.resolve();
-            if(castClass == null){
-                return;
-            }
-            if(!castClass.isInterface()){
-                return;
-            }
-            final PsiClass operandClass = operandClassType.resolve();
-            if(operandClass == null){
-                return;
-            }
-            if(operandClass.isInterface()){
-                return;
-            }
-            if(InheritanceUtil.existsMutualSubclass(operandClass, castClass)){
-                return;
-            }
-            registerError(castTypeElement);
-        }
-    }
+  }
 }

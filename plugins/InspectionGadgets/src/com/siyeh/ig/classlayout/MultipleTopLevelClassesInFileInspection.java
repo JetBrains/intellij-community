@@ -27,53 +27,54 @@ import org.jetbrains.annotations.NotNull;
 
 public class MultipleTopLevelClassesInFileInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "multiple.top.level.classes.in.file.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "multiple.top.level.classes.in.file.display.name");
+  }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "multiple.top.level.classes.in.file.problem.descriptor");
-    }
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "multiple.top.level.classes.in.file.problem.descriptor");
+  }
 
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        return new MoveClassFix();
-    }
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new MoveClassFix();
+  }
 
-    protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
-        return true;
-    }
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return true;
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new MultipleTopLevelClassesInFileVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new MultipleTopLevelClassesInFileVisitor();
+  }
 
-    private static class MultipleTopLevelClassesInFileVisitor
-            extends BaseInspectionVisitor {
+  private static class MultipleTopLevelClassesInFileVisitor
+    extends BaseInspectionVisitor {
 
-        @Override public void visitClass(@NotNull PsiClass aClass) {
-            // no call to super, so that it doesn't drill down to inner classes
-            if (!(aClass.getParent() instanceof PsiJavaFile)) {
-                return;
-            }
-            final PsiJavaFile file = (PsiJavaFile)aClass.getParent();
-            if (file == null) {
-                return;
-            }
-            int numClasses = 0;
-            final PsiElement[] children = file.getChildren();
-            for (final PsiElement child : children) {
-                if (child instanceof PsiClass) {
-                    numClasses++;
-                }
-            }
-            if (numClasses <= 1) {
-                return;
-            }
-            registerClassError(aClass);
+    @Override
+    public void visitClass(@NotNull PsiClass aClass) {
+      // no call to super, so that it doesn't drill down to inner classes
+      if (!(aClass.getParent() instanceof PsiJavaFile)) {
+        return;
+      }
+      final PsiJavaFile file = (PsiJavaFile)aClass.getParent();
+      if (file == null) {
+        return;
+      }
+      int numClasses = 0;
+      final PsiElement[] children = file.getChildren();
+      for (final PsiElement child : children) {
+        if (child instanceof PsiClass) {
+          numClasses++;
         }
+      }
+      if (numClasses <= 1) {
+        return;
+      }
+      registerClassError(aClass);
     }
+  }
 }

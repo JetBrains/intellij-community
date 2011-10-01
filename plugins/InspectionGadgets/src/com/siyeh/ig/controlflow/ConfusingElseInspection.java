@@ -34,172 +34,175 @@ import javax.swing.*;
 
 public class ConfusingElseInspection extends BaseInspection {
 
-    @SuppressWarnings({"PublicField"})
-    public boolean reportWhenNoStatementFollow = false;
+  @SuppressWarnings({"PublicField"})
+  public boolean reportWhenNoStatementFollow = false;
 
-    @Override
+  @Override
+  @NotNull
+  public String getID() {
+    return "ConfusingElseBranch";
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("confusing.else.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "confusing.else.problem.descriptor");
+  }
+
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(
+      InspectionGadgetsBundle.message("confusing.else.option"),
+      this, "reportWhenNoStatementFollow");
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new ConfusingElseVisitor();
+  }
+
+  @Override
+  @Nullable
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new ConfusingElseFix();
+  }
+
+  private static class ConfusingElseFix extends InspectionGadgetsFix {
+
     @NotNull
-    public String getID() {
-        return "ConfusingElseBranch";
+    public String getName() {
+      return InspectionGadgetsBundle.message(
+        "confusing.else.unwrap.quickfix");
     }
 
     @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message("confusing.else.display.name");
+    public void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiElement ifKeyword = descriptor.getPsiElement();
+      final PsiIfStatement ifStatement =
+        (PsiIfStatement)ifKeyword.getParent();
+      assert ifStatement != null;
+      final PsiExpression condition = ifStatement.getCondition();
+      final String conditionText;
+      if (condition == null) {
+        conditionText = "";
+      }
+      else {
+        conditionText = condition.getText();
+      }
+      final PsiStatement thenBranch = ifStatement.getThenBranch();
+      if (thenBranch == null) {
+        return;
+      }
+      @NonNls final String text = "if(" + conditionText + ')' +
+                                  thenBranch.getText();
+      final PsiStatement elseBranch = ifStatement.getElseBranch();
+      if (elseBranch == null) {
+        return;
+      }
+      if (elseBranch instanceof PsiBlockStatement) {
+        final PsiBlockStatement elseBlock =
+          (PsiBlockStatement)elseBranch;
+        final PsiCodeBlock block = elseBlock.getCodeBlock();
+        final PsiElement[] children = block.getChildren();
+        if (children.length > 2) {
+          final PsiElement containingElement =
+            ifStatement.getParent();
+          assert containingElement != null;
+          containingElement.addRangeAfter(children[1],
+                                          children[children.length - 2], ifStatement);
+        }
+      }
+      else {
+        final PsiElement containingElement = ifStatement.getParent();
+        assert containingElement != null;
+        containingElement.addAfter(elseBranch, ifStatement);
+      }
+      replaceStatement(ifStatement, text);
     }
+  }
+
+  private class ConfusingElseVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "confusing.else.problem.descriptor");
-    }
-
-    @Override
-    public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel(
-                InspectionGadgetsBundle.message("confusing.else.option"),
-                this, "reportWhenNoStatementFollow");
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new ConfusingElseVisitor();
-    }
-
-    @Override
-    @Nullable
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        return new ConfusingElseFix();
-    }
-
-    private static class ConfusingElseFix extends InspectionGadgetsFix {
-
-        @NotNull
-        public String getName() {
-            return InspectionGadgetsBundle.message(
-                    "confusing.else.unwrap.quickfix");
+    public void visitIfStatement(
+      @NotNull PsiIfStatement statement) {
+      super.visitIfStatement(statement);
+      final PsiStatement thenBranch = statement.getThenBranch();
+      if (thenBranch == null) {
+        return;
+      }
+      final PsiStatement elseBranch = statement.getElseBranch();
+      if (elseBranch == null) {
+        return;
+      }
+      if (ControlFlowUtils.statementMayCompleteNormally(thenBranch)) {
+        return;
+      }
+      if (!reportWhenNoStatementFollow) {
+        final PsiStatement nextStatement = getNextStatement(statement);
+        if (nextStatement == null) {
+          return;
         }
-
-        @Override
-        public void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
-            final PsiElement ifKeyword = descriptor.getPsiElement();
-            final PsiIfStatement ifStatement =
-                    (PsiIfStatement)ifKeyword.getParent();
-            assert ifStatement != null;
-            final PsiExpression condition = ifStatement.getCondition();
-            final String conditionText;
-            if (condition == null) {
-                conditionText = "";
-            } else {
-                conditionText = condition.getText();
-            }
-            final PsiStatement thenBranch = ifStatement.getThenBranch();
-            if (thenBranch == null) {
-                return;
-            }
-            @NonNls final String text = "if(" + conditionText + ')' +
-                    thenBranch.getText();
-            final PsiStatement elseBranch = ifStatement.getElseBranch();
-            if (elseBranch == null) {
-                return;
-            }
-            if (elseBranch instanceof PsiBlockStatement) {
-                final PsiBlockStatement elseBlock =
-                        (PsiBlockStatement)elseBranch;
-                final PsiCodeBlock block = elseBlock.getCodeBlock();
-                final PsiElement[] children = block.getChildren();
-                if (children.length > 2) {
-                    final PsiElement containingElement =
-                            ifStatement.getParent();
-                    assert containingElement != null;
-                    containingElement.addRangeAfter(children[1],
-                            children[children.length - 2], ifStatement);
-                }
-            } else {
-                final PsiElement containingElement = ifStatement.getParent();
-                assert containingElement != null;
-                containingElement.addAfter(elseBranch, ifStatement);
-            }
-            replaceStatement(ifStatement, text);
+        if (!ControlFlowUtils.statementMayCompleteNormally(
+          elseBranch)) {
+          return;
+          // protecting against an edge case where both branches return
+          // and are followed by a case label
         }
+      }
+      final PsiElement elseToken = statement.getElseElement();
+      if (elseToken == null) {
+        return;
+      }
+      if (parentCompletesNormally(statement)) {
+        return;
+      }
+      registerError(elseToken);
     }
 
-    private class ConfusingElseVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitIfStatement(
-                @NotNull PsiIfStatement statement) {
-            super.visitIfStatement(statement);
-            final PsiStatement thenBranch = statement.getThenBranch();
-            if (thenBranch == null) {
-                return;
-            }
-            final PsiStatement elseBranch = statement.getElseBranch();
-            if (elseBranch == null) {
-                return;
-            }
-            if (ControlFlowUtils.statementMayCompleteNormally(thenBranch)) {
-                return;
-            }
-            if (!reportWhenNoStatementFollow) {
-                final PsiStatement nextStatement = getNextStatement(statement);
-                if (nextStatement == null) {
-                    return;
-                }
-                if (!ControlFlowUtils.statementMayCompleteNormally(
-                        elseBranch)) {
-                    return;
-                    // protecting against an edge case where both branches return
-                    // and are followed by a case label
-                }
-            }
-            final PsiElement elseToken = statement.getElseElement();
-            if (elseToken == null) {
-                return;
-            }
-            if (parentCompletesNormally(statement)) {
-                return;
-            }
-            registerError(elseToken);
+    private boolean parentCompletesNormally(PsiElement element) {
+      PsiElement parent = element.getParent();
+      while (parent instanceof PsiIfStatement) {
+        final PsiIfStatement ifStatement = (PsiIfStatement)parent;
+        final PsiStatement elseBranch = ifStatement.getElseBranch();
+        if (elseBranch != element) {
+          return true;
         }
-
-        private boolean parentCompletesNormally(PsiElement element) {
-            PsiElement parent = element.getParent();
-            while (parent instanceof PsiIfStatement) {
-                final PsiIfStatement ifStatement = (PsiIfStatement) parent;
-                final PsiStatement elseBranch = ifStatement.getElseBranch();
-                if (elseBranch != element) {
-                    return true;
-                }
-                final PsiStatement thenBranch = ifStatement.getThenBranch();
-                if (ControlFlowUtils.statementMayCompleteNormally(thenBranch)) {
-                    return true;
-                }
-                element = parent;
-                parent = element.getParent();
-            }
-            return !(parent instanceof PsiCodeBlock);
+        final PsiStatement thenBranch = ifStatement.getThenBranch();
+        if (ControlFlowUtils.statementMayCompleteNormally(thenBranch)) {
+          return true;
         }
-
-        private PsiStatement getNextStatement(PsiIfStatement statement) {
-            while (true) {
-                final PsiElement parent = statement.getParent();
-                if (parent instanceof PsiIfStatement) {
-                    final PsiIfStatement parentIfStatement =
-                            (PsiIfStatement) parent;
-                    final PsiStatement elseBranch =
-                            parentIfStatement.getElseBranch();
-                    if (elseBranch == statement) {
-                        statement = parentIfStatement;
-                        continue;
-                    }
-                }
-                return PsiTreeUtil.getNextSiblingOfType(statement,
-                        PsiStatement.class);
-            }
-        }
+        element = parent;
+        parent = element.getParent();
+      }
+      return !(parent instanceof PsiCodeBlock);
     }
+
+    private PsiStatement getNextStatement(PsiIfStatement statement) {
+      while (true) {
+        final PsiElement parent = statement.getParent();
+        if (parent instanceof PsiIfStatement) {
+          final PsiIfStatement parentIfStatement =
+            (PsiIfStatement)parent;
+          final PsiStatement elseBranch =
+            parentIfStatement.getElseBranch();
+          if (elseBranch == statement) {
+            statement = parentIfStatement;
+            continue;
+          }
+        }
+        return PsiTreeUtil.getNextSiblingOfType(statement,
+                                                PsiStatement.class);
+      }
+    }
+  }
 }

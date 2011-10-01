@@ -27,53 +27,54 @@ import javax.swing.JComponent;
 
 public class MethodReturnOfConcreteClassInspection extends BaseInspection {
 
-    @SuppressWarnings("PublicField")
-    public boolean ignoreAbstractClasses = false;
+  @SuppressWarnings("PublicField")
+  public boolean ignoreAbstractClasses = false;
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "method.return.concrete.class.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "method.return.concrete.class.problem.descriptor");
+  }
+
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(
+      InspectionGadgetsBundle.message(
+        "method.return.of.concrete.class.option"),
+      this, "ignoreAbstractClasses");
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new MethodReturnOfConcreteClassVisitor();
+  }
+
+  private class MethodReturnOfConcreteClassVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "method.return.concrete.class.display.name");
+    public void visitMethod(@NotNull PsiMethod method) {
+      super.visitMethod(method);
+      if (method.isConstructor()) {
+        return;
+      }
+      final PsiTypeElement typeElement = method.getReturnTypeElement();
+      if (typeElement == null) {
+        return;
+      }
+      if (!ConcreteClassUtil.typeIsConcreteClass(typeElement,
+                                                 ignoreAbstractClasses)) {
+        return;
+      }
+      registerError(typeElement);
     }
-
-    @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "method.return.concrete.class.problem.descriptor");
-    }
-
-    @Override
-    public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel(
-                InspectionGadgetsBundle.message(
-                        "method.return.of.concrete.class.option"),
-                this, "ignoreAbstractClasses");
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new MethodReturnOfConcreteClassVisitor();
-    }
-
-    private class MethodReturnOfConcreteClassVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitMethod(@NotNull PsiMethod method) {
-            super.visitMethod(method);
-            if (method.isConstructor()) {
-                return;
-            }
-            final PsiTypeElement typeElement = method.getReturnTypeElement();
-            if (typeElement == null) {
-                return;
-            }
-            if (!ConcreteClassUtil.typeIsConcreteClass(typeElement,
-                    ignoreAbstractClasses)) {
-                return;
-            }
-            registerError(typeElement);
-        }
-    }
+  }
 }

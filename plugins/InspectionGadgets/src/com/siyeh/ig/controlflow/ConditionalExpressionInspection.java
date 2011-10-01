@@ -26,53 +26,54 @@ import javax.swing.*;
 
 public class ConditionalExpressionInspection extends BaseInspection {
 
-    @SuppressWarnings({"PublicField"})
-    public boolean ignoreSimpleAssignmentsAndReturns = false;
+  @SuppressWarnings({"PublicField"})
+  public boolean ignoreSimpleAssignmentsAndReturns = false;
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "conditional.expression.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "conditional.expression.problem.descriptor");
+  }
+
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(
+      InspectionGadgetsBundle.message("conditional.expression.option"),
+      this, "ignoreSimpleAssignmentsAndReturns");
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new ConditionalExpressionVisitor();
+  }
+
+  private class ConditionalExpressionVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "conditional.expression.display.name");
-    }
-
-    @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "conditional.expression.problem.descriptor");
-    }
-
-    @Override
-    public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel(
-                InspectionGadgetsBundle.message("conditional.expression.option"),
-                this, "ignoreSimpleAssignmentsAndReturns");
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new ConditionalExpressionVisitor();
-    }
-
-    private class ConditionalExpressionVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitConditionalExpression(
-                PsiConditionalExpression expression) {
-            super.visitConditionalExpression(expression);
-            if (ignoreSimpleAssignmentsAndReturns) {
-                PsiElement parent = expression.getParent();
-                while (parent instanceof PsiParenthesizedExpression) {
-                    parent = parent.getParent();
-                }
-                if (parent instanceof PsiAssignmentExpression ||
-                        parent instanceof PsiReturnStatement ||
-                        parent instanceof PsiLocalVariable) {
-                    return;
-                }
-            }
-            registerError(expression);
+    public void visitConditionalExpression(
+      PsiConditionalExpression expression) {
+      super.visitConditionalExpression(expression);
+      if (ignoreSimpleAssignmentsAndReturns) {
+        PsiElement parent = expression.getParent();
+        while (parent instanceof PsiParenthesizedExpression) {
+          parent = parent.getParent();
         }
+        if (parent instanceof PsiAssignmentExpression ||
+            parent instanceof PsiReturnStatement ||
+            parent instanceof PsiLocalVariable) {
+          return;
+        }
+      }
+      registerError(expression);
     }
+  }
 }

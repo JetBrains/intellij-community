@@ -24,112 +24,115 @@ import org.jetbrains.annotations.NotNull;
 
 public class WaitWithoutCorrespondingNotifyInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "wait.without.corresponding.notify.display.name");
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "wait.without.corresponding.notify.display.name");
+  }
+
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "wait.without.corresponding.notify.problem.descriptor");
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new WaitWithoutCorrespondingNotifyVisitor();
+  }
+
+  private static class WaitWithoutCorrespondingNotifyVisitor
+    extends BaseInspectionVisitor {
+
+    @Override
+    public void visitMethodCallExpression(
+      @NotNull PsiMethodCallExpression expression) {
+      super.visitMethodCallExpression(expression);
+      if (!ThreadingUtils.isWaitCall(expression)) {
+        return;
+      }
+
+      final PsiReferenceExpression methodExpression =
+        expression.getMethodExpression();
+      final PsiExpression qualifier =
+        methodExpression.getQualifierExpression();
+      if (!(qualifier instanceof PsiReferenceExpression)) {
+        return;
+      }
+      final PsiElement referent = ((PsiReference)qualifier).resolve();
+      if (!(referent instanceof PsiField)) {
+        return;
+      }
+      final PsiField field = (PsiField)referent;
+      final PsiClass fieldClass = field.getContainingClass();
+      if (fieldClass == null) {
+        return;
+      }
+      if (!PsiTreeUtil.isAncestor(fieldClass, expression, true)) {
+        return;
+      }
+      if (containsNotifyCall(fieldClass, field)) {
+        return;
+      }
+      registerMethodCallError(expression);
     }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "wait.without.corresponding.notify.problem.descriptor");
+    private static boolean containsNotifyCall(
+      PsiClass fieldClass, PsiField field) {
+      final ContainsNotifyVisitor visitor =
+        new ContainsNotifyVisitor(field);
+      fieldClass.accept(visitor);
+      return visitor.containsNotify();
+    }
+  }
+
+  private static class ContainsNotifyVisitor
+    extends JavaRecursiveElementVisitor {
+
+    private final PsiField target;
+    private boolean containsNotify = false;
+
+    ContainsNotifyVisitor(PsiField target) {
+      super();
+      this.target = target;
     }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new WaitWithoutCorrespondingNotifyVisitor();
+    @Override
+    public void visitElement(PsiElement element) {
+      if (containsNotify) {
+        return;
+      }
+      super.visitElement(element);
     }
 
-    private static class WaitWithoutCorrespondingNotifyVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitMethodCallExpression(
-                @NotNull PsiMethodCallExpression expression) {
-            super.visitMethodCallExpression(expression);
-            if (!ThreadingUtils.isWaitCall(expression)) {
-                return;
-            }
-
-            final PsiReferenceExpression methodExpression =
-                    expression.getMethodExpression();
-            final PsiExpression qualifier =
-                    methodExpression.getQualifierExpression();
-            if (!(qualifier instanceof PsiReferenceExpression)) {
-                return;
-            }
-            final PsiElement referent = ((PsiReference) qualifier).resolve();
-            if (!(referent instanceof PsiField)) {
-                return;
-            }
-            final PsiField field = (PsiField) referent;
-            final PsiClass fieldClass = field.getContainingClass();
-            if (fieldClass == null) {
-                return;
-            }
-            if (!PsiTreeUtil.isAncestor(fieldClass, expression, true)) {
-                return;
-            }
-            if (containsNotifyCall(fieldClass, field)) {
-                return;
-            }
-            registerMethodCallError(expression);
-        }
-
-        private static boolean containsNotifyCall(
-                PsiClass fieldClass, PsiField field) {
-            final ContainsNotifyVisitor visitor =
-                    new ContainsNotifyVisitor(field);
-            fieldClass.accept(visitor);
-            return visitor.containsNotify();
-        }
+    @Override
+    public void visitMethodCallExpression(
+      PsiMethodCallExpression expression) {
+      super.visitMethodCallExpression(expression);
+      if (!ThreadingUtils.isNotifyOrNotifyAllCall(expression)) {
+        return;
+      }
+      final PsiReferenceExpression methodExpression =
+        expression.getMethodExpression();
+      final PsiExpression qualifier =
+        methodExpression.getQualifierExpression();
+      if (qualifier == null) {
+        return;
+      }
+      if (!(qualifier instanceof PsiReferenceExpression)) {
+        return;
+      }
+      final PsiElement referent = ((PsiReference)qualifier).resolve();
+      if (referent == null) {
+        return;
+      }
+      if (!target.equals(referent)) {
+        return;
+      }
+      containsNotify = true;
     }
 
-    private static class ContainsNotifyVisitor
-            extends JavaRecursiveElementVisitor {
-
-        private final PsiField target;
-        private boolean containsNotify = false;
-
-        ContainsNotifyVisitor(PsiField target) {
-            super();
-            this.target = target;
-        }
-
-        @Override public void visitElement(PsiElement element) {
-            if (containsNotify) {
-                return;
-            }
-            super.visitElement(element);
-        }
-
-        @Override public void visitMethodCallExpression(
-                PsiMethodCallExpression expression) {
-            super.visitMethodCallExpression(expression);
-            if (!ThreadingUtils.isNotifyOrNotifyAllCall(expression)) {
-                return;
-            }
-            final PsiReferenceExpression methodExpression =
-                    expression.getMethodExpression();
-            final PsiExpression qualifier =
-                    methodExpression.getQualifierExpression();
-            if (qualifier == null) {
-                return;
-            }
-            if (!(qualifier instanceof PsiReferenceExpression)) {
-                return;
-            }
-            final PsiElement referent = ((PsiReference) qualifier).resolve();
-            if (referent == null) {
-                return;
-            }
-            if (!target.equals(referent)) {
-                return;
-            }
-            containsNotify = true;
-        }
-
-        public boolean containsNotify() {
-            return containsNotify;
-        }
+    public boolean containsNotify() {
+      return containsNotify;
     }
+  }
 }

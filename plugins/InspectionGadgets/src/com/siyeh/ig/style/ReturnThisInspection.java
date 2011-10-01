@@ -23,44 +23,45 @@ import org.jetbrains.annotations.NotNull;
 
 public class ReturnThisInspection extends BaseInspection {
 
-    @NotNull
-    public String getID() {
-        return "ReturnOfThis";
-    }
+  @NotNull
+  public String getID() {
+    return "ReturnOfThis";
+  }
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message("return.this.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("return.this.display.name");
+  }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "return.this.problem.descriptor");
-    }
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "return.this.problem.descriptor");
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new ReturnThisVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new ReturnThisVisitor();
+  }
 
-    private static class ReturnThisVisitor extends BaseInspectionVisitor {
+  private static class ReturnThisVisitor extends BaseInspectionVisitor {
 
-        @Override public void visitThisExpression(@NotNull PsiThisExpression thisValue) {
-            super.visitThisExpression(thisValue);
-            if (thisValue.getQualifier() != null) {
-                return;
-            }
-            PsiElement parent = thisValue.getParent();
-            while (parent != null &&
-                    (parent instanceof PsiParenthesizedExpression ||
-                            parent instanceof PsiConditionalExpression ||
-                            parent instanceof PsiTypeCastExpression)) {
-                parent = parent.getParent();
-            }
-            if (parent == null || !(parent instanceof PsiReturnStatement)) {
-                return;
-            }
-            registerError(thisValue);
-        }
+    @Override
+    public void visitThisExpression(@NotNull PsiThisExpression thisValue) {
+      super.visitThisExpression(thisValue);
+      if (thisValue.getQualifier() != null) {
+        return;
+      }
+      PsiElement parent = thisValue.getParent();
+      while (parent != null &&
+             (parent instanceof PsiParenthesizedExpression ||
+              parent instanceof PsiConditionalExpression ||
+              parent instanceof PsiTypeCastExpression)) {
+        parent = parent.getParent();
+      }
+      if (parent == null || !(parent instanceof PsiReturnStatement)) {
+        return;
+      }
+      registerError(thisValue);
     }
+  }
 }

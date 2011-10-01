@@ -23,33 +23,35 @@ import org.jetbrains.annotations.NotNull;
 
 class CatchParameterUsedVisitor extends JavaRecursiveElementVisitor {
 
-    private final PsiParameter parameter;
-    private boolean used = false;
+  private final PsiParameter parameter;
+  private boolean used = false;
 
-    CatchParameterUsedVisitor(PsiParameter variable){
-        super();
-        parameter = variable;
-    }
+  CatchParameterUsedVisitor(PsiParameter variable) {
+    super();
+    parameter = variable;
+  }
 
-    @Override public void visitElement(@NotNull PsiElement element){
-        if(!used){
-            super.visitElement(element);
-        }
+  @Override
+  public void visitElement(@NotNull PsiElement element) {
+    if (!used) {
+      super.visitElement(element);
     }
+  }
 
-    @Override public void visitReferenceExpression(
-            @NotNull PsiReferenceExpression reference){
-        if(used){
-            return;
-        }
-        super.visitReferenceExpression(reference);
-        final PsiElement element = reference.resolve();
-        if(parameter.equals(element)){
-            used = true;
-        }
+  @Override
+  public void visitReferenceExpression(
+    @NotNull PsiReferenceExpression reference) {
+    if (used) {
+      return;
     }
+    super.visitReferenceExpression(reference);
+    final PsiElement element = reference.resolve();
+    if (parameter.equals(element)) {
+      used = true;
+    }
+  }
 
-    public boolean isUsed(){
-        return used;
-    }
+  public boolean isUsed() {
+    return used;
+  }
 }

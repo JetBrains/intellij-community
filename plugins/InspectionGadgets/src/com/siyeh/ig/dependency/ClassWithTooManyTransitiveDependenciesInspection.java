@@ -33,50 +33,50 @@ import javax.swing.*;
 import java.util.Set;
 
 public class ClassWithTooManyTransitiveDependenciesInspection
-        extends BaseGlobalInspection {
+  extends BaseGlobalInspection {
 
-    @SuppressWarnings({"PublicField"})
-    public int limit = 35;
+  @SuppressWarnings({"PublicField"})
+  public int limit = 35;
 
-    @NotNull
-    @Override
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "class.with.too.many.transitive.dependencies.display.name");
+  @NotNull
+  @Override
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "class.with.too.many.transitive.dependencies.display.name");
+  }
+
+  @Nullable
+  public CommonProblemDescriptor[] checkElement(
+    RefEntity refEntity,
+    AnalysisScope analysisScope,
+    InspectionManager inspectionManager,
+    GlobalInspectionContext globalInspectionContext) {
+    if (!(refEntity instanceof RefClass)) {
+      return null;
     }
-
-    @Nullable
-    public CommonProblemDescriptor[] checkElement(
-            RefEntity refEntity,
-            AnalysisScope analysisScope,
-            InspectionManager inspectionManager,
-            GlobalInspectionContext globalInspectionContext) {
-        if (!(refEntity instanceof RefClass)) {
-            return null;
-        }
-        final RefClass refClass = (RefClass) refEntity;
-        final PsiClass aClass = refClass.getElement();
-        if (ClassUtils.isInnerClass(aClass)) {
-            return null;
-        }
-        final Set<RefClass> dependencies =
-                DependencyUtils.calculateTransitiveDependenciesForClass(refClass);
-        final int numDependencies = dependencies.size();
-        if (numDependencies <= limit) {
-            return null;
-        }
-        final String errorString = InspectionGadgetsBundle.message(
-                "class.with.too.many.transitive.dependencies.problem.descriptor",
-                refEntity.getName(), numDependencies, limit);
-        return new CommonProblemDescriptor[]{
-                inspectionManager.createProblemDescriptor(errorString)
-        };
+    final RefClass refClass = (RefClass)refEntity;
+    final PsiClass aClass = refClass.getElement();
+    if (ClassUtils.isInnerClass(aClass)) {
+      return null;
     }
-
-    public JComponent createOptionsPanel() {
-        return new SingleIntegerFieldOptionsPanel(
-                InspectionGadgetsBundle.message(
-                        "class.with.too.many.transitive.dependencies.max.option"),
-                this, "limit");
+    final Set<RefClass> dependencies =
+      DependencyUtils.calculateTransitiveDependenciesForClass(refClass);
+    final int numDependencies = dependencies.size();
+    if (numDependencies <= limit) {
+      return null;
     }
+    final String errorString = InspectionGadgetsBundle.message(
+      "class.with.too.many.transitive.dependencies.problem.descriptor",
+      refEntity.getName(), numDependencies, limit);
+    return new CommonProblemDescriptor[]{
+      inspectionManager.createProblemDescriptor(errorString)
+    };
+  }
+
+  public JComponent createOptionsPanel() {
+    return new SingleIntegerFieldOptionsPanel(
+      InspectionGadgetsBundle.message(
+        "class.with.too.many.transitive.dependencies.max.option"),
+      this, "limit");
+  }
 }

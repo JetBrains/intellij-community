@@ -25,54 +25,55 @@ import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
 
 class SerializableInnerClassHasSerialVersionUIDFieldVisitor
-        extends BaseInspectionVisitor {
+  extends BaseInspectionVisitor {
 
-    private final SerializableInspection inspection;
+  private final SerializableInspection inspection;
 
-    public SerializableInnerClassHasSerialVersionUIDFieldVisitor(
-            SerializableInspection inspection) {
-        this.inspection = inspection;
+  public SerializableInnerClassHasSerialVersionUIDFieldVisitor(
+    SerializableInspection inspection) {
+    this.inspection = inspection;
+  }
+
+  @Override
+  public void visitClass(@NotNull PsiClass aClass) {
+    // no call to super, so it doesn't drill down
+    if (aClass.isInterface() || aClass.isAnnotationType() ||
+        aClass.isEnum()) {
+      return;
     }
-
-    @Override public void visitClass(@NotNull PsiClass aClass) {
-        // no call to super, so it doesn't drill down
-        if (aClass.isInterface() || aClass.isAnnotationType() ||
-                aClass.isEnum()) {
-            return;
-        }
-        if (inspection.ignoreAnonymousInnerClasses &&
-                aClass instanceof PsiAnonymousClass) {
-            return;
-        }
-        if (hasSerialVersionUIDField(aClass)) {
-            return;
-        }
-        final PsiClass containingClass = aClass.getContainingClass();
-        if (containingClass == null) {
-            return;
-        }
-        if (aClass.hasModifierProperty(PsiModifier.STATIC)) {
-            return;
-        }
-        if (!SerializationUtils.isSerializable(aClass)) {
-            return;
-        }
-        if (inspection.isIgnoredSubclass(aClass)) {
-            return;
-        }
-        registerClassError(aClass);
+    if (inspection.ignoreAnonymousInnerClasses &&
+        aClass instanceof PsiAnonymousClass) {
+      return;
     }
-
-    private static boolean hasSerialVersionUIDField(PsiClass aClass) {
-        final PsiField[] fields = aClass.getFields();
-        boolean hasSerialVersionUID = false;
-        for (PsiField field : fields) {
-            final String fieldName = field.getName();
-            if (HardcodedMethodConstants.SERIAL_VERSION_UID.equals(
-                    fieldName)) {
-                hasSerialVersionUID = true;
-            }
-        }
-        return hasSerialVersionUID;
+    if (hasSerialVersionUIDField(aClass)) {
+      return;
     }
+    final PsiClass containingClass = aClass.getContainingClass();
+    if (containingClass == null) {
+      return;
+    }
+    if (aClass.hasModifierProperty(PsiModifier.STATIC)) {
+      return;
+    }
+    if (!SerializationUtils.isSerializable(aClass)) {
+      return;
+    }
+    if (inspection.isIgnoredSubclass(aClass)) {
+      return;
+    }
+    registerClassError(aClass);
+  }
+
+  private static boolean hasSerialVersionUIDField(PsiClass aClass) {
+    final PsiField[] fields = aClass.getFields();
+    boolean hasSerialVersionUID = false;
+    for (PsiField field : fields) {
+      final String fieldName = field.getName();
+      if (HardcodedMethodConstants.SERIAL_VERSION_UID.equals(
+        fieldName)) {
+        hasSerialVersionUID = true;
+      }
+    }
+    return hasSerialVersionUID;
+  }
 }

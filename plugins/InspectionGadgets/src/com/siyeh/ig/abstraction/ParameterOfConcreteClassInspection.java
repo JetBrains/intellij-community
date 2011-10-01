@@ -28,62 +28,63 @@ import javax.swing.JComponent;
 
 public class ParameterOfConcreteClassInspection extends BaseInspection {
 
-    @SuppressWarnings("PublicField")
-    public boolean ignoreAbstractClasses = false;
+  @SuppressWarnings("PublicField")
+  public boolean ignoreAbstractClasses = false;
+
+  @Override
+  @NotNull
+  public String getID() {
+    return "MethodParameterOfConcreteClass";
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "concrete.class.method.parameter.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "concrete.class.method.parameter.problem.descriptor",
+      infos);
+  }
+
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(
+      InspectionGadgetsBundle.message(
+        "parameter.of.concrete.class.option"),
+      this, "ignoreAbstractClasses");
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new ParameterOfConcreteClassVisitor();
+  }
+
+  private class ParameterOfConcreteClassVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String getID() {
-        return "MethodParameterOfConcreteClass";
+    public void visitParameter(@NotNull PsiParameter parameter) {
+      super.visitParameter(parameter);
+
+      if (parameter.getDeclarationScope() instanceof PsiCatchSection) {
+        return;
+      }
+      final PsiTypeElement typeElement = parameter.getTypeElement();
+      if (typeElement == null) {
+        return;
+      }
+      if (!ConcreteClassUtil.typeIsConcreteClass(typeElement,
+                                                 ignoreAbstractClasses)) {
+        return;
+      }
+      final String variableName = parameter.getName();
+      registerError(typeElement, variableName);
     }
-
-    @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "concrete.class.method.parameter.display.name");
-    }
-
-    @Override
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "concrete.class.method.parameter.problem.descriptor",
-                infos);
-    }
-
-    @Override
-    public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel(
-                InspectionGadgetsBundle.message(
-                        "parameter.of.concrete.class.option"),
-                this, "ignoreAbstractClasses");
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new ParameterOfConcreteClassVisitor();
-    }
-
-    private class ParameterOfConcreteClassVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitParameter(@NotNull PsiParameter parameter) {
-            super.visitParameter(parameter);
-
-            if (parameter.getDeclarationScope() instanceof PsiCatchSection) {
-                return;
-            }
-            final PsiTypeElement typeElement = parameter.getTypeElement();
-            if (typeElement == null) {
-                return;
-            }
-            if (!ConcreteClassUtil.typeIsConcreteClass(typeElement,
-                    ignoreAbstractClasses)) {
-                return;
-            }
-            final String variableName = parameter.getName();
-            registerError(typeElement, variableName);
-        }
-    }
+  }
 }

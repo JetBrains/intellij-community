@@ -30,112 +30,114 @@ import org.jetbrains.annotations.NotNull;
 
 public class UnqualifiedFieldAccessInspection extends BaseInspection {
 
-    @Override
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "unqualified.field.access.display.name");
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new UnqualifiedFieldAccessVisitor();
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "unqualified.field.access.problem.descriptor");
+  }
+
+  @Override
+  public InspectionGadgetsFix buildFix(Object... infos) {
+    return new UnqualifiedFieldAccessFix();
+  }
+
+  private static class UnqualifiedFieldAccessFix
+    extends InspectionGadgetsFix {
+
     @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "unqualified.field.access.display.name");
+    public String getName() {
+      return InspectionGadgetsBundle.message(
+        "add.this.qualifier.quickfix");
     }
 
     @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new UnqualifiedFieldAccessVisitor();
-    }
-
-    @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "unqualified.field.access.problem.descriptor");
-    }
-
-    @Override
-    public InspectionGadgetsFix buildFix(Object... infos) {
-        return new UnqualifiedFieldAccessFix();
-    }
-
-    private static class UnqualifiedFieldAccessFix
-            extends InspectionGadgetsFix {
-
-        @NotNull
-        public String getName() {
-            return InspectionGadgetsBundle.message(
-                    "add.this.qualifier.quickfix");
+    public void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiReferenceExpression expression =
+        (PsiReferenceExpression)descriptor.getPsiElement();
+      if (expression.getQualifierExpression() != null) {
+        return;
+      }
+      final PsiField field = (PsiField)expression.resolve();
+      if (field == null) {
+        return;
+      }
+      final PsiClass fieldClass = field.getContainingClass();
+      if (fieldClass == null) {
+        return;
+      }
+      PsiClass containingClass =
+        ClassUtils.getContainingClass(expression);
+      @NonNls final String newExpression;
+      if (InheritanceUtil.isInheritorOrSelf(containingClass, fieldClass,
+                                            true)) {
+        newExpression = "this." + expression.getText();
+      }
+      else {
+        containingClass =
+          ClassUtils.getContainingClass(containingClass);
+        if (containingClass == null) {
+          return;
         }
-
-        @Override
-        public void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
-            final PsiReferenceExpression expression =
-                    (PsiReferenceExpression) descriptor.getPsiElement();
-            if (expression.getQualifierExpression() != null) {
-                return;
-            }
-            final PsiField field = (PsiField)expression.resolve();
-            if (field == null) {
-                return;
-            }
-            final PsiClass fieldClass = field.getContainingClass();
-            if (fieldClass == null) {
-                return;
-            }
-            PsiClass containingClass =
-                    ClassUtils.getContainingClass(expression);
-            @NonNls final String newExpression;
-            if (InheritanceUtil.isInheritorOrSelf(containingClass, fieldClass,
-                    true)) {
-                newExpression = "this." + expression.getText();
-            } else {
-                containingClass =
-                        ClassUtils.getContainingClass(containingClass);
-                if (containingClass == null) {
-                    return;
-                }
-                while (!InheritanceUtil.isInheritorOrSelf(containingClass,
-                        fieldClass, true)) {
-                    containingClass =
-                            ClassUtils.getContainingClass(containingClass);
-                    if (containingClass == null) {
-                        return;
-                    }
-                }
-                newExpression = containingClass.getQualifiedName() + ".this." +
+        while (!InheritanceUtil.isInheritorOrSelf(containingClass,
+                                                  fieldClass, true)) {
+          containingClass =
+            ClassUtils.getContainingClass(containingClass);
+          if (containingClass == null) {
+            return;
+          }
+        }
+        newExpression = containingClass.getQualifiedName() + ".this." +
                         expression.getText();
-            }
-            replaceExpressionAndShorten(expression, newExpression);
-        }
+      }
+      replaceExpressionAndShorten(expression, newExpression);
     }
+  }
 
-    private static class UnqualifiedFieldAccessVisitor
-            extends BaseInspectionVisitor {
+  private static class UnqualifiedFieldAccessVisitor
+    extends BaseInspectionVisitor {
 
-        @Override public void visitReferenceExpression(
-                @NotNull PsiReferenceExpression expression) {
-            super.visitReferenceExpression(expression);
-            final PsiExpression qualifierExpression =
-                    expression.getQualifierExpression();
-            if (qualifierExpression != null) {
-                return;
-            }
-            final PsiReferenceParameterList parameterList =
-                    expression.getParameterList();
-            if (parameterList == null) {
-                return;
-            }
-            if (parameterList.getTypeArguments().length > 0) {
-                // optimization: reference with type arguments are
-                // definitely not references to fields.
-                return;
-            }
-            final PsiElement element = expression.resolve();
-            if (!(element instanceof PsiField)) {
-                return;
-            }
-            final PsiField field = (PsiField) element;
-            if (field.hasModifierProperty(PsiModifier.STATIC)) {
-                return;
-            }
-            registerError(expression);
-        }
+    @Override
+    public void visitReferenceExpression(
+      @NotNull PsiReferenceExpression expression) {
+      super.visitReferenceExpression(expression);
+      final PsiExpression qualifierExpression =
+        expression.getQualifierExpression();
+      if (qualifierExpression != null) {
+        return;
+      }
+      final PsiReferenceParameterList parameterList =
+        expression.getParameterList();
+      if (parameterList == null) {
+        return;
+      }
+      if (parameterList.getTypeArguments().length > 0) {
+        // optimization: reference with type arguments are
+        // definitely not references to fields.
+        return;
+      }
+      final PsiElement element = expression.resolve();
+      if (!(element instanceof PsiField)) {
+        return;
+      }
+      final PsiField field = (PsiField)element;
+      if (field.hasModifierProperty(PsiModifier.STATIC)) {
+        return;
+      }
+      registerError(expression);
     }
+  }
 }

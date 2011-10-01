@@ -27,66 +27,67 @@ import org.jetbrains.annotations.NotNull;
 
 public class NumberEqualityInspection extends BaseInspection {
 
-    @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "number.comparison.display.name");
-    }
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "number.comparison.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "number.comparison.problem.descriptor");
+  }
+
+  @Override
+  public boolean isEnabledByDefault() {
+    return true;
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new NumberEqualityVisitor();
+  }
+
+  @Override
+  public InspectionGadgetsFix buildFix(Object... infos) {
+    return new EqualityToEqualsFix();
+  }
+
+  private static class NumberEqualityVisitor extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "number.comparison.problem.descriptor");
+    public void visitBinaryExpression(
+      @NotNull PsiBinaryExpression expression) {
+      super.visitBinaryExpression(expression);
+      final PsiExpression rhs = expression.getROperand();
+      if (rhs == null) {
+        return;
+      }
+      if (!ComparisonUtils.isEqualityComparison(expression)) {
+        return;
+      }
+      final PsiExpression lhs = expression.getLOperand();
+      if (!hasNumberType(lhs) || !hasNumberType(rhs)) {
+        return;
+      }
+      final String lhsText = lhs.getText();
+      if (PsiKeyword.NULL.equals(lhsText)) {
+        return;
+      }
+      final String rhsText = rhs.getText();
+      if (PsiKeyword.NULL.equals(rhsText)) {
+        return;
+      }
+      final PsiJavaToken sign = expression.getOperationSign();
+      registerError(sign);
     }
 
-    @Override
-    public boolean isEnabledByDefault(){
-        return true;
+    private static boolean hasNumberType(PsiExpression expression) {
+      return TypeUtils.expressionHasTypeOrSubtype(expression,
+                                                  CommonClassNames.JAVA_LANG_NUMBER);
     }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new NumberEqualityVisitor();
-    }
-
-    @Override
-    public InspectionGadgetsFix buildFix(Object... infos) {
-        return new EqualityToEqualsFix();
-    }
-
-    private static class NumberEqualityVisitor extends BaseInspectionVisitor {
-
-        @Override public void visitBinaryExpression(
-                @NotNull PsiBinaryExpression expression) {
-            super.visitBinaryExpression(expression);
-            final PsiExpression rhs = expression.getROperand();
-            if (rhs == null) {
-                return;
-            }
-            if (!ComparisonUtils.isEqualityComparison(expression)) {
-                return;
-            }
-            final PsiExpression lhs = expression.getLOperand();
-            if (!hasNumberType(lhs) || !hasNumberType(rhs)) {
-                return;
-            }
-            final String lhsText = lhs.getText();
-            if (PsiKeyword.NULL.equals(lhsText)) {
-                return;
-            }
-            final String rhsText = rhs.getText();
-            if (PsiKeyword.NULL.equals(rhsText)) {
-                return;
-            }
-            final PsiJavaToken sign = expression.getOperationSign();
-            registerError(sign);
-        }
-
-        private static boolean hasNumberType(PsiExpression expression) {
-            return TypeUtils.expressionHasTypeOrSubtype(expression,
-                    CommonClassNames.JAVA_LANG_NUMBER);
-        }
-    }
+  }
 }

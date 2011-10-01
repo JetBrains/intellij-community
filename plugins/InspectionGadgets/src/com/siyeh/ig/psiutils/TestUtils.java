@@ -29,81 +29,82 @@ import org.jetbrains.annotations.Nullable;
 
 public class TestUtils {
 
-    private TestUtils() {}
+  private TestUtils() {
+  }
 
-    public static boolean isTest(@Nullable PsiClass aClass) {
-        if (aClass == null) {
-            return false;
-        }
-        final PsiFile file = aClass.getContainingFile();
-        final VirtualFile virtualFile = file.getVirtualFile();
-        if (virtualFile == null) {
-            return true;
-        }
-        final Project project = aClass.getProject();
-        final ProjectRootManager rootManager =
-                ProjectRootManager.getInstance(project);
-        final ProjectFileIndex fileIndex = rootManager.getFileIndex();
-        return fileIndex.isInTestSourceContent(virtualFile);
+  public static boolean isTest(@Nullable PsiClass aClass) {
+    if (aClass == null) {
+      return false;
     }
+    final PsiFile file = aClass.getContainingFile();
+    final VirtualFile virtualFile = file.getVirtualFile();
+    if (virtualFile == null) {
+      return true;
+    }
+    final Project project = aClass.getProject();
+    final ProjectRootManager rootManager =
+      ProjectRootManager.getInstance(project);
+    final ProjectFileIndex fileIndex = rootManager.getFileIndex();
+    return fileIndex.isInTestSourceContent(virtualFile);
+  }
 
-    public static boolean isPartOfJUnitTestMethod(@NotNull PsiElement element) {
-        final PsiMethod method = PsiTreeUtil.getParentOfType(element,
-                PsiMethod.class);
-        return method != null && isJUnitTestMethod(method);
-    }
+  public static boolean isPartOfJUnitTestMethod(@NotNull PsiElement element) {
+    final PsiMethod method = PsiTreeUtil.getParentOfType(element,
+                                                         PsiMethod.class);
+    return method != null && isJUnitTestMethod(method);
+  }
 
-    public static boolean isJUnit4BeforeOrAfterMethod(
-            @NotNull PsiMethod method) {
-        return AnnotationUtil.isAnnotated(method, "org.junit.Before", true) ||
-                AnnotationUtil.isAnnotated(method, "org.junit.After", true);
-    }
+  public static boolean isJUnit4BeforeOrAfterMethod(
+    @NotNull PsiMethod method) {
+    return AnnotationUtil.isAnnotated(method, "org.junit.Before", true) ||
+           AnnotationUtil.isAnnotated(method, "org.junit.After", true);
+  }
 
-    public static boolean isJUnit4BeforeClassOrAfterClassMethod(
-            @NotNull PsiMethod method) {
-        return AnnotationUtil.isAnnotated(method, "org.junit.BeforeClass", true) ||
-                AnnotationUtil.isAnnotated(method, "org.junit.AfterClass", true);
-    }
+  public static boolean isJUnit4BeforeClassOrAfterClassMethod(
+    @NotNull PsiMethod method) {
+    return AnnotationUtil.isAnnotated(method, "org.junit.BeforeClass", true) ||
+           AnnotationUtil.isAnnotated(method, "org.junit.AfterClass", true);
+  }
 
-    public static boolean isJUnitTestMethod(@Nullable PsiMethod method) {
-        if (method == null) {
-            return false;
-        }
-        if (isJUnit4TestMethod(method)) {
-            return true;
-        }
-        final String methodName = method.getName();
-        @NonNls final String test = "test";
-        if (!methodName.startsWith(test)) {
-            return false;
-        }
-        if (method.hasModifierProperty(PsiModifier.ABSTRACT) ||
-                !method.hasModifierProperty(PsiModifier.PUBLIC)) {
-            return false;
-        }
-        final PsiType returnType = method.getReturnType();
-        if (returnType == null) {
-            return false;
-        }
-        if (!returnType.equals(PsiType.VOID)) {
-            return false;
-        }
-        final PsiParameterList parameterList = method.getParameterList();
-        if (parameterList.getParametersCount() != 0) {
-            return false;
-        }
-        final PsiClass targetClass = method.getContainingClass();
-        return isJUnitTestClass(targetClass);
+  public static boolean isJUnitTestMethod(@Nullable PsiMethod method) {
+    if (method == null) {
+      return false;
     }
+    if (isJUnit4TestMethod(method)) {
+      return true;
+    }
+    final String methodName = method.getName();
+    @NonNls final String test = "test";
+    if (!methodName.startsWith(test)) {
+      return false;
+    }
+    if (method.hasModifierProperty(PsiModifier.ABSTRACT) ||
+        !method.hasModifierProperty(PsiModifier.PUBLIC)) {
+      return false;
+    }
+    final PsiType returnType = method.getReturnType();
+    if (returnType == null) {
+      return false;
+    }
+    if (!returnType.equals(PsiType.VOID)) {
+      return false;
+    }
+    final PsiParameterList parameterList = method.getParameterList();
+    if (parameterList.getParametersCount() != 0) {
+      return false;
+    }
+    final PsiClass targetClass = method.getContainingClass();
+    return isJUnitTestClass(targetClass);
+  }
 
-    public static boolean isJUnit4TestMethod(@Nullable PsiMethod method) {
-        return method != null &&
-                AnnotationUtil.isAnnotated(method, "org.junit.Test", true);
-    }
+  public static boolean isJUnit4TestMethod(@Nullable PsiMethod method) {
+    return method != null &&
+           AnnotationUtil.isAnnotated(method, "org.junit.Test", true);
+  }
 
-    public static boolean isJUnitTestClass(@Nullable PsiClass targetClass){
-        return targetClass != null &&
-                InheritanceUtil.isInheritor(targetClass,
-                        "junit.framework.TestCase");
-    }
+  public static boolean isJUnitTestClass(@Nullable PsiClass targetClass) {
+    return targetClass != null &&
+           InheritanceUtil.isInheritor(targetClass,
+                                       "junit.framework.TestCase");
+  }
 }

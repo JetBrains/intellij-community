@@ -24,29 +24,30 @@ import org.jetbrains.annotations.NotNull;
 
 public class UtilityClassInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message("utility.class.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("utility.class.display.name");
+  }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "utility.class.problem.descriptor");
-    }
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "utility.class.problem.descriptor");
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new UtilityClassVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new UtilityClassVisitor();
+  }
 
-    private static class UtilityClassVisitor extends BaseInspectionVisitor {
+  private static class UtilityClassVisitor extends BaseInspectionVisitor {
 
-        @Override public void visitClass(@NotNull PsiClass aClass) {
-            // no call to super, so that it doesn't drill down to inner classes
-            if (!UtilityClassUtil.isUtilityClass(aClass)) {
-                return;
-            }
-            registerClassError(aClass);
-        }
+    @Override
+    public void visitClass(@NotNull PsiClass aClass) {
+      // no call to super, so that it doesn't drill down to inner classes
+      if (!UtilityClassUtil.isUtilityClass(aClass)) {
+        return;
+      }
+      registerClassError(aClass);
     }
+  }
 }

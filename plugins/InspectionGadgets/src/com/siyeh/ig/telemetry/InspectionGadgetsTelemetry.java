@@ -22,32 +22,32 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class InspectionGadgetsTelemetry {
 
-    private final ConcurrentHashMap<String, InspectionRunTime> inspectionRunTimes =
-            new ConcurrentHashMap();
+  private final ConcurrentHashMap<String, InspectionRunTime> inspectionRunTimes =
+    new ConcurrentHashMap();
 
-    public List<InspectionRunTime> buildList() {
-        if (inspectionRunTimes.isEmpty()) {
-            return Collections.EMPTY_LIST;
-        }
-        return new ArrayList(inspectionRunTimes.values());
+  public List<InspectionRunTime> buildList() {
+    if (inspectionRunTimes.isEmpty()) {
+      return Collections.EMPTY_LIST;
     }
+    return new ArrayList(inspectionRunTimes.values());
+  }
 
-    public void reportRun(String inspectionID, long runTime) {
-        InspectionRunTime inspectionRunTime =
-                inspectionRunTimes.get(inspectionID);
-        if (inspectionRunTime == null) {
-            inspectionRunTime = new InspectionRunTime(inspectionID);
-            final InspectionRunTime oldValue =
-                    inspectionRunTimes.putIfAbsent(inspectionID,
-                            inspectionRunTime);
-            if (oldValue != null) {
-                inspectionRunTime = oldValue;
-            }
-        }
-        inspectionRunTime.addRunTime(runTime);
+  public void reportRun(String inspectionID, long runTime) {
+    InspectionRunTime inspectionRunTime =
+      inspectionRunTimes.get(inspectionID);
+    if (inspectionRunTime == null) {
+      inspectionRunTime = new InspectionRunTime(inspectionID);
+      final InspectionRunTime oldValue =
+        inspectionRunTimes.putIfAbsent(inspectionID,
+                                       inspectionRunTime);
+      if (oldValue != null) {
+        inspectionRunTime = oldValue;
+      }
     }
+    inspectionRunTime.addRunTime(runTime);
+  }
 
-    public void reset() {
-        inspectionRunTimes.clear();
-    }
+  public void reset() {
+    inspectionRunTimes.clear();
+  }
 }

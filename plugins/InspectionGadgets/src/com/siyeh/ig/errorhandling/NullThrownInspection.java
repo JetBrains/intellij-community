@@ -29,66 +29,66 @@ import org.jetbrains.annotations.NotNull;
 
 public class NullThrownInspection extends BaseInspection {
 
-    @Nls
-    @NotNull
-    @Override
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message("null.thrown.display.name");
-    }
+  @Nls
+  @NotNull
+  @Override
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("null.thrown.display.name");
+  }
+
+  @NotNull
+  @Override
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "null.thrown.problem.descriptor");
+  }
+
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new ThrowNullFix();
+  }
+
+  private static class ThrowNullFix extends InspectionGadgetsFix {
 
     @NotNull
     @Override
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "null.thrown.problem.descriptor");
+    public String getName() {
+      return InspectionGadgetsBundle.message("null.thrown.quickfix");
     }
 
     @Override
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        return new ThrowNullFix();
+    protected void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiElement element = descriptor.getPsiElement();
+      final PsiElementFactory factory =
+        JavaPsiFacade.getElementFactory(project);
+      final PsiExpression newExpression =
+        factory.createExpressionFromText(
+          "new java.lang.NullPointerException()", element);
+      element.replace(newExpression);
     }
+  }
 
-    private static class ThrowNullFix extends InspectionGadgetsFix {
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new ThrowNullVisitor();
+  }
 
-        @NotNull
-        @Override
-        public String getName() {
-            return InspectionGadgetsBundle.message("null.thrown.quickfix");
-        }
-
-        @Override
-        protected void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
-            final PsiElement element = descriptor.getPsiElement();
-            final PsiElementFactory factory =
-                    JavaPsiFacade.getElementFactory(project);
-            final PsiExpression newExpression =
-                    factory.createExpressionFromText(
-                            "new java.lang.NullPointerException()", element);
-            element.replace(newExpression);
-        }
-    }
+  private static class ThrowNullVisitor extends BaseInspectionVisitor {
 
     @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new ThrowNullVisitor();
+    public void visitThrowStatement(PsiThrowStatement statement) {
+      super.visitThrowStatement(statement);
+      final PsiExpression exception =
+        ParenthesesUtils.stripParentheses(statement.getException());
+      if (!(exception instanceof PsiLiteralExpression)) {
+        return;
+      }
+      final PsiType type = exception.getType();
+      if (!PsiType.NULL.equals(type)) {
+        return;
+      }
+      registerError(exception);
     }
-
-    private static class ThrowNullVisitor extends BaseInspectionVisitor {
-
-        @Override
-        public void visitThrowStatement(PsiThrowStatement statement) {
-            super.visitThrowStatement(statement);
-            final PsiExpression exception =
-                    ParenthesesUtils.stripParentheses(statement.getException());
-            if (!(exception instanceof PsiLiteralExpression)) {
-                return;
-            }
-            final PsiType type = exception.getType();
-            if (!PsiType.NULL.equals(type)) {
-                return;
-            }
-            registerError(exception);
-        }
-    }
+  }
 }

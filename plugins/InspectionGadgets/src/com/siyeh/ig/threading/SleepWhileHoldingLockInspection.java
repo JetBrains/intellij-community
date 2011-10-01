@@ -26,65 +26,66 @@ import org.jetbrains.annotations.NotNull;
 
 public class SleepWhileHoldingLockInspection extends BaseInspection {
 
-    @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "sleep.while.holding.lock.display.name");
-    }
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "sleep.while.holding.lock.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "sleep.while.holding.lock.problem.descriptor");
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new SleepWhileHoldingLockVisitor();
+  }
+
+  private static class SleepWhileHoldingLockVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "sleep.while.holding.lock.problem.descriptor");
+    public void visitMethodCallExpression(
+      @NotNull PsiMethodCallExpression expression) {
+      super.visitMethodCallExpression(expression);
+      final PsiReferenceExpression methodExpression =
+        expression.getMethodExpression();
+      @NonNls final String methodName =
+        methodExpression.getReferenceName();
+      if (!"sleep".equals(methodName)) {
+        return;
+      }
+      final PsiMethod containingMethod =
+        PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
+      boolean isSynced = false;
+      if (containingMethod != null && containingMethod
+        .hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
+        isSynced = true;
+      }
+      final PsiSynchronizedStatement containingSyncStatement =
+        PsiTreeUtil.getParentOfType(expression,
+                                    PsiSynchronizedStatement.class);
+      if (containingSyncStatement != null) {
+        isSynced = true;
+      }
+      if (!isSynced) {
+        return;
+      }
+      final PsiMethod method = expression.resolveMethod();
+      if (method == null) {
+        return;
+      }
+      final PsiClass methodClass = method.getContainingClass();
+      if (methodClass == null ||
+          !InheritanceUtil.isInheritor(methodClass,
+                                       "java.lang.Thread")) {
+        return;
+      }
+      registerMethodCallError(expression);
     }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new SleepWhileHoldingLockVisitor();
-    }
-
-    private static class SleepWhileHoldingLockVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitMethodCallExpression(
-                @NotNull PsiMethodCallExpression expression) {
-            super.visitMethodCallExpression(expression);
-            final PsiReferenceExpression methodExpression =
-                    expression.getMethodExpression();
-            @NonNls final String methodName =
-                    methodExpression.getReferenceName();
-            if (!"sleep".equals(methodName)) {
-                return;
-            }
-            final PsiMethod containingMethod =
-                    PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
-            boolean isSynced = false;
-            if (containingMethod != null && containingMethod
-                    .hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
-                isSynced = true;
-            }
-            final PsiSynchronizedStatement containingSyncStatement =
-                    PsiTreeUtil.getParentOfType(expression,
-                            PsiSynchronizedStatement.class);
-            if (containingSyncStatement != null) {
-                isSynced = true;
-            }
-            if (!isSynced) {
-                return;
-            }
-            final PsiMethod method = expression.resolveMethod();
-            if (method == null) {
-                return;
-            }
-            final PsiClass methodClass = method.getContainingClass();
-            if (methodClass == null ||
-                    !InheritanceUtil.isInheritor(methodClass,
-                            "java.lang.Thread")) {
-                return;
-            }
-            registerMethodCallError(expression);
-        }
-    }
+  }
 }

@@ -23,59 +23,62 @@ import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class ExternalizableWithSerializationMethodsInspection
-        extends BaseInspection {
+  extends BaseInspection {
 
-    @NotNull
-    public String getID(){
-        return "ExternalizableClassWithSerializationMethods";
+  @NotNull
+  public String getID() {
+    return "ExternalizableClassWithSerializationMethods";
+  }
+
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "externalizable.with.serialization.methods.display.name");
+  }
+
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    final boolean hasReadObject = ((Boolean)infos[0]).booleanValue();
+    final boolean hasWriteObject = ((Boolean)infos[1]).booleanValue();
+    if (hasReadObject && hasWriteObject) {
+      return InspectionGadgetsBundle.message(
+        "externalizable.with.serialization.methods.problem.descriptor.both");
     }
-
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "externalizable.with.serialization.methods.display.name");
+    else if (hasWriteObject) {
+      return InspectionGadgetsBundle.message(
+        "externalizable.with.serialization.methods.problem.descriptor.write");
     }
-
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        final boolean hasReadObject = ((Boolean)infos[0]).booleanValue();
-        final boolean hasWriteObject = ((Boolean)infos[1]).booleanValue();
-        if (hasReadObject && hasWriteObject) {
-            return InspectionGadgetsBundle.message(
-                    "externalizable.with.serialization.methods.problem.descriptor.both");
-        } else if (hasWriteObject) {
-            return InspectionGadgetsBundle.message(
-                    "externalizable.with.serialization.methods.problem.descriptor.write");
-        } else {
-            return InspectionGadgetsBundle.message(
-                    "externalizable.with.serialization.methods.problem.descriptor.read");
-        }
+    else {
+      return InspectionGadgetsBundle.message(
+        "externalizable.with.serialization.methods.problem.descriptor.read");
     }
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new ExternalizableDefinesSerializationMethodsVisitor();
+  public BaseInspectionVisitor buildVisitor() {
+    return new ExternalizableDefinesSerializationMethodsVisitor();
+  }
+
+  private static class ExternalizableDefinesSerializationMethodsVisitor
+    extends BaseInspectionVisitor {
+
+    @Override
+    public void visitClass(@NotNull PsiClass aClass) {
+      // no call to super, so it doesn't drill down
+      if (aClass.isInterface() || aClass.isAnnotationType()) {
+        return;
+      }
+      if (!SerializationUtils.isExternalizable(aClass)) {
+        return;
+      }
+      final boolean hasReadObject =
+        SerializationUtils.hasReadObject(aClass);
+      final boolean hasWriteObject =
+        SerializationUtils.hasWriteObject(aClass);
+      if (!hasWriteObject && !hasReadObject) {
+        return;
+      }
+      registerClassError(aClass, Boolean.valueOf(hasReadObject),
+                         Boolean.valueOf(hasWriteObject));
     }
-
-    private static class ExternalizableDefinesSerializationMethodsVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitClass(@NotNull PsiClass aClass) {
-            // no call to super, so it doesn't drill down
-            if (aClass.isInterface() || aClass.isAnnotationType()) {
-                return;
-            }
-            if (!SerializationUtils.isExternalizable(aClass)) {
-                return;
-            }
-            final boolean hasReadObject =
-                    SerializationUtils.hasReadObject(aClass);
-            final boolean hasWriteObject =
-                    SerializationUtils.hasWriteObject(aClass);
-            if (!hasWriteObject && !hasReadObject) {
-                return;
-            }
-            registerClassError(aClass, Boolean.valueOf(hasReadObject),
-                    Boolean.valueOf(hasWriteObject));
-        }
-    }
+  }
 }

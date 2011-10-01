@@ -23,72 +23,75 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashSet;
 import java.util.Set;
 
-class VariableIsModifiedVisitor extends JavaRecursiveElementVisitor{
+class VariableIsModifiedVisitor extends JavaRecursiveElementVisitor {
 
-    @NonNls private static final Set<String> updateNames =
-            new HashSet<String>(9);
-    static {
-        updateNames.add("append");
-        updateNames.add("appendCodePoint");
-        updateNames.add("delete");
-        updateNames.add("deleteCharAt");
-        updateNames.add("insert");
-        updateNames.add("replace");
-        updateNames.add("reverse");
-        updateNames.add("setCharAt");
-        updateNames.add("setLength");
+  @NonNls private static final Set<String> updateNames =
+    new HashSet<String>(9);
+
+  static {
+    updateNames.add("append");
+    updateNames.add("appendCodePoint");
+    updateNames.add("delete");
+    updateNames.add("deleteCharAt");
+    updateNames.add("insert");
+    updateNames.add("replace");
+    updateNames.add("reverse");
+    updateNames.add("setCharAt");
+    updateNames.add("setLength");
+  }
+
+  private boolean modified = false;
+  private final PsiVariable variable;
+
+  VariableIsModifiedVisitor(PsiVariable variable) {
+    super();
+    this.variable = variable;
+  }
+
+  @Override
+  public void visitElement(@NotNull PsiElement element) {
+    if (!modified) {
+      super.visitElement(element);
     }
+  }
 
-    private boolean modified = false;
-    private final PsiVariable variable;
-
-    VariableIsModifiedVisitor(PsiVariable variable){
-        super();
-        this.variable = variable;
+  @Override
+  public void visitMethodCallExpression(
+    @NotNull PsiMethodCallExpression call) {
+    if (modified) {
+      return;
     }
-
-    @Override public void visitElement(@NotNull PsiElement element){
-        if(!modified){
-            super.visitElement(element);
-        }
+    super.visitMethodCallExpression(call);
+    if (!isStringBufferUpdate(call)) {
+      return;
     }
-
-    @Override public void visitMethodCallExpression(
-            @NotNull PsiMethodCallExpression call){
-        if(modified){
-            return;
-        }
-        super.visitMethodCallExpression(call);
-        if (!isStringBufferUpdate(call)){
-            return;
-        }
-        final PsiReferenceExpression methodExpression =
-                call.getMethodExpression();
-        final PsiExpression qualifier =
-                methodExpression.getQualifierExpression();
-        if(!(qualifier instanceof PsiReferenceExpression)){
-            return;
-        }
-        final PsiReferenceExpression reference =
-                (PsiReferenceExpression) qualifier;
-        final PsiElement referent = reference.resolve();
-        if(variable.equals(referent)){
-            modified = true;
-        }
+    final PsiReferenceExpression methodExpression =
+      call.getMethodExpression();
+    final PsiExpression qualifier =
+      methodExpression.getQualifierExpression();
+    if (!(qualifier instanceof PsiReferenceExpression)) {
+      return;
     }
-
-    public static boolean isStringBufferUpdate(
-            @Nullable PsiMethodCallExpression methodCallExpression) {
-        if (methodCallExpression == null) {
-            return false;
-        }
-        final PsiReferenceExpression methodExpression =
-                methodCallExpression.getMethodExpression();
-        final String methodName = methodExpression.getReferenceName();
-        return updateNames.contains(methodName);
+    final PsiReferenceExpression reference =
+      (PsiReferenceExpression)qualifier;
+    final PsiElement referent = reference.resolve();
+    if (variable.equals(referent)) {
+      modified = true;
     }
+  }
 
-    public boolean isModified(){
-        return modified;
+  public static boolean isStringBufferUpdate(
+    @Nullable PsiMethodCallExpression methodCallExpression) {
+    if (methodCallExpression == null) {
+      return false;
     }
+    final PsiReferenceExpression methodExpression =
+      methodCallExpression.getMethodExpression();
+    final String methodName = methodExpression.getReferenceName();
+    return updateNames.contains(methodName);
+  }
+
+  public boolean isModified() {
+    return modified;
+  }
 }

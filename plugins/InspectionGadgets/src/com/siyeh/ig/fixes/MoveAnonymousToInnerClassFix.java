@@ -30,41 +30,42 @@ import org.jetbrains.annotations.NotNull;
 
 public class MoveAnonymousToInnerClassFix extends InspectionGadgetsFix {
 
-    private final String name;
+  private final String name;
 
-    public MoveAnonymousToInnerClassFix(String name) {
-        this.name = name;
-    }
+  public MoveAnonymousToInnerClassFix(String name) {
+    this.name = name;
+  }
 
-    public MoveAnonymousToInnerClassFix() {
-        name = InspectionGadgetsBundle.message(
-                "move.anonymous.to.inner.quickfix");
-    }
+  public MoveAnonymousToInnerClassFix() {
+    name = InspectionGadgetsBundle.message(
+      "move.anonymous.to.inner.quickfix");
+  }
 
-    @NotNull
-    public String getName() {
-        return name;
-    }
+  @NotNull
+  public String getName() {
+    return name;
+  }
 
-    public void doFix(@NotNull final Project project, ProblemDescriptor descriptor) {
-        final PsiElement nameElement = descriptor.getPsiElement();
-        final PsiAnonymousClass aClass =
-                (PsiAnonymousClass) nameElement.getParent();
-        final JavaRefactoringActionHandlerFactory factory =
-                JavaRefactoringActionHandlerFactory.getInstance();
-        final RefactoringActionHandler anonymousToInner =
-                factory.createAnonymousToInnerHandler();
-        final DataManager dataManager = DataManager.getInstance();
-        final DataContext dataContext = dataManager.getDataContext();
-        final Runnable runnable = new Runnable() {
-          public void run() {
-            anonymousToInner.invoke(project, new PsiElement[]{aClass}, dataContext);
-          }
-        };
-        if (ApplicationManager.getApplication().isUnitTestMode()) {
-          runnable.run();
-        } else {
-          ApplicationManager.getApplication().invokeLater(runnable, project.getDisposed());
-        }
+  public void doFix(@NotNull final Project project, ProblemDescriptor descriptor) {
+    final PsiElement nameElement = descriptor.getPsiElement();
+    final PsiAnonymousClass aClass =
+      (PsiAnonymousClass)nameElement.getParent();
+    final JavaRefactoringActionHandlerFactory factory =
+      JavaRefactoringActionHandlerFactory.getInstance();
+    final RefactoringActionHandler anonymousToInner =
+      factory.createAnonymousToInnerHandler();
+    final DataManager dataManager = DataManager.getInstance();
+    final DataContext dataContext = dataManager.getDataContext();
+    final Runnable runnable = new Runnable() {
+      public void run() {
+        anonymousToInner.invoke(project, new PsiElement[]{aClass}, dataContext);
+      }
+    };
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      runnable.run();
     }
+    else {
+      ApplicationManager.getApplication().invokeLater(runnable, project.getDisposed());
+    }
+  }
 }

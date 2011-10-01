@@ -30,122 +30,123 @@ import org.jetbrains.annotations.Nullable;
 
 public class UnnecessarySuperQualifierInspection extends BaseInspection {
 
-    @Override
-    @Nls
+  @Override
+  @Nls
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "unnecessary.super.qualifier.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "unnecessary.super.qualifier.problem.descriptor"
+    );
+  }
+
+  @Override
+  @Nullable
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new UnnecessarySuperQualifierFix();
+  }
+
+  private static class UnnecessarySuperQualifierFix
+    extends InspectionGadgetsFix {
     @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "unnecessary.super.qualifier.display.name");
+    public String getName() {
+      return InspectionGadgetsBundle.message(
+        "unnecessary.super.qualifier.quickfix");
     }
 
     @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "unnecessary.super.qualifier.problem.descriptor"
-        );
+    protected void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiElement element = descriptor.getPsiElement();
+      element.delete();
     }
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new UnnecessarySuperQualifierVisitor();
+  }
+
+  private static class UnnecessarySuperQualifierVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @Nullable
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        return new UnnecessarySuperQualifierFix();
+    public void visitSuperExpression(PsiSuperExpression expression) {
+      super.visitSuperExpression(expression);
+      final PsiJavaCodeReferenceElement qualifier =
+        expression.getQualifier();
+      if (qualifier != null) {
+        return;
+      }
+      final PsiElement parent = expression.getParent();
+      if (!(parent instanceof PsiReferenceExpression)) {
+        return;
+      }
+      final PsiReferenceExpression referenceExpression =
+        (PsiReferenceExpression)parent;
+      final PsiElement grandParent = referenceExpression.getParent();
+      if (grandParent instanceof PsiMethodCallExpression) {
+        final PsiMethodCallExpression methodCallExpression =
+          (PsiMethodCallExpression)grandParent;
+        if (!hasUnnecessarySuperQualifier(methodCallExpression)) {
+          return;
+        }
+      }
+      else {
+        if (!hasUnnecessarySuperQualifier(referenceExpression)) {
+          return;
+        }
+      }
+      registerError(expression);
     }
 
-    private static class UnnecessarySuperQualifierFix
-            extends InspectionGadgetsFix {
-        @NotNull
-        public String getName() {
-            return InspectionGadgetsBundle.message(
-                    "unnecessary.super.qualifier.quickfix");
-        }
-
-        @Override
-        protected void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
-            final PsiElement element = descriptor.getPsiElement();
-            element.delete();
-        }
+    private static boolean hasUnnecessarySuperQualifier(
+      PsiReferenceExpression referenceExpression) {
+      final PsiClass parentClass =
+        PsiTreeUtil.getParentOfType(referenceExpression,
+                                    PsiClass.class);
+      if (parentClass == null) {
+        return false;
+      }
+      final PsiElement target = referenceExpression.resolve();
+      if (target == null || !(target instanceof PsiField)) {
+        return false;
+      }
+      final PsiField superField = (PsiField)target;
+      final PsiReferenceExpression copy = (PsiReferenceExpression)
+        referenceExpression.copy();
+      final PsiElement qualifier = copy.getQualifier();
+      if (qualifier == null) {
+        return false;
+      }
+      qualifier.delete(); // remove super
+      return superField == copy.resolve();
     }
 
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new UnnecessarySuperQualifierVisitor();
+    private static boolean hasUnnecessarySuperQualifier(
+      PsiMethodCallExpression methodCallExpression) {
+      final PsiMethod superMethod =
+        methodCallExpression.resolveMethod();
+      if (superMethod == null) {
+        return false;
+      }
+      // check that super.m() and m() resolve to the same method
+      final PsiMethodCallExpression copy =
+        (PsiMethodCallExpression)methodCallExpression.copy();
+      final PsiReferenceExpression methodExpression =
+        copy.getMethodExpression();
+      final PsiElement qualifier = methodExpression.getQualifier();
+      if (qualifier == null) {
+        return false;
+      }
+      qualifier.delete(); //remove super
+      return superMethod == copy.resolveMethod();
     }
-
-    private static class UnnecessarySuperQualifierVisitor
-            extends BaseInspectionVisitor {
-
-        @Override
-        public void visitSuperExpression(PsiSuperExpression expression) {
-            super.visitSuperExpression(expression);
-            final PsiJavaCodeReferenceElement qualifier =
-                    expression.getQualifier();
-            if (qualifier != null) {
-                return;
-            }
-            final PsiElement parent = expression.getParent();
-            if (!(parent instanceof PsiReferenceExpression)) {
-                return;
-            }
-            final PsiReferenceExpression referenceExpression =
-                    (PsiReferenceExpression) parent;
-            final PsiElement grandParent = referenceExpression.getParent();
-            if (grandParent instanceof PsiMethodCallExpression) {
-                final PsiMethodCallExpression methodCallExpression =
-                        (PsiMethodCallExpression)grandParent;
-                if (!hasUnnecessarySuperQualifier(methodCallExpression)) {
-                    return;
-                }
-            } else {
-                if (!hasUnnecessarySuperQualifier(referenceExpression)) {
-                    return;
-                }
-            }
-            registerError(expression);
-        }
-
-        private static boolean hasUnnecessarySuperQualifier(
-                PsiReferenceExpression referenceExpression) {
-            final PsiClass parentClass =
-                    PsiTreeUtil.getParentOfType(referenceExpression,
-                            PsiClass.class);
-            if (parentClass == null) {
-                return false;
-            }
-            final PsiElement target = referenceExpression.resolve();
-            if (target == null || !(target instanceof PsiField)) {
-                return false;
-            }
-            final PsiField superField = (PsiField)target;
-            final PsiReferenceExpression copy = (PsiReferenceExpression)
-                    referenceExpression.copy();
-            final PsiElement qualifier = copy.getQualifier();
-            if (qualifier ==  null) {
-                return false;
-            }
-            qualifier.delete(); // remove super
-            return superField == copy.resolve();
-        }
-
-        private static boolean hasUnnecessarySuperQualifier(
-                PsiMethodCallExpression methodCallExpression) {
-            final PsiMethod superMethod =
-                    methodCallExpression.resolveMethod();
-            if (superMethod == null) {
-                return false;
-            }
-            // check that super.m() and m() resolve to the same method
-            final PsiMethodCallExpression copy =
-                    (PsiMethodCallExpression)methodCallExpression.copy();
-            final PsiReferenceExpression methodExpression =
-                    copy.getMethodExpression();
-            final PsiElement qualifier = methodExpression.getQualifier();
-            if (qualifier == null) {
-                return false;
-            }
-            qualifier.delete(); //remove super
-            return superMethod == copy.resolveMethod();
-        }
-    }
+  }
 }

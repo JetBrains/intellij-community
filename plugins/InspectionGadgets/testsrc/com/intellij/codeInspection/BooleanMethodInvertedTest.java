@@ -13,23 +13,23 @@ public class BooleanMethodInvertedTest extends IGInspectionTestCase {
     doTest();
   }
 
-  public void testNotAlwaysInverted() throws Exception{
+  public void testNotAlwaysInverted() throws Exception {
     doTest();
   }
 
-  public void testAlwaysInverted() throws Exception{
+  public void testAlwaysInverted() throws Exception {
     doTest();
   }
 
-  public void testAlwaysInvertedByRange() throws Exception{
+  public void testAlwaysInvertedByRange() throws Exception {
     doTest(true);
   }
 
-  public void testFromExpression() throws Exception{
+  public void testFromExpression() throws Exception {
     doTest();
   }
 
-  public void testAlwaysInvertedInScope() throws Exception{
+  public void testAlwaysInvertedInScope() throws Exception {
     doTest();
   }
 
@@ -49,7 +49,7 @@ public class BooleanMethodInvertedTest extends IGInspectionTestCase {
     doTest();
   }
 
-  public void testOverrideLibrary() throws Exception{
+  public void testOverrideLibrary() throws Exception {
     doTest();
   }
 

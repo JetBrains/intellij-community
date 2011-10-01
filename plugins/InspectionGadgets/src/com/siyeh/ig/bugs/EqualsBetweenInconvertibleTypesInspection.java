@@ -24,67 +24,68 @@ import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class EqualsBetweenInconvertibleTypesInspection
-        extends BaseInspection {
+  extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "equals.between.inconvertible.types.display.name");
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "equals.between.inconvertible.types.display.name");
+  }
+
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    final PsiType comparedType = (PsiType)infos[0];
+    final PsiType comparisonType = (PsiType)infos[1];
+    return InspectionGadgetsBundle.message(
+      "equals.between.inconvertible.types.problem.descriptor",
+      comparedType.getPresentableText(),
+      comparisonType.getPresentableText());
+  }
+
+  public boolean isEnabledByDefault() {
+    return true;
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new EqualsBetweenInconvertibleTypesVisitor();
+  }
+
+  private static class EqualsBetweenInconvertibleTypesVisitor
+    extends BaseInspectionVisitor {
+
+    @Override
+    public void visitMethodCallExpression(
+      @NotNull PsiMethodCallExpression expression) {
+      super.visitMethodCallExpression(expression);
+      if (!MethodCallUtils.isEqualsCall(expression)) {
+        return;
+      }
+      final PsiReferenceExpression methodExpression =
+        expression.getMethodExpression();
+      final PsiExpressionList argumentList = expression.getArgumentList();
+      final PsiExpression[] args = argumentList.getExpressions();
+      if (args.length != 1) {
+        return;
+      }
+      final PsiExpression expression1 = args[0];
+      final PsiExpression expression2 =
+        methodExpression.getQualifierExpression();
+      if (expression2 == null) {
+        return;
+      }
+      final PsiType comparedType = expression1.getType();
+      if (comparedType == null) {
+        return;
+      }
+      final PsiType comparisonType = expression2.getType();
+      if (comparisonType == null) {
+        return;
+      }
+      if (TypeConversionUtil.areTypesConvertible(TypeConversionUtil.erasure(comparedType),
+                                                 TypeConversionUtil.erasure(comparisonType))) {
+        return;
+      }
+      registerMethodCallError(expression, comparedType, comparisonType);
     }
-
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        final PsiType comparedType = (PsiType)infos[0];
-        final PsiType comparisonType = (PsiType)infos[1];
-        return InspectionGadgetsBundle.message(
-                "equals.between.inconvertible.types.problem.descriptor",
-                comparedType.getPresentableText(),
-                comparisonType.getPresentableText());
-    }
-
-    public boolean isEnabledByDefault() {
-        return true;
-    }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new EqualsBetweenInconvertibleTypesVisitor();
-    }
-
-    private static class EqualsBetweenInconvertibleTypesVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitMethodCallExpression(
-                @NotNull PsiMethodCallExpression expression) {
-            super.visitMethodCallExpression(expression);
-            if(!MethodCallUtils.isEqualsCall(expression)){
-                return;
-            }
-            final PsiReferenceExpression methodExpression =
-                    expression.getMethodExpression();
-            final PsiExpressionList argumentList = expression.getArgumentList();
-            final PsiExpression[] args = argumentList.getExpressions();
-            if (args.length != 1) {
-                return;
-            }
-            final PsiExpression expression1 = args[0];
-            final PsiExpression expression2 =
-                    methodExpression.getQualifierExpression();
-            if (expression2 == null) {
-                return;
-            }
-            final PsiType comparedType = expression1.getType();
-            if (comparedType == null) {
-                return;
-            }
-            final PsiType comparisonType = expression2.getType();
-            if (comparisonType == null) {
-                return;
-            }
-            if (TypeConversionUtil.areTypesConvertible(TypeConversionUtil.erasure(comparedType),
-                                                       TypeConversionUtil.erasure(comparisonType))) {
-                return;
-            }
-            registerMethodCallError(expression, comparedType, comparisonType);
-        }
-    }
+  }
 }

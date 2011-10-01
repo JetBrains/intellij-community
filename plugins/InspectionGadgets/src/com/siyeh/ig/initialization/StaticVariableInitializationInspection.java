@@ -30,81 +30,84 @@ import javax.swing.*;
 
 public class StaticVariableInitializationInspection extends BaseInspection {
 
-    /** @noinspection PublicField*/
-    public boolean m_ignorePrimitives = false;
+  /**
+   * @noinspection PublicField
+   */
+  public boolean m_ignorePrimitives = false;
+
+  @Override
+  @NotNull
+  public String getID() {
+    return "StaticVariableMayNotBeInitialized";
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "static.variable.may.not.be.initialized.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "static.variable.may.not.be.initialized.problem.descriptor");
+  }
+
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+      "primitive.fields.ignore.option"),
+                                          this, "m_ignorePrimitives");
+  }
+
+  @Override
+  public InspectionGadgetsFix buildFix(Object... infos) {
+    return new MakeInitializerExplicitFix();
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new StaticVariableInitializationVisitor();
+  }
+
+  private class StaticVariableInitializationVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String getID(){
-        return "StaticVariableMayNotBeInitialized";
-    }
-
-    @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "static.variable.may.not.be.initialized.display.name");
-    }
-
-    @Override
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "static.variable.may.not.be.initialized.problem.descriptor");
-    }
-
-    @Override
-    public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-                "primitive.fields.ignore.option"),
-                this, "m_ignorePrimitives");
-    }
-
-    @Override
-    public InspectionGadgetsFix buildFix(Object... infos){
-        return new MakeInitializerExplicitFix();
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new StaticVariableInitializationVisitor();
-    }
-
-    private class StaticVariableInitializationVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitField(@NotNull PsiField field) {
-            if (!field.hasModifierProperty(PsiModifier.STATIC)) {
-                return;
-            }
-            if (field.getInitializer() != null) {
-                return;
-            }
-            final PsiClass containingClass = field.getContainingClass();
-            if (containingClass == null) {
-                return;
-            }
-            if (containingClass.isEnum()) {
-                return;
-            }
-            if (m_ignorePrimitives) {
-                final PsiType type = field.getType();
-                if (ClassUtils.isPrimitive(type)) {
-                    return;
-                }
-            }
-            final PsiClassInitializer[] initializers =
-                    containingClass.getInitializers();
-            for(final PsiClassInitializer initializer : initializers){
-                if(initializer.hasModifierProperty(PsiModifier.STATIC)){
-                    final PsiCodeBlock body = initializer.getBody();
-                    if(InitializationUtils.blockAssignsVariableOrFails(body,
-                            field)) {
-                        return;
-                    }
-                }
-            }
-            registerFieldError(field);
+    public void visitField(@NotNull PsiField field) {
+      if (!field.hasModifierProperty(PsiModifier.STATIC)) {
+        return;
+      }
+      if (field.getInitializer() != null) {
+        return;
+      }
+      final PsiClass containingClass = field.getContainingClass();
+      if (containingClass == null) {
+        return;
+      }
+      if (containingClass.isEnum()) {
+        return;
+      }
+      if (m_ignorePrimitives) {
+        final PsiType type = field.getType();
+        if (ClassUtils.isPrimitive(type)) {
+          return;
         }
+      }
+      final PsiClassInitializer[] initializers =
+        containingClass.getInitializers();
+      for (final PsiClassInitializer initializer : initializers) {
+        if (initializer.hasModifierProperty(PsiModifier.STATIC)) {
+          final PsiCodeBlock body = initializer.getBody();
+          if (InitializationUtils.blockAssignsVariableOrFails(body,
+                                                              field)) {
+            return;
+          }
+        }
+      }
+      registerFieldError(field);
     }
+  }
 }

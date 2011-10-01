@@ -30,62 +30,63 @@ import org.jetbrains.annotations.NotNull;
 
 public class CStyleArrayDeclarationInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "c.style.array.declaration.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "c.style.array.declaration.display.name");
+  }
+
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "c.style.array.declaration.problem.descriptor");
+  }
+
+  public InspectionGadgetsFix buildFix(Object... infos) {
+    return new CStyleArrayDeclarationFix();
+  }
+
+  private static class CStyleArrayDeclarationFix
+    extends InspectionGadgetsFix {
 
     @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "c.style.array.declaration.problem.descriptor");
+    public String getName() {
+      return InspectionGadgetsBundle.message(
+        "c.style.array.declaration.replace.quickfix");
     }
 
-    public InspectionGadgetsFix buildFix(Object... infos) {
-        return new CStyleArrayDeclarationFix();
+    public void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiElement nameElement = descriptor.getPsiElement();
+      final PsiVariable var = (PsiVariable)nameElement.getParent();
+      assert var != null;
+      var.normalizeDeclaration();
     }
+  }
 
-    private static class CStyleArrayDeclarationFix
-            extends InspectionGadgetsFix {
+  public BaseInspectionVisitor buildVisitor() {
+    return new CStyleArrayDeclarationVisitor();
+  }
 
-        @NotNull
-        public String getName() {
-            return InspectionGadgetsBundle.message(
-                    "c.style.array.declaration.replace.quickfix");
-        }
+  private static class CStyleArrayDeclarationVisitor
+    extends BaseInspectionVisitor {
 
-        public void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
-            final PsiElement nameElement = descriptor.getPsiElement();
-            final PsiVariable var = (PsiVariable)nameElement.getParent();
-            assert var != null;
-            var.normalizeDeclaration();
-        }
+    @Override
+    public void visitVariable(@NotNull PsiVariable var) {
+      super.visitVariable(var);
+      final PsiType declaredType = var.getType();
+      if (declaredType.getArrayDimensions() == 0) {
+        return;
+      }
+      final PsiTypeElement typeElement = var.getTypeElement();
+      if (typeElement == null) {
+        return; // Could be true for enum constants.
+      }
+      final PsiType elementType = typeElement.getType();
+      if (elementType.equals(declaredType)) {
+        return;
+      }
+      registerVariableError(var);
     }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new CStyleArrayDeclarationVisitor();
-    }
-
-    private static class CStyleArrayDeclarationVisitor
-            extends BaseInspectionVisitor{
-
-        @Override public void visitVariable(@NotNull PsiVariable var) {
-            super.visitVariable(var);
-            final PsiType declaredType = var.getType();
-            if (declaredType.getArrayDimensions() == 0) {
-                return;
-            }
-            final PsiTypeElement typeElement = var.getTypeElement();
-            if (typeElement == null) {
-                return; // Could be true for enum constants.
-            }
-            final PsiType elementType = typeElement.getType();
-            if (elementType.equals(declaredType)) {
-                return;
-            }
-            registerVariableError(var);
-        }
-    }
+  }
 }

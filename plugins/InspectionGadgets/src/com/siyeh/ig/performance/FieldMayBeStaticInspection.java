@@ -28,65 +28,66 @@ import org.jetbrains.annotations.NotNull;
 
 public class FieldMayBeStaticInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "field.may.be.static.display.name");
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "field.may.be.static.display.name");
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new FieldMayBeStaticVisitor();
+  }
+
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "field.may.be.static.problem.descriptor");
+  }
+
+  public InspectionGadgetsFix buildFix(Object... infos) {
+    return new ChangeModifierFix(PsiModifier.STATIC);
+  }
+
+  private static class FieldMayBeStaticVisitor extends BaseInspectionVisitor {
+
+    @Override
+    public void visitField(@NotNull PsiField field) {
+      if (field.hasModifierProperty(PsiModifier.STATIC)) {
+        return;
+      }
+      if (!field.hasModifierProperty(PsiModifier.FINAL)) {
+        return;
+      }
+      final PsiExpression initializer = field.getInitializer();
+      if (initializer == null) {
+        return;
+      }
+      if (SideEffectChecker.mayHaveSideEffects(initializer)) {
+        return;
+      }
+      if (!canBeStatic(initializer)) {
+        return;
+      }
+      final PsiType type = field.getType();
+      if (!ClassUtils.isImmutable(type)) {
+        return;
+      }
+      final PsiClass containingClass = field.getContainingClass();
+      if (containingClass != null
+          && !containingClass.hasModifierProperty(PsiModifier.STATIC)
+          && containingClass.getContainingClass() != null
+          && !PsiUtil.isCompileTimeConstant(field)) {
+        // inner class cannot have static declarations
+        return;
+      }
+      registerFieldError(field);
     }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new FieldMayBeStaticVisitor();
+    private static boolean canBeStatic(PsiExpression initializer) {
+      final CanBeStaticVisitor canBeStaticVisitor =
+        new CanBeStaticVisitor();
+      initializer.accept(canBeStaticVisitor);
+      return canBeStaticVisitor.canBeStatic();
     }
-
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "field.may.be.static.problem.descriptor");
-    }
-
-    public InspectionGadgetsFix buildFix(Object... infos) {
-        return new ChangeModifierFix(PsiModifier.STATIC);
-    }
-
-    private static class FieldMayBeStaticVisitor extends BaseInspectionVisitor {
-
-        @Override public void visitField(@NotNull PsiField field) {
-            if (field.hasModifierProperty(PsiModifier.STATIC)) {
-                return;
-            }
-            if (!field.hasModifierProperty(PsiModifier.FINAL)) {
-                return;
-            }
-            final PsiExpression initializer = field.getInitializer();
-            if (initializer == null) {
-                return;
-            }
-            if (SideEffectChecker.mayHaveSideEffects(initializer)) {
-                return;
-            }
-            if (!canBeStatic(initializer)) {
-                return;
-            }
-            final PsiType type = field.getType();
-            if (!ClassUtils.isImmutable(type)) {
-                return;
-            }
-            final PsiClass containingClass = field.getContainingClass();
-            if (containingClass != null
-                    && !containingClass.hasModifierProperty(PsiModifier.STATIC)
-                    && containingClass.getContainingClass() != null
-                    && !PsiUtil.isCompileTimeConstant(field)) {
-                // inner class cannot have static declarations
-                return;
-            }
-            registerFieldError(field);
-        }
-
-        private static boolean canBeStatic(PsiExpression initializer) {
-            final CanBeStaticVisitor canBeStaticVisitor =
-                    new CanBeStaticVisitor();
-            initializer.accept(canBeStaticVisitor);
-            return canBeStaticVisitor.canBeStatic();
-        }
-    }
+  }
 }

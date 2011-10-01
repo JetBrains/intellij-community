@@ -24,89 +24,90 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
 public class PrimitiveArrayArgumentToVariableArgMethodInspection
-        extends BaseInspection {
+  extends BaseInspection {
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "primitive.array.argument.to.var.arg.method.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "primitive.array.argument.to.var.arg.method.problem.descriptor");
+  }
+
+  @Override
+  public boolean isEnabledByDefault() {
+    return true;
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new PrimitiveArrayArgumentToVariableArgVisitor();
+  }
+
+  private static class PrimitiveArrayArgumentToVariableArgVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "primitive.array.argument.to.var.arg.method.display.name");
+    public void visitMethodCallExpression(
+      @NotNull PsiMethodCallExpression call) {
+      super.visitMethodCallExpression(call);
+      if (!PsiUtil.isLanguageLevel5OrHigher(call)) {
+        return;
+      }
+      final PsiExpressionList argumentList = call.getArgumentList();
+      final PsiExpression[] arguments = argumentList.getExpressions();
+      if (arguments.length == 0) {
+        return;
+      }
+      final PsiExpression lastArgument = arguments[arguments.length - 1];
+      final PsiType argumentType = lastArgument.getType();
+      if (!isPrimitiveArrayType(argumentType)) {
+        return;
+      }
+      final PsiMethod method = call.resolveMethod();
+      if (method == null) {
+        return;
+      }
+      final PsiParameterList parameterList = method.getParameterList();
+      if (parameterList.getParametersCount() != arguments.length) {
+        return;
+      }
+      final PsiParameter[] parameters = parameterList.getParameters();
+      final PsiParameter lastParameter =
+        parameters[parameters.length - 1];
+      if (!lastParameter.isVarArgs()) {
+        return;
+      }
+      final PsiType parameterType = lastParameter.getType();
+      if (isDeepPrimitiveArrayType(parameterType)) {
+        return;
+      }
+      registerError(lastArgument);
     }
+  }
 
-    @Override
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "primitive.array.argument.to.var.arg.method.problem.descriptor");
+  private static boolean isPrimitiveArrayType(PsiType type) {
+    if (type == null) {
+      return false;
     }
-
-    @Override
-    public boolean isEnabledByDefault() {
-        return true;
+    if (!(type instanceof PsiArrayType)) {
+      return false;
     }
+    final PsiType componentType = ((PsiArrayType)type).getComponentType();
+    return TypeConversionUtil.isPrimitiveAndNotNull(componentType);
+  }
 
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new PrimitiveArrayArgumentToVariableArgVisitor();
+  private static boolean isDeepPrimitiveArrayType(PsiType type) {
+    if (!(type instanceof PsiArrayType)) {
+      return false;
     }
-
-    private static class PrimitiveArrayArgumentToVariableArgVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitMethodCallExpression(
-                @NotNull PsiMethodCallExpression call) {
-            super.visitMethodCallExpression(call);
-            if (!PsiUtil.isLanguageLevel5OrHigher(call)) {
-                return;
-            }
-            final PsiExpressionList argumentList = call.getArgumentList();
-            final PsiExpression[] arguments = argumentList.getExpressions();
-            if (arguments.length == 0) {
-                return;
-            }
-            final PsiExpression lastArgument = arguments[arguments.length - 1];
-            final PsiType argumentType = lastArgument.getType();
-            if (!isPrimitiveArrayType(argumentType)) {
-                return;
-            }
-            final PsiMethod method = call.resolveMethod();
-            if (method == null) {
-                return;
-            }
-            final PsiParameterList parameterList = method.getParameterList();
-            if (parameterList.getParametersCount() != arguments.length) {
-                return;
-            }
-            final PsiParameter[] parameters = parameterList.getParameters();
-            final PsiParameter lastParameter =
-                    parameters[parameters.length - 1];
-            if (!lastParameter.isVarArgs()) {
-                return;
-            }
-            final PsiType parameterType = lastParameter.getType();
-            if (isDeepPrimitiveArrayType(parameterType)) {
-                return;
-            }
-            registerError(lastArgument);
-        }
-    }
-
-    private static boolean isPrimitiveArrayType(PsiType type) {
-        if (type == null) {
-            return false;
-        }
-        if (!(type instanceof PsiArrayType)) {
-            return false;
-        }
-        final PsiType componentType = ((PsiArrayType)type).getComponentType();
-        return TypeConversionUtil.isPrimitiveAndNotNull(componentType);
-    }
-
-    private static boolean isDeepPrimitiveArrayType(PsiType type) {
-        if (!(type instanceof PsiArrayType)) {
-            return false;
-        }
-        final PsiType componentType = type.getDeepComponentType();
-        return TypeConversionUtil.isPrimitiveAndNotNull(componentType);
-    }
+    final PsiType componentType = type.getDeepComponentType();
+    return TypeConversionUtil.isPrimitiveAndNotNull(componentType);
+  }
 }

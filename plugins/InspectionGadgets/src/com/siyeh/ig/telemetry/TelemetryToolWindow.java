@@ -33,49 +33,49 @@ import java.awt.*;
 
 public class TelemetryToolWindow {
 
-    @NonNls
-    private static final String TOOL_WINDOW_ID = "IG Telemetry";
+  @NonNls
+  private static final String TOOL_WINDOW_ID = "IG Telemetry";
 
-    private final JPanel contentPanel;
+  private final JPanel contentPanel;
 
-    public TelemetryToolWindow(InspectionGadgetsTelemetry telemetry) {
-        final TelemetryDisplay telemetryDisplay =
-                new TelemetryDisplay(telemetry);
-        final DefaultActionGroup toolbarGroup = new DefaultActionGroup();
-        toolbarGroup.add(
-                new UpdateTelemetryViewAction(telemetry, telemetryDisplay));
-        toolbarGroup.add(new ResetTelemetryAction(telemetry, telemetryDisplay));
-        final ActionManager actionManager = ActionManager.getInstance();
-        final ActionToolbar toolbar =
-                actionManager.createActionToolbar(TOOL_WINDOW_ID,
-                                                  toolbarGroup, true);
-        contentPanel = new JPanel(new BorderLayout());
-        contentPanel.setBackground(Color.gray);
-        final JComponent toolbarComponent = toolbar.getComponent();
-        contentPanel.add(toolbarComponent, BorderLayout.NORTH);
-        final JComponent displayContentPane = telemetryDisplay.getContentPane();
-        contentPanel.add(displayContentPane, BorderLayout.CENTER);
-    }
+  public TelemetryToolWindow(InspectionGadgetsTelemetry telemetry) {
+    final TelemetryDisplay telemetryDisplay =
+      new TelemetryDisplay(telemetry);
+    final DefaultActionGroup toolbarGroup = new DefaultActionGroup();
+    toolbarGroup.add(
+      new UpdateTelemetryViewAction(telemetry, telemetryDisplay));
+    toolbarGroup.add(new ResetTelemetryAction(telemetry, telemetryDisplay));
+    final ActionManager actionManager = ActionManager.getInstance();
+    final ActionToolbar toolbar =
+      actionManager.createActionToolbar(TOOL_WINDOW_ID,
+                                        toolbarGroup, true);
+    contentPanel = new JPanel(new BorderLayout());
+    contentPanel.setBackground(Color.gray);
+    final JComponent toolbarComponent = toolbar.getComponent();
+    contentPanel.add(toolbarComponent, BorderLayout.NORTH);
+    final JComponent displayContentPane = telemetryDisplay.getContentPane();
+    contentPanel.add(displayContentPane, BorderLayout.CENTER);
+  }
 
-    public void register(Project project){
-        final ToolWindowManager toolWindowManager =
-                ToolWindowManager.getInstance(project);
-        final ToolWindow toolWindow =
-                toolWindowManager.registerToolWindow(TOOL_WINDOW_ID, false,
-                                                     ToolWindowAnchor.LEFT);
-        toolWindow.setTitle(InspectionGadgetsBundle.message(
-                "telemetry.toolwindow.title"));
-        final ContentManager contentManager = toolWindow.getContentManager();
-        final ContentFactory contentFactory = contentManager.getFactory();
-        final Content content = contentFactory.createContent(contentPanel,
-                "", true);
-        contentManager.addContent(content);
-        toolWindow.setAvailable(true, null);
-    }
+  public void register(Project project) {
+    final ToolWindowManager toolWindowManager =
+      ToolWindowManager.getInstance(project);
+    final ToolWindow toolWindow =
+      toolWindowManager.registerToolWindow(TOOL_WINDOW_ID, false,
+                                           ToolWindowAnchor.LEFT);
+    toolWindow.setTitle(InspectionGadgetsBundle.message(
+      "telemetry.toolwindow.title"));
+    final ContentManager contentManager = toolWindow.getContentManager();
+    final ContentFactory contentFactory = contentManager.getFactory();
+    final Content content = contentFactory.createContent(contentPanel,
+                                                         "", true);
+    contentManager.addContent(content);
+    toolWindow.setAvailable(true, null);
+  }
 
-    public static void unregister(Project project){
-        final ToolWindowManager toolWindowManager =
-                ToolWindowManager.getInstance(project);
-        toolWindowManager.unregisterToolWindow(TOOL_WINDOW_ID);
-    }
+  public static void unregister(Project project) {
+    final ToolWindowManager toolWindowManager =
+      ToolWindowManager.getInstance(project);
+    toolWindowManager.unregisterToolWindow(TOOL_WINDOW_ID);
+  }
 }

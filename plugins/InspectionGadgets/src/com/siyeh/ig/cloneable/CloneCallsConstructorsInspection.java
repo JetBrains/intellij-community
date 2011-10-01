@@ -25,56 +25,58 @@ import org.jetbrains.annotations.NotNull;
 
 public class CloneCallsConstructorsInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "clone.instantiates.objects.with.constructor.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "clone.instantiates.objects.with.constructor.display.name");
+  }
 
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "clone.instantiates.objects.with.constructor.problem.descriptor");
-    }
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "clone.instantiates.objects.with.constructor.problem.descriptor");
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new CloneCallsConstructorVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new CloneCallsConstructorVisitor();
+  }
 
-    private static class CloneCallsConstructorVisitor
-            extends BaseInspectionVisitor {
+  private static class CloneCallsConstructorVisitor
+    extends BaseInspectionVisitor {
 
-        @Override public void visitMethod(@NotNull PsiMethod method) {
-            final String methodName = method.getName();
-            final PsiParameterList parameterList = method.getParameterList();
-            final boolean isClone =
-                    HardcodedMethodConstants.CLONE.equals(methodName) &&
-                            parameterList.getParametersCount() == 0;
-            if (isClone) {
-                method.accept(new JavaRecursiveElementVisitor() {
+    @Override
+    public void visitMethod(@NotNull PsiMethod method) {
+      final String methodName = method.getName();
+      final PsiParameterList parameterList = method.getParameterList();
+      final boolean isClone =
+        HardcodedMethodConstants.CLONE.equals(methodName) &&
+        parameterList.getParametersCount() == 0;
+      if (isClone) {
+        method.accept(new JavaRecursiveElementVisitor() {
 
-                    @Override public void visitNewExpression(
-                            @NotNull PsiNewExpression newExpression) {
-                        super.visitNewExpression(newExpression);
-                        final PsiExpression[] arrayDimensions =
-                                newExpression.getArrayDimensions();
-                        if (arrayDimensions.length != 0) {
-                            return;
-                        }
-                        if (newExpression.getArrayInitializer() != null) {
-                            return;
-                        }
-                        if (newExpression.getAnonymousClass() != null) {
-                            return;
-                        }
-                        if (PsiTreeUtil.getParentOfType(newExpression,
-                                PsiThrowStatement.class) != null) {
-                            return;
-                        }
-                        registerError(newExpression);
-                    }
-                });
+          @Override
+          public void visitNewExpression(
+            @NotNull PsiNewExpression newExpression) {
+            super.visitNewExpression(newExpression);
+            final PsiExpression[] arrayDimensions =
+              newExpression.getArrayDimensions();
+            if (arrayDimensions.length != 0) {
+              return;
             }
-        }
+            if (newExpression.getArrayInitializer() != null) {
+              return;
+            }
+            if (newExpression.getAnonymousClass() != null) {
+              return;
+            }
+            if (PsiTreeUtil.getParentOfType(newExpression,
+                                            PsiThrowStatement.class) != null) {
+              return;
+            }
+            registerError(newExpression);
+          }
+        });
+      }
     }
+  }
 }

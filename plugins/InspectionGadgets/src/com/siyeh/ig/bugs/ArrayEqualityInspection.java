@@ -30,121 +30,125 @@ import org.jetbrains.annotations.NotNull;
 
 public class ArrayEqualityInspection extends BaseInspection {
 
-    @Override
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "array.comparison.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "array.comparison.problem.descriptor");
+  }
+
+  @Override
+  public InspectionGadgetsFix buildFix(Object... infos) {
+    final PsiArrayType type = (PsiArrayType)infos[0];
+    final PsiType componentType = type.getComponentType();
+    if (componentType instanceof PsiArrayType) {
+      return new ArrayEqualityFix(true);
+    }
+    return new ArrayEqualityFix(false);
+  }
+
+  private static class ArrayEqualityFix extends InspectionGadgetsFix {
+
+    private final boolean deepEquals;
+
+    public ArrayEqualityFix(boolean deepEquals) {
+      this.deepEquals = deepEquals;
+    }
+
     @NotNull
-    public String getDisplayName() {
+    @Override
+    public String getName() {
+      if (deepEquals) {
         return InspectionGadgetsBundle.message(
-                "array.comparison.display.name");
-    }
-
-    @Override
-    @NotNull
-    public String buildErrorString(Object... infos) {
+          "replace.with.arrays.deep.equals");
+      }
+      else {
         return InspectionGadgetsBundle.message(
-                "array.comparison.problem.descriptor");
+          "replace.with.arrays.equals");
+      }
     }
 
     @Override
-    public InspectionGadgetsFix buildFix(Object... infos) {
-        final PsiArrayType type = (PsiArrayType) infos[0];
-        final PsiType componentType = type.getComponentType();
-        if (componentType instanceof PsiArrayType) {
-            return new ArrayEqualityFix(true);
-        }
-        return new ArrayEqualityFix(false);
+    protected void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiElement element = descriptor.getPsiElement();
+      final PsiElement parent = element.getParent();
+      if (!(parent instanceof PsiBinaryExpression)) {
+        return;
+      }
+      final PsiBinaryExpression binaryExpression =
+        (PsiBinaryExpression)parent;
+      final IElementType tokenType =
+        binaryExpression.getOperationTokenType();
+      @NonNls final StringBuilder newExpressionText = new StringBuilder();
+      if (JavaTokenType.NE.equals(tokenType)) {
+        newExpressionText.append('!');
+      }
+      else if (!JavaTokenType.EQEQ.equals(tokenType)) {
+        return;
+      }
+      if (deepEquals) {
+        newExpressionText.append("java.util.Arrays.deepEquals(");
+      }
+      else {
+        newExpressionText.append("java.util.Arrays.equals(");
+      }
+      newExpressionText.append(binaryExpression.getLOperand().getText());
+      newExpressionText.append(',');
+      final PsiExpression rhs = binaryExpression.getROperand();
+      if (rhs == null) {
+        return;
+      }
+      newExpressionText.append(rhs.getText());
+      newExpressionText.append(')');
+      replaceExpressionAndShorten(binaryExpression,
+                                  newExpressionText.toString());
     }
+  }
 
-    private static class ArrayEqualityFix extends InspectionGadgetsFix {
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new ArrayEqualityVisitor();
+  }
 
-        private final boolean deepEquals;
-
-        public ArrayEqualityFix(boolean deepEquals) {
-            this.deepEquals = deepEquals;
-        }
-
-        @NotNull
-        @Override
-        public String getName() {
-            if (deepEquals) {
-                return InspectionGadgetsBundle.message(
-                        "replace.with.arrays.deep.equals");
-            } else {
-                return InspectionGadgetsBundle.message(
-                        "replace.with.arrays.equals");
-            }
-        }
-
-        @Override
-        protected void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
-            final PsiElement element = descriptor.getPsiElement();
-            final PsiElement parent = element.getParent();
-            if (!(parent instanceof PsiBinaryExpression)) {
-                return;
-            }
-            final PsiBinaryExpression binaryExpression =
-                    (PsiBinaryExpression) parent;
-            final IElementType tokenType =
-                    binaryExpression.getOperationTokenType();
-            @NonNls final StringBuilder newExpressionText = new StringBuilder();
-            if (JavaTokenType.NE.equals(tokenType)) {
-                newExpressionText.append('!');
-            } else if (!JavaTokenType.EQEQ.equals(tokenType)) {
-                return;
-            }
-            if (deepEquals) {
-                newExpressionText.append("java.util.Arrays.deepEquals(");
-            } else {
-                newExpressionText.append("java.util.Arrays.equals(");
-            }
-            newExpressionText.append(binaryExpression.getLOperand().getText());
-            newExpressionText.append(',');
-            final PsiExpression rhs = binaryExpression.getROperand();
-            if (rhs == null) {
-                return;
-            }
-            newExpressionText.append(rhs.getText());
-            newExpressionText.append(')');
-            replaceExpressionAndShorten(binaryExpression,
-                    newExpressionText.toString());
-        }
-    }
+  private static class ArrayEqualityVisitor extends BaseInspectionVisitor {
 
     @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new ArrayEqualityVisitor();
+    public void visitBinaryExpression(
+      @NotNull PsiBinaryExpression expression) {
+      super.visitBinaryExpression(expression);
+      final PsiExpression rhs = expression.getROperand();
+      if (rhs == null) {
+        return;
+      }
+      if (!ComparisonUtils.isEqualityComparison(expression)) {
+        return;
+      }
+      final PsiExpression lhs = expression.getLOperand();
+      final PsiType lhsType = lhs.getType();
+      if (!(lhsType instanceof PsiArrayType)) {
+        return;
+      }
+      if (!(rhs.getType() instanceof PsiArrayType)) {
+        return;
+      }
+      final String lhsText = lhs.getText();
+      if (PsiKeyword.NULL.equals(lhsText)) {
+        return;
+      }
+      final String rhsText = rhs.getText();
+      if (PsiKeyword.NULL.equals(rhsText)) {
+        return;
+      }
+      final PsiJavaToken sign = expression.getOperationSign();
+      registerError(sign, lhsType);
     }
-
-    private static class ArrayEqualityVisitor extends BaseInspectionVisitor {
-
-        @Override public void visitBinaryExpression(
-                @NotNull PsiBinaryExpression expression) {
-            super.visitBinaryExpression(expression);
-            final PsiExpression rhs = expression.getROperand();
-            if (rhs == null) {
-                return;
-            }
-            if (!ComparisonUtils.isEqualityComparison(expression)) {
-                return;
-            }
-            final PsiExpression lhs = expression.getLOperand();
-            final PsiType lhsType = lhs.getType();
-            if (!(lhsType instanceof PsiArrayType)) {
-                return;
-            }
-            if (!(rhs.getType() instanceof PsiArrayType)) {
-                return;
-            }
-            final String lhsText = lhs.getText();
-            if (PsiKeyword.NULL.equals(lhsText)) {
-                return;
-            }
-            final String rhsText = rhs.getText();
-            if (PsiKeyword.NULL.equals(rhsText)) {
-                return;
-            }
-            final PsiJavaToken sign = expression.getOperationSign();
-            registerError(sign, lhsType);
-        }
-    }
+  }
 }

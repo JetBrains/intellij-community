@@ -26,51 +26,52 @@ import com.siyeh.ig.psiutils.CollectionUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class CollectionsMustHaveInitialCapacityInspection
-        extends BaseInspection {
+  extends BaseInspection {
 
-    @NotNull
-    public String getID() {
-        return "CollectionWithoutInitialCapacity";
+  @NotNull
+  public String getID() {
+    return "CollectionWithoutInitialCapacity";
+  }
+
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "collections.must.have.initial.capacity.display.name");
+  }
+
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "collections.must.have.initial.capacity.problem.descriptor");
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new CollectionInitialCapacityVisitor();
+  }
+
+  private static class CollectionInitialCapacityVisitor
+    extends BaseInspectionVisitor {
+
+    @Override
+    public void visitNewExpression(@NotNull PsiNewExpression expression) {
+      super.visitNewExpression(expression);
+      final PsiType type = expression.getType();
+
+      if (type == null) {
+        return;
+      }
+      if (!CollectionUtils.isCollectionWithInitialCapacity(type)) {
+        return;
+      }
+      final PsiExpressionList argumentList = expression.getArgumentList();
+      if (argumentList == null) {
+        return;
+      }
+      final PsiExpression[] parameters = argumentList.getExpressions();
+      if (parameters.length != 0) {
+        return;
+      }
+      registerError(expression);
     }
-
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "collections.must.have.initial.capacity.display.name");
-    }
-
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "collections.must.have.initial.capacity.problem.descriptor");
-    }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new CollectionInitialCapacityVisitor();
-    }
-
-    private static class CollectionInitialCapacityVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitNewExpression(@NotNull PsiNewExpression expression) {
-            super.visitNewExpression(expression);
-            final PsiType type = expression.getType();
-
-            if (type == null) {
-                return;
-            }
-            if (!CollectionUtils.isCollectionWithInitialCapacity(type)) {
-                return;
-            }
-            final PsiExpressionList argumentList = expression.getArgumentList();
-            if (argumentList == null) {
-                return;
-            }
-            final PsiExpression[] parameters = argumentList.getExpressions();
-            if (parameters.length != 0) {
-                return;
-            }
-            registerError(expression);
-        }
-    }
+  }
 }

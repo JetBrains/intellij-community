@@ -28,123 +28,127 @@ import org.jetbrains.annotations.NotNull;
 
 public class IntLiteralMayBeLongLiteralInspection extends BaseInspection {
 
-    @Override
-    @Nls
+  @Override
+  @Nls
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "int.literal.may.be.long.literal.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    final PsiTypeCastExpression typeCastExpression =
+      (PsiTypeCastExpression)infos[0];
+    final StringBuilder replacementText =
+      buildReplacementText(typeCastExpression, new StringBuilder());
+    return InspectionGadgetsBundle.message(
+      "int.literal.may.be.long.literal.problem.descriptor",
+      replacementText);
+  }
+
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    final PsiTypeCastExpression typeCastExpression =
+      (PsiTypeCastExpression)infos[0];
+    final StringBuilder replacementText =
+      buildReplacementText(typeCastExpression, new StringBuilder());
+    return new IntLiteralMayBeLongLiteralFix(replacementText.toString());
+  }
+
+  private static StringBuilder buildReplacementText(
+    PsiExpression expression, StringBuilder out) {
+    if (expression instanceof PsiLiteralExpression) {
+      out.append(expression.getText());
+      out.append('L');
+    }
+    else if (expression instanceof PsiPrefixExpression) {
+      final PsiPrefixExpression prefixExpression =
+        (PsiPrefixExpression)expression;
+      final PsiJavaToken sign = prefixExpression.getOperationSign();
+      out.append(sign.getText());
+      return buildReplacementText(prefixExpression.getOperand(), out);
+    }
+    else if (expression instanceof PsiParenthesizedExpression) {
+      final PsiParenthesizedExpression parenthesizedExpression =
+        (PsiParenthesizedExpression)expression;
+      out.append('(');
+      buildReplacementText(parenthesizedExpression.getExpression(),
+                           out);
+      out.append(')');
+    }
+    else if (expression instanceof PsiTypeCastExpression) {
+      final PsiTypeCastExpression typeCastExpression =
+        (PsiTypeCastExpression)expression;
+      final PsiExpression operand = typeCastExpression.getOperand();
+      buildReplacementText(operand, out);
+    }
+    else {
+      assert false;
+    }
+    return out;
+  }
+
+  private static class IntLiteralMayBeLongLiteralFix
+    extends InspectionGadgetsFix {
+
+    private final String replacementString;
+
+    public IntLiteralMayBeLongLiteralFix(String replacementString) {
+      this.replacementString = replacementString;
+    }
+
     @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "int.literal.may.be.long.literal.display.name");
+    public String getName() {
+      return InspectionGadgetsBundle.message(
+        "int.literal.may.be.long.literal.quickfix",
+        replacementString);
     }
 
     @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        final PsiTypeCastExpression typeCastExpression =
-                (PsiTypeCastExpression) infos[0];
-        final StringBuilder replacementText =
-                buildReplacementText(typeCastExpression, new StringBuilder());
-        return InspectionGadgetsBundle.message(
-                "int.literal.may.be.long.literal.problem.descriptor",
-                replacementText);
+    protected void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiElement element = descriptor.getPsiElement();
+      if (!(element instanceof PsiTypeCastExpression)) {
+        return;
+      }
+      final PsiTypeCastExpression typeCastExpression =
+        (PsiTypeCastExpression)element;
+      replaceExpression(typeCastExpression, replacementString);
     }
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new IntLiteralMayBeLongLiteralVisitor();
+  }
+
+  private static class IntLiteralMayBeLongLiteralVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        final PsiTypeCastExpression typeCastExpression =
-                (PsiTypeCastExpression) infos[0];
-        final StringBuilder replacementText =
-                buildReplacementText(typeCastExpression, new StringBuilder());
-        return new IntLiteralMayBeLongLiteralFix(replacementText.toString());
+    public void visitLiteralExpression(PsiLiteralExpression expression) {
+      super.visitLiteralExpression(expression);
+      final PsiType type = expression.getType();
+      if (!PsiType.INT.equals(type)) {
+        return;
+      }
+      PsiElement parent = expression.getParent();
+      while (parent instanceof PsiPrefixExpression ||
+             parent instanceof PsiParenthesizedExpression) {
+        parent = parent.getParent();
+      }
+      if (!(parent instanceof PsiTypeCastExpression)) {
+        return;
+      }
+      final PsiTypeCastExpression typeCastExpression =
+        (PsiTypeCastExpression)parent;
+      final PsiType castType = typeCastExpression.getType();
+      if (!PsiType.LONG.equals(castType)) {
+        return;
+      }
+      registerError(typeCastExpression, typeCastExpression);
     }
-
-    private static StringBuilder buildReplacementText(
-            PsiExpression expression, StringBuilder out) {
-        if (expression instanceof PsiLiteralExpression) {
-            out.append(expression.getText());
-            out.append('L');
-        } else if (expression instanceof PsiPrefixExpression) {
-            final PsiPrefixExpression prefixExpression =
-                    (PsiPrefixExpression) expression;
-            final PsiJavaToken sign = prefixExpression.getOperationSign();
-            out.append(sign.getText());
-            return buildReplacementText(prefixExpression.getOperand(), out);
-        } else if (expression instanceof PsiParenthesizedExpression) {
-            final PsiParenthesizedExpression parenthesizedExpression =
-                    (PsiParenthesizedExpression) expression;
-            out.append('(');
-            buildReplacementText(parenthesizedExpression.getExpression(),
-                    out);
-            out.append(')');
-        } else if (expression instanceof PsiTypeCastExpression) {
-            final PsiTypeCastExpression typeCastExpression =
-                    (PsiTypeCastExpression) expression;
-            final PsiExpression operand = typeCastExpression.getOperand();
-            buildReplacementText(operand, out);
-        } else {
-            assert false;
-        }
-        return out;
-    }
-
-    private static class IntLiteralMayBeLongLiteralFix
-            extends InspectionGadgetsFix {
-
-        private final String replacementString;
-
-        public IntLiteralMayBeLongLiteralFix(String replacementString) {
-            this.replacementString = replacementString;
-        }
-
-        @NotNull
-        public String getName() {
-            return InspectionGadgetsBundle.message(
-                    "int.literal.may.be.long.literal.quickfix",
-                    replacementString);
-        }
-
-        @Override
-        protected void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
-            final PsiElement element = descriptor.getPsiElement();
-            if (!(element instanceof PsiTypeCastExpression)) {
-                return;
-            }
-            final PsiTypeCastExpression typeCastExpression =
-                    (PsiTypeCastExpression) element;
-            replaceExpression(typeCastExpression, replacementString);
-        }
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new IntLiteralMayBeLongLiteralVisitor();
-    }
-
-    private static class IntLiteralMayBeLongLiteralVisitor
-            extends BaseInspectionVisitor {
-
-        @Override
-        public void visitLiteralExpression(PsiLiteralExpression expression) {
-            super.visitLiteralExpression(expression);
-            final PsiType type = expression.getType();
-            if (!PsiType.INT.equals(type)) {
-                return;
-            }
-            PsiElement parent = expression.getParent();
-            while (parent instanceof PsiPrefixExpression ||
-                    parent instanceof PsiParenthesizedExpression) {
-                parent = parent.getParent();
-            }
-            if (!(parent instanceof PsiTypeCastExpression)) {
-                return;
-            }
-            final PsiTypeCastExpression typeCastExpression =
-                    (PsiTypeCastExpression) parent;
-            final PsiType castType = typeCastExpression.getType();
-            if (!PsiType.LONG.equals(castType)) {
-                return;
-            }
-            registerError(typeCastExpression, typeCastExpression);
-        }
-    }
+  }
 }

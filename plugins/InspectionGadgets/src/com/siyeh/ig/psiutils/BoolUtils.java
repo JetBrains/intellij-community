@@ -22,73 +22,78 @@ import org.jetbrains.annotations.Nullable;
 
 public class BoolUtils {
 
-    private BoolUtils() {}
+  private BoolUtils() {
+  }
 
-    public static boolean isNegation(@NotNull PsiExpression expression) {
-        if (!(expression instanceof PsiPrefixExpression)) {
-            return false;
-        }
-        final PsiPrefixExpression prefixExp = (PsiPrefixExpression) expression;
-      final IElementType tokenType = prefixExp.getOperationTokenType();
-        return JavaTokenType.EXCL.equals(tokenType);
+  public static boolean isNegation(@NotNull PsiExpression expression) {
+    if (!(expression instanceof PsiPrefixExpression)) {
+      return false;
     }
+    final PsiPrefixExpression prefixExp = (PsiPrefixExpression)expression;
+    final IElementType tokenType = prefixExp.getOperationTokenType();
+    return JavaTokenType.EXCL.equals(tokenType);
+  }
 
-    @Nullable
-    private static PsiExpression getNegated(@NotNull PsiExpression expression) {
-        final PsiPrefixExpression prefixExp = (PsiPrefixExpression) expression;
-        final PsiExpression operand = prefixExp.getOperand();
-        return ParenthesesUtils.stripParentheses(operand);
-    }
+  @Nullable
+  private static PsiExpression getNegated(@NotNull PsiExpression expression) {
+    final PsiPrefixExpression prefixExp = (PsiPrefixExpression)expression;
+    final PsiExpression operand = prefixExp.getOperand();
+    return ParenthesesUtils.stripParentheses(operand);
+  }
 
-    public static String getNegatedExpressionText(
-            @Nullable PsiExpression condition) {
-        if (condition == null) {
-            return "";
-        }
-        if (condition instanceof PsiParenthesizedExpression) {
-            final PsiParenthesizedExpression parenthesizedExpression =
-                    (PsiParenthesizedExpression)condition;
-            final PsiExpression contentExpression =
-                    parenthesizedExpression.getExpression();
-            return '(' +getNegatedExpressionText(contentExpression) + ')';
-        } else if (isNegation(condition)) {
-            final PsiExpression negated = getNegated(condition);
-            if (negated == null) {
-                return "";
-            }
-            return negated.getText();
-        } else if (ComparisonUtils.isComparison(condition)) {
-            final PsiBinaryExpression binaryExpression =
-                    (PsiBinaryExpression) condition;
-          final String negatedComparison =
-                    ComparisonUtils.getNegatedComparison(binaryExpression.getOperationTokenType());
-            final PsiExpression lhs = binaryExpression.getLOperand();
-            final PsiExpression rhs = binaryExpression.getROperand();
-            if (rhs == null) {
-                return lhs.getText() + negatedComparison;
-            }
-            return lhs.getText() + negatedComparison + rhs.getText();
-        } else if (ParenthesesUtils.getPrecedence(condition) >
-                ParenthesesUtils.PREFIX_PRECEDENCE) {
-            return "!(" + condition.getText() + ')';
-        } else {
-            return '!' + condition.getText();
-        }
+  public static String getNegatedExpressionText(
+    @Nullable PsiExpression condition) {
+    if (condition == null) {
+      return "";
     }
+    if (condition instanceof PsiParenthesizedExpression) {
+      final PsiParenthesizedExpression parenthesizedExpression =
+        (PsiParenthesizedExpression)condition;
+      final PsiExpression contentExpression =
+        parenthesizedExpression.getExpression();
+      return '(' + getNegatedExpressionText(contentExpression) + ')';
+    }
+    else if (isNegation(condition)) {
+      final PsiExpression negated = getNegated(condition);
+      if (negated == null) {
+        return "";
+      }
+      return negated.getText();
+    }
+    else if (ComparisonUtils.isComparison(condition)) {
+      final PsiBinaryExpression binaryExpression =
+        (PsiBinaryExpression)condition;
+      final String negatedComparison =
+        ComparisonUtils.getNegatedComparison(binaryExpression.getOperationTokenType());
+      final PsiExpression lhs = binaryExpression.getLOperand();
+      final PsiExpression rhs = binaryExpression.getROperand();
+      if (rhs == null) {
+        return lhs.getText() + negatedComparison;
+      }
+      return lhs.getText() + negatedComparison + rhs.getText();
+    }
+    else if (ParenthesesUtils.getPrecedence(condition) >
+             ParenthesesUtils.PREFIX_PRECEDENCE) {
+      return "!(" + condition.getText() + ')';
+    }
+    else {
+      return '!' + condition.getText();
+    }
+  }
 
-    public static boolean isTrue(@Nullable PsiExpression expression) {
-        if (expression == null) {
-            return false;
-        }
-        final String text = expression.getText();
-        return PsiKeyword.TRUE.equals(text);
+  public static boolean isTrue(@Nullable PsiExpression expression) {
+    if (expression == null) {
+      return false;
     }
+    final String text = expression.getText();
+    return PsiKeyword.TRUE.equals(text);
+  }
 
-    public static boolean isFalse(@Nullable PsiExpression expression) {
-        if (expression == null) {
-            return false;
-        }
-        final String text = expression.getText();
-        return PsiKeyword.FALSE.equals(text);
+  public static boolean isFalse(@Nullable PsiExpression expression) {
+    if (expression == null) {
+      return false;
     }
+    final String text = expression.getText();
+    return PsiKeyword.FALSE.equals(text);
+  }
 }

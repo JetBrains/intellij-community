@@ -19,31 +19,34 @@ import com.intellij.psi.*;
 
 class ContainsSynchronizationVisitor extends JavaRecursiveElementWalkingVisitor {
 
-    private boolean containsSynchronization = false;
+  private boolean containsSynchronization = false;
 
-    @Override public void visitElement(PsiElement element){
-        if(containsSynchronization){
-            return;
-        }
-        super.visitElement(element);
+  @Override
+  public void visitElement(PsiElement element) {
+    if (containsSynchronization) {
+      return;
     }
+    super.visitElement(element);
+  }
 
-    @Override public void visitSynchronizedStatement(PsiSynchronizedStatement statement){
-        containsSynchronization = true;
-    }
+  @Override
+  public void visitSynchronizedStatement(PsiSynchronizedStatement statement) {
+    containsSynchronization = true;
+  }
 
-    @Override public void visitMethod(PsiMethod method){
-        if(containsSynchronization){
-            return;
-        }
-        if(method.hasModifierProperty(PsiModifier.SYNCHRONIZED)){
-            containsSynchronization = true;
-            return;
-        }
-        super.visitMethod(method);
+  @Override
+  public void visitMethod(PsiMethod method) {
+    if (containsSynchronization) {
+      return;
     }
+    if (method.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
+      containsSynchronization = true;
+      return;
+    }
+    super.visitMethod(method);
+  }
 
-    public boolean containsSynchronization(){
-        return containsSynchronization;
-    }
+  public boolean containsSynchronization() {
+    return containsSynchronization;
+  }
 }

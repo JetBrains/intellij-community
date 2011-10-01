@@ -30,138 +30,142 @@ import org.jetbrains.annotations.NotNull;
 
 public class ShiftOutOfRangeInspection extends BaseInspection {
 
-    @Override
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "shift.operation.by.inappropriate.constant.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    final Integer value = (Integer)infos[0];
+    if (value.intValue() > 0) {
+      return InspectionGadgetsBundle.message(
+        "shift.operation.by.inappropriate.constant.problem.descriptor.too.large");
+    }
+    else {
+      return InspectionGadgetsBundle.message(
+        "shift.operation.by.inappropriate.constant.problem.descriptor.negative");
+    }
+  }
+
+  @Override
+  public boolean isEnabledByDefault() {
+    return true;
+  }
+
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new ShiftOutOfRangeFix(((Integer)infos[0]).intValue(),
+                                  ((Boolean)infos[1]).booleanValue());
+  }
+
+  private static class ShiftOutOfRangeFix extends InspectionGadgetsFix {
+
+    private final int value;
+    private final boolean isLong;
+
+    ShiftOutOfRangeFix(int value, boolean isLong) {
+      this.value = value;
+      this.isLong = isLong;
+    }
+
     @NotNull
-    public String getDisplayName(){
-        return InspectionGadgetsBundle.message(
-                "shift.operation.by.inappropriate.constant.display.name");
+    public String getName() {
+      final int newValue;
+      if (isLong) {
+        newValue = value & 63;
+      }
+      else {
+        newValue = value & 31;
+      }
+      return InspectionGadgetsBundle.message(
+        "shift.out.of.range.quickfix",
+        Integer.valueOf(value), Integer.valueOf(newValue));
     }
 
     @Override
-    @NotNull
-    public String buildErrorString(Object... infos){
-        final Integer value = (Integer)infos[0];
-        if(value.intValue() > 0){
-            return InspectionGadgetsBundle.message(
-                    "shift.operation.by.inappropriate.constant.problem.descriptor.too.large");
-        } else{
-            return InspectionGadgetsBundle.message(
-                    "shift.operation.by.inappropriate.constant.problem.descriptor.negative");
-        }
+    protected void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiElement element = descriptor.getPsiElement();
+      final PsiElement parent = element.getParent();
+      if (!(parent instanceof PsiBinaryExpression)) {
+        return;
+      }
+      final PsiBinaryExpression binaryExpression =
+        (PsiBinaryExpression)parent;
+      final PsiExpression rhs = binaryExpression.getROperand();
+      if (rhs == null) {
+        return;
+      }
+      final PsiElementFactory factory =
+        JavaPsiFacade.getElementFactory(project);
+      final String text;
+      final PsiExpression lhs = binaryExpression.getLOperand();
+      if (PsiType.LONG.equals(lhs.getType())) {
+        text = String.valueOf(value & 63);
+      }
+      else {
+        text = String.valueOf(value & 31);
+      }
+      final PsiExpression newExpression =
+        factory.createExpressionFromText(
+          text, element);
+      rhs.replace(newExpression);
     }
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new ShiftOutOfRange();
+  }
+
+  private static class ShiftOutOfRange extends BaseInspectionVisitor {
 
     @Override
-    public boolean isEnabledByDefault(){
-        return true;
-    }
-
-    @Override
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        return new ShiftOutOfRangeFix(((Integer)infos[0]).intValue(),
-                ((Boolean)infos[1]).booleanValue());
-    }
-
-    private static class ShiftOutOfRangeFix extends InspectionGadgetsFix {
-
-        private final int value;
-        private final boolean isLong;
-
-        ShiftOutOfRangeFix(int value, boolean isLong) {
-            this.value = value;
-            this.isLong = isLong;
+    public void visitBinaryExpression(
+      @NotNull PsiBinaryExpression expression) {
+      super.visitBinaryExpression(expression);
+      if (!(expression.getROperand() != null)) {
+        return;
+      }
+      final PsiJavaToken sign = expression.getOperationSign();
+      final IElementType tokenType = sign.getTokenType();
+      if (!tokenType.equals(JavaTokenType.LTLT) &&
+          !tokenType.equals(JavaTokenType.GTGT) &&
+          !tokenType.equals(JavaTokenType.GTGTGT)) {
+        return;
+      }
+      final PsiType expressionType = expression.getType();
+      if (expressionType == null) {
+        return;
+      }
+      final PsiExpression rhs = expression.getROperand();
+      if (rhs == null) {
+        return;
+      }
+      if (!PsiUtil.isConstantExpression(rhs)) {
+        return;
+      }
+      final Integer valueObject =
+        (Integer)ConstantExpressionUtil.computeCastTo(rhs,
+                                                      PsiType.INT);
+      if (valueObject == null) {
+        return;
+      }
+      final int value = valueObject.intValue();
+      if (expressionType.equals(PsiType.LONG)) {
+        if (value < 0 || value > 63) {
+          registerError(sign, valueObject, Boolean.TRUE);
         }
-
-        @NotNull
-        public String getName() {
-            final int newValue;
-            if (isLong) {
-                newValue = value & 63;
-            } else {
-                newValue = value & 31;
-            }
-            return InspectionGadgetsBundle.message(
-                    "shift.out.of.range.quickfix",
-                    Integer.valueOf(value), Integer.valueOf(newValue));
+      }
+      if (expressionType.equals(PsiType.INT)) {
+        if (value < 0 || value > 31) {
+          registerError(sign, valueObject, Boolean.FALSE);
         }
-
-        @Override
-        protected void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
-            final PsiElement element = descriptor.getPsiElement();
-            final PsiElement parent = element.getParent();
-            if (!(parent instanceof PsiBinaryExpression)) {
-                return;
-            }
-            final PsiBinaryExpression binaryExpression =
-                    (PsiBinaryExpression) parent;
-            final PsiExpression rhs = binaryExpression.getROperand();
-            if (rhs == null) {
-                return;
-            }
-            final PsiElementFactory factory =
-                    JavaPsiFacade.getElementFactory(project);
-            final String text;
-            final PsiExpression lhs = binaryExpression.getLOperand();
-            if (PsiType.LONG.equals(lhs.getType())) {
-                text = String.valueOf(value & 63);
-            } else {
-            text = String.valueOf(value & 31);
-            }
-            final PsiExpression newExpression =
-                    factory.createExpressionFromText(
-                            text, element);
-            rhs.replace(newExpression);
-        }
+      }
     }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor(){
-        return new ShiftOutOfRange();
-    }
-
-    private static class ShiftOutOfRange extends BaseInspectionVisitor{
-
-        @Override public void visitBinaryExpression(
-                @NotNull PsiBinaryExpression expression){
-            super.visitBinaryExpression(expression);
-            if(!(expression.getROperand() != null)){
-                return;
-            }
-            final PsiJavaToken sign = expression.getOperationSign();
-            final IElementType tokenType = sign.getTokenType();
-            if(!tokenType.equals(JavaTokenType.LTLT) &&
-                       !tokenType.equals(JavaTokenType.GTGT) &&
-                       !tokenType.equals(JavaTokenType.GTGTGT)){
-                return;
-            }
-            final PsiType expressionType = expression.getType();
-            if(expressionType == null){
-                return;
-            }
-            final PsiExpression rhs = expression.getROperand();
-            if(rhs == null){
-                return;
-            }
-            if(!PsiUtil.isConstantExpression(rhs)){
-                return;
-            }
-            final Integer valueObject =
-                    (Integer) ConstantExpressionUtil.computeCastTo(rhs,
-                            PsiType.INT);
-            if(valueObject == null){
-                return;
-            }
-            final int value = valueObject.intValue();
-            if(expressionType.equals(PsiType.LONG)){
-                if(value < 0 || value > 63){
-                    registerError(sign, valueObject, Boolean.TRUE);
-                }
-            }
-            if(expressionType.equals(PsiType.INT)){
-                if(value < 0 || value > 31){
-                    registerError(sign, valueObject, Boolean.FALSE);
-                }
-            }
-        }
-    }
+  }
 }

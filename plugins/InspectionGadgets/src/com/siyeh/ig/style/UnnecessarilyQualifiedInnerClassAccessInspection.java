@@ -31,166 +31,166 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class UnnecessarilyQualifiedInnerClassAccessInspection 
-        extends BaseInspection {
+public class UnnecessarilyQualifiedInnerClassAccessInspection
+  extends BaseInspection {
 
-    @SuppressWarnings({"PublicField"})
-    public boolean ignoreReferencesNeedingImport = false;
+  @SuppressWarnings({"PublicField"})
+  public boolean ignoreReferencesNeedingImport = false;
 
-    @Nls
+  @Nls
+  @NotNull
+  @Override
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "unnecessarily.qualified.inner.class.access.display.name");
+  }
+
+  @NotNull
+  @Override
+  protected String buildErrorString(Object... infos) {
+    final PsiClass aClass = (PsiClass)infos[0];
+    return InspectionGadgetsBundle.message(
+      "unnecessarily.qualified.inner.class.access.problem.descriptor",
+      aClass.getName());
+  }
+
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(
+      InspectionGadgetsBundle.message(
+        "unnecessarily.qualified.inner.class.access.option"),
+      this, "ignoreReferencesNeedingImport");
+  }
+
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new UnnecessarilyQualifiedInnerClassAccessFix();
+  }
+
+  private static class UnnecessarilyQualifiedInnerClassAccessFix
+    extends InspectionGadgetsFix {
+
     @NotNull
-    @Override
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "unnecessarily.qualified.inner.class.access.display.name");
-    }
-
-    @NotNull
-    @Override
-    protected String buildErrorString(Object... infos) {
-        final PsiClass aClass = (PsiClass) infos[0];
-        return InspectionGadgetsBundle.message(
-                "unnecessarily.qualified.inner.class.access.problem.descriptor",
-                aClass.getName());
+    public String getName() {
+      return InspectionGadgetsBundle.message(
+        "unnecessarily.qualified.inner.class.access.quickfix");
     }
 
     @Override
-    public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel(
-                InspectionGadgetsBundle.message(
-                        "unnecessarily.qualified.inner.class.access.option"),
-                this, "ignoreReferencesNeedingImport");
+    protected void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiElement element = descriptor.getPsiElement();
+      final PsiElement parent = element.getParent();
+      if (!(parent instanceof PsiJavaCodeReferenceElement)) {
+        return;
+      }
+      final PsiJavaCodeReferenceElement referenceElement =
+        (PsiJavaCodeReferenceElement)parent;
+      final PsiElement target = referenceElement.resolve();
+      if (!(target instanceof PsiClass)) {
+        return;
+      }
+      final PsiClass aClass = (PsiClass)target;
+      ImportUtils.addImportIfNeeded(aClass, element);
+      element.delete();
+    }
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new UnnecessarilyQualifiedInnerClassAccessVisitor();
+  }
+
+  private class UnnecessarilyQualifiedInnerClassAccessVisitor
+    extends BaseInspectionVisitor {
+
+    @Override
+    public void visitReferenceElement(
+      PsiJavaCodeReferenceElement reference) {
+      super.visitReferenceElement(reference);
+      final PsiElement qualifier = reference.getQualifier();
+      if (!(qualifier instanceof PsiJavaCodeReferenceElement)) {
+        return;
+      }
+      if (isInImportOrPackage(reference)) {
+        return;
+      }
+      final PsiJavaCodeReferenceElement referenceElement =
+        (PsiJavaCodeReferenceElement)qualifier;
+      final PsiReferenceParameterList parameterList =
+        referenceElement.getParameterList();
+      if (parameterList != null &&
+          parameterList.getTypeParameterElements().length > 0) {
+        return;
+      }
+      final PsiElement qualifierTarget = referenceElement.resolve();
+      if (!(qualifierTarget instanceof PsiClass)) {
+        return;
+      }
+      final PsiClass referenceClass =
+        PsiTreeUtil.getParentOfType(reference, PsiClass.class);
+      if (referenceClass == null) {
+        return;
+      }
+      if (!referenceClass.equals(qualifierTarget) ||
+          PsiTreeUtil.isAncestor(referenceClass.getModifierList(),
+                                 reference, true)) {
+        if (ignoreReferencesNeedingImport &&
+            (PsiTreeUtil.isAncestor(referenceClass, qualifierTarget,
+                                    true) ||
+             !PsiTreeUtil.isAncestor(qualifierTarget,
+                                     referenceClass, true))) {
+          return;
+        }
+      }
+      final PsiElement target = reference.resolve();
+      if (!(target instanceof PsiClass)) {
+        return;
+      }
+      final PsiClass aClass = (PsiClass)target;
+      final PsiClass containingClass = aClass.getContainingClass();
+      if (containingClass == null) {
+        return;
+      }
+      if (!containingClass.equals(qualifierTarget)) {
+        return;
+      }
+      final String shortName = aClass.getName();
+      if (!isReferenceToTarget(shortName, aClass, reference)) {
+        return;
+      }
+      registerError(qualifier, aClass);
     }
 
     @Override
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        return new UnnecessarilyQualifiedInnerClassAccessFix();
+    public void visitReferenceExpression(
+      PsiReferenceExpression expression) {
+      visitReferenceElement(expression);
     }
 
-    private static class UnnecessarilyQualifiedInnerClassAccessFix
-            extends InspectionGadgetsFix {
-
-        @NotNull
-        public String getName() {
-            return InspectionGadgetsBundle.message(
-                    "unnecessarily.qualified.inner.class.access.quickfix");
-        }
-
-        @Override
-        protected void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
-            final PsiElement element = descriptor.getPsiElement();
-            final PsiElement parent = element.getParent();
-            if (!(parent instanceof PsiJavaCodeReferenceElement)) {
-                return;
-            }
-            final PsiJavaCodeReferenceElement referenceElement =
-                    (PsiJavaCodeReferenceElement) parent;
-            final PsiElement target = referenceElement.resolve();
-            if (!(target instanceof PsiClass)) {
-                return;
-            }
-            final PsiClass aClass = (PsiClass) target;
-            ImportUtils.addImportIfNeeded(aClass, element);
-            element.delete();
-        }
+    private boolean isReferenceToTarget(
+      String referenceText, PsiClass target, PsiElement context) {
+      final PsiManager manager = target.getManager();
+      final JavaPsiFacade facade =
+        JavaPsiFacade.getInstance(manager.getProject());
+      final PsiResolveHelper resolveHelper = facade.getResolveHelper();
+      final PsiClass referencedClass =
+        resolveHelper.resolveReferencedClass(referenceText,
+                                             context);
+      return referencedClass == null ||
+             manager.areElementsEquivalent(target, referencedClass);
     }
 
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new UnnecessarilyQualifiedInnerClassAccessVisitor();
+    private boolean isInImportOrPackage(PsiElement element) {
+      while (element instanceof PsiJavaCodeReferenceElement) {
+        element = element.getParent();
+        if (element instanceof PsiImportStatementBase ||
+            element instanceof PsiPackageStatement ||
+            element instanceof PsiImportStaticReferenceElement) {
+          return true;
+        }
+      }
+      return false;
     }
-
-    private class UnnecessarilyQualifiedInnerClassAccessVisitor
-            extends BaseInspectionVisitor {
-
-        @Override
-        public void visitReferenceElement(
-                PsiJavaCodeReferenceElement reference) {
-            super.visitReferenceElement(reference);
-            final PsiElement qualifier = reference.getQualifier();
-            if (!(qualifier instanceof PsiJavaCodeReferenceElement)) {
-                return;
-            }
-            if (isInImportOrPackage(reference)) {
-                return;
-            }
-            final PsiJavaCodeReferenceElement referenceElement =
-                    (PsiJavaCodeReferenceElement) qualifier;
-            final PsiReferenceParameterList parameterList =
-                    referenceElement.getParameterList();
-            if (parameterList != null &&
-                    parameterList.getTypeParameterElements().length > 0) {
-                return;
-            }
-            final PsiElement qualifierTarget = referenceElement.resolve();
-            if (!(qualifierTarget instanceof PsiClass)) {
-                return;
-            }
-            final PsiClass referenceClass =
-                    PsiTreeUtil.getParentOfType(reference, PsiClass.class);
-            if (referenceClass == null) {
-                return;
-            }
-            if (!referenceClass.equals(qualifierTarget) ||
-                    PsiTreeUtil.isAncestor(referenceClass.getModifierList(),
-                            reference, true)) {
-                if (ignoreReferencesNeedingImport &&
-                        (PsiTreeUtil.isAncestor(referenceClass, qualifierTarget,
-                                true) ||
-                                !PsiTreeUtil.isAncestor(qualifierTarget,
-                                        referenceClass, true))) {
-                    return;
-                }
-            }
-            final PsiElement target = reference.resolve();
-            if (!(target instanceof PsiClass)) {
-                return;
-            }
-            final PsiClass aClass = (PsiClass) target;
-            final PsiClass containingClass = aClass.getContainingClass();
-            if (containingClass == null) {
-                return;
-            }
-            if (!containingClass.equals(qualifierTarget)) {
-                return;
-            }
-            final String shortName = aClass.getName();
-            if (!isReferenceToTarget(shortName, aClass, reference)) {
-                return;
-            }
-            registerError(qualifier, aClass);
-        }
-
-        @Override
-        public void visitReferenceExpression(
-                PsiReferenceExpression expression) {
-            visitReferenceElement(expression);
-        }
-
-        private boolean isReferenceToTarget(
-                String referenceText, PsiClass target, PsiElement context) {
-            final PsiManager manager = target.getManager();
-            final JavaPsiFacade facade =
-                    JavaPsiFacade.getInstance(manager.getProject());
-            final PsiResolveHelper resolveHelper = facade.getResolveHelper();
-            final PsiClass referencedClass =
-                    resolveHelper.resolveReferencedClass(referenceText,
-                            context);
-            return referencedClass == null ||
-                    manager.areElementsEquivalent(target, referencedClass);
-        }
-
-        private boolean isInImportOrPackage(PsiElement element) {
-            while (element instanceof PsiJavaCodeReferenceElement) {
-                element = element.getParent();
-                if (element instanceof PsiImportStatementBase ||
-                        element instanceof PsiPackageStatement ||
-                        element instanceof PsiImportStaticReferenceElement) {
-                    return true;
-                }
-            }
-            return false;
-        }
-    }
+  }
 }

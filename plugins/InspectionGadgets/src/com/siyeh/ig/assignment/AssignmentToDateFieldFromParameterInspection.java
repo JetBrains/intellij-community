@@ -29,88 +29,91 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class AssignmentToDateFieldFromParameterInspection
-        extends BaseInspection {
+  extends BaseInspection {
 
-    /** @noinspection PublicField*/
-    public boolean ignorePrivateMethods = true;
+  /**
+   * @noinspection PublicField
+   */
+  public boolean ignorePrivateMethods = true;
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "assignment.to.date.calendar.field.from.parameter.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    final String type = (String)infos[0];
+    final PsiExpression rhs = (PsiExpression)infos[1];
+    return InspectionGadgetsBundle.message(
+      "assignment.to.date.calendar.field.from.parameter.problem.descriptor",
+      type, rhs.getText());
+  }
+
+  @Override
+  @Nullable
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(
+      InspectionGadgetsBundle.message(
+        "assignment.collection.array.field.option"), this,
+      "ignorePrivateMethods");
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new AssignmentToDateFieldFromParameterVisitor();
+  }
+
+  private class AssignmentToDateFieldFromParameterVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "assignment.to.date.calendar.field.from.parameter.display.name");
-    }
-
-    @Override
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        final String type = (String) infos[0];
-        final PsiExpression rhs = (PsiExpression)infos[1];
-        return InspectionGadgetsBundle.message(
-                "assignment.to.date.calendar.field.from.parameter.problem.descriptor",
-                type, rhs.getText());
-    }
-
-    @Override
-    @Nullable
-    public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel(
-                InspectionGadgetsBundle.message(
-                        "assignment.collection.array.field.option"), this,
-                "ignorePrivateMethods");
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new AssignmentToDateFieldFromParameterVisitor();
-    }
-
-    private class AssignmentToDateFieldFromParameterVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitAssignmentExpression(
-                @NotNull PsiAssignmentExpression expression) {
-            super.visitAssignmentExpression(expression);
-          final IElementType tokenType = expression.getOperationTokenType();
-            if (!JavaTokenType.EQ.equals(tokenType)) {
-                return;
-            }
-            final PsiExpression lhs = expression.getLExpression();
-            if (!(lhs instanceof PsiReferenceExpression)) {
-                return;
-            }
-            final String type = TypeUtils.expressionHasTypeOrSubtype(lhs,
-                    CommonClassNames.JAVA_UTIL_DATE,
-                    CommonClassNames.JAVA_UTIL_CALENDAR);
-            if (type == null) {
-                return;
-            }
-            final PsiExpression rhs = expression.getRExpression();
-            if (!(rhs instanceof PsiReferenceExpression)) {
-                return;
-            }
-            final PsiElement lhsReferent = ((PsiReference) lhs).resolve();
-            if (!(lhsReferent instanceof PsiField)) {
-                return;
-            }
-            final PsiElement rhsReferent = ((PsiReference) rhs).resolve();
-            if (!(rhsReferent instanceof PsiParameter)) {
-                return;
-            }
-            if (!(rhsReferent.getParent() instanceof PsiParameterList)) {
-                return;
-            }
-            if (ignorePrivateMethods) {
-                final PsiMethod containingMethod =
-                        PsiTreeUtil.getParentOfType(expression,
-                                PsiMethod.class);
-                if (containingMethod == null ||
-                        containingMethod.hasModifierProperty(
-                                PsiModifier.PRIVATE)) {
-                    return;
-                }
-            }
-            registerError(lhs, type, rhs);
+    public void visitAssignmentExpression(
+      @NotNull PsiAssignmentExpression expression) {
+      super.visitAssignmentExpression(expression);
+      final IElementType tokenType = expression.getOperationTokenType();
+      if (!JavaTokenType.EQ.equals(tokenType)) {
+        return;
+      }
+      final PsiExpression lhs = expression.getLExpression();
+      if (!(lhs instanceof PsiReferenceExpression)) {
+        return;
+      }
+      final String type = TypeUtils.expressionHasTypeOrSubtype(lhs,
+                                                               CommonClassNames.JAVA_UTIL_DATE,
+                                                               CommonClassNames.JAVA_UTIL_CALENDAR);
+      if (type == null) {
+        return;
+      }
+      final PsiExpression rhs = expression.getRExpression();
+      if (!(rhs instanceof PsiReferenceExpression)) {
+        return;
+      }
+      final PsiElement lhsReferent = ((PsiReference)lhs).resolve();
+      if (!(lhsReferent instanceof PsiField)) {
+        return;
+      }
+      final PsiElement rhsReferent = ((PsiReference)rhs).resolve();
+      if (!(rhsReferent instanceof PsiParameter)) {
+        return;
+      }
+      if (!(rhsReferent.getParent() instanceof PsiParameterList)) {
+        return;
+      }
+      if (ignorePrivateMethods) {
+        final PsiMethod containingMethod =
+          PsiTreeUtil.getParentOfType(expression,
+                                      PsiMethod.class);
+        if (containingMethod == null ||
+            containingMethod.hasModifierProperty(
+              PsiModifier.PRIVATE)) {
+          return;
         }
+      }
+      registerError(lhs, type, rhs);
     }
+  }
 }

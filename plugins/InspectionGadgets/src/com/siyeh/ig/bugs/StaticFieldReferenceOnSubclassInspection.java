@@ -27,97 +27,98 @@ import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class StaticFieldReferenceOnSubclassInspection
-        extends BaseInspection {
+  extends BaseInspection {
+
+  @NotNull
+  public String getID() {
+    return "StaticFieldReferencedViaSubclass";
+  }
+
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "static.field.via.subclass.display.name");
+  }
+
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    final PsiClass declaringClass = (PsiClass)infos[0];
+    final PsiClass referencedClass = (PsiClass)infos[1];
+    return InspectionGadgetsBundle.message(
+      "static.field.via.subclass.problem.descriptor",
+      declaringClass.getQualifiedName(),
+      referencedClass.getQualifiedName());
+  }
+
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new StaticFieldOnSubclassFix();
+  }
+
+  private static class StaticFieldOnSubclassFix extends InspectionGadgetsFix {
 
     @NotNull
-    public String getID(){
-        return "StaticFieldReferencedViaSubclass";
+    public String getName() {
+      return InspectionGadgetsBundle.message(
+        "static.field.via.subclass.rationalize.quickfix");
     }
 
-    @NotNull
-    public String getDisplayName(){
-        return InspectionGadgetsBundle.message(
-                "static.field.via.subclass.display.name");
+    public void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiIdentifier name =
+        (PsiIdentifier)descriptor.getPsiElement();
+      final PsiReferenceExpression expression =
+        (PsiReferenceExpression)name.getParent();
+      assert expression != null;
+      final PsiField field = (PsiField)expression.resolve();
+      assert field != null;
+      replaceExpressionWithReferenceTo(expression, field);
     }
+  }
 
-    @NotNull
-    public String buildErrorString(Object... infos){
-        final PsiClass declaringClass = (PsiClass)infos[0];
-        final PsiClass referencedClass = (PsiClass)infos[1];
-        return InspectionGadgetsBundle.message(
-                "static.field.via.subclass.problem.descriptor",
-                declaringClass.getQualifiedName(),
-                referencedClass.getQualifiedName());
+  public BaseInspectionVisitor buildVisitor() {
+    return new StaticFieldOnSubclassVisitor();
+  }
+
+  private static class StaticFieldOnSubclassVisitor
+    extends BaseInspectionVisitor {
+
+    @Override
+    public void visitReferenceExpression(
+      PsiReferenceExpression expression) {
+      super.visitReferenceExpression(expression);
+      final PsiElement qualifier = expression.getQualifier();
+      if (!(qualifier instanceof PsiReferenceExpression)) {
+        return;
+      }
+      final PsiElement referent = expression.resolve();
+      if (!(referent instanceof PsiField)) {
+        return;
+      }
+      final PsiField field = (PsiField)referent;
+      if (!field.hasModifierProperty(PsiModifier.STATIC)) {
+        return;
+      }
+      final PsiElement qualifierReferent =
+        ((PsiReference)qualifier).resolve();
+      if (!(qualifierReferent instanceof PsiClass)) {
+        return;
+      }
+      final PsiClass referencedClass = (PsiClass)qualifierReferent;
+      final PsiClass declaringClass = field.getContainingClass();
+      if (declaringClass == null) {
+        return;
+      }
+      if (declaringClass.equals(referencedClass)) {
+        return;
+      }
+      final PsiClass containingClass =
+        ClassUtils.getContainingClass(expression);
+      if (!ClassUtils.isClassVisibleFromClass(containingClass,
+                                              declaringClass)) {
+        return;
+      }
+      final PsiElement identifier = expression.getReferenceNameElement();
+      registerError(identifier, declaringClass, referencedClass);
     }
-
-    protected InspectionGadgetsFix buildFix(Object... infos){
-        return new StaticFieldOnSubclassFix();
-    }
-
-    private static class StaticFieldOnSubclassFix extends InspectionGadgetsFix{
-
-        @NotNull
-        public String getName(){
-            return InspectionGadgetsBundle.message(
-                    "static.field.via.subclass.rationalize.quickfix");
-        }
-
-        public void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException{
-            final PsiIdentifier name =
-                    (PsiIdentifier) descriptor.getPsiElement();
-            final PsiReferenceExpression expression =
-                    (PsiReferenceExpression) name.getParent();
-            assert expression != null;
-            final PsiField field = (PsiField) expression.resolve();
-            assert field != null;
-            replaceExpressionWithReferenceTo(expression, field);
-        }
-    }
-
-    public BaseInspectionVisitor buildVisitor(){
-        return new StaticFieldOnSubclassVisitor();
-    }
-
-    private static class StaticFieldOnSubclassVisitor
-            extends BaseInspectionVisitor{
-
-        @Override public void visitReferenceExpression(
-                PsiReferenceExpression expression){
-            super.visitReferenceExpression(expression);
-            final PsiElement qualifier = expression.getQualifier();
-            if(!(qualifier instanceof PsiReferenceExpression)){
-                return;
-            }
-            final PsiElement referent = expression.resolve();
-            if(!(referent instanceof PsiField)){
-                return;
-            }
-            final PsiField field = (PsiField) referent;
-            if(!field.hasModifierProperty(PsiModifier.STATIC)){
-                return;
-            }
-            final PsiElement qualifierReferent =
-                    ((PsiReference) qualifier).resolve();
-            if(!(qualifierReferent instanceof PsiClass)){
-                return;
-            }
-            final PsiClass referencedClass = (PsiClass) qualifierReferent;
-            final PsiClass declaringClass = field.getContainingClass();
-            if(declaringClass == null){
-                return;
-            }
-            if(declaringClass.equals(referencedClass)){
-                return;
-            }
-            final PsiClass containingClass =
-                    ClassUtils.getContainingClass(expression);
-            if(!ClassUtils.isClassVisibleFromClass(containingClass,
-                    declaringClass)){
-                return;
-            }
-            final PsiElement identifier = expression.getReferenceNameElement();
-            registerError(identifier, declaringClass, referencedClass);
-        }
-    }
+  }
 }

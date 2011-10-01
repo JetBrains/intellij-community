@@ -31,40 +31,40 @@ import java.util.Set;
 
 public class CyclicPackageDependencyInspection extends BaseGlobalInspection {
 
-    @NotNull
-    @Override
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "cyclic.package.dependency.display.name");
-    }
+  @NotNull
+  @Override
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "cyclic.package.dependency.display.name");
+  }
 
-    @Nullable
-    public CommonProblemDescriptor[] checkElement(
-            RefEntity refEntity,
-            AnalysisScope analysisScope,
-            InspectionManager inspectionManager,
-            GlobalInspectionContext globalInspectionContext) {
-        if (!(refEntity instanceof RefPackage)) {
-            return null;
-        }
-        final RefPackage refPackage = (RefPackage) refEntity;
-        final Set<RefPackage> dependencies =
-                DependencyUtils.calculateTransitiveDependenciesForPackage(refPackage);
-        final Set<RefPackage> dependents =
-                DependencyUtils.calculateTransitiveDependentsForPackage(refPackage);
-        final Set<RefPackage> mutualDependents =
-                new HashSet<RefPackage>(dependencies);
-        mutualDependents.retainAll(dependents);
-        final int numMutualDependents = mutualDependents.size();
-        if (numMutualDependents <= 1) {
-            return null;
-        }
-        final String packageName = refEntity.getName();
-        final String errorString = InspectionGadgetsBundle.message(
-                        "cyclic.package.dependency.problem.descriptor",
-                packageName, numMutualDependents-1);
-        return new CommonProblemDescriptor[]{
-                inspectionManager.createProblemDescriptor(errorString)
-        };
+  @Nullable
+  public CommonProblemDescriptor[] checkElement(
+    RefEntity refEntity,
+    AnalysisScope analysisScope,
+    InspectionManager inspectionManager,
+    GlobalInspectionContext globalInspectionContext) {
+    if (!(refEntity instanceof RefPackage)) {
+      return null;
     }
+    final RefPackage refPackage = (RefPackage)refEntity;
+    final Set<RefPackage> dependencies =
+      DependencyUtils.calculateTransitiveDependenciesForPackage(refPackage);
+    final Set<RefPackage> dependents =
+      DependencyUtils.calculateTransitiveDependentsForPackage(refPackage);
+    final Set<RefPackage> mutualDependents =
+      new HashSet<RefPackage>(dependencies);
+    mutualDependents.retainAll(dependents);
+    final int numMutualDependents = mutualDependents.size();
+    if (numMutualDependents <= 1) {
+      return null;
+    }
+    final String packageName = refEntity.getName();
+    final String errorString = InspectionGadgetsBundle.message(
+      "cyclic.package.dependency.problem.descriptor",
+      packageName, numMutualDependents - 1);
+    return new CommonProblemDescriptor[]{
+      inspectionManager.createProblemDescriptor(errorString)
+    };
+  }
 }

@@ -26,38 +26,39 @@ import org.jetbrains.annotations.NotNull;
 
 public class PublicStaticCollectionFieldInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "public.static.collection.field.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "public.static.collection.field.display.name");
+  }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "public.static.collection.field.problem.descriptor");
-    }
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "public.static.collection.field.problem.descriptor");
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new PublicStaticCollectionFieldVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new PublicStaticCollectionFieldVisitor();
+  }
 
-    private static class PublicStaticCollectionFieldVisitor
-            extends BaseInspectionVisitor {
-        
-        @Override public void visitField(@NotNull PsiField field) {
-            super.visitField(field);
-            if (!field.hasModifierProperty(PsiModifier.PUBLIC)) {
-                return;
-            }
-            if (!field.hasModifierProperty(PsiModifier.STATIC)) {
-                return;
-            }
-            final PsiType type = field.getType();
-            if (!CollectionUtils.isCollectionClassOrInterface(type)) {
-                return;
-            }
-            registerFieldError(field);
-        }
+  private static class PublicStaticCollectionFieldVisitor
+    extends BaseInspectionVisitor {
+
+    @Override
+    public void visitField(@NotNull PsiField field) {
+      super.visitField(field);
+      if (!field.hasModifierProperty(PsiModifier.PUBLIC)) {
+        return;
+      }
+      if (!field.hasModifierProperty(PsiModifier.STATIC)) {
+        return;
+      }
+      final PsiType type = field.getType();
+      if (!CollectionUtils.isCollectionClassOrInterface(type)) {
+        return;
+      }
+      registerFieldError(field);
     }
+  }
 }

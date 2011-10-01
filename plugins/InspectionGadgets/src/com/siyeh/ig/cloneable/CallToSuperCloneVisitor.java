@@ -19,37 +19,39 @@ import com.intellij.psi.*;
 import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
-class CallToSuperCloneVisitor extends JavaRecursiveElementVisitor{
+class CallToSuperCloneVisitor extends JavaRecursiveElementVisitor {
 
-    private boolean callToSuperCloneFound = false;
+  private boolean callToSuperCloneFound = false;
 
-    @Override public void visitElement(@NotNull PsiElement element){
-        if (callToSuperCloneFound) {
-            return;
-        }
-        super.visitElement(element);
+  @Override
+  public void visitElement(@NotNull PsiElement element) {
+    if (callToSuperCloneFound) {
+      return;
     }
+    super.visitElement(element);
+  }
 
-    @Override public void visitMethodCallExpression(
-            @NotNull PsiMethodCallExpression expression){
-        if(callToSuperCloneFound){
-            return;
-        }
-        super.visitMethodCallExpression(expression);
-        final PsiReferenceExpression methodExpression =
-                expression.getMethodExpression();
-        final PsiExpression target = methodExpression.getQualifierExpression();
-        if(!(target instanceof PsiSuperExpression)){
-            return;
-        }
-        final String methodName = methodExpression.getReferenceName();
-        if(!HardcodedMethodConstants.CLONE.equals(methodName)){
-            return;
-        }
-        callToSuperCloneFound = true;
+  @Override
+  public void visitMethodCallExpression(
+    @NotNull PsiMethodCallExpression expression) {
+    if (callToSuperCloneFound) {
+      return;
     }
+    super.visitMethodCallExpression(expression);
+    final PsiReferenceExpression methodExpression =
+      expression.getMethodExpression();
+    final PsiExpression target = methodExpression.getQualifierExpression();
+    if (!(target instanceof PsiSuperExpression)) {
+      return;
+    }
+    final String methodName = methodExpression.getReferenceName();
+    if (!HardcodedMethodConstants.CLONE.equals(methodName)) {
+      return;
+    }
+    callToSuperCloneFound = true;
+  }
 
-    public boolean isCallToSuperCloneFound(){
-        return callToSuperCloneFound;
-    }
+  public boolean isCallToSuperCloneFound() {
+    return callToSuperCloneFound;
+  }
 }

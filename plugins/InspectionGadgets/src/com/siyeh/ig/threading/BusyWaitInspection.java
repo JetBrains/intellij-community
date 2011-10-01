@@ -26,36 +26,37 @@ import org.jetbrains.annotations.NotNull;
 
 public class BusyWaitInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message("busy.wait.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("busy.wait.display.name");
+  }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message("busy.wait.problem.descriptor");
-    }
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message("busy.wait.problem.descriptor");
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new BusyWaitVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new BusyWaitVisitor();
+  }
 
-    private static class BusyWaitVisitor extends BaseInspectionVisitor {
+  private static class BusyWaitVisitor extends BaseInspectionVisitor {
 
-        @Override public void visitMethodCallExpression(
-                @NotNull PsiMethodCallExpression expression) {
-            super.visitMethodCallExpression(expression);
-            if (!MethodCallUtils.isCallToMethod(expression, "java.lang.Thread",
-                    PsiType.VOID, "sleep", PsiType.LONG) &&
-                    !MethodCallUtils.isCallToMethod(expression,
-                            "java.lang.Thread", PsiType.VOID, "sleep",
-                            PsiType.LONG, PsiType.INT)) {
-                return;
-            }
-            if (!ControlFlowUtils.isInLoop(expression)) {
-                return;
-            }
-            registerMethodCallError(expression);
-        }
+    @Override
+    public void visitMethodCallExpression(
+      @NotNull PsiMethodCallExpression expression) {
+      super.visitMethodCallExpression(expression);
+      if (!MethodCallUtils.isCallToMethod(expression, "java.lang.Thread",
+                                          PsiType.VOID, "sleep", PsiType.LONG) &&
+          !MethodCallUtils.isCallToMethod(expression,
+                                          "java.lang.Thread", PsiType.VOID, "sleep",
+                                          PsiType.LONG, PsiType.INT)) {
+        return;
+      }
+      if (!ControlFlowUtils.isInLoop(expression)) {
+        return;
+      }
+      registerMethodCallError(expression);
     }
+  }
 }

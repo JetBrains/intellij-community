@@ -25,37 +25,38 @@ import org.jetbrains.annotations.NotNull;
 
 public class CheckedExceptionClassInspection extends BaseInspection {
 
-    @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "checked.exception.class.display.name");
-    }
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "checked.exception.class.display.name");
+  }
 
-    @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "checked.exception.class.problem.descriptor");
-    }
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "checked.exception.class.problem.descriptor");
+  }
 
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new CheckedExceptionClassVisitor();
-    }
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new CheckedExceptionClassVisitor();
+  }
 
-    private static class CheckedExceptionClassVisitor
-            extends BaseInspectionVisitor {
-        @Override public void visitClass(@NotNull PsiClass aClass) {
-            if (!InheritanceUtil.isInheritor(aClass,
-                    CommonClassNames.JAVA_LANG_THROWABLE)) {
-                return;
-            }
-            if (InheritanceUtil.isInheritor(aClass,
-                    CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION)) {
-                return;
-            }
-            registerClassError(aClass);
-        }
+  private static class CheckedExceptionClassVisitor
+    extends BaseInspectionVisitor {
+    @Override
+    public void visitClass(@NotNull PsiClass aClass) {
+      if (!InheritanceUtil.isInheritor(aClass,
+                                       CommonClassNames.JAVA_LANG_THROWABLE)) {
+        return;
+      }
+      if (InheritanceUtil.isInheritor(aClass,
+                                      CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION)) {
+        return;
+      }
+      registerClassError(aClass);
     }
+  }
 }

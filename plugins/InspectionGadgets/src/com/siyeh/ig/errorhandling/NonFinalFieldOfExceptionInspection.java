@@ -30,50 +30,50 @@ import org.jetbrains.annotations.Nullable;
 
 public class NonFinalFieldOfExceptionInspection extends BaseInspection {
 
-    @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "non.final.field.of.exception.display.name");
-    }
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "non.final.field.of.exception.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "non.final.field.of.exception.problem.descriptor");
+  }
+
+  @Override
+  @Nullable
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    final PsiField field = (PsiField)infos[0];
+    return MakeFieldFinalFix.buildFix(field);
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new NonFinalFieldOfExceptionVisitor();
+  }
+
+  private static class NonFinalFieldOfExceptionVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "non.final.field.of.exception.problem.descriptor");
+    public void visitField(PsiField field) {
+      super.visitField(field);
+      if (field.hasModifierProperty(PsiModifier.FINAL)) {
+        return;
+      }
+      final PsiClass containingClass = field.getContainingClass();
+      if (containingClass == null) {
+        return;
+      }
+      if (!InheritanceUtil.isInheritor(containingClass,
+                                       CommonClassNames.JAVA_LANG_EXCEPTION)) {
+        return;
+      }
+      registerFieldError(field, field);
     }
-
-    @Override
-    @Nullable
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        final PsiField field = (PsiField) infos[0];
-        return MakeFieldFinalFix.buildFix(field);
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new NonFinalFieldOfExceptionVisitor();
-    }
-
-    private static class NonFinalFieldOfExceptionVisitor
-            extends BaseInspectionVisitor {
-
-        @Override
-        public void visitField(PsiField field) {
-            super.visitField(field);
-            if (field.hasModifierProperty(PsiModifier.FINAL)) {
-                return;
-            }
-            final PsiClass containingClass = field.getContainingClass();
-            if (containingClass == null) {
-                return;
-            }
-            if (!InheritanceUtil.isInheritor(containingClass,
-                    CommonClassNames.JAVA_LANG_EXCEPTION)) {
-                return;
-            }
-            registerFieldError(field, field);
-        }
-    }
+  }
 }

@@ -23,54 +23,56 @@ import org.jetbrains.annotations.NotNull;
 
 public class WaitOrAwaitWithoutTimeoutInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "wait.or.await.without.timeout.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "wait.or.await.without.timeout.display.name");
+  }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "wait.or.await.without.timeout.problem.descriptor");
-    }
-    public BaseInspectionVisitor buildVisitor() {
-        return new WaitWithoutTimeoutVisitor();
-    }
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "wait.or.await.without.timeout.problem.descriptor");
+  }
 
-    private static class WaitWithoutTimeoutVisitor
-            extends BaseInspectionVisitor {
+  public BaseInspectionVisitor buildVisitor() {
+    return new WaitWithoutTimeoutVisitor();
+  }
 
-        @Override public void visitMethodCallExpression(
-                @NotNull PsiMethodCallExpression expression) {
-            super.visitMethodCallExpression(expression);
-            final PsiReferenceExpression methodExpression =
-                    expression.getMethodExpression();
-            final String methodName = methodExpression.getReferenceName();
-            if (!"wait".equals(methodName) && !"await".equals(methodName)) {
-                return;
-            }
-            final PsiExpressionList argList = expression.getArgumentList();
-            final PsiExpression[] args = argList.getExpressions();
-            final int numParams = args.length;
-            if (numParams != 0) {
-                return;
-            }
-            if ("await".equals(methodName)) {
-                final PsiMethod method = expression.resolveMethod();
-                if (method == null) {
-                    return;
-                }
-                final PsiClass containingClass = method.getContainingClass();
-                if (containingClass == null) {
-                    return;
-                }
-                final String className = containingClass.getName();
-                if (!"java.util.concurrent.locks.Condition".equals(className)) {
-                    return;
-                }
-            }
-            registerMethodCallError(expression);
+  private static class WaitWithoutTimeoutVisitor
+    extends BaseInspectionVisitor {
+
+    @Override
+    public void visitMethodCallExpression(
+      @NotNull PsiMethodCallExpression expression) {
+      super.visitMethodCallExpression(expression);
+      final PsiReferenceExpression methodExpression =
+        expression.getMethodExpression();
+      final String methodName = methodExpression.getReferenceName();
+      if (!"wait".equals(methodName) && !"await".equals(methodName)) {
+        return;
+      }
+      final PsiExpressionList argList = expression.getArgumentList();
+      final PsiExpression[] args = argList.getExpressions();
+      final int numParams = args.length;
+      if (numParams != 0) {
+        return;
+      }
+      if ("await".equals(methodName)) {
+        final PsiMethod method = expression.resolveMethod();
+        if (method == null) {
+          return;
         }
+        final PsiClass containingClass = method.getContainingClass();
+        if (containingClass == null) {
+          return;
+        }
+        final String className = containingClass.getName();
+        if (!"java.util.concurrent.locks.Condition".equals(className)) {
+          return;
+        }
+      }
+      registerMethodCallError(expression);
     }
+  }
 }

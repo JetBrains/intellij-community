@@ -28,110 +28,118 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class ExceptionFromCatchWhichDoesntWrapInspection
-        extends BaseInspection {
+  extends BaseInspection {
 
-    /** @noinspection PublicField*/
-    public boolean ignoreGetMessage = false;
+  /**
+   * @noinspection PublicField
+   */
+  public boolean ignoreGetMessage = false;
 
-    @Override @NotNull
-    public String getID() {
-        return "ThrowInsideCatchBlockWhichIgnoresCaughtException";
+  @Override
+  @NotNull
+  public String getID() {
+    return "ThrowInsideCatchBlockWhichIgnoresCaughtException";
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "exception.from.catch.which.doesnt.wrap.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "exception.from.catch.which.doesnt.wrap.problem.descriptor");
+  }
+
+  @Override
+  @Nullable
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+      "exception.from.catch.which.doesntwrap.ignore.option"), this,
+                                          "ignoreGetMessage");
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new ExceptionFromCatchWhichDoesntWrapVisitor();
+  }
+
+  private class ExceptionFromCatchWhichDoesntWrapVisitor
+    extends BaseInspectionVisitor {
+
+    @Override
+    public void visitThrowStatement(PsiThrowStatement statement) {
+      super.visitThrowStatement(statement);
+      final PsiCatchSection catchSection =
+        PsiTreeUtil.getParentOfType(statement, PsiCatchSection.class,
+                                    true, PsiClass.class);
+      if (catchSection == null) {
+        return;
+      }
+      final PsiParameter parameter = catchSection.getParameter();
+      if (parameter == null) {
+        return;
+      }
+      @NonNls final String parameterName = parameter.getName();
+      if ("ignore".equals(parameterName) ||
+          "ignored".equals(parameterName)) {
+        return;
+      }
+      final PsiExpression exception = statement.getException();
+      if (exception == null) {
+        return;
+      }
+      final ReferenceFinder visitor = new ReferenceFinder(parameter);
+      exception.accept(visitor);
+      if (visitor.usesParameter()) {
+        return;
+      }
+      registerStatementError(statement);
     }
+  }
 
-    @Override @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "exception.from.catch.which.doesnt.wrap.display.name");
-    }
+  private class ReferenceFinder extends JavaRecursiveElementVisitor {
 
-    @Override @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "exception.from.catch.which.doesnt.wrap.problem.descriptor");
-    }
+    private boolean argumentsContainCatchParameter = false;
+    private final PsiParameter parameter;
 
-    @Override @Nullable
-    public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-                "exception.from.catch.which.doesntwrap.ignore.option"), this,
-                "ignoreGetMessage");
+    public ReferenceFinder(PsiParameter parameter) {
+      this.parameter = parameter;
     }
 
     @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new ExceptionFromCatchWhichDoesntWrapVisitor();
+    public void visitReferenceExpression(
+      PsiReferenceExpression expression) {
+      super.visitReferenceExpression(expression);
+      final PsiElement target = expression.resolve();
+      if (!parameter.equals(target)) {
+        if (target instanceof PsiVariable) {
+          final PsiVariable variable = (PsiVariable)target;
+          final PsiExpression initializer = variable.getInitializer();
+          if (initializer != null) {
+            initializer.accept(this);
+          }
+        }
+        return;
+      }
+      if (ignoreGetMessage) {
+        argumentsContainCatchParameter = true;
+      }
+      else {
+        final PsiElement parent = expression.getParent();
+        final PsiElement grandParent = parent.getParent();
+        if (!(grandParent instanceof PsiMethodCallExpression)) {
+          argumentsContainCatchParameter = true;
+        }
+      }
     }
 
-    private class ExceptionFromCatchWhichDoesntWrapVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitThrowStatement(PsiThrowStatement statement) {
-            super.visitThrowStatement(statement);
-            final PsiCatchSection catchSection =
-                    PsiTreeUtil.getParentOfType(statement, PsiCatchSection.class,
-                            true, PsiClass.class);
-            if (catchSection == null) {
-                return;
-            }
-            final PsiParameter parameter = catchSection.getParameter();
-            if (parameter == null) {
-                return;
-            }
-            @NonNls final String parameterName = parameter.getName();
-            if ("ignore".equals(parameterName) ||
-                    "ignored".equals(parameterName)) {
-                return;
-            }
-            final PsiExpression exception = statement.getException();
-            if (exception == null) {
-                return;
-            }
-            final ReferenceFinder visitor = new ReferenceFinder(parameter);
-            exception.accept(visitor);
-            if (visitor.usesParameter()) {
-                return;
-            }
-            registerStatementError(statement);
-        }
+    public boolean usesParameter() {
+      return argumentsContainCatchParameter;
     }
-
-    private class ReferenceFinder extends JavaRecursiveElementVisitor {
-
-        private boolean argumentsContainCatchParameter = false;
-        private final PsiParameter parameter;
-
-        public ReferenceFinder(PsiParameter parameter) {
-            this.parameter = parameter;
-        }
-
-        @Override
-        public void visitReferenceExpression(
-                PsiReferenceExpression expression) {
-            super.visitReferenceExpression(expression);
-            final PsiElement target = expression.resolve();
-            if (!parameter.equals(target)) {
-                if (target instanceof PsiVariable) {
-                    final PsiVariable variable = (PsiVariable) target;
-                    final PsiExpression initializer = variable.getInitializer();
-                    if (initializer != null) {
-                        initializer.accept(this);
-                    }
-                }
-                return;
-            }
-            if (ignoreGetMessage) {
-                argumentsContainCatchParameter = true;
-            } else {
-                final PsiElement parent = expression.getParent();
-                final PsiElement grandParent = parent.getParent();
-                if (!(grandParent instanceof PsiMethodCallExpression)) {
-                    argumentsContainCatchParameter = true;
-                }
-            }
-        }
-
-        public boolean usesParameter() {
-            return argumentsContainCatchParameter;
-        }
-    }
+  }
 }

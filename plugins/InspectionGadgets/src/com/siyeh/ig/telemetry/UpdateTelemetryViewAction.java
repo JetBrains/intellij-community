@@ -21,23 +21,23 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.util.IconLoader;
 import com.siyeh.InspectionGadgetsBundle;
 
-class UpdateTelemetryViewAction extends AnAction{
+class UpdateTelemetryViewAction extends AnAction {
 
-    private final InspectionGadgetsTelemetry telemetry;
-    private final TelemetryDisplay telemetryDisplay;
+  private final InspectionGadgetsTelemetry telemetry;
+  private final TelemetryDisplay telemetryDisplay;
 
-    UpdateTelemetryViewAction(InspectionGadgetsTelemetry telemetry,
-                              TelemetryDisplay telemetryDisplay){
-        super(CommonBundle.message("action.refresh"),
-                InspectionGadgetsBundle.message(
-                        "action.telemetry.refresh.description"),
-                IconLoader.getIcon("/actions/sync.png"));
-        this.telemetry = telemetry;
-        this.telemetryDisplay = telemetryDisplay;
-    }
+  UpdateTelemetryViewAction(InspectionGadgetsTelemetry telemetry,
+                            TelemetryDisplay telemetryDisplay) {
+    super(CommonBundle.message("action.refresh"),
+          InspectionGadgetsBundle.message(
+            "action.telemetry.refresh.description"),
+          IconLoader.getIcon("/actions/sync.png"));
+    this.telemetry = telemetry;
+    this.telemetryDisplay = telemetryDisplay;
+  }
 
-    @Override
-    public void actionPerformed(AnActionEvent event){
-        telemetryDisplay.update(telemetry.buildList());
-    }
+  @Override
+  public void actionPerformed(AnActionEvent event) {
+    telemetryDisplay.update(telemetry.buildList());
+  }
 }

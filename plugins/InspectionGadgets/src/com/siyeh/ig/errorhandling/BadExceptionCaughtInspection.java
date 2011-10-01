@@ -42,109 +42,113 @@ import java.util.List;
 
 public class BadExceptionCaughtInspection extends BaseInspection {
 
-    /** @noinspection PublicField*/
-    public String exceptionsString = "";
+  /**
+   * @noinspection PublicField
+   */
+  public String exceptionsString = "";
 
-    /** @noinspection PublicField*/
-    public final ExternalizableStringSet exceptions =
-            new ExternalizableStringSet(
-                    "java.lang.NullPointerException",
-                    "java.lang.IllegalMonitorStateException",
-                    "java.lang.ArrayIndexOutOfBoundsException"
-            );
+  /**
+   * @noinspection PublicField
+   */
+  public final ExternalizableStringSet exceptions =
+    new ExternalizableStringSet(
+      "java.lang.NullPointerException",
+      "java.lang.IllegalMonitorStateException",
+      "java.lang.ArrayIndexOutOfBoundsException"
+    );
 
-    public BadExceptionCaughtInspection() {
-        if (exceptionsString.length() != 0) {
-            exceptions.clear();
-            final List<String> strings =
-                    StringUtil.split(exceptionsString, ",");
-            for (String string : strings) {
-                exceptions.add(string);
-            }
-            exceptionsString = "";
-        }
+  public BadExceptionCaughtInspection() {
+    if (exceptionsString.length() != 0) {
+      exceptions.clear();
+      final List<String> strings =
+        StringUtil.split(exceptionsString, ",");
+      for (String string : strings) {
+        exceptions.add(string);
+      }
+      exceptionsString = "";
     }
+  }
 
-    @NotNull
-    public String getID() {
-        return "ProhibitedExceptionCaught";
-    }
+  @NotNull
+  public String getID() {
+    return "ProhibitedExceptionCaught";
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "bad.exception.caught.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "bad.exception.caught.problem.descriptor");
+  }
+
+  @Override
+  public JComponent createOptionsPanel() {
+    final JComponent panel = new JPanel(new GridBagLayout());
+
+    final ListTable table =
+      new ListTable(new ListWrappingTableModel(exceptions,
+                                               InspectionGadgetsBundle.message(
+                                                 "exception.class.column.name")));
+    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(table);
+    UiUtils.setScrollPaneSize(scrollPane, 7, 25);
+    final ActionToolbar toolbar =
+      UiUtils.createAddRemoveTreeClassChooserToolbar(table,
+                                                     InspectionGadgetsBundle.message(
+                                                       "choose.exception.class"),
+                                                     "java.lang.Throwable");
+
+    final GridBagConstraints constraints = new GridBagConstraints();
+    constraints.anchor = GridBagConstraints.FIRST_LINE_START;
+    constraints.gridx = 0;
+    constraints.gridy = 0;
+    constraints.insets.left = 4;
+    constraints.insets.right = 4;
+    constraints.fill = GridBagConstraints.HORIZONTAL;
+    panel.add(toolbar.getComponent(), constraints);
+
+    constraints.gridy = 1;
+    constraints.weightx = 1.0;
+    constraints.weighty = 1.0;
+    constraints.fill = GridBagConstraints.BOTH;
+    panel.add(scrollPane, constraints);
+
+    return panel;
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new BadExceptionCaughtVisitor();
+  }
+
+  private class BadExceptionCaughtVisitor extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "bad.exception.caught.display.name");
+    public void visitCatchSection(PsiCatchSection section) {
+      super.visitCatchSection(section);
+      final PsiParameter parameter = section.getParameter();
+      if (parameter == null) {
+        return;
+      }
+      final PsiType type = parameter.getType();
+      final String text = type.getCanonicalText();
+      if (text == null) {
+        return;
+      }
+      if (!exceptions.contains(text)) {
+        return;
+      }
+      final PsiTypeElement typeElement = parameter.getTypeElement();
+      if (typeElement == null) {
+        return;
+      }
+      registerError(typeElement);
     }
-
-    @Override
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "bad.exception.caught.problem.descriptor");
-    }
-
-    @Override
-    public JComponent createOptionsPanel() {
-        final JComponent panel = new JPanel(new GridBagLayout());
-
-        final ListTable table =
-                new ListTable(new ListWrappingTableModel(exceptions,
-                        InspectionGadgetsBundle.message(
-                                "exception.class.column.name")));
-        final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(table);
-        UiUtils.setScrollPaneSize(scrollPane, 7, 25);
-        final ActionToolbar toolbar =
-                UiUtils.createAddRemoveTreeClassChooserToolbar(table,
-                        InspectionGadgetsBundle.message(
-                                "choose.exception.class"),
-                        "java.lang.Throwable");
-
-        final GridBagConstraints constraints = new GridBagConstraints();
-        constraints.anchor = GridBagConstraints.FIRST_LINE_START;
-        constraints.gridx = 0;
-        constraints.gridy = 0;
-        constraints.insets.left = 4;
-        constraints.insets.right = 4;
-        constraints.fill = GridBagConstraints.HORIZONTAL;
-        panel.add(toolbar.getComponent(), constraints);
-
-        constraints.gridy = 1;
-        constraints.weightx = 1.0;
-        constraints.weighty = 1.0;
-        constraints.fill = GridBagConstraints.BOTH;
-        panel.add(scrollPane, constraints);
-
-        return panel;
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new BadExceptionCaughtVisitor();
-    }
-
-    private class BadExceptionCaughtVisitor extends BaseInspectionVisitor {
-
-        @Override
-        public void visitCatchSection(PsiCatchSection section) {
-            super.visitCatchSection(section);
-            final PsiParameter parameter = section.getParameter();
-            if(parameter == null) {
-                return;
-            }
-            final PsiType type = parameter.getType();
-            final String text = type.getCanonicalText();
-            if (text == null) {
-                return;
-            }
-            if (!exceptions.contains(text)) {
-                return;
-            }
-            final PsiTypeElement typeElement = parameter.getTypeElement();
-            if (typeElement == null) {
-                return;
-            }
-            registerError(typeElement);
-        }
-    }
+  }
 }

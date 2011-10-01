@@ -18,55 +18,57 @@ package com.siyeh.ig.psiutils;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-public class RecursionVisitor extends JavaRecursiveElementVisitor{
+public class RecursionVisitor extends JavaRecursiveElementVisitor {
 
-    private boolean recursive = false;
-    private final PsiMethod method;
-    private final String methodName;
+  private boolean recursive = false;
+  private final PsiMethod method;
+  private final String methodName;
 
-    public RecursionVisitor(@NotNull PsiMethod method){
-        super();
-        this.method = method;
-        methodName = method.getName();
+  public RecursionVisitor(@NotNull PsiMethod method) {
+    super();
+    this.method = method;
+    methodName = method.getName();
+  }
+
+  @Override
+  public void visitElement(@NotNull PsiElement element) {
+    if (!recursive) {
+      super.visitElement(element);
     }
+  }
 
-    @Override public void visitElement(@NotNull PsiElement element){
-        if(!recursive){
-            super.visitElement(element);
-        }
+  @Override
+  public void visitMethodCallExpression(
+    @NotNull PsiMethodCallExpression call) {
+    if (recursive) {
+      return;
     }
+    super.visitMethodCallExpression(call);
+    final PsiReferenceExpression methodExpression =
+      call.getMethodExpression();
+    final String calledMethodName = methodExpression.getReferenceName();
+    if (calledMethodName == null) {
+      return;
+    }
+    if (!calledMethodName.equals(methodName)) {
+      return;
+    }
+    final PsiMethod calledMethod = call.resolveMethod();
+    if (!method.equals(calledMethod)) {
+      return;
+    }
+    if (method.hasModifierProperty(PsiModifier.STATIC) ||
+        method.hasModifierProperty(PsiModifier.PRIVATE)) {
+      recursive = true;
+      return;
+    }
+    final PsiExpression qualifier = methodExpression.getQualifierExpression();
+    if (qualifier == null || qualifier instanceof PsiThisExpression) {
+      recursive = true;
+    }
+  }
 
-    @Override public void visitMethodCallExpression(
-            @NotNull PsiMethodCallExpression call){
-        if(recursive){
-            return;
-        }
-        super.visitMethodCallExpression(call);
-        final PsiReferenceExpression methodExpression =
-                call.getMethodExpression();
-        final String calledMethodName = methodExpression.getReferenceName();
-        if(calledMethodName == null){
-            return;
-        }
-        if(!calledMethodName.equals(methodName)){
-            return;
-        }
-        final PsiMethod calledMethod = call.resolveMethod();
-        if(!method.equals(calledMethod)){
-            return;
-        }
-        if(method.hasModifierProperty(PsiModifier.STATIC) ||
-                method.hasModifierProperty(PsiModifier.PRIVATE)){
-            recursive = true;
-            return;
-        }
-        final PsiExpression qualifier = methodExpression.getQualifierExpression();
-        if(qualifier == null || qualifier instanceof PsiThisExpression){
-            recursive = true;
-        }
-    }
-
-    public boolean isRecursive(){
-        return recursive;
-    }
+  public boolean isRecursive() {
+    return recursive;
+  }
 }

@@ -23,51 +23,52 @@ import com.siyeh.ig.psiutils.SynchronizationUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class PublicFieldAccessedInSynchronizedContextInspection
-        extends BaseInspection {
+  extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "public.field.accessed.in.synchronized.context.display.name");
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "public.field.accessed.in.synchronized.context.display.name");
+  }
+
+  @NotNull
+  public String getID() {
+    return "NonPrivateFieldAccessedInSynchronizedContext";
+  }
+
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "public.field.accessed.in.synchronized.context.problem.descriptor");
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new PublicFieldAccessedInSynchronizedContextVisitor();
+  }
+
+  private static class PublicFieldAccessedInSynchronizedContextVisitor
+    extends BaseInspectionVisitor {
+
+    @Override
+    public void visitReferenceExpression(
+      @NotNull PsiReferenceExpression expression) {
+      final PsiElement element = expression.resolve();
+      if (!(element instanceof PsiField)) {
+        return;
+      }
+      final PsiField field = (PsiField)element;
+      if (field.hasModifierProperty(PsiModifier.PRIVATE) ||
+          field.hasModifierProperty(PsiModifier.FINAL)) {
+        return;
+      }
+      if (!SynchronizationUtil.isInSynchronizedContext(expression)) {
+        return;
+      }
+      final PsiClass containingClass = field.getContainingClass();
+      if (containingClass.hasModifierProperty(PsiModifier.PRIVATE)) {
+        return;
+      }
+      registerError(expression);
     }
-
-    @NotNull
-    public String getID() {
-        return "NonPrivateFieldAccessedInSynchronizedContext";
-    }
-
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "public.field.accessed.in.synchronized.context.problem.descriptor");
-    }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new PublicFieldAccessedInSynchronizedContextVisitor();
-    }
-
-    private static class PublicFieldAccessedInSynchronizedContextVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitReferenceExpression(
-                @NotNull PsiReferenceExpression expression) {
-            final PsiElement element = expression.resolve();
-            if (!(element instanceof PsiField)) {
-                return;
-            }
-            final PsiField field = (PsiField)element;
-            if (field.hasModifierProperty(PsiModifier.PRIVATE) ||
-                field.hasModifierProperty(PsiModifier.FINAL)) {
-                return;
-            }
-            if (!SynchronizationUtil.isInSynchronizedContext(expression)) {
-                return;
-            }
-            final PsiClass containingClass = field.getContainingClass();
-            if (containingClass.hasModifierProperty(PsiModifier.PRIVATE)) {
-                return;
-            }
-            registerError(expression);
-        }
-    }
+  }
 }

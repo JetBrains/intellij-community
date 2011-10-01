@@ -26,58 +26,59 @@ import org.jetbrains.annotations.NotNull;
 
 public class UpperCaseFieldNameNotConstantInspection extends BaseInspection {
 
-    @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "upper.case.field.name.not.constant.display.name");
-    }
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "upper.case.field.name.not.constant.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String getID() {
+    return "NonConstantFieldWithUpperCaseName";
+  }
+
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new RenameFix();
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "upper.case.field.name.not.constant.problem.descriptor");
+  }
+
+  @Override
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return true;
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new UpperCaseFieldNameNotConstantVisitor();
+  }
+
+  private static class UpperCaseFieldNameNotConstantVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String getID() {
-        return "NonConstantFieldWithUpperCaseName";
+    public void visitField(@NotNull PsiField field) {
+      super.visitField(field);
+      if (field.hasModifierProperty(PsiModifier.STATIC) &&
+          field.hasModifierProperty(PsiModifier.FINAL)) {
+        return;
+      }
+      final String fieldName = field.getName();
+      if (fieldName == null) {
+        return;
+      }
+      if (!fieldName.equals(fieldName.toUpperCase())) {
+        return;
+      }
+      registerFieldError(field);
     }
-
-    @Override
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        return new RenameFix();
-    }
-
-    @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "upper.case.field.name.not.constant.problem.descriptor");
-    }
-
-    @Override
-    protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
-        return true;
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new UpperCaseFieldNameNotConstantVisitor();
-    }
-
-    private static class UpperCaseFieldNameNotConstantVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitField(@NotNull PsiField field) {
-            super.visitField(field);
-            if (field.hasModifierProperty(PsiModifier.STATIC) &&
-                    field.hasModifierProperty(PsiModifier.FINAL)) {
-                return;
-            }
-            final String fieldName = field.getName();
-            if (fieldName == null) {
-                return;
-            }
-            if (!fieldName.equals(fieldName.toUpperCase())) {
-                return;
-            }
-            registerFieldError(field);
-        }
-    }
+  }
 }

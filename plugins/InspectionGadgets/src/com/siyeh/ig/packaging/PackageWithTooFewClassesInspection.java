@@ -33,53 +33,53 @@ import java.util.List;
 
 public class PackageWithTooFewClassesInspection extends BaseGlobalInspection {
 
-    @SuppressWarnings({"PublicField"})
-    public int limit = 3;
+  @SuppressWarnings({"PublicField"})
+  public int limit = 3;
 
-    @NotNull
-    @Override
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "package.with.too.few.classes.display.name");
-    }
+  @NotNull
+  @Override
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "package.with.too.few.classes.display.name");
+  }
 
-    @Override
-    @Nullable
-    public CommonProblemDescriptor[] checkElement(
-            RefEntity refEntity,
-            AnalysisScope analysisScope,
-            InspectionManager inspectionManager,
-            GlobalInspectionContext globalInspectionContext) {
-        if (!(refEntity instanceof RefPackage)) {
-            return null;
-        }
-        final List<RefEntity> children = refEntity.getChildren();
-        if (children == null) {
-            return null;
-        }
-        int numClasses = 0;
-        for (RefEntity child : children) {
-            if(child instanceof RefClass) {
-                numClasses++;
-            }
-        }
-        if(numClasses >= limit || numClasses == 0) {
-            return null;
-        }
-        final String errorString = InspectionGadgetsBundle.message(
-                        "package.with.too.few.classes.problem.descriptor",
-                refEntity.getQualifiedName(), Integer.valueOf(numClasses),
-                Integer.valueOf(limit));
-        return new CommonProblemDescriptor[]{
-                inspectionManager.createProblemDescriptor(errorString)
-        };
+  @Override
+  @Nullable
+  public CommonProblemDescriptor[] checkElement(
+    RefEntity refEntity,
+    AnalysisScope analysisScope,
+    InspectionManager inspectionManager,
+    GlobalInspectionContext globalInspectionContext) {
+    if (!(refEntity instanceof RefPackage)) {
+      return null;
     }
+    final List<RefEntity> children = refEntity.getChildren();
+    if (children == null) {
+      return null;
+    }
+    int numClasses = 0;
+    for (RefEntity child : children) {
+      if (child instanceof RefClass) {
+        numClasses++;
+      }
+    }
+    if (numClasses >= limit || numClasses == 0) {
+      return null;
+    }
+    final String errorString = InspectionGadgetsBundle.message(
+      "package.with.too.few.classes.problem.descriptor",
+      refEntity.getQualifiedName(), Integer.valueOf(numClasses),
+      Integer.valueOf(limit));
+    return new CommonProblemDescriptor[]{
+      inspectionManager.createProblemDescriptor(errorString)
+    };
+  }
 
-    @Override
-    public JComponent createOptionsPanel() {
-        return new SingleIntegerFieldOptionsPanel(
-                InspectionGadgetsBundle.message(
-                        "package.with.too.few.classes.min.option"),
-                this, "limit");
-    }
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleIntegerFieldOptionsPanel(
+      InspectionGadgetsBundle.message(
+        "package.with.too.few.classes.min.option"),
+      this, "limit");
+  }
 }

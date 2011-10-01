@@ -27,41 +27,42 @@ import org.jetbrains.annotations.NotNull;
 
 public class JavaLangReflectInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "java.lang.reflect.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "java.lang.reflect.display.name");
+  }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "java.lang.reflect.problem.descriptor");
-    }
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "java.lang.reflect.problem.descriptor");
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new JavaLangReflectVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new JavaLangReflectVisitor();
+  }
 
-    private static class JavaLangReflectVisitor extends BaseInspectionVisitor {
+  private static class JavaLangReflectVisitor extends BaseInspectionVisitor {
 
-        @Override public void visitVariable(@NotNull PsiVariable variable) {
-            super.visitVariable(variable);
-            final PsiType type = variable.getType();
-            final PsiType componentType = type.getDeepComponentType();
-            if (!(componentType instanceof PsiClassType)) {
-                return;
-            }
-            final String className = ((PsiClassType)componentType).getClassName();
-            @NonNls final String javaLangReflect = "java.lang.reflect.";
-            if (!className.startsWith(javaLangReflect)) {
-                return;
-            }
-            final PsiTypeElement typeElement = variable.getTypeElement();
-            if (typeElement == null) {
-                return;
-            }
-            registerError(typeElement);
-        }
+    @Override
+    public void visitVariable(@NotNull PsiVariable variable) {
+      super.visitVariable(variable);
+      final PsiType type = variable.getType();
+      final PsiType componentType = type.getDeepComponentType();
+      if (!(componentType instanceof PsiClassType)) {
+        return;
+      }
+      final String className = ((PsiClassType)componentType).getClassName();
+      @NonNls final String javaLangReflect = "java.lang.reflect.";
+      if (!className.startsWith(javaLangReflect)) {
+        return;
+      }
+      final PsiTypeElement typeElement = variable.getTypeElement();
+      if (typeElement == null) {
+        return;
+      }
+      registerError(typeElement);
     }
+  }
 }

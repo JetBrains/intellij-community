@@ -25,38 +25,39 @@ import org.jetbrains.annotations.NotNull;
 
 public class StringBufferFieldInspection extends BaseInspection {
 
-    @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "stringbuffer.field.display.name");
-    }
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "stringbuffer.field.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    final PsiType type = (PsiType)infos[0];
+    final String typeName = type.getPresentableText();
+    return InspectionGadgetsBundle.message(
+      "stringbuffer.field.problem.descriptor", typeName);
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new StringBufferFieldVisitor();
+  }
+
+  private static class StringBufferFieldVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        final PsiType type = (PsiType)infos[0];
-        final String typeName = type.getPresentableText();
-        return InspectionGadgetsBundle.message(
-                "stringbuffer.field.problem.descriptor", typeName);
+    public void visitField(@NotNull PsiField field) {
+      super.visitField(field);
+      final PsiType type = field.getType();
+      if (!type.equalsToText(CommonClassNames.JAVA_LANG_STRING_BUFFER) &&
+          !type.equalsToText("java.lang.StringBuilder")) {
+        return;
+      }
+      registerFieldError(field, type);
     }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new StringBufferFieldVisitor();
-    }
-
-    private static class StringBufferFieldVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitField(@NotNull PsiField field) {
-            super.visitField(field);
-            final PsiType type = field.getType();
-            if (!type.equalsToText(CommonClassNames.JAVA_LANG_STRING_BUFFER) &&
-                        !type.equalsToText("java.lang.StringBuilder")) {
-                return;
-            }
-            registerFieldError(field, type);
-        }
-    }
+  }
 }

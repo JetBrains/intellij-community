@@ -27,42 +27,42 @@ import org.jetbrains.annotations.Nullable;
 
 public class ClassInitializerInspection extends BaseInspection {
 
-    @NotNull
-    public String getID() {
-        return "NonStaticInitializer";
-    }
+  @NotNull
+  public String getID() {
+    return "NonStaticInitializer";
+  }
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "class.initializer.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "class.initializer.display.name");
+  }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "class.initializer.problem.descriptor");
-    }
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "class.initializer.problem.descriptor");
+  }
+
+  @Override
+  @Nullable
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new ChangeModifierFix(PsiModifier.STATIC);
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new ClassInitializerVisitor();
+  }
+
+  private static class ClassInitializerVisitor extends BaseInspectionVisitor {
 
     @Override
-    @Nullable
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        return new ChangeModifierFix(PsiModifier.STATIC);
+    public void visitClassInitializer(PsiClassInitializer initializer) {
+      super.visitClassInitializer(initializer);
+      if (initializer.hasModifierProperty(PsiModifier.STATIC)) {
+        return;
+      }
+      registerClassInitializerError(initializer);
     }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new ClassInitializerVisitor();
-    }
-
-    private static class ClassInitializerVisitor extends BaseInspectionVisitor {
-
-        @Override
-        public void visitClassInitializer(PsiClassInitializer initializer) {
-            super.visitClassInitializer(initializer);
-            if (initializer.hasModifierProperty(PsiModifier.STATIC)) {
-                return;
-            }
-            registerClassInitializerError(initializer);
-        }
-    }
+  }
 }

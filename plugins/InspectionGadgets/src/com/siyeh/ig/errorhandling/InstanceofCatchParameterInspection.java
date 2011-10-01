@@ -24,46 +24,46 @@ import org.jetbrains.annotations.NotNull;
 
 public class InstanceofCatchParameterInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "instanceof.catch.parameter.display.name");
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "instanceof.catch.parameter.display.name");
+  }
+
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "instanceof.catch.parameter.problem.descriptor");
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new InstanceofCatchParameterVisitor();
+  }
+
+  private static class InstanceofCatchParameterVisitor
+    extends BaseInspectionVisitor {
+
+    @Override
+    public void visitInstanceOfExpression(
+      @NotNull PsiInstanceOfExpression exp) {
+      super.visitInstanceOfExpression(exp);
+      if (!ControlFlowUtils.isInCatchBlock(exp)) {
+        return;
+      }
+      final PsiExpression operand = exp.getOperand();
+      if (!(operand instanceof PsiReferenceExpression)) {
+        return;
+      }
+      final PsiReferenceExpression ref = (PsiReferenceExpression)operand;
+      final PsiElement referent = ref.resolve();
+      if (!(referent instanceof PsiParameter)) {
+        return;
+      }
+      final PsiParameter parameter = (PsiParameter)referent;
+      if (!(parameter.getDeclarationScope() instanceof PsiCatchSection)) {
+        return;
+      }
+      registerError(exp);
     }
-
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "instanceof.catch.parameter.problem.descriptor");
-    }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new InstanceofCatchParameterVisitor();
-    }
-
-    private static class InstanceofCatchParameterVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitInstanceOfExpression(
-                @NotNull PsiInstanceOfExpression exp) {
-            super.visitInstanceOfExpression(exp);
-            if (!ControlFlowUtils.isInCatchBlock(exp)) {
-                return;
-            }
-            final PsiExpression operand = exp.getOperand();
-            if (!(operand instanceof PsiReferenceExpression)) {
-                return;
-            }
-            final PsiReferenceExpression ref = (PsiReferenceExpression)operand;
-            final PsiElement referent = ref.resolve();
-            if (!(referent instanceof PsiParameter)) {
-                return;
-            }
-            final PsiParameter parameter = (PsiParameter)referent;
-            if (!(parameter.getDeclarationScope() instanceof PsiCatchSection)) {
-                return;
-            }
-            registerError(exp);
-        }
-
-    }
+  }
 }

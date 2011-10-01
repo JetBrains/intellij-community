@@ -31,121 +31,125 @@ import org.jetbrains.annotations.NotNull;
 
 public class EqualsCalledOnEnumConstantInspection extends BaseInspection {
 
-    @Override
-    @Nls
+  @Override
+  @Nls
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "equals.called.on.enum.constant.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "equals.called.on.enum.constant.problem.descriptor");
+  }
+
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    final PsiElement element = (PsiElement)infos[0];
+    final PsiElement parent = element.getParent();
+    if (parent instanceof PsiExpressionStatement) {
+      return null;
+    }
+    return new EqualsCalledOnEnumValueFix();
+  }
+
+  private static class EqualsCalledOnEnumValueFix
+    extends InspectionGadgetsFix {
+
     @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "equals.called.on.enum.constant.display.name");
+    public String getName() {
+      return InspectionGadgetsBundle.message(
+        "equals.called.on.enum.constant.quickfix");
     }
 
     @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "equals.called.on.enum.constant.problem.descriptor");
+    protected void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiElement element = descriptor.getPsiElement();
+      final PsiElement parent = element.getParent();
+      if (parent == null) {
+        return;
+      }
+      final PsiElement grandParent = parent.getParent();
+      if (!(grandParent instanceof PsiMethodCallExpression)) {
+        return;
+      }
+      final PsiMethodCallExpression methodCallExpression =
+        (PsiMethodCallExpression)grandParent;
+      final PsiExpressionList argumentList =
+        methodCallExpression.getArgumentList();
+      final PsiExpression[] arguments = argumentList.getExpressions();
+      if (arguments.length > 1) {
+        return;
+      }
+      final PsiReferenceExpression methodExpression =
+        methodCallExpression.getMethodExpression();
+      final PsiExpression qualifier =
+        methodExpression.getQualifierExpression();
+      if (qualifier == null) {
+        return;
+      }
+      final StringBuilder newExpression = new StringBuilder();
+      final PsiElement greatGrandParent = grandParent.getParent();
+      final boolean not;
+      final PsiPrefixExpression prefixExpression;
+      if (greatGrandParent instanceof PsiPrefixExpression) {
+        prefixExpression = (PsiPrefixExpression)greatGrandParent;
+        final IElementType tokenType =
+          prefixExpression.getOperationTokenType();
+        not = JavaTokenType.EXCL == tokenType;
+      }
+      else {
+        prefixExpression = null;
+        not = false;
+      }
+      newExpression.append(qualifier.getText());
+      if (not) {
+        newExpression.append("!=");
+      }
+      else {
+        newExpression.append("==");
+      }
+      if (arguments.length == 1) {
+        newExpression.append(arguments[0].getText());
+      }
+      if (not) {
+        replaceExpression(prefixExpression, newExpression.toString());
+      }
+      else {
+        replaceExpression(methodCallExpression,
+                          newExpression.toString());
+      }
     }
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new EqualsCalledOnEnumValueVisitor();
+  }
+
+  private static class EqualsCalledOnEnumValueVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        final PsiElement element = (PsiElement) infos[0];
-        final PsiElement parent = element.getParent();
-        if (parent instanceof PsiExpressionStatement) {
-            return null;
-        }
-        return new EqualsCalledOnEnumValueFix();
+    public void visitMethodCallExpression(
+      @NotNull PsiMethodCallExpression expression) {
+      super.visitMethodCallExpression(expression);
+      if (!MethodCallUtils.isEqualsCall(expression)) {
+        return;
+      }
+      final PsiReferenceExpression methodExpression =
+        expression.getMethodExpression();
+      final PsiExpression qualifier =
+        methodExpression.getQualifierExpression();
+      if (!TypeUtils.expressionHasTypeOrSubtype(qualifier,
+                                                CommonClassNames.JAVA_LANG_ENUM)) {
+        return;
+      }
+      registerMethodCallError(expression, expression);
     }
-
-    private static class EqualsCalledOnEnumValueFix
-            extends InspectionGadgetsFix {
-
-        @NotNull
-        public String getName() {
-            return InspectionGadgetsBundle.message(
-                    "equals.called.on.enum.constant.quickfix");
-        }
-
-        @Override
-        protected void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
-            final PsiElement element = descriptor.getPsiElement();
-            final PsiElement parent = element.getParent();
-            if (parent == null) {
-                return;
-            }
-            final PsiElement grandParent = parent.getParent();
-            if (!(grandParent instanceof PsiMethodCallExpression)) {
-                return;
-            }
-            final PsiMethodCallExpression methodCallExpression =
-                    (PsiMethodCallExpression) grandParent;
-            final PsiExpressionList argumentList =
-                    methodCallExpression.getArgumentList();
-            final PsiExpression[] arguments = argumentList.getExpressions();
-            if (arguments.length > 1) {
-                return;
-            }
-            final PsiReferenceExpression methodExpression =
-                    methodCallExpression.getMethodExpression();
-            final PsiExpression qualifier =
-                    methodExpression.getQualifierExpression();
-            if (qualifier == null) {
-                return;
-            }
-            final StringBuilder newExpression = new StringBuilder();
-            final PsiElement greatGrandParent = grandParent.getParent();
-            final boolean not;
-            final PsiPrefixExpression prefixExpression;
-            if (greatGrandParent instanceof PsiPrefixExpression) {
-                prefixExpression = (PsiPrefixExpression) greatGrandParent;
-                final IElementType tokenType =
-                        prefixExpression.getOperationTokenType();
-                not = JavaTokenType.EXCL == tokenType;
-            } else {
-                prefixExpression = null;
-                not = false;
-            }
-            newExpression.append(qualifier.getText());
-            if (not) {
-                newExpression.append("!=");
-            } else {
-                newExpression.append("==");
-            }
-            if (arguments.length == 1) {
-                newExpression.append(arguments[0].getText());
-            }
-            if (not) {
-                replaceExpression(prefixExpression, newExpression.toString());
-            } else {
-                replaceExpression(methodCallExpression,
-                        newExpression.toString());
-            }
-        }
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new EqualsCalledOnEnumValueVisitor();
-    }
-
-    private static class EqualsCalledOnEnumValueVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitMethodCallExpression(
-                @NotNull PsiMethodCallExpression expression) {
-            super.visitMethodCallExpression(expression);
-            if (!MethodCallUtils.isEqualsCall(expression)) {
-                return;
-            }
-            final PsiReferenceExpression methodExpression =
-                    expression.getMethodExpression();
-            final PsiExpression qualifier =
-                    methodExpression.getQualifierExpression();
-            if (!TypeUtils.expressionHasTypeOrSubtype(qualifier,
-                    CommonClassNames.JAVA_LANG_ENUM)) {
-                return;
-            }
-            registerMethodCallError(expression, expression);
-        }
-    }
+  }
 }

@@ -29,30 +29,31 @@ import org.jetbrains.annotations.NotNull;
 
 public class InlineCallFix extends InspectionGadgetsFix {
 
-    @NotNull
-    public String getName() {
-        return InspectionGadgetsBundle.message("inline.call.quickfix");
-    }
+  @NotNull
+  public String getName() {
+    return InspectionGadgetsBundle.message("inline.call.quickfix");
+  }
 
-    public void doFix(final Project project, ProblemDescriptor descriptor) {
-        final PsiElement nameElement = descriptor.getPsiElement();
-        final PsiReferenceExpression methodExpression =
-                (PsiReferenceExpression) nameElement.getParent();
-        assert methodExpression != null;
-        final PsiMethodCallExpression methodCallExpression =
-                (PsiMethodCallExpression) methodExpression.getParent();
-        final JavaRefactoringActionHandlerFactory factory =
-                JavaRefactoringActionHandlerFactory.getInstance();
-        final RefactoringActionHandler inlineHandler = factory.createInlineHandler();
-        final Runnable runnable = new Runnable() {
-          public void run() {
-            inlineHandler.invoke(project, new PsiElement[]{methodCallExpression}, null);
-          }
-        };
-        if (ApplicationManager.getApplication().isUnitTestMode()) {
-          runnable.run();
-        } else {
-          ApplicationManager.getApplication().invokeLater(runnable, project.getDisposed());
-        }
+  public void doFix(final Project project, ProblemDescriptor descriptor) {
+    final PsiElement nameElement = descriptor.getPsiElement();
+    final PsiReferenceExpression methodExpression =
+      (PsiReferenceExpression)nameElement.getParent();
+    assert methodExpression != null;
+    final PsiMethodCallExpression methodCallExpression =
+      (PsiMethodCallExpression)methodExpression.getParent();
+    final JavaRefactoringActionHandlerFactory factory =
+      JavaRefactoringActionHandlerFactory.getInstance();
+    final RefactoringActionHandler inlineHandler = factory.createInlineHandler();
+    final Runnable runnable = new Runnable() {
+      public void run() {
+        inlineHandler.invoke(project, new PsiElement[]{methodCallExpression}, null);
+      }
+    };
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      runnable.run();
     }
+    else {
+      ApplicationManager.getApplication().invokeLater(runnable, project.getDisposed());
+    }
+  }
 }

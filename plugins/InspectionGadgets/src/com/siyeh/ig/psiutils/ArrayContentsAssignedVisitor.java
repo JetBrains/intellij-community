@@ -22,105 +22,109 @@ import org.jetbrains.annotations.Nullable;
 
 class ArrayContentsAssignedVisitor extends JavaRecursiveElementVisitor {
 
-    private boolean assigned = false;
-    private final PsiVariable variable;
+  private boolean assigned = false;
+  private final PsiVariable variable;
 
-    public ArrayContentsAssignedVisitor(@NotNull PsiVariable variable) {
-        this.variable = variable;
-    }
+  public ArrayContentsAssignedVisitor(@NotNull PsiVariable variable) {
+    this.variable = variable;
+  }
 
-    @Override public void visitAssignmentExpression(
-            @NotNull PsiAssignmentExpression assignment){
-        if(assigned) {
-            return;
-        }
-        super.visitAssignmentExpression(assignment);
-        final PsiExpression lhs = assignment.getLExpression();
-        final PsiExpression arrayExpression = getDeepArrayExpression(lhs);
-        if(!(arrayExpression instanceof PsiReferenceExpression)){
-            return;
-        }
-        final PsiReferenceExpression referenceExpression =
-                (PsiReferenceExpression)arrayExpression;
-        final PsiElement referent = referenceExpression.resolve();
-        if(referent == null){
-            return;
-        }
-        if(referent.equals(variable)){
-            assigned = true;
-        }
+  @Override
+  public void visitAssignmentExpression(
+    @NotNull PsiAssignmentExpression assignment) {
+    if (assigned) {
+      return;
     }
+    super.visitAssignmentExpression(assignment);
+    final PsiExpression lhs = assignment.getLExpression();
+    final PsiExpression arrayExpression = getDeepArrayExpression(lhs);
+    if (!(arrayExpression instanceof PsiReferenceExpression)) {
+      return;
+    }
+    final PsiReferenceExpression referenceExpression =
+      (PsiReferenceExpression)arrayExpression;
+    final PsiElement referent = referenceExpression.resolve();
+    if (referent == null) {
+      return;
+    }
+    if (referent.equals(variable)) {
+      assigned = true;
+    }
+  }
 
-    @Override public void visitPrefixExpression(
-            @NotNull PsiPrefixExpression expression){
-        if(assigned) {
-            return;
-        }
-        super.visitPrefixExpression(expression);
-      final IElementType tokenType = expression.getOperationTokenType();
-        if(!(tokenType.equals(JavaTokenType.PLUSPLUS) ||
-                tokenType.equals(JavaTokenType.MINUSMINUS))){
-            return;
-        }
-        final PsiExpression operand = expression.getOperand();
-        final PsiExpression arrayExpression = getDeepArrayExpression(operand);
-        if(!(arrayExpression instanceof PsiReferenceExpression)){
-            return;
-        }
-        final PsiReferenceExpression referenceExpression =
-                (PsiReferenceExpression)arrayExpression;
-        final PsiElement referent = referenceExpression.resolve();
-        if(referent == null){
-            return;
-        }
-        if(referent.equals(variable)){
-            assigned = true;
-        }
+  @Override
+  public void visitPrefixExpression(
+    @NotNull PsiPrefixExpression expression) {
+    if (assigned) {
+      return;
     }
-    @Override public void visitPostfixExpression(
-            @NotNull PsiPostfixExpression expression){
-        if(assigned) {
-            return;
-        }
-        super.visitPostfixExpression(expression);
-      final IElementType tokenType = expression.getOperationTokenType();
-        if(!(tokenType.equals(JavaTokenType.PLUSPLUS) ||
-                tokenType.equals(JavaTokenType.MINUSMINUS))){
-            return;
-        }
-        final PsiExpression operand = expression.getOperand();
-        final PsiExpression arrayExpression = getDeepArrayExpression(operand);
-        if(!(arrayExpression instanceof PsiReferenceExpression)){
-            return;
-        }
-        final PsiReferenceExpression referenceExpression =
-                (PsiReferenceExpression)arrayExpression;
-        final PsiElement referent = referenceExpression.resolve();
-        if(referent == null){
-            return;
-        }
-        if(referent.equals(variable)){
-            assigned = true;
-        }
+    super.visitPrefixExpression(expression);
+    final IElementType tokenType = expression.getOperationTokenType();
+    if (!(tokenType.equals(JavaTokenType.PLUSPLUS) ||
+          tokenType.equals(JavaTokenType.MINUSMINUS))) {
+      return;
     }
+    final PsiExpression operand = expression.getOperand();
+    final PsiExpression arrayExpression = getDeepArrayExpression(operand);
+    if (!(arrayExpression instanceof PsiReferenceExpression)) {
+      return;
+    }
+    final PsiReferenceExpression referenceExpression =
+      (PsiReferenceExpression)arrayExpression;
+    final PsiElement referent = referenceExpression.resolve();
+    if (referent == null) {
+      return;
+    }
+    if (referent.equals(variable)) {
+      assigned = true;
+    }
+  }
 
-    @Nullable
-    private static PsiExpression getDeepArrayExpression(
-            PsiExpression expression) {
-        if (!(expression instanceof PsiArrayAccessExpression)) {
-            return null;
-        }
-        PsiExpression arrayExpression =
-                ((PsiArrayAccessExpression) expression).getArrayExpression();
-        while (arrayExpression  instanceof PsiArrayAccessExpression) {
-            final PsiArrayAccessExpression arrayAccessExpression =
-                    (PsiArrayAccessExpression)arrayExpression;
-            arrayExpression = arrayAccessExpression.getArrayExpression();
-        }
-        return arrayExpression;
+  @Override
+  public void visitPostfixExpression(
+    @NotNull PsiPostfixExpression expression) {
+    if (assigned) {
+      return;
     }
+    super.visitPostfixExpression(expression);
+    final IElementType tokenType = expression.getOperationTokenType();
+    if (!(tokenType.equals(JavaTokenType.PLUSPLUS) ||
+          tokenType.equals(JavaTokenType.MINUSMINUS))) {
+      return;
+    }
+    final PsiExpression operand = expression.getOperand();
+    final PsiExpression arrayExpression = getDeepArrayExpression(operand);
+    if (!(arrayExpression instanceof PsiReferenceExpression)) {
+      return;
+    }
+    final PsiReferenceExpression referenceExpression =
+      (PsiReferenceExpression)arrayExpression;
+    final PsiElement referent = referenceExpression.resolve();
+    if (referent == null) {
+      return;
+    }
+    if (referent.equals(variable)) {
+      assigned = true;
+    }
+  }
 
-    public boolean isAssigned() {
-        return assigned;
+  @Nullable
+  private static PsiExpression getDeepArrayExpression(
+    PsiExpression expression) {
+    if (!(expression instanceof PsiArrayAccessExpression)) {
+      return null;
     }
+    PsiExpression arrayExpression =
+      ((PsiArrayAccessExpression)expression).getArrayExpression();
+    while (arrayExpression instanceof PsiArrayAccessExpression) {
+      final PsiArrayAccessExpression arrayAccessExpression =
+        (PsiArrayAccessExpression)arrayExpression;
+      arrayExpression = arrayAccessExpression.getArrayExpression();
+    }
+    return arrayExpression;
+  }
+
+  public boolean isAssigned() {
+    return assigned;
+  }
 }

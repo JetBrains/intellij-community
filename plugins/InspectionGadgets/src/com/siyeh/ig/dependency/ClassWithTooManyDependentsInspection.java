@@ -34,49 +34,49 @@ import java.util.Set;
 
 public class ClassWithTooManyDependentsInspection extends BaseGlobalInspection {
 
-    @SuppressWarnings({"PublicField"})
-    public int limit = 10;
+  @SuppressWarnings({"PublicField"})
+  public int limit = 10;
 
-    @NotNull
-    @Override
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "class.with.too.many.dependents.display.name");
+  @NotNull
+  @Override
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "class.with.too.many.dependents.display.name");
+  }
+
+  @Nullable
+  public CommonProblemDescriptor[] checkElement(
+    RefEntity refEntity,
+    AnalysisScope analysisScope,
+    InspectionManager inspectionManager,
+    GlobalInspectionContext globalInspectionContext) {
+    if (!(refEntity instanceof RefClass)) {
+      return null;
     }
-
-    @Nullable
-    public CommonProblemDescriptor[] checkElement(
-            RefEntity refEntity,
-            AnalysisScope analysisScope,
-            InspectionManager inspectionManager,
-            GlobalInspectionContext globalInspectionContext) {
-        if (!(refEntity instanceof RefClass)) {
-            return null;
-        }
-        final RefClass refClass = (RefClass) refEntity;
-        final PsiClass aClass = refClass.getElement();
-        if (ClassUtils.isInnerClass(aClass)) {
-            return null;
-        }
-        final Set<RefClass> dependents =
-                DependencyUtils.calculateDependentsForClass(refClass);
-        final int numDependents = dependents.size();
-        if (numDependents <= limit) {
-            return null;
-        }
-        final String errorString = InspectionGadgetsBundle.message(
-                        "class.with.too.many.dependents.problem.descriptor",
-                refEntity.getName(), numDependents, limit);
-
-        return new CommonProblemDescriptor[]{
-                inspectionManager.createProblemDescriptor(errorString)
-        };
+    final RefClass refClass = (RefClass)refEntity;
+    final PsiClass aClass = refClass.getElement();
+    if (ClassUtils.isInnerClass(aClass)) {
+      return null;
     }
-
-    public JComponent createOptionsPanel() {
-        return new SingleIntegerFieldOptionsPanel(
-                InspectionGadgetsBundle.message(
-                        "class.with.too.many.dependents.max.option"),
-                this, "limit");
+    final Set<RefClass> dependents =
+      DependencyUtils.calculateDependentsForClass(refClass);
+    final int numDependents = dependents.size();
+    if (numDependents <= limit) {
+      return null;
     }
+    final String errorString = InspectionGadgetsBundle.message(
+      "class.with.too.many.dependents.problem.descriptor",
+      refEntity.getName(), numDependents, limit);
+
+    return new CommonProblemDescriptor[]{
+      inspectionManager.createProblemDescriptor(errorString)
+    };
+  }
+
+  public JComponent createOptionsPanel() {
+    return new SingleIntegerFieldOptionsPanel(
+      InspectionGadgetsBundle.message(
+        "class.with.too.many.dependents.max.option"),
+      this, "limit");
+  }
 }

@@ -28,43 +28,44 @@ import org.jetbrains.annotations.NotNull;
 
 public class EqualsHashCodeCalledOnUrlInspection extends BaseInspection {
 
-    @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "equals.hashcode.called.on.url.display.name");
-    }
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "equals.hashcode.called.on.url.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "equals.hashcode.called.on.url.problem.descriptor");
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new EqualsHashCodeCalledOnUrlVisitor();
+  }
+
+  private static class EqualsHashCodeCalledOnUrlVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "equals.hashcode.called.on.url.problem.descriptor");
+    public void visitMethodCallExpression(
+      PsiMethodCallExpression expression) {
+      final PsiReferenceExpression methodExpression =
+        expression.getMethodExpression();
+      final PsiMethod method = expression.resolveMethod();
+      if (!MethodUtils.isEquals(method) &&
+          !MethodUtils.isHashCode(method)) {
+        return;
+      }
+      final PsiExpression qualifier =
+        methodExpression.getQualifierExpression();
+      if (!TypeUtils.expressionHasType(qualifier, "java.net.URL")) {
+        return;
+      }
+      registerMethodCallError(expression);
     }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new EqualsHashCodeCalledOnUrlVisitor();
-    }
-
-    private static class EqualsHashCodeCalledOnUrlVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitMethodCallExpression(
-                PsiMethodCallExpression expression) {
-            final PsiReferenceExpression methodExpression =
-                    expression.getMethodExpression();
-            final PsiMethod method = expression.resolveMethod();
-            if (!MethodUtils.isEquals(method) &&
-                    !MethodUtils.isHashCode(method)) {
-                return;
-            }
-            final PsiExpression qualifier =
-                    methodExpression.getQualifierExpression();
-            if (!TypeUtils.expressionHasType(qualifier, "java.net.URL")) {
-                return;
-            }
-            registerMethodCallError(expression);
-        }
-    }
+  }
 }

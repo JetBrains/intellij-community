@@ -29,55 +29,56 @@ import org.jetbrains.annotations.NotNull;
 
 public class ClassInTopLevelPackageInspection extends BaseInspection {
 
-    @NotNull
-    public String getID() {
-        return "ClassWithoutPackageStatement";
+  @NotNull
+  public String getID() {
+    return "ClassWithoutPackageStatement";
+  }
+
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "class.in.top.level.package.display.name");
+  }
+
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "class.in.top.level.package.problem.descriptor");
+  }
+
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new MoveClassFix();
+  }
+
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return true;
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new ClassInTopLevelPackageVisitor();
+  }
+
+  private static class ClassInTopLevelPackageVisitor
+    extends BaseInspectionVisitor {
+
+    @Override
+    public void visitClass(@NotNull PsiClass aClass) {
+      // no call to super, so that it doesn't drill down to inner classes
+      if (JspPsiUtil.isInJspFile(aClass)) {
+        return;
+      }
+      if (ClassUtils.isInnerClass(aClass)) {
+        return;
+      }
+      final PsiFile file = aClass.getContainingFile();
+
+      if (file == null || !(file instanceof PsiJavaFile)) {
+        return;
+      }
+      if (((PsiJavaFile)file).getPackageStatement() != null) {
+        return;
+      }
+      registerClassError(aClass);
     }
-
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "class.in.top.level.package.display.name");
-    }
-
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "class.in.top.level.package.problem.descriptor");
-    }
-
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        return new MoveClassFix();
-    }
-
-    protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
-        return true;
-    }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new ClassInTopLevelPackageVisitor();
-    }
-
-    private static class ClassInTopLevelPackageVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitClass(@NotNull PsiClass aClass) {
-            // no call to super, so that it doesn't drill down to inner classes
-            if (JspPsiUtil.isInJspFile(aClass)) {
-                return;
-            }
-            if (ClassUtils.isInnerClass(aClass)) {
-                return;
-            }
-            final PsiFile file = aClass.getContainingFile();
-
-            if (file == null || !(file instanceof PsiJavaFile)) {
-                return;
-            }
-            if (((PsiJavaFile)file).getPackageStatement() != null) {
-                return;
-            }
-            registerClassError(aClass);
-        }
-    }
+  }
 }

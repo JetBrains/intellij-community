@@ -24,30 +24,31 @@ import org.jetbrains.annotations.NotNull;
 
 public class LabeledStatementInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "labeled.statement.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "labeled.statement.display.name");
+  }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "labeled.statement.problem.descriptor");
-    }
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "labeled.statement.problem.descriptor");
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new LabeledStatementVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new LabeledStatementVisitor();
+  }
 
-    private static class LabeledStatementVisitor
-            extends BaseInspectionVisitor {
+  private static class LabeledStatementVisitor
+    extends BaseInspectionVisitor {
 
-        @Override public void visitLabeledStatement(PsiLabeledStatement statement) {
-            super.visitLabeledStatement(statement);
-            final PsiIdentifier labelIdentifier =
-                    statement.getLabelIdentifier();
-            registerError(labelIdentifier);
-        }
+    @Override
+    public void visitLabeledStatement(PsiLabeledStatement statement) {
+      super.visitLabeledStatement(statement);
+      final PsiIdentifier labelIdentifier =
+        statement.getLabelIdentifier();
+      registerError(labelIdentifier);
     }
+  }
 }

@@ -30,30 +30,31 @@ import org.jetbrains.annotations.NotNull;
 
 public class ExtractMethodFix extends InspectionGadgetsFix {
 
-    @NotNull
-    public String getName() {
-        return InspectionGadgetsBundle.message("extract.method.quickfix");
-    }
+  @NotNull
+  public String getName() {
+    return InspectionGadgetsBundle.message("extract.method.quickfix");
+  }
 
-    public void doFix(final Project project, ProblemDescriptor descriptor) {
-        final PsiExpression expression =
-                (PsiExpression) descriptor.getPsiElement();
-        final JavaRefactoringActionHandlerFactory factory =
-                JavaRefactoringActionHandlerFactory.getInstance();
-        final RefactoringActionHandler extractHandler =
-                factory.createExtractMethodHandler();
-        final DataManager dataManager = DataManager.getInstance();
-        final DataContext dataContext = dataManager.getDataContext();
-        final Runnable runnable = new Runnable() {
-          public void run() {
-            extractHandler.invoke(project,
-                    new PsiElement[]{expression}, dataContext);
-          }
-        };
-        if (ApplicationManager.getApplication().isUnitTestMode()) {
-          runnable.run();
-        } else {
-          ApplicationManager.getApplication().invokeLater(runnable);
-        }
+  public void doFix(final Project project, ProblemDescriptor descriptor) {
+    final PsiExpression expression =
+      (PsiExpression)descriptor.getPsiElement();
+    final JavaRefactoringActionHandlerFactory factory =
+      JavaRefactoringActionHandlerFactory.getInstance();
+    final RefactoringActionHandler extractHandler =
+      factory.createExtractMethodHandler();
+    final DataManager dataManager = DataManager.getInstance();
+    final DataContext dataContext = dataManager.getDataContext();
+    final Runnable runnable = new Runnable() {
+      public void run() {
+        extractHandler.invoke(project,
+                              new PsiElement[]{expression}, dataContext);
+      }
+    };
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      runnable.run();
     }
+    else {
+      ApplicationManager.getApplication().invokeLater(runnable);
+    }
+  }
 }

@@ -25,71 +25,72 @@ import org.jetbrains.annotations.NotNull;
 
 public class MapReplaceableByEnumMapInspection extends BaseInspection {
 
-    @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "map.replaceable.by.enum.map.display.name");
-    }
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "map.replaceable.by.enum.map.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "map.replaceable.by.enum.map.problem.descriptor");
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new SetReplaceableByEnumSetVisitor();
+  }
+
+  private static class SetReplaceableByEnumSetVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "map.replaceable.by.enum.map.problem.descriptor");
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new SetReplaceableByEnumSetVisitor();
-    }
-
-    private static class SetReplaceableByEnumSetVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitNewExpression(
-                @NotNull PsiNewExpression expression) {
-            super.visitNewExpression(expression);
-            final PsiType type = expression.getType();
-            if (!(type instanceof PsiClassType)) {
-                return;
-            }
-            final PsiClassType classType = (PsiClassType)type;
-            if (!classType.hasParameters()) {
-                return;
-            }
-            final PsiType[] typeArguments = classType.getParameters();
-            if (typeArguments.length != 2) {
-                return;
-            }
-            final PsiType argumentType = typeArguments[0];
-            if (!(argumentType instanceof PsiClassType)) {
-                return;
-            }
-            if (!TypeUtils.expressionHasTypeOrSubtype(expression,
-                    CommonClassNames.JAVA_UTIL_MAP)) {
-                return;
-            }
-            if (null != TypeUtils.expressionHasTypeOrSubtype(expression,
-                    "java.util.EnumMap", "java.util.concurrent.ConcurrentMap")) {
-                return;
-            }
-            final PsiClassType argumentClassType = (PsiClassType)argumentType;
-            final PsiClass argumentClass = argumentClassType.resolve();
-            if (argumentClass == null || !argumentClass.isEnum()) {
-                return;
-            }
-            final PsiClass aClass =
-                    PsiTreeUtil.getParentOfType(expression, PsiClass.class);
-            if (argumentClass.equals(aClass)) {
-                final PsiMember member =
-                        PsiTreeUtil.getParentOfType(expression, PsiMember.class);
-                if (member != null &&
-                        !member.hasModifierProperty(PsiModifier.STATIC)) {
-                    return;
-                }
-            }
-            registerNewExpressionError(expression);
+    public void visitNewExpression(
+      @NotNull PsiNewExpression expression) {
+      super.visitNewExpression(expression);
+      final PsiType type = expression.getType();
+      if (!(type instanceof PsiClassType)) {
+        return;
+      }
+      final PsiClassType classType = (PsiClassType)type;
+      if (!classType.hasParameters()) {
+        return;
+      }
+      final PsiType[] typeArguments = classType.getParameters();
+      if (typeArguments.length != 2) {
+        return;
+      }
+      final PsiType argumentType = typeArguments[0];
+      if (!(argumentType instanceof PsiClassType)) {
+        return;
+      }
+      if (!TypeUtils.expressionHasTypeOrSubtype(expression,
+                                                CommonClassNames.JAVA_UTIL_MAP)) {
+        return;
+      }
+      if (null != TypeUtils.expressionHasTypeOrSubtype(expression,
+                                                       "java.util.EnumMap", "java.util.concurrent.ConcurrentMap")) {
+        return;
+      }
+      final PsiClassType argumentClassType = (PsiClassType)argumentType;
+      final PsiClass argumentClass = argumentClassType.resolve();
+      if (argumentClass == null || !argumentClass.isEnum()) {
+        return;
+      }
+      final PsiClass aClass =
+        PsiTreeUtil.getParentOfType(expression, PsiClass.class);
+      if (argumentClass.equals(aClass)) {
+        final PsiMember member =
+          PsiTreeUtil.getParentOfType(expression, PsiMember.class);
+        if (member != null &&
+            !member.hasModifierProperty(PsiModifier.STATIC)) {
+          return;
         }
+      }
+      registerNewExpressionError(expression);
     }
+  }
 }

@@ -31,248 +31,252 @@ import org.jetbrains.annotations.Nullable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class MethodUtils{
+public class MethodUtils {
 
-    private MethodUtils(){
+  private MethodUtils() {
+  }
+
+  public static boolean isCompareTo(@Nullable PsiMethod method) {
+    if (method == null) {
+      return false;
     }
+    return methodMatches(method, null, PsiType.INT,
+                         HardcodedMethodConstants.COMPARE_TO, PsiType.NULL);
+  }
 
-    public static boolean isCompareTo(@Nullable PsiMethod method){
-        if (method == null) {
-            return false;
-        }
-        return methodMatches(method, null, PsiType.INT,
-                HardcodedMethodConstants.COMPARE_TO, PsiType.NULL);
+  public static boolean isHashCode(@Nullable PsiMethod method) {
+    if (method == null) {
+      return false;
     }
+    return methodMatches(method, null, PsiType.INT,
+                         HardcodedMethodConstants.HASH_CODE);
+  }
 
-    public static boolean isHashCode(@Nullable PsiMethod method){
-        if (method == null) {
-            return false;
-        }
-        return methodMatches(method, null, PsiType.INT,
-                HardcodedMethodConstants.HASH_CODE);
+  public static boolean isToString(@Nullable PsiMethod method) {
+    if (method == null) {
+      return false;
     }
+    final PsiManager manager = method.getManager();
+    final GlobalSearchScope scope = method.getResolveScope();
+    final PsiClassType stringType =
+      PsiType.getJavaLangString(manager, scope);
+    return methodMatches(method, null, stringType,
+                         HardcodedMethodConstants.TO_STRING);
+  }
 
-    public static boolean isToString(@Nullable PsiMethod method){
-        if (method == null) {
-            return false;
-        }
-        final PsiManager manager = method.getManager();
-        final GlobalSearchScope scope = method.getResolveScope();
-        final PsiClassType stringType =
-                PsiType.getJavaLangString(manager, scope);
-        return methodMatches(method, null, stringType,
-                HardcodedMethodConstants.TO_STRING);
+  public static boolean isEquals(@Nullable PsiMethod method) {
+    if (method == null) {
+      return false;
     }
+    final PsiManager manager = method.getManager();
+    final Project project = method.getProject();
+    final PsiClassType objectType = PsiType.getJavaLangObject(
+      manager, GlobalSearchScope.allScope(project));
+    return methodMatches(method, null, PsiType.BOOLEAN,
+                         HardcodedMethodConstants.EQUALS, objectType);
+  }
 
-    public static boolean isEquals(@Nullable PsiMethod method){
-        if (method == null) {
-            return false;
-        }
-        final PsiManager manager = method.getManager();
-        final Project project = method.getProject();
-        final PsiClassType objectType = PsiType.getJavaLangObject(
-                manager, GlobalSearchScope.allScope(project));
-        return methodMatches(method, null, PsiType.BOOLEAN,
-                HardcodedMethodConstants.EQUALS, objectType);
-    }
-
-    /**
-     * @param method  the method to compare to.
-     * @param containingClassName  the name of the class which contiains the
-     * method.
-     * @param returnType  the return type, specify null if any type matches
-     * @param methodNamePattern  the name the method should have
-     * @param parameterTypes  the type of the parameters of the method, specify
-     *  null if any number and type of parameters match or an empty array
-     * to match zero parameters.
-     * @return true, if the specified method matches the specified constraints,
-     *  false otherwise
-     */
-    public static boolean methodMatches(
-            @NotNull PsiMethod method,
-            @NonNls @Nullable String containingClassName,
-            @Nullable PsiType returnType,
-            @Nullable Pattern methodNamePattern,
-            @Nullable PsiType... parameterTypes) {
-        if (methodNamePattern != null) {
-            final String name = method.getName();
-            final Matcher matcher = methodNamePattern.matcher(name);
-            if (!matcher.matches()) {
-                return false;
-            }
-        }
-        if (parameterTypes != null) {
-            final PsiParameterList parameterList = method.getParameterList();
-            if (parameterList.getParametersCount() != parameterTypes.length) {
-                return false;
-            }
-            final PsiParameter[] parameters = parameterList.getParameters();
-            for (int i = 0; i < parameters.length; i++) {
-                final PsiParameter parameter = parameters[i];
-                final PsiType type = parameter.getType();
-                final PsiType parameterType = parameterTypes[i];
-                if (PsiType.NULL.equals(parameterType)) {
-                    continue;
-                }
-                if (parameterType != null &&
-                        !EquivalenceChecker.typesAreEquivalent(type,
-                                parameterType)) {
-                    return false;
-                }
-            }
-        }
-        if (returnType != null) {
-            final PsiType methodReturnType = method.getReturnType();
-            if (!EquivalenceChecker.typesAreEquivalent(returnType,
-                    methodReturnType)) {
-                return false;
-            }
-        }
-        if (containingClassName != null) {
-            final PsiClass containingClass = method.getContainingClass();
-            return InheritanceUtil.isInheritor(containingClass,
-                    containingClassName);
-        }
-        return true;
-    }
-
-    /**
-     * @param method  the method to compare to.
-     * @param containingClassName  the name of the class which contiains the
-     * method.
-     * @param returnType  the return type, specify null if any type matches
-     * @param methodName  the name the method should have
-     * @param parameterTypes  the type of the parameters of the method, specify
-     *  null if any number and type of parameters match or an empty array
-     * to match zero parameters.
-     * @return true, if the specified method matches the specified constraints,
-     *  false otherwise
-     */
-    public static boolean methodMatches(
-            @NotNull PsiMethod method,
-            @NonNls @Nullable String containingClassName,
-            @Nullable PsiType returnType,
-            @NonNls @Nullable String methodName,
-            @Nullable PsiType... parameterTypes) {
-        final String name = method.getName();
-        if (methodName != null && !methodName.equals(name)) {
-            return false;
-        }
-        if (parameterTypes != null) {
-            final PsiParameterList parameterList = method.getParameterList();
-            if (parameterList.getParametersCount() != parameterTypes.length) {
-                return false;
-            }
-            final PsiParameter[] parameters = parameterList.getParameters();
-            for (int i = 0; i < parameters.length; i++) {
-                final PsiParameter parameter = parameters[i];
-                final PsiType type = parameter.getType();
-                final PsiType parameterType = parameterTypes[i];
-                if (PsiType.NULL.equals(parameterType)) {
-                    continue;
-                }
-                if (parameterType != null &&
-                        !EquivalenceChecker.typesAreEquivalent(type,
-                                parameterType)) {
-                    return false;
-                }
-            }
-        }
-        if (returnType != null) {
-            final PsiType methodReturnType = method.getReturnType();
-            if (!EquivalenceChecker.typesAreEquivalent(returnType,
-                    methodReturnType)) {
-                return false;
-            }
-        }
-        if (containingClassName != null) {
-            final PsiClass containingClass = method.getContainingClass();
-            return InheritanceUtil.isInheritor(containingClass,
-                    containingClassName);
-        }
-        return true;
-    }
-
-    public static boolean simpleMethodMatches(
-            @NotNull PsiMethod method,
-            @NonNls @Nullable String containingClassName,
-            @NonNls @Nullable String returnTypeString,
-            @NonNls @Nullable String methodName,
-            @NonNls @Nullable String... parameterTypeStrings) {
-        final Project project = method.getProject();
-        final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-        final PsiElementFactory factory = psiFacade.getElementFactory();
-        try {
-            if (parameterTypeStrings != null) {
-                final PsiType[] parameterTypes =
-                        new PsiType[parameterTypeStrings.length];
-                for (int i = 0; i < parameterTypeStrings.length; i++) {
-                    final String parameterTypeString = parameterTypeStrings[i];
-                    parameterTypes[i] = factory.createTypeFromText(
-                            parameterTypeString, method);
-                }
-                if (returnTypeString != null) {
-                    final PsiType returnType =
-                            factory.createTypeFromText(returnTypeString,
-                                    method);
-                    return methodMatches(method, containingClassName, returnType,
-                            methodName, parameterTypes);
-                } else {
-                    return methodMatches(method, containingClassName, null,
-                            methodName, parameterTypes);
-                }
-            } else if (returnTypeString != null) {
-                final PsiType returnType =
-                        factory.createTypeFromText(returnTypeString, method);
-                return methodMatches(method, containingClassName, returnType,
-                        methodName);
-            } else {
-                return methodMatches(method, containingClassName, null,
-                        methodName);
-            }
-        } catch (IncorrectOperationException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-
-    public static boolean isOverridden(PsiMethod method){
-        final Query<PsiMethod> overridingMethodQuery =
-                OverridingMethodsSearch.search(method);
-        final PsiMethod result = overridingMethodQuery.findFirst();
-        return result != null;
-    }
-
-    public static boolean isOverriddenInHierarchy(PsiMethod method,
-                                                  PsiClass baseClass) {
-        // previous implementation:
-        // final Query<PsiMethod> search = OverridingMethodsSearch.search(method);
-        //for (PsiMethod overridingMethod : search) {
-        //    final PsiClass aClass = overridingMethod.getContainingClass();
-        //    if (InheritanceUtil.isCorrectDescendant(aClass, baseClass, true)) {
-        //        return true;
-        //    }
-        //}
-        // was extremely slow and used an enormous amount of memory for clone()
-        final Query<PsiClass> search =
-                ClassInheritorsSearch.search(baseClass, baseClass.getUseScope(),
-                        true, true, true);
-        for (PsiClass inheritor : search) {
-            final PsiMethod overridingMethod =
-                    inheritor.findMethodBySignature(method, false);
-            if (overridingMethod != null) {
-                return true;
-            }
-        }
+  /**
+   * @param method              the method to compare to.
+   * @param containingClassName the name of the class which contiains the
+   *                            method.
+   * @param returnType          the return type, specify null if any type matches
+   * @param methodNamePattern   the name the method should have
+   * @param parameterTypes      the type of the parameters of the method, specify
+   *                            null if any number and type of parameters match or an empty array
+   *                            to match zero parameters.
+   * @return true, if the specified method matches the specified constraints,
+   *         false otherwise
+   */
+  public static boolean methodMatches(
+    @NotNull PsiMethod method,
+    @NonNls @Nullable String containingClassName,
+    @Nullable PsiType returnType,
+    @Nullable Pattern methodNamePattern,
+    @Nullable PsiType... parameterTypes) {
+    if (methodNamePattern != null) {
+      final String name = method.getName();
+      final Matcher matcher = methodNamePattern.matcher(name);
+      if (!matcher.matches()) {
         return false;
+      }
     }
-
-    public static boolean isEmpty(PsiMethod method){
-        final PsiCodeBlock body = method.getBody();
-        if (body == null){
-            return true;
+    if (parameterTypes != null) {
+      final PsiParameterList parameterList = method.getParameterList();
+      if (parameterList.getParametersCount() != parameterTypes.length) {
+        return false;
+      }
+      final PsiParameter[] parameters = parameterList.getParameters();
+      for (int i = 0; i < parameters.length; i++) {
+        final PsiParameter parameter = parameters[i];
+        final PsiType type = parameter.getType();
+        final PsiType parameterType = parameterTypes[i];
+        if (PsiType.NULL.equals(parameterType)) {
+          continue;
         }
-        final PsiStatement[] statements = body.getStatements();
-        return statements.length == 0;
+        if (parameterType != null &&
+            !EquivalenceChecker.typesAreEquivalent(type,
+                                                   parameterType)) {
+          return false;
+        }
+      }
     }
+    if (returnType != null) {
+      final PsiType methodReturnType = method.getReturnType();
+      if (!EquivalenceChecker.typesAreEquivalent(returnType,
+                                                 methodReturnType)) {
+        return false;
+      }
+    }
+    if (containingClassName != null) {
+      final PsiClass containingClass = method.getContainingClass();
+      return InheritanceUtil.isInheritor(containingClass,
+                                         containingClassName);
+    }
+    return true;
+  }
+
+  /**
+   * @param method              the method to compare to.
+   * @param containingClassName the name of the class which contiains the
+   *                            method.
+   * @param returnType          the return type, specify null if any type matches
+   * @param methodName          the name the method should have
+   * @param parameterTypes      the type of the parameters of the method, specify
+   *                            null if any number and type of parameters match or an empty array
+   *                            to match zero parameters.
+   * @return true, if the specified method matches the specified constraints,
+   *         false otherwise
+   */
+  public static boolean methodMatches(
+    @NotNull PsiMethod method,
+    @NonNls @Nullable String containingClassName,
+    @Nullable PsiType returnType,
+    @NonNls @Nullable String methodName,
+    @Nullable PsiType... parameterTypes) {
+    final String name = method.getName();
+    if (methodName != null && !methodName.equals(name)) {
+      return false;
+    }
+    if (parameterTypes != null) {
+      final PsiParameterList parameterList = method.getParameterList();
+      if (parameterList.getParametersCount() != parameterTypes.length) {
+        return false;
+      }
+      final PsiParameter[] parameters = parameterList.getParameters();
+      for (int i = 0; i < parameters.length; i++) {
+        final PsiParameter parameter = parameters[i];
+        final PsiType type = parameter.getType();
+        final PsiType parameterType = parameterTypes[i];
+        if (PsiType.NULL.equals(parameterType)) {
+          continue;
+        }
+        if (parameterType != null &&
+            !EquivalenceChecker.typesAreEquivalent(type,
+                                                   parameterType)) {
+          return false;
+        }
+      }
+    }
+    if (returnType != null) {
+      final PsiType methodReturnType = method.getReturnType();
+      if (!EquivalenceChecker.typesAreEquivalent(returnType,
+                                                 methodReturnType)) {
+        return false;
+      }
+    }
+    if (containingClassName != null) {
+      final PsiClass containingClass = method.getContainingClass();
+      return InheritanceUtil.isInheritor(containingClass,
+                                         containingClassName);
+    }
+    return true;
+  }
+
+  public static boolean simpleMethodMatches(
+    @NotNull PsiMethod method,
+    @NonNls @Nullable String containingClassName,
+    @NonNls @Nullable String returnTypeString,
+    @NonNls @Nullable String methodName,
+    @NonNls @Nullable String... parameterTypeStrings) {
+    final Project project = method.getProject();
+    final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+    final PsiElementFactory factory = psiFacade.getElementFactory();
+    try {
+      if (parameterTypeStrings != null) {
+        final PsiType[] parameterTypes =
+          new PsiType[parameterTypeStrings.length];
+        for (int i = 0; i < parameterTypeStrings.length; i++) {
+          final String parameterTypeString = parameterTypeStrings[i];
+          parameterTypes[i] = factory.createTypeFromText(
+            parameterTypeString, method);
+        }
+        if (returnTypeString != null) {
+          final PsiType returnType =
+            factory.createTypeFromText(returnTypeString,
+                                       method);
+          return methodMatches(method, containingClassName, returnType,
+                               methodName, parameterTypes);
+        }
+        else {
+          return methodMatches(method, containingClassName, null,
+                               methodName, parameterTypes);
+        }
+      }
+      else if (returnTypeString != null) {
+        final PsiType returnType =
+          factory.createTypeFromText(returnTypeString, method);
+        return methodMatches(method, containingClassName, returnType,
+                             methodName);
+      }
+      else {
+        return methodMatches(method, containingClassName, null,
+                             methodName);
+      }
+    }
+    catch (IncorrectOperationException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+
+  public static boolean isOverridden(PsiMethod method) {
+    final Query<PsiMethod> overridingMethodQuery =
+      OverridingMethodsSearch.search(method);
+    final PsiMethod result = overridingMethodQuery.findFirst();
+    return result != null;
+  }
+
+  public static boolean isOverriddenInHierarchy(PsiMethod method,
+                                                PsiClass baseClass) {
+    // previous implementation:
+    // final Query<PsiMethod> search = OverridingMethodsSearch.search(method);
+    //for (PsiMethod overridingMethod : search) {
+    //    final PsiClass aClass = overridingMethod.getContainingClass();
+    //    if (InheritanceUtil.isCorrectDescendant(aClass, baseClass, true)) {
+    //        return true;
+    //    }
+    //}
+    // was extremely slow and used an enormous amount of memory for clone()
+    final Query<PsiClass> search =
+      ClassInheritorsSearch.search(baseClass, baseClass.getUseScope(),
+                                   true, true, true);
+    for (PsiClass inheritor : search) {
+      final PsiMethod overridingMethod =
+        inheritor.findMethodBySignature(method, false);
+      if (overridingMethod != null) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public static boolean isEmpty(PsiMethod method) {
+    final PsiCodeBlock body = method.getBody();
+    if (body == null) {
+      return true;
+    }
+    final PsiStatement[] statements = body.getStatements();
+    return statements.length == 0;
+  }
 }

@@ -18,20 +18,19 @@ package com.siyeh.ig.style;
 import com.siyeh.ig.IGInspectionTestCase;
 
 public class UnnecessarilyQualifiedStaticallyImportedElementInspectionTest
-        extends IGInspectionTestCase {
+  extends IGInspectionTestCase {
 
-    public void test() throws Exception {
-        doTest("com/siyeh/igtest/style/unnecessarily_qualified_statically_imported_element",
-                new UnnecessarilyQualifiedStaticallyImportedElementInspection());
-    }
-  
-    public void testSameMemberNames() throws Exception {
-      doTest(getTestName(true));
-    }
-  
-  private void doTest(String testName) throws Exception {
-    doTest("com/siyeh/igtest/style/unnecessarily_qualified_statically_imported_element/" + testName,
-                      new UnnecessarilyQualifiedStaticallyImportedElementInspection());
+  public void test() throws Exception {
+    doTest("com/siyeh/igtest/style/unnecessarily_qualified_statically_imported_element",
+           new UnnecessarilyQualifiedStaticallyImportedElementInspection());
   }
 
+  public void testSameMemberNames() throws Exception {
+    doTest(getTestName(true));
+  }
+
+  private void doTest(String testName) throws Exception {
+    doTest("com/siyeh/igtest/style/unnecessarily_qualified_statically_imported_element/" + testName,
+           new UnnecessarilyQualifiedStaticallyImportedElementInspection());
+  }
 }

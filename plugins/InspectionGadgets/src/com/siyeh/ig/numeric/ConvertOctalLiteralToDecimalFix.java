@@ -24,28 +24,28 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
 class ConvertOctalLiteralToDecimalFix
-        extends InspectionGadgetsFix {
+  extends InspectionGadgetsFix {
 
-    @NotNull
-    public String getName() {
-        return InspectionGadgetsBundle.message(
-                "convert.octal.literal.to.decimal.literal.quickfix");
-    }
+  @NotNull
+  public String getName() {
+    return InspectionGadgetsBundle.message(
+      "convert.octal.literal.to.decimal.literal.quickfix");
+  }
 
-    @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor)
-            throws IncorrectOperationException {
-        final PsiElement element = descriptor.getPsiElement();
-        if (!(element instanceof PsiLiteralExpression)) return;
+  @Override
+  protected void doFix(Project project, ProblemDescriptor descriptor)
+    throws IncorrectOperationException {
+    final PsiElement element = descriptor.getPsiElement();
+    if (!(element instanceof PsiLiteralExpression)) return;
 
-        final Object value = ((PsiLiteralExpression)element).getValue();
-        if (value == null) return;
+    final Object value = ((PsiLiteralExpression)element).getValue();
+    if (value == null) return;
 
-        final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-        final PsiElementFactory factory = psiFacade.getElementFactory();
-        final PsiExpression decimalNumber =
-                factory.createExpressionFromText(value.toString(),
-                        element);
-        element.replace(decimalNumber);
-    }
+    final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+    final PsiElementFactory factory = psiFacade.getElementFactory();
+    final PsiExpression decimalNumber =
+      factory.createExpressionFromText(value.toString(),
+                                       element);
+    element.replace(decimalNumber);
+  }
 }

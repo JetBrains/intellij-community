@@ -24,100 +24,102 @@ import org.jetbrains.annotations.NotNull;
 
 public class SynchronizeOnThisInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "synchronize.on.this.display.name");
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "synchronize.on.this.display.name");
+  }
+
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "synchronize.on.this.problem.descriptor");
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new SynchronizeOnThisVisitor();
+  }
+
+  private static class SynchronizeOnThisVisitor
+    extends BaseInspectionVisitor {
+
+    @Override
+    public void visitSynchronizedStatement(
+      @NotNull PsiSynchronizedStatement statement) {
+      super.visitSynchronizedStatement(statement);
+      final PsiExpression lockExpression = statement.getLockExpression();
+      if (!(lockExpression instanceof PsiThisExpression)) {
+        return;
+      }
+      registerError(lockExpression);
     }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "synchronize.on.this.problem.descriptor");
+    @Override
+    public void visitMethodCallExpression(
+      @NotNull PsiMethodCallExpression expression) {
+      super.visitMethodCallExpression(expression);
+      final PsiReferenceExpression methodExpression =
+        expression.getMethodExpression();
+      final PsiExpression qualifier =
+        methodExpression.getQualifierExpression();
+      if (qualifier != null &&
+          !(qualifier instanceof PsiThisExpression)) {
+        return;
+      }
+      if (!isNotify(expression) && !isWait(expression)) {
+        return;
+      }
+      registerMethodCallError(expression);
     }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new SynchronizeOnThisVisitor();
+    private static boolean isWait(PsiMethodCallExpression expression) {
+      final PsiReferenceExpression methodExpression =
+        expression.getMethodExpression();
+      final String methodName = methodExpression.getReferenceName();
+
+      if (!HardcodedMethodConstants.WAIT.equals(methodName)) {
+        return false;
+      }
+      final PsiMethod method = expression.resolveMethod();
+      if (method == null) {
+        return false;
+      }
+      final PsiParameterList parameterList = method.getParameterList();
+      final int numParams = parameterList.getParametersCount();
+      if (numParams > 2) {
+        return false;
+      }
+      final PsiParameter[] parameters = parameterList.getParameters();
+      if (numParams > 0) {
+        final PsiType parameterType = parameters[0].getType();
+        if (!parameterType.equals(PsiType.LONG)) {
+          return false;
+        }
+      }
+
+      if (numParams > 1) {
+        final PsiType parameterType = parameters[1].getType();
+        if (!parameterType.equals(PsiType.INT)) {
+          return false;
+        }
+      }
+      return true;
     }
 
-    private static class SynchronizeOnThisVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitSynchronizedStatement(
-                @NotNull PsiSynchronizedStatement statement) {
-            super.visitSynchronizedStatement(statement);
-            final PsiExpression lockExpression = statement.getLockExpression();
-            if (!(lockExpression instanceof PsiThisExpression)) {
-                return;
-            }
-            registerError(lockExpression);
-        }
-
-        @Override public void visitMethodCallExpression(
-                @NotNull PsiMethodCallExpression expression) {
-            super.visitMethodCallExpression(expression);
-            final PsiReferenceExpression methodExpression =
-                    expression.getMethodExpression();
-            final PsiExpression qualifier =
-                    methodExpression.getQualifierExpression();
-            if (qualifier != null &&
-                    !(qualifier instanceof PsiThisExpression)) {
-                return;
-            }
-            if (!isNotify(expression) && !isWait(expression)) {
-                return;
-            }
-            registerMethodCallError(expression);
-        }
-
-        private static boolean isWait(PsiMethodCallExpression expression) {
-            final PsiReferenceExpression methodExpression =
-                    expression.getMethodExpression();
-            final String methodName = methodExpression.getReferenceName();
-
-            if (!HardcodedMethodConstants.WAIT.equals(methodName)) {
-                return false;
-            }
-            final PsiMethod method = expression.resolveMethod();
-            if (method == null) {
-                return false;
-            }
-            final PsiParameterList parameterList = method.getParameterList();
-            final int numParams = parameterList.getParametersCount();
-            if (numParams > 2) {
-                return false;
-            }
-            final PsiParameter[] parameters = parameterList.getParameters();
-            if (numParams > 0) {
-                final PsiType parameterType = parameters[0].getType();
-                if (!parameterType.equals(PsiType.LONG)) {
-                    return false;
-                }
-            }
-
-            if (numParams > 1) {
-                final PsiType parameterType = parameters[1].getType();
-                if (!parameterType.equals(PsiType.INT)) {
-                    return false;
-                }
-            }
-            return true;
-        }
-
-        private static boolean isNotify(PsiMethodCallExpression expression) {
-            final PsiReferenceExpression methodExpression =
-                    expression.getMethodExpression();
-            final String methodName = methodExpression.getReferenceName();
-            if (!HardcodedMethodConstants.NOTIFY.equals(methodName) &&
-                    !HardcodedMethodConstants.NOTIFY_ALL.equals(methodName)) {
-                return false;
-            }
-            final PsiMethod method = expression.resolveMethod();
-            if (method == null) {
-                return false;
-            }
-            final PsiParameterList parameterList = method.getParameterList();
-            return parameterList.getParametersCount() == 0;
-        }
+    private static boolean isNotify(PsiMethodCallExpression expression) {
+      final PsiReferenceExpression methodExpression =
+        expression.getMethodExpression();
+      final String methodName = methodExpression.getReferenceName();
+      if (!HardcodedMethodConstants.NOTIFY.equals(methodName) &&
+          !HardcodedMethodConstants.NOTIFY_ALL.equals(methodName)) {
+        return false;
+      }
+      final PsiMethod method = expression.resolveMethod();
+      if (method == null) {
+        return false;
+      }
+      final PsiParameterList parameterList = method.getParameterList();
+      return parameterList.getParametersCount() == 0;
     }
+  }
 }

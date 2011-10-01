@@ -29,51 +29,54 @@ import org.jetbrains.annotations.NotNull;
 
 public class EncapsulateVariableFix extends InspectionGadgetsFix {
 
-    private final String fieldName;
+  private final String fieldName;
 
-    public EncapsulateVariableFix(String fieldName) {
-        this.fieldName = fieldName;
-    }
+  public EncapsulateVariableFix(String fieldName) {
+    this.fieldName = fieldName;
+  }
 
-    @Override
-    @NotNull
-    public String getName() {
-        return InspectionGadgetsBundle.message("encapsulate.variable.quickfix",
-                fieldName);
-    }
+  @Override
+  @NotNull
+  public String getName() {
+    return InspectionGadgetsBundle.message("encapsulate.variable.quickfix",
+                                           fieldName);
+  }
 
-    @Override
-    public void doFix(final Project project, ProblemDescriptor descriptor) {
-        final PsiElement nameElement = descriptor.getPsiElement();
-        final PsiElement parent = nameElement.getParent();
-        final PsiField field;
-        if (parent instanceof PsiField) {
-            field = (PsiField) parent;
-        } else if (parent instanceof PsiReferenceExpression) {
-            final PsiReferenceExpression referenceExpression =
-                    (PsiReferenceExpression) parent;
-            final PsiElement target = referenceExpression.resolve();
-            if (!(target instanceof PsiField)) {
-                return;
-            }
-            field = (PsiField) target;
-        } else {
-            return;
-        }
-        final JavaRefactoringActionHandlerFactory factory =
-                JavaRefactoringActionHandlerFactory.getInstance();
-        final RefactoringActionHandler renameHandler =
-                factory.createEncapsulateFieldsHandler();
-        final Runnable runnable = new Runnable() {
-          @Override
-          public void run() {
-            renameHandler.invoke(project, new PsiElement[]{field}, null);
-          }
-        };
-        if (ApplicationManager.getApplication().isUnitTestMode()) {
-          runnable.run();
-        } else {
-          ApplicationManager.getApplication().invokeLater(runnable, project.getDisposed());
-        }
+  @Override
+  public void doFix(final Project project, ProblemDescriptor descriptor) {
+    final PsiElement nameElement = descriptor.getPsiElement();
+    final PsiElement parent = nameElement.getParent();
+    final PsiField field;
+    if (parent instanceof PsiField) {
+      field = (PsiField)parent;
     }
+    else if (parent instanceof PsiReferenceExpression) {
+      final PsiReferenceExpression referenceExpression =
+        (PsiReferenceExpression)parent;
+      final PsiElement target = referenceExpression.resolve();
+      if (!(target instanceof PsiField)) {
+        return;
+      }
+      field = (PsiField)target;
+    }
+    else {
+      return;
+    }
+    final JavaRefactoringActionHandlerFactory factory =
+      JavaRefactoringActionHandlerFactory.getInstance();
+    final RefactoringActionHandler renameHandler =
+      factory.createEncapsulateFieldsHandler();
+    final Runnable runnable = new Runnable() {
+      @Override
+      public void run() {
+        renameHandler.invoke(project, new PsiElement[]{field}, null);
+      }
+    };
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      runnable.run();
+    }
+    else {
+      ApplicationManager.getApplication().invokeLater(runnable, project.getDisposed());
+    }
+  }
 }

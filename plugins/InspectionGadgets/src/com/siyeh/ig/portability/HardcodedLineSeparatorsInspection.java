@@ -25,60 +25,62 @@ import org.jetbrains.annotations.NotNull;
 
 public class HardcodedLineSeparatorsInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "hardcoded.line.separator.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "hardcoded.line.separator.display.name");
+  }
 
-    @NotNull
-    public String getID(){
-        return "HardcodedLineSeparator";
-    }
+  @NotNull
+  public String getID() {
+    return "HardcodedLineSeparator";
+  }
 
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "hardcoded.line.separator.problem.descriptor");
-    }
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "hardcoded.line.separator.problem.descriptor");
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new HardcodedLineSeparatorsVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new HardcodedLineSeparatorsVisitor();
+  }
 
-    private static class HardcodedLineSeparatorsVisitor
-            extends BaseInspectionVisitor {
+  private static class HardcodedLineSeparatorsVisitor
+    extends BaseInspectionVisitor {
 
-        private static final char NEW_LINE_CHAR = '\n';
-        private static final char RETURN_CHAR = '\r';
+    private static final char NEW_LINE_CHAR = '\n';
+    private static final char RETURN_CHAR = '\r';
 
-        @Override public void visitLiteralExpression(
-                @NotNull PsiLiteralExpression expression) {
-            super.visitLiteralExpression(expression);
-            final PsiType type = expression.getType();
-            if (type == null) {
-                return;
-            }
-            if (TypeUtils.isJavaLangString(type)) {
-                final String value = (String) expression.getValue();
-                if (value == null) {
-                    return;
-                }
-                if (value.indexOf(NEW_LINE_CHAR) >= 0 ||
-                        value.indexOf(RETURN_CHAR) >= 0) {
-                    registerError(expression);
-                }
-            } else if (type.equals(PsiType.CHAR)) {
-                final Character value = (Character) expression.getValue();
-                if (value == null) {
-                    return;
-                }
-                final char unboxedValue = value.charValue();
-                if (unboxedValue == NEW_LINE_CHAR
-                        || unboxedValue == RETURN_CHAR) {
-                    registerError(expression);
-                }
-            }
+    @Override
+    public void visitLiteralExpression(
+      @NotNull PsiLiteralExpression expression) {
+      super.visitLiteralExpression(expression);
+      final PsiType type = expression.getType();
+      if (type == null) {
+        return;
+      }
+      if (TypeUtils.isJavaLangString(type)) {
+        final String value = (String)expression.getValue();
+        if (value == null) {
+          return;
         }
+        if (value.indexOf(NEW_LINE_CHAR) >= 0 ||
+            value.indexOf(RETURN_CHAR) >= 0) {
+          registerError(expression);
+        }
+      }
+      else if (type.equals(PsiType.CHAR)) {
+        final Character value = (Character)expression.getValue();
+        if (value == null) {
+          return;
+        }
+        final char unboxedValue = value.charValue();
+        if (unboxedValue == NEW_LINE_CHAR
+            || unboxedValue == RETURN_CHAR) {
+          registerError(expression);
+        }
+      }
     }
+  }
 }

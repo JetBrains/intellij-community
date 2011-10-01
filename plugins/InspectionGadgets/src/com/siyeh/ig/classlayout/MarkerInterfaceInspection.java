@@ -26,41 +26,42 @@ import org.jetbrains.annotations.NotNull;
 
 public class MarkerInterfaceInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message("marker.interface.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("marker.interface.display.name");
+  }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "marker.interface.problem.descriptor");
-    }
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "marker.interface.problem.descriptor");
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new MarkerInterfaceVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new MarkerInterfaceVisitor();
+  }
 
-    private static class MarkerInterfaceVisitor extends BaseInspectionVisitor {
+  private static class MarkerInterfaceVisitor extends BaseInspectionVisitor {
 
-        @Override public void visitClass(@NotNull PsiClass aClass) {
-            // no call to super, so that it doesn't drill down to inner classes
-            if (!aClass.isInterface() || aClass.isAnnotationType()) {
-                return;
-            }
-            final PsiField[] fields = aClass.getFields();
-            if (fields.length != 0) {
-                return;
-            }
-            final PsiMethod[] methods = aClass.getMethods();
-            if (methods.length != 0) {
-                return;
-            }
-            final PsiClassType[] extendsList = aClass.getExtendsListTypes();
-            if (extendsList.length > 1) {
-                return;
-            }
-            registerClassError(aClass);
-        }
+    @Override
+    public void visitClass(@NotNull PsiClass aClass) {
+      // no call to super, so that it doesn't drill down to inner classes
+      if (!aClass.isInterface() || aClass.isAnnotationType()) {
+        return;
+      }
+      final PsiField[] fields = aClass.getFields();
+      if (fields.length != 0) {
+        return;
+      }
+      final PsiMethod[] methods = aClass.getMethods();
+      if (methods.length != 0) {
+        return;
+      }
+      final PsiClassType[] extendsList = aClass.getExtendsListTypes();
+      if (extendsList.length > 1) {
+        return;
+      }
+      registerClassError(aClass);
     }
+  }
 }

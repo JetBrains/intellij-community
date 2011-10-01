@@ -37,110 +37,113 @@ import java.util.List;
 
 public class ClassWithMultipleLoggersInspection extends BaseInspection {
 
-    /** @noinspection PublicField*/
-    @NonNls
-    public String loggerNamesString = "java.util.logging.Logger" + ',' +
-            "org.slf4j.Logger" + ',' +
-            "org.apache.commons.logging.Log" + ',' +
-            "org.apache.log4j.Logger";
-    private final List<String> loggerNames = new ArrayList();
+  /**
+   * @noinspection PublicField
+   */
+  @NonNls
+  public String loggerNamesString = "java.util.logging.Logger" + ',' +
+                                    "org.slf4j.Logger" + ',' +
+                                    "org.apache.commons.logging.Log" + ',' +
+                                    "org.apache.log4j.Logger";
+  private final List<String> loggerNames = new ArrayList();
 
-    public ClassWithMultipleLoggersInspection() {
-        parseString(loggerNamesString, loggerNames);
-    }
+  public ClassWithMultipleLoggersInspection() {
+    parseString(loggerNamesString, loggerNames);
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("multiple.loggers.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "multiple.loggers.problem.descriptor");
+  }
+
+  @Override
+  public void readSettings(Element element) throws InvalidDataException {
+    super.readSettings(element);
+    parseString(loggerNamesString, loggerNames);
+  }
+
+  @Override
+  public void writeSettings(Element element) throws WriteExternalException {
+    loggerNamesString = formatString(loggerNames);
+    super.writeSettings(element);
+  }
+
+  @Override
+  public JComponent createOptionsPanel() {
+    final JComponent panel = new JPanel(new GridBagLayout());
+
+    final ListTable table =
+      new ListTable(new ListWrappingTableModel(loggerNames,
+                                               InspectionGadgetsBundle.message("logger.class.names")));
+    final JScrollPane scrollPane =
+      ScrollPaneFactory.createScrollPane(table);
+    UiUtils.setScrollPaneSize(scrollPane, 7, 25);
+    final ActionToolbar toolbar =
+      UiUtils.createAddRemoveTreeClassChooserToolbar(table,
+                                                     InspectionGadgetsBundle.message("choose.logger.class"));
+
+    final GridBagConstraints constraints = new GridBagConstraints();
+    constraints.gridx = 0;
+    constraints.gridy = 0;
+    constraints.insets.left = 4;
+    constraints.insets.right = 4;
+    constraints.fill = GridBagConstraints.HORIZONTAL;
+    panel.add(toolbar.getComponent(), constraints);
+
+    constraints.gridy = 1;
+    constraints.weightx = 1.0;
+    constraints.weighty = 1.0;
+    constraints.fill = GridBagConstraints.BOTH;
+    panel.add(scrollPane, constraints);
+    return panel;
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new ClassWithMultipleLoggersVisitor();
+  }
+
+  private class ClassWithMultipleLoggersVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message("multiple.loggers.display.name");
-    }
-
-    @Override
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "multiple.loggers.problem.descriptor");
-    }
-
-    @Override
-    public void readSettings(Element element) throws InvalidDataException {
-        super.readSettings(element);
-        parseString(loggerNamesString, loggerNames);
-    }
-
-    @Override
-    public void writeSettings(Element element) throws WriteExternalException {
-        loggerNamesString = formatString(loggerNames);
-        super.writeSettings(element);
-    }
-
-    @Override
-    public JComponent createOptionsPanel() {
-        final JComponent panel = new JPanel(new GridBagLayout());
-
-        final ListTable table =
-                new ListTable(new ListWrappingTableModel(loggerNames,
-                        InspectionGadgetsBundle.message("logger.class.names")));
-        final JScrollPane scrollPane =
-                ScrollPaneFactory.createScrollPane(table);
-        UiUtils.setScrollPaneSize(scrollPane, 7, 25);
-        final ActionToolbar toolbar =
-                UiUtils.createAddRemoveTreeClassChooserToolbar(table,
-                        InspectionGadgetsBundle.message("choose.logger.class"));
-
-        final GridBagConstraints constraints = new GridBagConstraints();
-        constraints.gridx = 0;
-        constraints.gridy = 0;
-        constraints.insets.left = 4;
-        constraints.insets.right = 4;
-        constraints.fill = GridBagConstraints.HORIZONTAL;
-        panel.add(toolbar.getComponent(), constraints);
-
-        constraints.gridy = 1;
-        constraints.weightx = 1.0;
-        constraints.weighty = 1.0;
-        constraints.fill = GridBagConstraints.BOTH;
-        panel.add(scrollPane, constraints);
-        return panel;
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new ClassWithMultipleLoggersVisitor();
-    }
-
-    private class ClassWithMultipleLoggersVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitClass(@NotNull PsiClass aClass) {
-            //no recursion to avoid drilldown
-            if (aClass.isInterface() || aClass.isEnum() ||
-                    aClass.isAnnotationType()) {
-                return;
-            }
-            if(aClass instanceof PsiTypeParameter) {
-                return;
-            }
-            if (aClass.getContainingClass() != null) {
-                return;
-            }
-            int numLoggers = 0;
-            final PsiField[] fields = aClass.getFields();
-            for(PsiField field : fields){
-                if(isLogger(field)){
-                    numLoggers++;
-                }
-            }
-            if (numLoggers <= 1) {
-                return;
-            }
-            registerClassError(aClass);
+    public void visitClass(@NotNull PsiClass aClass) {
+      //no recursion to avoid drilldown
+      if (aClass.isInterface() || aClass.isEnum() ||
+          aClass.isAnnotationType()) {
+        return;
+      }
+      if (aClass instanceof PsiTypeParameter) {
+        return;
+      }
+      if (aClass.getContainingClass() != null) {
+        return;
+      }
+      int numLoggers = 0;
+      final PsiField[] fields = aClass.getFields();
+      for (PsiField field : fields) {
+        if (isLogger(field)) {
+          numLoggers++;
         }
-
-        private boolean isLogger(PsiVariable variable) {
-            final PsiType type = variable.getType();
-            final String text = type.getCanonicalText();
-            return loggerNames.contains(text);
-        }
+      }
+      if (numLoggers <= 1) {
+        return;
+      }
+      registerClassError(aClass);
     }
+
+    private boolean isLogger(PsiVariable variable) {
+      final PsiType type = variable.getType();
+      final String text = type.getCanonicalText();
+      return loggerNames.contains(text);
+    }
+  }
 }

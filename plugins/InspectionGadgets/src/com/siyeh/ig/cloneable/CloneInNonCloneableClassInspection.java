@@ -27,53 +27,55 @@ import org.jetbrains.annotations.NotNull;
 
 public class CloneInNonCloneableClassInspection extends BaseInspection {
 
-    @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "clone.method.in.non.cloneable.class.display.name");
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "clone.method.in.non.cloneable.class.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    final PsiClass aClass = (PsiClass)infos[0];
+    final String className = aClass.getName();
+    if (aClass.isInterface()) {
+      return InspectionGadgetsBundle.message(
+        "clone.method.in.non.cloneable.interface.problem.descriptor",
+        className);
     }
+    else {
+      return InspectionGadgetsBundle.message(
+        "clone.method.in.non.cloneable.class.problem.descriptor",
+        className);
+    }
+  }
+
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    final PsiClass aClass = (PsiClass)infos[0];
+    return new MakeCloneableFix(aClass.isInterface());
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new CloneInNonCloneableClassVisitor();
+  }
+
+  private static class CloneInNonCloneableClassVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        final PsiClass aClass = (PsiClass) infos[0];
-        final String className = aClass.getName();
-        if (aClass.isInterface()) {
-            return InspectionGadgetsBundle.message(
-                    "clone.method.in.non.cloneable.interface.problem.descriptor",
-                    className);
-        } else {
-            return InspectionGadgetsBundle.message(
-                    "clone.method.in.non.cloneable.class.problem.descriptor",
-                    className);
-        }
+    public void visitMethod(@NotNull PsiMethod method) {
+      if (!CloneUtils.isClone(method)) {
+        return;
+      }
+      final PsiClass containingClass = method.getContainingClass();
+      if (containingClass == null ||
+          CloneUtils.isCloneable(containingClass)) {
+        return;
+      }
+      registerMethodError(method, containingClass);
     }
-
-    @Override
-    protected InspectionGadgetsFix buildFix(Object... infos){
-        final PsiClass aClass = (PsiClass) infos[0];
-        return new MakeCloneableFix(aClass.isInterface());
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new CloneInNonCloneableClassVisitor();
-    }
-
-    private static class CloneInNonCloneableClassVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitMethod(@NotNull PsiMethod method){
-            if (!CloneUtils.isClone(method)) {
-                return;
-            }
-            final PsiClass containingClass = method.getContainingClass();
-            if (containingClass == null ||
-                    CloneUtils.isCloneable(containingClass)) {
-                return;
-            }
-            registerMethodError(method, containingClass);
-        }
-    }
+  }
 }

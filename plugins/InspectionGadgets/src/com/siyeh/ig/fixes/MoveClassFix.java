@@ -31,28 +31,28 @@ import org.jetbrains.annotations.NotNull;
 
 public class MoveClassFix extends InspectionGadgetsFix {
 
-    @NotNull
-    public String getName() {
-        return InspectionGadgetsBundle.message("move.class.quickfix");
-    }
+  @NotNull
+  public String getName() {
+    return InspectionGadgetsBundle.message("move.class.quickfix");
+  }
 
-    public void doFix(@NotNull final Project project,
-                      ProblemDescriptor descriptor) {
-        final PsiElement nameElement = descriptor.getPsiElement();
-        final PsiClass aClass = (PsiClass) nameElement.getParent();
-        final Application application = ApplicationManager.getApplication();
-        application.invokeLater(new Runnable() {
+  public void doFix(@NotNull final Project project,
+                    ProblemDescriptor descriptor) {
+    final PsiElement nameElement = descriptor.getPsiElement();
+    final PsiClass aClass = (PsiClass)nameElement.getParent();
+    final Application application = ApplicationManager.getApplication();
+    application.invokeLater(new Runnable() {
 
-            public void run() {
-                final RefactoringActionHandlerFactory factory =
-                        RefactoringActionHandlerFactory.getInstance();
-                final RefactoringActionHandler moveHandler =
-                        factory.createMoveHandler();
-                final DataManager dataManager = DataManager.getInstance();
-                final DataContext dataContext = dataManager.getDataContext();
-                moveHandler.invoke(project, new PsiElement[]{aClass},
-                        dataContext);
-            }
-        });
-    }
+      public void run() {
+        final RefactoringActionHandlerFactory factory =
+          RefactoringActionHandlerFactory.getInstance();
+        final RefactoringActionHandler moveHandler =
+          factory.createMoveHandler();
+        final DataManager dataManager = DataManager.getInstance();
+        final DataContext dataContext = dataManager.getDataContext();
+        moveHandler.invoke(project, new PsiElement[]{aClass},
+                           dataContext);
+      }
+    });
+  }
 }

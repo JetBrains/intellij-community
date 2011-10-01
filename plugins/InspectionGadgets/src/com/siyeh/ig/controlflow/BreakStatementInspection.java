@@ -24,54 +24,55 @@ import org.jetbrains.annotations.NotNull;
 
 public class BreakStatementInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message("break.statement.display.name");
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("break.statement.display.name");
+  }
+
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "statement.problem.descriptor");
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new BreakStatementVisitor();
+  }
+
+  private static class BreakStatementVisitor
+    extends BaseInspectionVisitor {
+
+    @Override
+    public void visitBreakStatement(@NotNull PsiBreakStatement statement) {
+      super.visitBreakStatement(statement);
+      final PsiSwitchStatement switchStatement =
+        PsiTreeUtil.getParentOfType(statement,
+                                    PsiSwitchStatement.class);
+      if (switchStatement != null && isTopLevelBreakInSwitch(statement)) {
+        return;
+      }
+      registerStatementError(statement);
     }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "statement.problem.descriptor");
+    private static boolean isTopLevelBreakInSwitch(
+      PsiBreakStatement statement) {
+      final PsiElement parent = statement.getParent();
+      if (!(parent instanceof PsiCodeBlock)) {
+        return false;
+      }
+      final PsiElement parentsParent = parent.getParent();
+      if (parentsParent instanceof PsiSwitchStatement) {
+        return true;
+      }
+      if (!(parentsParent instanceof PsiBlockStatement)) {
+        return false;
+      }
+      final PsiElement blocksParent = parentsParent.getParent();
+      if (!(blocksParent instanceof PsiCodeBlock)) {
+        return false;
+      }
+      final PsiElement blocksParentsParent = blocksParent.getParent();
+      return blocksParentsParent instanceof PsiSwitchStatement;
     }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new BreakStatementVisitor();
-    }
-
-    private static class BreakStatementVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitBreakStatement(@NotNull PsiBreakStatement statement) {
-            super.visitBreakStatement(statement);
-            final PsiSwitchStatement switchStatement =
-                    PsiTreeUtil.getParentOfType(statement,
-                            PsiSwitchStatement.class);
-            if (switchStatement != null && isTopLevelBreakInSwitch(statement)) {
-                return;
-            }
-            registerStatementError(statement);
-        }
-
-        private static boolean isTopLevelBreakInSwitch(
-                PsiBreakStatement statement) {
-            final PsiElement parent = statement.getParent();
-            if (!(parent instanceof PsiCodeBlock)) {
-                return false;
-            }
-            final PsiElement parentsParent = parent.getParent();
-            if (parentsParent instanceof PsiSwitchStatement) {
-                return true;
-            }
-            if (!(parentsParent instanceof PsiBlockStatement)) {
-                return false;
-            }
-            final PsiElement blocksParent = parentsParent.getParent();
-            if (!(blocksParent instanceof PsiCodeBlock)) {
-                return false;
-            }
-            final PsiElement blocksParentsParent = blocksParent.getParent();
-            return blocksParentsParent instanceof PsiSwitchStatement;
-        }
-    }
+  }
 }

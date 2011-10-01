@@ -26,49 +26,50 @@ import org.jetbrains.annotations.NotNull;
 
 public class ComparisonOfShortAndCharInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "comparison.of.short.and.char.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "comparison.of.short.and.char.display.name");
+  }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "comparison.of.short.and.char.problem.descriptor");
-    }
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "comparison.of.short.and.char.problem.descriptor");
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new ComparisonOfShortAndCharVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new ComparisonOfShortAndCharVisitor();
+  }
 
-    private static class ComparisonOfShortAndCharVisitor
-            extends BaseInspectionVisitor {
+  private static class ComparisonOfShortAndCharVisitor
+    extends BaseInspectionVisitor {
 
-        @Override public void visitBinaryExpression(
-                @NotNull PsiBinaryExpression expression) {
-            super.visitBinaryExpression(expression);
-            if (!(expression.getROperand() != null)) {
-                return;
-            }
-            if (!ComparisonUtils.isEqualityComparison(expression)) {
-                return;
-            }
-            final PsiExpression lhs = expression.getLOperand();
-            final PsiType lhsType = lhs.getType();
-            final PsiExpression rhs = expression.getROperand();
-            if (rhs == null) {
-                return;
-            }
-            final PsiType rhsType = rhs.getType();
-            if (PsiType.SHORT.equals(lhsType) &&
-                    PsiType.CHAR.equals(rhsType)) {
-                registerError(expression);
-            }
-            else if (PsiType.CHAR.equals(lhsType) &&
-                    PsiType.SHORT.equals(rhsType)) {
-                registerError(expression);
-            }
-        }
+    @Override
+    public void visitBinaryExpression(
+      @NotNull PsiBinaryExpression expression) {
+      super.visitBinaryExpression(expression);
+      if (!(expression.getROperand() != null)) {
+        return;
+      }
+      if (!ComparisonUtils.isEqualityComparison(expression)) {
+        return;
+      }
+      final PsiExpression lhs = expression.getLOperand();
+      final PsiType lhsType = lhs.getType();
+      final PsiExpression rhs = expression.getROperand();
+      if (rhs == null) {
+        return;
+      }
+      final PsiType rhsType = rhs.getType();
+      if (PsiType.SHORT.equals(lhsType) &&
+          PsiType.CHAR.equals(rhsType)) {
+        registerError(expression);
+      }
+      else if (PsiType.CHAR.equals(lhsType) &&
+               PsiType.SHORT.equals(rhsType)) {
+        registerError(expression);
+      }
     }
+  }
 }

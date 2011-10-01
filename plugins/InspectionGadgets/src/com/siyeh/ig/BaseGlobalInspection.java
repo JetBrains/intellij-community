@@ -22,32 +22,33 @@ import org.jetbrains.annotations.NotNull;
 
 public abstract class BaseGlobalInspection extends GlobalJavaInspectionTool {
 
-    private String shortName = null;
-    @NonNls private static final String INSPECTION = "Inspection";
+  private String shortName = null;
+  @NonNls private static final String INSPECTION = "Inspection";
 
-    @Override
-    @NotNull
-    public String getShortName() {
-        if (shortName == null) {
-            final Class<? extends BaseGlobalInspection> aClass = getClass();
-            final String name = aClass.getName();
-            assert name.endsWith(INSPECTION) :
-                    "class name must end with 'Inspection' to correctly" +
-                            " calculate the short name: " + name;
-            shortName = name.substring(name.lastIndexOf((int)'.') + 1,
-                    name.length() - INSPECTION.length());
-        }
-        return shortName;
+  @Override
+  @NotNull
+  public String getShortName() {
+    if (shortName == null) {
+      final Class<? extends BaseGlobalInspection> aClass = getClass();
+      final String name = aClass.getName();
+      assert name.endsWith(INSPECTION) :
+        "class name must end with 'Inspection' to correctly" +
+        " calculate the short name: " + name;
+      shortName = name.substring(name.lastIndexOf((int)'.') + 1,
+                                 name.length() - INSPECTION.length());
     }
+    return shortName;
+  }
 
-    @Override @Nls
-    @NotNull
-    public final String getGroupDisplayName() {
-        return GroupDisplayNameUtil.getGroupDisplayName(getClass());
-    }
+  @Override
+  @Nls
+  @NotNull
+  public final String getGroupDisplayName() {
+    return GroupDisplayNameUtil.getGroupDisplayName(getClass());
+  }
 
-    @Override
-    public boolean isEnabledByDefault() {
-        return false;
-    }
+  @Override
+  public boolean isEnabledByDefault() {
+    return false;
+  }
 }

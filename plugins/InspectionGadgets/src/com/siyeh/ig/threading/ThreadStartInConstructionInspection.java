@@ -26,88 +26,92 @@ import org.jetbrains.annotations.NotNull;
 
 public class ThreadStartInConstructionInspection extends BaseInspection {
 
+  @Override
+  @NotNull
+  public String getID() {
+    return "CallToThreadStartDuringObjectConstruction";
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "thread.start.in.construction.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "thread.start.in.construction.problem.descriptor");
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new ThreadStartInConstructionVisitor();
+  }
+
+  private static class ThreadStartInConstructionVisitor
+    extends BaseInspectionVisitor {
+
     @Override
-    @NotNull
-    public String getID() {
-        return "CallToThreadStartDuringObjectConstruction";
+    public void visitMethod(@NotNull PsiMethod method) {
+      if (method.isConstructor()) {
+        method.accept(new ThreadStartVisitor());
+      }
     }
 
     @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "thread.start.in.construction.display.name");
+    public void visitClassInitializer(
+      @NotNull PsiClassInitializer initializer) {
+      if (!initializer.hasModifierProperty(PsiModifier.STATIC)) {
+        initializer.accept(new ThreadStartVisitor());
+      }
     }
 
-    @Override
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "thread.start.in.construction.problem.descriptor");
-    }
+    private class ThreadStartVisitor extends JavaRecursiveElementVisitor {
 
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new ThreadStartInConstructionVisitor();
-    }
+      @Override
+      public void visitClass(PsiClass aClass) {
+        // Do not recurse into.
+      }
 
-    private static class ThreadStartInConstructionVisitor
-            extends BaseInspectionVisitor {
+      @Override
+      public void visitMethodCallExpression(
+        @NotNull PsiMethodCallExpression expression) {
+        super.visitMethodCallExpression(expression);
 
-        @Override public void visitMethod(@NotNull PsiMethod method) {
-            if (method.isConstructor()) {
-                method.accept(new ThreadStartVisitor());
-            }
+        final PsiReferenceExpression methodExpression =
+          expression.getMethodExpression();
+        @NonNls final String methodName =
+          methodExpression.getReferenceName();
+        if (!"start".equals(methodName)) {
+          return;
         }
-
-        @Override public void visitClassInitializer(
-                @NotNull PsiClassInitializer initializer) {
-            if (!initializer.hasModifierProperty(PsiModifier.STATIC)) {
-                initializer.accept(new ThreadStartVisitor());
-            }
+        final PsiMethod method = expression.resolveMethod();
+        if (method == null) {
+          return;
         }
-
-        private class ThreadStartVisitor extends JavaRecursiveElementVisitor {
-
-            @Override public void visitClass(PsiClass aClass) {
-                // Do not recurse into.
-            }
-
-            @Override public void visitMethodCallExpression(
-                    @NotNull PsiMethodCallExpression expression) {
-                super.visitMethodCallExpression(expression);
-
-                final PsiReferenceExpression methodExpression =
-                        expression.getMethodExpression();
-                @NonNls final String methodName =
-                        methodExpression.getReferenceName();
-                if (!"start".equals(methodName)) {
-                    return;
-                }
-                final PsiMethod method = expression.resolveMethod();
-                if (method == null) {
-                    return;
-                }
-                final PsiParameterList parameterList =
-                        method.getParameterList();
-                if (parameterList.getParametersCount() != 0) {
-                    return;
-                }
-                final PsiClass methodClass = method.getContainingClass();
-                if (methodClass == null ||
-                        !InheritanceUtil.isInheritor(methodClass,
-                                "java.lang.Thread")) {
-                    return;
-                }
-                final PsiClass containingClass =
-                        ClassUtils.getContainingClass(expression);
-                if (containingClass == null ||
-                        containingClass.hasModifierProperty(
-                                PsiModifier.FINAL)) {
-                    return;
-                }
-                registerMethodCallError(expression);
-            }
+        final PsiParameterList parameterList =
+          method.getParameterList();
+        if (parameterList.getParametersCount() != 0) {
+          return;
         }
+        final PsiClass methodClass = method.getContainingClass();
+        if (methodClass == null ||
+            !InheritanceUtil.isInheritor(methodClass,
+                                         "java.lang.Thread")) {
+          return;
+        }
+        final PsiClass containingClass =
+          ClassUtils.getContainingClass(expression);
+        if (containingClass == null ||
+            containingClass.hasModifierProperty(
+              PsiModifier.FINAL)) {
+          return;
+        }
+        registerMethodCallError(expression);
+      }
     }
+  }
 }

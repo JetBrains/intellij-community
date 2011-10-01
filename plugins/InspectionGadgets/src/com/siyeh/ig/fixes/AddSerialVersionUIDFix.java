@@ -23,25 +23,25 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
-public class AddSerialVersionUIDFix extends InspectionGadgetsFix{
+public class AddSerialVersionUIDFix extends InspectionGadgetsFix {
 
-    @NotNull
-    public String getName(){
-      return InspectionGadgetsBundle.message("add.serialversionuidfield.quickfix");
-    }
+  @NotNull
+  public String getName() {
+    return InspectionGadgetsBundle.message("add.serialversionuidfield.quickfix");
+  }
 
-    public void doFix(Project project, ProblemDescriptor descriptor)
-            throws IncorrectOperationException{
-        final PsiElement classIdentifier = descriptor.getPsiElement();
-        final PsiClass aClass = (PsiClass) classIdentifier.getParent();
-        assert aClass != null;
-        final PsiManager psiManager = aClass.getManager();
-      final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
-        final long serialVersionUID =
-                SerialVersionUIDBuilder.computeDefaultSUID(aClass);
-        final PsiField field =
-                elementFactory.createFieldFromText("private static final long serialVersionUID = " +
-                                                   serialVersionUID + "L;", aClass);
-        aClass.add(field);
-    }
+  public void doFix(Project project, ProblemDescriptor descriptor)
+    throws IncorrectOperationException {
+    final PsiElement classIdentifier = descriptor.getPsiElement();
+    final PsiClass aClass = (PsiClass)classIdentifier.getParent();
+    assert aClass != null;
+    final PsiManager psiManager = aClass.getManager();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
+    final long serialVersionUID =
+      SerialVersionUIDBuilder.computeDefaultSUID(aClass);
+    final PsiField field =
+      elementFactory.createFieldFromText("private static final long serialVersionUID = " +
+                                         serialVersionUID + "L;", aClass);
+    aClass.add(field);
+  }
 }

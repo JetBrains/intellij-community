@@ -25,93 +25,98 @@ import org.jetbrains.annotations.Nullable;
 
 public class ClassReferencesSubclassInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName(){
-        return InspectionGadgetsBundle.message(
-                "class.references.subclass.display.name");
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "class.references.subclass.display.name");
+  }
+
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    final PsiNamedElement element = (PsiNamedElement)infos[0];
+    final String containingClassName = element.getName();
+    final Boolean isAnonymous = (Boolean)infos[1];
+    if (isAnonymous.booleanValue()) {
+      return InspectionGadgetsBundle.message(
+        "class.references.subclass.problem.descriptor.anonymous",
+        containingClassName);
+    }
+    return InspectionGadgetsBundle.message(
+      "class.references.subclass.problem.descriptor",
+      containingClassName);
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new ClassReferencesSubclassVisitor();
+  }
+
+  private static class ClassReferencesSubclassVisitor
+    extends BaseInspectionVisitor {
+
+    @Override
+    public void visitVariable(@NotNull PsiVariable variable) {
+      final PsiTypeElement typeElement = variable.getTypeElement();
+      checkTypeElement(typeElement);
     }
 
-    @NotNull
-    public String buildErrorString(Object... infos){
-        final PsiNamedElement element = (PsiNamedElement)infos[0];
-        final String containingClassName = element.getName();
-        final Boolean isAnonymous = (Boolean)infos[1];
-        if (isAnonymous.booleanValue()) {
-            return InspectionGadgetsBundle.message(
-                    "class.references.subclass.problem.descriptor.anonymous",
-                    containingClassName);
-        }
-        return InspectionGadgetsBundle.message(
-                "class.references.subclass.problem.descriptor",
-                containingClassName);
+    @Override
+    public void visitMethod(@NotNull PsiMethod method) {
+      final PsiTypeElement typeElement = method.getReturnTypeElement();
+      checkTypeElement(typeElement);
     }
 
-    public BaseInspectionVisitor buildVisitor(){
-        return new ClassReferencesSubclassVisitor();
+    @Override
+    public void visitInstanceOfExpression(
+      @NotNull PsiInstanceOfExpression expression) {
+      final PsiTypeElement typeElement = expression.getCheckType();
+      checkTypeElement(typeElement);
     }
 
-    private static class ClassReferencesSubclassVisitor
-            extends BaseInspectionVisitor{
-
-        @Override public void visitVariable(@NotNull PsiVariable variable){
-            final PsiTypeElement typeElement = variable.getTypeElement();
-            checkTypeElement(typeElement);
-        }
-
-        @Override public void visitMethod(@NotNull PsiMethod method){
-            final PsiTypeElement typeElement = method.getReturnTypeElement();
-            checkTypeElement(typeElement);
-        }
-
-        @Override public void visitInstanceOfExpression(
-                @NotNull PsiInstanceOfExpression expression){
-            final PsiTypeElement typeElement = expression.getCheckType();
-            checkTypeElement(typeElement);
-        }
-
-        @Override public void visitTypeCastExpression(
-                @NotNull PsiTypeCastExpression expression){
-            final PsiTypeElement typeElement = expression.getCastType();
-            checkTypeElement(typeElement);
-        }
-
-        @Override public void visitClassObjectAccessExpression(
-                @NotNull PsiClassObjectAccessExpression expression){
-            final PsiTypeElement typeElement = expression.getOperand();
-            checkTypeElement(typeElement);
-        }
-
-        private void checkTypeElement(PsiTypeElement typeElement){
-            if(typeElement == null){
-                return;
-            }
-            final PsiType type = typeElement.getType();
-            final PsiType componentType = type.getDeepComponentType();
-            if(!(componentType instanceof PsiClassType)){
-                return;
-            }
-            final PsiClassType classType = (PsiClassType) componentType;
-            final PsiClass aClass = classType.resolve();
-            if (aClass instanceof PsiTypeParameter) {
-                return;
-            }
-            final PsiClass parentClass =
-                    ClassUtils.getContainingClass(typeElement);
-            if(!isSubclass(aClass, parentClass)){
-                return;
-            }
-            registerError(typeElement, parentClass, Boolean.FALSE);
-        }
-
-        private static boolean isSubclass(@Nullable PsiClass childClass,
-                                          @Nullable PsiClass parent){
-            if (childClass == null) {
-                return false;
-            }
-            if(parent == null){
-                return false;
-            }
-            return childClass.isInheritor(parent, true);
-        }
+    @Override
+    public void visitTypeCastExpression(
+      @NotNull PsiTypeCastExpression expression) {
+      final PsiTypeElement typeElement = expression.getCastType();
+      checkTypeElement(typeElement);
     }
+
+    @Override
+    public void visitClassObjectAccessExpression(
+      @NotNull PsiClassObjectAccessExpression expression) {
+      final PsiTypeElement typeElement = expression.getOperand();
+      checkTypeElement(typeElement);
+    }
+
+    private void checkTypeElement(PsiTypeElement typeElement) {
+      if (typeElement == null) {
+        return;
+      }
+      final PsiType type = typeElement.getType();
+      final PsiType componentType = type.getDeepComponentType();
+      if (!(componentType instanceof PsiClassType)) {
+        return;
+      }
+      final PsiClassType classType = (PsiClassType)componentType;
+      final PsiClass aClass = classType.resolve();
+      if (aClass instanceof PsiTypeParameter) {
+        return;
+      }
+      final PsiClass parentClass =
+        ClassUtils.getContainingClass(typeElement);
+      if (!isSubclass(aClass, parentClass)) {
+        return;
+      }
+      registerError(typeElement, parentClass, Boolean.FALSE);
+    }
+
+    private static boolean isSubclass(@Nullable PsiClass childClass,
+                                      @Nullable PsiClass parent) {
+      if (childClass == null) {
+        return false;
+      }
+      if (parent == null) {
+        return false;
+      }
+      return childClass.isInheritor(parent, true);
+    }
+  }
 }

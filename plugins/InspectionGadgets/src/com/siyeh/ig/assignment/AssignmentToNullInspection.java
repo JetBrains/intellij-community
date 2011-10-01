@@ -28,78 +28,79 @@ import javax.swing.*;
 
 public class AssignmentToNullInspection extends BaseInspection {
 
-    @SuppressWarnings("PublicField")
-    public boolean ignoreAssignmentsToFields = false;
+  @SuppressWarnings("PublicField")
+  public boolean ignoreAssignmentsToFields = false;
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("assignment.to.null.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "assignment.to.null.problem.descriptor");
+  }
+
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+      "assignment.to.null.option"), this,
+                                          "ignoreAssignmentsToFields");
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new AssignmentToNullVisitor();
+  }
+
+  private class AssignmentToNullVisitor extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message("assignment.to.null.display.name");
+    public void visitLiteralExpression(
+      @NotNull PsiLiteralExpression value) {
+      super.visitLiteralExpression(value);
+      final String text = value.getText();
+      if (!PsiKeyword.NULL.equals(text)) {
+        return;
+      }
+      PsiElement parent = value.getParent();
+      while (parent instanceof PsiParenthesizedExpression ||
+             parent instanceof PsiConditionalExpression ||
+             parent instanceof PsiTypeCastExpression) {
+        parent = parent.getParent();
+      }
+      if (!(parent instanceof PsiAssignmentExpression)) {
+        return;
+      }
+      final PsiAssignmentExpression assignmentExpression =
+        (PsiAssignmentExpression)parent;
+      final PsiExpression lhs = ParenthesesUtils.stripParentheses(
+        assignmentExpression.getLExpression());
+      if (lhs == null || isReferenceToNullableVariable(lhs)) {
+        return;
+      }
+      registerError(lhs);
     }
 
-    @Override
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "assignment.to.null.problem.descriptor");
+    private boolean isReferenceToNullableVariable(
+      PsiExpression lhs) {
+      if (!(lhs instanceof PsiReferenceExpression)) {
+        return false;
+      }
+      final PsiReferenceExpression referenceExpression =
+        (PsiReferenceExpression)lhs;
+      final PsiElement element = referenceExpression.resolve();
+      if (!(element instanceof PsiVariable)) {
+        return false;
+      }
+      final PsiVariable variable = (PsiVariable)element;
+      if (ignoreAssignmentsToFields && variable instanceof PsiField) {
+        return true;
+      }
+      return NullableNotNullManager.isNullable(variable);
     }
-
-    @Override
-    public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-                "assignment.to.null.option"), this,
-                "ignoreAssignmentsToFields");
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new AssignmentToNullVisitor();
-    }
-
-    private class AssignmentToNullVisitor extends BaseInspectionVisitor {
-
-        @Override public void visitLiteralExpression(
-                @NotNull PsiLiteralExpression value) {
-            super.visitLiteralExpression(value);
-            final String text = value.getText();
-            if (!PsiKeyword.NULL.equals(text)) {
-              return;
-            }
-            PsiElement parent = value.getParent();
-            while (parent instanceof PsiParenthesizedExpression ||
-                    parent instanceof PsiConditionalExpression ||
-                    parent instanceof PsiTypeCastExpression) {
-                parent = parent.getParent();
-            }
-            if (!(parent instanceof PsiAssignmentExpression)) {
-                return;
-            }
-            final PsiAssignmentExpression assignmentExpression =
-                    (PsiAssignmentExpression)parent;
-            final PsiExpression lhs = ParenthesesUtils.stripParentheses(
-                    assignmentExpression.getLExpression());
-            if (lhs == null || isReferenceToNullableVariable(lhs)) {
-                return;
-            }
-            registerError(lhs);
-        }
-
-        private boolean isReferenceToNullableVariable(
-                PsiExpression lhs) {
-            if (!(lhs instanceof PsiReferenceExpression)) {
-                return false;
-            }
-            final PsiReferenceExpression referenceExpression =
-                    (PsiReferenceExpression)lhs;
-            final PsiElement element = referenceExpression.resolve();
-            if (!(element instanceof PsiVariable)) {
-                return false;
-            }
-            final PsiVariable variable = (PsiVariable)element;
-            if (ignoreAssignmentsToFields && variable instanceof PsiField) {
-                return true;
-            }
-            return NullableNotNullManager.isNullable(variable);
-        }
-    }
+  }
 }

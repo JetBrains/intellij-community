@@ -29,89 +29,91 @@ import com.siyeh.ig.psiutils.LibraryUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class InstanceMethodNamingConventionInspection
-        extends ConventionInspection {
+  extends ConventionInspection {
 
-    private static final int DEFAULT_MIN_LENGTH = 4;
-    private static final int DEFAULT_MAX_LENGTH = 32;
+  private static final int DEFAULT_MIN_LENGTH = 4;
+  private static final int DEFAULT_MAX_LENGTH = 32;
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "instance.method.naming.convention.display.name");
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "instance.method.naming.convention.display.name");
+  }
+
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new RenameFix();
+  }
+
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return true;
+  }
+
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    final String methodName = (String)infos[0];
+    if (methodName.length() < getMinLength()) {
+      return InspectionGadgetsBundle.message(
+        "instance.method.name.convention.problem.descriptor.short");
     }
-
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        return new RenameFix();
+    else if (methodName.length() > getMaxLength()) {
+      return InspectionGadgetsBundle.message(
+        "instance.method.name.convention.problem.descriptor.long");
     }
+    return InspectionGadgetsBundle.message(
+      "instance.method.name.convention.problem.descriptor.regex.mismatch",
+      getRegex());
+  }
 
-    protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
-        return true;
-    }
+  protected String getDefaultRegex() {
+    return "[a-z][A-Za-z\\d]*";
+  }
 
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        final String methodName = (String)infos[0];
-        if (methodName.length() < getMinLength()) {
-            return InspectionGadgetsBundle.message(
-                    "instance.method.name.convention.problem.descriptor.short");
-        } else if (methodName.length() > getMaxLength()) {
-            return InspectionGadgetsBundle.message(
-                    "instance.method.name.convention.problem.descriptor.long");
+  protected int getDefaultMinLength() {
+    return DEFAULT_MIN_LENGTH;
+  }
+
+  protected int getDefaultMaxLength() {
+    return DEFAULT_MAX_LENGTH;
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new NamingConventionsVisitor();
+  }
+
+  private class NamingConventionsVisitor extends BaseInspectionVisitor {
+
+    @Override
+    public void visitMethod(@NotNull PsiMethod method) {
+      super.visitMethod(method);
+      if (method.isConstructor()) {
+        return;
+      }
+      if (method.hasModifierProperty(PsiModifier.STATIC)) {
+        return;
+      }
+      final PsiIdentifier nameIdentifier = method.getNameIdentifier();
+      if (nameIdentifier == null) {
+        return;
+      }
+      final String name = method.getName();
+      if (isValid(name)) {
+        return;
+      }
+      if (!isOnTheFly()) {
+        final Query<MethodSignatureBackedByPsiMethod> search =
+          SuperMethodsSearch.search(method,
+                                    method.getContainingClass(),
+                                    true, false);
+        final MethodSignatureBackedByPsiMethod signature =
+          search.findFirst();
+        if (signature != null) {
+          return;
         }
-        return InspectionGadgetsBundle.message(
-                "instance.method.name.convention.problem.descriptor.regex.mismatch",
-                getRegex());
+      }
+      if (LibraryUtil.isOverrideOfLibraryMethod(method)) {
+        return;
+      }
+      registerMethodError(method, name);
     }
-
-    protected String getDefaultRegex() {
-        return "[a-z][A-Za-z\\d]*";
-    }
-
-    protected int getDefaultMinLength() {
-        return DEFAULT_MIN_LENGTH;
-    }
-
-    protected int getDefaultMaxLength() {
-        return DEFAULT_MAX_LENGTH;
-    }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new NamingConventionsVisitor();
-    }
-
-    private class NamingConventionsVisitor extends BaseInspectionVisitor {
-
-        @Override public void visitMethod(@NotNull PsiMethod method) {
-            super.visitMethod(method);
-            if (method.isConstructor()) {
-                return;
-            }
-            if (method.hasModifierProperty(PsiModifier.STATIC)) {
-                return;
-            }
-            final PsiIdentifier nameIdentifier = method.getNameIdentifier();
-            if (nameIdentifier == null) {
-                return;
-            }
-            final String name = method.getName();
-            if (isValid(name)) {
-                return;
-            }
-            if (!isOnTheFly()) {
-                final Query<MethodSignatureBackedByPsiMethod> search =
-                        SuperMethodsSearch.search(method,
-                                method.getContainingClass(),
-                                true, false);
-                final MethodSignatureBackedByPsiMethod signature =
-                        search.findFirst();
-                if (signature != null) {
-                    return;
-                }
-            }
-            if (LibraryUtil.isOverrideOfLibraryMethod(method)) {
-                return;
-            }
-            registerMethodError(method, name);
-        }
-    }
+  }
 }

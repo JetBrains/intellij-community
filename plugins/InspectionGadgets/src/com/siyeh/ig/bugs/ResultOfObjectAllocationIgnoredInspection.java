@@ -24,45 +24,46 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
 public class ResultOfObjectAllocationIgnoredInspection
-        extends BaseInspection {
+  extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "result.of.object.allocation.ignored.display.name");
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "result.of.object.allocation.ignored.display.name");
+  }
+
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "result.of.object.allocation.ignored.problem.descriptor");
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new IgnoreResultOfCallVisitor();
+  }
+
+  private static class IgnoreResultOfCallVisitor
+    extends BaseInspectionVisitor {
+
+    @Override
+    public void visitExpressionStatement(
+      @NotNull PsiExpressionStatement statement) {
+      super.visitExpressionStatement(statement);
+      final PsiExpression expression = statement.getExpression();
+      if (!(expression instanceof PsiNewExpression)) {
+        return;
+      }
+      final PsiNewExpression newExpression =
+        (PsiNewExpression)expression;
+      final PsiExpression[] arrayDimensions =
+        newExpression.getArrayDimensions();
+      if (arrayDimensions.length != 0) {
+        return;
+      }
+      if (newExpression.getArrayInitializer() != null) {
+        return;
+      }
+      registerNewExpressionError(newExpression);
     }
-
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "result.of.object.allocation.ignored.problem.descriptor");
-    }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new IgnoreResultOfCallVisitor();
-    }
-
-    private static class IgnoreResultOfCallVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitExpressionStatement(
-                @NotNull PsiExpressionStatement statement) {
-            super.visitExpressionStatement(statement);
-            final PsiExpression expression = statement.getExpression();
-            if (!(expression instanceof PsiNewExpression)) {
-                return;
-            }
-            final PsiNewExpression newExpression =
-                    (PsiNewExpression) expression;
-            final PsiExpression[] arrayDimensions =
-                    newExpression.getArrayDimensions();
-            if (arrayDimensions.length != 0) {
-                return;
-            }
-            if (newExpression.getArrayInitializer() != null) {
-                return;
-            }
-            registerNewExpressionError(newExpression);
-        }
-    }
+  }
 }

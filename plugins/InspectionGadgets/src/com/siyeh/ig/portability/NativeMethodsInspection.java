@@ -24,34 +24,35 @@ import org.jetbrains.annotations.NotNull;
 
 public class NativeMethodsInspection extends BaseInspection {
 
-    @NotNull
-    public String getID(){
-        return "NativeMethod";
+  @NotNull
+  public String getID() {
+    return "NativeMethod";
+  }
+
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("native.method.display.name");
+  }
+
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "native.method.problem.descriptor");
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new NativeMethodVisitor();
+  }
+
+  private static class NativeMethodVisitor extends BaseInspectionVisitor {
+
+
+    @Override
+    public void visitMethod(@NotNull PsiMethod method) {
+      if (!method.hasModifierProperty(PsiModifier.NATIVE)) {
+        return;
+      }
+      registerModifierError(PsiModifier.NATIVE, method);
     }
-
-    @NotNull
-    public String getDisplayName(){
-        return InspectionGadgetsBundle.message("native.method.display.name");
-    }
-
-    @NotNull
-    public String buildErrorString(Object... infos){
-        return InspectionGadgetsBundle.message(
-                "native.method.problem.descriptor");
-    }
-
-    public BaseInspectionVisitor buildVisitor(){
-        return new NativeMethodVisitor();
-    }
-
-    private static class NativeMethodVisitor extends BaseInspectionVisitor{
-
-
-        @Override public void visitMethod(@NotNull PsiMethod method){
-            if(!method.hasModifierProperty(PsiModifier.NATIVE)){
-                return;
-            }
-            registerModifierError(PsiModifier.NATIVE, method);
-        }
-    }
+  }
 }

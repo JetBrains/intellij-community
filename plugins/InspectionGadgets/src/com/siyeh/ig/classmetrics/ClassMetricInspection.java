@@ -22,20 +22,22 @@ import javax.swing.JComponent;
 
 public abstract class ClassMetricInspection extends BaseInspection {
 
-    /** @noinspection PublicField*/
-    public int m_limit = getDefaultLimit();
+  /**
+   * @noinspection PublicField
+   */
+  public int m_limit = getDefaultLimit();
 
-    protected abstract int getDefaultLimit();
+  protected abstract int getDefaultLimit();
 
-    protected abstract String getConfigurationLabel();
+  protected abstract String getConfigurationLabel();
 
-    protected int getLimit() {
-        return m_limit;
-    }
+  protected int getLimit() {
+    return m_limit;
+  }
 
-    public JComponent createOptionsPanel() {
-        final String label = getConfigurationLabel();
-        return new SingleIntegerFieldOptionsPanel(label,
-                this, "m_limit");
-    }
+  public JComponent createOptionsPanel() {
+    final String label = getConfigurationLabel();
+    return new SingleIntegerFieldOptionsPanel(label,
+                                              this, "m_limit");
+  }
 }

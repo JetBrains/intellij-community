@@ -26,115 +26,116 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class NonAtomicOperationOnVolatileFieldInspection
-        extends BaseInspection {
+  extends BaseInspection {
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "non.atomic.operation.on.volatile.field.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "non.atomic.operation.on.volatile.field.problem.descriptor");
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new NonAtomicOperationOnVolatileFieldVisitor();
+  }
+
+  private static class NonAtomicOperationOnVolatileFieldVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "non.atomic.operation.on.volatile.field.display.name");
+    public void visitAssignmentExpression(
+      @NotNull PsiAssignmentExpression expression) {
+      super.visitAssignmentExpression(expression);
+      final PsiExpression rhs = expression.getRExpression();
+      if (rhs == null) {
+        return;
+      }
+      final PsiExpression lhs = expression.getLExpression();
+      final PsiField volatileField = findNonSynchronizedVolatileField(lhs);
+      if (volatileField == null) {
+        return;
+      }
+      final IElementType tokenType = expression.getOperationTokenType();
+      if (tokenType.equals(JavaTokenType.PLUSEQ) ||
+          tokenType.equals(JavaTokenType.MINUSEQ) ||
+          tokenType.equals(JavaTokenType.ASTERISKEQ) ||
+          tokenType.equals(JavaTokenType.DIVEQ) ||
+          tokenType.equals(JavaTokenType.ANDEQ) ||
+          tokenType.equals(JavaTokenType.OREQ) ||
+          tokenType.equals(JavaTokenType.XOREQ) ||
+          tokenType.equals(JavaTokenType.PERCEQ) ||
+          tokenType.equals(JavaTokenType.LTLTEQ) ||
+          tokenType.equals(JavaTokenType.GTGTEQ) ||
+          tokenType.equals(JavaTokenType.GTGTGTEQ)) {
+        registerError(lhs);
+        return;
+      }
+      if (VariableAccessUtils.variableIsUsed(volatileField, rhs)) {
+        registerError(lhs);
+      }
     }
 
     @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "non.atomic.operation.on.volatile.field.problem.descriptor");
+    public void visitPrefixExpression(PsiPrefixExpression expression) {
+      super.visitPrefixExpression(expression);
+      final IElementType tokenType = expression.getOperationTokenType();
+      if (JavaTokenType.PLUS.equals(tokenType) ||
+          JavaTokenType.MINUS.equals(tokenType) ||
+          JavaTokenType.EXCL.equals(tokenType)) {
+        return;
+      }
+      final PsiExpression operand = expression.getOperand();
+      if (operand == null) {
+        return;
+      }
+      final PsiField volatileField =
+        findNonSynchronizedVolatileField(operand);
+      if (volatileField == null) {
+        return;
+      }
+      registerError(operand);
     }
 
     @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new NonAtomicOperationOnVolatileFieldVisitor();
+    public void visitPostfixExpression(PsiPostfixExpression expression) {
+      super.visitPostfixExpression(expression);
+      final PsiExpression operand = expression.getOperand();
+      final PsiField volatileField =
+        findNonSynchronizedVolatileField(operand);
+      if (volatileField == null) {
+        return;
+      }
+      registerError(operand);
     }
 
-    private static class NonAtomicOperationOnVolatileFieldVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitAssignmentExpression(
-                @NotNull PsiAssignmentExpression expression) {
-            super.visitAssignmentExpression(expression);
-            final PsiExpression rhs = expression.getRExpression();
-            if (rhs == null) {
-                return;
-            }
-            final PsiExpression lhs = expression.getLExpression();
-            final PsiField volatileField = findNonSynchronizedVolatileField(lhs);
-            if (volatileField ==  null) {
-                return;
-            }
-            final IElementType tokenType = expression.getOperationTokenType();
-            if (tokenType.equals(JavaTokenType.PLUSEQ) ||
-                    tokenType.equals(JavaTokenType.MINUSEQ) ||
-                    tokenType.equals(JavaTokenType.ASTERISKEQ) ||
-                    tokenType.equals(JavaTokenType.DIVEQ) ||
-                    tokenType.equals(JavaTokenType.ANDEQ) ||
-                    tokenType.equals(JavaTokenType.OREQ)||
-                    tokenType.equals(JavaTokenType.XOREQ)||
-                    tokenType.equals(JavaTokenType.PERCEQ)||
-                    tokenType.equals(JavaTokenType.LTLTEQ)||
-                    tokenType.equals(JavaTokenType.GTGTEQ)||
-                    tokenType.equals(JavaTokenType.GTGTGTEQ)) {
-                registerError(lhs);
-                return;
-            }
-            if (VariableAccessUtils.variableIsUsed(volatileField, rhs)) {
-                registerError(lhs);
-            }
-        }
-
-        @Override
-        public void visitPrefixExpression(PsiPrefixExpression expression) {
-            super.visitPrefixExpression(expression);
-            final IElementType tokenType = expression.getOperationTokenType();
-            if (JavaTokenType.PLUS.equals(tokenType) ||
-                    JavaTokenType.MINUS.equals(tokenType) ||
-                    JavaTokenType.EXCL.equals(tokenType)) {
-                return;
-            }
-            final PsiExpression operand = expression.getOperand();
-            if (operand == null) {
-                return;
-            }
-            final PsiField volatileField =
-                    findNonSynchronizedVolatileField(operand);
-            if (volatileField == null) {
-                return;
-            }
-            registerError(operand);
-        }
-
-        @Override
-        public void visitPostfixExpression(PsiPostfixExpression expression) {
-            super.visitPostfixExpression(expression);
-            final PsiExpression operand = expression.getOperand();
-            final PsiField volatileField =
-                    findNonSynchronizedVolatileField(operand);
-            if (volatileField == null) {
-                return;
-            }
-            registerError(operand);
-        }
-
-        @Nullable
-        private static PsiField findNonSynchronizedVolatileField(
-                PsiExpression expression) {
-            if (!(expression instanceof PsiReferenceExpression)) {
-                return null;
-            }
-            final PsiReferenceExpression reference =
-                    (PsiReferenceExpression)expression;
-            if (SynchronizationUtil.isInSynchronizedContext(reference)) {
-                return null;
-            }
-            final PsiElement referent = reference.resolve();
-            if (!(referent instanceof PsiField)) {
-                return null;
-            }
-            final PsiField field = (PsiField)referent;
-            if (!field.hasModifierProperty(PsiModifier.VOLATILE)) {
-                return null;
-            }
-            return field;
-        }
+    @Nullable
+    private static PsiField findNonSynchronizedVolatileField(
+      PsiExpression expression) {
+      if (!(expression instanceof PsiReferenceExpression)) {
+        return null;
+      }
+      final PsiReferenceExpression reference =
+        (PsiReferenceExpression)expression;
+      if (SynchronizationUtil.isInSynchronizedContext(reference)) {
+        return null;
+      }
+      final PsiElement referent = reference.resolve();
+      if (!(referent instanceof PsiField)) {
+        return null;
+      }
+      final PsiField field = (PsiField)referent;
+      if (!field.hasModifierProperty(PsiModifier.VOLATILE)) {
+        return null;
+      }
+      return field;
     }
+  }
 }

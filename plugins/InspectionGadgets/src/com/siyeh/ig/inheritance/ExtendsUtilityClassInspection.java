@@ -25,43 +25,44 @@ import org.jetbrains.annotations.NotNull;
 
 public class ExtendsUtilityClassInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "class.extends.utility.class.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "class.extends.utility.class.display.name");
+  }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        final PsiClass superClass = (PsiClass) infos[0];
-        final String superClassName = superClass.getName();
-        return InspectionGadgetsBundle.message(
-                "class.extends.utility.class.problem.descriptor", superClassName
-        );
-    }
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    final PsiClass superClass = (PsiClass)infos[0];
+    final String superClassName = superClass.getName();
+    return InspectionGadgetsBundle.message(
+      "class.extends.utility.class.problem.descriptor", superClassName
+    );
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new ClassExtendsUtilityClassVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new ClassExtendsUtilityClassVisitor();
+  }
 
-    private static class ClassExtendsUtilityClassVisitor
-            extends BaseInspectionVisitor {
+  private static class ClassExtendsUtilityClassVisitor
+    extends BaseInspectionVisitor {
 
-        @Override public void visitClass(PsiClass aClass) {
-            if (aClass.isInterface() || aClass.isAnnotationType()) {
-                return;
-            }
-            final PsiClass superClass = aClass.getSuperClass();
-            if (superClass == null) {
-                return;
-            }
-            if (superClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-                return;
-            }
-            if (!UtilityClassUtil.isUtilityClass(superClass)) {
-                return;
-            }
-            registerClassError(aClass, superClass);
-        }
+    @Override
+    public void visitClass(PsiClass aClass) {
+      if (aClass.isInterface() || aClass.isAnnotationType()) {
+        return;
+      }
+      final PsiClass superClass = aClass.getSuperClass();
+      if (superClass == null) {
+        return;
+      }
+      if (superClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        return;
+      }
+      if (!UtilityClassUtil.isUtilityClass(superClass)) {
+        return;
+      }
+      registerClassError(aClass, superClass);
     }
+  }
 }
