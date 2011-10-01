@@ -5,8 +5,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.NavigatablePsiElement;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-
 /**
  * @author traff
  */
