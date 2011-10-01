@@ -17,10 +17,7 @@ package com.intellij.core;
 
 import com.intellij.lang.*;
 import com.intellij.lang.impl.PsiBuilderFactoryImpl;
-import com.intellij.mock.MockApplication;
-import com.intellij.mock.MockFileDocumentManagerImpl;
-import com.intellij.mock.MockProject;
-import com.intellij.mock.MockReferenceProvidersRegistry;
+import com.intellij.mock.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationComponentLocator;
 import com.intellij.openapi.application.ApplicationManager;
@@ -53,6 +50,7 @@ public class CoreEnvironment {
   private MockApplication myApplication;
   private MockProject myProject;
   private CoreLocalFileSystem myLocalFileSystem;
+  private MockFileIndexFacade myFileIndexFacade;
 
   public CoreEnvironment(Disposable parentDisposable) {
     myFileTypeRegistry = new CoreFileTypeRegistry();
@@ -85,8 +83,9 @@ public class CoreEnvironment {
     myApplication.registerService(PsiBuilderFactory.class, new PsiBuilderFactoryImpl());
     myApplication.registerService(ReferenceProvidersRegistry.class, new MockReferenceProvidersRegistry());
 
+    myFileIndexFacade = new MockFileIndexFacade(myProject);
     final MutablePicoContainer projectContainer = myProject.getPicoContainer();
-    PsiManagerImpl psiManager = new PsiManagerImpl(myProject, null, null, null, null);
+    PsiManagerImpl psiManager = new PsiManagerImpl(myProject, null, null, myFileIndexFacade, null);
     ((FileManagerImpl) psiManager.getFileManager()).markInitialized();
     registerComponentInstance(projectContainer, PsiManager.class, psiManager);
 
