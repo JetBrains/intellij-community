@@ -126,7 +126,7 @@ public final class IconLoader {
   public static Icon findIcon(@NotNull final String path, @NotNull final Class aClass, boolean computeNow) {
     final ByClass icon = new ByClass(aClass, path);
 
-    if (computeNow || !Registry.is("ide.lazyIconLoading")) {
+    if (computeNow || !Registry.is("ide.lazyIconLoading", true)) {
       return icon.getOrComputeIcon();
     }
 
