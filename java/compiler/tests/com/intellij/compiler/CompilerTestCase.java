@@ -451,7 +451,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
           }
         }
 
-        VirtualFile newChild = VfsUtil.copyFile(this, child, destDir, name);
+        VirtualFile newChild = VfsUtilCore.copyFile(this, child, destDir, name);
         //to ensure that compiler will threat the file as changed. On Linux system timestamp may be rounded to multiple of 1000
         final long newStamp = newChild.getTimeStamp();
         if (newStamp == currentTimeStamp) {
