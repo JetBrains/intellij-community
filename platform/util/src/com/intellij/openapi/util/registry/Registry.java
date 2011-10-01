@@ -69,6 +69,15 @@ public class Registry  {
     return get(key).asInteger();
   }
 
+  public static int intValue(@PropertyKey(resourceBundle = REGISTRY_BUNDLE) String key, int defaultValue) {
+    try {
+      return get(key).asInteger();
+    }
+    catch (MissingResourceException ex) {
+      return defaultValue;
+    }
+  }
+
   public static double doubleValue(@PropertyKey(resourceBundle = REGISTRY_BUNDLE) String key) {
     return get(key).asDouble();
   }
