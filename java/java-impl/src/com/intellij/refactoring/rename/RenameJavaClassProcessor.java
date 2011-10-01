@@ -27,6 +27,7 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
@@ -117,7 +118,7 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
   public String getQualifiedNameAfterRename(final PsiElement element, final String newName, final boolean nonJava) {
     if (nonJava) {
       final PsiClass aClass = (PsiClass)element;
-      return RenameUtil.getQualifiedNameAfterRename(aClass.getQualifiedName(), newName);
+      return PsiUtilCore.getQualifiedNameAfterRename(aClass.getQualifiedName(), newName);
     }
     else {
       return newName;
@@ -235,7 +236,7 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
       }
     }
     else if (!(aClass instanceof PsiTypeParameter)) {
-      final String qualifiedNameAfterRename = RenameUtil.getQualifiedNameAfterRename(aClass.getQualifiedName(), newName);
+      final String qualifiedNameAfterRename = PsiUtilCore.getQualifiedNameAfterRename(aClass.getQualifiedName(), newName);
       Project project = element.getProject();
       final PsiClass conflictingClass =
         JavaPsiFacade.getInstance(project).findClass(qualifiedNameAfterRename, GlobalSearchScope.allScope(project));

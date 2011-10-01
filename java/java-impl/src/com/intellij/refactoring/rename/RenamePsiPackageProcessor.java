@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
@@ -45,7 +46,7 @@ public class RenamePsiPackageProcessor extends RenamePsiElementProcessor {
                             final String newName,
                             final UsageInfo[] usages, final RefactoringElementListener listener) throws IncorrectOperationException {
     final PsiPackage psiPackage = (PsiPackage)element;
-    psiPackage.handleQualifiedNameChange(RenameUtil.getQualifiedNameAfterRename(psiPackage.getQualifiedName(), newName));
+    psiPackage.handleQualifiedNameChange(PsiUtilCore.getQualifiedNameAfterRename(psiPackage.getQualifiedName(), newName));
     RenameUtil.doRenameGenericNamedElement(element, newName, usages, listener);
   }
 
@@ -92,7 +93,7 @@ public class RenamePsiPackageProcessor extends RenamePsiElementProcessor {
   public Runnable getPostRenameCallback(final PsiElement element, final String newName, final RefactoringElementListener listener) {
     final Project project = element.getProject();
     final PsiPackage psiPackage = (PsiPackage)element;
-    final String newQualifiedName = RenameUtil.getQualifiedNameAfterRename(psiPackage.getQualifiedName(), newName);
+    final String newQualifiedName = PsiUtilCore.getQualifiedNameAfterRename(psiPackage.getQualifiedName(), newName);
     return new Runnable() {
       public void run() {
         final PsiPackage aPackage = JavaPsiFacade.getInstance(project).findPackage(newQualifiedName);

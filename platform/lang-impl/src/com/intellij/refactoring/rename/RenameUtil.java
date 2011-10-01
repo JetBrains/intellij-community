@@ -159,12 +159,6 @@ public class RenameUtil {
     }
   }
 
-  public static String getQualifiedNameAfterRename(String qName, String newName) {
-    if (qName == null) return newName;
-    int index = qName.lastIndexOf('.');
-    return index < 0 ? newName : qName.substring(0, index + 1) + newName;
-  }
-
   public static void checkRename(PsiElement element, String newName) throws IncorrectOperationException {
     if (element instanceof PsiCheckedRenameElement) {
       ((PsiCheckedRenameElement)element).checkSetName(newName);

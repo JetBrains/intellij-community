@@ -25,7 +25,7 @@ import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiElementBase;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.refactoring.rename.RenameUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -115,7 +115,7 @@ public abstract class PsiPackageBase extends PsiElementBase implements PsiDirect
     for (PsiDirectory dir : dirs) {
       dir.setName(name);
     }
-    String nameAfterRename = RenameUtil.getQualifiedNameAfterRename(getQualifiedName(), name);
+    String nameAfterRename = PsiUtilCore.getQualifiedNameAfterRename(getQualifiedName(), name);
     return findPackage(nameAfterRename);
   }
 

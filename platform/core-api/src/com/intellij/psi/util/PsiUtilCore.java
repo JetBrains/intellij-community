@@ -375,4 +375,10 @@ public class PsiUtilCore {
     }
     return name;
   }
+
+  public static String getQualifiedNameAfterRename(String qName, String newName) {
+    if (qName == null) return newName;
+    int index = qName.lastIndexOf('.');
+    return index < 0 ? newName : qName.substring(0, index + 1) + newName;
+  }
 }
