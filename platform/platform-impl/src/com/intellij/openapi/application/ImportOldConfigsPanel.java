@@ -108,6 +108,7 @@ public class ImportOldConfigsPanel extends JDialog {
         }
 
         fc.setFileSelectionMode(SystemInfo.isMac ? JFileChooser.FILES_AND_DIRECTORIES : JFileChooser.DIRECTORIES_ONLY);
+        fc.setFileHidingEnabled(!SystemInfo.isLinux);
 
         int returnVal = fc.showOpenDialog(ImportOldConfigsPanel.this);
         if (returnVal == JFileChooser.APPROVE_OPTION){
