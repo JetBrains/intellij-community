@@ -34,6 +34,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.PsiCachedValuesFactory;
 import com.intellij.psi.impl.PsiFileFactoryImpl;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
@@ -85,7 +86,7 @@ public class CoreEnvironment {
     registerComponentInstance(projectContainer, PsiManager.class, psiManager);
 
     myProject.registerService(PsiFileFactory.class, new PsiFileFactoryImpl(psiManager));
-    myProject.registerService(CachedValuesManager.class, new CachedValuesManagerImpl(myProject, null));
+    myProject.registerService(CachedValuesManager.class, new CachedValuesManagerImpl(myProject, new PsiCachedValuesFactory(psiManager)));
   }
 
   public Project getProject() {

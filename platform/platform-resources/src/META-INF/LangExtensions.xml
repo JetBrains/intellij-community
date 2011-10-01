@@ -196,7 +196,7 @@
   <projectService serviceInterface="com.intellij.psi.impl.include.FileIncludeManager"
                   serviceImplementation="com.intellij.psi.impl.include.FileIncludeManagerImpl"/>
   <projectService serviceInterface="com.intellij.util.CachedValuesFactory"
-                  serviceImplementation="com.intellij.psi.impl.PsiCachedValuesFactory"/> 
+                  serviceImplementation="com.intellij.psi.impl.PsiCachedValuesFactory"/>
 
 
   <projectService serviceInterface="com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable"
