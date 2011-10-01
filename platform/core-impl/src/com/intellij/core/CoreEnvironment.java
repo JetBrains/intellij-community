@@ -32,6 +32,7 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.vfs.local.CoreLocalFileSystem;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiCachedValuesFactory;
@@ -50,6 +51,7 @@ public class CoreEnvironment {
   private CoreFileTypeRegistry myFileTypeRegistry;
   private MockApplication myApplication;
   private MockProject myProject;
+  private CoreLocalFileSystem myLocalFileSystem;
 
   public CoreEnvironment(Disposable parentDisposable) {
     myFileTypeRegistry = new CoreFileTypeRegistry();
@@ -66,6 +68,7 @@ public class CoreEnvironment {
       ourApplication = myApplication;
     }};
     ApplicationComponentLocator.setInstance(myApplication);
+    myLocalFileSystem = new CoreLocalFileSystem();
 
     myProject = new MockProject(myApplication.getPicoContainer(), parentDisposable);
 
@@ -114,5 +117,9 @@ public class CoreEnvironment {
         instance.removeExplicitExtension(language, object);
       }
     });
+  }
+
+  public CoreLocalFileSystem getLocalFileSystem() {
+    return myLocalFileSystem;
   }
 }
