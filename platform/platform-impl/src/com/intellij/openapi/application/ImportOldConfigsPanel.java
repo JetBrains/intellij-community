@@ -178,7 +178,7 @@ public class ImportOldConfigsPanel extends JDialog {
   }
 
   private void close() {
-    if (isImportEnabled()) {
+    if (myRbImport.isSelected()) {
       final String productWithVendor = mySettings.getProductName(ThreeState.YES);
       String instHome = myPrevInstallation.getText();
       if ("".equals(instHome)) {
