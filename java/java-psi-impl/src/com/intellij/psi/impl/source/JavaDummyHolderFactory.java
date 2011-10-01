@@ -20,7 +20,7 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.Language;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.tree.TreeElement;
@@ -42,7 +42,7 @@ public class JavaDummyHolderFactory implements HolderFactory {
   }
 
   public DummyHolder createHolder(@NotNull final PsiManager manager, final Language language, final PsiElement context) {
-    return language == StdLanguages.JAVA? new JavaDummyHolder(manager, context) : new DummyHolder(manager, language, context);
+    return language == JavaLanguage.INSTANCE ? new JavaDummyHolder(manager, context) : new DummyHolder(manager, language, context);
   }
 
   public DummyHolder createHolder(@NotNull final PsiManager manager, final PsiElement context, final CharTable table) {
