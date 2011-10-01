@@ -29,6 +29,7 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.openapi.vfs.local.CoreLocalFileSystem;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiManager;
@@ -49,6 +50,7 @@ import org.picocontainer.MutablePicoContainer;
  */
 public class CoreEnvironment {
   private CoreFileTypeRegistry myFileTypeRegistry;
+  private CoreEncodingRegistry myEncodingRegistry;
   private MockApplication myApplication;
   private MockProject myProject;
   private CoreLocalFileSystem myLocalFileSystem;
@@ -61,6 +63,15 @@ public class CoreEnvironment {
       @Override
       public FileTypeRegistry get() {
         return myFileTypeRegistry;
+      }
+    };
+
+    myEncodingRegistry = new CoreEncodingRegistry();
+    //noinspection AssignmentToStaticFieldFromInstanceMethod
+    EncodingRegistry.ourInstanceGetter = new Getter<EncodingRegistry>() {
+      @Override
+      public EncodingRegistry get() {
+        return myEncodingRegistry;
       }
     };
 

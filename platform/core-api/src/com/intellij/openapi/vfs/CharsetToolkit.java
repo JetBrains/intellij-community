@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.vfs;
 
-import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
@@ -197,7 +197,7 @@ public class CharsetToolkit {
 
   @NotNull
   public static String bytesToString(@NotNull byte[] bytes) {
-    return bytesToString(bytes, EncodingManager.getInstance().getDefaultCharset());
+    return bytesToString(bytes, EncodingRegistry.getInstance().getDefaultCharset());
   }
 
   @NotNull
@@ -310,7 +310,7 @@ public class CharsetToolkit {
   }
 
   public static Charset guessEncoding(@NotNull File f, int bufferLength) throws IOException {
-    return guessEncoding(f, bufferLength, EncodingManager.getInstance().getDefaultCharset());
+    return guessEncoding(f, bufferLength, EncodingRegistry.getInstance().getDefaultCharset());
   }
 
   public static Charset guessEncoding(@NotNull File f, int bufferLength, Charset defaultCharset) throws IOException {

@@ -18,8 +18,7 @@ package com.intellij.openapi.vfs.encoding;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +31,16 @@ import java.util.Collection;
 /**
  * @author cdr
  */
-public abstract class EncodingManager {
+public abstract class EncodingManager extends EncodingRegistry {
+  static {
+    EncodingRegistry.ourInstanceGetter = new Getter<EncodingRegistry>() {
+      @Override
+      public EncodingRegistry get() {
+        return EncodingManager.getInstance();
+      }
+    };
+  }
+
   @NonNls public static final String PROP_NATIVE2ASCII_SWITCH = "native2ascii";
   @NonNls public static final String PROP_PROPERTIES_FILES_ENCODING = "propertiesFilesEncoding";
 
@@ -44,33 +52,11 @@ public abstract class EncodingManager {
   @NotNull
   public abstract Collection<Charset> getFavorites();
 
-  /**
-   * @param virtualFile  file to get encoding for
-   * @param useParentDefaults true to determine encoding from the parent
-   * @return encoding configured for this file in Settings|File Encodings or,
-   *         if useParentDefaults is true, encoding configured for nearest parent of virtualFile or,
-   *         null if there is no configured encoding found.
-   */
-  @Nullable
-  public abstract Charset getEncoding(@Nullable VirtualFile virtualFile, boolean useParentDefaults);
-
-  public abstract void setEncoding(@Nullable VirtualFile virtualFileOrDir, @Nullable Charset charset);
-
-  public abstract boolean isUseUTFGuessing(VirtualFile virtualFile);
-
   public abstract void setUseUTFGuessing(VirtualFile virtualFile, boolean useUTFGuessing);
-
-  public abstract boolean isNative2Ascii(@NotNull VirtualFile virtualFile);
 
   public abstract boolean isNative2AsciiForPropertiesFiles();
 
   public abstract void setNative2AsciiForPropertiesFiles(VirtualFile virtualFile, boolean native2Ascii);
-
-  /**
-   * @return name of default charset configured in Settings|File Encodings|IDE encoding
-   */
-  @Nullable
-  public abstract Charset getDefaultCharset();
 
   @Nullable
   public String getDefaultCharsetName() {
@@ -99,21 +85,4 @@ public abstract class EncodingManager {
 
   @Nullable
   public abstract Charset getCachedCharsetFromContent(@NotNull Document document);
-
-  public static <E extends Throwable> VirtualFile doActionAndRestoreEncoding(@NotNull VirtualFile fileBefore, @NotNull ThrowableComputable<VirtualFile, E> action) throws E {
-    Charset charsetBefore = getInstance().getEncoding(fileBefore, true);
-    VirtualFile fileAfter = null;
-    try {
-      fileAfter = action.compute();
-      return fileAfter;
-    }
-    finally {
-      if (fileAfter != null) {
-        Charset actual = getInstance().getEncoding(fileAfter, true);
-        if (!Comparing.equal(actual, charsetBefore)) {
-          getInstance().setEncoding(fileAfter, charsetBefore);
-        }
-      }
-    }
-  }
 }

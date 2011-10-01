@@ -26,7 +26,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -100,8 +100,8 @@ public final class LoadTextUtil {
     if (virtualFile.isCharsetSet()) return virtualFile.getCharset();
 
     Charset charset = dodetectCharset(virtualFile, content);
-    charset = charset == null ? EncodingManager.getInstance().getDefaultCharset() : charset;
-    if (EncodingManager.getInstance().isNative2Ascii(virtualFile)) {
+    charset = charset == null ? EncodingRegistry.getInstance().getDefaultCharset() : charset;
+    if (EncodingRegistry.getInstance().isNative2Ascii(virtualFile)) {
       charset = Native2AsciiCharset.wrap(charset);
     }
     virtualFile.setCharset(charset);
@@ -115,9 +115,9 @@ public final class LoadTextUtil {
   }
 
   private static Charset dodetectCharset(final VirtualFile virtualFile, final byte[] content) {
-    EncodingManager settings = EncodingManager.getInstance();
+    EncodingRegistry settings = EncodingRegistry.getInstance();
     boolean shouldGuess = settings != null && settings.isUseUTFGuessing(virtualFile);
-    CharsetToolkit toolkit = shouldGuess ? new CharsetToolkit(content, EncodingManager.getInstance().getDefaultCharset()) : null;
+    CharsetToolkit toolkit = shouldGuess ? new CharsetToolkit(content, EncodingRegistry.getInstance().getDefaultCharset()) : null;
     setCharsetWasDetectedFromBytes(virtualFile, false);
     if (shouldGuess) {
       toolkit.setEnforce8Bit(true);
@@ -137,7 +137,7 @@ public final class LoadTextUtil {
     String charsetName = fileType.getCharset(virtualFile, content);
 
     if (charsetName == null) {
-      Charset saved = EncodingManager.getInstance().getEncoding(virtualFile, true);
+      Charset saved = EncodingRegistry.getInstance().getEncoding(virtualFile, true);
       if (saved != null) return saved;
     }
     return CharsetToolkit.forName(charsetName);

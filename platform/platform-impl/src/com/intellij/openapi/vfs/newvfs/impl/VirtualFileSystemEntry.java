@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
@@ -297,7 +298,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
       throw new IOException(VfsBundle.message("file.copy.target.must.be.directory"));
     }
 
-    return EncodingManager.doActionAndRestoreEncoding(this, new ThrowableComputable<VirtualFile, IOException>() {
+    return EncodingRegistry.doActionAndRestoreEncoding(this, new ThrowableComputable<VirtualFile, IOException>() {
       public VirtualFile compute() throws IOException {
         return ourPersistence.copyFile(requestor, VirtualFileSystemEntry.this, newParent, copyName);
       }
@@ -309,7 +310,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
       throw new IOException(VfsBundle.message("file.move.error", newParent.getPresentableUrl()));
     }
 
-    EncodingManager.doActionAndRestoreEncoding(this, new ThrowableComputable<VirtualFile, IOException>() {
+    EncodingRegistry.doActionAndRestoreEncoding(this, new ThrowableComputable<VirtualFile, IOException>() {
       public VirtualFile compute() throws IOException {
         ourPersistence.moveFile(requestor, VirtualFileSystemEntry.this, newParent);
         return VirtualFileSystemEntry.this;
