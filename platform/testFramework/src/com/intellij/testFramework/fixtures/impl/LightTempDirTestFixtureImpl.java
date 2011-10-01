@@ -68,7 +68,7 @@ public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirT
             return existing;
           }
 
-          return VfsUtil.copyFile(this, file, targetDir, newName);
+          return VfsUtilCore.copyFile(this, file, targetDir, newName);
         }
         catch (IOException e) {
           throw new RuntimeException(e);

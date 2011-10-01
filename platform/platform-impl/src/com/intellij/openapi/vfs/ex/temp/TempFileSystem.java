@@ -20,7 +20,7 @@
 package com.intellij.openapi.vfs.ex.temp;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
@@ -72,7 +72,7 @@ public class TempFileSystem extends NewVirtualFileSystem {
 
   public VirtualFile copyFile(final Object requestor, @NotNull final VirtualFile file, @NotNull final VirtualFile newParent, @NotNull final String copyName)
       throws IOException {
-    return VfsUtil.copyFile(requestor, file, newParent, copyName);
+    return VfsUtilCore.copyFile(requestor, file, newParent, copyName);
   }
 
   @NotNull

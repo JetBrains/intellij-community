@@ -55,7 +55,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
@@ -522,7 +521,7 @@ public class BackendCompilerWrapper {
         }
       }
     }
-    return VfsUtil.copyFile(this, file, tempDir);
+    return VfsUtilCore.copyFile(this, file, tempDir);
   }
 
   private VirtualFile getTempDir(Module module) throws IOException {

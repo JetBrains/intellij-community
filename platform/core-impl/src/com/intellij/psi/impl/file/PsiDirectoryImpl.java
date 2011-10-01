@@ -16,25 +16,20 @@
 
 package com.intellij.psi.impl.file;
 
-import com.intellij.ide.impl.ProjectViewSelectInTarget;
-import com.intellij.ide.projectView.impl.ProjectViewPane;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsBundle;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
-import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
+import com.intellij.openapi.vfs.*;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.PsiElementBase;
@@ -45,7 +40,6 @@ import com.intellij.psi.impl.source.tree.ChangeUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiFileSystemItemProcessor;
-import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -199,7 +193,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
 
   public boolean processChildren(PsiElementProcessor<PsiFileSystemItem> processor) {
     checkValid();
-    ProgressManager.checkCanceled();
+    ProgressIndicatorProvider.checkCanceled();
 
     for (VirtualFile vFile : myFile.getChildren()) {
       if (processor instanceof PsiFileSystemItemProcessor &&
@@ -235,7 +229,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
       }
     });
 
-    return PsiUtilBase.toPsiElementArray(children);
+    return PsiUtilCore.toPsiElementArray(children);
   }
 
   private void checkValid() {
@@ -294,7 +288,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
   }
 
   public boolean isPhysical() {
-    return !(myFile.getFileSystem() instanceof DummyFileSystem) && !(myFile.getFileSystem() instanceof TempFileSystem);
+    return !(myFile.getFileSystem() instanceof NonPhysicalFileSystem) && !(myFile.getFileSystem().getProtocol().equals("temp"));
   }
 
   /**
@@ -362,7 +356,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
         copyVFile = vFile.copy(this, parent, newName);
       }
       else {
-        copyVFile = VfsUtil.copyFile(this, vFile, parent, newName);
+        copyVFile = VfsUtilCore.copyFile(this, vFile, parent, newName);
       }
       final PsiFile copyPsi = myManager.findFile(copyVFile);
       if (copyPsi == null) {
@@ -443,7 +437,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
             newVFile.setBinaryContent(storedContents);
           }
           else {
-            newVFile = VfsUtil.copyFile(null, originalFile.getVirtualFile(), myFile);
+            newVFile = VfsUtilCore.copyFile(null, originalFile.getVirtualFile(), myFile);
           }
         }
         psiDocumentManager.commitAllDocuments();
@@ -553,7 +547,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
   }
 
   public void navigate(boolean requestFocus) {
-    ProjectViewSelectInTarget.select(getProject(), this, ProjectViewPane.ID, null, getVirtualFile(), requestFocus);
+    PsiNavigationSupport.getInstance().navigateToDirectory(this, false);
   }
 
   protected Icon getElementIcon(final int flags) {

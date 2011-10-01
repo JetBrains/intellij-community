@@ -91,42 +91,6 @@ public class VfsUtil extends VfsUtilCore {
   }
 
   /**
-   * Makes a copy of the <code>file</code> in the <code>toDir</code> folder and returns it.
-   *
-   * @param requestor any object to control who called this method. Note that
-   *                  it is considered to be an external change if <code>requestor</code> is <code>null</code>.
-   *                  See {@link VirtualFileEvent#getRequestor}
-   * @param file      file to make a copy of
-   * @param toDir     directory to make a copy in
-   * @return a copy of the file
-   * @throws IOException if file failed to be copied
-   */
-  public static VirtualFile copyFile(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile toDir) throws IOException {
-    return copyFile(requestor, file, toDir, file.getName());
-  }
-
-  /**
-   * Makes a copy of the <code>file</code> in the <code>toDir</code> folder with the <code>newName</code> and returns it.
-   *
-   * @param requestor any object to control who called this method. Note that
-   *                  it is considered to be an external change if <code>requestor</code> is <code>null</code>.
-   *                  See {@link VirtualFileEvent#getRequestor}
-   * @param file      file to make a copy of
-   * @param toDir     directory to make a copy in
-   * @param newName   new name of the file
-   * @return a copy of the file
-   * @throws IOException if file failed to be copied
-   */
-  public static VirtualFile copyFile(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile toDir, @NotNull @NonNls String newName)
-    throws IOException {
-    final VirtualFile newChild = toDir.createChildData(requestor, newName);
-    // [jeka] TODO: to be discussed if the copy should have the same timestamp as the original
-    //OutputStream out = newChild.getOutputStream(requestor, -1, file.getActualTimeStamp());
-    newChild.setBinaryContent(file.contentsToByteArray());
-    return newChild;
-  }
-
-  /**
    * Copies content of resource to the given file
    *
    * @param file to copy to

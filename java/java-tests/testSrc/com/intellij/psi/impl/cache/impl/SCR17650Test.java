@@ -10,6 +10,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PsiTestCase;
 
@@ -43,7 +44,7 @@ public class SCR17650Test extends PsiTestCase {
 
           VirtualFile file1 = myDir.createChildData(null, "A.java");
           VfsUtil.saveText(file1, "package p; public class A{ public void foo(); }");
-          VfsUtil.copyFile(null, getClassFile(), myDir);
+          VfsUtilCore.copyFile(null, getClassFile(), myDir);
 
           final ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
           final ContentEntry contentEntry1 = rootModel.addContentEntry(myDir);

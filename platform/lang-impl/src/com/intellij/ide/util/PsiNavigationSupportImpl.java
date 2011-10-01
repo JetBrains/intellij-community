@@ -15,7 +15,10 @@
  */
 package com.intellij.ide.util;
 
+import com.intellij.ide.impl.ProjectViewSelectInTarget;
+import com.intellij.ide.projectView.impl.ProjectViewPane;
 import com.intellij.pom.Navigatable;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,5 +35,10 @@ public class PsiNavigationSupportImpl extends PsiNavigationSupport {
   @Override
   public boolean canNavigate(PsiElement element) {
     return EditSourceUtil.canNavigate(element);
+  }
+
+  @Override
+  public void navigateToDirectory(PsiDirectory psiDirectory, boolean requestFocus) {
+    ProjectViewSelectInTarget.select(psiDirectory.getProject(), this, ProjectViewPane.ID, null, psiDirectory.getVirtualFile(), requestFocus);
   }
 }

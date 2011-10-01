@@ -21,7 +21,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDirectoryContainer;
 import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
 
 /**
