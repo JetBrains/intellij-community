@@ -23,31 +23,32 @@ import com.siyeh.ipp.psiutils.ErrorUtil;
 import com.siyeh.ipp.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NonNls;
 
-class RemoveConditionalPredicate implements PsiElementPredicate{
+class RemoveConditionalPredicate implements PsiElementPredicate {
 
-    public boolean satisfiedBy(PsiElement element){
-        if(!(element instanceof PsiConditionalExpression)){
-            return false;
-        }
-        final PsiConditionalExpression condition =
-                (PsiConditionalExpression) element;
-        PsiExpression thenExpression = condition.getThenExpression();
-        PsiExpression elseExpression = condition.getElseExpression();
-        if(thenExpression == null || elseExpression == null){
-            return false;
-        }
-        thenExpression = ParenthesesUtils.stripParentheses(thenExpression);
-        elseExpression = ParenthesesUtils.stripParentheses(elseExpression);
-        if(thenExpression == null || elseExpression == null){
-            return false;
-        }
-        @NonNls final String thenText = thenExpression.getText();
-        @NonNls final String elseText = elseExpression.getText();
-        if("true".equals(elseText) && "false".equals(thenText)){
-            return !ErrorUtil.containsError(element);
-        } else if("true".equals(thenText) && "false".equals(elseText)){
-            return !ErrorUtil.containsError(element);
-        }
-        return false;
+  public boolean satisfiedBy(PsiElement element) {
+    if (!(element instanceof PsiConditionalExpression)) {
+      return false;
     }
+    final PsiConditionalExpression condition =
+      (PsiConditionalExpression)element;
+    PsiExpression thenExpression = condition.getThenExpression();
+    PsiExpression elseExpression = condition.getElseExpression();
+    if (thenExpression == null || elseExpression == null) {
+      return false;
+    }
+    thenExpression = ParenthesesUtils.stripParentheses(thenExpression);
+    elseExpression = ParenthesesUtils.stripParentheses(elseExpression);
+    if (thenExpression == null || elseExpression == null) {
+      return false;
+    }
+    @NonNls final String thenText = thenExpression.getText();
+    @NonNls final String elseText = elseExpression.getText();
+    if ("true".equals(elseText) && "false".equals(thenText)) {
+      return !ErrorUtil.containsError(element);
+    }
+    else if ("true".equals(thenText) && "false".equals(elseText)) {
+      return !ErrorUtil.containsError(element);
+    }
+    return false;
+  }
 }

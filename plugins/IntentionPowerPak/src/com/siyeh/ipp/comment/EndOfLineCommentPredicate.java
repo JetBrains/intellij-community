@@ -25,25 +25,25 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
-class EndOfLineCommentPredicate implements PsiElementPredicate{
+class EndOfLineCommentPredicate implements PsiElementPredicate {
 
-    private static final Pattern NO_INSPECTION_PATTERN =
-            Pattern.compile("//[\t ]*noinspection .*");
+  private static final Pattern NO_INSPECTION_PATTERN =
+    Pattern.compile("//[\t ]*noinspection .*");
 
-    public boolean satisfiedBy(PsiElement element){
-        if(!(element instanceof PsiComment)){  
-            return false;
-        }
-        if(element instanceof PsiDocComment){
-            return false;
-        }
-        final PsiComment comment = (PsiComment) element;
-        final IElementType type = comment.getTokenType();
-        if (!JavaTokenType.END_OF_LINE_COMMENT.equals(type)) {
-            return false;
-        }
-        final String text = comment.getText();
-        final Matcher matcher = NO_INSPECTION_PATTERN.matcher(text);
-        return !matcher.matches();
+  public boolean satisfiedBy(PsiElement element) {
+    if (!(element instanceof PsiComment)) {
+      return false;
     }
+    if (element instanceof PsiDocComment) {
+      return false;
+    }
+    final PsiComment comment = (PsiComment)element;
+    final IElementType type = comment.getTokenType();
+    if (!JavaTokenType.END_OF_LINE_COMMENT.equals(type)) {
+      return false;
+    }
+    final String text = comment.getText();
+    final Matcher matcher = NO_INSPECTION_PATTERN.matcher(text);
+    return !matcher.matches();
+  }
 }

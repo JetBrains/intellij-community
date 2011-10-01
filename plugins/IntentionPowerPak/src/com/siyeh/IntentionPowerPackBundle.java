@@ -34,11 +34,11 @@ public class IntentionPowerPackBundle {
   private IntentionPowerPackBundle() {
   }
 
-  public static String message(@PropertyKey(resourceBundle = BUNDLE)String key, Object... params) {
+  public static String message(@PropertyKey(resourceBundle = BUNDLE) String key, Object... params) {
     return CommonBundle.message(getBundle(), key, params);
   }
 
-  public static String defaultableMessage(@PropertyKey(resourceBundle = BUNDLE)String key, Object... params) {
+  public static String defaultableMessage(@PropertyKey(resourceBundle = BUNDLE) String key, Object... params) {
     return CommonBundle.messageOrDefault(getBundle(), key, "default", true, (Object[])params);
   }
 

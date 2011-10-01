@@ -22,24 +22,24 @@ import com.intellij.psi.PsiJavaToken;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ErrorUtil;
 
-class IfToSwitchPredicate implements PsiElementPredicate{
+class IfToSwitchPredicate implements PsiElementPredicate {
 
-    public boolean satisfiedBy(PsiElement element){
-        if(!(element instanceof PsiJavaToken)){
-            return false;
-        }
-        final PsiJavaToken token = (PsiJavaToken)element;
-        if(token.getTokenType() != JavaTokenType.IF_KEYWORD){
-            return false;
-        }
-        final PsiElement parent = element.getParent();
-        if(!(parent instanceof PsiIfStatement)){
-            return false;
-        }
-        final PsiIfStatement statement = (PsiIfStatement) parent;
-        if(ErrorUtil.containsError(statement)){
-            return false;
-        }
-        return SwitchUtils.getSwitchExpression(statement) != null;
+  public boolean satisfiedBy(PsiElement element) {
+    if (!(element instanceof PsiJavaToken)) {
+      return false;
     }
+    final PsiJavaToken token = (PsiJavaToken)element;
+    if (token.getTokenType() != JavaTokenType.IF_KEYWORD) {
+      return false;
+    }
+    final PsiElement parent = element.getParent();
+    if (!(parent instanceof PsiIfStatement)) {
+      return false;
+    }
+    final PsiIfStatement statement = (PsiIfStatement)parent;
+    if (ErrorUtil.containsError(statement)) {
+      return false;
+    }
+    return SwitchUtils.getSwitchExpression(statement) != null;
+  }
 }

@@ -26,64 +26,66 @@ import org.jetbrains.annotations.NotNull;
 
 public class ExpandBooleanIntention extends Intention {
 
-    @Override
-    @NotNull
-    public PsiElementPredicate getElementPredicate() {
-        return new ExpandBooleanPredicate();
-    }
+  @Override
+  @NotNull
+  public PsiElementPredicate getElementPredicate() {
+    return new ExpandBooleanPredicate();
+  }
 
-    @Override
-    public void processIntention(@NotNull PsiElement element)
-            throws IncorrectOperationException {
-        final PsiStatement containingStatement =
-                PsiTreeUtil.getParentOfType(element, PsiStatement.class);
-        if (containingStatement == null) {
-            return;
-        }
-        if (ExpandBooleanPredicate.isBooleanAssignment(containingStatement)) {
-            final PsiExpressionStatement assignmentStatement =
-                    (PsiExpressionStatement)containingStatement;
-            final PsiAssignmentExpression assignmentExpression =
-                    (PsiAssignmentExpression)assignmentStatement.getExpression();
-            final PsiExpression rhs = assignmentExpression.getRExpression();
-            if (rhs == null) {
-                return;
-            }
-            final PsiExpression lhs = assignmentExpression.getLExpression();
-            if (ErrorUtil.containsDeepError(lhs) ||
-                    ErrorUtil.containsDeepError(rhs)) {
-                return;
-            }
-            final String rhsText = rhs.getText();
-            final String lhsText = lhs.getText();
-            final PsiJavaToken sign = assignmentExpression.getOperationSign();
-            final String signText = sign.getText();
-            final String conditionText;
-            if (signText.length() == 2) {
-                conditionText = lhsText + signText.charAt(0) + rhsText;
-            } else {
-                conditionText = rhsText;
-            }
-
-            @NonNls final String statement =
-                    "if(" + conditionText + ") " + lhsText + " = true; else " +
-                            lhsText + " = false;";
-            replaceStatement(statement, containingStatement);
-        } else if (ExpandBooleanPredicate.isBooleanReturn(
-                containingStatement)) {
-            final PsiReturnStatement returnStatement =
-                    (PsiReturnStatement)containingStatement;
-            final PsiExpression returnValue = returnStatement.getReturnValue();
-            if (returnValue == null) {
-                return;
-            }
-            if (ErrorUtil.containsDeepError(returnValue)) {
-                return;
-            }
-            final String valueText = returnValue.getText();
-            @NonNls final String statement =
-                    "if(" + valueText + ") return true; else return false;";
-            replaceStatement(statement, containingStatement);
-        }
+  @Override
+  public void processIntention(@NotNull PsiElement element)
+    throws IncorrectOperationException {
+    final PsiStatement containingStatement =
+      PsiTreeUtil.getParentOfType(element, PsiStatement.class);
+    if (containingStatement == null) {
+      return;
     }
+    if (ExpandBooleanPredicate.isBooleanAssignment(containingStatement)) {
+      final PsiExpressionStatement assignmentStatement =
+        (PsiExpressionStatement)containingStatement;
+      final PsiAssignmentExpression assignmentExpression =
+        (PsiAssignmentExpression)assignmentStatement.getExpression();
+      final PsiExpression rhs = assignmentExpression.getRExpression();
+      if (rhs == null) {
+        return;
+      }
+      final PsiExpression lhs = assignmentExpression.getLExpression();
+      if (ErrorUtil.containsDeepError(lhs) ||
+          ErrorUtil.containsDeepError(rhs)) {
+        return;
+      }
+      final String rhsText = rhs.getText();
+      final String lhsText = lhs.getText();
+      final PsiJavaToken sign = assignmentExpression.getOperationSign();
+      final String signText = sign.getText();
+      final String conditionText;
+      if (signText.length() == 2) {
+        conditionText = lhsText + signText.charAt(0) + rhsText;
+      }
+      else {
+        conditionText = rhsText;
+      }
+
+      @NonNls final String statement =
+        "if(" + conditionText + ") " + lhsText + " = true; else " +
+        lhsText + " = false;";
+      replaceStatement(statement, containingStatement);
+    }
+    else if (ExpandBooleanPredicate.isBooleanReturn(
+      containingStatement)) {
+      final PsiReturnStatement returnStatement =
+        (PsiReturnStatement)containingStatement;
+      final PsiExpression returnValue = returnStatement.getReturnValue();
+      if (returnValue == null) {
+        return;
+      }
+      if (ErrorUtil.containsDeepError(returnValue)) {
+        return;
+      }
+      final String valueText = returnValue.getText();
+      @NonNls final String statement =
+        "if(" + valueText + ") return true; else return false;";
+      replaceStatement(statement, containingStatement);
+    }
+  }
 }

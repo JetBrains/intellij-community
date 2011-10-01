@@ -24,22 +24,22 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 
 class DoWhileLoopPredicate implements PsiElementPredicate {
 
-    public boolean satisfiedBy(PsiElement element) {
-        if(!(element instanceof PsiJavaToken)){
-            return false;
-        }
-        final PsiJavaToken token = (PsiJavaToken) element;
-        final IElementType tokenType = token.getTokenType();
-        if(!JavaTokenType.DO_KEYWORD.equals(tokenType)){
-            return false;
-        }
-        final PsiElement parent = element.getParent();
-        if (!(parent instanceof PsiDoWhileStatement)) {
-            return false;
-        }
-        final PsiDoWhileStatement doWhileStatement =
-                (PsiDoWhileStatement)parent;
-        return !(doWhileStatement.getCondition() == null ||
-                doWhileStatement.getBody() == null);
+  public boolean satisfiedBy(PsiElement element) {
+    if (!(element instanceof PsiJavaToken)) {
+      return false;
     }
+    final PsiJavaToken token = (PsiJavaToken)element;
+    final IElementType tokenType = token.getTokenType();
+    if (!JavaTokenType.DO_KEYWORD.equals(tokenType)) {
+      return false;
+    }
+    final PsiElement parent = element.getParent();
+    if (!(parent instanceof PsiDoWhileStatement)) {
+      return false;
+    }
+    final PsiDoWhileStatement doWhileStatement =
+      (PsiDoWhileStatement)parent;
+    return !(doWhileStatement.getCondition() == null ||
+             doWhileStatement.getBody() == null);
+  }
 }

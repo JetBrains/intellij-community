@@ -84,35 +84,37 @@ public class FlipSetterCallIntention extends Intention {
       .append(")");
     final PsiExpression newExpression =
       JavaPsiFacade.getElementFactory(call.getProject()).createExpressionFromText(text.toString(), call.getContext());
-      call.replace(newExpression);    
+    call.replace(newExpression);
   }
 
   private static boolean isSetGetMethodCall(PsiMethodCallExpression call) {
     final PsiExpression[] params = call.getArgumentList().getExpressions();
     if (params.length != 1) return false;
-    if (! (params[0] instanceof PsiMethodCallExpression)) return false;
+    if (!(params[0] instanceof PsiMethodCallExpression)) return false;
     final PsiMethodCallExpression call2 = (PsiMethodCallExpression)params[0];
 
     //check expressions are simple properties
     final PsiElement methodElement = call.getMethodExpression().resolve();
     final PsiElement param = call2.getMethodExpression().resolve();
     if (!(methodElement instanceof PsiMethod)
-     || !(param instanceof PsiMethod)
-     ||!PropertyUtil.isSimplePropertySetter((PsiMethod)methodElement)
-     ||!PropertyUtil.isSimplePropertyGetter((PsiMethod)param)) {
+        || !(param instanceof PsiMethod)
+        || !PropertyUtil.isSimplePropertySetter((PsiMethod)methodElement)
+        || !PropertyUtil.isSimplePropertyGetter((PsiMethod)param)) {
       return false;
     }
     final PsiMethod setter1 = (PsiMethod)methodElement;
     final PsiMethod getter2 = (PsiMethod)param;
 
     //check types compatibility
-    if (! call.getArgumentList().getExpressionTypes()[0].equals(getter2.getReturnType())) return false;
+    if (!call.getArgumentList().getExpressionTypes()[0].equals(getter2.getReturnType())) return false;
 
     //check both classes have getters/setters
-    final PsiMethod getter1 = PropertyUtil.findPropertyGetter(setter1.getContainingClass(), PropertyUtil.getPropertyName(setter1), false, true);
+    final PsiMethod getter1 =
+      PropertyUtil.findPropertyGetter(setter1.getContainingClass(), PropertyUtil.getPropertyName(setter1), false, true);
     if (getter1 == null) return false;
 
-    final PsiMethod setter2 = PropertyUtil.findPropertyGetter(getter2.getContainingClass(), PropertyUtil.getPropertyName(getter2), false, true);
+    final PsiMethod setter2 =
+      PropertyUtil.findPropertyGetter(getter2.getContainingClass(), PropertyUtil.getPropertyName(getter2), false, true);
     if (setter2 == null) return false;
 
     return true;
@@ -121,7 +123,7 @@ public class FlipSetterCallIntention extends Intention {
   @Nullable
   private static Editor getEditorByElementIfItHasSelection(@NotNull PsiElement element) {
     final Editor editor = FileEditorManager.getInstance(element.getProject()).getSelectedTextEditor();
-    return editor != null && editor.getSelectionModel().hasSelection() ? editor : null; 
+    return editor != null && editor.getSelectionModel().hasSelection() ? editor : null;
   }
 
   private static class SetterCallPredicate extends PsiElementEditorPredicate {
@@ -132,7 +134,8 @@ public class FlipSetterCallIntention extends Intention {
         return underCorrectElement;
       }
 
-      final List<PsiMethodCallExpression> list = PsiSelectionSearcher.searchElementsInSelection(editor, element.getProject(), PsiMethodCallExpression.class, false);
+      final List<PsiMethodCallExpression> list =
+        PsiSelectionSearcher.searchElementsInSelection(editor, element.getProject(), PsiMethodCallExpression.class, false);
       for (PsiMethodCallExpression methodCallExpression : list) {
         if (isSetGetMethodCall(methodCallExpression)) return true;
       }

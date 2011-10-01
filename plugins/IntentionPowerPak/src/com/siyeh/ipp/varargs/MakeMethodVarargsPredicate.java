@@ -22,27 +22,27 @@ import org.jetbrains.annotations.NotNull;
 
 class MakeMethodVarargsPredicate implements PsiElementPredicate {
 
-    public boolean satisfiedBy(@NotNull PsiElement element) {
-        if (!(element instanceof PsiParameterList)) {
-            return false;
-        }
-        if (!PsiUtil.isLanguageLevel5OrHigher(element)) {
-            return false;
-        }
-        final PsiParameterList parameterList = (PsiParameterList) element;
-        if (!(element.getParent() instanceof PsiMethod)) {
-            return false;
-        }
-        if (parameterList.getParametersCount() == 0) {
-            return false;
-        }
-        final PsiParameter[] parameters = parameterList.getParameters();
-        final PsiParameter lastParameter =
-                parameters[parameters.length - 1];
-        if (lastParameter.isVarArgs()) {
-            return false;
-        }
-        final PsiType type = lastParameter.getType();
-        return type instanceof PsiArrayType;
+  public boolean satisfiedBy(@NotNull PsiElement element) {
+    if (!(element instanceof PsiParameterList)) {
+      return false;
     }
+    if (!PsiUtil.isLanguageLevel5OrHigher(element)) {
+      return false;
+    }
+    final PsiParameterList parameterList = (PsiParameterList)element;
+    if (!(element.getParent() instanceof PsiMethod)) {
+      return false;
+    }
+    if (parameterList.getParametersCount() == 0) {
+      return false;
+    }
+    final PsiParameter[] parameters = parameterList.getParameters();
+    final PsiParameter lastParameter =
+      parameters[parameters.length - 1];
+    if (lastParameter.isVarArgs()) {
+      return false;
+    }
+    final PsiType type = lastParameter.getType();
+    return type instanceof PsiArrayType;
+  }
 }

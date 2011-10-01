@@ -26,123 +26,128 @@ import org.jetbrains.annotations.NonNls;
 
 public class MergeIfOrIntention extends Intention {
 
-    @NotNull
-    public PsiElementPredicate getElementPredicate() {
-        return new MergeIfOrPredicate();
-    }
+  @NotNull
+  public PsiElementPredicate getElementPredicate() {
+    return new MergeIfOrPredicate();
+  }
 
-    public void processIntention(PsiElement element)
-            throws IncorrectOperationException {
-        final PsiJavaToken token = (PsiJavaToken)element;
-        if (MergeIfOrPredicate.isMergableExplicitIf(token)) {
-            replaceMergeableExplicitIf(token);
-        } else {
-            replaceMergeableImplicitIf(token);
-        }
+  public void processIntention(PsiElement element)
+    throws IncorrectOperationException {
+    final PsiJavaToken token = (PsiJavaToken)element;
+    if (MergeIfOrPredicate.isMergableExplicitIf(token)) {
+      replaceMergeableExplicitIf(token);
     }
+    else {
+      replaceMergeableImplicitIf(token);
+    }
+  }
 
-    private static void replaceMergeableExplicitIf(PsiJavaToken token)
-            throws IncorrectOperationException {
-        final PsiIfStatement parentStatement =
-                (PsiIfStatement)token.getParent();
-        assert parentStatement != null;
-        final PsiIfStatement childStatement =
-                (PsiIfStatement)parentStatement.getElseBranch();
-        if (childStatement == null) {
-            return;
-        }
-        final PsiExpression childCondition = childStatement.getCondition();
-        if (childCondition == null) {
-            return;
-        }
-        final String childConditionText;
-        if (ParenthesesUtils.getPrecedence(childCondition)
-                > ParenthesesUtils.OR_PRECEDENCE) {
-            childConditionText = '(' + childCondition.getText() + ')';
-        } else {
-            childConditionText = childCondition.getText();
-        }
-        final PsiExpression condition = parentStatement.getCondition();
-        if (condition == null) {
-            return;
-        }
-        final String parentConditionText;
-        if (ParenthesesUtils.getPrecedence(condition)
-                > ParenthesesUtils.OR_PRECEDENCE) {
-            parentConditionText = '(' + condition.getText() + ')';
-        } else {
-            parentConditionText = condition.getText();
-        }
-        final PsiStatement parentThenBranch = parentStatement.getThenBranch();
-        if (parentThenBranch == null) {
-            return;
-        }
-        final String parentThenBranchText = parentThenBranch.getText();
-        @NonNls final StringBuilder statement = new StringBuilder();
-        statement.append("if(");
-        statement.append(parentConditionText);
-        statement.append("||");
-        statement.append(childConditionText);
-        statement.append(')');
-        statement.append(parentThenBranchText);
-        final PsiStatement childElseBranch = childStatement.getElseBranch();
-        if (childElseBranch != null) {
-            final String childElseBranchText = childElseBranch.getText();
-            statement.append("else ");
-            statement.append(childElseBranchText);
-        }
-        final String newStatement = statement.toString();
-        replaceStatement(newStatement, parentStatement);
+  private static void replaceMergeableExplicitIf(PsiJavaToken token)
+    throws IncorrectOperationException {
+    final PsiIfStatement parentStatement =
+      (PsiIfStatement)token.getParent();
+    assert parentStatement != null;
+    final PsiIfStatement childStatement =
+      (PsiIfStatement)parentStatement.getElseBranch();
+    if (childStatement == null) {
+      return;
     }
+    final PsiExpression childCondition = childStatement.getCondition();
+    if (childCondition == null) {
+      return;
+    }
+    final String childConditionText;
+    if (ParenthesesUtils.getPrecedence(childCondition)
+        > ParenthesesUtils.OR_PRECEDENCE) {
+      childConditionText = '(' + childCondition.getText() + ')';
+    }
+    else {
+      childConditionText = childCondition.getText();
+    }
+    final PsiExpression condition = parentStatement.getCondition();
+    if (condition == null) {
+      return;
+    }
+    final String parentConditionText;
+    if (ParenthesesUtils.getPrecedence(condition)
+        > ParenthesesUtils.OR_PRECEDENCE) {
+      parentConditionText = '(' + condition.getText() + ')';
+    }
+    else {
+      parentConditionText = condition.getText();
+    }
+    final PsiStatement parentThenBranch = parentStatement.getThenBranch();
+    if (parentThenBranch == null) {
+      return;
+    }
+    final String parentThenBranchText = parentThenBranch.getText();
+    @NonNls final StringBuilder statement = new StringBuilder();
+    statement.append("if(");
+    statement.append(parentConditionText);
+    statement.append("||");
+    statement.append(childConditionText);
+    statement.append(')');
+    statement.append(parentThenBranchText);
+    final PsiStatement childElseBranch = childStatement.getElseBranch();
+    if (childElseBranch != null) {
+      final String childElseBranchText = childElseBranch.getText();
+      statement.append("else ");
+      statement.append(childElseBranchText);
+    }
+    final String newStatement = statement.toString();
+    replaceStatement(newStatement, parentStatement);
+  }
 
-    private static void replaceMergeableImplicitIf(PsiJavaToken token)
-            throws IncorrectOperationException {
-        final PsiIfStatement parentStatement =
-                (PsiIfStatement)token.getParent();
-        final PsiIfStatement childStatement =
-                (PsiIfStatement)PsiTreeUtil.skipSiblingsForward(parentStatement,
-                        PsiWhiteSpace.class);
-        assert childStatement != null;
-        final PsiExpression childCondition = childStatement.getCondition();
-        if (childCondition == null) {
-            return;
-        }
-        final String childConditionText;
-        if (ParenthesesUtils.getPrecedence(childCondition)
-                > ParenthesesUtils.OR_PRECEDENCE) {
-            childConditionText = '(' + childCondition.getText() + ')';
-        } else {
-            childConditionText = childCondition.getText();
-        }
-        assert parentStatement != null;
-        final PsiExpression condition = parentStatement.getCondition();
-        if (condition == null) {
-            return;
-        }
-        final String parentConditionText;
-        if (ParenthesesUtils.getPrecedence(condition)
-                > ParenthesesUtils.OR_PRECEDENCE) {
-            parentConditionText = '(' + condition.getText() + ')';
-        } else {
-            parentConditionText = condition.getText();
-        }
-        final PsiStatement parentThenBranch = parentStatement.getThenBranch();
-        if (parentThenBranch == null) {
-            return;
-        }
-        final StringBuilder newStatement = new StringBuilder();
-        newStatement.append("if(");
-        newStatement.append(parentConditionText);
-        newStatement.append("||");
-        newStatement.append(childConditionText);
-        newStatement.append(')');
-        newStatement.append(parentThenBranch.getText());
-        final PsiStatement childElseBranch = childStatement.getElseBranch();
-        if (childElseBranch != null) {
-            newStatement.append("else ");
-            newStatement.append(childElseBranch.getText());
-        }
-        replaceStatement(newStatement.toString(), parentStatement);
-        childStatement.delete();
+  private static void replaceMergeableImplicitIf(PsiJavaToken token)
+    throws IncorrectOperationException {
+    final PsiIfStatement parentStatement =
+      (PsiIfStatement)token.getParent();
+    final PsiIfStatement childStatement =
+      (PsiIfStatement)PsiTreeUtil.skipSiblingsForward(parentStatement,
+                                                      PsiWhiteSpace.class);
+    assert childStatement != null;
+    final PsiExpression childCondition = childStatement.getCondition();
+    if (childCondition == null) {
+      return;
     }
+    final String childConditionText;
+    if (ParenthesesUtils.getPrecedence(childCondition)
+        > ParenthesesUtils.OR_PRECEDENCE) {
+      childConditionText = '(' + childCondition.getText() + ')';
+    }
+    else {
+      childConditionText = childCondition.getText();
+    }
+    assert parentStatement != null;
+    final PsiExpression condition = parentStatement.getCondition();
+    if (condition == null) {
+      return;
+    }
+    final String parentConditionText;
+    if (ParenthesesUtils.getPrecedence(condition)
+        > ParenthesesUtils.OR_PRECEDENCE) {
+      parentConditionText = '(' + condition.getText() + ')';
+    }
+    else {
+      parentConditionText = condition.getText();
+    }
+    final PsiStatement parentThenBranch = parentStatement.getThenBranch();
+    if (parentThenBranch == null) {
+      return;
+    }
+    final StringBuilder newStatement = new StringBuilder();
+    newStatement.append("if(");
+    newStatement.append(parentConditionText);
+    newStatement.append("||");
+    newStatement.append(childConditionText);
+    newStatement.append(')');
+    newStatement.append(parentThenBranch.getText());
+    final PsiStatement childElseBranch = childStatement.getElseBranch();
+    if (childElseBranch != null) {
+      newStatement.append("else ");
+      newStatement.append(childElseBranch.getText());
+    }
+    replaceStatement(newStatement.toString(), parentStatement);
+    childStatement.delete();
+  }
 }

@@ -22,46 +22,46 @@ import com.intellij.psi.tree.IElementType;
 
 public class ReverseForLoopDirectionPredicate implements PsiElementPredicate {
 
-    public boolean satisfiedBy(PsiElement element) {
-        if (!(element instanceof PsiJavaToken)) {
-            return false;
-        }
-        final PsiJavaToken keyword = (PsiJavaToken)element;
-        final IElementType tokenType = keyword.getTokenType();
-        if (!JavaTokenType.FOR_KEYWORD.equals(tokenType)) {
-            return false;
-        }
-        final PsiElement parent = keyword.getParent();
-        if (!(parent instanceof PsiForStatement)) {
-            return false;
-        }
-        final PsiForStatement forStatement = (PsiForStatement)parent;
-        final PsiStatement initialization = forStatement.getInitialization();
-        if (!(initialization instanceof PsiDeclarationStatement)) {
-            return false;
-        }
-        final PsiDeclarationStatement declarationStatement =
-                (PsiDeclarationStatement)initialization;
-        final PsiElement[] declaredElements =
-                declarationStatement.getDeclaredElements();
-        if (declaredElements.length != 1) {
-            return false;
-        }
-        final PsiElement declaredElement = declaredElements[0];
-        if (!(declaredElement instanceof PsiLocalVariable)) {
-            return false;
-        }
-        final PsiVariable variable = (PsiVariable)declaredElement;
-        final PsiType type = variable.getType();
-        if (!PsiType.INT.equals(type) && !PsiType.LONG.equals(type)) {
-            return false;
-        }
-        final PsiExpression condition = forStatement.getCondition();
-        if (!VariableAccessUtils.isVariableCompared(variable, condition)) {
-            return false;
-        }
-        final PsiStatement update = forStatement.getUpdate();
-        return VariableAccessUtils.isVariableIncrementOrDecremented(variable,
-                update);
+  public boolean satisfiedBy(PsiElement element) {
+    if (!(element instanceof PsiJavaToken)) {
+      return false;
     }
+    final PsiJavaToken keyword = (PsiJavaToken)element;
+    final IElementType tokenType = keyword.getTokenType();
+    if (!JavaTokenType.FOR_KEYWORD.equals(tokenType)) {
+      return false;
+    }
+    final PsiElement parent = keyword.getParent();
+    if (!(parent instanceof PsiForStatement)) {
+      return false;
+    }
+    final PsiForStatement forStatement = (PsiForStatement)parent;
+    final PsiStatement initialization = forStatement.getInitialization();
+    if (!(initialization instanceof PsiDeclarationStatement)) {
+      return false;
+    }
+    final PsiDeclarationStatement declarationStatement =
+      (PsiDeclarationStatement)initialization;
+    final PsiElement[] declaredElements =
+      declarationStatement.getDeclaredElements();
+    if (declaredElements.length != 1) {
+      return false;
+    }
+    final PsiElement declaredElement = declaredElements[0];
+    if (!(declaredElement instanceof PsiLocalVariable)) {
+      return false;
+    }
+    final PsiVariable variable = (PsiVariable)declaredElement;
+    final PsiType type = variable.getType();
+    if (!PsiType.INT.equals(type) && !PsiType.LONG.equals(type)) {
+      return false;
+    }
+    final PsiExpression condition = forStatement.getCondition();
+    if (!VariableAccessUtils.isVariableCompared(variable, condition)) {
+      return false;
+    }
+    final PsiStatement update = forStatement.getUpdate();
+    return VariableAccessUtils.isVariableIncrementOrDecremented(variable,
+                                                                update);
+  }
 }

@@ -27,26 +27,27 @@ import org.jetbrains.annotations.NonNls;
 
 public class RemoveConditionalIntention extends Intention {
 
-    @NotNull
-    public PsiElementPredicate getElementPredicate() {
-        return new RemoveConditionalPredicate();
-    }
+  @NotNull
+  public PsiElementPredicate getElementPredicate() {
+    return new RemoveConditionalPredicate();
+  }
 
-    public void processIntention(PsiElement element)
-            throws IncorrectOperationException {
-        final PsiConditionalExpression expression =
-                (PsiConditionalExpression)element;
-        final PsiExpression condition = expression.getCondition();
-        final PsiExpression thenExpression = expression.getThenExpression();
-        assert thenExpression != null;
-        @NonNls final String thenExpressionText = thenExpression.getText();
-        if ("true".equals(thenExpressionText)) {
-            final String newExpression = condition.getText();
-            replaceExpression(newExpression, expression);
-        } else {
-            final String newExpression =
-                    BoolUtils.getNegatedExpressionText(condition);
-            replaceExpression(newExpression, expression);
-        }
+  public void processIntention(PsiElement element)
+    throws IncorrectOperationException {
+    final PsiConditionalExpression expression =
+      (PsiConditionalExpression)element;
+    final PsiExpression condition = expression.getCondition();
+    final PsiExpression thenExpression = expression.getThenExpression();
+    assert thenExpression != null;
+    @NonNls final String thenExpressionText = thenExpression.getText();
+    if ("true".equals(thenExpressionText)) {
+      final String newExpression = condition.getText();
+      replaceExpression(newExpression, expression);
     }
+    else {
+      final String newExpression =
+        BoolUtils.getNegatedExpressionText(condition);
+      replaceExpression(newExpression, expression);
+    }
+  }
 }

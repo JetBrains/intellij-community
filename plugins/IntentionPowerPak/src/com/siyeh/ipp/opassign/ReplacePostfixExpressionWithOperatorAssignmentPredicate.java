@@ -22,17 +22,17 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.tree.IElementType;
 
 public class ReplacePostfixExpressionWithOperatorAssignmentPredicate
-        implements PsiElementPredicate {
+  implements PsiElementPredicate {
 
-    public boolean satisfiedBy(PsiElement element) {
-        if (!(element instanceof PsiPostfixExpression)) {
-            return false;
-        }
-        final PsiPostfixExpression postfixExpression =
-                (PsiPostfixExpression)element;
-        final IElementType tokenType =
-                postfixExpression.getOperationTokenType();
-        return !(!JavaTokenType.PLUSPLUS.equals(tokenType) &&
-                !JavaTokenType.MINUSMINUS.equals(tokenType));
+  public boolean satisfiedBy(PsiElement element) {
+    if (!(element instanceof PsiPostfixExpression)) {
+      return false;
     }
+    final PsiPostfixExpression postfixExpression =
+      (PsiPostfixExpression)element;
+    final IElementType tokenType =
+      postfixExpression.getOperationTokenType();
+    return !(!JavaTokenType.PLUSPLUS.equals(tokenType) &&
+             !JavaTokenType.MINUSMINUS.equals(tokenType));
+  }
 }

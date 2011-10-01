@@ -20,30 +20,30 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ErrorUtil;
 import org.jetbrains.annotations.NonNls;
 
-class EqualsPredicate implements PsiElementPredicate{
+class EqualsPredicate implements PsiElementPredicate {
 
-    public boolean satisfiedBy(PsiElement element){
-        if(!(element instanceof PsiMethodCallExpression)){
-            return false;
-        }
-        final PsiMethodCallExpression expression =
-                (PsiMethodCallExpression) element;
-        final PsiExpressionList argumentList = expression.getArgumentList();
-        final PsiExpression[] arguments = argumentList.getExpressions();
-        if(arguments.length != 1){
-            return false;
-        }
-        final PsiReferenceExpression methodExpression =
-                expression.getMethodExpression();
-        final PsiExpression qualifier =
-                methodExpression.getQualifierExpression();
-        if(qualifier == null){
-            return false;
-        }
-        @NonNls final String methodName = methodExpression.getReferenceName();
-        if (!"equals".equals(methodName)) {
-            return false;
-        }
-        return !ErrorUtil.containsError(element);
+  public boolean satisfiedBy(PsiElement element) {
+    if (!(element instanceof PsiMethodCallExpression)) {
+      return false;
     }
+    final PsiMethodCallExpression expression =
+      (PsiMethodCallExpression)element;
+    final PsiExpressionList argumentList = expression.getArgumentList();
+    final PsiExpression[] arguments = argumentList.getExpressions();
+    if (arguments.length != 1) {
+      return false;
+    }
+    final PsiReferenceExpression methodExpression =
+      expression.getMethodExpression();
+    final PsiExpression qualifier =
+      methodExpression.getQualifierExpression();
+    if (qualifier == null) {
+      return false;
+    }
+    @NonNls final String methodName = methodExpression.getReferenceName();
+    if (!"equals".equals(methodName)) {
+      return false;
+    }
+    return !ErrorUtil.containsError(element);
+  }
 }

@@ -20,17 +20,17 @@ import com.intellij.psi.PsiElement;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ErrorUtil;
 
-class AssertStatementPredicate implements PsiElementPredicate{
+class AssertStatementPredicate implements PsiElementPredicate {
 
-    public boolean satisfiedBy(PsiElement element){
-        if(!(element instanceof PsiAssertStatement)){
-            return false;
-        }
-        final PsiAssertStatement assertStatement =
-                (PsiAssertStatement)element;
-        if (assertStatement.getAssertCondition() == null) {
-            return false;
-        }
-        return !ErrorUtil.containsError(element);
+  public boolean satisfiedBy(PsiElement element) {
+    if (!(element instanceof PsiAssertStatement)) {
+      return false;
     }
+    final PsiAssertStatement assertStatement =
+      (PsiAssertStatement)element;
+    if (assertStatement.getAssertCondition() == null) {
+      return false;
+    }
+    return !ErrorUtil.containsError(element);
+  }
 }

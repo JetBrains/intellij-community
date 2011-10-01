@@ -24,112 +24,117 @@ import org.jetbrains.annotations.Nullable;
 
 public class AddClarifyingParenthesesIntention extends Intention {
 
-    @Override @NotNull protected
-    PsiElementPredicate getElementPredicate() {
-        return new AddClarifyingParenthesesPredicate();
-    }
+  @Override
+  @NotNull
+  protected PsiElementPredicate getElementPredicate() {
+    return new AddClarifyingParenthesesPredicate();
+  }
 
-    @Override
-    protected void processIntention(@NotNull PsiElement element)
-            throws IncorrectOperationException {
-        final PsiExpression expression = getTopLevelExpression(element);
-        if (expression == null) {
-            return;
-        }
-        final StringBuilder newExpression =
-                createReplacementText(expression, new StringBuilder());
-        final PsiElement parent = expression.getParent();
-        if (parent instanceof PsiConditionalExpression) {
-            final PsiConditionalExpression conditionalExpression =
-                    (PsiConditionalExpression) parent;
-            final PsiExpression condition =
-                    conditionalExpression.getCondition();
-            if (expression == condition) {
-                replaceExpression('(' + newExpression.toString() + ')',
-                        expression);
-                return;
-            }
-        }
-        replaceExpression(newExpression.toString(), expression);
+  @Override
+  protected void processIntention(@NotNull PsiElement element)
+    throws IncorrectOperationException {
+    final PsiExpression expression = getTopLevelExpression(element);
+    if (expression == null) {
+      return;
     }
+    final StringBuilder newExpression =
+      createReplacementText(expression, new StringBuilder());
+    final PsiElement parent = expression.getParent();
+    if (parent instanceof PsiConditionalExpression) {
+      final PsiConditionalExpression conditionalExpression =
+        (PsiConditionalExpression)parent;
+      final PsiExpression condition =
+        conditionalExpression.getCondition();
+      if (expression == condition) {
+        replaceExpression('(' + newExpression.toString() + ')',
+                          expression);
+        return;
+      }
+    }
+    replaceExpression(newExpression.toString(), expression);
+  }
 
-    @Nullable
-    private static PsiExpression getTopLevelExpression(PsiElement element) {
-        if (!(element instanceof PsiExpression)) {
-            return null;
-        }
-        PsiExpression result = (PsiExpression)element;
-        PsiElement parent = result.getParent();
-        while (parent instanceof PsiBinaryExpression ||
-                parent instanceof PsiParenthesizedExpression) {
-            result = (PsiExpression)parent;
-            parent = result.getParent();
-        }
-        return result;
+  @Nullable
+  private static PsiExpression getTopLevelExpression(PsiElement element) {
+    if (!(element instanceof PsiExpression)) {
+      return null;
     }
+    PsiExpression result = (PsiExpression)element;
+    PsiElement parent = result.getParent();
+    while (parent instanceof PsiBinaryExpression ||
+           parent instanceof PsiParenthesizedExpression) {
+      result = (PsiExpression)parent;
+      parent = result.getParent();
+    }
+    return result;
+  }
 
-    private static StringBuilder createReplacementText(PsiExpression element,
-                                                       StringBuilder out) {
-        if (element instanceof PsiBinaryExpression) {
-            final PsiBinaryExpression binaryExpression =
-                    (PsiBinaryExpression)element;
-            final PsiExpression lhs = binaryExpression.getLOperand();
-            final PsiJavaToken operationSign =
-                    binaryExpression.getOperationSign();
-            final PsiExpression rhs = binaryExpression.getROperand();
-            final PsiElement parent = element.getParent();
-            final String signText = operationSign.getText();
-            final PsiElement lhsNextSibling = lhs.getNextSibling();
-            final PsiElement rhsPrevSibling;
-            if (rhs != null) {
-                rhsPrevSibling = rhs.getPrevSibling();
-            } else {
-                rhsPrevSibling = null;
-            }
-            if (parent instanceof PsiBinaryExpression) {
-                final PsiBinaryExpression parentBinaryExpression =
-                        (PsiBinaryExpression)parent;
-                final PsiJavaToken parentOperationSign =
-                        parentBinaryExpression.getOperationSign();
-                if (!signText.equals(parentOperationSign.getText())) {
-                    out.append('(');
-                    createReplacementText(lhs, out);
-                    if (lhsNextSibling instanceof PsiWhiteSpace) {
-                        out.append(lhsNextSibling.getText());
-                    }
-                    out.append(signText);
-                    if (rhsPrevSibling instanceof PsiWhiteSpace) {
-                        out.append(rhsPrevSibling.getText());
-                    }
-                    createReplacementText(rhs, out);
-                    out.append(')');
-                    return out;
-                }
-            }
-            createReplacementText(lhs, out);
-            if (lhsNextSibling instanceof PsiWhiteSpace) {
-                out.append(lhsNextSibling.getText());
-            }
-            out.append(signText);
-            if (rhsPrevSibling instanceof PsiWhiteSpace) {
-                out.append(rhsPrevSibling.getText());
-            }
-            createReplacementText(rhs, out);
-        } else if (element instanceof PsiParenthesizedExpression) {
-            final PsiParenthesizedExpression parenthesizedExpression =
-                    (PsiParenthesizedExpression)element;
-            final PsiExpression expression =
-                    parenthesizedExpression.getExpression();
-            out.append('(');
-            createReplacementText(expression, out);
-            out.append(')');
-        } else if (element instanceof PsiInstanceOfExpression) {
-            out.append('(');
-            out.append(element.getText());
-            out.append(')');
-        } else if (element != null) {
-            out.append(element.getText());
+  private static StringBuilder createReplacementText(PsiExpression element,
+                                                     StringBuilder out) {
+    if (element instanceof PsiBinaryExpression) {
+      final PsiBinaryExpression binaryExpression =
+        (PsiBinaryExpression)element;
+      final PsiExpression lhs = binaryExpression.getLOperand();
+      final PsiJavaToken operationSign =
+        binaryExpression.getOperationSign();
+      final PsiExpression rhs = binaryExpression.getROperand();
+      final PsiElement parent = element.getParent();
+      final String signText = operationSign.getText();
+      final PsiElement lhsNextSibling = lhs.getNextSibling();
+      final PsiElement rhsPrevSibling;
+      if (rhs != null) {
+        rhsPrevSibling = rhs.getPrevSibling();
+      }
+      else {
+        rhsPrevSibling = null;
+      }
+      if (parent instanceof PsiBinaryExpression) {
+        final PsiBinaryExpression parentBinaryExpression =
+          (PsiBinaryExpression)parent;
+        final PsiJavaToken parentOperationSign =
+          parentBinaryExpression.getOperationSign();
+        if (!signText.equals(parentOperationSign.getText())) {
+          out.append('(');
+          createReplacementText(lhs, out);
+          if (lhsNextSibling instanceof PsiWhiteSpace) {
+            out.append(lhsNextSibling.getText());
+          }
+          out.append(signText);
+          if (rhsPrevSibling instanceof PsiWhiteSpace) {
+            out.append(rhsPrevSibling.getText());
+          }
+          createReplacementText(rhs, out);
+          out.append(')');
+          return out;
         }
-        return out;
+      }
+      createReplacementText(lhs, out);
+      if (lhsNextSibling instanceof PsiWhiteSpace) {
+        out.append(lhsNextSibling.getText());
+      }
+      out.append(signText);
+      if (rhsPrevSibling instanceof PsiWhiteSpace) {
+        out.append(rhsPrevSibling.getText());
+      }
+      createReplacementText(rhs, out);
     }
+    else if (element instanceof PsiParenthesizedExpression) {
+      final PsiParenthesizedExpression parenthesizedExpression =
+        (PsiParenthesizedExpression)element;
+      final PsiExpression expression =
+        parenthesizedExpression.getExpression();
+      out.append('(');
+      createReplacementText(expression, out);
+      out.append(')');
+    }
+    else if (element instanceof PsiInstanceOfExpression) {
+      out.append('(');
+      out.append(element.getText());
+      out.append(')');
+    }
+    else if (element != null) {
+      out.append(element.getText());
+    }
+    return out;
+  }
 }

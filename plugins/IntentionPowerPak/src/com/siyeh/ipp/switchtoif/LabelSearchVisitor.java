@@ -22,26 +22,28 @@ import com.intellij.psi.PsiReferenceExpression;
 
 class LabelSearchVisitor extends JavaRecursiveElementWalkingVisitor {
 
-    private final String m_labelName;
-    private boolean m_used = false;
+  private final String m_labelName;
+  private boolean m_used = false;
 
-    LabelSearchVisitor(String name){
-        super();
-        m_labelName = name;
-    }
+  LabelSearchVisitor(String name) {
+    super();
+    m_labelName = name;
+  }
 
-    @Override public void visitReferenceExpression(PsiReferenceExpression expression){
-    }
+  @Override
+  public void visitReferenceExpression(PsiReferenceExpression expression) {
+  }
 
-    @Override public void visitLabeledStatement(PsiLabeledStatement statement){
-        final PsiIdentifier labelIdentifier = statement.getLabelIdentifier();
-        final String labelText = labelIdentifier.getText();
-        if(labelText.equals(m_labelName)){
-            m_used = true;
-        }
+  @Override
+  public void visitLabeledStatement(PsiLabeledStatement statement) {
+    final PsiIdentifier labelIdentifier = statement.getLabelIdentifier();
+    final String labelText = labelIdentifier.getText();
+    if (labelText.equals(m_labelName)) {
+      m_used = true;
     }
+  }
 
-    public boolean isUsed(){
-        return m_used;
-    }
+  public boolean isUsed() {
+    return m_used;
+  }
 }

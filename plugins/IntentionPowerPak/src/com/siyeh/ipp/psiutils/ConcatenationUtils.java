@@ -18,35 +18,35 @@ package com.siyeh.ipp.psiutils;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 
-public class ConcatenationUtils{
+public class ConcatenationUtils {
 
-    private ConcatenationUtils(){
-        super();
-    }
+  private ConcatenationUtils() {
+    super();
+  }
 
-    public static boolean isConcatenation(PsiElement element){
-        if(!(element instanceof PsiPolyadicExpression)){
-            return false;
-        }
-        final PsiPolyadicExpression expression = (PsiPolyadicExpression) element;
-      final IElementType tokenType = expression.getOperationTokenType();
-        if(!tokenType.equals(JavaTokenType.PLUS)){
-            return false;
-        }
-      PsiExpression[] operands = expression.getOperands();
-      if (operands.length <= 1) return false;
-        final PsiType type = expression.getType();
-        if(type == null){
-          for (PsiExpression operand : operands) {
-            if (hasStringType(operand)) return true;
-          }
-          return false;
-        }
-        return type.equalsToText("java.lang.String");
+  public static boolean isConcatenation(PsiElement element) {
+    if (!(element instanceof PsiPolyadicExpression)) {
+      return false;
     }
+    final PsiPolyadicExpression expression = (PsiPolyadicExpression)element;
+    final IElementType tokenType = expression.getOperationTokenType();
+    if (!tokenType.equals(JavaTokenType.PLUS)) {
+      return false;
+    }
+    PsiExpression[] operands = expression.getOperands();
+    if (operands.length <= 1) return false;
+    final PsiType type = expression.getType();
+    if (type == null) {
+      for (PsiExpression operand : operands) {
+        if (hasStringType(operand)) return true;
+      }
+      return false;
+    }
+    return type.equalsToText("java.lang.String");
+  }
 
-    private static boolean hasStringType(PsiExpression expression) {
-        final PsiType type = expression.getType();
-        return type != null && type.equalsToText("java.lang.String");
-    }
+  private static boolean hasStringType(PsiExpression expression) {
+    final PsiType type = expression.getType();
+    return type != null && type.equalsToText("java.lang.String");
+  }
 }

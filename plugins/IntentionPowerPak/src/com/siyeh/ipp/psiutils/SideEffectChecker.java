@@ -18,64 +18,70 @@ package com.siyeh.ipp.psiutils;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 
-public class SideEffectChecker{
+public class SideEffectChecker {
 
-    private SideEffectChecker(){
-        super();
+  private SideEffectChecker() {
+    super();
+  }
+
+  public static boolean mayHaveSideEffects(PsiExpression exp) {
+    final SideEffectsVisitor visitor = new SideEffectsVisitor();
+    exp.accept(visitor);
+    return visitor.mayHaveSideEffects();
+  }
+
+  private static class SideEffectsVisitor extends JavaRecursiveElementWalkingVisitor {
+
+    private boolean mayHaveSideEffects = false;
+
+    @Override
+    public void visitElement(PsiElement element) {
+      if (!mayHaveSideEffects) {
+        super.visitElement(element);
+      }
     }
 
-    public static boolean mayHaveSideEffects(PsiExpression exp){
-        final SideEffectsVisitor visitor = new SideEffectsVisitor();
-        exp.accept(visitor);
-        return visitor.mayHaveSideEffects();
+    @Override
+    public void visitMethodCallExpression(
+      PsiMethodCallExpression expression) {
+      mayHaveSideEffects = true;
     }
 
-    private static class SideEffectsVisitor extends JavaRecursiveElementWalkingVisitor{
-
-        private boolean mayHaveSideEffects = false;
-
-        @Override public void visitElement(PsiElement element){
-            if(!mayHaveSideEffects){
-                super.visitElement(element);
-            }
-        }
-
-        @Override public void visitMethodCallExpression(
-                PsiMethodCallExpression expression){
-            mayHaveSideEffects = true;
-        }
-
-        @Override public void visitNewExpression(PsiNewExpression expression){
-            mayHaveSideEffects = true;
-        }
-
-        @Override public void visitAssignmentExpression(
-                PsiAssignmentExpression expression){
-            mayHaveSideEffects = true;
-        }
-
-        @Override public void visitPrefixExpression(PsiPrefixExpression expression){
-            super.visitPrefixExpression(expression);
-          final IElementType tokenType = expression.getOperationTokenType();
-
-            if(tokenType.equals(JavaTokenType.PLUSPLUS) ||
-                    tokenType.equals(JavaTokenType.MINUSMINUS)){
-                mayHaveSideEffects = true;
-            }
-        }
-
-        @Override public void visitPostfixExpression(PsiPostfixExpression expression){
-            super.visitPostfixExpression(expression);
-          final IElementType tokenType = expression.getOperationTokenType();
-
-            if(tokenType.equals(JavaTokenType.PLUSPLUS) ||
-                    tokenType.equals(JavaTokenType.MINUSMINUS)){
-                mayHaveSideEffects = true;
-            }
-        }
-
-        public boolean mayHaveSideEffects(){
-            return mayHaveSideEffects;
-        }
+    @Override
+    public void visitNewExpression(PsiNewExpression expression) {
+      mayHaveSideEffects = true;
     }
+
+    @Override
+    public void visitAssignmentExpression(
+      PsiAssignmentExpression expression) {
+      mayHaveSideEffects = true;
+    }
+
+    @Override
+    public void visitPrefixExpression(PsiPrefixExpression expression) {
+      super.visitPrefixExpression(expression);
+      final IElementType tokenType = expression.getOperationTokenType();
+
+      if (tokenType.equals(JavaTokenType.PLUSPLUS) ||
+          tokenType.equals(JavaTokenType.MINUSMINUS)) {
+        mayHaveSideEffects = true;
+      }
+    }
+
+    @Override
+    public void visitPostfixExpression(PsiPostfixExpression expression) {
+      super.visitPostfixExpression(expression);
+      final IElementType tokenType = expression.getOperationTokenType();
+
+      if (tokenType.equals(JavaTokenType.PLUSPLUS) ||
+          tokenType.equals(JavaTokenType.MINUSMINUS)) {
+        mayHaveSideEffects = true;
+      }
+    }
+
+    public boolean mayHaveSideEffects() {
+      return mayHaveSideEffects;
+    }
+  }
 }

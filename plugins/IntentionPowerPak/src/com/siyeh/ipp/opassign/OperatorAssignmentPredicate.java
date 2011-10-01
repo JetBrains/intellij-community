@@ -26,30 +26,31 @@ import java.util.Set;
 
 class OperatorAssignmentPredicate implements PsiElementPredicate {
 
-    private static final Set<IElementType> OPERATOR_ASSIGNMENT_TOKENS =
-            new HashSet();
-    static {
-        OPERATOR_ASSIGNMENT_TOKENS.add(JavaTokenType.PLUSEQ);
-        OPERATOR_ASSIGNMENT_TOKENS.add(JavaTokenType.MINUSEQ);
-        OPERATOR_ASSIGNMENT_TOKENS.add(JavaTokenType.ASTERISKEQ);
-        OPERATOR_ASSIGNMENT_TOKENS.add(JavaTokenType.PERCEQ);
-        OPERATOR_ASSIGNMENT_TOKENS.add(JavaTokenType.DIVEQ);
-        OPERATOR_ASSIGNMENT_TOKENS.add(JavaTokenType.ANDEQ);
-        OPERATOR_ASSIGNMENT_TOKENS.add(JavaTokenType.OREQ);
-        OPERATOR_ASSIGNMENT_TOKENS.add(JavaTokenType.XOREQ);
-        OPERATOR_ASSIGNMENT_TOKENS.add(JavaTokenType.LTLTEQ);
-        OPERATOR_ASSIGNMENT_TOKENS.add(JavaTokenType.GTGTEQ);
-        OPERATOR_ASSIGNMENT_TOKENS.add(JavaTokenType.GTGTGTEQ);
-    }
+  private static final Set<IElementType> OPERATOR_ASSIGNMENT_TOKENS =
+    new HashSet();
 
-    public boolean satisfiedBy(PsiElement element) {
-        if (!(element instanceof PsiAssignmentExpression)) {
-            return false;
-        }
-        final PsiAssignmentExpression assignmentExpression =
-                (PsiAssignmentExpression) element;
-        final IElementType tokenType =
-                assignmentExpression.getOperationTokenType();
-        return OPERATOR_ASSIGNMENT_TOKENS.contains(tokenType);
+  static {
+    OPERATOR_ASSIGNMENT_TOKENS.add(JavaTokenType.PLUSEQ);
+    OPERATOR_ASSIGNMENT_TOKENS.add(JavaTokenType.MINUSEQ);
+    OPERATOR_ASSIGNMENT_TOKENS.add(JavaTokenType.ASTERISKEQ);
+    OPERATOR_ASSIGNMENT_TOKENS.add(JavaTokenType.PERCEQ);
+    OPERATOR_ASSIGNMENT_TOKENS.add(JavaTokenType.DIVEQ);
+    OPERATOR_ASSIGNMENT_TOKENS.add(JavaTokenType.ANDEQ);
+    OPERATOR_ASSIGNMENT_TOKENS.add(JavaTokenType.OREQ);
+    OPERATOR_ASSIGNMENT_TOKENS.add(JavaTokenType.XOREQ);
+    OPERATOR_ASSIGNMENT_TOKENS.add(JavaTokenType.LTLTEQ);
+    OPERATOR_ASSIGNMENT_TOKENS.add(JavaTokenType.GTGTEQ);
+    OPERATOR_ASSIGNMENT_TOKENS.add(JavaTokenType.GTGTGTEQ);
+  }
+
+  public boolean satisfiedBy(PsiElement element) {
+    if (!(element instanceof PsiAssignmentExpression)) {
+      return false;
     }
+    final PsiAssignmentExpression assignmentExpression =
+      (PsiAssignmentExpression)element;
+    final IElementType tokenType =
+      assignmentExpression.getOperationTokenType();
+    return OPERATOR_ASSIGNMENT_TOKENS.contains(tokenType);
+  }
 }

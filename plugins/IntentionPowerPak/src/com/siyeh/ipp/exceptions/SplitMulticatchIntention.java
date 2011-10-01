@@ -25,48 +25,48 @@ import java.util.List;
 
 public class SplitMulticatchIntention extends Intention {
 
-    @NotNull
-    @Override
-    protected PsiElementPredicate getElementPredicate() {
-        return new MulticatchPredicate();
-    }
+  @NotNull
+  @Override
+  protected PsiElementPredicate getElementPredicate() {
+    return new MulticatchPredicate();
+  }
 
-    @Override
-    protected void processIntention(@NotNull PsiElement element)
-            throws IncorrectOperationException {
-        final PsiElement parent = element.getParent();
-        if (!(parent instanceof PsiCatchSection)) {
-            return;
-        }
-        final PsiCatchSection catchSection = (PsiCatchSection) parent;
-        final PsiElement grandParent = catchSection.getParent();
-        if (!(grandParent instanceof PsiTryStatement)) {
-            return;
-        }
-        final PsiParameter parameter = catchSection.getParameter();
-        if (parameter == null) {
-            return;
-        }
-        final PsiType type = parameter.getType();
-        if (!(type instanceof PsiDisjunctionType)) {
-            return;
-        }
-        final PsiDisjunctionType disjunctionType = (PsiDisjunctionType) type;
-        final List<PsiType> disjunctions = disjunctionType.getDisjunctions();
-        final PsiElementFactory factory =
-                JavaPsiFacade.getElementFactory(element.getProject());
-        for (PsiType disjunction : disjunctions) {
-            final PsiCatchSection copy = (PsiCatchSection) catchSection.copy();
-            final PsiParameter copyParameter = copy.getParameter();
-            if (copyParameter == null) {
-                continue;
-            }
-            final PsiTypeElement typeElement = copyParameter.getTypeElement();
-            final PsiTypeElement newTypeElement =
-                    factory.createTypeElement(disjunction);
-            typeElement.replace(newTypeElement);
-            grandParent.addBefore(copy, catchSection);
-        }
-        catchSection.delete();
+  @Override
+  protected void processIntention(@NotNull PsiElement element)
+    throws IncorrectOperationException {
+    final PsiElement parent = element.getParent();
+    if (!(parent instanceof PsiCatchSection)) {
+      return;
     }
+    final PsiCatchSection catchSection = (PsiCatchSection)parent;
+    final PsiElement grandParent = catchSection.getParent();
+    if (!(grandParent instanceof PsiTryStatement)) {
+      return;
+    }
+    final PsiParameter parameter = catchSection.getParameter();
+    if (parameter == null) {
+      return;
+    }
+    final PsiType type = parameter.getType();
+    if (!(type instanceof PsiDisjunctionType)) {
+      return;
+    }
+    final PsiDisjunctionType disjunctionType = (PsiDisjunctionType)type;
+    final List<PsiType> disjunctions = disjunctionType.getDisjunctions();
+    final PsiElementFactory factory =
+      JavaPsiFacade.getElementFactory(element.getProject());
+    for (PsiType disjunction : disjunctions) {
+      final PsiCatchSection copy = (PsiCatchSection)catchSection.copy();
+      final PsiParameter copyParameter = copy.getParameter();
+      if (copyParameter == null) {
+        continue;
+      }
+      final PsiTypeElement typeElement = copyParameter.getTypeElement();
+      final PsiTypeElement newTypeElement =
+        factory.createTypeElement(disjunction);
+      typeElement.replace(newTypeElement);
+      grandParent.addBefore(copy, catchSection);
+    }
+    catchSection.delete();
+  }
 }

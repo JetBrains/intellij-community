@@ -21,57 +21,59 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.Nullable;
 
-class StringConcatPredicate implements PsiElementPredicate{
+class StringConcatPredicate implements PsiElementPredicate {
 
-    public boolean satisfiedBy(PsiElement element){
-        if(element instanceof PsiJavaToken){
-            final PsiJavaToken token = (PsiJavaToken) element;
-            final IElementType tokenType = token.getTokenType();
-            if(!tokenType.equals(JavaTokenType.PLUS)){
-                return false;
-            }
-        } else if(!(element instanceof PsiWhiteSpace)){
-            return false;
-        }
-        final PsiElement parent = element.getParent();
-        if(!(parent instanceof PsiBinaryExpression)){
-            return false;
-        }
-        final PsiBinaryExpression binaryExpression =
-                (PsiBinaryExpression) parent;
-      final IElementType tokenType = binaryExpression.getOperationTokenType();
-        if(!tokenType.equals(JavaTokenType.PLUS)){
-            return false;
-        }
-        final PsiType type = binaryExpression.getType();
-        if (type == null || !type.equalsToText("java.lang.String")) {
-            return false;
-        }
-        final PsiExpression rhs = binaryExpression.getROperand();
-        if (rhs == null) {
-            return false;
-        }
-        final PsiExpression lhs = binaryExpression.getLOperand();
-        final PsiExpression rightMostExpression = getRightmostExpression(lhs);
-        if (rightMostExpression instanceof PsiPrefixExpression) {
-            final PsiType prefixExpressionType = rightMostExpression.getType();
-            if (prefixExpressionType == null ||
-                    prefixExpressionType.equalsToText("java.lang.String")) {
-                return false;
-            }
-        }
-        return PsiUtil.isConstantExpression(rhs) &&
-                PsiUtil.isConstantExpression(rightMostExpression);
+  public boolean satisfiedBy(PsiElement element) {
+    if (element instanceof PsiJavaToken) {
+      final PsiJavaToken token = (PsiJavaToken)element;
+      final IElementType tokenType = token.getTokenType();
+      if (!tokenType.equals(JavaTokenType.PLUS)) {
+        return false;
+      }
     }
+    else if (!(element instanceof PsiWhiteSpace)) {
+      return false;
+    }
+    final PsiElement parent = element.getParent();
+    if (!(parent instanceof PsiBinaryExpression)) {
+      return false;
+    }
+    final PsiBinaryExpression binaryExpression =
+      (PsiBinaryExpression)parent;
+    final IElementType tokenType = binaryExpression.getOperationTokenType();
+    if (!tokenType.equals(JavaTokenType.PLUS)) {
+      return false;
+    }
+    final PsiType type = binaryExpression.getType();
+    if (type == null || !type.equalsToText("java.lang.String")) {
+      return false;
+    }
+    final PsiExpression rhs = binaryExpression.getROperand();
+    if (rhs == null) {
+      return false;
+    }
+    final PsiExpression lhs = binaryExpression.getLOperand();
+    final PsiExpression rightMostExpression = getRightmostExpression(lhs);
+    if (rightMostExpression instanceof PsiPrefixExpression) {
+      final PsiType prefixExpressionType = rightMostExpression.getType();
+      if (prefixExpressionType == null ||
+          prefixExpressionType.equalsToText("java.lang.String")) {
+        return false;
+      }
+    }
+    return PsiUtil.isConstantExpression(rhs) &&
+           PsiUtil.isConstantExpression(rightMostExpression);
+  }
 
-    @Nullable private static PsiExpression getRightmostExpression(
-            PsiExpression expression){
-        if (expression instanceof PsiBinaryExpression) {
-            final PsiBinaryExpression binaryExpression =
-                    (PsiBinaryExpression)expression;
-            final PsiExpression rhs = binaryExpression.getROperand();
-            return getRightmostExpression(rhs);
-        }
-        return expression;
+  @Nullable
+  private static PsiExpression getRightmostExpression(
+    PsiExpression expression) {
+    if (expression instanceof PsiBinaryExpression) {
+      final PsiBinaryExpression binaryExpression =
+        (PsiBinaryExpression)expression;
+      final PsiExpression rhs = binaryExpression.getROperand();
+      return getRightmostExpression(rhs);
     }
+    return expression;
+  }
 }

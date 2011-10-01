@@ -23,16 +23,16 @@ import org.jetbrains.annotations.NotNull;
 
 class ArrayCreationExpressionPredicate implements PsiElementPredicate {
 
-    public boolean satisfiedBy(@NotNull PsiElement element) {
-        if (!(element instanceof PsiArrayInitializerExpression)) {
-            return false;
-        }
-        final PsiArrayInitializerExpression arrayInitializerExpression =
-                (PsiArrayInitializerExpression)element;
-        if (arrayInitializerExpression.getType() == null) {
-            return false;
-        }
-        final PsiElement parent = element.getParent();
-        return !(parent instanceof PsiNewExpression);
+  public boolean satisfiedBy(@NotNull PsiElement element) {
+    if (!(element instanceof PsiArrayInitializerExpression)) {
+      return false;
     }
+    final PsiArrayInitializerExpression arrayInitializerExpression =
+      (PsiArrayInitializerExpression)element;
+    if (arrayInitializerExpression.getType() == null) {
+      return false;
+    }
+    final PsiElement parent = element.getParent();
+    return !(parent instanceof PsiNewExpression);
+  }
 }

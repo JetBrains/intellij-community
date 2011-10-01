@@ -25,19 +25,20 @@ import org.jetbrains.annotations.NotNull;
 
 public class RemoveUnnecessaryParenthesesIntention extends Intention {
 
-    @Override @NotNull
-    public PsiElementPredicate getElementPredicate() {
-        return new UnnecessaryParenthesesPredicate();
-    }
+  @Override
+  @NotNull
+  public PsiElementPredicate getElementPredicate() {
+    return new UnnecessaryParenthesesPredicate();
+  }
 
-    @Override
-    public void processIntention(@NotNull PsiElement element)
-            throws IncorrectOperationException {
-        PsiExpression expression = (PsiExpression)element;
-        while (expression.getParent() instanceof PsiExpression) {
-            expression = (PsiExpression)expression.getParent();
-            assert expression != null;
-        }
-        ParenthesesUtils.removeParentheses(expression, false);
+  @Override
+  public void processIntention(@NotNull PsiElement element)
+    throws IncorrectOperationException {
+    PsiExpression expression = (PsiExpression)element;
+    while (expression.getParent() instanceof PsiExpression) {
+      expression = (PsiExpression)expression.getParent();
+      assert expression != null;
     }
+    ParenthesesUtils.removeParentheses(expression, false);
+  }
 }

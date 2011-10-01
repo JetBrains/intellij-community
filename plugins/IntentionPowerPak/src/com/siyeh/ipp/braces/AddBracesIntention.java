@@ -28,34 +28,36 @@ import org.jetbrains.annotations.NotNull;
 
 public class AddBracesIntention extends MutablyNamedIntention {
 
-	@NotNull
-	protected PsiElementPredicate getElementPredicate() {
-		return new AddBracesPredicate();
-	}
+  @NotNull
+  protected PsiElementPredicate getElementPredicate() {
+    return new AddBracesPredicate();
+  }
 
-	protected String getTextForElement(PsiElement element) {
-		final PsiElement parent = element.getParent();
-		@NonNls final String keyword;
-		if (parent instanceof PsiIfStatement) {
-			final PsiIfStatement ifStatement = (PsiIfStatement)parent;
-			final PsiStatement elseBranch = ifStatement.getElseBranch();
-			if (element.equals(elseBranch)) {
-				keyword = PsiKeyword.ELSE;
-			} else {
-				keyword = PsiKeyword.IF;
-			}
-		} else {
-			final PsiElement firstChild = parent.getFirstChild();
-			assert firstChild != null;
-			keyword = firstChild.getText();
-		}
-		return IntentionPowerPackBundle.message("add.braces.intention.name", keyword);
-	}
+  protected String getTextForElement(PsiElement element) {
+    final PsiElement parent = element.getParent();
+    @NonNls final String keyword;
+    if (parent instanceof PsiIfStatement) {
+      final PsiIfStatement ifStatement = (PsiIfStatement)parent;
+      final PsiStatement elseBranch = ifStatement.getElseBranch();
+      if (element.equals(elseBranch)) {
+        keyword = PsiKeyword.ELSE;
+      }
+      else {
+        keyword = PsiKeyword.IF;
+      }
+    }
+    else {
+      final PsiElement firstChild = parent.getFirstChild();
+      assert firstChild != null;
+      keyword = firstChild.getText();
+    }
+    return IntentionPowerPackBundle.message("add.braces.intention.name", keyword);
+  }
 
-	protected void processIntention(@NotNull PsiElement element)
-			throws IncorrectOperationException {
-		final PsiStatement statement = (PsiStatement)element;
-		final String newStatement = "{\n" + element.getText() + "\n}";
-		replaceStatement(newStatement, statement);
-	}
+  protected void processIntention(@NotNull PsiElement element)
+    throws IncorrectOperationException {
+    final PsiStatement statement = (PsiStatement)element;
+    final String newStatement = "{\n" + element.getText() + "\n}";
+    replaceStatement(newStatement, statement);
+  }
 }

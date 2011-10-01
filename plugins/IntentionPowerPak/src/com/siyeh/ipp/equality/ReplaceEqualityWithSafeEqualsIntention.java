@@ -26,54 +26,55 @@ import org.jetbrains.annotations.NotNull;
 
 public class ReplaceEqualityWithSafeEqualsIntention extends Intention {
 
-    @NotNull
-    public PsiElementPredicate getElementPredicate() {
-        return new ObjectEqualityPredicate();
-    }
+  @NotNull
+  public PsiElementPredicate getElementPredicate() {
+    return new ObjectEqualityPredicate();
+  }
 
-    public void processIntention(PsiElement element)
-            throws IncorrectOperationException {
-        final PsiBinaryExpression exp =
-                (PsiBinaryExpression)element;
-        final PsiExpression lhs = exp.getLOperand();
-        final PsiExpression rhs = exp.getROperand();
-        if (rhs == null) {
-            return;
-        }
-        final PsiExpression strippedLhs =
-                ParenthesesUtils.stripParentheses(lhs);
-        if (strippedLhs == null) {
-            return;
-        }
-        final PsiExpression strippedRhs =
-                ParenthesesUtils.stripParentheses(rhs);
-        if (strippedRhs == null) {
-            return;
-        }
-        final String lhsText = strippedLhs.getText();
-        final String rhsText = strippedRhs.getText();
-        final PsiJavaToken operationSign = exp.getOperationSign();
-        final IElementType tokenType = operationSign.getTokenType();
-        final String signText = operationSign.getText();
-        @NonNls final StringBuilder buffer = new StringBuilder(lhsText);
-        buffer.append("==null?");
-        buffer.append(rhsText);
-        buffer.append(signText);
-        buffer.append(" null:");
-        if (tokenType.equals(JavaTokenType.NE)) {
-            buffer.append('!');
-        }
-        if (ParenthesesUtils.getPrecedence(strippedLhs) >
-                ParenthesesUtils.METHOD_CALL_PRECEDENCE) {
-            buffer.append('(');
-            buffer.append(lhsText);
-            buffer.append(')');
-        } else {
-            buffer.append(lhsText);
-        }
-        buffer.append(".equals(");
-        buffer.append(rhsText);
-        buffer.append(')');
-        replaceExpression(buffer.toString(), exp);
+  public void processIntention(PsiElement element)
+    throws IncorrectOperationException {
+    final PsiBinaryExpression exp =
+      (PsiBinaryExpression)element;
+    final PsiExpression lhs = exp.getLOperand();
+    final PsiExpression rhs = exp.getROperand();
+    if (rhs == null) {
+      return;
     }
+    final PsiExpression strippedLhs =
+      ParenthesesUtils.stripParentheses(lhs);
+    if (strippedLhs == null) {
+      return;
+    }
+    final PsiExpression strippedRhs =
+      ParenthesesUtils.stripParentheses(rhs);
+    if (strippedRhs == null) {
+      return;
+    }
+    final String lhsText = strippedLhs.getText();
+    final String rhsText = strippedRhs.getText();
+    final PsiJavaToken operationSign = exp.getOperationSign();
+    final IElementType tokenType = operationSign.getTokenType();
+    final String signText = operationSign.getText();
+    @NonNls final StringBuilder buffer = new StringBuilder(lhsText);
+    buffer.append("==null?");
+    buffer.append(rhsText);
+    buffer.append(signText);
+    buffer.append(" null:");
+    if (tokenType.equals(JavaTokenType.NE)) {
+      buffer.append('!');
+    }
+    if (ParenthesesUtils.getPrecedence(strippedLhs) >
+        ParenthesesUtils.METHOD_CALL_PRECEDENCE) {
+      buffer.append('(');
+      buffer.append(lhsText);
+      buffer.append(')');
+    }
+    else {
+      buffer.append(lhsText);
+    }
+    buffer.append(".equals(");
+    buffer.append(rhsText);
+    buffer.append(')');
+    replaceExpression(buffer.toString(), exp);
+  }
 }

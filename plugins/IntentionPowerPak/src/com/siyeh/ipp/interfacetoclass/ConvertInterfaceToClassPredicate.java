@@ -24,28 +24,28 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 
 class ConvertInterfaceToClassPredicate implements PsiElementPredicate {
 
-    public boolean satisfiedBy(PsiElement element) {
-        final PsiElement parent = element.getParent();
-        if (!(parent instanceof PsiClass)) {
-            return false;
-        }
-        final PsiClass aClass = (PsiClass)parent;
-        if (!aClass.isInterface() || aClass.isAnnotationType()) {
-            return false;
-        }
-        final PsiElement leftBrace = aClass.getLBrace();
-        final int offsetInParent = element.getStartOffsetInParent();
-        if (leftBrace == null ||
-                offsetInParent >= leftBrace.getStartOffsetInParent()) {
-            return false;
-        }
-        final SearchScope useScope = aClass.getUseScope();
-        for (PsiClass inheritor :
-                ClassInheritorsSearch.search(aClass, useScope, true)) {
-            if (inheritor.isInterface()) {
-                return false;
-            }
-        }
-        return true;
+  public boolean satisfiedBy(PsiElement element) {
+    final PsiElement parent = element.getParent();
+    if (!(parent instanceof PsiClass)) {
+      return false;
     }
+    final PsiClass aClass = (PsiClass)parent;
+    if (!aClass.isInterface() || aClass.isAnnotationType()) {
+      return false;
+    }
+    final PsiElement leftBrace = aClass.getLBrace();
+    final int offsetInParent = element.getStartOffsetInParent();
+    if (leftBrace == null ||
+        offsetInParent >= leftBrace.getStartOffsetInParent()) {
+      return false;
+    }
+    final SearchScope useScope = aClass.getUseScope();
+    for (PsiClass inheritor :
+      ClassInheritorsSearch.search(aClass, useScope, true)) {
+      if (inheritor.isInterface()) {
+        return false;
+      }
+    }
+    return true;
+  }
 }

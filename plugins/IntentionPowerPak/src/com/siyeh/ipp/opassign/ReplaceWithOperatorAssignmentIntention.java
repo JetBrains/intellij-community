@@ -24,43 +24,43 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
 public class ReplaceWithOperatorAssignmentIntention
-        extends MutablyNamedIntention {
+  extends MutablyNamedIntention {
 
-    public String getTextForElement(PsiElement element) {
-        final PsiAssignmentExpression assignmentExpression =
-                (PsiAssignmentExpression)element;
-        final PsiExpression rhs = assignmentExpression.getRExpression();
-        final PsiBinaryExpression expression =
-                (PsiBinaryExpression)PsiUtil.deparenthesizeExpression(rhs);
-        assert expression != null;
-        final PsiJavaToken sign = expression.getOperationSign();
-        final String operator = sign.getText();
-        return IntentionPowerPackBundle.message(
-                "replace.assignment.with.operator.assignment.intention.name",
-                operator);
-    }
+  public String getTextForElement(PsiElement element) {
+    final PsiAssignmentExpression assignmentExpression =
+      (PsiAssignmentExpression)element;
+    final PsiExpression rhs = assignmentExpression.getRExpression();
+    final PsiBinaryExpression expression =
+      (PsiBinaryExpression)PsiUtil.deparenthesizeExpression(rhs);
+    assert expression != null;
+    final PsiJavaToken sign = expression.getOperationSign();
+    final String operator = sign.getText();
+    return IntentionPowerPackBundle.message(
+      "replace.assignment.with.operator.assignment.intention.name",
+      operator);
+  }
 
-    @NotNull
-    public PsiElementPredicate getElementPredicate() {
-        return new AssignmentExpressionReplaceableWithOperatorAssigment();
-    }
+  @NotNull
+  public PsiElementPredicate getElementPredicate() {
+    return new AssignmentExpressionReplaceableWithOperatorAssigment();
+  }
 
-    public void processIntention(@NotNull PsiElement element)
-            throws IncorrectOperationException {
-        final PsiAssignmentExpression expression =
-                (PsiAssignmentExpression)element;
-        final PsiExpression rhs =
-		        expression.getRExpression();
-	    final PsiBinaryExpression binaryExpression =
-			    (PsiBinaryExpression)PsiUtil.deparenthesizeExpression(rhs);
-        final PsiExpression lhs = expression.getLExpression();
-        assert rhs != null;
-        final PsiJavaToken sign = binaryExpression.getOperationSign();
-        final String operand = sign.getText();
-        final PsiExpression binaryRhs = binaryExpression.getROperand();
-        assert binaryRhs != null;
-        final String newExpression =
-                lhs.getText() + operand + '=' + binaryRhs.getText();
-        replaceExpression(newExpression, expression);
-    }
+  public void processIntention(@NotNull PsiElement element)
+    throws IncorrectOperationException {
+    final PsiAssignmentExpression expression =
+      (PsiAssignmentExpression)element;
+    final PsiExpression rhs =
+      expression.getRExpression();
+    final PsiBinaryExpression binaryExpression =
+      (PsiBinaryExpression)PsiUtil.deparenthesizeExpression(rhs);
+    final PsiExpression lhs = expression.getLExpression();
+    assert rhs != null;
+    final PsiJavaToken sign = binaryExpression.getOperationSign();
+    final String operand = sign.getText();
+    final PsiExpression binaryRhs = binaryExpression.getROperand();
+    assert binaryRhs != null;
+    final String newExpression =
+      lhs.getText() + operand + '=' + binaryRhs.getText();
+    replaceExpression(newExpression, expression);
+  }
 }

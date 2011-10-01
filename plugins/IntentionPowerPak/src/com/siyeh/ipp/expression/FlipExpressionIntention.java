@@ -29,48 +29,49 @@ import org.jetbrains.annotations.NotNull;
 
 public class FlipExpressionIntention extends MutablyNamedIntention {
 
-    @Override
-    public String getTextForElement(PsiElement element) {
-        final PsiBinaryExpression expression = (PsiBinaryExpression)element;
-        final PsiJavaToken sign = expression.getOperationSign();
-        final String operatorText = sign.getText();
-        final IElementType token = sign.getTokenType();
-        final boolean commutative =
-                ParenthesesUtils.isCommutativeBinaryOperator(token);
-        if (commutative) {
-            return IntentionPowerPackBundle.message("flip.smth.intention.name",
-                    operatorText);
-        } else {
-            return IntentionPowerPackBundle.message("flip.smth.intention.name1",
-                    operatorText);
-        }
+  @Override
+  public String getTextForElement(PsiElement element) {
+    final PsiBinaryExpression expression = (PsiBinaryExpression)element;
+    final PsiJavaToken sign = expression.getOperationSign();
+    final String operatorText = sign.getText();
+    final IElementType token = sign.getTokenType();
+    final boolean commutative =
+      ParenthesesUtils.isCommutativeBinaryOperator(token);
+    if (commutative) {
+      return IntentionPowerPackBundle.message("flip.smth.intention.name",
+                                              operatorText);
     }
+    else {
+      return IntentionPowerPackBundle.message("flip.smth.intention.name1",
+                                              operatorText);
+    }
+  }
 
-    @Override
-    @NotNull
-    public PsiElementPredicate getElementPredicate() {
-        return new ExpressionPredicate();
-    }
+  @Override
+  @NotNull
+  public PsiElementPredicate getElementPredicate() {
+    return new ExpressionPredicate();
+  }
 
-    @Override
-    public void processIntention(@NotNull PsiElement element)
-            throws IncorrectOperationException {
-        final PsiBinaryExpression expression = (PsiBinaryExpression)element;
-        final PsiExpression lhs = expression.getLOperand();
-        final PsiExpression rhs = expression.getROperand();
-        final PsiJavaToken sign = expression.getOperationSign();
-        if (rhs == null) {
-            return;
-        }
-        final String signText = sign.getText();
-        final String lhsText = lhs.getText();
-        final String rhsText = rhs.getText();
-        final StringBuilder newExpression = new StringBuilder(rhsText);
-        newExpression.append(signText);
-        if (lhsText.startsWith(signText)) {
-            newExpression.append(' ');
-        }
-        newExpression.append(lhsText);
-        replaceExpression(newExpression.toString(), expression);
+  @Override
+  public void processIntention(@NotNull PsiElement element)
+    throws IncorrectOperationException {
+    final PsiBinaryExpression expression = (PsiBinaryExpression)element;
+    final PsiExpression lhs = expression.getLOperand();
+    final PsiExpression rhs = expression.getROperand();
+    final PsiJavaToken sign = expression.getOperationSign();
+    if (rhs == null) {
+      return;
     }
+    final String signText = sign.getText();
+    final String lhsText = lhs.getText();
+    final String rhsText = rhs.getText();
+    final StringBuilder newExpression = new StringBuilder(rhsText);
+    newExpression.append(signText);
+    if (lhsText.startsWith(signText)) {
+      newExpression.append(' ');
+    }
+    newExpression.append(lhsText);
+    replaceExpression(newExpression.toString(), expression);
+  }
 }

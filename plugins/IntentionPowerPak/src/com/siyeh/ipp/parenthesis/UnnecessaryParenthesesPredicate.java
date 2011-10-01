@@ -21,50 +21,53 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ErrorUtil;
 import com.siyeh.ipp.psiutils.ParenthesesUtils;
 
-class UnnecessaryParenthesesPredicate implements PsiElementPredicate{
+class UnnecessaryParenthesesPredicate implements PsiElementPredicate {
 
-    public boolean satisfiedBy(PsiElement element){
-        if(!(element instanceof PsiParenthesizedExpression)){
-            return false;
-        }
-        if(ErrorUtil.containsError(element)){
-            return false;
-        }
-        final PsiParenthesizedExpression expression =
-                (PsiParenthesizedExpression) element;
-        final PsiElement parent = expression.getParent();
-        if(!(parent instanceof PsiExpression)){
-            return true;
-        }
-        final PsiExpression body = expression.getExpression();
-        if(body instanceof PsiParenthesizedExpression){
-            return true;
-        }
-        final int parentPrecedence =
-                ParenthesesUtils.getPrecedence((PsiExpression) parent);
-        final int childPrecedence = ParenthesesUtils.getPrecedence(body);
-        if(parentPrecedence > childPrecedence){
-            return true;
-        } else if(parentPrecedence == childPrecedence){
-            if(parent instanceof PsiBinaryExpression &&
-                    body instanceof PsiBinaryExpression){
-                final PsiBinaryExpression binaryExpression =
-                        (PsiBinaryExpression) parent;
-                final PsiJavaToken parentSign =
-                        binaryExpression.getOperationSign();
-                final IElementType parentOperator = parentSign.getTokenType();
-              final IElementType childOperator = ((PsiBinaryExpression)body).getOperationTokenType();
-                if(!parentOperator.equals(childOperator)){
-                    return false;
-                }
-                final PsiType parentType = binaryExpression.getType();
-                final PsiType bodyType = body.getType();
-                return parentType != null && parentType.equals(bodyType);
-            } else{
-                return false;
-            }
-        } else{
-            return false;
-        }
+  public boolean satisfiedBy(PsiElement element) {
+    if (!(element instanceof PsiParenthesizedExpression)) {
+      return false;
     }
+    if (ErrorUtil.containsError(element)) {
+      return false;
+    }
+    final PsiParenthesizedExpression expression =
+      (PsiParenthesizedExpression)element;
+    final PsiElement parent = expression.getParent();
+    if (!(parent instanceof PsiExpression)) {
+      return true;
+    }
+    final PsiExpression body = expression.getExpression();
+    if (body instanceof PsiParenthesizedExpression) {
+      return true;
+    }
+    final int parentPrecedence =
+      ParenthesesUtils.getPrecedence((PsiExpression)parent);
+    final int childPrecedence = ParenthesesUtils.getPrecedence(body);
+    if (parentPrecedence > childPrecedence) {
+      return true;
+    }
+    else if (parentPrecedence == childPrecedence) {
+      if (parent instanceof PsiBinaryExpression &&
+          body instanceof PsiBinaryExpression) {
+        final PsiBinaryExpression binaryExpression =
+          (PsiBinaryExpression)parent;
+        final PsiJavaToken parentSign =
+          binaryExpression.getOperationSign();
+        final IElementType parentOperator = parentSign.getTokenType();
+        final IElementType childOperator = ((PsiBinaryExpression)body).getOperationTokenType();
+        if (!parentOperator.equals(childOperator)) {
+          return false;
+        }
+        final PsiType parentType = binaryExpression.getType();
+        final PsiType bodyType = body.getType();
+        return parentType != null && parentType.equals(bodyType);
+      }
+      else {
+        return false;
+      }
+    }
+    else {
+      return false;
+    }
+  }
 }

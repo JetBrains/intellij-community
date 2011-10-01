@@ -21,21 +21,21 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 
 class MulticatchPredicate implements PsiElementPredicate {
 
-    public boolean satisfiedBy(PsiElement element) {
-        if (!(element instanceof PsiKeyword)) {
-            return false;
-        }
-        final PsiJavaToken javaToken = (PsiJavaToken) element;
-        final IElementType tokenType = javaToken.getTokenType();
-        if (!tokenType.equals(JavaTokenType.CATCH_KEYWORD)) {
-            return false;
-        }
-        final PsiElement parent = javaToken.getParent();
-        if (!(parent instanceof PsiCatchSection)) {
-            return false;
-        }
-        final PsiCatchSection catchSection = (PsiCatchSection) parent;
-        final PsiType type = catchSection.getCatchType();
-        return type instanceof PsiDisjunctionType;
+  public boolean satisfiedBy(PsiElement element) {
+    if (!(element instanceof PsiKeyword)) {
+      return false;
     }
+    final PsiJavaToken javaToken = (PsiJavaToken)element;
+    final IElementType tokenType = javaToken.getTokenType();
+    if (!tokenType.equals(JavaTokenType.CATCH_KEYWORD)) {
+      return false;
+    }
+    final PsiElement parent = javaToken.getParent();
+    if (!(parent instanceof PsiCatchSection)) {
+      return false;
+    }
+    final PsiCatchSection catchSection = (PsiCatchSection)parent;
+    final PsiType type = catchSection.getCatchType();
+    return type instanceof PsiDisjunctionType;
+  }
 }

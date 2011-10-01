@@ -19,20 +19,20 @@ import com.intellij.psi.*;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
 class DiamondTypePredicate implements PsiElementPredicate {
-    
-    public boolean satisfiedBy(PsiElement element) {
-        if (!(element instanceof PsiReferenceParameterList)) {
-            return false;
-        }
-        final PsiReferenceParameterList referenceParameterList =
-                (PsiReferenceParameterList) element;
-        final PsiTypeElement[] typeParameterElements =
-                referenceParameterList.getTypeParameterElements();
-        if (typeParameterElements.length != 1) {
-            return false;
-        }
-        final PsiTypeElement typeParameterElement = typeParameterElements[0];
-        final PsiType type = typeParameterElement.getType();
-        return type instanceof PsiDiamondType;
+
+  public boolean satisfiedBy(PsiElement element) {
+    if (!(element instanceof PsiReferenceParameterList)) {
+      return false;
     }
+    final PsiReferenceParameterList referenceParameterList =
+      (PsiReferenceParameterList)element;
+    final PsiTypeElement[] typeParameterElements =
+      referenceParameterList.getTypeParameterElements();
+    if (typeParameterElements.length != 1) {
+      return false;
+    }
+    final PsiTypeElement typeParameterElement = typeParameterElements[0];
+    final PsiType type = typeParameterElement.getType();
+    return type instanceof PsiDiamondType;
+  }
 }

@@ -24,48 +24,51 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
 public class ReplaceOperatorAssignmentWithPostfixExpressionIntention
-        extends MutablyNamedIntention {
+  extends MutablyNamedIntention {
 
-    @Override
-    protected String getTextForElement(PsiElement element) {
-        final PsiAssignmentExpression assignment =
-                (PsiAssignmentExpression)element;
-        final PsiExpression expression = assignment.getLExpression();
-        final PsiJavaToken sign = assignment.getOperationSign();
-        final IElementType tokenType = sign.getTokenType();
-        final String replacementText;
-        if (JavaTokenType.PLUSEQ.equals(tokenType)) {
-            replacementText = expression.getText() + "++";
-        } else {
-            replacementText = expression.getText() + "--";
-        }
-        return IntentionPowerPackBundle.message(
-                "replace.some.operator.with.other.intention.name",
-                sign.getText(), replacementText);
+  @Override
+  protected String getTextForElement(PsiElement element) {
+    final PsiAssignmentExpression assignment =
+      (PsiAssignmentExpression)element;
+    final PsiExpression expression = assignment.getLExpression();
+    final PsiJavaToken sign = assignment.getOperationSign();
+    final IElementType tokenType = sign.getTokenType();
+    final String replacementText;
+    if (JavaTokenType.PLUSEQ.equals(tokenType)) {
+      replacementText = expression.getText() + "++";
     }
+    else {
+      replacementText = expression.getText() + "--";
+    }
+    return IntentionPowerPackBundle.message(
+      "replace.some.operator.with.other.intention.name",
+      sign.getText(), replacementText);
+  }
 
-    @NotNull
-    @Override
-    protected PsiElementPredicate getElementPredicate() {
-        return new ReplaceOperatorAssignmentWithPostfixExpressionPredicate();
-    }
+  @NotNull
+  @Override
+  protected PsiElementPredicate getElementPredicate() {
+    return new ReplaceOperatorAssignmentWithPostfixExpressionPredicate();
+  }
 
-    @Override
-    protected void processIntention(@NotNull PsiElement element)
-            throws IncorrectOperationException {
-        final PsiAssignmentExpression assignment =
-                (PsiAssignmentExpression)element;
-        final PsiExpression expression = assignment.getLExpression();
-        final String expressionText = expression.getText();
-        final IElementType tokenType = assignment.getOperationTokenType();
-        final String newExpressionText;
-        if (JavaTokenType.PLUSEQ.equals(tokenType)) {
-            newExpressionText = expressionText + "++";
-        } else if (JavaTokenType.MINUSEQ.equals(tokenType)) {
-            newExpressionText = expressionText + "--";
-        } else {
-            return;
-        }
-        replaceExpression(newExpressionText, assignment);
+  @Override
+  protected void processIntention(@NotNull PsiElement element)
+    throws IncorrectOperationException {
+    final PsiAssignmentExpression assignment =
+      (PsiAssignmentExpression)element;
+    final PsiExpression expression = assignment.getLExpression();
+    final String expressionText = expression.getText();
+    final IElementType tokenType = assignment.getOperationTokenType();
+    final String newExpressionText;
+    if (JavaTokenType.PLUSEQ.equals(tokenType)) {
+      newExpressionText = expressionText + "++";
     }
+    else if (JavaTokenType.MINUSEQ.equals(tokenType)) {
+      newExpressionText = expressionText + "--";
+    }
+    else {
+      return;
+    }
+    replaceExpression(newExpressionText, assignment);
+  }
 }

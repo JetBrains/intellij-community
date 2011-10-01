@@ -21,28 +21,28 @@ import com.intellij.psi.PsiType;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NonNls;
 
-class ConvertIntegerToOctalPredicate implements PsiElementPredicate{
+class ConvertIntegerToOctalPredicate implements PsiElementPredicate {
 
-    public boolean satisfiedBy(PsiElement element){
-        if(!(element instanceof PsiLiteralExpression)){
-            return false;
-        }
-        final PsiLiteralExpression expression = (PsiLiteralExpression) element;
-        final PsiType type = expression.getType();
-        if(!(PsiType.INT.equals(type) || PsiType.LONG.equals(type))){
-            return false;
-        }
-        @NonNls final String text = expression.getText();
-        if (text.charAt(0) != '0') {
-            return true;
-        }
-        if (text.length() < 2) {
-            return true;
-        }
-        final char c1 = text.charAt(1);
-        if (c1 != '_' && (c1 < '0' || c1 > '7')) {
-            return true;
-        }
-        return false;
+  public boolean satisfiedBy(PsiElement element) {
+    if (!(element instanceof PsiLiteralExpression)) {
+      return false;
     }
+    final PsiLiteralExpression expression = (PsiLiteralExpression)element;
+    final PsiType type = expression.getType();
+    if (!(PsiType.INT.equals(type) || PsiType.LONG.equals(type))) {
+      return false;
+    }
+    @NonNls final String text = expression.getText();
+    if (text.charAt(0) != '0') {
+      return true;
+    }
+    if (text.length() < 2) {
+      return true;
+    }
+    final char c1 = text.charAt(1);
+    if (c1 != '_' && (c1 < '0' || c1 > '7')) {
+      return true;
+    }
+    return false;
+  }
 }

@@ -35,7 +35,8 @@ public abstract class IPPTestCase extends LightCodeInsightFixtureTestCase {
   protected void assertIntentionNotAvailable() {
     final String testName = getTestName(false);
     myFixture.configureByFile(testName + ".java");
-    assertEmpty("Intention \'" + getIntentionName() + "\' is available but should not", myFixture.filterAvailableIntentions(getIntentionName()));
+    assertEmpty("Intention \'" + getIntentionName() + "\' is available but should not",
+                myFixture.filterAvailableIntentions(getIntentionName()));
   }
 
   protected abstract String getIntentionName();

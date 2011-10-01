@@ -33,105 +33,108 @@ import java.util.List;
 
 public class ReplaceFullyQualifiedNameWithImportIntention extends Intention {
 
-    @Override
-    @NotNull
-    public PsiElementPredicate getElementPredicate() {
-        return new FullyQualifiedNamePredicate();
+  @Override
+  @NotNull
+  public PsiElementPredicate getElementPredicate() {
+    return new FullyQualifiedNamePredicate();
+  }
+
+  @Override
+  public void processIntention(@NotNull PsiElement element)
+    throws IncorrectOperationException {
+    PsiJavaCodeReferenceElement reference =
+      (PsiJavaCodeReferenceElement)element;
+    PsiElement target = reference.resolve();
+    if (!(target instanceof PsiClass)) {
+      PsiElement parent = reference.getParent();
+      while (parent instanceof PsiJavaCodeReferenceElement) {
+        reference = (PsiJavaCodeReferenceElement)parent;
+        target = reference.resolve();
+        if (target instanceof PsiClass) {
+          break;
+        }
+        parent = parent.getParent();
+      }
+    }
+    if (!(target instanceof PsiClass)) {
+      return;
+    }
+    final PsiClass aClass = (PsiClass)target;
+    final String qualifiedName = aClass.getQualifiedName();
+    if (qualifiedName == null) {
+      return;
+    }
+    final PsiJavaFile file =
+      PsiTreeUtil.getParentOfType(reference, PsiJavaFile.class);
+    if (file == null) {
+      return;
+    }
+    if (!ImportUtils.nameCanBeImported(qualifiedName, file)) {
+      return;
+    }
+    ImportUtils.addImportIfNeeded(file, aClass);
+    final String fullyQualifiedText = reference.getText();
+    final QualificationRemover qualificationRemover =
+      new QualificationRemover(fullyQualifiedText);
+    file.accept(qualificationRemover);
+    final Collection<PsiJavaCodeReferenceElement> shortenedElements =
+      qualificationRemover.getShortenedElements();
+    final int elementCount = shortenedElements.size();
+    final String text;
+    if (elementCount == 1) {
+      text = IntentionPowerPackBundle.message(
+        "1.fully.qualified.name.status.bar.escape.highlighting.message");
+    }
+    else {
+      text = IntentionPowerPackBundle.message(
+        "multiple.fully.qualified.names.status.bar.escape.highlighting.message",
+        Integer.valueOf(elementCount));
+    }
+    HighlightUtil.highlightElements(shortenedElements, text);
+  }
+
+  private static class QualificationRemover
+    extends JavaRecursiveElementWalkingVisitor {
+
+    private final String fullyQualifiedText;
+    private final List<PsiJavaCodeReferenceElement> shortenedElements =
+      new ArrayList();
+
+    QualificationRemover(String fullyQualifiedText) {
+      this.fullyQualifiedText = fullyQualifiedText;
+    }
+
+    public Collection<PsiJavaCodeReferenceElement> getShortenedElements() {
+      return Collections.unmodifiableCollection(shortenedElements);
     }
 
     @Override
-    public void processIntention(@NotNull PsiElement element)
-            throws IncorrectOperationException {
-        PsiJavaCodeReferenceElement reference =
-                (PsiJavaCodeReferenceElement)element;
-        PsiElement target = reference.resolve();
-        if (!(target instanceof PsiClass)) {
-            PsiElement parent = reference.getParent();
-            while (parent instanceof PsiJavaCodeReferenceElement) {
-                reference = (PsiJavaCodeReferenceElement) parent;
-                target = reference.resolve();
-                if (target instanceof PsiClass) {
-                    break;
-                }
-                parent = parent.getParent();
-            }
-        }
-        if (!(target instanceof PsiClass)) {
-            return;
-        }
-        final PsiClass aClass = (PsiClass)target;
-        final String qualifiedName = aClass.getQualifiedName();
-        if (qualifiedName == null) {
-            return;
-        }
-        final PsiJavaFile file =
-                PsiTreeUtil.getParentOfType(reference, PsiJavaFile.class);
-        if (file == null) {
-            return;
-        }
-        if (!ImportUtils.nameCanBeImported(qualifiedName, file)) {
-            return;
-        }
-        ImportUtils.addImportIfNeeded(file, aClass);
-        final String fullyQualifiedText = reference.getText();
-        final QualificationRemover qualificationRemover =
-                new QualificationRemover(fullyQualifiedText);
-        file.accept(qualificationRemover);
-        final Collection<PsiJavaCodeReferenceElement> shortenedElements =
-                qualificationRemover.getShortenedElements();
-        final int elementCount = shortenedElements.size();
-        final String text;
-        if (elementCount == 1) {
-            text = IntentionPowerPackBundle.message(
-                    "1.fully.qualified.name.status.bar.escape.highlighting.message");
-        } else {
-            text = IntentionPowerPackBundle.message(
-                    "multiple.fully.qualified.names.status.bar.escape.highlighting.message",
-                    Integer.valueOf(elementCount));
-        }
-        HighlightUtil.highlightElements(shortenedElements, text);
+    public void visitReferenceElement(
+      PsiJavaCodeReferenceElement reference) {
+      super.visitReferenceElement(reference);
+      final PsiElement parent = reference.getParent();
+      if (parent instanceof PsiImportStatement) {
+        return;
+      }
+      final String text = reference.getText();
+      if (!text.equals(fullyQualifiedText)) {
+        return;
+      }
+      final PsiElement qualifier = reference.getQualifier();
+      if (qualifier == null) {
+        return;
+      }
+      try {
+        qualifier.delete();
+      }
+      catch (IncorrectOperationException e) {
+        final Class<? extends QualificationRemover> aClass =
+          getClass();
+        final String className = aClass.getName();
+        final Logger logger = Logger.getInstance(className);
+        logger.error(e);
+      }
+      shortenedElements.add(reference);
     }
-
-    private static class QualificationRemover
-            extends JavaRecursiveElementWalkingVisitor {
-
-        private final String fullyQualifiedText;
-        private final List<PsiJavaCodeReferenceElement> shortenedElements =
-                new ArrayList();
-
-        QualificationRemover(String fullyQualifiedText) {
-            this.fullyQualifiedText = fullyQualifiedText;
-        }
-
-        public Collection<PsiJavaCodeReferenceElement> getShortenedElements() {
-            return Collections.unmodifiableCollection(shortenedElements);
-        }
-
-        @Override public void visitReferenceElement(
-                PsiJavaCodeReferenceElement reference) {
-            super.visitReferenceElement(reference);
-            final PsiElement parent = reference.getParent();
-            if (parent instanceof PsiImportStatement) {
-                return;
-            }
-            final String text = reference.getText();
-            if (!text.equals(fullyQualifiedText)) {
-                return;
-            }
-            final PsiElement qualifier = reference.getQualifier();
-            if (qualifier == null) {
-                return;
-            }
-            try {
-                qualifier.delete();
-            } catch(IncorrectOperationException e){
-                final Class<? extends QualificationRemover> aClass =
-                        getClass();
-                final String className = aClass.getName();
-                final Logger logger = Logger.getInstance(className);
-                logger.error(e);
-            }
-            shortenedElements.add(reference);
-        }
-    }
+  }
 }

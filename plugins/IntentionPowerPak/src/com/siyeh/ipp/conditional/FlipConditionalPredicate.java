@@ -20,18 +20,18 @@ import com.intellij.psi.PsiElement;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ErrorUtil;
 
-class FlipConditionalPredicate implements PsiElementPredicate{
+class FlipConditionalPredicate implements PsiElementPredicate {
 
-    public boolean satisfiedBy(PsiElement element){
-        if(!(element instanceof PsiConditionalExpression)){
-            return false;
-        }
-        final PsiConditionalExpression condition =
-                (PsiConditionalExpression) element;
-        if (condition.getThenExpression() == null ||
-                condition.getElseExpression() == null) {
-            return false;
-        }
-        return !ErrorUtil.containsError(element);
+  public boolean satisfiedBy(PsiElement element) {
+    if (!(element instanceof PsiConditionalExpression)) {
+      return false;
     }
+    final PsiConditionalExpression condition =
+      (PsiConditionalExpression)element;
+    if (condition.getThenExpression() == null ||
+        condition.getElseExpression() == null) {
+      return false;
+    }
+    return !ErrorUtil.containsError(element);
+  }
 }

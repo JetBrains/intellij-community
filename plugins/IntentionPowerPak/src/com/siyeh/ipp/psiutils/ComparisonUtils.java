@@ -28,65 +28,65 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class ComparisonUtils{
+public class ComparisonUtils {
 
-    private static final Set<IElementType> comparisons =
-            new HashSet<IElementType>(6);
-    private static final Map<IElementType, String> flippedComparisons =
-            new HashMap<IElementType, String>(6);
-    private static final Map<IElementType, String> negatedComparisons =
-            new HashMap<IElementType, String>(6);
+  private static final Set<IElementType> comparisons =
+    new HashSet<IElementType>(6);
+  private static final Map<IElementType, String> flippedComparisons =
+    new HashMap<IElementType, String>(6);
+  private static final Map<IElementType, String> negatedComparisons =
+    new HashMap<IElementType, String>(6);
 
-    private ComparisonUtils(){
+  private ComparisonUtils() {
+  }
+
+  static {
+    comparisons.add(JavaTokenType.EQEQ);
+    comparisons.add(JavaTokenType.NE);
+    comparisons.add(JavaTokenType.GT);
+    comparisons.add(JavaTokenType.LT);
+    comparisons.add(JavaTokenType.GE);
+    comparisons.add(JavaTokenType.LE);
+
+    flippedComparisons.put(JavaTokenType.EQEQ, "==");
+    flippedComparisons.put(JavaTokenType.NE, "!=");
+    flippedComparisons.put(JavaTokenType.GT, "<");
+    flippedComparisons.put(JavaTokenType.LT, ">");
+    flippedComparisons.put(JavaTokenType.GE, "<=");
+    flippedComparisons.put(JavaTokenType.LE, ">=");
+
+    negatedComparisons.put(JavaTokenType.EQEQ, "!=");
+    negatedComparisons.put(JavaTokenType.NE, "==");
+    negatedComparisons.put(JavaTokenType.GT, "<=");
+    negatedComparisons.put(JavaTokenType.LT, ">=");
+    negatedComparisons.put(JavaTokenType.GE, "<");
+    negatedComparisons.put(JavaTokenType.LE, ">");
+  }
+
+  public static boolean isComparison(@Nullable PsiExpression expression) {
+    if (!(expression instanceof PsiBinaryExpression)) {
+      return false;
     }
+    final PsiBinaryExpression binaryExpression =
+      (PsiBinaryExpression)expression;
+    final IElementType tokenType = binaryExpression.getOperationTokenType();
+    return isComparison(tokenType);
+  }
 
-    static {
-        comparisons.add(JavaTokenType.EQEQ);
-        comparisons.add(JavaTokenType.NE);
-        comparisons.add(JavaTokenType.GT);
-        comparisons.add(JavaTokenType.LT);
-        comparisons.add(JavaTokenType.GE);
-        comparisons.add(JavaTokenType.LE);
+  public static boolean isComparison(@NotNull IElementType tokenType) {
+    return comparisons.contains(tokenType);
+  }
 
-        flippedComparisons.put(JavaTokenType.EQEQ, "==");
-        flippedComparisons.put(JavaTokenType.NE, "!=");
-        flippedComparisons.put(JavaTokenType.GT, "<");
-        flippedComparisons.put(JavaTokenType.LT, ">");
-        flippedComparisons.put(JavaTokenType.GE, "<=");
-        flippedComparisons.put(JavaTokenType.LE, ">=");
+  public static String getFlippedComparison(@NotNull PsiJavaToken sign) {
+    final IElementType text = sign.getTokenType();
+    return getFlippedComparison(text);
+  }
 
-        negatedComparisons.put(JavaTokenType.EQEQ, "!=");
-        negatedComparisons.put(JavaTokenType.NE, "==");
-        negatedComparisons.put(JavaTokenType.GT, "<=");
-        negatedComparisons.put(JavaTokenType.LT, ">=");
-        negatedComparisons.put(JavaTokenType.GE, "<");
-        negatedComparisons.put(JavaTokenType.LE, ">");
-    }
+  public static String getFlippedComparison(IElementType text) {
+    return flippedComparisons.get(text);
+  }
 
-    public static boolean isComparison(@Nullable PsiExpression expression){
-        if(!(expression instanceof PsiBinaryExpression)){
-            return false;
-        }
-        final PsiBinaryExpression binaryExpression =
-                (PsiBinaryExpression) expression;
-        final IElementType tokenType = binaryExpression.getOperationTokenType();
-        return isComparison(tokenType);
-    }
-
-    public static boolean isComparison(@NotNull IElementType tokenType){
-        return comparisons.contains(tokenType);
-    }
-
-    public static String getFlippedComparison(@NotNull PsiJavaToken sign){
-        final IElementType text = sign.getTokenType();
-        return getFlippedComparison(text);
-    }
-
-    public static String getFlippedComparison(IElementType text){
-        return flippedComparisons.get(text);
-    }
-
-    public static String getNegatedComparison(IElementType tokenType){
-        return negatedComparisons.get(tokenType);
-    }
+  public static String getNegatedComparison(IElementType tokenType) {
+    return negatedComparisons.get(tokenType);
+  }
 }

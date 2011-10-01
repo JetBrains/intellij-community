@@ -24,27 +24,26 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
-class CStyleCommentPredicate implements PsiElementPredicate{
+class CStyleCommentPredicate implements PsiElementPredicate {
 
-    public boolean satisfiedBy(PsiElement element){
-        if(!(element instanceof PsiComment)) {
-            return false;
-        }
-        if(element instanceof PsiDocComment){
-            return false;
-        }
-        final PsiComment comment = (PsiComment) element;
-        final IElementType type = comment.getTokenType();
-        if(!JavaTokenType.C_STYLE_COMMENT.equals(type)){
-            return false;
-        }
-      final PsiElement sibling = PsiTreeUtil.nextLeaf(comment);
-        if(!(sibling instanceof PsiWhiteSpace))
-        {
-            return false;
-        }
-        final String whitespaceText = sibling.getText();
-        return whitespaceText.indexOf((int) '\n') >=0 ||
-                whitespaceText.indexOf((int) '\r') >= 0;
+  public boolean satisfiedBy(PsiElement element) {
+    if (!(element instanceof PsiComment)) {
+      return false;
     }
+    if (element instanceof PsiDocComment) {
+      return false;
+    }
+    final PsiComment comment = (PsiComment)element;
+    final IElementType type = comment.getTokenType();
+    if (!JavaTokenType.C_STYLE_COMMENT.equals(type)) {
+      return false;
+    }
+    final PsiElement sibling = PsiTreeUtil.nextLeaf(comment);
+    if (!(sibling instanceof PsiWhiteSpace)) {
+      return false;
+    }
+    final String whitespaceText = sibling.getText();
+    return whitespaceText.indexOf((int)'\n') >= 0 ||
+           whitespaceText.indexOf((int)'\r') >= 0;
+  }
 }
