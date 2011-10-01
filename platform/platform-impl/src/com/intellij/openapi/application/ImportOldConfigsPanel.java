@@ -89,7 +89,8 @@ public class ImportOldConfigsPanel extends JDialog {
 
     if (myGuessedOldConfig != null) {
       myPrevInstallation.setText(myGuessedOldConfig.getParent());
-    } if (SystemInfo.isMac) {
+    }
+    else if (SystemInfo.isMac) {
       myPrevInstallation.setText(findPreviousInstallationMac(productName));
     }
     else if (SystemInfo.isWindows) {
@@ -152,12 +153,9 @@ public class ImportOldConfigsPanel extends JDialog {
         for (File file : files) {
           if (file.isDirectory() && file.getName().startsWith(productName)) {
             String versionName = file.getName().substring(productName.length()).trim();
-            // EAP builds don't have . in version number - ignore them
-            if (versionName.indexOf('.') > 0) {
-              if (latestVersion == null || StringUtil.compareVersionNumbers(latestVersion, versionName) > 0) {
-                latestVersion = versionName;
-                latestFile = file;
-              }
+            if (latestVersion == null || StringUtil.compareVersionNumbers(latestVersion, versionName) > 0) {
+              latestVersion = versionName;
+              latestFile = file;
             }
           }
         }
