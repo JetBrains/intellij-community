@@ -132,7 +132,7 @@ public class ConfigImportHelper {
         maxFile = file;
       }
     }
-    return new File(maxFile, CONFIG_RELATED_PATH);
+    return maxFile != null ? new File(maxFile, CONFIG_RELATED_PATH) : null;
   }
 
   public static void doImport(final String newConfigPath, final File oldConfigDir) {
