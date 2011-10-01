@@ -23,11 +23,11 @@ import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.NavigatableWithText;
@@ -129,7 +129,7 @@ public class PsiFileNode extends BasePsiNode<PsiFile> implements NavigatableWith
   public String getTitle() {
     final PsiFile file = getValue();
     if (file != null) {
-      return ProjectUtil.getLocationRelativeToUserHome(file.getVirtualFile().getPresentableUrl());
+      return FileUtil.getLocationRelativeToUserHome(file.getVirtualFile().getPresentableUrl());
     }
     return super.getTitle();
   }

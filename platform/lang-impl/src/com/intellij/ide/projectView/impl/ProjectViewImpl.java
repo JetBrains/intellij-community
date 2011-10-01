@@ -53,7 +53,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
 import com.intellij.openapi.ui.ComboBox;
@@ -62,6 +61,7 @@ import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -861,7 +861,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       if (element != null) {
         PsiFile file = element.getContainingFile();
         if (file != null) {
-          title = ProjectUtil.getLocationRelativeToUserHome(file.getVirtualFile().getPresentableUrl());
+          title = FileUtil.getLocationRelativeToUserHome(file.getVirtualFile().getPresentableUrl());
         }
         else if (element instanceof PsiDirectory) {
           title = PsiDirectoryFactory.getInstance(myProject).getQualifiedName((PsiDirectory) element, true);
@@ -873,7 +873,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       else {
         title = "";
         if (myProject != null) {
-          title = ProjectUtil.getLocationRelativeToUserHome(myProject.getPresentableUrl());
+          title = FileUtil.getLocationRelativeToUserHome(myProject.getPresentableUrl());
         }
       }
     }

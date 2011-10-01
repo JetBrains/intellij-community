@@ -16,8 +16,8 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFilePathWrapper;
 import com.intellij.platform.ProjectBaseDirectory;
@@ -30,10 +30,10 @@ public class PlatformFrameTitleBuilder extends FrameTitleBuilder {
     final VirtualFile baseDir = project.getBaseDir();
     if (baseDir != null) {
       if (SystemInfo.isMac && baseDir.getName().equals(project.getName())) {
-        return "[" + ProjectUtil.getLocationRelativeToUserHome(baseDir.getPresentableUrl()) + "]";  
+        return "[" + FileUtil.getLocationRelativeToUserHome(baseDir.getPresentableUrl()) + "]";
       }
       
-      return project.getName() + " - [" + ProjectUtil.getLocationRelativeToUserHome(baseDir.getPresentableUrl()) + "]";
+      return project.getName() + " - [" + FileUtil.getLocationRelativeToUserHome(baseDir.getPresentableUrl()) + "]";
     }
     return project.getName();
   }
@@ -43,12 +43,12 @@ public class PlatformFrameTitleBuilder extends FrameTitleBuilder {
     if (file instanceof VirtualFilePathWrapper) {
       return ((VirtualFilePathWrapper)file).getPresentablePath();
     }
-    String url = ProjectUtil.getLocationRelativeToUserHome(file.getPresentableUrl());
+    String url = FileUtil.getLocationRelativeToUserHome(file.getPresentableUrl());
     VirtualFile baseDir = ProjectBaseDirectory.getInstance(project).getBaseDir();
     if (baseDir == null) baseDir = project.getBaseDir();
     if (baseDir != null) {
       //noinspection ConstantConditions
-      final String projectHomeUrl = ProjectUtil.getLocationRelativeToUserHome(baseDir.getPresentableUrl());
+      final String projectHomeUrl = FileUtil.getLocationRelativeToUserHome(baseDir.getPresentableUrl());
       if (url.startsWith(projectHomeUrl)) {
         url = "..." + url.substring(projectHomeUrl.length());
       }

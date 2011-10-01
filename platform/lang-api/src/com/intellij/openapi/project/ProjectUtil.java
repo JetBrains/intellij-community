@@ -34,13 +34,11 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFilePathWrapper;
-import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.File;
 
 public class ProjectUtil {
   @NonNls public static final String DIRECTORY_BASED_PROJECT_DIR = ".idea";
@@ -51,24 +49,7 @@ public class ProjectUtil {
   @Nullable
   public static String getProjectLocationString(@NotNull final Project project) {
     String projectPath = project.getLocation();
-    return getLocationRelativeToUserHome(projectPath);
-  }
-  
-  @Nullable
-  public static String getLocationRelativeToUserHome(final String path) {
-    if (path == null) return null;
-    
-    String _path = path;
-    
-    if ((SystemInfo.isLinux || SystemInfo.isMac)) {
-      final File projectDir = new File(path);
-      final File userHomeDir = new File(SystemProperties.getUserHome());
-      if (FileUtil.isAncestor(userHomeDir, projectDir, true)) {
-        _path = "~/" + FileUtil.getRelativePath(userHomeDir, projectDir);
-      }
-    }
-
-    return _path;
+    return FileUtil.getLocationRelativeToUserHome(projectPath);
   }
 
   public static String calcRelativeToProjectPath(final VirtualFile file, final Project project, final boolean includeFilePath) {
