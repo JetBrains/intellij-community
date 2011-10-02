@@ -17,7 +17,10 @@ package com.siyeh.ig.errorhandling;
 
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.Processor;
+import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -112,13 +115,37 @@ public class ExceptionFromCatchWhichDoesntWrapInspection
     }
 
     @Override
-    public void visitReferenceExpression(
-      PsiReferenceExpression expression) {
+    public void visitReferenceExpression(PsiReferenceExpression expression) {
+      if (argumentsContainCatchParameter) {
+        return;
+      }
       super.visitReferenceExpression(expression);
       final PsiElement target = expression.resolve();
       if (!parameter.equals(target)) {
-        if (target instanceof PsiVariable) {
-          final PsiVariable variable = (PsiVariable)target;
+        if (target instanceof PsiLocalVariable) {
+          final PsiLocalVariable variable = (PsiLocalVariable)target;
+          final Query<PsiReference> query = ReferencesSearch.search(variable, variable.getUseScope(), false);
+          query.forEach(new Processor<PsiReference>() {
+            @Override
+            public boolean process(PsiReference reference) {
+              final PsiElement element = reference.getElement();
+              final PsiElement parent = PsiTreeUtil.skipParentsOfType(element, PsiParenthesizedExpression.class);
+              if (!(parent instanceof PsiReferenceExpression)) {
+                return true;
+              }
+              final PsiElement grandParent = parent.getParent();
+              if (!(grandParent instanceof PsiMethodCallExpression)) {
+                return true;
+              }
+              final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
+              final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
+              final PsiExpression[] arguments = argumentList.getExpressions();
+              for (PsiExpression argument : arguments) {
+                argument.accept(ReferenceFinder.this);
+              }
+              return true;
+            }
+          });
           final PsiExpression initializer = variable.getInitializer();
           if (initializer != null) {
             initializer.accept(this);
@@ -131,10 +158,13 @@ public class ExceptionFromCatchWhichDoesntWrapInspection
       }
       else {
         final PsiElement parent = expression.getParent();
-        final PsiElement grandParent = parent.getParent();
-        if (!(grandParent instanceof PsiMethodCallExpression)) {
-          argumentsContainCatchParameter = true;
+        if (parent instanceof PsiReferenceExpression) {
+          final PsiElement grandParent = parent.getParent();
+          if (grandParent instanceof PsiMethodCallExpression) {
+            return;
+          }
         }
+        argumentsContainCatchParameter = true;
       }
     }
 
