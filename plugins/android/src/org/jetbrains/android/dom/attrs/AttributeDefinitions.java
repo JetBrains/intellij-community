@@ -187,10 +187,8 @@ public class AttributeDefinitions {
       LOG.info("Found attr tag with no name: " + tag.getText());
       return;
     }
-    AttributeDefinition attr = myAttrs.get(name);
-    if (attr == null) {
-      attr = parseAttrTag(tag);
-    }
+
+    final AttributeDefinition attr = parseAttrTag(tag);
     if (attr != null) {
       def.addAttribute(attr);
     }

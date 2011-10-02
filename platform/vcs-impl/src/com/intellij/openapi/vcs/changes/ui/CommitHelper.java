@@ -135,7 +135,7 @@ public class CommitHelper {
             if (failed > 0) {
               text += ", " + failed + " " + StringUtil.pluralize("change", failed) + " failed to commit";
             }
-            String content = StringUtil.isEmpty(myCommitMessage) ? text : text + ": " + StringUtil.escapeXml(myCommitMessage);
+            String content = StringUtil.isEmpty(myCommitMessage) ? text : text + ": " + escape(myCommitMessage);
             VcsBalloonProblemNotifier.NOTIFICATION_GROUP.createNotification(content, NotificationType.INFORMATION).notify(myProject);
             return new NotificationInfo("VCS Commit", "VCS Commit Finished", text, true);
           }
@@ -143,6 +143,17 @@ public class CommitHelper {
       ProgressManager.getInstance().run(task);
       return false;
     }
+  }
+
+  /*
+    Commit message is passed to NotificationManagerImpl#doNotify and displayed as HTML.
+    Thus HTML tag braces (< and >) should be escaped,
+    but only they since the text is passed directly to HTML <BODY> tag and is not a part of an attribute or else.
+   */
+  private static String escape(String s) {
+    final String[] FROM = {"<", ">"};
+    final String[] TO = {"&lt;", "&gt;"};
+    return StringUtil.replace(s, FROM, TO);
   }
 
   private static boolean doesntContainErrors(final List<VcsException> vcsExceptions) {
