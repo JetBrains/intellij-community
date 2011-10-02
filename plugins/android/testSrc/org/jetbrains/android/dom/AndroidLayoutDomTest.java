@@ -292,6 +292,10 @@ public class AndroidLayoutDomTest extends AndroidDomTest {
     doTestHighlighting();
   }
 
+  public void testMinHeightCompletion() throws Throwable {
+    doTestCompletionVariants(getTestName(true) + ".xml", "@android:", "@dimen/myDimen");
+  }
+
   public void testOnClickNavigation() throws Throwable {
     copyOnClickClasses();
     final VirtualFile file = copyFileToProject(getTestName(true) + ".xml");
