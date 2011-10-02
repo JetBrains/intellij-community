@@ -252,16 +252,4 @@ public abstract class HighlightingTestBase extends UsefulTestCase implements Ide
       };
     }
   }
-
-  private static class MyMockProgressIndicator extends MockProgressIndicator implements UserDataHolder {
-    private final UserDataHolderBase myHolder = new UserDataHolderBase();
-
-    public <T> T getUserData(@NotNull Key<T> key) {
-      return myHolder.getUserData(key);
-    }
-
-    public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
-      myHolder.putUserData(key, value);
-    }
-  }
 }
