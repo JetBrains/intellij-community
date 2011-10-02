@@ -42,24 +42,24 @@ public class ClassInitializerMayBeStaticInspection extends BaseInspection {
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
-            "class.initializer.may.be.static.problem.descriptor");
+      "class.initializer.may.be.static.problem.descriptor");
   }
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos){
-      return new ChangeModifierFix(PsiModifier.STATIC);
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new ChangeModifierFix(PsiModifier.STATIC);
   }
 
   @Nls
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
-            "class.initializer.may.be.static.display.name");
+      "class.initializer.may.be.static.display.name");
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor(){
-      return new ClassInitializerCanBeStaticVisitor();
+  public BaseInspectionVisitor buildVisitor() {
+    return new ClassInitializerCanBeStaticVisitor();
   }
 
   private static class ClassInitializerCanBeStaticVisitor extends BaseInspectionVisitor {
@@ -68,30 +68,30 @@ public class ClassInitializerMayBeStaticInspection extends BaseInspection {
       if (initializer.hasModifierProperty(PsiModifier.STATIC)) return;
 
       final PsiClass containingClass =
-              ClassUtils.getContainingClass(initializer);
-      if(containingClass == null){
-          return;
+        ClassUtils.getContainingClass(initializer);
+      if (containingClass == null) {
+        return;
       }
       final ExtensionsArea rootArea = Extensions.getRootArea();
       final ExtensionPoint<Condition<PsiElement>> extensionPoint = rootArea.getExtensionPoint(
-              "com.intellij.cantBeStatic");
+        "com.intellij.cantBeStatic");
       final Condition<PsiElement>[] addins = extensionPoint.getExtensions();
       for (Condition<PsiElement> addin : addins) {
         if (addin.value(initializer)) {
-              return;
-          }
+          return;
+        }
       }
       final PsiElement scope = containingClass.getScope();
-      if(!(scope instanceof PsiJavaFile) &&
-              !containingClass.hasModifierProperty(PsiModifier.STATIC)){
-          return;
+      if (!(scope instanceof PsiJavaFile) &&
+          !containingClass.hasModifierProperty(PsiModifier.STATIC)) {
+        return;
       }
 
       final MethodReferenceVisitor visitor =
-              new MethodReferenceVisitor(initializer);
+        new MethodReferenceVisitor(initializer);
       initializer.accept(visitor);
-      if(!visitor.areReferencesStaticallyAccessible()){
-          return;
+      if (!visitor.areReferencesStaticallyAccessible()) {
+        return;
       }
 
       registerClassInitializerError(initializer);

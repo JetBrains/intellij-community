@@ -24,11 +24,11 @@ public class ReplaceDiamondWithExplicitTypeIntentionTest extends IPPTestCase {
   }
 
   public void testApplicableDiamond() {
-      doTest();
+    doTest();
   }
 
   public void testApplicableDiamondCheckFormatting() {
-     doTest();
+    doTest();
   }
 
   public void testExplicitTypeArgs() {

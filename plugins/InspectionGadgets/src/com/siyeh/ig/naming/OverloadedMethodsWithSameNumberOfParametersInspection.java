@@ -25,99 +25,99 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public class OverloadedMethodsWithSameNumberOfParametersInspection
-        extends BaseInspection {
+  extends BaseInspection {
 
-    @SuppressWarnings({"PublicField"})
-    public boolean ignoreInconvertibleTypes = true;
+  @SuppressWarnings({"PublicField"})
+  public boolean ignoreInconvertibleTypes = true;
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "overloaded.methods.with.same.number.parameters.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "overloaded.methods.with.same.number.parameters.problem.descriptor");
+  }
+
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+      "overloaded.methods.with.same.number.parameters.option"),
+                                          this, "ignoreInconvertibleTypes");
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new OverloadedMethodsWithSameNumberOfParametersVisitor();
+  }
+
+  private class OverloadedMethodsWithSameNumberOfParametersVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "overloaded.methods.with.same.number.parameters.display.name");
-    }
-
-    @Override
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "overloaded.methods.with.same.number.parameters.problem.descriptor");
-    }
-
-    @Override
-    public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-                "overloaded.methods.with.same.number.parameters.option"),
-                this, "ignoreInconvertibleTypes");
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new OverloadedMethodsWithSameNumberOfParametersVisitor();
-    }
-
-    private class OverloadedMethodsWithSameNumberOfParametersVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitMethod(@NotNull PsiMethod method) {
-            if (method.isConstructor()) {
-                return;
-            }
-            if (method.getNameIdentifier() == null) {
-                return;
-            }
-            final PsiParameterList parameterList = method.getParameterList();
-            final int parameterCount = parameterList.getParametersCount();
-            if (parameterCount == 0) {
-                return;
-            }
-            final PsiClass aClass = method.getContainingClass();
-            if (aClass == null) {
-                return;
-            }
-            final PsiMethod[] superMethods = method.findSuperMethods();
-            if (superMethods.length > 0) {
-                return;
-            }
-            final String methodName = method.getName();
-            final PsiMethod[] sameNameMethods =
-                    aClass.findMethodsByName(methodName, true);
-            for (PsiMethod sameNameMethod : sameNameMethods) {
-                if (method.equals(sameNameMethod)) {
-                    continue;
-                }
-                final PsiParameterList otherParameterList =
-                        sameNameMethod.getParameterList();
-                if (parameterCount == otherParameterList.getParametersCount()) {
-                    if (ignoreInconvertibleTypes) {
-                        if (!areParameterTypesConvertible(parameterList,
-                                otherParameterList)) {
-                            return;
-                        }
-                    }
-                    registerMethodError(method);
-                    return;
-                }
-            }
+    public void visitMethod(@NotNull PsiMethod method) {
+      if (method.isConstructor()) {
+        return;
+      }
+      if (method.getNameIdentifier() == null) {
+        return;
+      }
+      final PsiParameterList parameterList = method.getParameterList();
+      final int parameterCount = parameterList.getParametersCount();
+      if (parameterCount == 0) {
+        return;
+      }
+      final PsiClass aClass = method.getContainingClass();
+      if (aClass == null) {
+        return;
+      }
+      final PsiMethod[] superMethods = method.findSuperMethods();
+      if (superMethods.length > 0) {
+        return;
+      }
+      final String methodName = method.getName();
+      final PsiMethod[] sameNameMethods =
+        aClass.findMethodsByName(methodName, true);
+      for (PsiMethod sameNameMethod : sameNameMethods) {
+        if (method.equals(sameNameMethod)) {
+          continue;
         }
-
-        private boolean areParameterTypesConvertible(
-                PsiParameterList parameterList,
-                PsiParameterList otherParameterList) {
-            final PsiParameter[] parameters =
-                    parameterList.getParameters();
-            final PsiParameter[] otherParameters =
-                    otherParameterList.getParameters();
-            for (int i = 0; i < parameters.length; i++) {
-                final PsiType type = parameters[i].getType();
-                final PsiType otherType = otherParameters[i].getType();
-                if (!type.isAssignableFrom(otherType) &&
-                        !otherType.isAssignableFrom(type)) {
-                    return false;
-                }
+        final PsiParameterList otherParameterList =
+          sameNameMethod.getParameterList();
+        if (parameterCount == otherParameterList.getParametersCount()) {
+          if (ignoreInconvertibleTypes) {
+            if (!areParameterTypesConvertible(parameterList,
+                                              otherParameterList)) {
+              return;
             }
-            return true;
+          }
+          registerMethodError(method);
+          return;
         }
-
+      }
     }
+
+    private boolean areParameterTypesConvertible(
+      PsiParameterList parameterList,
+      PsiParameterList otherParameterList) {
+      final PsiParameter[] parameters =
+        parameterList.getParameters();
+      final PsiParameter[] otherParameters =
+        otherParameterList.getParameters();
+      for (int i = 0; i < parameters.length; i++) {
+        final PsiType type = parameters[i].getType();
+        final PsiType otherType = otherParameters[i].getType();
+        if (!type.isAssignableFrom(otherType) &&
+            !otherType.isAssignableFrom(type)) {
+          return false;
+        }
+      }
+      return true;
+    }
+  }
 }

@@ -24,33 +24,33 @@ import com.siyeh.ipp.psiutils.ConcatenationUtils;
 import com.siyeh.ipp.psiutils.ErrorUtil;
 
 class SimpleStringConcatenationPredicate
-        implements PsiElementPredicate{
+  implements PsiElementPredicate {
 
-    private final boolean excludeConcatenationsInsideAnnotations;
+  private final boolean excludeConcatenationsInsideAnnotations;
 
-    public SimpleStringConcatenationPredicate(boolean excludeConcatenationsInsideAnnotations) {
-        this.excludeConcatenationsInsideAnnotations = excludeConcatenationsInsideAnnotations;
+  public SimpleStringConcatenationPredicate(boolean excludeConcatenationsInsideAnnotations) {
+    this.excludeConcatenationsInsideAnnotations = excludeConcatenationsInsideAnnotations;
+  }
+
+  public boolean satisfiedBy(PsiElement element) {
+    if (!ConcatenationUtils.isConcatenation(element)) {
+      return false;
     }
-
-    public boolean satisfiedBy(PsiElement element){
-        if(!ConcatenationUtils.isConcatenation(element)){
-            return false;
-        }
-        if (excludeConcatenationsInsideAnnotations && isInsideAnnotation(element)) {
-            return false;
-        }
-        return !ErrorUtil.containsError(element);
+    if (excludeConcatenationsInsideAnnotations && isInsideAnnotation(element)) {
+      return false;
     }
+    return !ErrorUtil.containsError(element);
+  }
 
-    private static boolean isInsideAnnotation(PsiElement element) {
-        for (int i = 0; i < 20 && element instanceof PsiBinaryExpression; i++) {
-            // optimization: don't check deep string concatenations more than 20 levels up.
-            element = element.getParent();
-            if (element instanceof PsiNameValuePair ||
-                    element instanceof PsiArrayInitializerMemberValue) {
-                return true;
-            }
-        }
-        return false;
+  private static boolean isInsideAnnotation(PsiElement element) {
+    for (int i = 0; i < 20 && element instanceof PsiBinaryExpression; i++) {
+      // optimization: don't check deep string concatenations more than 20 levels up.
+      element = element.getParent();
+      if (element instanceof PsiNameValuePair ||
+          element instanceof PsiArrayInitializerMemberValue) {
+        return true;
+      }
     }
+    return false;
+  }
 }

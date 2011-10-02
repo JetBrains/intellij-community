@@ -28,46 +28,46 @@ import org.jetbrains.annotations.NotNull;
 
 public class ConstantAssertConditionInspection extends BaseInspection {
 
-    @Override
-    @Nls
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "constant.assert.condition.display.name");
-    }
+  @Override
+  @Nls
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "constant.assert.condition.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "constant.assert.condition.problem.descriptor");
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new ConstantAssertConditionVisitor();
+  }
+
+  private static class ConstantAssertConditionVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "constant.assert.condition.problem.descriptor");
+    public void visitAssertStatement(PsiAssertStatement statement) {
+      super.visitAssertStatement(statement);
+      final PsiExpression assertCondition =
+        statement.getAssertCondition();
+      final PsiExpression expression =
+        ParenthesesUtils.stripParentheses(assertCondition);
+      if (expression == null) {
+        return;
+      }
+      if (BoolUtils.isFalse(expression)) {
+        return;
+      }
+      if (!PsiUtil.isConstantExpression(expression)) {
+        return;
+      }
+      registerError(expression);
     }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new ConstantAssertConditionVisitor();
-    }
-
-    private static class ConstantAssertConditionVisitor
-            extends BaseInspectionVisitor {
-
-        @Override
-        public void visitAssertStatement(PsiAssertStatement statement) {
-            super.visitAssertStatement(statement);
-            final PsiExpression assertCondition =
-                    statement.getAssertCondition();
-            final PsiExpression expression =
-                    ParenthesesUtils.stripParentheses(assertCondition);
-            if (expression == null) {
-                return;
-            }
-            if (BoolUtils.isFalse(expression)) {
-                return;
-            }
-            if (!PsiUtil.isConstantExpression(expression)) {
-                return;
-            }
-            registerError(expression);
-        }
-    }
+  }
 }

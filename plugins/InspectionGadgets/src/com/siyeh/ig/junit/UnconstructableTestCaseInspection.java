@@ -25,79 +25,80 @@ import org.jetbrains.annotations.NotNull;
 
 public class UnconstructableTestCaseInspection extends BaseInspection {
 
-    @Override
-    @NotNull
-    public String getID() {
-        return "UnconstructableJUnitTestCase";
-    }
+  @Override
+  @NotNull
+  public String getID() {
+    return "UnconstructableJUnitTestCase";
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "unconstructable.test.case.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "unconstructable.test.case.problem.descriptor");
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new UnconstructableTestCaseVisitor();
+  }
+
+  private static class UnconstructableTestCaseVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "unconstructable.test.case.display.name");
-    }
-
-    @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "unconstructable.test.case.problem.descriptor");
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new UnconstructableTestCaseVisitor();
-    }
-
-    private static class UnconstructableTestCaseVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitClass(@NotNull PsiClass aClass) {
-            if (aClass.isInterface() || aClass.isEnum() ||
-                    aClass.isAnnotationType() ||
-                    aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-                return;
-            }
-            if (aClass instanceof PsiTypeParameter) {
-                return;
-            }
-            if (!InheritanceUtil.isInheritor(aClass,
-                    "junit.framework.TestCase")) {
-                return;
-            }
-            final PsiMethod[] constructors = aClass.getConstructors();
-            boolean hasStringConstructor = false;
-            boolean hasNoArgConstructor = false;
-            boolean hasConstructor = false;
-            for (final PsiMethod constructor : constructors) {
-                hasConstructor = true;
-                if (!constructor.hasModifierProperty(PsiModifier.PUBLIC)) {
-                    continue;
-                }
-                final PsiParameterList parameterList =
-                        constructor.getParameterList();
-                final int parametersCount = parameterList.getParametersCount();
-                if (parametersCount == 0) {
-                    hasNoArgConstructor = true;
-                }
-                if (parametersCount == 1) {
-                    final PsiParameter[] parameters =
-                            parameterList.getParameters();
-                    final PsiType type = parameters[0].getType();
-                    if (TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_STRING,
-                            type)) {
-                        hasStringConstructor = true;
-                    }
-                }
-            }
-            if (!hasConstructor) {
-                return;
-            }
-            if (hasNoArgConstructor || hasStringConstructor) {
-                return;
-            }
-            registerClassError(aClass);
+    public void visitClass(@NotNull PsiClass aClass) {
+      if (aClass.isInterface() || aClass.isEnum() ||
+          aClass.isAnnotationType() ||
+          aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        return;
+      }
+      if (aClass instanceof PsiTypeParameter) {
+        return;
+      }
+      if (!InheritanceUtil.isInheritor(aClass,
+                                       "junit.framework.TestCase")) {
+        return;
+      }
+      final PsiMethod[] constructors = aClass.getConstructors();
+      boolean hasStringConstructor = false;
+      boolean hasNoArgConstructor = false;
+      boolean hasConstructor = false;
+      for (final PsiMethod constructor : constructors) {
+        hasConstructor = true;
+        if (!constructor.hasModifierProperty(PsiModifier.PUBLIC)) {
+          continue;
         }
+        final PsiParameterList parameterList =
+          constructor.getParameterList();
+        final int parametersCount = parameterList.getParametersCount();
+        if (parametersCount == 0) {
+          hasNoArgConstructor = true;
+        }
+        if (parametersCount == 1) {
+          final PsiParameter[] parameters =
+            parameterList.getParameters();
+          final PsiType type = parameters[0].getType();
+          if (TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_STRING,
+                                   type)) {
+            hasStringConstructor = true;
+          }
+        }
+      }
+      if (!hasConstructor) {
+        return;
+      }
+      if (hasNoArgConstructor || hasStringConstructor) {
+        return;
+      }
+      registerClassError(aClass);
     }
+  }
 }

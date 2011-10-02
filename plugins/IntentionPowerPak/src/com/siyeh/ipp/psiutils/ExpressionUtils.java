@@ -23,64 +23,64 @@ import org.jetbrains.annotations.Nullable;
 
 public class ExpressionUtils {
 
-    private ExpressionUtils() {
-    }
+  private ExpressionUtils() {
+  }
 
-    @Nullable
-    public static Object computeConstantExpression(PsiExpression expression) {
-        return computeConstantExpression(expression, false);
-    }
+  @Nullable
+  public static Object computeConstantExpression(PsiExpression expression) {
+    return computeConstantExpression(expression, false);
+  }
 
-    public static Object computeConstantExpression(
-            PsiExpression expression, boolean throwExceptionOnOverflow) {
-        final Project project = expression.getProject();
-        final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-        final PsiConstantEvaluationHelper constantEvaluationHelper =
-                psiFacade.getConstantEvaluationHelper();
-        return constantEvaluationHelper.computeConstantExpression(expression,
-                throwExceptionOnOverflow);
-    }
+  public static Object computeConstantExpression(
+    PsiExpression expression, boolean throwExceptionOnOverflow) {
+    final Project project = expression.getProject();
+    final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+    final PsiConstantEvaluationHelper constantEvaluationHelper =
+      psiFacade.getConstantEvaluationHelper();
+    return constantEvaluationHelper.computeConstantExpression(expression,
+                                                              throwExceptionOnOverflow);
+  }
 
-    public static boolean isNegated(PsiExpression expression) {
-        final PsiElement parent = expression.getParent();
-        if (!(parent instanceof PsiPrefixExpression)) {
-            return false;
-        }
-        final PsiPrefixExpression prefixExpression =
-                (PsiPrefixExpression)parent;
-        final IElementType tokenType = prefixExpression.getOperationTokenType();
-        return JavaTokenType.MINUS.equals(tokenType);
+  public static boolean isNegated(PsiExpression expression) {
+    final PsiElement parent = expression.getParent();
+    if (!(parent instanceof PsiPrefixExpression)) {
+      return false;
     }
+    final PsiPrefixExpression prefixExpression =
+      (PsiPrefixExpression)parent;
+    final IElementType tokenType = prefixExpression.getOperationTokenType();
+    return JavaTokenType.MINUS.equals(tokenType);
+  }
 
-    public static boolean isOne(@Nullable PsiExpression expression) {
-        if (expression == null) {
-            return false;
-        }
-        final PsiType expressionType = expression.getType();
-        final Object value = ConstantExpressionUtil.computeCastTo(
-                expression, expressionType);
-        if(value == null){
-            return false;
-        }
-        //noinspection FloatingPointEquality
-        if(value instanceof Double && ((Double) value).doubleValue() == 1.0) {
-            return true;
-        }
-        if(value instanceof Float && ((Float) value).floatValue() == 1.0f) {
-            return true;
-        }
-        if(value instanceof Integer && ((Integer) value).intValue() == 1){
-            return true;
-        }
-        if(value instanceof Long && ((Long) value).longValue() == 1L){
-            return true;
-        }
-        if(value instanceof Short && ((Short) value).shortValue() == 1){
-            return true;
-        }
-        if(value instanceof Character && ((Character) value).charValue() == 1){
-            return true;
-        }
-        return value instanceof Byte && ((Byte) value).byteValue() == 1;
+  public static boolean isOne(@Nullable PsiExpression expression) {
+    if (expression == null) {
+      return false;
     }
+    final PsiType expressionType = expression.getType();
+    final Object value = ConstantExpressionUtil.computeCastTo(
+      expression, expressionType);
+    if (value == null) {
+      return false;
+    }
+    //noinspection FloatingPointEquality
+    if (value instanceof Double && ((Double)value).doubleValue() == 1.0) {
+      return true;
+    }
+    if (value instanceof Float && ((Float)value).floatValue() == 1.0f) {
+      return true;
+    }
+    if (value instanceof Integer && ((Integer)value).intValue() == 1) {
+      return true;
+    }
+    if (value instanceof Long && ((Long)value).longValue() == 1L) {
+      return true;
+    }
+    if (value instanceof Short && ((Short)value).shortValue() == 1) {
+      return true;
+    }
+    if (value instanceof Character && ((Character)value).charValue() == 1) {
+      return true;
+    }
+    return value instanceof Byte && ((Byte)value).byteValue() == 1;
+  }
 }

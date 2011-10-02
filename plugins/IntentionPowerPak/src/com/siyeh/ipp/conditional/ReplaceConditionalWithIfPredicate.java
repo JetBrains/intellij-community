@@ -19,50 +19,51 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
-class ReplaceConditionalWithIfPredicate implements PsiElementPredicate{
+class ReplaceConditionalWithIfPredicate implements PsiElementPredicate {
 
-    public boolean satisfiedBy(PsiElement element){
-        if (!(element instanceof PsiConditionalExpression)) {
-            return false;
-        }
-        final PsiConditionalExpression conditionalExpression =
-                (PsiConditionalExpression) element;
-        if (JspPsiUtil.isInJspFile(element)) {
-            final PsiExpression thenExpression =
-                    conditionalExpression.getThenExpression();
-            if (thenExpression == null) {
-                return false;
-            }
-            final PsiExpression elseExpression =
-                    conditionalExpression.getElseExpression();
-            if (elseExpression == null) {
-                return false;
-            }
-        }
-        final PsiElement parent = conditionalExpression.getParent();
-        if (parent instanceof PsiExpressionStatement) {
-            return false;
-        }
-        final PsiMember member = PsiTreeUtil.getParentOfType(element,
-                PsiMember.class);
-        if (member instanceof PsiMethod) {
-            final PsiMethod method = (PsiMethod)member;
-            if (!method.isConstructor()) {
-                return true;
-            }
-            final PsiMethodCallExpression methodCallExpression =
-                    PsiTreeUtil.getParentOfType(element,
-                            PsiMethodCallExpression.class);
-            if (methodCallExpression == null) {
-                return true;
-            }
-            final PsiReferenceExpression methodExpression =
-                    methodCallExpression.getMethodExpression();
-            final String methodName = methodExpression.getReferenceName();
-            return !"super".equals(methodName);
-        } else if (member instanceof PsiField) {
-            return false;
-        }
-        return true;
+  public boolean satisfiedBy(PsiElement element) {
+    if (!(element instanceof PsiConditionalExpression)) {
+      return false;
     }
+    final PsiConditionalExpression conditionalExpression =
+      (PsiConditionalExpression)element;
+    if (JspPsiUtil.isInJspFile(element)) {
+      final PsiExpression thenExpression =
+        conditionalExpression.getThenExpression();
+      if (thenExpression == null) {
+        return false;
+      }
+      final PsiExpression elseExpression =
+        conditionalExpression.getElseExpression();
+      if (elseExpression == null) {
+        return false;
+      }
+    }
+    final PsiElement parent = conditionalExpression.getParent();
+    if (parent instanceof PsiExpressionStatement) {
+      return false;
+    }
+    final PsiMember member = PsiTreeUtil.getParentOfType(element,
+                                                         PsiMember.class);
+    if (member instanceof PsiMethod) {
+      final PsiMethod method = (PsiMethod)member;
+      if (!method.isConstructor()) {
+        return true;
+      }
+      final PsiMethodCallExpression methodCallExpression =
+        PsiTreeUtil.getParentOfType(element,
+                                    PsiMethodCallExpression.class);
+      if (methodCallExpression == null) {
+        return true;
+      }
+      final PsiReferenceExpression methodExpression =
+        methodCallExpression.getMethodExpression();
+      final String methodName = methodExpression.getReferenceName();
+      return !"super".equals(methodName);
+    }
+    else if (member instanceof PsiField) {
+      return false;
+    }
+    return true;
+  }
 }

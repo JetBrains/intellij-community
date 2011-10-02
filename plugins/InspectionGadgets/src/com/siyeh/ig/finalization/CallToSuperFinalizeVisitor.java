@@ -20,47 +20,49 @@ import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
-class CallToSuperFinalizeVisitor extends JavaRecursiveElementVisitor{
+class CallToSuperFinalizeVisitor extends JavaRecursiveElementVisitor {
 
-    private boolean callToSuperFinalizeFound = false;
+  private boolean callToSuperFinalizeFound = false;
 
-    @Override public void visitElement(@NotNull PsiElement element){
-        if(!callToSuperFinalizeFound){
-            super.visitElement(element);
-        }
+  @Override
+  public void visitElement(@NotNull PsiElement element) {
+    if (!callToSuperFinalizeFound) {
+      super.visitElement(element);
     }
+  }
 
-    @Override
-    public void visitIfStatement(PsiIfStatement statement) {
-        final PsiExpression condition = statement.getCondition();
-        final Object result =
-                    ExpressionUtils.computeConstantExpression(condition);
-        if(result != null && result.equals(Boolean.FALSE)){
-            return;
-        }
-        super.visitIfStatement(statement);
+  @Override
+  public void visitIfStatement(PsiIfStatement statement) {
+    final PsiExpression condition = statement.getCondition();
+    final Object result =
+      ExpressionUtils.computeConstantExpression(condition);
+    if (result != null && result.equals(Boolean.FALSE)) {
+      return;
     }
+    super.visitIfStatement(statement);
+  }
 
-    @Override public void visitMethodCallExpression(
-            @NotNull PsiMethodCallExpression expression){
-        if(callToSuperFinalizeFound){
-            return;
-        }
-        super.visitMethodCallExpression(expression);
-        final PsiReferenceExpression methodExpression =
-                expression.getMethodExpression();
-        final PsiExpression target = methodExpression.getQualifierExpression();
-        if(!(target instanceof PsiSuperExpression)){
-            return;
-        }
-        final String methodName = methodExpression.getReferenceName();
-        if(!HardcodedMethodConstants.FINALIZE.equals(methodName)){
-            return;
-        }
-        callToSuperFinalizeFound = true;
+  @Override
+  public void visitMethodCallExpression(
+    @NotNull PsiMethodCallExpression expression) {
+    if (callToSuperFinalizeFound) {
+      return;
     }
+    super.visitMethodCallExpression(expression);
+    final PsiReferenceExpression methodExpression =
+      expression.getMethodExpression();
+    final PsiExpression target = methodExpression.getQualifierExpression();
+    if (!(target instanceof PsiSuperExpression)) {
+      return;
+    }
+    final String methodName = methodExpression.getReferenceName();
+    if (!HardcodedMethodConstants.FINALIZE.equals(methodName)) {
+      return;
+    }
+    callToSuperFinalizeFound = true;
+  }
 
-    public boolean isCallToSuperFinalizeFound(){
-        return callToSuperFinalizeFound;
-    }
+  public boolean isCallToSuperFinalizeFound() {
+    return callToSuperFinalizeFound;
+  }
 }

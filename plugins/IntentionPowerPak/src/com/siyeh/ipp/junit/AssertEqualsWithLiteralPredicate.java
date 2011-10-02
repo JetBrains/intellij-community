@@ -20,55 +20,56 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ErrorUtil;
 import org.jetbrains.annotations.NonNls;
 
-class AssertEqualsWithLiteralPredicate implements PsiElementPredicate{
+class AssertEqualsWithLiteralPredicate implements PsiElementPredicate {
 
-    public boolean satisfiedBy(PsiElement element){
-        if(!(element instanceof PsiMethodCallExpression)){
-            return false;
-        }
-        final PsiMethodCallExpression expression =
-                (PsiMethodCallExpression) element;
-        final PsiExpressionList argumentList = expression.getArgumentList();
-        final PsiExpression[] arguments = argumentList.getExpressions();
-        final int argumentCount = arguments.length;
-        if(argumentCount < 2 || argumentCount > 3){
-            return false;
-        }
-        final PsiReferenceExpression methodExpression =
-                expression.getMethodExpression();
-        @NonNls final String methodName = methodExpression.getReferenceName();
-        if(!"assertEquals".equals(methodName)){
-            return false;
-        }
-        if(ErrorUtil.containsError(element)){
-            return false;
-        }
-        final PsiMethod method = expression.resolveMethod();
-        if (method == null) {
-            return false;
-        }
-        final PsiClass targetClass = method.getContainingClass();
-        if (targetClass == null) {
-            return false;
-        }
-        final String qualifiedName = targetClass.getQualifiedName();
-        if (!"junit.framework.Assert".equals(qualifiedName) &&
-            !"org.junit.Assert".equals(qualifiedName)) {
-            return false;
-        }
-        if(argumentCount == 2){
-            return isSpecialLiteral(arguments[0]) || isSpecialLiteral(arguments[1]);
-        } else{
-            return isSpecialLiteral(arguments[1]) || isSpecialLiteral(arguments[2]);
-        }
+  public boolean satisfiedBy(PsiElement element) {
+    if (!(element instanceof PsiMethodCallExpression)) {
+      return false;
     }
+    final PsiMethodCallExpression expression =
+      (PsiMethodCallExpression)element;
+    final PsiExpressionList argumentList = expression.getArgumentList();
+    final PsiExpression[] arguments = argumentList.getExpressions();
+    final int argumentCount = arguments.length;
+    if (argumentCount < 2 || argumentCount > 3) {
+      return false;
+    }
+    final PsiReferenceExpression methodExpression =
+      expression.getMethodExpression();
+    @NonNls final String methodName = methodExpression.getReferenceName();
+    if (!"assertEquals".equals(methodName)) {
+      return false;
+    }
+    if (ErrorUtil.containsError(element)) {
+      return false;
+    }
+    final PsiMethod method = expression.resolveMethod();
+    if (method == null) {
+      return false;
+    }
+    final PsiClass targetClass = method.getContainingClass();
+    if (targetClass == null) {
+      return false;
+    }
+    final String qualifiedName = targetClass.getQualifiedName();
+    if (!"junit.framework.Assert".equals(qualifiedName) &&
+        !"org.junit.Assert".equals(qualifiedName)) {
+      return false;
+    }
+    if (argumentCount == 2) {
+      return isSpecialLiteral(arguments[0]) || isSpecialLiteral(arguments[1]);
+    }
+    else {
+      return isSpecialLiteral(arguments[1]) || isSpecialLiteral(arguments[2]);
+    }
+  }
 
-    private static boolean isSpecialLiteral(PsiExpression expression){
-        if(expression == null){
-            return false;
-        }
-        @NonNls final String text = expression.getText();
-        return "true".equals(text) ||
-                "false".equals(text) || "null".equals(text);
+  private static boolean isSpecialLiteral(PsiExpression expression) {
+    if (expression == null) {
+      return false;
     }
+    @NonNls final String text = expression.getText();
+    return "true".equals(text) ||
+           "false".equals(text) || "null".equals(text);
+  }
 }

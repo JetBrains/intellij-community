@@ -25,60 +25,61 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
 public class AbstractMethodOverridesConcreteMethodInspection
-        extends BaseInspection {
+  extends BaseInspection {
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "abstract.method.overrides.concrete.method.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "abstract.method.overrides.concrete.method.problem.descriptor");
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new AbstractMethodOverridesConcreteMethodVisitor();
+  }
+
+  private static class AbstractMethodOverridesConcreteMethodVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "abstract.method.overrides.concrete.method.display.name");
-    }
-
-    @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "abstract.method.overrides.concrete.method.problem.descriptor");
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new AbstractMethodOverridesConcreteMethodVisitor();
-    }
-
-    private static class AbstractMethodOverridesConcreteMethodVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitMethod(@NotNull PsiMethod method) {
-            //no call to super, so we don't drill into anonymous classes
-            if (method.isConstructor()) {
-                return;
-            }
-            final PsiClass containingClass = method.getContainingClass();
-            if (containingClass == null) {
-                return;
-            }
-            if (containingClass.isInterface() ||
-                    containingClass.isAnnotationType()) {
-                return;
-            }
-            if (!method.hasModifierProperty(PsiModifier.ABSTRACT)) {
-                return;
-            }
-            final PsiMethod[] superMethods = method.findSuperMethods();
-            for (final PsiMethod superMethod : superMethods) {
-                final PsiClass superClass = superMethod.getContainingClass();
-                if (superClass == null) {
-                    continue;
-                }
-                final String superClassName = superClass.getQualifiedName();
-                if (!superClass.isInterface() &&
-                        !CommonClassNames.JAVA_LANG_OBJECT.equals(superClassName) &&
-                        !superMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
-                    registerMethodError(method);
-                    return;
-                }
-            }
+    public void visitMethod(@NotNull PsiMethod method) {
+      //no call to super, so we don't drill into anonymous classes
+      if (method.isConstructor()) {
+        return;
+      }
+      final PsiClass containingClass = method.getContainingClass();
+      if (containingClass == null) {
+        return;
+      }
+      if (containingClass.isInterface() ||
+          containingClass.isAnnotationType()) {
+        return;
+      }
+      if (!method.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        return;
+      }
+      final PsiMethod[] superMethods = method.findSuperMethods();
+      for (final PsiMethod superMethod : superMethods) {
+        final PsiClass superClass = superMethod.getContainingClass();
+        if (superClass == null) {
+          continue;
         }
+        final String superClassName = superClass.getQualifiedName();
+        if (!superClass.isInterface() &&
+            !CommonClassNames.JAVA_LANG_OBJECT.equals(superClassName) &&
+            !superMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
+          registerMethodError(method);
+          return;
+        }
+      }
     }
+  }
 }

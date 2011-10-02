@@ -21,15 +21,15 @@ import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.controlflow.PointlessNullCheckInspection;
 
 public class PointlessNullCheckFixTest extends IGQuickFixesTestCase {
-    @Override
-    public void setUp() throws Exception {
-        super.setUp();
-        myFixture.enableInspections(new PointlessNullCheckInspection());
-        myRelativePath = "pointlessnullcheck";
-        myDefaultHint = InspectionGadgetsBundle.message("pointless.nullcheck.simplify.quickfix");
-    }
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    myFixture.enableInspections(new PointlessNullCheckInspection());
+    myRelativePath = "pointlessnullcheck";
+    myDefaultHint = InspectionGadgetsBundle.message("pointless.nullcheck.simplify.quickfix");
+  }
 
-    public void testScenario1() {
-        doTest();
-    }
+  public void testScenario1() {
+    doTest();
+  }
 }

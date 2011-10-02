@@ -24,15 +24,15 @@ import org.jetbrains.annotations.NotNull;
 
 public class ReplaceDiamondWithExplicitTypeArgumentsIntention extends Intention {
 
-    @NotNull
-    @Override
-    protected PsiElementPredicate getElementPredicate() {
-        return new DiamondTypePredicate();
-    }
+  @NotNull
+  @Override
+  protected PsiElementPredicate getElementPredicate() {
+    return new DiamondTypePredicate();
+  }
 
-    @Override
-    protected void processIntention(@NotNull PsiElement element)
-            throws IncorrectOperationException {
-      PsiDiamondTypeUtil.replaceDiamondWithExplicitTypes(element);
-    }
+  @Override
+  protected void processIntention(@NotNull PsiElement element)
+    throws IncorrectOperationException {
+    PsiDiamondTypeUtil.replaceDiamondWithExplicitTypes(element);
+  }
 }

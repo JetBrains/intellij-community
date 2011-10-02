@@ -24,58 +24,59 @@ import org.jetbrains.annotations.NotNull;
 
 public class TimeToStringInspection extends BaseInspection {
 
-    @NotNull
-    public String getID(){
-        return "CallToTimeToString";
-    }
+  @NotNull
+  public String getID() {
+    return "CallToTimeToString";
+  }
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "time.tostring.call.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "time.tostring.call.display.name");
+  }
 
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "time.tostring.call.problem.descriptor");
-    }
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "time.tostring.call.problem.descriptor");
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new TimeToStringVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new TimeToStringVisitor();
+  }
 
-    private static class TimeToStringVisitor extends BaseInspectionVisitor {
+  private static class TimeToStringVisitor extends BaseInspectionVisitor {
 
-        @Override public void visitMethodCallExpression(
-                @NotNull PsiMethodCallExpression expression) {
-            super.visitMethodCallExpression(expression);
-            final PsiReferenceExpression methodExpression =
-                    expression.getMethodExpression();
-            final String methodName = methodExpression.getReferenceName();
-            if (!HardcodedMethodConstants.TO_STRING.equals(methodName)) {
-              return;
-            }
-            if (NonNlsUtils.isNonNlsAnnotatedUse(expression)) {
-                return;
-            }
-            final PsiMethod method = expression.resolveMethod();
-            if (method == null) {
-                return;
-            }
-            final PsiParameterList parameterList = method.getParameterList();
-            if (parameterList.getParametersCount() != 0) {
-                return;
-            }
-            final PsiClass aClass = method.getContainingClass();
-            if (aClass == null) {
-                return;
-            }
-            final String className = aClass.getQualifiedName();
-            if (!"java.sql.Time".equals(className)) {
-                return;
-            }
-            registerMethodCallError(expression);
-        }
+    @Override
+    public void visitMethodCallExpression(
+      @NotNull PsiMethodCallExpression expression) {
+      super.visitMethodCallExpression(expression);
+      final PsiReferenceExpression methodExpression =
+        expression.getMethodExpression();
+      final String methodName = methodExpression.getReferenceName();
+      if (!HardcodedMethodConstants.TO_STRING.equals(methodName)) {
+        return;
+      }
+      if (NonNlsUtils.isNonNlsAnnotatedUse(expression)) {
+        return;
+      }
+      final PsiMethod method = expression.resolveMethod();
+      if (method == null) {
+        return;
+      }
+      final PsiParameterList parameterList = method.getParameterList();
+      if (parameterList.getParametersCount() != 0) {
+        return;
+      }
+      final PsiClass aClass = method.getContainingClass();
+      if (aClass == null) {
+        return;
+      }
+      final String className = aClass.getQualifiedName();
+      if (!"java.sql.Time".equals(className)) {
+        return;
+      }
+      registerMethodCallError(expression);
     }
+  }
 }

@@ -22,44 +22,44 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
-class CommentOnLineWithSourcePredicate implements PsiElementPredicate{
+class CommentOnLineWithSourcePredicate implements PsiElementPredicate {
 
-    public boolean satisfiedBy(PsiElement element){
-        //final PsiFile file = element.getContainingFile();
-        //if (file instanceof JspFile){
-        //    return false;
-        //}
-        if(!(element instanceof PsiComment)){
-            return false;
-        }
-        if(element instanceof PsiDocComment){
-            return false;
-        }
-
-        final PsiComment comment = (PsiComment) element;
-        if (comment instanceof PsiLanguageInjectionHost && InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)comment)) {
-           return false;
-        }
-        final IElementType type = comment.getTokenType();
-        if(!JavaTokenType.C_STYLE_COMMENT.equals(type) &&
-                !JavaTokenType.END_OF_LINE_COMMENT.equals(type)){
-            return false; // can't move JSP comments
-        }
-      final PsiElement prevSibling = PsiTreeUtil.prevLeaf(element);
-        if(!(prevSibling instanceof PsiWhiteSpace)){
-            return true;
-        }
-        final String prevSiblingText = prevSibling.getText();
-        if(prevSiblingText.indexOf((int) '\n') < 0 &&
-                prevSiblingText.indexOf((int) '\r') < 0){
-            return true;
-        }
-      final PsiElement nextSibling = PsiTreeUtil.nextLeaf(element);
-        if(!(nextSibling instanceof PsiWhiteSpace)){
-            return true;
-        }
-        final String nextSiblingText = nextSibling.getText();
-        return nextSiblingText.indexOf((int) '\n') < 0 &&
-                nextSiblingText.indexOf((int) '\r') < 0;
+  public boolean satisfiedBy(PsiElement element) {
+    //final PsiFile file = element.getContainingFile();
+    //if (file instanceof JspFile){
+    //    return false;
+    //}
+    if (!(element instanceof PsiComment)) {
+      return false;
     }
+    if (element instanceof PsiDocComment) {
+      return false;
+    }
+
+    final PsiComment comment = (PsiComment)element;
+    if (comment instanceof PsiLanguageInjectionHost && InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)comment)) {
+      return false;
+    }
+    final IElementType type = comment.getTokenType();
+    if (!JavaTokenType.C_STYLE_COMMENT.equals(type) &&
+        !JavaTokenType.END_OF_LINE_COMMENT.equals(type)) {
+      return false; // can't move JSP comments
+    }
+    final PsiElement prevSibling = PsiTreeUtil.prevLeaf(element);
+    if (!(prevSibling instanceof PsiWhiteSpace)) {
+      return true;
+    }
+    final String prevSiblingText = prevSibling.getText();
+    if (prevSiblingText.indexOf((int)'\n') < 0 &&
+        prevSiblingText.indexOf((int)'\r') < 0) {
+      return true;
+    }
+    final PsiElement nextSibling = PsiTreeUtil.nextLeaf(element);
+    if (!(nextSibling instanceof PsiWhiteSpace)) {
+      return true;
+    }
+    final String nextSiblingText = nextSibling.getText();
+    return nextSiblingText.indexOf((int)'\n') < 0 &&
+           nextSiblingText.indexOf((int)'\r') < 0;
+  }
 }

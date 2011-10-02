@@ -32,32 +32,32 @@ import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class BeforeClassOrAfterClassIsPublicStaticVoidNoArgInspection
-        extends BaseInspection {
+  extends BaseInspection {
 
-    @Override
-    @NotNull
-    public String getID() {
-        return "BeforeOrAfterWithIncorrectSignature";
-    }
+  @Override
+  @NotNull
+  public String getID() {
+    return "BeforeOrAfterWithIncorrectSignature";
+  }
 
-    @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "before.class.or.after.class.is.public.static.void.no.arg.display.name");
-    }
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "before.class.or.after.class.is.public.static.void.no.arg.display.name");
+  }
 
-    @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "before.class.or.after.class.is.public.static.void.no.arg.problem.descriptor");
-    }
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "before.class.or.after.class.is.public.static.void.no.arg.problem.descriptor");
+  }
 
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new BeforeClassOrAfterClassIsPublicStaticVoidNoArgVisitor();
-    }
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new BeforeClassOrAfterClassIsPublicStaticVoidNoArgVisitor();
+  }
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
@@ -68,37 +68,41 @@ public class BeforeClassOrAfterClassIsPublicStaticVoidNoArgInspection
   }
 
   private static class BeforeClassOrAfterClassIsPublicStaticVoidNoArgVisitor
-            extends BaseInspectionVisitor {
+    extends BaseInspectionVisitor {
 
-        @Override public void visitMethod(@NotNull PsiMethod method) {
-            //note: no call to super;
-            if (!TestUtils.isJUnit4BeforeClassOrAfterClassMethod(method)) {
-                return;
-            }
-            final PsiType returnType = method.getReturnType();
-            if (returnType == null) {
-                return;
-            }
-            final PsiClass targetClass = method.getContainingClass();
-            if (targetClass == null) {
-                return;
-            }
+    @Override
+    public void visitMethod(@NotNull PsiMethod method) {
+      //note: no call to super;
+      if (!TestUtils.isJUnit4BeforeClassOrAfterClassMethod(method)) {
+        return;
+      }
+      final PsiType returnType = method.getReturnType();
+      if (returnType == null) {
+        return;
+      }
+      final PsiClass targetClass = method.getContainingClass();
+      if (targetClass == null) {
+        return;
+      }
 
-            final PsiParameterList parameterList = method.getParameterList();
-          if (parameterList.getParametersCount() != 0 ||
-              !returnType.equals(PsiType.VOID) ||
-              !method.hasModifierProperty(PsiModifier.PUBLIC) ||
-              !method.hasModifierProperty(PsiModifier.STATIC)) {
-            registerMethodError(method, "Change signature of \'" +
-                                        PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY,
-                                                                   PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_MODIFIERS | PsiFormatUtil.SHOW_PARAMETERS | PsiFormatUtil.SHOW_TYPE,
-                                                                   PsiFormatUtil.SHOW_TYPE) +
-                                        "\' to \'public static void " +
-                                        method.getName() +
-                                        "()\'");
-          }
-        }
+      final PsiParameterList parameterList = method.getParameterList();
+      if (parameterList.getParametersCount() != 0 ||
+          !returnType.equals(PsiType.VOID) ||
+          !method.hasModifierProperty(PsiModifier.PUBLIC) ||
+          !method.hasModifierProperty(PsiModifier.STATIC)) {
+        registerMethodError(method, "Change signature of \'" +
+                                    PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY,
+                                                               PsiFormatUtil.SHOW_NAME |
+                                                               PsiFormatUtil.SHOW_MODIFIERS |
+                                                               PsiFormatUtil.SHOW_PARAMETERS |
+                                                               PsiFormatUtil.SHOW_TYPE,
+                                                               PsiFormatUtil.SHOW_TYPE) +
+                                    "\' to \'public static void " +
+                                    method.getName() +
+                                    "()\'");
+      }
     }
+  }
 
   private static class MakePublicStaticVoidFix extends InspectionGadgetsFix {
     private final String myName;
@@ -109,7 +113,7 @@ public class BeforeClassOrAfterClassIsPublicStaticVoidNoArgInspection
 
     protected void doFix(final Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiMethod method = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethod.class);
-      if (method != null){
+      if (method != null) {
         final PsiModifierList modifierList = method.getModifierList();
         if (!modifierList.hasModifierProperty(PsiModifier.PUBLIC)) {
           modifierList.setModifierProperty(PsiModifier.PUBLIC, true);

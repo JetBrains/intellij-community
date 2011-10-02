@@ -20,26 +20,26 @@ import com.intellij.psi.tree.IElementType;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
 class AutomaticResourceManagementPredicate
-        implements PsiElementPredicate {
+  implements PsiElementPredicate {
 
-    public boolean satisfiedBy(PsiElement element) {
-        if(!(element instanceof PsiJavaToken)){
-            return false;
-        }
-        final PsiJavaToken javaToken = (PsiJavaToken) element;
-        final IElementType tokenType = javaToken.getTokenType();
-        if(!JavaTokenType.TRY_KEYWORD.equals(tokenType)){
-            return false;
-        }
-        final PsiElement parent = element.getParent();
-        if(!(parent instanceof PsiTryStatement)){
-            return false;
-        }
-        final PsiTryStatement tryStatement = (PsiTryStatement) parent;
-        if (tryStatement.getTryBlock() == null) {
-            return false;
-        }
-        final PsiResourceList resourceList = tryStatement.getResourceList();
-        return resourceList != null;
+  public boolean satisfiedBy(PsiElement element) {
+    if (!(element instanceof PsiJavaToken)) {
+      return false;
     }
+    final PsiJavaToken javaToken = (PsiJavaToken)element;
+    final IElementType tokenType = javaToken.getTokenType();
+    if (!JavaTokenType.TRY_KEYWORD.equals(tokenType)) {
+      return false;
+    }
+    final PsiElement parent = element.getParent();
+    if (!(parent instanceof PsiTryStatement)) {
+      return false;
+    }
+    final PsiTryStatement tryStatement = (PsiTryStatement)parent;
+    if (tryStatement.getTryBlock() == null) {
+      return false;
+    }
+    final PsiResourceList resourceList = tryStatement.getResourceList();
+    return resourceList != null;
+  }
 }

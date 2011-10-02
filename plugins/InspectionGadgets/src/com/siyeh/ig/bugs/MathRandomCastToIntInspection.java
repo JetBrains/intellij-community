@@ -29,139 +29,141 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class MathRandomCastToIntInspection extends BaseInspection {
-    @Nls
+  @Nls
+  @NotNull
+  @Override
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "math.random.cast.to.int.display.name");
+  }
+
+  @NotNull
+  @Override
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "math.random.cast.to.int.problem.descriptor");
+  }
+
+  @Override
+  public boolean isEnabledByDefault() {
+    return true;
+  }
+
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    final PsiTypeCastExpression expression =
+      (PsiTypeCastExpression)infos[0];
+    final PsiElement parent = expression.getParent();
+    if (!(parent instanceof PsiBinaryExpression)) {
+      return null;
+    }
+    final PsiBinaryExpression binaryExpression =
+      (PsiBinaryExpression)parent;
+    final IElementType tokenType = binaryExpression.getOperationTokenType();
+    if (JavaTokenType.ASTERISK != tokenType) {
+      return null;
+    }
+    return new MathRandomCastToIntegerFix();
+  }
+
+  private static class MathRandomCastToIntegerFix
+    extends InspectionGadgetsFix {
     @NotNull
-    @Override
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "math.random.cast.to.int.display.name");
-    }
-
-    @NotNull
-    @Override
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "math.random.cast.to.int.problem.descriptor");
+    public String getName() {
+      return InspectionGadgetsBundle.message(
+        "math.random.cast.to.int.quickfix");
     }
 
     @Override
-    public boolean isEnabledByDefault() {
-        return true;
+    protected void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiElement element = descriptor.getPsiElement();
+      final PsiElement parent = element.getParent();
+      if (!(parent instanceof PsiTypeCastExpression)) {
+        return;
+      }
+      final PsiTypeCastExpression typeCastExpression =
+        (PsiTypeCastExpression)parent;
+      final PsiElement grandParent = typeCastExpression.getParent();
+      if (!(grandParent instanceof PsiBinaryExpression)) {
+        return;
+      }
+      final PsiBinaryExpression binaryExpression =
+        (PsiBinaryExpression)grandParent;
+      final PsiExpression operand = typeCastExpression.getOperand();
+      if (operand == null) {
+        return;
+      }
+      @NonNls final StringBuilder newExpression = new StringBuilder();
+      newExpression.append("(int)(");
+      final PsiExpression lhs = binaryExpression.getLOperand();
+      if (typeCastExpression.equals(lhs)) {
+        newExpression.append(operand.getText());
+      }
+      else {
+        newExpression.append(lhs.getText());
+      }
+      newExpression.append(binaryExpression.getOperationSign().getText());
+      final PsiExpression rhs = binaryExpression.getROperand();
+      if (rhs == null) {
+        return;
+      }
+      if (typeCastExpression.equals(rhs)) {
+        newExpression.append(operand.getText());
+      }
+      else {
+        newExpression.append(rhs.getText());
+      }
+      newExpression.append(')');
+      replaceExpression(binaryExpression, newExpression.toString());
     }
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new MathRandomCastToIntegerVisitor();
+  }
+
+  private static class MathRandomCastToIntegerVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        final PsiTypeCastExpression expression =
-                (PsiTypeCastExpression) infos[0];
-        final PsiElement parent = expression.getParent();
-        if (!(parent instanceof PsiBinaryExpression)) {
-            return null;
-        }
-        final PsiBinaryExpression binaryExpression =
-                (PsiBinaryExpression) parent;
-        final IElementType tokenType = binaryExpression.getOperationTokenType();
-        if (JavaTokenType.ASTERISK != tokenType) {
-            return null;
-        }
-        return new MathRandomCastToIntegerFix();
+    public void visitTypeCastExpression(PsiTypeCastExpression expression) {
+      super.visitTypeCastExpression(expression);
+      final PsiExpression operand = expression.getOperand();
+      if (!(operand instanceof PsiMethodCallExpression)) {
+        return;
+      }
+      final PsiTypeElement castType = expression.getCastType();
+      if (castType == null) {
+        return;
+      }
+      final PsiType type = castType.getType();
+      if (!PsiType.INT.equals(type)) {
+        return;
+      }
+      final PsiMethodCallExpression methodCallExpression =
+        (PsiMethodCallExpression)operand;
+      final PsiReferenceExpression methodExpression =
+        methodCallExpression.getMethodExpression();
+      @NonNls
+      final String referenceName = methodExpression.getReferenceName();
+      if (!"random".equals(referenceName)) {
+        return;
+      }
+      final PsiMethod method = methodCallExpression.resolveMethod();
+      if (method == null) {
+        return;
+      }
+      final PsiClass containingClass = method.getContainingClass();
+      if (containingClass == null) {
+        return;
+      }
+      final String qualifiedName = containingClass.getQualifiedName();
+      if (!"java.lang.Math".equals(qualifiedName)) {
+        return;
+      }
+      registerError(methodCallExpression, expression);
     }
-
-    private static class MathRandomCastToIntegerFix
-            extends InspectionGadgetsFix {
-        @NotNull
-        public String getName() {
-            return InspectionGadgetsBundle.message(
-                    "math.random.cast.to.int.quickfix");
-        }
-
-        @Override
-        protected void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
-            final PsiElement element = descriptor.getPsiElement();
-            final PsiElement parent = element.getParent();
-            if (!(parent instanceof PsiTypeCastExpression)) {
-                return;
-            }
-            final PsiTypeCastExpression typeCastExpression =
-                    (PsiTypeCastExpression) parent;
-            final PsiElement grandParent = typeCastExpression.getParent();
-            if (!(grandParent instanceof PsiBinaryExpression)) {
-                return;
-            }
-            final PsiBinaryExpression binaryExpression =
-                    (PsiBinaryExpression) grandParent;
-            final PsiExpression operand = typeCastExpression.getOperand();
-            if (operand == null) {
-                return;
-            }
-            @NonNls final StringBuilder newExpression = new StringBuilder();
-            newExpression.append("(int)(");
-            final PsiExpression lhs = binaryExpression.getLOperand();
-            if (typeCastExpression.equals(lhs)) {
-                newExpression.append(operand.getText());
-            } else {
-                newExpression.append(lhs.getText());
-            }
-            newExpression.append(binaryExpression.getOperationSign().getText());
-            final PsiExpression rhs = binaryExpression.getROperand();
-            if (rhs == null) {
-                return;
-            }
-            if (typeCastExpression.equals(rhs)) {
-                newExpression.append(operand.getText());
-            } else {
-                newExpression.append(rhs.getText());
-            }
-            newExpression.append(')');
-            replaceExpression(binaryExpression, newExpression.toString());
-        }
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new MathRandomCastToIntegerVisitor();
-    }
-
-    private static class MathRandomCastToIntegerVisitor
-            extends BaseInspectionVisitor {
-
-        @Override
-        public void visitTypeCastExpression(PsiTypeCastExpression expression) {
-            super.visitTypeCastExpression(expression);
-            final PsiExpression operand = expression.getOperand();
-            if (!(operand instanceof PsiMethodCallExpression)) {
-                return;
-            }
-            final PsiTypeElement castType = expression.getCastType();
-            if (castType == null) {
-                return;
-            }
-            final PsiType type = castType.getType();
-            if (!PsiType.INT.equals(type)) {
-                return;
-            }
-            final PsiMethodCallExpression methodCallExpression =
-                    (PsiMethodCallExpression) operand;
-            final PsiReferenceExpression methodExpression =
-                    methodCallExpression.getMethodExpression();
-            @NonNls
-            final String referenceName = methodExpression.getReferenceName();
-            if (!"random".equals(referenceName)) {
-                return;
-            }
-            final PsiMethod method = methodCallExpression.resolveMethod();
-            if (method == null) {
-                return;
-            }
-            final PsiClass containingClass = method.getContainingClass();
-            if (containingClass == null) {
-                return;
-            }
-            final String qualifiedName = containingClass.getQualifiedName();
-            if (!"java.lang.Math".equals(qualifiedName)) {
-                return;
-            }
-            registerError(methodCallExpression, expression);
-        }
-    }
+  }
 }

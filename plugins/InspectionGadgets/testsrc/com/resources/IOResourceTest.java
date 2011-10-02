@@ -12,19 +12,19 @@ import com.siyeh.ig.resources.IOResourceInspection;
  */
 public class IOResourceTest extends IGInspectionTestCase {
 
-    @Override
-    protected Sdk getTestProjectSdk() {
-        LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_7);
-        return JavaSdkImpl.getMockJdk17();
-    }
+  @Override
+  protected Sdk getTestProjectSdk() {
+    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_7);
+    return JavaSdkImpl.getMockJdk17();
+  }
 
-    public void test() throws Exception {
-        doTest("com/siyeh/igtest/resources/io/plain", new IOResourceInspection());
-    }
+  public void test() throws Exception {
+    doTest("com/siyeh/igtest/resources/io/plain", new IOResourceInspection());
+  }
 
-    public void testInsideTry() throws Exception {
-        final IOResourceInspection inspection = new IOResourceInspection();
-        inspection.insideTryAllowed = true;
-        doTest("com/siyeh/igtest/resources/io/inside_try", inspection);
-    }
+  public void testInsideTry() throws Exception {
+    final IOResourceInspection inspection = new IOResourceInspection();
+    inspection.insideTryAllowed = true;
+    doTest("com/siyeh/igtest/resources/io/inside_try", inspection);
+  }
 }

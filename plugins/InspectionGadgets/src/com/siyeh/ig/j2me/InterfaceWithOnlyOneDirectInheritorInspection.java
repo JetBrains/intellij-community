@@ -27,49 +27,50 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
 public class InterfaceWithOnlyOneDirectInheritorInspection
-        extends BaseInspection {
+  extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "interface.one.inheritor.display.name");
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "interface.one.inheritor.display.name");
+  }
+
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "interface.one.inheritor.problem.descriptor");
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new InterfaceWithOnlyOneDirectInheritorVisitor();
+  }
+
+  private static class InterfaceWithOnlyOneDirectInheritorVisitor
+    extends BaseInspectionVisitor {
+
+    @Override
+    public void visitClass(@NotNull PsiClass aClass) {
+      // no call to super, so that it doesn't drill down to inner classes
+      if (!aClass.isInterface() || aClass.isAnnotationType()) {
+        return;
+      }
+      if (!hasOneInheritor(aClass)) {
+        return;
+      }
+      registerClassError(aClass);
     }
 
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "interface.one.inheritor.problem.descriptor");
-    }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new InterfaceWithOnlyOneDirectInheritorVisitor();
-    }
-
-    private static class InterfaceWithOnlyOneDirectInheritorVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitClass(@NotNull PsiClass aClass) {
-            // no call to super, so that it doesn't drill down to inner classes
-            if (!aClass.isInterface() || aClass.isAnnotationType()) {
-                return;
-            }
-            if (!hasOneInheritor(aClass)) {
-                return;
-            }
-            registerClassError(aClass);
+    private static boolean hasOneInheritor(final PsiClass aClass) {
+      final SearchScope searchScope = aClass.getUseScope();
+      final PsiElementProcessor.CollectElementsWithLimit<PsiClass> processor =
+        new PsiElementProcessor.CollectElementsWithLimit<PsiClass>(2);
+      final ProgressManager instance = ProgressManager.getInstance();
+      instance.runProcess(new Runnable() {
+        public void run() {
+          ClassInheritorsSearch.search(aClass, searchScope, false).forEach(new PsiElementProcessorAdapter<PsiClass>(processor));
         }
-
-        private static boolean hasOneInheritor(final PsiClass aClass) {
-            final SearchScope searchScope = aClass.getUseScope();
-            final PsiElementProcessor.CollectElementsWithLimit<PsiClass> processor =
-                    new PsiElementProcessor.CollectElementsWithLimit<PsiClass>(2);
-            final ProgressManager instance = ProgressManager.getInstance();
-            instance.runProcess(new Runnable() {
-                public void run() {
-                  ClassInheritorsSearch.search(aClass, searchScope, false).forEach(new PsiElementProcessorAdapter<PsiClass>(processor));
-                }
-            }, null);
-          return !processor.isOverflow();
-        }
+      }, null);
+      return !processor.isOverflow();
     }
+  }
 }

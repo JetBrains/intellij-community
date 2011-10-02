@@ -20,29 +20,32 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 class NegationCountVisitor extends JavaRecursiveElementVisitor {
-    
-    private int m_count = 0;
 
-    @Override public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
-        super.visitBinaryExpression(expression);
-      final IElementType tokenType = expression.getOperationTokenType();
-        if (tokenType.equals(JavaTokenType.NE)) {
-            m_count++;
-        }
-    }
+  private int m_count = 0;
 
-    @Override public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) {
-        // no call to super, to keep it from drilling into anonymous classes
+  @Override
+  public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
+    super.visitBinaryExpression(expression);
+    final IElementType tokenType = expression.getOperationTokenType();
+    if (tokenType.equals(JavaTokenType.NE)) {
+      m_count++;
     }
+  }
 
-    @Override public void visitPrefixExpression(@NotNull PsiPrefixExpression expression) {
-        super.visitPrefixExpression(expression);
-      if (expression.getOperationTokenType().equals(JavaTokenType.EXCL)) {
-            m_count++;
-        }
-    }
+  @Override
+  public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) {
+    // no call to super, to keep it from drilling into anonymous classes
+  }
 
-    public int getCount() {
-        return m_count;
+  @Override
+  public void visitPrefixExpression(@NotNull PsiPrefixExpression expression) {
+    super.visitPrefixExpression(expression);
+    if (expression.getOperationTokenType().equals(JavaTokenType.EXCL)) {
+      m_count++;
     }
+  }
+
+  public int getCount() {
+    return m_count;
+  }
 }

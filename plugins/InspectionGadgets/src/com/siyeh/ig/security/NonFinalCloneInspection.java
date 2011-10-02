@@ -27,46 +27,47 @@ import org.jetbrains.annotations.NotNull;
 
 public class NonFinalCloneInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message("non.final.clone.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("non.final.clone.display.name");
+  }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "non.final.clone.problem.descriptor");
-    }
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "non.final.clone.problem.descriptor");
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new NonFinalCloneVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new NonFinalCloneVisitor();
+  }
 
-    private static class NonFinalCloneVisitor extends BaseInspectionVisitor {
+  private static class NonFinalCloneVisitor extends BaseInspectionVisitor {
 
-        @Override public void visitMethod(@NotNull PsiMethod method) {
-            super.visitMethod(method);
-            final String name = method.getName();
-            if (!HardcodedMethodConstants.CLONE.equals(name)) {
-                return;
-            }
-            final PsiParameterList parameterList = method.getParameterList();
-            if (parameterList.getParametersCount() != 0) {
-                return;
-            }
-            if (method.hasModifierProperty(PsiModifier.FINAL)
-                    || method.hasModifierProperty(PsiModifier.ABSTRACT)) {
-                return;
-            }
-            final PsiClass containingClass = method.getContainingClass();
-            if (containingClass == null) {
-                return;
-            }
-            if (containingClass.hasModifierProperty(PsiModifier.FINAL)
-                    || containingClass.isInterface()) {
-                return;
-            }
-            registerMethodError(method);
-        }
+    @Override
+    public void visitMethod(@NotNull PsiMethod method) {
+      super.visitMethod(method);
+      final String name = method.getName();
+      if (!HardcodedMethodConstants.CLONE.equals(name)) {
+        return;
+      }
+      final PsiParameterList parameterList = method.getParameterList();
+      if (parameterList.getParametersCount() != 0) {
+        return;
+      }
+      if (method.hasModifierProperty(PsiModifier.FINAL)
+          || method.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        return;
+      }
+      final PsiClass containingClass = method.getContainingClass();
+      if (containingClass == null) {
+        return;
+      }
+      if (containingClass.hasModifierProperty(PsiModifier.FINAL)
+          || containingClass.isInterface()) {
+        return;
+      }
+      registerMethodError(method);
     }
+  }
 }

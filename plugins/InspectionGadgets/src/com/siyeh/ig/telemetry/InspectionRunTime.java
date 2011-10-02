@@ -17,41 +17,41 @@ package com.siyeh.ig.telemetry;
 
 class InspectionRunTime {
 
-    private final String inspectionName;
-    
-    private long totalRunTime = 0L;
-    private int runCount = 0;
+  private final String inspectionName;
 
-    public InspectionRunTime(String inspectionName) {
-        this.inspectionName = inspectionName;
-    }
+  private long totalRunTime = 0L;
+  private int runCount = 0;
 
-    public void addRunTime(long runTime) {
-        synchronized (this) {
-            totalRunTime += runTime;
-            runCount++;
-        }
-    }
-    
-    public double getAverageRunTime() {
-        synchronized (this) {
-            return (double) totalRunTime / (double) runCount;
-        }
-    }
+  public InspectionRunTime(String inspectionName) {
+    this.inspectionName = inspectionName;
+  }
 
-    public String getInspectionName() {
-        return inspectionName;
+  public void addRunTime(long runTime) {
+    synchronized (this) {
+      totalRunTime += runTime;
+      runCount++;
     }
+  }
 
-    public int getRunCount() {
-        synchronized (this) {
-            return runCount;
-        }
+  public double getAverageRunTime() {
+    synchronized (this) {
+      return (double)totalRunTime / (double)runCount;
     }
+  }
 
-    public long getTotalRunTime() {
-        synchronized (this) {
-            return totalRunTime;
-        }
+  public String getInspectionName() {
+    return inspectionName;
+  }
+
+  public int getRunCount() {
+    synchronized (this) {
+      return runCount;
     }
+  }
+
+  public long getTotalRunTime() {
+    synchronized (this) {
+      return totalRunTime;
+    }
+  }
 }

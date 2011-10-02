@@ -25,41 +25,42 @@ import org.jetbrains.annotations.NotNull;
 
 public class TestMethodInProductCodeInspection extends BaseInspection {
 
-    @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "test.method.in.product.code.display.name");
-    }
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "test.method.in.product.code.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String getID() {
+    return "JUnitTestMethodInProductSource";
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "test.method.in.product.code.problem.descriptor");
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new TestCaseInProductCodeVisitor();
+  }
+
+  private static class TestCaseInProductCodeVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String getID() {
-        return "JUnitTestMethodInProductSource";
+    public void visitMethod(PsiMethod method) {
+      final PsiClass containingClass = method.getContainingClass();
+      if (TestUtils.isTest(containingClass) ||
+          !TestUtils.isJUnit4TestMethod(method)) {
+        return;
+      }
+      registerMethodError(method);
     }
-
-    @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "test.method.in.product.code.problem.descriptor");
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new TestCaseInProductCodeVisitor();
-    }
-
-    private static class TestCaseInProductCodeVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitMethod(PsiMethod method) {
-            final PsiClass containingClass = method.getContainingClass();
-            if (TestUtils.isTest(containingClass) ||
-                    !TestUtils.isJUnit4TestMethod(method)) {
-                return;
-            }
-            registerMethodError(method);
-        }
-    }
+  }
 }

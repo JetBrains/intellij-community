@@ -24,71 +24,73 @@ import com.siyeh.ig.fixes.RenameFix;
 import org.jetbrains.annotations.NotNull;
 
 public class InstanceVariableNamingConventionInspection
-        extends ConventionInspection {
+  extends ConventionInspection {
 
-    private static final int DEFAULT_MIN_LENGTH = 5;
-    private static final int DEFAULT_MAX_LENGTH = 32;
+  private static final int DEFAULT_MIN_LENGTH = 5;
+  private static final int DEFAULT_MAX_LENGTH = 32;
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "instance.variable.naming.convention.display.name");
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "instance.variable.naming.convention.display.name");
+  }
+
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new RenameFix();
+  }
+
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return true;
+  }
+
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    final String fieldName = (String)infos[0];
+    if (fieldName.length() < getMinLength()) {
+      return InspectionGadgetsBundle.message(
+        "instance.variable.name.convention.problem.descriptor.short");
     }
-
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        return new RenameFix();
+    else if (fieldName.length() > getMaxLength()) {
+      return InspectionGadgetsBundle.message(
+        "instance.variable.name.convention.problem.descriptor.long");
     }
+    return InspectionGadgetsBundle.message(
+      "instance.variable.name.convention.problem.descriptor.regex.mismatch",
+      getRegex());
+  }
 
-    protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
-        return true;
+  protected String getDefaultRegex() {
+    return "m_[a-z][A-Za-z\\d]*";
+  }
+
+  protected int getDefaultMinLength() {
+    return DEFAULT_MIN_LENGTH;
+  }
+
+  protected int getDefaultMaxLength() {
+    return DEFAULT_MAX_LENGTH;
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new NamingConventionsVisitor();
+  }
+
+  private class NamingConventionsVisitor extends BaseInspectionVisitor {
+
+    @Override
+    public void visitField(@NotNull PsiField field) {
+      super.visitField(field);
+      if (field.hasModifierProperty(PsiModifier.STATIC)) {
+        return;
+      }
+      final String name = field.getName();
+      if (name == null) {
+        return;
+      }
+      if (isValid(name)) {
+        return;
+      }
+      registerFieldError(field, name);
     }
-
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        final String fieldName = (String)infos[0];
-        if (fieldName.length() < getMinLength()) {
-            return InspectionGadgetsBundle.message(
-                    "instance.variable.name.convention.problem.descriptor.short");
-        } else if (fieldName.length() > getMaxLength()) {
-            return InspectionGadgetsBundle.message(
-                    "instance.variable.name.convention.problem.descriptor.long");
-        }
-        return InspectionGadgetsBundle.message(
-                "instance.variable.name.convention.problem.descriptor.regex.mismatch",
-                getRegex());
-    }
-
-    protected String getDefaultRegex() {
-        return "m_[a-z][A-Za-z\\d]*";
-    }
-
-    protected int getDefaultMinLength() {
-        return DEFAULT_MIN_LENGTH;
-    }
-
-    protected int getDefaultMaxLength() {
-        return DEFAULT_MAX_LENGTH;
-    }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new NamingConventionsVisitor();
-    }
-
-    private class NamingConventionsVisitor extends BaseInspectionVisitor {
-
-        @Override public void visitField(@NotNull PsiField field) {
-            super.visitField(field);
-            if (field.hasModifierProperty(PsiModifier.STATIC)) {
-                return;
-            }
-            final String name = field.getName();
-            if (name == null) {
-                return;
-            }
-            if (isValid(name)) {
-                return;
-            }
-            registerFieldError(field, name);
-        }
-    }
+  }
 }

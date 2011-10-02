@@ -24,111 +24,114 @@ import org.jetbrains.annotations.NotNull;
 
 public class SignalWithoutCorrespondingAwaitInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "signal.without.corresponding.await.display.name");
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "signal.without.corresponding.await.display.name");
+  }
+
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "signal.without.corresponding.await.problem.descriptor");
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new SignalWithoutCorrespondingAwaitVisitor();
+  }
+
+  private static class SignalWithoutCorrespondingAwaitVisitor
+    extends BaseInspectionVisitor {
+
+    @Override
+    public void visitMethodCallExpression(
+      @NotNull PsiMethodCallExpression expression) {
+      super.visitMethodCallExpression(expression);
+      if (!ThreadingUtils.isSignalOrSignalAllCall(expression)) {
+        return;
+      }
+      final PsiReferenceExpression methodExpression =
+        expression.getMethodExpression();
+      final PsiExpression qualifier =
+        methodExpression.getQualifierExpression();
+      if (!(qualifier instanceof PsiReferenceExpression)) {
+        return;
+      }
+      final PsiElement referent = ((PsiReference)qualifier).resolve();
+      if (!(referent instanceof PsiField)) {
+        return;
+      }
+      final PsiField field = (PsiField)referent;
+      final PsiClass fieldClass = field.getContainingClass();
+      if (fieldClass == null) {
+        return;
+      }
+      if (!PsiTreeUtil.isAncestor(fieldClass, expression, true)) {
+        return;
+      }
+      if (containsAwaitCall(fieldClass, field)) {
+        return;
+      }
+      registerMethodCallError(expression);
     }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "signal.without.corresponding.await.problem.descriptor");
+    private static boolean containsAwaitCall(
+      PsiClass fieldClass, PsiField field) {
+      final ContainsAwaitVisitor visitor =
+        new ContainsAwaitVisitor(field);
+      fieldClass.accept(visitor);
+      return visitor.containsAwait();
+    }
+  }
+
+  private static class ContainsAwaitVisitor
+    extends JavaRecursiveElementVisitor {
+
+    private final PsiField target;
+    private boolean containsAwait = false;
+
+    ContainsAwaitVisitor(PsiField target) {
+      super();
+      this.target = target;
     }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new SignalWithoutCorrespondingAwaitVisitor();
+    @Override
+    public void visitElement(PsiElement element) {
+      if (containsAwait) {
+        return;
+      }
+      super.visitElement(element);
     }
 
-    private static class SignalWithoutCorrespondingAwaitVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitMethodCallExpression(
-                @NotNull PsiMethodCallExpression expression) {
-            super.visitMethodCallExpression(expression);
-            if (!ThreadingUtils.isSignalOrSignalAllCall(expression)) {
-                return;
-            }
-            final PsiReferenceExpression methodExpression =
-                    expression.getMethodExpression();
-            final PsiExpression qualifier =
-                    methodExpression.getQualifierExpression();
-            if (!(qualifier instanceof PsiReferenceExpression)) {
-                return;
-            }
-            final PsiElement referent = ((PsiReference) qualifier).resolve();
-            if (!(referent instanceof PsiField)) {
-                return;
-            }
-            final PsiField field = (PsiField) referent;
-            final PsiClass fieldClass = field.getContainingClass();
-            if (fieldClass == null) {
-                return;
-            }
-            if (!PsiTreeUtil.isAncestor(fieldClass, expression, true)) {
-                return;
-            }
-            if (containsAwaitCall(fieldClass, field)) {
-                return;
-            }
-            registerMethodCallError(expression);
-        }
-
-        private static boolean containsAwaitCall(
-                PsiClass fieldClass, PsiField field) {
-            final ContainsAwaitVisitor visitor =
-                    new ContainsAwaitVisitor(field);
-            fieldClass.accept(visitor);
-            return visitor.containsAwait();
-        }
+    @Override
+    public void visitMethodCallExpression(
+      PsiMethodCallExpression expression) {
+      super.visitMethodCallExpression(expression);
+      if (!ThreadingUtils.isAwaitCall(expression)) {
+        return;
+      }
+      final PsiReferenceExpression methodExpression =
+        expression.getMethodExpression();
+      final PsiExpression qualifier =
+        methodExpression.getQualifierExpression();
+      if (qualifier == null) {
+        return;
+      }
+      if (!(qualifier instanceof PsiReferenceExpression)) {
+        return;
+      }
+      final PsiElement referent = ((PsiReference)qualifier).resolve();
+      if (referent == null) {
+        return;
+      }
+      if (!target.equals(referent)) {
+        return;
+      }
+      containsAwait = true;
     }
 
-    private static class ContainsAwaitVisitor
-            extends JavaRecursiveElementVisitor {
-
-        private final PsiField target;
-        private boolean containsAwait = false;
-
-        ContainsAwaitVisitor(PsiField target) {
-            super();
-            this.target = target;
-        }
-
-        @Override public void visitElement(PsiElement element) {
-            if (containsAwait) {
-                return;
-            }
-            super.visitElement(element);
-        }
-
-        @Override public void visitMethodCallExpression(
-                PsiMethodCallExpression expression) {
-            super.visitMethodCallExpression(expression);
-            if (!ThreadingUtils.isAwaitCall(expression)) {
-                return;
-            }
-            final PsiReferenceExpression methodExpression =
-                    expression.getMethodExpression();
-            final PsiExpression qualifier =
-                    methodExpression.getQualifierExpression();
-            if (qualifier == null) {
-                return;
-            }
-            if (!(qualifier instanceof PsiReferenceExpression)) {
-                return;
-            }
-            final PsiElement referent = ((PsiReference) qualifier).resolve();
-            if (referent == null) {
-                return;
-            }
-            if (!target.equals(referent)) {
-                return;
-            }
-            containsAwait = true;
-        }
-
-        public boolean containsAwait() {
-            return containsAwait;
-        }
+    public boolean containsAwait() {
+      return containsAwait;
     }
+  }
 }

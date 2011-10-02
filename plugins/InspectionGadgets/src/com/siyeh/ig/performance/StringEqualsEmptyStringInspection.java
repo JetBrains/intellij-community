@@ -33,179 +33,190 @@ import org.jetbrains.annotations.NotNull;
 
 public class StringEqualsEmptyStringInspection extends BaseInspection {
 
-    @Override
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "string.equals.empty.string.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "string.equals.empty.string.problem.descriptor");
+  }
+
+  @Override
+  public InspectionGadgetsFix buildFix(Object... infos) {
+    final boolean useIsEmpty = ((Boolean)infos[0]).booleanValue();
+    return new StringEqualsEmptyStringFix(useIsEmpty);
+  }
+
+  private static class StringEqualsEmptyStringFix
+    extends InspectionGadgetsFix {
+
+    private final boolean useIsEmpty;
+
+    public StringEqualsEmptyStringFix(boolean useIsEmpty) {
+      this.useIsEmpty = useIsEmpty;
+    }
+
     @NotNull
-    public String getDisplayName() {
+    public String getName() {
+      if (useIsEmpty) {
         return InspectionGadgetsBundle.message(
-                "string.equals.empty.string.display.name");
-    }
-
-    @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
+          "string.equals.empty.string.replace.quickfix2");
+      }
+      else {
         return InspectionGadgetsBundle.message(
-                "string.equals.empty.string.problem.descriptor");
+          "string.equals.empty.string.replace.quickfix");
+      }
     }
 
     @Override
-    public InspectionGadgetsFix buildFix(Object... infos) {
-        final boolean useIsEmpty = ((Boolean) infos[0]).booleanValue();
-        return new StringEqualsEmptyStringFix(useIsEmpty);
+    public void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiIdentifier name =
+        (PsiIdentifier)descriptor.getPsiElement();
+      final PsiReferenceExpression expression =
+        (PsiReferenceExpression)name.getParent();
+      if (expression == null) {
+        return;
+      }
+      final PsiMethodCallExpression call =
+        (PsiMethodCallExpression)expression.getParent();
+      final PsiExpressionList argumentList = call.getArgumentList();
+      final PsiExpression[] arguments = argumentList.getExpressions();
+      if (arguments.length == 0) {
+        return;
+      }
+      final PsiExpression qualifier = expression.getQualifierExpression();
+      final PsiExpression argument = arguments[0];
+      final String variableText;
+      if (ExpressionUtils.isEmptyStringLiteral(argument)) {
+        variableText = getRemainingText(qualifier);
+      }
+      else {
+        variableText = getRemainingText(argument);
+      }
+      final PsiElement parent = call.getParent();
+      if (parent instanceof PsiExpression) {
+        final PsiExpression parentExpression = (PsiExpression)parent;
+        if (BoolUtils.isNegation(parentExpression)) {
+          if (useIsEmpty) {
+            replaceExpression(parentExpression,
+                              '!' + variableText + ".isEmpty()");
+          }
+          else {
+            replaceExpression(parentExpression,
+                              variableText + ".length()!=0");
+          }
+        }
+        else {
+          if (useIsEmpty) {
+            replaceExpression(call, variableText + ".isEmpty()");
+          }
+          else {
+            replaceExpression(call, variableText + ".length()==0");
+          }
+        }
+      }
+      else {
+        if (useIsEmpty) {
+          replaceExpression(call, variableText + ".isEmpty()");
+        }
+        else {
+          replaceExpression(call, variableText + ".length()==0");
+        }
+      }
     }
 
-    private static class StringEqualsEmptyStringFix
-            extends InspectionGadgetsFix {
-
-        private final boolean useIsEmpty;
-
-        public StringEqualsEmptyStringFix(boolean useIsEmpty) {
-            this.useIsEmpty = useIsEmpty;
-        }
-
-        @NotNull
-        public String getName() {
-            if (useIsEmpty) {
-                return InspectionGadgetsBundle.message(
-                        "string.equals.empty.string.replace.quickfix2");
-            } else {
-                return InspectionGadgetsBundle.message(
-                        "string.equals.empty.string.replace.quickfix");
-            }
-        }
-
-        @Override
-        public void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
-            final PsiIdentifier name =
-                    (PsiIdentifier) descriptor.getPsiElement();
-            final PsiReferenceExpression expression =
-                    (PsiReferenceExpression) name.getParent();
-            if (expression == null) {
-                return;
-            }
-            final PsiMethodCallExpression call =
-                    (PsiMethodCallExpression)expression.getParent();
-            final PsiExpressionList argumentList = call.getArgumentList();
-            final PsiExpression[] arguments = argumentList.getExpressions();
-            if (arguments.length == 0) {
-                return;
-            }
-            final PsiExpression qualifier = expression.getQualifierExpression();
-            final PsiExpression argument = arguments[0];
-            final String variableText;
-            if (ExpressionUtils.isEmptyStringLiteral(argument)) {
-                variableText = getRemainingText(qualifier);
-            } else {
-                variableText = getRemainingText(argument);
-            }
-            final PsiElement parent = call.getParent();
-            if (parent instanceof PsiExpression) {
-                final PsiExpression parentExpression = (PsiExpression) parent;
-                if(BoolUtils.isNegation(parentExpression)) {
-                    if (useIsEmpty) {
-                        replaceExpression(parentExpression,
-                                '!' + variableText + ".isEmpty()");
-                    } else {
-                        replaceExpression(parentExpression,
-                                variableText + ".length()!=0");
-                    }
-                } else {
-                    if (useIsEmpty) {
-                        replaceExpression(call, variableText + ".isEmpty()");
-                    } else {
-                        replaceExpression(call, variableText + ".length()==0");
-                    }
-                }
-            } else {
-                if (useIsEmpty) {
-                    replaceExpression(call, variableText + ".isEmpty()");
-                } else {
-                    replaceExpression(call, variableText + ".length()==0");
-                }
-            }
-        }
-
-        private String getRemainingText(PsiExpression expression) {
-            if (useIsEmpty ||
-                    !(expression instanceof PsiMethodCallExpression)) {
-                return expression.getText();
-            }
-            // to replace stringBuffer.toString().equals("") with
-            // stringBuffer.length() == 0
-            final PsiMethodCallExpression callExpression =
-                    (PsiMethodCallExpression) expression;
-            final PsiReferenceExpression methodExpression =
-                    callExpression.getMethodExpression();
-            final String referenceName =
-                    methodExpression.getReferenceName();
-            final PsiExpression qualifierExpression =
-                    methodExpression.getQualifierExpression();
-            if (qualifierExpression == null) {
-                return expression.getText();
-            }
-            final PsiType type = qualifierExpression.getType();
-            if (HardcodedMethodConstants.TO_STRING.equals(referenceName) &&
-                    type != null && (type.equalsToText(
-                    CommonClassNames.JAVA_LANG_STRING_BUFFER) ||
-                            type.equalsToText("java.lang.StringBuilder"))) {
-                return qualifierExpression.getText();
-            } else {
-                return expression.getText();
-            }
-        }
+    private String getRemainingText(PsiExpression expression) {
+      if (useIsEmpty ||
+          !(expression instanceof PsiMethodCallExpression)) {
+        return expression.getText();
+      }
+      // to replace stringBuffer.toString().equals("") with
+      // stringBuffer.length() == 0
+      final PsiMethodCallExpression callExpression =
+        (PsiMethodCallExpression)expression;
+      final PsiReferenceExpression methodExpression =
+        callExpression.getMethodExpression();
+      final String referenceName =
+        methodExpression.getReferenceName();
+      final PsiExpression qualifierExpression =
+        methodExpression.getQualifierExpression();
+      if (qualifierExpression == null) {
+        return expression.getText();
+      }
+      final PsiType type = qualifierExpression.getType();
+      if (HardcodedMethodConstants.TO_STRING.equals(referenceName) &&
+          type != null && (type.equalsToText(
+        CommonClassNames.JAVA_LANG_STRING_BUFFER) ||
+                           type.equalsToText("java.lang.StringBuilder"))) {
+        return qualifierExpression.getText();
+      }
+      else {
+        return expression.getText();
+      }
     }
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new StringEqualsEmptyStringVisitor();
+  }
+
+  private static class StringEqualsEmptyStringVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new StringEqualsEmptyStringVisitor();
-    }
+    public void visitMethodCallExpression(
+      @NotNull PsiMethodCallExpression call) {
+      super.visitMethodCallExpression(call);
+      final PsiReferenceExpression methodExpression =
+        call.getMethodExpression();
+      @NonNls final String methodName =
+        methodExpression.getReferenceName();
+      if (!"equals".equals(methodName)) {
+        return;
+      }
+      final PsiExpressionList argumentList = call.getArgumentList();
+      final PsiExpression[] arguments = argumentList.getExpressions();
+      if (arguments.length != 1) {
+        return;
+      }
+      final PsiElement context = call.getParent();
+      final boolean useIsEmpty = PsiUtil.isLanguageLevel6OrHigher(call);
+      if (!useIsEmpty && context instanceof PsiExpressionStatement) {
+        //cheesy, but necessary, because otherwise the quickfix will
+        // produce uncompilable code (out of merely incorrect code).
+        return;
+      }
 
-    private static class StringEqualsEmptyStringVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitMethodCallExpression(
-                @NotNull PsiMethodCallExpression call) {
-            super.visitMethodCallExpression(call);
-            final PsiReferenceExpression methodExpression =
-                    call.getMethodExpression();
-            @NonNls final String methodName =
-                    methodExpression.getReferenceName();
-            if (!"equals".equals(methodName)) {
-                return;
-            }
-            final PsiExpressionList argumentList = call.getArgumentList();
-            final PsiExpression[] arguments = argumentList.getExpressions();
-            if (arguments.length != 1) {
-                return;
-            }
-            final PsiElement context = call.getParent();
-            final boolean useIsEmpty = PsiUtil.isLanguageLevel6OrHigher(call);
-            if (!useIsEmpty && context instanceof PsiExpressionStatement) {
-                //cheesy, but necessary, because otherwise the quickfix will
-                // produce uncompilable code (out of merely incorrect code).
-                return;
-            }
-
-            final PsiExpression qualifier =
-                    methodExpression.getQualifierExpression();
-            final PsiExpression argument = arguments[0];
-            if (ExpressionUtils.isEmptyStringLiteral(qualifier)) {
-                final PsiType type = argument.getType();
-                if (!TypeUtils.isJavaLangString(type)) {
-                    return;
-                }
-            } else if (ExpressionUtils.isEmptyStringLiteral(argument)) {
-                if (qualifier == null) {
-                    return;
-                }
-                final PsiType type = qualifier.getType();
-                if (!TypeUtils.isJavaLangString(type)) {
-                    return;
-                }
-            } else {
-                return;
-            }
-            registerMethodCallError(call, Boolean.valueOf(useIsEmpty));
+      final PsiExpression qualifier =
+        methodExpression.getQualifierExpression();
+      final PsiExpression argument = arguments[0];
+      if (ExpressionUtils.isEmptyStringLiteral(qualifier)) {
+        final PsiType type = argument.getType();
+        if (!TypeUtils.isJavaLangString(type)) {
+          return;
         }
+      }
+      else if (ExpressionUtils.isEmptyStringLiteral(argument)) {
+        if (qualifier == null) {
+          return;
+        }
+        final PsiType type = qualifier.getType();
+        if (!TypeUtils.isJavaLangString(type)) {
+          return;
+        }
+      }
+      else {
+        return;
+      }
+      registerMethodCallError(call, Boolean.valueOf(useIsEmpty));
     }
+  }
 }

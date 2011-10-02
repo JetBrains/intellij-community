@@ -30,100 +30,101 @@ import org.jetbrains.annotations.NotNull;
 
 public class SetupCallsSuperSetupInspection extends BaseInspection {
 
-    @Override
+  @Override
+  @NotNull
+  public String getID() {
+    return "SetUpDoesntCallSuperSetUp";
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "setup.calls.super.setup.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "setup.calls.super.setup.problem.descriptor");
+  }
+
+  private static class AddSuperSetUpCall extends InspectionGadgetsFix {
+
     @NotNull
-    public String getID() {
-        return "SetUpDoesntCallSuperSetUp";
+    public String getName() {
+      return InspectionGadgetsBundle.message(
+        "setup.calls.super.setup.add.quickfix");
     }
 
     @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "setup.calls.super.setup.display.name");
+    public void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiElement methodName = descriptor.getPsiElement();
+      final PsiMethod method = (PsiMethod)methodName.getParent();
+      assert method != null;
+      final PsiCodeBlock body = method.getBody();
+      if (body == null) {
+        return;
+      }
+      final PsiElementFactory factory =
+        JavaPsiFacade.getElementFactory(project);
+      final PsiStatement newStatement =
+        factory.createStatementFromText("super.setUp();", null);
+      final CodeStyleManager styleManager =
+        CodeStyleManager.getInstance(project);
+      final PsiJavaToken brace = body.getLBrace();
+      body.addAfter(newStatement, brace);
+      styleManager.reformat(body);
     }
+  }
+
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new AddSuperSetUpCall();
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new SetupCallsSuperSetupVisitor();
+  }
+
+  private static class SetupCallsSuperSetupVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "setup.calls.super.setup.problem.descriptor");
+    public void visitMethod(@NotNull PsiMethod method) {
+      //note: no call to super;
+      @NonNls final String methodName = method.getName();
+      if (!"setUp".equals(methodName)) {
+        return;
+      }
+      if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        return;
+      }
+      if (method.getBody() == null) {
+        return;
+      }
+      final PsiParameterList parameterList = method.getParameterList();
+      if (parameterList.getParametersCount() != 0) {
+        return;
+      }
+      final PsiClass targetClass = method.getContainingClass();
+      if (targetClass == null) {
+        return;
+      }
+      if (!InheritanceUtil.isInheritor(targetClass,
+                                       "junit.framework.TestCase")) {
+        return;
+      }
+      final CallToSuperSetupVisitor visitor =
+        new CallToSuperSetupVisitor();
+      method.accept(visitor);
+      if (visitor.isCallToSuperSetupFound()) {
+        return;
+      }
+      registerMethodError(method);
     }
-
-    private static class AddSuperSetUpCall extends InspectionGadgetsFix {
-
-        @NotNull
-        public String getName() {
-            return InspectionGadgetsBundle.message(
-                    "setup.calls.super.setup.add.quickfix");
-        }
-
-        @Override
-        public void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
-            final PsiElement methodName = descriptor.getPsiElement();
-            final PsiMethod method = (PsiMethod)methodName.getParent();
-            assert method != null;
-            final PsiCodeBlock body = method.getBody();
-            if (body == null) {
-                return;
-            }
-            final PsiElementFactory factory =
-                    JavaPsiFacade.getElementFactory(project);
-            final PsiStatement newStatement =
-                    factory.createStatementFromText("super.setUp();", null);
-            final CodeStyleManager styleManager =
-                    CodeStyleManager.getInstance(project);
-            final PsiJavaToken brace = body.getLBrace();
-            body.addAfter(newStatement, brace);
-            styleManager.reformat(body);
-        }
-    }
-
-    @Override
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        return new AddSuperSetUpCall();
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new SetupCallsSuperSetupVisitor();
-    }
-
-    private static class SetupCallsSuperSetupVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitMethod(@NotNull PsiMethod method) {
-            //note: no call to super;
-            @NonNls final String methodName = method.getName();
-            if (!"setUp".equals(methodName)) {
-                return;
-            }
-            if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
-                return;
-            }
-            if (method.getBody() == null) {
-                return;
-            }
-            final PsiParameterList parameterList = method.getParameterList();
-            if (parameterList.getParametersCount() != 0) {
-                return;
-            }
-            final PsiClass targetClass = method.getContainingClass();
-            if (targetClass == null) {
-                return;
-            }
-            if (!InheritanceUtil.isInheritor(targetClass,
-                    "junit.framework.TestCase")) {
-                return;
-            }
-            final CallToSuperSetupVisitor visitor =
-                    new CallToSuperSetupVisitor();
-            method.accept(visitor);
-            if (visitor.isCallToSuperSetupFound()) {
-                return;
-            }
-            registerMethodError(method);
-        }
-    }
+  }
 }

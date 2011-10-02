@@ -37,203 +37,205 @@ import java.util.List;
 
 public class MissingOverrideAnnotationInspection extends BaseInspection {
 
-    @SuppressWarnings({"PublicField"})
-    public boolean ignoreObjectMethods = true;
+  @SuppressWarnings({"PublicField"})
+  public boolean ignoreObjectMethods = true;
 
-    @SuppressWarnings({"PublicField"})
-    public boolean ignoreAnonymousClassMethods = false;
+  @SuppressWarnings({"PublicField"})
+  public boolean ignoreAnonymousClassMethods = false;
 
-    @Override
+  @Override
+  @NotNull
+  public String getID() {
+    return "override";
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "missing.override.annotation.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "missing.override.annotation.problem.descriptor");
+  }
+
+  @Override
+  public JComponent createOptionsPanel() {
+    final MultipleCheckboxOptionsPanel panel =
+      new MultipleCheckboxOptionsPanel(this);
+    panel.addCheckbox(InspectionGadgetsBundle.message(
+      "ignore.equals.hashcode.and.tostring"), "ignoreObjectMethods");
+    panel.addCheckbox(InspectionGadgetsBundle.message(
+      "ignore.methods.in.anonymous.classes"),
+                      "ignoreAnonymousClassMethods");
+    return panel;
+  }
+
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new MissingOverrideAnnotationFix();
+  }
+
+  private static class MissingOverrideAnnotationFix
+    extends InspectionGadgetsFix {
+
     @NotNull
-    public String getID() {
-        return "override";
-    }
-
-    @Override @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "missing.override.annotation.display.name");
+    public String getName() {
+      return InspectionGadgetsBundle.message(
+        "missing.override.annotation.add.quickfix");
     }
 
     @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "missing.override.annotation.problem.descriptor");
+    public void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiElement identifier = descriptor.getPsiElement();
+      final PsiElement parent = identifier.getParent();
+      if (!(parent instanceof PsiModifierListOwner)) {
+        return;
+      }
+      final PsiModifierListOwner modifierListOwner =
+        (PsiModifierListOwner)parent;
+      final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+      final PsiElementFactory factory = psiFacade.getElementFactory();
+      final PsiAnnotation annotation =
+        factory.createAnnotationFromText("@java.lang.Override",
+                                         modifierListOwner);
+      final PsiModifierList modifierList =
+        modifierListOwner.getModifierList();
+      if (modifierList == null) {
+        return;
+      }
+      modifierList.addAfter(annotation, null);
     }
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new MissingOverrideAnnotationVisitor();
+  }
+
+  private class MissingOverrideAnnotationVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    public JComponent createOptionsPanel() {
-        final MultipleCheckboxOptionsPanel panel =
-                new MultipleCheckboxOptionsPanel(this);
-        panel.addCheckbox(InspectionGadgetsBundle.message(
-                "ignore.equals.hashcode.and.tostring"), "ignoreObjectMethods");
-        panel.addCheckbox(InspectionGadgetsBundle.message(
-                "ignore.methods.in.anonymous.classes"),
-                "ignoreAnonymousClassMethods");
-        return panel;
+    public void visitMethod(@NotNull PsiMethod method) {
+      if (!PsiUtil.isLanguageLevel5OrHigher(method)) {
+        return;
+      }
+      if (method.getNameIdentifier() == null) {
+        return;
+      }
+      if (method.isConstructor()) {
+        return;
+      }
+      if (method.hasModifierProperty(PsiModifier.PRIVATE) ||
+          method.hasModifierProperty(PsiModifier.STATIC)) {
+        return;
+      }
+      final PsiClass methodClass = method.getContainingClass();
+      if (methodClass == null) {
+        return;
+      }
+      if (ignoreAnonymousClassMethods &&
+          methodClass instanceof PsiAnonymousClass) {
+        return;
+      }
+      final boolean useJdk6Rules =
+        PsiUtil.isLanguageLevel6OrHigher(method);
+      if (useJdk6Rules) {
+        if (!isJdk6Override(method, methodClass)) {
+          return;
+        }
+      }
+      else if (!isJdk5Override(method, methodClass)) {
+        return;
+      }
+      if (ignoreObjectMethods && (MethodUtils.isHashCode(method) ||
+                                  MethodUtils.isEquals(method) ||
+                                  MethodUtils.isToString(method))) {
+        return;
+      }
+      if (hasOverrideAnnotation(method)) {
+        return;
+      }
+      registerMethodError(method);
     }
 
-    @Override
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        return new MissingOverrideAnnotationFix();
+    private boolean hasOverrideAnnotation(
+      PsiModifierListOwner element) {
+      final PsiModifierList modifierList = element.getModifierList();
+      if (modifierList == null) {
+        return false;
+      }
+      final PsiAnnotation annotation =
+        modifierList.findAnnotation("java.lang.Override");
+      return annotation != null;
     }
 
-    private static class MissingOverrideAnnotationFix
-            extends InspectionGadgetsFix {
-
-        @NotNull
-        public String getName() {
-            return InspectionGadgetsBundle.message(
-                    "missing.override.annotation.add.quickfix");
+    private boolean isJdk6Override(PsiMethod method, PsiClass methodClass) {
+      final PsiMethod[] superMethods =
+        getSuperMethodsInJavaSense(method, methodClass);
+      if (superMethods.length <= 0) {
+        return false;
+      }
+      // is override except if this is an interface method
+      // overriding a protected method in java.lang.Object
+      // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6501053
+      if (!methodClass.isInterface()) {
+        return true;
+      }
+      for (PsiMethod superMethod : superMethods) {
+        if (!superMethod.hasModifierProperty(PsiModifier.PROTECTED)) {
+          return true;
         }
-
-        @Override
-        public void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
-            final PsiElement identifier = descriptor.getPsiElement();
-            final PsiElement parent = identifier.getParent();
-            if (!(parent instanceof PsiModifierListOwner)) {
-                return;
-            }
-            final PsiModifierListOwner modifierListOwner =
-                    (PsiModifierListOwner)parent;
-            final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-            final PsiElementFactory factory = psiFacade.getElementFactory();
-            final PsiAnnotation annotation =
-                    factory.createAnnotationFromText("@java.lang.Override",
-                            modifierListOwner);
-            final PsiModifierList modifierList =
-                    modifierListOwner.getModifierList();
-            if (modifierList == null) {
-                return;
-            }
-            modifierList.addAfter(annotation, null);
-        }
+      }
+      return false;
     }
 
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new MissingOverrideAnnotationVisitor();
+    private boolean isJdk5Override(PsiMethod method, PsiClass methodClass) {
+      final PsiMethod[] superMethods =
+        getSuperMethodsInJavaSense(method, methodClass);
+      for (PsiMethod superMethod : superMethods) {
+        final PsiClass superClass = superMethod.getContainingClass();
+        if (superClass == null) {
+          continue;
+        }
+        if (superClass.isInterface()) {
+          continue;
+        }
+        if (methodClass.isInterface() &&
+            superMethod.hasModifierProperty(PsiModifier.PROTECTED)) {
+          // only true for J2SE java.lang.Object.clone(), but might
+          // be different on other/newer java platforms
+          continue;
+        }
+        return true;
+      }
+      return false;
     }
 
-    private class MissingOverrideAnnotationVisitor
-            extends BaseInspectionVisitor {
-
-        @Override
-        public void visitMethod(@NotNull PsiMethod method) {
-            if (!PsiUtil.isLanguageLevel5OrHigher(method)) {
-                return;
-            }
-            if (method.getNameIdentifier() == null) {
-                return;
-            }
-            if (method.isConstructor()) {
-                return;
-            }
-            if (method.hasModifierProperty(PsiModifier.PRIVATE) ||
-                    method.hasModifierProperty(PsiModifier.STATIC)) {
-                return;
-            }
-            final PsiClass methodClass = method.getContainingClass();
-            if (methodClass == null) {
-                return;
-            }
-            if (ignoreAnonymousClassMethods &&
-                    methodClass instanceof PsiAnonymousClass) {
-                return;
-            }
-            final boolean useJdk6Rules =
-                    PsiUtil.isLanguageLevel6OrHigher(method);
-            if (useJdk6Rules) {
-                if (!isJdk6Override(method, methodClass)) {
-                    return;
-                }
-            } else if (!isJdk5Override(method, methodClass)) {
-                return;
-            }
-            if (ignoreObjectMethods && (MethodUtils.isHashCode(method) ||
-                    MethodUtils.isEquals(method) ||
-                    MethodUtils.isToString(method))) {
-                return;
-            }
-            if (hasOverrideAnnotation(method)) {
-                return;
-            }
-            registerMethodError(method);
+    private PsiMethod[] getSuperMethodsInJavaSense(
+      @NotNull PsiMethod method, @NotNull PsiClass methodClass) {
+      final PsiMethod[] superMethods = method.findSuperMethods();
+      final List<PsiMethod> toExclude = new SmartList<PsiMethod>();
+      for (PsiMethod superMethod : superMethods) {
+        final PsiClass superClass = superMethod.getContainingClass();
+        if (!InheritanceUtil.isInheritorOrSelf(methodClass, superClass,
+                                               true)) {
+          toExclude.add(superMethod);
         }
-
-        private boolean hasOverrideAnnotation(
-                PsiModifierListOwner element) {
-            final PsiModifierList modifierList = element.getModifierList();
-            if (modifierList == null) {
-                return false;
-            }
-            final PsiAnnotation annotation =
-                    modifierList.findAnnotation("java.lang.Override");
-            return annotation != null;
-        }
-
-        private boolean isJdk6Override(PsiMethod method, PsiClass methodClass) {
-            final PsiMethod[] superMethods =
-                    getSuperMethodsInJavaSense(method, methodClass);
-            if (superMethods.length <= 0) {
-                return false;
-            }
-            // is override except if this is an interface method
-            // overriding a protected method in java.lang.Object
-            // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6501053
-            if (!methodClass.isInterface()) {
-                return true;
-            }
-            for (PsiMethod superMethod : superMethods) {
-                if (!superMethod.hasModifierProperty(PsiModifier.PROTECTED)) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        private boolean isJdk5Override(PsiMethod method, PsiClass methodClass) {
-            final PsiMethod[] superMethods =
-                    getSuperMethodsInJavaSense(method, methodClass);
-            for (PsiMethod superMethod : superMethods) {
-                final PsiClass superClass = superMethod.getContainingClass();
-                if (superClass == null) {
-                    continue;
-                }
-                if (superClass.isInterface()) {
-                    continue;
-                }
-                if (methodClass.isInterface() &&
-                        superMethod.hasModifierProperty(PsiModifier.PROTECTED)) {
-                    // only true for J2SE java.lang.Object.clone(), but might
-                    // be different on other/newer java platforms
-                    continue;
-                }
-                return true;
-            }
-            return false;
-        }
-
-        private PsiMethod[] getSuperMethodsInJavaSense(
-                @NotNull PsiMethod method, @NotNull PsiClass methodClass) {
-            final PsiMethod[] superMethods = method.findSuperMethods();
-            final List<PsiMethod> toExclude = new SmartList<PsiMethod>();
-            for (PsiMethod superMethod : superMethods) {
-                final PsiClass superClass = superMethod.getContainingClass();
-                if (!InheritanceUtil.isInheritorOrSelf(methodClass, superClass,
-                        true)) {
-                    toExclude.add(superMethod);
-                }
-            }
-            if (!toExclude.isEmpty()) {
-                final List<PsiMethod> result =
-                        new ArrayList<PsiMethod>(Arrays.asList(superMethods));
-                result.removeAll(toExclude);
-                return result.toArray(new PsiMethod[result.size()]);
-            }
-            return superMethods;
-        }
+      }
+      if (!toExclude.isEmpty()) {
+        final List<PsiMethod> result =
+          new ArrayList<PsiMethod>(Arrays.asList(superMethods));
+        result.removeAll(toExclude);
+        return result.toArray(new PsiMethod[result.size()]);
+      }
+      return superMethods;
     }
+  }
 }

@@ -30,110 +30,116 @@ import org.jetbrains.annotations.NotNull;
 
 public class ConstantSubexpressionIntention extends MutablyNamedIntention {
 
-    @Override
-    @NotNull
-    protected PsiElementPredicate getElementPredicate() {
-        return new ConstantSubexpressionPredicate();
-    }
+  @Override
+  @NotNull
+  protected PsiElementPredicate getElementPredicate() {
+    return new ConstantSubexpressionPredicate();
+  }
 
-    @Override
-    protected String getTextForElement(PsiElement element) {
-        final PsiBinaryExpression binaryExpression =
-                (PsiBinaryExpression)element.getParent();
-        assert binaryExpression != null;
-        final PsiExpression lhs = binaryExpression.getLOperand();
-        final PsiExpression leftSide;
-        if (lhs instanceof PsiBinaryExpression) {
-            final PsiBinaryExpression lhsBinaryExpression =
-                    (PsiBinaryExpression)lhs;
-            leftSide = lhsBinaryExpression.getROperand();
-        } else {
-            leftSide = lhs;
-        }
-        final PsiJavaToken operationSign = binaryExpression.getOperationSign();
-        final PsiExpression rhs = binaryExpression.getROperand();
-        assert rhs != null;
-        assert leftSide != null;
-        return IntentionPowerPackBundle.message(
-                "constant.subexpression.intention.name", leftSide.getText() +
-                ' ' + operationSign.getText() + ' ' + rhs.getText());
+  @Override
+  protected String getTextForElement(PsiElement element) {
+    final PsiBinaryExpression binaryExpression =
+      (PsiBinaryExpression)element.getParent();
+    assert binaryExpression != null;
+    final PsiExpression lhs = binaryExpression.getLOperand();
+    final PsiExpression leftSide;
+    if (lhs instanceof PsiBinaryExpression) {
+      final PsiBinaryExpression lhsBinaryExpression =
+        (PsiBinaryExpression)lhs;
+      leftSide = lhsBinaryExpression.getROperand();
     }
+    else {
+      leftSide = lhs;
+    }
+    final PsiJavaToken operationSign = binaryExpression.getOperationSign();
+    final PsiExpression rhs = binaryExpression.getROperand();
+    assert rhs != null;
+    assert leftSide != null;
+    return IntentionPowerPackBundle.message(
+      "constant.subexpression.intention.name", leftSide.getText() +
+                                               ' ' + operationSign.getText() + ' ' + rhs.getText());
+  }
 
-    @Override
-    public void processIntention(@NotNull PsiElement element)
-            throws IncorrectOperationException {
-        final PsiExpression expression = (PsiExpression)element.getParent();
-        assert expression != null;
-        String newExpression = "";
-        final Object constantValue;
-        if (expression instanceof PsiBinaryExpression) {
-            final PsiBinaryExpression copy =
-                    (PsiBinaryExpression)expression.copy();
-            final PsiExpression lhs = copy.getLOperand();
-            if (lhs instanceof PsiBinaryExpression) {
-                final PsiBinaryExpression lhsBinaryExpression =
-                        (PsiBinaryExpression)lhs;
-                newExpression += getLeftSideText(lhsBinaryExpression);
-                final PsiExpression rightSide =
-                        lhsBinaryExpression.getROperand();
-                assert rightSide != null;
-                lhs.replace(rightSide);
-            }
-            if (ConcatenationUtils.isConcatenation(expression)) {
-                constantValue = computeConstantStringExpression(copy);
-            } else {
-                constantValue =
-                        ExpressionUtils.computeConstantExpression(copy);
-            }
-        } else {
-            constantValue =
-                    ExpressionUtils.computeConstantExpression(expression);
-        }
-        if (constantValue instanceof String) {
-            newExpression += '"' + StringUtil.escapeStringCharacters(
-                    constantValue.toString()) + '"';
-        } else if (constantValue != null) {
-            if (constantValue instanceof Number) {
-                final Number number = (Number) constantValue;
-                if (0 > number.doubleValue()) {
-                    newExpression += " ";
-                }
-            }
-            newExpression += constantValue.toString();
-        }
-        replaceExpression(newExpression, expression);
+  @Override
+  public void processIntention(@NotNull PsiElement element)
+    throws IncorrectOperationException {
+    final PsiExpression expression = (PsiExpression)element.getParent();
+    assert expression != null;
+    String newExpression = "";
+    final Object constantValue;
+    if (expression instanceof PsiBinaryExpression) {
+      final PsiBinaryExpression copy =
+        (PsiBinaryExpression)expression.copy();
+      final PsiExpression lhs = copy.getLOperand();
+      if (lhs instanceof PsiBinaryExpression) {
+        final PsiBinaryExpression lhsBinaryExpression =
+          (PsiBinaryExpression)lhs;
+        newExpression += getLeftSideText(lhsBinaryExpression);
+        final PsiExpression rightSide =
+          lhsBinaryExpression.getROperand();
+        assert rightSide != null;
+        lhs.replace(rightSide);
+      }
+      if (ConcatenationUtils.isConcatenation(expression)) {
+        constantValue = computeConstantStringExpression(copy);
+      }
+      else {
+        constantValue =
+          ExpressionUtils.computeConstantExpression(copy);
+      }
     }
+    else {
+      constantValue =
+        ExpressionUtils.computeConstantExpression(expression);
+    }
+    if (constantValue instanceof String) {
+      newExpression += '"' + StringUtil.escapeStringCharacters(
+        constantValue.toString()) + '"';
+    }
+    else if (constantValue != null) {
+      if (constantValue instanceof Number) {
+        final Number number = (Number)constantValue;
+        if (0 > number.doubleValue()) {
+          newExpression += " ";
+        }
+      }
+      newExpression += constantValue.toString();
+    }
+    replaceExpression(newExpression, expression);
+  }
 
-    /**
-     * handles the specified expression as if it was part of a string expression
-     * (even if it's of another type) and computes a constant string expression
-     * from it.
-     */
-    private static String computeConstantStringExpression(
-            PsiBinaryExpression expression) {
-        final PsiExpression lhs = expression.getLOperand();
-        final String lhsText = lhs.getText();
-        String result;
-        if (lhsText.charAt(0) == '\'' || lhsText.charAt(0) == '"') {
-            result = lhsText.substring(1, lhsText.length() - 1);
-        } else {
-            result = lhsText;
-        }
-        final PsiExpression rhs = expression.getROperand();
-        assert rhs != null;
-        final String rhsText = rhs.getText();
-        if (rhsText.charAt(0) == '\'' || rhsText.charAt(0) == '"') {
-            result += rhsText.substring(1, rhsText.length() - 1);
-        } else {
-            result += rhsText;
-        }
-        return result;
+  /**
+   * handles the specified expression as if it was part of a string expression
+   * (even if it's of another type) and computes a constant string expression
+   * from it.
+   */
+  private static String computeConstantStringExpression(
+    PsiBinaryExpression expression) {
+    final PsiExpression lhs = expression.getLOperand();
+    final String lhsText = lhs.getText();
+    String result;
+    if (lhsText.charAt(0) == '\'' || lhsText.charAt(0) == '"') {
+      result = lhsText.substring(1, lhsText.length() - 1);
     }
+    else {
+      result = lhsText;
+    }
+    final PsiExpression rhs = expression.getROperand();
+    assert rhs != null;
+    final String rhsText = rhs.getText();
+    if (rhsText.charAt(0) == '\'' || rhsText.charAt(0) == '"') {
+      result += rhsText.substring(1, rhsText.length() - 1);
+    }
+    else {
+      result += rhsText;
+    }
+    return result;
+  }
 
-    private static String getLeftSideText(
-            PsiBinaryExpression binaryExpression) {
-        final PsiExpression lhs = binaryExpression.getLOperand();
-        final PsiJavaToken sign = binaryExpression.getOperationSign();
-        return lhs.getText() + sign.getText();
-    }
+  private static String getLeftSideText(
+    PsiBinaryExpression binaryExpression) {
+    final PsiExpression lhs = binaryExpression.getLOperand();
+    final PsiJavaToken sign = binaryExpression.getOperationSign();
+    return lhs.getText() + sign.getText();
+  }
 }

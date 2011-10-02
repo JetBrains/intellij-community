@@ -25,37 +25,38 @@ import org.jetbrains.annotations.NotNull;
 
 public class VolatileArrayFieldInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "volatile.array.field.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "volatile.array.field.display.name");
+  }
 
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        final PsiType type = (PsiType)infos[0];
-        final String typeString = type.getPresentableText();
-        return InspectionGadgetsBundle.message(
-                "volatile.field.problem.descriptor", typeString);
-    }
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    final PsiType type = (PsiType)infos[0];
+    final String typeString = type.getPresentableText();
+    return InspectionGadgetsBundle.message(
+      "volatile.field.problem.descriptor", typeString);
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new VolatileArrayFieldVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new VolatileArrayFieldVisitor();
+  }
 
-    private static class VolatileArrayFieldVisitor
-            extends BaseInspectionVisitor {
+  private static class VolatileArrayFieldVisitor
+    extends BaseInspectionVisitor {
 
-        @Override public void visitField(@NotNull PsiField field) {
-            super.visitField(field);
-            if (!field.hasModifierProperty(PsiModifier.VOLATILE)) {
-                return;
-            }
-            final PsiType type = field.getType();
-            if (type.getArrayDimensions() == 0) {
-                return;
-            }
-            registerFieldError(field, type);
-        }
+    @Override
+    public void visitField(@NotNull PsiField field) {
+      super.visitField(field);
+      if (!field.hasModifierProperty(PsiModifier.VOLATILE)) {
+        return;
+      }
+      final PsiType type = field.getType();
+      if (type.getArrayDimensions() == 0) {
+        return;
+      }
+      registerFieldError(field, type);
     }
+  }
 }

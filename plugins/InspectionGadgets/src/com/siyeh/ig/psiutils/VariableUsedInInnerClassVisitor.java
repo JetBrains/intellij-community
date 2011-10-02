@@ -18,49 +18,52 @@ package com.siyeh.ig.psiutils;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-class VariableUsedInInnerClassVisitor extends JavaRecursiveElementVisitor{
+class VariableUsedInInnerClassVisitor extends JavaRecursiveElementVisitor {
 
-    @NotNull private final PsiVariable variable;
-    private boolean usedInInnerClass = false;
-    private boolean inInnerClass = false;
+  @NotNull private final PsiVariable variable;
+  private boolean usedInInnerClass = false;
+  private boolean inInnerClass = false;
 
-    public VariableUsedInInnerClassVisitor(@NotNull PsiVariable variable){
-        super();
-        this.variable = variable;
+  public VariableUsedInInnerClassVisitor(@NotNull PsiVariable variable) {
+    super();
+    this.variable = variable;
+  }
+
+  @Override
+  public void visitElement(@NotNull PsiElement element) {
+    if (!usedInInnerClass) {
+      super.visitElement(element);
     }
+  }
 
-    @Override public void visitElement(@NotNull PsiElement element){
-        if(!usedInInnerClass){
-            super.visitElement(element);
-        }
+  @Override
+  public void visitClass(@NotNull PsiClass psiClass) {
+    if (usedInInnerClass) {
+      return;
     }
+    final boolean wasInInnerClass = inInnerClass;
+    inInnerClass = true;
+    super.visitClass(psiClass);
+    inInnerClass = wasInInnerClass;
+  }
 
-    @Override public void visitClass(@NotNull PsiClass psiClass){
-        if(usedInInnerClass){
-            return;
-        }
-        final boolean wasInInnerClass = inInnerClass;
-        inInnerClass = true;
-        super.visitClass(psiClass);
-        inInnerClass = wasInInnerClass;
+  @Override
+  public void visitReferenceExpression(
+    @NotNull PsiReferenceExpression referenceExpression) {
+    if (usedInInnerClass) {
+      return;
     }
+    super.visitReferenceExpression(referenceExpression);
+    if (!inInnerClass) {
+      return;
+    }
+    final PsiElement target = referenceExpression.resolve();
+    if (variable.equals(target)) {
+      usedInInnerClass = true;
+    }
+  }
 
-    @Override public void visitReferenceExpression(
-            @NotNull PsiReferenceExpression referenceExpression){
-        if(usedInInnerClass){
-            return;
-        }
-        super.visitReferenceExpression(referenceExpression);
-        if(!inInnerClass){
-            return;
-        }
-        final PsiElement target = referenceExpression.resolve();
-        if(variable.equals(target)){
-            usedInInnerClass = true;
-        }
-    }
-
-    public boolean isUsedInInnerClass(){
-        return usedInInnerClass;
-    }
+  public boolean isUsedInInnerClass() {
+    return usedInInnerClass;
+  }
 }

@@ -32,88 +32,89 @@ import org.jetbrains.annotations.Nullable;
 
 public class RedundantMethodOverrideInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "redundant.method.override.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "redundant.method.override.display.name");
+  }
+
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "redundant.method.override.problem.descriptor");
+  }
+
+  @Nullable
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new RedundantMethodOverrideFix();
+  }
+
+  private static class RedundantMethodOverrideFix
+    extends InspectionGadgetsFix {
 
     @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "redundant.method.override.problem.descriptor");
+    public String getName() {
+      return InspectionGadgetsBundle.message(
+        "redundant.method.override.quickfix");
     }
 
-    @Nullable
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        return new RedundantMethodOverrideFix();
+    public void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiElement methodNameIdentifier = descriptor.getPsiElement();
+      final PsiElement method = methodNameIdentifier.getParent();
+      assert method != null;
+      deleteElement(method);
     }
+  }
 
-    private static class  RedundantMethodOverrideFix
-            extends InspectionGadgetsFix {
+  public BaseInspectionVisitor buildVisitor() {
+    return new RedundantMethodOverrideVisitor();
+  }
 
-        @NotNull
-        public String getName() {
-            return InspectionGadgetsBundle.message(
-                    "redundant.method.override.quickfix");
-        }
+  private static class RedundantMethodOverrideVisitor
+    extends BaseInspectionVisitor {
 
-        public void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
-            final PsiElement methodNameIdentifier = descriptor.getPsiElement();
-            final PsiElement method = methodNameIdentifier.getParent();
-            assert method != null;
-            deleteElement(method);
-        }
+    @Override
+    public void visitMethod(PsiMethod method) {
+      super.visitMethod(method);
+      final PsiCodeBlock body = method.getBody();
+      if (body == null) {
+        return;
+      }
+      if (method.getNameIdentifier() == null) {
+        return;
+      }
+      final Query<MethodSignatureBackedByPsiMethod> superMethodQuery =
+        SuperMethodsSearch.search(method, null, true, false);
+      final MethodSignatureBackedByPsiMethod signature =
+        superMethodQuery.findFirst();
+      if (signature == null) {
+        return;
+      }
+      final PsiMethod superMethod = signature.getMethod();
+      final PsiCodeBlock superBody = superMethod.getBody();
+      if (superBody == null) {
+        return;
+      }
+      final PsiModifierList superModifierList =
+        superMethod.getModifierList();
+      final PsiModifierList modifierList = method.getModifierList();
+      if (!EquivalenceChecker.modifierListsAreEquivalent(
+        modifierList, superModifierList)) {
+        return;
+      }
+      final PsiType superReturnType = superMethod.getReturnType();
+      if (superReturnType == null) {
+        return;
+      }
+      final PsiType returnType = method.getReturnType();
+      if (!superReturnType.equals(returnType)) {
+        return;
+      }
+      if (!EquivalenceChecker.codeBlocksAreEquivalent(body, superBody)) {
+        return;
+      }
+      registerMethodError(method);
     }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new RedundantMethodOverrideVisitor();
-    }
-
-    private static class RedundantMethodOverrideVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitMethod(PsiMethod method) {
-            super.visitMethod(method);
-            final PsiCodeBlock body = method.getBody();
-            if (body == null) {
-                return;
-            }
-            if (method.getNameIdentifier() == null) {
-                return;
-            }
-            final Query<MethodSignatureBackedByPsiMethod> superMethodQuery =
-                    SuperMethodsSearch.search(method, null, true, false);
-            final MethodSignatureBackedByPsiMethod signature =
-                    superMethodQuery.findFirst();
-            if (signature == null) {
-                return;
-            }
-            final PsiMethod superMethod = signature.getMethod();
-            final PsiCodeBlock superBody = superMethod.getBody();
-            if (superBody == null) {
-                return;
-            }
-            final PsiModifierList superModifierList =
-                    superMethod.getModifierList();
-            final PsiModifierList modifierList = method.getModifierList();
-            if (!EquivalenceChecker.modifierListsAreEquivalent(
-                    modifierList, superModifierList)) {
-                return;
-            }
-            final PsiType superReturnType = superMethod.getReturnType();
-            if (superReturnType == null) {
-                return;
-            }
-            final PsiType returnType = method.getReturnType();
-            if (!superReturnType.equals(returnType)) {
-                return;
-            }
-            if (!EquivalenceChecker.codeBlocksAreEquivalent(body, superBody)) {
-                return;
-            }
-            registerMethodError(method);
-        }
-    }
+  }
 }

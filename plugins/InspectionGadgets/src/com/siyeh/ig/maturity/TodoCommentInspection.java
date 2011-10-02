@@ -23,28 +23,29 @@ import org.jetbrains.annotations.NotNull;
 
 public class TodoCommentInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message("todo.comment.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("todo.comment.display.name");
+  }
 
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message("todo.comment.problem.descriptor");
-    }
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message("todo.comment.problem.descriptor");
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new ClassWithoutToStringVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new ClassWithoutToStringVisitor();
+  }
 
-    private static class ClassWithoutToStringVisitor
-            extends BaseInspectionVisitor {
+  private static class ClassWithoutToStringVisitor
+    extends BaseInspectionVisitor {
 
-        @Override public void visitComment(PsiComment comment) {
-            super.visitComment(comment);
-            if (TodoUtil.isTodoComment(comment)) {
-                registerError(comment);
-            }
-        }
+    @Override
+    public void visitComment(PsiComment comment) {
+      super.visitComment(comment);
+      if (TodoUtil.isTodoComment(comment)) {
+        registerError(comment);
+      }
     }
+  }
 }

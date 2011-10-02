@@ -89,7 +89,8 @@ public class ImportOldConfigsPanel extends JDialog {
 
     if (myGuessedOldConfig != null) {
       myPrevInstallation.setText(myGuessedOldConfig.getParent());
-    } if (SystemInfo.isMac) {
+    }
+    else if (SystemInfo.isMac) {
       myPrevInstallation.setText(findPreviousInstallationMac(productName));
     }
     else if (SystemInfo.isWindows) {
@@ -107,6 +108,7 @@ public class ImportOldConfigsPanel extends JDialog {
         }
 
         fc.setFileSelectionMode(SystemInfo.isMac ? JFileChooser.FILES_AND_DIRECTORIES : JFileChooser.DIRECTORIES_ONLY);
+        fc.setFileHidingEnabled(!SystemInfo.isLinux);
 
         int returnVal = fc.showOpenDialog(ImportOldConfigsPanel.this);
         if (returnVal == JFileChooser.APPROVE_OPTION){
@@ -152,12 +154,9 @@ public class ImportOldConfigsPanel extends JDialog {
         for (File file : files) {
           if (file.isDirectory() && file.getName().startsWith(productName)) {
             String versionName = file.getName().substring(productName.length()).trim();
-            // EAP builds don't have . in version number - ignore them
-            if (versionName.indexOf('.') > 0) {
-              if (latestVersion == null || StringUtil.compareVersionNumbers(latestVersion, versionName) > 0) {
-                latestVersion = versionName;
-                latestFile = file;
-              }
+            if (latestVersion == null || StringUtil.compareVersionNumbers(latestVersion, versionName) > 0) {
+              latestVersion = versionName;
+              latestFile = file;
             }
           }
         }
@@ -179,34 +178,34 @@ public class ImportOldConfigsPanel extends JDialog {
   }
 
   private void close() {
-    if (isImportEnabled()) {
+    if (myRbImport.isSelected()) {
       final String productWithVendor = mySettings.getProductName(ThreeState.YES);
       String instHome = myPrevInstallation.getText();
       if ("".equals(instHome)) {
         JOptionPane.showMessageDialog(this,
                                       mySettings.getEmptyHomeErrorText(productWithVendor),
-                                      ApplicationBundle.message("title.installation.home.required"), JOptionPane.ERROR_MESSAGE);
+                                      mySettings.getInstallationHomeRequiredTitle(), JOptionPane.ERROR_MESSAGE);
         return;
       }
 
       if (PathManager.getHomePath().equals(instHome)) {
         JOptionPane.showMessageDialog(this,
                                       mySettings.getCurrentHomeErrorText(productWithVendor),
-                                      ApplicationBundle.message("title.installation.home.required"), JOptionPane.ERROR_MESSAGE);
+                                      mySettings.getInstallationHomeRequiredTitle(), JOptionPane.ERROR_MESSAGE);
         return;
       }
 
       if (myRbImport.isSelected() && !ConfigImportHelper.isInstallationHomeOrConfig(instHome, mySettings.getProductName(ThreeState.NO))) {
         JOptionPane.showMessageDialog(this,
                                       mySettings.getInvalidHomeErrorText(productWithVendor, instHome),
-                                      ApplicationBundle.message("title.installation.home.required"), JOptionPane.ERROR_MESSAGE);
+                                      mySettings.getInstallationHomeRequiredTitle(), JOptionPane.ERROR_MESSAGE);
         return;
       }
 
       if (!new File(instHome).canRead()) {
         JOptionPane.showMessageDialog(this,
                                       mySettings.getInaccessibleHomeErrorText(instHome),
-                                      ApplicationBundle.message("title.installation.home.required"), JOptionPane.ERROR_MESSAGE);
+                                      mySettings.getInstallationHomeRequiredTitle(), JOptionPane.ERROR_MESSAGE);
         return;
       }
     }

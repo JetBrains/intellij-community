@@ -29,135 +29,134 @@ import org.jetbrains.annotations.NotNull;
 
 public class CastConflictsWithInstanceofInspection extends BaseInspection {
 
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "cast.conflicts.with.instanceof.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "cast.conflicts.with.instanceof.problem.descriptor");
+  }
+
+  @NotNull
+  @Override
+  protected InspectionGadgetsFix[] buildFixes(final Object... infos) {
+    final PsiType castExpressionType = (PsiType)infos[0];
+    final PsiInstanceOfExpression conflictingInstanceof =
+      (PsiInstanceOfExpression)infos[1];
+    final PsiTypeElement typeElement = conflictingInstanceof.getCheckType();
+    return new InspectionGadgetsFix[]{
+      new ReplaceCastFix(typeElement, castExpressionType),
+      new ReplaceInstanceofFix(typeElement, castExpressionType)
+    };
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new CastConflictsWithInstanceofVisitor();
+  }
+
+  private static class CastConflictsWithInstanceofVisitor
+    extends BaseInspectionVisitor {
+
     @Override
+    public void visitTypeCastExpression(
+      @NotNull PsiTypeCastExpression expression) {
+      super.visitTypeCastExpression(expression);
+      final PsiType castType = expression.getType();
+      if (castType == null) {
+        return;
+      }
+      final PsiInstanceOfExpression conflictingInstanceof =
+        InstanceOfUtils.getConflictingInstanceof(expression);
+      if (conflictingInstanceof == null) {
+        return;
+      }
+      registerError(expression, castType, conflictingInstanceof);
+    }
+  }
+
+  private static abstract class ReplaceFix extends InspectionGadgetsFix {
+
+    protected final PsiTypeElement myInstanceofTypeElement;
+    protected final PsiType myCastType;
+
+    protected ReplaceFix(@NotNull PsiTypeElement instanceofTypeElement,
+                         @NotNull PsiType castType) {
+      myInstanceofTypeElement = instanceofTypeElement;
+      myCastType = castType;
+    }
+
+    @Override
+    protected void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiTypeCastExpression typeCastExpression =
+        (PsiTypeCastExpression)descriptor.getPsiElement();
+      final PsiTypeElement castTypeElement =
+        typeCastExpression.getCastType();
+      if (castTypeElement == null) {
+        return;
+      }
+      final PsiElement newElement =
+        replace(castTypeElement, myInstanceofTypeElement, project);
+      final JavaCodeStyleManager codeStyleManager =
+        JavaCodeStyleManager.getInstance(project);
+      codeStyleManager.shortenClassReferences(newElement);
+    }
+
+    protected abstract PsiElement replace(PsiTypeElement castTypeElement,
+                                          PsiTypeElement instanceofTypeElement,
+                                          Project project);
+  }
+
+  private static class ReplaceCastFix extends ReplaceFix {
+
+    public ReplaceCastFix(PsiTypeElement instanceofTypeElement,
+                          PsiType castType) {
+      super(instanceofTypeElement, castType);
+    }
+
     @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "cast.conflicts.with.instanceof.display.name");
+    public String getName() {
+      return InspectionGadgetsBundle.message(
+        "cast.conflicts.with.instanceof.quickfix1",
+        myCastType.getPresentableText(),
+        myInstanceofTypeElement.getType().getPresentableText());
     }
 
     @Override
+    protected PsiElement replace(PsiTypeElement castTypeElement,
+                                 PsiTypeElement instanceofTypeElement,
+                                 Project project) {
+      return castTypeElement.replace(instanceofTypeElement);
+    }
+  }
+
+  private static class ReplaceInstanceofFix extends ReplaceFix {
+
+    public ReplaceInstanceofFix(PsiTypeElement instanceofTypeElement,
+                                PsiType castExpressionType) {
+      super(instanceofTypeElement, castExpressionType);
+    }
+
     @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "cast.conflicts.with.instanceof.problem.descriptor");
-    }
-
-    @NotNull
-    @Override
-    protected InspectionGadgetsFix[] buildFixes(final Object... infos) {
-        final PsiType castExpressionType = (PsiType)infos[0];
-        final PsiInstanceOfExpression conflictingInstanceof =
-                (PsiInstanceOfExpression)infos[1];
-        final PsiTypeElement typeElement = conflictingInstanceof.getCheckType();
-        return new InspectionGadgetsFix[] {
-                new ReplaceCastFix(typeElement, castExpressionType),
-                new ReplaceInstanceofFix(typeElement, castExpressionType)
-        };
+    public String getName() {
+      return InspectionGadgetsBundle.message(
+        "cast.conflicts.with.instanceof.quickfix2",
+        myInstanceofTypeElement.getType().getPresentableText(),
+        myCastType.getPresentableText());
     }
 
     @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new CastConflictsWithInstanceofVisitor();
+    protected PsiElement replace(PsiTypeElement castTypeElement,
+                                 PsiTypeElement instanceofTypeElement,
+                                 Project project) {
+      return instanceofTypeElement.replace(castTypeElement);
     }
-
-    private static class CastConflictsWithInstanceofVisitor
-            extends BaseInspectionVisitor {
-
-        @Override
-        public void visitTypeCastExpression(
-                @NotNull PsiTypeCastExpression expression) {
-            super.visitTypeCastExpression(expression);
-            final PsiType castType = expression.getType();
-            if (castType == null) {
-                return;
-            }
-            final PsiInstanceOfExpression conflictingInstanceof =
-                    InstanceOfUtils.getConflictingInstanceof(expression);
-            if (conflictingInstanceof == null) {
-                return;
-            }
-            registerError(expression, castType, conflictingInstanceof);
-        }
-    }
-
-    private static abstract class ReplaceFix extends InspectionGadgetsFix {
-
-        protected final PsiTypeElement myInstanceofTypeElement;
-        protected final PsiType myCastType;
-
-        protected ReplaceFix(@NotNull PsiTypeElement instanceofTypeElement,
-                             @NotNull PsiType castType) {
-            myInstanceofTypeElement = instanceofTypeElement;
-            myCastType = castType;
-        }
-
-        @Override
-        protected void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
-            final PsiTypeCastExpression typeCastExpression =
-                    (PsiTypeCastExpression)descriptor.getPsiElement();
-            final PsiTypeElement castTypeElement =
-                    typeCastExpression.getCastType();
-            if (castTypeElement == null) {
-                return;
-            }
-            final PsiElement newElement =
-                    replace(castTypeElement, myInstanceofTypeElement, project);
-            final JavaCodeStyleManager codeStyleManager =
-                    JavaCodeStyleManager.getInstance(project);
-            codeStyleManager.shortenClassReferences(newElement);
-        }
-
-        protected abstract PsiElement replace(PsiTypeElement castTypeElement,
-                                        PsiTypeElement instanceofTypeElement,
-                                        Project project);
-
-    }
-
-    private static class ReplaceCastFix extends ReplaceFix {
-
-        public ReplaceCastFix(PsiTypeElement instanceofTypeElement,
-                              PsiType castType) {
-            super(instanceofTypeElement, castType);
-        }
-
-        @NotNull
-        public String getName() {
-            return InspectionGadgetsBundle.message(
-                    "cast.conflicts.with.instanceof.quickfix1",
-                    myCastType.getPresentableText(),
-                    myInstanceofTypeElement.getType().getPresentableText());
-        }
-
-        @Override
-        protected PsiElement replace(PsiTypeElement castTypeElement,
-                               PsiTypeElement instanceofTypeElement,
-                               Project project) {
-            return castTypeElement.replace(instanceofTypeElement);
-        }
-    }
-
-    private static class ReplaceInstanceofFix extends ReplaceFix {
-
-        public ReplaceInstanceofFix(PsiTypeElement instanceofTypeElement,
-                                    PsiType castExpressionType) {
-            super(instanceofTypeElement, castExpressionType);
-        }
-
-        @NotNull
-        public String getName() {
-            return InspectionGadgetsBundle.message(
-                    "cast.conflicts.with.instanceof.quickfix2",
-                    myInstanceofTypeElement.getType().getPresentableText(),
-                    myCastType.getPresentableText());
-        }
-
-        @Override
-        protected PsiElement replace(PsiTypeElement castTypeElement,
-                               PsiTypeElement instanceofTypeElement,
-                               Project project) {
-            return instanceofTypeElement.replace(castTypeElement);
-        }
-    }
+  }
 }

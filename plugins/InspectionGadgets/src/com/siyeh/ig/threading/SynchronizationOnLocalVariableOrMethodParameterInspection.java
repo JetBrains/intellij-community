@@ -24,87 +24,92 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public class SynchronizationOnLocalVariableOrMethodParameterInspection
-        extends BaseInspection {
+  extends BaseInspection {
 
-    @SuppressWarnings({"PublicField"})
-    public boolean reportLocalVariables = true;
-    @SuppressWarnings({"PublicField"})
-    public boolean reportMethodParameters = true;
+  @SuppressWarnings({"PublicField"})
+  public boolean reportLocalVariables = true;
+  @SuppressWarnings({"PublicField"})
+  public boolean reportMethodParameters = true;
 
-    @Nls @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "synchronization.on.local.variable.or.method.parameter.display.name");
+  @Nls
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "synchronization.on.local.variable.or.method.parameter.display.name");
+  }
+
+  public boolean isEnabledByDefault() {
+    return true;
+  }
+
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    final Boolean localVariable = (Boolean)infos[0];
+    if (localVariable.booleanValue()) {
+      return InspectionGadgetsBundle.message(
+        "synchronization.on.local.variable.problem.descriptor");
     }
-
-    public boolean isEnabledByDefault() {
-        return true;
+    else {
+      return InspectionGadgetsBundle.message(
+        "synchronization.on.method.parameter.problem.descriptor");
     }
+  }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        final Boolean localVariable = (Boolean)infos[0];
-        if (localVariable.booleanValue()) {
-            return InspectionGadgetsBundle.message(
-                    "synchronization.on.local.variable.problem.descriptor");
-        } else {
-            return InspectionGadgetsBundle.message(
-                    "synchronization.on.method.parameter.problem.descriptor");
+  public BaseInspectionVisitor buildVisitor() {
+    return new SynchronizationOnLocalVariableVisitor();
+  }
+
+  private class SynchronizationOnLocalVariableVisitor
+    extends BaseInspectionVisitor {
+
+    public void visitSynchronizedStatement(
+      PsiSynchronizedStatement statement) {
+      super.visitSynchronizedStatement(statement);
+      if (!reportLocalVariables && !reportMethodParameters) {
+        return;
+      }
+      final PsiExpression lockExpression = statement.getLockExpression();
+      if (!(lockExpression instanceof PsiReferenceExpression)) {
+        return;
+      }
+      final PsiReferenceExpression referenceExpression =
+        (PsiReferenceExpression)lockExpression;
+      if (referenceExpression.isQualified()) {
+        return;
+      }
+      boolean localVariable = false;
+      final PsiElement target = referenceExpression.resolve();
+      if (target instanceof PsiLocalVariable) {
+        if (!reportLocalVariables) {
+          return;
         }
-    }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new SynchronizationOnLocalVariableVisitor();
-    }
-
-    private class SynchronizationOnLocalVariableVisitor
-            extends BaseInspectionVisitor {
-
-        public void visitSynchronizedStatement(
-                PsiSynchronizedStatement statement) {
-            super.visitSynchronizedStatement(statement);
-            if (!reportLocalVariables && !reportMethodParameters) {
-                return;
-            }
-            final PsiExpression lockExpression = statement.getLockExpression();
-            if (!(lockExpression instanceof PsiReferenceExpression)) {
-                return;
-            }
-            final PsiReferenceExpression referenceExpression =
-                    (PsiReferenceExpression) lockExpression;
-            if (referenceExpression.isQualified()) {
-                return;
-            }
-            boolean localVariable = false;
-            final PsiElement target = referenceExpression.resolve();
-            if (target instanceof PsiLocalVariable) {
-                if (!reportLocalVariables) {
-                    return;
-                }
-                localVariable = true;
-            } else if (target instanceof PsiParameter) {
-                final PsiParameter parameter = (PsiParameter) target;
-                final PsiElement scope = parameter.getDeclarationScope();
-                if (scope instanceof PsiMethod) {
-                    if (!reportMethodParameters) {
-                        return;
-                    }
-                } else {
-                    if (!reportLocalVariables) {
-                        return;
-                    }
-                    localVariable = true;
-                }
-            } else {
-                return;
-            }
-            final PsiClass parentClass =
-                    PsiTreeUtil.getParentOfType(statement, PsiClass.class);
-            if (!PsiTreeUtil.isAncestor(parentClass, target, true)) {
-                // different class, probably different thread.
-                return;
-            }
-            registerError(referenceExpression, Boolean.valueOf(localVariable));
+        localVariable = true;
+      }
+      else if (target instanceof PsiParameter) {
+        final PsiParameter parameter = (PsiParameter)target;
+        final PsiElement scope = parameter.getDeclarationScope();
+        if (scope instanceof PsiMethod) {
+          if (!reportMethodParameters) {
+            return;
+          }
         }
+        else {
+          if (!reportLocalVariables) {
+            return;
+          }
+          localVariable = true;
+        }
+      }
+      else {
+        return;
+      }
+      final PsiClass parentClass =
+        PsiTreeUtil.getParentOfType(statement, PsiClass.class);
+      if (!PsiTreeUtil.isAncestor(parentClass, target, true)) {
+        // different class, probably different thread.
+        return;
+      }
+      registerError(referenceExpression, Boolean.valueOf(localVariable));
     }
+  }
 }

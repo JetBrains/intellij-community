@@ -22,427 +22,436 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
-public class VariableAccessUtils{
+public class VariableAccessUtils {
 
-    private VariableAccessUtils(){}
+  private VariableAccessUtils() {
+  }
 
-    public static boolean variableIsAssignedFrom(@NotNull PsiVariable variable,
-                                                 @Nullable PsiElement context){
-        if (context == null) {
-            return false;
-        }
-        final VariableAssignedFromVisitor visitor =
-                new VariableAssignedFromVisitor(variable);
-        context.accept(visitor);
-        return visitor.isAssignedFrom();
+  public static boolean variableIsAssignedFrom(@NotNull PsiVariable variable,
+                                               @Nullable PsiElement context) {
+    if (context == null) {
+      return false;
     }
+    final VariableAssignedFromVisitor visitor =
+      new VariableAssignedFromVisitor(variable);
+    context.accept(visitor);
+    return visitor.isAssignedFrom();
+  }
 
-    public static boolean variableIsPassedAsMethodArgument(
-            @NotNull PsiVariable variable, @Nullable PsiElement context) {
-        if (context == null) {
-            return false;
-        }
-        final VariablePassedAsArgumentVisitor visitor =
-                new VariablePassedAsArgumentVisitor(variable);
-        context.accept(visitor);
-        return visitor.isPassed();
+  public static boolean variableIsPassedAsMethodArgument(
+    @NotNull PsiVariable variable, @Nullable PsiElement context) {
+    if (context == null) {
+      return false;
     }
+    final VariablePassedAsArgumentVisitor visitor =
+      new VariablePassedAsArgumentVisitor(variable);
+    context.accept(visitor);
+    return visitor.isPassed();
+  }
 
-    public static boolean variableIsPassedAsMethodArgument(
-            @NotNull PsiVariable variable, Set<String> excludes,
-            @Nullable PsiElement context) {
-        if (context == null) {
-            return false;
-        }
-        final VariablePassedAsArgumentExcludedVisitor visitor =
-                new VariablePassedAsArgumentExcludedVisitor(variable, excludes);
-        context.accept(visitor);
-        return visitor.isPassed();
+  public static boolean variableIsPassedAsMethodArgument(
+    @NotNull PsiVariable variable, Set<String> excludes,
+    @Nullable PsiElement context) {
+    if (context == null) {
+      return false;
     }
+    final VariablePassedAsArgumentExcludedVisitor visitor =
+      new VariablePassedAsArgumentExcludedVisitor(variable, excludes);
+    context.accept(visitor);
+    return visitor.isPassed();
+  }
 
-    public static boolean variableIsUsedInArrayInitializer(
-            @NotNull PsiVariable variable, @Nullable PsiElement context) {
-        if (context == null) {
-            return false;
-        }
-        final VariableUsedInArrayInitializerVisitor visitor =
-                new VariableUsedInArrayInitializerVisitor(variable);
-        context.accept(visitor);
-        return visitor.isPassed();
+  public static boolean variableIsUsedInArrayInitializer(
+    @NotNull PsiVariable variable, @Nullable PsiElement context) {
+    if (context == null) {
+      return false;
     }
+    final VariableUsedInArrayInitializerVisitor visitor =
+      new VariableUsedInArrayInitializerVisitor(variable);
+    context.accept(visitor);
+    return visitor.isPassed();
+  }
 
-    public static boolean variableIsAssigned(
-            @NotNull PsiVariable variable, @Nullable PsiElement context) {
-        if (context == null) {
-            return false;
-        }
-        final VariableAssignedVisitor visitor =
-                new VariableAssignedVisitor(variable, true);
-        context.accept(visitor);
-        return visitor.isAssigned();
+  public static boolean variableIsAssigned(
+    @NotNull PsiVariable variable, @Nullable PsiElement context) {
+    if (context == null) {
+      return false;
     }
+    final VariableAssignedVisitor visitor =
+      new VariableAssignedVisitor(variable, true);
+    context.accept(visitor);
+    return visitor.isAssigned();
+  }
 
-    public static boolean variableIsAssigned(
-            @NotNull PsiVariable variable, @Nullable PsiElement context,
-            boolean recurseIntoClasses) {
-        if (context == null) {
-            return false;
-        }
-        final VariableAssignedVisitor visitor =
-                new VariableAssignedVisitor(variable, recurseIntoClasses);
-        context.accept(visitor);
-        return visitor.isAssigned();
+  public static boolean variableIsAssigned(
+    @NotNull PsiVariable variable, @Nullable PsiElement context,
+    boolean recurseIntoClasses) {
+    if (context == null) {
+      return false;
     }
+    final VariableAssignedVisitor visitor =
+      new VariableAssignedVisitor(variable, recurseIntoClasses);
+    context.accept(visitor);
+    return visitor.isAssigned();
+  }
 
-    public static boolean variableIsReturned(
-            @NotNull PsiVariable variable, @Nullable PsiElement context) {
-        if (context == null) {
-            return false;
-        }
-        final VariableReturnedVisitor visitor =
-                new VariableReturnedVisitor(variable);
-        context.accept(visitor);
-        return visitor.isReturned();
+  public static boolean variableIsReturned(
+    @NotNull PsiVariable variable, @Nullable PsiElement context) {
+    if (context == null) {
+      return false;
     }
+    final VariableReturnedVisitor visitor =
+      new VariableReturnedVisitor(variable);
+    context.accept(visitor);
+    return visitor.isReturned();
+  }
 
-    public static boolean variableValueIsUsed(
-            @NotNull PsiVariable variable, @Nullable PsiElement context) {
-        if (context == null) {
-            return false;
-        }
-        final VariableValueUsedVisitor visitor =
-                new VariableValueUsedVisitor(variable);
-        context.accept(visitor);
-        return visitor.isVariableValueUsed();
+  public static boolean variableValueIsUsed(
+    @NotNull PsiVariable variable, @Nullable PsiElement context) {
+    if (context == null) {
+      return false;
     }
+    final VariableValueUsedVisitor visitor =
+      new VariableValueUsedVisitor(variable);
+    context.accept(visitor);
+    return visitor.isVariableValueUsed();
+  }
 
-    public static boolean arrayContentsAreAccessed(
-            @NotNull PsiVariable variable, @Nullable PsiElement context) {
-        if (context == null) {
-            return false;
-        }
-        final ArrayContentsAccessedVisitor visitor =
-                new ArrayContentsAccessedVisitor(variable);
-        context.accept(visitor);
-        return visitor.isAccessed();
+  public static boolean arrayContentsAreAccessed(
+    @NotNull PsiVariable variable, @Nullable PsiElement context) {
+    if (context == null) {
+      return false;
     }
+    final ArrayContentsAccessedVisitor visitor =
+      new ArrayContentsAccessedVisitor(variable);
+    context.accept(visitor);
+    return visitor.isAccessed();
+  }
 
-    public static boolean arrayContentsAreAssigned(
-            @NotNull PsiVariable variable, @Nullable PsiElement context) {
-        if (context == null) {
-            return false;
-        }
-        final ArrayContentsAssignedVisitor visitor =
-                new ArrayContentsAssignedVisitor(variable);
-        context.accept(visitor);
-        return visitor.isAssigned();
+  public static boolean arrayContentsAreAssigned(
+    @NotNull PsiVariable variable, @Nullable PsiElement context) {
+    if (context == null) {
+      return false;
     }
+    final ArrayContentsAssignedVisitor visitor =
+      new ArrayContentsAssignedVisitor(variable);
+    context.accept(visitor);
+    return visitor.isAssigned();
+  }
 
-    public static boolean variableIsUsedInInnerClass(
-            @NotNull PsiVariable variable, @Nullable PsiElement context) {
-        if (context == null) {
-            return false;
-        }
-        final VariableUsedInInnerClassVisitor visitor =
-                new VariableUsedInInnerClassVisitor(variable);
-        context.accept(visitor);
-        return visitor.isUsedInInnerClass();
+  public static boolean variableIsUsedInInnerClass(
+    @NotNull PsiVariable variable, @Nullable PsiElement context) {
+    if (context == null) {
+      return false;
     }
+    final VariableUsedInInnerClassVisitor visitor =
+      new VariableUsedInInnerClassVisitor(variable);
+    context.accept(visitor);
+    return visitor.isUsedInInnerClass();
+  }
 
-    public static boolean mayEvaluateToVariable(
-            @Nullable PsiExpression expression,
-            @NotNull PsiVariable variable) {
-        if (expression == null){
-            return false;
-        }
-        if(expression instanceof PsiBinaryExpression) {
-            final PsiBinaryExpression binaryExpression =
-                    (PsiBinaryExpression)expression;
-            PsiExpression lOperand = binaryExpression.getLOperand();
-            PsiExpression rOperand = binaryExpression.getROperand();
-            // iterate instead of recurse to prevent SOE in very deeply nested
-            // binary expressions
-            while (lOperand instanceof PsiBinaryExpression) {
-                final PsiBinaryExpression innerBinaryExpression =
-                        (PsiBinaryExpression) lOperand;
-                if (mayEvaluateToVariable(rOperand, variable)) {
-                    return true;
-                }
-                lOperand = innerBinaryExpression.getLOperand();
-                rOperand = innerBinaryExpression.getROperand();
-            }
-            return mayEvaluateToVariable(lOperand, variable) ||
-                    mayEvaluateToVariable(rOperand, variable);
-        }
-        if(expression instanceof PsiParenthesizedExpression){
-            final PsiParenthesizedExpression parenthesizedExpression =
-                    (PsiParenthesizedExpression)expression;
-            final PsiExpression containedExpression =
-                    parenthesizedExpression.getExpression();
-            return mayEvaluateToVariable(containedExpression, variable);
-        }
-        if(expression instanceof PsiTypeCastExpression){
-            final PsiTypeCastExpression typeCastExpression =
-                    (PsiTypeCastExpression)expression;
-            final PsiExpression containedExpression =
-                    typeCastExpression.getOperand();
-            return mayEvaluateToVariable(containedExpression, variable);
-        }
-        if(expression instanceof PsiConditionalExpression){
-            final PsiConditionalExpression conditional =
-                    (PsiConditionalExpression) expression;
-            final PsiExpression thenExpression = conditional.getThenExpression();
-            final PsiExpression elseExpression = conditional.getElseExpression();
-            return mayEvaluateToVariable(thenExpression, variable) ||
-                    mayEvaluateToVariable(elseExpression, variable);
-        }
-        if(expression instanceof PsiArrayAccessExpression){
-            final PsiElement parent = expression.getParent();
-            if (parent instanceof PsiArrayAccessExpression){
-                return false;
-            }
-            final PsiType type = variable.getType();
-            if (!(type instanceof PsiArrayType)) {
-                return false;
-            }
-            final PsiArrayType arrayType = (PsiArrayType)type;
-            final int dimensions = arrayType.getArrayDimensions();
-            if (dimensions <= 1) {
-                return false;
-            }
-            PsiArrayAccessExpression arrayAccessExpression =
-                    (PsiArrayAccessExpression)expression;
-            PsiExpression arrayExpression =
-                    arrayAccessExpression.getArrayExpression();
-            int count = 1;
-            while (arrayExpression instanceof PsiArrayAccessExpression) {
-                arrayAccessExpression =
-                        (PsiArrayAccessExpression)arrayExpression;
-                arrayExpression = arrayAccessExpression.getArrayExpression();
-                count++;
-            }
-            return count != dimensions &&
-                    mayEvaluateToVariable(arrayExpression, variable);
-        }
-        return evaluatesToVariable(expression, variable);
+  public static boolean mayEvaluateToVariable(
+    @Nullable PsiExpression expression,
+    @NotNull PsiVariable variable) {
+    if (expression == null) {
+      return false;
     }
-
-    public static boolean evaluatesToVariable(
-            @Nullable PsiExpression expression,
-            @NotNull PsiVariable variable) {
-        expression = ParenthesesUtils.stripParentheses(expression);
-        if (!(expression instanceof PsiReferenceExpression)) {
-            return false;
+    if (expression instanceof PsiBinaryExpression) {
+      final PsiBinaryExpression binaryExpression =
+        (PsiBinaryExpression)expression;
+      PsiExpression lOperand = binaryExpression.getLOperand();
+      PsiExpression rOperand = binaryExpression.getROperand();
+      // iterate instead of recurse to prevent SOE in very deeply nested
+      // binary expressions
+      while (lOperand instanceof PsiBinaryExpression) {
+        final PsiBinaryExpression innerBinaryExpression =
+          (PsiBinaryExpression)lOperand;
+        if (mayEvaluateToVariable(rOperand, variable)) {
+          return true;
         }
-        final PsiReferenceExpression referenceExpression =
-                (PsiReferenceExpression) expression;
-        final PsiElement target = referenceExpression.resolve();
-        return variable.equals(target);
+        lOperand = innerBinaryExpression.getLOperand();
+        rOperand = innerBinaryExpression.getROperand();
+      }
+      return mayEvaluateToVariable(lOperand, variable) ||
+             mayEvaluateToVariable(rOperand, variable);
     }
-
-    public static boolean variableIsUsed(@NotNull PsiVariable variable,
-                                         @Nullable PsiElement context){
-        if (context == null) {
-            return false;
-        }
-        final VariableUsedVisitor visitor =
-                new VariableUsedVisitor(variable);
-        context.accept(visitor);
-        return visitor.isUsed();
+    if (expression instanceof PsiParenthesizedExpression) {
+      final PsiParenthesizedExpression parenthesizedExpression =
+        (PsiParenthesizedExpression)expression;
+      final PsiExpression containedExpression =
+        parenthesizedExpression.getExpression();
+      return mayEvaluateToVariable(containedExpression, variable);
     }
-
-    public static boolean variableIsDecremented(
-            @NotNull PsiVariable variable, @Nullable PsiStatement statement) {
-        if (!(statement instanceof PsiExpressionStatement)) {
-            return false;
-        }
-        final PsiExpressionStatement expressionStatement =
-                (PsiExpressionStatement)statement;
-        PsiExpression expression = expressionStatement.getExpression();
-        expression = ParenthesesUtils.stripParentheses(expression);
-        if (expression instanceof PsiPrefixExpression) {
-            final PsiPrefixExpression prefixExpression =
-                    (PsiPrefixExpression)expression;
-          final IElementType tokenType = prefixExpression.getOperationTokenType();
-            if (!tokenType.equals(JavaTokenType.MINUSMINUS)) {
-                return false;
-            }
-            final PsiExpression operand = prefixExpression.getOperand();
-            return evaluatesToVariable(operand, variable);
-        } else if (expression instanceof PsiPostfixExpression) {
-            final PsiPostfixExpression postfixExpression =
-                    (PsiPostfixExpression)expression;
-          final IElementType tokenType = postfixExpression.getOperationTokenType();
-            if (!tokenType.equals(JavaTokenType.MINUSMINUS)) {
-                return false;
-            }
-            final PsiExpression operand = postfixExpression.getOperand();
-            return evaluatesToVariable(operand, variable);
-        } else if (expression instanceof PsiAssignmentExpression) {
-            final PsiAssignmentExpression assignmentExpression =
-                    (PsiAssignmentExpression) expression;
-            final IElementType tokenType =
-                    assignmentExpression.getOperationTokenType();
-            final PsiExpression lhs = assignmentExpression.getLExpression();
-            if (!evaluatesToVariable(lhs, variable)) {
-                return false;
-            }
-            PsiExpression rhs = assignmentExpression.getRExpression();
-            rhs = ParenthesesUtils.stripParentheses(rhs);
-            if (tokenType == JavaTokenType.EQ) {
-                if (!(rhs instanceof PsiBinaryExpression)) {
-                    return false;
-                }
-                final PsiBinaryExpression binaryExpression =
-                        (PsiBinaryExpression) rhs;
-                final IElementType binaryTokenType =
-                        binaryExpression.getOperationTokenType();
-                if (binaryTokenType != JavaTokenType.MINUS) {
-                    return false;
-                }
-                final PsiExpression lOperand = binaryExpression.getLOperand();
-                final PsiExpression rOperand = binaryExpression.getROperand();
-                if (ExpressionUtils.isOne(lOperand)) {
-                    if (evaluatesToVariable(rOperand, variable)) {
-                        return true;
-                    }
-                } else if (ExpressionUtils.isOne(rOperand)) {
-                    if (evaluatesToVariable(lOperand, variable)) {
-                        return true;
-                    }
-                }
-            } else if (tokenType == JavaTokenType.MINUSEQ) {
-                if (ExpressionUtils.isOne(rhs)) {
-                    return true;
-                }
-            }
-        }
+    if (expression instanceof PsiTypeCastExpression) {
+      final PsiTypeCastExpression typeCastExpression =
+        (PsiTypeCastExpression)expression;
+      final PsiExpression containedExpression =
+        typeCastExpression.getOperand();
+      return mayEvaluateToVariable(containedExpression, variable);
+    }
+    if (expression instanceof PsiConditionalExpression) {
+      final PsiConditionalExpression conditional =
+        (PsiConditionalExpression)expression;
+      final PsiExpression thenExpression = conditional.getThenExpression();
+      final PsiExpression elseExpression = conditional.getElseExpression();
+      return mayEvaluateToVariable(thenExpression, variable) ||
+             mayEvaluateToVariable(elseExpression, variable);
+    }
+    if (expression instanceof PsiArrayAccessExpression) {
+      final PsiElement parent = expression.getParent();
+      if (parent instanceof PsiArrayAccessExpression) {
         return false;
-    }
-
-    public static boolean variableIsIncremented(
-            @NotNull PsiVariable variable, @Nullable PsiStatement statement) {
-        if (!(statement instanceof PsiExpressionStatement)) {
-            return false;
-        }
-        final PsiExpressionStatement expressionStatement =
-                (PsiExpressionStatement)statement;
-        PsiExpression expression = expressionStatement.getExpression();
-        expression = ParenthesesUtils.stripParentheses(expression);
-        if (expression instanceof PsiPrefixExpression) {
-            final PsiPrefixExpression prefixExpression =
-                    (PsiPrefixExpression)expression;
-          final IElementType tokenType = prefixExpression.getOperationTokenType();
-            if (!tokenType.equals(JavaTokenType.PLUSPLUS)) {
-                return false;
-            }
-            final PsiExpression operand = prefixExpression.getOperand();
-            return evaluatesToVariable(operand, variable);
-        } else if (expression instanceof PsiPostfixExpression) {
-            final PsiPostfixExpression postfixExpression =
-                    (PsiPostfixExpression)expression;
-          final IElementType tokenType = postfixExpression.getOperationTokenType();
-            if (!tokenType.equals(JavaTokenType.PLUSPLUS)) {
-                return false;
-            }
-            final PsiExpression operand = postfixExpression.getOperand();
-            return evaluatesToVariable(operand, variable);
-        } else if (expression instanceof PsiAssignmentExpression) {
-            final PsiAssignmentExpression assignmentExpression =
-                    (PsiAssignmentExpression) expression;
-            final IElementType tokenType =
-                    assignmentExpression.getOperationTokenType();
-            final PsiExpression lhs = assignmentExpression.getLExpression();
-            if (!evaluatesToVariable(lhs, variable)) {
-                return false;
-            }
-            PsiExpression rhs = assignmentExpression.getRExpression();
-            rhs = ParenthesesUtils.stripParentheses(rhs);
-            if (tokenType == JavaTokenType.EQ) {
-                if (!(rhs instanceof PsiBinaryExpression)) {
-                    return false;
-                }
-                final PsiBinaryExpression binaryExpression =
-                        (PsiBinaryExpression) rhs;
-                final IElementType binaryTokenType =
-                        binaryExpression.getOperationTokenType();
-                if (binaryTokenType != JavaTokenType.PLUS) {
-                    return false;
-                }
-                final PsiExpression lOperand = binaryExpression.getLOperand();
-                final PsiExpression rOperand = binaryExpression.getROperand();
-                if (ExpressionUtils.isOne(lOperand)) {
-                    if (evaluatesToVariable(rOperand, variable)) {
-                        return true;
-                    }
-                } else if (ExpressionUtils.isOne(rOperand)) {
-                    if (evaluatesToVariable(lOperand, variable)) {
-                        return true;
-                    }
-                }
-            } else if (tokenType == JavaTokenType.PLUSEQ) {
-                if (ExpressionUtils.isOne(rhs)) {
-                    return true;
-                }
-            }
-        }
+      }
+      final PsiType type = variable.getType();
+      if (!(type instanceof PsiArrayType)) {
         return false;
-    }
-
-    public static boolean variableIsAssignedBeforeReference(
-            @NotNull PsiReferenceExpression referenceExpression,
-            @Nullable PsiElement context) {
-        if (context == null) {
-            return false;
-        }
-        final PsiElement target = referenceExpression.resolve();
-        if (!(target instanceof PsiVariable)) {
-            return false;
-        }
-        final PsiVariable variable = (PsiVariable)target;
-        return variableIsAssignedAtPoint(variable, context,
-                referenceExpression);
-    }
-
-    public static boolean variableIsAssignedAtPoint(
-            @NotNull PsiVariable variable, @Nullable PsiElement context,
-            @NotNull PsiElement point) {
-        if (context == null) {
-            return false;
-        }
-        final PsiElement directChild =
-                getDirectChildWhichContainsElement(context, point);
-        if (directChild == null) {
-            return false;
-        }
-        final PsiElement[] children = context.getChildren();
-        for (PsiElement child : children) {
-            if (child == directChild) {
-                return variableIsAssignedAtPoint(variable, directChild, point);
-            }
-            if (variableIsAssigned(variable, child)) {
-                return true;
-            }
-        }
+      }
+      final PsiArrayType arrayType = (PsiArrayType)type;
+      final int dimensions = arrayType.getArrayDimensions();
+      if (dimensions <= 1) {
         return false;
+      }
+      PsiArrayAccessExpression arrayAccessExpression =
+        (PsiArrayAccessExpression)expression;
+      PsiExpression arrayExpression =
+        arrayAccessExpression.getArrayExpression();
+      int count = 1;
+      while (arrayExpression instanceof PsiArrayAccessExpression) {
+        arrayAccessExpression =
+          (PsiArrayAccessExpression)arrayExpression;
+        arrayExpression = arrayAccessExpression.getArrayExpression();
+        count++;
+      }
+      return count != dimensions &&
+             mayEvaluateToVariable(arrayExpression, variable);
     }
+    return evaluatesToVariable(expression, variable);
+  }
 
-    @Nullable
-    private static PsiElement getDirectChildWhichContainsElement(
-            @NotNull PsiElement ancestor,
-            @NotNull PsiElement descendant) {
-        if (ancestor == descendant) {
-            return null;
-        }
-        PsiElement child = descendant;
-        PsiElement parent = child.getParent();
-        while (!parent.equals(ancestor)) {
-            child = parent;
-            parent = child.getParent();
-            if (parent == null) {
-                return null;
-            }
-        }
-        return child;
+  public static boolean evaluatesToVariable(
+    @Nullable PsiExpression expression,
+    @NotNull PsiVariable variable) {
+    expression = ParenthesesUtils.stripParentheses(expression);
+    if (!(expression instanceof PsiReferenceExpression)) {
+      return false;
     }
+    final PsiReferenceExpression referenceExpression =
+      (PsiReferenceExpression)expression;
+    final PsiElement target = referenceExpression.resolve();
+    return variable.equals(target);
+  }
+
+  public static boolean variableIsUsed(@NotNull PsiVariable variable,
+                                       @Nullable PsiElement context) {
+    if (context == null) {
+      return false;
+    }
+    final VariableUsedVisitor visitor =
+      new VariableUsedVisitor(variable);
+    context.accept(visitor);
+    return visitor.isUsed();
+  }
+
+  public static boolean variableIsDecremented(
+    @NotNull PsiVariable variable, @Nullable PsiStatement statement) {
+    if (!(statement instanceof PsiExpressionStatement)) {
+      return false;
+    }
+    final PsiExpressionStatement expressionStatement =
+      (PsiExpressionStatement)statement;
+    PsiExpression expression = expressionStatement.getExpression();
+    expression = ParenthesesUtils.stripParentheses(expression);
+    if (expression instanceof PsiPrefixExpression) {
+      final PsiPrefixExpression prefixExpression =
+        (PsiPrefixExpression)expression;
+      final IElementType tokenType = prefixExpression.getOperationTokenType();
+      if (!tokenType.equals(JavaTokenType.MINUSMINUS)) {
+        return false;
+      }
+      final PsiExpression operand = prefixExpression.getOperand();
+      return evaluatesToVariable(operand, variable);
+    }
+    else if (expression instanceof PsiPostfixExpression) {
+      final PsiPostfixExpression postfixExpression =
+        (PsiPostfixExpression)expression;
+      final IElementType tokenType = postfixExpression.getOperationTokenType();
+      if (!tokenType.equals(JavaTokenType.MINUSMINUS)) {
+        return false;
+      }
+      final PsiExpression operand = postfixExpression.getOperand();
+      return evaluatesToVariable(operand, variable);
+    }
+    else if (expression instanceof PsiAssignmentExpression) {
+      final PsiAssignmentExpression assignmentExpression =
+        (PsiAssignmentExpression)expression;
+      final IElementType tokenType =
+        assignmentExpression.getOperationTokenType();
+      final PsiExpression lhs = assignmentExpression.getLExpression();
+      if (!evaluatesToVariable(lhs, variable)) {
+        return false;
+      }
+      PsiExpression rhs = assignmentExpression.getRExpression();
+      rhs = ParenthesesUtils.stripParentheses(rhs);
+      if (tokenType == JavaTokenType.EQ) {
+        if (!(rhs instanceof PsiBinaryExpression)) {
+          return false;
+        }
+        final PsiBinaryExpression binaryExpression =
+          (PsiBinaryExpression)rhs;
+        final IElementType binaryTokenType =
+          binaryExpression.getOperationTokenType();
+        if (binaryTokenType != JavaTokenType.MINUS) {
+          return false;
+        }
+        final PsiExpression lOperand = binaryExpression.getLOperand();
+        final PsiExpression rOperand = binaryExpression.getROperand();
+        if (ExpressionUtils.isOne(lOperand)) {
+          if (evaluatesToVariable(rOperand, variable)) {
+            return true;
+          }
+        }
+        else if (ExpressionUtils.isOne(rOperand)) {
+          if (evaluatesToVariable(lOperand, variable)) {
+            return true;
+          }
+        }
+      }
+      else if (tokenType == JavaTokenType.MINUSEQ) {
+        if (ExpressionUtils.isOne(rhs)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  public static boolean variableIsIncremented(
+    @NotNull PsiVariable variable, @Nullable PsiStatement statement) {
+    if (!(statement instanceof PsiExpressionStatement)) {
+      return false;
+    }
+    final PsiExpressionStatement expressionStatement =
+      (PsiExpressionStatement)statement;
+    PsiExpression expression = expressionStatement.getExpression();
+    expression = ParenthesesUtils.stripParentheses(expression);
+    if (expression instanceof PsiPrefixExpression) {
+      final PsiPrefixExpression prefixExpression =
+        (PsiPrefixExpression)expression;
+      final IElementType tokenType = prefixExpression.getOperationTokenType();
+      if (!tokenType.equals(JavaTokenType.PLUSPLUS)) {
+        return false;
+      }
+      final PsiExpression operand = prefixExpression.getOperand();
+      return evaluatesToVariable(operand, variable);
+    }
+    else if (expression instanceof PsiPostfixExpression) {
+      final PsiPostfixExpression postfixExpression =
+        (PsiPostfixExpression)expression;
+      final IElementType tokenType = postfixExpression.getOperationTokenType();
+      if (!tokenType.equals(JavaTokenType.PLUSPLUS)) {
+        return false;
+      }
+      final PsiExpression operand = postfixExpression.getOperand();
+      return evaluatesToVariable(operand, variable);
+    }
+    else if (expression instanceof PsiAssignmentExpression) {
+      final PsiAssignmentExpression assignmentExpression =
+        (PsiAssignmentExpression)expression;
+      final IElementType tokenType =
+        assignmentExpression.getOperationTokenType();
+      final PsiExpression lhs = assignmentExpression.getLExpression();
+      if (!evaluatesToVariable(lhs, variable)) {
+        return false;
+      }
+      PsiExpression rhs = assignmentExpression.getRExpression();
+      rhs = ParenthesesUtils.stripParentheses(rhs);
+      if (tokenType == JavaTokenType.EQ) {
+        if (!(rhs instanceof PsiBinaryExpression)) {
+          return false;
+        }
+        final PsiBinaryExpression binaryExpression =
+          (PsiBinaryExpression)rhs;
+        final IElementType binaryTokenType =
+          binaryExpression.getOperationTokenType();
+        if (binaryTokenType != JavaTokenType.PLUS) {
+          return false;
+        }
+        final PsiExpression lOperand = binaryExpression.getLOperand();
+        final PsiExpression rOperand = binaryExpression.getROperand();
+        if (ExpressionUtils.isOne(lOperand)) {
+          if (evaluatesToVariable(rOperand, variable)) {
+            return true;
+          }
+        }
+        else if (ExpressionUtils.isOne(rOperand)) {
+          if (evaluatesToVariable(lOperand, variable)) {
+            return true;
+          }
+        }
+      }
+      else if (tokenType == JavaTokenType.PLUSEQ) {
+        if (ExpressionUtils.isOne(rhs)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  public static boolean variableIsAssignedBeforeReference(
+    @NotNull PsiReferenceExpression referenceExpression,
+    @Nullable PsiElement context) {
+    if (context == null) {
+      return false;
+    }
+    final PsiElement target = referenceExpression.resolve();
+    if (!(target instanceof PsiVariable)) {
+      return false;
+    }
+    final PsiVariable variable = (PsiVariable)target;
+    return variableIsAssignedAtPoint(variable, context,
+                                     referenceExpression);
+  }
+
+  public static boolean variableIsAssignedAtPoint(
+    @NotNull PsiVariable variable, @Nullable PsiElement context,
+    @NotNull PsiElement point) {
+    if (context == null) {
+      return false;
+    }
+    final PsiElement directChild =
+      getDirectChildWhichContainsElement(context, point);
+    if (directChild == null) {
+      return false;
+    }
+    final PsiElement[] children = context.getChildren();
+    for (PsiElement child : children) {
+      if (child == directChild) {
+        return variableIsAssignedAtPoint(variable, directChild, point);
+      }
+      if (variableIsAssigned(variable, child)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @Nullable
+  private static PsiElement getDirectChildWhichContainsElement(
+    @NotNull PsiElement ancestor,
+    @NotNull PsiElement descendant) {
+    if (ancestor == descendant) {
+      return null;
+    }
+    PsiElement child = descendant;
+    PsiElement parent = child.getParent();
+    while (!parent.equals(ancestor)) {
+      child = parent;
+      parent = child.getParent();
+      if (parent == null) {
+        return null;
+      }
+    }
+    return child;
+  }
 }

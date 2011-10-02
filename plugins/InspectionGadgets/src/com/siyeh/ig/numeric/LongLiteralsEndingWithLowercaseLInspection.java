@@ -28,76 +28,77 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
 public class LongLiteralsEndingWithLowercaseLInspection
-        extends BaseInspection {
+  extends BaseInspection {
+
+  @NotNull
+  public String getID() {
+    return "LongLiteralEndingWithLowercaseL";
+  }
+
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "long.literals.ending.with.lowercase.l.display.name");
+  }
+
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "long.literals.ending.with.lowercase.l.problem.descriptor");
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new LongLiteralWithLowercaseLVisitor();
+  }
+
+  public InspectionGadgetsFix buildFix(Object... infos) {
+    return new LongLiteralFix();
+  }
+
+  private static class LongLiteralFix extends InspectionGadgetsFix {
 
     @NotNull
-    public String getID() {
-        return "LongLiteralEndingWithLowercaseL";
+    public String getName() {
+      return InspectionGadgetsBundle.message(
+        "long.literals.ending.with.lowercase.l.replace.quickfix");
     }
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "long.literals.ending.with.lowercase.l.display.name");
+    public void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiExpression literal =
+        (PsiExpression)descriptor.getPsiElement();
+      final String text = literal.getText();
+      final String newText = text.replace('l', 'L');
+      replaceExpression(literal, newText);
     }
+  }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "long.literals.ending.with.lowercase.l.problem.descriptor");
+  private static class LongLiteralWithLowercaseLVisitor
+    extends BaseInspectionVisitor {
+
+    @Override
+    public void visitLiteralExpression(
+      @NotNull PsiLiteralExpression expression) {
+      super.visitLiteralExpression(expression);
+      final PsiType type = expression.getType();
+      if (type == null) {
+        return;
+      }
+      if (!type.equals(PsiType.LONG)) {
+        return;
+      }
+      final String text = expression.getText();
+      if (text == null) {
+        return;
+      }
+      final int length = text.length();
+      if (length == 0) {
+        return;
+      }
+      if (text.charAt(length - 1) != 'l') {
+        return;
+      }
+      registerError(expression);
     }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new LongLiteralWithLowercaseLVisitor();
-    }
-
-    public InspectionGadgetsFix buildFix(Object... infos) {
-        return new LongLiteralFix();
-    }
-
-    private static class LongLiteralFix extends InspectionGadgetsFix {
-
-        @NotNull
-        public String getName() {
-            return InspectionGadgetsBundle.message(
-                    "long.literals.ending.with.lowercase.l.replace.quickfix");
-        }
-
-        public void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
-            final PsiExpression literal =
-                    (PsiExpression)descriptor.getPsiElement();
-            final String text = literal.getText();
-            final String newText = text.replace('l', 'L');
-            replaceExpression(literal, newText);
-        }
-    }
-
-    private static class LongLiteralWithLowercaseLVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitLiteralExpression(
-                @NotNull PsiLiteralExpression expression) {
-            super.visitLiteralExpression(expression);
-            final PsiType type = expression.getType();
-            if (type == null) {
-                return;
-            }
-            if (!type.equals(PsiType.LONG)) {
-                return;
-            }
-            final String text = expression.getText();
-            if (text == null) {
-                return;
-            }
-            final int length = text.length();
-            if (length == 0) {
-                return;
-            }
-            if (text.charAt(length - 1) != 'l') {
-                return;
-            }
-            registerError(expression);
-        }
-    }
+  }
 }

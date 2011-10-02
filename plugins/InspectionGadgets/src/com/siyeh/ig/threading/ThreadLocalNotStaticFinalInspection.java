@@ -27,58 +27,58 @@ import org.jetbrains.annotations.NotNull;
 
 public class ThreadLocalNotStaticFinalInspection extends BaseInspection {
 
-    @Nls
-    @NotNull
+  @Nls
+  @NotNull
+  @Override
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "thread.local.not.static.final.display.name");
+  }
+
+  @NotNull
+  @Override
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "thread.local.not.static.final.problem.descriptor");
+  }
+
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return MakeFieldStaticFinalFix.buildFix((PsiField)infos[0]);
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new ThreadLocalNotStaticFinalVisitor();
+  }
+
+  private static class ThreadLocalNotStaticFinalVisitor
+    extends BaseInspectionVisitor {
+
     @Override
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "thread.local.not.static.final.display.name");
+    public void visitField(PsiField field) {
+      super.visitField(field);
+      final PsiType type = field.getType();
+      if (!(type instanceof PsiClassType)) {
+        return;
+      }
+      final PsiClassType classType = (PsiClassType)type;
+      final PsiClass aClass = classType.resolve();
+      if (aClass == null) {
+        return;
+      }
+      if (!InheritanceUtil.isInheritor(aClass, "java.lang.ThreadLocal")) {
+        return;
+      }
+      final PsiModifierList modifierList = field.getModifierList();
+      if (modifierList == null) {
+        return;
+      }
+      if (modifierList.hasModifierProperty(PsiModifier.STATIC) &&
+          modifierList.hasModifierProperty(PsiModifier.FINAL)) {
+        return;
+      }
+      registerFieldError(field, field);
     }
-
-    @NotNull
-    @Override
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "thread.local.not.static.final.problem.descriptor");
-    }
-
-    @Override
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        return MakeFieldStaticFinalFix.buildFix((PsiField) infos[0]);
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new ThreadLocalNotStaticFinalVisitor();
-    }
-
-    private static class ThreadLocalNotStaticFinalVisitor
-            extends BaseInspectionVisitor {
-
-        @Override
-        public void visitField(PsiField field) {
-            super.visitField(field);
-            final PsiType type = field.getType();
-            if (!(type instanceof PsiClassType)) {
-                return;
-            }
-            final PsiClassType classType = (PsiClassType)type;
-            final PsiClass aClass = classType.resolve();
-            if (aClass == null) {
-                return;
-            }
-            if (!InheritanceUtil.isInheritor(aClass, "java.lang.ThreadLocal")) {
-                return;
-            }
-            final PsiModifierList modifierList = field.getModifierList();
-            if (modifierList == null) {
-                return;
-            }
-            if (modifierList.hasModifierProperty(PsiModifier.STATIC) &&
-                    modifierList.hasModifierProperty(PsiModifier.FINAL)) {
-                return;
-            }
-            registerFieldError(field, field);
-        }
-    }
+  }
 }

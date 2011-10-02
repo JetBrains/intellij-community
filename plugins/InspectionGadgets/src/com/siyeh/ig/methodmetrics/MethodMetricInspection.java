@@ -22,20 +22,20 @@ import javax.swing.JComponent;
 
 public abstract class MethodMetricInspection extends BaseInspection {
 
-    @SuppressWarnings("PublicField")
-    public int m_limit = getDefaultLimit();  //this is public for the DefaultJDOMSerialization thingy
+  @SuppressWarnings("PublicField")
+  public int m_limit = getDefaultLimit();  //this is public for the DefaultJDOMSerialization thingy
 
-    protected abstract int getDefaultLimit();
+  protected abstract int getDefaultLimit();
 
-    protected abstract String getConfigurationLabel();
+  protected abstract String getConfigurationLabel();
 
-    protected final int getLimit() {
-        return m_limit;
-    }
+  protected final int getLimit() {
+    return m_limit;
+  }
 
-    @Override
-    public JComponent createOptionsPanel() {
-        return new SingleIntegerFieldOptionsPanel(getConfigurationLabel(),
-                this, "m_limit");
-    }
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleIntegerFieldOptionsPanel(getConfigurationLabel(),
+                                              this, "m_limit");
+  }
 }

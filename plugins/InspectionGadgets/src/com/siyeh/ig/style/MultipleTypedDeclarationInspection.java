@@ -29,115 +29,117 @@ import java.util.List;
 
 public class MultipleTypedDeclarationInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "multiple.typed.declaration.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "multiple.typed.declaration.display.name");
+  }
 
-    @NotNull
-    public String getID() {
-        return "VariablesOfDifferentTypesInDeclaration";
-    }
+  @NotNull
+  public String getID() {
+    return "VariablesOfDifferentTypesInDeclaration";
+  }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "multiple.typed.declaration.problem.descriptor");
-    }
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "multiple.typed.declaration.problem.descriptor");
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new MultiplyTypedDeclarationVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new MultiplyTypedDeclarationVisitor();
+  }
 
-    public InspectionGadgetsFix buildFix(Object... infos) {
-        return new NormalizeDeclarationFix();
-    }
+  public InspectionGadgetsFix buildFix(Object... infos) {
+    return new NormalizeDeclarationFix();
+  }
 
-    private static class MultiplyTypedDeclarationVisitor
-            extends BaseInspectionVisitor {
+  private static class MultiplyTypedDeclarationVisitor
+    extends BaseInspectionVisitor {
 
-        @Override public void visitDeclarationStatement(
-                PsiDeclarationStatement statement) {
-            super.visitDeclarationStatement(statement);
-            final PsiElement[] elements = statement.getDeclaredElements();
-            if (elements.length > 1) {
-                final PsiType baseType = ((PsiVariable)elements[0]).getType();
-                boolean hasMultipleTypes = false;
-                for (int i = 1; i < elements.length; i++) {
-                    final PsiLocalVariable var = (PsiLocalVariable)elements[i];
-                    final PsiType variableType = var.getType();
-                    if (!variableType.equals(baseType)) {
-                        hasMultipleTypes = true;
-                    }
-                }
-                if (hasMultipleTypes) {
-                    for (int i = 1; i < elements.length; i++) {
-                        final PsiLocalVariable var =
-                                (PsiLocalVariable)elements[i];
-                        registerVariableError(var);
-                    }
-                }
-            }
+    @Override
+    public void visitDeclarationStatement(
+      PsiDeclarationStatement statement) {
+      super.visitDeclarationStatement(statement);
+      final PsiElement[] elements = statement.getDeclaredElements();
+      if (elements.length > 1) {
+        final PsiType baseType = ((PsiVariable)elements[0]).getType();
+        boolean hasMultipleTypes = false;
+        for (int i = 1; i < elements.length; i++) {
+          final PsiLocalVariable var = (PsiLocalVariable)elements[i];
+          final PsiType variableType = var.getType();
+          if (!variableType.equals(baseType)) {
+            hasMultipleTypes = true;
+          }
         }
-
-        @Override public void visitField(@NotNull PsiField field) {
-            super.visitField(field);
-            if (!childrenContainTypeElement(field)) {
-                return;
-            }
-            final List<PsiField> fields = getSiblingFields(field);
-            if (fields.size() > 1) {
-                final PsiField firstField = fields.get(0);
-                final PsiType baseType = firstField.getType();
-                boolean hasMultipleTypes = false;
-                for (int i = 1; i < fields.size(); i++) {
-                    final PsiField variable = fields.get(i);
-                    final PsiType variableType = variable.getType();
-                    if (!variableType.equals(baseType)) {
-                        hasMultipleTypes = true;
-                    }
-                }
-                if (hasMultipleTypes) {
-                    for (int i = 1; i < fields.size(); i++) {
-                        final PsiField var = fields.get(i);
-                        registerVariableError(var);
-                    }
-                }
-            }
+        if (hasMultipleTypes) {
+          for (int i = 1; i < elements.length; i++) {
+            final PsiLocalVariable var =
+              (PsiLocalVariable)elements[i];
+            registerVariableError(var);
+          }
         }
-
-        public static List<PsiField> getSiblingFields(PsiField field) {
-            final List<PsiField> out = new ArrayList<PsiField>(5);
-            out.add(field);
-            PsiField nextField =
-                    PsiTreeUtil.getNextSiblingOfType(field,
-                            PsiField.class);
-            if (nextField != null) {
-                PsiTypeElement nextTypeElement = nextField.getTypeElement();
-                while (nextTypeElement != null &&
-                       nextTypeElement.equals(field.getTypeElement())) {
-                    out.add(nextField);
-                    nextField =
-                            PsiTreeUtil.getNextSiblingOfType(nextField,
-                                    PsiField.class);
-                    if (nextField == null) {
-                        break;
-                    }
-                    nextTypeElement = nextField.getTypeElement();
-                }
-            }
-            return out;
-        }
-
-        public static boolean childrenContainTypeElement(PsiElement field) {
-            final PsiElement[] children = field.getChildren();
-            for (PsiElement aChildren : children) {
-                if (aChildren instanceof PsiTypeElement) {
-                    return true;
-                }
-            }
-            return false;
-        }
+      }
     }
+
+    @Override
+    public void visitField(@NotNull PsiField field) {
+      super.visitField(field);
+      if (!childrenContainTypeElement(field)) {
+        return;
+      }
+      final List<PsiField> fields = getSiblingFields(field);
+      if (fields.size() > 1) {
+        final PsiField firstField = fields.get(0);
+        final PsiType baseType = firstField.getType();
+        boolean hasMultipleTypes = false;
+        for (int i = 1; i < fields.size(); i++) {
+          final PsiField variable = fields.get(i);
+          final PsiType variableType = variable.getType();
+          if (!variableType.equals(baseType)) {
+            hasMultipleTypes = true;
+          }
+        }
+        if (hasMultipleTypes) {
+          for (int i = 1; i < fields.size(); i++) {
+            final PsiField var = fields.get(i);
+            registerVariableError(var);
+          }
+        }
+      }
+    }
+
+    public static List<PsiField> getSiblingFields(PsiField field) {
+      final List<PsiField> out = new ArrayList<PsiField>(5);
+      out.add(field);
+      PsiField nextField =
+        PsiTreeUtil.getNextSiblingOfType(field,
+                                         PsiField.class);
+      if (nextField != null) {
+        PsiTypeElement nextTypeElement = nextField.getTypeElement();
+        while (nextTypeElement != null &&
+               nextTypeElement.equals(field.getTypeElement())) {
+          out.add(nextField);
+          nextField =
+            PsiTreeUtil.getNextSiblingOfType(nextField,
+                                             PsiField.class);
+          if (nextField == null) {
+            break;
+          }
+          nextTypeElement = nextField.getTypeElement();
+        }
+      }
+      return out;
+    }
+
+    public static boolean childrenContainTypeElement(PsiElement field) {
+      final PsiElement[] children = field.getChildren();
+      for (PsiElement aChildren : children) {
+        if (aChildren instanceof PsiTypeElement) {
+          return true;
+        }
+      }
+      return false;
+    }
+  }
 }

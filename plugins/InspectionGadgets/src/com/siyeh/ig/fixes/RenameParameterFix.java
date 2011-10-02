@@ -25,28 +25,28 @@ import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class RenameParameterFix extends InspectionGadgetsFix {
-    private final String m_targetName;
+  private final String m_targetName;
 
 
-    public RenameParameterFix(String targetName) {
-        super();
-        m_targetName = targetName;
-    }
+  public RenameParameterFix(String targetName) {
+    super();
+    m_targetName = targetName;
+  }
 
-    @NotNull
-    public String getName() {
-        return InspectionGadgetsBundle.message("renameto.quickfix", m_targetName);
-    }
+  @NotNull
+  public String getName() {
+    return InspectionGadgetsBundle.message("renameto.quickfix", m_targetName);
+  }
 
-    public void doFix(Project project, ProblemDescriptor descriptor) {
-        final PsiElement nameIdentifier = descriptor.getPsiElement();
-        final PsiElement elementToRename = nameIdentifier.getParent();
-        final RefactoringFactory factory =
-                RefactoringFactory.getInstance(project);
-        final RenameRefactoring renameRefactoring =
-                factory.createRename(elementToRename, m_targetName);
-        renameRefactoring.setSearchInComments(false);
-        renameRefactoring.setSearchInNonJavaFiles(false);
-        renameRefactoring.run();
-    }
+  public void doFix(Project project, ProblemDescriptor descriptor) {
+    final PsiElement nameIdentifier = descriptor.getPsiElement();
+    final PsiElement elementToRename = nameIdentifier.getParent();
+    final RefactoringFactory factory =
+      RefactoringFactory.getInstance(project);
+    final RenameRefactoring renameRefactoring =
+      factory.createRename(elementToRename, m_targetName);
+    renameRefactoring.setSearchInComments(false);
+    renameRefactoring.setSearchInNonJavaFiles(false);
+    renameRefactoring.run();
+  }
 }

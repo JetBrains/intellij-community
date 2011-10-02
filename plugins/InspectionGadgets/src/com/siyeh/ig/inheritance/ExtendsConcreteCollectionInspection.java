@@ -27,53 +27,54 @@ import org.jetbrains.annotations.NotNull;
 
 public class ExtendsConcreteCollectionInspection extends BaseInspection {
 
-    @NotNull
-    public String getID() {
-        return "ClassExtendsConcreteCollection";
-    }
+  @NotNull
+  public String getID() {
+    return "ClassExtendsConcreteCollection";
+  }
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "extends.concrete.collection.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "extends.concrete.collection.display.name");
+  }
 
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        final PsiClass superClass = (PsiClass)infos[0];
-        return InspectionGadgetsBundle.message(
-                "extends.concrete.collection.problem.descriptor",
-                superClass.getQualifiedName());
-    }
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    final PsiClass superClass = (PsiClass)infos[0];
+    return InspectionGadgetsBundle.message(
+      "extends.concrete.collection.problem.descriptor",
+      superClass.getQualifiedName());
+  }
 
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-      final PsiClass superClass = (PsiClass)infos[0];
-      //skip inheritance with delegation for anonymous classes
-      // or better suggest to replace anonymous with inner and then replace with delegation
-      if (superClass instanceof PsiAnonymousClass) return null;
-      return new ReplaceInheritanceWithDelegationFix();
-    }
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    final PsiClass superClass = (PsiClass)infos[0];
+    //skip inheritance with delegation for anonymous classes
+    // or better suggest to replace anonymous with inner and then replace with delegation
+    if (superClass instanceof PsiAnonymousClass) return null;
+    return new ReplaceInheritanceWithDelegationFix();
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new ExtendsConcreteCollectionVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new ExtendsConcreteCollectionVisitor();
+  }
 
-    private static class ExtendsConcreteCollectionVisitor
-            extends BaseInspectionVisitor {
+  private static class ExtendsConcreteCollectionVisitor
+    extends BaseInspectionVisitor {
 
-        @Override public void visitClass(@NotNull PsiClass aClass) {
-            if (aClass.isInterface() || aClass.isAnnotationType() ||
-                    aClass.isEnum()) {
-                return;
-            }
-            final PsiClass superClass = aClass.getSuperClass();
-            if (superClass == null) {
-                return;
-            }
-            if (!CollectionUtils.isCollectionClass(superClass)) {
-                return;
-            }
-            registerClassError(aClass, superClass);
-        }
+    @Override
+    public void visitClass(@NotNull PsiClass aClass) {
+      if (aClass.isInterface() || aClass.isAnnotationType() ||
+          aClass.isEnum()) {
+        return;
+      }
+      final PsiClass superClass = aClass.getSuperClass();
+      if (superClass == null) {
+        return;
+      }
+      if (!CollectionUtils.isCollectionClass(superClass)) {
+        return;
+      }
+      registerClassError(aClass, superClass);
     }
+  }
 }

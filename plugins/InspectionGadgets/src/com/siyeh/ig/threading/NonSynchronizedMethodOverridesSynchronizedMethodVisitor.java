@@ -29,23 +29,24 @@ import org.jetbrains.annotations.NotNull;
 
 class NonSynchronizedMethodOverridesSynchronizedMethodVisitor extends BaseInspectionVisitor {
 
-    @Override public void visitMethod(@NotNull PsiMethod method) {
-        //no call to super, so we don't drill into anonymous classes
-        if (method.isConstructor()) {
-            return;
-        }
-        if (method.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
-            return;
-        }
-        if (method.getNameIdentifier() == null) {
-            return;
-        }
-        final PsiMethod[] superMethods = method.findSuperMethods();
-        for (final PsiMethod superMethod : superMethods) {
-            if (superMethod.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
-                registerMethodError(method);
-                return;
-            }
-        }
+  @Override
+  public void visitMethod(@NotNull PsiMethod method) {
+    //no call to super, so we don't drill into anonymous classes
+    if (method.isConstructor()) {
+      return;
     }
+    if (method.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
+      return;
+    }
+    if (method.getNameIdentifier() == null) {
+      return;
+    }
+    final PsiMethod[] superMethods = method.findSuperMethods();
+    for (final PsiMethod superMethod : superMethods) {
+      if (superMethod.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
+        registerMethodError(method);
+        return;
+      }
+    }
+  }
 }

@@ -20,58 +20,60 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NonNls;
 
-class AppendUtil{
+class AppendUtil {
 
-    private AppendUtil(){}
+  private AppendUtil() {
+  }
 
-    public static boolean isAppendCall(PsiElement element){
-        if (!(element instanceof PsiMethodCallExpression)) {
-            return false;
-        }
-        final PsiMethodCallExpression methodCallExpression =
-                (PsiMethodCallExpression)element;
-        final PsiReferenceExpression methodExpression =
-                methodCallExpression.getMethodExpression();
-        @NonNls final String callName = methodExpression.getReferenceName();
-        if(!"append".equals(callName)){
-            return false;
-        }
-        final PsiMethod method = methodCallExpression.resolveMethod();
-        final PsiClass containingClass;
-        if(method == null){
-            // if the argument has no type because of invalid code
-            // this uses the qualifier as type, so the conversion too
-            // append sequence is still applicable
-            final PsiExpression qualifierExpression =
-                    methodExpression.getQualifierExpression();
-            if (qualifierExpression == null) {
-                return false;
-            }
-            final PsiType type = qualifierExpression.getType();
-            if (!(type instanceof PsiClassType)) {
-                return false;
-            }
-            final PsiClassType classType = (PsiClassType) type;
-            containingClass = classType.resolve();
-        } else {
-            containingClass = method.getContainingClass();
-        }
-        if(containingClass == null){
-            return false;
-        }
-        final String name = containingClass.getQualifiedName();
-        if ("java.lang.StringBuffer".equals(name) ||
-                "java.lang.StringBuilder".equals(name)) {
-            return true;
-        }
-        final Project project = containingClass.getProject();
-        final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-        final PsiClass appendableClass =
-                psiFacade.findClass("java.lang.Appendable",
-                        GlobalSearchScope.allScope(project));
-        if (appendableClass == null) {
-            return false;
-        }
-        return containingClass.isInheritor(appendableClass, true);
+  public static boolean isAppendCall(PsiElement element) {
+    if (!(element instanceof PsiMethodCallExpression)) {
+      return false;
     }
+    final PsiMethodCallExpression methodCallExpression =
+      (PsiMethodCallExpression)element;
+    final PsiReferenceExpression methodExpression =
+      methodCallExpression.getMethodExpression();
+    @NonNls final String callName = methodExpression.getReferenceName();
+    if (!"append".equals(callName)) {
+      return false;
+    }
+    final PsiMethod method = methodCallExpression.resolveMethod();
+    final PsiClass containingClass;
+    if (method == null) {
+      // if the argument has no type because of invalid code
+      // this uses the qualifier as type, so the conversion too
+      // append sequence is still applicable
+      final PsiExpression qualifierExpression =
+        methodExpression.getQualifierExpression();
+      if (qualifierExpression == null) {
+        return false;
+      }
+      final PsiType type = qualifierExpression.getType();
+      if (!(type instanceof PsiClassType)) {
+        return false;
+      }
+      final PsiClassType classType = (PsiClassType)type;
+      containingClass = classType.resolve();
+    }
+    else {
+      containingClass = method.getContainingClass();
+    }
+    if (containingClass == null) {
+      return false;
+    }
+    final String name = containingClass.getQualifiedName();
+    if ("java.lang.StringBuffer".equals(name) ||
+        "java.lang.StringBuilder".equals(name)) {
+      return true;
+    }
+    final Project project = containingClass.getProject();
+    final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+    final PsiClass appendableClass =
+      psiFacade.findClass("java.lang.Appendable",
+                          GlobalSearchScope.allScope(project));
+    if (appendableClass == null) {
+      return false;
+    }
+    return containingClass.isInheritor(appendableClass, true);
+  }
 }

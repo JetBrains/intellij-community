@@ -21,24 +21,24 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.util.IconLoader;
 import com.siyeh.InspectionGadgetsBundle;
 
-class ResetTelemetryAction extends AnAction{
-    
-    private final InspectionGadgetsTelemetry telemetry;
-    private final TelemetryDisplay display;
+class ResetTelemetryAction extends AnAction {
 
-    ResetTelemetryAction(InspectionGadgetsTelemetry telemetry,
-                         TelemetryDisplay display){
-        super(CommonBundle.message("button.reset"),
-                InspectionGadgetsBundle.message(
-                        "action.reset.telemetry.description"),
-                IconLoader.getIcon("/actions/reset.png"));
-        this.telemetry = telemetry;
-        this.display = display;
-    }
+  private final InspectionGadgetsTelemetry telemetry;
+  private final TelemetryDisplay display;
 
-    @Override
-    public void actionPerformed(AnActionEvent event){
-        telemetry.reset();
-        display.update(telemetry.buildList());
-    }
+  ResetTelemetryAction(InspectionGadgetsTelemetry telemetry,
+                       TelemetryDisplay display) {
+    super(CommonBundle.message("button.reset"),
+          InspectionGadgetsBundle.message(
+            "action.reset.telemetry.description"),
+          IconLoader.getIcon("/actions/reset.png"));
+    this.telemetry = telemetry;
+    this.display = display;
+  }
+
+  @Override
+  public void actionPerformed(AnActionEvent event) {
+    telemetry.reset();
+    display.update(telemetry.buildList());
+  }
 }

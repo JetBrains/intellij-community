@@ -32,96 +32,103 @@ import javax.swing.JComponent;
 
 public class MagicNumberInspection extends BaseInspection {
 
-    /** @noinspection PublicField*/
-    public boolean m_ignoreInHashCode = true;
+  /**
+   * @noinspection PublicField
+   */
+  public boolean m_ignoreInHashCode = true;
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("magic.number.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "magic.number.problem.descriptor");
+  }
+
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(
+      InspectionGadgetsBundle.message(
+        "magic.number.ignore.option"),
+      this, "m_ignoreInHashCode");
+  }
+
+  @Override
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return true;
+  }
+
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new IntroduceConstantFix();
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new MagicNumberVisitor();
+  }
+
+  private class MagicNumberVisitor extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message("magic.number.display.name");
-    }
-
-    @Override
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "magic.number.problem.descriptor");
-    }
-
-    @Override
-    public JComponent createOptionsPanel(){
-        return new SingleCheckboxOptionsPanel(
-                InspectionGadgetsBundle.message(
-                        "magic.number.ignore.option"),
-                this, "m_ignoreInHashCode");
-    }
-
-    @Override
-    protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
-        return true;
-    }
-
-    @Override
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        return new IntroduceConstantFix();
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new MagicNumberVisitor();
-    }
-
-    private class MagicNumberVisitor extends BaseInspectionVisitor {
-
-        @Override public void visitLiteralExpression(
-                @NotNull PsiLiteralExpression expression) {
-            super.visitLiteralExpression(expression);
-            final PsiType type = expression.getType();
-            if (!ClassUtils.isPrimitiveNumericType(type)) {
-                return;
-            }
-            if (PsiType.CHAR.equals(type)) {
-                return;
-            }
-            if (isSpecialCaseLiteral(expression)) {
-                return;
-            }
-            if (ExpressionUtils.isDeclaredConstant(expression)) {
-                return;
-            }
-            if(m_ignoreInHashCode) {
-                final PsiMethod containingMethod =
-                        PsiTreeUtil.getParentOfType(expression,
-                                                    PsiMethod.class);
-                if(MethodUtils.isHashCode(containingMethod)) {
-                    return;
-                }
-            }
-            final PsiElement parent = expression.getParent();
-            if (parent instanceof PsiPrefixExpression) {
-                registerError(parent);
-            } else {
-                registerError(expression);
-            }
+    public void visitLiteralExpression(
+      @NotNull PsiLiteralExpression expression) {
+      super.visitLiteralExpression(expression);
+      final PsiType type = expression.getType();
+      if (!ClassUtils.isPrimitiveNumericType(type)) {
+        return;
+      }
+      if (PsiType.CHAR.equals(type)) {
+        return;
+      }
+      if (isSpecialCaseLiteral(expression)) {
+        return;
+      }
+      if (ExpressionUtils.isDeclaredConstant(expression)) {
+        return;
+      }
+      if (m_ignoreInHashCode) {
+        final PsiMethod containingMethod =
+          PsiTreeUtil.getParentOfType(expression,
+                                      PsiMethod.class);
+        if (MethodUtils.isHashCode(containingMethod)) {
+          return;
         }
-
-        private boolean isSpecialCaseLiteral(PsiLiteralExpression expression) {
-            final Object object =
-                    ExpressionUtils.computeConstantExpression(expression);
-            if (object instanceof Integer) {
-                final int i = ((Integer)object).intValue();
-                return i >= 0 && i <= 10 || i == 100 || i == 1000;
-            } else if (object instanceof Long) {
-                final long l = ((Long)object).longValue();
-                return l >= 0L && l <= 2L;
-            } else if (object instanceof Double) {
-                final double d = ((Double)object).doubleValue();
-                return d == 1.0 || d == 0.0;
-            } else if (object instanceof Float) {
-                final float f = ((Float)object).floatValue();
-                return f == 1.0f || f == 0.0f;
-            }
-            return false;
-        }
+      }
+      final PsiElement parent = expression.getParent();
+      if (parent instanceof PsiPrefixExpression) {
+        registerError(parent);
+      }
+      else {
+        registerError(expression);
+      }
     }
+
+    private boolean isSpecialCaseLiteral(PsiLiteralExpression expression) {
+      final Object object =
+        ExpressionUtils.computeConstantExpression(expression);
+      if (object instanceof Integer) {
+        final int i = ((Integer)object).intValue();
+        return i >= 0 && i <= 10 || i == 100 || i == 1000;
+      }
+      else if (object instanceof Long) {
+        final long l = ((Long)object).longValue();
+        return l >= 0L && l <= 2L;
+      }
+      else if (object instanceof Double) {
+        final double d = ((Double)object).doubleValue();
+        return d == 1.0 || d == 0.0;
+      }
+      else if (object instanceof Float) {
+        final float f = ((Float)object).floatValue();
+        return f == 1.0f || f == 0.0f;
+      }
+      return false;
+    }
+  }
 }

@@ -28,62 +28,63 @@ import org.jetbrains.annotations.NotNull;
 
 public class FinalizeNotProtectedInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName(){
-        return InspectionGadgetsBundle.message(
-                "finalize.not.declared.protected.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "finalize.not.declared.protected.display.name");
+  }
+
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "finalize.not.declared.protected.problem.descriptor");
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new FinalizeDeclaredProtectedVisitor();
+  }
+
+  public InspectionGadgetsFix buildFix(Object... infos) {
+    return new ProtectedFinalizeFix();
+  }
+
+  private static class ProtectedFinalizeFix extends InspectionGadgetsFix {
 
     @NotNull
-    public String buildErrorString(Object... infos){
-        return InspectionGadgetsBundle.message(
-                "finalize.not.declared.protected.problem.descriptor");
+    public String getName() {
+      return InspectionGadgetsBundle.message("make.protected.quickfix");
     }
 
-    public BaseInspectionVisitor buildVisitor(){
-        return new FinalizeDeclaredProtectedVisitor();
+    public void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiElement methodName = descriptor.getPsiElement();
+      final PsiMethod method = (PsiMethod)methodName.getParent();
+      assert method != null;
+      final PsiModifierList modifiers = method.getModifierList();
+      modifiers.setModifierProperty(PsiModifier.PUBLIC, false);
+      modifiers.setModifierProperty(PsiModifier.PRIVATE, false);
+      modifiers.setModifierProperty(PsiModifier.PROTECTED, true);
     }
+  }
 
-    public InspectionGadgetsFix buildFix(Object... infos){
-        return new ProtectedFinalizeFix();
+  private static class FinalizeDeclaredProtectedVisitor
+    extends BaseInspectionVisitor {
+
+    @Override
+    public void visitMethod(@NotNull PsiMethod method) {
+      //note: no call to super;
+      final String methodName = method.getName();
+      if (!HardcodedMethodConstants.FINALIZE.equals(methodName)) {
+        return;
+      }
+      final PsiParameterList parameterList = method.getParameterList();
+      if (parameterList.getParametersCount() != 0) {
+        return;
+      }
+      if (method.hasModifierProperty(PsiModifier.PROTECTED)) {
+        return;
+      }
+      registerMethodError(method);
     }
-
-    private static class ProtectedFinalizeFix extends InspectionGadgetsFix{
-
-        @NotNull
-        public String getName(){
-            return InspectionGadgetsBundle.message("make.protected.quickfix");
-        }
-
-        public void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException{
-            final PsiElement methodName = descriptor.getPsiElement();
-            final PsiMethod method = (PsiMethod) methodName.getParent();
-            assert method != null;
-            final PsiModifierList modifiers = method.getModifierList();
-            modifiers.setModifierProperty(PsiModifier.PUBLIC, false);
-            modifiers.setModifierProperty(PsiModifier.PRIVATE, false);
-            modifiers.setModifierProperty(PsiModifier.PROTECTED, true);
-        }
-    }
-
-    private static class FinalizeDeclaredProtectedVisitor
-            extends BaseInspectionVisitor{
-
-        @Override public void visitMethod(@NotNull PsiMethod method){
-            //note: no call to super;
-            final String methodName = method.getName();
-            if(!HardcodedMethodConstants.FINALIZE.equals(methodName)) {
-              return;
-            }
-            final PsiParameterList parameterList = method.getParameterList();
-            if(parameterList.getParametersCount() != 0){
-                return;
-            }
-            if(method.hasModifierProperty(PsiModifier.PROTECTED)){
-                return;
-            }
-            registerMethodError(method);
-        }
-    }
+  }
 }

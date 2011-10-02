@@ -26,85 +26,91 @@ import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class NonSerializableWithSerializationMethodsInspection
-        extends BaseInspection {
+  extends BaseInspection {
 
-    @Override
-    @NotNull
-    public String getID(){
-        return "NonSerializableClassWithSerializationMethods";
+  @Override
+  @NotNull
+  public String getID() {
+    return "NonSerializableClassWithSerializationMethods";
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "non.serializable.class.with.readwriteobject.display.name");
+  }
+
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    if (infos[2] instanceof PsiAnonymousClass) {
+      return null;
     }
+    return new MakeSerializableFix();
+  }
 
-    @Override
-    @NotNull
-    public String getDisplayName(){
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    final boolean hasReadObject = ((Boolean)infos[0]).booleanValue();
+    final boolean hasWriteObject = ((Boolean)infos[1]).booleanValue();
+    final PsiClass aClass = (PsiClass)infos[2];
+    if (aClass instanceof PsiAnonymousClass) {
+      if (hasReadObject && hasWriteObject) {
         return InspectionGadgetsBundle.message(
-                "non.serializable.class.with.readwriteobject.display.name");
+          "non.serializable.anonymous.with.readwriteobject.problem.descriptor.both");
+      }
+      else if (hasWriteObject) {
+        return InspectionGadgetsBundle.message(
+          "non.serializable.anonymous.with.readwriteobject.problem.descriptor.write");
+      }
+      else {
+        return InspectionGadgetsBundle.message(
+          "non.serializable.anonymous.with.readwriteobject.problem.descriptor.read");
+      }
     }
+    else {
+      if (hasReadObject && hasWriteObject) {
+        return InspectionGadgetsBundle.message(
+          "non.serializable.class.with.readwriteobject.problem.descriptor.both");
+      }
+      else if (hasWriteObject) {
+        return InspectionGadgetsBundle.message(
+          "non.serializable.class.with.readwriteobject.problem.descriptor.write");
+      }
+      else {
+        return InspectionGadgetsBundle.message(
+          "non.serializable.class.with.readwriteobject.problem.descriptor.read");
+      }
+    }
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new NonserializableDefinesSerializationMethodsVisitor();
+  }
+
+  private static class NonserializableDefinesSerializationMethodsVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    protected InspectionGadgetsFix buildFix(Object... infos){
-        if (infos[2] instanceof PsiAnonymousClass) {
-            return null;
-        }
-        return new MakeSerializableFix();
+    public void visitClass(@NotNull PsiClass aClass) {
+      // no call to super, so it doesn't drill down
+      if (aClass.isInterface() || aClass.isAnnotationType()) {
+        return;
+      }
+      final boolean hasReadObject =
+        SerializationUtils.hasReadObject(aClass);
+      final boolean hasWriteObject =
+        SerializationUtils.hasWriteObject(aClass);
+      if (!hasWriteObject && !hasReadObject) {
+        return;
+      }
+      if (SerializationUtils.isSerializable(aClass)) {
+        return;
+      }
+      registerClassError(aClass, Boolean.valueOf(hasReadObject),
+                         Boolean.valueOf(hasWriteObject), aClass);
     }
-
-    @Override
-    @NotNull
-    public String buildErrorString(Object... infos){
-        final boolean hasReadObject = ((Boolean)infos[0]).booleanValue();
-        final boolean hasWriteObject = ((Boolean)infos[1]).booleanValue();
-        final PsiClass aClass = (PsiClass)infos[2];
-        if (aClass instanceof PsiAnonymousClass) {
-            if(hasReadObject && hasWriteObject){
-                return InspectionGadgetsBundle.message(
-                        "non.serializable.anonymous.with.readwriteobject.problem.descriptor.both");
-            } else if(hasWriteObject){
-                return InspectionGadgetsBundle.message(
-                        "non.serializable.anonymous.with.readwriteobject.problem.descriptor.write");
-            } else{
-                return InspectionGadgetsBundle.message(
-                        "non.serializable.anonymous.with.readwriteobject.problem.descriptor.read");
-            }
-        } else {
-            if(hasReadObject && hasWriteObject){
-                return InspectionGadgetsBundle.message(
-                        "non.serializable.class.with.readwriteobject.problem.descriptor.both");
-            } else if(hasWriteObject){
-                return InspectionGadgetsBundle.message(
-                        "non.serializable.class.with.readwriteobject.problem.descriptor.write");
-            } else{
-                return InspectionGadgetsBundle.message(
-                        "non.serializable.class.with.readwriteobject.problem.descriptor.read");
-            }
-        }
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor(){
-        return new NonserializableDefinesSerializationMethodsVisitor();
-    }
-
-    private static class NonserializableDefinesSerializationMethodsVisitor
-            extends BaseInspectionVisitor{
-
-        @Override public void visitClass(@NotNull PsiClass aClass){
-            // no call to super, so it doesn't drill down
-            if(aClass.isInterface() || aClass.isAnnotationType()){
-                return;
-            }
-            final boolean hasReadObject =
-                    SerializationUtils.hasReadObject(aClass);
-            final boolean hasWriteObject =
-                    SerializationUtils.hasWriteObject(aClass);
-            if(!hasWriteObject && !hasReadObject){
-                return;
-            }
-            if(SerializationUtils.isSerializable(aClass)){
-                return;
-            }
-            registerClassError(aClass, Boolean.valueOf(hasReadObject),
-                    Boolean.valueOf(hasWriteObject), aClass);
-        }
-    }
+  }
 }

@@ -23,47 +23,48 @@ import java.util.Set;
 
 public class FormatUtils {
 
-    /**
-     * @noinspection StaticCollection
-     */
-    @NonNls
-    public static final Set<String> formatMethodNames =
-            new HashSet<String>(2);
-    /**
-     * @noinspection StaticCollection
-     */
-    public static final Set<String> formatClassNames =
-            new HashSet<String>(4);
+  /**
+   * @noinspection StaticCollection
+   */
+  @NonNls
+  public static final Set<String> formatMethodNames =
+    new HashSet<String>(2);
+  /**
+   * @noinspection StaticCollection
+   */
+  public static final Set<String> formatClassNames =
+    new HashSet<String>(4);
 
-    static {
-        FormatUtils.formatMethodNames.add("format");
-        FormatUtils.formatMethodNames.add("printf");
+  static {
+    FormatUtils.formatMethodNames.add("format");
+    FormatUtils.formatMethodNames.add("printf");
 
-        FormatUtils.formatClassNames.add("java.io.PrintWriter");
-        FormatUtils.formatClassNames.add("java.io.PrintStream");
-        FormatUtils.formatClassNames.add("java.util.Formatter");
-        FormatUtils.formatClassNames.add(CommonClassNames.JAVA_LANG_STRING);
+    FormatUtils.formatClassNames.add("java.io.PrintWriter");
+    FormatUtils.formatClassNames.add("java.io.PrintStream");
+    FormatUtils.formatClassNames.add("java.util.Formatter");
+    FormatUtils.formatClassNames.add(CommonClassNames.JAVA_LANG_STRING);
+  }
+
+  private FormatUtils() {
+  }
+
+  public static boolean isFormatCall(
+    PsiMethodCallExpression expression) {
+    final PsiReferenceExpression methodExpression =
+      expression.getMethodExpression();
+    final String name = methodExpression.getReferenceName();
+    if (!formatMethodNames.contains(name)) {
+      return false;
     }
-
-    private FormatUtils() {}
-
-    public static boolean isFormatCall(
-            PsiMethodCallExpression expression) {
-        final PsiReferenceExpression methodExpression =
-                expression.getMethodExpression();
-        final String name = methodExpression.getReferenceName();
-        if (!formatMethodNames.contains(name)) {
-            return false;
-        }
-        final PsiMethod method = expression.resolveMethod();
-        if (method == null) {
-            return false;
-        }
-        final PsiClass containingClass = method.getContainingClass();
-        if (containingClass == null) {
-            return false;
-        }
-        final String className = containingClass.getQualifiedName();
-        return formatClassNames.contains(className);
+    final PsiMethod method = expression.resolveMethod();
+    if (method == null) {
+      return false;
     }
+    final PsiClass containingClass = method.getContainingClass();
+    if (containingClass == null) {
+      return false;
+    }
+    final String className = containingClass.getQualifiedName();
+    return formatClassNames.contains(className);
+  }
 }

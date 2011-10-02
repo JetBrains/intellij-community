@@ -24,36 +24,37 @@ import org.jetbrains.annotations.NotNull;
 
 public class ConstantDeclaredInInterfaceInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "constant.declared.in.interface.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "constant.declared.in.interface.display.name");
+  }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "constant.declared.in.interface.problem.descriptor");
-    }
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "constant.declared.in.interface.problem.descriptor");
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new ConstantDeclaredInInterfaceVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new ConstantDeclaredInInterfaceVisitor();
+  }
 
-    private static class ConstantDeclaredInInterfaceVisitor
-            extends BaseInspectionVisitor {
+  private static class ConstantDeclaredInInterfaceVisitor
+    extends BaseInspectionVisitor {
 
-        @Override public void visitField(@NotNull PsiField field) {
-            //no call to super, so we don't drill into anonymous classes
-            final PsiClass containingClass = field.getContainingClass();
-            if (containingClass == null) {
-                return;
-            }
-            if (!containingClass.isInterface() &&
-                    !containingClass.isAnnotationType()) {
-                return;
-            }
-            registerFieldError(field);
-        }
+    @Override
+    public void visitField(@NotNull PsiField field) {
+      //no call to super, so we don't drill into anonymous classes
+      final PsiClass containingClass = field.getContainingClass();
+      if (containingClass == null) {
+        return;
+      }
+      if (!containingClass.isInterface() &&
+          !containingClass.isAnnotationType()) {
+        return;
+      }
+      registerFieldError(field);
     }
+  }
 }

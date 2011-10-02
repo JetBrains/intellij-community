@@ -23,28 +23,29 @@ import org.jetbrains.annotations.NotNull;
 
 public class AssertStatementInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "assert.statement.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "assert.statement.display.name");
+  }
 
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "statement.problem.descriptor");
-    }
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "statement.problem.descriptor");
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new AssertStatementVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new AssertStatementVisitor();
+  }
 
-    private static class AssertStatementVisitor
-            extends BaseInspectionVisitor {
+  private static class AssertStatementVisitor
+    extends BaseInspectionVisitor {
 
-        @Override public void visitAssertStatement(PsiAssertStatement statement) {
-            super.visitAssertStatement(statement);
-            registerStatementError(statement);
-        }
+    @Override
+    public void visitAssertStatement(PsiAssertStatement statement) {
+      super.visitAssertStatement(statement);
+      registerStatementError(statement);
     }
+  }
 }

@@ -30,107 +30,109 @@ import org.jetbrains.annotations.NotNull;
 
 public class ThreadRunInspection extends BaseInspection {
 
-    @Override
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("thread.run.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String getID() {
+    return "CallToThreadRun";
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message("thread.run.problem.descriptor");
+  }
+
+  @Override
+  public InspectionGadgetsFix buildFix(Object... infos) {
+    return new ThreadRunFix();
+  }
+
+  private static class ThreadRunFix extends InspectionGadgetsFix {
+
     @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message("thread.run.display.name");
+    public String getName() {
+      return InspectionGadgetsBundle.message(
+        "thread.run.replace.quickfix");
     }
 
     @Override
-    @NotNull
-    public String getID() {
-        return "CallToThreadRun";
+    public void doFix(@NotNull Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiElement methodNameIdentifier = descriptor.getPsiElement();
+      final PsiReferenceExpression methodExpression =
+        (PsiReferenceExpression)methodNameIdentifier.getParent();
+      assert methodExpression != null;
+      final PsiExpression qualifier =
+        methodExpression.getQualifierExpression();
+      if (qualifier == null) {
+        replaceExpression(methodExpression, "start");
+      }
+      else {
+        final String qualifierText = qualifier.getText();
+        replaceExpression(methodExpression, qualifierText + ".start");
+      }
     }
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new ThreadRunVisitor();
+  }
+
+  private static class ThreadRunVisitor extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message("thread.run.problem.descriptor");
+    public void visitMethodCallExpression(
+      @NotNull PsiMethodCallExpression expression) {
+      super.visitMethodCallExpression(expression);
+      final PsiReferenceExpression methodExpression =
+        expression.getMethodExpression();
+      final String methodName = methodExpression.getReferenceName();
+      if (!HardcodedMethodConstants.RUN.equals(methodName)) {
+        return;
+      }
+      final PsiMethod method = expression.resolveMethod();
+      if (method == null) {
+        return;
+      }
+      final PsiParameterList parameterList = method.getParameterList();
+      if (parameterList.getParametersCount() != 0) {
+        return;
+      }
+      final PsiClass methodClass = method.getContainingClass();
+      if (methodClass == null) {
+        return;
+      }
+      if (!InheritanceUtil.isInheritor(methodClass, "java.lang.Thread")) {
+        return;
+      }
+      if (isInsideThreadRun(expression)) {
+        return;
+      }
+      registerMethodCallError(expression);
     }
 
-    @Override
-    public InspectionGadgetsFix buildFix(Object... infos) {
-        return new ThreadRunFix();
+    private static boolean isInsideThreadRun(
+      PsiElement element) {
+      final PsiMethod method =
+        PsiTreeUtil.getParentOfType(element, PsiMethod.class);
+      if (method == null) {
+        return false;
+      }
+      final String methodName = method.getName();
+      if (!HardcodedMethodConstants.RUN.equals(methodName)) {
+        return false;
+      }
+      final PsiClass methodClass = method.getContainingClass();
+      if (methodClass == null) {
+        return false;
+      }
+      return InheritanceUtil.isInheritor(methodClass, "java.lang.Thread");
     }
-
-    private static class ThreadRunFix extends InspectionGadgetsFix {
-
-        @NotNull
-        public String getName() {
-            return InspectionGadgetsBundle.message(
-                    "thread.run.replace.quickfix");
-        }
-
-        @Override
-        public void doFix(@NotNull Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
-            final PsiElement methodNameIdentifier = descriptor.getPsiElement();
-            final PsiReferenceExpression methodExpression =
-                    (PsiReferenceExpression)methodNameIdentifier.getParent();
-            assert methodExpression != null;
-            final PsiExpression qualifier =
-                    methodExpression.getQualifierExpression();
-            if (qualifier == null) {
-                replaceExpression(methodExpression, "start");
-            } else {
-                final String qualifierText = qualifier.getText();
-                replaceExpression(methodExpression, qualifierText + ".start");
-            }
-        }
-    }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new ThreadRunVisitor();
-    }
-
-    private static class ThreadRunVisitor extends BaseInspectionVisitor {
-
-        @Override public void visitMethodCallExpression(
-                @NotNull PsiMethodCallExpression expression) {
-            super.visitMethodCallExpression(expression);
-            final PsiReferenceExpression methodExpression =
-                    expression.getMethodExpression();
-            final String methodName = methodExpression.getReferenceName();
-            if (!HardcodedMethodConstants.RUN.equals(methodName)) {
-                return;
-            }
-            final PsiMethod method = expression.resolveMethod();
-            if (method == null) {
-                return;
-            }
-            final PsiParameterList parameterList = method.getParameterList();
-            if (parameterList.getParametersCount() != 0) {
-                return;
-            }
-            final PsiClass methodClass = method.getContainingClass();
-            if (methodClass == null) {
-                return;
-            }
-            if (!InheritanceUtil.isInheritor(methodClass, "java.lang.Thread")) {
-                return;
-            }
-            if (isInsideThreadRun(expression)) {
-                return;
-            }
-            registerMethodCallError(expression);
-        }
-
-        private static boolean isInsideThreadRun(
-                PsiElement element) {
-            final PsiMethod method =
-                    PsiTreeUtil.getParentOfType(element, PsiMethod.class);
-            if (method == null) {
-                return false;
-            }
-            final String methodName = method.getName();
-            if (!HardcodedMethodConstants.RUN.equals(methodName)) {
-                return false;
-            }
-            final PsiClass methodClass = method.getContainingClass();
-            if (methodClass == null) {
-                return false;
-            }
-            return InheritanceUtil.isInheritor(methodClass, "java.lang.Thread");
-        }
-    }
+  }
 }

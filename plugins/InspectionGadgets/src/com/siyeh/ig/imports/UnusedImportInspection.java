@@ -26,98 +26,102 @@ import org.jetbrains.annotations.Nullable;
 
 public class UnusedImportInspection extends BaseInspection {
 
-    @Override @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message("unused.import.display.name");
-    }
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("unused.import.display.name");
+  }
 
-    @Override @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "unused.import.problem.descriptor");
-    }
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "unused.import.problem.descriptor");
+  }
+
+  @Override
+  public boolean runForWholeFile() {
+    return true;
+  }
+
+  @Override
+  public InspectionGadgetsFix buildFix(Object... infos) {
+    return new DeleteImportFix();
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new UnusedImportVisitor();
+  }
+
+  private static class UnusedImportVisitor extends BaseInspectionVisitor {
 
     @Override
-    public boolean runForWholeFile() {
-        return true;
+    public void visitJavaFile(PsiJavaFile file) {
+      if (JspPsiUtil.isInJspFile(file)) {
+        return;
+      }
+      final PsiImportList importList = file.getImportList();
+      if (importList == null) {
+        return;
+      }
+      final PsiClass[] classes = file.getClasses();
+      final PsiPackageStatement packageStatement =
+        file.getPackageStatement();
+      final PsiModifierList annotationList;
+      if (packageStatement != null) {
+        annotationList = packageStatement.getAnnotationList();
+      }
+      else {
+        annotationList = null;
+      }
+      final PsiImportStatement[] importStatements =
+        importList.getImportStatements();
+      checkImports(importStatements, classes, annotationList);
+      final PsiImportStaticStatement[] importStaticStatements =
+        importList.getImportStaticStatements();
+      checkStaticImports(importStaticStatements, classes);
     }
 
-    @Override
-    public InspectionGadgetsFix buildFix(Object... infos) {
-        return new DeleteImportFix();
+    private void checkStaticImports(
+      PsiImportStaticStatement[] importStaticStatements,
+      PsiClass[] classes) {
+      if (importStaticStatements.length == 0) {
+        return;
+      }
+      final StaticImportsAreUsedVisitor visitor =
+        new StaticImportsAreUsedVisitor(importStaticStatements);
+      for (PsiClass aClass : classes) {
+        aClass.accept(visitor);
+      }
+      final PsiImportStaticStatement[] unusedImportStaticStatements =
+        visitor.getUnusedImportStaticStatements();
+      for (PsiImportStaticStatement importStaticStatement :
+        unusedImportStaticStatements) {
+        registerError(importStaticStatement);
+      }
     }
 
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new UnusedImportVisitor();
+    private void checkImports(PsiImportStatement[] importStatements,
+                              PsiClass[] classes,
+                              @Nullable PsiModifierList annotationList) {
+      if (importStatements.length == 0) {
+        return;
+      }
+      final ImportsAreUsedVisitor visitor =
+        new ImportsAreUsedVisitor(importStatements);
+      for (PsiClass aClass : classes) {
+        aClass.accept(visitor);
+      }
+      if (annotationList != null) {
+        annotationList.accept(visitor);
+      }
+      final PsiImportStatement[] unusedImportStatements =
+        visitor.getUnusedImportStatements();
+      for (PsiImportStatement unusedImportStatement :
+        unusedImportStatements) {
+        registerError(unusedImportStatement);
+      }
     }
-
-    private static class UnusedImportVisitor extends BaseInspectionVisitor {
-
-        @Override public void visitJavaFile(PsiJavaFile file) {
-            if (JspPsiUtil.isInJspFile(file)) {
-                return;
-            }
-            final PsiImportList importList = file.getImportList();
-            if (importList == null) {
-                return;
-            }
-            final PsiClass[] classes = file.getClasses();
-            final PsiPackageStatement packageStatement =
-                    file.getPackageStatement();
-            final PsiModifierList annotationList;
-            if (packageStatement != null) {
-                annotationList = packageStatement.getAnnotationList();
-            } else {
-                annotationList =  null;
-            }
-            final PsiImportStatement[] importStatements =
-                    importList.getImportStatements();
-            checkImports(importStatements, classes, annotationList);
-            final PsiImportStaticStatement[] importStaticStatements =
-                    importList.getImportStaticStatements();
-            checkStaticImports(importStaticStatements, classes);
-        }
-
-        private void checkStaticImports(
-                PsiImportStaticStatement[] importStaticStatements,
-                PsiClass[] classes) {
-            if (importStaticStatements.length == 0) {
-                return;
-            }
-            final StaticImportsAreUsedVisitor visitor =
-                    new StaticImportsAreUsedVisitor(importStaticStatements);
-            for (PsiClass aClass : classes) {
-                aClass.accept(visitor);
-            }
-            final PsiImportStaticStatement[] unusedImportStaticStatements =
-                    visitor.getUnusedImportStaticStatements();
-            for (PsiImportStaticStatement importStaticStatement :
-                    unusedImportStaticStatements) {
-                registerError(importStaticStatement);
-            }
-        }
-        
-        private void checkImports(PsiImportStatement[] importStatements,
-                                  PsiClass[] classes,
-                                  @Nullable PsiModifierList annotationList) {
-            if (importStatements.length == 0) {
-                return;
-            }
-            final ImportsAreUsedVisitor visitor =
-                    new ImportsAreUsedVisitor(importStatements);
-            for (PsiClass aClass : classes) {
-                aClass.accept(visitor);
-            }
-            if (annotationList != null) {
-                annotationList.accept(visitor);
-            }
-            final PsiImportStatement[] unusedImportStatements =
-                    visitor.getUnusedImportStatements();
-            for (PsiImportStatement unusedImportStatement :
-                    unusedImportStatements) {
-                registerError(unusedImportStatement);
-            }
-        }
-    }
+  }
 }

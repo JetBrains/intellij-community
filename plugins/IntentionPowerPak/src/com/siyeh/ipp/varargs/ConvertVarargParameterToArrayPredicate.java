@@ -22,17 +22,17 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
 class ConvertVarargParameterToArrayPredicate
-        implements PsiElementPredicate {
+  implements PsiElementPredicate {
 
-    public boolean satisfiedBy(@NotNull PsiElement element) {
-        if (!(element instanceof PsiParameterList)) {
-            return false;
-        }
-        final PsiElement parent = element.getParent();
-        if (!(parent instanceof PsiMethod)) {
-            return false;
-        }
-        final PsiMethod method = (PsiMethod) parent;
-        return method.isVarArgs();
+  public boolean satisfiedBy(@NotNull PsiElement element) {
+    if (!(element instanceof PsiParameterList)) {
+      return false;
     }
+    final PsiElement parent = element.getParent();
+    if (!(parent instanceof PsiMethod)) {
+      return false;
+    }
+    final PsiMethod method = (PsiMethod)parent;
+    return method.isVarArgs();
+  }
 }

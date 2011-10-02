@@ -23,45 +23,46 @@ import com.siyeh.ig.psiutils.ClassUtils;
 
 class NonFinalStaticVariableUsedInClassInitializationVisitor extends BaseInspectionVisitor {
 
-    @Override public void visitReferenceExpression(PsiReferenceExpression expression){
-        super.visitReferenceExpression(expression);
-        if(!isInClassInitialization(expression)){
-            return;
-        }
-        final PsiElement referent = expression.resolve();
-        if(!(referent instanceof PsiField)){
-            return;
-        }
-        final PsiField field = (PsiField) referent;
-        if(!field.hasModifierProperty(PsiModifier.STATIC)){
-            return;
-        }
-        if(field.hasModifierProperty(PsiModifier.FINAL)){
-            return;
-        }
-        registerError(expression, field);
+  @Override
+  public void visitReferenceExpression(PsiReferenceExpression expression) {
+    super.visitReferenceExpression(expression);
+    if (!isInClassInitialization(expression)) {
+      return;
     }
+    final PsiElement referent = expression.resolve();
+    if (!(referent instanceof PsiField)) {
+      return;
+    }
+    final PsiField field = (PsiField)referent;
+    if (!field.hasModifierProperty(PsiModifier.STATIC)) {
+      return;
+    }
+    if (field.hasModifierProperty(PsiModifier.FINAL)) {
+      return;
+    }
+    registerError(expression, field);
+  }
 
-    private static boolean isInClassInitialization(
-            PsiExpression expression){
-        final PsiClass expressionClass =
-                ClassUtils.getContainingClass(expression);
-        final PsiMember member =
-                PsiTreeUtil.getParentOfType(expression,
-                        PsiClassInitializer.class, PsiField.class);
-        if (member == null) {
-            return false;
-        }
-        final PsiClass memberClass = member.getContainingClass();
-        if (!memberClass.equals(expressionClass)) {
-            return false;
-        }
-        if (!member.hasModifierProperty(PsiModifier.STATIC)) {
-            return false;
-        }
-        if (member instanceof PsiClassInitializer) {
-            return !PsiUtil.isOnAssignmentLeftHand(expression);
-        }
-        return true;
+  private static boolean isInClassInitialization(
+    PsiExpression expression) {
+    final PsiClass expressionClass =
+      ClassUtils.getContainingClass(expression);
+    final PsiMember member =
+      PsiTreeUtil.getParentOfType(expression,
+                                  PsiClassInitializer.class, PsiField.class);
+    if (member == null) {
+      return false;
     }
+    final PsiClass memberClass = member.getContainingClass();
+    if (!memberClass.equals(expressionClass)) {
+      return false;
+    }
+    if (!member.hasModifierProperty(PsiModifier.STATIC)) {
+      return false;
+    }
+    if (member instanceof PsiClassInitializer) {
+      return !PsiUtil.isOnAssignmentLeftHand(expression);
+    }
+    return true;
+  }
 }

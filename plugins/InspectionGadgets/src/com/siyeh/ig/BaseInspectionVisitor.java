@@ -21,198 +21,209 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class BaseInspectionVisitor extends JavaElementVisitor{
+public abstract class BaseInspectionVisitor extends JavaElementVisitor {
 
-    private BaseInspection inspection = null;
-    private boolean onTheFly = false;
-    private ProblemsHolder holder = null;
+  private BaseInspection inspection = null;
+  private boolean onTheFly = false;
+  private ProblemsHolder holder = null;
 
-    final void setInspection(BaseInspection inspection){
-        this.inspection = inspection;
+  final void setInspection(BaseInspection inspection) {
+    this.inspection = inspection;
+  }
+
+  final void setOnTheFly(boolean onTheFly) {
+    this.onTheFly = onTheFly;
+  }
+
+  public final boolean isOnTheFly() {
+    return onTheFly;
+  }
+
+  protected final void registerNewExpressionError(
+    @NotNull PsiNewExpression expression, Object... infos) {
+    final PsiJavaCodeReferenceElement classReference =
+      expression.getClassOrAnonymousClassReference();
+    if (classReference == null) {
+      registerError(expression, infos);
     }
-
-    final void setOnTheFly(boolean onTheFly){
-        this.onTheFly = onTheFly;
+    else {
+      registerError(classReference, infos);
     }
+  }
 
-    public final boolean isOnTheFly() {
-        return onTheFly;
+  protected final void registerMethodCallError(
+    @NotNull PsiMethodCallExpression expression,
+    @NonNls Object... infos) {
+    final PsiReferenceExpression methodExpression =
+      expression.getMethodExpression();
+    final PsiElement nameToken = methodExpression.getReferenceNameElement();
+    if (nameToken == null) {
+      registerError(expression, infos);
     }
+    else {
+      registerError(nameToken, infos);
+    }
+  }
 
-    protected final void registerNewExpressionError(
-            @NotNull PsiNewExpression expression, Object... infos) {
-        final PsiJavaCodeReferenceElement classReference =
-                expression.getClassOrAnonymousClassReference();
-        if (classReference == null) {
-            registerError(expression, infos);
-        } else {
-            registerError(classReference, infos);
-        }
+  protected final void registerStatementError(@NotNull PsiStatement statement,
+                                              Object... infos) {
+    final PsiElement statementToken = statement.getFirstChild();
+    if (statementToken == null) {
+      registerError(statement, infos);
     }
+    else {
+      registerError(statementToken, infos);
+    }
+  }
 
-    protected final void registerMethodCallError(
-            @NotNull PsiMethodCallExpression expression,
-            @NonNls Object... infos) {
-        final PsiReferenceExpression methodExpression =
-                expression.getMethodExpression();
-        final PsiElement nameToken = methodExpression.getReferenceNameElement();
-        if (nameToken == null) {
-            registerError(expression, infos);
-        } else {
-            registerError(nameToken, infos);
-        }
+  protected final void registerClassError(@NotNull PsiClass aClass,
+                                          Object... infos) {
+    final PsiElement nameIdentifier;
+    if (aClass instanceof PsiEnumConstantInitializer) {
+      final PsiEnumConstantInitializer enumConstantInitializer =
+        (PsiEnumConstantInitializer)aClass;
+      final PsiEnumConstant enumConstant =
+        enumConstantInitializer.getEnumConstant();
+      nameIdentifier = enumConstant.getNameIdentifier();
     }
+    else if (aClass instanceof PsiAnonymousClass) {
+      final PsiAnonymousClass anonymousClass = (PsiAnonymousClass)aClass;
+      nameIdentifier = anonymousClass.getBaseClassReference();
+    }
+    else {
+      nameIdentifier = aClass.getNameIdentifier();
+    }
+    if (nameIdentifier == null) {
+      registerError(aClass.getContainingFile(), infos);
+    }
+    else {
+      registerError(nameIdentifier, infos);
+    }
+  }
 
-    protected final void registerStatementError(@NotNull PsiStatement statement,
-                                                Object... infos){
-        final PsiElement statementToken = statement.getFirstChild();
-        if (statementToken == null) {
-            registerError(statement, infos);
-        } else {
-            registerError(statementToken, infos);
-        }
+  protected final void registerMethodError(@NotNull PsiMethod method,
+                                           Object... infos) {
+    final PsiElement nameIdentifier = method.getNameIdentifier();
+    if (nameIdentifier == null) {
+      registerError(method.getContainingFile(), infos);
     }
+    else {
+      registerError(nameIdentifier, infos);
+    }
+  }
 
-    protected final void registerClassError(@NotNull PsiClass aClass,
-                                            Object... infos){
-        final PsiElement nameIdentifier;
-        if (aClass instanceof PsiEnumConstantInitializer) {
-            final PsiEnumConstantInitializer enumConstantInitializer =
-                    (PsiEnumConstantInitializer)aClass;
-            final PsiEnumConstant enumConstant =
-                    enumConstantInitializer.getEnumConstant();
-            nameIdentifier = enumConstant.getNameIdentifier();
-        } else if (aClass instanceof PsiAnonymousClass) {
-            final PsiAnonymousClass anonymousClass = (PsiAnonymousClass)aClass;
-            nameIdentifier = anonymousClass.getBaseClassReference();
-        } else {
-            nameIdentifier = aClass.getNameIdentifier();
-        }
-        if (nameIdentifier == null) {
-            registerError(aClass.getContainingFile(), infos);
-        } else {
-            registerError(nameIdentifier, infos);
-        }
+  protected final void registerVariableError(@NotNull PsiVariable variable,
+                                             Object... infos) {
+    final PsiElement nameIdentifier = variable.getNameIdentifier();
+    if (nameIdentifier == null) {
+      registerError(variable, infos);
     }
+    else {
+      registerError(nameIdentifier, infos);
+    }
+  }
 
-    protected final void registerMethodError(@NotNull PsiMethod method,
-                                             Object... infos){
-        final PsiElement nameIdentifier = method.getNameIdentifier();
-        if (nameIdentifier == null) {
-            registerError(method.getContainingFile(), infos);
-        } else {
-            registerError(nameIdentifier, infos);
-        }
+  protected final void registerTypeParameterError(
+    @NotNull PsiTypeParameter typeParameter, Object... infos) {
+    final PsiElement nameIdentifier = typeParameter.getNameIdentifier();
+    if (nameIdentifier == null) {
+      registerError(typeParameter, infos);
     }
+    else {
+      registerError(nameIdentifier, infos);
+    }
+  }
 
-    protected final void registerVariableError(@NotNull PsiVariable variable,
-                                               Object... infos){
-        final PsiElement nameIdentifier = variable.getNameIdentifier();
-        if (nameIdentifier == null) {
-            registerError(variable, infos);
-        } else {
-            registerError(nameIdentifier, infos);
-        }
-    }
+  protected final void registerFieldError(@NotNull PsiField field,
+                                          Object... infos) {
+    final PsiElement nameIdentifier = field.getNameIdentifier();
+    registerError(nameIdentifier, infos);
+  }
 
-    protected final void registerTypeParameterError(
-            @NotNull PsiTypeParameter typeParameter, Object... infos) {
-        final PsiElement nameIdentifier = typeParameter.getNameIdentifier();
-        if (nameIdentifier == null) {
-            registerError(typeParameter, infos);
-        } else {
-            registerError(nameIdentifier, infos);
-        }
+  protected final void registerModifierError(
+    @NotNull String modifier, @NotNull PsiModifierListOwner parameter,
+    Object... infos) {
+    final PsiModifierList modifiers = parameter.getModifierList();
+    if (modifiers == null) {
+      return;
     }
+    final PsiElement[] children = modifiers.getChildren();
+    for (final PsiElement child : children) {
+      final String text = child.getText();
+      if (modifier.equals(text)) {
+        registerError(child, infos);
+      }
+    }
+  }
 
-    protected final void registerFieldError(@NotNull PsiField field,
-                                            Object... infos){
-        final PsiElement nameIdentifier = field.getNameIdentifier();
-        registerError(nameIdentifier, infos);
+  protected final void registerClassInitializerError(
+    @NotNull PsiClassInitializer initializer, Object... infos) {
+    final PsiCodeBlock body = initializer.getBody();
+    final PsiJavaToken lBrace = body.getLBrace();
+    if (lBrace == null) {
+      registerError(initializer, infos);
     }
+    else {
+      registerError(lBrace, infos);
+    }
+  }
 
-    protected final void registerModifierError(
-            @NotNull String modifier, @NotNull PsiModifierListOwner parameter,
-            Object... infos){
-        final PsiModifierList modifiers = parameter.getModifierList();
-        if(modifiers == null){
-            return;
-        }
-        final PsiElement[] children = modifiers.getChildren();
-        for(final PsiElement child : children){
-            final String text = child.getText();
-            if(modifier.equals(text)){
-                registerError(child, infos);
-            }
-        }
+  protected final void registerError(@NotNull PsiElement location,
+                                     Object... infos) {
+    if (location.getTextLength() == 0) {
+      return;
     }
+    final InspectionGadgetsFix[] fixes = createFixes(infos);
+    for (InspectionGadgetsFix fix : fixes) {
+      fix.setOnTheFly(onTheFly);
+    }
+    final String description = inspection.buildErrorString(infos);
+    holder.registerProblem(location, description, fixes);
+  }
 
-    protected final void registerClassInitializerError(
-            @NotNull PsiClassInitializer initializer, Object... infos){
-        final PsiCodeBlock body = initializer.getBody();
-        final PsiJavaToken lBrace = body.getLBrace();
-        if (lBrace == null) {
-            registerError(initializer, infos);
-        } else {
-            registerError(lBrace, infos);
-        }
+  protected final void registerError(@NotNull PsiElement location,
+                                     int offset, int length, Object... infos) {
+    if (location.getTextLength() == 0 || length == 0) {
+      return;
     }
+    final InspectionGadgetsFix[] fixes = createFixes(infos);
+    for (InspectionGadgetsFix fix : fixes) {
+      fix.setOnTheFly(onTheFly);
+    }
+    final String description = inspection.buildErrorString(infos);
+    final TextRange range = new TextRange(offset, offset + length);
+    holder.registerProblem(location, range, description, fixes);
+  }
 
-    protected final void registerError(@NotNull PsiElement location,
-                                       Object... infos){
-        if (location.getTextLength() == 0) {
-            return;
-        }
-        final InspectionGadgetsFix[] fixes = createFixes(infos);
-        for (InspectionGadgetsFix fix : fixes) {
-            fix.setOnTheFly(onTheFly);
-        }
-        final String description = inspection.buildErrorString(infos);
-        holder.registerProblem(location, description, fixes);
+  @NotNull
+  private InspectionGadgetsFix[] createFixes(Object... infos) {
+    if (!onTheFly && inspection.buildQuickFixesOnlyForOnTheFlyErrors()) {
+      return InspectionGadgetsFix.EMPTY_ARRAY;
     }
+    final InspectionGadgetsFix[] fixes = inspection.buildFixes(infos);
+    if (fixes.length > 0) {
+      return fixes;
+    }
+    final InspectionGadgetsFix fix = inspection.buildFix(infos);
+    if (fix == null) {
+      return InspectionGadgetsFix.EMPTY_ARRAY;
+    }
+    return new InspectionGadgetsFix[]{fix};
+  }
 
-    protected final void registerError(@NotNull PsiElement location,
-                                       int offset, int length, Object... infos){
-        if (location.getTextLength() == 0 || length == 0) {
-            return;
-        }
-        final InspectionGadgetsFix[] fixes = createFixes(infos);
-        for (InspectionGadgetsFix fix : fixes) {
-            fix.setOnTheFly(onTheFly);
-        }
-        final String description = inspection.buildErrorString(infos);
-        final TextRange range = new TextRange(offset, offset + length);
-        holder.registerProblem(location, range, description, fixes);
-    }
+  @Override
+  public void visitReferenceExpression(
+    PsiReferenceExpression expression) {
+    visitExpression(expression);
+  }
 
-    @NotNull
-    private InspectionGadgetsFix[] createFixes(Object... infos){
-        if(!onTheFly && inspection.buildQuickFixesOnlyForOnTheFlyErrors()){
-            return InspectionGadgetsFix.EMPTY_ARRAY;
-        }
-        final InspectionGadgetsFix[] fixes = inspection.buildFixes(infos);
-        if(fixes.length > 0){
-            return fixes;
-        }
-        final InspectionGadgetsFix fix = inspection.buildFix(infos);
-        if(fix == null){
-            return InspectionGadgetsFix.EMPTY_ARRAY;
-        }
-        return new InspectionGadgetsFix[]{fix};
-    }
+  @Override
+  public final void visitWhiteSpace(PsiWhiteSpace space) {
+    // none of our inspections need to do anything with white space,
+    // so this is a performance optimization
+  }
 
-    @Override public void visitReferenceExpression(
-            PsiReferenceExpression expression) {
-        visitExpression(expression);
-    }
-
-    @Override
-    public final void visitWhiteSpace(PsiWhiteSpace space){
-        // none of our inspections need to do anything with white space,
-        // so this is a performance optimization
-    }
-
-    public final void setProblemsHolder(ProblemsHolder holder) {
-        this.holder = holder;
-    }
+  public final void setProblemsHolder(ProblemsHolder holder) {
+    this.holder = holder;
+  }
 }

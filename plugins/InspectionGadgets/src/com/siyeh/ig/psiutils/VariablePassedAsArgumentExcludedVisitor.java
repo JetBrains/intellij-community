@@ -21,82 +21,85 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Set;
 
 class VariablePassedAsArgumentExcludedVisitor
-        extends JavaRecursiveElementVisitor{
+  extends JavaRecursiveElementVisitor {
 
-    @NotNull
-    private final PsiVariable variable;
-    private final Set<String> excludes;
-    private boolean passed = false;
+  @NotNull
+  private final PsiVariable variable;
+  private final Set<String> excludes;
+  private boolean passed = false;
 
-    public VariablePassedAsArgumentExcludedVisitor(
-            @NotNull PsiVariable variable, @NotNull Set<String> excludes) {
-        super();
-        this.variable = variable;
-        this.excludes = excludes;
+  public VariablePassedAsArgumentExcludedVisitor(
+    @NotNull PsiVariable variable, @NotNull Set<String> excludes) {
+    super();
+    this.variable = variable;
+    this.excludes = excludes;
+  }
+
+  @Override
+  public void visitElement(@NotNull PsiElement element) {
+    if (!passed) {
+      super.visitElement(element);
     }
+  }
 
-    @Override public void visitElement(@NotNull PsiElement element){
-        if(!passed){
-            super.visitElement(element);
-        }
+  @Override
+  public void visitMethodCallExpression(
+    @NotNull PsiMethodCallExpression call) {
+    if (passed) {
+      return;
     }
+    super.visitMethodCallExpression(call);
+    final PsiExpressionList argumentList = call.getArgumentList();
+    final PsiExpression[] arguments = argumentList.getExpressions();
+    for (PsiExpression argument : arguments) {
+      if (!VariableAccessUtils.mayEvaluateToVariable(argument, variable)) {
+        continue;
+      }
+      final PsiMethod method = call.resolveMethod();
+      if (method != null) {
+        final PsiClass aClass = method.getContainingClass();
+        if (aClass != null) {
+          final String name = aClass.getQualifiedName();
+          if (excludes.contains(name)) {
+            continue;
+          }
+        }
+      }
+      passed = true;
+    }
+  }
 
-    @Override public void visitMethodCallExpression(
-            @NotNull PsiMethodCallExpression call){
-        if(passed){
-            return;
-        }
-        super.visitMethodCallExpression(call);
-        final PsiExpressionList argumentList = call.getArgumentList();
-        final PsiExpression[] arguments = argumentList.getExpressions();
-        for(PsiExpression argument : arguments){
-            if(!VariableAccessUtils.mayEvaluateToVariable(argument, variable)){
-                continue;
-            }
-            final PsiMethod method = call.resolveMethod();
-            if(method != null){
-                final PsiClass aClass = method.getContainingClass();
-                if(aClass != null){
-                    final String name = aClass.getQualifiedName();
-                    if(excludes.contains(name)){
-                        continue;
-                    }
-                }
-            }
-            passed = true;
-        }
+  @Override
+  public void visitNewExpression(
+    @NotNull PsiNewExpression newExpression) {
+    if (passed) {
+      return;
     }
+    super.visitNewExpression(newExpression);
+    final PsiExpressionList argumentList = newExpression.getArgumentList();
+    if (argumentList == null) {
+      return;
+    }
+    final PsiExpression[] arguments = argumentList.getExpressions();
+    for (PsiExpression argument : arguments) {
+      if (!VariableAccessUtils.mayEvaluateToVariable(argument, variable)) {
+        continue;
+      }
+      final PsiMethod constructor = newExpression.resolveConstructor();
+      if (constructor != null) {
+        final PsiClass aClass = constructor.getContainingClass();
+        if (aClass != null) {
+          final String name = aClass.getQualifiedName();
+          if (excludes.contains(name)) {
+            continue;
+          }
+        }
+      }
+      passed = true;
+    }
+  }
 
-    @Override public void visitNewExpression(
-            @NotNull PsiNewExpression newExpression){
-        if(passed){
-            return;
-        }
-        super.visitNewExpression(newExpression);
-        final PsiExpressionList argumentList = newExpression.getArgumentList();
-        if(argumentList == null){
-            return;
-        }
-        final PsiExpression[] arguments = argumentList.getExpressions();
-        for(PsiExpression argument : arguments){
-            if(!VariableAccessUtils.mayEvaluateToVariable(argument, variable)){
-                continue;
-            }
-            final PsiMethod constructor = newExpression.resolveConstructor();
-            if(constructor != null){
-                final PsiClass aClass = constructor.getContainingClass();
-                if(aClass != null){
-                    final String name = aClass.getQualifiedName();
-                    if(excludes.contains(name)){
-                        continue;
-                    }
-                }
-            }
-            passed = true;
-        }
-    }
-
-    public boolean isPassed(){
-        return passed;
-    }
+  public boolean isPassed() {
+    return passed;
+  }
 }

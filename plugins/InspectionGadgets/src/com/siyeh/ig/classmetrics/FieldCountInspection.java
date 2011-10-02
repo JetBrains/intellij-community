@@ -30,128 +30,134 @@ import java.awt.*;
 
 public class FieldCountInspection extends ClassMetricInspection {
 
-    private static final int FIELD_COUNT_LIMIT = 10;
-    /** @noinspection PublicField*/
-    public boolean m_countConstantFields = false;
+  private static final int FIELD_COUNT_LIMIT = 10;
+  /**
+   * @noinspection PublicField
+   */
+  public boolean m_countConstantFields = false;
 
-    /** @noinspection PublicField*/
-    public boolean m_considerStaticFinalFieldsConstant = false;
+  /**
+   * @noinspection PublicField
+   */
+  public boolean m_considerStaticFinalFieldsConstant = false;
+
+  @Override
+  @NotNull
+  public String getID() {
+    return "ClassWithTooManyFields";
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("too.many.fields.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "too.many.fields.problem.descriptor", infos[0]);
+  }
+
+  @Override
+  protected int getDefaultLimit() {
+    return FIELD_COUNT_LIMIT;
+  }
+
+  @Override
+  protected String getConfigurationLabel() {
+    return InspectionGadgetsBundle.message(
+      "too.many.fields.count.limit.option");
+  }
+
+  @Override
+  public JComponent createOptionsPanel() {
+    final String configurationLabel = getConfigurationLabel();
+    final JLabel label = new JLabel(configurationLabel);
+    final JFormattedTextField valueField = prepareNumberEditor("m_limit");
+
+    final CheckBox includeCheckBox =
+      new CheckBox(InspectionGadgetsBundle.message(
+        "field.count.inspection.include.constant.fields.in.count.checkbox"),
+                   this, "m_countConstantFields");
+    final CheckBox considerCheckBox =
+      new CheckBox(InspectionGadgetsBundle.message(
+        "field.count.inspection.static.final.fields.count.as.constant.checkbox"),
+                   this, "m_considerStaticFinalFieldsConstant");
+
+    final GridBagConstraints constraints = new GridBagConstraints();
+    constraints.gridx = 0;
+    constraints.gridy = 0;
+    constraints.weightx = 0.0;
+    constraints.anchor = GridBagConstraints.WEST;
+    constraints.fill = GridBagConstraints.NONE;
+    final JPanel panel = new JPanel(new GridBagLayout());
+    panel.add(label, constraints);
+    constraints.gridx = 1;
+    constraints.gridy = 0;
+    constraints.gridwidth = 3;
+    constraints.weightx = 1.0;
+    constraints.anchor = GridBagConstraints.WEST;
+    constraints.fill = GridBagConstraints.NONE;
+    panel.add(valueField, constraints);
+    constraints.gridx = 0;
+    constraints.gridy = 1;
+    constraints.gridwidth = 4;
+    constraints.weightx = 1.0;
+    constraints.anchor = GridBagConstraints.WEST;
+    constraints.fill = GridBagConstraints.NONE;
+    panel.add(includeCheckBox, constraints);
+    constraints.gridy = 2;
+    panel.add(considerCheckBox, constraints);
+    return panel;
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new FieldCountVisitor();
+  }
+
+  private class FieldCountVisitor extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String getID(){
-        return "ClassWithTooManyFields";
+    public void visitClass(@NotNull PsiClass aClass) {
+      // note: no call to super
+      final int totalFields = countFields(aClass);
+      if (totalFields <= getLimit()) {
+        return;
+      }
+      registerClassError(aClass, Integer.valueOf(totalFields));
     }
 
-    @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message("too.many.fields.display.name");
-    }
-
-    @Override
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "too.many.fields.problem.descriptor", infos[0]);
-    }
-
-    @Override
-    protected int getDefaultLimit() {
-        return FIELD_COUNT_LIMIT;
-    }
-
-    @Override
-    protected String getConfigurationLabel() {
-        return InspectionGadgetsBundle.message(
-                "too.many.fields.count.limit.option");
-    }
-
-    @Override
-    public JComponent createOptionsPanel() {
-        final String configurationLabel = getConfigurationLabel();
-        final JLabel label = new JLabel(configurationLabel);
-        final JFormattedTextField valueField = prepareNumberEditor("m_limit");
-
-        final CheckBox includeCheckBox =
-                new CheckBox(InspectionGadgetsBundle.message(
-                        "field.count.inspection.include.constant.fields.in.count.checkbox"),
-                        this, "m_countConstantFields");
-        final CheckBox considerCheckBox =
-                new CheckBox(InspectionGadgetsBundle.message(
-                        "field.count.inspection.static.final.fields.count.as.constant.checkbox"),
-                        this, "m_considerStaticFinalFieldsConstant");
-
-        final GridBagConstraints constraints = new GridBagConstraints();
-        constraints.gridx = 0;
-        constraints.gridy = 0;
-        constraints.weightx = 0.0;
-        constraints.anchor = GridBagConstraints.WEST;
-        constraints.fill = GridBagConstraints.NONE;
-        final JPanel panel = new JPanel(new GridBagLayout());
-        panel.add(label, constraints);
-        constraints.gridx = 1;
-        constraints.gridy = 0;
-        constraints.gridwidth = 3;
-        constraints.weightx = 1.0;
-        constraints.anchor = GridBagConstraints.WEST;
-        constraints.fill = GridBagConstraints.NONE;
-        panel.add(valueField, constraints);
-        constraints.gridx = 0;
-        constraints.gridy = 1;
-        constraints.gridwidth = 4;
-        constraints.weightx = 1.0;
-        constraints.anchor = GridBagConstraints.WEST;
-        constraints.fill = GridBagConstraints.NONE;
-        panel.add(includeCheckBox, constraints);
-        constraints.gridy = 2;
-        panel.add(considerCheckBox, constraints);
-        return panel;
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new FieldCountVisitor();
-    }
-
-    private class FieldCountVisitor extends BaseInspectionVisitor {
-
-        @Override public void visitClass(@NotNull PsiClass aClass) {
-            // note: no call to super
-            final int totalFields = countFields(aClass);
-            if (totalFields <= getLimit()) {
-                return;
-            }
-            registerClassError(aClass, Integer.valueOf(totalFields));
+    private int countFields(PsiClass aClass) {
+      int totalFields = 0;
+      final PsiField[] fields = aClass.getFields();
+      for (final PsiField field : fields) {
+        if (m_countConstantFields) {
+          totalFields++;
         }
-
-        private int countFields(PsiClass aClass) {
-            int totalFields = 0;
-            final PsiField[] fields = aClass.getFields();
-            for(final PsiField field : fields) {
-                if (m_countConstantFields) {
-                    totalFields++;
-                } else {
-                    if(!fieldIsConstant(field)) {
-                        totalFields++;
-                    }
-                }
-            }
-            return totalFields;
+        else {
+          if (!fieldIsConstant(field)) {
+            totalFields++;
+          }
         }
-
-        private boolean fieldIsConstant(PsiField field) {
-            if (!field.hasModifierProperty(PsiModifier.STATIC)) {
-                return false;
-            }
-            if (!field.hasModifierProperty(PsiModifier.FINAL)) {
-                return false;
-            }
-            if (m_considerStaticFinalFieldsConstant) {
-                return true;
-            }
-            final PsiType type = field.getType();
-            return ClassUtils.isImmutable(type);
-        }
+      }
+      return totalFields;
     }
+
+    private boolean fieldIsConstant(PsiField field) {
+      if (!field.hasModifierProperty(PsiModifier.STATIC)) {
+        return false;
+      }
+      if (!field.hasModifierProperty(PsiModifier.FINAL)) {
+        return false;
+      }
+      if (m_considerStaticFinalFieldsConstant) {
+        return true;
+      }
+      final PsiType type = field.getType();
+      return ClassUtils.isImmutable(type);
+    }
+  }
 }

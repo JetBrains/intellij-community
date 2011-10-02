@@ -28,43 +28,44 @@ import org.jetbrains.annotations.NotNull;
 
 public class NegateComparisonIntention extends MutablyNamedIntention {
 
-    public String getTextForElement(PsiElement element) {
-        String operatorText = "";
-        String negatedOperatorText = "";
-        final PsiBinaryExpression exp = (PsiBinaryExpression)element;
-        if (exp != null) {
-            final PsiJavaToken sign = exp.getOperationSign();
-            operatorText = sign.getText();
-            negatedOperatorText =
-                    ComparisonUtils.getNegatedComparison(sign.getTokenType());
-        }
-        if (operatorText.equals(negatedOperatorText)) {
-            return IntentionPowerPackBundle.message(
-                    "negate.comparison.intention.name", operatorText);
-        } else {
-            return IntentionPowerPackBundle.message(
-                    "negate.comparison.intention.name1", operatorText,
-                    negatedOperatorText);
-        }
+  public String getTextForElement(PsiElement element) {
+    String operatorText = "";
+    String negatedOperatorText = "";
+    final PsiBinaryExpression exp = (PsiBinaryExpression)element;
+    if (exp != null) {
+      final PsiJavaToken sign = exp.getOperationSign();
+      operatorText = sign.getText();
+      negatedOperatorText =
+        ComparisonUtils.getNegatedComparison(sign.getTokenType());
     }
+    if (operatorText.equals(negatedOperatorText)) {
+      return IntentionPowerPackBundle.message(
+        "negate.comparison.intention.name", operatorText);
+    }
+    else {
+      return IntentionPowerPackBundle.message(
+        "negate.comparison.intention.name1", operatorText,
+        negatedOperatorText);
+    }
+  }
 
-    @NotNull
-    public PsiElementPredicate getElementPredicate() {
-        return new ComparisonPredicate();
-    }
+  @NotNull
+  public PsiElementPredicate getElementPredicate() {
+    return new ComparisonPredicate();
+  }
 
-    public void processIntention(PsiElement element)
-            throws IncorrectOperationException {
-        final PsiBinaryExpression expression =
-                (PsiBinaryExpression)element;
-        final PsiExpression lhs = expression.getLOperand();
-        final PsiExpression rhs = expression.getROperand();
-      final String negatedOperator =
-                ComparisonUtils.getNegatedComparison(expression.getOperationTokenType());
-        final String lhsText = lhs.getText();
-        assert rhs != null;
-        final String rhsText = rhs.getText();
-        replaceExpressionWithNegatedExpressionString(lhsText +
-                negatedOperator + rhsText, expression);
-    }
+  public void processIntention(PsiElement element)
+    throws IncorrectOperationException {
+    final PsiBinaryExpression expression =
+      (PsiBinaryExpression)element;
+    final PsiExpression lhs = expression.getLOperand();
+    final PsiExpression rhs = expression.getROperand();
+    final String negatedOperator =
+      ComparisonUtils.getNegatedComparison(expression.getOperationTokenType());
+    final String lhsText = lhs.getText();
+    assert rhs != null;
+    final String rhsText = rhs.getText();
+    replaceExpressionWithNegatedExpressionString(lhsText +
+                                                 negatedOperator + rhsText, expression);
+  }
 }

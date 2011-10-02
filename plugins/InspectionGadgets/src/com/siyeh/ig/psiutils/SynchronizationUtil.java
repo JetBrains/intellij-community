@@ -20,21 +20,21 @@ import com.intellij.psi.util.PsiTreeUtil;
 
 public class SynchronizationUtil {
 
-    private SynchronizationUtil() {
-    }
+  private SynchronizationUtil() {
+  }
 
-    public static boolean isInSynchronizedContext(PsiElement element) {
-        final PsiElement context =
-                PsiTreeUtil.getParentOfType(element, PsiMethod.class,
-                        PsiSynchronizedStatement.class);
-        if (context instanceof PsiSynchronizedStatement) {
-            return true;
-        }
-        if (context == null) {
-            return false;
-        }
-        final PsiModifierListOwner modifierListOwner =
-                (PsiModifierListOwner)context;
-        return modifierListOwner.hasModifierProperty(PsiModifier.SYNCHRONIZED);
+  public static boolean isInSynchronizedContext(PsiElement element) {
+    final PsiElement context =
+      PsiTreeUtil.getParentOfType(element, PsiMethod.class,
+                                  PsiSynchronizedStatement.class);
+    if (context instanceof PsiSynchronizedStatement) {
+      return true;
     }
+    if (context == null) {
+      return false;
+    }
+    final PsiModifierListOwner modifierListOwner =
+      (PsiModifierListOwner)context;
+    return modifierListOwner.hasModifierProperty(PsiModifier.SYNCHRONIZED);
+  }
 }

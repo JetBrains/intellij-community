@@ -25,97 +25,103 @@ import org.jetbrains.annotations.NotNull;
 
 public class WaitWhileHoldingTwoLocksInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "wait.while.holding.two.locks.display.name");
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "wait.while.holding.two.locks.display.name");
+  }
+
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "wait.while.holding.two.locks.problem.descriptor");
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new WaitWhileHoldingTwoLocksVisitor();
+  }
+
+  private static class WaitWhileHoldingTwoLocksVisitor
+    extends BaseInspectionVisitor {
+
+    @Override
+    public void visitMethod(PsiMethod method) {
+      checkErrorsIn(method);
     }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "wait.while.holding.two.locks.problem.descriptor");
+    @Override
+    public void visitClassInitializer(PsiClassInitializer initializer) {
+      checkErrorsIn(initializer);
     }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new WaitWhileHoldingTwoLocksVisitor();
-    }
+    private void checkErrorsIn(PsiElement context) {
+      context.accept(new JavaRecursiveElementVisitor() {
+        private int m_numLocksHeld = 0;
 
-    private static class WaitWhileHoldingTwoLocksVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitMethod(PsiMethod method) {
-            checkErrorsIn(method);
+        @Override
+        public void visitClass(PsiClass aClass) {
+          // Do not recurse into
         }
 
-        @Override public void visitClassInitializer(PsiClassInitializer initializer) {
-            checkErrorsIn(initializer);
+        @Override
+        public void visitMethodCallExpression(
+          @NotNull PsiMethodCallExpression expression) {
+          super.visitMethodCallExpression(expression);
+          if (m_numLocksHeld < 2) {
+            return;
+          }
+          final PsiReferenceExpression methodExpression =
+            expression.getMethodExpression();
+          @NonNls final String methodName =
+            methodExpression.getReferenceName();
+          if (!HardcodedMethodConstants.WAIT.equals(methodName)) {
+            return;
+          }
+          final PsiMethod method = expression.resolveMethod();
+          if (method == null) {
+            return;
+          }
+          final PsiParameterList parameterList =
+            method.getParameterList();
+          final int numParams = parameterList.getParametersCount();
+          if (numParams > 2) {
+            return;
+          }
+          final PsiParameter[] parameters = parameterList.getParameters();
+          if (numParams > 0) {
+            final PsiType parameterType = parameters[0].getType();
+            if (!parameterType.equals(PsiType.LONG)) {
+              return;
+            }
+          }
+          if (numParams > 1) {
+            final PsiType parameterType = parameters[1].getType();
+            if (!parameterType.equals(PsiType.INT)) {
+              return;
+            }
+          }
+          registerMethodCallError(expression);
         }
 
-        private void checkErrorsIn(PsiElement context) {
-            context.accept(new JavaRecursiveElementVisitor() {
-                private int m_numLocksHeld = 0;
-
-                @Override public void visitClass(PsiClass aClass) {
-                    // Do not recurse into
-                }
-
-                @Override public void visitMethodCallExpression(
-                        @NotNull PsiMethodCallExpression expression) {
-                    super.visitMethodCallExpression(expression);
-                    if (m_numLocksHeld < 2) {
-                        return;
-                    }
-                    final PsiReferenceExpression methodExpression =
-                            expression.getMethodExpression();
-                    @NonNls final String methodName =
-                            methodExpression.getReferenceName();
-                    if (!HardcodedMethodConstants.WAIT.equals(methodName)) {
-                        return;
-                    }
-                    final PsiMethod method = expression.resolveMethod();
-                    if (method == null) {
-                        return;
-                    }
-                    final PsiParameterList parameterList =
-                            method.getParameterList();
-                    final int numParams = parameterList.getParametersCount();
-                    if (numParams > 2) {
-                        return;
-                    }
-                    final PsiParameter[] parameters = parameterList.getParameters();
-                    if (numParams > 0) {
-                        final PsiType parameterType = parameters[0].getType();
-                        if (!parameterType.equals(PsiType.LONG)) {
-                            return;
-                        }
-                    }
-                    if (numParams > 1) {
-                        final PsiType parameterType = parameters[1].getType();
-                        if (!parameterType.equals(PsiType.INT)) {
-                            return;
-                        }
-                    }
-                    registerMethodCallError(expression);
-                }
-
-                @Override public void visitMethod(@NotNull PsiMethod method) {
-                    if (method.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
-                        m_numLocksHeld++;
-                    }
-                    super.visitMethod(method);
-                    if (method.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
-                        m_numLocksHeld--;
-                    }
-                }
-
-                @Override public void visitSynchronizedStatement(
-                        @NotNull PsiSynchronizedStatement synchronizedStatement) {
-                    m_numLocksHeld++;
-                    super.visitSynchronizedStatement(synchronizedStatement);
-                    m_numLocksHeld--;
-                }
-            });
+        @Override
+        public void visitMethod(@NotNull PsiMethod method) {
+          if (method.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
+            m_numLocksHeld++;
+          }
+          super.visitMethod(method);
+          if (method.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
+            m_numLocksHeld--;
+          }
         }
+
+        @Override
+        public void visitSynchronizedStatement(
+          @NotNull PsiSynchronizedStatement synchronizedStatement) {
+          m_numLocksHeld++;
+          super.visitSynchronizedStatement(synchronizedStatement);
+          m_numLocksHeld--;
+        }
+      });
     }
+  }
 }

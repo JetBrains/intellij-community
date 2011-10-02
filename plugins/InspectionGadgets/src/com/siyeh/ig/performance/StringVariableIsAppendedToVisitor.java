@@ -22,78 +22,80 @@ import org.jetbrains.annotations.NotNull;
 
 class StringVariableIsAppendedToVisitor extends JavaRecursiveElementVisitor {
 
-    private boolean appendedTo = false;
-    private final PsiVariable variable;
-    private final boolean onlyWarnOnLoop;
+  private boolean appendedTo = false;
+  private final PsiVariable variable;
+  private final boolean onlyWarnOnLoop;
 
-    StringVariableIsAppendedToVisitor(PsiVariable variable,
-                                      boolean onlyWarnOnLoop) {
-        super();
-        this.variable = variable;
-        this.onlyWarnOnLoop = onlyWarnOnLoop;
-    }
+  StringVariableIsAppendedToVisitor(PsiVariable variable,
+                                    boolean onlyWarnOnLoop) {
+    super();
+    this.variable = variable;
+    this.onlyWarnOnLoop = onlyWarnOnLoop;
+  }
 
-    @Override public void visitAssignmentExpression(
-            @NotNull PsiAssignmentExpression assignment) {
-        if(appendedTo){
-            return;
-        }
-        super.visitAssignmentExpression(assignment);
-        final PsiExpression lhs = assignment.getLExpression();
-        final PsiExpression rhs = assignment.getRExpression();
-        if (rhs == null) {
-            return;
-        }
-        if (!(lhs instanceof PsiReferenceExpression)) {
-            return;
-        }
-        final PsiReferenceExpression reference = (PsiReferenceExpression) lhs;
-        final PsiExpression qualifier = reference.getQualifierExpression();
-        if (qualifier != null) {
-            return;
-        }
-        final PsiElement referent = reference.resolve();
-        if (!variable.equals(referent)) {
-            return;
-        }
-      final IElementType tokenType = assignment.getOperationTokenType();
-        if (tokenType.equals(JavaTokenType.PLUSEQ)) {
-            if (onlyWarnOnLoop && !ControlFlowUtils.isInLoop(assignment)) {
-                return;
-            }
-            appendedTo = true;
-        } else if (isConcatenation(rhs)) {
-            if (onlyWarnOnLoop && !ControlFlowUtils.isInLoop(assignment)) {
-                return;
-            }
-            appendedTo = true;
-        }
+  @Override
+  public void visitAssignmentExpression(
+    @NotNull PsiAssignmentExpression assignment) {
+    if (appendedTo) {
+      return;
     }
+    super.visitAssignmentExpression(assignment);
+    final PsiExpression lhs = assignment.getLExpression();
+    final PsiExpression rhs = assignment.getRExpression();
+    if (rhs == null) {
+      return;
+    }
+    if (!(lhs instanceof PsiReferenceExpression)) {
+      return;
+    }
+    final PsiReferenceExpression reference = (PsiReferenceExpression)lhs;
+    final PsiExpression qualifier = reference.getQualifierExpression();
+    if (qualifier != null) {
+      return;
+    }
+    final PsiElement referent = reference.resolve();
+    if (!variable.equals(referent)) {
+      return;
+    }
+    final IElementType tokenType = assignment.getOperationTokenType();
+    if (tokenType.equals(JavaTokenType.PLUSEQ)) {
+      if (onlyWarnOnLoop && !ControlFlowUtils.isInLoop(assignment)) {
+        return;
+      }
+      appendedTo = true;
+    }
+    else if (isConcatenation(rhs)) {
+      if (onlyWarnOnLoop && !ControlFlowUtils.isInLoop(assignment)) {
+        return;
+      }
+      appendedTo = true;
+    }
+  }
 
-    private boolean isConcatenation(PsiExpression expression) {
-        if (expression == null) {
-            return false;
-        }
-        if (expression instanceof PsiReferenceExpression) {
-            final PsiElement referent = ((PsiReference) expression).resolve();
-            return variable.equals(referent);
-        }
-        if (expression instanceof PsiParenthesizedExpression) {
-            final PsiExpression body =
-                    ((PsiParenthesizedExpression) expression).getExpression();
-            return isConcatenation(body);
-        }
-        if (expression instanceof PsiBinaryExpression) {
-            final PsiBinaryExpression binaryExpression =
-                    (PsiBinaryExpression) expression;
-            final PsiExpression lhs = binaryExpression.getLOperand();
-            final PsiExpression rhs = binaryExpression.getROperand();
-            return isConcatenation(lhs) || isConcatenation(rhs);
-        }
-        return false;
+  private boolean isConcatenation(PsiExpression expression) {
+    if (expression == null) {
+      return false;
     }
+    if (expression instanceof PsiReferenceExpression) {
+      final PsiElement referent = ((PsiReference)expression).resolve();
+      return variable.equals(referent);
+    }
+    if (expression instanceof PsiParenthesizedExpression) {
+      final PsiExpression body =
+        ((PsiParenthesizedExpression)expression).getExpression();
+      return isConcatenation(body);
+    }
+    if (expression instanceof PsiBinaryExpression) {
+      final PsiBinaryExpression binaryExpression =
+        (PsiBinaryExpression)expression;
+      final PsiExpression lhs = binaryExpression.getLOperand();
+      final PsiExpression rhs = binaryExpression.getROperand();
+      return isConcatenation(lhs) || isConcatenation(rhs);
+    }
+    return false;
+  }
 
-    public boolean isAppendedTo() {
-        return appendedTo;
-    }
+  public boolean isAppendedTo() {
+    return appendedTo;
+  }
 }

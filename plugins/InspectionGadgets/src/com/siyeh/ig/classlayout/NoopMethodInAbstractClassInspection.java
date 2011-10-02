@@ -26,48 +26,49 @@ import org.jetbrains.annotations.NotNull;
 
 public class NoopMethodInAbstractClassInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "noop.method.in.abstract.class.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "noop.method.in.abstract.class.display.name");
+  }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "noop.method.in.abstract.class.problem.descriptor");
-    }
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "noop.method.in.abstract.class.problem.descriptor");
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new NoopMethodInAbstractClassVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new NoopMethodInAbstractClassVisitor();
+  }
 
-    private static class NoopMethodInAbstractClassVisitor
-            extends BaseInspectionVisitor {
+  private static class NoopMethodInAbstractClassVisitor
+    extends BaseInspectionVisitor {
 
-        @Override public void visitMethod(@NotNull PsiMethod method) {
-            //no call to super, so we don't drill into anonymous classes
-            if (method.isConstructor()) {
-                return;
-            }
-            final PsiClass containingClass = method.getContainingClass();
-            if(containingClass == null) {
-                return;
-            }
-            if (containingClass.isInterface() ||
-                    containingClass.isAnnotationType()) {
-                return;
-            }
-            if (!containingClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-                return;
-            }
-            if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
-                return;
-            }
-            if (!MethodUtils.isEmpty(method)) {
-                return;
-            }
-            registerMethodError(method);
-        }
+    @Override
+    public void visitMethod(@NotNull PsiMethod method) {
+      //no call to super, so we don't drill into anonymous classes
+      if (method.isConstructor()) {
+        return;
+      }
+      final PsiClass containingClass = method.getContainingClass();
+      if (containingClass == null) {
+        return;
+      }
+      if (containingClass.isInterface() ||
+          containingClass.isAnnotationType()) {
+        return;
+      }
+      if (!containingClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        return;
+      }
+      if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        return;
+      }
+      if (!MethodUtils.isEmpty(method)) {
+        return;
+      }
+      registerMethodError(method);
     }
+  }
 }

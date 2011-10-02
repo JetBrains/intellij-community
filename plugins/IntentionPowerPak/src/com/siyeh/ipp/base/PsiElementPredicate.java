@@ -17,9 +17,9 @@ package com.siyeh.ipp.base;
 
 import com.intellij.psi.PsiElement;
 
-public interface PsiElementPredicate{
+public interface PsiElementPredicate {
   /**
    * Use {@link PsiElementEditorPredicate} when editor selection should be checked
    */
-    boolean satisfiedBy(PsiElement element);
+  boolean satisfiedBy(PsiElement element);
 }

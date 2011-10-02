@@ -28,64 +28,65 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class ExceptionNameDoesntEndWithExceptionInspection
-        extends BaseInspection {
+  extends BaseInspection {
+
+  @Override
+  @NotNull
+  public String getID() {
+    return "ExceptionClassNameDoesntEndWithException";
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "exception.name.doesnt.end.with.exception.display.name");
+  }
+
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new RenameFix();
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "exception.name.doesnt.end.with.exception.problem.descriptor");
+  }
+
+  @Override
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return true;
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new ExceptionNameDoesntEndWithExceptionVisitor();
+  }
+
+  private static class ExceptionNameDoesntEndWithExceptionVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String getID() {
-        return "ExceptionClassNameDoesntEndWithException";
+    public void visitClass(@NotNull PsiClass aClass) {
+      // no call to super, so it doesn't drill down into inner classes
+      if (aClass instanceof PsiTypeParameter) {
+        return;
+      }
+      final String className = aClass.getName();
+      if (className == null) {
+        return;
+      }
+      @NonNls final String exception = "Exception";
+      if (className.endsWith(exception)) {
+        return;
+      }
+      if (!InheritanceUtil.isInheritor(aClass,
+                                       CommonClassNames.JAVA_LANG_EXCEPTION)) {
+        return;
+      }
+      registerClassError(aClass);
     }
-
-    @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "exception.name.doesnt.end.with.exception.display.name");
-    }
-
-    @Override
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        return new RenameFix();
-    }
-
-    @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "exception.name.doesnt.end.with.exception.problem.descriptor");
-    }
-
-    @Override
-    protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
-        return true;
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new ExceptionNameDoesntEndWithExceptionVisitor();
-    }
-
-    private static class ExceptionNameDoesntEndWithExceptionVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitClass(@NotNull PsiClass aClass) {
-            // no call to super, so it doesn't drill down into inner classes
-            if (aClass instanceof PsiTypeParameter) {
-                return;
-            }
-            final String className = aClass.getName();
-            if (className == null) {
-                return;
-            }
-            @NonNls final String exception = "Exception";
-            if (className.endsWith(exception)) {
-                return;
-            }
-            if (!InheritanceUtil.isInheritor(aClass,
-                    CommonClassNames.JAVA_LANG_EXCEPTION)) {
-                return;
-            }
-            registerClassError(aClass);
-        }
-    }
+  }
 }

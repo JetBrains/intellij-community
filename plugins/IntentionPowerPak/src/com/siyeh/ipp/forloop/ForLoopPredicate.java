@@ -25,17 +25,17 @@ import com.siyeh.ipp.psiutils.ErrorUtil;
 
 class ForLoopPredicate implements PsiElementPredicate {
 
-    public boolean satisfiedBy(PsiElement element) {
-        if(!(element instanceof PsiJavaToken)){
-            return false;
-        }
-        final PsiJavaToken token = (PsiJavaToken) element;
-        final IElementType tokenType = token.getTokenType();
-        if(!JavaTokenType.FOR_KEYWORD.equals(tokenType)){
-            return false;
-        }
-        final PsiElement parent = element.getParent();
-        return parent instanceof PsiForStatement &&
-               !ErrorUtil.containsError(parent);
+  public boolean satisfiedBy(PsiElement element) {
+    if (!(element instanceof PsiJavaToken)) {
+      return false;
     }
+    final PsiJavaToken token = (PsiJavaToken)element;
+    final IElementType tokenType = token.getTokenType();
+    if (!JavaTokenType.FOR_KEYWORD.equals(tokenType)) {
+      return false;
+    }
+    final PsiElement parent = element.getParent();
+    return parent instanceof PsiForStatement &&
+           !ErrorUtil.containsError(parent);
+  }
 }

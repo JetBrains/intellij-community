@@ -24,35 +24,36 @@ import org.jetbrains.annotations.NotNull;
 
 public class ThrowFromFinallyBlockInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "throw.from.finally.block.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "throw.from.finally.block.display.name");
+  }
 
-    public boolean isEnabledByDefault() {
-        return true;
-    }
+  public boolean isEnabledByDefault() {
+    return true;
+  }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "throw.from.finally.block.problem.descriptor");
-    }
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "throw.from.finally.block.problem.descriptor");
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new ThrowFromFinallyBlockVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new ThrowFromFinallyBlockVisitor();
+  }
 
-    private static class ThrowFromFinallyBlockVisitor
-            extends BaseInspectionVisitor {
+  private static class ThrowFromFinallyBlockVisitor
+    extends BaseInspectionVisitor {
 
-        @Override public void visitThrowStatement(PsiThrowStatement statement) {
-            super.visitThrowStatement(statement);
-            if (!ControlFlowUtils.isInFinallyBlock(statement)) {
-                return;
-            }
-            registerStatementError(statement);
-        }
+    @Override
+    public void visitThrowStatement(PsiThrowStatement statement) {
+      super.visitThrowStatement(statement);
+      if (!ControlFlowUtils.isInFinallyBlock(statement)) {
+        return;
+      }
+      registerStatementError(statement);
     }
+  }
 }

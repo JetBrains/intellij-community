@@ -29,44 +29,46 @@ import java.awt.datatransfer.Transferable;
 
 public class CopyConcatenatedStringToClipboardIntention extends Intention {
 
-    @Override @NotNull
-    protected PsiElementPredicate getElementPredicate() {
-        return new SimpleStringConcatenationPredicate(false);
-    }
+  @Override
+  @NotNull
+  protected PsiElementPredicate getElementPredicate() {
+    return new SimpleStringConcatenationPredicate(false);
+  }
 
-    @Override
-    protected void processIntention(@NotNull PsiElement element)
-            throws IncorrectOperationException {
-        if (!(element instanceof PsiPolyadicExpression)) {
-            return;
-        }
-      PsiPolyadicExpression concatenationExpression =
-        (PsiPolyadicExpression) element;
-      final IElementType tokenType =
-        concatenationExpression.getOperationTokenType();
-      if (tokenType != JavaTokenType.PLUS) {
-        return;
-      }
-      final PsiType type = concatenationExpression.getType();
-      if (type == null || !type.equalsToText("java.lang.String")) {
-        return;
-      }
-        final StringBuilder text = new StringBuilder();
-        buildConcatenationText(concatenationExpression, text);
-        final Transferable contents = new StringSelection(text.toString());
-        CopyPasteManager.getInstance().setContents(contents);
+  @Override
+  protected void processIntention(@NotNull PsiElement element)
+    throws IncorrectOperationException {
+    if (!(element instanceof PsiPolyadicExpression)) {
+      return;
     }
+    PsiPolyadicExpression concatenationExpression =
+      (PsiPolyadicExpression)element;
+    final IElementType tokenType =
+      concatenationExpression.getOperationTokenType();
+    if (tokenType != JavaTokenType.PLUS) {
+      return;
+    }
+    final PsiType type = concatenationExpression.getType();
+    if (type == null || !type.equalsToText("java.lang.String")) {
+      return;
+    }
+    final StringBuilder text = new StringBuilder();
+    buildConcatenationText(concatenationExpression, text);
+    final Transferable contents = new StringSelection(text.toString());
+    CopyPasteManager.getInstance().setContents(contents);
+  }
 
-    private static void buildConcatenationText(PsiPolyadicExpression expression,
-                                               StringBuilder out) {
-      for (PsiExpression operand : expression.getOperands()) {
-        final Object value =
-                ExpressionUtils.computeConstantExpression(operand);
-        if (value == null) {
-            out.append('?');
-        } else {
-            out.append(value.toString());
-        }
+  private static void buildConcatenationText(PsiPolyadicExpression expression,
+                                             StringBuilder out) {
+    for (PsiExpression operand : expression.getOperands()) {
+      final Object value =
+        ExpressionUtils.computeConstantExpression(operand);
+      if (value == null) {
+        out.append('?');
+      }
+      else {
+        out.append(value.toString());
       }
     }
+  }
 }

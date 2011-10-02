@@ -24,54 +24,55 @@ import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class NonSerializableObjectPassedToObjectStreamInspection
-        extends BaseInspection {
+  extends BaseInspection {
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "non.serializable.object.passed.to.object.stream.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "non.serializable.object.passed.to.object.stream.problem.descriptor");
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new NonSerializableObjectPassedToObjectStreamVisitor();
+  }
+
+  private static class NonSerializableObjectPassedToObjectStreamVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "non.serializable.object.passed.to.object.stream.display.name");
+    public void visitMethodCallExpression(
+      PsiMethodCallExpression methodCallExpression) {
+      super.visitMethodCallExpression(methodCallExpression);
+
+      if (!MethodCallUtils.isSimpleCallToMethod(methodCallExpression,
+                                                "java.io.ObjectOutputStream", PsiType.VOID, "writeObject",
+                                                CommonClassNames.JAVA_LANG_OBJECT)) {
+        return;
+      }
+      final PsiExpressionList argumentList =
+        methodCallExpression.getArgumentList();
+      final PsiExpression[] arguments = argumentList.getExpressions();
+      if (arguments.length != 1) {
+        return;
+      }
+      final PsiExpression argument = arguments[0];
+      final PsiType argumentType = argument.getType();
+      if (argumentType == null) {
+        return;
+      }
+      if (SerializationUtils.isProbablySerializable(argumentType)) {
+        return;
+      }
+      registerError(argument);
     }
-
-    @Override
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "non.serializable.object.passed.to.object.stream.problem.descriptor");
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new NonSerializableObjectPassedToObjectStreamVisitor();
-    }
-
-    private static class NonSerializableObjectPassedToObjectStreamVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitMethodCallExpression(
-                PsiMethodCallExpression methodCallExpression) {
-            super.visitMethodCallExpression(methodCallExpression);
-
-            if (!MethodCallUtils.isSimpleCallToMethod(methodCallExpression,
-                    "java.io.ObjectOutputStream", PsiType.VOID, "writeObject",
-                    CommonClassNames.JAVA_LANG_OBJECT)) {
-                return;
-            }
-            final PsiExpressionList argumentList =
-                    methodCallExpression.getArgumentList();
-            final PsiExpression[] arguments = argumentList.getExpressions();
-            if (arguments.length != 1) {
-                return;
-            }
-            final PsiExpression argument = arguments[0];
-            final PsiType argumentType = argument.getType();
-            if (argumentType == null) {
-                return;
-            }
-            if (SerializationUtils.isProbablySerializable(argumentType)) {
-                return;
-            }
-            registerError(argument);
-        }
-    }
+  }
 }

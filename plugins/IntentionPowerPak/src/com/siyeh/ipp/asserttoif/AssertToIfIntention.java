@@ -27,30 +27,31 @@ import org.jetbrains.annotations.NotNull;
 
 public class AssertToIfIntention extends Intention {
 
-    @Override
-    @NotNull
-    protected PsiElementPredicate getElementPredicate() {
-        return new AssertStatementPredicate();
-    }
+  @Override
+  @NotNull
+  protected PsiElementPredicate getElementPredicate() {
+    return new AssertStatementPredicate();
+  }
 
-    @Override
-    public void processIntention(@NotNull PsiElement element)
-            throws IncorrectOperationException {
-        final PsiAssertStatement assertStatement = (PsiAssertStatement)element;
-        final PsiExpression condition = assertStatement.getAssertCondition();
-        final PsiExpression description =
-                assertStatement.getAssertDescription();
-        final String negatedConditionString =
-                BoolUtils.getNegatedExpressionText(condition);
-        @NonNls final String newStatement;
-        if (description == null) {
-            newStatement = "if(" + negatedConditionString +
-                    "){ throw new java.lang.AssertionError();}";
-        } else {
-            newStatement = "if(" + negatedConditionString +
-                    "){ throw new java.lang.AssertionError(" +
-                    description.getText() + ");}";
-        }
-        replaceStatement(newStatement, assertStatement);
+  @Override
+  public void processIntention(@NotNull PsiElement element)
+    throws IncorrectOperationException {
+    final PsiAssertStatement assertStatement = (PsiAssertStatement)element;
+    final PsiExpression condition = assertStatement.getAssertCondition();
+    final PsiExpression description =
+      assertStatement.getAssertDescription();
+    final String negatedConditionString =
+      BoolUtils.getNegatedExpressionText(condition);
+    @NonNls final String newStatement;
+    if (description == null) {
+      newStatement = "if(" + negatedConditionString +
+                     "){ throw new java.lang.AssertionError();}";
     }
+    else {
+      newStatement = "if(" + negatedConditionString +
+                     "){ throw new java.lang.AssertionError(" +
+                     description.getText() + ");}";
+    }
+    replaceStatement(newStatement, assertStatement);
+  }
 }

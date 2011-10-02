@@ -28,124 +28,125 @@ import javax.swing.*;
 
 public class FinalizeCallsSuperFinalizeInspection extends BaseInspection {
 
-    @SuppressWarnings("PublicField")
-    public boolean ignoreObjectSubclasses = false;
+  @SuppressWarnings("PublicField")
+  public boolean ignoreObjectSubclasses = false;
 
-    @SuppressWarnings("PublicField")
-    public boolean ignoreTrivialFinalizers = true;
+  @SuppressWarnings("PublicField")
+  public boolean ignoreTrivialFinalizers = true;
+
+  @Override
+  @NotNull
+  public String getID() {
+    return "FinalizeDoesntCallSuperFinalize";
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "finalize.doesnt.call.super.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "finalize.doesnt.call.super.problem.descriptor");
+  }
+
+  @Override
+  public boolean isEnabledByDefault() {
+    return true;
+  }
+
+  @Override
+  public JComponent createOptionsPanel() {
+    final MultipleCheckboxOptionsPanel optionsPanel =
+      new MultipleCheckboxOptionsPanel(this);
+    optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
+      "finalize.doesnt.call.super.ignore.option"),
+                             "ignoreObjectSubclasses");
+    optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
+      "ignore.trivial.finalizers.option"),
+                             "ignoreTrivialFinalizers");
+    return optionsPanel;
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new NoExplicitFinalizeCallsVisitor();
+  }
+
+  private class NoExplicitFinalizeCallsVisitor extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String getID(){
-        return "FinalizeDoesntCallSuperFinalize";
+    public void visitMethod(@NotNull PsiMethod method) {
+      //note: no call to super;
+      final String methodName = method.getName();
+      if (!HardcodedMethodConstants.FINALIZE.equals(methodName)) {
+        return;
+      }
+      if (method.hasModifierProperty(PsiModifier.NATIVE) ||
+          method.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        return;
+      }
+      final PsiClass containingClass = method.getContainingClass();
+      if (containingClass == null) {
+        return;
+      }
+      if (ignoreObjectSubclasses) {
+        final PsiClass superClass = containingClass.getSuperClass();
+        if (superClass != null) {
+          final String superClassName = superClass.getQualifiedName();
+          if (CommonClassNames.JAVA_LANG_OBJECT.equals(superClassName)) {
+            return;
+          }
+        }
+      }
+      final PsiParameterList parameterList = method.getParameterList();
+      if (parameterList.getParametersCount() != 0) {
+        return;
+      }
+      final CallToSuperFinalizeVisitor visitor =
+        new CallToSuperFinalizeVisitor();
+      method.accept(visitor);
+      if (visitor.isCallToSuperFinalizeFound()) {
+        return;
+      }
+      if (ignoreTrivialFinalizers && isTrivial(method)) {
+        return;
+      }
+      registerMethodError(method);
     }
 
-    @Override
-    @NotNull
-    public String getDisplayName(){
-        return InspectionGadgetsBundle.message(
-                "finalize.doesnt.call.super.display.name");
-    }
-
-    @Override
-    @NotNull
-    public String buildErrorString(Object... infos){
-        return InspectionGadgetsBundle.message(
-                "finalize.doesnt.call.super.problem.descriptor");
-    }
-
-    @Override
-    public boolean isEnabledByDefault(){
+    private boolean isTrivial(PsiMethod method) {
+      final PsiCodeBlock body = method.getBody();
+      if (body == null) {
         return true;
-    }
-
-    @Override
-    public JComponent createOptionsPanel(){
-        final MultipleCheckboxOptionsPanel optionsPanel =
-                new MultipleCheckboxOptionsPanel(this);
-        optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-                "finalize.doesnt.call.super.ignore.option"),
-                "ignoreObjectSubclasses");
-        optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-                "ignore.trivial.finalizers.option"),
-                "ignoreTrivialFinalizers");
-        return optionsPanel;
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor(){
-        return new NoExplicitFinalizeCallsVisitor();
-    }
-
-    private class NoExplicitFinalizeCallsVisitor extends BaseInspectionVisitor{
-
-        @Override public void visitMethod(@NotNull PsiMethod method){
-            //note: no call to super;
-            final String methodName = method.getName();
-            if(!HardcodedMethodConstants.FINALIZE.equals(methodName)){
-                return;
-            }
-            if(method.hasModifierProperty(PsiModifier.NATIVE) ||
-                    method.hasModifierProperty(PsiModifier.ABSTRACT)){
-                return;
-            }
-            final PsiClass containingClass = method.getContainingClass();
-            if(containingClass == null){
-                return;
-            }
-            if(ignoreObjectSubclasses){
-                final PsiClass superClass = containingClass.getSuperClass();
-                if(superClass != null){
-                    final String superClassName = superClass.getQualifiedName();
-                    if(CommonClassNames.JAVA_LANG_OBJECT.equals(superClassName)){
-                        return;
-                    }
-                }
-            }
-            final PsiParameterList parameterList = method.getParameterList();
-            if(parameterList.getParametersCount() != 0){
-                return;
-            }
-            final CallToSuperFinalizeVisitor visitor =
-                    new CallToSuperFinalizeVisitor();
-            method.accept(visitor);
-            if(visitor.isCallToSuperFinalizeFound()){
-                return;
-            }
-            if(ignoreTrivialFinalizers && isTrivial(method)){
-                return;
-            }
-            registerMethodError(method);
+      }
+      final PsiStatement[] statements = body.getStatements();
+      if (statements.length == 0) {
+        return true;
+      }
+      final Project project = method.getProject();
+      final JavaPsiFacade psiFacade =
+        JavaPsiFacade.getInstance(project);
+      final PsiConstantEvaluationHelper evaluationHelper =
+        psiFacade.getConstantEvaluationHelper();
+      for (PsiStatement statement : statements) {
+        if (!(statement instanceof PsiIfStatement)) {
+          return false;
         }
-
-        private boolean isTrivial(PsiMethod method) {
-            final PsiCodeBlock body = method.getBody();
-            if (body == null) {
-                return true;
-            }
-            final PsiStatement[] statements = body.getStatements();
-            if (statements.length == 0) {
-                return true;
-            }
-            final Project project = method.getProject();
-            final JavaPsiFacade psiFacade =
-                    JavaPsiFacade.getInstance(project);
-            final PsiConstantEvaluationHelper evaluationHelper =
-                    psiFacade.getConstantEvaluationHelper();
-            for (PsiStatement statement : statements) {
-                if (!(statement instanceof PsiIfStatement)) {
-                    return false;
-                }
-                final PsiIfStatement ifStatement =
-                        (PsiIfStatement) statement;
-                final PsiExpression condition = ifStatement.getCondition();
-                final Object result =
-                        evaluationHelper.computeConstantExpression(condition);
-                if (result == null || !result.equals(Boolean.FALSE)) {
-                    return false;
-                }
-            }
-            return true;
+        final PsiIfStatement ifStatement =
+          (PsiIfStatement)statement;
+        final PsiExpression condition = ifStatement.getCondition();
+        final Object result =
+          evaluationHelper.computeConstantExpression(condition);
+        if (result == null || !result.equals(Boolean.FALSE)) {
+          return false;
         }
+      }
+      return true;
     }
+  }
 }

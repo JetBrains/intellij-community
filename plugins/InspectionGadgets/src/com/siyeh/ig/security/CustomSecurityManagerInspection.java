@@ -24,37 +24,38 @@ import org.jetbrains.annotations.NotNull;
 
 public class CustomSecurityManagerInspection extends BaseInspection {
 
-    @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "custom.security.manager.display.name");
-    }
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "custom.security.manager.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "custom.security.manager.problem.descriptor");
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new CustomSecurityManagerVisitor();
+  }
+
+  private static class CustomSecurityManagerVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "custom.security.manager.problem.descriptor");
+    public void visitClass(@NotNull PsiClass aClass) {
+      if (!InheritanceUtil.isInheritor(aClass,
+                                       "java.lang.SecurityManager")) {
+        return;
+      }
+      if ("java.lang.SecurityManager".equals(aClass.getQualifiedName())) {
+        return;
+      }
+      registerClassError(aClass);
     }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new CustomSecurityManagerVisitor();
-    }
-
-    private static class CustomSecurityManagerVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitClass(@NotNull PsiClass aClass) {
-            if (!InheritanceUtil.isInheritor(aClass,
-                    "java.lang.SecurityManager")) {
-                return;
-            }
-            if ("java.lang.SecurityManager".equals(aClass.getQualifiedName())) {
-                return;
-            }
-            registerClassError(aClass);
-        }
-    }
+  }
 }

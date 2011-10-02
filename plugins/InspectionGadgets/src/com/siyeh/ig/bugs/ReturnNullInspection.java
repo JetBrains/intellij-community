@@ -36,121 +36,124 @@ import javax.swing.*;
 
 public class ReturnNullInspection extends BaseInspection {
 
-    @SuppressWarnings({"PublicField"})
-    public boolean m_reportObjectMethods = true;
-    @SuppressWarnings({"PublicField"})
-    public boolean m_reportArrayMethods = true;
-    @SuppressWarnings({"PublicField"})
-    public boolean m_reportCollectionMethods = true;
-    @SuppressWarnings({"PublicField"})
-    public boolean m_ignorePrivateMethods = false;
+  @SuppressWarnings({"PublicField"})
+  public boolean m_reportObjectMethods = true;
+  @SuppressWarnings({"PublicField"})
+  public boolean m_reportArrayMethods = true;
+  @SuppressWarnings({"PublicField"})
+  public boolean m_reportCollectionMethods = true;
+  @SuppressWarnings({"PublicField"})
+  public boolean m_ignorePrivateMethods = false;
 
-    @Override
-    @Pattern("[a-zA-Z_0-9.-]+")
-    @NotNull
-    public String getID() {
-        return "ReturnOfNull";
+  @Override
+  @Pattern("[a-zA-Z_0-9.-]+")
+  @NotNull
+  public String getID() {
+    return "ReturnOfNull";
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("return.of.null.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "return.of.null.problem.descriptor");
+  }
+
+  @Override
+  @Nullable
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    final PsiElement elt = (PsiElement)infos[0];
+    if (!AnnotationUtil.isAnnotatingApplicable(elt)) {
+      return null;
     }
+    final NullableNotNullManager manager =
+      NullableNotNullManager.getInstance(elt.getProject());
+    return new DelegatingFix(new AnnotateMethodFix(
+      manager.getDefaultNullable(),
+      ArrayUtil.toStringArray(manager.getNotNulls())));
+  }
+
+  @Override
+  public JComponent createOptionsPanel() {
+    final MultipleCheckboxOptionsPanel optionsPanel =
+      new MultipleCheckboxOptionsPanel(this);
+    optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
+      "return.of.null.ignore.private.option"),
+                             "m_ignorePrivateMethods");
+    optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
+      "return.of.null.arrays.option"), "m_reportArrayMethods");
+    optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
+      "return.of.null.collections.option"),
+                             "m_reportCollectionMethods");
+    optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
+      "return.of.null.objects.option"), "m_reportObjectMethods");
+    return optionsPanel;
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new ReturnNullVisitor();
+  }
+
+  private class ReturnNullVisitor extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message("return.of.null.display.name");
-    }
-
-    @Override
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "return.of.null.problem.descriptor");
-    }
-
-    @Override
-    @Nullable
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        final PsiElement elt = (PsiElement)infos[0];
-        if (!AnnotationUtil.isAnnotatingApplicable(elt)) {
-            return null;
+    public void visitLiteralExpression(
+      @NotNull PsiLiteralExpression value) {
+      super.visitLiteralExpression(value);
+      final String text = value.getText();
+      if (!PsiKeyword.NULL.equals(text)) {
+        return;
+      }
+      PsiElement parent = value.getParent();
+      while (parent instanceof PsiParenthesizedExpression ||
+             parent instanceof PsiConditionalExpression ||
+             parent instanceof PsiTypeCastExpression) {
+        parent = parent.getParent();
+      }
+      if (parent == null || !(parent instanceof PsiReturnStatement)) {
+        return;
+      }
+      final PsiMethod method =
+        PsiTreeUtil.getParentOfType(value, PsiMethod.class);
+      if (method == null) {
+        return;
+      }
+      if (m_ignorePrivateMethods &&
+          method.hasModifierProperty(PsiModifier.PRIVATE)) {
+        return;
+      }
+      final PsiType returnType = method.getReturnType();
+      if (returnType == null) {
+        return;
+      }
+      final boolean isArray = returnType.getArrayDimensions() > 0;
+      final NullableNotNullManager nullableNotNullManager =
+        NullableNotNullManager.getInstance(method.getProject());
+      if (nullableNotNullManager.isNullable(method, false)) {
+        return;
+      }
+      if (CollectionUtils.isCollectionClassOrInterface(returnType)) {
+        if (m_reportCollectionMethods) {
+          registerError(value, value);
         }
-        final NullableNotNullManager manager =
-                NullableNotNullManager.getInstance(elt.getProject());
-        return new DelegatingFix(new AnnotateMethodFix(
-                manager.getDefaultNullable(),
-                ArrayUtil.toStringArray(manager.getNotNulls())));
-    }
-
-    @Override
-    public JComponent createOptionsPanel() {
-        final MultipleCheckboxOptionsPanel optionsPanel =
-                new MultipleCheckboxOptionsPanel(this);
-        optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-                "return.of.null.ignore.private.option"),
-                "m_ignorePrivateMethods");
-        optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-                "return.of.null.arrays.option"), "m_reportArrayMethods");
-        optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-                "return.of.null.collections.option"),
-                "m_reportCollectionMethods");
-        optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-                "return.of.null.objects.option"), "m_reportObjectMethods");
-        return optionsPanel;
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new ReturnNullVisitor();
-    }
-
-    private class ReturnNullVisitor extends BaseInspectionVisitor {
-
-        @Override public void visitLiteralExpression(
-                @NotNull PsiLiteralExpression value) {
-            super.visitLiteralExpression(value);
-            final String text = value.getText();
-            if (!PsiKeyword.NULL.equals(text)) {
-                return;
-            }
-            PsiElement parent = value.getParent();
-            while (parent instanceof PsiParenthesizedExpression ||
-                    parent instanceof PsiConditionalExpression ||
-                    parent instanceof PsiTypeCastExpression) {
-                parent = parent.getParent();
-            }
-            if (parent == null || !(parent instanceof PsiReturnStatement)) {
-                return;
-            }
-            final PsiMethod method =
-                    PsiTreeUtil.getParentOfType(value, PsiMethod.class);
-            if (method == null) {
-                return;
-            }
-            if (m_ignorePrivateMethods &&
-                    method.hasModifierProperty(PsiModifier.PRIVATE)) {
-                return;
-            }
-            final PsiType returnType = method.getReturnType();
-            if (returnType == null) {
-                return;
-            }
-            final boolean isArray = returnType.getArrayDimensions() > 0;
-            final NullableNotNullManager nullableNotNullManager =
-                    NullableNotNullManager.getInstance(method.getProject());
-            if (nullableNotNullManager.isNullable(method, false)) {
-                return;
-            }
-            if (CollectionUtils.isCollectionClassOrInterface(returnType)) {
-                if (m_reportCollectionMethods) {
-                    registerError(value, value);
-                }
-            } else if (isArray) {
-                if (m_reportArrayMethods) {
-                    registerError(value, value);
-                }
-            } else {
-                if (m_reportObjectMethods) {
-                    registerError(value, value);
-                }
-            }
+      }
+      else if (isArray) {
+        if (m_reportArrayMethods) {
+          registerError(value, value);
         }
+      }
+      else {
+        if (m_reportObjectMethods) {
+          registerError(value, value);
+        }
+      }
     }
+  }
 }

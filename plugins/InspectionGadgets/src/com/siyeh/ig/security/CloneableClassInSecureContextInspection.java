@@ -26,42 +26,43 @@ import org.jetbrains.annotations.NotNull;
 
 public class CloneableClassInSecureContextInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "cloneable.class.in.secure.context.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "cloneable.class.in.secure.context.display.name");
+  }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "cloneable.class.in.secure.context.problem.descriptor");
-    }
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "cloneable.class.in.secure.context.problem.descriptor");
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new CloneableClassInSecureContextVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new CloneableClassInSecureContextVisitor();
+  }
 
-    private static class CloneableClassInSecureContextVisitor
-            extends BaseInspectionVisitor {
+  private static class CloneableClassInSecureContextVisitor
+    extends BaseInspectionVisitor {
 
-        @Override public void visitClass(@NotNull PsiClass aClass) {
-            // no call to super, so it doesn't drill down
-            if (aClass.isInterface() || aClass.isAnnotationType()) {
-                return;
-            }
-            if (!CloneUtils.isCloneable(aClass)) {
-                return;
-            }
-            final PsiMethod[] methods = aClass.getMethods();
-            for (final PsiMethod method : methods) {
-                if (CloneUtils.isClone(method)) {
-                    if (ControlFlowUtils.methodAlwaysThrowsException(method)) {
-                        return;
-                    }
-                }
-            }
-            registerClassError(aClass);
+    @Override
+    public void visitClass(@NotNull PsiClass aClass) {
+      // no call to super, so it doesn't drill down
+      if (aClass.isInterface() || aClass.isAnnotationType()) {
+        return;
+      }
+      if (!CloneUtils.isCloneable(aClass)) {
+        return;
+      }
+      final PsiMethod[] methods = aClass.getMethods();
+      for (final PsiMethod method : methods) {
+        if (CloneUtils.isClone(method)) {
+          if (ControlFlowUtils.methodAlwaysThrowsException(method)) {
+            return;
+          }
         }
+      }
+      registerClassError(aClass);
     }
+  }
 }

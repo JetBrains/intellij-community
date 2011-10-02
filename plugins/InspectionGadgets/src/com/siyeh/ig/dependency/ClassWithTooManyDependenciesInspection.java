@@ -34,54 +34,55 @@ import javax.swing.*;
 import java.util.Set;
 
 public class ClassWithTooManyDependenciesInspection
-        extends BaseGlobalInspection {
+  extends BaseGlobalInspection {
 
-    @SuppressWarnings({"PublicField"})
-    public int limit = 10;
+  @SuppressWarnings({"PublicField"})
+  public int limit = 10;
 
-    @NotNull
-    @Override
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "class.with.too.many.dependencies.display.name");
-    }
+  @NotNull
+  @Override
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "class.with.too.many.dependencies.display.name");
+  }
 
-    @Override
-    public void runInspection(
-            AnalysisScope scope,
-            final InspectionManager inspectionManager,
-            GlobalInspectionContext globalInspectionContext,
-            final ProblemDescriptionsProcessor problemDescriptionsProcessor) {
-        final RefManager refManager = globalInspectionContext.getRefManager();
-        refManager.iterate(new RefJavaVisitor(){
+  @Override
+  public void runInspection(
+    AnalysisScope scope,
+    final InspectionManager inspectionManager,
+    GlobalInspectionContext globalInspectionContext,
+    final ProblemDescriptionsProcessor problemDescriptionsProcessor) {
+    final RefManager refManager = globalInspectionContext.getRefManager();
+    refManager.iterate(new RefJavaVisitor() {
 
-            @Override public void visitClass(RefClass refClass) {
-                super.visitClass(refClass);
-                final PsiClass aClass = refClass.getElement();
-                if (ClassUtils.isInnerClass(aClass)) {
-                    return;
-                }
-                final Set<RefClass> dependencies =
-                        DependencyUtils.calculateDependenciesForClass(refClass);
-                final int numDependencies = dependencies.size();
-                if (numDependencies <= limit) {
-                    return ;
-                }
-                final String errorString = InspectionGadgetsBundle.message(
-                        "class.with.too.many.dependencies.problem.descriptor",
-                        refClass.getName(), numDependencies, limit);
-                final CommonProblemDescriptor[] descriptors = {
-                        inspectionManager.createProblemDescriptor(errorString)};
-                problemDescriptionsProcessor.addProblemElement(refClass, descriptors);
-            }
-        });  
-    }
+      @Override
+      public void visitClass(RefClass refClass) {
+        super.visitClass(refClass);
+        final PsiClass aClass = refClass.getElement();
+        if (ClassUtils.isInnerClass(aClass)) {
+          return;
+        }
+        final Set<RefClass> dependencies =
+          DependencyUtils.calculateDependenciesForClass(refClass);
+        final int numDependencies = dependencies.size();
+        if (numDependencies <= limit) {
+          return;
+        }
+        final String errorString = InspectionGadgetsBundle.message(
+          "class.with.too.many.dependencies.problem.descriptor",
+          refClass.getName(), numDependencies, limit);
+        final CommonProblemDescriptor[] descriptors = {
+          inspectionManager.createProblemDescriptor(errorString)};
+        problemDescriptionsProcessor.addProblemElement(refClass, descriptors);
+      }
+    });
+  }
 
-    @Override
-    public JComponent createOptionsPanel() {
-        return new SingleIntegerFieldOptionsPanel(
-                InspectionGadgetsBundle.message(
-                        "class.with.too.many.dependencies.max.option"),
-                this, "limit");
-    }
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleIntegerFieldOptionsPanel(
+      InspectionGadgetsBundle.message(
+        "class.with.too.many.dependencies.max.option"),
+      this, "limit");
+  }
 }

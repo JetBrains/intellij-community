@@ -27,55 +27,58 @@ import javax.swing.*;
 
 public class ThreeNegationsPerMethodInspection extends BaseInspection {
 
-    /** @noinspection PublicField */
-    public boolean m_ignoreInEquals = true;
+  /**
+   * @noinspection PublicField
+   */
+  public boolean m_ignoreInEquals = true;
 
-    @NotNull
-    public String getID() {
-        return "MethodWithMoreThanThreeNegations";
+  @NotNull
+  public String getID() {
+    return "MethodWithMoreThanThreeNegations";
+  }
+
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "three.negations.per.method.display.name");
+  }
+
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(
+      InspectionGadgetsBundle.message(
+        "three.negations.per.method.ignore.option"),
+      this, "m_ignoreInEquals");
+  }
+
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    final Integer negationCount = (Integer)infos[0];
+    return InspectionGadgetsBundle.message(
+      "three.negations.per.method.problem.descriptor", negationCount);
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new ThreeNegationsPerMethodVisitor();
+  }
+
+  private class ThreeNegationsPerMethodVisitor extends BaseInspectionVisitor {
+
+    @Override
+    public void visitMethod(@NotNull PsiMethod method) {
+      // note: no call to super
+      if (method.getNameIdentifier() == null) {
+        return;
+      }
+      final NegationCountVisitor visitor = new NegationCountVisitor();
+      method.accept(visitor);
+      final int negationCount = visitor.getCount();
+      if (negationCount <= 3) {
+        return;
+      }
+      if (m_ignoreInEquals && MethodUtils.isEquals(method)) {
+        return;
+      }
+      registerMethodError(method, Integer.valueOf(negationCount));
     }
-
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "three.negations.per.method.display.name");
-    }
-
-    public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel(
-                InspectionGadgetsBundle.message(
-                        "three.negations.per.method.ignore.option"),
-                this, "m_ignoreInEquals");
-    }
-
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        final Integer negationCount = (Integer)infos[0];
-        return InspectionGadgetsBundle.message(
-                "three.negations.per.method.problem.descriptor", negationCount);
-    }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new ThreeNegationsPerMethodVisitor();
-    }
-
-    private class ThreeNegationsPerMethodVisitor extends BaseInspectionVisitor {
-
-        @Override public void visitMethod(@NotNull PsiMethod method) {
-            // note: no call to super
-            if (method.getNameIdentifier() == null) {
-                return;
-            }
-            final NegationCountVisitor visitor = new NegationCountVisitor();
-            method.accept(visitor);
-            final int negationCount = visitor.getCount();
-            if (negationCount <= 3) {
-                return;
-            }
-            if (m_ignoreInEquals && MethodUtils.isEquals(method)) {
-                return;
-            }
-            registerMethodError(method, Integer.valueOf(negationCount));
-        }
-    }
+  }
 }

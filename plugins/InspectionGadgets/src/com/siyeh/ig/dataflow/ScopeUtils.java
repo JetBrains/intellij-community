@@ -23,182 +23,151 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
-class ScopeUtils
-{
-    private ScopeUtils() {}
+class ScopeUtils {
+  private ScopeUtils() {
+  }
 
-    @Nullable
-    public static PsiElement findTighterDeclarationLocation(
-            @NotNull PsiElement sibling, @NotNull PsiVariable variable)
-    {
-        PsiElement prevSibling = sibling.getPrevSibling();
-        while (prevSibling instanceof PsiWhiteSpace ||
-               prevSibling instanceof PsiComment)
-        {
-            prevSibling = prevSibling.getPrevSibling();
-        }
-        if (prevSibling instanceof PsiDeclarationStatement)
-        {
-            if (prevSibling.equals(variable.getParent()))
-            {
-                return null;
-            }
-            return findTighterDeclarationLocation(prevSibling, variable);
-        }
-        return prevSibling;
+  @Nullable
+  public static PsiElement findTighterDeclarationLocation(
+    @NotNull PsiElement sibling, @NotNull PsiVariable variable) {
+    PsiElement prevSibling = sibling.getPrevSibling();
+    while (prevSibling instanceof PsiWhiteSpace ||
+           prevSibling instanceof PsiComment) {
+      prevSibling = prevSibling.getPrevSibling();
     }
-
-    @Nullable
-    public static PsiElement getChildWhichContainsElement(
-            @NotNull PsiElement ancestor, @NotNull PsiElement element)
-    {
-        PsiElement child = element;
-        PsiElement parent = child.getParent();
-        while (!parent.equals(ancestor))
-        {
-            child = parent;
-            parent = child.getParent();
-            if (parent == null)
-            {
-                return null;
-            }
-        }
-        return child;
-    }
-
-    @Nullable
-    public static PsiElement getCommonParent(
-            @NotNull PsiElement[] referenceElements)
-    {
-        Arrays.sort(referenceElements, PsiElementOrderComparator.getInstance());
-        PsiElement commonParent = null;
-        for (PsiElement referenceElement : referenceElements)
-        {
-            final PsiElement parent = PsiTreeUtil.getParentOfType(
-                    referenceElement, PsiCodeBlock.class, PsiForStatement.class);
-            if (parent != null && commonParent != null)
-            {
-                if (!commonParent.equals(parent))
-                {
-                    commonParent =
-                            PsiTreeUtil.findCommonParent(commonParent, parent);
-                    commonParent = getNonStrictParentOfType(commonParent,
-                            PsiCodeBlock.class, PsiForStatement.class);
-                }
-            }
-            else
-            {
-                commonParent = parent;
-            }
-        }
-
-        // make common parent may only be for-statement if first reference is
-        // the initialization of the for statement or the initialization is
-        // empty.
-        if (commonParent instanceof PsiForStatement)
-        {
-            final PsiForStatement forStatement = (PsiForStatement)commonParent;
-            final PsiElement referenceElement = referenceElements[0];
-            final PsiStatement initialization =
-                    forStatement.getInitialization();
-            if (!(initialization instanceof PsiEmptyStatement))
-            {
-                if (initialization instanceof PsiExpressionStatement)
-                {
-                    final PsiExpressionStatement statement =
-                            (PsiExpressionStatement)initialization;
-                    final PsiExpression expression = statement.getExpression();
-                    if (expression instanceof PsiAssignmentExpression)
-                    {
-                        final PsiAssignmentExpression assignmentExpression =
-                                (PsiAssignmentExpression)expression;
-                        final PsiExpression lExpression =
-                                assignmentExpression.getLExpression();
-                        if (!lExpression.equals(referenceElement))
-                        {
-                            commonParent = PsiTreeUtil.getParentOfType(
-                                    commonParent, PsiCodeBlock.class);
-                        }
-                    }
-                    else
-                    {
-                        commonParent = PsiTreeUtil.getParentOfType(
-                                commonParent, PsiCodeBlock.class);
-                    }
-                }
-                 else
-                {
-                    commonParent = PsiTreeUtil.getParentOfType(commonParent,
-                            PsiCodeBlock.class);
-                }
-            }
-        }
-
-        // common parent may not be a switch() statement to avoid narrowing
-        // scope to inside switch branch
-        if (commonParent != null)
-        {
-            final PsiElement parent = commonParent.getParent();
-            if (parent instanceof PsiSwitchStatement &&
-                referenceElements.length > 1)
-            {
-                commonParent = PsiTreeUtil.getParentOfType(parent,
-                        PsiCodeBlock.class, false);
-            }
-        }
-        return commonParent;
-    }
-
-    @Nullable
-    public static PsiElement getNonStrictParentOfType(
-            @Nullable PsiElement element,
-            @NotNull Class<? extends PsiElement>... classes)
-    {
-        if (element == null)
-        {
-            return null;
-        }
-
-        while (element != null)
-        {
-            for (Class<? extends PsiElement> clazz : classes)
-            {
-                if (clazz.isInstance(element))
-                {
-                    return element;
-                }
-            }
-            element = element.getParent();
-        }
+    if (prevSibling instanceof PsiDeclarationStatement) {
+      if (prevSibling.equals(variable.getParent())) {
         return null;
+      }
+      return findTighterDeclarationLocation(prevSibling, variable);
+    }
+    return prevSibling;
+  }
+
+  @Nullable
+  public static PsiElement getChildWhichContainsElement(
+    @NotNull PsiElement ancestor, @NotNull PsiElement element) {
+    PsiElement child = element;
+    PsiElement parent = child.getParent();
+    while (!parent.equals(ancestor)) {
+      child = parent;
+      parent = child.getParent();
+      if (parent == null) {
+        return null;
+      }
+    }
+    return child;
+  }
+
+  @Nullable
+  public static PsiElement getCommonParent(
+    @NotNull PsiElement[] referenceElements) {
+    Arrays.sort(referenceElements, PsiElementOrderComparator.getInstance());
+    PsiElement commonParent = null;
+    for (PsiElement referenceElement : referenceElements) {
+      final PsiElement parent = PsiTreeUtil.getParentOfType(
+        referenceElement, PsiCodeBlock.class, PsiForStatement.class);
+      if (parent != null && commonParent != null) {
+        if (!commonParent.equals(parent)) {
+          commonParent =
+            PsiTreeUtil.findCommonParent(commonParent, parent);
+          commonParent = getNonStrictParentOfType(commonParent,
+                                                  PsiCodeBlock.class, PsiForStatement.class);
+        }
+      }
+      else {
+        commonParent = parent;
+      }
     }
 
-    @Nullable
-    public static PsiElement moveOutOfLoopsAndClasses(
-            @NotNull PsiElement scope, @NotNull PsiElement maxScope) {
-        PsiElement result = maxScope;
-        if (result instanceof PsiLoopStatement)
-        {
-            return result;
-        }
-        while (!result.equals(scope))
-        {
-            final PsiElement element =
-                    getChildWhichContainsElement(result, scope);
-            if (element == null || element instanceof PsiLoopStatement
-                    || element instanceof PsiClass)
-            {
-                while (result != null && !(result instanceof PsiCodeBlock))
-                {
-                    result = result.getParent();
-                }
-                return result;
+    // make common parent may only be for-statement if first reference is
+    // the initialization of the for statement or the initialization is
+    // empty.
+    if (commonParent instanceof PsiForStatement) {
+      final PsiForStatement forStatement = (PsiForStatement)commonParent;
+      final PsiElement referenceElement = referenceElements[0];
+      final PsiStatement initialization =
+        forStatement.getInitialization();
+      if (!(initialization instanceof PsiEmptyStatement)) {
+        if (initialization instanceof PsiExpressionStatement) {
+          final PsiExpressionStatement statement =
+            (PsiExpressionStatement)initialization;
+          final PsiExpression expression = statement.getExpression();
+          if (expression instanceof PsiAssignmentExpression) {
+            final PsiAssignmentExpression assignmentExpression =
+              (PsiAssignmentExpression)expression;
+            final PsiExpression lExpression =
+              assignmentExpression.getLExpression();
+            if (!lExpression.equals(referenceElement)) {
+              commonParent = PsiTreeUtil.getParentOfType(
+                commonParent, PsiCodeBlock.class);
             }
-            else
-            {
-                result = element;
-            }
+          }
+          else {
+            commonParent = PsiTreeUtil.getParentOfType(
+              commonParent, PsiCodeBlock.class);
+          }
         }
-        return scope;
+        else {
+          commonParent = PsiTreeUtil.getParentOfType(commonParent,
+                                                     PsiCodeBlock.class);
+        }
+      }
     }
+
+    // common parent may not be a switch() statement to avoid narrowing
+    // scope to inside switch branch
+    if (commonParent != null) {
+      final PsiElement parent = commonParent.getParent();
+      if (parent instanceof PsiSwitchStatement &&
+          referenceElements.length > 1) {
+        commonParent = PsiTreeUtil.getParentOfType(parent,
+                                                   PsiCodeBlock.class, false);
+      }
+    }
+    return commonParent;
+  }
+
+  @Nullable
+  public static PsiElement getNonStrictParentOfType(
+    @Nullable PsiElement element,
+    @NotNull Class<? extends PsiElement>... classes) {
+    if (element == null) {
+      return null;
+    }
+
+    while (element != null) {
+      for (Class<? extends PsiElement> clazz : classes) {
+        if (clazz.isInstance(element)) {
+          return element;
+        }
+      }
+      element = element.getParent();
+    }
+    return null;
+  }
+
+  @Nullable
+  public static PsiElement moveOutOfLoopsAndClasses(
+    @NotNull PsiElement scope, @NotNull PsiElement maxScope) {
+    PsiElement result = maxScope;
+    if (result instanceof PsiLoopStatement) {
+      return result;
+    }
+    while (!result.equals(scope)) {
+      final PsiElement element =
+        getChildWhichContainsElement(result, scope);
+      if (element == null || element instanceof PsiLoopStatement
+          || element instanceof PsiClass) {
+        while (result != null && !(result instanceof PsiCodeBlock)) {
+          result = result.getParent();
+        }
+        return result;
+      }
+      else {
+        result = element;
+      }
+    }
+    return scope;
+  }
 }

@@ -27,38 +27,39 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class IteratorHasNextCallsIteratorNextInspection
-        extends BaseInspection {
+  extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName(){
-        return InspectionGadgetsBundle.message(
-                "iterator.hasnext.which.calls.next.display.name");
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "iterator.hasnext.which.calls.next.display.name");
+  }
+
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "iterator.hasnext.which.calls.next.problem.descriptor");
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new IteratorHasNextCallsIteratorNext();
+  }
+
+  private static class IteratorHasNextCallsIteratorNext
+    extends BaseInspectionVisitor {
+
+    @Override
+    public void visitMethod(@NotNull PsiMethod method) {
+      // note: no call to super
+      @NonNls final String name = method.getName();
+      if (!MethodUtils.methodMatches(method, CommonClassNames.JAVA_UTIL_ITERATOR, null,
+                                     HardcodedMethodConstants.HAS_NEXT)) {
+        return;
+      }
+      if (!IteratorUtils.containsCallToIteratorNext(method, null, true)) {
+        return;
+      }
+      registerMethodError(method);
     }
-
-    @NotNull
-    public String buildErrorString(Object... infos){
-        return InspectionGadgetsBundle.message(
-                "iterator.hasnext.which.calls.next.problem.descriptor");
-    }
-
-    public BaseInspectionVisitor buildVisitor(){
-        return new IteratorHasNextCallsIteratorNext();
-    }
-
-    private static class IteratorHasNextCallsIteratorNext
-            extends BaseInspectionVisitor{
-
-        @Override public void visitMethod(@NotNull PsiMethod method){
-            // note: no call to super
-            @NonNls final String name = method.getName();
-            if (!MethodUtils.methodMatches(method, CommonClassNames.JAVA_UTIL_ITERATOR, null,
-                    HardcodedMethodConstants.HAS_NEXT)) {
-                return;
-            }
-            if(!IteratorUtils.containsCallToIteratorNext(method, null, true)){
-                return;
-            }
-            registerMethodError(method);
-        }
-    }
+  }
 }

@@ -27,53 +27,54 @@ import org.jetbrains.annotations.NotNull;
 
 public class TestCaseInProductCodeInspection extends BaseInspection {
 
-    @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "test.case.in.product.code.display.name");
-    }
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "test.case.in.product.code.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String getID() {
+    return "JUnitTestCaseInProductSource";
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "test.case.in.product.code.problem.descriptor");
+  }
+
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new MoveClassFix();
+  }
+
+  @Override
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return true;
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new TestCaseInProductCodeVisitor();
+  }
+
+  private static class TestCaseInProductCodeVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String getID() {
-        return "JUnitTestCaseInProductSource";
+    public void visitClass(@NotNull PsiClass aClass) {
+      if (TestUtils.isTest(aClass)) {
+        return;
+      }
+      if (!InheritanceUtil.isInheritor(aClass,
+                                       "junit.framework.TestCase")) {
+        return;
+      }
+      registerClassError(aClass);
     }
-
-    @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "test.case.in.product.code.problem.descriptor");
-    }
-
-    @Override
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        return new MoveClassFix();
-    }
-
-    @Override
-    protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
-        return true;
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new TestCaseInProductCodeVisitor();
-    }
-
-    private static class TestCaseInProductCodeVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitClass(@NotNull PsiClass aClass) {
-            if (TestUtils.isTest(aClass)) {
-                return;
-            }
-            if (!InheritanceUtil.isInheritor(aClass,
-                    "junit.framework.TestCase")) {
-                return;
-            }
-            registerClassError(aClass);
-        }
-    }
+  }
 }

@@ -23,65 +23,68 @@ import org.jetbrains.annotations.NotNull;
 
 public class MethodCallInLoopConditionInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "method.call.in.loop.condition.display.name");
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "method.call.in.loop.condition.display.name");
+  }
+
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "method.call.in.loop.condition.problem.descriptor");
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new MethodCallInLoopConditionVisitor();
+  }
+
+  private static class MethodCallInLoopConditionVisitor
+    extends BaseInspectionVisitor {
+
+    @Override
+    public void visitForStatement(@NotNull PsiForStatement statement) {
+      super.visitForStatement(statement);
+      final PsiExpression condition = statement.getCondition();
+      if (condition == null) {
+        return;
+      }
+      checkForMethodCalls(condition);
     }
 
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "method.call.in.loop.condition.problem.descriptor");
+    @Override
+    public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
+      super.visitWhileStatement(statement);
+      final PsiExpression condition = statement.getCondition();
+      if (condition == null) {
+        return;
+      }
+      checkForMethodCalls(condition);
     }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new MethodCallInLoopConditionVisitor();
+    @Override
+    public void visitDoWhileStatement(
+      @NotNull PsiDoWhileStatement statement) {
+      super.visitDoWhileStatement(statement);
+      final PsiExpression condition = statement.getCondition();
+      if (condition == null) {
+        return;
+      }
+      checkForMethodCalls(condition);
     }
 
-    private static class MethodCallInLoopConditionVisitor
-            extends BaseInspectionVisitor {
-        
-        @Override public void visitForStatement(@NotNull PsiForStatement statement) {
-            super.visitForStatement(statement);
-            final PsiExpression condition = statement.getCondition();
-            if(condition== null)
-            {
-                return;
-            }
-            checkForMethodCalls(condition);
-        }
+    private void checkForMethodCalls(PsiExpression condition) {
+      final PsiElementVisitor visitor =
+        new JavaRecursiveElementVisitor() {
 
-        @Override public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
-            super.visitWhileStatement(statement);
-            final PsiExpression condition = statement.getCondition();
-            if(condition == null){
-                return;
-            }
-            checkForMethodCalls(condition);
-        }
-
-        @Override public void visitDoWhileStatement(
-                @NotNull PsiDoWhileStatement statement) {
-            super.visitDoWhileStatement(statement);
-            final PsiExpression condition = statement.getCondition();
-            if(condition == null){
-                return;
-            }
-            checkForMethodCalls(condition);
-        }
-
-        private void checkForMethodCalls(PsiExpression condition){
-            final PsiElementVisitor visitor =
-                    new JavaRecursiveElementVisitor(){
-
-                @Override public void visitMethodCallExpression(
-                        @NotNull PsiMethodCallExpression expression){
-                    super.visitMethodCallExpression(expression);
-                    registerMethodCallError(expression);
-                }
-            };
-            condition.accept(visitor);
-        }
+          @Override
+          public void visitMethodCallExpression(
+            @NotNull PsiMethodCallExpression expression) {
+            super.visitMethodCallExpression(expression);
+            registerMethodCallError(expression);
+          }
+        };
+      condition.accept(visitor);
     }
+  }
 }

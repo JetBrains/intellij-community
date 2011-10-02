@@ -26,51 +26,52 @@ import org.jetbrains.annotations.NotNull;
 
 public class ExtendsThreadInspection extends BaseInspection {
 
-    @NotNull
-    public String getID() {
-        return "ClassExplicitlyExtendsThread";
-    }
+  @NotNull
+  public String getID() {
+    return "ClassExplicitlyExtendsThread";
+  }
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message("extends.thread.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("extends.thread.display.name");
+  }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "extends.thread.problem.descriptor");
-    }
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "extends.thread.problem.descriptor");
+  }
 
   /**
    * @see com.siyeh.ig.inheritance.ExtendsConcreteCollectionInspection#buildFix(java.lang.Object...)
    */
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-      final PsiClass superClass = (PsiClass)infos[0];
-      if (superClass instanceof PsiAnonymousClass) return null;
-      return new ReplaceInheritanceWithDelegationFix();
-    }
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    final PsiClass superClass = (PsiClass)infos[0];
+    if (superClass instanceof PsiAnonymousClass) return null;
+    return new ReplaceInheritanceWithDelegationFix();
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new ExtendsThreadVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new ExtendsThreadVisitor();
+  }
 
-    private static class ExtendsThreadVisitor extends BaseInspectionVisitor {
+  private static class ExtendsThreadVisitor extends BaseInspectionVisitor {
 
-        @Override public void visitClass(@NotNull PsiClass aClass) {
-            if (aClass.isInterface() || aClass.isAnnotationType() ||
-                    aClass.isEnum()) {
-                return;
-            }
-            final PsiClass superClass = aClass.getSuperClass();
-            if (superClass == null) {
-                return;
-            }
-            final String superclassName = superClass.getQualifiedName();
-            if (!"java.lang.Thread".equals(superclassName)) {
-                return;
-            }
-            registerClassError(aClass, aClass);
-        }
+    @Override
+    public void visitClass(@NotNull PsiClass aClass) {
+      if (aClass.isInterface() || aClass.isAnnotationType() ||
+          aClass.isEnum()) {
+        return;
+      }
+      final PsiClass superClass = aClass.getSuperClass();
+      if (superClass == null) {
+        return;
+      }
+      final String superclassName = superClass.getQualifiedName();
+      if (!"java.lang.Thread".equals(superclassName)) {
+        return;
+      }
+      registerClassError(aClass, aClass);
     }
+  }
 }

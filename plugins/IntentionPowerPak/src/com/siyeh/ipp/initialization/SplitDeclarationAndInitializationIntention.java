@@ -28,91 +28,93 @@ import org.jetbrains.annotations.NotNull;
 
 public class SplitDeclarationAndInitializationIntention extends Intention {
 
-    @Override
-    @NotNull
-    protected PsiElementPredicate getElementPredicate() {
-        return new SplitDeclarationAndInitializationPredicate();
-    }
+  @Override
+  @NotNull
+  protected PsiElementPredicate getElementPredicate() {
+    return new SplitDeclarationAndInitializationPredicate();
+  }
 
-    @Override
-    public void processIntention(@NotNull PsiElement element)
-            throws IncorrectOperationException {
-        final PsiField field = (PsiField)element.getParent();
-        field.normalizeDeclaration();
-        final PsiExpression initializer = field.getInitializer();
-        if (initializer == null) {
-            return;
-        }
-        final String initializerText;
-        if (initializer instanceof PsiArrayInitializerExpression) {
-            final PsiType type = initializer.getType();
-            if (type == null) {
-                initializerText = initializer.getText();
-            } else {
-                initializerText = "new " + type.getCanonicalText() +
-                        initializer.getText();
-            }
-        } else {
-            initializerText = initializer.getText();
-        }
-        final PsiClass containingClass = field.getContainingClass();
-        if (containingClass == null) {
-            return;
-        }
-        final boolean fieldIsStatic =
-                field.hasModifierProperty(PsiModifier.STATIC);
-        final PsiClassInitializer[] classInitializers =
-                containingClass.getInitializers();
-        PsiClassInitializer classInitializer = null;
-        final int fieldOffset = field.getTextOffset();
-        for (PsiClassInitializer existingClassInitializer : classInitializers) {
-            final int initializerOffset =
-                    existingClassInitializer.getTextOffset();
-            if (initializerOffset <= fieldOffset) {
-                continue;
-            }
-            final boolean initializerIsStatic =
-                    existingClassInitializer.hasModifierProperty(
-                            PsiModifier.STATIC);
-            if (initializerIsStatic == fieldIsStatic) {
-                classInitializer = existingClassInitializer;
-                break;
-            }
-        }
-        final PsiManager manager = field.getManager();
-        final Project project = manager.getProject();
-        final PsiElementFactory elementFactory =
-                JavaPsiFacade.getInstance(project).getElementFactory();
-        if (classInitializer == null) {
-            classInitializer = elementFactory.createClassInitializer();
-            classInitializer = (PsiClassInitializer)
-                    containingClass.addAfter(classInitializer, field);
-
-            // add some whitespace between the field and the class initializer
-            final PsiElement whitespace =
-                    PsiParserFacade.SERVICE.getInstance(project).createWhiteSpaceFromText("\n");
-            containingClass.addAfter(whitespace, field);
-        }
-        final PsiCodeBlock body = classInitializer.getBody();
-        @NonNls final String initializationStatementText =
-                field.getName() + " = " + initializerText + ';';
-        final PsiExpressionStatement statement =
-                (PsiExpressionStatement)elementFactory.createStatementFromText(
-                        initializationStatementText, body);
-        final PsiElement addedElement = body.add(statement);
-        if (fieldIsStatic) {
-            final PsiModifierList modifierList =
-                    classInitializer.getModifierList();
-            if (modifierList != null) {
-                modifierList.setModifierProperty(PsiModifier.STATIC, true);
-            }
-        }
-        initializer.delete();
-      final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(manager.getProject());
-        codeStyleManager.reformat(field);
-        codeStyleManager.reformat(classInitializer);
-        HighlightUtil.highlightElement(addedElement,
-                IntentionPowerPackBundle.message(
-                        "press.escape.to.remove.highlighting.message"));
+  @Override
+  public void processIntention(@NotNull PsiElement element)
+    throws IncorrectOperationException {
+    final PsiField field = (PsiField)element.getParent();
+    field.normalizeDeclaration();
+    final PsiExpression initializer = field.getInitializer();
+    if (initializer == null) {
+      return;
     }
+    final String initializerText;
+    if (initializer instanceof PsiArrayInitializerExpression) {
+      final PsiType type = initializer.getType();
+      if (type == null) {
+        initializerText = initializer.getText();
+      }
+      else {
+        initializerText = "new " + type.getCanonicalText() +
+                          initializer.getText();
+      }
+    }
+    else {
+      initializerText = initializer.getText();
+    }
+    final PsiClass containingClass = field.getContainingClass();
+    if (containingClass == null) {
+      return;
+    }
+    final boolean fieldIsStatic =
+      field.hasModifierProperty(PsiModifier.STATIC);
+    final PsiClassInitializer[] classInitializers =
+      containingClass.getInitializers();
+    PsiClassInitializer classInitializer = null;
+    final int fieldOffset = field.getTextOffset();
+    for (PsiClassInitializer existingClassInitializer : classInitializers) {
+      final int initializerOffset =
+        existingClassInitializer.getTextOffset();
+      if (initializerOffset <= fieldOffset) {
+        continue;
+      }
+      final boolean initializerIsStatic =
+        existingClassInitializer.hasModifierProperty(
+          PsiModifier.STATIC);
+      if (initializerIsStatic == fieldIsStatic) {
+        classInitializer = existingClassInitializer;
+        break;
+      }
+    }
+    final PsiManager manager = field.getManager();
+    final Project project = manager.getProject();
+    final PsiElementFactory elementFactory =
+      JavaPsiFacade.getInstance(project).getElementFactory();
+    if (classInitializer == null) {
+      classInitializer = elementFactory.createClassInitializer();
+      classInitializer = (PsiClassInitializer)
+        containingClass.addAfter(classInitializer, field);
+
+      // add some whitespace between the field and the class initializer
+      final PsiElement whitespace =
+        PsiParserFacade.SERVICE.getInstance(project).createWhiteSpaceFromText("\n");
+      containingClass.addAfter(whitespace, field);
+    }
+    final PsiCodeBlock body = classInitializer.getBody();
+    @NonNls final String initializationStatementText =
+      field.getName() + " = " + initializerText + ';';
+    final PsiExpressionStatement statement =
+      (PsiExpressionStatement)elementFactory.createStatementFromText(
+        initializationStatementText, body);
+    final PsiElement addedElement = body.add(statement);
+    if (fieldIsStatic) {
+      final PsiModifierList modifierList =
+        classInitializer.getModifierList();
+      if (modifierList != null) {
+        modifierList.setModifierProperty(PsiModifier.STATIC, true);
+      }
+    }
+    initializer.delete();
+    final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(manager.getProject());
+    codeStyleManager.reformat(field);
+    codeStyleManager.reformat(classInitializer);
+    HighlightUtil.highlightElement(addedElement,
+                                   IntentionPowerPackBundle.message(
+                                     "press.escape.to.remove.highlighting.message"));
+  }
 }

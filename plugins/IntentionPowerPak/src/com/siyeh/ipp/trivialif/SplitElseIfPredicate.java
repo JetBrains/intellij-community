@@ -20,33 +20,33 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ErrorUtil;
 import org.jetbrains.annotations.NonNls;
 
-class SplitElseIfPredicate implements PsiElementPredicate{
+class SplitElseIfPredicate implements PsiElementPredicate {
 
-    public boolean satisfiedBy(PsiElement element){
-        if(!(element instanceof PsiJavaToken)){
-            return false;
-        }
-        @NonNls final String text = element.getText();
-        if(!PsiKeyword.ELSE.equals(text)){
-            return false;
-        }
-        final PsiJavaToken token = (PsiJavaToken) element;
-        final PsiElement parent = token.getParent();
-        if(!(parent instanceof PsiIfStatement)){
-            return false;
-        }
-        final PsiIfStatement ifStatement = (PsiIfStatement) parent;
-        final PsiStatement thenBranch = ifStatement.getThenBranch();
-        final PsiStatement elseBranch = ifStatement.getElseBranch();
-        if(thenBranch == null){
-            return false;
-        }
-        if(elseBranch == null){
-            return false;
-        }
-        if (!(elseBranch instanceof PsiIfStatement)) {
-            return false;
-        }
-        return !ErrorUtil.containsError(ifStatement);
+  public boolean satisfiedBy(PsiElement element) {
+    if (!(element instanceof PsiJavaToken)) {
+      return false;
     }
+    @NonNls final String text = element.getText();
+    if (!PsiKeyword.ELSE.equals(text)) {
+      return false;
+    }
+    final PsiJavaToken token = (PsiJavaToken)element;
+    final PsiElement parent = token.getParent();
+    if (!(parent instanceof PsiIfStatement)) {
+      return false;
+    }
+    final PsiIfStatement ifStatement = (PsiIfStatement)parent;
+    final PsiStatement thenBranch = ifStatement.getThenBranch();
+    final PsiStatement elseBranch = ifStatement.getElseBranch();
+    if (thenBranch == null) {
+      return false;
+    }
+    if (elseBranch == null) {
+      return false;
+    }
+    if (!(elseBranch instanceof PsiIfStatement)) {
+      return false;
+    }
+    return !ErrorUtil.containsError(ifStatement);
+  }
 }

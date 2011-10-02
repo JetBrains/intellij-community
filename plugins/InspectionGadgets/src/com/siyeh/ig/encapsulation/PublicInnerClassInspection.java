@@ -31,59 +31,60 @@ import javax.swing.*;
 
 public class PublicInnerClassInspection extends BaseInspection {
 
-    @SuppressWarnings({"PublicField"})
-    public boolean ignoreEnums = false;
+  @SuppressWarnings({"PublicField"})
+  public boolean ignoreEnums = false;
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "public.inner.class.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "public.inner.class.problem.descriptor");
+  }
+
+  @Override
+  @Nullable
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+      "public.inner.class.ignore.enum.option"),
+                                          this, "ignoreEnums");
+  }
+
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new MoveClassFix();
+  }
+
+  @Override
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return true;
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new PublicInnerClassVisitor();
+  }
+
+  private class PublicInnerClassVisitor extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "public.inner.class.display.name");
+    public void visitClass(@NotNull PsiClass aClass) {
+      if (!aClass.hasModifierProperty(PsiModifier.PUBLIC)) {
+        return;
+      }
+      if (!ClassUtils.isInnerClass(aClass)) {
+        return;
+      }
+      if (ignoreEnums && aClass.isEnum()) {
+        return;
+      }
+      registerClassError(aClass);
     }
-
-    @Override
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "public.inner.class.problem.descriptor");
-    }
-
-    @Override
-    @Nullable
-    public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-                "public.inner.class.ignore.enum.option"),
-                this, "ignoreEnums");
-    }
-
-    @Override
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        return new MoveClassFix();
-    }
-
-    @Override
-    protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
-        return true;
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new PublicInnerClassVisitor();
-    }
-
-    private class PublicInnerClassVisitor extends BaseInspectionVisitor {
-
-        @Override public void visitClass(@NotNull PsiClass aClass) {
-            if (!aClass.hasModifierProperty(PsiModifier.PUBLIC)) {
-                return;
-            }
-            if (!ClassUtils.isInnerClass(aClass)) {
-                return;
-            }
-            if (ignoreEnums && aClass.isEnum()) {
-                return;
-            }
-            registerClassError(aClass);
-        }
-    }
+  }
 }

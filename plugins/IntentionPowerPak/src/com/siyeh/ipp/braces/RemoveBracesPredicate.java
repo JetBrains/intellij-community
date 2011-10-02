@@ -19,34 +19,29 @@ import com.intellij.psi.*;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
-class RemoveBracesPredicate implements PsiElementPredicate
-{
-	public boolean satisfiedBy(@NotNull PsiElement element)
-	{
-        if (!(element instanceof PsiBlockStatement))
-		{
-			return false;
-		}
-		final PsiBlockStatement blockStatement = (PsiBlockStatement)element;
-		final PsiElement parent = blockStatement.getParent();
-		if(!(parent instanceof PsiIfStatement ||
-                parent instanceof PsiWhileStatement ||
-                parent instanceof PsiDoWhileStatement ||
-                parent instanceof PsiForStatement ||
-                parent instanceof PsiForeachStatement))
-		{
-			return false;
-		}
-		final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
-		final PsiStatement[] statements = codeBlock.getStatements();
-        if(statements.length != 1 ||
-                statements[0] instanceof PsiDeclarationStatement)
-        {
-            return false;
-        }
-        final PsiFile file = element.getContainingFile();
-        //this intention doesn't work in JSP files, as it can't tell about tags
-        // inside the braces
-        return !JspPsiUtil.isInJspFile(file);
+class RemoveBracesPredicate implements PsiElementPredicate {
+  public boolean satisfiedBy(@NotNull PsiElement element) {
+    if (!(element instanceof PsiBlockStatement)) {
+      return false;
     }
+    final PsiBlockStatement blockStatement = (PsiBlockStatement)element;
+    final PsiElement parent = blockStatement.getParent();
+    if (!(parent instanceof PsiIfStatement ||
+          parent instanceof PsiWhileStatement ||
+          parent instanceof PsiDoWhileStatement ||
+          parent instanceof PsiForStatement ||
+          parent instanceof PsiForeachStatement)) {
+      return false;
+    }
+    final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
+    final PsiStatement[] statements = codeBlock.getStatements();
+    if (statements.length != 1 ||
+        statements[0] instanceof PsiDeclarationStatement) {
+      return false;
+    }
+    final PsiFile file = element.getContainingFile();
+    //this intention doesn't work in JSP files, as it can't tell about tags
+    // inside the braces
+    return !JspPsiUtil.isInJspFile(file);
+  }
 }

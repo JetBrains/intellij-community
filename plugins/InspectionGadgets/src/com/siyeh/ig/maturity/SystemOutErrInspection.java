@@ -27,51 +27,52 @@ import org.jetbrains.annotations.NotNull;
 
 public class SystemOutErrInspection extends BaseInspection {
 
-    @NotNull
-    public String getID() {
-        return "UseOfSystemOutOrSystemErr";
-    }
+  @NotNull
+  public String getID() {
+    return "UseOfSystemOutOrSystemErr";
+  }
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "use.system.out.err.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "use.system.out.err.display.name");
+  }
 
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "use.system.out.err.problem.descriptor");
-    }
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "use.system.out.err.problem.descriptor");
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new SystemOutErrVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new SystemOutErrVisitor();
+  }
 
-    private static class SystemOutErrVisitor extends BaseInspectionVisitor {
+  private static class SystemOutErrVisitor extends BaseInspectionVisitor {
 
-        @Override public void visitReferenceExpression(
-                @NotNull PsiReferenceExpression expression) {
-            super.visitReferenceExpression(expression);
-            final String name = expression.getReferenceName();
-            if (!HardcodedMethodConstants.OUT.equals(name) &&
-                    !HardcodedMethodConstants.ERR.equals(name)) {
-                return;
-            }
-            final PsiElement referent = expression.resolve();
-            if(!(referent instanceof PsiField)) {
-                return;
-            }
-            final PsiField field = (PsiField)referent;
-            final PsiClass containingClass = field.getContainingClass();
-            if(containingClass == null) {
-                return;
-            }
-            final String className = containingClass.getQualifiedName();
-            if(!"java.lang.System".equals(className)) {
-                return;
-            }
-            registerError(expression);
-        }
+    @Override
+    public void visitReferenceExpression(
+      @NotNull PsiReferenceExpression expression) {
+      super.visitReferenceExpression(expression);
+      final String name = expression.getReferenceName();
+      if (!HardcodedMethodConstants.OUT.equals(name) &&
+          !HardcodedMethodConstants.ERR.equals(name)) {
+        return;
+      }
+      final PsiElement referent = expression.resolve();
+      if (!(referent instanceof PsiField)) {
+        return;
+      }
+      final PsiField field = (PsiField)referent;
+      final PsiClass containingClass = field.getContainingClass();
+      if (containingClass == null) {
+        return;
+      }
+      final String className = containingClass.getQualifiedName();
+      if (!"java.lang.System".equals(className)) {
+        return;
+      }
+      registerError(expression);
     }
+  }
 }

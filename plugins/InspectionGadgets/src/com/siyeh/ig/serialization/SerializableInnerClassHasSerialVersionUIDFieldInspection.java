@@ -22,30 +22,30 @@ import com.siyeh.ig.fixes.AddSerialVersionUIDFix;
 import org.jetbrains.annotations.NotNull;
 
 public class SerializableInnerClassHasSerialVersionUIDFieldInspection
-        extends SerializableInspection {
+  extends SerializableInspection {
 
-    @NotNull
-    public String getID() {
-        return "SerializableNonStaticInnerClassWithoutSerialVersionUID";
-    }
+  @NotNull
+  public String getID() {
+    return "SerializableNonStaticInnerClassWithoutSerialVersionUID";
+  }
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "serializable.inner.class.has.serial.version.uid.field.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "serializable.inner.class.has.serial.version.uid.field.display.name");
+  }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "serializable.inner.class.has.serial.version.uid.field.problem.descriptor");
-    }
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "serializable.inner.class.has.serial.version.uid.field.problem.descriptor");
+  }
 
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        return new AddSerialVersionUIDFix();
-    }
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new AddSerialVersionUIDFix();
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new SerializableInnerClassHasSerialVersionUIDFieldVisitor(this);
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new SerializableInnerClassHasSerialVersionUIDFieldVisitor(this);
+  }
 }

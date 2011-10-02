@@ -21,26 +21,26 @@ import com.siyeh.ipp.psiutils.ErrorUtil;
 import org.jetbrains.annotations.NotNull;
 
 class SplitDeclarationAndInitializationPredicate
-        implements PsiElementPredicate{
+  implements PsiElementPredicate {
 
-    public boolean satisfiedBy(@NotNull PsiElement element){
-        final PsiElement parent = element.getParent();
-        if (!(parent instanceof PsiField)) {
-            return false;
-        }
-        if (element instanceof PsiComment &&
-                element == parent.getFirstChild()) {
-            return false;
-        }
-        final PsiField field = (PsiField)parent;
-        final PsiExpression initializer = field.getInitializer();
-        if (initializer == null) {
-            return false;
-        }
-        final PsiClass containingClass = field.getContainingClass();
-        if (containingClass == null || containingClass.isInterface()) {
-            return false;
-        }
-        return !ErrorUtil.containsError(field);
+  public boolean satisfiedBy(@NotNull PsiElement element) {
+    final PsiElement parent = element.getParent();
+    if (!(parent instanceof PsiField)) {
+      return false;
     }
+    if (element instanceof PsiComment &&
+        element == parent.getFirstChild()) {
+      return false;
+    }
+    final PsiField field = (PsiField)parent;
+    final PsiExpression initializer = field.getInitializer();
+    if (initializer == null) {
+      return false;
+    }
+    final PsiClass containingClass = field.getContainingClass();
+    if (containingClass == null || containingClass.isInterface()) {
+      return false;
+    }
+    return !ErrorUtil.containsError(field);
+  }
 }

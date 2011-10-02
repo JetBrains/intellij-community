@@ -28,40 +28,41 @@ import org.jetbrains.annotations.NotNull;
 
 public class MisspelledToStringInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "misspelled.tostring.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "misspelled.tostring.display.name");
+  }
 
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "misspelled.tostring.problem.descriptor");
-    }
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "misspelled.tostring.problem.descriptor");
+  }
 
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        return new RenameFix(HardcodedMethodConstants.TO_STRING);
-    }
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new RenameFix(HardcodedMethodConstants.TO_STRING);
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new MisspelledToStringVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new MisspelledToStringVisitor();
+  }
 
-    private static class MisspelledToStringVisitor
-            extends BaseInspectionVisitor {
+  private static class MisspelledToStringVisitor
+    extends BaseInspectionVisitor {
 
-        @Override public void visitMethod(@NotNull PsiMethod method) {
-            //note: no call to super
-            @NonNls final String methodName = method.getName();
-            if (!"tostring".equals(methodName)) {
-                return;
-            }
-            final PsiParameterList parameterList = method.getParameterList();
-            if (parameterList.getParametersCount() != 0) {
-                return;
-            }
-            registerMethodError(method);
-        }
+    @Override
+    public void visitMethod(@NotNull PsiMethod method) {
+      //note: no call to super
+      @NonNls final String methodName = method.getName();
+      if (!"tostring".equals(methodName)) {
+        return;
+      }
+      final PsiParameterList parameterList = method.getParameterList();
+      if (parameterList.getParametersCount() != 0) {
+        return;
+      }
+      registerMethodError(method);
     }
+  }
 }

@@ -26,89 +26,92 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public class ComparatorMethodParameterNotUsedInspection
-        extends BaseInspection {
+  extends BaseInspection {
+
+  @Override
+  @Nls
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "comparator.method.parameter.not.used.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "comparator.method.parameter.not.used.problem.descriptor");
+  }
+
+  @Override
+  public boolean isEnabledByDefault() {
+    return true;
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new CompareMethodDoesNotUseParameterVisitor();
+  }
+
+  private static class CompareMethodDoesNotUseParameterVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @Nls @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "comparator.method.parameter.not.used.display.name");
+    public void visitMethod(PsiMethod method) {
+      super.visitMethod(method);
+      if (!MethodUtils.methodMatches(method,
+                                     CommonClassNames.JAVA_UTIL_COMPARATOR,
+                                     PsiType.INT, "compare", PsiType.NULL, PsiType.NULL)) {
+        return;
+      }
+      final PsiCodeBlock body = method.getBody();
+      if (body == null) {
+        return;
+      }
+      final PsiParameterList parameterList = method.getParameterList();
+      final PsiParameter[] parameters = parameterList.getParameters();
+      final ParameterAccessVisitor visitor =
+        new ParameterAccessVisitor(parameters);
+      body.accept(visitor);
+      final Collection<PsiParameter> unusedParameters =
+        visitor.getUnusedParameters();
+      for (PsiParameter unusedParameter : unusedParameters) {
+        registerVariableError(unusedParameter);
+      }
     }
 
-    @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "comparator.method.parameter.not.used.problem.descriptor");
-    }
+    private static class ParameterAccessVisitor
+      extends JavaRecursiveElementVisitor {
 
-    @Override
-    public boolean isEnabledByDefault() {
-        return true;
-    }
+      private final Set<PsiParameter> parameters;
 
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new CompareMethodDoesNotUseParameterVisitor();
-    }
+      ParameterAccessVisitor(@NotNull PsiParameter[] parameters) {
+        this.parameters = new HashSet(Arrays.asList(parameters));
+      }
 
-    private static class CompareMethodDoesNotUseParameterVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitMethod(PsiMethod method) {
-            super.visitMethod(method);
-            if (!MethodUtils.methodMatches(method,
-                    CommonClassNames.JAVA_UTIL_COMPARATOR,
-                    PsiType.INT, "compare", PsiType.NULL, PsiType.NULL)) {
-                return;
-            }
-            final PsiCodeBlock body = method.getBody();
-            if (body == null) {
-                return;
-            }
-            final PsiParameterList parameterList = method.getParameterList();
-            final PsiParameter[] parameters = parameterList.getParameters();
-            final ParameterAccessVisitor visitor =
-                    new ParameterAccessVisitor(parameters);
-            body.accept(visitor);
-            final Collection<PsiParameter> unusedParameters =
-                    visitor.getUnusedParameters();
-            for (PsiParameter unusedParameter : unusedParameters) {
-                registerVariableError(unusedParameter);
-            }
+      @Override
+      public void visitReferenceExpression(
+        PsiReferenceExpression expression) {
+        super.visitReferenceExpression(expression);
+        if (parameters.isEmpty()) {
+          return;
         }
-
-        private static class ParameterAccessVisitor
-                extends JavaRecursiveElementVisitor {
-
-            private final Set<PsiParameter> parameters;
-
-            ParameterAccessVisitor(@NotNull PsiParameter[] parameters) {
-                this.parameters = new HashSet(Arrays.asList(parameters));
-            }
-
-            @Override public void visitReferenceExpression(
-                    PsiReferenceExpression expression) {
-                super.visitReferenceExpression(expression);
-                if (parameters.isEmpty()) {
-                    return;
-                }
-                if (expression.getQualifierExpression() != null) {
-                    // optimization
-                    // references to parameters are never qualified
-                    return;
-                }
-                final PsiElement target = expression.resolve();
-                if (!(target instanceof PsiParameter)) {
-                    return;
-                }
-                final PsiParameter parameter = (PsiParameter) target;
-                parameters.remove(parameter);
-            }
-
-            public Collection<PsiParameter> getUnusedParameters() {
-                return Collections.unmodifiableSet(parameters);
-            }
+        if (expression.getQualifierExpression() != null) {
+          // optimization
+          // references to parameters are never qualified
+          return;
         }
+        final PsiElement target = expression.resolve();
+        if (!(target instanceof PsiParameter)) {
+          return;
+        }
+        final PsiParameter parameter = (PsiParameter)target;
+        parameters.remove(parameter);
+      }
+
+      public Collection<PsiParameter> getUnusedParameters() {
+        return Collections.unmodifiableSet(parameters);
+      }
     }
+  }
 }

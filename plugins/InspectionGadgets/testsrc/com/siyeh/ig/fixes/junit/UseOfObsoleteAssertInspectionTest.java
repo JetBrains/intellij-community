@@ -49,7 +49,7 @@ public class UseOfObsoleteAssertInspectionTest extends IGQuickFixesTestCase {
   }
 
   public void testOnDemandStaticImport() {
-     doFixTest();
+    doFixTest();
   }
 
   public void testStaticImport() {

@@ -20,26 +20,26 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class MutablyNamedIntention extends Intention{
+public abstract class MutablyNamedIntention extends Intention {
 
-    private String m_text = null;
+  private String m_text = null;
 
-    protected abstract String getTextForElement(PsiElement element);
+  protected abstract String getTextForElement(PsiElement element);
 
-    @Override
-    @NotNull
-    public final String getText(){
-      return m_text == null ? "" : m_text;
+  @Override
+  @NotNull
+  public final String getText() {
+    return m_text == null ? "" : m_text;
+  }
+
+  @Override
+  public final boolean isAvailable(@NotNull Project project, Editor editor,
+                                   @NotNull PsiElement node) {
+    final PsiElement element = findMatchingElement(node, editor);
+    if (element == null) {
+      return false;
     }
-
-    @Override
-    public final boolean isAvailable(@NotNull Project project, Editor editor,
-                                     @NotNull PsiElement node) {
-        final PsiElement element = findMatchingElement(node, editor);
-        if (element == null) {
-            return false;
-        }
-        m_text = getTextForElement(element);
-        return m_text != null;
-    }
+    m_text = getTextForElement(element);
+    return m_text != null;
+  }
 }

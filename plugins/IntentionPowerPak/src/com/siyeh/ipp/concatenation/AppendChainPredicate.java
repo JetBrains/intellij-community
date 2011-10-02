@@ -18,39 +18,39 @@ package com.siyeh.ipp.concatenation;
 import com.intellij.psi.*;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
-class AppendChainPredicate implements PsiElementPredicate{
+class AppendChainPredicate implements PsiElementPredicate {
 
-    public boolean satisfiedBy(PsiElement element){
-        if(!AppendUtil.isAppendCall(element)){
-            return false;
-        }
-        final PsiMethodCallExpression call = (PsiMethodCallExpression) element;
-        final PsiReferenceExpression methodExpression =
-                call.getMethodExpression();
-        final PsiExpression qualifier =
-                methodExpression.getQualifierExpression();
-        if(!(qualifier instanceof PsiMethodCallExpression)){
-            return false;
-        }
-        final PsiMethodCallExpression qualifierCall =
-                (PsiMethodCallExpression) element;
-        if(!AppendUtil.isAppendCall(qualifierCall)){
-            return false;
-        }
-        final PsiElement parent = element.getParent();
-        if(parent instanceof PsiExpressionStatement){
-            return true;
-        }
-        final PsiElement grandParent = parent.getParent();
-        if (parent instanceof PsiLocalVariable &&
-                grandParent instanceof PsiDeclarationStatement) {
-            final PsiDeclarationStatement declarationStatement =
-                    (PsiDeclarationStatement)grandParent;
-            if (declarationStatement.getDeclaredElements().length == 1) {
-                return true;
-            }
-        }
-        return parent instanceof PsiAssignmentExpression &&
-                grandParent instanceof PsiExpressionStatement;
+  public boolean satisfiedBy(PsiElement element) {
+    if (!AppendUtil.isAppendCall(element)) {
+      return false;
     }
+    final PsiMethodCallExpression call = (PsiMethodCallExpression)element;
+    final PsiReferenceExpression methodExpression =
+      call.getMethodExpression();
+    final PsiExpression qualifier =
+      methodExpression.getQualifierExpression();
+    if (!(qualifier instanceof PsiMethodCallExpression)) {
+      return false;
+    }
+    final PsiMethodCallExpression qualifierCall =
+      (PsiMethodCallExpression)element;
+    if (!AppendUtil.isAppendCall(qualifierCall)) {
+      return false;
+    }
+    final PsiElement parent = element.getParent();
+    if (parent instanceof PsiExpressionStatement) {
+      return true;
+    }
+    final PsiElement grandParent = parent.getParent();
+    if (parent instanceof PsiLocalVariable &&
+        grandParent instanceof PsiDeclarationStatement) {
+      final PsiDeclarationStatement declarationStatement =
+        (PsiDeclarationStatement)grandParent;
+      if (declarationStatement.getDeclaredElements().length == 1) {
+        return true;
+      }
+    }
+    return parent instanceof PsiAssignmentExpression &&
+           grandParent instanceof PsiExpressionStatement;
+  }
 }

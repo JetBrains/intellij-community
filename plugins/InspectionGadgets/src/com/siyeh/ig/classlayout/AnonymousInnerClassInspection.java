@@ -27,43 +27,45 @@ import org.jetbrains.annotations.NotNull;
 
 public class AnonymousInnerClassInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "anonymous.inner.class.display.name");
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "anonymous.inner.class.display.name");
+  }
+
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "anonymous.inner.class.problem.descriptor");
+  }
+
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new MoveAnonymousToInnerClassFix();
+  }
+
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return true;
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new AnonymousInnerClassVisitor();
+  }
+
+  private static class AnonymousInnerClassVisitor
+    extends BaseInspectionVisitor {
+
+    @Override
+    public void visitClass(@NotNull PsiClass aClass) {
+      //no call to super here, to avoid double counting
     }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "anonymous.inner.class.problem.descriptor");
+    @Override
+    public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) {
+      super.visitAnonymousClass(aClass);
+      if (aClass instanceof PsiEnumConstantInitializer) {
+        return;
+      }
+      registerClassError(aClass);
     }
-
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        return new MoveAnonymousToInnerClassFix();
-    }
-
-    protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
-        return true;
-    }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new AnonymousInnerClassVisitor();
-    }
-
-    private static class AnonymousInnerClassVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitClass(@NotNull PsiClass aClass) {
-            //no call to super here, to avoid double counting
-        }
-
-        @Override public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) {
-            super.visitAnonymousClass(aClass);
-            if (aClass instanceof PsiEnumConstantInitializer) {
-                return;
-            }
-            registerClassError(aClass);
-        }
-    }
+  }
 }

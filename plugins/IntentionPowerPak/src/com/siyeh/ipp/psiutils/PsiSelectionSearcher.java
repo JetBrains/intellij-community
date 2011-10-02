@@ -36,15 +36,18 @@ public class PsiSelectionSearcher {
   /**
    * Searches elements in selection
    *
-   * @param editor editor to get text selection
-   * @param project Project
-   * @param filter PsiElement filter, e.g. PsiMethodCallExpression.class
+   * @param editor          editor to get text selection
+   * @param project         Project
+   * @param filter          PsiElement filter, e.g. PsiMethodCallExpression.class
    * @param dontStopOnFound if true, visitor will look inside found elements. if false, visitor will stop looking for elements in children of found element
-   * @param <T> type based on PsiElement type
+   * @param <T>             type based on PsiElement type
    * @return elements in selection
    */
   @NotNull
-  public static <T extends PsiElement> List<T> searchElementsInSelection(Editor editor, Project project, final Class<T> filter, final boolean dontStopOnFound) {
+  public static <T extends PsiElement> List<T> searchElementsInSelection(Editor editor,
+                                                                         Project project,
+                                                                         final Class<T> filter,
+                                                                         final boolean dontStopOnFound) {
     final TextRange selection = new TextRange(editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd());
 
     final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());

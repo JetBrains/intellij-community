@@ -25,45 +25,46 @@ import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class DeserializableClassInSecureContextInspection
-        extends BaseInspection {
+  extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "deserializable.class.in.secure.context.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "deserializable.class.in.secure.context.display.name");
+  }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "deserializable.class.in.secure.context.problem.descriptor");
-    }
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "deserializable.class.in.secure.context.problem.descriptor");
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new DeserializableClassInSecureContextVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new DeserializableClassInSecureContextVisitor();
+  }
 
-    private static class DeserializableClassInSecureContextVisitor
-            extends BaseInspectionVisitor {
+  private static class DeserializableClassInSecureContextVisitor
+    extends BaseInspectionVisitor {
 
-        @Override public void visitClass(@NotNull PsiClass aClass) {
-            // no call to super, so it doesn't drill down
-            if (aClass.isInterface() || aClass.isAnnotationType() ||
-                    aClass.isEnum()) {
-                return;
-            }
-            if (!SerializationUtils.isSerializable(aClass)) {
-                return;
-            }
-            final PsiMethod[] methods = aClass.getMethods();
-            for (final PsiMethod method : methods) {
-                if (SerializationUtils.isReadObject(method)) {
-                    if (ControlFlowUtils.methodAlwaysThrowsException(method)) {
-                        return;
-                    }
-                }
-            }
-            registerClassError(aClass);
+    @Override
+    public void visitClass(@NotNull PsiClass aClass) {
+      // no call to super, so it doesn't drill down
+      if (aClass.isInterface() || aClass.isAnnotationType() ||
+          aClass.isEnum()) {
+        return;
+      }
+      if (!SerializationUtils.isSerializable(aClass)) {
+        return;
+      }
+      final PsiMethod[] methods = aClass.getMethods();
+      for (final PsiMethod method : methods) {
+        if (SerializationUtils.isReadObject(method)) {
+          if (ControlFlowUtils.methodAlwaysThrowsException(method)) {
+            return;
+          }
         }
+      }
+      registerClassError(aClass);
     }
+  }
 }

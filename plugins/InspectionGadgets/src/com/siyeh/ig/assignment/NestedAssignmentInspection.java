@@ -26,37 +26,38 @@ import org.jetbrains.annotations.NotNull;
 
 public class NestedAssignmentInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "nested.assignment.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "nested.assignment.display.name");
+  }
 
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "nested.assignment.problem.descriptor");
-    }
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "nested.assignment.problem.descriptor");
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new NestedAssignmentVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new NestedAssignmentVisitor();
+  }
 
-    private static class NestedAssignmentVisitor extends BaseInspectionVisitor {
+  private static class NestedAssignmentVisitor extends BaseInspectionVisitor {
 
-        @Override public void visitAssignmentExpression(
-                @NotNull PsiAssignmentExpression expression) {
-            super.visitAssignmentExpression(expression);
-            final PsiElement parent = expression.getParent();
-            if(parent == null) {
-                return;
-            }
-            final PsiElement grandparent = parent.getParent();
-            if (parent instanceof PsiExpressionStatement ||
-                    grandparent instanceof PsiExpressionListStatement) {
-                return;
-            }
-            registerError(expression);
-        }
+    @Override
+    public void visitAssignmentExpression(
+      @NotNull PsiAssignmentExpression expression) {
+      super.visitAssignmentExpression(expression);
+      final PsiElement parent = expression.getParent();
+      if (parent == null) {
+        return;
+      }
+      final PsiElement grandparent = parent.getParent();
+      if (parent instanceof PsiExpressionStatement ||
+          grandparent instanceof PsiExpressionListStatement) {
+        return;
+      }
+      registerError(expression);
     }
+  }
 }

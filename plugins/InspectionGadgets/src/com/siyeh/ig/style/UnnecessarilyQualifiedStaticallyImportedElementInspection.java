@@ -29,137 +29,139 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public class UnnecessarilyQualifiedStaticallyImportedElementInspection
-        extends BaseInspection {
+  extends BaseInspection {
 
-    @Nls
+  @Nls
+  @NotNull
+  @Override
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "unnecessarily.qualified.statically.imported.element.display.name");
+  }
+
+  @NotNull
+  @Override
+  protected String buildErrorString(Object... infos) {
+    final PsiMember member = (PsiMember)infos[0];
+    return InspectionGadgetsBundle.message(
+      "unnecessarily.qualified.statically.imported.element.problem.descriptor",
+      member.getName());
+  }
+
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new UnnecessarilyQualifiedStaticallyImportedElementFix();
+  }
+
+  private static class UnnecessarilyQualifiedStaticallyImportedElementFix
+    extends InspectionGadgetsFix {
+
     @NotNull
-    @Override
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "unnecessarily.qualified.statically.imported.element.display.name");
-    }
-
-    @NotNull
-    @Override
-    protected String buildErrorString(Object... infos) {
-        final PsiMember member = (PsiMember) infos[0];
-        return InspectionGadgetsBundle.message(
-                "unnecessarily.qualified.statically.imported.element.problem.descriptor",
-                member.getName());
+    public String getName() {
+      return InspectionGadgetsBundle.message(
+        "unnecessarily.qualified.statically.imported.element.quickfix");
     }
 
     @Override
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        return new UnnecessarilyQualifiedStaticallyImportedElementFix();
+    protected void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiElement element = descriptor.getPsiElement();
+      element.delete();
     }
+  }
 
-    private static class UnnecessarilyQualifiedStaticallyImportedElementFix
-            extends InspectionGadgetsFix {
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new UnnecessarilyQualifiedStaticallyImportedElementVisitor();
+  }
 
-        @NotNull
-        public String getName() {
-            return InspectionGadgetsBundle.message(
-                    "unnecessarily.qualified.statically.imported.element.quickfix");
-        }
+  private static class UnnecessarilyQualifiedStaticallyImportedElementVisitor
+    extends BaseInspectionVisitor {
 
-        @Override
-        protected void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
-            final PsiElement element = descriptor.getPsiElement();
-            element.delete();
-        }
+    @Override
+    public void visitReferenceExpression(
+      PsiReferenceExpression expression) {
+      visitReferenceElement(expression);
     }
 
     @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new UnnecessarilyQualifiedStaticallyImportedElementVisitor();
+    public void visitReferenceElement(
+      PsiJavaCodeReferenceElement reference) {
+      super.visitReferenceElement(reference);
+      final PsiElement qualifier = reference.getQualifier();
+      if (!(qualifier instanceof PsiJavaCodeReferenceElement)) {
+        return;
+      }
+      final PsiElement parent = reference.getParent();
+      if (parent instanceof PsiReferenceExpression) {
+        return;
+      }
+      if (parent instanceof PsiImportStatementBase) {
+        return;
+      }
+      final PsiElement target = reference.resolve();
+      if (!(target instanceof PsiMember)) {
+        return;
+      }
+      final PsiMember member = (PsiMember)target;
+      final PsiJavaCodeReferenceElement referenceExpression =
+        (PsiJavaCodeReferenceElement)qualifier;
+      final PsiElement qualifierTarget = referenceExpression.resolve();
+      if (!(qualifierTarget instanceof PsiClass)) {
+        return;
+      }
+      if (!ImportUtils.isStaticallyImported(member, reference)) {
+        return;
+      }
+      if (!isReferenceCorrectWithoutQualifier(reference, member)) {
+        return;
+      }
+      registerError(qualifier, member);
     }
 
-    private static class UnnecessarilyQualifiedStaticallyImportedElementVisitor
-            extends BaseInspectionVisitor {
-
-        @Override
-        public void visitReferenceExpression(
-                PsiReferenceExpression expression) {
-            visitReferenceElement(expression);
+    private static boolean isReferenceCorrectWithoutQualifier(
+      PsiJavaCodeReferenceElement reference, PsiMember member) {
+      final String referenceName = reference.getReferenceName();
+      if (referenceName == null) {
+        return false;
+      }
+      final Project project = reference.getProject();
+      final JavaPsiFacade psiFacade =
+        JavaPsiFacade.getInstance(project);
+      final PsiResolveHelper resolveHelper =
+        psiFacade.getResolveHelper();
+      if (member instanceof PsiMethod) {
+        final PsiElementFactory factory = psiFacade.getElementFactory();
+        final PsiExpression expression =
+          factory.createExpressionFromText(referenceName + "()",
+                                           reference);
+        final CandidateInfo[] methodCandidates =
+          resolveHelper.getReferencedMethodCandidates(
+            (PsiCallExpression)expression, false);
+        for (CandidateInfo methodCandidate : methodCandidates) {
+          if (!(methodCandidate.getCurrentFileResolveScope()
+                  instanceof PsiImportStaticStatement)) {
+            return false;
+          }
         }
-
-        @Override
-        public void visitReferenceElement(
-                PsiJavaCodeReferenceElement reference) {
-            super.visitReferenceElement(reference);
-            final PsiElement qualifier = reference.getQualifier();
-            if (!(qualifier instanceof PsiJavaCodeReferenceElement)) {
-                return;
-            }
-            final PsiElement parent = reference.getParent();
-            if (parent instanceof PsiReferenceExpression) {
-                return;
-            }
-            if (parent instanceof PsiImportStatementBase) {
-                return;
-            }
-            final PsiElement target = reference.resolve();
-            if (!(target instanceof PsiMember)) {
-                return;
-            }
-            final PsiMember member = (PsiMember) target;
-            final PsiJavaCodeReferenceElement referenceExpression =
-                    (PsiJavaCodeReferenceElement) qualifier;
-            final PsiElement qualifierTarget = referenceExpression.resolve();
-            if (!(qualifierTarget instanceof PsiClass)) {
-                return;
-            }
-            if (!ImportUtils.isStaticallyImported(member, reference)) {
-                return;
-            }
-            if (!isReferenceCorrectWithoutQualifier(reference, member)) {
-                return;
-            }
-            registerError(qualifier, member);
+      }
+      else if (member instanceof PsiField) {
+        final PsiVariable variable =
+          resolveHelper.resolveAccessibleReferencedVariable(
+            referenceName, reference);
+        if (!member.equals(variable)) {
+          return false;
         }
-
-        private static boolean isReferenceCorrectWithoutQualifier(
-                PsiJavaCodeReferenceElement reference, PsiMember member) {
-            final String referenceName = reference.getReferenceName();
-            if (referenceName == null) {
-                return false;
-            }
-            final Project project = reference.getProject();
-            final JavaPsiFacade psiFacade =
-                    JavaPsiFacade.getInstance(project);
-            final PsiResolveHelper resolveHelper =
-                    psiFacade.getResolveHelper();
-            if (member instanceof PsiMethod) {
-                final PsiElementFactory factory = psiFacade.getElementFactory();
-                final PsiExpression expression =
-                        factory.createExpressionFromText(referenceName + "()",
-                                reference);
-                final CandidateInfo[] methodCandidates =
-                        resolveHelper.getReferencedMethodCandidates(
-                                (PsiCallExpression) expression, false);
-                for (CandidateInfo methodCandidate : methodCandidates) {
-                    if (!(methodCandidate.getCurrentFileResolveScope()
-                            instanceof PsiImportStaticStatement)) {
-                        return false;
-                    }
-                }
-            } else if (member instanceof PsiField) {
-                final PsiVariable variable =
-                        resolveHelper.resolveAccessibleReferencedVariable(
-                                referenceName, reference);
-                if (!member.equals(variable)) {
-                    return false;
-                }
-            } else if (member instanceof PsiClass) {
-                final PsiClass aClass =
-                        resolveHelper.resolveReferencedClass(referenceName,
-                                reference);
-                if (!member.equals(aClass)) {
-                    return false;
-                }
-            }
-            return true;
+      }
+      else if (member instanceof PsiClass) {
+        final PsiClass aClass =
+          resolveHelper.resolveReferencedClass(referenceName,
+                                               reference);
+        if (!member.equals(aClass)) {
+          return false;
         }
+      }
+      return true;
     }
+  }
 }

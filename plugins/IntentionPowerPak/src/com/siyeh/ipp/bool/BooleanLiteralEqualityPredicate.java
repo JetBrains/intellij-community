@@ -21,31 +21,31 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.BoolUtils;
 import com.siyeh.ipp.psiutils.ErrorUtil;
 
-class BooleanLiteralEqualityPredicate implements PsiElementPredicate{
+class BooleanLiteralEqualityPredicate implements PsiElementPredicate {
 
-	public boolean satisfiedBy(PsiElement element){
-		if(!(element instanceof PsiBinaryExpression)){
-			return false;
-		}
-		final PsiBinaryExpression expression = (PsiBinaryExpression) element;
-          final IElementType tokenType = expression.getOperationTokenType();
-		if(!tokenType.equals(JavaTokenType.EQEQ) &&
-				!tokenType.equals(JavaTokenType.NE)){
-			return false;
-		}
-		final PsiExpression lhs = expression.getLOperand();
-		final PsiExpression rhs = expression.getROperand();
-		if(rhs == null){
-			return false;
-		}
-		if (!BoolUtils.isBooleanLiteral(lhs) &&
-				!BoolUtils.isBooleanLiteral(rhs)) {
-			return false;
-		}
-        final PsiType type = expression.getType();
-        if (!PsiType.BOOLEAN.equals(type)){
-            return false;
-        }
-        return !ErrorUtil.containsError(element);
-	}
+  public boolean satisfiedBy(PsiElement element) {
+    if (!(element instanceof PsiBinaryExpression)) {
+      return false;
+    }
+    final PsiBinaryExpression expression = (PsiBinaryExpression)element;
+    final IElementType tokenType = expression.getOperationTokenType();
+    if (!tokenType.equals(JavaTokenType.EQEQ) &&
+        !tokenType.equals(JavaTokenType.NE)) {
+      return false;
+    }
+    final PsiExpression lhs = expression.getLOperand();
+    final PsiExpression rhs = expression.getROperand();
+    if (rhs == null) {
+      return false;
+    }
+    if (!BoolUtils.isBooleanLiteral(lhs) &&
+        !BoolUtils.isBooleanLiteral(rhs)) {
+      return false;
+    }
+    final PsiType type = expression.getType();
+    if (!PsiType.BOOLEAN.equals(type)) {
+      return false;
+    }
+    return !ErrorUtil.containsError(element);
+  }
 }

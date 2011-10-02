@@ -23,28 +23,29 @@ import org.jetbrains.annotations.NotNull;
 
 public class SwitchStatementInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message("switch.statement.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("switch.statement.display.name");
+  }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "statement.problem.descriptor");
-    }
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "statement.problem.descriptor");
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new SwitchStatementVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new SwitchStatementVisitor();
+  }
 
-    private static class SwitchStatementVisitor
-            extends BaseInspectionVisitor {
+  private static class SwitchStatementVisitor
+    extends BaseInspectionVisitor {
 
-        @Override public void visitSwitchStatement(
-                @NotNull PsiSwitchStatement statement) {
-            super.visitSwitchStatement(statement);
-            registerStatementError(statement);
-        }
+    @Override
+    public void visitSwitchStatement(
+      @NotNull PsiSwitchStatement statement) {
+      super.visitSwitchStatement(statement);
+      registerStatementError(statement);
     }
+  }
 }

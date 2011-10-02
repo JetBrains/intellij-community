@@ -32,121 +32,122 @@ import javax.swing.JComponent;
 
 public class ImplicitCallToSuperInspection extends BaseInspection {
 
-    @SuppressWarnings("PublicField")
-    public boolean m_ignoreForObjectSubclasses = false;
+  @SuppressWarnings("PublicField")
+  public boolean m_ignoreForObjectSubclasses = false;
 
-    @Override
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "implicit.call.to.super.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "implicit.call.to.super.problem.descriptor");
+  }
+
+  @Override
+  public InspectionGadgetsFix buildFix(Object... infos) {
+    return new AddExplicitSuperCall();
+  }
+
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+      "implicit.call.to.super.ignore.option"),
+                                          this, "m_ignoreForObjectSubclasses");
+  }
+
+  private static class AddExplicitSuperCall extends InspectionGadgetsFix {
+
     @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "implicit.call.to.super.display.name");
+    public String getName() {
+      return InspectionGadgetsBundle.message(
+        "implicit.call.to.super.make.explicit.quickfix");
     }
 
     @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "implicit.call.to.super.problem.descriptor");
+    public void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiElement methodName = descriptor.getPsiElement();
+      final PsiMethod method = (PsiMethod)methodName.getParent();
+      if (method == null) {
+        return;
+      }
+      final PsiCodeBlock body = method.getBody();
+      final PsiElementFactory factory =
+        JavaPsiFacade.getElementFactory(project);
+      final PsiStatement newStatement =
+        factory.createStatementFromText("super();", null);
+      final CodeStyleManager styleManager =
+        CodeStyleManager.getInstance(project);
+      if (body == null) {
+        return;
+      }
+      final PsiJavaToken brace = body.getLBrace();
+      body.addAfter(newStatement, brace);
+      styleManager.reformat(body);
     }
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new ImplicitCallToSuperVisitor();
+  }
+
+  private class ImplicitCallToSuperVisitor extends BaseInspectionVisitor {
 
     @Override
-    public InspectionGadgetsFix buildFix(Object... infos) {
-        return new AddExplicitSuperCall();
-    }
-
-    @Override
-    public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-                "implicit.call.to.super.ignore.option"),
-                this, "m_ignoreForObjectSubclasses");
-    }
-
-    private static class AddExplicitSuperCall extends InspectionGadgetsFix {
-
-        @NotNull
-        public String getName() {
-            return InspectionGadgetsBundle.message(
-                    "implicit.call.to.super.make.explicit.quickfix");
+    public void visitMethod(@NotNull PsiMethod method) {
+      super.visitMethod(method);
+      if (!method.isConstructor()) {
+        return;
+      }
+      final PsiClass containingClass = method.getContainingClass();
+      if (containingClass == null) {
+        return;
+      }
+      if (containingClass.isEnum()) {
+        return;
+      }
+      if (m_ignoreForObjectSubclasses) {
+        final PsiClass superClass = containingClass.getSuperClass();
+        if (superClass != null) {
+          final String superClassName = superClass.getQualifiedName();
+          if (CommonClassNames.JAVA_LANG_OBJECT.equals(
+            superClassName)) {
+            return;
+          }
         }
-
-        @Override
-        public void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
-            final PsiElement methodName = descriptor.getPsiElement();
-            final PsiMethod method = (PsiMethod)methodName.getParent();
-            if (method == null) {
-                return;
-            }
-            final PsiCodeBlock body = method.getBody();
-            final PsiElementFactory factory =
-                    JavaPsiFacade.getElementFactory(project);
-            final PsiStatement newStatement =
-                    factory.createStatementFromText("super();", null);
-            final CodeStyleManager styleManager =
-                    CodeStyleManager.getInstance(project);
-            if (body == null) {
-                return;
-            }
-            final PsiJavaToken brace = body.getLBrace();
-            body.addAfter(newStatement, brace);
-            styleManager.reformat(body);
-        }
+      }
+      final PsiCodeBlock body = method.getBody();
+      if (body == null) {
+        return;
+      }
+      final PsiStatement[] statements = body.getStatements();
+      if (statements.length == 0) {
+        registerMethodError(method);
+        return;
+      }
+      final PsiStatement firstStatement = statements[0];
+      if (isConstructorCall(firstStatement)) {
+        return;
+      }
+      registerMethodError(method);
     }
 
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new ImplicitCallToSuperVisitor();
+    private boolean isConstructorCall(PsiStatement statement) {
+      if (!(statement instanceof PsiExpressionStatement)) {
+        return false;
+      }
+      final PsiExpressionStatement expressionStatement =
+        (PsiExpressionStatement)statement;
+      final PsiExpression expression =
+        expressionStatement.getExpression();
+      return ExpressionUtils.isConstructorInvocation(expression);
     }
-
-    private class ImplicitCallToSuperVisitor extends BaseInspectionVisitor {
-
-        @Override public void visitMethod(@NotNull PsiMethod method) {
-            super.visitMethod(method);
-            if (!method.isConstructor()) {
-                return;
-            }
-            final PsiClass containingClass = method.getContainingClass();
-            if (containingClass == null) {
-                return;
-            }
-            if (containingClass.isEnum()) {
-                return;
-            }
-            if (m_ignoreForObjectSubclasses) {
-                final PsiClass superClass = containingClass.getSuperClass();
-                if (superClass != null) {
-                    final String superClassName = superClass.getQualifiedName();
-                    if (CommonClassNames.JAVA_LANG_OBJECT.equals(
-                            superClassName)) {
-                        return;
-                    }
-                }
-            }
-            final PsiCodeBlock body = method.getBody();
-            if (body == null) {
-                return;
-            }
-            final PsiStatement[] statements = body.getStatements();
-            if (statements.length == 0) {
-                registerMethodError(method);
-                return;
-            }
-            final PsiStatement firstStatement = statements[0];
-            if (isConstructorCall(firstStatement)) {
-                return;
-            }
-            registerMethodError(method);
-        }
-
-        private boolean isConstructorCall(PsiStatement statement) {
-            if (!(statement instanceof PsiExpressionStatement)) {
-                return false;
-            }
-            final PsiExpressionStatement expressionStatement =
-                    (PsiExpressionStatement)statement;
-            final PsiExpression expression =
-                    expressionStatement.getExpression();
-            return ExpressionUtils.isConstructorInvocation(expression);
-        }
-    }
+  }
 }

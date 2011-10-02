@@ -20,38 +20,42 @@ import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.psi.util.PsiUtilCore;
 
-public class ErrorUtil{
+public class ErrorUtil {
 
-    private ErrorUtil(){}
+  private ErrorUtil() {
+  }
 
-    /**
-     * Checks only immediate children. No expensive full tree traversal.
-     * @return true, if an PsiErrorElement was found, false otherwise.
-     */
-    public static boolean containsError(PsiElement element){
-        // check only immediate children, full tree traversal is too expensive
-        return PsiUtilCore.hasErrorElementChild(element);
+  /**
+   * Checks only immediate children. No expensive full tree traversal.
+   *
+   * @return true, if an PsiErrorElement was found, false otherwise.
+   */
+  public static boolean containsError(PsiElement element) {
+    // check only immediate children, full tree traversal is too expensive
+    return PsiUtilCore.hasErrorElementChild(element);
+  }
+
+  /**
+   * Does full tree traversal check for PsiErrorElements.
+   *
+   * @return true, if an PsiErrorElement was found, false otherwise.
+   */
+  public static boolean containsDeepError(PsiElement element) {
+    final ErrorElementVisitor visitor = new ErrorElementVisitor();
+    element.accept(visitor);
+    return visitor.containsErrorElement();
+  }
+
+  private static class ErrorElementVisitor extends PsiRecursiveElementWalkingVisitor {
+    private boolean containsErrorElement = false;
+
+    @Override
+    public void visitErrorElement(PsiErrorElement element) {
+      containsErrorElement = true;
     }
 
-    /**
-     * Does full tree traversal check for PsiErrorElements.
-     * @return true, if an PsiErrorElement was found, false otherwise.
-     */
-    public static boolean containsDeepError(PsiElement element){
-        final ErrorElementVisitor visitor = new ErrorElementVisitor();
-        element.accept(visitor);
-        return visitor.containsErrorElement();
+    public boolean containsErrorElement() {
+      return containsErrorElement;
     }
-
-    private static class ErrorElementVisitor extends PsiRecursiveElementWalkingVisitor {
-        private boolean containsErrorElement = false;
-
-        @Override public void visitErrorElement(PsiErrorElement element){
-            containsErrorElement = true;
-        }
-
-        public boolean containsErrorElement(){
-            return containsErrorElement;
-        }
-    }
+  }
 }

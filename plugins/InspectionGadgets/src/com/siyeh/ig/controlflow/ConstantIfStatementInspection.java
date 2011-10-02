@@ -31,124 +31,129 @@ import org.jetbrains.annotations.NotNull;
 
 public class ConstantIfStatementInspection extends BaseInspection {
 
-    @Override
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "constant.if.statement.display.name");
+  }
+
+  @Override
+  public boolean isEnabledByDefault() {
+    return true;
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "constant.if.statement.problem.descriptor");
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new ConstantIfStatementVisitor();
+  }
+
+  @Override
+  public InspectionGadgetsFix buildFix(Object... infos) {
+    //if (PsiUtil.isInJspFile(location)) {
+    //    return null;
+    //}
+    return new ConstantIfStatementFix();
+  }
+
+  private static class ConstantIfStatementFix extends InspectionGadgetsFix {
+
     @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "constant.if.statement.display.name");
+    public String getName() {
+      return InspectionGadgetsBundle.message(
+        "constant.conditional.expression.simplify.quickfix");
     }
+
+    public void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiElement ifKeyword = descriptor.getPsiElement();
+      final PsiIfStatement statement =
+        (PsiIfStatement)ifKeyword.getParent();
+      assert statement != null;
+      final PsiStatement thenBranch = statement.getThenBranch();
+      final PsiStatement elseBranch = statement.getElseBranch();
+      final PsiExpression condition = statement.getCondition();
+      if (BoolUtils.isFalse(condition)) {
+        if (elseBranch != null) {
+          replaceStatementWithUnwrapping(elseBranch, statement);
+        }
+        else {
+          deleteElement(statement);
+        }
+      }
+      else {
+        replaceStatementWithUnwrapping(thenBranch, statement);
+      }
+    }
+
+    private static void replaceStatementWithUnwrapping(
+      PsiStatement branch, PsiIfStatement statement)
+      throws IncorrectOperationException {
+      if (branch instanceof PsiBlockStatement &&
+          !(statement.getParent() instanceof PsiIfStatement)) {
+        final PsiCodeBlock parentBlock =
+          PsiTreeUtil.getParentOfType(branch, PsiCodeBlock.class);
+        if (parentBlock == null) {
+          final String elseText = branch.getText();
+          replaceStatement(statement, elseText);
+          return;
+        }
+        final PsiCodeBlock block =
+          ((PsiBlockStatement)branch).getCodeBlock();
+        final boolean hasConflicts =
+          VariableSearchUtils.containsConflictingDeclarations(
+            block, parentBlock);
+        if (hasConflicts) {
+          final String elseText = branch.getText();
+          replaceStatement(statement, elseText);
+        }
+        else {
+          final PsiElement containingElement = statement.getParent();
+          final PsiStatement[] statements = block.getStatements();
+          if (statements.length > 0) {
+            assert containingElement != null;
+            final PsiElement added =
+              containingElement.addRangeBefore(statements[0],
+                                               statements[statements.length - 1], statement);
+            final Project project = statement.getProject();
+            final CodeStyleManager codeStyleManager =
+              CodeStyleManager.getInstance(project);
+            codeStyleManager.reformat(added);
+          }
+          statement.delete();
+        }
+      }
+      else {
+        final String elseText = branch.getText();
+        replaceStatement(statement, elseText);
+      }
+    }
+  }
+
+  private static class ConstantIfStatementVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    public boolean isEnabledByDefault() {
-        return true;
+    public void visitIfStatement(PsiIfStatement statement) {
+      super.visitIfStatement(statement);
+      final PsiExpression condition = statement.getCondition();
+      if (condition == null) {
+        return;
+      }
+      final PsiStatement thenBranch = statement.getThenBranch();
+      if (thenBranch == null) {
+        return;
+      }
+      if (BoolUtils.isTrue(condition) || BoolUtils.isFalse(condition)) {
+        registerStatementError(statement);
+      }
     }
-
-    @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "constant.if.statement.problem.descriptor");
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new ConstantIfStatementVisitor();
-    }
-
-    @Override
-    public InspectionGadgetsFix buildFix(Object... infos) {
-        //if (PsiUtil.isInJspFile(location)) {
-        //    return null;
-        //}
-        return new ConstantIfStatementFix();
-    }
-
-    private static class ConstantIfStatementFix extends InspectionGadgetsFix {
-
-        @NotNull
-        public String getName() {
-            return InspectionGadgetsBundle.message(
-                    "constant.conditional.expression.simplify.quickfix");
-        }
-
-        public void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
-            final PsiElement ifKeyword = descriptor.getPsiElement();
-            final PsiIfStatement statement =
-                    (PsiIfStatement)ifKeyword.getParent();
-            assert statement != null;
-            final PsiStatement thenBranch = statement.getThenBranch();
-            final PsiStatement elseBranch = statement.getElseBranch();
-            final PsiExpression condition = statement.getCondition();
-            if (BoolUtils.isFalse(condition)) {
-                if (elseBranch != null) {
-                    replaceStatementWithUnwrapping(elseBranch, statement);
-                } else {
-                    deleteElement(statement);
-                }
-            } else {
-                replaceStatementWithUnwrapping(thenBranch, statement);
-            }
-        }
-
-        private static void replaceStatementWithUnwrapping(
-                PsiStatement branch, PsiIfStatement statement)
-                throws IncorrectOperationException {
-            if (branch instanceof PsiBlockStatement &&
-                    !(statement.getParent() instanceof PsiIfStatement)) {
-                final PsiCodeBlock parentBlock =
-                        PsiTreeUtil.getParentOfType(branch, PsiCodeBlock.class);
-                if (parentBlock == null) {
-                    final String elseText = branch.getText();
-                    replaceStatement(statement, elseText);
-                    return;
-                }
-                final PsiCodeBlock block =
-                        ((PsiBlockStatement)branch).getCodeBlock();
-                final boolean hasConflicts =
-                        VariableSearchUtils.containsConflictingDeclarations(
-                                block, parentBlock);
-                if (hasConflicts) {
-                    final String elseText = branch.getText();
-                    replaceStatement(statement, elseText);
-                } else {
-                    final PsiElement containingElement = statement.getParent();
-                    final PsiStatement[] statements = block.getStatements();
-                    if (statements.length > 0) {
-                        assert containingElement != null;
-                        final PsiElement added =
-                                containingElement.addRangeBefore(statements[0],
-                                        statements[statements.length - 1], statement);
-                        final Project project = statement.getProject();
-                        final CodeStyleManager codeStyleManager =
-                                CodeStyleManager.getInstance(project);
-                        codeStyleManager.reformat(added);
-                    }
-                    statement.delete();
-                }
-            } else {
-                final String elseText = branch.getText();
-                replaceStatement(statement, elseText);
-            }
-        }
-    }
-
-    private static class ConstantIfStatementVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitIfStatement(PsiIfStatement statement) {
-            super.visitIfStatement(statement);
-            final PsiExpression condition = statement.getCondition();
-            if (condition == null) {
-                return;
-            }
-            final PsiStatement thenBranch = statement.getThenBranch();
-            if (thenBranch == null) {
-                return;
-            }
-            if (BoolUtils.isTrue(condition) || BoolUtils.isFalse(condition)) {
-                registerStatementError(statement);
-            }
-        }
-    }
+  }
 }

@@ -32,85 +32,86 @@ public class CovariantCompareToInspection extends BaseInspection {
   @Override
   @NotNull
   public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "covariant.compareto.display.name");
-    }
+    return InspectionGadgetsBundle.message(
+      "covariant.compareto.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "covariant.compareto.problem.descriptor");
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new CovariantCompareToVisitor();
+  }
+
+  private static class CovariantCompareToVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "covariant.compareto.problem.descriptor");
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new CovariantCompareToVisitor();
-    }
-
-    private static class CovariantCompareToVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitMethod(@NotNull PsiMethod method) {
-            // note: no call to super
-            final String name = method.getName();
-            if (!HardcodedMethodConstants.COMPARE_TO.equals(name)) {
-                return;
-            }
-            if (!method.hasModifierProperty(PsiModifier.PUBLIC)) {
-                return;
-            }
-            final PsiParameterList parameterList = method.getParameterList();
-            if (parameterList.getParametersCount() != 1) {
-                return;
-            }
-            final PsiParameter[] parameters = parameterList.getParameters();
-            final PsiType paramType = parameters[0].getType();
-            if (TypeUtils.isJavaLangObject(paramType)) {
-                return;
-            }
-            final PsiClass aClass = method.getContainingClass();
-            if (aClass == null) {
-                return;
-            }
-            final PsiMethod[] methods = aClass.findMethodsByName(
-                    HardcodedMethodConstants.COMPARE_TO, false);
-            for(PsiMethod compareToMethod : methods){
-                if(isNonVariantCompareTo(compareToMethod)){
-                    return;
-                }
-            }
-            final Project project = method.getProject();
-            final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-            final GlobalSearchScope scope = method.getResolveScope();
-            final PsiClass comparableClass =
-                    psiFacade.findClass(CommonClassNames.JAVA_LANG_COMPARABLE,
+    public void visitMethod(@NotNull PsiMethod method) {
+      // note: no call to super
+      final String name = method.getName();
+      if (!HardcodedMethodConstants.COMPARE_TO.equals(name)) {
+        return;
+      }
+      if (!method.hasModifierProperty(PsiModifier.PUBLIC)) {
+        return;
+      }
+      final PsiParameterList parameterList = method.getParameterList();
+      if (parameterList.getParametersCount() != 1) {
+        return;
+      }
+      final PsiParameter[] parameters = parameterList.getParameters();
+      final PsiType paramType = parameters[0].getType();
+      if (TypeUtils.isJavaLangObject(paramType)) {
+        return;
+      }
+      final PsiClass aClass = method.getContainingClass();
+      if (aClass == null) {
+        return;
+      }
+      final PsiMethod[] methods = aClass.findMethodsByName(
+        HardcodedMethodConstants.COMPARE_TO, false);
+      for (PsiMethod compareToMethod : methods) {
+        if (isNonVariantCompareTo(compareToMethod)) {
+          return;
+        }
+      }
+      final Project project = method.getProject();
+      final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+      final GlobalSearchScope scope = method.getResolveScope();
+      final PsiClass comparableClass =
+        psiFacade.findClass(CommonClassNames.JAVA_LANG_COMPARABLE,
                             scope);
-            if (comparableClass != null &&
-                    comparableClass.getTypeParameters().length == 1) {
-                final PsiSubstitutor superSubstitutor =
-                        TypeConversionUtil.getClassSubstitutor(comparableClass,
-                                aClass, PsiSubstitutor.EMPTY);
-                //null iff aClass is not inheritor of comparableClass
-                if (superSubstitutor != null) {
-                    final PsiType substituted =
-                            superSubstitutor.substitute(
-                                    comparableClass.getTypeParameters()[0]);
-                    if (paramType.equals(substituted)) {
-                        return;
-                    }
-                }
-            }
-            registerMethodError(method);
+      if (comparableClass != null &&
+          comparableClass.getTypeParameters().length == 1) {
+        final PsiSubstitutor superSubstitutor =
+          TypeConversionUtil.getClassSubstitutor(comparableClass,
+                                                 aClass, PsiSubstitutor.EMPTY);
+        //null iff aClass is not inheritor of comparableClass
+        if (superSubstitutor != null) {
+          final PsiType substituted =
+            superSubstitutor.substitute(
+              comparableClass.getTypeParameters()[0]);
+          if (paramType.equals(substituted)) {
+            return;
+          }
         }
-
-        private static boolean isNonVariantCompareTo(PsiMethod method) {
-            final PsiManager manager = method.getManager();
-            final Project project = method.getProject();
-            final PsiClassType objectType = PsiType.getJavaLangObject(
-                    manager, GlobalSearchScope.allScope(project));
-            return MethodUtils.methodMatches(method, null, PsiType.INT,
-                    HardcodedMethodConstants.COMPARE_TO, objectType);
-        }
+      }
+      registerMethodError(method);
     }
+
+    private static boolean isNonVariantCompareTo(PsiMethod method) {
+      final PsiManager manager = method.getManager();
+      final Project project = method.getProject();
+      final PsiClassType objectType = PsiType.getJavaLangObject(
+        manager, GlobalSearchScope.allScope(project));
+      return MethodUtils.methodMatches(method, null, PsiType.INT,
+                                       HardcodedMethodConstants.COMPARE_TO, objectType);
+    }
+  }
 }

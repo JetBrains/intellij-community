@@ -22,23 +22,24 @@ import com.intellij.psi.PsiReferenceExpression;
 
 class LocalVariableUsageVisitor extends JavaRecursiveElementWalkingVisitor {
 
-    private final PsiLocalVariable m_var;
-    private boolean m_used = false;
+  private final PsiLocalVariable m_var;
+  private boolean m_used = false;
 
-    LocalVariableUsageVisitor(PsiLocalVariable name){
-        super();
-        m_var = name;
-    }
+  LocalVariableUsageVisitor(PsiLocalVariable name) {
+    super();
+    m_var = name;
+  }
 
-    @Override public void visitReferenceExpression(PsiReferenceExpression expression){
-        final PsiElement reference = expression.resolve();
-        if(m_var.equals(reference)){
-            m_used = true;
-        }
-        super.visitReferenceElement(expression);
+  @Override
+  public void visitReferenceExpression(PsiReferenceExpression expression) {
+    final PsiElement reference = expression.resolve();
+    if (m_var.equals(reference)) {
+      m_used = true;
     }
+    super.visitReferenceElement(expression);
+  }
 
-    public boolean isUsed(){
-        return m_used;
-    }
+  public boolean isUsed() {
+    return m_used;
+  }
 }

@@ -23,7 +23,7 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 
 /**
  * @author anna
- * Date: 16-Jun-2009
+ *         Date: 16-Jun-2009
  */
 @SuppressWarnings({"JUnitTestCaseWithNonTrivialConstructors"})
 public abstract class IGQuickFixesTestCase extends JavaCodeInsightFixtureTestCase {

@@ -30,125 +30,126 @@ import org.jetbrains.annotations.NotNull;
 
 public class StringConcatenationInFormatCallInspection extends BaseInspection {
 
-    @Nls
-    @NotNull
-    @Override
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "string.concatenation.in.format.call.display.name");
+  @Nls
+  @NotNull
+  @Override
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "string.concatenation.in.format.call.display.name");
+  }
+
+  @NotNull
+  @Override
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "string.concatenation.in.format.call.problem.descriptor");
+  }
+
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    final PsiReferenceExpression referenceExpression =
+      (PsiReferenceExpression)infos[0];
+    final String referenceName = referenceExpression.getReferenceName();
+    return new StringConcatenationInFormatCallFix(referenceName);
+  }
+
+  private static class StringConcatenationInFormatCallFix
+    extends InspectionGadgetsFix {
+
+    private final String variableName;
+
+    public StringConcatenationInFormatCallFix(String variableName) {
+      this.variableName = variableName;
     }
 
     @NotNull
-    @Override
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "string.concatenation.in.format.call.problem.descriptor");
+    public String getName() {
+      return InspectionGadgetsBundle.message(
+        "string.concatenation.in.format.call.quickfix", variableName);
     }
 
     @Override
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        final PsiReferenceExpression referenceExpression =
-                (PsiReferenceExpression) infos[0];
-        final String referenceName = referenceExpression.getReferenceName();
-        return new StringConcatenationInFormatCallFix(referenceName);
+    protected void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiElement element = descriptor.getPsiElement();
+      if (!(element instanceof PsiBinaryExpression)) {
+        return;
+      }
+      final PsiBinaryExpression binaryExpression =
+        (PsiBinaryExpression)element;
+      final PsiElement parent = binaryExpression.getParent();
+      if (!(parent instanceof PsiExpressionList)) {
+        return;
+      }
+      final PsiExpression lhs = binaryExpression.getLOperand();
+      final PsiExpression rhs = binaryExpression.getROperand();
+      if (rhs == null) {
+        return;
+      }
+      parent.add(rhs);
+      parent.addAfter(lhs, binaryExpression);
+      binaryExpression.delete();
     }
+  }
 
-    private static class StringConcatenationInFormatCallFix
-            extends InspectionGadgetsFix {
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new StringConcatenationInFormatCallVisitor();
+  }
 
-        private final String variableName;
-
-        public StringConcatenationInFormatCallFix(String variableName) {
-            this.variableName = variableName;
-        }
-
-        @NotNull
-        public String getName() {
-            return InspectionGadgetsBundle.message(
-                    "string.concatenation.in.format.call.quickfix", variableName);
-        }
-
-        @Override
-        protected void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
-            final PsiElement element = descriptor.getPsiElement();
-            if (!(element instanceof PsiBinaryExpression)) {
-                return;
-            }
-            final PsiBinaryExpression binaryExpression =
-                    (PsiBinaryExpression) element;
-            final PsiElement parent = binaryExpression.getParent();
-            if (!(parent instanceof PsiExpressionList)) {
-                return;
-            }
-            final PsiExpression lhs = binaryExpression.getLOperand();
-            final PsiExpression rhs = binaryExpression.getROperand();
-            if (rhs == null) {
-                return;
-            }
-            parent.add(rhs);
-            parent.addAfter(lhs, binaryExpression);
-            binaryExpression.delete();
-        }
-    }
+  private static class StringConcatenationInFormatCallVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new StringConcatenationInFormatCallVisitor();
+    public void visitMethodCallExpression(
+      PsiMethodCallExpression expression) {
+      super.visitMethodCallExpression(expression);
+      if (!FormatUtils.isFormatCall(expression)) {
+        return;
+      }
+      final PsiExpressionList argumentList = expression.getArgumentList();
+      final PsiExpression[] arguments = argumentList.getExpressions();
+      if (arguments.length == 0) {
+        return;
+      }
+      final PsiExpression firstArgument = arguments[0];
+      final PsiType type = firstArgument.getType();
+      if (type == null) {
+        return;
+      }
+      final int formatArgumentIndex;
+      if ("java.util.Locale".equals(type.getCanonicalText())
+          && arguments.length > 1) {
+        formatArgumentIndex = 1;
+      }
+      else {
+        formatArgumentIndex = 0;
+      }
+      final PsiExpression formatArgument = arguments[formatArgumentIndex];
+      final PsiType formatArgumentType = formatArgument.getType();
+      if (formatArgumentType == null ||
+          !formatArgumentType.equalsToText("java.lang.String")) {
+        return;
+      }
+      if (!(formatArgument instanceof PsiBinaryExpression)) {
+        return;
+      }
+      if (PsiUtil.isConstantExpression(formatArgument)) {
+        return;
+      }
+
+      final PsiBinaryExpression binaryExpression =
+        (PsiBinaryExpression)formatArgument;
+      final PsiExpression lhs = binaryExpression.getLOperand();
+      final PsiType lhsType = lhs.getType();
+      if (lhsType == null || !lhsType.equalsToText("java.lang.String")) {
+        return;
+      }
+      final PsiExpression rhs = binaryExpression.getROperand();
+      if (!(rhs instanceof PsiReferenceExpression)) {
+        return;
+      }
+      registerError(formatArgument, rhs);
     }
-
-    private static class StringConcatenationInFormatCallVisitor
-            extends BaseInspectionVisitor {
-
-        @Override
-        public void visitMethodCallExpression(
-                PsiMethodCallExpression expression) {
-            super.visitMethodCallExpression(expression);
-            if (!FormatUtils.isFormatCall(expression)) {
-                return;
-            }
-            final PsiExpressionList argumentList = expression.getArgumentList();
-            final PsiExpression[] arguments = argumentList.getExpressions();
-            if(arguments.length == 0){
-                return;
-            }
-            final PsiExpression firstArgument = arguments[0];
-            final PsiType type = firstArgument.getType();
-            if(type == null){
-                return;
-            }
-            final int formatArgumentIndex;
-            if("java.util.Locale".equals(type.getCanonicalText())
-                    && arguments.length > 1){
-                formatArgumentIndex = 1;
-            } else{
-                formatArgumentIndex = 0;
-            }
-            final PsiExpression formatArgument = arguments[formatArgumentIndex];
-            final PsiType formatArgumentType = formatArgument.getType();
-            if (formatArgumentType == null ||
-                    !formatArgumentType.equalsToText("java.lang.String")) {
-                return;
-            }
-            if (!(formatArgument instanceof PsiBinaryExpression)) {
-                return;
-            }
-            if (PsiUtil.isConstantExpression(formatArgument)) {
-                return;
-            }
-
-            final PsiBinaryExpression binaryExpression =
-                    (PsiBinaryExpression) formatArgument;
-            final PsiExpression lhs = binaryExpression.getLOperand();
-            final PsiType lhsType = lhs.getType();
-            if (lhsType == null || !lhsType.equalsToText("java.lang.String")) {
-                return;
-            }
-            final PsiExpression rhs = binaryExpression.getROperand();
-            if (!(rhs instanceof PsiReferenceExpression)) {
-                return;
-            }
-            registerError(formatArgument, rhs);
-        }
-    }
+  }
 }

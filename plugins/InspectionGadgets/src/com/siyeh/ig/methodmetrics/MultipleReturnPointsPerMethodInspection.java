@@ -34,142 +34,143 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 
 public class MultipleReturnPointsPerMethodInspection
-        extends MethodMetricInspection {
+  extends MethodMetricInspection {
 
-    @SuppressWarnings({"PublicField"})
-    public boolean ignoreGuardClauses = false;
+  @SuppressWarnings({"PublicField"})
+  public boolean ignoreGuardClauses = false;
 
-    @SuppressWarnings({"PublicField"})
-    public boolean ignoreEqualsMethod = false;
+  @SuppressWarnings({"PublicField"})
+  public boolean ignoreEqualsMethod = false;
+
+  @Override
+  @NotNull
+  public String getID() {
+    return "MethodWithMultipleReturnPoints";
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "multiple.return.points.per.method.display.name");
+  }
+
+  @Override
+  protected int getDefaultLimit() {
+    return 1;
+  }
+
+  @Override
+  protected String getConfigurationLabel() {
+    return InspectionGadgetsBundle.message("return.point.limit.option");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    final Integer returnPointCount = (Integer)infos[0];
+    return InspectionGadgetsBundle.message(
+      "multiple.return.points.per.method.problem.descriptor",
+      returnPointCount);
+  }
+
+  @Override
+  public JComponent createOptionsPanel() {
+    final JPanel panel = new JPanel(new GridBagLayout());
+    final JLabel label = new JLabel(InspectionGadgetsBundle.message(
+      "return.point.limit.option"));
+    final JFormattedTextField termLimitTextField =
+      prepareNumberEditor("m_limit");
+    final CheckBox ignoreGuardClausesCheckBox =
+      new CheckBox(InspectionGadgetsBundle.message(
+        "ignore.guard.clauses.option"),
+                   this, "ignoreGuardClauses");
+    final CheckBox ignoreEqualsMethodCheckBox =
+      new CheckBox(InspectionGadgetsBundle.message(
+        "ignore.for.equals.methods.option"),
+                   this, "ignoreEqualsMethod");
+
+    final GridBagConstraints constraints = new GridBagConstraints();
+
+    constraints.anchor = GridBagConstraints.BASELINE_LEADING;
+    constraints.fill = GridBagConstraints.HORIZONTAL;
+    constraints.gridx = 0;
+    constraints.gridy = 0;
+    panel.add(label, constraints);
+
+    constraints.fill = GridBagConstraints.NONE;
+    constraints.gridx = 1;
+    panel.add(termLimitTextField, constraints);
+
+    constraints.gridx = 0;
+    constraints.gridy = 1;
+    constraints.gridwidth = 2;
+    constraints.weightx = 1.0;
+    panel.add(ignoreGuardClausesCheckBox, constraints);
+
+    constraints.gridy = 2;
+    constraints.weighty = 1.0;
+    panel.add(ignoreEqualsMethodCheckBox, constraints);
+
+    return panel;
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new MultipleReturnPointsPerMethodVisitor();
+  }
+
+  private class MultipleReturnPointsPerMethodVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String getID() {
-        return "MethodWithMultipleReturnPoints";
-    }
-
-    @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "multiple.return.points.per.method.display.name");
-    }
-
-    @Override
-    protected int getDefaultLimit() {
-        return 1;
-    }
-
-    @Override
-    protected String getConfigurationLabel() {
-        return InspectionGadgetsBundle.message("return.point.limit.option");
-    }
-
-    @Override
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        final Integer returnPointCount = (Integer)infos[0];
-        return InspectionGadgetsBundle.message(
-                "multiple.return.points.per.method.problem.descriptor",
-                returnPointCount);
-    }
-
-    @Override
-    public JComponent createOptionsPanel() {
-        final JPanel panel = new JPanel(new GridBagLayout());
-        final JLabel label = new JLabel(InspectionGadgetsBundle.message(
-                "return.point.limit.option"));
-        final JFormattedTextField termLimitTextField =
-                prepareNumberEditor("m_limit");
-        final CheckBox ignoreGuardClausesCheckBox =
-                new CheckBox(InspectionGadgetsBundle.message(
-                        "ignore.guard.clauses.option"),
-                        this, "ignoreGuardClauses");
-        final CheckBox ignoreEqualsMethodCheckBox =
-                new CheckBox(InspectionGadgetsBundle.message(
-                        "ignore.for.equals.methods.option"),
-                        this, "ignoreEqualsMethod");
-
-        final GridBagConstraints constraints = new GridBagConstraints();
-
-        constraints.anchor = GridBagConstraints.BASELINE_LEADING;
-        constraints.fill = GridBagConstraints.HORIZONTAL;
-        constraints.gridx = 0;
-        constraints.gridy = 0;
-        panel.add(label, constraints);
-
-        constraints.fill = GridBagConstraints.NONE;
-        constraints.gridx = 1;
-        panel.add(termLimitTextField, constraints);
-
-        constraints.gridx = 0;
-        constraints.gridy = 1;
-        constraints.gridwidth = 2;
-        constraints.weightx = 1.0;
-        panel.add(ignoreGuardClausesCheckBox, constraints);
-
-        constraints.gridy = 2;
-        constraints.weighty = 1.0;
-        panel.add(ignoreEqualsMethodCheckBox, constraints);
-
-        return panel;
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new MultipleReturnPointsPerMethodVisitor();
-    }
-
-    private class MultipleReturnPointsPerMethodVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitMethod(@NotNull PsiMethod method) {
-            // note: no call to super
-            if (method.getNameIdentifier() == null) {
-                return;
-            }
-            if (ignoreEqualsMethod) {
-                if (MethodUtils.isEquals(method)) {
-                    return;
-                }
-            }
-            final int returnPointCount = calculateReturnPointCount(method);
-            if (returnPointCount <= getLimit()) {
-                return;
-            }
-            registerMethodError(method, Integer.valueOf(returnPointCount));
+    public void visitMethod(@NotNull PsiMethod method) {
+      // note: no call to super
+      if (method.getNameIdentifier() == null) {
+        return;
+      }
+      if (ignoreEqualsMethod) {
+        if (MethodUtils.isEquals(method)) {
+          return;
         }
-
-        private int calculateReturnPointCount(PsiMethod method) {
-            final ReturnPointCountVisitor visitor =
-                    new ReturnPointCountVisitor(ignoreGuardClauses);
-            method.accept(visitor);
-            final int count = visitor.getCount();
-            if (!mayFallThroughBottom(method)) {
-                return count;
-            }
-            final PsiCodeBlock body = method.getBody();
-            if (body == null) {
-                return count;
-            }
-            final PsiStatement[] statements = body.getStatements();
-            if (statements.length == 0) {
-                return count + 1;
-            }
-            final PsiStatement lastStatement =
-                    statements[statements.length - 1];
-            if (ControlFlowUtils.statementMayCompleteNormally(lastStatement)) {
-                return count + 1;
-            }
-            return count;
-        }
-
-        private boolean mayFallThroughBottom(PsiMethod method) {
-            if (method.isConstructor()) {
-                return true;
-            }
-            final PsiType returnType = method.getReturnType();
-            return PsiType.VOID.equals(returnType);
-        }
+      }
+      final int returnPointCount = calculateReturnPointCount(method);
+      if (returnPointCount <= getLimit()) {
+        return;
+      }
+      registerMethodError(method, Integer.valueOf(returnPointCount));
     }
+
+    private int calculateReturnPointCount(PsiMethod method) {
+      final ReturnPointCountVisitor visitor =
+        new ReturnPointCountVisitor(ignoreGuardClauses);
+      method.accept(visitor);
+      final int count = visitor.getCount();
+      if (!mayFallThroughBottom(method)) {
+        return count;
+      }
+      final PsiCodeBlock body = method.getBody();
+      if (body == null) {
+        return count;
+      }
+      final PsiStatement[] statements = body.getStatements();
+      if (statements.length == 0) {
+        return count + 1;
+      }
+      final PsiStatement lastStatement =
+        statements[statements.length - 1];
+      if (ControlFlowUtils.statementMayCompleteNormally(lastStatement)) {
+        return count + 1;
+      }
+      return count;
+    }
+
+    private boolean mayFallThroughBottom(PsiMethod method) {
+      if (method.isConstructor()) {
+        return true;
+      }
+      final PsiType returnType = method.getReturnType();
+      return PsiType.VOID.equals(returnType);
+    }
+  }
 }

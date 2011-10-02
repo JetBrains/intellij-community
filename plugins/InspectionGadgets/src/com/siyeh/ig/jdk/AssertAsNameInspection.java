@@ -25,80 +25,85 @@ import org.jetbrains.annotations.NotNull;
 
 public class AssertAsNameInspection extends BaseInspection {
 
-    @Override
-    @NotNull
-    public String getID(){
-        return "AssertAsIdentifier";
-    }
-    @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "use.assert.as.identifier.display.name");
-    }
+  @Override
+  @NotNull
+  public String getID() {
+    return "AssertAsIdentifier";
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "use.assert.as.identifier.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "use.assert.as.identifier.problem.descriptor");
+  }
+
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new RenameFix();
+  }
+
+  @Override
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return true;
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new AssertAsNameVisitor();
+  }
+
+  private static class AssertAsNameVisitor extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "use.assert.as.identifier.problem.descriptor");
+    public void visitVariable(@NotNull PsiVariable variable) {
+      super.visitVariable(variable);
+      final String variableName = variable.getName();
+      if (!PsiKeyword.ASSERT.equals(variableName)) {
+        return;
+      }
+      registerVariableError(variable);
     }
 
     @Override
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        return new RenameFix();
+    public void visitMethod(@NotNull PsiMethod method) {
+      super.visitMethod(method);
+      final String name = method.getName();
+      if (!PsiKeyword.ASSERT.equals(name)) {
+        return;
+      }
+      registerMethodError(method);
     }
 
     @Override
-    protected boolean buildQuickFixesOnlyForOnTheFlyErrors(){
-        return true;
+    public void visitClass(@NotNull PsiClass aClass) {
+      //note: no call to super, to avoid drill-down
+      final String name = aClass.getName();
+      if (!PsiKeyword.ASSERT.equals(name)) {
+        return;
+      }
+      final PsiTypeParameterList params = aClass.getTypeParameterList();
+      if (params != null) {
+        params.accept(this);
+      }
+      registerClassError(aClass);
     }
 
     @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new AssertAsNameVisitor();
+    public void visitTypeParameter(PsiTypeParameter parameter) {
+      super.visitTypeParameter(parameter);
+      final String name = parameter.getName();
+      if (!PsiKeyword.ASSERT.equals(name)) {
+        return;
+      }
+      registerTypeParameterError(parameter);
     }
-
-    private static class AssertAsNameVisitor extends BaseInspectionVisitor {
-
-        @Override public void visitVariable(@NotNull PsiVariable variable) {
-            super.visitVariable(variable);
-            final String variableName = variable.getName();
-            if (!PsiKeyword.ASSERT.equals(variableName)) {
-                return;
-            }
-            registerVariableError(variable);
-        }
-
-        @Override public void visitMethod(@NotNull PsiMethod method) {
-            super.visitMethod(method);
-            final String name = method.getName();
-            if (!PsiKeyword.ASSERT.equals(name)) {
-                return;
-            }
-            registerMethodError(method);
-        }
-
-        @Override public void visitClass(@NotNull PsiClass aClass) {
-            //note: no call to super, to avoid drill-down
-            final String name = aClass.getName();
-            if (!PsiKeyword.ASSERT.equals(name)) {
-                return;
-            }
-            final PsiTypeParameterList params = aClass.getTypeParameterList();
-            if (params != null) {
-                params.accept(this);
-            }
-            registerClassError(aClass);
-        }
-
-        @Override public void visitTypeParameter(PsiTypeParameter parameter) {
-            super.visitTypeParameter(parameter);
-            final String name = parameter.getName();
-            if (!PsiKeyword.ASSERT.equals(name)) {
-                return;
-            }
-            registerTypeParameterError(parameter);
-        }
-    }
+  }
 }

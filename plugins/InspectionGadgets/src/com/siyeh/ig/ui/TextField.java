@@ -26,68 +26,72 @@ import java.lang.reflect.Field;
 
 public class TextField extends JTextField {
 
-    public TextField(@NotNull InspectionProfileEntry owner,
-                     @NonNls String property) {
-        super(getPropertyValue(owner, property));
-        final DocumentListener documentListener =
-                new TextFieldDocumentListener(owner, property);
-        getDocument().addDocumentListener(documentListener);
-    }
+  public TextField(@NotNull InspectionProfileEntry owner,
+                   @NonNls String property) {
+    super(getPropertyValue(owner, property));
+    final DocumentListener documentListener =
+      new TextFieldDocumentListener(owner, property);
+    getDocument().addDocumentListener(documentListener);
+  }
 
-    private static String getPropertyValue(InspectionProfileEntry owner,
-                                           String property) {
-        try {
-            final Class<? extends InspectionProfileEntry> aClass =
-                    owner.getClass();
-            final Field field = aClass.getField(property);
-            return (String) field.get(owner);
-        } catch (IllegalAccessException ignore) {
-            return null;
-        } catch (NoSuchFieldException ignore) {
-            return null;
-        }
-    }
-
-    private static void setPropertyValue(InspectionProfileEntry owner,
-                                         String property,
-                                         String value) {
-        try {
-            final Class<? extends InspectionProfileEntry> aClass =
-                    owner.getClass();
-            final Field field = aClass.getField(property);
-            field.set(owner, value);
-        } catch (IllegalAccessException ignore) {
-            // do nothing
-        } catch (NoSuchFieldException ignore) {
-            // do nothing
-        }
-    }
-
-    private class TextFieldDocumentListener implements DocumentListener {
-
-        private final InspectionProfileEntry owner;
-        private final String property;
-
-        public TextFieldDocumentListener(InspectionProfileEntry owner,
+  private static String getPropertyValue(InspectionProfileEntry owner,
                                          String property) {
-            this.owner = owner;
-            this.property = property;
-        }
-
-        public void insertUpdate(DocumentEvent documentEvent) {
-            textChanged();
-        }
-
-        public void removeUpdate(DocumentEvent documentEvent) {
-            textChanged();
-        }
-
-        public void changedUpdate(DocumentEvent documentEvent) {
-            textChanged();
-        }
-
-        private void textChanged() {
-            setPropertyValue(owner, property, getText());
-        }
+    try {
+      final Class<? extends InspectionProfileEntry> aClass =
+        owner.getClass();
+      final Field field = aClass.getField(property);
+      return (String)field.get(owner);
     }
+    catch (IllegalAccessException ignore) {
+      return null;
+    }
+    catch (NoSuchFieldException ignore) {
+      return null;
+    }
+  }
+
+  private static void setPropertyValue(InspectionProfileEntry owner,
+                                       String property,
+                                       String value) {
+    try {
+      final Class<? extends InspectionProfileEntry> aClass =
+        owner.getClass();
+      final Field field = aClass.getField(property);
+      field.set(owner, value);
+    }
+    catch (IllegalAccessException ignore) {
+      // do nothing
+    }
+    catch (NoSuchFieldException ignore) {
+      // do nothing
+    }
+  }
+
+  private class TextFieldDocumentListener implements DocumentListener {
+
+    private final InspectionProfileEntry owner;
+    private final String property;
+
+    public TextFieldDocumentListener(InspectionProfileEntry owner,
+                                     String property) {
+      this.owner = owner;
+      this.property = property;
+    }
+
+    public void insertUpdate(DocumentEvent documentEvent) {
+      textChanged();
+    }
+
+    public void removeUpdate(DocumentEvent documentEvent) {
+      textChanged();
+    }
+
+    public void changedUpdate(DocumentEvent documentEvent) {
+      textChanged();
+    }
+
+    private void textChanged() {
+      setPropertyValue(owner, property, getText());
+    }
+  }
 }

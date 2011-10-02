@@ -34,88 +34,91 @@ import javax.swing.*;
 
 public class NegatedConditionalInspection extends BaseInspection {
 
-    /** @noinspection PublicField */
-    public boolean m_ignoreNegatedNullComparison = true;
+  /**
+   * @noinspection PublicField
+   */
+  public boolean m_ignoreNegatedNullComparison = true;
+
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "negated.conditional.display.name");
+  }
+
+  @NotNull
+  public String getID() {
+    return "ConditionalExpressionWithNegatedCondition";
+  }
+
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "negated.conditional.problem.descriptor");
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new NegatedConditionalVisitor();
+  }
+
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+      "negated.conditional.ignore.option"), this,
+                                          "m_ignoreNegatedNullComparison");
+  }
+
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new NegatedConditionalFix();
+  }
+
+  private static class NegatedConditionalFix extends InspectionGadgetsFix {
 
     @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "negated.conditional.display.name");
+    public String getName() {
+      return InspectionGadgetsBundle.message(
+        "negated.conditional.invert.quickfix");
     }
 
-    @NotNull
-    public String getID() {
-        return "ConditionalExpressionWithNegatedCondition";
+    public void doFix(Project project,
+                      ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiElement element = descriptor.getPsiElement();
+      final PsiConditionalExpression exp =
+        (PsiConditionalExpression)element.getParent();
+      assert exp != null;
+      final PsiExpression elseBranch = exp.getElseExpression();
+      final PsiExpression thenBranch = exp.getThenExpression();
+      final PsiExpression condition = exp.getCondition();
+      final String negatedCondition =
+        BoolUtils.getNegatedExpressionText(condition);
+      assert elseBranch != null;
+      assert thenBranch != null;
+      final String newStatement =
+        negatedCondition + '?' + elseBranch.getText() + ':' +
+        thenBranch.getText();
+      replaceExpression(exp, newStatement);
     }
+  }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "negated.conditional.problem.descriptor");
+  private class NegatedConditionalVisitor extends BaseInspectionVisitor {
+
+    @Override
+    public void visitConditionalExpression(
+      PsiConditionalExpression expression) {
+      super.visitConditionalExpression(expression);
+      final PsiExpression thenBranch = expression.getThenExpression();
+      if (thenBranch == null) {
+        return;
+      }
+      final PsiExpression elseBranch = expression.getElseExpression();
+      if (elseBranch == null) {
+        return;
+      }
+      final PsiExpression condition = expression.getCondition();
+      if (!ExpressionUtils.isNegation(condition,
+                                      m_ignoreNegatedNullComparison)) {
+        return;
+      }
+      registerError(condition);
     }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new NegatedConditionalVisitor();
-    }
-
-    public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-                "negated.conditional.ignore.option"), this,
-                "m_ignoreNegatedNullComparison");
-    }
-
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        return new NegatedConditionalFix();
-    }
-
-    private static class NegatedConditionalFix extends InspectionGadgetsFix {
-
-        @NotNull
-        public String getName() {
-            return InspectionGadgetsBundle.message(
-                    "negated.conditional.invert.quickfix");
-        }
-
-        public void doFix(Project project,
-                          ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
-            final PsiElement element = descriptor.getPsiElement();
-            final PsiConditionalExpression exp =
-                    (PsiConditionalExpression)element.getParent();
-            assert exp != null;
-            final PsiExpression elseBranch = exp.getElseExpression();
-            final PsiExpression thenBranch = exp.getThenExpression();
-            final PsiExpression condition = exp.getCondition();
-            final String negatedCondition =
-                    BoolUtils.getNegatedExpressionText(condition);
-            assert elseBranch != null;
-            assert thenBranch != null;
-            final String newStatement =
-                    negatedCondition + '?' + elseBranch.getText() + ':' +
-                            thenBranch.getText();
-            replaceExpression(exp, newStatement);
-        }
-    }
-
-    private class NegatedConditionalVisitor extends BaseInspectionVisitor {
-
-        @Override public void visitConditionalExpression(
-                PsiConditionalExpression expression) {
-            super.visitConditionalExpression(expression);
-            final PsiExpression thenBranch = expression.getThenExpression();
-            if (thenBranch == null) {
-                return;
-            }
-            final PsiExpression elseBranch = expression.getElseExpression();
-            if (elseBranch == null) {
-                return;
-            }
-            final PsiExpression condition = expression.getCondition();
-            if (!ExpressionUtils.isNegation(condition,
-                    m_ignoreNegatedNullComparison)) {
-                return;
-            }
-            registerError(condition);
-        }
-    }
+  }
 }

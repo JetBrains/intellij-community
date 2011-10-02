@@ -31,116 +31,118 @@ import javax.swing.*;
 
 public class UnnecessaryParenthesesInspection extends BaseInspection {
 
-    @SuppressWarnings({"PublicField"})
-    public boolean ignoreClarifyingParentheses = false;
+  @SuppressWarnings({"PublicField"})
+  public boolean ignoreClarifyingParentheses = false;
 
-    @SuppressWarnings({"PublicField"})
-    public boolean ignoreParenthesesOnConditionals = false;
+  @SuppressWarnings({"PublicField"})
+  public boolean ignoreParenthesesOnConditionals = false;
 
-    @Override
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "unnecessary.parentheses.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "unnecessary.parentheses.problem.descriptor");
+  }
+
+  @Override
+  public JComponent createOptionsPanel() {
+    final MultipleCheckboxOptionsPanel optionsPanel =
+      new MultipleCheckboxOptionsPanel(this);
+    optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
+      "unnecessary.parentheses.option"),
+                             "ignoreClarifyingParentheses");
+    optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
+      "unnecessary.parentheses.conditional.option"),
+                             "ignoreParenthesesOnConditionals");
+    return optionsPanel;
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new UnnecessaryParenthesesVisitor();
+  }
+
+  private class UnnecessaryParenthesesFix extends InspectionGadgetsFix {
+
     @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "unnecessary.parentheses.display.name");
+    public String getName() {
+      return InspectionGadgetsBundle.message(
+        "unnecessary.parentheses.remove.quickfix");
     }
 
     @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "unnecessary.parentheses.problem.descriptor");
+    public void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiExpression expression =
+        (PsiExpression)descriptor.getPsiElement();
+      ParenthesesUtils.removeParentheses(expression,
+                                         ignoreClarifyingParentheses);
     }
+  }
+
+  @Override
+  public InspectionGadgetsFix buildFix(Object... infos) {
+    return new UnnecessaryParenthesesFix();
+  }
+
+  private class UnnecessaryParenthesesVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    public JComponent createOptionsPanel() {
-        final MultipleCheckboxOptionsPanel optionsPanel =
-                new MultipleCheckboxOptionsPanel(this);
-        optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-                "unnecessary.parentheses.option"),
-                "ignoreClarifyingParentheses");
-        optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-                "unnecessary.parentheses.conditional.option"),
-                "ignoreParenthesesOnConditionals");
-        return optionsPanel;
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new UnnecessaryParenthesesVisitor();
-    }
-
-    private class UnnecessaryParenthesesFix extends InspectionGadgetsFix {
-
-        @NotNull
-        public String getName() {
-            return InspectionGadgetsBundle.message(
-                    "unnecessary.parentheses.remove.quickfix");
+    public void visitParenthesizedExpression(
+      PsiParenthesizedExpression expression) {
+      final PsiElement parent = expression.getParent();
+      final PsiExpression child = expression.getExpression();
+      if (child == null) {
+        return;
+      }
+      if (!(parent instanceof PsiExpression) ||
+          parent instanceof PsiParenthesizedExpression) {
+        registerError(expression);
+        return;
+      }
+      final int parentPrecedence =
+        ParenthesesUtils.getPrecedence((PsiExpression)parent);
+      final int childPrecedence = ParenthesesUtils.getPrecedence(child);
+      if (parentPrecedence > childPrecedence) {
+        if (ignoreClarifyingParentheses) {
+          if (parent instanceof PsiPolyadicExpression &&
+              child instanceof PsiPolyadicExpression) {
+            return;
+          }
+          else if (child instanceof PsiInstanceOfExpression) {
+            return;
+          }
         }
-
-        @Override
-        public void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
-            final PsiExpression expression =
-                    (PsiExpression)descriptor.getPsiElement();
-            ParenthesesUtils.removeParentheses(expression,
-                    ignoreClarifyingParentheses);
+        if (ignoreParenthesesOnConditionals) {
+          if (parent instanceof PsiConditionalExpression) {
+            final PsiConditionalExpression conditionalExpression =
+              (PsiConditionalExpression)parent;
+            final PsiExpression condition =
+              conditionalExpression.getCondition();
+            if (expression == condition) {
+              return;
+            }
+          }
         }
-    }
-
-    @Override
-    public InspectionGadgetsFix buildFix(Object... infos) {
-        return new UnnecessaryParenthesesFix();
-    }
-
-    private class UnnecessaryParenthesesVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitParenthesizedExpression(
-                PsiParenthesizedExpression expression) {
-            final PsiElement parent = expression.getParent();
-            final PsiExpression child = expression.getExpression();
-            if (child == null) {
-                return;
-            }
-            if (!(parent instanceof PsiExpression) ||
-                    parent instanceof PsiParenthesizedExpression) {
-                registerError(expression);
-                return;
-            }
-            final int parentPrecedence =
-                    ParenthesesUtils.getPrecedence((PsiExpression)parent);
-            final int childPrecedence = ParenthesesUtils.getPrecedence(child);
-            if (parentPrecedence > childPrecedence) {
-                if (ignoreClarifyingParentheses) {
-                    if (parent instanceof PsiPolyadicExpression &&
-                            child instanceof PsiPolyadicExpression) {
-                        return;
-                    } else if (child instanceof PsiInstanceOfExpression) {
-                        return;
-                    }
-                }
-                if (ignoreParenthesesOnConditionals) {
-                    if (parent instanceof PsiConditionalExpression) {
-                        final PsiConditionalExpression conditionalExpression =
-                                (PsiConditionalExpression) parent;
-                        final PsiExpression condition =
-                                conditionalExpression.getCondition();
-                        if (expression == condition) {
-                            return;
-                        }
-                    }
-                }
-                registerError(expression);
-                return;
-            }
-            if (parentPrecedence == childPrecedence) {
-                if (!ParenthesesUtils.areParenthesesNeeded(expression,
-                        ignoreClarifyingParentheses)) {
-                    registerError(expression);
-                    return;
-                }
-            }
-            super.visitParenthesizedExpression(expression);
+        registerError(expression);
+        return;
+      }
+      if (parentPrecedence == childPrecedence) {
+        if (!ParenthesesUtils.areParenthesesNeeded(expression,
+                                                   ignoreClarifyingParentheses)) {
+          registerError(expression);
+          return;
         }
+      }
+      super.visitParenthesizedExpression(expression);
     }
+  }
 }

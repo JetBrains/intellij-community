@@ -29,101 +29,104 @@ import java.awt.*;
 
 public class NonStaticFinalLoggerInspection extends BaseInspection {
 
-    /** @noinspection PublicField*/
-    public String loggerClassName = "java.util.logging.Logger";
+  /**
+   * @noinspection PublicField
+   */
+  public String loggerClassName = "java.util.logging.Logger";
+
+  @Override
+  @NotNull
+  public String getID() {
+    return "NonConstantLogger";
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "non.constant.logger.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "non.constant.logger.problem.descriptor");
+  }
+
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    final PsiField field = (PsiField)infos[0];
+    return MakeFieldStaticFinalFix.buildFixUnconditional(field);
+  }
+
+
+  @Override
+  public JComponent createOptionsPanel() {
+    final GridBagLayout layout = new GridBagLayout();
+    final JPanel panel = new JPanel(layout);
+
+    final JLabel classNameLabel = new JLabel(
+      InspectionGadgetsBundle.message("logger.name.option"));
+    classNameLabel.setHorizontalAlignment(SwingConstants.TRAILING);
+
+    final TextField loggerClassNameField =
+      new TextField(this, "loggerClassName");
+
+    final GridBagConstraints constraints = new GridBagConstraints();
+    constraints.gridx = 0;
+    constraints.gridy = 0;
+    constraints.ipady = 10;
+    constraints.weighty = 1.0;
+    constraints.anchor = GridBagConstraints.NORTHEAST;
+    panel.add(classNameLabel, constraints);
+
+    constraints.gridx = 1;
+    constraints.ipady = 0;
+    constraints.fill = GridBagConstraints.HORIZONTAL;
+    constraints.weightx = 1.0;
+    panel.add(loggerClassNameField, constraints);
+
+    return panel;
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new NonStaticFinalLoggerVisitor();
+  }
+
+  private class NonStaticFinalLoggerVisitor extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String getID(){
-        return "NonConstantLogger";
-    }
-
-    @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "non.constant.logger.display.name");
-    }
-
-    @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "non.constant.logger.problem.descriptor");
-    }
-
-    @Override
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        final PsiField field = (PsiField) infos[0];
-        return MakeFieldStaticFinalFix.buildFixUnconditional(field);
-    }
-
-
-    @Override
-    public JComponent createOptionsPanel() {
-        final GridBagLayout layout = new GridBagLayout();
-        final JPanel panel = new JPanel(layout);
-
-        final JLabel classNameLabel = new JLabel(
-                InspectionGadgetsBundle.message("logger.name.option"));
-        classNameLabel.setHorizontalAlignment(SwingConstants.TRAILING);
-
-        final TextField loggerClassNameField =
-                new TextField(this, "loggerClassName");
-
-        final GridBagConstraints constraints = new GridBagConstraints();
-        constraints.gridx = 0;
-        constraints.gridy = 0;
-        constraints.ipady = 10;
-        constraints.weighty = 1.0;
-        constraints.anchor = GridBagConstraints.NORTHEAST;
-        panel.add(classNameLabel, constraints);
-
-        constraints.gridx = 1;
-        constraints.ipady = 0;
-        constraints.fill = GridBagConstraints.HORIZONTAL;
-        constraints.weightx = 1.0;
-        panel.add(loggerClassNameField, constraints);
-
-        return panel;
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new NonStaticFinalLoggerVisitor();
-    }
-
-    private class NonStaticFinalLoggerVisitor extends BaseInspectionVisitor {
-
-        @Override public void visitClass(@NotNull PsiClass aClass) {
-            //no recursion to avoid drilldown
-            if (aClass.isInterface() || aClass.isEnum() ||
-                    aClass.isAnnotationType()) {
-                return;
-            }
-            if(aClass instanceof PsiTypeParameter) {
-                return;
-            }
-            if (aClass.getContainingClass() != null) {
-                return;
-            }
-            final PsiField[] fields = aClass.getFields();
-            for(final PsiField field : fields) {
-                if (!isLogger(field)) {
-                    continue;
-                }
-                if (field.hasModifierProperty(PsiModifier.STATIC) &&
-                        field.hasModifierProperty(PsiModifier.FINAL)) {
-                    continue;
-                }
-                registerFieldError(field, field);
-            }
+    public void visitClass(@NotNull PsiClass aClass) {
+      //no recursion to avoid drilldown
+      if (aClass.isInterface() || aClass.isEnum() ||
+          aClass.isAnnotationType()) {
+        return;
+      }
+      if (aClass instanceof PsiTypeParameter) {
+        return;
+      }
+      if (aClass.getContainingClass() != null) {
+        return;
+      }
+      final PsiField[] fields = aClass.getFields();
+      for (final PsiField field : fields) {
+        if (!isLogger(field)) {
+          continue;
         }
-
-        private boolean isLogger(PsiVariable variable) {
-            final PsiType type = variable.getType();
-            final String text = type.getCanonicalText();
-            return text.equals(loggerClassName);
+        if (field.hasModifierProperty(PsiModifier.STATIC) &&
+            field.hasModifierProperty(PsiModifier.FINAL)) {
+          continue;
         }
+        registerFieldError(field, field);
+      }
     }
+
+    private boolean isLogger(PsiVariable variable) {
+      final PsiType type = variable.getType();
+      final String text = type.getCanonicalText();
+      return text.equals(loggerClassName);
+    }
+  }
 }

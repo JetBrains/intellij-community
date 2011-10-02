@@ -31,57 +31,58 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 
 public class AbstractClassWithOnlyOneDirectInheritorInspection
-        extends BaseInspection {
+  extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "abstract.class.with.only.one.direct.inheritor.display.name");
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "abstract.class.with.only.one.direct.inheritor.display.name");
+  }
+
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "abstract.class.with.only.one.direct.inheritor.problem.descriptor");
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new AbstractClassWithOnlyOneDirectInheritorVisitor();
+  }
+
+  private static class AbstractClassWithOnlyOneDirectInheritorVisitor
+    extends BaseInspectionVisitor {
+
+    @Override
+    public void visitClass(@NotNull PsiClass aClass) {
+      // no call to super, so that it doesn't drill down to inner classes
+      if (aClass.isInterface() || aClass.isAnnotationType()
+          || aClass.isEnum()) {
+        return;
+      }
+      if (aClass instanceof PsiTypeParameter) {
+        return;
+      }
+      if (!aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        return;
+      }
+      if (!hasOneInheritor(aClass)) {
+        return;
+      }
+      registerClassError(aClass);
     }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "abstract.class.with.only.one.direct.inheritor.problem.descriptor");
-    }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new AbstractClassWithOnlyOneDirectInheritorVisitor();
-    }
-
-    private static class AbstractClassWithOnlyOneDirectInheritorVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitClass(@NotNull PsiClass aClass) {
-            // no call to super, so that it doesn't drill down to inner classes
-            if (aClass.isInterface() || aClass.isAnnotationType()
-                || aClass.isEnum()) {
-                return;
-            }
-            if(aClass instanceof PsiTypeParameter) {
-                return;
-            }
-            if(!aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-                return;
-            }
-            if (!hasOneInheritor(aClass)) {
-                return;
-            }
-            registerClassError(aClass);
+    private static boolean hasOneInheritor(final PsiClass aClass) {
+      final SearchScope searchScope = aClass.getUseScope();
+      final PsiElementProcessor.CollectElementsWithLimit<PsiClass> processor =
+        new PsiElementProcessor.CollectElementsWithLimit<PsiClass>(2);
+      final ProgressManager instance = ProgressManager.getInstance();
+      instance.runProcess(new Runnable() {
+        public void run() {
+          ClassInheritorsSearch.search(aClass, searchScope, false).forEach(new PsiElementProcessorAdapter<PsiClass>(processor));
         }
-
-        private static boolean hasOneInheritor(final PsiClass aClass) {
-            final SearchScope searchScope = aClass.getUseScope();
-            final PsiElementProcessor.CollectElementsWithLimit<PsiClass> processor =
-                    new PsiElementProcessor.CollectElementsWithLimit<PsiClass>(2);
-            final ProgressManager instance = ProgressManager.getInstance();
-            instance.runProcess(new Runnable() {
-                public void run() {
-                  ClassInheritorsSearch.search(aClass, searchScope, false).forEach(new PsiElementProcessorAdapter<PsiClass>(processor));
-                }
-            }, null);
-            final Collection<PsiClass> collection = processor.getCollection();
-            return collection.size() == 1;
-        }
+      }, null);
+      final Collection<PsiClass> collection = processor.getCollection();
+      return collection.size() == 1;
     }
+  }
 }

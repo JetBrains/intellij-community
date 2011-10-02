@@ -27,48 +27,49 @@ import com.siyeh.ig.psiutils.SynchronizationUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class NotifyNotInSynchronizedContextInspection
-        extends BaseInspection {
+  extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "notify.not.in.synchronized.context.display.name");
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "notify.not.in.synchronized.context.display.name");
+  }
+
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "notify.not.in.synchronized.context.problem.descriptor");
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new NotifyNotInSynchronizedContextVisitor();
+  }
+
+  private static class NotifyNotInSynchronizedContextVisitor
+    extends BaseInspectionVisitor {
+
+    @Override
+    public void visitMethodCallExpression(
+      @NotNull PsiMethodCallExpression expression) {
+      final PsiReferenceExpression methodExpression =
+        expression.getMethodExpression();
+      final String methodName = methodExpression.getReferenceName();
+      if (!HardcodedMethodConstants.NOTIFY.equals(methodName) &&
+          !HardcodedMethodConstants.NOTIFY_ALL.equals(methodName)) {
+        return;
+      }
+      final PsiMethod method = expression.resolveMethod();
+      if (method == null) {
+        return;
+      }
+      final PsiParameterList parameterList = method.getParameterList();
+      if (parameterList.getParametersCount() != 0) {
+        return;
+      }
+      if (SynchronizationUtil.isInSynchronizedContext(expression)) {
+        return;
+      }
+      registerMethodCallError(expression);
     }
-
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "notify.not.in.synchronized.context.problem.descriptor");
-    }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new NotifyNotInSynchronizedContextVisitor();
-    }
-
-    private static class NotifyNotInSynchronizedContextVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitMethodCallExpression(
-                @NotNull PsiMethodCallExpression expression) {
-            final PsiReferenceExpression methodExpression =
-                    expression.getMethodExpression();
-            final String methodName = methodExpression.getReferenceName();
-            if (!HardcodedMethodConstants.NOTIFY.equals(methodName) &&
-                !HardcodedMethodConstants.NOTIFY_ALL.equals(methodName)) {
-                return;
-            }
-            final PsiMethod method = expression.resolveMethod();
-            if (method == null) {
-                return;
-            }
-            final PsiParameterList parameterList = method.getParameterList();
-            if (parameterList.getParametersCount() != 0) {
-                return;
-            }
-            if (SynchronizationUtil.isInSynchronizedContext(expression)) {
-                return;
-            }
-            registerMethodCallError(expression);
-        }
-    }
+  }
 }

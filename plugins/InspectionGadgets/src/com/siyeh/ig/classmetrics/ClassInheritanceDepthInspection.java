@@ -26,72 +26,73 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class ClassInheritanceDepthInspection
-        extends ClassMetricInspection{
+  extends ClassMetricInspection {
 
-    @NotNull
-    public String getID(){
-        return "ClassTooDeepInInheritanceTree";
+  @NotNull
+  public String getID() {
+    return "ClassTooDeepInInheritanceTree";
+  }
+
+  private static final int CLASS_INHERITANCE_LIMIT = 2;
+
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("class.too.deep.display.name");
+  }
+
+  protected int getDefaultLimit() {
+    return CLASS_INHERITANCE_LIMIT;
+  }
+
+  protected String getConfigurationLabel() {
+    return InspectionGadgetsBundle.message(
+      "class.too.deep.inheritance.depth.limit.option");
+  }
+
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    final Integer count = (Integer)infos[0];
+    return InspectionGadgetsBundle.message(
+      "class.too.deep.problem.descriptor", count);
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new ClassNestingLevel();
+  }
+
+  private class ClassNestingLevel extends BaseInspectionVisitor {
+
+    @Override
+    public void visitClass(@NotNull PsiClass aClass) {
+      // note: no call to super
+      if (aClass.isEnum()) {
+        return;
+      }
+      if (aClass instanceof PsiTypeParameter) {
+        return;
+      }
+      final int inheritanceDepth =
+        getInheritanceDepth(aClass, new HashSet<PsiClass>());
+      if (inheritanceDepth <= getLimit()) {
+        return;
+      }
+      registerClassError(aClass, Integer.valueOf(inheritanceDepth));
     }
 
-    private static final int CLASS_INHERITANCE_LIMIT = 2;
-
-    @NotNull
-    public String getDisplayName(){
-        return InspectionGadgetsBundle.message("class.too.deep.display.name");
+    private int getInheritanceDepth(PsiClass aClass, Set<PsiClass> visited) {
+      if (visited.contains(aClass)) {
+        return 0;
+      }
+      visited.add(aClass);
+      final PsiClass superClass = aClass.getSuperClass();
+      if (superClass == null) {
+        return 0;
+      }
+      if (LibraryUtil.classIsInLibrary(aClass) &&
+          LibraryUtil.classIsInLibrary(superClass)) {
+        return 0;
+      }
+      return getInheritanceDepth(superClass, visited) + 1;
     }
-
-    protected int getDefaultLimit(){
-        return CLASS_INHERITANCE_LIMIT;
-    }
-
-    protected String getConfigurationLabel(){
-        return InspectionGadgetsBundle.message(
-                "class.too.deep.inheritance.depth.limit.option");
-    }
-
-    @NotNull
-    public String buildErrorString(Object... infos){
-        final Integer count = (Integer)infos[0];
-        return InspectionGadgetsBundle.message(
-                "class.too.deep.problem.descriptor", count);
-    }
-
-    public BaseInspectionVisitor buildVisitor(){
-        return new ClassNestingLevel();
-    }
-
-    private class ClassNestingLevel extends BaseInspectionVisitor{
-
-        @Override public void visitClass(@NotNull PsiClass aClass){
-            // note: no call to super
-            if(aClass.isEnum()){
-                return;
-            }
-            if(aClass instanceof PsiTypeParameter) {
-                return;
-            }
-            final int inheritanceDepth =
-                    getInheritanceDepth(aClass, new HashSet<PsiClass>());
-            if (inheritanceDepth <= getLimit()){
-                return;
-            }
-            registerClassError(aClass, Integer.valueOf(inheritanceDepth));
-        }
-
-        private int getInheritanceDepth(PsiClass aClass, Set<PsiClass> visited){
-            if(visited.contains(aClass)){
-                return 0;
-            }
-            visited.add(aClass);
-            final PsiClass superClass = aClass.getSuperClass();
-            if(superClass == null){
-                return 0;
-            }
-            if(LibraryUtil.classIsInLibrary(aClass) &&
-                    LibraryUtil.classIsInLibrary(superClass)){
-                return 0;
-            }
-            return getInheritanceDepth(superClass, visited) + 1;
-        }
-    }
+  }
 }

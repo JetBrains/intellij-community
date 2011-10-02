@@ -27,50 +27,50 @@ import org.jetbrains.annotations.Nullable;
 
 public class MakeFieldStaticFinalFix extends InspectionGadgetsFix {
 
-    private final String fieldName;
+  private final String fieldName;
 
-    private MakeFieldStaticFinalFix(String fieldName) {
-        this.fieldName = fieldName;
-    }
+  private MakeFieldStaticFinalFix(String fieldName) {
+    this.fieldName = fieldName;
+  }
 
-    @NotNull
-    public static InspectionGadgetsFix buildFixUnconditional(
-            @NotNull PsiField field) {
-        return new MakeFieldStaticFinalFix(field.getName());
-    }
+  @NotNull
+  public static InspectionGadgetsFix buildFixUnconditional(
+    @NotNull PsiField field) {
+    return new MakeFieldStaticFinalFix(field.getName());
+  }
 
-    @Nullable
-    public static InspectionGadgetsFix buildFix(PsiField field) {
-        final PsiExpression initializer = field.getInitializer();
-        if (initializer == null) {
-            return null;
-        }
-        if (!FinalUtils.canBeFinal(field)) {
-            return null;
-        }
-        return new MakeFieldStaticFinalFix(field.getName());
+  @Nullable
+  public static InspectionGadgetsFix buildFix(PsiField field) {
+    final PsiExpression initializer = field.getInitializer();
+    if (initializer == null) {
+      return null;
     }
+    if (!FinalUtils.canBeFinal(field)) {
+      return null;
+    }
+    return new MakeFieldStaticFinalFix(field.getName());
+  }
 
-    @NotNull
-    public String getName() {
-        return InspectionGadgetsBundle.message(
-                "make.static.final.quickfix", fieldName);
-    }
+  @NotNull
+  public String getName() {
+    return InspectionGadgetsBundle.message(
+      "make.static.final.quickfix", fieldName);
+  }
 
-    @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor)
-            throws IncorrectOperationException {
-        final PsiElement element = descriptor.getPsiElement();
-        final PsiElement parent = element.getParent();
-        if (!(parent instanceof PsiField)) {
-            return;
-        }
-        final PsiField field = (PsiField) parent;
-        final PsiModifierList modifierList = field.getModifierList();
-        if (modifierList == null) {
-            return;
-        }
-        modifierList.setModifierProperty(PsiModifier.FINAL, true);
-        modifierList.setModifierProperty(PsiModifier.STATIC, true);
+  @Override
+  protected void doFix(Project project, ProblemDescriptor descriptor)
+    throws IncorrectOperationException {
+    final PsiElement element = descriptor.getPsiElement();
+    final PsiElement parent = element.getParent();
+    if (!(parent instanceof PsiField)) {
+      return;
     }
+    final PsiField field = (PsiField)parent;
+    final PsiModifierList modifierList = field.getModifierList();
+    if (modifierList == null) {
+      return;
+    }
+    modifierList.setModifierProperty(PsiModifier.FINAL, true);
+    modifierList.setModifierProperty(PsiModifier.STATIC, true);
+  }
 }

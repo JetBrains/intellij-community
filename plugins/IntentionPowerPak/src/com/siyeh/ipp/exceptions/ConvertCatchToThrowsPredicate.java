@@ -22,21 +22,21 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 
 class ConvertCatchToThrowsPredicate implements PsiElementPredicate {
 
-    public boolean satisfiedBy(PsiElement element) {
-        if (!(element instanceof PsiKeyword)) {
-            return false;
-        }
-        final PsiJavaToken javaToken = (PsiJavaToken) element;
-        final IElementType tokenType = javaToken.getTokenType();
-        if (!tokenType.equals(JavaTokenType.CATCH_KEYWORD)) {
-            return false;
-        }
-        final PsiElement parent = javaToken.getParent();
-        if (!(parent instanceof PsiCatchSection)) {
-            return false;
-        }
-        final PsiMethod method =
-                PsiTreeUtil.getParentOfType(parent, PsiMethod.class);
-        return method != null;
+  public boolean satisfiedBy(PsiElement element) {
+    if (!(element instanceof PsiKeyword)) {
+      return false;
     }
+    final PsiJavaToken javaToken = (PsiJavaToken)element;
+    final IElementType tokenType = javaToken.getTokenType();
+    if (!tokenType.equals(JavaTokenType.CATCH_KEYWORD)) {
+      return false;
+    }
+    final PsiElement parent = javaToken.getParent();
+    if (!(parent instanceof PsiCatchSection)) {
+      return false;
+    }
+    final PsiMethod method =
+      PsiTreeUtil.getParentOfType(parent, PsiMethod.class);
+    return method != null;
+  }
 }

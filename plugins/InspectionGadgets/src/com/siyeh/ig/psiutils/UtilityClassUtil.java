@@ -19,67 +19,67 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 public class UtilityClassUtil {
-    private UtilityClassUtil() {
-        super();
-    }
+  private UtilityClassUtil() {
+    super();
+  }
 
-    public static boolean isUtilityClass(@NotNull PsiClass aClass) {
-        if (aClass.isInterface() || aClass.isEnum() || aClass.isAnnotationType()) {
-            return false;
-        }
-        if(aClass instanceof PsiTypeParameter ||
-                aClass instanceof PsiAnonymousClass){
-            return false;
-        }
-        final PsiReferenceList extendsList = aClass.getExtendsList();
-        if (extendsList != null
-                && extendsList.getReferenceElements().length > 0) {
-            return false;
-        }
-        final PsiReferenceList implementsList = aClass.getImplementsList();
-        if (implementsList != null
-                && implementsList.getReferenceElements().length > 0) {
-            return false;
-        }
-        final PsiMethod[] methods = aClass.getMethods();
-        final int staticMethodCount = countStaticMethods(methods);
-        if (staticMethodCount < 0) {
-            return false;
-        }
-        final PsiField[] fields = aClass.getFields();
-        if (!allFieldsStatic(fields)) {
-            return false;
-        }
-        return staticMethodCount != 0 || fields.length != 0;
+  public static boolean isUtilityClass(@NotNull PsiClass aClass) {
+    if (aClass.isInterface() || aClass.isEnum() || aClass.isAnnotationType()) {
+      return false;
     }
+    if (aClass instanceof PsiTypeParameter ||
+        aClass instanceof PsiAnonymousClass) {
+      return false;
+    }
+    final PsiReferenceList extendsList = aClass.getExtendsList();
+    if (extendsList != null
+        && extendsList.getReferenceElements().length > 0) {
+      return false;
+    }
+    final PsiReferenceList implementsList = aClass.getImplementsList();
+    if (implementsList != null
+        && implementsList.getReferenceElements().length > 0) {
+      return false;
+    }
+    final PsiMethod[] methods = aClass.getMethods();
+    final int staticMethodCount = countStaticMethods(methods);
+    if (staticMethodCount < 0) {
+      return false;
+    }
+    final PsiField[] fields = aClass.getFields();
+    if (!allFieldsStatic(fields)) {
+      return false;
+    }
+    return staticMethodCount != 0 || fields.length != 0;
+  }
 
-    private static boolean allFieldsStatic(PsiField[] fields) {
-        for(final PsiField field : fields){
-            if(!field.hasModifierProperty(PsiModifier.STATIC)){
-                return false;
-            }
-        }
-        return true;
+  private static boolean allFieldsStatic(PsiField[] fields) {
+    for (final PsiField field : fields) {
+      if (!field.hasModifierProperty(PsiModifier.STATIC)) {
+        return false;
+      }
     }
+    return true;
+  }
 
-    /**
-     * @return -1 if an instance method was found, else the number of static
-     * methods in the class
-     */
-    private static int countStaticMethods(PsiMethod[] methods) {
-        int staticCount = 0;
-        for(final PsiMethod method : methods){
-            if (method.isConstructor()) {
-                continue;
-            }
-            if (!method.hasModifierProperty(PsiModifier.STATIC)) {
-                return -1;
-            }
-            if (method.hasModifierProperty(PsiModifier.PRIVATE)) {
-                continue;
-            }
-            staticCount++;
-        }
-        return staticCount;
+  /**
+   * @return -1 if an instance method was found, else the number of static
+   *         methods in the class
+   */
+  private static int countStaticMethods(PsiMethod[] methods) {
+    int staticCount = 0;
+    for (final PsiMethod method : methods) {
+      if (method.isConstructor()) {
+        continue;
+      }
+      if (!method.hasModifierProperty(PsiModifier.STATIC)) {
+        return -1;
+      }
+      if (method.hasModifierProperty(PsiModifier.PRIVATE)) {
+        continue;
+      }
+      staticCount++;
     }
+    return staticCount;
+  }
 }

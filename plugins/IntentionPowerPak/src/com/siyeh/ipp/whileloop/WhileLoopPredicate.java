@@ -24,21 +24,21 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 
 class WhileLoopPredicate implements PsiElementPredicate {
 
-    public boolean satisfiedBy(PsiElement element) {
-        if(!(element instanceof PsiJavaToken)){
-            return false;
-        }
-        final PsiJavaToken token = (PsiJavaToken) element;
-        final IElementType tokenType = token.getTokenType();
-        if(!JavaTokenType.WHILE_KEYWORD.equals(tokenType)){
-            return false;
-        }
-        final PsiElement parent = element.getParent();
-        if (!(parent instanceof PsiWhileStatement)) {
-            return false;
-        }
-        final PsiWhileStatement whileStatement = (PsiWhileStatement)parent;
-        return !(whileStatement.getCondition() == null ||
-                whileStatement.getBody() == null);
+  public boolean satisfiedBy(PsiElement element) {
+    if (!(element instanceof PsiJavaToken)) {
+      return false;
     }
+    final PsiJavaToken token = (PsiJavaToken)element;
+    final IElementType tokenType = token.getTokenType();
+    if (!JavaTokenType.WHILE_KEYWORD.equals(tokenType)) {
+      return false;
+    }
+    final PsiElement parent = element.getParent();
+    if (!(parent instanceof PsiWhileStatement)) {
+      return false;
+    }
+    final PsiWhileStatement whileStatement = (PsiWhileStatement)parent;
+    return !(whileStatement.getCondition() == null ||
+             whileStatement.getBody() == null);
+  }
 }

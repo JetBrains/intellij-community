@@ -29,95 +29,96 @@ import org.jetbrains.annotations.NotNull;
 
 public class ConstantStringInternInspection extends BaseInspection {
 
-    @Override
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "constant.string.intern.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "constant.string.intern.problem.descriptor");
+  }
+
+  @Override
+  public InspectionGadgetsFix buildFix(Object... infos) {
+    return new ConstantStringInternFix();
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new ConstantStringInternVisitor();
+  }
+
+  private static class ConstantStringInternFix extends InspectionGadgetsFix {
+
     @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "constant.string.intern.display.name");
+    public String getName() {
+      return InspectionGadgetsBundle.message(
+        "constant.string.intern.quickfix");
     }
 
     @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "constant.string.intern.problem.descriptor");
+    public void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiElement element = descriptor.getPsiElement();
+      final PsiElement parent = element.getParent();
+      final PsiMethodCallExpression call =
+        (PsiMethodCallExpression)parent.getParent();
+      final PsiReferenceExpression expression =
+        call.getMethodExpression();
+      final PsiExpression qualifier = expression.getQualifierExpression();
+      if (qualifier == null) {
+        return;
+      }
+      final String qualifierText = qualifier.getText();
+      replaceExpression(call, qualifierText);
     }
+  }
+
+  private static class ConstantStringInternVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    public InspectionGadgetsFix buildFix(Object... infos) {
-        return new ConstantStringInternFix();
+    public void visitMethodCallExpression(
+      @NotNull PsiMethodCallExpression expression) {
+      super.visitMethodCallExpression(expression);
+      final PsiReferenceExpression methodExpression =
+        expression.getMethodExpression();
+      @NonNls final String methodName =
+        methodExpression.getReferenceName();
+      if (!"intern".equals(methodName)) {
+        return;
+      }
+      final PsiExpressionList argList = expression.getArgumentList();
+      final PsiExpression[] args = argList.getExpressions();
+      if (args.length != 0) {
+        return;
+      }
+      final PsiExpression qualifier =
+        methodExpression.getQualifierExpression();
+      if (qualifier == null) {
+        return;
+      }
+      if (!PsiUtil.isConstantExpression(qualifier)) {
+        return;
+      }
+      final PsiMethod method = expression.resolveMethod();
+      if (method == null) {
+        return;
+      }
+      final PsiClass aClass = method.getContainingClass();
+      if (aClass == null) {
+        return;
+      }
+      final String className = aClass.getQualifiedName();
+      if (!CommonClassNames.JAVA_LANG_STRING.equals(className)) {
+        return;
+      }
+      registerMethodCallError(expression);
     }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new ConstantStringInternVisitor();
-    }
-
-    private static class ConstantStringInternFix extends InspectionGadgetsFix {
-
-        @NotNull
-        public String getName() {
-            return InspectionGadgetsBundle.message(
-                    "constant.string.intern.quickfix");
-        }
-
-        @Override
-        public void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
-            final PsiElement element = descriptor.getPsiElement();
-            final PsiElement parent = element.getParent();
-            final PsiMethodCallExpression call =
-                    (PsiMethodCallExpression) parent.getParent();
-            final PsiReferenceExpression expression =
-                    call.getMethodExpression();
-            final PsiExpression qualifier = expression.getQualifierExpression();
-            if (qualifier == null) {
-                return;
-            }
-            final String qualifierText = qualifier.getText();
-            replaceExpression(call, qualifierText);
-        }
-    }
-
-    private static class ConstantStringInternVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitMethodCallExpression(
-                @NotNull PsiMethodCallExpression expression) {
-            super.visitMethodCallExpression(expression);
-            final PsiReferenceExpression methodExpression =
-                    expression.getMethodExpression();
-            @NonNls final String methodName =
-                    methodExpression.getReferenceName();
-            if (!"intern".equals(methodName)) {
-                return;
-            }
-            final PsiExpressionList argList = expression.getArgumentList();
-            final PsiExpression[] args = argList.getExpressions();
-            if (args.length != 0) {
-                return;
-            }
-            final PsiExpression qualifier =
-                    methodExpression.getQualifierExpression();
-            if(qualifier == null) {
-                return;
-            }
-            if(!PsiUtil.isConstantExpression(qualifier)) {
-                return;
-            }
-            final PsiMethod method = expression.resolveMethod();
-            if (method == null) {
-                return;
-            }
-            final PsiClass aClass = method.getContainingClass();
-            if (aClass == null) {
-                return;
-            }
-            final String className = aClass.getQualifiedName();
-            if (!CommonClassNames.JAVA_LANG_STRING.equals(className)) {
-                return;
-            }
-            registerMethodCallError(expression);
-        }
-    }
+  }
 }

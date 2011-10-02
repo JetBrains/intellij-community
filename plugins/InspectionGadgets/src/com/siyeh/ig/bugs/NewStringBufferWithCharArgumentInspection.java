@@ -30,101 +30,102 @@ import org.jetbrains.annotations.Nullable;
 
 public class NewStringBufferWithCharArgumentInspection extends BaseInspection {
 
-    @Override
-    @Nls
+  @Override
+  @Nls
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "new.string.buffer.with.char.argument.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "new.string.buffer.with.char.argument.problem.descriptor");
+  }
+
+  @Override
+  public boolean isEnabledByDefault() {
+    return true;
+  }
+
+  @Override
+  @Nullable
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    final PsiExpression argument = (PsiExpression)infos[0];
+    if (!(argument instanceof PsiLiteralExpression)) {
+      return null;
+    }
+    return new NewStringBufferWithCharArgumentFix();
+  }
+
+  private static class NewStringBufferWithCharArgumentFix
+    extends InspectionGadgetsFix {
+
     @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "new.string.buffer.with.char.argument.display.name");
+    public String getName() {
+      return InspectionGadgetsBundle.message(
+        "new.string.buffer.with.char.argument.quickfix");
     }
 
     @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "new.string.buffer.with.char.argument.problem.descriptor");
+    protected void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiElement element = descriptor.getPsiElement();
+      final PsiNewExpression newExpression =
+        (PsiNewExpression)element.getParent();
+      final PsiExpressionList argumentList =
+        newExpression.getArgumentList();
+      if (argumentList == null) {
+        return;
+      }
+      final PsiExpression[] arguments = argumentList.getExpressions();
+      if (arguments.length != 1) {
+        return;
+      }
+      final PsiExpression argument = arguments[0];
+      final String text = argument.getText();
+      final String newArgument =
+        '"' + text.substring(1, text.length() - 1) + '"';
+      replaceExpression(argument, newArgument);
     }
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new StringBufferWithCharArgumentVisitor();
+  }
+
+  private static class StringBufferWithCharArgumentVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    public boolean isEnabledByDefault() {
-        return true;
+    public void visitNewExpression(PsiNewExpression expression) {
+      super.visitNewExpression(expression);
+      final PsiExpressionList argumentList = expression.getArgumentList();
+      if (argumentList == null) {
+        return;
+      }
+      final PsiExpression[] arguments = argumentList.getExpressions();
+      if (arguments.length != 1) {
+        return;
+      }
+      final PsiExpression argument = arguments[0];
+      final PsiType type = argument.getType();
+      if (!PsiType.CHAR.equals(type)) {
+        return;
+      }
+      final PsiMethod constructor = expression.resolveConstructor();
+      if (constructor == null) {
+        return;
+      }
+      final PsiClass aClass = constructor.getContainingClass();
+      if (!InheritanceUtil.isInheritor(aClass,
+                                       CommonClassNames.JAVA_LANG_ABSTRACT_STRING_BUILDER)) {
+        return;
+      }
+      registerNewExpressionError(expression, argument);
     }
-
-    @Override
-    @Nullable
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        final PsiExpression argument = (PsiExpression) infos[0];
-        if (!(argument instanceof PsiLiteralExpression)) {
-            return null;
-        }
-        return new NewStringBufferWithCharArgumentFix();
-    }
-
-    private static class NewStringBufferWithCharArgumentFix
-            extends InspectionGadgetsFix {
-
-        @NotNull
-        public String getName() {
-            return InspectionGadgetsBundle.message(
-                    "new.string.buffer.with.char.argument.quickfix");
-        }
-
-        @Override
-        protected void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
-            final PsiElement element = descriptor.getPsiElement();
-            final PsiNewExpression newExpression =
-                    (PsiNewExpression) element.getParent();
-            final PsiExpressionList argumentList =
-                    newExpression.getArgumentList();
-            if (argumentList == null) {
-                return;
-            }
-            final PsiExpression[] arguments = argumentList.getExpressions();
-            if (arguments.length != 1) {
-                return;
-            }
-            final PsiExpression argument = arguments[0];
-            final String text = argument.getText();
-            final String newArgument =
-                    '"' + text.substring(1, text.length() - 1) + '"';
-            replaceExpression(argument, newArgument);
-        }
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new StringBufferWithCharArgumentVisitor();
-    }
-
-    private static class StringBufferWithCharArgumentVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitNewExpression(PsiNewExpression expression) {
-            super.visitNewExpression(expression);
-            final PsiExpressionList argumentList = expression.getArgumentList();
-            if (argumentList == null) {
-                return;
-            }
-            final PsiExpression[] arguments = argumentList.getExpressions();
-            if (arguments.length != 1) {
-                return;
-            }
-            final PsiExpression argument = arguments[0];
-            final PsiType type = argument.getType();
-            if (!PsiType.CHAR.equals(type)) {
-                return;
-            }
-            final PsiMethod constructor = expression.resolveConstructor();
-            if (constructor == null) {
-                return;
-            }
-            final PsiClass aClass = constructor.getContainingClass();
-            if (!InheritanceUtil.isInheritor(aClass,
-                    CommonClassNames.JAVA_LANG_ABSTRACT_STRING_BUILDER)) {
-                return;
-            }
-            registerNewExpressionError(expression, argument);
-        }
-    }
+  }
 }

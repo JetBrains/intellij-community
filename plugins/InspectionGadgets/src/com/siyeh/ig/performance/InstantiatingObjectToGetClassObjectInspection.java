@@ -28,112 +28,115 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class InstantiatingObjectToGetClassObjectInspection
-        extends BaseInspection {
+  extends BaseInspection {
 
-    @Override
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "instantiating.object.to.get.class.object.display.name");
+  }
+
+  @Override
+  public boolean isEnabledByDefault() {
+    return true;
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "instantiating.object.to.get.class.object.problem.descriptor");
+  }
+
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new InstantiatingObjectToGetClassObjectFix();
+  }
+
+  private static class InstantiatingObjectToGetClassObjectFix
+    extends InspectionGadgetsFix {
+
     @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "instantiating.object.to.get.class.object.display.name");
+    public String getName() {
+      return InspectionGadgetsBundle.message(
+        "instantiating.object.to.get.class.object.replace.quickfix");
     }
 
     @Override
-    public boolean isEnabledByDefault() {
-        return true;
+    public void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiMethodCallExpression expression =
+        (PsiMethodCallExpression)descriptor.getPsiElement();
+      final PsiReferenceExpression methodExpression =
+        expression.getMethodExpression();
+      final PsiExpression qualifier =
+        methodExpression.getQualifierExpression();
+      if (qualifier == null) {
+        return;
+      }
+      final PsiType type = qualifier.getType();
+      if (type == null) {
+        return;
+      }
+      replaceExpression(expression,
+                        getTypeText(type, new StringBuilder()) + ".class");
     }
+
+    private static StringBuilder getTypeText(PsiType type,
+                                             StringBuilder text) {
+      if (type instanceof PsiArrayType) {
+        text.append("[]");
+        final PsiArrayType arrayType = (PsiArrayType)type;
+        getTypeText(arrayType.getComponentType(), text);
+      }
+      else if (type instanceof PsiClassType) {
+        final String canonicalText = type.getCanonicalText();
+        final String typeText =
+          StringUtils.stripAngleBrackets(canonicalText);
+        text.insert(0, typeText);
+      }
+      else {
+        text.insert(0, type.getCanonicalText());
+      }
+      return text;
+    }
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new InstantiatingObjectToGetClassObjectVisitor();
+  }
+
+  private static class InstantiatingObjectToGetClassObjectVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "instantiating.object.to.get.class.object.problem.descriptor");
+    public void visitMethodCallExpression(
+      @NotNull PsiMethodCallExpression expression) {
+      super.visitMethodCallExpression(expression);
+      final PsiReferenceExpression methodExpression =
+        expression.getMethodExpression();
+      @NonNls final String methodName =
+        methodExpression.getReferenceName();
+      if (!"getClass".equals(methodName)) {
+        return;
+      }
+      final PsiExpressionList argumentList = expression.getArgumentList();
+      final PsiExpression[] args = argumentList.getExpressions();
+      if (args.length != 0) {
+        return;
+      }
+      final PsiExpression qualifier =
+        methodExpression.getQualifierExpression();
+      if (!(qualifier instanceof PsiNewExpression)) {
+        return;
+      }
+      final PsiNewExpression newExpression = (PsiNewExpression)qualifier;
+      if (newExpression.getAnonymousClass() != null) {
+        return;
+      }
+      registerError(expression);
     }
-
-    @Override
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        return new InstantiatingObjectToGetClassObjectFix();
-    }
-
-    private static class InstantiatingObjectToGetClassObjectFix
-            extends InspectionGadgetsFix {
-
-        @NotNull
-        public String getName() {
-            return InspectionGadgetsBundle.message(
-                    "instantiating.object.to.get.class.object.replace.quickfix");
-        }
-
-        @Override
-        public void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
-            final PsiMethodCallExpression expression =
-                    (PsiMethodCallExpression)descriptor.getPsiElement();
-            final PsiReferenceExpression methodExpression =
-                    expression.getMethodExpression();
-            final PsiExpression qualifier =
-                    methodExpression.getQualifierExpression();
-            if (qualifier == null) {
-                return;
-            }
-            final PsiType type = qualifier.getType();
-            if (type == null) {
-                return;
-            }
-            replaceExpression(expression,
-                    getTypeText(type, new StringBuilder()) + ".class");
-        }
-
-        private static StringBuilder getTypeText(PsiType type,
-                                                 StringBuilder text) {
-            if (type instanceof PsiArrayType) {
-                text.append("[]");
-                final PsiArrayType arrayType = (PsiArrayType)type;
-                getTypeText(arrayType.getComponentType(), text);
-            } else if (type instanceof PsiClassType) {
-                final String canonicalText = type.getCanonicalText();
-                final String typeText =
-                        StringUtils.stripAngleBrackets(canonicalText);
-                text.insert(0, typeText);
-            } else {
-                text.insert(0, type.getCanonicalText());
-            }
-            return text;
-        }
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new InstantiatingObjectToGetClassObjectVisitor();
-    }
-
-    private static class InstantiatingObjectToGetClassObjectVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitMethodCallExpression(
-                @NotNull PsiMethodCallExpression expression) {
-            super.visitMethodCallExpression(expression);
-            final PsiReferenceExpression methodExpression =
-                    expression.getMethodExpression();
-            @NonNls final String methodName =
-                    methodExpression.getReferenceName();
-            if (!"getClass".equals(methodName)) {
-                return;
-            }
-            final PsiExpressionList argumentList = expression.getArgumentList();
-            final PsiExpression[] args = argumentList.getExpressions();
-            if (args.length != 0) {
-                return;
-            }
-            final PsiExpression qualifier =
-                    methodExpression.getQualifierExpression();
-            if (!(qualifier instanceof PsiNewExpression)) {
-                return;
-            }
-            final PsiNewExpression newExpression = (PsiNewExpression)qualifier;
-            if (newExpression.getAnonymousClass() != null) {
-                return;
-            }
-            registerError(expression);
-        }
-    }
+  }
 }

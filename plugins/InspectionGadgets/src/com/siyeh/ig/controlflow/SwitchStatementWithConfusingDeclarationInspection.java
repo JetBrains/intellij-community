@@ -25,76 +25,77 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class SwitchStatementWithConfusingDeclarationInspection
-        extends BaseInspection {
+  extends BaseInspection {
 
-    @NotNull
-    public String getID() {
-        return "LocalVariableUsedAndDeclaredInDifferentSwitchBranches";
-    }
+  @NotNull
+  public String getID() {
+    return "LocalVariableUsedAndDeclaredInDifferentSwitchBranches";
+  }
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "switch.statement.with.confusing.declaration.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "switch.statement.with.confusing.declaration.display.name");
+  }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "switch.statement.with.confusing.declaration.problem.descriptor");
-    }
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "switch.statement.with.confusing.declaration.problem.descriptor");
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new SwitchStatementWithConfusingDeclarationVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new SwitchStatementWithConfusingDeclarationVisitor();
+  }
 
-    private static class SwitchStatementWithConfusingDeclarationVisitor
-            extends BaseInspectionVisitor {
+  private static class SwitchStatementWithConfusingDeclarationVisitor
+    extends BaseInspectionVisitor {
 
-        @Override public void visitSwitchStatement(
-                @NotNull PsiSwitchStatement statement) {
-            final PsiCodeBlock body = statement.getBody();
-            if (body == null) {
-                return;
+    @Override
+    public void visitSwitchStatement(
+      @NotNull PsiSwitchStatement statement) {
+      final PsiCodeBlock body = statement.getBody();
+      if (body == null) {
+        return;
+      }
+      final Set<PsiLocalVariable> variablesInPreviousBranches =
+        new HashSet<PsiLocalVariable>(10);
+      final Set<PsiLocalVariable> variablesInCurrentBranch =
+        new HashSet<PsiLocalVariable>(10);
+      final PsiStatement[] statements = body.getStatements();
+      for (final PsiStatement child : statements) {
+        if (child instanceof PsiDeclarationStatement) {
+          final PsiDeclarationStatement declaration =
+            (PsiDeclarationStatement)child;
+          final PsiElement[] declaredElements =
+            declaration.getDeclaredElements();
+          for (final PsiElement declaredElement : declaredElements) {
+            if (declaredElement instanceof PsiLocalVariable) {
+              final PsiLocalVariable localVar =
+                (PsiLocalVariable)declaredElement;
+              variablesInCurrentBranch.add(localVar);
             }
-            final Set<PsiLocalVariable> variablesInPreviousBranches =
-                    new HashSet<PsiLocalVariable>(10);
-            final Set<PsiLocalVariable> variablesInCurrentBranch =
-                    new HashSet<PsiLocalVariable>(10);
-            final PsiStatement[] statements = body.getStatements();
-            for (final PsiStatement child : statements) {
-                if (child instanceof PsiDeclarationStatement) {
-                    final PsiDeclarationStatement declaration =
-                            (PsiDeclarationStatement)child;
-                    final PsiElement[] declaredElements =
-                            declaration.getDeclaredElements();
-                    for (final PsiElement declaredElement : declaredElements) {
-                        if (declaredElement instanceof PsiLocalVariable) {
-                            final PsiLocalVariable localVar =
-                                    (PsiLocalVariable)declaredElement;
-                            variablesInCurrentBranch.add(localVar);
-                        }
-                    }
-                }
-                if (child instanceof PsiBreakStatement) {
-                    variablesInPreviousBranches.addAll(
-                            variablesInCurrentBranch);
-                    variablesInCurrentBranch.clear();
-                }
-                final LocalVariableAccessVisitor visitor =
-                        new LocalVariableAccessVisitor();
-                child.accept(visitor);
-                final Set<PsiElement> accessedVariables =
-                        visitor.getAccessedVariables();
-                for (Object accessedVariable : accessedVariables) {
-                    final PsiLocalVariable localVar =
-                            (PsiLocalVariable)accessedVariable;
-                    if (variablesInPreviousBranches.contains(localVar)) {
-                        variablesInPreviousBranches.remove(localVar);
-                        registerVariableError(localVar);
-                    }
-                }
-            }
+          }
         }
+        if (child instanceof PsiBreakStatement) {
+          variablesInPreviousBranches.addAll(
+            variablesInCurrentBranch);
+          variablesInCurrentBranch.clear();
+        }
+        final LocalVariableAccessVisitor visitor =
+          new LocalVariableAccessVisitor();
+        child.accept(visitor);
+        final Set<PsiElement> accessedVariables =
+          visitor.getAccessedVariables();
+        for (Object accessedVariable : accessedVariables) {
+          final PsiLocalVariable localVar =
+            (PsiLocalVariable)accessedVariable;
+          if (variablesInPreviousBranches.contains(localVar)) {
+            variablesInPreviousBranches.remove(localVar);
+            registerVariableError(localVar);
+          }
+        }
+      }
     }
+  }
 }

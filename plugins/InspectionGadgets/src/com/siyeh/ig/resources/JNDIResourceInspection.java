@@ -27,128 +27,130 @@ import javax.swing.*;
 
 public class JNDIResourceInspection extends ResourceInspection {
 
-    @SuppressWarnings({"PublicField"})
-    public boolean insideTryAllowed = false;
+  @SuppressWarnings({"PublicField"})
+  public boolean insideTryAllowed = false;
+
+  @Override
+  @NotNull
+  public String getID() {
+    return "JNDIResourceOpenedButNotSafelyClosed";
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "jndi.resource.opened.not.closed.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    final PsiExpression expression = (PsiExpression)infos[0];
+    final PsiType type = expression.getType();
+    assert type != null;
+    final String text = type.getPresentableText();
+    return InspectionGadgetsBundle.message(
+      "resource.opened.not.closed.problem.descriptor", text);
+  }
+
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+      "allow.resource.to.be.opened.inside.a.try.block"),
+                                          this, "insideTryAllowed");
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new JNDIResourceVisitor();
+  }
+
+  private class JNDIResourceVisitor extends BaseInspectionVisitor {
+
+    @NonNls
+    private static final String LIST = "list";
+    @NonNls
+    private static final String LIST_BINDING = "listBindings";
+    @NonNls
+    private static final String GET_ALL = "getAll";
 
     @Override
-    @NotNull
-    public String getID() {
-        return "JNDIResourceOpenedButNotSafelyClosed";
+    public void visitMethodCallExpression(
+      @NotNull PsiMethodCallExpression expression) {
+      super.visitMethodCallExpression(expression);
+      if (!isJNDIFactoryMethod(expression)) {
+        return;
+      }
+      final PsiElement parent = getExpressionParent(expression);
+      if (parent instanceof PsiReturnStatement) {
+        return;
+      }
+      final PsiVariable boundVariable = getVariable(parent);
+      if (isSafelyClosed(boundVariable, expression, insideTryAllowed)) {
+        return;
+      }
+      if (isResourceEscapedFromMethod(boundVariable, expression)) {
+        return;
+      }
+      registerError(expression, expression);
     }
+
 
     @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "jndi.resource.opened.not.closed.display.name");
+    public void visitNewExpression(
+      @NotNull PsiNewExpression expression) {
+      super.visitNewExpression(expression);
+      if (!isJNDIResource(expression)) {
+        return;
+      }
+      final PsiElement parent = getExpressionParent(expression);
+      if (parent instanceof PsiReturnStatement) {
+        return;
+      }
+      final PsiVariable boundVariable = getVariable(parent);
+      if (isSafelyClosed(boundVariable, expression, insideTryAllowed)) {
+        return;
+      }
+      if (isResourceEscapedFromMethod(boundVariable, expression)) {
+        return;
+      }
+      registerError(expression, expression);
     }
 
-    @Override
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        final PsiExpression expression = (PsiExpression) infos[0];
-        final PsiType type = expression.getType();
-        assert type != null;
-        final String text = type.getPresentableText();
-        return InspectionGadgetsBundle.message(
-                "resource.opened.not.closed.problem.descriptor", text);
+    private boolean isJNDIResource(PsiNewExpression expression) {
+      return TypeUtils.expressionHasTypeOrSubtype(expression,
+                                                  "javax.naming.InitialContext");
     }
 
-    @Override
-    public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-                "allow.resource.to.be.opened.inside.a.try.block"),
-                this, "insideTryAllowed");
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new JNDIResourceVisitor();
-    }
-
-    private class JNDIResourceVisitor extends BaseInspectionVisitor {
-
-        @NonNls
-        private static final String LIST = "list";
-        @NonNls
-        private static final String LIST_BINDING = "listBindings";
-        @NonNls
-        private static final String GET_ALL = "getAll";
-
-        @Override
-        public void visitMethodCallExpression(
-                @NotNull PsiMethodCallExpression expression) {
-            super.visitMethodCallExpression(expression);
-            if (!isJNDIFactoryMethod(expression)) {
-                return;
-            }
-            final PsiElement parent = getExpressionParent(expression);
-            if (parent instanceof PsiReturnStatement) {
-                return;
-            }
-            final PsiVariable boundVariable = getVariable(parent);
-            if (isSafelyClosed(boundVariable, expression, insideTryAllowed)) {
-                return;
-            }
-            if (isResourceEscapedFromMethod(boundVariable, expression)) {
-                return;
-            }
-            registerError(expression, expression);
+    private boolean isJNDIFactoryMethod(
+      PsiMethodCallExpression expression) {
+      final PsiReferenceExpression methodExpression =
+        expression.getMethodExpression();
+      final String methodName = methodExpression.getReferenceName();
+      if (LIST.equals(methodName) || LIST_BINDING.equals(methodName)) {
+        final PsiExpression qualifier =
+          methodExpression.getQualifierExpression();
+        if (qualifier == null) {
+          return false;
         }
-
-
-        @Override
-        public void visitNewExpression(
-                @NotNull PsiNewExpression expression) {
-            super.visitNewExpression(expression);
-            if (!isJNDIResource(expression)) {
-                return;
-            }
-            final PsiElement parent = getExpressionParent(expression);
-            if (parent instanceof PsiReturnStatement) {
-                return;
-            }
-            final PsiVariable boundVariable = getVariable(parent);
-            if (isSafelyClosed(boundVariable, expression, insideTryAllowed)) {
-                return;
-            }
-            if (isResourceEscapedFromMethod(boundVariable, expression)) {
-                return;
-            }
-            registerError(expression, expression);
+        return TypeUtils.expressionHasTypeOrSubtype(qualifier,
+                                                    "javax.naming.Context");
+      }
+      else if (GET_ALL.equals(methodName)) {
+        final PsiExpression qualifier =
+          methodExpression.getQualifierExpression();
+        if (qualifier == null) {
+          return false;
         }
-
-        private boolean isJNDIResource(PsiNewExpression expression) {
-            return TypeUtils.expressionHasTypeOrSubtype(expression,
-                    "javax.naming.InitialContext");
-        }
-
-        private boolean isJNDIFactoryMethod(
-                PsiMethodCallExpression expression) {
-            final PsiReferenceExpression methodExpression =
-                    expression.getMethodExpression();
-            final String methodName = methodExpression.getReferenceName();
-            if (LIST.equals(methodName) || LIST_BINDING.equals(methodName)) {
-                final PsiExpression qualifier =
-                        methodExpression.getQualifierExpression();
-                if (qualifier == null) {
-                    return false;
-                }
-                return TypeUtils.expressionHasTypeOrSubtype(qualifier,
-                        "javax.naming.Context");
-            } else if (GET_ALL.equals(methodName)) {
-                final PsiExpression qualifier =
-                        methodExpression.getQualifierExpression();
-                if (qualifier == null) {
-                    return false;
-                }
-                return TypeUtils.expressionHasTypeOrSubtype(qualifier,
-                        "javax.naming.directory.Attribute") ||
-                        TypeUtils.expressionHasTypeOrSubtype(qualifier,
-                                "javax.naming.directory.Attributes");
-            } else {
-                return false;
-            }
-        }
+        return TypeUtils.expressionHasTypeOrSubtype(qualifier,
+                                                    "javax.naming.directory.Attribute") ||
+               TypeUtils.expressionHasTypeOrSubtype(qualifier,
+                                                    "javax.naming.directory.Attributes");
+      }
+      else {
+        return false;
+      }
     }
+  }
 }

@@ -27,73 +27,74 @@ import org.jetbrains.annotations.NotNull;
 
 public class StringEqualityInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "string.comparison.display.name");
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "string.comparison.display.name");
+  }
+
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "string.comparison.problem.descriptor");
+  }
+
+  public boolean isEnabledByDefault() {
+    return true;
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new ObjectEqualityVisitor();
+  }
+
+  public InspectionGadgetsFix buildFix(Object... infos) {
+    return new EqualityToEqualsFix();
+  }
+
+  private static class ObjectEqualityVisitor extends BaseInspectionVisitor {
+
+    @Override
+    public void visitBinaryExpression(
+      @NotNull PsiBinaryExpression expression) {
+      super.visitBinaryExpression(expression);
+      if (!(expression.getROperand() != null)) {
+        return;
+      }
+      if (!ComparisonUtils.isEqualityComparison(expression)) {
+        return;
+      }
+      final PsiExpression lhs = expression.getLOperand();
+      if (!isStringType(lhs)) {
+        return;
+      }
+      final PsiExpression rhs = expression.getROperand();
+      if (!isStringType(rhs)) {
+        return;
+      }
+      final String lhsText = lhs.getText();
+      if (PsiKeyword.NULL.equals(lhsText)) {
+        return;
+      }
+      if (rhs == null) {
+        return;
+      }
+      final String rhsText = rhs.getText();
+      if (PsiKeyword.NULL.equals(rhsText)) {
+        return;
+      }
+      final PsiJavaToken sign = expression.getOperationSign();
+      registerError(sign);
     }
 
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "string.comparison.problem.descriptor");
+    private static boolean isStringType(PsiExpression lhs) {
+      if (lhs == null) {
+        return false;
+      }
+      final PsiType lhsType = lhs.getType();
+      if (lhsType == null) {
+        return false;
+      }
+      return TypeUtils.isJavaLangString(lhsType);
     }
-
-    public boolean isEnabledByDefault(){
-        return true;
-    }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new ObjectEqualityVisitor();
-    }
-
-    public InspectionGadgetsFix buildFix(Object... infos) {
-        return new EqualityToEqualsFix();
-    }
-
-    private static class ObjectEqualityVisitor extends BaseInspectionVisitor {
-
-        @Override public void visitBinaryExpression(
-                @NotNull PsiBinaryExpression expression) {
-            super.visitBinaryExpression(expression);
-            if(!(expression.getROperand() != null)){
-                return;
-            }
-            if (!ComparisonUtils.isEqualityComparison(expression)) {
-                return;
-            }
-            final PsiExpression lhs = expression.getLOperand();
-            if (!isStringType(lhs)) {
-                return;
-            }
-            final PsiExpression rhs = expression.getROperand();
-            if (!isStringType(rhs)) {
-                return;
-            }
-            final String lhsText = lhs.getText();
-            if (PsiKeyword.NULL.equals(lhsText)) {
-                return;
-            }
-            if (rhs == null) {
-                return;
-            }
-            final String rhsText = rhs.getText();
-            if (PsiKeyword.NULL.equals(rhsText)) {
-                return;
-            }
-            final PsiJavaToken sign = expression.getOperationSign();
-            registerError(sign);
-        }
-
-        private static boolean isStringType(PsiExpression lhs) {
-            if (lhs == null) {
-                return false;
-            }
-            final PsiType lhsType = lhs.getType();
-            if (lhsType == null) {
-                return false;
-            }
-            return TypeUtils.isJavaLangString(lhsType);
-        }
-    }
+  }
 }

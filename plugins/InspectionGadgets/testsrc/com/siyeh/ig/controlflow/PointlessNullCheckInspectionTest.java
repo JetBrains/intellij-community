@@ -12,8 +12,7 @@ import com.siyeh.ig.IGInspectionTestCase;
 
 public class PointlessNullCheckInspectionTest extends IGInspectionTestCase {
 
-    public void test() throws Exception {
-        doTest("com/siyeh/igtest/controlflow/pointless_null_check", new PointlessNullCheckInspection());
-    }
-
+  public void test() throws Exception {
+    doTest("com/siyeh/igtest/controlflow/pointless_null_check", new PointlessNullCheckInspection());
+  }
 }

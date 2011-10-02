@@ -26,61 +26,73 @@ import org.jetbrains.annotations.NotNull;
 
 public class ConstantExpressionIntention extends Intention {
 
-    @Override
-    @NotNull
-    protected PsiElementPredicate getElementPredicate() {
-        return new ConstantExpressionPredicate();
-    }
+  @Override
+  @NotNull
+  protected PsiElementPredicate getElementPredicate() {
+    return new ConstantExpressionPredicate();
+  }
 
-    @Override
-    public void processIntention(PsiElement element)
-            throws IncorrectOperationException {
-        final PsiExpression expression =
-                (PsiExpression)element;
-        final Object value =
-                ExpressionUtils.computeConstantExpression(expression);
-        @NonNls final String newExpression;
-        if (value instanceof String) {
-            final String string = (String)value;
-            newExpression =
-                    '"' + StringUtil.escapeStringCharacters(string) + '"';
-        } else if (value instanceof Character) {
-            newExpression =
-                    '\'' + StringUtil.escapeStringCharacters(value.toString()) +
-                            '\'';
-        } else if (value instanceof Long) {
-            newExpression = value.toString() + 'L';
-        } else if (value instanceof Double) {
-          final double v = ((Double)value).doubleValue();
-          if (Double.isNaN(v)) {
-              newExpression = "java.lang.Double.NaN";
-          } else if (Double.isInfinite(v)) {
-              if (v > 0.0) {
-                  newExpression = "java.lang.Double.POSITIVE_INFINITY";
-              } else {
-                  newExpression = "java.lang.Double.NEGATIVE_INFINITY";
-              }
-          } else {
-              newExpression = Double.toString(v);
-          }
-        } else if (value instanceof Float) {
-          final float v = ((Float)value).floatValue();
-          if (Float.isNaN(v)) {
-              newExpression = "java.lang.Float.NaN";
-          } else if (Float.isInfinite(v)) {
-              if (v > 0.0F) {
-                  newExpression = "java.lang.Float.POSITIVE_INFINITY";
-              } else {
-                  newExpression = "java.lang.Float.NEGATIVE_INFINITY";
-              }
-          } else {
-              newExpression = Float.toString(v) + 'f';
-          }
-        } else if (value == null) {
-            newExpression = "null";
-        } else {
-            newExpression = String.valueOf(value);
-        }
-        replaceExpression(newExpression, expression);
+  @Override
+  public void processIntention(PsiElement element)
+    throws IncorrectOperationException {
+    final PsiExpression expression =
+      (PsiExpression)element;
+    final Object value =
+      ExpressionUtils.computeConstantExpression(expression);
+    @NonNls final String newExpression;
+    if (value instanceof String) {
+      final String string = (String)value;
+      newExpression =
+        '"' + StringUtil.escapeStringCharacters(string) + '"';
     }
+    else if (value instanceof Character) {
+      newExpression =
+        '\'' + StringUtil.escapeStringCharacters(value.toString()) +
+        '\'';
+    }
+    else if (value instanceof Long) {
+      newExpression = value.toString() + 'L';
+    }
+    else if (value instanceof Double) {
+      final double v = ((Double)value).doubleValue();
+      if (Double.isNaN(v)) {
+        newExpression = "java.lang.Double.NaN";
+      }
+      else if (Double.isInfinite(v)) {
+        if (v > 0.0) {
+          newExpression = "java.lang.Double.POSITIVE_INFINITY";
+        }
+        else {
+          newExpression = "java.lang.Double.NEGATIVE_INFINITY";
+        }
+      }
+      else {
+        newExpression = Double.toString(v);
+      }
+    }
+    else if (value instanceof Float) {
+      final float v = ((Float)value).floatValue();
+      if (Float.isNaN(v)) {
+        newExpression = "java.lang.Float.NaN";
+      }
+      else if (Float.isInfinite(v)) {
+        if (v > 0.0F) {
+          newExpression = "java.lang.Float.POSITIVE_INFINITY";
+        }
+        else {
+          newExpression = "java.lang.Float.NEGATIVE_INFINITY";
+        }
+      }
+      else {
+        newExpression = Float.toString(v) + 'f';
+      }
+    }
+    else if (value == null) {
+      newExpression = "null";
+    }
+    else {
+      newExpression = String.valueOf(value);
+    }
+    replaceExpression(newExpression, expression);
+  }
 }

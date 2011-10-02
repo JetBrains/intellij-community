@@ -24,66 +24,67 @@ import org.jetbrains.annotations.NotNull;
 
 public class StringTokenizerInspection extends BaseInspection {
 
-    @NotNull
-    public String getID() {
-        return "UseOfStringTokenizer";
+  @NotNull
+  public String getID() {
+    return "UseOfStringTokenizer";
+  }
+
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "use.stringtokenizer.display.name");
+  }
+
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "use.stringtokenizer.problem.descriptor");
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new StringTokenizerVisitor();
+  }
+
+  private static class StringTokenizerVisitor extends BaseInspectionVisitor {
+
+    @Override
+    public void visitVariable(@NotNull PsiVariable variable) {
+      super.visitVariable(variable);
+      final PsiType type = variable.getType();
+      final PsiType deepComponentType = type.getDeepComponentType();
+      if (!TypeUtils.typeEquals("java.util.StringTokenizer",
+                                deepComponentType)) {
+        return;
+      }
+      final PsiTypeElement typeElement = variable.getTypeElement();
+      if (typeElement == null) {
+        return;
+      }
+      final PsiExpression initializer = variable.getInitializer();
+      if (isTokenizingNonNlsAnnotatedElement(initializer)) {
+        return;
+      }
+      registerError(typeElement);
     }
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "use.stringtokenizer.display.name");
+    private static boolean isTokenizingNonNlsAnnotatedElement(
+      PsiExpression initializer) {
+      if (!(initializer instanceof PsiNewExpression)) {
+        return false;
+      }
+      final PsiNewExpression newExpression =
+        (PsiNewExpression)initializer;
+      final PsiExpressionList argumentList =
+        newExpression.getArgumentList();
+      if (argumentList == null) {
+        return false;
+      }
+      final PsiExpression[] expressions =
+        argumentList.getExpressions();
+      if (expressions.length <= 0) {
+        return false;
+      }
+      return NonNlsUtils.isNonNlsAnnotated(expressions[0]);
     }
-
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "use.stringtokenizer.problem.descriptor");
-    }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new StringTokenizerVisitor();
-    }
-
-    private static class StringTokenizerVisitor extends BaseInspectionVisitor {
-
-        @Override public void visitVariable(@NotNull PsiVariable variable) {
-            super.visitVariable(variable);
-            final PsiType type = variable.getType();
-            final PsiType deepComponentType = type.getDeepComponentType();
-            if (!TypeUtils.typeEquals("java.util.StringTokenizer",
-                    deepComponentType)) {
-                return;
-            }
-            final PsiTypeElement typeElement = variable.getTypeElement();
-            if (typeElement == null) {
-                return;
-            }
-            final PsiExpression initializer = variable.getInitializer();
-            if (isTokenizingNonNlsAnnotatedElement(initializer)) {
-                return;
-            }
-            registerError(typeElement);
-        }
-
-        private static boolean isTokenizingNonNlsAnnotatedElement(
-                PsiExpression initializer) {
-            if (!(initializer instanceof PsiNewExpression)) {
-                return false;
-            }
-            final PsiNewExpression newExpression =
-                    (PsiNewExpression) initializer;
-            final PsiExpressionList argumentList =
-                    newExpression.getArgumentList();
-            if (argumentList == null) {
-                return false;
-            }
-            final PsiExpression[] expressions =
-                    argumentList.getExpressions();
-            if (expressions.length <= 0) {
-                return false;
-            }
-            return NonNlsUtils.isNonNlsAnnotated(expressions[0]);
-        }
-    }
+  }
 }

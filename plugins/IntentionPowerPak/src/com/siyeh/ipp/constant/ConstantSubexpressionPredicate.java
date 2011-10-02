@@ -21,87 +21,89 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Nullable;
 
-class ConstantSubexpressionPredicate implements PsiElementPredicate{
+class ConstantSubexpressionPredicate implements PsiElementPredicate {
 
-    public boolean satisfiedBy(PsiElement element){
-        if(!(element instanceof PsiJavaToken) &&
-                !(element.getPrevSibling() instanceof PsiJavaToken)){
-            return false;
-        }
-        final PsiElement parent = element.getParent();
-        if(!(parent instanceof PsiBinaryExpression)){
-            return false;
-        }
-        final PsiBinaryExpression binaryExpression =
-                (PsiBinaryExpression) parent;
-        final PsiType type = binaryExpression.getType();
-        if(type == null || type.equalsToText("java.lang.String")){
-            // handled by JoinConcatenatedStringLiteralsIntention
-            return false;
-        }
-        final PsiBinaryExpression subexpression =
-                getSubexpression(binaryExpression);
-        if(subexpression == null){
-            return false;
-        }
-        if(binaryExpression.equals(subexpression) &&
-                !isPartOfConstantExpression(binaryExpression)){
-            // handled by ConstantExpressonIntention
-            return false;
-        }
-        if(!PsiUtil.isConstantExpression(subexpression)){
-            return false;
-        }
-        final Object value =
-                ExpressionUtils.computeConstantExpression(subexpression);
-        return value != null;
+  public boolean satisfiedBy(PsiElement element) {
+    if (!(element instanceof PsiJavaToken) &&
+        !(element.getPrevSibling() instanceof PsiJavaToken)) {
+      return false;
     }
+    final PsiElement parent = element.getParent();
+    if (!(parent instanceof PsiBinaryExpression)) {
+      return false;
+    }
+    final PsiBinaryExpression binaryExpression =
+      (PsiBinaryExpression)parent;
+    final PsiType type = binaryExpression.getType();
+    if (type == null || type.equalsToText("java.lang.String")) {
+      // handled by JoinConcatenatedStringLiteralsIntention
+      return false;
+    }
+    final PsiBinaryExpression subexpression =
+      getSubexpression(binaryExpression);
+    if (subexpression == null) {
+      return false;
+    }
+    if (binaryExpression.equals(subexpression) &&
+        !isPartOfConstantExpression(binaryExpression)) {
+      // handled by ConstantExpressonIntention
+      return false;
+    }
+    if (!PsiUtil.isConstantExpression(subexpression)) {
+      return false;
+    }
+    final Object value =
+      ExpressionUtils.computeConstantExpression(subexpression);
+    return value != null;
+  }
 
-    private static boolean isPartOfConstantExpression(
-            PsiBinaryExpression binaryExpression){
-        final PsiElement containingElement = binaryExpression.getParent();
-        if(containingElement instanceof PsiExpression){
-            final PsiExpression containingExpression =
-                    (PsiExpression) containingElement;
-            if(!PsiUtil.isConstantExpression(containingExpression)){
-                return false;
-            }
-        } else{
-            return false;
-        }
-        return true;
+  private static boolean isPartOfConstantExpression(
+    PsiBinaryExpression binaryExpression) {
+    final PsiElement containingElement = binaryExpression.getParent();
+    if (containingElement instanceof PsiExpression) {
+      final PsiExpression containingExpression =
+        (PsiExpression)containingElement;
+      if (!PsiUtil.isConstantExpression(containingExpression)) {
+        return false;
+      }
     }
+    else {
+      return false;
+    }
+    return true;
+  }
 
-    /**
-     * Returns the smallest subexpression (if precendence allows it). example:
-     * variable + 2 + 3 normally gets evaluated left to right -> (variable + 2)
-     * + 3 this method returns the right most legal subexpression -> 2 + 3
-     */
-    @Nullable
-    private static PsiBinaryExpression getSubexpression(
-            PsiBinaryExpression expression){
-        final PsiExpression rhs = expression.getROperand();
-        if(rhs == null){
-            return null;
-        }
-        final PsiExpression lhs = expression.getLOperand();
-        if(!(lhs instanceof PsiBinaryExpression)){
-            return expression;
-        }
-        final PsiBinaryExpression lhsBinaryExpression =
-                (PsiBinaryExpression) lhs;
-        final PsiExpression leftSide = lhsBinaryExpression.getROperand();
-        if(leftSide == null){
-            return null;
-        }
-        try{
-            final PsiBinaryExpression binaryExpression =
-                    (PsiBinaryExpression) expression.copy();
-            final PsiExpression lOperand = binaryExpression.getLOperand();
-            lOperand.replace(leftSide);
-            return binaryExpression;
-        } catch(Throwable ignore){
-            return null;
-        }
+  /**
+   * Returns the smallest subexpression (if precendence allows it). example:
+   * variable + 2 + 3 normally gets evaluated left to right -> (variable + 2)
+   * + 3 this method returns the right most legal subexpression -> 2 + 3
+   */
+  @Nullable
+  private static PsiBinaryExpression getSubexpression(
+    PsiBinaryExpression expression) {
+    final PsiExpression rhs = expression.getROperand();
+    if (rhs == null) {
+      return null;
     }
+    final PsiExpression lhs = expression.getLOperand();
+    if (!(lhs instanceof PsiBinaryExpression)) {
+      return expression;
+    }
+    final PsiBinaryExpression lhsBinaryExpression =
+      (PsiBinaryExpression)lhs;
+    final PsiExpression leftSide = lhsBinaryExpression.getROperand();
+    if (leftSide == null) {
+      return null;
+    }
+    try {
+      final PsiBinaryExpression binaryExpression =
+        (PsiBinaryExpression)expression.copy();
+      final PsiExpression lOperand = binaryExpression.getLOperand();
+      lOperand.replace(leftSide);
+      return binaryExpression;
+    }
+    catch (Throwable ignore) {
+      return null;
+    }
+  }
 }

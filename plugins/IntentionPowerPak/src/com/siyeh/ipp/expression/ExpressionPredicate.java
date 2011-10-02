@@ -24,15 +24,15 @@ import com.siyeh.ipp.psiutils.ErrorUtil;
 
 class ExpressionPredicate implements PsiElementPredicate {
 
-    public boolean satisfiedBy(PsiElement element) {
-        if(!(element instanceof PsiBinaryExpression)) {
-            return false;
-        }
-        final PsiBinaryExpression expression = (PsiBinaryExpression) element;
-        final PsiExpression rhs = expression.getROperand();
-        if (rhs == null) {
-            return false;
-        }
-        return !ComparisonUtils.isComparison((PsiExpression)element);
+  public boolean satisfiedBy(PsiElement element) {
+    if (!(element instanceof PsiBinaryExpression)) {
+      return false;
     }
+    final PsiBinaryExpression expression = (PsiBinaryExpression)element;
+    final PsiExpression rhs = expression.getROperand();
+    if (rhs == null) {
+      return false;
+    }
+    return !ComparisonUtils.isComparison((PsiExpression)element);
+  }
 }

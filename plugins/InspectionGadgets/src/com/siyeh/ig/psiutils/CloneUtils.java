@@ -21,69 +21,71 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
-public class CloneUtils{
+public class CloneUtils {
 
-    private CloneUtils(){}
+  private CloneUtils() {
+  }
 
-    public static boolean isCloneable(@NotNull PsiClass aClass){
-        return InheritanceUtil.isInheritor(aClass,
-                CommonClassNames.JAVA_LANG_CLONEABLE);
+  public static boolean isCloneable(@NotNull PsiClass aClass) {
+    return InheritanceUtil.isInheritor(aClass,
+                                       CommonClassNames.JAVA_LANG_CLONEABLE);
+  }
+
+  public static boolean isDirectlyCloneable(@NotNull PsiClass aClass) {
+    final PsiClass[] interfaces = aClass.getInterfaces();
+    for (PsiClass anInterface : interfaces) {
+      if (anInterface == null) {
+        continue;
+      }
+      final String qualifiedName = anInterface.getQualifiedName();
+      if (CommonClassNames.JAVA_LANG_CLONEABLE.equals(qualifiedName)) {
+        return true;
+      }
     }
+    return false;
+  }
 
-    public static boolean isDirectlyCloneable(@NotNull PsiClass aClass){
-        final PsiClass[] interfaces = aClass.getInterfaces();
-        for(PsiClass anInterface : interfaces){
-            if (anInterface == null) {
-                continue;
-            }
-            final String qualifiedName = anInterface.getQualifiedName();
-            if(CommonClassNames.JAVA_LANG_CLONEABLE.equals(qualifiedName)){
-                return true;
-            }
-        }
-        return false;
+  public static boolean isClone(@NotNull PsiMethod method) {
+    final PsiClassType javaLangObject;
+    if (!PsiUtil.isLanguageLevel5OrHigher(method)) {
+      javaLangObject = PsiType.getJavaLangObject(
+        method.getManager(), method.getResolveScope());
     }
+    else {
+      // for 1.5 and after, clone may be covariant
+      javaLangObject = null;
+    }
+    return MethodUtils.methodMatches(method, null, javaLangObject,
+                                     HardcodedMethodConstants.CLONE, PsiType.EMPTY_ARRAY);
+  }
 
-    public static boolean isClone(@NotNull PsiMethod method){
-        final PsiClassType javaLangObject;
-        if (!PsiUtil.isLanguageLevel5OrHigher(method)) {
-        javaLangObject = PsiType.getJavaLangObject(
-                method.getManager(), method.getResolveScope());
-        } else {
-            // for 1.5 and after, clone may be covariant
-            javaLangObject = null;
-        }
-        return MethodUtils.methodMatches(method, null, javaLangObject,
-                HardcodedMethodConstants.CLONE, PsiType.EMPTY_ARRAY);
+  public static boolean onlyThrowsCloneNotSupportedException(
+    @NotNull PsiMethod method) {
+    final PsiCodeBlock body = method.getBody();
+    if (body == null) {
+      return false;
     }
-
-    public static boolean onlyThrowsCloneNotSupportedException(
-            @NotNull PsiMethod method){
-        final PsiCodeBlock body = method.getBody();
-        if(body == null){
-            return false;
-        }
-        final PsiStatement[] statements = body.getStatements();
-        if(statements.length != 1){
-            return false;
-        }
-        final PsiStatement statement = statements[0];
-        if(!(statement instanceof PsiThrowStatement)){
-            return false;
-        }
-        final PsiThrowStatement throwStatement =
-                (PsiThrowStatement)statement;
-        final PsiExpression exception = throwStatement.getException();
-        if(!(exception instanceof PsiNewExpression)){
-            return false;
-        }
-        final PsiNewExpression newExpression = (PsiNewExpression)exception;
-        final PsiJavaCodeReferenceElement classReference =
-                newExpression.getClassReference();
-        if(classReference == null){
-            return false;
-        }
-        final String qualifiedName = classReference.getQualifiedName();
-        return qualifiedName.equals("java.lang.CloneNotSupportedException");
+    final PsiStatement[] statements = body.getStatements();
+    if (statements.length != 1) {
+      return false;
     }
+    final PsiStatement statement = statements[0];
+    if (!(statement instanceof PsiThrowStatement)) {
+      return false;
+    }
+    final PsiThrowStatement throwStatement =
+      (PsiThrowStatement)statement;
+    final PsiExpression exception = throwStatement.getException();
+    if (!(exception instanceof PsiNewExpression)) {
+      return false;
+    }
+    final PsiNewExpression newExpression = (PsiNewExpression)exception;
+    final PsiJavaCodeReferenceElement classReference =
+      newExpression.getClassReference();
+    if (classReference == null) {
+      return false;
+    }
+    final String qualifiedName = classReference.getQualifiedName();
+    return qualifiedName.equals("java.lang.CloneNotSupportedException");
+  }
 }

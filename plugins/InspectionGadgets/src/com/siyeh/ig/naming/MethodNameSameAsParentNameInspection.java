@@ -26,58 +26,59 @@ import org.jetbrains.annotations.NotNull;
 
 public class MethodNameSameAsParentNameInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "method.name.same.as.parent.name.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "method.name.same.as.parent.name.display.name");
+  }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "method.name.same.as.parent.name.problem.descriptor");
-    }
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "method.name.same.as.parent.name.problem.descriptor");
+  }
 
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        return new RenameFix();
-    }
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new RenameFix();
+  }
 
-    protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
-        return true;
-    }
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return true;
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new MethodNameSameAsParentClassNameVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new MethodNameSameAsParentClassNameVisitor();
+  }
 
-    private static class MethodNameSameAsParentClassNameVisitor
-            extends BaseInspectionVisitor {
+  private static class MethodNameSameAsParentClassNameVisitor
+    extends BaseInspectionVisitor {
 
-        @Override public void visitMethod(@NotNull PsiMethod method) {
-            // no call to super, so it doesn't drill down into inner classes
-            if (method.isConstructor()) {
-                return;
-            }
-            if (method.getNameIdentifier() == null) {
-                return;
-            }
-            final PsiClass containingClass = method.getContainingClass();
-            if (containingClass == null) {
-                return;
-            }
-            final PsiClass parent = containingClass.getSuperClass();
-            if (parent == null) {
-                return;
-            }
-            final String parentName = parent.getName();
-            if (parentName == null) {
-                return;
-            }
-            final String methodName = method.getName();
-            if (!methodName.equals(parentName)) {
-                return;
-            }
-            registerMethodError(method);
-        }
+    @Override
+    public void visitMethod(@NotNull PsiMethod method) {
+      // no call to super, so it doesn't drill down into inner classes
+      if (method.isConstructor()) {
+        return;
+      }
+      if (method.getNameIdentifier() == null) {
+        return;
+      }
+      final PsiClass containingClass = method.getContainingClass();
+      if (containingClass == null) {
+        return;
+      }
+      final PsiClass parent = containingClass.getSuperClass();
+      if (parent == null) {
+        return;
+      }
+      final String parentName = parent.getName();
+      if (parentName == null) {
+        return;
+      }
+      final String methodName = method.getName();
+      if (!methodName.equals(parentName)) {
+        return;
+      }
+      registerMethodError(method);
     }
+  }
 }

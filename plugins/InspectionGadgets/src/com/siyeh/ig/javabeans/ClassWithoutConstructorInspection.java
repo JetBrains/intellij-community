@@ -28,88 +28,92 @@ import org.jetbrains.annotations.NotNull;
 
 public class ClassWithoutConstructorInspection extends BaseInspection {
 
-    @Override
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "class.without.constructor.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "class.without.constructor.problem.descriptor");
+  }
+
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new ClassWithoutConstructorFix();
+  }
+
+  private static class ClassWithoutConstructorFix
+    extends InspectionGadgetsFix {
+
     @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "class.without.constructor.display.name");
+    public String getName() {
+      return InspectionGadgetsBundle.message(
+        "class.without.constructor.create.quickfix");
     }
 
     @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "class.without.constructor.problem.descriptor");
+    public void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiElement classIdentifier = descriptor.getPsiElement();
+      final PsiClass aClass = (PsiClass)classIdentifier.getParent();
+      final PsiElementFactory factory =
+        JavaPsiFacade.getElementFactory(project);
+      final PsiMethod constructor = factory.createConstructor();
+      final PsiModifierList modifierList = constructor.getModifierList();
+      if (aClass == null) {
+        return;
+      }
+      if (aClass.hasModifierProperty(PsiModifier.PRIVATE)) {
+        modifierList.setModifierProperty(PsiModifier.PUBLIC, false);
+        modifierList.setModifierProperty(PsiModifier.PRIVATE, true);
+      }
+      else if (aClass.hasModifierProperty(PsiModifier.PROTECTED)) {
+        modifierList.setModifierProperty(PsiModifier.PUBLIC, false);
+        modifierList.setModifierProperty(PsiModifier.PROTECTED, true);
+      }
+      else if (aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        modifierList.setModifierProperty(PsiModifier.PUBLIC, false);
+        modifierList.setModifierProperty(PsiModifier.PROTECTED, true);
+      }
+      else if (!aClass.hasModifierProperty(PsiModifier.PUBLIC)) {
+        modifierList.setModifierProperty(PsiModifier.PUBLIC, false);
+      }
+      aClass.add(constructor);
+      final CodeStyleManager styleManager =
+        CodeStyleManager.getInstance(project);
+      styleManager.reformat(constructor);
     }
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new ClassWithoutConstructorVisitor();
+  }
+
+  private static class ClassWithoutConstructorVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        return new ClassWithoutConstructorFix();
+    public void visitClass(@NotNull PsiClass aClass) {
+      // no call to super, so it doesn't drill down
+      if (aClass.isInterface() || aClass.isEnum() ||
+          aClass.isAnnotationType() || JspPsiUtil.isInJspFile(aClass)) {
+        return;
+      }
+      if (aClass instanceof PsiTypeParameter ||
+          aClass instanceof PsiAnonymousClass) {
+        return;
+      }
+      final PsiMethod[] constructors = aClass.getConstructors();
+      if (constructors.length > 0) {
+        return;
+      }
+      registerClassError(aClass);
     }
-
-    private static class ClassWithoutConstructorFix
-            extends InspectionGadgetsFix {
-
-        @NotNull
-        public String getName() {
-            return InspectionGadgetsBundle.message(
-                    "class.without.constructor.create.quickfix");
-        }
-
-        @Override
-        public void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
-            final PsiElement classIdentifier = descriptor.getPsiElement();
-            final PsiClass aClass = (PsiClass)classIdentifier.getParent();
-            final PsiElementFactory factory =
-                  JavaPsiFacade.getElementFactory(project);
-            final PsiMethod constructor = factory.createConstructor();
-            final PsiModifierList modifierList = constructor.getModifierList();
-            if (aClass == null) {
-                return;
-            }
-            if (aClass.hasModifierProperty(PsiModifier.PRIVATE)) {
-                modifierList.setModifierProperty(PsiModifier.PUBLIC, false);
-                modifierList.setModifierProperty(PsiModifier.PRIVATE, true);
-            } else if (aClass.hasModifierProperty(PsiModifier.PROTECTED)) {
-                modifierList.setModifierProperty(PsiModifier.PUBLIC, false);
-                modifierList.setModifierProperty(PsiModifier.PROTECTED, true);
-            } else if (aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-                modifierList.setModifierProperty(PsiModifier.PUBLIC, false);
-                modifierList.setModifierProperty(PsiModifier.PROTECTED, true);
-            } else if (!aClass.hasModifierProperty(PsiModifier.PUBLIC)) {
-                modifierList.setModifierProperty(PsiModifier.PUBLIC, false);
-            }
-            aClass.add(constructor);
-            final CodeStyleManager styleManager =
-                    CodeStyleManager.getInstance(project);
-            styleManager.reformat(constructor);
-        }
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new ClassWithoutConstructorVisitor();
-    }
-
-    private static class ClassWithoutConstructorVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitClass(@NotNull PsiClass aClass) {
-            // no call to super, so it doesn't drill down
-            if (aClass.isInterface() || aClass.isEnum() ||
-                    aClass.isAnnotationType() || JspPsiUtil.isInJspFile(aClass)) {
-                return;
-            }
-            if (aClass instanceof PsiTypeParameter ||
-                    aClass instanceof PsiAnonymousClass) {
-                return;
-            }
-            final PsiMethod[] constructors = aClass.getConstructors();
-            if (constructors.length > 0) {
-                return;
-            }
-            registerClassError(aClass);
-        }
-    }
+  }
 }

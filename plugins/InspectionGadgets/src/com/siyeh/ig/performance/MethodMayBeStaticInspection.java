@@ -38,188 +38,189 @@ import javax.swing.JComponent;
 
 public class MethodMayBeStaticInspection extends BaseInspection {
 
-    /**
-     * @noinspection PublicField
-     */
-    public boolean m_onlyPrivateOrFinal = false;
-    /**
-     * @noinspection PublicField
-     */
-    public boolean m_ignoreEmptyMethods = true;
+  /**
+   * @noinspection PublicField
+   */
+  public boolean m_onlyPrivateOrFinal = false;
+  /**
+   * @noinspection PublicField
+   */
+  public boolean m_ignoreEmptyMethods = true;
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "method.may.be.static.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "method.may.be.static.problem.descriptor");
+  }
+
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new ChangeModifierFix(PsiModifier.STATIC);
+  }
+
+  @Override
+  public JComponent createOptionsPanel() {
+    final MultipleCheckboxOptionsPanel optionsPanel =
+      new MultipleCheckboxOptionsPanel(this);
+    optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
+      "method.may.be.static.only.option"), "m_onlyPrivateOrFinal");
+    optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
+      "method.may.be.static.empty.option"), "m_ignoreEmptyMethods");
+    return optionsPanel;
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new MethodCanBeStaticVisitor();
+  }
+
+  private class MethodCanBeStaticVisitor extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String getDisplayName(){
-        return InspectionGadgetsBundle.message(
-                "method.may.be.static.display.name");
-    }
-
-    @Override
-    @NotNull
-    protected String buildErrorString(Object... infos){
-        return InspectionGadgetsBundle.message(
-                "method.may.be.static.problem.descriptor");
-    }
-
-    @Override
-    protected InspectionGadgetsFix buildFix(Object... infos){
-        return new ChangeModifierFix(PsiModifier.STATIC);
-    }
-
-    @Override
-    public JComponent createOptionsPanel(){
-        final MultipleCheckboxOptionsPanel optionsPanel =
-                new MultipleCheckboxOptionsPanel(this);
-        optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-                "method.may.be.static.only.option"), "m_onlyPrivateOrFinal");
-        optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-                "method.may.be.static.empty.option"), "m_ignoreEmptyMethods");
-        return optionsPanel;
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor(){
-        return new MethodCanBeStaticVisitor();
-    }
-
-    private class MethodCanBeStaticVisitor extends BaseInspectionVisitor{
-
-        @Override public void visitMethod(@NotNull PsiMethod method){
-            super.visitMethod(method);
-            if (method.hasModifierProperty(PsiModifier.STATIC) ||
-                    method.hasModifierProperty(PsiModifier.ABSTRACT) ||
-                    method.hasModifierProperty(PsiModifier.SYNCHRONIZED)){
-                return;
-            }
-            if(method.isConstructor() || method.getNameIdentifier() == null){
-                return;
-            }
-            if(m_ignoreEmptyMethods && MethodUtils.isEmpty(method)){
-                return;
-            }
-            final PsiClass containingClass =
-                    ClassUtils.getContainingClass(method);
-            if(containingClass == null){
-                return;
-            }
-            final ExtensionsArea rootArea = Extensions.getRootArea();
-            final ExtensionPoint<Condition<PsiElement>> extensionPoint =
-                    rootArea.getExtensionPoint("com.intellij.cantBeStatic");
-            final Condition<PsiElement>[] addins =
-                    extensionPoint.getExtensions();
-            for (Condition<PsiElement> addin : addins) {
-                if (addin.value(method)) {
-                    return;
-                }
-            }
-            final PsiElement scope = containingClass.getScope();
-            if(!(scope instanceof PsiJavaFile) &&
-                    !containingClass.hasModifierProperty(PsiModifier.STATIC)){
-                return;
-            }
-            if(m_onlyPrivateOrFinal &&
-                    !method.hasModifierProperty(PsiModifier.FINAL) &&
-                    !method.hasModifierProperty(PsiModifier.PRIVATE)){
-                return;
-            }
-            if (isExcluded(method)) {
-                return;
-            }
-            final Query<MethodSignatureBackedByPsiMethod> superMethodQuery =
-                    SuperMethodsSearch.search(method, null, true, false);
-            if (superMethodQuery.findFirst() != null) {
-                return;
-            }
-            if(MethodUtils.isOverridden(method)){
-                return;
-            }
-            final MethodReferenceVisitor visitor =
-                    new MethodReferenceVisitor(method);
-            method.accept(visitor);
-            if(!visitor.areReferencesStaticallyAccessible()){
-                return;
-            }
-            registerMethodError(method);
+    public void visitMethod(@NotNull PsiMethod method) {
+      super.visitMethod(method);
+      if (method.hasModifierProperty(PsiModifier.STATIC) ||
+          method.hasModifierProperty(PsiModifier.ABSTRACT) ||
+          method.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
+        return;
+      }
+      if (method.isConstructor() || method.getNameIdentifier() == null) {
+        return;
+      }
+      if (m_ignoreEmptyMethods && MethodUtils.isEmpty(method)) {
+        return;
+      }
+      final PsiClass containingClass =
+        ClassUtils.getContainingClass(method);
+      if (containingClass == null) {
+        return;
+      }
+      final ExtensionsArea rootArea = Extensions.getRootArea();
+      final ExtensionPoint<Condition<PsiElement>> extensionPoint =
+        rootArea.getExtensionPoint("com.intellij.cantBeStatic");
+      final Condition<PsiElement>[] addins =
+        extensionPoint.getExtensions();
+      for (Condition<PsiElement> addin : addins) {
+        if (addin.value(method)) {
+          return;
         }
-
-        private boolean isExcluded(PsiMethod method) {
-            @NonNls final String name = method.getName();
-            if ("writeObject".equals(name)) {
-                if (!method.hasModifierProperty(PsiModifier.PRIVATE)) {
-                    return false;
-                }
-                final PsiReferenceList throwsList = method.getThrowsList();
-                final PsiClassType[] thrownTypes =
-                        throwsList.getReferencedTypes();
-                if (thrownTypes.length != 1) {
-                    return false;
-                }
-                if (!thrownTypes[0].equalsToText("java.io.IOException")) {
-                    return false;
-                }
-                final PsiType returnType = method.getReturnType();
-                if (!PsiType.VOID.equals(returnType)) {
-                    return false;
-                }
-                final PsiParameterList parameterList =
-                        method.getParameterList();
-                if (parameterList.getParametersCount() != 1) {
-                    return false;
-                }
-                final PsiParameter parameter = parameterList.getParameters()[0];
-                final PsiType type = parameter.getType();
-                return type.equalsToText("java.io.ObjectOutputStream");
-            }
-            if ("readObject".equals(name)) {
-                if (!method.hasModifierProperty(PsiModifier.PRIVATE)) {
-                    return false;
-                }
-                final PsiReferenceList throwsList = method.getThrowsList();
-                final PsiClassType[] thrownTypes =
-                        throwsList.getReferencedTypes();
-                if (thrownTypes.length != 2) {
-                    return false;
-                }
-                if (!thrownTypes[0].equalsToText("java.io.IOException") ||
-                        !thrownTypes[1].equalsToText(
-                                "java.lang.ClassNotFoundException")) {
-                    return false;
-                }
-                final PsiType returnType = method.getReturnType();
-                if (!PsiType.VOID.equals(returnType)) {
-                    return false;
-                }
-                final PsiParameterList parameterList =
-                        method.getParameterList();
-                if (parameterList.getParametersCount() != 1) {
-                    return false;
-                }
-                final PsiParameter parameter = parameterList.getParameters()[0];
-                final PsiType type = parameter.getType();
-                return type.equalsToText("java.io.ObjectInputStream");
-            }
-            if ("writeReplace".equals(name) ||
-                    "readResolve".equals(name)) {
-                final PsiReferenceList throwsList = method.getThrowsList();
-                final PsiClassType[] thrownTypes =
-                        throwsList.getReferencedTypes();
-                if (thrownTypes.length != 1) {
-                    return false;
-                }
-                if (!thrownTypes[0].equalsToText(
-                        "java.io.ObjectStreamException")) {
-                    return false;
-                }
-                final PsiType returnType = method.getReturnType();
-                if (returnType == null ||
-                        !returnType.equalsToText("java.lang.Object")) {
-                    return false;
-                }
-                final PsiParameterList parameterList =
-                        method.getParameterList();
-                return parameterList.getParametersCount() == 0;
-            }
-            return false;
-        }
+      }
+      final PsiElement scope = containingClass.getScope();
+      if (!(scope instanceof PsiJavaFile) &&
+          !containingClass.hasModifierProperty(PsiModifier.STATIC)) {
+        return;
+      }
+      if (m_onlyPrivateOrFinal &&
+          !method.hasModifierProperty(PsiModifier.FINAL) &&
+          !method.hasModifierProperty(PsiModifier.PRIVATE)) {
+        return;
+      }
+      if (isExcluded(method)) {
+        return;
+      }
+      final Query<MethodSignatureBackedByPsiMethod> superMethodQuery =
+        SuperMethodsSearch.search(method, null, true, false);
+      if (superMethodQuery.findFirst() != null) {
+        return;
+      }
+      if (MethodUtils.isOverridden(method)) {
+        return;
+      }
+      final MethodReferenceVisitor visitor =
+        new MethodReferenceVisitor(method);
+      method.accept(visitor);
+      if (!visitor.areReferencesStaticallyAccessible()) {
+        return;
+      }
+      registerMethodError(method);
     }
+
+    private boolean isExcluded(PsiMethod method) {
+      @NonNls final String name = method.getName();
+      if ("writeObject".equals(name)) {
+        if (!method.hasModifierProperty(PsiModifier.PRIVATE)) {
+          return false;
+        }
+        final PsiReferenceList throwsList = method.getThrowsList();
+        final PsiClassType[] thrownTypes =
+          throwsList.getReferencedTypes();
+        if (thrownTypes.length != 1) {
+          return false;
+        }
+        if (!thrownTypes[0].equalsToText("java.io.IOException")) {
+          return false;
+        }
+        final PsiType returnType = method.getReturnType();
+        if (!PsiType.VOID.equals(returnType)) {
+          return false;
+        }
+        final PsiParameterList parameterList =
+          method.getParameterList();
+        if (parameterList.getParametersCount() != 1) {
+          return false;
+        }
+        final PsiParameter parameter = parameterList.getParameters()[0];
+        final PsiType type = parameter.getType();
+        return type.equalsToText("java.io.ObjectOutputStream");
+      }
+      if ("readObject".equals(name)) {
+        if (!method.hasModifierProperty(PsiModifier.PRIVATE)) {
+          return false;
+        }
+        final PsiReferenceList throwsList = method.getThrowsList();
+        final PsiClassType[] thrownTypes =
+          throwsList.getReferencedTypes();
+        if (thrownTypes.length != 2) {
+          return false;
+        }
+        if (!thrownTypes[0].equalsToText("java.io.IOException") ||
+            !thrownTypes[1].equalsToText(
+              "java.lang.ClassNotFoundException")) {
+          return false;
+        }
+        final PsiType returnType = method.getReturnType();
+        if (!PsiType.VOID.equals(returnType)) {
+          return false;
+        }
+        final PsiParameterList parameterList =
+          method.getParameterList();
+        if (parameterList.getParametersCount() != 1) {
+          return false;
+        }
+        final PsiParameter parameter = parameterList.getParameters()[0];
+        final PsiType type = parameter.getType();
+        return type.equalsToText("java.io.ObjectInputStream");
+      }
+      if ("writeReplace".equals(name) ||
+          "readResolve".equals(name)) {
+        final PsiReferenceList throwsList = method.getThrowsList();
+        final PsiClassType[] thrownTypes =
+          throwsList.getReferencedTypes();
+        if (thrownTypes.length != 1) {
+          return false;
+        }
+        if (!thrownTypes[0].equalsToText(
+          "java.io.ObjectStreamException")) {
+          return false;
+        }
+        final PsiType returnType = method.getReturnType();
+        if (returnType == null ||
+            !returnType.equalsToText("java.lang.Object")) {
+          return false;
+        }
+        final PsiParameterList parameterList =
+          method.getParameterList();
+        return parameterList.getParametersCount() == 0;
+      }
+      return false;
+    }
+  }
 }

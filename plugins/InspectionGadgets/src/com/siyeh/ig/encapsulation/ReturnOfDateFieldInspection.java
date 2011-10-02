@@ -22,51 +22,52 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class ReturnOfDateFieldInspection extends BaseInspection{
+public class ReturnOfDateFieldInspection extends BaseInspection {
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "return.date.calendar.field.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    final String type = (String)infos[0];
+    return InspectionGadgetsBundle.message(
+      "return.date.calendar.field.problem.descriptor", type);
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new ReturnOfDateFieldVisitor();
+  }
+
+  private static class ReturnOfDateFieldVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String getDisplayName(){
-        return InspectionGadgetsBundle.message(
-                "return.date.calendar.field.display.name");
+    public void visitReturnStatement(
+      @NotNull PsiReturnStatement statement) {
+      super.visitReturnStatement(statement);
+      final PsiExpression returnValue = statement.getReturnValue();
+      if (!(returnValue instanceof PsiReferenceExpression)) {
+        return;
+      }
+      final PsiReferenceExpression fieldReference =
+        (PsiReferenceExpression)returnValue;
+      final PsiElement element = fieldReference.resolve();
+      if (!(element instanceof PsiField)) {
+        return;
+      }
+      final String type = TypeUtils.expressionHasTypeOrSubtype(
+        returnValue, CommonClassNames.JAVA_UTIL_DATE,
+        CommonClassNames.JAVA_UTIL_CALENDAR);
+      if (type == null) {
+        return;
+      }
+      registerError(returnValue, type);
     }
-
-    @Override
-    @NotNull
-    public String buildErrorString(Object... infos){
-        final String type = (String)infos[0];
-        return InspectionGadgetsBundle.message(
-                "return.date.calendar.field.problem.descriptor", type);
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor(){
-        return new ReturnOfDateFieldVisitor();
-    }
-
-    private static class ReturnOfDateFieldVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitReturnStatement(
-                @NotNull PsiReturnStatement statement){
-            super.visitReturnStatement(statement);
-            final PsiExpression returnValue = statement.getReturnValue();
-            if(!(returnValue instanceof PsiReferenceExpression)){
-                return;
-            }
-            final PsiReferenceExpression fieldReference =
-                    (PsiReferenceExpression) returnValue;
-            final PsiElement element = fieldReference.resolve();
-            if(!(element instanceof PsiField)){
-                return;
-            }
-            final String type = TypeUtils.expressionHasTypeOrSubtype(
-                    returnValue, CommonClassNames.JAVA_UTIL_DATE,
-                    CommonClassNames.JAVA_UTIL_CALENDAR);
-            if (type == null) {
-                return;
-            }
-            registerError(returnValue, type);
-        }
-    }
+  }
 }

@@ -23,20 +23,20 @@ import com.siyeh.ipp.psiutils.ConcatenationUtils;
 import com.siyeh.ipp.psiutils.ErrorUtil;
 
 class Jdk5StringConcatenationPredicate implements PsiElementPredicate {
-    public boolean satisfiedBy(PsiElement element) {
-        if (!PsiUtil.isLanguageLevel5OrHigher(element)) {
-            return false;
-        }
-        if (!ConcatenationUtils.isConcatenation(element)) {
-            return false;
-        }
-        if (isInsideAnnotation(element)) {
-            return false;
-        }
-        return !ErrorUtil.containsError(element);
+  public boolean satisfiedBy(PsiElement element) {
+    if (!PsiUtil.isLanguageLevel5OrHigher(element)) {
+      return false;
     }
+    if (!ConcatenationUtils.isConcatenation(element)) {
+      return false;
+    }
+    if (isInsideAnnotation(element)) {
+      return false;
+    }
+    return !ErrorUtil.containsError(element);
+  }
 
-    private static boolean isInsideAnnotation(PsiElement element) {
-      return PsiTreeUtil.getParentOfType(element, PsiNameValuePair.class, PsiArrayInitializerMemberValue.class) != null;
-    }
+  private static boolean isInsideAnnotation(PsiElement element) {
+    return PsiTreeUtil.getParentOfType(element, PsiNameValuePair.class, PsiArrayInitializerMemberValue.class) != null;
+  }
 }

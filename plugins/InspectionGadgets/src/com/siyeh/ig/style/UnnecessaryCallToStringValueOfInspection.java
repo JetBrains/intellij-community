@@ -30,130 +30,131 @@ import org.jetbrains.annotations.Nullable;
 
 public class UnnecessaryCallToStringValueOfInspection extends BaseInspection {
 
-    @Override
-    @Nls
+  @Override
+  @Nls
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "unnecessary.call.to.string.valueof.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    final PsiExpression expression = (PsiExpression)infos[0];
+    return InspectionGadgetsBundle.message(
+      "unnecessary.call.to.string.valueof.problem.descriptor",
+      expression.getText());
+  }
+
+  @Override
+  @Nullable
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    final PsiExpression expression = (PsiExpression)infos[0];
+    return new UnnecessaryCallToStringValueOfFix(expression.getText());
+  }
+
+  private static class UnnecessaryCallToStringValueOfFix
+    extends InspectionGadgetsFix {
+
+    private final String replacementText;
+
+    UnnecessaryCallToStringValueOfFix(String replacementText) {
+      this.replacementText = replacementText;
+    }
+
     @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "unnecessary.call.to.string.valueof.display.name");
+    public String getName() {
+      return InspectionGadgetsBundle.message(
+        "unnecessary.call.to.string.valueof.quickfix",
+        replacementText);
     }
 
     @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        final PsiExpression expression = (PsiExpression) infos[0];
-        return InspectionGadgetsBundle.message(
-                "unnecessary.call.to.string.valueof.problem.descriptor",
-                expression.getText());
+    protected void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiMethodCallExpression methodCallExpression =
+        (PsiMethodCallExpression)descriptor.getPsiElement();
+      final PsiExpressionList argumentList =
+        methodCallExpression.getArgumentList();
+      final PsiExpression[] arguments = argumentList.getExpressions();
+      if (arguments.length != 1) {
+        return;
+      }
+      final PsiExpression argument = arguments[0];
+      methodCallExpression.replace(argument);
     }
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new UnnecessaryCallToStringValueOfVisitor();
+  }
+
+  private static class UnnecessaryCallToStringValueOfVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @Nullable
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        final PsiExpression expression = (PsiExpression) infos[0];
-        return new UnnecessaryCallToStringValueOfFix(expression.getText());
-    }
-
-    private static class UnnecessaryCallToStringValueOfFix
-            extends InspectionGadgetsFix {
-
-        private final String replacementText;
-
-        UnnecessaryCallToStringValueOfFix(String replacementText) {
-            this.replacementText = replacementText;
+    public void visitMethodCallExpression(
+      PsiMethodCallExpression expression) {
+      super.visitMethodCallExpression(expression);
+      final PsiReferenceExpression methodExpression =
+        expression.getMethodExpression();
+      final String referenceName = methodExpression.getReferenceName();
+      if (!"valueOf".equals(referenceName)) {
+        return;
+      }
+      final PsiElement parent = expression.getParent();
+      if (!(parent instanceof PsiBinaryExpression)) {
+        return;
+      }
+      final PsiBinaryExpression binaryExpression =
+        (PsiBinaryExpression)parent;
+      final PsiType type = binaryExpression.getType();
+      if (!TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_STRING,
+                                type)) {
+        return;
+      }
+      final PsiExpression lhs = binaryExpression.getLOperand();
+      if (lhs == expression) {
+        final PsiExpression rhs = binaryExpression.getROperand();
+        if (rhs == null || !TypeUtils.typeEquals(
+          CommonClassNames.JAVA_LANG_STRING,
+          rhs.getType())) {
+          return;
         }
-
-        @NotNull
-        public String getName() {
-            return InspectionGadgetsBundle.message(
-                    "unnecessary.call.to.string.valueof.quickfix",
-                    replacementText);
+      }
+      else if (!TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_STRING,
+                                     lhs.getType())) {
+        return;
+      }
+      final PsiExpressionList argumentList = expression.getArgumentList();
+      final PsiExpression[] arguments = argumentList.getExpressions();
+      if (arguments.length != 1) {
+        return;
+      }
+      final PsiExpression argument = arguments[0];
+      final PsiType argumentType = argument.getType();
+      if (argumentType instanceof PsiArrayType) {
+        final PsiArrayType arrayType = (PsiArrayType)argumentType;
+        final PsiType componentType = arrayType.getComponentType();
+        if (PsiType.CHAR.equals(componentType)) {
+          return;
         }
-
-        @Override
-        protected void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
-            final PsiMethodCallExpression methodCallExpression =
-                    (PsiMethodCallExpression) descriptor.getPsiElement();
-            final PsiExpressionList argumentList =
-                    methodCallExpression.getArgumentList();
-            final PsiExpression[] arguments = argumentList.getExpressions();
-            if (arguments.length != 1) {
-                return;
-            }
-            final PsiExpression argument = arguments[0];
-            methodCallExpression.replace(argument);
-        }
+      }
+      final PsiMethod method = expression.resolveMethod();
+      if (method == null) {
+        return;
+      }
+      final PsiClass aClass = method.getContainingClass();
+      if (aClass == null) {
+        return;
+      }
+      final String qualifiedName = aClass.getQualifiedName();
+      if (!CommonClassNames.JAVA_LANG_STRING.equals(qualifiedName)) {
+        return;
+      }
+      registerError(expression, argument);
     }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new UnnecessaryCallToStringValueOfVisitor();
-    }
-
-    private static class UnnecessaryCallToStringValueOfVisitor
-            extends BaseInspectionVisitor {
-
-        @Override
-        public void visitMethodCallExpression(
-                PsiMethodCallExpression expression) {
-            super.visitMethodCallExpression(expression);
-            final PsiReferenceExpression methodExpression =
-                    expression.getMethodExpression();
-            final String referenceName = methodExpression.getReferenceName();
-            if (!"valueOf".equals(referenceName)) {
-                return;
-            }
-            final PsiElement parent = expression.getParent();
-            if (!(parent instanceof PsiBinaryExpression)) {
-                return;
-            }
-            final PsiBinaryExpression binaryExpression =
-                    (PsiBinaryExpression) parent;
-            final PsiType type = binaryExpression.getType();
-            if (!TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_STRING,
-                    type)) {
-                return;
-            }
-            final PsiExpression lhs = binaryExpression.getLOperand();
-            if (lhs == expression) {
-                final PsiExpression rhs = binaryExpression.getROperand();
-                if (rhs == null || !TypeUtils.typeEquals(
-                        CommonClassNames.JAVA_LANG_STRING,
-                        rhs.getType())) {
-                    return;
-                }
-            } else if (!TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_STRING,
-                    lhs.getType())) {
-                return;
-            }
-            final PsiExpressionList argumentList = expression.getArgumentList();
-            final PsiExpression[] arguments = argumentList.getExpressions();
-            if (arguments.length != 1) {
-                return;
-            }
-            final PsiExpression argument = arguments[0];
-            final PsiType argumentType = argument.getType();
-            if (argumentType instanceof PsiArrayType) {
-                final PsiArrayType arrayType = (PsiArrayType) argumentType;
-                final PsiType componentType = arrayType.getComponentType();
-              if (PsiType.CHAR.equals(componentType)) {
-                return;
-              }
-            }
-            final PsiMethod method = expression.resolveMethod();
-            if (method == null) {
-                return;
-            }
-            final PsiClass aClass = method.getContainingClass();
-            if (aClass == null) {
-                return;
-            }
-            final String qualifiedName = aClass.getQualifiedName();
-            if (!CommonClassNames.JAVA_LANG_STRING.equals(qualifiedName)) {
-                return;
-            }
-            registerError(expression, argument);
-        }
-    }
+  }
 }

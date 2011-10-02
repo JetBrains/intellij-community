@@ -21,57 +21,58 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
 public class NonCommentSourceStatementsInspection
-        extends MethodMetricInspection {
+  extends MethodMetricInspection {
 
-    private static final int DEFAULT_LIMIT = 30;
+  private static final int DEFAULT_LIMIT = 30;
 
-    @NotNull
-    public String getID() {
-        return "OverlyLongMethod";
+  @NotNull
+  public String getID() {
+    return "OverlyLongMethod";
+  }
+
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "non.comment.source.statements.display.name");
+  }
+
+  protected int getDefaultLimit() {
+    return DEFAULT_LIMIT;
+  }
+
+  protected String getConfigurationLabel() {
+    return InspectionGadgetsBundle.message(
+      "non.comment.source.statements.limit.option");
+  }
+
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    final Integer statementCount = (Integer)infos[0];
+    return InspectionGadgetsBundle.message(
+      "non.comment.source.statements.problem.descriptor",
+      statementCount);
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new NonCommentSourceStatementsMethodVisitor();
+  }
+
+  private class NonCommentSourceStatementsMethodVisitor
+    extends BaseInspectionVisitor {
+
+    @Override
+    public void visitMethod(@NotNull PsiMethod method) {
+      // note: no call to super
+      if (method.getNameIdentifier() == null) {
+        return;
+      }
+      final NCSSVisitor visitor = new NCSSVisitor();
+      method.accept(visitor);
+      final int count = visitor.getStatementCount();
+      if (count <= getLimit()) {
+        return;
+      }
+      registerMethodError(method, Integer.valueOf(count));
     }
-
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "non.comment.source.statements.display.name");
-    }
-
-    protected int getDefaultLimit() {
-        return DEFAULT_LIMIT;
-    }
-
-    protected String getConfigurationLabel() {
-        return InspectionGadgetsBundle.message(
-                "non.comment.source.statements.limit.option");
-    }
-
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        final Integer statementCount = (Integer)infos[0];
-        return InspectionGadgetsBundle.message(
-                "non.comment.source.statements.problem.descriptor",
-                statementCount);
-    }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new NonCommentSourceStatementsMethodVisitor();
-    }
-
-    private class NonCommentSourceStatementsMethodVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitMethod(@NotNull PsiMethod method) {
-            // note: no call to super
-            if (method.getNameIdentifier() == null) {
-                return;
-            }
-            final NCSSVisitor visitor = new NCSSVisitor();
-            method.accept(visitor);
-            final int count = visitor.getStatementCount();
-            if (count <= getLimit()) {
-                return;
-            }
-            registerMethodError(method, Integer.valueOf(count));
-        }
-    }
+  }
 }

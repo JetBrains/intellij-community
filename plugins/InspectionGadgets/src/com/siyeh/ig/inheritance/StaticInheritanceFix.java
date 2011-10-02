@@ -55,7 +55,8 @@ class StaticInheritanceFix extends InspectionGadgetsFix {
 
   @NotNull
   public String getName() {
-    String scope = myReplaceInWholeProject ? InspectionGadgetsBundle.message("the.whole.project") : InspectionGadgetsBundle.message("this.class");
+    String scope =
+      myReplaceInWholeProject ? InspectionGadgetsBundle.message("the.whole.project") : InspectionGadgetsBundle.message("this.class");
     return InspectionGadgetsBundle.message("static.inheritance.replace.quickfix", scope);
   }
 
@@ -78,8 +79,8 @@ class StaticInheritanceFix extends InspectionGadgetsFix {
     assert implementingClass != null;
     final PsiFile file = implementingClass.getContainingFile();
 
-    ProgressManager.getInstance().run(new Task.Modal(project, "Replacing usages of "+iface.getName(), false) {
-      
+    ProgressManager.getInstance().run(new Task.Modal(project, "Replacing usages of " + iface.getName(), false) {
+
       public void run(@NotNull ProgressIndicator indicator) {
         for (final PsiField field : allFields) {
           final Query<PsiReference> search = ReferencesSearch.search(field, implementingClass.getUseScope(), false);
@@ -105,7 +106,8 @@ class StaticInheritanceFix extends InspectionGadgetsFix {
                 }
                 final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
                 final PsiReferenceExpression qualified =
-                  (PsiReferenceExpression)elementFactory.createExpressionFromText("xxx." + referenceExpression.getText(), referenceExpression);
+                  (PsiReferenceExpression)elementFactory
+                    .createExpressionFromText("xxx." + referenceExpression.getText(), referenceExpression);
                 final PsiReferenceExpression newReference = (PsiReferenceExpression)referenceExpression.replace(qualified);
                 final PsiReferenceExpression qualifier = (PsiReferenceExpression)newReference.getQualifierExpression();
                 assert qualifier != null : DebugUtil.psiToString(newReference, false);

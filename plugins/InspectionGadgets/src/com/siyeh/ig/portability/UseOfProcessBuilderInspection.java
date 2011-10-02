@@ -27,50 +27,52 @@ import org.jetbrains.annotations.NotNull;
 
 public class UseOfProcessBuilderInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "use.processbuilder.class.display.name");
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "use.processbuilder.class.display.name");
+  }
+
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "use.processbuilder.class.problem.descriptor");
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new ProcessBuilderVisitor();
+  }
+
+  private static class ProcessBuilderVisitor extends BaseInspectionVisitor {
+
+    @Override
+    public void visitVariable(@NotNull PsiVariable variable) {
+      super.visitVariable(variable);
+      final PsiType type = variable.getType();
+      final String typeString = type.getCanonicalText();
+      if (!"java.lang.ProcessBuilder".equals(typeString)) {
+        return;
+      }
+      final PsiTypeElement typeElement = variable.getTypeElement();
+      if (typeElement == null) {
+        return;
+      }
+      registerError(typeElement);
     }
 
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "use.processbuilder.class.problem.descriptor");
+    @Override
+    public void visitNewExpression(
+      @NotNull PsiNewExpression newExpression) {
+      super.visitNewExpression(newExpression);
+      final PsiType type = newExpression.getType();
+      if (type == null) {
+        return;
+      }
+      @NonNls final String typeString = type.getCanonicalText();
+      if (!"java.lang.ProcessBuilder".equals(typeString)) {
+        return;
+      }
+      registerNewExpressionError(newExpression);
     }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new ProcessBuilderVisitor();
-    }
-
-    private static class ProcessBuilderVisitor extends BaseInspectionVisitor {
-
-        @Override public void visitVariable(@NotNull PsiVariable variable) {
-            super.visitVariable(variable);
-            final PsiType type = variable.getType();
-            final String typeString = type.getCanonicalText();
-            if(!"java.lang.ProcessBuilder".equals(typeString)) {
-                return;
-            }
-            final PsiTypeElement typeElement = variable.getTypeElement();
-            if (typeElement == null) {
-                return;
-            }
-            registerError(typeElement);
-        }
-
-        @Override public void visitNewExpression(
-                @NotNull PsiNewExpression newExpression) {
-            super.visitNewExpression(newExpression);
-            final PsiType type = newExpression.getType();
-            if (type == null) {
-                return;
-            }
-            @NonNls final String typeString = type.getCanonicalText();
-            if(!"java.lang.ProcessBuilder".equals(typeString)) {
-                return;
-            }
-            registerNewExpressionError(newExpression);
-        }
-    }
+  }
 }

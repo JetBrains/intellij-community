@@ -28,70 +28,72 @@ import org.jetbrains.annotations.NotNull;
 
 public class ZeroLengthArrayInitializationInspection extends BaseInspection {
 
-    @Override
-    @NotNull
-    public String getID() {
-        return "ZeroLengthArrayAllocation";
-    }
+  @Override
+  @NotNull
+  public String getID() {
+    return "ZeroLengthArrayAllocation";
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "array.allocation.zero.length.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "array.allocation.zero.length.problem.descriptor");
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new ZeroLengthArrayInitializationVisitor();
+  }
+
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new IntroduceConstantFix();
+  }
+
+  @Override
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return true;
+  }
+
+  private static class ZeroLengthArrayInitializationVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "array.allocation.zero.length.display.name");
+    public void visitNewExpression(
+      @NotNull PsiNewExpression expression) {
+      super.visitNewExpression(expression);
+      if (!ExpressionUtils.isZeroLengthArrayConstruction(expression)) {
+        return;
+      }
+      if (ExpressionUtils.isDeclaredConstant(expression)) {
+        return;
+      }
+      registerError(expression);
     }
 
     @Override
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "array.allocation.zero.length.problem.descriptor");
+    public void visitArrayInitializerExpression(
+      PsiArrayInitializerExpression expression) {
+      super.visitArrayInitializerExpression(expression);
+      final PsiExpression[] initializers = expression.getInitializers();
+      if (initializers.length > 0) {
+        return;
+      }
+      if (expression.getParent() instanceof PsiNewExpression) {
+        return;
+      }
+      if (ExpressionUtils.isDeclaredConstant(expression)) {
+        return;
+      }
+      registerError(expression);
     }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new ZeroLengthArrayInitializationVisitor();
-    }
-
-    @Override
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        return new IntroduceConstantFix();
-    }
-
-    @Override
-    protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
-        return true;
-    }
-
-    private static class ZeroLengthArrayInitializationVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitNewExpression(
-                @NotNull PsiNewExpression expression) {
-            super.visitNewExpression(expression);
-            if (!ExpressionUtils.isZeroLengthArrayConstruction(expression)) {
-                return;
-            }
-            if (ExpressionUtils.isDeclaredConstant(expression)) {
-                return;
-            }
-            registerError(expression);
-        }
-
-        @Override public void visitArrayInitializerExpression(
-                PsiArrayInitializerExpression expression) {
-            super.visitArrayInitializerExpression(expression);
-            final PsiExpression[] initializers = expression.getInitializers();
-            if (initializers.length > 0) {
-                return;
-            }
-            if (expression.getParent() instanceof PsiNewExpression) {
-                return;
-            }
-            if (ExpressionUtils.isDeclaredConstant(expression)) {
-                return;
-            }
-            registerError(expression);
-        }
-    }
+  }
 }

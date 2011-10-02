@@ -33,73 +33,76 @@ import java.util.Set;
 
 public class FieldHidesSuperclassFieldInspection extends BaseInspection {
 
-    /** @noinspection PublicField*/
-    public boolean m_ignoreInvisibleFields = true;
+  /**
+   * @noinspection PublicField
+   */
+  public boolean m_ignoreInvisibleFields = true;
 
-    @NotNull
-    public String getID(){
-        return "FieldNameHidesFieldInSuperclass";
-    }
+  @NotNull
+  public String getID() {
+    return "FieldNameHidesFieldInSuperclass";
+  }
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "field.name.hides.in.superclass.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "field.name.hides.in.superclass.display.name");
+  }
 
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        return new RenameFix();
-    }
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new RenameFix();
+  }
 
-    protected boolean buildQuickFixesOnlyForOnTheFlyErrors(){
-        return true;
-    }
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return true;
+  }
 
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "field.name.hides.in.superclass.problem.descriptor");
-    }
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "field.name.hides.in.superclass.problem.descriptor");
+  }
 
-    public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-                "field.name.hides.in.superclass.ignore.option"),
-                this, "m_ignoreInvisibleFields");
-    }
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+      "field.name.hides.in.superclass.ignore.option"),
+                                          this, "m_ignoreInvisibleFields");
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new FieldHidesSuperclassFieldVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new FieldHidesSuperclassFieldVisitor();
+  }
 
-    private class FieldHidesSuperclassFieldVisitor
-            extends BaseInspectionVisitor {
+  private class FieldHidesSuperclassFieldVisitor
+    extends BaseInspectionVisitor {
 
-        @Override public void visitField(@NotNull PsiField field) {
-            final PsiClass aClass = field.getContainingClass();
-            if (aClass == null) {
-                return;
-            }
-            final String fieldName = field.getName();
-            if (HardcodedMethodConstants.SERIAL_VERSION_UID.equals(fieldName)) {
-                return;    //special case
-            }
-            PsiClass ancestorClass = aClass.getSuperClass();
-            final Set<PsiClass> visitedClasses = new HashSet<PsiClass>();
-            while (ancestorClass != null) {
-                if (!visitedClasses.add(ancestorClass)) {
-                    return;
-                }
-                final PsiField ancestorField =
-                        ancestorClass.findFieldByName(fieldName, false);
-                if (ancestorField != null) {
-                    if (!m_ignoreInvisibleFields ||
-                            ClassUtils.isFieldVisible(ancestorField, aClass)) {
-                        registerFieldError(field);
-                        return;
-                    }
-                }
-                ancestorClass = ancestorClass.getSuperClass();
-            }
+    @Override
+    public void visitField(@NotNull PsiField field) {
+      final PsiClass aClass = field.getContainingClass();
+      if (aClass == null) {
+        return;
+      }
+      final String fieldName = field.getName();
+      if (HardcodedMethodConstants.SERIAL_VERSION_UID.equals(fieldName)) {
+        return;    //special case
+      }
+      PsiClass ancestorClass = aClass.getSuperClass();
+      final Set<PsiClass> visitedClasses = new HashSet<PsiClass>();
+      while (ancestorClass != null) {
+        if (!visitedClasses.add(ancestorClass)) {
+          return;
         }
+        final PsiField ancestorField =
+          ancestorClass.findFieldByName(fieldName, false);
+        if (ancestorField != null) {
+          if (!m_ignoreInvisibleFields ||
+              ClassUtils.isFieldVisible(ancestorField, aClass)) {
+            registerFieldError(field);
+            return;
+          }
+        }
+        ancestorClass = ancestorClass.getSuperClass();
+      }
     }
+  }
 }

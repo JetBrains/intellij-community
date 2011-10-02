@@ -23,43 +23,46 @@ import java.util.*;
 
 class VariableAccessVisitor extends JavaRecursiveElementVisitor {
 
-    private final Map<PsiField,Integer> m_accessCounts =
-            new HashMap<PsiField, Integer>(2);
-    private final Set<PsiField> m_overAccessedFields =
-            new HashSet<PsiField>(2);
+  private final Map<PsiField, Integer> m_accessCounts =
+    new HashMap<PsiField, Integer>(2);
+  private final Set<PsiField> m_overAccessedFields =
+    new HashSet<PsiField>(2);
 
-    @Override public void visitReferenceExpression(
-            @NotNull PsiReferenceExpression referenceExpression) {
-        super.visitReferenceExpression(referenceExpression);
-        final PsiExpression qualifier =
-                referenceExpression.getQualifierExpression();
-        if (qualifier != null && !(qualifier instanceof PsiThisExpression)) {
-            return;
-        }
-        final PsiElement element = referenceExpression.resolve();
-        if (!(element instanceof PsiField)) {
-            return;
-        }
-        final PsiField field = (PsiField) element;
-        final Set<PsiField> overAccessedFields = m_overAccessedFields;
-        if (overAccessedFields.contains(field)) {
-            return;
-        }
-        if (ControlFlowUtils.isInLoop(referenceExpression)) {
-            overAccessedFields.add(field);
-        }
-        final Map<PsiField,Integer> accessCounts = m_accessCounts;
-        final Integer count = accessCounts.get(field);
-        if (count == null) {
-            accessCounts.put(field, Integer.valueOf(1));
-        } else if (count.intValue() == 1) {
-            accessCounts.put(field, Integer.valueOf(2));
-        } else {
-            overAccessedFields.add(field);
-        }
+  @Override
+  public void visitReferenceExpression(
+    @NotNull PsiReferenceExpression referenceExpression) {
+    super.visitReferenceExpression(referenceExpression);
+    final PsiExpression qualifier =
+      referenceExpression.getQualifierExpression();
+    if (qualifier != null && !(qualifier instanceof PsiThisExpression)) {
+      return;
     }
+    final PsiElement element = referenceExpression.resolve();
+    if (!(element instanceof PsiField)) {
+      return;
+    }
+    final PsiField field = (PsiField)element;
+    final Set<PsiField> overAccessedFields = m_overAccessedFields;
+    if (overAccessedFields.contains(field)) {
+      return;
+    }
+    if (ControlFlowUtils.isInLoop(referenceExpression)) {
+      overAccessedFields.add(field);
+    }
+    final Map<PsiField, Integer> accessCounts = m_accessCounts;
+    final Integer count = accessCounts.get(field);
+    if (count == null) {
+      accessCounts.put(field, Integer.valueOf(1));
+    }
+    else if (count.intValue() == 1) {
+      accessCounts.put(field, Integer.valueOf(2));
+    }
+    else {
+      overAccessedFields.add(field);
+    }
+  }
 
-    public Set<PsiField> getOveraccessedFields() {
-        return Collections.unmodifiableSet(m_overAccessedFields);
-    }
+  public Set<PsiField> getOveraccessedFields() {
+    return Collections.unmodifiableSet(m_overAccessedFields);
+  }
 }

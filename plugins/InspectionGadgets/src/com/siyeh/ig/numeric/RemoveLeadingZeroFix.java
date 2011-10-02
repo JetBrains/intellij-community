@@ -28,31 +28,31 @@ import org.jetbrains.annotations.NotNull;
 
 class RemoveLeadingZeroFix extends InspectionGadgetsFix {
 
-    @NotNull
-    public String getName() {
-        return InspectionGadgetsBundle.message(
-                "remove.leading.zero.to.make.decimal.quickfix");
-    }
+  @NotNull
+  public String getName() {
+    return InspectionGadgetsBundle.message(
+      "remove.leading.zero.to.make.decimal.quickfix");
+  }
 
-    @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor)
-            throws IncorrectOperationException {
-        final PsiElement element = descriptor.getPsiElement();
-        final String text = element.getText();
-        final int max = text.length() - 1;
-        if (max < 1) {
-            return;
-        }
-        int index = 0;
-        while (index < max && (text.charAt(index) == '0' || text.charAt(index) == '_')) {
-            index++;
-        }
-        final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-        final PsiElementFactory factory = psiFacade.getElementFactory();
-        final String textWithoutLeadingZeros = text.substring(index);
-        final PsiExpression decimalNumber =
-                factory.createExpressionFromText(textWithoutLeadingZeros,
-                        element);
-        element.replace(decimalNumber);
+  @Override
+  protected void doFix(Project project, ProblemDescriptor descriptor)
+    throws IncorrectOperationException {
+    final PsiElement element = descriptor.getPsiElement();
+    final String text = element.getText();
+    final int max = text.length() - 1;
+    if (max < 1) {
+      return;
     }
+    int index = 0;
+    while (index < max && (text.charAt(index) == '0' || text.charAt(index) == '_')) {
+      index++;
+    }
+    final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+    final PsiElementFactory factory = psiFacade.getElementFactory();
+    final String textWithoutLeadingZeros = text.substring(index);
+    final PsiExpression decimalNumber =
+      factory.createExpressionFromText(textWithoutLeadingZeros,
+                                       element);
+    element.replace(decimalNumber);
+  }
 }

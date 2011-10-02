@@ -27,62 +27,65 @@ import org.jetbrains.annotations.NotNull;
 
 public class InfiniteLoopStatementInspection extends BaseInspection {
 
-    @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "infinite.loop.statement.display.name");
-    }
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "infinite.loop.statement.display.name");
+  }
+
+  @Override
+  public boolean isEnabledByDefault() {
+    return true;
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "infinite.loop.statement.problem.descriptor");
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new InfiniteLoopStatementsVisitor();
+  }
+
+  private static class InfiniteLoopStatementsVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    public boolean isEnabledByDefault() {
-        return true;
+    public void visitForStatement(
+      @NotNull PsiForStatement statement) {
+      super.visitForStatement(statement);
+      checkStatement(statement);
     }
 
     @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "infinite.loop.statement.problem.descriptor");
+    public void visitWhileStatement(
+      @NotNull PsiWhileStatement statement) {
+      super.visitWhileStatement(statement);
+      checkStatement(statement);
     }
 
     @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new InfiniteLoopStatementsVisitor();
+    public void visitDoWhileStatement(
+      @NotNull PsiDoWhileStatement statement) {
+      super.visitDoWhileStatement(statement);
+      checkStatement(statement);
     }
 
-    private static class InfiniteLoopStatementsVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitForStatement(
-                @NotNull PsiForStatement statement) {
-            super.visitForStatement(statement);
-            checkStatement(statement);
-        }
-
-        @Override public void visitWhileStatement(
-                @NotNull PsiWhileStatement statement) {
-            super.visitWhileStatement(statement);
-            checkStatement(statement);
-        }
-
-        @Override public void visitDoWhileStatement(
-                @NotNull PsiDoWhileStatement statement) {
-            super.visitDoWhileStatement(statement);
-            checkStatement(statement);
-        }
-
-        private void checkStatement(PsiStatement statement) {
-            if (ControlFlowUtils.statementMayCompleteNormally(statement)) {
-                return;
-            }
-            if (ControlFlowUtils.statementContainsReturn(statement)) {
-                return;
-            }
-            if (ControlFlowUtils.statementContainsSystemExit(statement)) {
-                return;
-            }
-            registerStatementError(statement);
-        }
+    private void checkStatement(PsiStatement statement) {
+      if (ControlFlowUtils.statementMayCompleteNormally(statement)) {
+        return;
+      }
+      if (ControlFlowUtils.statementContainsReturn(statement)) {
+        return;
+      }
+      if (ControlFlowUtils.statementContainsSystemExit(statement)) {
+        return;
+      }
+      registerStatementError(statement);
     }
+  }
 }

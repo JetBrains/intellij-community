@@ -22,5 +22,4 @@ public class MethodOverridesStaticMethodInspectionTest extends IGInspectionTestC
   public void test() throws Exception {
     doTest("com/siyeh/igtest/visibility/overrides", new MethodOverridesStaticMethodInspection());
   }
-
 }

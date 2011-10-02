@@ -43,143 +43,142 @@ import javax.swing.JComponent;
 
 public class EmptyDirectoryInspection extends BaseGlobalInspection {
 
-    @SuppressWarnings("PublicField")
-    public boolean onlyReportDirectoriesUnderSourceRoots = false;
+  @SuppressWarnings("PublicField")
+  public boolean onlyReportDirectoriesUnderSourceRoots = false;
 
-    @Nls
-    @NotNull
-    @Override
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message("empty.directory.display.name");
-    }
+  @Nls
+  @NotNull
+  @Override
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("empty.directory.display.name");
+  }
 
-    @Override
-    public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-                "empty.directories.only.under.source.roots.option"), this,
-                "onlyReportDirectoriesUnderSourceRoots");
-    }
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+      "empty.directories.only.under.source.roots.option"), this,
+                                          "onlyReportDirectoriesUnderSourceRoots");
+  }
 
-    @Override
-    public void runInspection(
-            final AnalysisScope scope, final InspectionManager manager,
-            final GlobalInspectionContext context,
-            final ProblemDescriptionsProcessor processor) {
-        final Project project = context.getProject();
-        final ProjectFileIndex index =
-                ProjectRootManager.getInstance(project).getFileIndex();
-        final GlobalSearchScope searchScope =
-                (GlobalSearchScope) scope.toSearchScope();
-        final PsiManager psiManager = PsiManager.getInstance(project);
-        index.iterateContent(new ContentIterator() {
+  @Override
+  public void runInspection(
+    final AnalysisScope scope, final InspectionManager manager,
+    final GlobalInspectionContext context,
+    final ProblemDescriptionsProcessor processor) {
+    final Project project = context.getProject();
+    final ProjectFileIndex index =
+      ProjectRootManager.getInstance(project).getFileIndex();
+    final GlobalSearchScope searchScope =
+      (GlobalSearchScope)scope.toSearchScope();
+    final PsiManager psiManager = PsiManager.getInstance(project);
+    index.iterateContent(new ContentIterator() {
+      @Override
+      public boolean processFile(final VirtualFile fileOrDir) {
+        if (!fileOrDir.isDirectory()) {
+          return true;
+        }
+        if (!searchScope.contains(fileOrDir)) {
+          return true;
+        }
+        if (onlyReportDirectoriesUnderSourceRoots &&
+            !index.isInSourceContent(fileOrDir)) {
+          return true;
+        }
+        final VirtualFile[] children = fileOrDir.getChildren();
+        if (children.length != 0) {
+          return true;
+        }
+        final Application application =
+          ApplicationManager.getApplication();
+        final PsiDirectory directory = application.runReadAction(
+          new Computable<PsiDirectory>() {
             @Override
-            public boolean processFile(final VirtualFile fileOrDir) {
-                if (!fileOrDir.isDirectory()) {
-                    return true;
-                }
-                if (!searchScope.contains(fileOrDir)) {
-                    return true;
-                }
-                if (onlyReportDirectoriesUnderSourceRoots &&
-                        !index.isInSourceContent(fileOrDir)) {
-                    return true;
-                }
-                final VirtualFile[] children = fileOrDir.getChildren();
-                if (children.length != 0) {
-                    return true;
-                }
-                final Application application =
-                        ApplicationManager.getApplication();
-                final PsiDirectory directory = application.runReadAction(
-                        new Computable<PsiDirectory>() {
-                            @Override
-                            public PsiDirectory compute() {
-                                return psiManager.findDirectory(fileOrDir);
-                            }
-                        });
-                final RefElement refDirectory =
-                        context.getRefManager().getReference(directory);
-                if (context.shouldCheck(refDirectory,
-                        EmptyDirectoryInspection.this)) {
-                    return true;
-                }
-                final String relativePath =
-                        getPathRelativeToModule(fileOrDir, project);
-                if (relativePath == null) {
-                    return true;
-                }
-                processor.addProblemElement(refDirectory,
-                        manager.createProblemDescriptor(
-                                InspectionGadgetsBundle.message(
+            public PsiDirectory compute() {
+              return psiManager.findDirectory(fileOrDir);
+            }
+          });
+        final RefElement refDirectory =
+          context.getRefManager().getReference(directory);
+        if (context.shouldCheck(refDirectory,
+                                EmptyDirectoryInspection.this)) {
+          return true;
+        }
+        final String relativePath =
+          getPathRelativeToModule(fileOrDir, project);
+        if (relativePath == null) {
+          return true;
+        }
+        processor.addProblemElement(refDirectory,
+                                    manager.createProblemDescriptor(
+                                      InspectionGadgetsBundle.message(
                                         "empty.directories.problem.descriptor",
                                         relativePath),
-                                new EmptyPackageFix(fileOrDir.getUrl(),
-                                        fileOrDir.getName())));
-                return true;
-            }
+                                      new EmptyPackageFix(fileOrDir.getUrl(),
+                                                          fileOrDir.getName())));
+        return true;
+      }
+    });
+  }
 
-        });
+  @Nullable
+  private static String getPathRelativeToModule(VirtualFile file,
+                                                Project project) {
+    final ProjectRootManager rootManager =
+      ProjectRootManager.getInstance(project);
+    final Application application =
+      ApplicationManager.getApplication();
+    final VirtualFile[] contentRoots = application.runReadAction(
+      new Computable<VirtualFile[]>() {
+        @Override
+        public VirtualFile[] compute() {
+          return rootManager.getContentRootsFromAllModules();
+        }
+      });
+    for (VirtualFile otherRoot : contentRoots) {
+      if (VfsUtil.isAncestor(otherRoot, file, false)) {
+        return VfsUtilCore.getRelativePath(file, otherRoot, '/');
+      }
+    }
+    return null;
+  }
+
+  private static class EmptyPackageFix implements QuickFix {
+
+    private final String url;
+    private final String name;
+
+    public EmptyPackageFix(String url, String name) {
+      this.url = url;
+      this.name = name;
     }
 
-    @Nullable
-    private static String getPathRelativeToModule(VirtualFile file,
-                                                  Project project) {
-        final ProjectRootManager rootManager =
-                ProjectRootManager.getInstance(project);
-        final Application application =
-                ApplicationManager.getApplication();
-        final VirtualFile[] contentRoots = application.runReadAction(
-                new Computable<VirtualFile[]>() {
-                    @Override
-                    public VirtualFile[] compute() {
-                        return rootManager.getContentRootsFromAllModules();
-                    }
-                });
-        for (VirtualFile otherRoot : contentRoots) {
-            if (VfsUtil.isAncestor(otherRoot, file, false)) {
-                return VfsUtilCore.getRelativePath(file, otherRoot, '/');
-            }
-        }
-        return null;
+    @NotNull
+    @Override
+    public String getName() {
+      return InspectionGadgetsBundle.message(
+        "empty.directories.delete.quickfix", name);
     }
 
-    private static class EmptyPackageFix implements QuickFix {
-
-        private final String url;
-        private final String name;
-
-        public EmptyPackageFix(String url, String name) {
-            this.url = url;
-            this.name = name;
-        }
-
-        @NotNull
-        @Override
-        public String getName() {
-            return InspectionGadgetsBundle.message(
-                    "empty.directories.delete.quickfix", name);
-        }
-
-        @NotNull
-        @Override
-        public String getFamilyName() {
-            return getName();
-        }
-
-        @Override
-        public void applyFix(@NotNull Project project,
-                             @NotNull CommonProblemDescriptor descriptor) {
-            final VirtualFile file =
-                    VirtualFileManager.getInstance().findFileByUrl(url);
-            if (file == null) {
-                return;
-            }
-            final PsiManager psiManager = PsiManager.getInstance(project);
-            final PsiDirectory directory = psiManager.findDirectory(file);
-            if (directory == null) {
-                return;
-            }
-            directory.delete();
-        }
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getName();
     }
+
+    @Override
+    public void applyFix(@NotNull Project project,
+                         @NotNull CommonProblemDescriptor descriptor) {
+      final VirtualFile file =
+        VirtualFileManager.getInstance().findFileByUrl(url);
+      if (file == null) {
+        return;
+      }
+      final PsiManager psiManager = PsiManager.getInstance(project);
+      final PsiDirectory directory = psiManager.findDirectory(file);
+      if (directory == null) {
+        return;
+      }
+      directory.delete();
+    }
+  }
 }

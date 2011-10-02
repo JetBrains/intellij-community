@@ -22,18 +22,18 @@ import com.intellij.psi.tree.IElementType;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ErrorUtil;
 
-class ConjunctionPredicate implements PsiElementPredicate{
+class ConjunctionPredicate implements PsiElementPredicate {
 
-    public boolean satisfiedBy(PsiElement element){
-        if(!(element instanceof PsiPolyadicExpression)){
-            return false;
-        }
-        final PsiPolyadicExpression expression = (PsiPolyadicExpression) element;
-      final IElementType tokenType = expression.getOperationTokenType();
-	    if (!tokenType.equals(JavaTokenType.ANDAND) &&
-			    !tokenType.equals(JavaTokenType.OROR)) {
-		    return false;
-	    }
-	    return !ErrorUtil.containsError(element);
+  public boolean satisfiedBy(PsiElement element) {
+    if (!(element instanceof PsiPolyadicExpression)) {
+      return false;
     }
+    final PsiPolyadicExpression expression = (PsiPolyadicExpression)element;
+    final IElementType tokenType = expression.getOperationTokenType();
+    if (!tokenType.equals(JavaTokenType.ANDAND) &&
+        !tokenType.equals(JavaTokenType.OROR)) {
+      return false;
+    }
+    return !ErrorUtil.containsError(element);
+  }
 }

@@ -21,16 +21,16 @@ import java.util.Comparator;
 
 public class PsiElementOrderComparator implements Comparator<PsiElement> {
 
-    private static final PsiElementOrderComparator INSTANCE =
-            new PsiElementOrderComparator();
+  private static final PsiElementOrderComparator INSTANCE =
+    new PsiElementOrderComparator();
 
-    public int compare(PsiElement element1, PsiElement element2) {
-        final int offset1 = element1.getTextOffset();
-        final int offset2 = element2.getTextOffset();
-        return offset1 - offset2;
-    }
+  public int compare(PsiElement element1, PsiElement element2) {
+    final int offset1 = element1.getTextOffset();
+    final int offset2 = element2.getTextOffset();
+    return offset1 - offset2;
+  }
 
-    public static PsiElementOrderComparator getInstance() {
-        return INSTANCE;
-    }
+  public static PsiElementOrderComparator getInstance() {
+    return INSTANCE;
+  }
 }

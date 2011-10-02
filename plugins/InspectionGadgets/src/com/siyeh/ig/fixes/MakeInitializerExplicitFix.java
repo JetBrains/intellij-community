@@ -24,50 +24,58 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class MakeInitializerExplicitFix extends InspectionGadgetsFix{
+public class MakeInitializerExplicitFix extends InspectionGadgetsFix {
 
-    @NotNull
-    public String getName(){
-        return InspectionGadgetsBundle.message(
-                "make.initialization.explicit.quickfix");
-    }
+  @NotNull
+  public String getName() {
+    return InspectionGadgetsBundle.message(
+      "make.initialization.explicit.quickfix");
+  }
 
-    public void doFix(Project project, ProblemDescriptor descriptor)
-            throws IncorrectOperationException{
-        final PsiElement fieldName = descriptor.getPsiElement();
-        final PsiField field = (PsiField) fieldName.getParent();
-        if (field == null) {
-            return;
-        }
-        if (field.getInitializer() != null) {
-            return;
-        }
-        final PsiType type = field.getType();
-        final PsiManager psiManager = PsiManager.getInstance(project);
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
-        final PsiExpression initializer =
-                factory.createExpressionFromText(getDefaultValue(type), field);
-        field.setInitializer(initializer);
+  public void doFix(Project project, ProblemDescriptor descriptor)
+    throws IncorrectOperationException {
+    final PsiElement fieldName = descriptor.getPsiElement();
+    final PsiField field = (PsiField)fieldName.getParent();
+    if (field == null) {
+      return;
     }
+    if (field.getInitializer() != null) {
+      return;
+    }
+    final PsiType type = field.getType();
+    final PsiManager psiManager = PsiManager.getInstance(project);
+    final PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
+    final PsiExpression initializer =
+      factory.createExpressionFromText(getDefaultValue(type), field);
+    field.setInitializer(initializer);
+  }
 
-    @NonNls private static String getDefaultValue(PsiType type){
-        if(PsiType.INT.equals(type)){
-            return "0";
-        } else if(PsiType.LONG.equals(type)){
-            return "0L";
-        } else if(PsiType.DOUBLE.equals(type)){
-            return "0.0";
-        } else if(PsiType.FLOAT.equals(type)){
-            return "0.0F";
-        } else if(PsiType.SHORT.equals(type)){
-            return "(short)0";
-        } else if(PsiType.BYTE.equals(type)){
-            return "(byte)0";
-        } else if(PsiType.BOOLEAN.equals(type)){
-          return PsiKeyword.FALSE;
-        } else if(PsiType.CHAR.equals(type)){
-            return "(char)0";
-        }
-        return PsiKeyword.NULL;
+  @NonNls
+  private static String getDefaultValue(PsiType type) {
+    if (PsiType.INT.equals(type)) {
+      return "0";
     }
+    else if (PsiType.LONG.equals(type)) {
+      return "0L";
+    }
+    else if (PsiType.DOUBLE.equals(type)) {
+      return "0.0";
+    }
+    else if (PsiType.FLOAT.equals(type)) {
+      return "0.0F";
+    }
+    else if (PsiType.SHORT.equals(type)) {
+      return "(short)0";
+    }
+    else if (PsiType.BYTE.equals(type)) {
+      return "(byte)0";
+    }
+    else if (PsiType.BOOLEAN.equals(type)) {
+      return PsiKeyword.FALSE;
+    }
+    else if (PsiType.CHAR.equals(type)) {
+      return "(char)0";
+    }
+    return PsiKeyword.NULL;
+  }
 }

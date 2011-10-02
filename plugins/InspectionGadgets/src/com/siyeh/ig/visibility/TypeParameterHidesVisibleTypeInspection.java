@@ -25,53 +25,54 @@ import org.jetbrains.annotations.NotNull;
 
 public class TypeParameterHidesVisibleTypeInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName(){
-        return InspectionGadgetsBundle.message(
-                "type.parameter.hides.visible.type.display.name");
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "type.parameter.hides.visible.type.display.name");
+  }
+
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new RenameFix();
+  }
+
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return true;
+  }
+
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    final PsiClass aClass = (PsiClass)infos[0];
+    return InspectionGadgetsBundle.message(
+      "type.parameter.hides.visible.type.problem.descriptor",
+      aClass.getQualifiedName());
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new TypeParameterHidesVisibleTypeVisitor();
+  }
+
+  private static class TypeParameterHidesVisibleTypeVisitor
+    extends BaseInspectionVisitor {
+
+    @Override
+    public void visitTypeParameter(PsiTypeParameter parameter) {
+      super.visitTypeParameter(parameter);
+      final String unqualifiedClassName = parameter.getName();
+
+      final JavaPsiFacade manager = JavaPsiFacade.getInstance(parameter.getProject());
+      final PsiFile containingFile = parameter.getContainingFile();
+      final PsiResolveHelper resolveHelper = manager.getResolveHelper();
+      final PsiClass aClass =
+        resolveHelper.resolveReferencedClass(unqualifiedClassName,
+                                             containingFile);
+      if (aClass == null) {
+        return;
+      }
+      final PsiIdentifier identifier = parameter.getNameIdentifier();
+      if (identifier == null) {
+        return;
+      }
+      registerError(identifier, aClass);
     }
-
-    protected InspectionGadgetsFix buildFix(Object... infos){
-        return new RenameFix();
-    }
-
-    protected boolean buildQuickFixesOnlyForOnTheFlyErrors(){
-        return true;
-    }
-
-    @NotNull
-    public String buildErrorString(Object... infos){
-        final PsiClass aClass = (PsiClass)infos[0];
-        return InspectionGadgetsBundle.message(
-                "type.parameter.hides.visible.type.problem.descriptor",
-                aClass.getQualifiedName());
-    }
-
-    public BaseInspectionVisitor buildVisitor(){
-        return new TypeParameterHidesVisibleTypeVisitor();
-    }
-
-    private static class TypeParameterHidesVisibleTypeVisitor
-            extends BaseInspectionVisitor{
-
-        @Override public void visitTypeParameter(PsiTypeParameter parameter){
-            super.visitTypeParameter(parameter);
-            final String unqualifiedClassName = parameter.getName();
-
-            final JavaPsiFacade manager = JavaPsiFacade.getInstance(parameter.getProject());
-            final PsiFile containingFile = parameter.getContainingFile();
-            final PsiResolveHelper resolveHelper = manager.getResolveHelper();
-            final PsiClass aClass =
-                    resolveHelper.resolveReferencedClass(unqualifiedClassName,
-                                                         containingFile);
-            if(aClass == null) {
-                return;
-            }
-            final PsiIdentifier identifier = parameter.getNameIdentifier();
-            if (identifier == null) {
-                return;
-            }
-            registerError(identifier, aClass);
-        }
-    }
+  }
 }

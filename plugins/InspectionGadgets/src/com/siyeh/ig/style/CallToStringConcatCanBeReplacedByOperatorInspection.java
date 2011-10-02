@@ -30,108 +30,109 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class CallToStringConcatCanBeReplacedByOperatorInspection
-        extends BaseInspection {
+  extends BaseInspection {
 
-    @Override
-    @Nls
+  @Override
+  @Nls
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "call.to.string.concat.can.be.replaced.by.operator.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "call.to.string.concat.can.be.replaced.by.operator.problem.descriptor");
+  }
+
+  @Override
+  @Nullable
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new CallToStringConcatCanBeReplacedByOperatorFix();
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new CallToStringConcatCanBeReplacedByOperatorVisitor();
+  }
+
+  private static class CallToStringConcatCanBeReplacedByOperatorFix
+    extends InspectionGadgetsFix {
+
     @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "call.to.string.concat.can.be.replaced.by.operator.display.name");
+    public String getName() {
+      return InspectionGadgetsBundle.message("call.to.string.concat.can.be.replaced.by.operator.quickfix");
     }
 
     @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "call.to.string.concat.can.be.replaced.by.operator.problem.descriptor");
+    protected void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiElement element = descriptor.getPsiElement();
+      final PsiElement parent = element.getParent();
+      if (!(parent instanceof PsiReferenceExpression)) {
+        return;
+      }
+      final PsiReferenceExpression referenceExpression =
+        (PsiReferenceExpression)parent;
+      final PsiExpression qualifier =
+        referenceExpression.getQualifierExpression();
+      if (qualifier == null) {
+        return;
+      }
+      final PsiElement grandParent = referenceExpression.getParent();
+      if (!(grandParent instanceof PsiMethodCallExpression)) {
+        return;
+      }
+      final PsiMethodCallExpression methodCallExpression =
+        (PsiMethodCallExpression)grandParent;
+      final PsiExpressionList argumentList =
+        methodCallExpression.getArgumentList();
+      final PsiExpression[] arguments = argumentList.getExpressions();
+      if (arguments.length != 1) {
+        return;
+      }
+      final PsiExpression argument = arguments[0];
+      @NonNls
+      final String newExpression =
+        qualifier.getText() + '+' + argument.getText();
+      replaceExpression(methodCallExpression, newExpression);
     }
+  }
+
+  private static class CallToStringConcatCanBeReplacedByOperatorVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @Nullable
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        return new CallToStringConcatCanBeReplacedByOperatorFix();
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new CallToStringConcatCanBeReplacedByOperatorVisitor();
-    }
-
-    private static class CallToStringConcatCanBeReplacedByOperatorFix
-            extends InspectionGadgetsFix {
-
-        @NotNull
-        public String getName() {
-            return InspectionGadgetsBundle.message("call.to.string.concat.can.be.replaced.by.operator.quickfix");
-        }
-
-        @Override
-        protected void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
-            final PsiElement element = descriptor.getPsiElement();
-            final PsiElement parent = element.getParent();
-            if (!(parent instanceof PsiReferenceExpression)) {
-                return;
-            }
-            final PsiReferenceExpression referenceExpression =
-                    (PsiReferenceExpression)parent;
-            final PsiExpression qualifier =
-                    referenceExpression.getQualifierExpression();
-            if (qualifier == null) {
-                return;
-            }
-            final PsiElement grandParent = referenceExpression.getParent();
-            if (!(grandParent instanceof PsiMethodCallExpression)) {
-                return;
-            }
-            final PsiMethodCallExpression methodCallExpression =
-                    (PsiMethodCallExpression)grandParent;
-            final PsiExpressionList argumentList =
-                    methodCallExpression.getArgumentList();
-            final PsiExpression[] arguments = argumentList.getExpressions();
-            if (arguments.length != 1) {
-                return;
-            }
-            final PsiExpression argument = arguments[0];
-            @NonNls
-            final String newExpression =
-                    qualifier.getText() + '+' + argument.getText();
-            replaceExpression(methodCallExpression, newExpression);
-        }
-    }
-
-    private static class CallToStringConcatCanBeReplacedByOperatorVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitMethodCallExpression(
-                PsiMethodCallExpression expression) {
-            super.visitMethodCallExpression(expression);
-            final Project project = expression.getProject();
-            final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-            final PsiClass stringClass =
-                    psiFacade.findClass(CommonClassNames.JAVA_LANG_STRING,
+    public void visitMethodCallExpression(
+      PsiMethodCallExpression expression) {
+      super.visitMethodCallExpression(expression);
+      final Project project = expression.getProject();
+      final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+      final PsiClass stringClass =
+        psiFacade.findClass(CommonClassNames.JAVA_LANG_STRING,
                             expression.getResolveScope());
-            if (stringClass == null) {
-                return;
-            }
-          final PsiClassType stringType =
-                    psiFacade.getElementFactory().createType(stringClass);
-            if (!MethodCallUtils.isCallToMethod(expression,
-                    CommonClassNames.JAVA_LANG_STRING,
-                    stringType, "concat", stringType)) {
-                return;
-            }
-            final PsiExpressionList argumentList = expression.getArgumentList();
-            final PsiExpression[] arguments = argumentList.getExpressions();
-            if (arguments.length != 1) {
-                return;
-            }
-            final PsiElement parent = expression.getParent();
-            if (parent instanceof PsiExpressionStatement) {
-                return;
-            }
-            registerMethodCallError(expression);
-        }
+      if (stringClass == null) {
+        return;
+      }
+      final PsiClassType stringType =
+        psiFacade.getElementFactory().createType(stringClass);
+      if (!MethodCallUtils.isCallToMethod(expression,
+                                          CommonClassNames.JAVA_LANG_STRING,
+                                          stringType, "concat", stringType)) {
+        return;
+      }
+      final PsiExpressionList argumentList = expression.getArgumentList();
+      final PsiExpression[] arguments = argumentList.getExpressions();
+      if (arguments.length != 1) {
+        return;
+      }
+      final PsiElement parent = expression.getParent();
+      if (parent instanceof PsiExpressionStatement) {
+        return;
+      }
+      registerMethodCallError(expression);
     }
+  }
 }

@@ -32,68 +32,70 @@ import org.jetbrains.annotations.NotNull;
 
 public class RenameFix extends InspectionGadgetsFix {
 
-    private final String m_targetName;
-    private boolean m_searchInStrings = true;
-    private boolean m_searchInNonJavaFiles = true;
+  private final String m_targetName;
+  private boolean m_searchInStrings = true;
+  private boolean m_searchInNonJavaFiles = true;
 
-    public RenameFix() {
-        m_targetName = null;
+  public RenameFix() {
+    m_targetName = null;
+  }
+
+  public RenameFix(@NonNls String targetName) {
+    m_targetName = targetName;
+  }
+
+
+  public RenameFix(@NonNls String targetName, boolean searchInStrings, boolean searchInNonJavaFiles) {
+    m_targetName = targetName;
+    m_searchInStrings = searchInStrings;
+    m_searchInNonJavaFiles = searchInNonJavaFiles;
+  }
+
+  @NotNull
+  public String getName() {
+    if (m_targetName == null) {
+      return InspectionGadgetsBundle.message("rename.quickfix");
     }
-
-    public RenameFix(@NonNls String targetName) {
-        m_targetName = targetName;
+    else {
+      return InspectionGadgetsBundle.message("renameto.quickfix",
+                                             m_targetName);
     }
+  }
 
+  public String getTargetName() {
+    return m_targetName;
+  }
 
-    public RenameFix(@NonNls String targetName, boolean searchInStrings, boolean searchInNonJavaFiles) {
-        m_targetName = targetName;
-        m_searchInStrings = searchInStrings;
-        m_searchInNonJavaFiles = searchInNonJavaFiles;
-    }
-
-    @NotNull
-    public String getName() {
-        if (m_targetName == null) {
-            return InspectionGadgetsBundle.message("rename.quickfix");
-        } else {
-            return InspectionGadgetsBundle.message("renameto.quickfix",
-                    m_targetName);
+  @Override
+  public void doFix(final Project project, ProblemDescriptor descriptor) {
+    final PsiElement nameIdentifier = descriptor.getPsiElement();
+    final PsiElement elementToRename = nameIdentifier.getParent();
+    if (m_targetName == null) {
+      final RefactoringActionHandlerFactory factory =
+        RefactoringActionHandlerFactory.getInstance();
+      final RefactoringActionHandler renameHandler =
+        factory.createRenameHandler();
+      final DataManager dataManager = DataManager.getInstance();
+      final DataContext dataContext = dataManager.getDataContext();
+      Runnable runnable = new Runnable() {
+        public void run() {
+          renameHandler.invoke(project, new PsiElement[]{elementToRename},
+                               dataContext);
         }
+      };
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        runnable.run();
+      }
+      else {
+        ApplicationManager.getApplication().invokeLater(runnable, project.getDisposed());
+      }
     }
-
-    public String getTargetName() {
-        return m_targetName;
+    else {
+      final RefactoringFactory factory =
+        RefactoringFactory.getInstance(project);
+      final RenameRefactoring renameRefactoring =
+        factory.createRename(elementToRename, m_targetName, m_searchInStrings, m_searchInNonJavaFiles);
+      renameRefactoring.run();
     }
-
-    @Override
-    public void doFix(final Project project, ProblemDescriptor descriptor) {
-        final PsiElement nameIdentifier = descriptor.getPsiElement();
-        final PsiElement elementToRename = nameIdentifier.getParent();
-        if (m_targetName == null) {
-            final RefactoringActionHandlerFactory factory =
-                    RefactoringActionHandlerFactory.getInstance();
-            final RefactoringActionHandler renameHandler =
-                    factory.createRenameHandler();
-            final DataManager dataManager = DataManager.getInstance();
-            final DataContext dataContext = dataManager.getDataContext();
-            Runnable runnable = new Runnable() {
-              public void run() {
-                renameHandler.invoke(project, new PsiElement[]{elementToRename},
-                        dataContext);
-              }
-            };
-            if (ApplicationManager.getApplication().isUnitTestMode()) {
-              runnable.run();
-            } else {
-              ApplicationManager.getApplication().invokeLater(runnable, project.getDisposed());
-            }
-
-        } else {
-            final RefactoringFactory factory =
-                    RefactoringFactory.getInstance(project);
-            final RenameRefactoring renameRefactoring =
-                    factory.createRename(elementToRename, m_targetName, m_searchInStrings, m_searchInNonJavaFiles);
-            renameRefactoring.run();
-        }
-    }
+  }
 }

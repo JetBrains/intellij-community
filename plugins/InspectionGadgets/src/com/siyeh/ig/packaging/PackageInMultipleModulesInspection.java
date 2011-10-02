@@ -34,45 +34,44 @@ import java.util.Set;
 
 public class PackageInMultipleModulesInspection extends BaseGlobalInspection {
 
-    @NotNull
-    @Override
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "package.in.multiple.modules.display.name");
+  @NotNull
+  @Override
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "package.in.multiple.modules.display.name");
+  }
+
+  @Override
+  @Nullable
+  public CommonProblemDescriptor[] checkElement(
+    RefEntity refEntity, AnalysisScope analysisScope,
+    InspectionManager inspectionManager,
+    GlobalInspectionContext globalInspectionContext) {
+    if (!(refEntity instanceof RefPackage)) {
+      return null;
     }
-
-    @Override
-    @Nullable
-    public CommonProblemDescriptor[] checkElement(
-            RefEntity refEntity, AnalysisScope analysisScope,
-            InspectionManager inspectionManager,
-            GlobalInspectionContext globalInspectionContext) {
-        if (!(refEntity instanceof RefPackage)) {
-            return null;
-        }
-        final List<RefEntity> children = refEntity.getChildren();
-        if (children == null) {
-            return null;
-        }
-        final Set<RefModule> modules = new HashSet<RefModule>();
-        for (RefEntity child : children) {
-            if (!(child instanceof RefClass)) {
-                continue;
-            }
-            final RefClass refClass = (RefClass) child;
-            final RefModule module = refClass.getModule();
-            modules.add(module);
-        }
-        if (modules.size() <= 1) {
-            return null;
-        }
-        final String errorString =
-                InspectionGadgetsBundle.message(
-                        "package.in.multiple.modules.problem.descriptor",
-                        refEntity.getQualifiedName());
-
-        return new CommonProblemDescriptor[]{
-                inspectionManager.createProblemDescriptor(errorString)};
-
+    final List<RefEntity> children = refEntity.getChildren();
+    if (children == null) {
+      return null;
     }
+    final Set<RefModule> modules = new HashSet<RefModule>();
+    for (RefEntity child : children) {
+      if (!(child instanceof RefClass)) {
+        continue;
+      }
+      final RefClass refClass = (RefClass)child;
+      final RefModule module = refClass.getModule();
+      modules.add(module);
+    }
+    if (modules.size() <= 1) {
+      return null;
+    }
+    final String errorString =
+      InspectionGadgetsBundle.message(
+        "package.in.multiple.modules.problem.descriptor",
+        refEntity.getQualifiedName());
+
+    return new CommonProblemDescriptor[]{
+      inspectionManager.createProblemDescriptor(errorString)};
+  }
 }

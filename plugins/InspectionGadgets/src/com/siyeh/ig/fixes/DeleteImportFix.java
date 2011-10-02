@@ -23,15 +23,15 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
-public  class DeleteImportFix extends InspectionGadgetsFix {
-    @NotNull
-    public String getName() {
-        return InspectionGadgetsBundle.message("delete.import.quickfix");
-    }
+public class DeleteImportFix extends InspectionGadgetsFix {
+  @NotNull
+  public String getName() {
+    return InspectionGadgetsBundle.message("delete.import.quickfix");
+  }
 
-    public void doFix(Project project, ProblemDescriptor descriptor)
-                                                                     throws IncorrectOperationException{
-        final PsiElement importStatement = descriptor.getPsiElement();
-        deleteElement(importStatement);
-    }
+  public void doFix(Project project, ProblemDescriptor descriptor)
+    throws IncorrectOperationException {
+    final PsiElement importStatement = descriptor.getPsiElement();
+    deleteElement(importStatement);
+  }
 }

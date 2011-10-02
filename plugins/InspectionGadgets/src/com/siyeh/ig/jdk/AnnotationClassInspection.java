@@ -23,29 +23,30 @@ import org.jetbrains.annotations.NotNull;
 
 public class AnnotationClassInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "annotation.class.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "annotation.class.display.name");
+  }
 
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "annotation.class.problem.descriptor");
-    }
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "annotation.class.problem.descriptor");
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new AnnotationClassVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new AnnotationClassVisitor();
+  }
 
-    private static class AnnotationClassVisitor extends BaseInspectionVisitor {
+  private static class AnnotationClassVisitor extends BaseInspectionVisitor {
 
-        @Override public void visitClass(@NotNull PsiClass aClass) {
-            if (!aClass.isAnnotationType()) {
-                return;
-            }
-            registerClassError(aClass);
-        }
+    @Override
+    public void visitClass(@NotNull PsiClass aClass) {
+      if (!aClass.isAnnotationType()) {
+        return;
+      }
+      registerClassError(aClass);
     }
+  }
 }

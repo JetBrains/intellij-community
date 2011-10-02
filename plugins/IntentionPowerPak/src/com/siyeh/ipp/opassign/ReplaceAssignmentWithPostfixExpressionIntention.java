@@ -24,56 +24,59 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 public class ReplaceAssignmentWithPostfixExpressionIntention
-        extends MutablyNamedIntention {
+  extends MutablyNamedIntention {
 
-    @NotNull
-    @Override
-    protected PsiElementPredicate getElementPredicate() {
-        return new ReplaceAssignmentWithPostfixExpressionPredicate();
-    }
+  @NotNull
+  @Override
+  protected PsiElementPredicate getElementPredicate() {
+    return new ReplaceAssignmentWithPostfixExpressionPredicate();
+  }
 
-    @Override
-    protected String getTextForElement(PsiElement element) {
-        final PsiAssignmentExpression assignmentExpression =
-                (PsiAssignmentExpression)element;
-        final PsiBinaryExpression rhs =
-                (PsiBinaryExpression)assignmentExpression.getRExpression();
-        final PsiExpression lhs = assignmentExpression.getLExpression();
-        final String lhsText = lhs.getText();
-        final IElementType tokenType;
-        if (rhs == null) {
-            tokenType = null;
-        } else {
-            tokenType = rhs.getOperationTokenType();
-        }
-        final String replacementText;
-        if (JavaTokenType.MINUS.equals(tokenType)) {
-            replacementText = lhsText + "--";
-        } else {
-            replacementText = lhsText + "++";
-        }
-        return IntentionPowerPackBundle.message(
-                "replace.some.operator.with.other.intention.name", "=",
-                replacementText);
+  @Override
+  protected String getTextForElement(PsiElement element) {
+    final PsiAssignmentExpression assignmentExpression =
+      (PsiAssignmentExpression)element;
+    final PsiBinaryExpression rhs =
+      (PsiBinaryExpression)assignmentExpression.getRExpression();
+    final PsiExpression lhs = assignmentExpression.getLExpression();
+    final String lhsText = lhs.getText();
+    final IElementType tokenType;
+    if (rhs == null) {
+      tokenType = null;
     }
+    else {
+      tokenType = rhs.getOperationTokenType();
+    }
+    final String replacementText;
+    if (JavaTokenType.MINUS.equals(tokenType)) {
+      replacementText = lhsText + "--";
+    }
+    else {
+      replacementText = lhsText + "++";
+    }
+    return IntentionPowerPackBundle.message(
+      "replace.some.operator.with.other.intention.name", "=",
+      replacementText);
+  }
 
-    @Override
-    protected void processIntention(@NotNull PsiElement element)
-            throws IncorrectOperationException {
-        final PsiAssignmentExpression assignmentExpression =
-                (PsiAssignmentExpression)element;
-        final PsiExpression lhs = assignmentExpression.getLExpression();
-        final String lhsText = lhs.getText();
-        final PsiExpression rhs = assignmentExpression.getRExpression();
-        if (!(rhs instanceof PsiBinaryExpression)) {
-            return;
-        }
-        final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)rhs;
-        final IElementType tokenType = binaryExpression.getOperationTokenType();
-        if (JavaTokenType.PLUS.equals(tokenType)) {
-            replaceExpression(lhsText + "++", assignmentExpression);
-        } else if (JavaTokenType.MINUS.equals(tokenType)) {
-            replaceExpression(lhsText + "--", assignmentExpression);
-        }
+  @Override
+  protected void processIntention(@NotNull PsiElement element)
+    throws IncorrectOperationException {
+    final PsiAssignmentExpression assignmentExpression =
+      (PsiAssignmentExpression)element;
+    final PsiExpression lhs = assignmentExpression.getLExpression();
+    final String lhsText = lhs.getText();
+    final PsiExpression rhs = assignmentExpression.getRExpression();
+    if (!(rhs instanceof PsiBinaryExpression)) {
+      return;
     }
+    final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)rhs;
+    final IElementType tokenType = binaryExpression.getOperationTokenType();
+    if (JavaTokenType.PLUS.equals(tokenType)) {
+      replaceExpression(lhsText + "++", assignmentExpression);
+    }
+    else if (JavaTokenType.MINUS.equals(tokenType)) {
+      replaceExpression(lhsText + "--", assignmentExpression);
+    }
+  }
 }

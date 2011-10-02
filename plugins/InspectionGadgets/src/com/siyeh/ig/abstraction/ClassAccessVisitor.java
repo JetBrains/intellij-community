@@ -28,64 +28,67 @@ import java.util.*;
 
 class ClassAccessVisitor extends JavaRecursiveElementVisitor {
 
-    private final Map<PsiClass,Integer> m_accessCounts =
-            new HashMap<PsiClass, Integer>(2);
-    private final Set<PsiClass> m_overAccessedClasses =
-            new HashSet<PsiClass>(2);
-    private final PsiClass currentClass;
+  private final Map<PsiClass, Integer> m_accessCounts =
+    new HashMap<PsiClass, Integer>(2);
+  private final Set<PsiClass> m_overAccessedClasses =
+    new HashSet<PsiClass>(2);
+  private final PsiClass currentClass;
 
-    ClassAccessVisitor(PsiClass currentClass) {
-        super();
-        this.currentClass = currentClass;
-    }
+  ClassAccessVisitor(PsiClass currentClass) {
+    super();
+    this.currentClass = currentClass;
+  }
 
-    @Override public void visitMethodCallExpression(
-            @NotNull PsiMethodCallExpression expression) {
-        super.visitMethodCallExpression(expression);
-        final PsiMethod method = expression.resolveMethod();
-        if (method == null) {
-            return;
-        }
-        final PsiClass calledClass = method.getContainingClass();
-        if (calledClass == null) {
-            return;
-        }
-        if (currentClass.equals(calledClass)) {
-            return;
-        }
-        final Set<PsiClass> overAccessedClasses = m_overAccessedClasses;
-        if (overAccessedClasses.contains(calledClass)) {
-            return;
-        }
-        if (LibraryUtil.classIsInLibrary(calledClass)) {
-            return;
-        }
-        if (PsiTreeUtil.isAncestor(currentClass, calledClass, true)) {
-            return;
-        }
-        if (PsiTreeUtil.isAncestor(calledClass, currentClass, true)) {
-            return;
-        }
-        PsiClass lexicallyEnclosingClass = currentClass;
-        while (lexicallyEnclosingClass != null) {
-            if (lexicallyEnclosingClass.isInheritor(calledClass, true)) {
-                return;
-            }
-            lexicallyEnclosingClass =
-                    ClassUtils.getContainingClass(lexicallyEnclosingClass);
-        }
-        final Map<PsiClass,Integer> accessCounts = m_accessCounts;
-        final Integer count = accessCounts.get(calledClass);
-        if (count == null) {
-            accessCounts.put(calledClass, Integer.valueOf(1));
-        } else if (count.equals(Integer.valueOf(1))) {
-            accessCounts.put(calledClass, Integer.valueOf(2));
-        } else {
-            overAccessedClasses.add(calledClass);
-        }
+  @Override
+  public void visitMethodCallExpression(
+    @NotNull PsiMethodCallExpression expression) {
+    super.visitMethodCallExpression(expression);
+    final PsiMethod method = expression.resolveMethod();
+    if (method == null) {
+      return;
     }
+    final PsiClass calledClass = method.getContainingClass();
+    if (calledClass == null) {
+      return;
+    }
+    if (currentClass.equals(calledClass)) {
+      return;
+    }
+    final Set<PsiClass> overAccessedClasses = m_overAccessedClasses;
+    if (overAccessedClasses.contains(calledClass)) {
+      return;
+    }
+    if (LibraryUtil.classIsInLibrary(calledClass)) {
+      return;
+    }
+    if (PsiTreeUtil.isAncestor(currentClass, calledClass, true)) {
+      return;
+    }
+    if (PsiTreeUtil.isAncestor(calledClass, currentClass, true)) {
+      return;
+    }
+    PsiClass lexicallyEnclosingClass = currentClass;
+    while (lexicallyEnclosingClass != null) {
+      if (lexicallyEnclosingClass.isInheritor(calledClass, true)) {
+        return;
+      }
+      lexicallyEnclosingClass =
+        ClassUtils.getContainingClass(lexicallyEnclosingClass);
+    }
+    final Map<PsiClass, Integer> accessCounts = m_accessCounts;
+    final Integer count = accessCounts.get(calledClass);
+    if (count == null) {
+      accessCounts.put(calledClass, Integer.valueOf(1));
+    }
+    else if (count.equals(Integer.valueOf(1))) {
+      accessCounts.put(calledClass, Integer.valueOf(2));
+    }
+    else {
+      overAccessedClasses.add(calledClass);
+    }
+  }
 
-    public Set<PsiClass> getOveraccessedClasses() {
-        return Collections.unmodifiableSet(m_overAccessedClasses);
-    }
+  public Set<PsiClass> getOveraccessedClasses() {
+    return Collections.unmodifiableSet(m_overAccessedClasses);
+  }
 }

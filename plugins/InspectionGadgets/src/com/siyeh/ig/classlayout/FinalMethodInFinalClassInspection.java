@@ -27,45 +27,46 @@ import org.jetbrains.annotations.NotNull;
 
 public class FinalMethodInFinalClassInspection extends BaseInspection {
 
-    @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "final.method.in.final.class.display.name");
-    }
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "final.method.in.final.class.display.name");
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new FinalMethodInFinalClassVisitor();
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "final.method.in.final.class.problem.descriptor");
+  }
+
+  @Override
+  public InspectionGadgetsFix buildFix(Object... infos) {
+    return new RemoveModifierFix((String)infos[0]);
+  }
+
+  private static class FinalMethodInFinalClassVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new FinalMethodInFinalClassVisitor();
+    public void visitMethod(@NotNull PsiMethod method) {
+      if (!method.hasModifierProperty(PsiModifier.FINAL)) {
+        return;
+      }
+      final PsiClass containingClass = method.getContainingClass();
+      if (containingClass == null || containingClass.isEnum()) {
+        return;
+      }
+      if (!containingClass.hasModifierProperty(PsiModifier.FINAL)) {
+        return;
+      }
+      registerModifierError(PsiModifier.FINAL, method, PsiModifier.FINAL);
     }
-
-    @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "final.method.in.final.class.problem.descriptor");
-    }
-
-    @Override
-    public InspectionGadgetsFix buildFix(Object... infos) {
-        return new RemoveModifierFix((String) infos[0]);
-    }
-
-    private static class FinalMethodInFinalClassVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitMethod(@NotNull PsiMethod method) {
-            if (!method.hasModifierProperty(PsiModifier.FINAL)) {
-                return;
-            }
-            final PsiClass containingClass = method.getContainingClass();
-            if (containingClass == null || containingClass.isEnum()) {
-                return;
-            }
-            if (!containingClass.hasModifierProperty(PsiModifier.FINAL)) {
-                return;
-            }
-            registerModifierError(PsiModifier.FINAL, method, PsiModifier.FINAL);
-        }
-    }
+  }
 }

@@ -44,190 +44,197 @@ import org.jetbrains.annotations.Nullable;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class StaticMethodOnlyUsedInOneClassInspection
-        extends BaseInspection {
+  extends BaseInspection {
 
-    @Override
-    @NotNull
-    public String getDisplayName() {
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "static.method.only.used.in.one.class.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    final PsiNamedElement element = (PsiNamedElement)infos[0];
+    final String name = element.getName();
+    if (infos.length > 1) {
+      if (Boolean.TRUE.equals(infos[1])) {
         return InspectionGadgetsBundle.message(
-                "static.method.only.used.in.one.class.display.name");
+          "static.method.only.used.in.one.class.problem.descriptor.anonymous.extending",
+          name);
+      }
+      return InspectionGadgetsBundle.message(
+        "static.method.only.used.in.one.class.problem.descriptor.anonymous.implementing",
+        name);
+    }
+    return InspectionGadgetsBundle.message(
+      "static.method.only.used.in.one.class.problem.descriptor", name);
+  }
+
+  @Override
+  @Nullable
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    final PsiClass usageClass = (PsiClass)infos[0];
+    return new StaticMethodOnlyUsedInOneClassFix(usageClass);
+  }
+
+  private static class StaticMethodOnlyUsedInOneClassFix
+    extends InspectionGadgetsFix {
+
+    private final SmartPsiElementPointer<PsiClass> usageClass;
+
+    public StaticMethodOnlyUsedInOneClassFix(PsiClass usageClass) {
+      final SmartPointerManager pointerManager =
+        SmartPointerManager.getInstance(usageClass.getProject());
+      this.usageClass =
+        pointerManager.createSmartPsiElementPointer(usageClass);
+    }
+
+    @NotNull
+    public String getName() {
+      return InspectionGadgetsBundle.message(
+        "static.method.only.used.in.one.class.quickfix");
     }
 
     @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        final PsiNamedElement element = (PsiNamedElement)infos[0];
-        final String name = element.getName();
-        if (infos.length > 1) {
-            if (Boolean.TRUE.equals(infos[1])) {
-                return InspectionGadgetsBundle.message(
-                        "static.method.only.used.in.one.class.problem.descriptor.anonymous.extending",
-                        name);
+    protected void doFix(@NotNull final Project project,
+                         ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiElement location = descriptor.getPsiElement();
+      final PsiMethod method = (PsiMethod)location.getParent();
+      final Application application = ApplicationManager.getApplication();
+      final RefactoringActionHandlerFactory factory =
+        RefactoringActionHandlerFactory.getInstance();
+      final RefactoringActionHandler moveHandler =
+        factory.createMoveHandler();
+      final DataManager dataManager = DataManager.getInstance();
+      final DataContext originalContext = dataManager.getDataContext();
+      final DataContext dataContext =
+        new DataContext() {
+          @Override
+          public Object getData(@NonNls String name) {
+            if (LangDataKeys.TARGET_PSI_ELEMENT.is(name)) {
+              return usageClass.getElement();
             }
-            return InspectionGadgetsBundle.message(
-                    "static.method.only.used.in.one.class.problem.descriptor.anonymous.implementing",
-                    name);
+            return originalContext.getData(name);
+          }
+        };
+      final Runnable runnable = new Runnable() {
+        @Override
+        public void run() {
+          moveHandler.invoke(project,
+                             new PsiElement[]{method}, dataContext);
         }
-        return InspectionGadgetsBundle.message(
-                "static.method.only.used.in.one.class.problem.descriptor", name);
+      };
+      if (application.isUnitTestMode()) {
+        runnable.run();
+      }
+      else {
+        application.invokeLater(runnable, project.getDisposed());
+      }
     }
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new StaticMethodOnlyUsedInOneClassVisitor();
+  }
+
+  private static class StaticMethodOnlyUsedInOneClassVisitor
+    extends BaseInspectionVisitor {
 
     @Override
+    public void visitMethod(PsiMethod method) {
+      super.visitMethod(method);
+      if (!method.hasModifierProperty(PsiModifier.STATIC)) {
+        return;
+      }
+      if (method.hasModifierProperty(PsiModifier.PRIVATE)) {
+        return;
+      }
+      if (method.getNameIdentifier() == null) {
+        return;
+      }
+      final UsageProcessor usageProcessor = new UsageProcessor();
+      final PsiClass usageClass = usageProcessor.getUsageClass(method);
+      if (usageClass == null) {
+        return;
+      }
+      if (usageClass.equals(method.getContainingClass())) {
+        return;
+      }
+      if (usageClass instanceof PsiAnonymousClass) {
+        final PsiClass[] interfaces =
+          usageClass.getInterfaces();
+        final PsiClass superClass;
+        if (interfaces.length == 1) {
+          superClass = interfaces[0];
+          registerMethodError(method, superClass, Boolean.FALSE);
+        }
+        else {
+          superClass = usageClass.getSuperClass();
+          if (superClass == null) {
+            return;
+          }
+          registerMethodError(method, superClass, Boolean.TRUE);
+        }
+      }
+      else {
+        registerMethodError(method, usageClass);
+      }
+    }
+  }
+
+  private static class UsageProcessor implements Processor<PsiReference> {
+
+    private final AtomicReference<PsiClass> foundClass =
+      new AtomicReference<PsiClass>();
+
+    @Override
+    public boolean process(PsiReference reference) {
+      ProgressManager.checkCanceled();
+      final PsiElement element = reference.getElement();
+      final PsiClass usageClass = ClassUtils.getContainingClass(element);
+      if (usageClass == null) {
+        return true;
+      }
+      if (foundClass.compareAndSet(null, usageClass)) {
+        return true;
+      }
+      final PsiClass aClass = foundClass.get();
+      final PsiManager manager = usageClass.getManager();
+      return manager.areElementsEquivalent(aClass, usageClass);
+    }
+
+    /**
+     * @return the class the specified method is used from, or null if it is
+     *         used from 0 or more than 1 other classes.
+     */
     @Nullable
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        final PsiClass usageClass = (PsiClass)infos[0];
-        return new StaticMethodOnlyUsedInOneClassFix(usageClass);
-    }
-
-    private static class StaticMethodOnlyUsedInOneClassFix
-            extends InspectionGadgetsFix {
-
-        private final SmartPsiElementPointer<PsiClass> usageClass;
-
-        public StaticMethodOnlyUsedInOneClassFix(PsiClass usageClass) {
-            final SmartPointerManager pointerManager =
-                    SmartPointerManager.getInstance(usageClass.getProject());
-            this.usageClass =
-                    pointerManager.createSmartPsiElementPointer(usageClass);
-        }
-
-        @NotNull
-        public String getName() {
-            return InspectionGadgetsBundle.message(
-                    "static.method.only.used.in.one.class.quickfix");
-        }
-
+    public PsiClass getUsageClass(final PsiMethod method) {
+      final ProgressManager progressManager =
+        ProgressManager.getInstance();
+      final PsiSearchHelper searchHelper = PsiSearchHelper.SERVICE.getInstance(method.getProject());
+      final String name = method.getName();
+      final GlobalSearchScope scope =
+        GlobalSearchScope.allScope(method.getProject());
+      if (searchHelper.isCheapEnoughToSearch(name, scope, null,
+                                             progressManager.getProgressIndicator())
+          == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) {
+        return null;
+      }
+      progressManager.runProcess(new Runnable() {
         @Override
-        protected void doFix(@NotNull final Project project,
-                             ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
-            final PsiElement location = descriptor.getPsiElement();
-            final PsiMethod method = (PsiMethod)location.getParent();
-            final Application application = ApplicationManager.getApplication();
-            final RefactoringActionHandlerFactory factory =
-                    RefactoringActionHandlerFactory.getInstance();
-            final RefactoringActionHandler moveHandler =
-                    factory.createMoveHandler();
-            final DataManager dataManager = DataManager.getInstance();
-            final DataContext originalContext = dataManager.getDataContext();
-            final DataContext dataContext =
-                    new DataContext() {
-                        @Override public Object getData(@NonNls String name) {
-                            if (LangDataKeys.TARGET_PSI_ELEMENT.is(name)) {
-                                return usageClass.getElement();
-                            }
-                            return originalContext.getData(name);
-                        }
-                    };
-            final Runnable runnable = new Runnable() {
-                @Override public void run() {
-                    moveHandler.invoke(project,
-                            new PsiElement[]{method}, dataContext);
-                }
-            };
-            if (application.isUnitTestMode()) {
-                runnable.run();
-            } else {
-                application.invokeLater(runnable, project.getDisposed());
-            }
+        public void run() {
+          final Query<PsiReference> query =
+            MethodReferencesSearch.search(method);
+          if (!query.forEach(UsageProcessor.this)) {
+            foundClass.set(null);
+          }
         }
+      }, null);
+      return foundClass.get();
     }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new StaticMethodOnlyUsedInOneClassVisitor();
-    }
-
-    private static class StaticMethodOnlyUsedInOneClassVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitMethod(PsiMethod method) {
-            super.visitMethod(method);
-            if (!method.hasModifierProperty(PsiModifier.STATIC)) {
-                return;
-            }
-            if (method.hasModifierProperty(PsiModifier.PRIVATE)) {
-                return;
-            }
-            if (method.getNameIdentifier() == null) {
-                return;
-            }
-            final UsageProcessor usageProcessor = new UsageProcessor();
-            final PsiClass usageClass = usageProcessor.getUsageClass(method);
-            if (usageClass == null) {
-                return;
-            }
-            if (usageClass.equals(method.getContainingClass())) {
-                return;
-            }
-            if (usageClass instanceof PsiAnonymousClass) {
-                final PsiClass[] interfaces =
-                        usageClass.getInterfaces();
-                final PsiClass superClass;
-                if (interfaces.length == 1) {
-                    superClass = interfaces[0];
-                    registerMethodError(method, superClass, Boolean.FALSE);
-                } else {
-                    superClass = usageClass.getSuperClass();
-                    if (superClass == null) {
-                        return;
-                    }
-                    registerMethodError(method, superClass, Boolean.TRUE);
-                }
-            } else {
-                registerMethodError(method, usageClass);
-            }
-        }
-    }
-
-    private static class UsageProcessor implements Processor<PsiReference> {
-
-        private final AtomicReference<PsiClass> foundClass =
-                new AtomicReference<PsiClass>();
-
-        @Override
-        public boolean process(PsiReference reference) {
-            ProgressManager.checkCanceled();
-            final PsiElement element = reference.getElement();
-            final PsiClass usageClass = ClassUtils.getContainingClass(element);
-            if (usageClass == null) {
-                return true;
-            }
-            if (foundClass.compareAndSet(null, usageClass)) {
-                return true;
-            }
-            final PsiClass aClass = foundClass.get();
-            final PsiManager manager = usageClass.getManager();
-            return manager.areElementsEquivalent(aClass, usageClass);
-        }
-
-        /**
-         * @return the class the specified method is used from, or null if it is
-         * used from 0 or more than 1 other classes.
-         */
-        @Nullable
-        public PsiClass getUsageClass(final PsiMethod method) {
-            final ProgressManager progressManager =
-                    ProgressManager.getInstance();
-            final PsiSearchHelper searchHelper = PsiSearchHelper.SERVICE.getInstance(method.getProject());
-            final String name = method.getName();
-            final GlobalSearchScope scope =
-                    GlobalSearchScope.allScope(method.getProject());
-            if (searchHelper.isCheapEnoughToSearch(name, scope, null,
-                    progressManager.getProgressIndicator())
-                    == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) {
-                return null;
-            }
-            progressManager.runProcess(new Runnable() {
-                @Override public void run() {
-                    final Query<PsiReference> query =
-                            MethodReferencesSearch.search(method);
-                    if (!query.forEach(UsageProcessor.this)) {
-                      foundClass.set(null);
-                    }
-                }
-            }, null);
-            return foundClass.get();
-        }
-    }
+  }
 }

@@ -24,30 +24,32 @@ import org.jetbrains.annotations.NotNull;
 
 public class CharToStringIntention extends Intention {
 
-    @Override
-    @NotNull
-    protected PsiElementPredicate getElementPredicate() {
-        return new CharToStringPredicate();
-    }
+  @Override
+  @NotNull
+  protected PsiElementPredicate getElementPredicate() {
+    return new CharToStringPredicate();
+  }
 
-    @Override
-    public void processIntention(@NotNull PsiElement element)
-            throws IncorrectOperationException {
-        final PsiLiteralExpression charLiteral =
-                (PsiLiteralExpression)element;
-        final String charLiteralText = charLiteral.getText();
-        final String stringLiteral = stringForCharLiteral(charLiteralText);
-        replaceExpression(stringLiteral, charLiteral);
-    }
+  @Override
+  public void processIntention(@NotNull PsiElement element)
+    throws IncorrectOperationException {
+    final PsiLiteralExpression charLiteral =
+      (PsiLiteralExpression)element;
+    final String charLiteralText = charLiteral.getText();
+    final String stringLiteral = stringForCharLiteral(charLiteralText);
+    replaceExpression(stringLiteral, charLiteral);
+  }
 
-    private static String stringForCharLiteral(String charLiteral) {
-        if ("'\"'".equals(charLiteral)) {
-            return "\"\\\"\"";
-        } else if ("'\\''".equals(charLiteral)) {
-            return "\"'\"";
-        } else {
-            return '\"' + charLiteral.substring(1, charLiteral.length() - 1) +
-                    '\"';
-        }
+  private static String stringForCharLiteral(String charLiteral) {
+    if ("'\"'".equals(charLiteral)) {
+      return "\"\\\"\"";
     }
+    else if ("'\\''".equals(charLiteral)) {
+      return "\"'\"";
+    }
+    else {
+      return '\"' + charLiteral.substring(1, charLiteral.length() - 1) +
+             '\"';
+    }
+  }
 }

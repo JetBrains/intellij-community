@@ -25,89 +25,92 @@ import org.jetbrains.annotations.Nullable;
 
 public class TestCaseWithConstructorInspection extends BaseInspection {
 
-    @NotNull
-    public String getID() {
-        return "JUnitTestCaseWithNonTrivialConstructors";
+  @NotNull
+  public String getID() {
+    return "JUnitTestCaseWithNonTrivialConstructors";
+  }
+
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "test.case.with.constructor.display.name");
+  }
+
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    if (Boolean.TRUE.equals(infos[0])) {
+      return InspectionGadgetsBundle.message(
+        "test.case.with.constructor.problem.descriptor.initializer");
+    }
+    else {
+      return InspectionGadgetsBundle.message(
+        "test.case.with.constructor.problem.descriptor");
+    }
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new TestCaseWithConstructorVisitor();
+  }
+
+  private static class TestCaseWithConstructorVisitor
+    extends BaseInspectionVisitor {
+
+    @Override
+    public void visitMethod(@NotNull PsiMethod method) {
+      if (!method.isConstructor()) {
+        return;
+      }
+      final PsiClass aClass = method.getContainingClass();
+      if (!TestUtils.isJUnitTestClass(aClass)) {
+        return;
+      }
+      final PsiCodeBlock body = method.getBody();
+      if (isTrivial(body)) {
+        return;
+      }
+      registerMethodError(method, Boolean.FALSE);
     }
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "test.case.with.constructor.display.name");
+    @Override
+    public void visitClassInitializer(PsiClassInitializer initializer) {
+      if (initializer.hasModifierProperty(PsiModifier.STATIC)) {
+        return;
+      }
+      final PsiClass aClass = initializer.getContainingClass();
+      if (!TestUtils.isJUnitTestClass(aClass)) {
+        return;
+      }
+      registerClassInitializerError(initializer, Boolean.TRUE);
     }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        if (Boolean.TRUE.equals(infos[0])) {
-            return InspectionGadgetsBundle.message(
-                    "test.case.with.constructor.problem.descriptor.initializer");
-        } else {
-            return InspectionGadgetsBundle.message(
-                    "test.case.with.constructor.problem.descriptor");
-        }
+    private static boolean isTrivial(@Nullable PsiCodeBlock codeBlock) {
+      if (codeBlock == null) {
+        return true;
+      }
+      final PsiStatement[] statements = codeBlock.getStatements();
+      if (statements.length == 0) {
+        return true;
+      }
+      if (statements.length > 1) {
+        return false;
+      }
+      final PsiStatement statement = statements[0];
+      if (!(statement instanceof PsiExpressionStatement)) {
+        return false;
+      }
+      final PsiExpressionStatement expressionStatement =
+        (PsiExpressionStatement)statement;
+      final PsiExpression expression =
+        expressionStatement.getExpression();
+      if (!(expression instanceof PsiMethodCallExpression)) {
+        return false;
+      }
+      final PsiMethodCallExpression methodCallExpression =
+        (PsiMethodCallExpression)expression;
+      final PsiReferenceExpression methodExpression =
+        methodCallExpression.getMethodExpression();
+      final String text = methodExpression.getText();
+      return PsiKeyword.SUPER.equals(text);
     }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new TestCaseWithConstructorVisitor();
-    }
-
-    private static class TestCaseWithConstructorVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitMethod(@NotNull PsiMethod method) {
-            if (!method.isConstructor()) {
-                return;
-            }
-            final PsiClass aClass = method.getContainingClass();
-            if (!TestUtils.isJUnitTestClass(aClass)) {
-                return;
-            }
-            final PsiCodeBlock body = method.getBody();
-            if (isTrivial(body)) {
-                return;
-            }
-            registerMethodError(method, Boolean.FALSE);
-        }
-
-        @Override public void visitClassInitializer(PsiClassInitializer initializer) {
-            if (initializer.hasModifierProperty(PsiModifier.STATIC)) {
-                return;
-            }
-            final PsiClass aClass = initializer.getContainingClass();
-            if (!TestUtils.isJUnitTestClass(aClass)) {
-                return;
-            }
-            registerClassInitializerError(initializer, Boolean.TRUE);
-        }
-
-        private static boolean isTrivial(@Nullable PsiCodeBlock codeBlock) {
-            if (codeBlock == null) {
-                return true;
-            }
-            final PsiStatement[] statements = codeBlock.getStatements();
-            if (statements.length == 0) {
-                return true;
-            }
-            if (statements.length > 1) {
-                return false;
-            }
-            final PsiStatement statement = statements[0];
-            if (!(statement instanceof PsiExpressionStatement)) {
-                return false;
-            }
-            final PsiExpressionStatement expressionStatement =
-                    (PsiExpressionStatement)statement;
-            final PsiExpression expression =
-                    expressionStatement.getExpression();
-            if (!(expression instanceof PsiMethodCallExpression)) {
-                return false;
-            }
-            final PsiMethodCallExpression methodCallExpression =
-                    (PsiMethodCallExpression)expression;
-            final PsiReferenceExpression methodExpression =
-                    methodCallExpression.getMethodExpression();
-            final String text = methodExpression.getText();
-            return PsiKeyword.SUPER.equals(text);
-        }
-    }
+  }
 }

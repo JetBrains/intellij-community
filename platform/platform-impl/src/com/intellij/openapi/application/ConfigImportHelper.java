@@ -18,11 +18,11 @@ package com.intellij.openapi.application;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ThreeState;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.ui.AppUIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,9 +40,11 @@ public class ConfigImportHelper {
   @NonNls private static final String BUILD_NUMBER_FILE = "build.txt";
   @NonNls private static final String PLUGINS_PATH = "plugins";
   @NonNls private static final String BIN_FOLDER = "bin";
-  @NonNls private static final String OPTIONS_XML = SystemInfo.isMac ? "options/options.xml" : "config/options/options.xml";
+  @NonNls private static final String CONFIG_RELATED_PATH = SystemInfo.isMac ? "" : "config/";
+  @NonNls private static final String OPTIONS_XML = "options/options.xml";
 
-  private ConfigImportHelper() {}
+  private ConfigImportHelper() {
+  }
 
   public static void importConfigsTo(String newConfigPath) {
     ConfigImportSettings settings = getConfigImportSettings();
@@ -62,7 +64,7 @@ public class ConfigImportHelper {
       dlg.setVisible(true);
       if (dlg.isImportEnabled()) {
         File instHome = dlg.getSelectedFile();
-        oldConfigDir = getOldConfigDir(instHome);
+        oldConfigDir = getOldConfigDir(instHome, settings);
         if (!validateOldConfigDir(instHome, oldConfigDir, settings)) continue;
 
         doImport(newConfigPath, oldConfigDir);
@@ -102,7 +104,7 @@ public class ConfigImportHelper {
 
   private static File findOldConfigDir(String newConfigPath, @Nullable String customPathSelector) {
     final File configDir = new File(newConfigPath);
-    final File selectorDir = SystemInfo.isMac ? configDir : configDir.getParentFile();
+    final File selectorDir = CONFIG_RELATED_PATH.length() == 0 ? configDir : configDir.getParentFile();
     final File parent = selectorDir.getParentFile();
     if (parent == null || !parent.exists()) return null;
     File maxFile = null;
@@ -122,7 +124,7 @@ public class ConfigImportHelper {
         return name.length() == selector.length() && name.startsWith(prefix);
       }
     })) {
-      final File options = new File(file, OPTIONS_XML);
+      final File options = new File(file, CONFIG_RELATED_PATH + OPTIONS_XML);
       if (!options.exists()) continue;
       final long modified = options.lastModified();
       if (modified > lastModified) {
@@ -130,7 +132,7 @@ public class ConfigImportHelper {
         maxFile = file;
       }
     }
-    return maxFile;
+    return maxFile != null ? new File(maxFile, CONFIG_RELATED_PATH) : null;
   }
 
   public static void doImport(final String newConfigPath, final File oldConfigDir) {
@@ -150,7 +152,7 @@ public class ConfigImportHelper {
                              ApplicationBundle.message("error.invalid.installation.home", instHome.getAbsolutePath(),
                                                        settings.getProductName(ThreeState.YES)) :
                              ApplicationBundle.message("error.invalid.config.folder", instHome.getAbsolutePath(),
-                                                       settings.getProductName(ThreeState.YES)) ;
+                                                       settings.getProductName(ThreeState.YES));
       JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), message);
       return false;
     }
@@ -165,13 +167,13 @@ public class ConfigImportHelper {
     return true;
   }
 
-  public static void xcopy(File src, File dest) throws IOException{
+  public static void xcopy(File src, File dest) throws IOException {
     src = src.getCanonicalFile();
     dest = dest.getCanonicalFile();
-    if (!src.isDirectory()){
+    if (!src.isDirectory()) {
       throw new IOException(ApplicationBundle.message("config.import.invalid.directory.error", src.getAbsolutePath()));
     }
-    if (!dest.isDirectory()){
+    if (!dest.isDirectory()) {
       throw new IOException(ApplicationBundle.message("config.import.invalid.directory.error", dest.getAbsolutePath()));
     }
     FileUtil.copyDir(src, dest);
@@ -184,11 +186,14 @@ public class ConfigImportHelper {
   }
 
   @Nullable
-  public static File getOldConfigDir(File oldInstallHome) {
+  public static File getOldConfigDir(File oldInstallHome, ConfigImportSettings settings) {
     if (oldInstallHome == null) return null;
     // check if it's already config dir
     if (new File(oldInstallHome, OPTIONS_XML).exists()) {
       return oldInstallHome;
+    }
+    if (new File(oldInstallHome, CONFIG_RELATED_PATH + OPTIONS_XML).exists()) {
+      return new File(oldInstallHome, CONFIG_RELATED_PATH);
     }
 
     int oldBuildNumber = getBuildNumber(oldInstallHome);
@@ -205,6 +210,13 @@ public class ConfigImportHelper {
         if (configDir != null) {
           File probableConfig = new File(configDir);
           if (probableConfig.exists()) return probableConfig;
+
+          // in IDEA 11 idea.properties does not contain product version: "# idea.config.path=${user.home}/.IntelliJIdea/config"
+          String attempt2 = settings.fixConfigDir(configDir);
+          if (attempt2 != null && !configDir.equals(attempt2)) {
+            probableConfig = new File(attempt2);
+            if (probableConfig.exists()) return probableConfig;
+          }
         }
       }
     }
@@ -225,7 +237,8 @@ public class ConfigImportHelper {
         new File(bin, "idea.bat"),
         new File(bin, "idea.sh")
       };
-    } else {
+    }
+    else {
       return new File[]{
         new File(bin, "idea.properties"),
         new File(bin, "idea.lax"),
@@ -238,61 +251,65 @@ public class ConfigImportHelper {
   @SuppressWarnings({"HardCodedStringLiteral"})
   @Nullable
   public static String getConfigFromLaxFile(File file) {
-      if (file.getName().endsWith(".properties")) {
-          try {
-            InputStream fis = new BufferedInputStream(new FileInputStream(file));
-            PropertyResourceBundle bundle;
-            try {
-              bundle = new PropertyResourceBundle(fis);
-            }
-            finally {
-              fis.close();
-            }
-            return bundle.getString("idea.config.path");
-          } catch (IOException e) {
-              return null;
-          } catch (MissingResourceException e) {
-            // property is missing or commented out, go on with this file
-          }
+    if (file.getName().endsWith(".properties")) {
+      try {
+        InputStream fis = new BufferedInputStream(new FileInputStream(file));
+        PropertyResourceBundle bundle;
+        try {
+          bundle = new PropertyResourceBundle(fis);
+        }
+        finally {
+          fis.close();
+        }
+        return bundle.getString("idea.config.path");
       }
+      catch (IOException e) {
+        return null;
+      }
+      catch (MissingResourceException e) {
+        // property is missing or commented out, go on with this file
+      }
+    }
 
-      String fileContent = getContent(file);
-      String configParam = "idea.config.path=";
-      int idx = fileContent.indexOf(configParam);
-      if (idx == -1) {
-          configParam = "<key>idea.config.path</key>";
-          idx = fileContent.indexOf(configParam);
-          if (idx == -1) return null;
-          idx = fileContent.indexOf("<string>", idx);
-          if (idx == -1) return null;
-          idx += "<string>".length();
-          return fixDirName(fileContent.substring(idx, fileContent.indexOf("</string>", idx)), true);
-      } else {
-          String configDir = "";
-          idx += configParam.length();
-          if (fileContent.length() > idx) {
-              if (fileContent.charAt(idx) == '"') {
-                  idx++;
-                  while ((fileContent.length() > idx) && (fileContent.charAt(idx) != '"') && (fileContent.charAt(idx) != '\n') &&
-                          (fileContent.charAt(idx) != '\r')) {
-                      configDir += fileContent.charAt(idx);
-                      idx++;
-                  }
-              } else {
-                  while ((fileContent.length() > idx) && (!Character.isSpaceChar(fileContent.charAt(idx))) &&
-                          (fileContent.charAt(idx) != '\n') &&
-                          (fileContent.charAt(idx) != '\r')) {
-                      configDir += fileContent.charAt(idx);
-                      idx++;
-                  }
-              }
+    String fileContent = getContent(file);
+    String configParam = "idea.config.path=";
+    int idx = fileContent.indexOf(configParam);
+    if (idx == -1) {
+      configParam = "<key>idea.config.path</key>";
+      idx = fileContent.indexOf(configParam);
+      if (idx == -1) return null;
+      idx = fileContent.indexOf("<string>", idx);
+      if (idx == -1) return null;
+      idx += "<string>".length();
+      return fixDirName(fileContent.substring(idx, fileContent.indexOf("</string>", idx)), true);
+    }
+    else {
+      String configDir = "";
+      idx += configParam.length();
+      if (fileContent.length() > idx) {
+        if (fileContent.charAt(idx) == '"') {
+          idx++;
+          while ((fileContent.length() > idx) && (fileContent.charAt(idx) != '"') && (fileContent.charAt(idx) != '\n') &&
+                 (fileContent.charAt(idx) != '\r')) {
+            configDir += fileContent.charAt(idx);
+            idx++;
           }
-          configDir = fixDirName(configDir, true);
-          if (configDir.length() > 0) {
-              configDir = (new File(configDir)).getPath();
+        }
+        else {
+          while ((fileContent.length() > idx) && (!Character.isSpaceChar(fileContent.charAt(idx))) &&
+                 (fileContent.charAt(idx) != '\n') &&
+                 (fileContent.charAt(idx) != '\r')) {
+            configDir += fileContent.charAt(idx);
+            idx++;
           }
-          return configDir;
+        }
       }
+      configDir = fixDirName(configDir, true);
+      if (configDir.length() > 0) {
+        configDir = (new File(configDir)).getPath();
+      }
+      return configDir;
+    }
   }
 
   @Nullable
@@ -334,6 +351,7 @@ public class ConfigImportHelper {
 
   public static boolean isInstallationHomeOrConfig(String installationHome, String productName) {
     if (new File(installationHome, OPTIONS_XML).exists()) return true;
+    if (new File(installationHome, CONFIG_RELATED_PATH + OPTIONS_XML).exists()) return true;
 
     String mainJarName = StringUtil.toLowerCase(productName) + ".jar";
     //noinspection HardCodedStringLiteral
@@ -353,21 +371,21 @@ public class ConfigImportHelper {
     installDirectory = installDirectory.getAbsoluteFile();
 
     File buildTxt = new File(installDirectory, BUILD_NUMBER_FILE);
-    if ((!buildTxt.exists()) || (buildTxt.isDirectory())){
+    if ((!buildTxt.exists()) || (buildTxt.isDirectory())) {
       buildTxt = new File(new File(installDirectory, BIN_FOLDER), BUILD_NUMBER_FILE);
     }
 
-    if (buildTxt.exists() && !buildTxt.isDirectory()){
+    if (buildTxt.exists() && !buildTxt.isDirectory()) {
       int buildNumber = -1;
       String buildNumberText = getContent(buildTxt);
       if (buildNumberText != null) {
-        try{
-          if (buildNumberText.length() > 1){
+        try {
+          if (buildNumberText.length() > 1) {
             buildNumberText = buildNumberText.trim();
             buildNumber = Integer.parseInt(buildNumberText);
           }
         }
-        catch (Exception e){
+        catch (Exception e) {
           // OK
         }
       }

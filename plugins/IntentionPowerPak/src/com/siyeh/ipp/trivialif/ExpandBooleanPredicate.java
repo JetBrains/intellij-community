@@ -20,59 +20,59 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ErrorUtil;
 
-class ExpandBooleanPredicate implements PsiElementPredicate{
+class ExpandBooleanPredicate implements PsiElementPredicate {
 
-    public boolean satisfiedBy(PsiElement element){
-        if(!(element instanceof PsiJavaToken)){
-            return false;
-        }
-        final PsiStatement containingStatement =
-                PsiTreeUtil.getParentOfType(element,
-                                            PsiStatement.class);
-        if(containingStatement == null){
-            return false;
-        }
-        return isBooleanReturn(containingStatement) ||
-                isBooleanAssignment(containingStatement);
+  public boolean satisfiedBy(PsiElement element) {
+    if (!(element instanceof PsiJavaToken)) {
+      return false;
     }
+    final PsiStatement containingStatement =
+      PsiTreeUtil.getParentOfType(element,
+                                  PsiStatement.class);
+    if (containingStatement == null) {
+      return false;
+    }
+    return isBooleanReturn(containingStatement) ||
+           isBooleanAssignment(containingStatement);
+  }
 
-    public static boolean isBooleanReturn(PsiStatement containingStatement){
-        if(!(containingStatement instanceof PsiReturnStatement)){
-            return false;
-        }
-        final PsiReturnStatement returnStatement =
-                (PsiReturnStatement) containingStatement;
-        final PsiExpression returnValue = returnStatement.getReturnValue();
-        if (returnValue == null || returnValue instanceof PsiLiteralExpression) {
-            return false;
-        }
-        final PsiType returnType = returnValue.getType();
-        if (!PsiType.BOOLEAN.equals(returnType)) {
-            return false;
-        }
-        return !ErrorUtil.containsError(returnValue);
+  public static boolean isBooleanReturn(PsiStatement containingStatement) {
+    if (!(containingStatement instanceof PsiReturnStatement)) {
+      return false;
     }
+    final PsiReturnStatement returnStatement =
+      (PsiReturnStatement)containingStatement;
+    final PsiExpression returnValue = returnStatement.getReturnValue();
+    if (returnValue == null || returnValue instanceof PsiLiteralExpression) {
+      return false;
+    }
+    final PsiType returnType = returnValue.getType();
+    if (!PsiType.BOOLEAN.equals(returnType)) {
+      return false;
+    }
+    return !ErrorUtil.containsError(returnValue);
+  }
 
-    public static boolean isBooleanAssignment(PsiStatement containingStatement){
-        if(!(containingStatement instanceof PsiExpressionStatement)){
-            return false;
-        }
-        final PsiExpressionStatement expressionStatement =
-                (PsiExpressionStatement) containingStatement;
-        final PsiExpression expression = expressionStatement.getExpression();
-        if(!(expression instanceof PsiAssignmentExpression)){
-            return false;
-        }
-        final PsiAssignmentExpression assignment =
-                (PsiAssignmentExpression) expression;
-        final PsiExpression rhs = assignment.getRExpression();
-        if (rhs == null || rhs instanceof PsiLiteralExpression) {
-            return false;
-        }
-        final PsiType assignmentType = rhs.getType();
-        if (!PsiType.BOOLEAN.equals(assignmentType)) {
-            return false;
-        }
-        return !ErrorUtil.containsError(rhs);
+  public static boolean isBooleanAssignment(PsiStatement containingStatement) {
+    if (!(containingStatement instanceof PsiExpressionStatement)) {
+      return false;
     }
+    final PsiExpressionStatement expressionStatement =
+      (PsiExpressionStatement)containingStatement;
+    final PsiExpression expression = expressionStatement.getExpression();
+    if (!(expression instanceof PsiAssignmentExpression)) {
+      return false;
+    }
+    final PsiAssignmentExpression assignment =
+      (PsiAssignmentExpression)expression;
+    final PsiExpression rhs = assignment.getRExpression();
+    if (rhs == null || rhs instanceof PsiLiteralExpression) {
+      return false;
+    }
+    final PsiType assignmentType = rhs.getType();
+    if (!PsiType.BOOLEAN.equals(assignmentType)) {
+      return false;
+    }
+    return !ErrorUtil.containsError(rhs);
+  }
 }

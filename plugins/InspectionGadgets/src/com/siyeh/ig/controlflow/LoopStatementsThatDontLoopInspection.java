@@ -24,94 +24,98 @@ import org.jetbrains.annotations.NotNull;
 
 public class LoopStatementsThatDontLoopInspection extends BaseInspection {
 
-    @NotNull
-    public String getID() {
-        return "LoopStatementThatDoesntLoop";
+  @NotNull
+  public String getID() {
+    return "LoopStatementThatDoesntLoop";
+  }
+
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "loop.statements.that.dont.loop.display.name");
+  }
+
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "loop.statements.that.dont.loop.problem.descriptor");
+  }
+
+  public boolean isEnabledByDefault() {
+    return true;
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new LoopStatementsThatDontLoopVisitor();
+  }
+
+  private static class LoopStatementsThatDontLoopVisitor
+    extends BaseInspectionVisitor {
+
+    @Override
+    public void visitForStatement(@NotNull PsiForStatement statement) {
+      super.visitForStatement(statement);
+      final PsiStatement body = statement.getBody();
+      if (body == null) {
+        return;
+      }
+      if (ControlFlowUtils.statementMayCompleteNormally(body)) {
+        return;
+      }
+      if (ControlFlowUtils.statementIsContinueTarget(statement)) {
+        return;
+      }
+      registerStatementError(statement);
     }
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "loop.statements.that.dont.loop.display.name");
+    @Override
+    public void visitForeachStatement(
+      @NotNull PsiForeachStatement statement) {
+      super.visitForeachStatement(statement);
+      final PsiStatement body = statement.getBody();
+      if (body == null) {
+        return;
+      }
+      if (ControlFlowUtils.statementMayCompleteNormally(body)) {
+        return;
+      }
+      if (ControlFlowUtils.statementIsContinueTarget(statement)) {
+        return;
+      }
+      registerStatementError(statement);
     }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "loop.statements.that.dont.loop.problem.descriptor");
+    @Override
+    public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
+      super.visitWhileStatement(statement);
+      final PsiStatement body = statement.getBody();
+      if (body == null) {
+        return;
+      }
+      if (ControlFlowUtils.statementMayCompleteNormally(body)) {
+        return;
+      }
+      if (ControlFlowUtils.statementIsContinueTarget(statement)) {
+        return;
+      }
+      registerStatementError(statement);
     }
 
-    public boolean isEnabledByDefault() {
-        return true;
+    @Override
+    public void visitDoWhileStatement(
+      @NotNull PsiDoWhileStatement statement) {
+      super.visitDoWhileStatement(statement);
+      final PsiStatement body = statement.getBody();
+      if (body == null) {
+        return;
+      }
+      if (ControlFlowUtils.statementMayCompleteNormally(body)) {
+        return;
+      }
+      if (ControlFlowUtils.statementIsContinueTarget(statement)) {
+        return;
+      }
+      registerStatementError(statement);
     }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new LoopStatementsThatDontLoopVisitor();
-    }
-
-    private static class LoopStatementsThatDontLoopVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitForStatement(@NotNull PsiForStatement statement) {
-            super.visitForStatement(statement);
-            final PsiStatement body = statement.getBody();
-            if (body == null) {
-                return;
-            }
-            if (ControlFlowUtils.statementMayCompleteNormally(body)) {
-                return;
-            }
-            if (ControlFlowUtils.statementIsContinueTarget(statement)) {
-                return;
-            }
-            registerStatementError(statement);
-        }
-
-        @Override public void visitForeachStatement(
-                @NotNull PsiForeachStatement statement) {
-            super.visitForeachStatement(statement);
-            final PsiStatement body = statement.getBody();
-            if (body == null) {
-                return;
-            }
-            if (ControlFlowUtils.statementMayCompleteNormally(body)) {
-                return;
-            }
-            if (ControlFlowUtils.statementIsContinueTarget(statement)) {
-                return;
-            }
-            registerStatementError(statement);
-        }
-
-        @Override public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
-            super.visitWhileStatement(statement);
-            final PsiStatement body = statement.getBody();
-            if (body == null) {
-                return;
-            }
-            if (ControlFlowUtils.statementMayCompleteNormally(body)) {
-                return;
-            }
-            if (ControlFlowUtils.statementIsContinueTarget(statement)) {
-                return;
-            }
-            registerStatementError(statement);
-        }
-
-        @Override public void visitDoWhileStatement(
-                @NotNull PsiDoWhileStatement statement) {
-            super.visitDoWhileStatement(statement);
-            final PsiStatement body = statement.getBody();
-            if (body == null) {
-                return;
-            }
-            if (ControlFlowUtils.statementMayCompleteNormally(body)) {
-                return;
-            }
-            if (ControlFlowUtils.statementIsContinueTarget(statement)) {
-                return;
-            }
-            registerStatementError(statement);
-        }
-    }
+  }
 }

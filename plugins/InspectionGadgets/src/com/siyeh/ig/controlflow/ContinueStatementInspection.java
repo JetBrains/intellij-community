@@ -23,29 +23,30 @@ import org.jetbrains.annotations.NotNull;
 
 public class ContinueStatementInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "continue.statement.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "continue.statement.display.name");
+  }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "statement.problem.descriptor");
-    }
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "statement.problem.descriptor");
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new ContinueStatementVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new ContinueStatementVisitor();
+  }
 
-    private static class ContinueStatementVisitor
-            extends BaseInspectionVisitor {
+  private static class ContinueStatementVisitor
+    extends BaseInspectionVisitor {
 
-        @Override public void visitContinueStatement(
-                @NotNull PsiContinueStatement statement) {
-            super.visitContinueStatement(statement);
-            registerStatementError(statement);
-        }
+    @Override
+    public void visitContinueStatement(
+      @NotNull PsiContinueStatement statement) {
+      super.visitContinueStatement(statement);
+      registerStatementError(statement);
     }
+  }
 }

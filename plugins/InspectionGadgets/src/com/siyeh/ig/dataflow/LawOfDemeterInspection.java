@@ -29,105 +29,109 @@ import javax.swing.*;
 
 public class LawOfDemeterInspection extends BaseInspection {
 
-    @SuppressWarnings({"PublicField"})
-    public boolean ignoreLibraryCalls = true;
+  @SuppressWarnings({"PublicField"})
+  public boolean ignoreLibraryCalls = true;
 
-    private static final Key<Integer> key =
-            Key.create("LawOfDemeterInspection");
+  private static final Key<Integer> key =
+    Key.create("LawOfDemeterInspection");
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message("law.of.demeter.display.name");
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("law.of.demeter.display.name");
+  }
+
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "law.of.demeter.problem.descriptor");
+  }
+
+  @Nullable
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+      "law.of.demeter.ignore.library.calls.option"), this,
+                                          "ignoreLibraryCalls");
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new LawOfDemeterVisitor();
+  }
+
+  private class LawOfDemeterVisitor extends BaseInspectionVisitor {
+
+    private static final int threshold = 2;
+
+    @Override
+    public void visitMethodCallExpression(
+      PsiMethodCallExpression expression) {
+      super.visitMethodCallExpression(expression);
+      if (ignoreLibraryCalls &&
+          LibraryUtil.callOnLibraryMethod(expression)) {
+        return;
+      }
+      expression.putUserData(key, Integer.valueOf(1));
+      checkParents(expression, Integer.valueOf(1));
     }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "law.of.demeter.problem.descriptor");
-    }
-
-    @Nullable
-    public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-                "law.of.demeter.ignore.library.calls.option"), this,
-                "ignoreLibraryCalls");
-    }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new LawOfDemeterVisitor();
-    }
-
-    private class LawOfDemeterVisitor extends BaseInspectionVisitor {
-
-        private static final int threshold = 2;
-
-        @Override public void visitMethodCallExpression(
-                PsiMethodCallExpression expression) {
-            super.visitMethodCallExpression(expression);
-            if (ignoreLibraryCalls &&
-                    LibraryUtil.callOnLibraryMethod(expression)) {
-                return;
-            }
-            expression.putUserData(key, Integer.valueOf(1));
-            checkParents(expression, Integer.valueOf(1));
+    public void checkParents(PsiExpression expression, Integer count) {
+      final PsiElement parent = expression.getParent();
+      if (parent instanceof PsiLocalVariable) {
+        final Integer localCount = expression.getUserData(key);
+        parent.putUserData(key, localCount);
+      }
+      else if (parent instanceof PsiAssignmentExpression) {
+        final PsiAssignmentExpression assignmentExpression =
+          (PsiAssignmentExpression)parent;
+        final PsiExpression lhs = assignmentExpression.getLExpression();
+        if (!(lhs instanceof PsiReferenceExpression)) {
+          return;
         }
-
-        public void checkParents(PsiExpression expression, Integer count) {
-            final PsiElement parent = expression.getParent();
-            if (parent instanceof PsiLocalVariable) {
-                final Integer localCount = expression.getUserData(key);
-                parent.putUserData(key, localCount);
-            } else if (parent instanceof PsiAssignmentExpression) {
-                final PsiAssignmentExpression assignmentExpression =
-                        (PsiAssignmentExpression) parent;
-                final PsiExpression lhs = assignmentExpression.getLExpression();
-                if (!(lhs instanceof PsiReferenceExpression)) {
-                    return;
-                }
-                final PsiReferenceExpression referenceExpression =
-                        (PsiReferenceExpression) lhs;
-                final PsiElement element = referenceExpression.resolve();
-                if (!(element instanceof PsiLocalVariable)) {
-                    return;
-                }
-                final Integer localCount = expression.getUserData(key);
-                element.putUserData(key, localCount);
-            } else if (parent instanceof PsiReferenceExpression) {
-                final PsiElement grandParent = parent.getParent();
-                if (!(grandParent instanceof PsiMethodCallExpression)) {
-                    return;
-                }
-                final PsiMethodCallExpression methodCallExpression =
-                        (PsiMethodCallExpression) grandParent;
-                final Integer userData = grandParent.getUserData(key);
-                if (userData == null) {
-                    return;
-                }
-                final int localCount = userData.intValue();
-                final int newCount = localCount + count.intValue();
-                if (newCount == threshold) {
-                    registerMethodCallError(methodCallExpression);
-                }
-                grandParent.putUserData(key, Integer.valueOf(newCount));
-                checkParents(methodCallExpression, count);
-            }
+        final PsiReferenceExpression referenceExpression =
+          (PsiReferenceExpression)lhs;
+        final PsiElement element = referenceExpression.resolve();
+        if (!(element instanceof PsiLocalVariable)) {
+          return;
         }
-
-        @Override public void visitReferenceExpression(
-                PsiReferenceExpression expression) {
-            super.visitReferenceExpression(expression);
-            final PsiElement parent = expression.getParent();
-            if (!(parent instanceof PsiReferenceExpression)) {
-                return;
-            }
-            final PsiElement element = expression.resolve();
-            if (!(element instanceof PsiLocalVariable)) {
-                return;
-            }
-            final Integer count = element.getUserData(key);
-            if (count != null) {
-                checkParents(expression, count);
-            }
+        final Integer localCount = expression.getUserData(key);
+        element.putUserData(key, localCount);
+      }
+      else if (parent instanceof PsiReferenceExpression) {
+        final PsiElement grandParent = parent.getParent();
+        if (!(grandParent instanceof PsiMethodCallExpression)) {
+          return;
         }
+        final PsiMethodCallExpression methodCallExpression =
+          (PsiMethodCallExpression)grandParent;
+        final Integer userData = grandParent.getUserData(key);
+        if (userData == null) {
+          return;
+        }
+        final int localCount = userData.intValue();
+        final int newCount = localCount + count.intValue();
+        if (newCount == threshold) {
+          registerMethodCallError(methodCallExpression);
+        }
+        grandParent.putUserData(key, Integer.valueOf(newCount));
+        checkParents(methodCallExpression, count);
+      }
     }
+
+    @Override
+    public void visitReferenceExpression(
+      PsiReferenceExpression expression) {
+      super.visitReferenceExpression(expression);
+      final PsiElement parent = expression.getParent();
+      if (!(parent instanceof PsiReferenceExpression)) {
+        return;
+      }
+      final PsiElement element = expression.resolve();
+      if (!(element instanceof PsiLocalVariable)) {
+        return;
+      }
+      final Integer count = element.getUserData(key);
+      if (count != null) {
+        checkParents(expression, count);
+      }
+    }
+  }
 }

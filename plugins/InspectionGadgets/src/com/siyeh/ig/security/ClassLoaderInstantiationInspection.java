@@ -24,32 +24,33 @@ import org.jetbrains.annotations.NotNull;
 
 public class ClassLoaderInstantiationInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "class.loader.instantiation.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "class.loader.instantiation.display.name");
+  }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "class.loader.instantiation.problem.descriptor");
-    }
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "class.loader.instantiation.problem.descriptor");
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new ClassLoaderInstantiationVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new ClassLoaderInstantiationVisitor();
+  }
 
-    private static class ClassLoaderInstantiationVisitor
-            extends BaseInspectionVisitor {
+  private static class ClassLoaderInstantiationVisitor
+    extends BaseInspectionVisitor {
 
-        @Override public void visitNewExpression(@NotNull PsiNewExpression expression) {
-            super.visitNewExpression(expression);
-            if (!TypeUtils.expressionHasTypeOrSubtype(expression,
-		            "java.lang.ClassLoader")) {
-                return;
-            }
-            registerNewExpressionError(expression);
-        }
+    @Override
+    public void visitNewExpression(@NotNull PsiNewExpression expression) {
+      super.visitNewExpression(expression);
+      if (!TypeUtils.expressionHasTypeOrSubtype(expression,
+                                                "java.lang.ClassLoader")) {
+        return;
+      }
+      registerNewExpressionError(expression);
     }
+  }
 }

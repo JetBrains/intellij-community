@@ -24,128 +24,128 @@ import org.jetbrains.annotations.Nullable;
 
 public class SerializationUtils {
 
-    private SerializationUtils() {}
+  private SerializationUtils() {
+  }
 
-    public static boolean isSerializable(@Nullable PsiClass aClass) {
-        return InheritanceUtil.isInheritor(aClass,
-                CommonClassNames.JAVA_IO_SERIALIZABLE);
+  public static boolean isSerializable(@Nullable PsiClass aClass) {
+    return InheritanceUtil.isInheritor(aClass,
+                                       CommonClassNames.JAVA_IO_SERIALIZABLE);
+  }
+
+  public static boolean isExternalizable(@Nullable PsiClass aClass) {
+    return InheritanceUtil.isInheritor(aClass,
+                                       CommonClassNames.JAVA_IO_EXTERNALIZABLE);
+  }
+
+  public static boolean isDirectlySerializable(@NotNull PsiClass aClass) {
+    final PsiReferenceList implementsList = aClass.getImplementsList();
+    if (implementsList == null) {
+      return false;
     }
-
-    public static boolean isExternalizable(@Nullable PsiClass aClass) {
-        return InheritanceUtil.isInheritor(aClass,
-                CommonClassNames.JAVA_IO_EXTERNALIZABLE);
+    final PsiJavaCodeReferenceElement[] interfaces =
+      implementsList.getReferenceElements();
+    for (PsiJavaCodeReferenceElement aInterfaces : interfaces) {
+      final PsiClass implemented = (PsiClass)aInterfaces.resolve();
+      if (implemented == null) {
+        continue;
+      }
+      final String name = implemented.getQualifiedName();
+      if (CommonClassNames.JAVA_IO_SERIALIZABLE.equals(name)) {
+        return true;
+      }
     }
+    return false;
+  }
 
-    public static boolean isDirectlySerializable(@NotNull PsiClass aClass) {
-        final PsiReferenceList implementsList = aClass.getImplementsList();
-        if (implementsList == null) {
+  public static boolean hasReadObject(@NotNull PsiClass aClass) {
+    final PsiMethod[] methods =
+      aClass.findMethodsByName("readObject", false);
+    for (final PsiMethod method : methods) {
+      if (isReadObject(method)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public static boolean hasWriteObject(@NotNull PsiClass aClass) {
+    final PsiMethod[] methods =
+      aClass.findMethodsByName("writeObject", false);
+    for (final PsiMethod method : methods) {
+      if (isWriteObject(method)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public static boolean isReadObject(@NotNull PsiMethod method) {
+    final Project project = method.getProject();
+    final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+    final PsiElementFactory factory = psiFacade.getElementFactory();
+    final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
+    final PsiClassType type = factory.createTypeByFQClassName(
+      "java.io.ObjectInputStream", scope);
+    return MethodUtils.methodMatches(method, null,
+                                     PsiType.VOID, "readObject", type);
+  }
+
+  public static boolean isWriteObject(@NotNull PsiMethod method) {
+    final Project project = method.getProject();
+    final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+    final PsiElementFactory factory = psiFacade.getElementFactory();
+    final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
+    final PsiClassType type = factory.createTypeByFQClassName(
+      "java.io.ObjectOutputStream", scope);
+    return MethodUtils.methodMatches(method, null,
+                                     PsiType.VOID, "writeObject", type);
+  }
+
+  public static boolean isReadResolve(@NotNull PsiMethod method) {
+    return MethodUtils.simpleMethodMatches(method, null,
+                                           CommonClassNames.JAVA_LANG_OBJECT, "readResolve");
+  }
+
+  public static boolean isWriteReplace(@NotNull PsiMethod method) {
+    return MethodUtils.simpleMethodMatches(method, null,
+                                           CommonClassNames.JAVA_LANG_OBJECT, "writeReplace");
+  }
+
+  public static boolean isProbablySerializable(PsiType type) {
+    if (type instanceof PsiWildcardType) {
+      return true;
+    }
+    if (type instanceof PsiPrimitiveType) {
+      return true;
+    }
+    if (type instanceof PsiArrayType) {
+      final PsiArrayType arrayType = (PsiArrayType)type;
+      final PsiType componentType = arrayType.getComponentType();
+      return isProbablySerializable(componentType);
+    }
+    if (type instanceof PsiClassType) {
+      final PsiClassType classTYpe = (PsiClassType)type;
+      final PsiClass psiClass = classTYpe.resolve();
+      if (isSerializable(psiClass)) {
+        return true;
+      }
+      if (isExternalizable(psiClass)) {
+        return true;
+      }
+      if (InheritanceUtil.isInheritor(psiClass,
+                                      CommonClassNames.JAVA_UTIL_COLLECTION) ||
+          InheritanceUtil.isInheritor(psiClass,
+                                      CommonClassNames.JAVA_UTIL_MAP)) {
+        final PsiType[] parameters = classTYpe.getParameters();
+        for (PsiType parameter : parameters) {
+          if (!isProbablySerializable(parameter)) {
             return false;
+          }
         }
-        final PsiJavaCodeReferenceElement[] interfaces =
-                implementsList.getReferenceElements();
-        for (PsiJavaCodeReferenceElement aInterfaces : interfaces) {
-            final PsiClass implemented = (PsiClass) aInterfaces.resolve();
-            if (implemented == null) {
-                continue;
-            }
-            final String name = implemented.getQualifiedName();
-            if (CommonClassNames.JAVA_IO_SERIALIZABLE.equals(name)) {
-                return true;
-            }
-        }
-        return false;
+        return true;
+      }
+      return false;
     }
-
-    public static boolean hasReadObject(@NotNull PsiClass aClass) {
-        final PsiMethod[] methods =
-                aClass.findMethodsByName("readObject", false);
-        for (final PsiMethod method : methods) {
-            if (isReadObject(method)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public static boolean hasWriteObject(@NotNull PsiClass aClass) {
-        final PsiMethod[] methods =
-                aClass.findMethodsByName("writeObject", false);
-        for (final PsiMethod method : methods) {
-            if (isWriteObject(method)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public static boolean isReadObject(@NotNull PsiMethod method) {
-        final Project project = method.getProject();
-        final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-        final PsiElementFactory factory = psiFacade.getElementFactory();
-        final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-        final PsiClassType type = factory.createTypeByFQClassName(
-                "java.io.ObjectInputStream", scope);
-        return MethodUtils.methodMatches(method, null,
-                PsiType.VOID, "readObject", type);
-    }
-
-    public static boolean isWriteObject(@NotNull PsiMethod method) {
-        final Project project = method.getProject();
-        final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-        final PsiElementFactory factory = psiFacade.getElementFactory();
-        final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-        final PsiClassType type = factory.createTypeByFQClassName(
-                "java.io.ObjectOutputStream", scope);
-        return MethodUtils.methodMatches(method, null,
-                PsiType.VOID, "writeObject", type);
-    }
-
-    public static boolean isReadResolve(@NotNull PsiMethod method) {
-        return MethodUtils.simpleMethodMatches(method, null,
-                CommonClassNames.JAVA_LANG_OBJECT, "readResolve");
-
-    }
-
-    public static boolean isWriteReplace(@NotNull PsiMethod method) {
-        return MethodUtils.simpleMethodMatches(method, null,
-                CommonClassNames.JAVA_LANG_OBJECT, "writeReplace");
-    }
-
-    public static boolean isProbablySerializable(PsiType type) {
-        if (type instanceof PsiWildcardType) {
-            return true;
-        }
-        if (type instanceof PsiPrimitiveType) {
-            return true;
-        }
-        if (type instanceof PsiArrayType) {
-            final PsiArrayType arrayType = (PsiArrayType) type;
-            final PsiType componentType = arrayType.getComponentType();
-            return isProbablySerializable(componentType);
-        }
-        if (type instanceof PsiClassType) {
-            final PsiClassType classTYpe = (PsiClassType) type;
-            final PsiClass psiClass = classTYpe.resolve();
-            if (isSerializable(psiClass)) {
-                return true;
-            }
-            if (isExternalizable(psiClass)) {
-                return true;
-            }
-            if (InheritanceUtil.isInheritor(psiClass,
-                    CommonClassNames.JAVA_UTIL_COLLECTION) ||
-                    InheritanceUtil.isInheritor(psiClass,
-                            CommonClassNames.JAVA_UTIL_MAP)) {
-                final PsiType[] parameters = classTYpe.getParameters();
-                for (PsiType parameter : parameters) {
-                    if (!isProbablySerializable(parameter)) {
-                        return false;
-                    }
-                }
-                return true;
-            }
-            return false;
-        }
-        return false;
-    }
+    return false;
+  }
 }

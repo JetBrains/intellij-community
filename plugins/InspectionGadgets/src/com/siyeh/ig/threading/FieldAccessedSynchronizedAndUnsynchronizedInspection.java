@@ -32,75 +32,81 @@ import javax.swing.*;
 import java.util.Set;
 
 public class FieldAccessedSynchronizedAndUnsynchronizedInspection
-        extends BaseInspection {
+  extends BaseInspection {
 
-    /** @noinspection PublicField*/
-    public boolean countGettersAndSetters = false;
+  /**
+   * @noinspection PublicField
+   */
+  public boolean countGettersAndSetters = false;
 
-    @Override @NotNull
-    public String getDisplayName(){
-        return InspectionGadgetsBundle.message(
-                "field.accessed.synchronized.and.unsynchronized.display.name");
-    }
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "field.accessed.synchronized.and.unsynchronized.display.name");
+  }
 
-    @Override @NotNull
-    protected String buildErrorString(Object... infos){
-        return InspectionGadgetsBundle.message(
-                "field.accessed.synchronized.and.unsynchronized.problem.descriptor");
-    }
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "field.accessed.synchronized.and.unsynchronized.problem.descriptor");
+  }
+
+  @Override
+  @Nullable
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(
+      InspectionGadgetsBundle.message(
+        "field.accessed.synchronized.and.unsynchronized.option"),
+      this, "countGettersAndSetters");
+  }
+
+  @Override
+  public boolean runForWholeFile() {
+    return true;
+  }
+
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return MakeFieldFinalFix.buildFix((PsiField)infos[0]);
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new FieldAccessedSynchronizedAndUnsynchronizedVisitor();
+  }
+
+  private class FieldAccessedSynchronizedAndUnsynchronizedVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @Nullable
-    public JComponent createOptionsPanel() { return new SingleCheckboxOptionsPanel(
-          InspectionGadgetsBundle.message(
-                  "field.accessed.synchronized.and.unsynchronized.option"),
-                this, "countGettersAndSetters");
-    }
-
-    @Override
-    public boolean runForWholeFile() {
-        return true;
-    }
-
-    @Override
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        return MakeFieldFinalFix.buildFix((PsiField)infos[0]);
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor(){
-        return new FieldAccessedSynchronizedAndUnsynchronizedVisitor();
-    }
-
-    private class FieldAccessedSynchronizedAndUnsynchronizedVisitor
-            extends BaseInspectionVisitor{
-
-        @Override public void visitClass(@NotNull PsiClass aClass){
-            if(!containsSynchronization(aClass)){
-                return;
-            }
-            final VariableAccessVisitor visitor =
-                    new VariableAccessVisitor(aClass, countGettersAndSetters);
-            aClass.accept(visitor);
-            final Set<PsiField> fields =
-                    visitor.getInappropriatelyAccessedFields();
-            for(final PsiField field  : fields){
-                if (field.hasModifierProperty(PsiModifier.FINAL) ||
-                        field.hasModifierProperty(PsiModifier.VOLATILE)) {
-                    continue;
-                }
-                final PsiClass containingClass = field.getContainingClass();
-                if(aClass.equals(containingClass)){
-                    registerFieldError(field, field);
-                }
-            }
+    public void visitClass(@NotNull PsiClass aClass) {
+      if (!containsSynchronization(aClass)) {
+        return;
+      }
+      final VariableAccessVisitor visitor =
+        new VariableAccessVisitor(aClass, countGettersAndSetters);
+      aClass.accept(visitor);
+      final Set<PsiField> fields =
+        visitor.getInappropriatelyAccessedFields();
+      for (final PsiField field : fields) {
+        if (field.hasModifierProperty(PsiModifier.FINAL) ||
+            field.hasModifierProperty(PsiModifier.VOLATILE)) {
+          continue;
         }
-
-        private boolean containsSynchronization(PsiElement context){
-            final ContainsSynchronizationVisitor visitor =
-                    new ContainsSynchronizationVisitor();
-            context.accept(visitor);
-            return visitor.containsSynchronization();
+        final PsiClass containingClass = field.getContainingClass();
+        if (aClass.equals(containingClass)) {
+          registerFieldError(field, field);
         }
+      }
     }
+
+    private boolean containsSynchronization(PsiElement context) {
+      final ContainsSynchronizationVisitor visitor =
+        new ContainsSynchronizationVisitor();
+      context.accept(visitor);
+      return visitor.containsSynchronization();
+    }
+  }
 }

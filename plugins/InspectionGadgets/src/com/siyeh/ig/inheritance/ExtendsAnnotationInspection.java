@@ -27,67 +27,68 @@ import org.jetbrains.annotations.NotNull;
 
 public class ExtendsAnnotationInspection extends BaseInspection {
 
-    @NotNull
-    public String getID() {
-        return "ClassExplicitlyAnnotation";
+  @NotNull
+  public String getID() {
+    return "ClassExplicitlyAnnotation";
+  }
+
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "extends.annotation.display.name");
+  }
+
+  public boolean isEnabledByDefault() {
+    return true;
+  }
+
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    final PsiClass containingClass = (PsiClass)infos[0];
+    return InspectionGadgetsBundle.message(
+      "extends.annotation.problem.descriptor",
+      containingClass.getName());
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new ExtendsAnnotationVisitor();
+  }
+
+  private static class ExtendsAnnotationVisitor
+    extends BaseInspectionVisitor {
+
+    @Override
+    public void visitClass(@NotNull PsiClass aClass) {
+      if (!PsiUtil.isLanguageLevel5OrHigher(aClass)) {
+        return;
+      }
+      if (aClass.isAnnotationType()) {
+        return;
+      }
+      final PsiReferenceList extendsList = aClass.getExtendsList();
+      checkReferenceList(extendsList, aClass);
+      final PsiReferenceList implementsList = aClass.getImplementsList();
+      checkReferenceList(implementsList, aClass);
     }
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "extends.annotation.display.name");
-    }
-
-    public boolean isEnabledByDefault() {
-        return true;
-    }
-
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        final PsiClass containingClass = (PsiClass)infos[0];
-        return InspectionGadgetsBundle.message(
-                "extends.annotation.problem.descriptor",
-                containingClass.getName());
-    }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new ExtendsAnnotationVisitor();
-    }
-
-    private static class ExtendsAnnotationVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitClass(@NotNull PsiClass aClass) {
-            if (!PsiUtil.isLanguageLevel5OrHigher(aClass)) {
-                return;
-            }
-            if (aClass.isAnnotationType()) {
-                return;
-            }
-            final PsiReferenceList extendsList = aClass.getExtendsList();
-            checkReferenceList(extendsList, aClass);
-            final PsiReferenceList implementsList = aClass.getImplementsList();
-            checkReferenceList(implementsList, aClass);
+    private void checkReferenceList(PsiReferenceList referenceList,
+                                    PsiClass containingClass) {
+      if (referenceList == null) {
+        return;
+      }
+      final PsiJavaCodeReferenceElement[] elements =
+        referenceList.getReferenceElements();
+      for (final PsiJavaCodeReferenceElement element : elements) {
+        final PsiElement referent = element.resolve();
+        if (!(referent instanceof PsiClass)) {
+          continue;
         }
-
-        private void checkReferenceList(PsiReferenceList referenceList,
-                                        PsiClass containingClass) {
-            if (referenceList == null) {
-                return;
-            }
-            final PsiJavaCodeReferenceElement[] elements =
-                    referenceList.getReferenceElements();
-            for (final PsiJavaCodeReferenceElement element : elements) {
-                final PsiElement referent = element.resolve();
-                if (!(referent instanceof PsiClass)) {
-                    continue;
-                }
-                final PsiClass psiClass = (PsiClass) referent;
-                psiClass.isAnnotationType();
-                if (psiClass.isAnnotationType()) {
-                    registerError(element, containingClass);
-                }
-            }
+        final PsiClass psiClass = (PsiClass)referent;
+        psiClass.isAnnotationType();
+        if (psiClass.isAnnotationType()) {
+          registerError(element, containingClass);
         }
+      }
     }
+  }
 }

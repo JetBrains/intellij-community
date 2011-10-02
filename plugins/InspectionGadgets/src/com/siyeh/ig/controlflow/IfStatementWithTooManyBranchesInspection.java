@@ -27,70 +27,72 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public class IfStatementWithTooManyBranchesInspection
-        extends BaseInspection {
+  extends BaseInspection {
 
-    private static final int DEFAULT_BRANCH_LIMIT = 3;
+  private static final int DEFAULT_BRANCH_LIMIT = 3;
 
-    /**
-     * this is public for the DefaultJDOMExternalizer thingy
-     * @noinspection PublicField
-     */
-    public int m_limit = DEFAULT_BRANCH_LIMIT;
+  /**
+   * this is public for the DefaultJDOMExternalizer thingy
+   *
+   * @noinspection PublicField
+   */
+  public int m_limit = DEFAULT_BRANCH_LIMIT;
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "if.statement.with.too.many.branches.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "if.statement.with.too.many.branches.display.name");
+  }
 
-    public JComponent createOptionsPanel() {
-        return new SingleIntegerFieldOptionsPanel(
-                InspectionGadgetsBundle.message(
-                        "if.statement.with.too.many.branches.max.option"),
-                this, "m_limit");
-    }
+  public JComponent createOptionsPanel() {
+    return new SingleIntegerFieldOptionsPanel(
+      InspectionGadgetsBundle.message(
+        "if.statement.with.too.many.branches.max.option"),
+      this, "m_limit");
+  }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        final Integer branchCount = (Integer)infos[0];
-        return InspectionGadgetsBundle.message(
-                "if.statement.with.too.many.branches.problem.descriptor",
-                branchCount);
-    }
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    final Integer branchCount = (Integer)infos[0];
+    return InspectionGadgetsBundle.message(
+      "if.statement.with.too.many.branches.problem.descriptor",
+      branchCount);
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new IfStatementWithTooManyBranchesVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new IfStatementWithTooManyBranchesVisitor();
+  }
 
-    private class IfStatementWithTooManyBranchesVisitor
-            extends BaseInspectionVisitor {
+  private class IfStatementWithTooManyBranchesVisitor
+    extends BaseInspectionVisitor {
 
-        @Override public void visitIfStatement(@NotNull PsiIfStatement statement) {
-            super.visitIfStatement(statement);
-            final PsiElement parent = statement.getParent();
-            if (parent instanceof PsiIfStatement) {
-                final PsiIfStatement parentStatement = (PsiIfStatement)parent;
-                final PsiStatement elseBranch = parentStatement.getElseBranch();
-                if (statement.equals(elseBranch)) {
-                    return;
-                }
-            }
-            final int branchCount = calculateBranchCount(statement);
-            if (branchCount <= m_limit) {
-                return;
-            }
-            registerStatementError(statement, Integer.valueOf(branchCount));
+    @Override
+    public void visitIfStatement(@NotNull PsiIfStatement statement) {
+      super.visitIfStatement(statement);
+      final PsiElement parent = statement.getParent();
+      if (parent instanceof PsiIfStatement) {
+        final PsiIfStatement parentStatement = (PsiIfStatement)parent;
+        final PsiStatement elseBranch = parentStatement.getElseBranch();
+        if (statement.equals(elseBranch)) {
+          return;
         }
-
-        private int calculateBranchCount(PsiIfStatement statement) {
-            final PsiStatement branch = statement.getElseBranch();
-            if (branch == null) {
-                return 1;
-            }
-            if (!(branch instanceof PsiIfStatement)) {
-                return 2;
-            }
-            return 1 + calculateBranchCount((PsiIfStatement)branch);
-        }
+      }
+      final int branchCount = calculateBranchCount(statement);
+      if (branchCount <= m_limit) {
+        return;
+      }
+      registerStatementError(statement, Integer.valueOf(branchCount));
     }
+
+    private int calculateBranchCount(PsiIfStatement statement) {
+      final PsiStatement branch = statement.getElseBranch();
+      if (branch == null) {
+        return 1;
+      }
+      if (!(branch instanceof PsiIfStatement)) {
+        return 2;
+      }
+      return 1 + calculateBranchCount((PsiIfStatement)branch);
+    }
+  }
 }

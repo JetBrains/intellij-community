@@ -25,61 +25,62 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class IgnoredJUnitTestInspection extends BaseInspection {
-    @Nls
-    @NotNull
+  @Nls
+  @NotNull
+  @Override
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "ignored.junit.test.display.name");
+  }
+
+  @NotNull
+  @Override
+  protected String buildErrorString(Object... infos) {
+    final PsiNamedElement info = (PsiNamedElement)infos[0];
+    if (info instanceof PsiClass) {
+      return InspectionGadgetsBundle.message(
+        "ignored.junit.test.classproblem.descriptor",
+        info.getName());
+    }
+    else {
+      return InspectionGadgetsBundle.message(
+        "ignored.junit.test.method.problem.descriptor",
+        info.getName());
+    }
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new IgnoredJUnitTestVisitor();
+  }
+
+  private static class IgnoredJUnitTestVisitor extends BaseInspectionVisitor {
+
     @Override
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "ignored.junit.test.display.name");
+    public void visitAnnotation(PsiAnnotation annotation) {
+      super.visitAnnotation(annotation);
+      final PsiModifierListOwner modifierListOwner =
+        PsiTreeUtil.getParentOfType(annotation,
+                                    PsiModifierListOwner.class);
+      if (!(modifierListOwner instanceof PsiClass ||
+            modifierListOwner instanceof PsiMethod)) {
+        return;
+      }
+      final PsiJavaCodeReferenceElement nameReferenceElement =
+        annotation.getNameReferenceElement();
+      if (nameReferenceElement == null) {
+        return;
+      }
+      final PsiElement target = nameReferenceElement.resolve();
+      if (!(target instanceof PsiClass)) {
+        return;
+      }
+      final PsiClass aClass = (PsiClass)target;
+      @NonNls final String qualifiedName = aClass.getQualifiedName();
+      if (!"org.junit.Ignore".equals(qualifiedName)) {
+        return;
+      }
+      registerError(annotation, modifierListOwner);
     }
-
-    @NotNull
-    @Override
-    protected String buildErrorString(Object... infos) {
-        final PsiNamedElement info = (PsiNamedElement) infos[0];
-        if (info instanceof PsiClass) {
-            return InspectionGadgetsBundle.message(
-                    "ignored.junit.test.classproblem.descriptor",
-                    info.getName());
-        } else {
-            return InspectionGadgetsBundle.message(
-                    "ignored.junit.test.method.problem.descriptor",
-                    info.getName());
-        }
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new IgnoredJUnitTestVisitor();
-    }
-
-    private static class IgnoredJUnitTestVisitor extends BaseInspectionVisitor {
-
-        @Override
-        public void visitAnnotation(PsiAnnotation annotation) {
-            super.visitAnnotation(annotation);
-            final PsiModifierListOwner modifierListOwner =
-                    PsiTreeUtil.getParentOfType(annotation,
-                            PsiModifierListOwner.class);
-            if (!(modifierListOwner instanceof PsiClass ||
-                    modifierListOwner instanceof PsiMethod)) {
-                return;
-            }
-            final PsiJavaCodeReferenceElement nameReferenceElement =
-                    annotation.getNameReferenceElement();
-            if (nameReferenceElement == null) {
-                return;
-            }
-            final PsiElement target = nameReferenceElement.resolve();
-            if (!(target instanceof PsiClass)) {
-                return;
-            }
-            final PsiClass aClass = (PsiClass) target;
-            @NonNls final String qualifiedName = aClass.getQualifiedName();
-            if (!"org.junit.Ignore".equals(qualifiedName)) {
-                return;
-            }
-            registerError(annotation, modifierListOwner);
-        }
-    }
+  }
 }

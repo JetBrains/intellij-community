@@ -23,55 +23,56 @@ import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class StringBufferMustHaveInitialCapacityInspection
-        extends BaseInspection {
+  extends BaseInspection {
+
+  @Override
+  @NotNull
+  public String getID() {
+    return "StringBufferWithoutInitialCapacity";
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "string.buffer.must.have.initial.capacity.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "string.buffer.must.have.initial.capacity.problem.descriptor");
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new StringBufferInitialCapacityVisitor();
+  }
+
+  private static class StringBufferInitialCapacityVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String getID() {
-        return "StringBufferWithoutInitialCapacity";
+    public void visitNewExpression(
+      @NotNull PsiNewExpression expression) {
+      super.visitNewExpression(expression);
+      final PsiType type = expression.getType();
+
+      if (!TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_STRING_BUFFER,
+                                type) &&
+          !TypeUtils.typeEquals("java.lang.StringBuilder", type)) {
+        return;
+      }
+      final PsiExpressionList argumentList = expression.getArgumentList();
+      if (argumentList == null) {
+        return;
+      }
+      final PsiExpression[] args = argumentList.getExpressions();
+      if (args.length != 0) {
+        return;
+      }
+      registerError(expression);
     }
-
-    @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "string.buffer.must.have.initial.capacity.display.name");
-    }
-
-    @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "string.buffer.must.have.initial.capacity.problem.descriptor");
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new StringBufferInitialCapacityVisitor();
-    }
-
-    private static class StringBufferInitialCapacityVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitNewExpression(
-                @NotNull PsiNewExpression expression) {
-            super.visitNewExpression(expression);
-            final PsiType type = expression.getType();
-
-            if (!TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_STRING_BUFFER,
-                    type) &&
-                    !TypeUtils.typeEquals("java.lang.StringBuilder", type)) {
-                return;
-            }
-            final PsiExpressionList argumentList = expression.getArgumentList();
-            if (argumentList == null) {
-                return;
-            }
-            final PsiExpression[] args = argumentList.getExpressions();
-            if (args.length != 0) {
-                return;
-            }
-            registerError(expression);
-        }
-    }
+  }
 }

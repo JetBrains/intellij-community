@@ -27,53 +27,54 @@ import org.jetbrains.annotations.NotNull;
 
 public class AnonymousInnerClassMayBeStaticInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "anonymous.inner.may.be.named.static.inner.class.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "anonymous.inner.may.be.named.static.inner.class.display.name");
+  }
 
-    @NotNull
-    public String buildErrorString(Object... infos) {
-      return InspectionGadgetsBundle.message(
-              "anonymous.inner.may.be.named.static.inner.class.problem.descriptor");
-    }
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "anonymous.inner.may.be.named.static.inner.class.problem.descriptor");
+  }
 
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        return new MoveAnonymousToInnerClassFix(
-                InspectionGadgetsBundle.message(
-                        "anonymous.inner.may.be.named.static.inner.class.quickfix"));
-    }
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new MoveAnonymousToInnerClassFix(
+      InspectionGadgetsBundle.message(
+        "anonymous.inner.may.be.named.static.inner.class.quickfix"));
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new AnonymousInnerClassMayBeStaticVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new AnonymousInnerClassMayBeStaticVisitor();
+  }
 
-    private static class AnonymousInnerClassMayBeStaticVisitor
-            extends BaseInspectionVisitor {
+  private static class AnonymousInnerClassMayBeStaticVisitor
+    extends BaseInspectionVisitor {
 
-        @Override public void visitClass(@NotNull PsiClass aClass){
-            if (!(aClass instanceof PsiAnonymousClass)) {
-                return;
-            }
-            if (aClass instanceof PsiEnumConstantInitializer) {
-                return;
-            }
-            final PsiMember containingMember =
-                    PsiTreeUtil.getParentOfType(aClass, PsiMember.class);
-            if (containingMember == null ||
-                containingMember.hasModifierProperty(PsiModifier.STATIC)) {
-                return;
-            }
-            final PsiAnonymousClass anAnonymousClass =
-                    (PsiAnonymousClass) aClass;
-            final InnerClassReferenceVisitor visitor =
-                    new InnerClassReferenceVisitor(anAnonymousClass);
-            anAnonymousClass.accept(visitor);
-            if(!visitor.canInnerClassBeStatic()) {
-                return;
-            }
-            registerClassError(aClass);
-        }
+    @Override
+    public void visitClass(@NotNull PsiClass aClass) {
+      if (!(aClass instanceof PsiAnonymousClass)) {
+        return;
+      }
+      if (aClass instanceof PsiEnumConstantInitializer) {
+        return;
+      }
+      final PsiMember containingMember =
+        PsiTreeUtil.getParentOfType(aClass, PsiMember.class);
+      if (containingMember == null ||
+          containingMember.hasModifierProperty(PsiModifier.STATIC)) {
+        return;
+      }
+      final PsiAnonymousClass anAnonymousClass =
+        (PsiAnonymousClass)aClass;
+      final InnerClassReferenceVisitor visitor =
+        new InnerClassReferenceVisitor(anAnonymousClass);
+      anAnonymousClass.accept(visitor);
+      if (!visitor.canInnerClassBeStatic()) {
+        return;
+      }
+      registerClassError(aClass);
     }
+  }
 }

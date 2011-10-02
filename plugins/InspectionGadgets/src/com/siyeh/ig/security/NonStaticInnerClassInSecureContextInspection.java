@@ -23,36 +23,37 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
 public class NonStaticInnerClassInSecureContextInspection
-        extends BaseInspection {
+  extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "non.static.inner.class.in.secure.context.display.name");
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "non.static.inner.class.in.secure.context.display.name");
+  }
+
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "non.static.inner.class.in.secure.context.problem.descriptor");
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new NonStaticInnerClassInSecureContextVisitor();
+  }
+
+  private static class NonStaticInnerClassInSecureContextVisitor
+    extends BaseInspectionVisitor {
+
+    @Override
+    public void visitClass(@NotNull PsiClass aClass) {
+      // no call to super, so it doesn't drill down
+      if (aClass.isInterface() || aClass.isAnnotationType()) {
+        return;
+      }
+      if (!PsiUtil.isInnerClass(aClass)) {
+        return;
+      }
+      registerClassError(aClass);
     }
-
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "non.static.inner.class.in.secure.context.problem.descriptor");
-    }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new NonStaticInnerClassInSecureContextVisitor();
-    }
-
-    private static class NonStaticInnerClassInSecureContextVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitClass(@NotNull PsiClass aClass) {
-            // no call to super, so it doesn't drill down
-            if (aClass.isInterface() || aClass.isAnnotationType()) {
-                return;
-            }
-            if (!PsiUtil.isInnerClass(aClass)) {
-                return;
-            }
-            registerClassError(aClass);
-        }
-    }
+  }
 }

@@ -28,65 +28,66 @@ import org.jetbrains.annotations.NotNull;
 
 public class CharacterComparisonInspection extends BaseInspection {
 
-    @Override
-    @NotNull
-    public String getID() {
-        return "CharacterComparison";
-    }
+  @Override
+  @NotNull
+  public String getID() {
+    return "CharacterComparison";
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "character.comparison.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "character.comparison.problem.descriptor");
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new CharacterComparisonVisitor();
+  }
+
+  private static class CharacterComparisonVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "character.comparison.display.name");
+    public void visitBinaryExpression(
+      @NotNull PsiBinaryExpression expression) {
+      super.visitBinaryExpression(expression);
+      final PsiExpression rhs = expression.getROperand();
+      if (!(rhs != null)) {
+        return;
+      }
+      if (!ComparisonUtils.isComparison(expression)) {
+        return;
+      }
+      if (ComparisonUtils.isEqualityComparison(expression)) {
+        return;
+      }
+      final PsiExpression lhs = expression.getLOperand();
+      if (!isCharacter(lhs)) {
+        return;
+      }
+      if (!isCharacter(rhs)) {
+        return;
+      }
+      if (NonNlsUtils.isNonNlsAnnotated(lhs) ||
+          NonNlsUtils.isNonNlsAnnotated(rhs)) {
+        return;
+      }
+      registerError(expression);
     }
 
-    @Override
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "character.comparison.problem.descriptor");
+    private static boolean isCharacter(PsiExpression expression) {
+      return TypeUtils.expressionHasType(expression, PsiKeyword.CHAR) ||
+             TypeUtils.expressionHasType(expression,
+                                         CommonClassNames.JAVA_LANG_CHARACTER);
     }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new CharacterComparisonVisitor();
-    }
-
-    private static class CharacterComparisonVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitBinaryExpression(
-                @NotNull PsiBinaryExpression expression) {
-            super.visitBinaryExpression(expression);
-            final PsiExpression rhs = expression.getROperand();
-            if(!(rhs != null)){
-                return;
-            }
-            if(!ComparisonUtils.isComparison(expression)){
-                return;
-            }
-            if(ComparisonUtils.isEqualityComparison(expression)){
-                return;
-            }
-            final PsiExpression lhs = expression.getLOperand();
-            if (!isCharacter(lhs)) {
-                return;
-            }
-            if (!isCharacter(rhs)) {
-                return;
-            }
-            if (NonNlsUtils.isNonNlsAnnotated(lhs) ||
-                NonNlsUtils.isNonNlsAnnotated(rhs)) {
-                return;
-            }
-            registerError(expression);
-        }
-
-        private static boolean isCharacter(PsiExpression expression) {
-            return  TypeUtils.expressionHasType(expression, PsiKeyword.CHAR) ||
-                    TypeUtils.expressionHasType(expression,
-                            CommonClassNames.JAVA_LANG_CHARACTER);
-        }
-    }
+  }
 }

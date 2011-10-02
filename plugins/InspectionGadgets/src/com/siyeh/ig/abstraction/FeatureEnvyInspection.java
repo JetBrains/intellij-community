@@ -33,64 +33,65 @@ import java.util.Set;
 
 public class FeatureEnvyInspection extends BaseInspection {
 
-    @SuppressWarnings({"PublicField"})
-    public boolean ignoreTestCases = false;
+  @SuppressWarnings({"PublicField"})
+  public boolean ignoreTestCases = false;
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("feature.envy.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    final PsiNamedElement element = (PsiNamedElement)infos[0];
+    final String className = element.getName();
+    return InspectionGadgetsBundle.message(
+      "feature.envy.problem.descriptor", className);
+  }
+
+  @Override
+  @Nullable
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(
+      InspectionGadgetsBundle.message(
+        "feature.envy.ignore.test.cases.option"), this,
+      "ignoreTestCases");
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new FeatureEnvyVisitor();
+  }
+
+  private class FeatureEnvyVisitor extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message("feature.envy.display.name");
-    }
-
-    @Override
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        final PsiNamedElement element = (PsiNamedElement)infos[0];
-        final String className = element.getName();
-        return InspectionGadgetsBundle.message(
-                "feature.envy.problem.descriptor", className);
-    }
-
-    @Override
-    @Nullable
-    public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel(
-                InspectionGadgetsBundle.message(
-                "feature.envy.ignore.test.cases.option"), this, 
-                "ignoreTestCases");
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new FeatureEnvyVisitor();
-    }
-
-    private class FeatureEnvyVisitor extends BaseInspectionVisitor {
-
-        @Override public void visitMethod(@NotNull PsiMethod method) {
-            if (ignoreTestCases) {
-                final PsiClass containingClass = method.getContainingClass();
-                if(containingClass != null &&
-                   TestFrameworks.getInstance().isTestClass(containingClass)){
-                    return;
-                }
-                if (TestUtils.isJUnitTestMethod(method)) {
-                    return;
-                }
-            }
-            final PsiIdentifier nameIdentifier = method.getNameIdentifier();
-            if (nameIdentifier == null) {
-                return;
-            }
-            final PsiClass containingClass = method.getContainingClass();
-            final ClassAccessVisitor visitor =
-                    new ClassAccessVisitor(containingClass);
-            method.accept(visitor);
-            final Set<PsiClass> overaccessedClasses =
-                    visitor.getOveraccessedClasses();
-            for(PsiClass aClass : overaccessedClasses){
-                registerError(nameIdentifier, aClass);
-            }
+    public void visitMethod(@NotNull PsiMethod method) {
+      if (ignoreTestCases) {
+        final PsiClass containingClass = method.getContainingClass();
+        if (containingClass != null &&
+            TestFrameworks.getInstance().isTestClass(containingClass)) {
+          return;
         }
+        if (TestUtils.isJUnitTestMethod(method)) {
+          return;
+        }
+      }
+      final PsiIdentifier nameIdentifier = method.getNameIdentifier();
+      if (nameIdentifier == null) {
+        return;
+      }
+      final PsiClass containingClass = method.getContainingClass();
+      final ClassAccessVisitor visitor =
+        new ClassAccessVisitor(containingClass);
+      method.accept(visitor);
+      final Set<PsiClass> overaccessedClasses =
+        visitor.getOveraccessedClasses();
+      for (PsiClass aClass : overaccessedClasses) {
+        registerError(nameIdentifier, aClass);
+      }
     }
+  }
 }

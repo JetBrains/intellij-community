@@ -24,59 +24,61 @@ import org.jetbrains.annotations.NotNull;
 
 public class UseOfSunClassesInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message("use.sun.classes.display.name");
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("use.sun.classes.display.name");
+  }
+
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "use.sun.classes.problem.descriptor");
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new UseOfSunClassesVisitor();
+  }
+
+  private static class UseOfSunClassesVisitor
+    extends BaseInspectionVisitor {
+
+    @Override
+    public void visitVariable(@NotNull PsiVariable variable) {
+      super.visitVariable(variable);
+      final PsiType type = variable.getType();
+      final PsiType deepComponentType = type.getDeepComponentType();
+      if (!(deepComponentType instanceof PsiClassType)) {
+        return;
+      }
+      final PsiClassType classType = (PsiClassType)deepComponentType;
+      @NonNls final String className = classType.getCanonicalText();
+      if (className == null || !className.startsWith("sun.")) {
+        return;
+      }
+      final PsiTypeElement typeElement = variable.getTypeElement();
+      if (typeElement == null) {
+        return;
+      }
+      registerError(typeElement);
     }
 
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "use.sun.classes.problem.descriptor");
+    @Override
+    public void visitNewExpression(
+      @NotNull PsiNewExpression newExpression) {
+      super.visitNewExpression(newExpression);
+      final PsiType type = newExpression.getType();
+      if (type == null) {
+        return;
+      }
+      if (!(type instanceof PsiClassType)) {
+        return;
+      }
+      final PsiClassType classType = (PsiClassType)type;
+      @NonNls final String className = classType.getCanonicalText();
+      if (className == null || !className.startsWith("sun.")) {
+        return;
+      }
+      registerNewExpressionError(newExpression);
     }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new UseOfSunClassesVisitor();
-    }
-
-    private static class UseOfSunClassesVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitVariable(@NotNull PsiVariable variable) {
-            super.visitVariable(variable);
-            final PsiType type = variable.getType();
-            final PsiType deepComponentType = type.getDeepComponentType();
-            if(!(deepComponentType instanceof PsiClassType)) {
-                return;
-            }
-            final PsiClassType classType = (PsiClassType) deepComponentType;
-            @NonNls final String className = classType.getCanonicalText();
-            if(className == null || !className.startsWith("sun.")) {
-                return;
-            }
-            final PsiTypeElement typeElement = variable.getTypeElement();
-            if (typeElement == null) {
-                return;
-            }
-            registerError(typeElement);
-        }
-
-        @Override public void visitNewExpression(
-                @NotNull PsiNewExpression newExpression) {
-            super.visitNewExpression(newExpression);
-            final PsiType type = newExpression.getType();
-            if (type == null) {
-                return;
-            }
-            if(!(type instanceof PsiClassType)) {
-                return;
-            }
-            final PsiClassType classType = (PsiClassType) type;
-            @NonNls final String className = classType.getCanonicalText();
-            if (className==null || !className.startsWith("sun.")) {
-                return;
-            }
-            registerNewExpressionError(newExpression);
-        }
-    }
+  }
 }

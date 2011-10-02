@@ -21,39 +21,40 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ExpressionUtils;
 
-class ConstantExpressionPredicate implements PsiElementPredicate{
+class ConstantExpressionPredicate implements PsiElementPredicate {
 
-    public boolean satisfiedBy(PsiElement element){
-        if(!(element instanceof PsiBinaryExpression)){
-            return false;
-        }
-        if(element instanceof PsiLiteralExpression ||
-                element instanceof PsiClassObjectAccessExpression){
-            return false;
-        }
-        final PsiBinaryExpression expression = (PsiBinaryExpression) element;
-        final PsiExpression rhs = expression.getROperand();
-        if (rhs == null) {
-            return false;
-        }
-        final PsiType type = rhs.getType();
-        if (type == null || type.equalsToText("java.lang.String")){
-            return false;
-        }
-        if(!PsiUtil.isConstantExpression(expression)){
-            return false;
-        }
-        try{
-            final Object value =
-                    ExpressionUtils.computeConstantExpression(expression, true);
-            if(value == null){
-                return false;
-            }
-        } catch (ConstantEvaluationOverflowException ignore){
-            return false;
-        }
-        final PsiElement parent = element.getParent();
-        return !(parent instanceof PsiExpression &&
-                PsiUtil.isConstantExpression((PsiExpression)parent));
+  public boolean satisfiedBy(PsiElement element) {
+    if (!(element instanceof PsiBinaryExpression)) {
+      return false;
     }
+    if (element instanceof PsiLiteralExpression ||
+        element instanceof PsiClassObjectAccessExpression) {
+      return false;
+    }
+    final PsiBinaryExpression expression = (PsiBinaryExpression)element;
+    final PsiExpression rhs = expression.getROperand();
+    if (rhs == null) {
+      return false;
+    }
+    final PsiType type = rhs.getType();
+    if (type == null || type.equalsToText("java.lang.String")) {
+      return false;
+    }
+    if (!PsiUtil.isConstantExpression(expression)) {
+      return false;
+    }
+    try {
+      final Object value =
+        ExpressionUtils.computeConstantExpression(expression, true);
+      if (value == null) {
+        return false;
+      }
+    }
+    catch (ConstantEvaluationOverflowException ignore) {
+      return false;
+    }
+    final PsiElement parent = element.getParent();
+    return !(parent instanceof PsiExpression &&
+             PsiUtil.isConstantExpression((PsiExpression)parent));
+  }
 }

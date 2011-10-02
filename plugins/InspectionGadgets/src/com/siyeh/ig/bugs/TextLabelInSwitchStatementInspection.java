@@ -23,46 +23,47 @@ import org.jetbrains.annotations.NotNull;
 
 public class TextLabelInSwitchStatementInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "text.label.in.switch.statement.display.name");
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "text.label.in.switch.statement.display.name");
+  }
+
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "text.label.in.switch.statement.problem.descriptor");
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new TextLabelInSwitchStatementVisitor();
+  }
+
+  private static class TextLabelInSwitchStatementVisitor
+    extends BaseInspectionVisitor {
+
+    @Override
+    public void visitSwitchStatement(
+      @NotNull PsiSwitchStatement statement) {
+      super.visitSwitchStatement(statement);
+      final PsiCodeBlock body = statement.getBody();
+      if (body == null) {
+        return;
+      }
+      final PsiStatement[] statements = body.getStatements();
+      for (PsiStatement statement1 : statements) {
+        checkForLabel(statement1);
+      }
     }
 
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "text.label.in.switch.statement.problem.descriptor");
+    private void checkForLabel(PsiStatement statement) {
+      if (!(statement instanceof PsiLabeledStatement)) {
+        return;
+      }
+      final PsiLabeledStatement labeledStatement =
+        (PsiLabeledStatement)statement;
+      final PsiIdentifier label = labeledStatement.getLabelIdentifier();
+      registerError(label);
     }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new TextLabelInSwitchStatementVisitor();
-    }
-
-    private static class TextLabelInSwitchStatementVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitSwitchStatement(
-                @NotNull PsiSwitchStatement statement) {
-            super.visitSwitchStatement(statement);
-            final PsiCodeBlock body = statement.getBody();
-            if (body == null) {
-                return;
-            }
-            final PsiStatement[] statements = body.getStatements();
-            for(PsiStatement statement1 : statements){
-                checkForLabel(statement1);
-            }
-        }
-
-        private void checkForLabel(PsiStatement statement) {
-            if (!(statement instanceof PsiLabeledStatement)) {
-                return;
-            }
-            final PsiLabeledStatement labeledStatement =
-                    (PsiLabeledStatement)statement;
-            final PsiIdentifier label = labeledStatement.getLabelIdentifier();
-            registerError(label);
-        }
-    }
+  }
 }

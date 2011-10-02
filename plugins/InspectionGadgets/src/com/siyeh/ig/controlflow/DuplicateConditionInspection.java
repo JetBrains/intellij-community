@@ -32,141 +32,143 @@ import java.util.Set;
 
 public class DuplicateConditionInspection extends BaseInspection {
 
-    /** @noinspection PublicField*/
-    public boolean ignoreMethodCalls = false;
+  /**
+   * @noinspection PublicField
+   */
+  public boolean ignoreMethodCalls = false;
 
-    // This is a dirty fix of 'squared' algorithm performance issue.
-    private static final int LIMIT_DEPTH = 20;
+  // This is a dirty fix of 'squared' algorithm performance issue.
+  private static final int LIMIT_DEPTH = 20;
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "duplicate.condition.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "duplicate.condition.display.name");
+  }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "duplicate.condition.problem.descriptor");
-    }
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "duplicate.condition.problem.descriptor");
+  }
 
-    @Nullable
-    public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel(
-                InspectionGadgetsBundle.message(
-                        "duplicate.condition.ignore.method.calls.option"),
-                this, "ignoreMethodCalls");
-    }
+  @Nullable
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(
+      InspectionGadgetsBundle.message(
+        "duplicate.condition.ignore.method.calls.option"),
+      this, "ignoreMethodCalls");
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new DuplicateConditionVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new DuplicateConditionVisitor();
+  }
 
-    private class DuplicateConditionVisitor
-            extends BaseInspectionVisitor {
+  private class DuplicateConditionVisitor
+    extends BaseInspectionVisitor {
 
-        @Override public void visitIfStatement(@NotNull PsiIfStatement statement) {
-            super.visitIfStatement(statement);
-            final PsiElement parent = statement.getParent();
-            if (parent instanceof PsiIfStatement) {
-                final PsiIfStatement parentStatement = (PsiIfStatement)parent;
-                final PsiStatement elseBranch = parentStatement.getElseBranch();
-                if (statement.equals(elseBranch)) {
-                    return;
-                }
-            }
-            final Set<PsiExpression> conditions = new HashSet<PsiExpression>();
-            collectConditionsForIfStatement(statement, conditions, 0);
-            final int numConditions = conditions.size();
-            if (numConditions < 2) {
-                return;
-            }
-            final PsiExpression[] conditionArray =
-                    conditions.toArray(new PsiExpression[numConditions]);
-            final boolean[] matched = new boolean[conditionArray.length];
-            Arrays.fill(matched, false);
-            for (int i = 0; i < conditionArray.length; i++) {
-                if (matched[i]) {
-                    continue;
-                }
-                final PsiExpression condition = conditionArray[i];
-                for (int j = i + 1; j < conditionArray.length; j++) {
-                    if (matched[j]) {
-                        continue;
-                    }
-                    final PsiExpression testCondition = conditionArray[j];
-                    final boolean areEquivalent =
-                            EquivalenceChecker.expressionsAreEquivalent(
-                                    condition, testCondition);
-                    if (areEquivalent) {
-                        matched[i] = true;
-                        matched[j] = true;
-                        if (ignoreMethodCalls &&
-                                containsMethodCallExpression(testCondition)) {
-                            break;
-                        }
-                        registerError(testCondition);
-                        if (!matched[i]) {
-                            registerError(condition);
-                        }
-
-                    }
-                }
-            }
+    @Override
+    public void visitIfStatement(@NotNull PsiIfStatement statement) {
+      super.visitIfStatement(statement);
+      final PsiElement parent = statement.getParent();
+      if (parent instanceof PsiIfStatement) {
+        final PsiIfStatement parentStatement = (PsiIfStatement)parent;
+        final PsiStatement elseBranch = parentStatement.getElseBranch();
+        if (statement.equals(elseBranch)) {
+          return;
         }
-
-        private void collectConditionsForIfStatement(
-          PsiIfStatement statement, Set<PsiExpression> conditions, int depth) {
-            if (depth > LIMIT_DEPTH) return;
-
-            final PsiExpression condition = statement.getCondition();
-            collectConditionsForExpression(condition, conditions);
-            final PsiStatement branch = statement.getElseBranch();
-            if (branch instanceof PsiIfStatement) {
-                collectConditionsForIfStatement((PsiIfStatement)branch,
-                        conditions, depth + 1);
-            }
+      }
+      final Set<PsiExpression> conditions = new HashSet<PsiExpression>();
+      collectConditionsForIfStatement(statement, conditions, 0);
+      final int numConditions = conditions.size();
+      if (numConditions < 2) {
+        return;
+      }
+      final PsiExpression[] conditionArray =
+        conditions.toArray(new PsiExpression[numConditions]);
+      final boolean[] matched = new boolean[conditionArray.length];
+      Arrays.fill(matched, false);
+      for (int i = 0; i < conditionArray.length; i++) {
+        if (matched[i]) {
+          continue;
         }
-
-        private void collectConditionsForExpression(
-                PsiExpression condition, Set<PsiExpression> conditions) {
-            if (condition == null) {
-                return;
+        final PsiExpression condition = conditionArray[i];
+        for (int j = i + 1; j < conditionArray.length; j++) {
+          if (matched[j]) {
+            continue;
+          }
+          final PsiExpression testCondition = conditionArray[j];
+          final boolean areEquivalent =
+            EquivalenceChecker.expressionsAreEquivalent(
+              condition, testCondition);
+          if (areEquivalent) {
+            matched[i] = true;
+            matched[j] = true;
+            if (ignoreMethodCalls &&
+                containsMethodCallExpression(testCondition)) {
+              break;
             }
-            if (condition instanceof PsiParenthesizedExpression) {
-                final PsiParenthesizedExpression parenthesizedExpression =
-                        (PsiParenthesizedExpression)condition;
-                final PsiExpression contents =
-                        parenthesizedExpression.getExpression();
-                collectConditionsForExpression(contents, conditions);
-                return;
+            registerError(testCondition);
+            if (!matched[i]) {
+              registerError(condition);
             }
-            if (condition instanceof PsiBinaryExpression) {
-                final PsiBinaryExpression binaryExpression =
-                        (PsiBinaryExpression)condition;
-              final IElementType tokenType = binaryExpression.getOperationTokenType();
-                if (JavaTokenType.OROR.equals(tokenType)) {
-                    final PsiExpression lhs = binaryExpression.getLOperand();
-                    collectConditionsForExpression(lhs, conditions);
-                    final PsiExpression rhs = binaryExpression.getROperand();
-                    collectConditionsForExpression(rhs, conditions);
-                    return;
-                }
-            }
-            conditions.add(condition);
+          }
         }
-
-        private boolean containsMethodCallExpression(PsiElement element) {
-            if (element instanceof PsiMethodCallExpression) {
-                return true;
-            }
-            final PsiElement[] children = element.getChildren();
-            for (PsiElement child : children) {
-                if (containsMethodCallExpression(child)) {
-                    return true;
-                }
-            }
-            return false;
-        }
+      }
     }
+
+    private void collectConditionsForIfStatement(
+      PsiIfStatement statement, Set<PsiExpression> conditions, int depth) {
+      if (depth > LIMIT_DEPTH) return;
+
+      final PsiExpression condition = statement.getCondition();
+      collectConditionsForExpression(condition, conditions);
+      final PsiStatement branch = statement.getElseBranch();
+      if (branch instanceof PsiIfStatement) {
+        collectConditionsForIfStatement((PsiIfStatement)branch,
+                                        conditions, depth + 1);
+      }
+    }
+
+    private void collectConditionsForExpression(
+      PsiExpression condition, Set<PsiExpression> conditions) {
+      if (condition == null) {
+        return;
+      }
+      if (condition instanceof PsiParenthesizedExpression) {
+        final PsiParenthesizedExpression parenthesizedExpression =
+          (PsiParenthesizedExpression)condition;
+        final PsiExpression contents =
+          parenthesizedExpression.getExpression();
+        collectConditionsForExpression(contents, conditions);
+        return;
+      }
+      if (condition instanceof PsiBinaryExpression) {
+        final PsiBinaryExpression binaryExpression =
+          (PsiBinaryExpression)condition;
+        final IElementType tokenType = binaryExpression.getOperationTokenType();
+        if (JavaTokenType.OROR.equals(tokenType)) {
+          final PsiExpression lhs = binaryExpression.getLOperand();
+          collectConditionsForExpression(lhs, conditions);
+          final PsiExpression rhs = binaryExpression.getROperand();
+          collectConditionsForExpression(rhs, conditions);
+          return;
+        }
+      }
+      conditions.add(condition);
+    }
+
+    private boolean containsMethodCallExpression(PsiElement element) {
+      if (element instanceof PsiMethodCallExpression) {
+        return true;
+      }
+      final PsiElement[] children = element.getChildren();
+      for (PsiElement child : children) {
+        if (containsMethodCallExpression(child)) {
+          return true;
+        }
+      }
+      return false;
+    }
+  }
 }

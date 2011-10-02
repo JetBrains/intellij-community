@@ -32,52 +32,52 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Set;
 
-public class ClassWithTooManyTransitiveDependentsInspection 
-        extends BaseGlobalInspection {
+public class ClassWithTooManyTransitiveDependentsInspection
+  extends BaseGlobalInspection {
 
-    @SuppressWarnings({"PublicField"})
-    public int limit = 35;
+  @SuppressWarnings({"PublicField"})
+  public int limit = 35;
 
-    @NotNull
-    @Override
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "class.with.too.many.transitive.dependents.display.name");
+  @NotNull
+  @Override
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "class.with.too.many.transitive.dependents.display.name");
+  }
+
+  @Nullable
+  public CommonProblemDescriptor[] checkElement(
+    RefEntity refEntity,
+    AnalysisScope analysisScope,
+    InspectionManager inspectionManager,
+    GlobalInspectionContext globalInspectionContext) {
+    if (!(refEntity instanceof RefClass)) {
+      return null;
+    }
+    final RefClass refClass = (RefClass)refEntity;
+    final PsiClass aClass = refClass.getElement();
+    if (ClassUtils.isInnerClass(aClass)) {
+      return null;
     }
 
-    @Nullable
-    public CommonProblemDescriptor[] checkElement(
-            RefEntity refEntity,
-            AnalysisScope analysisScope,
-            InspectionManager inspectionManager,
-            GlobalInspectionContext globalInspectionContext) {
-        if (!(refEntity instanceof RefClass)) {
-            return null;
-        }
-        final RefClass refClass = (RefClass) refEntity;
-        final PsiClass aClass = refClass.getElement();
-        if (ClassUtils.isInnerClass(aClass)) {
-            return null;
-        }
-
-        final Set<RefClass> dependencies =
-                DependencyUtils.calculateTransitiveDependentsForClass(refClass);
-        final int numDependents = dependencies.size();
-        if (numDependents <= limit) {
-            return null;
-        }
-        final String errorString = InspectionGadgetsBundle.message(
-                "class.with.too.many.transitive.dependents.problem.descriptor",
-                refEntity.getName(), numDependents, limit);
-        return new CommonProblemDescriptor[]{
-                inspectionManager.createProblemDescriptor(errorString)
-        };
+    final Set<RefClass> dependencies =
+      DependencyUtils.calculateTransitiveDependentsForClass(refClass);
+    final int numDependents = dependencies.size();
+    if (numDependents <= limit) {
+      return null;
     }
+    final String errorString = InspectionGadgetsBundle.message(
+      "class.with.too.many.transitive.dependents.problem.descriptor",
+      refEntity.getName(), numDependents, limit);
+    return new CommonProblemDescriptor[]{
+      inspectionManager.createProblemDescriptor(errorString)
+    };
+  }
 
-    public JComponent createOptionsPanel() {
-        return new SingleIntegerFieldOptionsPanel(
-                InspectionGadgetsBundle.message(
-                        "class.with.too.many.transitive.dependents.max.option"),
-                this, "limit");
-    }
+  public JComponent createOptionsPanel() {
+    return new SingleIntegerFieldOptionsPanel(
+      InspectionGadgetsBundle.message(
+        "class.with.too.many.transitive.dependents.max.option"),
+      this, "limit");
+  }
 }

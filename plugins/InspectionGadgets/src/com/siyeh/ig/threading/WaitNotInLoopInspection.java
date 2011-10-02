@@ -26,59 +26,60 @@ import org.jetbrains.annotations.NotNull;
 
 public class WaitNotInLoopInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message("wait.not.in.loop.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("wait.not.in.loop.display.name");
+  }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "wait.not.in.loop.problem.descriptor");
-    }
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "wait.not.in.loop.problem.descriptor");
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new WaitNotInLoopVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new WaitNotInLoopVisitor();
+  }
 
-    private static class WaitNotInLoopVisitor extends BaseInspectionVisitor {
+  private static class WaitNotInLoopVisitor extends BaseInspectionVisitor {
 
-        @Override public void visitMethodCallExpression(
-                @NotNull PsiMethodCallExpression expression) {
-            super.visitMethodCallExpression(expression);
-            final PsiReferenceExpression methodExpression =
-                    expression.getMethodExpression();
-            @NonNls final String methodName =
-                    methodExpression.getReferenceName();
-            if (!HardcodedMethodConstants.WAIT.equals(methodName)) {
-                return;
-            }
-            final PsiMethod method = expression.resolveMethod();
-            if (method == null) {
-                return;
-            }
-            final PsiParameterList parameterList = method.getParameterList();
-            final int numParams = parameterList.getParametersCount();
-            if (numParams > 2) {
-                return;
-            }
-            final PsiParameter[] parameters = parameterList.getParameters();
-            if (numParams > 0) {
-                final PsiType parameterType = parameters[0].getType();
-                if (!parameterType.equals(PsiType.LONG)) {
-                    return;
-                }
-            }
-            if (numParams > 1) {
-                final PsiType parameterType = parameters[1].getType();
-                if (!parameterType.equals(PsiType.INT)) {
-                    return;
-                }
-            }
-            if (ControlFlowUtils.isInLoop(expression)) {
-                return;
-            }
-            registerMethodCallError(expression);
+    @Override
+    public void visitMethodCallExpression(
+      @NotNull PsiMethodCallExpression expression) {
+      super.visitMethodCallExpression(expression);
+      final PsiReferenceExpression methodExpression =
+        expression.getMethodExpression();
+      @NonNls final String methodName =
+        methodExpression.getReferenceName();
+      if (!HardcodedMethodConstants.WAIT.equals(methodName)) {
+        return;
+      }
+      final PsiMethod method = expression.resolveMethod();
+      if (method == null) {
+        return;
+      }
+      final PsiParameterList parameterList = method.getParameterList();
+      final int numParams = parameterList.getParametersCount();
+      if (numParams > 2) {
+        return;
+      }
+      final PsiParameter[] parameters = parameterList.getParameters();
+      if (numParams > 0) {
+        final PsiType parameterType = parameters[0].getType();
+        if (!parameterType.equals(PsiType.LONG)) {
+          return;
         }
+      }
+      if (numParams > 1) {
+        final PsiType parameterType = parameters[1].getType();
+        if (!parameterType.equals(PsiType.INT)) {
+          return;
+        }
+      }
+      if (ControlFlowUtils.isInLoop(expression)) {
+        return;
+      }
+      registerMethodCallError(expression);
     }
+  }
 }

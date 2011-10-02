@@ -24,77 +24,78 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class RuntimeExecWithNonConstantStringInspection
-        extends BaseInspection {
+  extends BaseInspection {
+
+  @Override
+  @NotNull
+  public String getID() {
+    return "CallToRuntimeExecWithNonConstantString";
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "runtime.exec.call.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "runtime.exec.with.non.constant.string.problem.descriptor");
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new RuntimeExecVisitor();
+  }
+
+  private static class RuntimeExecVisitor extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String getID() {
-        return "CallToRuntimeExecWithNonConstantString";
+    public void visitMethodCallExpression(
+      @NotNull PsiMethodCallExpression expression) {
+      super.visitMethodCallExpression(expression);
+      final PsiReferenceExpression methodExpression =
+        expression.getMethodExpression();
+      @NonNls final String methodName =
+        methodExpression.getReferenceName();
+      if (!"exec".equals(methodName)) {
+        return;
+      }
+      final PsiMethod method = expression.resolveMethod();
+      if (method == null) {
+        return;
+      }
+      final PsiClass aClass = method.getContainingClass();
+      if (aClass == null) {
+        return;
+      }
+      final String className = aClass.getQualifiedName();
+      if (!"java.lang.Runtime".equals(className)) {
+        return;
+      }
+      final PsiExpressionList argumentList = expression.getArgumentList();
+      final PsiExpression[] args = argumentList.getExpressions();
+      if (args.length == 0) {
+        return;
+      }
+      final PsiExpression arg = args[0];
+      final PsiType type = arg.getType();
+      if (type == null) {
+        return;
+      }
+      final String typeText = type.getCanonicalText();
+      if (!CommonClassNames.JAVA_LANG_STRING.equals(typeText)) {
+        return;
+      }
+      final String stringValue =
+        (String)ConstantExpressionUtil.computeCastTo(arg, type);
+      if (stringValue != null) {
+        return;
+      }
+      registerMethodCallError(expression);
     }
-
-    @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "runtime.exec.call.display.name");
-    }
-
-    @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "runtime.exec.with.non.constant.string.problem.descriptor");
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new RuntimeExecVisitor();
-    }
-
-    private static class RuntimeExecVisitor extends BaseInspectionVisitor {
-
-        @Override public void visitMethodCallExpression(
-                @NotNull PsiMethodCallExpression expression) {
-            super.visitMethodCallExpression(expression);
-            final PsiReferenceExpression methodExpression =
-                    expression.getMethodExpression();
-            @NonNls final String methodName =
-                    methodExpression.getReferenceName();
-            if (!"exec".equals(methodName)) {
-                return;
-            }
-            final PsiMethod method = expression.resolveMethod();
-            if (method == null) {
-                return;
-            }
-            final PsiClass aClass = method.getContainingClass();
-            if (aClass == null) {
-                return;
-            }
-            final String className = aClass.getQualifiedName();
-            if (!"java.lang.Runtime".equals(className)) {
-                return;
-            }
-            final PsiExpressionList argumentList = expression.getArgumentList();
-            final PsiExpression[] args = argumentList.getExpressions();
-            if (args.length == 0) {
-                return;
-            }
-            final PsiExpression arg = args[0];
-            final PsiType type = arg.getType();
-            if (type == null) {
-                return;
-            }
-            final String typeText = type.getCanonicalText();
-            if (!CommonClassNames.JAVA_LANG_STRING.equals(typeText)) {
-                return;
-            }
-            final String stringValue =
-                    (String)ConstantExpressionUtil.computeCastTo(arg, type);
-            if (stringValue != null) {
-                return;
-            }
-            registerMethodCallError(expression);
-        }
-    }
+  }
 }

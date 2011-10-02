@@ -23,57 +23,57 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ImportUtils;
 
-class FullyQualifiedNamePredicate implements PsiElementPredicate{
+class FullyQualifiedNamePredicate implements PsiElementPredicate {
 
-    public boolean satisfiedBy(PsiElement element){
-        if(!(element instanceof PsiJavaCodeReferenceElement)) {
-            return false;
-        }
-        final PsiJavaCodeReferenceElement referenceElement =
-                (PsiJavaCodeReferenceElement)element;
-        if(!referenceElement.isQualified()) {
-            return false;
-        }
-        final PsiElement parent = referenceElement.getParent();
-        if (parent instanceof PsiMethodCallExpression ||
-                parent instanceof PsiAssignmentExpression ||
-                parent instanceof PsiVariable) {
-            return false;
-        }
-        if (PsiTreeUtil.getParentOfType(element, PsiImportStatementBase.class,
-                PsiPackageStatement.class, JavaCodeFragment.class) != null) {
-            return false;
-        }
-        final PsiElement qualifier = referenceElement.getQualifier();
-        if (!(qualifier instanceof PsiJavaCodeReferenceElement)) {
-            return false;
-        }
-        final PsiJavaCodeReferenceElement qualifierReferenceElement =
-                (PsiJavaCodeReferenceElement)qualifier;
-        final PsiElement resolved = qualifierReferenceElement.resolve();
-        if (!(resolved instanceof PsiPackage)) {
-            if (!(resolved instanceof PsiClass)) {
-                return false;
-            }
-            final Project project = element.getProject();
-            final CodeStyleSettings codeStyleSettings =
-                    CodeStyleSettingsManager.getSettings(project);
-            if (!codeStyleSettings.INSERT_INNER_CLASS_IMPORTS) {
-                return false;
-            }
-        }
-        final PsiElement target = referenceElement.resolve();
-        if(!(target instanceof PsiClass)){
-            return false;
-        }
-        final PsiClass aClass = (PsiClass) target;
-        final String fqName = aClass.getQualifiedName();
-        if (fqName == null) {
-            return false;
-        }
-        final PsiJavaFile javaFile =
-                PsiTreeUtil.getParentOfType(referenceElement, PsiJavaFile.class);
-        return javaFile != null &&
-                ImportUtils.nameCanBeImported(fqName, javaFile);
+  public boolean satisfiedBy(PsiElement element) {
+    if (!(element instanceof PsiJavaCodeReferenceElement)) {
+      return false;
     }
+    final PsiJavaCodeReferenceElement referenceElement =
+      (PsiJavaCodeReferenceElement)element;
+    if (!referenceElement.isQualified()) {
+      return false;
+    }
+    final PsiElement parent = referenceElement.getParent();
+    if (parent instanceof PsiMethodCallExpression ||
+        parent instanceof PsiAssignmentExpression ||
+        parent instanceof PsiVariable) {
+      return false;
+    }
+    if (PsiTreeUtil.getParentOfType(element, PsiImportStatementBase.class,
+                                    PsiPackageStatement.class, JavaCodeFragment.class) != null) {
+      return false;
+    }
+    final PsiElement qualifier = referenceElement.getQualifier();
+    if (!(qualifier instanceof PsiJavaCodeReferenceElement)) {
+      return false;
+    }
+    final PsiJavaCodeReferenceElement qualifierReferenceElement =
+      (PsiJavaCodeReferenceElement)qualifier;
+    final PsiElement resolved = qualifierReferenceElement.resolve();
+    if (!(resolved instanceof PsiPackage)) {
+      if (!(resolved instanceof PsiClass)) {
+        return false;
+      }
+      final Project project = element.getProject();
+      final CodeStyleSettings codeStyleSettings =
+        CodeStyleSettingsManager.getSettings(project);
+      if (!codeStyleSettings.INSERT_INNER_CLASS_IMPORTS) {
+        return false;
+      }
+    }
+    final PsiElement target = referenceElement.resolve();
+    if (!(target instanceof PsiClass)) {
+      return false;
+    }
+    final PsiClass aClass = (PsiClass)target;
+    final String fqName = aClass.getQualifiedName();
+    if (fqName == null) {
+      return false;
+    }
+    final PsiJavaFile javaFile =
+      PsiTreeUtil.getParentOfType(referenceElement, PsiJavaFile.class);
+    return javaFile != null &&
+           ImportUtils.nameCanBeImported(fqName, javaFile);
+  }
 }

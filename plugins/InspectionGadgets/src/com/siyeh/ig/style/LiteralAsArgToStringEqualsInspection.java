@@ -30,110 +30,112 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class LiteralAsArgToStringEqualsInspection
-        extends BaseInspection {
+  extends BaseInspection {
+
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "literal.as.arg.to.string.equals.display.name");
+  }
+
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    final String methodName = (String)infos[0];
+    return InspectionGadgetsBundle.message(
+      "literal.as.arg.to.string.equals.problem.descriptor",
+      methodName);
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new LiteralAsArgToEqualsVisitor();
+  }
+
+  public InspectionGadgetsFix buildFix(Object... infos) {
+    return new SwapEqualsFix();
+  }
+
+  private static class SwapEqualsFix extends InspectionGadgetsFix {
 
     @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "literal.as.arg.to.string.equals.display.name");
+    public String getName() {
+      return InspectionGadgetsBundle.message(
+        "literal.as.arg.to.string.equals.flip.quickfix");
     }
 
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        final String methodName = (String)infos[0];
-        return InspectionGadgetsBundle.message(
-                "literal.as.arg.to.string.equals.problem.descriptor",
-                methodName);
+    public void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiExpression argument =
+        (PsiExpression)descriptor.getPsiElement();
+      final PsiElement argumentList = argument.getParent();
+      final PsiMethodCallExpression expression =
+        (PsiMethodCallExpression)argumentList.getParent();
+      final PsiReferenceExpression methodExpression =
+        expression.getMethodExpression();
+      final PsiExpression target =
+        methodExpression.getQualifierExpression();
+      final String methodName = methodExpression.getReferenceName();
+      final PsiExpression strippedTarget =
+        ParenthesesUtils.stripParentheses(target);
+      if (strippedTarget == null) {
+        return;
+      }
+      final PsiExpression strippedArg =
+        ParenthesesUtils.stripParentheses(argument);
+      if (strippedArg == null) {
+        return;
+      }
+      final String callString;
+      if (ParenthesesUtils.getPrecedence(strippedArg) >
+          ParenthesesUtils.METHOD_CALL_PRECEDENCE) {
+        callString = '(' + strippedArg.getText() + ")." + methodName +
+                     '(' + strippedTarget.getText() + ')';
+      }
+      else {
+        callString = strippedArg.getText() + '.' + methodName + '(' +
+                     strippedTarget.getText() + ')';
+      }
+      replaceExpression(expression, callString);
     }
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new LiteralAsArgToEqualsVisitor();
+  private static class LiteralAsArgToEqualsVisitor
+    extends BaseInspectionVisitor {
+
+    @Override
+    public void visitMethodCallExpression(
+      @NotNull PsiMethodCallExpression expression) {
+      super.visitMethodCallExpression(expression);
+      final PsiReferenceExpression methodExpression =
+        expression.getMethodExpression();
+      @NonNls final String methodName =
+        methodExpression.getReferenceName();
+      if (!HardcodedMethodConstants.EQUALS.equals(methodName) &&
+          !HardcodedMethodConstants.EQUALS_IGNORE_CASE.equals(
+            methodName)) {
+        return;
+      }
+      final PsiExpressionList argList = expression.getArgumentList();
+      final PsiExpression[] args = argList.getExpressions();
+      if (args.length != 1) {
+        return;
+      }
+      final PsiExpression argument = args[0];
+      final PsiType argumentType = argument.getType();
+      if (argumentType == null) {
+        return;
+      }
+      if (!(argument instanceof PsiLiteralExpression)) {
+        return;
+      }
+      if (!TypeUtils.isJavaLangString(argumentType)) {
+        return;
+      }
+      final PsiExpression target =
+        methodExpression.getQualifierExpression();
+      if (target instanceof PsiLiteralExpression) {
+        return;
+      }
+      registerError(argument, methodName);
     }
-
-    public InspectionGadgetsFix buildFix(Object... infos) {
-        return new SwapEqualsFix();
-    }
-
-    private static class SwapEqualsFix extends InspectionGadgetsFix {
-
-        @NotNull
-        public String getName() {
-            return InspectionGadgetsBundle.message(
-                    "literal.as.arg.to.string.equals.flip.quickfix");
-        }
-
-        public void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
-            final PsiExpression argument =
-                    (PsiExpression)descriptor.getPsiElement();
-            final PsiElement argumentList = argument.getParent();
-            final PsiMethodCallExpression expression =
-                    (PsiMethodCallExpression)argumentList.getParent();
-            final PsiReferenceExpression methodExpression =
-                    expression.getMethodExpression();
-            final PsiExpression target =
-                    methodExpression.getQualifierExpression();
-            final String methodName = methodExpression.getReferenceName();
-            final PsiExpression strippedTarget =
-                    ParenthesesUtils.stripParentheses(target);
-            if (strippedTarget == null) {
-                return;
-            }
-            final PsiExpression strippedArg =
-                    ParenthesesUtils.stripParentheses(argument);
-            if (strippedArg == null) {
-                return;
-            }
-            final String callString;
-            if (ParenthesesUtils.getPrecedence(strippedArg) >
-                    ParenthesesUtils.METHOD_CALL_PRECEDENCE) {
-                callString = '(' + strippedArg.getText() + ")." + methodName +
-                        '(' + strippedTarget.getText() + ')';
-            } else {
-                callString = strippedArg.getText() + '.' + methodName + '(' +
-                        strippedTarget.getText() + ')';
-            }
-            replaceExpression(expression, callString);
-        }
-    }
-
-    private static class LiteralAsArgToEqualsVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitMethodCallExpression(
-                @NotNull PsiMethodCallExpression expression) {
-            super.visitMethodCallExpression(expression);
-            final PsiReferenceExpression methodExpression =
-                    expression.getMethodExpression();
-            @NonNls final String methodName =
-                    methodExpression.getReferenceName();
-            if (!HardcodedMethodConstants.EQUALS.equals(methodName) &&
-                    !HardcodedMethodConstants.EQUALS_IGNORE_CASE.equals(
-                            methodName)) {
-                return;
-            }
-            final PsiExpressionList argList = expression.getArgumentList();
-            final PsiExpression[] args = argList.getExpressions();
-            if (args.length != 1) {
-                return;
-            }
-            final PsiExpression argument = args[0];
-            final PsiType argumentType = argument.getType();
-            if (argumentType == null) {
-                return;
-            }
-            if (!(argument instanceof PsiLiteralExpression)) {
-                return;
-            }
-            if (!TypeUtils.isJavaLangString(argumentType)) {
-                return;
-            }
-            final PsiExpression target =
-                    methodExpression.getQualifierExpression();
-            if (target instanceof PsiLiteralExpression) {
-                return;
-            }
-            registerError(argument, methodName);
-        }
-    }
+  }
 }

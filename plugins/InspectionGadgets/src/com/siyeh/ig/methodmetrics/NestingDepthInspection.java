@@ -22,49 +22,50 @@ import org.jetbrains.annotations.NotNull;
 
 public class NestingDepthInspection extends MethodMetricInspection {
 
-    @NotNull
-    public String getID() {
-        return "OverlyNestedMethod";
-    }
+  @NotNull
+  public String getID() {
+    return "OverlyNestedMethod";
+  }
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message("nesting.depth.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("nesting.depth.display.name");
+  }
 
-    protected int getDefaultLimit() {
-        return 5;
-    }
+  protected int getDefaultLimit() {
+    return 5;
+  }
 
-    protected String getConfigurationLabel() {
-        return InspectionGadgetsBundle.message("nesting.depth.limit.option");
-    }
+  protected String getConfigurationLabel() {
+    return InspectionGadgetsBundle.message("nesting.depth.limit.option");
+  }
 
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        final Integer nestingDepth = (Integer)infos[0];
-        return InspectionGadgetsBundle.message(
-                "nesting.depth.problem.descriptor", nestingDepth);
-    }
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    final Integer nestingDepth = (Integer)infos[0];
+    return InspectionGadgetsBundle.message(
+      "nesting.depth.problem.descriptor", nestingDepth);
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new NestingDepthMethodVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new NestingDepthMethodVisitor();
+  }
 
-    private class NestingDepthMethodVisitor extends BaseInspectionVisitor {
+  private class NestingDepthMethodVisitor extends BaseInspectionVisitor {
 
-        @Override public void visitMethod(@NotNull PsiMethod method) {
-            // note: no call to super
-            if (method.getNameIdentifier() == null) {
-                return;
-            }
-            final NestingDepthVisitor visitor = new NestingDepthVisitor();
-            method.accept(visitor);
-            final int count = visitor.getMaximumDepth();
-            if (count <= getLimit()) {
-                return;
-            }
-            registerMethodError(method, Integer.valueOf(count));
-        }
+    @Override
+    public void visitMethod(@NotNull PsiMethod method) {
+      // note: no call to super
+      if (method.getNameIdentifier() == null) {
+        return;
+      }
+      final NestingDepthVisitor visitor = new NestingDepthVisitor();
+      method.accept(visitor);
+      final int count = visitor.getMaximumDepth();
+      if (count <= getLimit()) {
+        return;
+      }
+      registerMethodError(method, Integer.valueOf(count));
     }
+  }
 }

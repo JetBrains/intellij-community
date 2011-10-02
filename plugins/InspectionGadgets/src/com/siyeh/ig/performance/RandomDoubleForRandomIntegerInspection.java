@@ -30,168 +30,170 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class RandomDoubleForRandomIntegerInspection
-        extends BaseInspection {
+  extends BaseInspection {
 
-    @Override
+  @Override
+  @NotNull
+  public String getID() {
+    return "UsingRandomNextDoubleForRandomInteger";
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "random.double.for.random.integer.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "random.double.for.random.integer.problem.descriptor");
+  }
+
+  @Override
+  public InspectionGadgetsFix buildFix(Object... infos) {
+    return new RandomDoubleForRandomIntegerFix();
+  }
+
+  private static class RandomDoubleForRandomIntegerFix
+    extends InspectionGadgetsFix {
+
     @NotNull
-    public String getID() {
-        return "UsingRandomNextDoubleForRandomInteger";
+    public String getName() {
+      return InspectionGadgetsBundle.message(
+        "random.double.for.random.integer.replace.quickfix");
     }
 
     @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "random.double.for.random.integer.display.name");
+    public void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiIdentifier name =
+        (PsiIdentifier)descriptor.getPsiElement();
+      final PsiReferenceExpression expression =
+        (PsiReferenceExpression)name.getParent();
+      if (expression == null) {
+        return;
+      }
+      final PsiExpression call = (PsiExpression)expression.getParent();
+      final PsiExpression qualifier = expression.getQualifierExpression();
+      if (qualifier == null) {
+        return;
+      }
+      final String qualifierText = qualifier.getText();
+      final PsiBinaryExpression multiplication =
+        (PsiBinaryExpression)getContainingExpression(call);
+      if (multiplication == null) {
+        return;
+      }
+      final PsiExpression cast = getContainingExpression(multiplication);
+      if (cast == null) {
+        return;
+      }
+      final PsiExpression multiplierExpression;
+      final PsiExpression lhs = multiplication.getLOperand();
+      final PsiExpression strippedLhs =
+        ParenthesesUtils.stripParentheses(lhs);
+      if (call.equals(strippedLhs)) {
+        multiplierExpression = multiplication.getROperand();
+      }
+      else {
+        multiplierExpression = lhs;
+      }
+      assert multiplierExpression != null;
+      final String multiplierText = multiplierExpression.getText();
+      @NonNls final String nextInt = ".nextInt((int) ";
+      replaceExpression(cast, qualifierText + nextInt + multiplierText +
+                              ')');
     }
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new RandomDoubleForRandomIntegerVisitor();
+  }
+
+  private static class RandomDoubleForRandomIntegerVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "random.double.for.random.integer.problem.descriptor");
+    public void visitMethodCallExpression(
+      @NotNull PsiMethodCallExpression call) {
+      super.visitMethodCallExpression(call);
+      final PsiReferenceExpression methodExpression =
+        call.getMethodExpression();
+      final String methodName = methodExpression.getReferenceName();
+      @NonNls final String nextDouble = "nextDouble";
+      if (!nextDouble.equals(methodName)) {
+        return;
+      }
+      final PsiMethod method = call.resolveMethod();
+      if (method == null) {
+        return;
+      }
+      final PsiClass containingClass = method.getContainingClass();
+      if (containingClass == null) {
+        return;
+      }
+      final String className = containingClass.getQualifiedName();
+      if (!"java.util.Random".equals(className)) {
+        return;
+      }
+      final PsiExpression possibleMultiplierExpression =
+        getContainingExpression(call);
+      if (!isMultiplier(possibleMultiplierExpression)) {
+        return;
+      }
+      final PsiExpression possibleIntCastExpression =
+        getContainingExpression(possibleMultiplierExpression);
+      if (!isIntCast(possibleIntCastExpression)) {
+        return;
+      }
+      registerMethodCallError(call);
     }
 
-    @Override
-    public InspectionGadgetsFix buildFix(Object... infos) {
-        return new RandomDoubleForRandomIntegerFix();
+    private static boolean isMultiplier(PsiExpression expression) {
+      if (expression == null) {
+        return false;
+      }
+      if (!(expression instanceof PsiBinaryExpression)) {
+        return false;
+      }
+      final PsiBinaryExpression binaryExpression =
+        (PsiBinaryExpression)expression;
+      final IElementType tokenType = binaryExpression.getOperationTokenType();
+      return JavaTokenType.ASTERISK.equals(tokenType);
     }
 
-    private static class RandomDoubleForRandomIntegerFix
-            extends InspectionGadgetsFix {
-
-        @NotNull
-        public String getName() {
-            return InspectionGadgetsBundle.message(
-                    "random.double.for.random.integer.replace.quickfix");
-        }
-
-        @Override
-        public void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
-            final PsiIdentifier name =
-                    (PsiIdentifier)descriptor.getPsiElement();
-            final PsiReferenceExpression expression =
-                    (PsiReferenceExpression)name.getParent();
-            if (expression == null) {
-                return;
-            }
-            final PsiExpression call = (PsiExpression)expression.getParent();
-            final PsiExpression qualifier = expression.getQualifierExpression();
-            if (qualifier == null) {
-                return;
-            }
-            final String qualifierText = qualifier.getText();
-            final PsiBinaryExpression multiplication =
-                    (PsiBinaryExpression)getContainingExpression(call);
-            if (multiplication == null) {
-                return;
-            }
-            final PsiExpression cast = getContainingExpression(multiplication);
-            if (cast == null) {
-                return;
-            }
-            final PsiExpression multiplierExpression;
-            final PsiExpression lhs = multiplication.getLOperand();
-            final PsiExpression strippedLhs =
-                    ParenthesesUtils.stripParentheses(lhs);
-            if (call.equals(strippedLhs)) {
-                multiplierExpression = multiplication.getROperand();
-            } else {
-                multiplierExpression = lhs;
-            }
-            assert multiplierExpression != null;
-            final String multiplierText = multiplierExpression.getText();
-            @NonNls final String nextInt = ".nextInt((int) ";
-            replaceExpression(cast, qualifierText + nextInt + multiplierText +
-                    ')');
-        }
+    private static boolean isIntCast(PsiExpression expression) {
+      if (expression == null) {
+        return false;
+      }
+      if (!(expression instanceof PsiTypeCastExpression)) {
+        return false;
+      }
+      final PsiTypeCastExpression castExpression =
+        (PsiTypeCastExpression)expression;
+      final PsiType type = castExpression.getType();
+      return PsiType.INT.equals(type);
     }
+  }
 
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new RandomDoubleForRandomIntegerVisitor();
+  @Nullable
+  static PsiExpression getContainingExpression(PsiExpression expression) {
+    PsiElement ancestor = expression.getParent();
+    while (true) {
+      if (ancestor == null) {
+        return null;
+      }
+      if (!(ancestor instanceof PsiExpression)) {
+        return null;
+      }
+      if (!(ancestor instanceof PsiParenthesizedExpression)) {
+        return (PsiExpression)ancestor;
+      }
+      ancestor = ancestor.getParent();
     }
-
-    private static class RandomDoubleForRandomIntegerVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitMethodCallExpression(
-                @NotNull PsiMethodCallExpression call) {
-            super.visitMethodCallExpression(call);
-            final PsiReferenceExpression methodExpression =
-                    call.getMethodExpression();
-            final String methodName = methodExpression.getReferenceName();
-            @NonNls final String nextDouble = "nextDouble";
-            if (!nextDouble.equals(methodName)) {
-                return;
-            }
-            final PsiMethod method = call.resolveMethod();
-            if (method == null) {
-                return;
-            }
-            final PsiClass containingClass = method.getContainingClass();
-            if (containingClass == null) {
-                return;
-            }
-            final String className = containingClass.getQualifiedName();
-            if (!"java.util.Random".equals(className)) {
-                return;
-            }
-            final PsiExpression possibleMultiplierExpression =
-                    getContainingExpression(call);
-            if (!isMultiplier(possibleMultiplierExpression)) {
-                return;
-            }
-            final PsiExpression possibleIntCastExpression =
-                    getContainingExpression(possibleMultiplierExpression);
-            if (!isIntCast(possibleIntCastExpression)) {
-                return;
-            }
-            registerMethodCallError(call);
-        }
-
-        private static boolean isMultiplier(PsiExpression expression) {
-            if (expression == null) {
-                return false;
-            }
-            if (!(expression instanceof PsiBinaryExpression)) {
-                return false;
-            }
-            final PsiBinaryExpression binaryExpression =
-                    (PsiBinaryExpression)expression;
-          final IElementType tokenType = binaryExpression.getOperationTokenType();
-            return JavaTokenType.ASTERISK.equals(tokenType);
-        }
-
-        private static boolean isIntCast(PsiExpression expression) {
-            if (expression == null) {
-                return false;
-            }
-            if (!(expression instanceof PsiTypeCastExpression)) {
-                return false;
-            }
-            final PsiTypeCastExpression castExpression =
-                    (PsiTypeCastExpression)expression;
-            final PsiType type = castExpression.getType();
-            return PsiType.INT.equals(type);
-        }
-    }
-
-    @Nullable
-    static PsiExpression getContainingExpression(PsiExpression expression) {
-        PsiElement ancestor = expression.getParent();
-        while (true) {
-            if (ancestor == null) {
-                return null;
-            }
-            if (!(ancestor instanceof PsiExpression)) {
-                return null;
-            }
-            if (!(ancestor instanceof PsiParenthesizedExpression)) {
-                return (PsiExpression)ancestor;
-            }
-            ancestor = ancestor.getParent();
-        }
-    }
+  }
 }

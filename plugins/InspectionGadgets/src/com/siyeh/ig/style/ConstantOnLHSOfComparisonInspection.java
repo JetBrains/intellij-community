@@ -31,89 +31,90 @@ import org.jetbrains.annotations.NotNull;
 
 public class ConstantOnLHSOfComparisonInspection extends BaseInspection {
 
-    @Override
+  @Override
+  @NotNull
+  public String getID() {
+    return "ConstantOnLeftSideOfComparison";
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "constant.on.lhs.of.comparison.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "constant.on.lhs.of.comparison.problem.descriptor");
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new ConstantOnLHSOfComparisonVisitor();
+  }
+
+  @Override
+  public InspectionGadgetsFix buildFix(Object... infos) {
+    return new SwapComparisonFix();
+  }
+
+  private static class SwapComparisonFix extends InspectionGadgetsFix {
+
     @NotNull
-    public String getID() {
-        return "ConstantOnLeftSideOfComparison";
+    public String getName() {
+      return InspectionGadgetsBundle.message("flip.comparison.quickfix");
     }
 
     @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "constant.on.lhs.of.comparison.display.name");
+    public void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiBinaryExpression expression =
+        (PsiBinaryExpression)descriptor.getPsiElement();
+      final PsiExpression rhs = expression.getROperand();
+      if (rhs == null) {
+        return;
+      }
+      final String flippedComparison =
+        ComparisonUtils.getFlippedComparison(expression.getOperationTokenType());
+      if (flippedComparison == null) {
+        return;
+      }
+      final PsiExpression lhs = expression.getLOperand();
+      final String rhsText = rhs.getText();
+      final String lhsText = lhs.getText();
+      replaceExpression(expression,
+                        rhsText + ' ' + flippedComparison + ' ' + lhsText);
     }
+  }
+
+  private static class ConstantOnLHSOfComparisonVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "constant.on.lhs.of.comparison.problem.descriptor");
+    public void visitBinaryExpression(
+      @NotNull PsiBinaryExpression expression) {
+      super.visitBinaryExpression(expression);
+      if (!(expression.getROperand() != null)) {
+        return;
+      }
+      if (!ComparisonUtils.isComparison(expression)) {
+        return;
+      }
+      final PsiExpression lhs = expression.getLOperand();
+      final PsiExpression rhs = expression.getROperand();
+      if (!isConstantExpression(lhs)
+          || isConstantExpression(rhs)) {
+        return;
+      }
+      registerError(expression);
     }
 
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new ConstantOnLHSOfComparisonVisitor();
+    private static boolean isConstantExpression(PsiExpression expression) {
+      return ExpressionUtils.isNullLiteral(expression) ||
+             PsiUtil.isConstantExpression(expression);
     }
-
-    @Override
-    public InspectionGadgetsFix buildFix(Object... infos) {
-        return new SwapComparisonFix();
-    }
-
-    private static class SwapComparisonFix extends InspectionGadgetsFix {
-
-        @NotNull
-        public String getName() {
-            return InspectionGadgetsBundle.message("flip.comparison.quickfix");
-        }
-
-        @Override
-        public void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
-            final PsiBinaryExpression expression =
-                    (PsiBinaryExpression) descriptor.getPsiElement();
-            final PsiExpression rhs = expression.getROperand();
-            if (rhs == null) {
-                return;
-            }
-          final String flippedComparison =
-                    ComparisonUtils.getFlippedComparison(expression.getOperationTokenType());
-            if (flippedComparison == null) {
-                return;
-            }
-            final PsiExpression lhs = expression.getLOperand();
-            final String rhsText = rhs.getText();
-            final String lhsText = lhs.getText();
-            replaceExpression(expression,
-                    rhsText + ' ' + flippedComparison + ' ' + lhsText);
-        }
-    }
-
-    private static class ConstantOnLHSOfComparisonVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitBinaryExpression(
-                @NotNull PsiBinaryExpression expression) {
-            super.visitBinaryExpression(expression);
-            if (!(expression.getROperand() != null)) {
-                return;
-            }
-            if (!ComparisonUtils.isComparison(expression)) {
-                return;
-            }
-            final PsiExpression lhs = expression.getLOperand();
-            final PsiExpression rhs = expression.getROperand();
-            if (!isConstantExpression(lhs)
-                    || isConstantExpression(rhs)) {
-                return;
-            }
-            registerError(expression);
-        }
-
-        private static boolean isConstantExpression(PsiExpression expression) {
-            return ExpressionUtils.isNullLiteral(expression) ||
-                    PsiUtil.isConstantExpression(expression);
-        }
-    }
+  }
 }

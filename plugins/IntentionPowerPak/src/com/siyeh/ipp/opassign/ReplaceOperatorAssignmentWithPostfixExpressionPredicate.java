@@ -20,29 +20,29 @@ import com.intellij.psi.tree.IElementType;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
 public class ReplaceOperatorAssignmentWithPostfixExpressionPredicate
-        implements PsiElementPredicate {
+  implements PsiElementPredicate {
 
-    private static final Integer ONE = Integer.valueOf(1);
+  private static final Integer ONE = Integer.valueOf(1);
 
-    public boolean satisfiedBy(PsiElement element) {
-        if (!(element instanceof PsiAssignmentExpression)) {
-            return false;
-        }
-        final PsiAssignmentExpression assignmentExpression =
-                (PsiAssignmentExpression)element;
-        final IElementType tokenType =
-                assignmentExpression.getOperationTokenType();
-        if (!JavaTokenType.PLUSEQ.equals(tokenType) &&
-                !JavaTokenType.MINUSEQ.equals(tokenType)) {
-            return false;
-        }
-        final PsiExpression rhs = assignmentExpression.getRExpression();
-        if (!(rhs instanceof PsiLiteralExpression)) {
-            return false;
-        }
-        final PsiLiteralExpression literalExpression =
-                (PsiLiteralExpression)rhs;
-        final Object value = literalExpression.getValue();
-        return ONE == value;
+  public boolean satisfiedBy(PsiElement element) {
+    if (!(element instanceof PsiAssignmentExpression)) {
+      return false;
     }
+    final PsiAssignmentExpression assignmentExpression =
+      (PsiAssignmentExpression)element;
+    final IElementType tokenType =
+      assignmentExpression.getOperationTokenType();
+    if (!JavaTokenType.PLUSEQ.equals(tokenType) &&
+        !JavaTokenType.MINUSEQ.equals(tokenType)) {
+      return false;
+    }
+    final PsiExpression rhs = assignmentExpression.getRExpression();
+    if (!(rhs instanceof PsiLiteralExpression)) {
+      return false;
+    }
+    final PsiLiteralExpression literalExpression =
+      (PsiLiteralExpression)rhs;
+    final Object value = literalExpression.getValue();
+    return ONE == value;
+  }
 }

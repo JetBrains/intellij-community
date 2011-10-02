@@ -26,49 +26,51 @@ import org.jetbrains.annotations.NotNull;
 
 public class DefaultNotLastCaseInSwitchInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "default.not.last.case.in.switch.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "default.not.last.case.in.switch.display.name");
+  }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "default.not.last.case.in.switch.problem.descriptor");
-    }
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "default.not.last.case.in.switch.problem.descriptor");
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new DefaultNotLastCaseInSwitchVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new DefaultNotLastCaseInSwitchVisitor();
+  }
 
-    private static class DefaultNotLastCaseInSwitchVisitor
-            extends BaseInspectionVisitor {
+  private static class DefaultNotLastCaseInSwitchVisitor
+    extends BaseInspectionVisitor {
 
-        @Override public void visitSwitchStatement(
-                @NotNull PsiSwitchStatement statement) {
-            super.visitSwitchStatement(statement);
-            final PsiCodeBlock body = statement.getBody();
-            if (body == null) {
-                return;
+    @Override
+    public void visitSwitchStatement(
+      @NotNull PsiSwitchStatement statement) {
+      super.visitSwitchStatement(statement);
+      final PsiCodeBlock body = statement.getBody();
+      if (body == null) {
+        return;
+      }
+      final PsiStatement[] statements = body.getStatements();
+      boolean labelSeen = false;
+      for (int i = statements.length - 1; i >= 0; i--) {
+        final PsiStatement child = statements[i];
+        if (child instanceof PsiSwitchLabelStatement) {
+          final PsiSwitchLabelStatement label =
+            (PsiSwitchLabelStatement)child;
+          if (label.isDefaultCase()) {
+            if (labelSeen) {
+              registerStatementError(label);
             }
-            final PsiStatement[] statements = body.getStatements();
-            boolean labelSeen = false;
-            for (int i = statements.length - 1; i >= 0; i--) {
-                final PsiStatement child = statements[i];
-                if (child instanceof PsiSwitchLabelStatement) {
-                    final PsiSwitchLabelStatement label =
-                            (PsiSwitchLabelStatement)child;
-                    if (label.isDefaultCase()) {
-                        if (labelSeen) {
-                            registerStatementError(label);
-                        }
-                        return;
-                    } else {
-                        labelSeen = true;
-                    }
-                }
-            }
+            return;
+          }
+          else {
+            labelSeen = true;
+          }
         }
+      }
     }
+  }
 }

@@ -25,58 +25,59 @@ import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class NonSerializableFieldInSerializableClassInspection
-        extends SerializableInspection {
+  extends SerializableInspection {
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "non.serializable.field.in.serializable.class.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "non.serializable.field.in.serializable.class.problem.descriptor");
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new NonSerializableFieldInSerializableClassVisitor();
+  }
+
+  private class NonSerializableFieldInSerializableClassVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "non.serializable.field.in.serializable.class.display.name");
+    public void visitField(@NotNull PsiField field) {
+      if (field.hasModifierProperty(PsiModifier.TRANSIENT)
+          || field.hasModifierProperty(PsiModifier.STATIC)) {
+        return;
+      }
+      final PsiClass aClass = field.getContainingClass();
+      if (aClass == null) {
+        return;
+      }
+      if (ignoreAnonymousInnerClasses &&
+          aClass instanceof PsiAnonymousClass) {
+        return;
+      }
+      if (!SerializationUtils.isSerializable(aClass)) {
+        return;
+      }
+      if (SerializationUtils.isProbablySerializable(field.getType())) {
+        return;
+      }
+      final boolean hasWriteObject =
+        SerializationUtils.hasWriteObject(aClass);
+      if (hasWriteObject) {
+        return;
+      }
+      if (isIgnoredSubclass(aClass)) {
+        return;
+      }
+      registerFieldError(field);
     }
-
-    @Override
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "non.serializable.field.in.serializable.class.problem.descriptor");
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new NonSerializableFieldInSerializableClassVisitor();
-    }
-
-    private class NonSerializableFieldInSerializableClassVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitField(@NotNull PsiField field) {
-            if (field.hasModifierProperty(PsiModifier.TRANSIENT)
-                    || field.hasModifierProperty(PsiModifier.STATIC)) {
-                return;
-            }
-            final PsiClass aClass = field.getContainingClass();
-            if (aClass == null) {
-                return;
-            }
-            if (ignoreAnonymousInnerClasses &&
-                    aClass instanceof PsiAnonymousClass) {
-                return;
-            }
-            if (!SerializationUtils.isSerializable(aClass)) {
-                return;
-            }
-            if (SerializationUtils.isProbablySerializable(field.getType())) {
-                return;
-            }
-            final boolean hasWriteObject =
-                    SerializationUtils.hasWriteObject(aClass);
-            if (hasWriteObject) {
-                return;
-            }
-            if (isIgnoredSubclass(aClass)) {
-                return;
-            }
-            registerFieldError(field);
-        }
-    }
+  }
 }

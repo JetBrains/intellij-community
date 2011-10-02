@@ -25,69 +25,72 @@ import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class SerializableHasSerializationMethodsInspection
-        extends SerializableInspection {
+  extends SerializableInspection {
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "serializable.has.serialization.methods.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    final boolean hasReadObject = ((Boolean)infos[0]).booleanValue();
+    final boolean hasWriteObject = ((Boolean)infos[1]).booleanValue();
+    if (!hasReadObject && !hasWriteObject) {
+      return InspectionGadgetsBundle.message(
+        "serializable.has.serialization.methods.problem.descriptor");
+    }
+    else if (hasReadObject) {
+      return InspectionGadgetsBundle.message(
+        "serializable.has.serialization.methods.problem.descriptor1");
+    }
+    else {
+      return InspectionGadgetsBundle.message(
+        "serializable.has.serialization.methods.problem.descriptor2");
+    }
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new SerializableHasSerializationMethodsVisitor();
+  }
+
+  private class SerializableHasSerializationMethodsVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "serializable.has.serialization.methods.display.name");
+    public void visitClass(@NotNull PsiClass aClass) {
+      // no call to super, so it doesn't drill down
+      if (aClass.isInterface() || aClass.isAnnotationType() ||
+          aClass.isEnum()) {
+        return;
+      }
+      if (aClass instanceof PsiTypeParameter ||
+          aClass instanceof PsiEnumConstantInitializer) {
+        return;
+      }
+      if (ignoreAnonymousInnerClasses &&
+          aClass instanceof PsiAnonymousClass) {
+        return;
+      }
+      if (!SerializationUtils.isSerializable(aClass)) {
+        return;
+      }
+      final boolean hasReadObject =
+        SerializationUtils.hasReadObject(aClass);
+      final boolean hasWriteObject =
+        SerializationUtils.hasWriteObject(aClass);
+      if (hasWriteObject && hasReadObject) {
+        return;
+      }
+      if (isIgnoredSubclass(aClass)) {
+        return;
+      }
+      registerClassError(aClass, Boolean.valueOf(hasReadObject),
+                         Boolean.valueOf(hasWriteObject));
     }
-
-    @Override
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        final boolean hasReadObject = ((Boolean)infos[0]).booleanValue();
-        final boolean hasWriteObject = ((Boolean)infos[1]).booleanValue();
-        if (!hasReadObject && !hasWriteObject) {
-            return InspectionGadgetsBundle.message(
-                    "serializable.has.serialization.methods.problem.descriptor");
-        } else if (hasReadObject) {
-            return InspectionGadgetsBundle.message(
-                    "serializable.has.serialization.methods.problem.descriptor1");
-        } else {
-            return InspectionGadgetsBundle.message(
-                    "serializable.has.serialization.methods.problem.descriptor2");
-        }
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new SerializableHasSerializationMethodsVisitor();
-    }
-
-    private class SerializableHasSerializationMethodsVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitClass(@NotNull PsiClass aClass) {
-            // no call to super, so it doesn't drill down
-            if (aClass.isInterface() || aClass.isAnnotationType() ||
-                    aClass.isEnum()) {
-                return;
-            }
-            if (aClass instanceof PsiTypeParameter ||
-                    aClass instanceof PsiEnumConstantInitializer) {
-                return;
-            }
-            if (ignoreAnonymousInnerClasses &&
-                    aClass instanceof PsiAnonymousClass) {
-                return;
-            }
-            if (!SerializationUtils.isSerializable(aClass)) {
-                return;
-            }
-            final boolean hasReadObject =
-                    SerializationUtils.hasReadObject(aClass);
-            final boolean hasWriteObject =
-                    SerializationUtils.hasWriteObject(aClass);
-            if (hasWriteObject && hasReadObject) {
-                return;
-            }
-            if (isIgnoredSubclass(aClass)) {
-                return;
-            }
-            registerClassError(aClass, Boolean.valueOf(hasReadObject),
-                    Boolean.valueOf(hasWriteObject));
-        }
-    }
+  }
 }

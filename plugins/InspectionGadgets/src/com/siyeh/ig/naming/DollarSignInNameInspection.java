@@ -27,63 +27,66 @@ import org.jetbrains.annotations.NotNull;
 
 public class DollarSignInNameInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "dollar.sign.in.name.display.name");
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "dollar.sign.in.name.display.name");
+  }
+
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new RenameFix();
+  }
+
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "dollar.sign.in.name.problem.descriptor");
+  }
+
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return true;
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new DollarSignInNameVisitor();
+  }
+
+  private static class DollarSignInNameVisitor extends BaseInspectionVisitor {
+
+    @Override
+    public void visitVariable(@NotNull PsiVariable variable) {
+      super.visitVariable(variable);
+      final String name = variable.getName();
+      if (name == null) {
+        return;
+      }
+      if (name.indexOf((int)'$') < 0) {
+        return;
+      }
+      registerVariableError(variable);
     }
 
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        return new RenameFix();
+    @Override
+    public void visitMethod(@NotNull PsiMethod method) {
+      super.visitMethod(method);
+      final String name = method.getName();
+      if (name.indexOf((int)'$') < 0) {
+        return;
+      }
+      registerMethodError(method);
     }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "dollar.sign.in.name.problem.descriptor");
+    @Override
+    public void visitClass(@NotNull PsiClass aClass) {
+      //note: no call to super, to avoid drill-down
+      final String name = aClass.getName();
+      if (name == null) {
+        return;
+      }
+      if (name.indexOf((int)'$') < 0) {
+        return;
+      }
+      registerClassError(aClass);
     }
-
-    protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
-        return true;
-    }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new DollarSignInNameVisitor();
-    }
-
-    private static class DollarSignInNameVisitor extends BaseInspectionVisitor {
-
-        @Override public void visitVariable(@NotNull PsiVariable variable) {
-            super.visitVariable(variable);
-            final String name = variable.getName();
-            if (name == null) {
-                return;
-            }
-            if (name.indexOf((int)'$') < 0) {
-                return;
-            }
-            registerVariableError(variable);
-        }
-
-        @Override public void visitMethod(@NotNull PsiMethod method) {
-            super.visitMethod(method);
-            final String name = method.getName();
-            if (name.indexOf((int)'$') < 0) {
-                return;
-            }
-            registerMethodError(method);
-        }
-
-        @Override public void visitClass(@NotNull PsiClass aClass) {
-            //note: no call to super, to avoid drill-down
-            final String name = aClass.getName();
-            if (name == null) {
-                return;
-            }
-            if (name.indexOf((int)'$') < 0) {
-                return;
-            }
-            registerClassError(aClass);
-        }
-    }
+  }
 }

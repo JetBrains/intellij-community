@@ -28,73 +28,74 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public class OverlyLargePrimitiveArrayInitializerInspection
-        extends BaseInspection {
-    
-    /**
-     * @noinspection PublicField
-     */
-    public int m_limit = 64;
+  extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName(){
-        return InspectionGadgetsBundle.message(
-                "large.initializer.primitive.type.array.display.name");
+  /**
+   * @noinspection PublicField
+   */
+  public int m_limit = 64;
+
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "large.initializer.primitive.type.array.display.name");
+  }
+
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    final Integer numElements = (Integer)infos[0];
+    return InspectionGadgetsBundle.message(
+      "large.initializer.primitive.type.array.problem.descriptor",
+      numElements);
+  }
+
+  public JComponent createOptionsPanel() {
+    return new SingleIntegerFieldOptionsPanel(
+      InspectionGadgetsBundle.message(
+        "large.initializer.primitive.type.array.maximum.number.of.elements.option"),
+      this, "m_limit");
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new OverlyLargePrimitiveArrayInitializerVisitor();
+  }
+
+  private class OverlyLargePrimitiveArrayInitializerVisitor
+    extends BaseInspectionVisitor {
+
+
+    @Override
+    public void visitArrayInitializerExpression(
+      PsiArrayInitializerExpression expression) {
+      super.visitArrayInitializerExpression(expression);
+      final PsiType type = expression.getType();
+      if (type == null) {
+        return;
+      }
+      final PsiType componentType = type.getDeepComponentType();
+      if (!(componentType instanceof PsiPrimitiveType)) {
+        return;
+      }
+      final int numElements = calculateNumElements(expression);
+      if (numElements <= m_limit) {
+        return;
+      }
+      registerError(expression, Integer.valueOf(numElements));
     }
 
-    @NotNull
-    public String buildErrorString(Object... infos){
-        final Integer numElements = (Integer)infos[0];
-        return InspectionGadgetsBundle.message(
-                "large.initializer.primitive.type.array.problem.descriptor",
-                numElements);
-    }
-
-    public JComponent createOptionsPanel(){
-        return new SingleIntegerFieldOptionsPanel(
-                InspectionGadgetsBundle.message(
-                        "large.initializer.primitive.type.array.maximum.number.of.elements.option"),
-                this, "m_limit");
-    }
-
-    public BaseInspectionVisitor buildVisitor(){
-        return new OverlyLargePrimitiveArrayInitializerVisitor();
-    }
-
-    private class OverlyLargePrimitiveArrayInitializerVisitor
-            extends BaseInspectionVisitor{
-
-
-        @Override public void visitArrayInitializerExpression(
-                PsiArrayInitializerExpression expression){
-            super.visitArrayInitializerExpression(expression);
-            final PsiType type = expression.getType();
-            if(type == null) {
-                return;
-            }
-            final PsiType componentType = type.getDeepComponentType();
-            if(!(componentType instanceof PsiPrimitiveType)) {
-                return;
-            }
-            final int numElements = calculateNumElements(expression);
-            if(numElements <= m_limit) {
-                return;
-            }
-            registerError(expression, Integer.valueOf(numElements));
+    private int calculateNumElements(PsiExpression expression) {
+      if (expression instanceof PsiArrayInitializerExpression) {
+        final PsiArrayInitializerExpression arrayExpression =
+          (PsiArrayInitializerExpression)expression;
+        final PsiExpression[] initializers =
+          arrayExpression.getInitializers();
+        int out = 0;
+        for (final PsiExpression initializer : initializers) {
+          out += calculateNumElements(initializer);
         }
-
-        private int calculateNumElements(PsiExpression expression){
-            if(expression instanceof PsiArrayInitializerExpression) {
-                final PsiArrayInitializerExpression arrayExpression =
-                        (PsiArrayInitializerExpression) expression;
-                final PsiExpression[] initializers =
-                        arrayExpression.getInitializers();
-                int out = 0;
-                for(final PsiExpression initializer : initializers){
-                    out += calculateNumElements(initializer);
-                }
-                return out;
-            }
-            return 1;
-        }
+        return out;
+      }
+      return 1;
     }
+  }
 }

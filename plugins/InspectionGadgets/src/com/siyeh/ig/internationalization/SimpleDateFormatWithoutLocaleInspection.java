@@ -25,47 +25,48 @@ import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class SimpleDateFormatWithoutLocaleInspection
-        extends BaseInspection {
+  extends BaseInspection {
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "instantiating.simpledateformat.without.locale.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "instantiating.simpledateformat.without.locale.problem.descriptor");
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new SimpleDateFormatWithoutLocaleVisitor();
+  }
+
+  private static class SimpleDateFormatWithoutLocaleVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "instantiating.simpledateformat.without.locale.display.name");
-    }
-
-    @Override
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "instantiating.simpledateformat.without.locale.problem.descriptor");
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new SimpleDateFormatWithoutLocaleVisitor();
-    }
-
-    private static class SimpleDateFormatWithoutLocaleVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitNewExpression(@NotNull PsiNewExpression expression) {
-            super.visitNewExpression(expression);
-            if(!TypeUtils.expressionHasType(expression,
-                    "java.text.SimpleDateFormat")) {
-                return;
-            }
-            final PsiExpressionList argumentList = expression.getArgumentList();
-            if(argumentList == null) {
-                return;
-            }
-            final PsiExpression[] args = argumentList.getExpressions();
-            for(PsiExpression arg : args){
-                if(TypeUtils.expressionHasType(arg, "java.util.Locale")){
-                    return;
-                }
-            }
-            registerError(expression);
+    public void visitNewExpression(@NotNull PsiNewExpression expression) {
+      super.visitNewExpression(expression);
+      if (!TypeUtils.expressionHasType(expression,
+                                       "java.text.SimpleDateFormat")) {
+        return;
+      }
+      final PsiExpressionList argumentList = expression.getArgumentList();
+      if (argumentList == null) {
+        return;
+      }
+      final PsiExpression[] args = argumentList.getExpressions();
+      for (PsiExpression arg : args) {
+        if (TypeUtils.expressionHasType(arg, "java.util.Locale")) {
+          return;
         }
+      }
+      registerError(expression);
     }
+  }
 }

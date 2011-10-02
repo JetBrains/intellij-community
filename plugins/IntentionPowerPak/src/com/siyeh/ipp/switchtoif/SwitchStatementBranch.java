@@ -20,69 +20,69 @@ import com.intellij.psi.PsiLocalVariable;
 
 import java.util.*;
 
-class SwitchStatementBranch{
+class SwitchStatementBranch {
 
-    private final Set<PsiLocalVariable> m_pendingVariableDeclarations =
-            new HashSet<PsiLocalVariable>(5);
-    private final List<String> m_caseValues =
-            new ArrayList<String>(2);
-    private final List<PsiElement> m_bodyElements =
-            new ArrayList<PsiElement>(5);
-    private final List<PsiElement> m_pendingWhiteSpace =
-            new ArrayList<PsiElement>(2);
-    private boolean m_default = false;
-    private boolean m_hasStatements = false;
+  private final Set<PsiLocalVariable> m_pendingVariableDeclarations =
+    new HashSet<PsiLocalVariable>(5);
+  private final List<String> m_caseValues =
+    new ArrayList<String>(2);
+  private final List<PsiElement> m_bodyElements =
+    new ArrayList<PsiElement>(5);
+  private final List<PsiElement> m_pendingWhiteSpace =
+    new ArrayList<PsiElement>(2);
+  private boolean m_default = false;
+  private boolean m_hasStatements = false;
 
-    public void addCaseValue(String labelString){
-        m_caseValues.add(labelString);
+  public void addCaseValue(String labelString) {
+    m_caseValues.add(labelString);
+  }
+
+  public void addStatement(PsiElement statement) {
+    m_hasStatements = true;
+    addElement(statement);
+  }
+
+  public void addComment(PsiElement comment) {
+    addElement(comment);
+  }
+
+  private void addElement(PsiElement element) {
+    m_bodyElements.addAll(m_pendingWhiteSpace);
+    m_pendingWhiteSpace.clear();
+    m_bodyElements.add(element);
+  }
+
+  public void addWhiteSpace(PsiElement statement) {
+    if (!m_bodyElements.isEmpty()) {
+      m_pendingWhiteSpace.add(statement);
     }
+  }
 
-    public void addStatement(PsiElement statement){
-        m_hasStatements = true;
-        addElement(statement);
-    }
+  public List<String> getCaseValues() {
+    return Collections.unmodifiableList(m_caseValues);
+  }
 
-    public void addComment(PsiElement comment){
-        addElement(comment);
-    }
+  public List<PsiElement> getBodyElements() {
+    return Collections.unmodifiableList(m_bodyElements);
+  }
 
-    private void addElement(PsiElement element){
-        m_bodyElements.addAll(m_pendingWhiteSpace);
-        m_pendingWhiteSpace.clear();
-        m_bodyElements.add(element);
-    }
+  public boolean isDefault() {
+    return m_default;
+  }
 
-    public void addWhiteSpace(PsiElement statement){
-        if(!m_bodyElements.isEmpty()){
-            m_pendingWhiteSpace.add(statement);
-        }
-    }
+  public void setDefault() {
+    m_default = true;
+  }
 
-    public List<String> getCaseValues(){
-        return Collections.unmodifiableList(m_caseValues);
-    }
+  public boolean hasStatements() {
+    return m_hasStatements;
+  }
 
-    public List<PsiElement> getBodyElements(){
-        return Collections.unmodifiableList(m_bodyElements);
-    }
+  public void addPendingVariableDeclarations(Set<PsiLocalVariable> vars) {
+    m_pendingVariableDeclarations.addAll(vars);
+  }
 
-    public boolean isDefault(){
-        return m_default;
-    }
-
-    public void setDefault(){
-        m_default = true;
-    }
-
-    public boolean hasStatements(){
-        return m_hasStatements;
-    }
-
-    public void addPendingVariableDeclarations(Set<PsiLocalVariable> vars){
-        m_pendingVariableDeclarations.addAll(vars);
-    }
-
-    public Set<PsiLocalVariable> getPendingVariableDeclarations(){
-        return Collections.unmodifiableSet(m_pendingVariableDeclarations);
-    }
+  public Set<PsiLocalVariable> getPendingVariableDeclarations() {
+    return Collections.unmodifiableSet(m_pendingVariableDeclarations);
+  }
 }

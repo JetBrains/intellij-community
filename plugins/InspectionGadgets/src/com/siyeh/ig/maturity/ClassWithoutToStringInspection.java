@@ -25,54 +25,55 @@ import org.jetbrains.annotations.NotNull;
 
 public class ClassWithoutToStringInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "class.without.tostring.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "class.without.tostring.display.name");
+  }
 
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "class.without.tostring.problem.descriptor");
-    }
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "class.without.tostring.problem.descriptor");
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new ClassWithoutToStringVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new ClassWithoutToStringVisitor();
+  }
 
-    private static class ClassWithoutToStringVisitor
-            extends BaseInspectionVisitor {
+  private static class ClassWithoutToStringVisitor
+    extends BaseInspectionVisitor {
 
-        @Override public void visitClass(@NotNull PsiClass aClass) {
-            //don't call super, to prevent drilldown
-            if (aClass.getNameIdentifier() == null &&
-                    !(aClass instanceof PsiAnonymousClass)) {
-                return;
-            }
-            if (aClass.isInterface() || aClass.isAnnotationType() ||
-                    aClass.isEnum()) {
-                return;
-            }
-            if(aClass instanceof PsiTypeParameter) {
-                return;
-            }
-            if (aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-                return;
-            }
-            if (UtilityClassUtil.isUtilityClass(aClass)) {
-                return;
-            }
-            final PsiMethod[] methods = aClass.findMethodsByName(
-                    HardcodedMethodConstants.TO_STRING, false);
-            for (PsiMethod method : methods) {
-                final PsiParameterList parameterList =
-                        method.getParameterList();
-                if (parameterList.getParametersCount() == 0) {
-                    return;
-                }
-            }
-            registerClassError(aClass);
+    @Override
+    public void visitClass(@NotNull PsiClass aClass) {
+      //don't call super, to prevent drilldown
+      if (aClass.getNameIdentifier() == null &&
+          !(aClass instanceof PsiAnonymousClass)) {
+        return;
+      }
+      if (aClass.isInterface() || aClass.isAnnotationType() ||
+          aClass.isEnum()) {
+        return;
+      }
+      if (aClass instanceof PsiTypeParameter) {
+        return;
+      }
+      if (aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        return;
+      }
+      if (UtilityClassUtil.isUtilityClass(aClass)) {
+        return;
+      }
+      final PsiMethod[] methods = aClass.findMethodsByName(
+        HardcodedMethodConstants.TO_STRING, false);
+      for (PsiMethod method : methods) {
+        final PsiParameterList parameterList =
+          method.getParameterList();
+        if (parameterList.getParametersCount() == 0) {
+          return;
         }
+      }
+      registerClassError(aClass);
     }
+  }
 }

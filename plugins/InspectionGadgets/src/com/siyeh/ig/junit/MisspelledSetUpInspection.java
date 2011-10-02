@@ -28,52 +28,53 @@ import org.jetbrains.annotations.NotNull;
 
 public class MisspelledSetUpInspection extends BaseInspection {
 
-    @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "misspelled.set.up.display.name");
-    }
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "misspelled.set.up.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "misspelled.set.up.problem.descriptor");
+  }
+
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new RenameFix("setUp");
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new MisspelledSetUpVisitor();
+  }
+
+  @Override
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return true;
+  }
+
+  private static class MisspelledSetUpVisitor extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "misspelled.set.up.problem.descriptor");
+    public void visitMethod(@NotNull PsiMethod method) {
+      //note: no call to super
+      final PsiClass aClass = method.getContainingClass();
+      @NonNls final String methodName = method.getName();
+      if (!"setup".equals(methodName)) {
+        return;
+      }
+      if (aClass == null) {
+        return;
+      }
+      if (!InheritanceUtil.isInheritor(aClass,
+                                       "junit.framework.TestCase")) {
+        return;
+      }
+      registerMethodError(method);
     }
-
-    @Override
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        return new RenameFix("setUp");
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new MisspelledSetUpVisitor();
-    }
-
-    @Override
-    protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
-        return true;
-    }
-
-    private static class MisspelledSetUpVisitor extends BaseInspectionVisitor {
-
-        @Override public void visitMethod(@NotNull PsiMethod method) {
-            //note: no call to super
-            final PsiClass aClass = method.getContainingClass();
-            @NonNls final String methodName = method.getName();
-            if (!"setup".equals(methodName)) {
-                return;
-            }
-            if (aClass == null) {
-                return;
-            }
-            if (!InheritanceUtil.isInheritor(aClass,
-                    "junit.framework.TestCase")) {
-                return;
-            }
-            registerMethodError(method);
-        }
-    }
+  }
 }

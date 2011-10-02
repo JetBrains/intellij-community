@@ -21,17 +21,17 @@ import com.intellij.psi.PsiReferenceList;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
 class ObscureThrownExceptionsPredicate implements PsiElementPredicate {
-    
-    public boolean satisfiedBy(PsiElement element) {
-        if (!(element instanceof PsiReferenceList)) {
-            return false;
-        }
-        final PsiElement parent = element.getParent();
-        if (!(parent instanceof PsiMethod)) {
-            return false;
-        }
-        final PsiMethod method = (PsiMethod) parent;
-        final PsiReferenceList throwsList = method.getThrowsList();
-        return throwsList.equals(element);
+
+  public boolean satisfiedBy(PsiElement element) {
+    if (!(element instanceof PsiReferenceList)) {
+      return false;
     }
+    final PsiElement parent = element.getParent();
+    if (!(parent instanceof PsiMethod)) {
+      return false;
+    }
+    final PsiMethod method = (PsiMethod)parent;
+    final PsiReferenceList throwsList = method.getThrowsList();
+    return throwsList.equals(element);
+  }
 }

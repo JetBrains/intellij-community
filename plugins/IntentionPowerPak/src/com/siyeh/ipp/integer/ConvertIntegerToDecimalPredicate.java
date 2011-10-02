@@ -21,31 +21,31 @@ import com.intellij.psi.PsiType;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NonNls;
 
-class ConvertIntegerToDecimalPredicate implements PsiElementPredicate{
+class ConvertIntegerToDecimalPredicate implements PsiElementPredicate {
 
-    public boolean satisfiedBy(PsiElement element){
-        if(!(element instanceof PsiLiteralExpression)){
-            return false;
-        }
-        final PsiLiteralExpression expression = (PsiLiteralExpression) element;
-        final PsiType type = expression.getType();
-        if(PsiType.INT.equals(type) || PsiType.LONG.equals(type)){
-            @NonNls final String text = expression.getText();
-            if(text == null || text.length() < 2){
-                return false;
-            }
-            if("0".equals(text) || "0L".equals(text) || "0l".equals(text)){
-                return false;
-            }
-            return text.charAt(0) == '0';
-        }
-        if(PsiType.DOUBLE.equals(type) || PsiType.FLOAT.equals(type)){
-            @NonNls final String text = expression.getText();
-            if(text == null || text.length() < 2){
-                return false;
-            }
-            return text.startsWith("0x") || text.startsWith("0X");
-        }
-        return false;
+  public boolean satisfiedBy(PsiElement element) {
+    if (!(element instanceof PsiLiteralExpression)) {
+      return false;
     }
+    final PsiLiteralExpression expression = (PsiLiteralExpression)element;
+    final PsiType type = expression.getType();
+    if (PsiType.INT.equals(type) || PsiType.LONG.equals(type)) {
+      @NonNls final String text = expression.getText();
+      if (text == null || text.length() < 2) {
+        return false;
+      }
+      if ("0".equals(text) || "0L".equals(text) || "0l".equals(text)) {
+        return false;
+      }
+      return text.charAt(0) == '0';
+    }
+    if (PsiType.DOUBLE.equals(type) || PsiType.FLOAT.equals(type)) {
+      @NonNls final String text = expression.getText();
+      if (text == null || text.length() < 2) {
+        return false;
+      }
+      return text.startsWith("0x") || text.startsWith("0X");
+    }
+    return false;
+  }
 }

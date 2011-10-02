@@ -22,52 +22,53 @@ import org.jetbrains.annotations.NotNull;
 
 public class ConstructorCountInspection extends ClassMetricInspection {
 
-    private static final int CONSTRUCTOR_COUNT_LIMIT = 5;
+  private static final int CONSTRUCTOR_COUNT_LIMIT = 5;
 
-    @NotNull
-    public String getID() {
-        return "ClassWithTooManyConstructors";
+  @NotNull
+  public String getID() {
+    return "ClassWithTooManyConstructors";
+  }
+
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "too.many.constructors.display.name");
+  }
+
+  protected int getDefaultLimit() {
+    return CONSTRUCTOR_COUNT_LIMIT;
+  }
+
+  protected String getConfigurationLabel() {
+    return InspectionGadgetsBundle.message(
+      "too.many.constructors.count.limit.option");
+  }
+
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    final Integer count = (Integer)infos[0];
+    return InspectionGadgetsBundle.message(
+      "too.many.constructors.problem.descriptor", count);
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new ConstructorCountVisitor();
+  }
+
+  private class ConstructorCountVisitor extends BaseInspectionVisitor {
+
+    @Override
+    public void visitClass(@NotNull PsiClass aClass) {
+      // note: no call to super
+      final int constructorCount = calculateTotalConstructorCount(aClass);
+      if (constructorCount <= getLimit()) {
+        return;
+      }
+      registerClassError(aClass, Integer.valueOf(constructorCount));
     }
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "too.many.constructors.display.name");
+    private int calculateTotalConstructorCount(PsiClass aClass) {
+      return aClass.getConstructors().length;
     }
-
-    protected int getDefaultLimit() {
-        return CONSTRUCTOR_COUNT_LIMIT;
-    }
-
-    protected String getConfigurationLabel() {
-        return InspectionGadgetsBundle.message(
-                "too.many.constructors.count.limit.option");
-    }
-
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        final Integer count = (Integer)infos[0];
-        return InspectionGadgetsBundle.message(
-                "too.many.constructors.problem.descriptor", count);
-    }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new ConstructorCountVisitor();
-    }
-
-    private class ConstructorCountVisitor extends BaseInspectionVisitor {
-
-        @Override public void visitClass(@NotNull PsiClass aClass) {
-            // note: no call to super
-            final int constructorCount = calculateTotalConstructorCount(aClass);
-            if (constructorCount <= getLimit()) {
-                return;
-            }
-            registerClassError(aClass, Integer.valueOf(constructorCount));
-        }
-
-        private int calculateTotalConstructorCount(PsiClass aClass) {
-            return aClass.getConstructors().length;
-        }
-    }
+  }
 }

@@ -23,56 +23,57 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
 public class ThrownExceptionsPerMethodInspection
-        extends MethodMetricInspection {
+  extends MethodMetricInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "thrown.exceptions.per.method.display.name");
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "thrown.exceptions.per.method.display.name");
+  }
+
+  @NotNull
+  public String getID() {
+    return "MethodWithTooExceptionsDeclared";
+  }
+
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    final Integer exceptionCount = (Integer)infos[0];
+    return InspectionGadgetsBundle.message(
+      "thrown.exceptions.per.method.problem.descriptor",
+      exceptionCount);
+  }
+
+  protected int getDefaultLimit() {
+    return 3;
+  }
+
+  protected String getConfigurationLabel() {
+    return InspectionGadgetsBundle.message(
+      "thrown.exceptions.per.method.limit.option");
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new ThrownExceptionsPerMethodVisitor();
+  }
+
+  private class ThrownExceptionsPerMethodVisitor
+    extends BaseInspectionVisitor {
+
+    @Override
+    public void visitMethod(@NotNull PsiMethod method) {
+      // note: no call to super
+      if (method.getNameIdentifier() == null) {
+        return;
+      }
+      final PsiReferenceList throwList = method.getThrowsList();
+      final PsiJavaCodeReferenceElement[] thrownExceptions =
+        throwList.getReferenceElements();
+      final int exceptionCount = thrownExceptions.length;
+      if (exceptionCount <= getLimit()) {
+        return;
+      }
+      registerMethodError(method, Integer.valueOf(exceptionCount));
     }
-
-    @NotNull
-    public String getID() {
-        return "MethodWithTooExceptionsDeclared";
-    }
-
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        final Integer exceptionCount = (Integer)infos[0];
-        return InspectionGadgetsBundle.message(
-                "thrown.exceptions.per.method.problem.descriptor",
-                exceptionCount);
-    }
-
-    protected int getDefaultLimit() {
-        return 3;
-    }
-
-    protected String getConfigurationLabel() {
-        return InspectionGadgetsBundle.message(
-                "thrown.exceptions.per.method.limit.option");
-    }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new ThrownExceptionsPerMethodVisitor();
-    }
-
-    private class ThrownExceptionsPerMethodVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitMethod(@NotNull PsiMethod method) {
-            // note: no call to super
-            if (method.getNameIdentifier() == null) {
-                return;
-            }
-            final PsiReferenceList throwList = method.getThrowsList();
-            final PsiJavaCodeReferenceElement[] thrownExceptions =
-                    throwList.getReferenceElements();
-            final int exceptionCount = thrownExceptions.length;
-            if (exceptionCount <= getLimit()) {
-                return;
-            }
-            registerMethodError(method, Integer.valueOf(exceptionCount));
-        }
-    }
+  }
 }

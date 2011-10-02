@@ -24,48 +24,48 @@ import org.jetbrains.annotations.NotNull;
 
 public class SynchronizationOnStaticFieldInspection extends BaseInspection {
 
-    @Nls
-    @NotNull
+  @Nls
+  @NotNull
+  @Override
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "synchronization.on.static.field.display.name");
+  }
+
+  @NotNull
+  @Override
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "synchronization.on.static.field.problem.descriptor");
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new SynchronizationOnStaticFieldVisitor();
+  }
+
+  private static class SynchronizationOnStaticFieldVisitor
+    extends BaseInspectionVisitor {
+
     @Override
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "synchronization.on.static.field.display.name");
+    public void visitSynchronizedStatement(
+      PsiSynchronizedStatement statement) {
+      super.visitSynchronizedStatement(statement);
+      final PsiExpression lockExpression = statement.getLockExpression();
+      if (!(lockExpression instanceof PsiReferenceExpression)) {
+        return;
+      }
+      final PsiReferenceExpression expression =
+        (PsiReferenceExpression)lockExpression;
+      final PsiElement target = expression.resolve();
+      if (!(target instanceof PsiField)) {
+        return;
+      }
+      final PsiField field = (PsiField)target;
+      if (!field.hasModifierProperty(PsiModifier.STATIC)) {
+        return;
+      }
+      registerError(lockExpression);
     }
-
-    @NotNull
-    @Override
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "synchronization.on.static.field.problem.descriptor");
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new SynchronizationOnStaticFieldVisitor();
-    }
-
-    private static class SynchronizationOnStaticFieldVisitor
-            extends BaseInspectionVisitor {
-
-        @Override
-        public void visitSynchronizedStatement(
-                PsiSynchronizedStatement statement) {
-            super.visitSynchronizedStatement(statement);
-            final PsiExpression lockExpression = statement.getLockExpression();
-            if (!(lockExpression instanceof PsiReferenceExpression)) {
-                return;
-            }
-            final PsiReferenceExpression expression =
-                    (PsiReferenceExpression) lockExpression;
-            final PsiElement target = expression.resolve();
-            if (!(target instanceof PsiField)) {
-                return;
-            }
-            final PsiField field = (PsiField) target;
-            if (!field.hasModifierProperty(PsiModifier.STATIC)) {
-                return;
-            }
-            registerError(lockExpression);
-        }
-    }
+  }
 }

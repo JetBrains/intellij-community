@@ -18,10 +18,10 @@ package com.siyeh.ig.bugs;
 import com.siyeh.ig.IGInspectionTestCase;
 
 public class EqualsWhichDoesntCheckParameterClassInspectionTest
-        extends IGInspectionTestCase {
+  extends IGInspectionTestCase {
 
-    public void test() throws Exception {
-        doTest("com/siyeh/igtest/bugs/equals_which_doesnt_check_parameter",
-                new EqualsWhichDoesntCheckParameterClassInspection());
-    }
+  public void test() throws Exception {
+    doTest("com/siyeh/igtest/bugs/equals_which_doesnt_check_parameter",
+           new EqualsWhichDoesntCheckParameterClassInspection());
+  }
 }

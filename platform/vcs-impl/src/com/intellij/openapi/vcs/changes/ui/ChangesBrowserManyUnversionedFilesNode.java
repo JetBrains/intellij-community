@@ -44,7 +44,7 @@ public class ChangesBrowserManyUnversionedFilesNode extends ChangesBrowserNode {
   @Override
   public void render(ChangesBrowserNodeRenderer renderer, boolean selected, boolean expanded, boolean hasFocus) {
     renderer.append(userObject.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-    final String s = "(" + (myDirsSize > 0 ? myDirsSize + " directories and " : "") + (myUnversionedSize - myDirsSize) + " files) ";
+    final String s = " (" + (myDirsSize > 0 ? myDirsSize + " directories and " : "") + (myUnversionedSize - myDirsSize) + " files) ";
     renderer.append(s, SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES);
     renderer.append(" Click to browse", SimpleTextAttributes.LINK_ATTRIBUTES, myShower);
   }

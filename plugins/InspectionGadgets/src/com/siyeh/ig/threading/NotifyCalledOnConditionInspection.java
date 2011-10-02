@@ -26,37 +26,38 @@ import org.jetbrains.annotations.NotNull;
 
 public class NotifyCalledOnConditionInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "notify.called.on.condition.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "notify.called.on.condition.display.name");
+  }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "notify.called.on.condition.problem.descriptor");
-    }
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "notify.called.on.condition.problem.descriptor");
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new NotifyCalledOnConditionVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new NotifyCalledOnConditionVisitor();
+  }
 
-    private static class NotifyCalledOnConditionVisitor
-            extends BaseInspectionVisitor {
+  private static class NotifyCalledOnConditionVisitor
+    extends BaseInspectionVisitor {
 
-        @Override public void visitMethodCallExpression(
-                @NotNull PsiMethodCallExpression expression) {
-            super.visitMethodCallExpression(expression);
-            if (!MethodCallUtils.isCallToMethod(expression,
-                    "java.util.concurrent.locks.Condition", PsiType.VOID,
-                    HardcodedMethodConstants.NOTIFY) &&
-                    !MethodCallUtils.isCallToMethod(expression,
-                            "java.util.concurrent.locks.Condition", PsiType.VOID,
-                            HardcodedMethodConstants.NOTIFY_ALL)) {
-                return;
-            }
-            registerMethodCallError(expression);
-        }
+    @Override
+    public void visitMethodCallExpression(
+      @NotNull PsiMethodCallExpression expression) {
+      super.visitMethodCallExpression(expression);
+      if (!MethodCallUtils.isCallToMethod(expression,
+                                          "java.util.concurrent.locks.Condition", PsiType.VOID,
+                                          HardcodedMethodConstants.NOTIFY) &&
+          !MethodCallUtils.isCallToMethod(expression,
+                                          "java.util.concurrent.locks.Condition", PsiType.VOID,
+                                          HardcodedMethodConstants.NOTIFY_ALL)) {
+        return;
+      }
+      registerMethodCallError(expression);
     }
+  }
 }

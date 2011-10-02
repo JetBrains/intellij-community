@@ -23,28 +23,29 @@ import org.jetbrains.annotations.NotNull;
 
 public class EnumClassInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message("enumerated.class.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("enumerated.class.display.name");
+  }
 
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "enumerated.class.problem.descriptor");
-    }
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "enumerated.class.problem.descriptor");
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new EnumClassVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new EnumClassVisitor();
+  }
 
-    private static class EnumClassVisitor extends BaseInspectionVisitor {
+  private static class EnumClassVisitor extends BaseInspectionVisitor {
 
-        @Override public void visitClass(@NotNull PsiClass aClass) {
-            if (!aClass.isEnum()) {
-                return;
-            }
-            registerClassError(aClass);
-        }
+    @Override
+    public void visitClass(@NotNull PsiClass aClass) {
+      if (!aClass.isEnum()) {
+        return;
+      }
+      registerClassError(aClass);
     }
+  }
 }

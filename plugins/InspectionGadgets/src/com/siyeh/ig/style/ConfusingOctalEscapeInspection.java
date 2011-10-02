@@ -25,86 +25,87 @@ import org.jetbrains.annotations.NotNull;
 
 public class ConfusingOctalEscapeInspection extends BaseInspection {
 
-    @Override
-    @NotNull
-    public String getID() {
-        return "ConfusingOctalEscapeSequence";
-    }
+  @Override
+  @NotNull
+  public String getID() {
+    return "ConfusingOctalEscapeSequence";
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "confusing.octal.escape.sequence.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "confusing.octal.escape.sequence.problem.descriptor");
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new ConfusingOctalEscapeVisitor();
+  }
+
+  private static class ConfusingOctalEscapeVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "confusing.octal.escape.sequence.display.name");
+    public void visitLiteralExpression(
+      @NotNull PsiLiteralExpression expression) {
+      super.visitLiteralExpression(expression);
+      if (!TypeUtils.expressionHasType(expression,
+                                       CommonClassNames.JAVA_LANG_STRING)) {
+        return;
+      }
+      final String text = expression.getText();
+      if (!containsConfusingOctalEscape(text)) {
+        return;
+      }
+      registerError(expression);
     }
 
-    @Override
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "confusing.octal.escape.sequence.problem.descriptor");
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new ConfusingOctalEscapeVisitor();
-    }
-
-    private static class ConfusingOctalEscapeVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitLiteralExpression(
-                @NotNull PsiLiteralExpression expression) {
-            super.visitLiteralExpression(expression);
-            if (!TypeUtils.expressionHasType(expression,
-                    CommonClassNames.JAVA_LANG_STRING)) {
-                return;
-            }
-            final String text = expression.getText();
-            if (!containsConfusingOctalEscape(text)) {
-                return;
-            }
-            registerError(expression);
+    private static boolean containsConfusingOctalEscape(String text) {
+      int escapeStart = -1;
+      while (true) {
+        escapeStart = text.indexOf((int)'\\', escapeStart + 1);
+        if (escapeStart < 0) {
+          return false;
         }
-
-        private static boolean containsConfusingOctalEscape(String text) {
-            int escapeStart = -1;
-            while (true) {
-                escapeStart = text.indexOf((int) '\\', escapeStart + 1);
-                if (escapeStart < 0) {
-                    return false;
-                }
-                if (escapeStart > 0 && text.charAt(escapeStart - 1) == '\\') {
-                    continue;
-                }
-                boolean isEscape = true;
-                final int textLength = text.length();
-                int nextChar = escapeStart + 1;
-                while (nextChar < textLength && text.charAt(nextChar) == '\\') {
-                    isEscape = !isEscape;
-                    nextChar++;
-                }
-                if (!isEscape) {
-                    continue;
-                }
-                escapeStart = nextChar - 1;
-                int digitPosition = escapeStart + 1;
-                while (digitPosition < textLength &&
-                        Character.isDigit(text.charAt(digitPosition))) {
-                    digitPosition++;
-                }
-                if (digitPosition > escapeStart + 1) {
-                    final String escapeString = text.substring(escapeStart + 1,
-                                                               digitPosition);
-                    if (escapeString.length() > 3) {
-                        return true;
-                    }
-                    if (escapeString.indexOf((int) '8') > 0 ||
-                            escapeString.indexOf((int) '9') > 0) {
-                        return true;
-                    }
-                }
-            }
+        if (escapeStart > 0 && text.charAt(escapeStart - 1) == '\\') {
+          continue;
         }
+        boolean isEscape = true;
+        final int textLength = text.length();
+        int nextChar = escapeStart + 1;
+        while (nextChar < textLength && text.charAt(nextChar) == '\\') {
+          isEscape = !isEscape;
+          nextChar++;
+        }
+        if (!isEscape) {
+          continue;
+        }
+        escapeStart = nextChar - 1;
+        int digitPosition = escapeStart + 1;
+        while (digitPosition < textLength &&
+               Character.isDigit(text.charAt(digitPosition))) {
+          digitPosition++;
+        }
+        if (digitPosition > escapeStart + 1) {
+          final String escapeString = text.substring(escapeStart + 1,
+                                                     digitPosition);
+          if (escapeString.length() > 3) {
+            return true;
+          }
+          if (escapeString.indexOf((int)'8') > 0 ||
+              escapeString.indexOf((int)'9') > 0) {
+            return true;
+          }
+        }
+      }
     }
+  }
 }

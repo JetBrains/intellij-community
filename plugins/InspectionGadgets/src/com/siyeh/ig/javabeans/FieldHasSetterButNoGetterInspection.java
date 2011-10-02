@@ -25,39 +25,40 @@ import org.jetbrains.annotations.NotNull;
 
 public class FieldHasSetterButNoGetterInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "field.has.setter.but.no.getter.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "field.has.setter.but.no.getter.display.name");
+  }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "field.has.setter.but.no.getter.problem.descriptor");
-    }
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "field.has.setter.but.no.getter.problem.descriptor");
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new FieldHasSetterButNoGetterVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new FieldHasSetterButNoGetterVisitor();
+  }
 
-    private static class FieldHasSetterButNoGetterVisitor
-            extends BaseInspectionVisitor {
+  private static class FieldHasSetterButNoGetterVisitor
+    extends BaseInspectionVisitor {
 
-        @Override public void visitField(@NotNull PsiField field) {
-            final Project project = field.getProject();
-            final String propertyName = PropertyUtil.suggestPropertyName(project, field);
-            final boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
-            final PsiClass containingClass = field.getContainingClass();
-            final PsiMethod setter = PropertyUtil.findPropertySetter(containingClass, propertyName, isStatic, false);
-            if (setter == null) {
-                return;
-            }
-            final PsiMethod getter = PropertyUtil.findPropertyGetter(containingClass, propertyName, isStatic, false);
-            if (getter != null) {
-                return;
-            }
-            registerFieldError(field);
-        }
+    @Override
+    public void visitField(@NotNull PsiField field) {
+      final Project project = field.getProject();
+      final String propertyName = PropertyUtil.suggestPropertyName(project, field);
+      final boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
+      final PsiClass containingClass = field.getContainingClass();
+      final PsiMethod setter = PropertyUtil.findPropertySetter(containingClass, propertyName, isStatic, false);
+      if (setter == null) {
+        return;
+      }
+      final PsiMethod getter = PropertyUtil.findPropertyGetter(containingClass, propertyName, isStatic, false);
+      if (getter != null) {
+        return;
+      }
+      registerFieldError(field);
     }
+  }
 }

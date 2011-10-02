@@ -29,46 +29,49 @@ import javax.swing.*;
 
 public class StaticCollectionInspection extends BaseInspection {
 
-    /** @noinspection PublicField*/
-    public boolean m_ignoreWeakCollections = false;
+  /**
+   * @noinspection PublicField
+   */
+  public boolean m_ignoreWeakCollections = false;
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "static.collection.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "static.collection.display.name");
+  }
 
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "static.collection.problem.descriptor");
-    }
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "static.collection.problem.descriptor");
+  }
 
-    public JComponent createOptionsPanel(){
-        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-                "static.collection.ignore.option"),
-                this, "m_ignoreWeakCollections");
-    }
-    
-    public BaseInspectionVisitor buildVisitor() {
-        return new StaticCollectionVisitor();
-    }
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+      "static.collection.ignore.option"),
+                                          this, "m_ignoreWeakCollections");
+  }
 
-    private class StaticCollectionVisitor extends BaseInspectionVisitor {
+  public BaseInspectionVisitor buildVisitor() {
+    return new StaticCollectionVisitor();
+  }
 
-        @Override public void visitField(@NotNull PsiField field) {
-            if (!field.hasModifierProperty(PsiModifier.STATIC)) {
-                return;
-            }
-            final PsiType type = field.getType();
-            if (!CollectionUtils.isCollectionClassOrInterface(type)) {
-                return;
-            }
-            if (!m_ignoreWeakCollections ||
-                    CollectionUtils.isWeakCollectionClass(type)) {
-                return;
-            }
-            registerFieldError(field);
-        }
+  private class StaticCollectionVisitor extends BaseInspectionVisitor {
+
+    @Override
+    public void visitField(@NotNull PsiField field) {
+      if (!field.hasModifierProperty(PsiModifier.STATIC)) {
+        return;
+      }
+      final PsiType type = field.getType();
+      if (!CollectionUtils.isCollectionClassOrInterface(type)) {
+        return;
+      }
+      if (!m_ignoreWeakCollections ||
+          CollectionUtils.isWeakCollectionClass(type)) {
+        return;
+      }
+      registerFieldError(field);
     }
+  }
 }

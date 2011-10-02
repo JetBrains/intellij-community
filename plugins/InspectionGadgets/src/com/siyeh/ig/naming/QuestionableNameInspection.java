@@ -43,110 +43,115 @@ import java.util.Set;
 
 public class QuestionableNameInspection extends BaseInspection {
 
-    /** @noinspection PublicField*/
-    @NonNls public String nameString = "aa,abc,bad,bar,bar2,baz,baz1,baz2," +
-            "baz3,bb,blah,bogus,bool,cc,dd,defau1t,dummy,dummy2,ee,fa1se," +
-            "ff,foo,foo1,foo2,foo3,foobar,four,fred,fred1,fred2,gg,hh,hello," +
-            "hello1,hello2,hello3,ii,nu11,one,silly,silly2,string,two,that," +
-            "then,three,whi1e,var";
+  /**
+   * @noinspection PublicField
+   */
+  @NonNls public String nameString = "aa,abc,bad,bar,bar2,baz,baz1,baz2," +
+                                     "baz3,bb,blah,bogus,bool,cc,dd,defau1t,dummy,dummy2,ee,fa1se," +
+                                     "ff,foo,foo1,foo2,foo3,foobar,four,fred,fred1,fred2,gg,hh,hello," +
+                                     "hello1,hello2,hello3,ii,nu11,one,silly,silly2,string,two,that," +
+                                     "then,three,whi1e,var";
 
-    List<String> nameList = new ArrayList<String>(32);
+  List<String> nameList = new ArrayList<String>(32);
 
-    public QuestionableNameInspection(){
-        parseString(nameString, nameList);
+  public QuestionableNameInspection() {
+    parseString(nameString, nameList);
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "questionable.name.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "questionable.name.problem.descriptor");
+  }
+
+  @Override
+  public void readSettings(Element element) throws InvalidDataException {
+    super.readSettings(element);
+    parseString(nameString, nameList);
+  }
+
+  @Override
+  public void writeSettings(Element element) throws WriteExternalException {
+    nameString = formatString(nameList);
+    super.writeSettings(element);
+  }
+
+  @Override
+  public JComponent createOptionsPanel() {
+    final JPanel panel = new JPanel(new GridBagLayout());
+    final ListTable table = new ListTable(new ListWrappingTableModel(
+      nameList, InspectionGadgetsBundle.message(
+      "questionable.name.column.title")));
+    final JScrollPane scrollPane =
+      ScrollPaneFactory.createScrollPane(table);
+    UiUtils.setScrollPaneSize(scrollPane, 7, 25);
+    final ActionToolbar toolbar =
+      UiUtils.createAddRemoveToolbar(table);
+
+    final GridBagConstraints constraints = new GridBagConstraints();
+    constraints.gridx = 0;
+    constraints.gridy = 0;
+    constraints.fill = GridBagConstraints.HORIZONTAL;
+    panel.add(toolbar.getComponent(), constraints);
+
+    constraints.gridy = 1;
+    constraints.weightx = 1.0;
+    constraints.weighty = 1.0;
+    constraints.fill = GridBagConstraints.BOTH;
+    panel.add(scrollPane, constraints);
+
+    return panel;
+  }
+
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new RenameFix();
+  }
+
+  @Override
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return true;
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new QuestionableNameVisitor();
+  }
+
+  private class QuestionableNameVisitor extends BaseInspectionVisitor {
+
+    private final Set<String> nameSet = new HashSet(nameList);
+
+    @Override
+    public void visitVariable(@NotNull PsiVariable variable) {
+      final String name = variable.getName();
+      if (nameSet.contains(name)) {
+        registerVariableError(variable);
+      }
     }
 
     @Override
-    @NotNull
-    public String getDisplayName(){
-        return InspectionGadgetsBundle.message(
-                "questionable.name.display.name");
+    public void visitMethod(@NotNull PsiMethod method) {
+      final String name = method.getName();
+      if (nameSet.contains(name)) {
+        registerMethodError(method);
+      }
     }
 
     @Override
-    @NotNull
-    public String buildErrorString(Object... infos){
-        return InspectionGadgetsBundle.message(
-                "questionable.name.problem.descriptor");
+    public void visitClass(@NotNull PsiClass aClass) {
+      final String name = aClass.getName();
+      if (nameSet.contains(name)) {
+        registerClassError(aClass);
+      }
     }
-
-    @Override
-    public void readSettings(Element element) throws InvalidDataException{
-        super.readSettings(element);
-        parseString(nameString, nameList);
-    }
-
-    @Override
-    public void writeSettings(Element element) throws WriteExternalException{
-        nameString = formatString(nameList);
-        super.writeSettings(element);
-    }
-
-    @Override
-    public JComponent createOptionsPanel(){
-        final JPanel panel = new JPanel(new GridBagLayout());
-        final ListTable table = new ListTable(new ListWrappingTableModel(
-                nameList, InspectionGadgetsBundle.message(
-                "questionable.name.column.title")));
-        final JScrollPane scrollPane =
-                ScrollPaneFactory.createScrollPane(table);
-        UiUtils.setScrollPaneSize(scrollPane, 7, 25);
-        final ActionToolbar toolbar =
-                UiUtils.createAddRemoveToolbar(table);
-
-        final GridBagConstraints constraints = new GridBagConstraints();
-        constraints.gridx = 0;
-        constraints.gridy = 0;
-        constraints.fill = GridBagConstraints.HORIZONTAL;
-        panel.add(toolbar.getComponent(), constraints);
-
-        constraints.gridy = 1;
-        constraints.weightx = 1.0;
-        constraints.weighty = 1.0;
-        constraints.fill = GridBagConstraints.BOTH;
-        panel.add(scrollPane, constraints);
-
-        return panel;
-    }
-
-    @Override
-    protected InspectionGadgetsFix buildFix(Object... infos){
-        return new RenameFix();
-    }
-
-    @Override
-    protected boolean buildQuickFixesOnlyForOnTheFlyErrors(){
-        return true;
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor(){
-        return new QuestionableNameVisitor();
-    }
-
-    private class QuestionableNameVisitor extends BaseInspectionVisitor{
-
-        private final Set<String> nameSet = new HashSet(nameList);
-
-        @Override public void visitVariable(@NotNull PsiVariable variable){
-            final String name = variable.getName();
-            if(nameSet.contains(name)){
-                registerVariableError(variable);
-            }
-        }
-
-        @Override public void visitMethod(@NotNull PsiMethod method){
-            final String name = method.getName();
-            if(nameSet.contains(name)){
-                registerMethodError(method);
-            }
-        }
-
-        @Override public void visitClass(@NotNull PsiClass aClass){
-            final String name = aClass.getName();
-            if(nameSet.contains(name)){
-                registerClassError(aClass);
-            }
-        }
-    }
+  }
 }

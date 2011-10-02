@@ -25,62 +25,62 @@ import org.jetbrains.annotations.NotNull;
 
 public class SystemGetenvInspection extends BaseInspection {
 
-    @NotNull
-    public String getID() {
-        return "CallToSystemGetenv";
-    }
+  @NotNull
+  public String getID() {
+    return "CallToSystemGetenv";
+  }
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "system.getenv.call.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "system.getenv.call.display.name");
+  }
 
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "system.getenv.call.problem.descriptor");
-    }
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "system.getenv.call.problem.descriptor");
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new SystemGetenvVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new SystemGetenvVisitor();
+  }
 
-    private static class SystemGetenvVisitor extends BaseInspectionVisitor {
+  private static class SystemGetenvVisitor extends BaseInspectionVisitor {
 
-        @Override public void visitMethodCallExpression(
-                @NotNull PsiMethodCallExpression expression) {
-            super.visitMethodCallExpression(expression);
-            final PsiReferenceExpression methodExpression =
-                    expression.getMethodExpression();
-            final String methodName = methodExpression.getReferenceName();
-            @NonNls final String getenv = "getenv";
-            if (!getenv.equals(methodName)) {
-                return;
-            }
-            final PsiMethod method = expression.resolveMethod();
-            if (method == null) {
-                return;
-            }
-            final PsiParameterList parameterList = method.getParameterList();
-            if (parameterList.getParametersCount() != 1) {
-                return;
-            }
-            final PsiParameter[] parameters = parameterList.getParameters();
-            final PsiType parameterType = parameters[0].getType();
-            if (!TypeUtils.isJavaLangString(parameterType)) {
-                return;
-            }
-            final PsiClass aClass = method.getContainingClass();
-            if(aClass == null)
-            {
-                return;
-            }
-            final String className = aClass.getQualifiedName();
-            if (!"java.lang.System".equals(className)) {
-                return;
-            }
-            registerMethodCallError(expression);
-        }
+    @Override
+    public void visitMethodCallExpression(
+      @NotNull PsiMethodCallExpression expression) {
+      super.visitMethodCallExpression(expression);
+      final PsiReferenceExpression methodExpression =
+        expression.getMethodExpression();
+      final String methodName = methodExpression.getReferenceName();
+      @NonNls final String getenv = "getenv";
+      if (!getenv.equals(methodName)) {
+        return;
+      }
+      final PsiMethod method = expression.resolveMethod();
+      if (method == null) {
+        return;
+      }
+      final PsiParameterList parameterList = method.getParameterList();
+      if (parameterList.getParametersCount() != 1) {
+        return;
+      }
+      final PsiParameter[] parameters = parameterList.getParameters();
+      final PsiType parameterType = parameters[0].getType();
+      if (!TypeUtils.isJavaLangString(parameterType)) {
+        return;
+      }
+      final PsiClass aClass = method.getContainingClass();
+      if (aClass == null) {
+        return;
+      }
+      final String className = aClass.getQualifiedName();
+      if (!"java.lang.System".equals(className)) {
+        return;
+      }
+      registerMethodCallError(expression);
     }
+  }
 }

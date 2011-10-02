@@ -27,54 +27,56 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public class SwitchStatementWithTooFewBranchesInspection
-        extends BaseInspection {
+  extends BaseInspection {
 
-    private static final int DEFAULT_BRANCH_LIMIT = 2;
-    /**
-     * this is public for the DefaultJDOMExternalizer thingy
-     * @noinspection PublicField
-     */
-    public int m_limit = DEFAULT_BRANCH_LIMIT;
+  private static final int DEFAULT_BRANCH_LIMIT = 2;
+  /**
+   * this is public for the DefaultJDOMExternalizer thingy
+   *
+   * @noinspection PublicField
+   */
+  public int m_limit = DEFAULT_BRANCH_LIMIT;
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "switch.statement.with.too.few.branches.display.name");
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "switch.statement.with.too.few.branches.display.name");
+  }
+
+  public JComponent createOptionsPanel() {
+    return new SingleIntegerFieldOptionsPanel(
+      InspectionGadgetsBundle.message(
+        "switch.statement.with.too.few.branches.min.option"),
+      this, "m_limit");
+  }
+
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    final Integer branchCount = (Integer)infos[0];
+    return InspectionGadgetsBundle.message(
+      "switch.statement.with.too.few.branches.problem.descriptor",
+      branchCount);
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new SwitchStatementWithTooFewBranchesVisitor();
+  }
+
+  private class SwitchStatementWithTooFewBranchesVisitor
+    extends BaseInspectionVisitor {
+
+    @Override
+    public void visitSwitchStatement(
+      @NotNull PsiSwitchStatement statement) {
+      final PsiCodeBlock body = statement.getBody();
+      if (body == null) {
+        return;
+      }
+      final int branchCount = SwitchUtils.calculateBranchCount(statement);
+      if (branchCount >= m_limit) {
+        return;
+      }
+      registerStatementError(statement, Integer.valueOf(branchCount));
     }
-
-    public JComponent createOptionsPanel() {
-        return new SingleIntegerFieldOptionsPanel(
-                InspectionGadgetsBundle.message(
-                        "switch.statement.with.too.few.branches.min.option"),
-                this, "m_limit");
-    }
-
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        final Integer branchCount = (Integer)infos[0];
-        return InspectionGadgetsBundle.message(
-                "switch.statement.with.too.few.branches.problem.descriptor",
-                branchCount);
-    }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new SwitchStatementWithTooFewBranchesVisitor();
-    }
-
-    private class SwitchStatementWithTooFewBranchesVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitSwitchStatement(
-                @NotNull PsiSwitchStatement statement) {
-            final PsiCodeBlock body = statement.getBody();
-            if (body == null) {
-                return;
-            }
-            final int branchCount = SwitchUtils.calculateBranchCount(statement);
-            if (branchCount >= m_limit) {
-                return;
-            }
-            registerStatementError(statement, Integer.valueOf(branchCount));
-        }
-    }
+  }
 }

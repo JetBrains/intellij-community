@@ -20,22 +20,21 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
 public class SerializableInnerClassWithNonSerializableOuterClassInspection
-        extends SerializableInspection {
+  extends SerializableInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "serializable.inner.class.with.non.serializable.outer.class.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "serializable.inner.class.with.non.serializable.outer.class.display.name");
+  }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "serializable.inner.class.with.non.serializable.outer.class.problem.descriptor");
-    }
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "serializable.inner.class.with.non.serializable.outer.class.problem.descriptor");
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new SerializableInnerClassWithNonSerializableOuterClassVisitor(this);
-    }
-
+  public BaseInspectionVisitor buildVisitor() {
+    return new SerializableInnerClassWithNonSerializableOuterClassVisitor(this);
+  }
 }

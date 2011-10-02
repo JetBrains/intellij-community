@@ -26,53 +26,54 @@ import org.jetbrains.annotations.NotNull;
 
 public class ChainedEqualityInspection extends BaseInspection {
 
-    @NotNull
-    public String getID() {
-        return "ChainedEqualityComparisons";
-    }
-    
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "chained.equality.comparisons.display.name");
+  @NotNull
+  public String getID() {
+    return "ChainedEqualityComparisons";
+  }
+
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "chained.equality.comparisons.display.name");
+  }
+
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "chained.equality.comparisons.problem.descriptor");
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new ChainedEqualityVisitor();
+  }
+
+  private static class ChainedEqualityVisitor extends BaseInspectionVisitor {
+
+    @Override
+    public void visitBinaryExpression(
+      @NotNull PsiBinaryExpression expression) {
+      super.visitBinaryExpression(expression);
+      if (!(expression.getROperand() != null)) {
+        return;
+      }
+      if (!isEqualityComparison(expression)) {
+        return;
+      }
+      final PsiExpression lhs = expression.getLOperand();
+      if (!(lhs instanceof PsiBinaryExpression)) {
+        return;
+      }
+      if (!isEqualityComparison((PsiBinaryExpression)lhs)) {
+        return;
+      }
+      registerError(expression);
     }
 
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "chained.equality.comparisons.problem.descriptor");
+    private static boolean isEqualityComparison(
+      @NotNull PsiBinaryExpression expression) {
+      final IElementType tokenType = expression.getOperationTokenType();
+      return tokenType.equals(JavaTokenType.EQEQ) ||
+             tokenType.equals(JavaTokenType.NE);
     }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new ChainedEqualityVisitor();
-    }
-
-    private static class ChainedEqualityVisitor extends BaseInspectionVisitor {
-
-        @Override public void visitBinaryExpression(
-                @NotNull PsiBinaryExpression expression) {
-            super.visitBinaryExpression(expression);
-            if(!(expression.getROperand() != null)) {
-                return;
-            }
-            if (!isEqualityComparison(expression)) {
-                return;
-            }
-            final PsiExpression lhs = expression.getLOperand();
-            if (!(lhs instanceof PsiBinaryExpression)) {
-                return;
-            }
-            if (!isEqualityComparison((PsiBinaryExpression) lhs)) {
-                return;
-            }
-            registerError(expression);
-        }
-
-        private static boolean isEqualityComparison(
-                @NotNull PsiBinaryExpression expression) {
-          final IElementType tokenType = expression.getOperationTokenType();
-            return tokenType.equals(JavaTokenType.EQEQ) ||
-                    tokenType.equals(JavaTokenType.NE);
-        }
-    }
+  }
 }

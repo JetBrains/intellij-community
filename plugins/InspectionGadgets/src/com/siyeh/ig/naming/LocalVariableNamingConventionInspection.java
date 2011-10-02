@@ -28,134 +28,142 @@ import java.util.Arrays;
 import java.util.Collection;
 
 public class LocalVariableNamingConventionInspection
-        extends ConventionInspection {
+  extends ConventionInspection {
 
-    /** @noinspection PublicField*/
-    public boolean m_ignoreForLoopParameters = false;
-    /** @noinspection PublicField*/
-    public boolean m_ignoreCatchParameters = false;
+  /**
+   * @noinspection PublicField
+   */
+  public boolean m_ignoreForLoopParameters = false;
+  /**
+   * @noinspection PublicField
+   */
+  public boolean m_ignoreCatchParameters = false;
 
-    private static final int DEFAULT_MIN_LENGTH = 1;
-    private static final int DEFAULT_MAX_LENGTH = 20;
+  private static final int DEFAULT_MIN_LENGTH = 1;
+  private static final int DEFAULT_MAX_LENGTH = 20;
 
-    @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "local.variable.naming.convention.display.name");
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "local.variable.naming.convention.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    final String varName = (String)infos[0];
+    if (varName.length() < getMinLength()) {
+      return InspectionGadgetsBundle.message(
+        "local.variable.naming.convention.problem.descriptor.short");
     }
+    else if (varName.length() > getMaxLength()) {
+      return InspectionGadgetsBundle.message(
+        "local.variable.naming.convention.problem.descriptor.long");
+    }
+    else {
+      return InspectionGadgetsBundle.message(
+        "local.variable.naming.convention.problem.descriptor.regex.mismatch",
+        getRegex());
+    }
+  }
+
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new RenameFix();
+  }
+
+  @Override
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return true;
+  }
+
+  @Override
+  protected String getDefaultRegex() {
+    return "[a-z][A-Za-z\\d]*";
+  }
+
+  @Override
+  protected int getDefaultMinLength() {
+    return DEFAULT_MIN_LENGTH;
+  }
+
+  @Override
+  protected int getDefaultMaxLength() {
+    return DEFAULT_MAX_LENGTH;
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new NamingConventionsVisitor();
+  }
+
+  private class NamingConventionsVisitor extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        final String varName = (String)infos[0];
-        if (varName.length() < getMinLength()) {
-            return InspectionGadgetsBundle.message(
-                    "local.variable.naming.convention.problem.descriptor.short");
-        } else if (varName.length() > getMaxLength()) {
-            return InspectionGadgetsBundle.message(
-                    "local.variable.naming.convention.problem.descriptor.long");
-        } else {
-          return InspectionGadgetsBundle.message(
-                  "local.variable.naming.convention.problem.descriptor.regex.mismatch",
-                  getRegex());
+    public void visitLocalVariable(
+      @NotNull PsiLocalVariable variable) {
+      super.visitLocalVariable(variable);
+      if (m_ignoreForLoopParameters) {
+        final PsiElement parent = variable.getParent();
+        if (parent != null) {
+          final PsiElement grandparent = parent.getParent();
+          if (grandparent instanceof PsiForStatement) {
+            final PsiForStatement forLoop =
+              (PsiForStatement)grandparent;
+            final PsiStatement initialization =
+              forLoop.getInitialization();
+            if (parent.equals(initialization)) {
+              return;
+            }
+          }
         }
+      }
+      final String name = variable.getName();
+      if (name == null) {
+        return;
+      }
+      if (isValid(name)) {
+        return;
+      }
+      registerVariableError(variable, name);
     }
 
     @Override
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        return new RenameFix();
+    public void visitParameter(@NotNull PsiParameter variable) {
+      final PsiElement scope = variable.getDeclarationScope();
+      final boolean isCatchParameter =
+        scope instanceof PsiCatchSection;
+      final boolean isForeachParameter =
+        scope instanceof PsiForeachStatement;
+      if (!isCatchParameter && !isForeachParameter) {
+        return;
+      }
+      if (m_ignoreCatchParameters && isCatchParameter) {
+        return;
+      }
+      if (m_ignoreForLoopParameters && isForeachParameter) {
+        return;
+      }
+      final String name = variable.getName();
+      if (name == null) {
+        return;
+      }
+      if (isValid(name)) {
+        return;
+      }
+      registerVariableError(variable, name);
     }
+  }
 
-    @Override
-    protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
-        return true;
-    }
-
-    @Override
-    protected String getDefaultRegex() {
-        return "[a-z][A-Za-z\\d]*";
-    }
-
-    @Override
-    protected int getDefaultMinLength() {
-        return DEFAULT_MIN_LENGTH;
-    }
-
-    @Override
-    protected int getDefaultMaxLength() {
-        return DEFAULT_MAX_LENGTH;
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new NamingConventionsVisitor();
-    }
-
-    private class NamingConventionsVisitor extends BaseInspectionVisitor {
-
-        @Override public void visitLocalVariable(
-                @NotNull PsiLocalVariable variable) {
-            super.visitLocalVariable(variable);
-            if (m_ignoreForLoopParameters) {
-                final PsiElement parent = variable.getParent();
-                if (parent != null) {
-                    final PsiElement grandparent = parent.getParent();
-                    if (grandparent instanceof PsiForStatement) {
-                        final PsiForStatement forLoop =
-                                (PsiForStatement) grandparent;
-                        final PsiStatement initialization =
-                                forLoop.getInitialization();
-                        if (parent.equals(initialization)) {
-                            return;
-                        }
-                    }
-                }
-            }
-            final String name = variable.getName();
-            if (name == null) {
-                return;
-            }
-            if (isValid(name)) {
-                return;
-            }
-            registerVariableError(variable, name);
-        }
-
-        @Override public void visitParameter(@NotNull PsiParameter variable) {
-            final PsiElement scope = variable.getDeclarationScope();
-            final boolean isCatchParameter =
-                    scope instanceof PsiCatchSection;
-            final boolean isForeachParameter =
-                    scope instanceof PsiForeachStatement;
-            if (!isCatchParameter && !isForeachParameter) {
-                return;
-            }
-            if (m_ignoreCatchParameters && isCatchParameter) {
-                return;
-            }
-            if (m_ignoreForLoopParameters && isForeachParameter) {
-                return;
-            }
-            final String name = variable.getName();
-            if (name == null) {
-                return;
-            }
-            if (isValid(name)) {
-                return;
-            }
-            registerVariableError(variable, name);
-        }
-    }
-
-    @Override
-    public Collection<? extends JComponent> createExtraOptions() {
-        return Arrays.asList(
-                new CheckBox(InspectionGadgetsBundle.message(
-                        "local.variable.naming.convention.ignore.option"),
-                        this, "m_ignoreForLoopParameters"),
-                new CheckBox(InspectionGadgetsBundle.message(
-                        "local.variable.naming.convention.ignore.catch.option"),
-                        this, "m_ignoreCatchParameters"));
-    }
+  @Override
+  public Collection<? extends JComponent> createExtraOptions() {
+    return Arrays.asList(
+      new CheckBox(InspectionGadgetsBundle.message(
+        "local.variable.naming.convention.ignore.option"),
+                   this, "m_ignoreForLoopParameters"),
+      new CheckBox(InspectionGadgetsBundle.message(
+        "local.variable.naming.convention.ignore.catch.option"),
+                   this, "m_ignoreCatchParameters"));
+  }
 }

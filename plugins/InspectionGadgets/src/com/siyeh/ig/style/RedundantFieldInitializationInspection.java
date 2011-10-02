@@ -31,96 +31,98 @@ import java.util.Set;
 
 public class RedundantFieldInitializationInspection extends BaseInspection {
 
-    @NonNls private static final Set<String> s_defaultValues =
-            new HashSet<String>(10);
+  @NonNls private static final Set<String> s_defaultValues =
+    new HashSet<String>(10);
 
-    static {
-        s_defaultValues.add("null");
-        s_defaultValues.add("0");
-        s_defaultValues.add("false");
-        s_defaultValues.add("0.0");
-        s_defaultValues.add("0.0F");
-        s_defaultValues.add("0.0f");
-        s_defaultValues.add("0L");
-        s_defaultValues.add("0l");
-        s_defaultValues.add("0x0");
-        s_defaultValues.add("0X0");
-    }
+  static {
+    s_defaultValues.add("null");
+    s_defaultValues.add("0");
+    s_defaultValues.add("false");
+    s_defaultValues.add("0.0");
+    s_defaultValues.add("0.0F");
+    s_defaultValues.add("0.0f");
+    s_defaultValues.add("0L");
+    s_defaultValues.add("0l");
+    s_defaultValues.add("0x0");
+    s_defaultValues.add("0X0");
+  }
+
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "redundant.field.initialization.display.name");
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new RedundantFieldInitializationVisitor();
+  }
+
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "redundant.field.initialization.problem.descriptor");
+  }
+
+  public InspectionGadgetsFix buildFix(Object... infos) {
+    return new RedundantFieldInitializationFix();
+  }
+
+  private static class RedundantFieldInitializationFix
+    extends InspectionGadgetsFix {
 
     @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "redundant.field.initialization.display.name");
+    public String getName() {
+      return InspectionGadgetsBundle.message(
+        "redundant.field.initialization.remove.quickfix");
     }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new RedundantFieldInitializationVisitor();
-    }
-
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "redundant.field.initialization.problem.descriptor");
-    }
-
-    public InspectionGadgetsFix buildFix(Object... infos) {
-        return new RedundantFieldInitializationFix();
-    }
-
-    private static class RedundantFieldInitializationFix
-            extends InspectionGadgetsFix {
-
-        @NotNull
-        public String getName() {
-            return InspectionGadgetsBundle.message(
-                    "redundant.field.initialization.remove.quickfix");
+    public void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiExpression expression =
+        (PsiExpression)descriptor.getPsiElement();
+      PsiElement prevSibling = expression.getPrevSibling();
+      PsiElement assignment = null;
+      do {
+        assert prevSibling != null;
+        final PsiElement newPrevSibling = prevSibling.getPrevSibling();
+        deleteElement(prevSibling);
+        final String text = prevSibling.getText();
+        if ("=".equals(text)) {
+          assignment = prevSibling;
         }
-
-        public void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
-            final PsiExpression expression =
-                    (PsiExpression)descriptor.getPsiElement();
-            PsiElement prevSibling = expression.getPrevSibling();
-            PsiElement assignment = null;
-            do {
-                assert prevSibling != null;
-                final PsiElement newPrevSibling = prevSibling.getPrevSibling();
-                deleteElement(prevSibling);
-                final String text = prevSibling.getText();
-                if ("=".equals(text)) {
-                    assignment = prevSibling;
-                }
-                prevSibling = newPrevSibling;
-            } while (assignment == null);
-            deleteElement(expression);
-        }
+        prevSibling = newPrevSibling;
+      }
+      while (assignment == null);
+      deleteElement(expression);
     }
+  }
 
-    private static class RedundantFieldInitializationVisitor
-            extends BaseInspectionVisitor {
+  private static class RedundantFieldInitializationVisitor
+    extends BaseInspectionVisitor {
 
-        @Override public void visitField(@NotNull PsiField field) {
-            super.visitField(field);
-            if (!field.hasInitializer()) {
-                return;
-            }
-            if (field.hasModifierProperty(PsiModifier.FINAL)) {
-                return;
-            }
-            final PsiExpression initializer = field.getInitializer();
-            if (initializer == null) {
-                return;
-            }
-            final String text = initializer.getText();
-            if (!s_defaultValues.contains(text)) {
-                return;
-            }
-            final PsiType type = field.getType();
-            if (!(type instanceof PsiPrimitiveType) &&
-                    !text.equals(PsiKeyword.NULL)) {
-                return;
-            }
-            registerError(initializer);
-        }
+    @Override
+    public void visitField(@NotNull PsiField field) {
+      super.visitField(field);
+      if (!field.hasInitializer()) {
+        return;
+      }
+      if (field.hasModifierProperty(PsiModifier.FINAL)) {
+        return;
+      }
+      final PsiExpression initializer = field.getInitializer();
+      if (initializer == null) {
+        return;
+      }
+      final String text = initializer.getText();
+      if (!s_defaultValues.contains(text)) {
+        return;
+      }
+      final PsiType type = field.getType();
+      if (!(type instanceof PsiPrimitiveType) &&
+          !text.equals(PsiKeyword.NULL)) {
+        return;
+      }
+      registerError(initializer);
     }
+  }
 }

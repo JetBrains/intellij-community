@@ -34,180 +34,180 @@ import javax.swing.event.DocumentEvent;
 
 
 public class LoggerInitializedWithForeignClassInspection
-        extends BaseInspection {
+  extends BaseInspection {
 
-    @SuppressWarnings({"PublicField"})
-    public String loggerClassName = "org.apache.log4j.Logger";
+  @SuppressWarnings({"PublicField"})
+  public String loggerClassName = "org.apache.log4j.Logger";
 
-    @SuppressWarnings({"PublicField"})
-    public String loggerFactoryMethodName = "getLogger";
+  @SuppressWarnings({"PublicField"})
+  public String loggerFactoryMethodName = "getLogger";
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "logger.initialized.with.foreign.class.display.name");
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "logger.initialized.with.foreign.class.display.name");
+  }
+
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "logger.initialized.with.foreign.class.problem.descriptor");
+  }
+
+  @Override
+  public JComponent createOptionsPanel() {
+    return new Form().getContentPanel();
+  }
+
+  @Nullable
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new LoggerInitializedWithForeignClassFix((String)infos[0]);
+  }
+
+  private static class LoggerInitializedWithForeignClassFix
+    extends InspectionGadgetsFix {
+
+    private final String newClassName;
+
+    private LoggerInitializedWithForeignClassFix(String newClassName) {
+      this.newClassName = newClassName;
     }
 
     @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "logger.initialized.with.foreign.class.problem.descriptor");
+    public String getName() {
+      return InspectionGadgetsBundle.message(
+        "logger.initialized.with.foreign.class.quickfix",
+        newClassName);
     }
 
-    @Override
-    public JComponent createOptionsPanel() {
-        return new Form().getContentPanel();
+    protected void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiElement element = descriptor.getPsiElement();
+      if (!(element instanceof PsiClassObjectAccessExpression)) {
+        return;
+      }
+      final PsiClassObjectAccessExpression classObjectAccessExpression =
+        (PsiClassObjectAccessExpression)element;
+      replaceExpression(classObjectAccessExpression,
+                        newClassName + ".class");
     }
+  }
 
-    @Nullable
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        return new LoggerInitializedWithForeignClassFix((String)infos[0]);
+  public BaseInspectionVisitor buildVisitor() {
+    return new LoggerInitializedWithForeignClassVisitor();
+  }
+
+  private class LoggerInitializedWithForeignClassVisitor
+    extends BaseInspectionVisitor {
+
+    public void visitClassObjectAccessExpression(
+      PsiClassObjectAccessExpression expression) {
+      super.visitClassObjectAccessExpression(expression);
+      final PsiElement parent = expression.getParent();
+      if (!(parent instanceof PsiExpressionList)) {
+        return;
+      }
+      final PsiElement grandParent = parent.getParent();
+      if (!(grandParent instanceof PsiMethodCallExpression)) {
+        return;
+      }
+      final PsiMethodCallExpression methodCallExpression =
+        (PsiMethodCallExpression)grandParent;
+      final PsiClass containingClass = PsiTreeUtil.getParentOfType(
+        expression, PsiClass.class);
+      if (containingClass == null) {
+        return;
+      }
+      final String containingClassName = containingClass.getName();
+      if (containingClassName == null) {
+        return;
+      }
+      final PsiReferenceExpression methodExpression =
+        methodCallExpression.getMethodExpression();
+      final String referenceName = methodExpression.getReferenceName();
+      if (!loggerFactoryMethodName.equals(referenceName)) {
+        return;
+      }
+      final PsiMethod method = methodCallExpression.resolveMethod();
+      if (method == null) {
+        return;
+      }
+      final PsiClass aClass = method.getContainingClass();
+      final String className = aClass.getQualifiedName();
+      if (!loggerClassName.equals(className)) {
+        return;
+      }
+      final PsiTypeElement operand = expression.getOperand();
+      final PsiType type = operand.getType();
+      if (!(type instanceof PsiClassType)) {
+        return;
+      }
+      final PsiClassType classType = (PsiClassType)type;
+      final PsiClass initializerClass = classType.resolve();
+      if (initializerClass == null) {
+        return;
+      }
+      if (containingClass.equals(initializerClass)) {
+        return;
+      }
+      registerError(expression, containingClassName);
     }
+  }
 
-    private static class LoggerInitializedWithForeignClassFix
-            extends InspectionGadgetsFix {
+  class Form {
 
-        private final String newClassName;
+    private JPanel contentPanel;
+    private JTextField loggerClassNameTextField;
+    private JTextField loggerFactoryMethodNameTextField;
 
-        private LoggerInitializedWithForeignClassFix(String newClassName) {
-            this.newClassName = newClassName;
+    Form() {
+      loggerClassNameTextField.setText(loggerClassName);
+      final DocumentListener listener = new DocumentListener() {
+
+        public void changedUpdate(DocumentEvent e) {
+          textChanged();
         }
 
-        @NotNull
-        public String getName() {
-            return InspectionGadgetsBundle.message(
-                    "logger.initialized.with.foreign.class.quickfix",
-                    newClassName);
+        public void insertUpdate(DocumentEvent e) {
+          textChanged();
         }
 
-        protected void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
-            final PsiElement element = descriptor.getPsiElement();
-            if (!(element instanceof PsiClassObjectAccessExpression)) {
-                return;
-            }
-            final PsiClassObjectAccessExpression classObjectAccessExpression =
-                    (PsiClassObjectAccessExpression) element;
-            replaceExpression(classObjectAccessExpression,
-                    newClassName + ".class");
+        public void removeUpdate(DocumentEvent e) {
+          textChanged();
         }
+
+        private void textChanged() {
+          loggerClassName = loggerClassNameTextField.getText();
+        }
+      };
+      final Document document = loggerClassNameTextField.getDocument();
+      document.addDocumentListener(listener);
+      loggerFactoryMethodNameTextField.setText(loggerFactoryMethodName);
+      final DocumentListener factoryListener = new DocumentListener() {
+
+        public void changedUpdate(DocumentEvent e) {
+          textChanged();
+        }
+
+        public void insertUpdate(DocumentEvent e) {
+          textChanged();
+        }
+
+        public void removeUpdate(DocumentEvent e) {
+          textChanged();
+        }
+
+        private void textChanged() {
+          loggerClassName = loggerClassNameTextField.getText();
+        }
+      };
+      final Document factoryDocument =
+        loggerFactoryMethodNameTextField.getDocument();
+      factoryDocument.addDocumentListener(factoryListener);
     }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new LoggerInitializedWithForeignClassVisitor();
+    public JComponent getContentPanel() {
+      return contentPanel;
     }
-
-    private class LoggerInitializedWithForeignClassVisitor
-            extends BaseInspectionVisitor {
-
-        public void visitClassObjectAccessExpression(
-                PsiClassObjectAccessExpression expression) {
-            super.visitClassObjectAccessExpression(expression);
-            final PsiElement parent = expression.getParent();
-            if (!(parent instanceof PsiExpressionList)) {
-                return;
-            }
-            final PsiElement grandParent = parent.getParent();
-            if (!(grandParent instanceof PsiMethodCallExpression)) {
-                return;
-            }
-            final PsiMethodCallExpression methodCallExpression =
-                    (PsiMethodCallExpression) grandParent;
-            final PsiClass containingClass = PsiTreeUtil.getParentOfType(
-                    expression, PsiClass.class);
-            if (containingClass == null) {
-                return;
-            }
-            final String containingClassName = containingClass.getName();
-            if (containingClassName == null) {
-                return;
-            }
-            final PsiReferenceExpression methodExpression =
-                    methodCallExpression.getMethodExpression();
-            final String referenceName = methodExpression.getReferenceName();
-            if (!loggerFactoryMethodName.equals(referenceName)) {
-                return;
-            }
-            final PsiMethod method = methodCallExpression.resolveMethod();
-            if (method == null) {
-                return;
-            }
-            final PsiClass aClass = method.getContainingClass();
-            final String className = aClass.getQualifiedName();
-            if (!loggerClassName.equals(className)) {
-                return;
-            }
-            final PsiTypeElement operand = expression.getOperand();
-            final PsiType type = operand.getType();
-            if (!(type instanceof PsiClassType)) {
-                return;
-            }
-            final PsiClassType classType = (PsiClassType) type;
-            final PsiClass initializerClass = classType.resolve();
-            if (initializerClass == null) {
-                return;
-            }
-            if (containingClass.equals(initializerClass)) {
-                return;
-            }
-            registerError(expression, containingClassName);
-        }
-    }
-
-    class Form {
-
-        private JPanel contentPanel;
-        private JTextField loggerClassNameTextField;
-        private JTextField loggerFactoryMethodNameTextField;
-
-        Form() {
-            loggerClassNameTextField.setText(loggerClassName);
-            final DocumentListener listener = new DocumentListener() {
-
-                public void changedUpdate(DocumentEvent e) {
-                    textChanged();
-                }
-
-                public void insertUpdate(DocumentEvent e) {
-                    textChanged();
-                }
-
-                public void removeUpdate(DocumentEvent e) {
-                    textChanged();
-                }
-
-                private void textChanged() {
-                    loggerClassName =  loggerClassNameTextField.getText();
-                }
-            };
-            final Document document = loggerClassNameTextField.getDocument();
-            document.addDocumentListener(listener);
-            loggerFactoryMethodNameTextField.setText(loggerFactoryMethodName);
-            final DocumentListener factoryListener = new DocumentListener() {
-
-                public void changedUpdate(DocumentEvent e) {
-                    textChanged();
-                }
-
-                public void insertUpdate(DocumentEvent e) {
-                    textChanged();
-                }
-
-                public void removeUpdate(DocumentEvent e) {
-                    textChanged();
-                }
-
-                private void textChanged() {
-                    loggerClassName =  loggerClassNameTextField.getText();
-                }
-            };
-            final Document factoryDocument =
-                    loggerFactoryMethodNameTextField.getDocument();
-            factoryDocument.addDocumentListener(factoryListener);
-        }
-
-        public JComponent getContentPanel() {
-            return contentPanel;
-        }
-    }
+  }
 }

@@ -26,36 +26,37 @@ import org.jetbrains.annotations.NotNull;
 
 public class AwaitNotInLoopInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "await.not.in.loop.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "await.not.in.loop.display.name");
+  }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "await.not.in.loop.problem.descriptor");
-    }
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "await.not.in.loop.problem.descriptor");
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new AwaitNotInLoopVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new AwaitNotInLoopVisitor();
+  }
 
-    private static class AwaitNotInLoopVisitor extends BaseInspectionVisitor {
+  private static class AwaitNotInLoopVisitor extends BaseInspectionVisitor {
 
-        @Override public void visitMethodCallExpression(
-                @NotNull PsiMethodCallExpression expression) {
-            super.visitMethodCallExpression(expression);
-            if (!MethodCallUtils.isCallToMethod(expression,
-                    "java.util.concurrent.locks.Condition", PsiType.VOID,
-                    "await")){
-                return;
-            }
-            if (ControlFlowUtils.isInLoop(expression)) {
-                return;
-            }
-            registerMethodCallError(expression);
-        }
+    @Override
+    public void visitMethodCallExpression(
+      @NotNull PsiMethodCallExpression expression) {
+      super.visitMethodCallExpression(expression);
+      if (!MethodCallUtils.isCallToMethod(expression,
+                                          "java.util.concurrent.locks.Condition", PsiType.VOID,
+                                          "await")) {
+        return;
+      }
+      if (ControlFlowUtils.isInLoop(expression)) {
+        return;
+      }
+      registerMethodCallError(expression);
     }
+  }
 }

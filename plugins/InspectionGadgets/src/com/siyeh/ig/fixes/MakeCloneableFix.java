@@ -27,47 +27,49 @@ import org.jetbrains.annotations.NotNull;
 
 public class MakeCloneableFix extends InspectionGadgetsFix {
 
-    private final boolean isInterface;
+  private final boolean isInterface;
 
-    public MakeCloneableFix(boolean isInterface) {
-        this.isInterface = isInterface;
-    }
+  public MakeCloneableFix(boolean isInterface) {
+    this.isInterface = isInterface;
+  }
 
-    @NotNull
-    public String getName() {
-        if (isInterface) {
-            return InspectionGadgetsBundle.message(
-                    "make.interface.cloneable.quickfix");
-        } else {
-            return InspectionGadgetsBundle.message(
-                    "make.class.cloneable.quickfix");
-        }
+  @NotNull
+  public String getName() {
+    if (isInterface) {
+      return InspectionGadgetsBundle.message(
+        "make.interface.cloneable.quickfix");
     }
+    else {
+      return InspectionGadgetsBundle.message(
+        "make.class.cloneable.quickfix");
+    }
+  }
 
-    @Override
-    public void doFix(Project project, ProblemDescriptor descriptor)
-            throws IncorrectOperationException{
-        final PsiElement nameElement = descriptor.getPsiElement();
-        final PsiClass containingClass =
-                ClassUtils.getContainingClass(nameElement);
-        if (containingClass == null) {
-            return;
-        }
-        final PsiElementFactory elementFactory =
-                JavaPsiFacade.getElementFactory(project);
-        final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-        final PsiJavaCodeReferenceElement ref =
-                elementFactory.createReferenceElementByFQClassName(
-                        CommonClassNames.JAVA_LANG_CLONEABLE, scope);
-        final PsiReferenceList extendsImplementsList;
-        if (containingClass.isInterface()) {
-            extendsImplementsList = containingClass.getExtendsList();
-        } else {
-            extendsImplementsList = containingClass.getImplementsList();
-        }
-        if (extendsImplementsList == null) {
-            return;
-        }
-        extendsImplementsList.add(ref);
+  @Override
+  public void doFix(Project project, ProblemDescriptor descriptor)
+    throws IncorrectOperationException {
+    final PsiElement nameElement = descriptor.getPsiElement();
+    final PsiClass containingClass =
+      ClassUtils.getContainingClass(nameElement);
+    if (containingClass == null) {
+      return;
     }
+    final PsiElementFactory elementFactory =
+      JavaPsiFacade.getElementFactory(project);
+    final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
+    final PsiJavaCodeReferenceElement ref =
+      elementFactory.createReferenceElementByFQClassName(
+        CommonClassNames.JAVA_LANG_CLONEABLE, scope);
+    final PsiReferenceList extendsImplementsList;
+    if (containingClass.isInterface()) {
+      extendsImplementsList = containingClass.getExtendsList();
+    }
+    else {
+      extendsImplementsList = containingClass.getImplementsList();
+    }
+    if (extendsImplementsList == null) {
+      return;
+    }
+    extendsImplementsList.add(ref);
+  }
 }

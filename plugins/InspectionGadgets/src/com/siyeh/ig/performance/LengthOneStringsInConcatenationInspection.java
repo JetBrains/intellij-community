@@ -30,122 +30,125 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class LengthOneStringsInConcatenationInspection
-        extends BaseInspection {
+  extends BaseInspection {
 
-    @Override
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "length.one.strings.in.concatenation.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String getID() {
+    return "SingleCharacterStringConcatenation";
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    final String string = (String)infos[0];
+    final String escapedString = StringUtil.escapeStringCharacters(string);
+    return InspectionGadgetsBundle.message(
+      "expression.can.be.replaced.problem.descriptor",
+      escapedString);
+  }
+
+  @Override
+  public InspectionGadgetsFix buildFix(Object... infos) {
+    return new ReplaceStringsWithCharsFix();
+  }
+
+  private static class ReplaceStringsWithCharsFix
+    extends InspectionGadgetsFix {
+
     @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "length.one.strings.in.concatenation.display.name");
+    public String getName() {
+      return InspectionGadgetsBundle.message(
+        "length.one.strings.in.concatenation.replace.quickfix");
     }
 
     @Override
-    @NotNull
-    public String getID() {
-        return "SingleCharacterStringConcatenation";
+    public void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiExpression expression =
+        (PsiExpression)descriptor.getPsiElement();
+      final String text = expression.getText();
+      final int length = text.length();
+      final String character = text.substring(1, length - 1);
+      final String charLiteral;
+      if ("\'".equals(character)) {
+        charLiteral = "'\\''";
+      }
+      else if ("\\\"".equals(character)) {
+        charLiteral = "'\"'";
+      }
+      else {
+        charLiteral = '\'' + character + '\'';
+      }
+      replaceExpression(expression, charLiteral);
     }
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new LengthOneStringsInConcatenationVisitor();
+  }
+
+  private static class LengthOneStringsInConcatenationVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        final String string = (String)infos[0];
-        final String escapedString = StringUtil.escapeStringCharacters(string);
-        return InspectionGadgetsBundle.message(
-                "expression.can.be.replaced.problem.descriptor",
-                escapedString);
+    public void visitLiteralExpression(
+      @NotNull PsiLiteralExpression expression) {
+      super.visitLiteralExpression(expression);
+      final PsiType type = expression.getType();
+      if (!TypeUtils.isJavaLangString(type)) {
+        return;
+      }
+      final String value = (String)expression.getValue();
+      if (value == null || value.length() != 1) {
+        return;
+      }
+      if (!ExpressionUtils.isStringConcatenationOperand(expression) &&
+          !isArgumentOfStringAppend(expression)) {
+        return;
+      }
+      registerError(expression, value);
     }
 
-    @Override
-    public InspectionGadgetsFix buildFix(Object... infos) {
-        return new ReplaceStringsWithCharsFix();
+    static boolean isArgumentOfStringAppend(PsiExpression expression) {
+      final PsiElement parent = expression.getParent();
+      if (parent == null) {
+        return false;
+      }
+      if (!(parent instanceof PsiExpressionList)) {
+        return false;
+      }
+      final PsiElement grandparent = parent.getParent();
+      if (!(grandparent instanceof PsiMethodCallExpression)) {
+        return false;
+      }
+      final PsiMethodCallExpression call =
+        (PsiMethodCallExpression)grandparent;
+      final PsiReferenceExpression methodExpression =
+        call.getMethodExpression();
+      @NonNls final String name = methodExpression.getReferenceName();
+      if (!"append".equals(name) && !"insert".equals(name)) {
+        return false;
+      }
+      final PsiMethod method = call.resolveMethod();
+      if (method == null) {
+        return false;
+      }
+      final PsiClass methodClass = method.getContainingClass();
+      if (methodClass == null) {
+        return false;
+      }
+      final String className = methodClass.getQualifiedName();
+      return CommonClassNames.JAVA_LANG_STRING_BUFFER.equals(className) ||
+             "java.lang.StringBuilder".equals(className);
     }
-
-    private static class ReplaceStringsWithCharsFix
-            extends InspectionGadgetsFix {
-
-        @NotNull
-        public String getName() {
-            return InspectionGadgetsBundle.message(
-                    "length.one.strings.in.concatenation.replace.quickfix");
-        }
-
-        @Override
-        public void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
-            final PsiExpression expression =
-                    (PsiExpression)descriptor.getPsiElement();
-            final String text = expression.getText();
-            final int length = text.length();
-            final String character = text.substring(1, length - 1);
-            final String charLiteral;
-            if ("\'".equals(character)) {
-                charLiteral = "'\\''";
-            } else if ("\\\"".equals(character)) {
-                charLiteral = "'\"'";
-            } else {
-                charLiteral = '\'' + character + '\'';
-            }
-            replaceExpression(expression, charLiteral);
-        }
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new LengthOneStringsInConcatenationVisitor();
-    }
-
-    private static class LengthOneStringsInConcatenationVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitLiteralExpression(
-                @NotNull PsiLiteralExpression expression) {
-            super.visitLiteralExpression(expression);
-            final PsiType type = expression.getType();
-            if (!TypeUtils.isJavaLangString(type)) {
-                return;
-            }
-            final String value = (String)expression.getValue();
-            if (value == null || value.length() != 1) {
-                return;
-            }
-            if (!ExpressionUtils.isStringConcatenationOperand(expression) &&
-                !isArgumentOfStringAppend(expression)) {
-                return;
-            }
-            registerError(expression, value);
-        }
-
-        static boolean isArgumentOfStringAppend(PsiExpression expression) {
-            final PsiElement parent = expression.getParent();
-            if (parent == null) {
-                return false;
-            }
-            if (!(parent instanceof PsiExpressionList)) {
-                return false;
-            }
-            final PsiElement grandparent = parent.getParent();
-            if (!(grandparent instanceof PsiMethodCallExpression)) {
-                return false;
-            }
-            final PsiMethodCallExpression call =
-                    (PsiMethodCallExpression)grandparent;
-            final PsiReferenceExpression methodExpression =
-                    call.getMethodExpression();
-            @NonNls final String name = methodExpression.getReferenceName();
-            if (!"append".equals(name) && !"insert".equals(name)) {
-                return false;
-            }
-            final PsiMethod method = call.resolveMethod();
-            if (method == null) {
-                return false;
-            }
-            final PsiClass methodClass = method.getContainingClass();
-            if (methodClass == null) {
-                return false;
-            }
-            final String className = methodClass.getQualifiedName();
-            return CommonClassNames.JAVA_LANG_STRING_BUFFER.equals(className) ||
-                   "java.lang.StringBuilder".equals(className);
-        }
-    }
+  }
 }

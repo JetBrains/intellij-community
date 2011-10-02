@@ -35,292 +35,298 @@ import javax.swing.*;
 import java.awt.*;
 
 public class MismatchedCollectionQueryUpdateInspection
-        extends BaseInspection {
+  extends BaseInspection {
 
-    @SuppressWarnings({"PublicField"})
-    public final ExternalizableStringSet queryNames =
-            new ExternalizableStringSet("copyInto", "drainTo", "propertyNames",
-                    "save", "store", "write");
-    @SuppressWarnings({"PublicField"})
-    public final ExternalizableStringSet updateNames =
-            new ExternalizableStringSet("add", "clear", "drainTo", "insert",
-                    "load", "offer", "poll", "push", "put", "remove", "replace",
-                    "retain", "set", "take");
+  @SuppressWarnings({"PublicField"})
+  public final ExternalizableStringSet queryNames =
+    new ExternalizableStringSet("copyInto", "drainTo", "propertyNames",
+                                "save", "store", "write");
+  @SuppressWarnings({"PublicField"})
+  public final ExternalizableStringSet updateNames =
+    new ExternalizableStringSet("add", "clear", "drainTo", "insert",
+                                "load", "offer", "poll", "push", "put", "remove", "replace",
+                                "retain", "set", "take");
 
-    public MismatchedCollectionQueryUpdateInspection() {}
+  public MismatchedCollectionQueryUpdateInspection() {
+  }
+
+  @Override
+  @NotNull
+  public String getID() {
+    return "MismatchedQueryAndUpdateOfCollection";
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "mismatched.update.collection.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    final boolean updated = ((Boolean)infos[0]).booleanValue();
+    if (updated) {
+      return InspectionGadgetsBundle.message(
+        "mismatched.update.collection.problem.descriptor.updated.not.queried");
+    }
+    else {
+      return InspectionGadgetsBundle.message(
+        "mismatched.update.collection.problem.description.queried.not.updated");
+    }
+  }
+
+  @Override
+  public JComponent createOptionsPanel() {
+    final JPanel panel = new JPanel(new GridBagLayout());
+    final ListTable table1 =
+      new ListTable(new ListWrappingTableModel(queryNames,
+                                               InspectionGadgetsBundle.message("query.column.name")));
+    final JScrollPane scrollPane1 =
+      ScrollPaneFactory.createScrollPane(table1);
+    UiUtils.setScrollPaneSize(scrollPane1, 10, 15);
+    final ActionToolbar toolbar1 = UiUtils.createAddRemoveToolbar(table1);
+
+    final ListTable table2 =
+      new ListTable(new ListWrappingTableModel(updateNames,
+                                               InspectionGadgetsBundle.message("update.column.name")));
+    final JScrollPane scrollPane2 =
+      ScrollPaneFactory.createScrollPane(table2);
+    UiUtils.setScrollPaneSize(scrollPane2, 10, 15);
+    final ActionToolbar toolbar2 = UiUtils.createAddRemoveToolbar(table2);
+
+    final GridBagConstraints constraints = new GridBagConstraints();
+    constraints.gridx = 0;
+    constraints.gridy = 0;
+    constraints.insets.left = 4;
+    constraints.insets.right = 4;
+    constraints.fill = GridBagConstraints.HORIZONTAL;
+    panel.add(toolbar1.getComponent(), constraints);
+
+    constraints.gridx = 1;
+    panel.add(toolbar2.getComponent(), constraints);
+
+    constraints.gridx = 0;
+    constraints.gridy = 1;
+    constraints.weightx = 0.5;
+    constraints.weighty = 1.0;
+    constraints.fill = GridBagConstraints.BOTH;
+    panel.add(scrollPane1, constraints);
+
+    constraints.gridx = 1;
+    panel.add(scrollPane2, constraints);
+    return panel;
+  }
+
+  @Override
+  public boolean isEnabledByDefault() {
+    return true;
+  }
+
+  @Override
+  public boolean runForWholeFile() {
+    return true;
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new MismatchedCollectionQueryUpdateVisitor();
+  }
+
+  private static boolean isEmptyCollectionInitializer(
+    PsiExpression initializer) {
+    if (!(initializer instanceof PsiNewExpression)) {
+      return false;
+    }
+    final PsiNewExpression newExpression =
+      (PsiNewExpression)initializer;
+    final PsiExpressionList argumentList =
+      newExpression.getArgumentList();
+    if (argumentList == null) {
+      return false;
+    }
+    final PsiExpression[] arguments = argumentList.getExpressions();
+    for (final PsiExpression argument : arguments) {
+      final PsiType argumentType = argument.getType();
+      if (argumentType == null) {
+        return false;
+      }
+      if (CollectionUtils.isCollectionClassOrInterface(argumentType)) {
+        return false;
+      }
+      if (argumentType instanceof PsiArrayType) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private class MismatchedCollectionQueryUpdateVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String getID(){
-        return "MismatchedQueryAndUpdateOfCollection";
+    public void visitField(@NotNull PsiField field) {
+      super.visitField(field);
+      if (!field.hasModifierProperty(PsiModifier.PRIVATE)) {
+        return;
+      }
+      final PsiClass containingClass = PsiUtil.getTopLevelClass(field);
+      if (!checkVariable(field, containingClass)) {
+        return;
+      }
+      final boolean written =
+        collectionContentsAreUpdated(field, containingClass);
+      final boolean read =
+        collectionContentsAreQueried(field, containingClass);
+      if (read == written) {
+        return;
+      }
+      registerFieldError(field, Boolean.valueOf(written));
     }
 
     @Override
-    @NotNull
-    public String getDisplayName(){
-        return InspectionGadgetsBundle.message(
-                "mismatched.update.collection.display.name");
+    public void visitLocalVariable(
+      @NotNull PsiLocalVariable variable) {
+      super.visitLocalVariable(variable);
+      final PsiCodeBlock codeBlock =
+        PsiTreeUtil.getParentOfType(variable,
+                                    PsiCodeBlock.class);
+      if (!checkVariable(variable, codeBlock)) {
+        return;
+      }
+      final boolean written =
+        collectionContentsAreUpdated(variable, codeBlock);
+      final boolean read =
+        collectionContentsAreQueried(variable, codeBlock);
+      if (read != written) {
+        registerVariableError(variable, Boolean.valueOf(written));
+      }
     }
 
-    @Override
-    @NotNull
-    public String buildErrorString(Object... infos){
-        final boolean updated = ((Boolean)infos[0]).booleanValue();
-        if(updated){
-            return InspectionGadgetsBundle.message(
-                    "mismatched.update.collection.problem.descriptor.updated.not.queried");
-        } else{
-            return InspectionGadgetsBundle.message(
-                    "mismatched.update.collection.problem.description.queried.not.updated");
-        }
+    private boolean checkVariable(PsiVariable variable,
+                                  PsiElement context) {
+      if (context == null) {
+        return false;
+      }
+      final PsiType type = variable.getType();
+      if (!CollectionUtils.isCollectionClassOrInterface(type)) {
+        return false;
+      }
+      if (VariableAccessUtils.variableIsAssignedFrom(variable, context)) {
+        return false;
+      }
+      if (VariableAccessUtils.variableIsReturned(variable, context)) {
+        return false;
+      }
+      if (VariableAccessUtils.variableIsPassedAsMethodArgument(variable,
+                                                               context)) {
+        return false;
+      }
+      return !VariableAccessUtils.variableIsUsedInArrayInitializer(
+        variable, context);
     }
 
-    @Override
-    public JComponent createOptionsPanel() {
-        final JPanel panel = new JPanel(new GridBagLayout());
-        final ListTable table1 =
-                new ListTable(new ListWrappingTableModel(queryNames,
-                        InspectionGadgetsBundle.message("query.column.name")));
-        final JScrollPane scrollPane1 =
-                ScrollPaneFactory.createScrollPane(table1);
-        UiUtils.setScrollPaneSize(scrollPane1, 10, 15);
-        final ActionToolbar toolbar1 = UiUtils.createAddRemoveToolbar(table1);
-
-        final ListTable table2 =
-                new ListTable(new ListWrappingTableModel(updateNames,
-                        InspectionGadgetsBundle.message("update.column.name")));
-        final JScrollPane scrollPane2 =
-                ScrollPaneFactory.createScrollPane(table2);
-        UiUtils.setScrollPaneSize(scrollPane2, 10, 15);
-        final ActionToolbar toolbar2 = UiUtils.createAddRemoveToolbar(table2);
-
-        final GridBagConstraints constraints = new GridBagConstraints();
-        constraints.gridx = 0;
-        constraints.gridy = 0;
-        constraints.insets.left = 4;
-        constraints.insets.right = 4;
-        constraints.fill = GridBagConstraints.HORIZONTAL;
-        panel.add(toolbar1.getComponent(), constraints);
-
-        constraints.gridx = 1;
-        panel.add(toolbar2.getComponent(), constraints);
-
-        constraints.gridx = 0;
-        constraints.gridy = 1;
-        constraints.weightx = 0.5;
-        constraints.weighty = 1.0;
-        constraints.fill = GridBagConstraints.BOTH;
-        panel.add(scrollPane1, constraints);
-
-        constraints.gridx = 1;
-        panel.add(scrollPane2, constraints);
-        return panel;
-    }
-
-    @Override
-    public boolean isEnabledByDefault(){
+    private boolean collectionContentsAreUpdated(
+      PsiVariable variable, PsiElement context) {
+      if (collectionUpdateCalled(variable, context)) {
         return true;
-    }
-
-    @Override
-    public boolean runForWholeFile() {
+      }
+      final PsiExpression initializer = variable.getInitializer();
+      if (initializer != null &&
+          !isEmptyCollectionInitializer(initializer)) {
         return true;
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor(){
-        return new MismatchedCollectionQueryUpdateVisitor();
-    }
-
-    private static boolean isEmptyCollectionInitializer(
-            PsiExpression initializer){
-        if(!(initializer instanceof PsiNewExpression)){
-            return false;
-        }
+      }
+      if (initializer instanceof PsiNewExpression) {
         final PsiNewExpression newExpression =
-                (PsiNewExpression) initializer;
-        final PsiExpressionList argumentList =
-                newExpression.getArgumentList();
-        if(argumentList == null){
-            return false;
+          (PsiNewExpression)initializer;
+        final PsiAnonymousClass anonymousClass =
+          newExpression.getAnonymousClass();
+        if (anonymousClass != null) {
+          if (collectionUpdateCalled(variable, anonymousClass)) {
+            return true;
+          }
         }
-        final PsiExpression[] arguments = argumentList.getExpressions();
-        for(final PsiExpression argument : arguments){
-            final PsiType argumentType = argument.getType();
-            if(argumentType == null){
-                return false;
-            }
-            if(CollectionUtils.isCollectionClassOrInterface(argumentType)){
-                return false;
-            }
-            if(argumentType instanceof PsiArrayType){
-                return false;
-            }
-        }
+      }
+      return VariableAccessUtils.variableIsAssigned(variable, context);
+    }
+
+    private boolean collectionContentsAreQueried(
+      PsiVariable variable, PsiElement context) {
+      if (collectionQueryCalled(variable, context)) {
         return true;
+      }
+      final PsiExpression initializer = variable.getInitializer();
+      if (initializer != null &&
+          !isEmptyCollectionInitializer(initializer)) {
+        return true;
+      }
+      return collectionQueriedByAssignment(variable, context);
     }
 
-    private class MismatchedCollectionQueryUpdateVisitor
-            extends BaseInspectionVisitor{
-
-        @Override public void visitField(@NotNull PsiField field){
-            super.visitField(field);
-            if(!field.hasModifierProperty(PsiModifier.PRIVATE)){
-                return;
-            }
-            final PsiClass containingClass = PsiUtil.getTopLevelClass(field);
-            if (!checkVariable(field, containingClass)) {
-                return;
-            }
-            final boolean written =
-                    collectionContentsAreUpdated(field, containingClass);
-            final boolean read =
-                    collectionContentsAreQueried(field, containingClass);
-            if(read == written){
-                return;
-            }
-            registerFieldError(field, Boolean.valueOf(written));
-        }
-
-        @Override public void visitLocalVariable(
-                @NotNull PsiLocalVariable variable){
-            super.visitLocalVariable(variable);
-            final PsiCodeBlock codeBlock =
-                    PsiTreeUtil.getParentOfType(variable,
-                            PsiCodeBlock.class);
-            if (!checkVariable(variable, codeBlock)) {
-                return;
-            }
-            final boolean written =
-                    collectionContentsAreUpdated(variable, codeBlock);
-            final boolean read =
-                    collectionContentsAreQueried(variable, codeBlock);
-            if(read != written){
-                registerVariableError(variable, Boolean.valueOf(written));
-            }
-        }
-
-        private boolean checkVariable(PsiVariable variable,
-                                      PsiElement context) {
-            if (context == null) {
-                return false;
-            }
-            final PsiType type = variable.getType();
-            if(!CollectionUtils.isCollectionClassOrInterface(type)){
-                return false;
-            }
-            if(VariableAccessUtils.variableIsAssignedFrom(variable, context)){
-                return false;
-            }
-            if(VariableAccessUtils.variableIsReturned(variable, context)){
-                return false;
-            }
-            if(VariableAccessUtils.variableIsPassedAsMethodArgument(variable,
-                    context)){
-                return false;
-            }
-            return !VariableAccessUtils.variableIsUsedInArrayInitializer(
-                    variable, context);
-        }
-
-        private boolean collectionContentsAreUpdated(
-                PsiVariable variable, PsiElement context){
-            if(collectionUpdateCalled(variable, context)){
-                return true;
-            }
-            final PsiExpression initializer = variable.getInitializer();
-            if(initializer != null &&
-                    !isEmptyCollectionInitializer(initializer)){
-                return true;
-            }
-            if(initializer instanceof PsiNewExpression){
-                final PsiNewExpression newExpression =
-                        (PsiNewExpression)initializer;
-                final PsiAnonymousClass anonymousClass =
-                        newExpression.getAnonymousClass();
-                if(anonymousClass != null){
-                    if(collectionUpdateCalled(variable, anonymousClass)){
-                        return true;
-                    }
-                }
-            }
-            return VariableAccessUtils.variableIsAssigned(variable, context);
-        }
-
-        private boolean collectionContentsAreQueried(
-                PsiVariable variable, PsiElement context){
-            if(collectionQueryCalled(variable, context)){
-                return true;
-            }
-            final PsiExpression initializer = variable.getInitializer();
-            if(initializer != null &&
-                    !isEmptyCollectionInitializer(initializer)){
-                return true;
-            }
-            return collectionQueriedByAssignment(variable, context);
-        }
-
-        private boolean collectionQueryCalled(PsiVariable variable,
-                                                     PsiElement context){
-            final CollectionQueryCalledVisitor visitor =
-                    new CollectionQueryCalledVisitor(variable, queryNames);
-            context.accept(visitor);
-            return visitor.isQueried();
-        }
-
-        private boolean collectionUpdateCalled(PsiVariable variable,
-                                                      PsiElement context){
-            final CollectionUpdateCalledVisitor visitor =
-                    new CollectionUpdateCalledVisitor(variable, updateNames);
-            context.accept(visitor);
-            return visitor.isUpdated();
-        }
+    private boolean collectionQueryCalled(PsiVariable variable,
+                                          PsiElement context) {
+      final CollectionQueryCalledVisitor visitor =
+        new CollectionQueryCalledVisitor(variable, queryNames);
+      context.accept(visitor);
+      return visitor.isQueried();
     }
 
-    private static boolean collectionQueriedByAssignment(
-            @NotNull PsiVariable variable, @NotNull PsiElement context) {
-        final CollectionQueriedByAssignmentVisitor visitor =
-                new CollectionQueriedByAssignmentVisitor(variable);
-        context.accept(visitor);
-        return visitor.mayBeQueried();
+    private boolean collectionUpdateCalled(PsiVariable variable,
+                                           PsiElement context) {
+      final CollectionUpdateCalledVisitor visitor =
+        new CollectionUpdateCalledVisitor(variable, updateNames);
+      context.accept(visitor);
+      return visitor.isUpdated();
+    }
+  }
+
+  private static boolean collectionQueriedByAssignment(
+    @NotNull PsiVariable variable, @NotNull PsiElement context) {
+    final CollectionQueriedByAssignmentVisitor visitor =
+      new CollectionQueriedByAssignmentVisitor(variable);
+    context.accept(visitor);
+    return visitor.mayBeQueried();
+  }
+
+  private static class CollectionQueriedByAssignmentVisitor
+    extends JavaRecursiveElementVisitor {
+
+    private boolean mayBeQueried = false;
+    @NotNull private final PsiVariable variable;
+
+    CollectionQueriedByAssignmentVisitor(@NotNull PsiVariable variable) {
+      this.variable = variable;
     }
 
-    private static class CollectionQueriedByAssignmentVisitor
-            extends JavaRecursiveElementVisitor{
-
-        private boolean mayBeQueried = false;
-        @NotNull private final PsiVariable variable;
-
-        CollectionQueriedByAssignmentVisitor(@NotNull PsiVariable variable){
-            this.variable = variable;
-        }
-
-        @Override public void visitElement(@NotNull PsiElement element){
-            if (mayBeQueried) {
-                return;
-            }
-            super.visitElement(element);
-        }
-
-        @Override public void visitAssignmentExpression(
-                @NotNull PsiAssignmentExpression assignment){
-            if(mayBeQueried){
-                return;
-            }
-            super.visitAssignmentExpression(assignment);
-            final PsiExpression lhs = assignment.getLExpression();
-            if (!VariableAccessUtils.mayEvaluateToVariable(lhs, variable)) {
-                return;
-            }
-            final PsiExpression rhs = assignment.getRExpression();
-            if (isEmptyCollectionInitializer(rhs)) {
-                return;
-            }
-            mayBeQueried = true;
-        }
-
-        public boolean mayBeQueried(){
-            return mayBeQueried;
-        }
+    @Override
+    public void visitElement(@NotNull PsiElement element) {
+      if (mayBeQueried) {
+        return;
+      }
+      super.visitElement(element);
     }
+
+    @Override
+    public void visitAssignmentExpression(
+      @NotNull PsiAssignmentExpression assignment) {
+      if (mayBeQueried) {
+        return;
+      }
+      super.visitAssignmentExpression(assignment);
+      final PsiExpression lhs = assignment.getLExpression();
+      if (!VariableAccessUtils.mayEvaluateToVariable(lhs, variable)) {
+        return;
+      }
+      final PsiExpression rhs = assignment.getRExpression();
+      if (isEmptyCollectionInitializer(rhs)) {
+        return;
+      }
+      mayBeQueried = true;
+    }
+
+    public boolean mayBeQueried() {
+      return mayBeQueried;
+    }
+  }
 }

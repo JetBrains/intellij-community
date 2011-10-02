@@ -24,59 +24,60 @@ import org.jetbrains.annotations.NotNull;
 
 public class DesignForExtensionInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "design.for.extension.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "design.for.extension.display.name");
+  }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "design.for.extension.problem.descriptor");
-    }
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "design.for.extension.problem.descriptor");
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new DesignForExtensionVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new DesignForExtensionVisitor();
+  }
 
-    private static class DesignForExtensionVisitor
-            extends BaseInspectionVisitor {
+  private static class DesignForExtensionVisitor
+    extends BaseInspectionVisitor {
 
-        @Override public void visitMethod(PsiMethod method) {
-            if (JspPsiUtil.isInJspFile(method)) {
-                // IDEADEV-25538
-                return;
-            }
-            super.visitMethod(method);
-            if(method.isConstructor()) {
-                return;
-            }
-            if(method.hasModifierProperty(PsiModifier.PRIVATE)||
-                    method.hasModifierProperty(PsiModifier.FINAL) ||
-                    method.hasModifierProperty(PsiModifier.ABSTRACT) ||
-                    method.hasModifierProperty(PsiModifier.STATIC)) {
-                return;
-            }
-            final PsiClass containingClass = method.getContainingClass();
-            if(containingClass==null) {
-                return;
-            }
-            if(containingClass.hasModifierProperty(PsiModifier.FINAL)) {
-                return;
-            }
-            if(containingClass.getName()==null) {
-                return; //anonymous classes can't be overridden
-            }
-            final PsiCodeBlock body = method.getBody();
-            if(body == null) {
-                return;
-            }
-            final PsiStatement[] statements = body.getStatements();
-            if(statements.length==0) {
-                return;
-            }
-            registerMethodError(method);
-        }
+    @Override
+    public void visitMethod(PsiMethod method) {
+      if (JspPsiUtil.isInJspFile(method)) {
+        // IDEADEV-25538
+        return;
+      }
+      super.visitMethod(method);
+      if (method.isConstructor()) {
+        return;
+      }
+      if (method.hasModifierProperty(PsiModifier.PRIVATE) ||
+          method.hasModifierProperty(PsiModifier.FINAL) ||
+          method.hasModifierProperty(PsiModifier.ABSTRACT) ||
+          method.hasModifierProperty(PsiModifier.STATIC)) {
+        return;
+      }
+      final PsiClass containingClass = method.getContainingClass();
+      if (containingClass == null) {
+        return;
+      }
+      if (containingClass.hasModifierProperty(PsiModifier.FINAL)) {
+        return;
+      }
+      if (containingClass.getName() == null) {
+        return; //anonymous classes can't be overridden
+      }
+      final PsiCodeBlock body = method.getBody();
+      if (body == null) {
+        return;
+      }
+      final PsiStatement[] statements = body.getStatements();
+      if (statements.length == 0) {
+        return;
+      }
+      registerMethodError(method);
     }
+  }
 }

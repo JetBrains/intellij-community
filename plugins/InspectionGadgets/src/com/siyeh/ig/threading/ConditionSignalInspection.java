@@ -29,93 +29,94 @@ import org.jetbrains.annotations.NotNull;
 
 public class ConditionSignalInspection extends BaseInspection {
 
-    @Override
+  @Override
+  @NotNull
+  public String getID() {
+    return "CallToSignalInsteadOfSignalAll";
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("condition.signal.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "condition.signal.problem.descriptor");
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new ConditionSignalVisitor();
+  }
+
+  @Override
+  public InspectionGadgetsFix buildFix(Object... infos) {
+    return new ConditionSignalFix();
+  }
+
+  private static class ConditionSignalFix extends InspectionGadgetsFix {
+
     @NotNull
-    public String getID() {
-        return "CallToSignalInsteadOfSignalAll";
+    public String getName() {
+      return InspectionGadgetsBundle.message(
+        "condition.signal.replace.quickfix");
     }
 
     @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message("condition.signal.display.name");
+    public void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiElement methodNameElement = descriptor.getPsiElement();
+      final PsiReferenceExpression methodExpression =
+        (PsiReferenceExpression)methodNameElement.getParent();
+      assert methodExpression != null;
+      final PsiExpression qualifier = methodExpression
+        .getQualifierExpression();
+      @NonNls final String signalAll = "signalAll";
+      if (qualifier == null) {
+        replaceExpression(methodExpression, signalAll);
+      }
+      else {
+        final String qualifierText = qualifier.getText();
+        replaceExpression(methodExpression,
+                          qualifierText + '.' + signalAll);
+      }
     }
+  }
+
+  private static class ConditionSignalVisitor extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "condition.signal.problem.descriptor");
+    public void visitMethodCallExpression(
+      @NotNull PsiMethodCallExpression expression) {
+      super.visitMethodCallExpression(expression);
+      final PsiReferenceExpression methodExpression =
+        expression.getMethodExpression();
+      final String methodName = methodExpression.getReferenceName();
+      @NonNls final String signal = "signal";
+      if (!signal.equals(methodName)) {
+        return;
+      }
+      final PsiExpressionList argumentList = expression.getArgumentList();
+      if (argumentList.getExpressions().length != 0) {
+        return;
+      }
+      final PsiMethod method = expression.resolveMethod();
+      if (method == null) {
+        return;
+      }
+      final PsiClass containingClass = method.getContainingClass();
+      if (containingClass == null) {
+        return;
+      }
+      if (!InheritanceUtil.isInheritor(containingClass,
+                                       "java.util.concurrent.locks.Condition")) {
+        return;
+      }
+      registerMethodCallError(expression);
     }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new ConditionSignalVisitor();
-    }
-
-    @Override
-    public InspectionGadgetsFix buildFix(Object... infos) {
-        return new ConditionSignalFix();
-    }
-
-    private static class ConditionSignalFix extends InspectionGadgetsFix {
-
-        @NotNull
-        public String getName() {
-            return InspectionGadgetsBundle.message(
-                    "condition.signal.replace.quickfix");
-        }
-
-        @Override
-        public void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
-            final PsiElement methodNameElement = descriptor.getPsiElement();
-            final PsiReferenceExpression methodExpression =
-                    (PsiReferenceExpression)methodNameElement.getParent();
-            assert methodExpression != null;
-            final PsiExpression qualifier = methodExpression
-                    .getQualifierExpression();
-            @NonNls final String signalAll = "signalAll";
-            if (qualifier == null) {
-                replaceExpression(methodExpression, signalAll);
-            }
-            else {
-                final String qualifierText = qualifier.getText();
-                replaceExpression(methodExpression,
-                        qualifierText + '.' + signalAll);
-            }
-        }
-    }
-
-    private static class ConditionSignalVisitor extends BaseInspectionVisitor {
-
-        @Override public void visitMethodCallExpression(
-                @NotNull PsiMethodCallExpression expression) {
-            super.visitMethodCallExpression(expression);
-            final PsiReferenceExpression methodExpression =
-                    expression.getMethodExpression();
-            final String methodName = methodExpression.getReferenceName();
-            @NonNls final String signal = "signal";
-            if (!signal.equals(methodName)) {
-                return;
-            }
-            final PsiExpressionList argumentList = expression.getArgumentList();
-            if (argumentList.getExpressions().length != 0) {
-                return;
-            }
-            final PsiMethod method = expression.resolveMethod();
-            if (method == null) {
-                return;
-            }
-            final PsiClass containingClass = method.getContainingClass();
-            if (containingClass == null) {
-                return;
-            }
-            if (!InheritanceUtil.isInheritor(containingClass,
-                    "java.util.concurrent.locks.Condition")) {
-                return;
-            }
-            registerMethodCallError(expression);
-        }
-    }
+  }
 }

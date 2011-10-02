@@ -27,136 +27,137 @@ import java.util.Collection;
 
 public class TypeUtils {
 
-    private TypeUtils() {}
+  private TypeUtils() {
+  }
 
-    public static boolean expressionHasType(
-            @Nullable PsiExpression expression,
-            @NonNls @NotNull String typeName) {
-        if (expression == null) {
-            return false;
-        }
-        final PsiType type = expression.getType();
-        return typeEquals(typeName, type);
+  public static boolean expressionHasType(
+    @Nullable PsiExpression expression,
+    @NonNls @NotNull String typeName) {
+    if (expression == null) {
+      return false;
     }
+    final PsiType type = expression.getType();
+    return typeEquals(typeName, type);
+  }
 
-    public static boolean typeEquals(@NonNls @NotNull String typeName,
-                                     @Nullable PsiType targetType) {
-        return targetType != null && targetType.equalsToText(typeName);
-    }
+  public static boolean typeEquals(@NonNls @NotNull String typeName,
+                                   @Nullable PsiType targetType) {
+    return targetType != null && targetType.equalsToText(typeName);
+  }
 
-    public static PsiClassType getType(@NotNull String fqName,
-                                       @NotNull PsiElement context) {
-        final Project project = context.getProject();
-        final PsiElementFactory factory =
-                JavaPsiFacade.getInstance(project).getElementFactory();
-        final GlobalSearchScope scope = context.getResolveScope();
-        return factory.createTypeByFQClassName(fqName, scope);
-    }
+  public static PsiClassType getType(@NotNull String fqName,
+                                     @NotNull PsiElement context) {
+    final Project project = context.getProject();
+    final PsiElementFactory factory =
+      JavaPsiFacade.getInstance(project).getElementFactory();
+    final GlobalSearchScope scope = context.getResolveScope();
+    return factory.createTypeByFQClassName(fqName, scope);
+  }
 
-    public static PsiClassType getJavaLangObjectType(
-            @NotNull PsiElement context) {
-        return getType(CommonClassNames.JAVA_LANG_OBJECT, context);
-    }
+  public static PsiClassType getJavaLangObjectType(
+    @NotNull PsiElement context) {
+    return getType(CommonClassNames.JAVA_LANG_OBJECT, context);
+  }
 
-    public static boolean isJavaLangObject(@Nullable PsiType targetType) {
-        return typeEquals(CommonClassNames.JAVA_LANG_OBJECT, targetType);
-    }
+  public static boolean isJavaLangObject(@Nullable PsiType targetType) {
+    return typeEquals(CommonClassNames.JAVA_LANG_OBJECT, targetType);
+  }
 
-    public static boolean isJavaLangString(@Nullable PsiType targetType) {
-        return typeEquals(CommonClassNames.JAVA_LANG_STRING, targetType);
-    }
+  public static boolean isJavaLangString(@Nullable PsiType targetType) {
+    return typeEquals(CommonClassNames.JAVA_LANG_STRING, targetType);
+  }
 
-    public static boolean expressionHasTypeOrSubtype(
-            @Nullable PsiExpression expression,
-            @NonNls @NotNull String typeName) {
-        if (expression == null) {
-            return false;
-        }
-        final PsiType type = expression.getType();
-        if (type == null) {
-            return false;
-        }
-        if (!(type instanceof PsiClassType)) {
-            return false;
-        }
-        final PsiClassType classType = (PsiClassType) type;
-        final PsiClass aClass = classType.resolve();
-        return aClass != null && InheritanceUtil.isInheritor(aClass, typeName);
+  public static boolean expressionHasTypeOrSubtype(
+    @Nullable PsiExpression expression,
+    @NonNls @NotNull String typeName) {
+    if (expression == null) {
+      return false;
     }
+    final PsiType type = expression.getType();
+    if (type == null) {
+      return false;
+    }
+    if (!(type instanceof PsiClassType)) {
+      return false;
+    }
+    final PsiClassType classType = (PsiClassType)type;
+    final PsiClass aClass = classType.resolve();
+    return aClass != null && InheritanceUtil.isInheritor(aClass, typeName);
+  }
 
-    //getTypeIfOneOfOrSubtype
-    public static String expressionHasTypeOrSubtype(
-            @Nullable PsiExpression expression,
-            @NonNls @NotNull String... typeNames) {
-        if (expression == null) {
-            return null;
-        }
-        final PsiType type = expression.getType();
-        if (type == null) {
-            return null;
-        }
-        if (!(type instanceof PsiClassType)) {
-            return null;
-        }
-        final PsiClassType classType = (PsiClassType) type;
-        final PsiClass aClass = classType.resolve();
-        if (aClass == null) {
-            return null;
-        }
-        for (String typeName : typeNames) {
-            if (InheritanceUtil.isInheritor(aClass, typeName)) {
-                return typeName;
-            }
-        }
-        return null;
+  //getTypeIfOneOfOrSubtype
+  public static String expressionHasTypeOrSubtype(
+    @Nullable PsiExpression expression,
+    @NonNls @NotNull String... typeNames) {
+    if (expression == null) {
+      return null;
     }
+    final PsiType type = expression.getType();
+    if (type == null) {
+      return null;
+    }
+    if (!(type instanceof PsiClassType)) {
+      return null;
+    }
+    final PsiClassType classType = (PsiClassType)type;
+    final PsiClass aClass = classType.resolve();
+    if (aClass == null) {
+      return null;
+    }
+    for (String typeName : typeNames) {
+      if (InheritanceUtil.isInheritor(aClass, typeName)) {
+        return typeName;
+      }
+    }
+    return null;
+  }
 
-    public static boolean expressionHasTypeOrSubtype(
-            @Nullable PsiExpression expression,
-            @NonNls @NotNull Collection<String> typeNames) {
-        if (expression == null) {
-            return false;
-        }
-        final PsiType type = expression.getType();
-        if (type == null) {
-            return false;
-        }
-        if (!(type instanceof PsiClassType)) {
-            return false;
-        }
-        final PsiClassType classType = (PsiClassType) type;
-        final PsiClass aClass = classType.resolve();
-        if (aClass == null) {
-            return false;
-        }
-        for (String typeName : typeNames) {
-            if (InheritanceUtil.isInheritor(aClass, typeName)) {
-                return true;
-            }
-        }
-        return false;
+  public static boolean expressionHasTypeOrSubtype(
+    @Nullable PsiExpression expression,
+    @NonNls @NotNull Collection<String> typeNames) {
+    if (expression == null) {
+      return false;
     }
+    final PsiType type = expression.getType();
+    if (type == null) {
+      return false;
+    }
+    if (!(type instanceof PsiClassType)) {
+      return false;
+    }
+    final PsiClassType classType = (PsiClassType)type;
+    final PsiClass aClass = classType.resolve();
+    if (aClass == null) {
+      return false;
+    }
+    for (String typeName : typeNames) {
+      if (InheritanceUtil.isInheritor(aClass, typeName)) {
+        return true;
+      }
+    }
+    return false;
+  }
 
-    public static boolean variableHasTypeOrSubtype(
-            @Nullable PsiVariable variable,
-            @NonNls @NotNull String... typeNames) {
-        if (variable == null) {
-            return false;
-        }
-        final PsiType type = variable.getType();
-        if (!(type instanceof PsiClassType)) {
-            return false;
-        }
-        final PsiClassType classType = (PsiClassType) type;
-        final PsiClass aClass = classType.resolve();
-        if (aClass == null) {
-            return false;
-        }
-        for (String typeName : typeNames) {
-            if (InheritanceUtil.isInheritor(aClass, typeName)) {
-                return true;
-            }
-        }
-        return false;
+  public static boolean variableHasTypeOrSubtype(
+    @Nullable PsiVariable variable,
+    @NonNls @NotNull String... typeNames) {
+    if (variable == null) {
+      return false;
     }
+    final PsiType type = variable.getType();
+    if (!(type instanceof PsiClassType)) {
+      return false;
+    }
+    final PsiClassType classType = (PsiClassType)type;
+    final PsiClass aClass = classType.resolve();
+    if (aClass == null) {
+      return false;
+    }
+    for (String typeName : typeNames) {
+      if (InheritanceUtil.isInheritor(aClass, typeName)) {
+        return true;
+      }
+    }
+    return false;
+  }
 }

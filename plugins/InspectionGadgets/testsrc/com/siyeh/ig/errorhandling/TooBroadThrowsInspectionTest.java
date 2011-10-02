@@ -19,15 +19,15 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
 
 public class TooBroadThrowsInspectionTest extends IGQuickFixesTestCase {
-    @Override
-    public void setUp() throws Exception {
-        super.setUp();
-        myFixture.enableInspections(new TooBroadThrowsInspection());
-        myRelativePath = "toobroadthrows";
-        myDefaultHint = InspectionGadgetsBundle.message("overly.broad.throws.clause.quickfix2");
-    }
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    myFixture.enableInspections(new TooBroadThrowsInspection());
+    myRelativePath = "toobroadthrows";
+    myDefaultHint = InspectionGadgetsBundle.message("overly.broad.throws.clause.quickfix2");
+  }
 
-    public void testNotFoundInsteadOfIOException() {
-        doTest();
-    }
+  public void testNotFoundInsteadOfIOException() {
+    doTest();
+  }
 }

@@ -24,26 +24,26 @@ import com.intellij.psi.PsiModifier;
 import org.jetbrains.annotations.NotNull;
 
 public class NonSynchronizedMethodOverridesSynchronizedMethodInspection
-        extends BaseInspection {
+  extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "non.synchronized.method.overrides.synchronized.method.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "non.synchronized.method.overrides.synchronized.method.display.name");
+  }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "non.synchronized.method.overrides.synchronized.method.problem.descriptor");
-    }
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "non.synchronized.method.overrides.synchronized.method.problem.descriptor");
+  }
 
-    @Override
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        return new ChangeModifierFix(PsiModifier.SYNCHRONIZED);
-    }
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new ChangeModifierFix(PsiModifier.SYNCHRONIZED);
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new NonSynchronizedMethodOverridesSynchronizedMethodVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new NonSynchronizedMethodOverridesSynchronizedMethodVisitor();
+  }
 }

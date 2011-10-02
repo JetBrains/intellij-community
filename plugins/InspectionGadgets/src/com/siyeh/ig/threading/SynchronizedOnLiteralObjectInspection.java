@@ -24,75 +24,76 @@ import org.jetbrains.annotations.NotNull;
 
 public class SynchronizedOnLiteralObjectInspection extends BaseInspection {
 
-    @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "synchronized.on.literal.object.name");
-    }
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "synchronized.on.literal.object.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    final PsiType type = (PsiType)infos[0];
+    return InspectionGadgetsBundle.message(
+      "synchronized.on.literal.object.descriptor",
+      type.getPresentableText());
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new SynchronizeOnLiteralVisitor();
+  }
+
+  private static class SynchronizeOnLiteralVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        final PsiType type = (PsiType)infos[0];
-        return InspectionGadgetsBundle.message(
-                "synchronized.on.literal.object.descriptor",
-                type.getPresentableText());
+    public void visitSynchronizedStatement(
+      @NotNull PsiSynchronizedStatement statement) {
+      super.visitSynchronizedStatement(statement);
+      final PsiExpression lockExpression = statement.getLockExpression();
+      if (!(lockExpression instanceof PsiReferenceExpression)) {
+        return;
+      }
+      if (!isNumberOrStringType(lockExpression)) {
+        return;
+      }
+      final PsiReferenceExpression referenceExpression =
+        (PsiReferenceExpression)lockExpression;
+      final PsiElement target = referenceExpression.resolve();
+      if (!(target instanceof PsiVariable)) {
+        return;
+      }
+      final PsiVariable variable = (PsiVariable)target;
+      final PsiExpression initializer = variable.getInitializer();
+      if (!(initializer instanceof PsiLiteralExpression)) {
+        return;
+      }
+      registerError(lockExpression, lockExpression.getType());
     }
 
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new SynchronizeOnLiteralVisitor();
-    }
-
-    private static class SynchronizeOnLiteralVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitSynchronizedStatement(
-                @NotNull PsiSynchronizedStatement statement) {
-            super.visitSynchronizedStatement(statement);
-            final PsiExpression lockExpression = statement.getLockExpression();
-            if (!(lockExpression instanceof PsiReferenceExpression)) {
-                return;
-            }
-            if (!isNumberOrStringType(lockExpression)) {
-                return;
-            }
-            final PsiReferenceExpression referenceExpression =
-                    (PsiReferenceExpression)lockExpression;
-            final PsiElement target = referenceExpression.resolve();
-            if (!(target instanceof PsiVariable)) {
-                return;
-            }
-            final PsiVariable variable = (PsiVariable)target;
-            final PsiExpression initializer = variable.getInitializer();
-            if (!(initializer instanceof PsiLiteralExpression)) {
-                return;
-            }
-            registerError(lockExpression, lockExpression.getType());
-        }
-
-        public static boolean isNumberOrStringType(PsiExpression expression) {
-            final PsiType type = expression.getType();
-            if (type == null) {
-                return false;
-            }
-            final Project project = expression.getProject();
-            final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-            final PsiClass javaLangNumberClass =
-                    psiFacade.findClass(CommonClassNames.JAVA_LANG_NUMBER,
+    public static boolean isNumberOrStringType(PsiExpression expression) {
+      final PsiType type = expression.getType();
+      if (type == null) {
+        return false;
+      }
+      final Project project = expression.getProject();
+      final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+      final PsiClass javaLangNumberClass =
+        psiFacade.findClass(CommonClassNames.JAVA_LANG_NUMBER,
                             expression.getResolveScope());
-            if (javaLangNumberClass == null) {
-                return false;
-            }
-            final PsiElementFactory elementFactory =
-                    psiFacade.getElementFactory();
-            final PsiClassType javaLangNumberType =
-                    elementFactory.createType(javaLangNumberClass);
-            return type.equalsToText(CommonClassNames.JAVA_LANG_STRING) ||
-                    type.equalsToText(CommonClassNames.JAVA_LANG_BOOLEAN) ||
-                    type.equalsToText(CommonClassNames.JAVA_LANG_CHARACTER) ||
-                    javaLangNumberType.isAssignableFrom(type);
-        }
+      if (javaLangNumberClass == null) {
+        return false;
+      }
+      final PsiElementFactory elementFactory =
+        psiFacade.getElementFactory();
+      final PsiClassType javaLangNumberType =
+        elementFactory.createType(javaLangNumberClass);
+      return type.equalsToText(CommonClassNames.JAVA_LANG_STRING) ||
+             type.equalsToText(CommonClassNames.JAVA_LANG_BOOLEAN) ||
+             type.equalsToText(CommonClassNames.JAVA_LANG_CHARACTER) ||
+             javaLangNumberType.isAssignableFrom(type);
     }
+  }
 }

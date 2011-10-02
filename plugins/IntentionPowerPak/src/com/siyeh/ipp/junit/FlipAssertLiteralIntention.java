@@ -29,70 +29,76 @@ import org.jetbrains.annotations.NotNull;
 
 public class FlipAssertLiteralIntention extends MutablyNamedIntention {
 
-    @Override
-    protected String getTextForElement(PsiElement element) {
-        final PsiMethodCallExpression call = (PsiMethodCallExpression)element;
-        final PsiReferenceExpression methodExpression =
-                call.getMethodExpression();
-        @NonNls final String fromMethodName = methodExpression.getReferenceName();
-        @NonNls final String toMethodName;
-        if ("assertTrue".equals(fromMethodName)) {
-            toMethodName = "assertFalse";
-        } else {
-            toMethodName = "assertTrue";
-        }
-        return IntentionPowerPackBundle.message(
-                "flip.assert.literal.intention.name",
-                fromMethodName, toMethodName);
+  @Override
+  protected String getTextForElement(PsiElement element) {
+    final PsiMethodCallExpression call = (PsiMethodCallExpression)element;
+    final PsiReferenceExpression methodExpression =
+      call.getMethodExpression();
+    @NonNls final String fromMethodName = methodExpression.getReferenceName();
+    @NonNls final String toMethodName;
+    if ("assertTrue".equals(fromMethodName)) {
+      toMethodName = "assertFalse";
     }
+    else {
+      toMethodName = "assertTrue";
+    }
+    return IntentionPowerPackBundle.message(
+      "flip.assert.literal.intention.name",
+      fromMethodName, toMethodName);
+  }
 
-    @Override @NotNull
-    public PsiElementPredicate getElementPredicate() {
-        return new AssertTrueOrFalsePredicate();
-    }
+  @Override
+  @NotNull
+  public PsiElementPredicate getElementPredicate() {
+    return new AssertTrueOrFalsePredicate();
+  }
 
-    @Override
-    public void processIntention(PsiElement element)
-            throws IncorrectOperationException {
-        final PsiMethodCallExpression call = (PsiMethodCallExpression)element;
-        final PsiReferenceExpression methodExpression =
-                call.getMethodExpression();
-        @NonNls final String fromMethodName =
-                methodExpression.getReferenceName();
-        @NonNls final String toMethodName;
-        if ("assertTrue".equals(fromMethodName)) {
-            toMethodName = "assertFalse";
-        } else {
-            toMethodName = "assertTrue";
-        }
-        final StringBuilder newCall = new StringBuilder();
-        final PsiElement qualifier = methodExpression.getQualifier();
-        if (qualifier == null) {
-            final PsiMethod containingMethod =
-                    PsiTreeUtil.getParentOfType(call, PsiMethod.class);
-            if (containingMethod != null &&
-                AnnotationUtil.isAnnotated(containingMethod, "org.junit.Test", true)) {
-                if (ImportUtils.nameCanBeStaticallyImported(
-                        "org.junit.Assert", toMethodName, element)) {
-                    ImportUtils.addStaticImport("org.junit.Assert", toMethodName, element);
-                } else {
-                    newCall.append("org.junit.Assert.");
-                }
-            }
-        } else {
-            newCall.append(qualifier.getText());
-            newCall.append('.');
-        }
-        newCall.append(toMethodName);
-        newCall.append('(');
-        final PsiExpressionList argumentList = call.getArgumentList();
-        final PsiExpression[] args = argumentList.getExpressions();
-        if (args.length == 1) {
-            newCall.append(BoolUtils.getNegatedExpressionText(args[0]));
-        } else {
-            newCall.append(BoolUtils.getNegatedExpressionText(args[1]));
-        }
-        newCall.append(')');
-        replaceExpression(newCall.toString(), call);
+  @Override
+  public void processIntention(PsiElement element)
+    throws IncorrectOperationException {
+    final PsiMethodCallExpression call = (PsiMethodCallExpression)element;
+    final PsiReferenceExpression methodExpression =
+      call.getMethodExpression();
+    @NonNls final String fromMethodName =
+      methodExpression.getReferenceName();
+    @NonNls final String toMethodName;
+    if ("assertTrue".equals(fromMethodName)) {
+      toMethodName = "assertFalse";
     }
+    else {
+      toMethodName = "assertTrue";
+    }
+    final StringBuilder newCall = new StringBuilder();
+    final PsiElement qualifier = methodExpression.getQualifier();
+    if (qualifier == null) {
+      final PsiMethod containingMethod =
+        PsiTreeUtil.getParentOfType(call, PsiMethod.class);
+      if (containingMethod != null &&
+          AnnotationUtil.isAnnotated(containingMethod, "org.junit.Test", true)) {
+        if (ImportUtils.nameCanBeStaticallyImported(
+          "org.junit.Assert", toMethodName, element)) {
+          ImportUtils.addStaticImport("org.junit.Assert", toMethodName, element);
+        }
+        else {
+          newCall.append("org.junit.Assert.");
+        }
+      }
+    }
+    else {
+      newCall.append(qualifier.getText());
+      newCall.append('.');
+    }
+    newCall.append(toMethodName);
+    newCall.append('(');
+    final PsiExpressionList argumentList = call.getArgumentList();
+    final PsiExpression[] args = argumentList.getExpressions();
+    if (args.length == 1) {
+      newCall.append(BoolUtils.getNegatedExpressionText(args[0]));
+    }
+    else {
+      newCall.append(BoolUtils.getNegatedExpressionText(args[1]));
+    }
+    newCall.append(')');
+    replaceExpression(newCall.toString(), call);
+  }
 }

@@ -42,7 +42,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class ParameterizedParametersStaticCollectionInspection extends BaseInspection{
+public class ParameterizedParametersStaticCollectionInspection extends BaseInspection {
   private static final String PARAMETERS_FQN = "org.junit.runners.Parameterized.Parameters";
   private static final String PARAMETERIZED_FQN = "org.junit.runners.Parameterized";
 
@@ -50,7 +50,7 @@ public class ParameterizedParametersStaticCollectionInspection extends BaseInspe
   protected String buildErrorString(Object... infos) {
     return infos.length > 0
            ? (String)infos[1]
-           :"Class #ref annotated @RunWith(Parameterized.class) lacks data provider";
+           : "Class #ref annotated @RunWith(Parameterized.class) lacks data provider";
   }
 
   public BaseInspectionVisitor buildVisitor() {
@@ -86,7 +86,8 @@ public class ParameterizedParametersStaticCollectionInspection extends BaseInspe
                       errorString += PsiModifier.STATIC;
                       hasToFixSignature = true;
                     }
-                    if (collectionsClass != null && (returnTypeClass == null || !InheritanceUtil.isInheritorOrSelf(returnTypeClass, collectionsClass, true))) {
+                    if (collectionsClass != null &&
+                        (returnTypeClass == null || !InheritanceUtil.isInheritorOrSelf(returnTypeClass, collectionsClass, true))) {
                       message += (hasToFixSignature ? " and" : "") + " return Collection";
                       errorString += (hasToFixSignature ? " and" : "") + " return Collection";
                       returnType = JavaPsiFacade.getElementFactory(project).createType(collectionsClass);
@@ -101,9 +102,10 @@ public class ParameterizedParametersStaticCollectionInspection extends BaseInspe
                 }
                 if (candidates.isEmpty()) {
                   registerClassError(aClass);
-                } else {
+                }
+                else {
                   for (MethodCandidate candidate : candidates) {
-                    registerMethodError(candidate.myMethod,  candidate.myProblem, candidate.myErrorString, candidate.myReturnType);
+                    registerMethodError(candidate.myMethod, candidate.myProblem, candidate.myErrorString, candidate.myReturnType);
                   }
                 }
               }
@@ -127,7 +129,8 @@ public class ParameterizedParametersStaticCollectionInspection extends BaseInspe
           final ChangeSignatureProcessor csp =
             new ChangeSignatureProcessor(project, method, false, PsiModifier.PUBLIC, method.getName(), type, new ParameterInfoImpl[0]);
           csp.run();
-        } else {
+        }
+        else {
           final PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
           if (psiClass != null) {
             final CreateMethodQuickFix fix = CreateMethodQuickFix

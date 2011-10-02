@@ -18,71 +18,75 @@ package com.siyeh.ig.psiutils;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-class VariableAssignedFromVisitor extends JavaRecursiveElementVisitor{
+class VariableAssignedFromVisitor extends JavaRecursiveElementVisitor {
 
-    private boolean assignedFrom = false;
+  private boolean assignedFrom = false;
 
-    @NotNull
-    private final PsiVariable variable;
+  @NotNull
+  private final PsiVariable variable;
 
-    public VariableAssignedFromVisitor(@NotNull PsiVariable variable){
-        super();
-        this.variable = variable;
+  public VariableAssignedFromVisitor(@NotNull PsiVariable variable) {
+    super();
+    this.variable = variable;
+  }
+
+  @Override
+  public void visitElement(@NotNull PsiElement element) {
+    if (!assignedFrom) {
+      super.visitElement(element);
     }
+  }
 
-    @Override public void visitElement(@NotNull PsiElement element){
-        if(!assignedFrom){
-            super.visitElement(element);
-        }
+  @Override
+  public void visitAssignmentExpression(
+    @NotNull PsiAssignmentExpression assignment) {
+    if (assignedFrom) {
+      return;
     }
+    super.visitAssignmentExpression(assignment);
+    final PsiExpression arg = assignment.getRExpression();
+    if (VariableAccessUtils.mayEvaluateToVariable(arg, variable)) {
+      assignedFrom = true;
+    }
+  }
 
-    @Override public void visitAssignmentExpression(
-            @NotNull PsiAssignmentExpression assignment){
-        if(assignedFrom){
-            return;
-        }
-        super.visitAssignmentExpression(assignment);
-        final PsiExpression arg = assignment.getRExpression();
-        if(VariableAccessUtils.mayEvaluateToVariable(arg, variable)){
-            assignedFrom = true;
-        }
+  @Override
+  public void visitDeclarationStatement(
+    @NotNull PsiDeclarationStatement statement) {
+    if (assignedFrom) {
+      return;
     }
+    super.visitDeclarationStatement(statement);
+    final PsiElement[] declaredElements = statement.getDeclaredElements();
+    for (PsiElement declaredElement : declaredElements) {
+      if (declaredElement instanceof PsiVariable) {
+        final PsiVariable declaredVariable =
+          (PsiVariable)declaredElement;
+        final PsiExpression initializer =
+          declaredVariable.getInitializer();
+        if (initializer != null &&
+            VariableAccessUtils.mayEvaluateToVariable(initializer,
+                                                      variable)) {
+          assignedFrom = true;
+          return;
+        }
+      }
+    }
+  }
 
-    @Override public void visitDeclarationStatement(
-            @NotNull PsiDeclarationStatement statement) {
-        if(assignedFrom){
-            return;
-        }
-        super.visitDeclarationStatement(statement);
-        final PsiElement[] declaredElements = statement.getDeclaredElements();
-        for(PsiElement declaredElement : declaredElements){
-            if(declaredElement instanceof PsiVariable){
-                final PsiVariable declaredVariable =
-                        (PsiVariable)declaredElement;
-                final PsiExpression initializer =
-                        declaredVariable.getInitializer();
-                if(initializer != null &&
-                    VariableAccessUtils.mayEvaluateToVariable(initializer,
-                            variable)){
-                    assignedFrom = true;
-                    return;
-                }
-            }
-        }
+  @Override
+  public void visitVariable(@NotNull PsiVariable var) {
+    if (assignedFrom) {
+      return;
     }
+    super.visitVariable(var);
+    final PsiExpression arg = var.getInitializer();
+    if (VariableAccessUtils.mayEvaluateToVariable(arg, variable)) {
+      assignedFrom = true;
+    }
+  }
 
-    @Override public void visitVariable(@NotNull PsiVariable var){
-        if(assignedFrom){
-            return;
-        }
-        super.visitVariable(var);
-        final PsiExpression arg = var.getInitializer();
-        if(VariableAccessUtils.mayEvaluateToVariable(arg, variable)){
-            assignedFrom = true;
-        }
-    }
-
-    public boolean isAssignedFrom(){
-        return assignedFrom;
-    }
+  public boolean isAssignedFrom() {
+    return assignedFrom;
+  }
 }

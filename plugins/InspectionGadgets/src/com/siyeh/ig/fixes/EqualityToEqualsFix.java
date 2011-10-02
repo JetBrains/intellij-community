@@ -28,52 +28,54 @@ import org.jetbrains.annotations.NotNull;
 
 public class EqualityToEqualsFix extends InspectionGadgetsFix {
 
-    @NotNull
-    public String getName() {
-        return InspectionGadgetsBundle.message(
-                "object.comparison.replace.quickfix");
-    }
+  @NotNull
+  public String getName() {
+    return InspectionGadgetsBundle.message(
+      "object.comparison.replace.quickfix");
+  }
 
-    public void doFix(Project project, ProblemDescriptor descriptor)
-            throws IncorrectOperationException {
-        final PsiElement comparisonToken = descriptor.getPsiElement();
-        final PsiBinaryExpression expression = (PsiBinaryExpression)
-                comparisonToken.getParent();
-        if (expression == null) {
-            return;
-        }
-        boolean negated=false;
-      final IElementType tokenType = expression.getOperationTokenType();
-        if (JavaTokenType.NE.equals(tokenType)) {
-            negated = true;
-        }
-        final PsiExpression lhs = expression.getLOperand();
-        final PsiExpression strippedLhs =
-                ParenthesesUtils.stripParentheses(lhs);
-        if (strippedLhs == null) {
-            return;
-        }
-        final PsiExpression rhs = expression.getROperand();
-        final PsiExpression strippedRhs =
-                ParenthesesUtils.stripParentheses(rhs);
-        if (strippedRhs == null) {
-            return;
-        }
-        @NonNls final String expString;
-        if (ParenthesesUtils.getPrecedence(strippedLhs) >
-                ParenthesesUtils.METHOD_CALL_PRECEDENCE) {
-            expString = '(' + strippedLhs.getText() + ").equals(" +
-                    strippedRhs.getText() + ')';
-        } else {
-            expString = strippedLhs.getText() + ".equals(" +
-                    strippedRhs.getText() + ')';
-        }
-        @NonNls final String newExpression;
-        if (negated) {
-            newExpression = '!' + expString;
-        } else {
-            newExpression = expString;
-        }
-        replaceExpression(expression, newExpression);
+  public void doFix(Project project, ProblemDescriptor descriptor)
+    throws IncorrectOperationException {
+    final PsiElement comparisonToken = descriptor.getPsiElement();
+    final PsiBinaryExpression expression = (PsiBinaryExpression)
+      comparisonToken.getParent();
+    if (expression == null) {
+      return;
     }
+    boolean negated = false;
+    final IElementType tokenType = expression.getOperationTokenType();
+    if (JavaTokenType.NE.equals(tokenType)) {
+      negated = true;
+    }
+    final PsiExpression lhs = expression.getLOperand();
+    final PsiExpression strippedLhs =
+      ParenthesesUtils.stripParentheses(lhs);
+    if (strippedLhs == null) {
+      return;
+    }
+    final PsiExpression rhs = expression.getROperand();
+    final PsiExpression strippedRhs =
+      ParenthesesUtils.stripParentheses(rhs);
+    if (strippedRhs == null) {
+      return;
+    }
+    @NonNls final String expString;
+    if (ParenthesesUtils.getPrecedence(strippedLhs) >
+        ParenthesesUtils.METHOD_CALL_PRECEDENCE) {
+      expString = '(' + strippedLhs.getText() + ").equals(" +
+                  strippedRhs.getText() + ')';
+    }
+    else {
+      expString = strippedLhs.getText() + ".equals(" +
+                  strippedRhs.getText() + ')';
+    }
+    @NonNls final String newExpression;
+    if (negated) {
+      newExpression = '!' + expString;
+    }
+    else {
+      newExpression = expString;
+    }
+    replaceExpression(expression, newExpression);
+  }
 }

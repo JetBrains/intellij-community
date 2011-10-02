@@ -27,94 +27,96 @@ import com.siyeh.ig.psiutils.UtilityClassUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class UtilityClassWithPublicConstructorInspection
-        extends BaseInspection {
+  extends BaseInspection {
 
-    @Override
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "utility.class.with.public.constructor.display.name");
+  }
+
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "utility.class.with.public.constructor.problem.descriptor");
+  }
+
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    final PsiClass psiClass = (PsiClass)infos[0];
+    if (psiClass.getConstructors().length > 1) {
+      return new UtilityClassWithPublicConstructorFix(true);
+    }
+    else {
+      return new UtilityClassWithPublicConstructorFix(false);
+    }
+  }
+
+  private static class UtilityClassWithPublicConstructorFix
+    extends InspectionGadgetsFix {
+
+    private final boolean m_multipleConstructors;
+
+    UtilityClassWithPublicConstructorFix(boolean multipleConstructors) {
+      super();
+      m_multipleConstructors = multipleConstructors;
+    }
+
     @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "utility.class.with.public.constructor.display.name");
-    }
-
-
-    @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "utility.class.with.public.constructor.problem.descriptor");
+    public String getName() {
+      return InspectionGadgetsBundle.message(
+        "utility.class.with.public.constructor.make.quickfix",
+        Integer.valueOf(m_multipleConstructors ? 1 : 2));
     }
 
     @Override
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        final PsiClass psiClass = (PsiClass)infos[0];
-        if (psiClass.getConstructors().length > 1) {
-            return new UtilityClassWithPublicConstructorFix(true);
-        } else {
-            return new UtilityClassWithPublicConstructorFix(false);
-        }
+    public void doFix(Project project, ProblemDescriptor descriptor)
+      throws IncorrectOperationException {
+      final PsiElement classNameIdentifer = descriptor.getPsiElement();
+      final PsiClass psiClass = (PsiClass)classNameIdentifer.getParent();
+      if (psiClass == null) {
+        return;
+      }
+      final PsiMethod[] constructors = psiClass.getConstructors();
+      for (PsiMethod constructor : constructors) {
+        final PsiModifierList modifierList =
+          constructor.getModifierList();
+        modifierList.setModifierProperty(PsiModifier.PRIVATE, true);
+      }
     }
+  }
 
-    private static class UtilityClassWithPublicConstructorFix
-            extends InspectionGadgetsFix {
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new StaticClassWithPublicConstructorVisitor();
+  }
 
-        private final boolean m_multipleConstructors;
-
-        UtilityClassWithPublicConstructorFix(boolean multipleConstructors) {
-            super();
-            m_multipleConstructors = multipleConstructors;
-        }
-
-        @NotNull
-        public String getName() {
-            return InspectionGadgetsBundle.message(
-                    "utility.class.with.public.constructor.make.quickfix",
-                    Integer.valueOf(m_multipleConstructors ? 1 : 2));
-        }
-
-        @Override
-        public void doFix(Project project, ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
-            final PsiElement classNameIdentifer = descriptor.getPsiElement();
-            final PsiClass psiClass = (PsiClass)classNameIdentifer.getParent();
-            if (psiClass == null) {
-                return;
-            }
-            final PsiMethod[] constructors = psiClass.getConstructors();
-            for (PsiMethod constructor : constructors) {
-                final PsiModifierList modifierList =
-                        constructor.getModifierList();
-                modifierList.setModifierProperty(PsiModifier.PRIVATE, true);
-            }
-        }
-    }
+  private static class StaticClassWithPublicConstructorVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new StaticClassWithPublicConstructorVisitor();
+    public void visitClass(@NotNull PsiClass aClass) {
+      // no call to super, so that it doesn't drill down to inner classes
+      if (!UtilityClassUtil.isUtilityClass(aClass)) {
+        return;
+      }
+      if (!hasPublicConstructor(aClass)) {
+        return;
+      }
+      registerClassError(aClass, aClass);
     }
 
-    private static class StaticClassWithPublicConstructorVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitClass(@NotNull PsiClass aClass) {
-            // no call to super, so that it doesn't drill down to inner classes
-            if (!UtilityClassUtil.isUtilityClass(aClass)) {
-                return;
-            }
-            if (!hasPublicConstructor(aClass)) {
-                return;
-            }
-            registerClassError(aClass, aClass);
+    private static boolean hasPublicConstructor(PsiClass aClass) {
+      final PsiMethod[] constructors = aClass.getConstructors();
+      for (final PsiMethod constructor : constructors) {
+        if (constructor.hasModifierProperty(PsiModifier.PUBLIC)) {
+          return true;
         }
-
-        private static boolean hasPublicConstructor(PsiClass aClass) {
-            final PsiMethod[] constructors = aClass.getConstructors();
-            for (final PsiMethod constructor : constructors) {
-                if (constructor.hasModifierProperty(PsiModifier.PUBLIC)) {
-                    return true;
-                }
-            }
-            return false;
-        }
+      }
+      return false;
     }
+  }
 }

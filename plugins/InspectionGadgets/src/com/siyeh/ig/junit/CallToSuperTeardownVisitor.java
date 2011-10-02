@@ -19,37 +19,39 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-class CallToSuperTeardownVisitor extends JavaRecursiveElementVisitor{
+class CallToSuperTeardownVisitor extends JavaRecursiveElementVisitor {
 
-    private boolean callToSuperTearDownFound = false;
+  private boolean callToSuperTearDownFound = false;
 
-    @Override public void visitElement(@NotNull PsiElement element){
-        if(!callToSuperTearDownFound){
-            super.visitElement(element);
-        }
+  @Override
+  public void visitElement(@NotNull PsiElement element) {
+    if (!callToSuperTearDownFound) {
+      super.visitElement(element);
+    }
+  }
+
+  @Override
+  public void visitMethodCallExpression(
+    @NotNull PsiMethodCallExpression expression) {
+    if (callToSuperTearDownFound) {
+      return;
+    }
+    super.visitMethodCallExpression(expression);
+    final PsiReferenceExpression methodExpression =
+      expression.getMethodExpression();
+    @NonNls final String methodName = methodExpression.getReferenceName();
+    if (!"tearDown".equals(methodName)) {
+      return;
+    }
+    final PsiExpression target = methodExpression.getQualifierExpression();
+    if (!(target instanceof PsiSuperExpression)) {
+      return;
     }
 
-    @Override public void visitMethodCallExpression(
-            @NotNull PsiMethodCallExpression expression){
-        if(callToSuperTearDownFound){
-            return;
-        }
-        super.visitMethodCallExpression(expression);
-        final PsiReferenceExpression methodExpression =
-                expression.getMethodExpression();
-        @NonNls final String methodName = methodExpression.getReferenceName();
-        if(!"tearDown".equals(methodName)){
-            return;
-        }
-        final PsiExpression target = methodExpression.getQualifierExpression();
-        if(!(target instanceof PsiSuperExpression)){
-            return;
-        }
+    callToSuperTearDownFound = true;
+  }
 
-        callToSuperTearDownFound = true;
-    }
-
-    public boolean isCallToSuperTeardownFound(){
-        return callToSuperTearDownFound;
-    }
+  public boolean isCallToSuperTeardownFound() {
+    return callToSuperTearDownFound;
+  }
 }

@@ -24,45 +24,47 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 public class ReplacePostfixExpressionWithOperatorAssignmentIntention
-        extends MutablyNamedIntention {
+  extends MutablyNamedIntention {
 
-    @Override
-    protected String getTextForElement(PsiElement element) {
-        final PsiPostfixExpression postfixExpression =
-                (PsiPostfixExpression)element;
-        final PsiJavaToken sign = postfixExpression.getOperationSign();
-        final IElementType tokenType = sign.getTokenType();
-        final String replacementText;
-        if (JavaTokenType.PLUSPLUS.equals(tokenType)) {
-            replacementText = "+=";
-        } else {
-            replacementText = "-=";
-        }
-        final String signText = sign.getText();
-        return IntentionPowerPackBundle.message(
-                "replace.some.operator.with.other.intention.name",
-                signText, replacementText);
+  @Override
+  protected String getTextForElement(PsiElement element) {
+    final PsiPostfixExpression postfixExpression =
+      (PsiPostfixExpression)element;
+    final PsiJavaToken sign = postfixExpression.getOperationSign();
+    final IElementType tokenType = sign.getTokenType();
+    final String replacementText;
+    if (JavaTokenType.PLUSPLUS.equals(tokenType)) {
+      replacementText = "+=";
     }
+    else {
+      replacementText = "-=";
+    }
+    final String signText = sign.getText();
+    return IntentionPowerPackBundle.message(
+      "replace.some.operator.with.other.intention.name",
+      signText, replacementText);
+  }
 
-    @NotNull
-    @Override
-    protected PsiElementPredicate getElementPredicate() {
-        return new ReplacePostfixExpressionWithOperatorAssignmentPredicate();
-    }
+  @NotNull
+  @Override
+  protected PsiElementPredicate getElementPredicate() {
+    return new ReplacePostfixExpressionWithOperatorAssignmentPredicate();
+  }
 
-    @Override
-    protected void processIntention(@NotNull PsiElement element)
-            throws IncorrectOperationException {
-        final PsiPostfixExpression postfixExpression =
-                (PsiPostfixExpression)element;
-        final PsiExpression operand = postfixExpression.getOperand();
-        final String operandText = operand.getText();
-        final IElementType tokenType =
-                postfixExpression.getOperationTokenType();
-        if (JavaTokenType.PLUSPLUS.equals(tokenType)) {
-            replaceExpression(operandText + "+=1", postfixExpression);
-        } else if (JavaTokenType.MINUSMINUS.equals(tokenType)) {
-            replaceExpression(operandText + "-=1", postfixExpression);
-        }
+  @Override
+  protected void processIntention(@NotNull PsiElement element)
+    throws IncorrectOperationException {
+    final PsiPostfixExpression postfixExpression =
+      (PsiPostfixExpression)element;
+    final PsiExpression operand = postfixExpression.getOperand();
+    final String operandText = operand.getText();
+    final IElementType tokenType =
+      postfixExpression.getOperationTokenType();
+    if (JavaTokenType.PLUSPLUS.equals(tokenType)) {
+      replaceExpression(operandText + "+=1", postfixExpression);
     }
+    else if (JavaTokenType.MINUSMINUS.equals(tokenType)) {
+      replaceExpression(operandText + "-=1", postfixExpression);
+    }
+  }
 }

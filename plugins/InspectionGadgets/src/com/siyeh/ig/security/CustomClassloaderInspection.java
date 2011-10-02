@@ -24,36 +24,37 @@ import org.jetbrains.annotations.NotNull;
 
 public class CustomClassloaderInspection extends BaseInspection {
 
-    @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "custom.classloader.display.name");
-    }
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "custom.classloader.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "custom.classloader.problem.descriptor");
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new CustomClassloaderVisitor();
+  }
+
+  private static class CustomClassloaderVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "custom.classloader.problem.descriptor");
+    public void visitClass(@NotNull PsiClass aClass) {
+      if (!InheritanceUtil.isInheritor(aClass, "java.lang.ClassLoader")) {
+        return;
+      }
+      if ("java.lang.ClassLoader".equals(aClass.getQualifiedName())) {
+        return;
+      }
+      registerClassError(aClass);
     }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new CustomClassloaderVisitor();
-    }
-
-    private static class CustomClassloaderVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitClass(@NotNull PsiClass aClass) {
-            if (!InheritanceUtil.isInheritor(aClass, "java.lang.ClassLoader")) {
-                return;
-            }
-            if ("java.lang.ClassLoader".equals(aClass.getQualifiedName())) {
-                return;
-            }
-            registerClassError(aClass);
-        }
-    }
+  }
 }

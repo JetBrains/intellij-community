@@ -27,59 +27,60 @@ import org.jetbrains.annotations.NotNull;
 
 public class ThreadYieldInspection extends BaseInspection {
 
-    @NotNull
-    public String getID() {
-        return "CallToThreadYield";
+  @NotNull
+  public String getID() {
+    return "CallToThreadYield";
+  }
+
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("thread.yield.display.name");
+  }
+
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "thread.yield.problem.descriptor");
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new ThreadYieldVisitor();
+  }
+
+  private static class ThreadYieldVisitor extends BaseInspectionVisitor {
+
+    @Override
+    public void visitMethodCallExpression(
+      @NotNull PsiMethodCallExpression expression) {
+      super.visitMethodCallExpression(expression);
+      if (!isThreadYield(expression)) {
+        return;
+      }
+      registerMethodCallError(expression);
     }
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message("thread.yield.display.name");
+    private static boolean isThreadYield(
+      PsiMethodCallExpression expression) {
+      final PsiReferenceExpression methodExpression =
+        expression.getMethodExpression();
+      @NonNls final String methodName =
+        methodExpression.getReferenceName();
+      if (!"yield".equals(methodName)) {
+        return false;
+      }
+      final PsiMethod method = expression.resolveMethod();
+      if (method == null) {
+        return false;
+      }
+      final PsiClass aClass = method.getContainingClass();
+      if (aClass == null) {
+        return false;
+      }
+      final String className = aClass.getQualifiedName();
+      if (className == null) {
+        return false;
+      }
+      return "java.lang.Thread".equals(className);
     }
-
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "thread.yield.problem.descriptor");
-    }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new ThreadYieldVisitor();
-    }
-
-    private static class ThreadYieldVisitor extends BaseInspectionVisitor {
-
-        @Override public void visitMethodCallExpression(
-                @NotNull PsiMethodCallExpression expression) {
-            super.visitMethodCallExpression(expression);
-            if (!isThreadYield(expression)) {
-                return;
-            }
-            registerMethodCallError(expression);
-        }
-
-        private static boolean isThreadYield(
-                PsiMethodCallExpression expression) {
-            final PsiReferenceExpression methodExpression =
-                    expression.getMethodExpression();
-            @NonNls final String methodName =
-                    methodExpression.getReferenceName();
-            if (!"yield".equals(methodName)) {
-                return false;
-            }
-            final PsiMethod method = expression.resolveMethod();
-            if (method == null) {
-                return false;
-            }
-            final PsiClass aClass = method.getContainingClass();
-            if (aClass == null) {
-                return false;
-            }
-            final String className = aClass.getQualifiedName();
-            if (className == null) {
-                return false;
-            }
-            return "java.lang.Thread".equals(className);
-        }
-    }
+  }
 }

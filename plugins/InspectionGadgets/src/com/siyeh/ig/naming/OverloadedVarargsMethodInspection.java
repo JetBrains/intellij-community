@@ -24,47 +24,49 @@ import org.jetbrains.annotations.NotNull;
 
 public class OverloadedVarargsMethodInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "overloaded.vararg.method.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "overloaded.vararg.method.display.name");
+  }
 
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        final PsiMethod element = (PsiMethod)infos[0];
-        if (element.isConstructor()) {
-            return InspectionGadgetsBundle.message(
-                    "overloaded.vararg.constructor.problem.descriptor");
-        } else {
-            return InspectionGadgetsBundle.message(
-                    "overloaded.vararg.method.problem.descriptor");
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    final PsiMethod element = (PsiMethod)infos[0];
+    if (element.isConstructor()) {
+      return InspectionGadgetsBundle.message(
+        "overloaded.vararg.constructor.problem.descriptor");
+    }
+    else {
+      return InspectionGadgetsBundle.message(
+        "overloaded.vararg.method.problem.descriptor");
+    }
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new OverloadedVarargMethodVisitor();
+  }
+
+  private static class OverloadedVarargMethodVisitor
+    extends BaseInspectionVisitor {
+
+    @Override
+    public void visitMethod(@NotNull PsiMethod method) {
+      if (!method.isVarArgs()) {
+        return;
+      }
+      final PsiClass aClass = method.getContainingClass();
+      if (aClass == null) {
+        return;
+      }
+      final String methodName = method.getName();
+      final PsiMethod[] sameNameMethods =
+        aClass.findMethodsByName(methodName, false);
+      for (PsiMethod sameNameMethod : sameNameMethods) {
+        if (!sameNameMethod.equals(method)) {
+          registerMethodError(method, method);
         }
+      }
     }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new OverloadedVarargMethodVisitor();
-    }
-
-    private static class OverloadedVarargMethodVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitMethod(@NotNull PsiMethod method) {
-            if (!method.isVarArgs()) {
-                return;
-            }
-            final PsiClass aClass = method.getContainingClass();
-            if (aClass == null) {
-                return;
-            }
-            final String methodName = method.getName();
-            final PsiMethod[] sameNameMethods =
-                    aClass.findMethodsByName(methodName, false);
-            for (PsiMethod sameNameMethod : sameNameMethods) {
-                if(!sameNameMethod.equals(method)) {
-                    registerMethodError(method, method);
-                }
-            }
-        }
-    }
+  }
 }

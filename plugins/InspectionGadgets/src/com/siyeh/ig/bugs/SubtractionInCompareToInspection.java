@@ -26,48 +26,49 @@ import org.jetbrains.annotations.NotNull;
 
 public class SubtractionInCompareToInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName(){
-        return InspectionGadgetsBundle.message(
-                "subtraction.in.compareto.display.name");
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "subtraction.in.compareto.display.name");
+  }
+
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "subtraction.in.compareto.problem.descriptor");
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new SubtractionInCompareToVisitor();
+  }
+
+  private static class SubtractionInCompareToVisitor
+    extends BaseInspectionVisitor {
+
+    @Override
+    public void visitBinaryExpression(@NotNull PsiBinaryExpression exp) {
+      super.visitBinaryExpression(exp);
+      if (!(exp.getROperand() != null)) {
+        return;
+      }
+      if (!isSubtraction(exp)) {
+        return;
+      }
+      final PsiMethod method =
+        PsiTreeUtil.getParentOfType(exp, PsiMethod.class);
+      if (!MethodUtils.isCompareTo(method)) {
+        return;
+      }
+      registerError(exp);
     }
 
-    @NotNull
-    public String buildErrorString(Object... infos){
-        return InspectionGadgetsBundle.message(
-                "subtraction.in.compareto.problem.descriptor");
+    private static boolean isSubtraction(PsiBinaryExpression exp) {
+      final PsiExpression rhs = exp.getROperand();
+      if (rhs == null) {
+        return false;
+      }
+      final IElementType tokenType = exp.getOperationTokenType();
+      return tokenType.equals(JavaTokenType.MINUS);
     }
-
-    public BaseInspectionVisitor buildVisitor(){
-        return new SubtractionInCompareToVisitor();
-    }
-
-    private static class SubtractionInCompareToVisitor
-            extends BaseInspectionVisitor{
-
-        @Override public void visitBinaryExpression(@NotNull PsiBinaryExpression exp){
-            super.visitBinaryExpression(exp);
-            if(!(exp.getROperand() != null)){
-                return;
-            }
-            if(!isSubtraction(exp)){
-                return;
-            }
-            final PsiMethod method =
-                    PsiTreeUtil.getParentOfType(exp, PsiMethod.class);
-            if(!MethodUtils.isCompareTo(method)){
-                return;
-            }
-            registerError(exp);
-        }
-
-        private static boolean isSubtraction(PsiBinaryExpression exp){
-            final PsiExpression rhs = exp.getROperand();
-            if(rhs == null){
-                return false;
-            }
-          final IElementType tokenType = exp.getOperationTokenType();
-            return tokenType.equals(JavaTokenType.MINUS);
-        }
-    }
+  }
 }

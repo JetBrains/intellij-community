@@ -30,28 +30,28 @@ import org.jetbrains.annotations.NotNull;
 
 public class IntroduceConstantFix extends InspectionGadgetsFix {
 
-    @NotNull
-    public String getName() {
-        return InspectionGadgetsBundle.message("introduce.constant.quickfix");
-    }
+  @NotNull
+  public String getName() {
+    return InspectionGadgetsBundle.message("introduce.constant.quickfix");
+  }
 
-    public void doFix(@NotNull final Project project,
-                      ProblemDescriptor descriptor) {
+  public void doFix(@NotNull final Project project,
+                    ProblemDescriptor descriptor) {
 
-        final PsiElement constant = descriptor.getPsiElement();
-        final Application application = ApplicationManager.getApplication();
-        application.invokeLater(new Runnable() {
+    final PsiElement constant = descriptor.getPsiElement();
+    final Application application = ApplicationManager.getApplication();
+    application.invokeLater(new Runnable() {
 
-            public void run() {
-                final JavaRefactoringActionHandlerFactory factory =
-                        JavaRefactoringActionHandlerFactory.getInstance();
-                final RefactoringActionHandler introduceHandler =
-                        factory.createIntroduceConstantHandler();
-                final DataManager dataManager = DataManager.getInstance();
-                final DataContext dataContext = dataManager.getDataContext();
-                introduceHandler.invoke(project, new PsiElement[]{constant},
-                        dataContext);
-            }
-        }, project.getDisposed());
-    }
+      public void run() {
+        final JavaRefactoringActionHandlerFactory factory =
+          JavaRefactoringActionHandlerFactory.getInstance();
+        final RefactoringActionHandler introduceHandler =
+          factory.createIntroduceConstantHandler();
+        final DataManager dataManager = DataManager.getInstance();
+        final DataContext dataContext = dataManager.getDataContext();
+        introduceHandler.invoke(project, new PsiElement[]{constant},
+                                dataContext);
+      }
+    }, project.getDisposed());
+  }
 }

@@ -27,56 +27,56 @@ import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class ReadResolveAndWriteReplaceProtectedInspection
-        extends BaseInspection {
+  extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "readresolve.writereplace.protected.display.name");
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "readresolve.writereplace.protected.display.name");
+  }
+
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "readresolve.writereplace.protected.problem.descriptor");
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new ReadResolveWriteReplaceProtectedVisitor();
+  }
+
+  public InspectionGadgetsFix buildFix(Object... infos) {
+    return new ChangeModifierFix(PsiModifier.PROTECTED);
+  }
+
+  private static class ReadResolveWriteReplaceProtectedVisitor
+    extends BaseInspectionVisitor {
+
+    @Override
+    public void visitMethod(@NotNull PsiMethod method) {
+      // no call to super, so it doesn't drill down
+      final PsiClass aClass = method.getContainingClass();
+      if (aClass == null) {
+        return;
+      }
+      if (aClass.isInterface() || aClass.isAnnotationType()) {
+        return;
+      }
+      if (method.hasModifierProperty(PsiModifier.PROTECTED)) {
+        return;
+      }
+      if (aClass.hasModifierProperty(PsiModifier.FINAL) &&
+          method.hasModifierProperty(PsiModifier.PRIVATE)) {
+        return;
+      }
+      if (!SerializationUtils.isReadResolve(method) &&
+          !SerializationUtils.isWriteReplace(method)) {
+        return;
+      }
+      if (!SerializationUtils.isSerializable(aClass)) {
+        return;
+      }
+      registerMethodError(method);
     }
-
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "readresolve.writereplace.protected.problem.descriptor");
-
-    }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new ReadResolveWriteReplaceProtectedVisitor();
-    }
-
-    public InspectionGadgetsFix buildFix(Object... infos) {
-        return new ChangeModifierFix(PsiModifier.PROTECTED);
-    }
-
-    private static class ReadResolveWriteReplaceProtectedVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitMethod(@NotNull PsiMethod method) {
-            // no call to super, so it doesn't drill down
-            final PsiClass aClass = method.getContainingClass();
-            if(aClass == null) {
-                return;
-            }
-            if (aClass.isInterface() || aClass.isAnnotationType()) {
-                return;
-            }
-            if (method.hasModifierProperty(PsiModifier.PROTECTED)) {
-                return;
-            }
-            if(aClass.hasModifierProperty(PsiModifier.FINAL) &&
-                   method.hasModifierProperty(PsiModifier.PRIVATE)) {
-                return;
-            }
-            if(!SerializationUtils.isReadResolve(method) &&
-                       !SerializationUtils.isWriteReplace(method)) {
-                return;
-            }
-            if(!SerializationUtils.isSerializable(aClass)) {
-                return;
-            }
-            registerMethodError(method);
-        }
-    }
+  }
 }

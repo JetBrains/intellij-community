@@ -21,17 +21,17 @@ import org.jetbrains.annotations.NotNull;
 
 class OnDemandImportPredicate implements PsiElementPredicate {
 
-    public boolean satisfiedBy(@NotNull PsiElement element) {
-        // doesn't work for import static yet.
-        if (!(element instanceof PsiImportStatement)) {
-            return false;
-        }
-        final PsiImportStatementBase importStatementBase =
-                (PsiImportStatementBase)element;
-        if (!importStatementBase.isOnDemand()) {
-            return false;
-        }
-        final PsiFile file = importStatementBase.getContainingFile();
-        return file instanceof PsiJavaFile;
+  public boolean satisfiedBy(@NotNull PsiElement element) {
+    // doesn't work for import static yet.
+    if (!(element instanceof PsiImportStatement)) {
+      return false;
     }
+    final PsiImportStatementBase importStatementBase =
+      (PsiImportStatementBase)element;
+    if (!importStatementBase.isOnDemand()) {
+      return false;
+    }
+    final PsiFile file = importStatementBase.getContainingFile();
+    return file instanceof PsiJavaFile;
+  }
 }

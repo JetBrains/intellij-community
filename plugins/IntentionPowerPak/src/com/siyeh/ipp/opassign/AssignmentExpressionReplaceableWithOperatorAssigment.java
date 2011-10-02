@@ -24,46 +24,46 @@ import com.siyeh.ipp.psiutils.ErrorUtil;
 import com.siyeh.ipp.psiutils.SideEffectChecker;
 
 class AssignmentExpressionReplaceableWithOperatorAssigment
-        implements PsiElementPredicate{
+  implements PsiElementPredicate {
 
-    public boolean satisfiedBy(PsiElement element){
-        if(!(element instanceof PsiAssignmentExpression)){
-            return false;
-        }
-        final PsiAssignmentExpression assignment =
-                (PsiAssignmentExpression) element;
-      final IElementType tokenType = assignment.getOperationTokenType();
-        if(!JavaTokenType.EQ.equals(tokenType)){
-            return false;
-        }
-        final PsiExpression rhs = assignment.getRExpression();
-        final PsiExpression expression = PsiUtil.deparenthesizeExpression(rhs);
-        if(expression == null){
-            return false;
-        }
-        if(!(expression instanceof PsiBinaryExpression)){
-            return false;
-        }
-        final PsiBinaryExpression binaryRhs = (PsiBinaryExpression) expression;
-        final PsiExpression rhsRhs = binaryRhs.getROperand();
-        final PsiExpression rhsLhs = binaryRhs.getLOperand();
-        if(rhsRhs == null){
-            return false;
-        }
-      final IElementType rhsTokenType = binaryRhs.getOperationTokenType();
-        if(JavaTokenType.OROR.equals(rhsTokenType) ||
-                JavaTokenType.ANDAND.equals(rhsTokenType) ||
-                JavaTokenType.EQEQ.equals(rhsTokenType) ||
-                JavaTokenType.NE.equals(rhsTokenType)){
-            return false;
-        }
-        final PsiExpression lhs = assignment.getLExpression();
-        if(SideEffectChecker.mayHaveSideEffects(lhs)){
-            return false;
-        }
-        if(!EquivalenceChecker.expressionsAreEquivalent(lhs, rhsLhs)){
-            return false;
-        }
-        return !ErrorUtil.containsError(element);
+  public boolean satisfiedBy(PsiElement element) {
+    if (!(element instanceof PsiAssignmentExpression)) {
+      return false;
     }
+    final PsiAssignmentExpression assignment =
+      (PsiAssignmentExpression)element;
+    final IElementType tokenType = assignment.getOperationTokenType();
+    if (!JavaTokenType.EQ.equals(tokenType)) {
+      return false;
+    }
+    final PsiExpression rhs = assignment.getRExpression();
+    final PsiExpression expression = PsiUtil.deparenthesizeExpression(rhs);
+    if (expression == null) {
+      return false;
+    }
+    if (!(expression instanceof PsiBinaryExpression)) {
+      return false;
+    }
+    final PsiBinaryExpression binaryRhs = (PsiBinaryExpression)expression;
+    final PsiExpression rhsRhs = binaryRhs.getROperand();
+    final PsiExpression rhsLhs = binaryRhs.getLOperand();
+    if (rhsRhs == null) {
+      return false;
+    }
+    final IElementType rhsTokenType = binaryRhs.getOperationTokenType();
+    if (JavaTokenType.OROR.equals(rhsTokenType) ||
+        JavaTokenType.ANDAND.equals(rhsTokenType) ||
+        JavaTokenType.EQEQ.equals(rhsTokenType) ||
+        JavaTokenType.NE.equals(rhsTokenType)) {
+      return false;
+    }
+    final PsiExpression lhs = assignment.getLExpression();
+    if (SideEffectChecker.mayHaveSideEffects(lhs)) {
+      return false;
+    }
+    if (!EquivalenceChecker.expressionsAreEquivalent(lhs, rhsLhs)) {
+      return false;
+    }
+    return !ErrorUtil.containsError(element);
+  }
 }

@@ -24,85 +24,89 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class UnsecureRandomNumberGenerationInspection
-        extends BaseInspection {
+  extends BaseInspection {
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "unsecure.random.number.generation.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    @NonNls final String text = ((PsiElement)infos[0]).getText();
+    if ("random".equals(text)) {
+      return InspectionGadgetsBundle.message(
+        "unsecure.random.number.generation.problem.descriptor1");
+    }
+    else if ("Random".equals(text)) {
+      return InspectionGadgetsBundle.message(
+        "unsecure.random.number.generation.problem.descriptor2");
+    }
+    else {
+      return InspectionGadgetsBundle.message(
+        "unsecure.random.number.generation.problem.descriptor3");
+    }
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new InsecureRandomNumberGenerationVisitor();
+  }
+
+  private static class InsecureRandomNumberGenerationVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "unsecure.random.number.generation.display.name");
+    public void visitNewExpression(
+      @NotNull PsiNewExpression expression) {
+      super.visitNewExpression(expression);
+      final PsiJavaCodeReferenceElement reference =
+        expression.getClassReference();
+      if (reference == null) {
+        return;
+      }
+      final PsiElement element = reference.resolve();
+      if (!(element instanceof PsiClass)) {
+        return;
+      }
+      final PsiClass aClass = (PsiClass)element;
+      if (!InheritanceUtil.isInheritor(aClass, "java.util.Random")) {
+        return;
+      }
+      final String qualifiedName = aClass.getQualifiedName();
+      if ("java.security.SecureRandom".equals(qualifiedName)) {
+        return;
+      }
+      registerError(reference, reference);
     }
 
     @Override
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        @NonNls final String text = ((PsiElement)infos[0]).getText();
-        if ("random".equals(text)) {
-            return InspectionGadgetsBundle.message(
-                    "unsecure.random.number.generation.problem.descriptor1");
-        } else if ("Random".equals(text)) {
-            return InspectionGadgetsBundle.message(
-                    "unsecure.random.number.generation.problem.descriptor2");
-        } else {
-            return InspectionGadgetsBundle.message(
-                    "unsecure.random.number.generation.problem.descriptor3");
-        }
+    public void visitMethodCallExpression(
+      @NotNull PsiMethodCallExpression expression) {
+      super.visitMethodCallExpression(expression);
+      final PsiReferenceExpression methodExpression =
+        expression.getMethodExpression();
+      @NonNls final String methodName =
+        methodExpression.getReferenceName();
+      if (!"random".equals(methodName)) {
+        return;
+      }
+      final PsiMethod method = expression.resolveMethod();
+      if (method == null) {
+        return;
+      }
+      final PsiClass containingClass = method.getContainingClass();
+      if (containingClass == null) {
+        return;
+      }
+      final String className = containingClass.getQualifiedName();
+      if (!"java.lang.Math".equals(className)) {
+        return;
+      }
+      registerMethodCallError(expression, expression);
     }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new InsecureRandomNumberGenerationVisitor();
-    }
-
-    private static class InsecureRandomNumberGenerationVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitNewExpression(
-                @NotNull PsiNewExpression expression) {
-            super.visitNewExpression(expression);
-            final PsiJavaCodeReferenceElement reference =
-                    expression.getClassReference();
-            if (reference == null) {
-                return;
-            }
-            final PsiElement element = reference.resolve();
-            if (!(element instanceof PsiClass)) {
-                return;
-            }
-            final PsiClass aClass = (PsiClass) element;
-            if (!InheritanceUtil.isInheritor(aClass, "java.util.Random")) {
-                return;
-            }
-            final String qualifiedName = aClass.getQualifiedName();
-            if ("java.security.SecureRandom".equals(qualifiedName)) {
-                return;
-            }
-            registerError(reference, reference);
-        }
-
-        @Override public void visitMethodCallExpression(
-                @NotNull PsiMethodCallExpression expression) {
-            super.visitMethodCallExpression(expression);
-            final PsiReferenceExpression methodExpression =
-                    expression.getMethodExpression();
-            @NonNls final String methodName =
-                    methodExpression.getReferenceName();
-            if (!"random".equals(methodName)) {
-                return;
-            }
-            final PsiMethod method = expression.resolveMethod();
-            if (method == null) {
-                return;
-            }
-            final PsiClass containingClass = method.getContainingClass();
-            if (containingClass == null) {
-                return;
-            }
-            final String className = containingClass.getQualifiedName();
-            if (!"java.lang.Math".equals(className)) {
-                return;
-            }
-            registerMethodCallError(expression, expression);
-        }
-    }
+  }
 }

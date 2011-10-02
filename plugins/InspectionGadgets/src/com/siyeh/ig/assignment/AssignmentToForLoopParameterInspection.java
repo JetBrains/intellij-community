@@ -31,154 +31,159 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class AssignmentToForLoopParameterInspection
-        extends BaseInspection {
+  extends BaseInspection {
 
-    /** @noinspection PublicField for externalization purposes*/
-    public boolean m_checkForeachParameters = false;
+  /**
+   * @noinspection PublicField for externalization purposes
+   */
+  public boolean m_checkForeachParameters = false;
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "assignment.to.for.loop.parameter.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "assignment.to.for.loop.parameter.problem.descriptor");
+  }
+
+  @Override
+  @Nullable
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(
+      InspectionGadgetsBundle.message(
+        "assignment.to.for.loop.parameter.check.foreach.option"),
+      this, "m_checkForeachParameters");
+  }
+
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    final Boolean foreachLoop = (Boolean)infos[0];
+    if (!foreachLoop.booleanValue()) {
+      return null;
+    }
+    return new ExtractParameterAsLocalVariableFix();
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new AssignmentToForLoopParameterVisitor();
+  }
+
+  private class AssignmentToForLoopParameterVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "assignment.to.for.loop.parameter.display.name");
+    public void visitAssignmentExpression(
+      @NotNull PsiAssignmentExpression expression) {
+      super.visitAssignmentExpression(expression);
+      if (!WellFormednessUtils.isWellFormed(expression)) {
+        return;
+      }
+      final PsiExpression lhs = expression.getLExpression();
+      checkForForLoopParam(lhs);
+      checkForForeachLoopParam(lhs);
     }
 
     @Override
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "assignment.to.for.loop.parameter.problem.descriptor");
+    public void visitPrefixExpression(
+      @NotNull PsiPrefixExpression expression) {
+      super.visitPrefixExpression(expression);
+      final IElementType tokenType = expression.getOperationTokenType();
+      if (!tokenType.equals(JavaTokenType.PLUSPLUS) &&
+          !tokenType.equals(JavaTokenType.MINUSMINUS)) {
+        return;
+      }
+      final PsiExpression operand = expression.getOperand();
+      if (operand == null) {
+        return;
+      }
+      checkForForLoopParam(operand);
+      checkForForeachLoopParam(operand);  //sensible due to autoboxing/unboxing
     }
 
     @Override
-    @Nullable
-    public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel(
-                InspectionGadgetsBundle.message(
-                        "assignment.to.for.loop.parameter.check.foreach.option"),
-                this, "m_checkForeachParameters");
+    public void visitPostfixExpression(
+      @NotNull PsiPostfixExpression expression) {
+      super.visitPostfixExpression(expression);
+      final IElementType tokenType = expression.getOperationTokenType();
+      if (!tokenType.equals(JavaTokenType.PLUSPLUS) &&
+          !tokenType.equals(JavaTokenType.MINUSMINUS)) {
+        return;
+      }
+      final PsiExpression operand = expression.getOperand();
+      checkForForLoopParam(operand);
+      checkForForeachLoopParam(operand);  //sensible due to autoboxing/unboxing
     }
 
-    @Override
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        final Boolean foreachLoop = (Boolean) infos[0];
-        if (!foreachLoop.booleanValue()) {
-            return null;
-        }
-        return new ExtractParameterAsLocalVariableFix();
+    private void checkForForLoopParam(PsiExpression expression) {
+      if (!(expression instanceof PsiReferenceExpression)) {
+        return;
+      }
+      final PsiReferenceExpression referenceExpression =
+        (PsiReferenceExpression)expression;
+      final PsiElement element = referenceExpression.resolve();
+      if (!(element instanceof PsiLocalVariable)) {
+        return;
+      }
+      final PsiLocalVariable variable = (PsiLocalVariable)element;
+      final PsiElement variableParent = variable.getParent();
+      if (!(variableParent instanceof PsiDeclarationStatement)) {
+        return;
+      }
+      final PsiDeclarationStatement declarationStatement =
+        (PsiDeclarationStatement)variableParent;
+      final PsiElement parent = declarationStatement.getParent();
+      if (!(parent instanceof PsiForStatement)) {
+        return;
+      }
+      final PsiForStatement forStatement = (PsiForStatement)parent;
+      final PsiStatement initialization =
+        forStatement.getInitialization();
+      if (initialization == null) {
+        return;
+      }
+      if (!initialization.equals(declarationStatement)) {
+        return;
+      }
+      if (!isInForStatementBody(expression, forStatement)) {
+        return;
+      }
+      registerError(expression, Boolean.FALSE);
     }
 
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new AssignmentToForLoopParameterVisitor();
+    private void checkForForeachLoopParam(PsiExpression expression) {
+      if (!m_checkForeachParameters) {
+        return;
+      }
+      if (!(expression instanceof PsiReferenceExpression)) {
+        return;
+      }
+      final PsiReferenceExpression referenceExpression =
+        (PsiReferenceExpression)expression;
+      final PsiElement element = referenceExpression.resolve();
+      if (!(element instanceof PsiParameter)) {
+        return;
+      }
+      final PsiParameter parameter = (PsiParameter)element;
+      if (!(parameter.getParent() instanceof PsiForeachStatement)) {
+        return;
+      }
+      registerError(expression, Boolean.TRUE);
     }
 
-    private class AssignmentToForLoopParameterVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitAssignmentExpression(
-                @NotNull PsiAssignmentExpression expression) {
-            super.visitAssignmentExpression(expression);
-            if(!WellFormednessUtils.isWellFormed(expression)){
-                return;
-            }
-            final PsiExpression lhs = expression.getLExpression();
-            checkForForLoopParam(lhs);
-            checkForForeachLoopParam(lhs);
-        }
-
-        @Override public void visitPrefixExpression(
-                @NotNull PsiPrefixExpression expression) {
-            super.visitPrefixExpression(expression);
-          final IElementType tokenType = expression.getOperationTokenType();
-            if (!tokenType.equals(JavaTokenType.PLUSPLUS) &&
-                !tokenType.equals(JavaTokenType.MINUSMINUS)) {
-                return;
-            }
-            final PsiExpression operand = expression.getOperand();
-            if (operand == null) {
-                return;
-            }
-            checkForForLoopParam(operand);
-            checkForForeachLoopParam(operand);  //sensible due to autoboxing/unboxing
-        }
-
-        @Override public void visitPostfixExpression(
-                @NotNull PsiPostfixExpression expression) {
-            super.visitPostfixExpression(expression);
-          final IElementType tokenType = expression.getOperationTokenType();
-            if (!tokenType.equals(JavaTokenType.PLUSPLUS) &&
-                !tokenType.equals(JavaTokenType.MINUSMINUS)) {
-                return;
-            }
-            final PsiExpression operand = expression.getOperand();
-            checkForForLoopParam(operand);
-            checkForForeachLoopParam(operand);  //sensible due to autoboxing/unboxing
-        }
-
-        private void checkForForLoopParam(PsiExpression expression) {
-            if (!(expression instanceof PsiReferenceExpression)) {
-                return;
-            }
-            final PsiReferenceExpression referenceExpression =
-                    (PsiReferenceExpression) expression;
-            final PsiElement element = referenceExpression.resolve();
-            if (!(element instanceof PsiLocalVariable)) {
-                return;
-            }
-            final PsiLocalVariable variable = (PsiLocalVariable) element;
-            final PsiElement variableParent = variable.getParent();
-            if (!(variableParent instanceof PsiDeclarationStatement)) {
-                return;
-            }
-            final PsiDeclarationStatement declarationStatement =
-                    (PsiDeclarationStatement)variableParent;
-            final PsiElement parent = declarationStatement.getParent();
-            if (!(parent instanceof PsiForStatement)) {
-                return;
-            }
-            final PsiForStatement forStatement = (PsiForStatement) parent;
-            final PsiStatement initialization =
-                    forStatement.getInitialization();
-            if (initialization == null) {
-                return;
-            }
-            if (!initialization.equals(declarationStatement)) {
-                return;
-            }
-            if (!isInForStatementBody(expression, forStatement)) {
-                return;
-            }
-            registerError(expression, Boolean.FALSE);
-        }
-
-        private void checkForForeachLoopParam(PsiExpression expression) {
-            if (!m_checkForeachParameters) {
-                return;
-            }
-            if (!(expression instanceof PsiReferenceExpression)) {
-                return;
-            }
-            final PsiReferenceExpression referenceExpression =
-                    (PsiReferenceExpression) expression;
-            final PsiElement element = referenceExpression.resolve();
-            if (!(element instanceof PsiParameter)) {
-                return;
-            }
-            final PsiParameter parameter = (PsiParameter) element;
-            if (!(parameter.getParent() instanceof PsiForeachStatement)) {
-                return;
-            }
-            registerError(expression, Boolean.TRUE);
-        }
-
-        private boolean isInForStatementBody(PsiExpression expression,
-                                             PsiForStatement statement) {
-            final PsiStatement body = statement.getBody();
-            if (body == null) {
-                return false;
-            }
-            return PsiTreeUtil.isAncestor(body, expression, true);
-        }
+    private boolean isInForStatementBody(PsiExpression expression,
+                                         PsiForStatement statement) {
+      final PsiStatement body = statement.getBody();
+      if (body == null) {
+        return false;
+      }
+      return PsiTreeUtil.isAncestor(body, expression, true);
     }
+  }
 }

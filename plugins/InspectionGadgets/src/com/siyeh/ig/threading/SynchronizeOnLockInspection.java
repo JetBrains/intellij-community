@@ -25,50 +25,51 @@ import org.jetbrains.annotations.NotNull;
 
 public class SynchronizeOnLockInspection extends BaseInspection {
 
-    @Override
-    @NotNull
-    public String getID() {
-        return "SynchroniziationOnLockObject";
-    }
+  @Override
+  @NotNull
+  public String getID() {
+    return "SynchroniziationOnLockObject";
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "synchronize.on.lock.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    final String type = (String)infos[0];
+    return InspectionGadgetsBundle.message(
+      "synchronize.on.lock.problem.descriptor", type);
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new SynchronizeOnLockVisitor();
+  }
+
+  private static class SynchronizeOnLockVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "synchronize.on.lock.display.name");
+    public void visitSynchronizedStatement(
+      @NotNull PsiSynchronizedStatement statement) {
+      super.visitSynchronizedStatement(statement);
+      final PsiExpression lockExpression = statement.getLockExpression();
+      if (lockExpression == null) {
+        return;
+      }
+      final String type = TypeUtils.expressionHasTypeOrSubtype(
+        lockExpression,
+        "java.util.concurrent.locks.Lock",
+        "java.util.concurrent.locks.ReadWriteLock");
+      if (type == null) {
+        return;
+      }
+      registerError(lockExpression, type);
     }
-
-    @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        final String type = (String)infos[0];
-        return InspectionGadgetsBundle.message(
-                "synchronize.on.lock.problem.descriptor", type);
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new SynchronizeOnLockVisitor();
-    }
-
-    private static class SynchronizeOnLockVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitSynchronizedStatement(
-                @NotNull PsiSynchronizedStatement statement) {
-            super.visitSynchronizedStatement(statement);
-            final PsiExpression lockExpression = statement.getLockExpression();
-            if (lockExpression == null) {
-                return;
-            }
-            final String type = TypeUtils.expressionHasTypeOrSubtype(
-                    lockExpression,
-                    "java.util.concurrent.locks.Lock",
-                    "java.util.concurrent.locks.ReadWriteLock");
-            if (type == null) {
-                return;
-            }
-            registerError(lockExpression, type);
-        }
-    }
+  }
 }

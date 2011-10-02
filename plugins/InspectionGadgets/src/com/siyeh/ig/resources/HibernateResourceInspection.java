@@ -27,84 +27,84 @@ import javax.swing.*;
 
 public class HibernateResourceInspection extends ResourceInspection {
 
-    @SuppressWarnings({"PublicField"})
-    public boolean insideTryAllowed = false;
+  @SuppressWarnings({"PublicField"})
+  public boolean insideTryAllowed = false;
+
+  @Override
+  @NotNull
+  public String getID() {
+    return "HibernateResourceOpenedButNotSafelyClosed";
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "hibernate.resource.opened.not.closed.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    final PsiExpression expression = (PsiExpression)infos[0];
+    final PsiType type = expression.getType();
+    assert type != null;
+    final String text = type.getPresentableText();
+    return InspectionGadgetsBundle.message(
+      "hibernate.resource.opened.not.closed.problem.descriptor",
+      text);
+  }
+
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+      "allow.resource.to.be.opened.inside.a.try.block"),
+                                          this, "insideTryAllowed");
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new HibernateResourceVisitor();
+  }
+
+  private class HibernateResourceVisitor extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String getID() {
-        return "HibernateResourceOpenedButNotSafelyClosed";
+    public void visitMethodCallExpression(
+      @NotNull PsiMethodCallExpression expression) {
+      super.visitMethodCallExpression(expression);
+      if (!isHibernateFactoryMethod(expression)) {
+        return;
+      }
+      final PsiElement parent = getExpressionParent(expression);
+      if (parent instanceof PsiReturnStatement) {
+        return;
+      }
+      final PsiVariable boundVariable = getVariable(parent);
+      if (isSafelyClosed(boundVariable, expression, insideTryAllowed)) {
+        return;
+      }
+      if (isResourceEscapedFromMethod(boundVariable, expression)) {
+        return;
+      }
+      registerError(expression, expression);
     }
 
-    @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "hibernate.resource.opened.not.closed.display.name");
+    private boolean isHibernateFactoryMethod(
+      PsiMethodCallExpression expression) {
+      final PsiReferenceExpression methodExpression =
+        expression.getMethodExpression();
+      final String methodName = methodExpression.getReferenceName();
+      if (!HardcodedMethodConstants.OPEN_SESSION.equals(methodName)) {
+        return false;
+      }
+      final PsiExpression qualifier =
+        methodExpression.getQualifierExpression();
+      if (qualifier == null) {
+        return false;
+      }
+      return TypeUtils.expressionHasTypeOrSubtype(qualifier,
+                                                  "org.hibernate.SessionFactory");
     }
-
-    @Override
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        final PsiExpression expression = (PsiExpression) infos[0];
-        final PsiType type = expression.getType();
-        assert type != null;
-        final String text = type.getPresentableText();
-        return InspectionGadgetsBundle.message(
-                "hibernate.resource.opened.not.closed.problem.descriptor",
-                text);
-    }
-
-    @Override
-    public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-                "allow.resource.to.be.opened.inside.a.try.block"),
-                this, "insideTryAllowed");
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new HibernateResourceVisitor();
-    }
-
-    private class HibernateResourceVisitor extends BaseInspectionVisitor {
-
-        @Override
-        public void visitMethodCallExpression(
-                @NotNull PsiMethodCallExpression expression) {
-            super.visitMethodCallExpression(expression);
-            if (!isHibernateFactoryMethod(expression)) {
-                return;
-            }
-            final PsiElement parent = getExpressionParent(expression);
-            if (parent instanceof PsiReturnStatement) {
-                return;
-            }
-            final PsiVariable boundVariable = getVariable(parent);
-            if (isSafelyClosed(boundVariable, expression, insideTryAllowed)) {
-                return;
-            }
-            if (isResourceEscapedFromMethod(boundVariable, expression)) {
-                return;
-            }
-            registerError(expression, expression);
-        }
-
-        private boolean isHibernateFactoryMethod(
-                PsiMethodCallExpression expression) {
-            final PsiReferenceExpression methodExpression =
-                    expression.getMethodExpression();
-            final String methodName = methodExpression.getReferenceName();
-            if (!HardcodedMethodConstants.OPEN_SESSION.equals(methodName)) {
-                return false;
-            }
-            final PsiExpression qualifier =
-                    methodExpression.getQualifierExpression();
-            if (qualifier == null) {
-                return false;
-            }
-            return TypeUtils.expressionHasTypeOrSubtype(qualifier,
-                    "org.hibernate.SessionFactory");
-        }
-    }
+  }
 }

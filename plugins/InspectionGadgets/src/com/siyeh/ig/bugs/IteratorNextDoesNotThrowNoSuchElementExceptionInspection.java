@@ -28,91 +28,93 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Set;
 
 public class IteratorNextDoesNotThrowNoSuchElementExceptionInspection
-        extends BaseInspection {
+  extends BaseInspection {
+
+  @Override
+  @NotNull
+  public String getID() {
+    return "IteratorNextCanNotThrowNoSuchElementException";
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "iterator.next.does.not.throw.nosuchelementexception.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "iterator.next.does.not.throw.nosuchelementexception.problem.descriptor");
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new IteratorNextDoesNotThrowNoSuchElementExceptionVisitor();
+  }
+
+  private static class IteratorNextDoesNotThrowNoSuchElementExceptionVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String getID(){
-        return "IteratorNextCanNotThrowNoSuchElementException";
-    }
-
-    @Override
-    @NotNull
-    public String getDisplayName(){
-        return InspectionGadgetsBundle.message(
-                "iterator.next.does.not.throw.nosuchelementexception.display.name");
-    }
-
-    @Override
-    @NotNull
-    public String buildErrorString(Object... infos){
-        return InspectionGadgetsBundle.message(
-                "iterator.next.does.not.throw.nosuchelementexception.problem.descriptor");
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor(){
-        return new IteratorNextDoesNotThrowNoSuchElementExceptionVisitor();
-    }
-
-    private static class IteratorNextDoesNotThrowNoSuchElementExceptionVisitor
-            extends BaseInspectionVisitor{
-
-        @Override public void visitMethod(@NotNull PsiMethod method){
-            // note: no call to super
-            if (!MethodUtils.methodMatches(method, CommonClassNames.JAVA_UTIL_ITERATOR, null,
-                    HardcodedMethodConstants.NEXT)) {
-                return;
-            }
-            final Set<PsiClassType> exceptions =
-                    ExceptionUtils.calculateExceptionsThrown(method);
-            for (final PsiType exception : exceptions) {
-                if (exception.equalsToText(
-                        "java.util.NoSuchElementException")) {
-                    return;
-                }
-            }
-            if(IteratorUtils.containsCallToIteratorNext(method, null, false)){
-                return;
-            }
-            final CalledMethodsVisitor visitor = new CalledMethodsVisitor();
-            method.accept(visitor);
-            if (visitor.isNoSuchElementExceptionThrown()) {
-                return;
-            }
-            registerMethodError(method);
+    public void visitMethod(@NotNull PsiMethod method) {
+      // note: no call to super
+      if (!MethodUtils.methodMatches(method, CommonClassNames.JAVA_UTIL_ITERATOR, null,
+                                     HardcodedMethodConstants.NEXT)) {
+        return;
+      }
+      final Set<PsiClassType> exceptions =
+        ExceptionUtils.calculateExceptionsThrown(method);
+      for (final PsiType exception : exceptions) {
+        if (exception.equalsToText(
+          "java.util.NoSuchElementException")) {
+          return;
         }
+      }
+      if (IteratorUtils.containsCallToIteratorNext(method, null, false)) {
+        return;
+      }
+      final CalledMethodsVisitor visitor = new CalledMethodsVisitor();
+      method.accept(visitor);
+      if (visitor.isNoSuchElementExceptionThrown()) {
+        return;
+      }
+      registerMethodError(method);
+    }
+  }
+
+  private static class CalledMethodsVisitor
+    extends JavaRecursiveElementVisitor {
+
+    private boolean noSuchElementExceptionThrown = false;
+
+    @Override
+    public void visitMethodCallExpression(
+      PsiMethodCallExpression expression) {
+      if (noSuchElementExceptionThrown) {
+        return;
+      }
+      super.visitMethodCallExpression(expression);
+      final PsiReferenceExpression methodExpression =
+        expression.getMethodExpression();
+      final PsiElement method = methodExpression.resolve();
+      if (method == null) {
+        return;
+      }
+      final Set<PsiClassType> exceptions =
+        ExceptionUtils.calculateExceptionsThrown(method);
+      for (final PsiType exception : exceptions) {
+        if (exception.equalsToText(
+          "java.util.NoSuchElementException")) {
+          noSuchElementExceptionThrown = true;
+        }
+      }
     }
 
-    private static class CalledMethodsVisitor
-            extends JavaRecursiveElementVisitor {
-
-        private boolean noSuchElementExceptionThrown = false;
-
-        @Override public void visitMethodCallExpression(
-                PsiMethodCallExpression expression) {
-            if (noSuchElementExceptionThrown) {
-                return;
-            }
-            super.visitMethodCallExpression(expression);
-            final PsiReferenceExpression methodExpression =
-                    expression.getMethodExpression();
-            final PsiElement method = methodExpression.resolve();
-            if (method == null) {
-                return;
-            }
-            final Set<PsiClassType> exceptions =
-                    ExceptionUtils.calculateExceptionsThrown(method);
-            for (final PsiType exception : exceptions) {
-                if (exception.equalsToText(
-                        "java.util.NoSuchElementException")) {
-                    noSuchElementExceptionThrown = true;
-                }
-            }
-        }
-
-        public boolean isNoSuchElementExceptionThrown() {
-            return noSuchElementExceptionThrown;
-        }
+    public boolean isNoSuchElementExceptionThrown() {
+      return noSuchElementExceptionThrown;
     }
+  }
 }

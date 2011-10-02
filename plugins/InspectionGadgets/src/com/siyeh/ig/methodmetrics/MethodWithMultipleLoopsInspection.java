@@ -23,38 +23,39 @@ import org.jetbrains.annotations.NotNull;
 
 public class MethodWithMultipleLoopsInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "method.with.multiple.loops.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "method.with.multiple.loops.display.name");
+  }
 
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        final Integer negationCount = (Integer)infos[0];
-        return InspectionGadgetsBundle.message(
-                "method.with.multiple.loops.problem.descriptor", negationCount);
-    }
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    final Integer negationCount = (Integer)infos[0];
+    return InspectionGadgetsBundle.message(
+      "method.with.multiple.loops.problem.descriptor", negationCount);
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new MethodWithMultipleLoopsVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new MethodWithMultipleLoopsVisitor();
+  }
 
-    private static class MethodWithMultipleLoopsVisitor
-            extends BaseInspectionVisitor {
+  private static class MethodWithMultipleLoopsVisitor
+    extends BaseInspectionVisitor {
 
-        @Override public void visitMethod(@NotNull PsiMethod method) {
-            // note: no call to super
-            if (method.getNameIdentifier() == null) {
-                return;
-            }
-            final LoopCountVisitor visitor = new LoopCountVisitor();
-            method.accept(visitor);
-            final int negationCount = visitor.getCount();
-            if (negationCount <= 1) {
-                return;
-            }
-            registerMethodError(method, Integer.valueOf(negationCount));
-        }
+    @Override
+    public void visitMethod(@NotNull PsiMethod method) {
+      // note: no call to super
+      if (method.getNameIdentifier() == null) {
+        return;
+      }
+      final LoopCountVisitor visitor = new LoopCountVisitor();
+      method.accept(visitor);
+      final int negationCount = visitor.getCount();
+      if (negationCount <= 1) {
+        return;
+      }
+      registerMethodError(method, Integer.valueOf(negationCount));
     }
+  }
 }

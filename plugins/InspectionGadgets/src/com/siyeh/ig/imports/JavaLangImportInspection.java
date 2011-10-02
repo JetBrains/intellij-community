@@ -27,85 +27,87 @@ import org.jetbrains.annotations.NotNull;
 
 public class JavaLangImportInspection extends BaseInspection {
 
-    @Override
-    @NotNull
-    public String getDisplayName(){
-        return InspectionGadgetsBundle.message(
-                "java.lang.import.display.name");
-    }
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "java.lang.import.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "java.lang.import.problem.descriptor");
+  }
+
+  @Override
+  public InspectionGadgetsFix buildFix(Object... infos) {
+    return new DeleteImportFix();
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new JavaLangImportVisitor();
+  }
+
+  private static class JavaLangImportVisitor extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String buildErrorString(Object... infos){
-        return InspectionGadgetsBundle.message(
-                "java.lang.import.problem.descriptor");
+    public void visitClass(@NotNull PsiClass aClass) {
+      // no call to super, so it doesn't drill down
+      if (!(aClass.getParent() instanceof PsiJavaFile)) {
+        return;
+      }
+      if (JspPsiUtil.isInJspFile(aClass.getContainingFile())) {
+        return;
+      }
+      final PsiJavaFile file = (PsiJavaFile)aClass.getContainingFile();
+      if (!file.getClasses()[0].equals(aClass)) {
+        return;
+      }
+      final PsiImportList importList = file.getImportList();
+      if (importList == null) {
+        return;
+      }
+      final PsiImportStatement[] importStatements =
+        importList.getImportStatements();
+      for (PsiImportStatement importStatement : importStatements) {
+        checkImportStatement(importStatement, file);
+      }
     }
 
-    @Override
-    public InspectionGadgetsFix buildFix(Object... infos) {
-        return new DeleteImportFix();
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor(){
-        return new JavaLangImportVisitor();
-    }
-
-    private static class JavaLangImportVisitor extends BaseInspectionVisitor {
-
-        @Override public void visitClass(@NotNull PsiClass aClass){
-            // no call to super, so it doesn't drill down
-            if(!(aClass.getParent() instanceof PsiJavaFile)) {
-                return;
-            }
-            if (JspPsiUtil.isInJspFile(aClass.getContainingFile())) {
-                return;
-            }
-            final PsiJavaFile file = (PsiJavaFile) aClass.getContainingFile();
-            if(!file.getClasses()[0].equals(aClass)){
-                return;
-            }
-            final PsiImportList importList = file.getImportList();
-            if(importList == null){
-                return;
-            }
-            final PsiImportStatement[] importStatements =
-                    importList.getImportStatements();
-            for(PsiImportStatement importStatement : importStatements) {
-                checkImportStatement(importStatement, file);
-            }
+    private void checkImportStatement(PsiImportStatement importStatement,
+                                      PsiJavaFile file) {
+      final PsiJavaCodeReferenceElement reference =
+        importStatement.getImportReference();
+      if (reference == null) {
+        return;
+      }
+      final String text = importStatement.getQualifiedName();
+      if (text == null) {
+        return;
+      }
+      if (importStatement.isOnDemand()) {
+        if (HardcodedMethodConstants.JAVA_LANG.equals(text)) {
+          registerError(importStatement);
         }
-
-        private void checkImportStatement(PsiImportStatement importStatement,
-                                          PsiJavaFile file){
-            final PsiJavaCodeReferenceElement reference =
-                    importStatement.getImportReference();
-            if (reference == null) {
-                return;
-            }
-            final String text = importStatement.getQualifiedName();
-            if (text == null) {
-                return;
-            }
-            if(importStatement.isOnDemand()){
-                if(HardcodedMethodConstants.JAVA_LANG.equals(text)){
-                    registerError(importStatement);
-                }
-            } else {
-                final int classNameIndex = text.lastIndexOf((int) '.');
-                if(classNameIndex < 0){
-                    return;
-                }
-                final String parentName =
-                        text.substring(0, classNameIndex);
-                if (!HardcodedMethodConstants.JAVA_LANG.equals(parentName)) {
-                    return;
-                }
-                if (ImportUtils.hasOnDemandImportConflict(text, file)) {
-                    return;
-                }
-                registerError(importStatement);
-            }
+      }
+      else {
+        final int classNameIndex = text.lastIndexOf((int)'.');
+        if (classNameIndex < 0) {
+          return;
         }
+        final String parentName =
+          text.substring(0, classNameIndex);
+        if (!HardcodedMethodConstants.JAVA_LANG.equals(parentName)) {
+          return;
+        }
+        if (ImportUtils.hasOnDemandImportConflict(text, file)) {
+          return;
+        }
+        registerError(importStatement);
+      }
     }
+  }
 }

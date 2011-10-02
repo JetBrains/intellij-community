@@ -27,38 +27,39 @@ import org.jetbrains.annotations.NotNull;
 
 public class InstantiationOfUtilityClassInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName(){
-        return InspectionGadgetsBundle.message(
-                "instantiation.utility.class.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "instantiation.utility.class.display.name");
+  }
 
-    @NotNull
-    public String buildErrorString(Object... infos){
-        return InspectionGadgetsBundle.message(
-                "instantiation.utility.class.problem.descriptor");
-    }
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "instantiation.utility.class.problem.descriptor");
+  }
 
-    public BaseInspectionVisitor buildVisitor(){
-        return new InstantiationOfUtilityClassVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new InstantiationOfUtilityClassVisitor();
+  }
 
-    private static class InstantiationOfUtilityClassVisitor
-            extends BaseInspectionVisitor{
+  private static class InstantiationOfUtilityClassVisitor
+    extends BaseInspectionVisitor {
 
-        @Override public void visitNewExpression(@NotNull PsiNewExpression expression){
-            final PsiType type = expression.getType();
-            if(!(type instanceof PsiClassType)){
-                return;
-            }
-            final PsiClass aClass = ((PsiClassType) type).resolve();
-            if(aClass == null){
-                return;
-            }
-            if(!UtilityClassUtil.isUtilityClass(aClass)){
-                return;
-            }
-            registerNewExpressionError(expression);
-        }
+    @Override
+    public void visitNewExpression(@NotNull PsiNewExpression expression) {
+      final PsiType type = expression.getType();
+      if (!(type instanceof PsiClassType)) {
+        return;
+      }
+      final PsiClass aClass = ((PsiClassType)type).resolve();
+      if (aClass == null) {
+        return;
+      }
+      if (!UtilityClassUtil.isUtilityClass(aClass)) {
+        return;
+      }
+      registerNewExpressionError(expression);
     }
+  }
 }

@@ -25,89 +25,92 @@ import com.siyeh.ig.psiutils.WellFormednessUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class AssignmentToStaticFieldFromInstanceMethodInspection
-        extends BaseInspection {
+  extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName(){
-        return InspectionGadgetsBundle.message(
-                "assignment.to.static.field.from.instance.method.display.name");
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "assignment.to.static.field.from.instance.method.display.name");
+  }
+
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "assignment.to.static.field.from.instance.method.problem.descriptor");
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new AssignmentToStaticFieldFromInstanceMethod();
+  }
+
+  private static class AssignmentToStaticFieldFromInstanceMethod
+    extends BaseInspectionVisitor {
+
+    @Override
+    public void visitAssignmentExpression(
+      @NotNull PsiAssignmentExpression expression) {
+      if (!WellFormednessUtils.isWellFormed(expression)) {
+        return;
+      }
+      final PsiExpression lhs = expression.getLExpression();
+      checkForStaticFieldAccess(lhs);
     }
 
-    @NotNull
-    public String buildErrorString(Object... infos){
-        return InspectionGadgetsBundle.message(
-                "assignment.to.static.field.from.instance.method.problem.descriptor");
+    @Override
+    public void visitPrefixExpression(
+      @NotNull PsiPrefixExpression expression) {
+      final IElementType tokenType = expression.getOperationTokenType();
+      if (!tokenType.equals(JavaTokenType.PLUSPLUS) &&
+          !tokenType.equals(JavaTokenType.MINUSMINUS)) {
+        return;
+      }
+      final PsiExpression operand = expression.getOperand();
+      if (operand == null) {
+        return;
+      }
+      checkForStaticFieldAccess(operand);
     }
 
-    public BaseInspectionVisitor buildVisitor(){
-        return new AssignmentToStaticFieldFromInstanceMethod();
+    @Override
+    public void visitPostfixExpression(
+      @NotNull PsiPostfixExpression expression) {
+      final IElementType tokenType = expression.getOperationTokenType();
+      if (!tokenType.equals(JavaTokenType.PLUSPLUS) &&
+          !tokenType.equals(JavaTokenType.MINUSMINUS)) {
+        return;
+      }
+      final PsiExpression operand = expression.getOperand();
+      checkForStaticFieldAccess(operand);
     }
 
-    private static class AssignmentToStaticFieldFromInstanceMethod
-            extends BaseInspectionVisitor{
-
-        @Override public void visitAssignmentExpression(
-                @NotNull PsiAssignmentExpression expression){
-            if(!WellFormednessUtils.isWellFormed(expression)){
-                return;
-            }
-            final PsiExpression lhs = expression.getLExpression();
-            checkForStaticFieldAccess(lhs);
-        }
-
-        @Override public void visitPrefixExpression(
-                @NotNull PsiPrefixExpression expression){
-          final IElementType tokenType = expression.getOperationTokenType();
-            if(!tokenType.equals(JavaTokenType.PLUSPLUS) &&
-                       !tokenType.equals(JavaTokenType.MINUSMINUS)){
-                return;
-            }
-            final PsiExpression operand = expression.getOperand();
-            if(operand == null){
-                return;
-            }
-            checkForStaticFieldAccess(operand);
-        }
-
-        @Override public void visitPostfixExpression(
-                @NotNull PsiPostfixExpression expression){
-          final IElementType tokenType = expression.getOperationTokenType();
-            if(!tokenType.equals(JavaTokenType.PLUSPLUS) &&
-                       !tokenType.equals(JavaTokenType.MINUSMINUS)){
-                return;
-            }
-            final PsiExpression operand = expression.getOperand();
-            checkForStaticFieldAccess(operand);
-        }
-
-        private void checkForStaticFieldAccess(PsiExpression expression){
-            if(!(expression instanceof PsiReferenceExpression)){
-                return;
-            }
-            if (isInStaticMethod(expression)) {
-                return;
-            }
-            final PsiElement referent = ((PsiReference) expression).resolve();
-            if(referent == null){
-                return;
-            }
-            if(!(referent instanceof PsiField)){
-                return;
-            }
-            final PsiField fieldReferenced = (PsiField) referent;
-            if(fieldReferenced.hasModifierProperty(PsiModifier.STATIC)){
-                registerError(expression);
-            }
-        }
-
-        private static boolean isInStaticMethod(PsiElement element) {
-            final PsiMember member =
-                    PsiTreeUtil.getParentOfType(element,
-                            PsiMethod.class, PsiClassInitializer.class);
-            if (member == null) {
-                return false;
-            }
-            return member.hasModifierProperty(PsiModifier.STATIC);
-        }
+    private void checkForStaticFieldAccess(PsiExpression expression) {
+      if (!(expression instanceof PsiReferenceExpression)) {
+        return;
+      }
+      if (isInStaticMethod(expression)) {
+        return;
+      }
+      final PsiElement referent = ((PsiReference)expression).resolve();
+      if (referent == null) {
+        return;
+      }
+      if (!(referent instanceof PsiField)) {
+        return;
+      }
+      final PsiField fieldReferenced = (PsiField)referent;
+      if (fieldReferenced.hasModifierProperty(PsiModifier.STATIC)) {
+        registerError(expression);
+      }
     }
+
+    private static boolean isInStaticMethod(PsiElement element) {
+      final PsiMember member =
+        PsiTreeUtil.getParentOfType(element,
+                                    PsiMethod.class, PsiClassInitializer.class);
+      if (member == null) {
+        return false;
+      }
+      return member.hasModifierProperty(PsiModifier.STATIC);
+    }
+  }
 }

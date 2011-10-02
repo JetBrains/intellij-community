@@ -26,64 +26,65 @@ import org.jetbrains.annotations.NotNull;
 
 public class BadOddnessInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message("bad.oddness.display.name");
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("bad.oddness.display.name");
+  }
+
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "bad.oddness.problem.descriptor");
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new BadOddnessVisitor();
+  }
+
+  private static class BadOddnessVisitor extends BaseInspectionVisitor {
+
+    @Override
+    public void visitBinaryExpression(
+      @NotNull PsiBinaryExpression expression) {
+      super.visitBinaryExpression(expression);
+      if (expression.getROperand() == null) {
+        return;
+      }
+      if (!ComparisonUtils.isEqualityComparison(expression)) {
+        return;
+      }
+      final PsiExpression lhs = expression.getLOperand();
+      final PsiExpression rhs = expression.getROperand();
+      if (isModTwo(lhs) && hasValue(rhs, 1)) {
+        registerError(expression, expression);
+      }
+      if (isModTwo(rhs) && hasValue(lhs, 1)) {
+        registerError(expression, expression);
+      }
     }
 
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "bad.oddness.problem.descriptor");
+    private static boolean isModTwo(PsiExpression exp) {
+      if (!(exp instanceof PsiBinaryExpression)) {
+        return false;
+      }
+      final PsiBinaryExpression binary = (PsiBinaryExpression)exp;
+      final IElementType tokenType = binary.getOperationTokenType();
+      if (!JavaTokenType.PERC.equals(tokenType)) {
+        return false;
+      }
+      final PsiExpression rhs = binary.getROperand();
+      final PsiExpression lhs = binary.getLOperand();
+      if (rhs == null) {
+        return false;
+      }
+      return hasValue(rhs, 2) || hasValue(lhs, 2);
     }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new BadOddnessVisitor();
+    private static boolean hasValue(PsiExpression expression, int testValue) {
+      final Integer value = (Integer)
+        ConstantExpressionUtil.computeCastTo(
+          expression, PsiType.INT);
+      return value != null && value.intValue() == testValue;
     }
-
-    private static class BadOddnessVisitor extends BaseInspectionVisitor {
-
-        @Override public void visitBinaryExpression(
-                @NotNull PsiBinaryExpression expression) {
-            super.visitBinaryExpression(expression);
-            if (expression.getROperand() == null) {
-                return;
-            }
-            if (!ComparisonUtils.isEqualityComparison(expression)) {
-                return;
-            }
-            final PsiExpression lhs = expression.getLOperand();
-            final PsiExpression rhs = expression.getROperand();
-            if (isModTwo(lhs) && hasValue(rhs, 1)) {
-                registerError(expression, expression);
-            }
-            if (isModTwo(rhs) && hasValue(lhs, 1)) {
-                registerError(expression, expression);
-            }
-        }
-
-        private static boolean isModTwo(PsiExpression exp) {
-            if (!(exp instanceof PsiBinaryExpression)) {
-                return false;
-            }
-            final PsiBinaryExpression binary = (PsiBinaryExpression) exp;
-          final IElementType tokenType = binary.getOperationTokenType();
-            if (!JavaTokenType.PERC.equals(tokenType)) {
-                return false;
-            }
-            final PsiExpression rhs = binary.getROperand();
-            final PsiExpression lhs = binary.getLOperand();
-            if (rhs == null) {
-                return false;
-            }
-            return hasValue(rhs, 2) || hasValue(lhs, 2);
-        }
-
-        private static boolean hasValue(PsiExpression expression, int testValue) {
-            final Integer value = (Integer)
-                    ConstantExpressionUtil.computeCastTo(
-                            expression, PsiType.INT);
-            return value != null && value.intValue() == testValue;
-        }
-    }
+  }
 }

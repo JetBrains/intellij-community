@@ -26,46 +26,47 @@ import org.jetbrains.annotations.NotNull;
 
 public class NestedSynchronizedStatementInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "nested.synchronized.statement.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "nested.synchronized.statement.display.name");
+  }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "nested.synchronized.statement.problem.descriptor");
-    }
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "nested.synchronized.statement.problem.descriptor");
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new NestedSynchronizedStatementVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new NestedSynchronizedStatementVisitor();
+  }
 
-    private static class NestedSynchronizedStatementVisitor
-            extends BaseInspectionVisitor {
+  private static class NestedSynchronizedStatementVisitor
+    extends BaseInspectionVisitor {
 
-        @Override public void visitSynchronizedStatement(
-                @NotNull PsiSynchronizedStatement statement) {
-            super.visitSynchronizedStatement(statement);
-            final PsiElement containingSynchronizedStatement =
-                    PsiTreeUtil.getParentOfType(statement,
-                            PsiSynchronizedStatement.class);
-            if (containingSynchronizedStatement == null) {
-                return;
-            }
-            final PsiMethod containingMethod =
-                    PsiTreeUtil.getParentOfType(statement,
-                    PsiMethod.class);
-            final PsiMethod containingContainingMethod =
-                    PsiTreeUtil.getParentOfType(containingSynchronizedStatement,
-                    PsiMethod.class);
-            if (containingMethod == null ||
-                    containingContainingMethod == null ||
-                    !containingMethod.equals(containingContainingMethod)) {
-                return;
-            }
-            registerStatementError(statement);
-        }
+    @Override
+    public void visitSynchronizedStatement(
+      @NotNull PsiSynchronizedStatement statement) {
+      super.visitSynchronizedStatement(statement);
+      final PsiElement containingSynchronizedStatement =
+        PsiTreeUtil.getParentOfType(statement,
+                                    PsiSynchronizedStatement.class);
+      if (containingSynchronizedStatement == null) {
+        return;
+      }
+      final PsiMethod containingMethod =
+        PsiTreeUtil.getParentOfType(statement,
+                                    PsiMethod.class);
+      final PsiMethod containingContainingMethod =
+        PsiTreeUtil.getParentOfType(containingSynchronizedStatement,
+                                    PsiMethod.class);
+      if (containingMethod == null ||
+          containingContainingMethod == null ||
+          !containingMethod.equals(containingContainingMethod)) {
+        return;
+      }
+      registerStatementError(statement);
     }
+  }
 }

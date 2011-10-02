@@ -25,174 +25,174 @@ import org.jetbrains.annotations.NotNull;
 
 public class AssertWithSideEffectsInspection extends BaseInspection {
 
-    @Override
-    @Nls
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "assert.with.side.effects.display.name");
-    }
+  @Override
+  @Nls
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "assert.with.side.effects.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "assert.with.side.effects.problem.descriptor");
+  }
+
+  @Override
+  public boolean isEnabledByDefault() {
+    return true;
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new AssertWithSideEffectsVisitor();
+  }
+
+  private static class AssertWithSideEffectsVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "assert.with.side.effects.problem.descriptor");
+    public void visitAssertStatement(PsiAssertStatement statement) {
+      super.visitAssertStatement(statement);
+      final PsiExpression condition = statement.getAssertCondition();
+      if (condition == null) {
+        return;
+      }
+      final SideEffectVistor visitor = new SideEffectVistor();
+      condition.accept(visitor);
+      if (!visitor.hasSideEffects()) {
+        return;
+      }
+      registerStatementError(statement);
+    }
+  }
+
+  private static class SideEffectVistor extends JavaRecursiveElementVisitor {
+
+    private boolean hasSideEffects = false;
+
+    public boolean hasSideEffects() {
+      return hasSideEffects;
     }
 
     @Override
-    public boolean isEnabledByDefault() {
-        return true;
+    public void visitAssignmentExpression(
+      PsiAssignmentExpression expression) {
+      hasSideEffects = true;
     }
 
     @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new AssertWithSideEffectsVisitor();
+    public void visitElement(PsiElement element) {
+      if (hasSideEffects) {
+        return;
+      }
+      super.visitElement(element);
     }
 
-    private static class AssertWithSideEffectsVisitor
-            extends BaseInspectionVisitor {
-
-        @Override
-        public void visitAssertStatement(PsiAssertStatement statement) {
-            super.visitAssertStatement(statement);
-            final PsiExpression condition = statement.getAssertCondition();
-            if (condition == null) {
-                return;
-            }
-            final SideEffectVistor visitor = new SideEffectVistor();
-            condition.accept(visitor);
-            if (!visitor.hasSideEffects()) {
-                return;
-            }
-            registerStatementError(statement);
-        }
+    @Override
+    public void visitMethodCallExpression(
+      PsiMethodCallExpression expression) {
+      if (hasSideEffects) {
+        return;
+      }
+      final PsiMethod method = expression.resolveMethod();
+      if (method == null) {
+        return;
+      }
+      if (methodHasSideEffects(method)) {
+        hasSideEffects = true;
+      }
+      else {
+        super.visitMethodCallExpression(expression);
+      }
     }
 
-    private static class SideEffectVistor extends JavaRecursiveElementVisitor {
-
-        private boolean hasSideEffects = false;
-
-        public boolean hasSideEffects() {
-            return hasSideEffects;
-        }
-
-        @Override
-        public void visitAssignmentExpression(
-                PsiAssignmentExpression expression) {
-            hasSideEffects = true;
-        }
-
-        @Override
-        public void visitElement(PsiElement element) {
-            if (hasSideEffects) {
-                return;
-            }
-            super.visitElement(element);
-        }
-
-        @Override
-        public void visitMethodCallExpression(
-                PsiMethodCallExpression expression) {
-            if (hasSideEffects) {
-                return;
-            }
-            final PsiMethod method = expression.resolveMethod();
-            if (method == null) {
-                return;
-            }
-            if (methodHasSideEffects(method)) {
-                hasSideEffects = true;
-            } else {
-                super.visitMethodCallExpression(expression);
-            }
-        }
-
-        @Override
-        public void visitPrefixExpression(PsiPrefixExpression expression) {
-            final IElementType tokenType = expression.getOperationTokenType();
-            if (JavaTokenType.PLUSPLUS.equals(tokenType) ||
-                    JavaTokenType.MINUSMINUS.equals(tokenType)) {
-                hasSideEffects = true;
-            }
-        }
-
-        @Override
-        public void visitPostfixExpression(PsiPostfixExpression expression) {
-            final IElementType tokenType = expression.getOperationTokenType();
-            if (JavaTokenType.PLUSPLUS.equals(tokenType) ||
-                    JavaTokenType.MINUSMINUS.equals(tokenType)) {
-                hasSideEffects = true;
-            }
-        }
+    @Override
+    public void visitPrefixExpression(PsiPrefixExpression expression) {
+      final IElementType tokenType = expression.getOperationTokenType();
+      if (JavaTokenType.PLUSPLUS.equals(tokenType) ||
+          JavaTokenType.MINUSMINUS.equals(tokenType)) {
+        hasSideEffects = true;
+      }
     }
 
-    private static boolean methodHasSideEffects(PsiMethod method) {
-        final PsiCodeBlock body = method.getBody();
-        if (body == null) {
-            return false;
-        }
-        final MethodSideEffectVisitor visitor = new MethodSideEffectVisitor();
-        body.accept(visitor);
-        return visitor.hasSideEffects();
+    @Override
+    public void visitPostfixExpression(PsiPostfixExpression expression) {
+      final IElementType tokenType = expression.getOperationTokenType();
+      if (JavaTokenType.PLUSPLUS.equals(tokenType) ||
+          JavaTokenType.MINUSMINUS.equals(tokenType)) {
+        hasSideEffects = true;
+      }
+    }
+  }
+
+  private static boolean methodHasSideEffects(PsiMethod method) {
+    final PsiCodeBlock body = method.getBody();
+    if (body == null) {
+      return false;
+    }
+    final MethodSideEffectVisitor visitor = new MethodSideEffectVisitor();
+    body.accept(visitor);
+    return visitor.hasSideEffects();
+  }
+
+  private static class MethodSideEffectVisitor
+    extends JavaRecursiveElementVisitor {
+
+    private boolean hasSideEffects = false;
+
+    @Override
+    public void visitAssignmentExpression(
+      PsiAssignmentExpression expression) {
+      if (hasSideEffects) {
+        return;
+      }
+      checkExpression(expression.getLExpression());
+      super.visitAssignmentExpression(expression);
     }
 
-    private static class MethodSideEffectVisitor
-            extends JavaRecursiveElementVisitor {
-
-        private boolean hasSideEffects = false;
-
-        @Override
-        public void visitAssignmentExpression(
-                PsiAssignmentExpression expression) {
-            if (hasSideEffects) {
-                return;
-            }
-            checkExpression(expression.getLExpression());
-            super.visitAssignmentExpression(expression);
-        }
-
-        @Override
-        public void visitPrefixExpression(PsiPrefixExpression expression) {
-            if (hasSideEffects) {
-                return;
-            }
-            final IElementType tokenType = expression.getOperationTokenType();
-            if (JavaTokenType.PLUSPLUS.equals(tokenType) ||
-                    JavaTokenType.MINUSMINUS.equals(tokenType)) {
-                checkExpression(expression.getOperand());
-            }
-            super.visitPrefixExpression(expression);
-
-        }
-
-        @Override
-        public void visitPostfixExpression(PsiPostfixExpression expression) {
-            if (hasSideEffects) {
-                return;
-            }
-            final IElementType tokenType = expression.getOperationTokenType();
-            if (JavaTokenType.PLUSPLUS.equals(tokenType) ||
-                    JavaTokenType.MINUSMINUS.equals(tokenType)) {
-                checkExpression(expression.getOperand());
-            }
-            super.visitPostfixExpression(expression);
-        }
-
-        private void checkExpression(PsiExpression operand) {
-            if (!(operand instanceof PsiReferenceExpression)) {
-                return;
-            }
-            final PsiReferenceExpression referenceExpression =
-                    (PsiReferenceExpression)operand;
-            final PsiElement target = referenceExpression.resolve();
-            if (target instanceof PsiField) {
-                hasSideEffects = true;
-            }
-        }
-
-        public boolean hasSideEffects() {
-            return hasSideEffects;
-        }
+    @Override
+    public void visitPrefixExpression(PsiPrefixExpression expression) {
+      if (hasSideEffects) {
+        return;
+      }
+      final IElementType tokenType = expression.getOperationTokenType();
+      if (JavaTokenType.PLUSPLUS.equals(tokenType) ||
+          JavaTokenType.MINUSMINUS.equals(tokenType)) {
+        checkExpression(expression.getOperand());
+      }
+      super.visitPrefixExpression(expression);
     }
+
+    @Override
+    public void visitPostfixExpression(PsiPostfixExpression expression) {
+      if (hasSideEffects) {
+        return;
+      }
+      final IElementType tokenType = expression.getOperationTokenType();
+      if (JavaTokenType.PLUSPLUS.equals(tokenType) ||
+          JavaTokenType.MINUSMINUS.equals(tokenType)) {
+        checkExpression(expression.getOperand());
+      }
+      super.visitPostfixExpression(expression);
+    }
+
+    private void checkExpression(PsiExpression operand) {
+      if (!(operand instanceof PsiReferenceExpression)) {
+        return;
+      }
+      final PsiReferenceExpression referenceExpression =
+        (PsiReferenceExpression)operand;
+      final PsiElement target = referenceExpression.resolve();
+      if (target instanceof PsiField) {
+        hasSideEffects = true;
+      }
+    }
+
+    public boolean hasSideEffects() {
+      return hasSideEffects;
+    }
+  }
 }

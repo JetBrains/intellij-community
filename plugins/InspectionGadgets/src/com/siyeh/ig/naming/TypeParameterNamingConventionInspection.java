@@ -24,72 +24,74 @@ import com.siyeh.ig.fixes.RenameFix;
 import org.jetbrains.annotations.NotNull;
 
 public class TypeParameterNamingConventionInspection
-        extends ConventionInspection {
+  extends ConventionInspection {
 
-    private static final int DEFAULT_MIN_LENGTH = 1;
-    private static final int DEFAULT_MAX_LENGTH = 1;
+  private static final int DEFAULT_MIN_LENGTH = 1;
+  private static final int DEFAULT_MAX_LENGTH = 1;
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "type.parameter.naming.convention.display.name");
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "type.parameter.naming.convention.display.name");
+  }
+
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new RenameFix();
+  }
+
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return true;
+  }
+
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    final String parameterName = (String)infos[0];
+    if (parameterName.length() < getMinLength()) {
+      return InspectionGadgetsBundle.message(
+        "type.parameter.naming.convention.problem.descriptor.short");
     }
-
-    protected InspectionGadgetsFix buildFix(Object... infos) {
-        return new RenameFix();
+    else if (parameterName.length() > getMaxLength()) {
+      return InspectionGadgetsBundle.message(
+        "type.parameter.naming.convention.problem.descriptor.long");
     }
+    return InspectionGadgetsBundle.message(
+      "enumerated.class.naming.convention.problem.descriptor.regex.mismatch",
+      getRegex());
+  }
 
-    protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
-        return true;
+  protected String getDefaultRegex() {
+    return "[A-Z][A-Za-z\\d]*";
+  }
+
+  protected int getDefaultMinLength() {
+    return DEFAULT_MIN_LENGTH;
+  }
+
+  protected int getDefaultMaxLength() {
+    return DEFAULT_MAX_LENGTH;
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new NamingConventionsVisitor();
+  }
+
+  private class NamingConventionsVisitor extends BaseInspectionVisitor {
+
+    @Override
+    public void visitTypeParameter(PsiTypeParameter parameter) {
+      super.visitTypeParameter(parameter);
+      final String name = parameter.getName();
+      if (name == null) {
+        return;
+      }
+      if (isValid(name)) {
+        return;
+      }
+      final PsiIdentifier nameIdentifier = parameter.getNameIdentifier();
+      if (nameIdentifier == null) {
+        return;
+      }
+      registerError(nameIdentifier, name);
     }
-
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        final String parameterName = (String)infos[0];
-        if (parameterName.length() < getMinLength()) {
-            return InspectionGadgetsBundle.message(
-                    "type.parameter.naming.convention.problem.descriptor.short");
-        } else if (parameterName.length() > getMaxLength()) {
-            return InspectionGadgetsBundle.message(
-                    "type.parameter.naming.convention.problem.descriptor.long");
-        }
-        return InspectionGadgetsBundle.message(
-                "enumerated.class.naming.convention.problem.descriptor.regex.mismatch",
-                getRegex());
-    }
-
-    protected String getDefaultRegex() {
-        return "[A-Z][A-Za-z\\d]*";
-    }
-
-    protected int getDefaultMinLength() {
-        return DEFAULT_MIN_LENGTH;
-    }
-
-    protected int getDefaultMaxLength() {
-        return DEFAULT_MAX_LENGTH;
-    }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new NamingConventionsVisitor();
-    }
-
-    private class NamingConventionsVisitor extends BaseInspectionVisitor {
-
-        @Override public void visitTypeParameter(PsiTypeParameter parameter) {
-            super.visitTypeParameter(parameter);
-            final String name = parameter.getName();
-            if (name == null) {
-                return;
-            }
-            if (isValid(name)) {
-                return;
-            }
-            final PsiIdentifier nameIdentifier = parameter.getNameIdentifier();
-            if (nameIdentifier == null) {
-                return;
-            }
-            registerError(nameIdentifier, name);
-        }
-    }
+  }
 }

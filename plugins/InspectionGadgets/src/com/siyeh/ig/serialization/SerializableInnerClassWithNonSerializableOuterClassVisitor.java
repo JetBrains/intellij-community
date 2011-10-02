@@ -23,40 +23,41 @@ import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
 
 class SerializableInnerClassWithNonSerializableOuterClassVisitor
-        extends BaseInspectionVisitor {
+  extends BaseInspectionVisitor {
 
-    private final SerializableInspection inspection;
+  private final SerializableInspection inspection;
 
-    public SerializableInnerClassWithNonSerializableOuterClassVisitor(
-            SerializableInspection inspection) {
-        this.inspection = inspection;
+  public SerializableInnerClassWithNonSerializableOuterClassVisitor(
+    SerializableInspection inspection) {
+    this.inspection = inspection;
+  }
+
+  @Override
+  public void visitClass(@NotNull PsiClass aClass) {
+    if (aClass.isInterface() || aClass.isAnnotationType() ||
+        aClass.isEnum()) {
+      return;
     }
-
-    @Override public void visitClass(@NotNull PsiClass aClass) {
-        if (aClass.isInterface() || aClass.isAnnotationType() ||
-                aClass.isEnum()) {
-            return;
-        }
-        if (inspection.ignoreAnonymousInnerClasses &&
-                aClass instanceof PsiAnonymousClass) {
-            return;
-        }
-        final PsiClass containingClass = aClass.getContainingClass();
-        if (containingClass == null) {
-            return;
-        }
-        if (aClass.hasModifierProperty(PsiModifier.STATIC)) {
-            return;
-        }
-        if (!SerializationUtils.isSerializable(aClass)) {
-            return;
-        }
-        if (SerializationUtils.isSerializable(containingClass)) {
-            return;
-        }
-        if (inspection.isIgnoredSubclass(aClass)) {
-            return;
-        }
-        registerClassError(aClass);
+    if (inspection.ignoreAnonymousInnerClasses &&
+        aClass instanceof PsiAnonymousClass) {
+      return;
     }
+    final PsiClass containingClass = aClass.getContainingClass();
+    if (containingClass == null) {
+      return;
+    }
+    if (aClass.hasModifierProperty(PsiModifier.STATIC)) {
+      return;
+    }
+    if (!SerializationUtils.isSerializable(aClass)) {
+      return;
+    }
+    if (SerializationUtils.isSerializable(containingClass)) {
+      return;
+    }
+    if (inspection.isIgnoredSubclass(aClass)) {
+      return;
+    }
+    registerClassError(aClass);
+  }
 }

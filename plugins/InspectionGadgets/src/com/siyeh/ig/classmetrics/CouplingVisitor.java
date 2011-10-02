@@ -28,157 +28,164 @@ import java.util.HashSet;
 import java.util.Set;
 
 class CouplingVisitor extends JavaRecursiveElementVisitor {
-    private boolean m_inClass = false;
-    private final PsiClass m_class;
-    private final boolean m_includeJavaClasses;
-    private final boolean m_includeLibraryClasses;
-    private final Set<String> m_dependencies = new HashSet<String>(10);
+  private boolean m_inClass = false;
+  private final PsiClass m_class;
+  private final boolean m_includeJavaClasses;
+  private final boolean m_includeLibraryClasses;
+  private final Set<String> m_dependencies = new HashSet<String>(10);
 
-    CouplingVisitor(PsiClass aClass, boolean includeJavaClasses,
-                    boolean includeLibraryClasses) {
-        super();
-        m_class = aClass;
-        m_includeJavaClasses = includeJavaClasses;
-        m_includeLibraryClasses = includeLibraryClasses;
+  CouplingVisitor(PsiClass aClass, boolean includeJavaClasses,
+                  boolean includeLibraryClasses) {
+    super();
+    m_class = aClass;
+    m_includeJavaClasses = includeJavaClasses;
+    m_includeLibraryClasses = includeLibraryClasses;
+  }
+
+  @Override
+  public void visitField(@NotNull PsiField field) {
+    super.visitField(field);
+    final PsiType type = field.getType();
+    addDependency(type);
+  }
+
+  @Override
+  public void visitLocalVariable(@NotNull PsiLocalVariable var) {
+    super.visitLocalVariable(var);
+    final PsiType type = var.getType();
+    addDependency(type);
+  }
+
+  @Override
+  public void visitMethod(@NotNull PsiMethod method) {
+    super.visitMethod(method);
+    final PsiType returnType = method.getReturnType();
+    addDependency(returnType);
+    addDependenciesForParameters(method);
+    addDependenciesForThrowsList(method);
+  }
+
+  private void addDependenciesForThrowsList(PsiMethod method) {
+    final PsiReferenceList throwsList = method.getThrowsList();
+    final PsiClassType[] throwsTypes = throwsList.getReferencedTypes();
+    for (PsiClassType throwsType : throwsTypes) {
+      addDependency(throwsType);
     }
+  }
 
-    @Override public void visitField(@NotNull PsiField field) {
-        super.visitField(field);
-        final PsiType type = field.getType();
-        addDependency(type);
+  private void addDependenciesForParameters(PsiMethod method) {
+    final PsiParameterList parameterList = method.getParameterList();
+    final PsiParameter[] parameters = parameterList.getParameters();
+    for (PsiParameter parameter : parameters) {
+      final PsiType parameterType = parameter.getType();
+      addDependency(parameterType);
     }
+  }
 
-    @Override public void visitLocalVariable(@NotNull PsiLocalVariable var) {
-        super.visitLocalVariable(var);
-        final PsiType type = var.getType();
-        addDependency(type);
+  @Override
+  public void visitNewExpression(@NotNull PsiNewExpression exp) {
+    super.visitNewExpression(exp);
+    final PsiType classType = exp.getType();
+    addDependency(classType);
+  }
+
+  @Override
+  public void visitClassObjectAccessExpression(PsiClassObjectAccessExpression exp) {
+    super.visitClassObjectAccessExpression(exp);
+    final PsiTypeElement operand = exp.getOperand();
+    final PsiType classType = operand.getType();
+    addDependency(classType);
+  }
+
+  @Override
+  public void visitClass(@NotNull PsiClass aClass) {
+    final boolean wasInClass = m_inClass;
+    if (!m_inClass) {
+
+      m_inClass = true;
+      super.visitClass(aClass);
     }
-
-    @Override public void visitMethod(@NotNull PsiMethod method) {
-        super.visitMethod(method);
-        final PsiType returnType = method.getReturnType();
-        addDependency(returnType);
-        addDependenciesForParameters(method);
-        addDependenciesForThrowsList(method);
+    m_inClass = wasInClass;
+    final PsiType[] superTypes = aClass.getSuperTypes();
+    for (PsiType superType : superTypes) {
+      addDependency(superType);
     }
+  }
 
-    private void addDependenciesForThrowsList(PsiMethod method) {
-        final PsiReferenceList throwsList = method.getThrowsList();
-        final PsiClassType[] throwsTypes = throwsList.getReferencedTypes();
-        for(PsiClassType throwsType : throwsTypes){
-            addDependency(throwsType);
-        }
+  @Override
+  public void visitTryStatement(@NotNull PsiTryStatement statement) {
+    super.visitTryStatement(statement);
+    final PsiParameter[] catchBlockParameters = statement.getCatchBlockParameters();
+    for (PsiParameter catchBlockParameter : catchBlockParameters) {
+      final PsiType catchType = catchBlockParameter.getType();
+      addDependency(catchType);
     }
+  }
 
-    private void addDependenciesForParameters(PsiMethod method) {
-        final PsiParameterList parameterList = method.getParameterList();
-        final PsiParameter[] parameters = parameterList.getParameters();
-        for(PsiParameter parameter : parameters){
-            final PsiType parameterType = parameter.getType();
-            addDependency(parameterType);
-        }
+  @Override
+  public void visitInstanceOfExpression(@NotNull PsiInstanceOfExpression exp) {
+    super.visitInstanceOfExpression(exp);
+    final PsiTypeElement checkType = exp.getCheckType();
+    if (checkType == null) {
+      return;
     }
+    final PsiType classType = checkType.getType();
+    addDependency(classType);
+  }
 
-    @Override public void visitNewExpression(@NotNull PsiNewExpression exp) {
-        super.visitNewExpression(exp);
-        final PsiType classType = exp.getType();
-        addDependency(classType);
+  @Override
+  public void visitTypeCastExpression(@NotNull PsiTypeCastExpression exp) {
+    super.visitTypeCastExpression(exp);
+    final PsiTypeElement castType = exp.getCastType();
+    if (castType == null) {
+      return;
     }
+    final PsiType classType = castType.getType();
+    addDependency(classType);
+  }
 
-    @Override public void visitClassObjectAccessExpression(PsiClassObjectAccessExpression exp) {
-        super.visitClassObjectAccessExpression(exp);
-        final PsiTypeElement operand = exp.getOperand();
-        final PsiType classType = operand.getType();
-        addDependency(classType);
+  private void addDependency(PsiType type) {
+    if (type == null) {
+      return;
     }
+    final PsiType baseType = type.getDeepComponentType();
 
-    @Override public void visitClass(@NotNull PsiClass aClass) {
-        final boolean wasInClass = m_inClass;
-        if (!m_inClass) {
-
-            m_inClass = true;
-            super.visitClass(aClass);
-        }
-        m_inClass = wasInClass;
-        final PsiType[] superTypes = aClass.getSuperTypes();
-        for(PsiType superType : superTypes){
-            addDependency(superType);
-        }
+    if (ClassUtils.isPrimitive(type)) {
+      return;
     }
-
-    @Override public void visitTryStatement(@NotNull PsiTryStatement statement) {
-        super.visitTryStatement(statement);
-        final PsiParameter[] catchBlockParameters = statement.getCatchBlockParameters();
-        for(PsiParameter catchBlockParameter : catchBlockParameters){
-            final PsiType catchType = catchBlockParameter.getType();
-            addDependency(catchType);
-        }
+    final String qualifiedName = m_class.getQualifiedName();
+    if (qualifiedName == null) {
+      return;
     }
-
-    @Override public void visitInstanceOfExpression(@NotNull PsiInstanceOfExpression exp) {
-        super.visitInstanceOfExpression(exp);
-        final PsiTypeElement checkType = exp.getCheckType();
-        if (checkType == null) {
-            return;
-        }
-        final PsiType classType = checkType.getType();
-        addDependency(classType);
+    if (baseType.equalsToText(qualifiedName)) {
+      return;
     }
-
-    @Override public void visitTypeCastExpression(@NotNull PsiTypeCastExpression exp) {
-        super.visitTypeCastExpression(exp);
-        final PsiTypeElement castType = exp.getCastType();
-        if (castType == null) {
-            return;
-        }
-        final PsiType classType = castType.getType();
-        addDependency(classType);
+    final String baseTypeName = baseType.getCanonicalText();
+    @NonNls final String javaPrefix = "java.";
+    @NonNls final String javaxPrefix = "javax.";
+    if (!m_includeJavaClasses &&
+        (baseTypeName.startsWith(javaPrefix) ||
+         baseTypeName.startsWith(javaxPrefix))) {
+      return;
     }
-
-    private void addDependency(PsiType type) {
-        if (type == null) {
-            return;
-        }
-        final PsiType baseType = type.getDeepComponentType();
-
-        if(ClassUtils.isPrimitive(type)){
-            return;
-        }
-        final String qualifiedName = m_class.getQualifiedName();
-        if(qualifiedName == null)
-        {
-            return;
-        }
-        if(baseType.equalsToText(qualifiedName)){
-            return;
-        }
-        final String baseTypeName = baseType.getCanonicalText();
-        @NonNls final String javaPrefix = "java.";
-        @NonNls final String javaxPrefix = "javax.";
-        if (!m_includeJavaClasses &&
-            (baseTypeName.startsWith(javaPrefix) ||
-             baseTypeName.startsWith(javaxPrefix))) {
-            return;
-        }
-        if (!m_includeLibraryClasses) {
-            final Project project = m_class.getProject();
-            final GlobalSearchScope searchScope = GlobalSearchScope.allScope(project);
-            final PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(baseTypeName, searchScope);
-            if (aClass == null) {
-                return;
-            }
-            if (LibraryUtil.classIsInLibrary(aClass)) {
-                return;
-            }
-        }
-      if (StringUtil.startsWithConcatenationOf(baseTypeName, qualifiedName, ".")) {
+    if (!m_includeLibraryClasses) {
+      final Project project = m_class.getProject();
+      final GlobalSearchScope searchScope = GlobalSearchScope.allScope(project);
+      final PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(baseTypeName, searchScope);
+      if (aClass == null) {
         return;
       }
-        m_dependencies.add(baseTypeName);
+      if (LibraryUtil.classIsInLibrary(aClass)) {
+        return;
+      }
     }
-
-    public int getNumDependencies() {
-        return m_dependencies.size();
+    if (StringUtil.startsWithConcatenationOf(baseTypeName, qualifiedName, ".")) {
+      return;
     }
+    m_dependencies.add(baseTypeName);
+  }
 
+  public int getNumDependencies() {
+    return m_dependencies.size();
+  }
 }

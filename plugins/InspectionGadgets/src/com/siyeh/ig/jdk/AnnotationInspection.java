@@ -23,26 +23,27 @@ import org.jetbrains.annotations.NotNull;
 
 public class AnnotationInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message("annotation.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("annotation.display.name");
+  }
 
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message("annotation.problem.descriptor");
-    }
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message("annotation.problem.descriptor");
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new UnnecessaryInterfaceModifierVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new UnnecessaryInterfaceModifierVisitor();
+  }
 
-    private static class UnnecessaryInterfaceModifierVisitor
-            extends BaseInspectionVisitor {
+  private static class UnnecessaryInterfaceModifierVisitor
+    extends BaseInspectionVisitor {
 
-        @Override public void visitAnnotation(PsiAnnotation annotation) {
-            super.visitAnnotation(annotation);
-            registerError(annotation);
-        }
+    @Override
+    public void visitAnnotation(PsiAnnotation annotation) {
+      super.visitAnnotation(annotation);
+      registerError(annotation);
     }
+  }
 }

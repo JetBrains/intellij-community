@@ -28,7 +28,15 @@ public class InlineVariableFixTest extends IGQuickFixesTestCase {
     myDefaultHint = InspectionGadgetsBundle.message("inline.variable.quickfix");
   }
 
-  public void testResourceVar() { doTest(); }
-  public void testResourceVarInMiddle() { doTest(); }
-  public void testSingleResourceVar() { doTest(); }
+  public void testResourceVar() {
+    doTest();
+  }
+
+  public void testResourceVarInMiddle() {
+    doTest();
+  }
+
+  public void testSingleResourceVar() {
+    doTest();
+  }
 }

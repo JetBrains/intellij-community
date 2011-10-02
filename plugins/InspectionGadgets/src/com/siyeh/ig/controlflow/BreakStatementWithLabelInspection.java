@@ -24,41 +24,42 @@ import org.jetbrains.annotations.NotNull;
 
 public class BreakStatementWithLabelInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "break.statement.with.label.display.name");
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "break.statement.with.label.display.name");
+  }
+
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "break.statement.with.label.problem.descriptor");
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
+    return new BreakStatementWithLabelVisitor();
+  }
+
+  private static class BreakStatementWithLabelVisitor
+    extends BaseInspectionVisitor {
+
+    @Override
+    public void visitBreakStatement(@NotNull PsiBreakStatement statement) {
+      super.visitBreakStatement(statement);
+      final PsiIdentifier labelIdentifier =
+        statement.getLabelIdentifier();
+      if (labelIdentifier == null) {
+        return;
+      }
+
+      final String labelText = labelIdentifier.getText();
+      if (labelText == null) {
+        return;
+      }
+      if (labelText.length() == 0) {
+        return;
+      }
+      registerStatementError(statement);
     }
-
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "break.statement.with.label.problem.descriptor");
-    }
-
-    public BaseInspectionVisitor buildVisitor() {
-        return new BreakStatementWithLabelVisitor();
-    }
-
-    private static class BreakStatementWithLabelVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitBreakStatement(@NotNull PsiBreakStatement statement) {
-            super.visitBreakStatement(statement);
-            final PsiIdentifier labelIdentifier =
-                    statement.getLabelIdentifier();
-            if (labelIdentifier == null) {
-                return;
-            }
-
-            final String labelText = labelIdentifier.getText();
-            if (labelText == null) {
-                return;
-            }
-            if (labelText.length() == 0) {
-                return;
-            }
-            registerStatementError(statement);
-        }
-    }
+  }
 }

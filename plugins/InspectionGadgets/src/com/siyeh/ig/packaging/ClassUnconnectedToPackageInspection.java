@@ -35,57 +35,57 @@ import java.util.Set;
 
 public class ClassUnconnectedToPackageInspection extends BaseGlobalInspection {
 
-    @NotNull
-    @Override
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "class.unconnected.to.package.display.name");
+  @NotNull
+  @Override
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "class.unconnected.to.package.display.name");
+  }
+
+  @Override
+  @Nullable
+  public CommonProblemDescriptor[] checkElement(
+    RefEntity refEntity,
+    AnalysisScope analysisScope,
+    InspectionManager manager,
+    GlobalInspectionContext globalInspectionContext) {
+    if (!(refEntity instanceof RefClass)) {
+      return null;
+    }
+    final RefClass refClass = (RefClass)refEntity;
+    final RefEntity owner = refClass.getOwner();
+    if (!(owner instanceof RefPackage)) {
+      return null;
     }
 
-    @Override
-    @Nullable
-    public CommonProblemDescriptor[] checkElement(
-            RefEntity refEntity,
-            AnalysisScope analysisScope,
-            InspectionManager manager,
-            GlobalInspectionContext globalInspectionContext) {
-        if (!(refEntity instanceof RefClass)) {
-            return null;
-        }
-        final RefClass refClass = (RefClass) refEntity;
-        final RefEntity owner = refClass.getOwner();
-        if (!(owner instanceof RefPackage)) {
-            return null;
-        }
-
-        final Set<RefClass> dependencies =
-                DependencyUtils.calculateDependenciesForClass(refClass);
-        for (RefClass dependency : dependencies) {
-             if (inSamePackage(refClass, dependency)) {
-                 return null;
-             }
-        }
-        final Set<RefClass> dependents =
-                DependencyUtils.calculateDependentsForClass(refClass);
-        for (RefClass dependent : dependents) {
-             if (inSamePackage(refClass, dependent)) {
-                 return null;
-             }
-        }
-        final PsiClass aClass = refClass.getElement();
-        final PsiIdentifier identifier = aClass.getNameIdentifier();
-        if (identifier == null) {
-            return null;
-        }
-        return new CommonProblemDescriptor[]{
-                manager.createProblemDescriptor(identifier,
-                        InspectionGadgetsBundle.message(
-                                "class.unconnected.to.package.problem.descriptor"),
-                        true, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false)
-        };
+    final Set<RefClass> dependencies =
+      DependencyUtils.calculateDependenciesForClass(refClass);
+    for (RefClass dependency : dependencies) {
+      if (inSamePackage(refClass, dependency)) {
+        return null;
+      }
     }
-
-    private static boolean inSamePackage(RefClass class1, RefClass class2) {
-        return class1.getOwner() == class2.getOwner();
+    final Set<RefClass> dependents =
+      DependencyUtils.calculateDependentsForClass(refClass);
+    for (RefClass dependent : dependents) {
+      if (inSamePackage(refClass, dependent)) {
+        return null;
+      }
     }
+    final PsiClass aClass = refClass.getElement();
+    final PsiIdentifier identifier = aClass.getNameIdentifier();
+    if (identifier == null) {
+      return null;
+    }
+    return new CommonProblemDescriptor[]{
+      manager.createProblemDescriptor(identifier,
+                                      InspectionGadgetsBundle.message(
+                                        "class.unconnected.to.package.problem.descriptor"),
+                                      true, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false)
+    };
+  }
+
+  private static boolean inSamePackage(RefClass class1, RefClass class2) {
+    return class1.getOwner() == class2.getOwner();
+  }
 }

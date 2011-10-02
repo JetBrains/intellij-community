@@ -22,97 +22,102 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-class CollectionUpdateCalledVisitor extends JavaRecursiveElementVisitor{
+class CollectionUpdateCalledVisitor extends JavaRecursiveElementVisitor {
 
-    @NonNls private final Set<String> updateNames;
+  @NonNls private final Set<String> updateNames;
 
-    private boolean updated = false;
-    private final PsiVariable variable;
+  private boolean updated = false;
+  private final PsiVariable variable;
 
-    CollectionUpdateCalledVisitor(PsiVariable variable,
-                                  Set<String> updateNames){
-        this.variable = variable;
-        this.updateNames = updateNames;
+  CollectionUpdateCalledVisitor(PsiVariable variable,
+                                Set<String> updateNames) {
+    this.variable = variable;
+    this.updateNames = updateNames;
+  }
+
+  @Override
+  public void visitElement(@NotNull PsiElement element) {
+    if (!updated) {
+      super.visitElement(element);
     }
+  }
 
-    @Override public void visitElement(@NotNull PsiElement element){
-        if(!updated){
-            super.visitElement(element);
-        }
+  @Override
+  public void visitMethodCallExpression(
+    @NotNull PsiMethodCallExpression call) {
+    super.visitMethodCallExpression(call);
+    if (updated) {
+      return;
     }
+    final PsiReferenceExpression methodExpression =
+      call.getMethodExpression();
+    final String methodName = methodExpression.getReferenceName();
+    if (methodName == null) {
+      return;
+    }
+    if (!updateNames.contains(methodName)) {
+      boolean found = false;
+      for (String updateName : updateNames) {
+        if (!methodName.startsWith(updateName)) {
+          continue;
+        }
+        found = true;
+        break;
+      }
+      if (!found) {
+        return;
+      }
+    }
+    final PsiExpression qualifier =
+      methodExpression.getQualifierExpression();
+    if (qualifier == null || qualifier instanceof PsiThisExpression) {
+      final PsiMethod method = call.resolveMethod();
+      if (method == null) {
+        return;
+      }
+      final PsiClass aClass = method.getContainingClass();
+      if (CollectionUtils.isCollectionClassOrInterface(aClass)) {
+        updated = true;
+      }
+    }
+    else {
+      checkQualifier(qualifier);
+    }
+  }
 
-    @Override public void visitMethodCallExpression(
-            @NotNull PsiMethodCallExpression call){
-        super.visitMethodCallExpression(call);
-        if(updated){
-            return;
-        }
-        final PsiReferenceExpression methodExpression =
-                call.getMethodExpression();
-        final String methodName = methodExpression.getReferenceName();
-        if (methodName == null) {
-            return;
-        }
-        if(!updateNames.contains(methodName)){
-            boolean found = false;
-            for (String updateName : updateNames) {
-                if (!methodName.startsWith(updateName)) {
-                    continue;
-                }
-                found = true;
-                break;
-            }
-            if (!found) {
-                return;
-            }
-        }
-        final PsiExpression qualifier =
-                methodExpression.getQualifierExpression();
-        if(qualifier == null || qualifier instanceof PsiThisExpression){
-            final PsiMethod method = call.resolveMethod();
-            if (method == null) {
-                return;
-            }
-            final PsiClass aClass = method.getContainingClass();
-            if (CollectionUtils.isCollectionClassOrInterface(aClass)){
-                updated = true;
-            }
-        } else{
-            checkQualifier(qualifier);
-        }
+  private void checkQualifier(PsiExpression expression) {
+    if (updated) {
+      return;
     }
+    if (expression instanceof PsiReferenceExpression) {
+      final PsiReferenceExpression referenceExpression =
+        (PsiReferenceExpression)expression;
+      final PsiElement referent = referenceExpression.resolve();
+      if (referent == null) {
+        return;
+      }
+      if (referent.equals(variable)) {
+        updated = true;
+      }
+    }
+    else if (expression instanceof PsiParenthesizedExpression) {
+      final PsiParenthesizedExpression parenthesizedExpression =
+        (PsiParenthesizedExpression)expression;
+      checkQualifier(parenthesizedExpression.getExpression());
+    }
+    else if (expression instanceof PsiConditionalExpression) {
+      final PsiConditionalExpression conditionalExpression =
+        (PsiConditionalExpression)expression;
+      final PsiExpression thenExpression =
+        conditionalExpression.getThenExpression();
+      checkQualifier(thenExpression);
+      final PsiExpression elseExpression =
+        conditionalExpression.getElseExpression();
+      checkQualifier(elseExpression);
+    }
+  }
 
-    private void checkQualifier(PsiExpression expression) {
-        if (updated) {
-            return;
-        }
-        if (expression instanceof PsiReferenceExpression) {
-            final PsiReferenceExpression referenceExpression =
-                    (PsiReferenceExpression) expression;
-            final PsiElement referent = referenceExpression.resolve();
-            if(referent == null){
-                return;
-            }
-            if(referent.equals(variable)){
-                updated = true;
-            }
-        } else if (expression instanceof PsiParenthesizedExpression) {
-            final PsiParenthesizedExpression parenthesizedExpression =
-                    (PsiParenthesizedExpression) expression;
-            checkQualifier(parenthesizedExpression.getExpression());
-        } else if (expression instanceof PsiConditionalExpression) {
-            final PsiConditionalExpression conditionalExpression =
-                    (PsiConditionalExpression) expression;
-            final PsiExpression thenExpression =
-                    conditionalExpression.getThenExpression();
-            checkQualifier(thenExpression);
-            final PsiExpression elseExpression =
-                    conditionalExpression.getElseExpression();
-            checkQualifier(elseExpression);
-        }
-    }
-
-    public boolean isUpdated(){
-        return updated;
-    }
+  public boolean isUpdated() {
+    return updated;
+  }
 }

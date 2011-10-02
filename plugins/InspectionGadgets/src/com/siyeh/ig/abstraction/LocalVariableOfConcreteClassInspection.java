@@ -27,52 +27,53 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.JComponent;
 
 public class LocalVariableOfConcreteClassInspection
-        extends BaseInspection {
+  extends BaseInspection {
 
-    @SuppressWarnings("PublicField")
-    public boolean ignoreAbstractClasses = false;
+  @SuppressWarnings("PublicField")
+  public boolean ignoreAbstractClasses = false;
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "local.variable.of.concrete.class.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... arg) {
+    final PsiNamedElement variable = (PsiNamedElement)arg[0];
+    final String name = variable.getName();
+    return InspectionGadgetsBundle.message(
+      "local.variable.of.concrete.class.problem.descriptor", name);
+  }
+
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(
+      InspectionGadgetsBundle.message(
+        "local.variable.of.concrete.class.option"),
+      this, "ignoreAbstractClasses");
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new LocalVariableOfConcreteClassVisitor();
+  }
+
+  private class LocalVariableOfConcreteClassVisitor
+    extends BaseInspectionVisitor {
 
     @Override
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "local.variable.of.concrete.class.display.name");
+    public void visitLocalVariable(
+      @NotNull PsiLocalVariable variable) {
+      super.visitLocalVariable(variable);
+      final PsiTypeElement typeElement = variable.getTypeElement();
+      if (!ConcreteClassUtil.typeIsConcreteClass(typeElement,
+                                                 ignoreAbstractClasses)) {
+        return;
+      }
+      registerError(typeElement, variable);
     }
-
-    @Override
-    @NotNull
-    public String buildErrorString(Object... arg) {
-        final PsiNamedElement variable = (PsiNamedElement)arg[0];
-        final String name = variable.getName();
-        return InspectionGadgetsBundle.message(
-                "local.variable.of.concrete.class.problem.descriptor", name);
-    }
-
-    @Override
-    public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel(
-                InspectionGadgetsBundle.message(
-                        "local.variable.of.concrete.class.option"),
-                this, "ignoreAbstractClasses");
-    }
-
-    @Override
-    public BaseInspectionVisitor buildVisitor() {
-        return new LocalVariableOfConcreteClassVisitor();
-    }
-
-    private class LocalVariableOfConcreteClassVisitor
-            extends BaseInspectionVisitor {
-
-        @Override public void visitLocalVariable(
-                @NotNull PsiLocalVariable variable) {
-            super.visitLocalVariable(variable);
-            final PsiTypeElement typeElement = variable.getTypeElement();
-            if (!ConcreteClassUtil.typeIsConcreteClass(typeElement,
-                    ignoreAbstractClasses)) {
-                return;
-            }
-            registerError(typeElement, variable);
-        }
-    }
+  }
 }

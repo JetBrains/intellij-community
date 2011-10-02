@@ -23,45 +23,46 @@ import org.jetbrains.annotations.NotNull;
 
 public class OnDemandImportInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message("import.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("import.display.name");
+  }
 
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message("import.problem.descriptor");
-    }
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message("import.problem.descriptor");
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new PackageImportVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new PackageImportVisitor();
+  }
 
-    private static class PackageImportVisitor extends BaseInspectionVisitor {
+  private static class PackageImportVisitor extends BaseInspectionVisitor {
 
-        @Override public void visitClass(@NotNull PsiClass aClass) {
-            // no call to super, so it doesn't drill down
-            final PsiElement parent = aClass.getParent();
-            if (!(parent instanceof PsiJavaFile)) {
-                return;
-            }
-            final PsiJavaFile file = (PsiJavaFile) parent;
-            if (JspPsiUtil.isInJspFile(aClass.getContainingFile())) {
-                return;
-            }
-            if (!file.getClasses()[0].equals(aClass)) {
-                return;
-            }
-            final PsiImportList importList = file.getImportList();
-            if (importList != null) {
-                final PsiImportStatement[] importStatements =
-                        importList.getImportStatements();
-                for(PsiImportStatement importStatement : importStatements){
-                    if(importStatement.isOnDemand()){
-                        registerError(importStatement);
-                    }
-                }
-            }
+    @Override
+    public void visitClass(@NotNull PsiClass aClass) {
+      // no call to super, so it doesn't drill down
+      final PsiElement parent = aClass.getParent();
+      if (!(parent instanceof PsiJavaFile)) {
+        return;
+      }
+      final PsiJavaFile file = (PsiJavaFile)parent;
+      if (JspPsiUtil.isInJspFile(aClass.getContainingFile())) {
+        return;
+      }
+      if (!file.getClasses()[0].equals(aClass)) {
+        return;
+      }
+      final PsiImportList importList = file.getImportList();
+      if (importList != null) {
+        final PsiImportStatement[] importStatements =
+          importList.getImportStatements();
+        for (PsiImportStatement importStatement : importStatements) {
+          if (importStatement.isOnDemand()) {
+            registerError(importStatement);
+          }
         }
+      }
     }
+  }
 }

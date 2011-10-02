@@ -26,72 +26,77 @@ import org.jetbrains.annotations.NotNull;
 
 public class UnnecessaryContinueInspection extends BaseInspection {
 
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message(
-                "unnecessary.continue.display.name");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "unnecessary.continue.display.name");
+  }
 
-    @NotNull
-    protected String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "unnecessary.continue.problem.descriptor");
-    }
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "unnecessary.continue.problem.descriptor");
+  }
 
-    public boolean isEnabledByDefault() {
-        return true;
-    }
+  public boolean isEnabledByDefault() {
+    return true;
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new UnnecessaryContinueVisitor();
-    }
+  public BaseInspectionVisitor buildVisitor() {
+    return new UnnecessaryContinueVisitor();
+  }
 
-    public InspectionGadgetsFix buildFix(Object... infos) {
-        return new DeleteUnnecessaryStatementFix("continue");
-    }
+  public InspectionGadgetsFix buildFix(Object... infos) {
+    return new DeleteUnnecessaryStatementFix("continue");
+  }
 
-    private static class UnnecessaryContinueVisitor
-            extends BaseInspectionVisitor {
+  private static class UnnecessaryContinueVisitor
+    extends BaseInspectionVisitor {
 
-        @Override public void visitContinueStatement(
-                @NotNull PsiContinueStatement statement) {
-          if (JspPsiUtil.isInJspFile(statement.getContainingFile())) {
-            return;
-          }
-            final PsiStatement continuedStatement =
-                    statement.findContinuedStatement();
-            PsiStatement body = null;
-            if (continuedStatement instanceof PsiForeachStatement) {
-                final PsiForeachStatement foreachStatement =
-                        (PsiForeachStatement)continuedStatement;
-                body = foreachStatement.getBody();
-            } else if (continuedStatement instanceof PsiForStatement) {
-                final PsiForStatement forStatement =
-                        (PsiForStatement)continuedStatement;
-                body = forStatement.getBody();
-            } else if (continuedStatement instanceof PsiDoWhileStatement) {
-                final PsiDoWhileStatement doWhileStatement =
-                        (PsiDoWhileStatement)continuedStatement;
-                body = doWhileStatement.getBody();
-            } else if (continuedStatement instanceof PsiWhileStatement) {
-                final PsiWhileStatement whileStatement =
-                        (PsiWhileStatement)continuedStatement;
-                body = whileStatement.getBody();
-            }
-            if (body == null) {
-                return;
-            }
-            if (body instanceof PsiBlockStatement) {
-                final PsiCodeBlock block =
-                        ((PsiBlockStatement)body).getCodeBlock();
-                if (ControlFlowUtils.blockCompletesWithStatement(block,
-                        statement)) {
-                    registerStatementError(statement);
-                }
-            } else if (ControlFlowUtils.statementCompletesWithStatement(body,
-                    statement)) {
-                registerStatementError(statement);
-            }
+    @Override
+    public void visitContinueStatement(
+      @NotNull PsiContinueStatement statement) {
+      if (JspPsiUtil.isInJspFile(statement.getContainingFile())) {
+        return;
+      }
+      final PsiStatement continuedStatement =
+        statement.findContinuedStatement();
+      PsiStatement body = null;
+      if (continuedStatement instanceof PsiForeachStatement) {
+        final PsiForeachStatement foreachStatement =
+          (PsiForeachStatement)continuedStatement;
+        body = foreachStatement.getBody();
+      }
+      else if (continuedStatement instanceof PsiForStatement) {
+        final PsiForStatement forStatement =
+          (PsiForStatement)continuedStatement;
+        body = forStatement.getBody();
+      }
+      else if (continuedStatement instanceof PsiDoWhileStatement) {
+        final PsiDoWhileStatement doWhileStatement =
+          (PsiDoWhileStatement)continuedStatement;
+        body = doWhileStatement.getBody();
+      }
+      else if (continuedStatement instanceof PsiWhileStatement) {
+        final PsiWhileStatement whileStatement =
+          (PsiWhileStatement)continuedStatement;
+        body = whileStatement.getBody();
+      }
+      if (body == null) {
+        return;
+      }
+      if (body instanceof PsiBlockStatement) {
+        final PsiCodeBlock block =
+          ((PsiBlockStatement)body).getCodeBlock();
+        if (ControlFlowUtils.blockCompletesWithStatement(block,
+                                                         statement)) {
+          registerStatementError(statement);
         }
+      }
+      else if (ControlFlowUtils.statementCompletesWithStatement(body,
+                                                                statement)) {
+        registerStatementError(statement);
+      }
     }
+  }
 }

@@ -25,55 +25,56 @@ import org.jetbrains.annotations.NotNull;
 
 public class ThreadDumpStackInspection extends BaseInspection {
 
-    @NotNull
-    public String getID(){
-        return "CallToThreadDumpStack";
-    }
-    @NotNull
-    public String getDisplayName() {
-        return InspectionGadgetsBundle.message("dumpstack.call.display.name");
-    }
+  @NotNull
+  public String getID() {
+    return "CallToThreadDumpStack";
+  }
 
-    @NotNull
-    public String buildErrorString(Object... infos) {
-        return InspectionGadgetsBundle.message(
-                "dumpstack.call.problem.descriptor");
-    }
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("dumpstack.call.display.name");
+  }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new ThreadDumpStackVisitor();
-    }
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "dumpstack.call.problem.descriptor");
+  }
 
-    private static class ThreadDumpStackVisitor extends BaseInspectionVisitor {
+  public BaseInspectionVisitor buildVisitor() {
+    return new ThreadDumpStackVisitor();
+  }
 
-        @Override public void visitMethodCallExpression(
-                @NotNull PsiMethodCallExpression expression) {
-            super.visitMethodCallExpression(expression);
-            final String methodName = MethodCallUtils.getMethodName(expression);
-            if (!HardcodedMethodConstants.DUMP_STACKTRACE.equals(methodName)) {
-                return;
-            }
-            final PsiExpressionList argumentList = expression.getArgumentList();
-            if (argumentList.getExpressions().length != 0) {
-                return;
-            }
-            final PsiReferenceExpression methodExpression =
-                    expression.getMethodExpression();
-            final PsiElement element = methodExpression.resolve();
-            if (!(element instanceof PsiMethod)) {
-                return;
-            }
-            final PsiMethod method = (PsiMethod) element;
-            final PsiClass aClass = method.getContainingClass();
-            if(aClass == null)
-            {
-                return;
-            }
-            final String qualifiedName = aClass.getQualifiedName();
-            if (!"java.lang.Thread".equals(qualifiedName)) {
-                return;
-            }
-            registerMethodCallError(expression);
-        }
+  private static class ThreadDumpStackVisitor extends BaseInspectionVisitor {
+
+    @Override
+    public void visitMethodCallExpression(
+      @NotNull PsiMethodCallExpression expression) {
+      super.visitMethodCallExpression(expression);
+      final String methodName = MethodCallUtils.getMethodName(expression);
+      if (!HardcodedMethodConstants.DUMP_STACKTRACE.equals(methodName)) {
+        return;
+      }
+      final PsiExpressionList argumentList = expression.getArgumentList();
+      if (argumentList.getExpressions().length != 0) {
+        return;
+      }
+      final PsiReferenceExpression methodExpression =
+        expression.getMethodExpression();
+      final PsiElement element = methodExpression.resolve();
+      if (!(element instanceof PsiMethod)) {
+        return;
+      }
+      final PsiMethod method = (PsiMethod)element;
+      final PsiClass aClass = method.getContainingClass();
+      if (aClass == null) {
+        return;
+      }
+      final String qualifiedName = aClass.getQualifiedName();
+      if (!"java.lang.Thread".equals(qualifiedName)) {
+        return;
+      }
+      registerMethodCallError(expression);
     }
+  }
 }
