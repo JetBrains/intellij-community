@@ -103,11 +103,19 @@
     <fileBasedIndex implementation="org.intellij.lang.xpath.xslt.impl.XsltSymbolIndex" />
     <include.provider implementation="org.intellij.lang.xpath.xslt.impl.XsltIncludeProvider"/>
     
-    <inspectionToolProvider implementation="org.intellij.lang.xpath.xslt.impl.XsltStuffProvider" />
     <usageGroupingRuleProvider implementation="org.intellij.lang.xpath.xslt.impl.XsltStuffProvider" />
     <lang.refactoringSupport language="XPath" implementationClass="org.intellij.lang.xpath.xslt.refactoring.XPathRefactoringSupportProvider" />
     <lang.refactoringSupport language="XML" implementationClass="org.intellij.lang.xpath.xslt.refactoring.XsltRefactoringSupportProvider" />
     <inlineActionHandler implementation="org.intellij.lang.xpath.xslt.refactoring.VariableInlineHandler" />
+
+    <localInspection shortName="XsltUnusedDeclaration" displayName="Unused Variable/Parameter" groupName="XSLT" enabledByDefault="true"
+                     level="WARNING" implementationClass="org.intellij.lang.xpath.xslt.validation.inspections.UnusedElementInspection"/>
+    <localInspection shortName="XsltTemplateInvocation" displayName="Template Invocation Problems" groupName="XSLT" enabledByDefault="true"
+                     level="ERROR" implementationClass="org.intellij.lang.xpath.xslt.validation.inspections.TemplateInvocationInspection"/>
+    <localInspection shortName="XsltDeclarations" displayName="Declaration Problems" groupName="XSLT" enabledByDefault="true" level="ERROR"
+                     implementationClass="org.intellij.lang.xpath.xslt.validation.inspections.XsltDeclarationInspection"/>
+    <localInspection shortName="XsltVariableShadowing" displayName="Variable Shadowing" groupName="XSLT" enabledByDefault="true"
+                     level="WARNING" implementationClass="org.intellij.lang.xpath.xslt.validation.inspections.VariableShadowingInspection"/>
 
     <intentionAction>
       <className>org.intellij.lang.xpath.xslt.intentions.AddOptionalArgumentsIntention</className>
