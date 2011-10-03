@@ -17,11 +17,12 @@ package com.intellij.codeInsight.generation.surroundWith;
 
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
-import com.intellij.idea.Bombed;
+import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Denis Zhdanov
@@ -93,12 +94,10 @@ public class JavaSurroundWithTest extends LightCodeInsightTestCase {
     doTest(getTestName(false), new JavaWithCastSurrounder());
   }
 
-  @Bombed(month = 10, day = 3, user = "denis.zhdanov")
   public void testSurroundExpressionWithCastEmptyLineAfter() throws Exception {
     doTestWithTemplateFinish(getTestName(false), new JavaWithCastSurrounder(), "var");
   }
 
-  @Bombed(month = 10, day = 3, user = "denis.zhdanov")
   public void testSurroundExpressionWithCastEmptyLineAfter_2() throws Exception {
     doTestWithTemplateFinish(getTestName(false), new JavaWithCastSurrounder(), null);
   }
@@ -113,14 +112,18 @@ public class JavaSurroundWithTest extends LightCodeInsightTestCase {
     checkResultByFile(BASE_PATH + fileName + "_after.java");
   }
 
-  private void doTestWithTemplateFinish(@NotNull String fileName, final Surrounder surrounder, String type) throws Exception {
+  private void doTestWithTemplateFinish(@NotNull String fileName, final Surrounder surrounder, @Nullable String textToType)
+    throws Exception
+  {
     ((TemplateManagerImpl)TemplateManager.getInstance(getProject())).setTemplateTesting(true);
     configureByFile(BASE_PATH + fileName + ".java");
     SurroundWithHandler.invoke(getProject(), getEditor(), getFile(), surrounder);
-    if (type != null) {
-      type("var");
+    if (textToType != null) {
+      type(textToType);
     }
-    ((TemplateManagerImpl)TemplateManager.getInstance(getProject())).getTemplateState(getEditor()).nextTab();
+    TemplateState templateState = TemplateManagerImpl.getTemplateState(getEditor());
+    assertNotNull(templateState);
+    templateState.nextTab();
     checkResultByFile(BASE_PATH + fileName + "_after.java");
   }
 

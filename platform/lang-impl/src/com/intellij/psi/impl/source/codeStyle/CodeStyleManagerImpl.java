@@ -92,7 +92,6 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     } else {
       return formatted;
     }
-
   }
 
   private PsiElement postProcessElement(final PsiElement formatted) {
@@ -461,8 +460,13 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     
     int start = offset;
     for (int i = offset - 1; i >= 0; i--) {
-      if (!isWhiteSpaceSymbol(text.charAt(i))) {
+      char c = text.charAt(i);
+      // We don't want to insert a marker if target line is not blank (doesn't consist from white space symbols only).
+      if (c == '\n') {
         break;
+      }
+      if (!isWhiteSpaceSymbol(c)) {
+        return null;
       }
       start = i;
     }
@@ -489,13 +493,20 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
   @Nullable
   private static TextRange insertNewLineIndentMarker(@NotNull PsiFile file, int offset) throws IncorrectOperationException {
     CheckUtil.checkWritable(file);
-    final CharTable charTable = ((FileElement)SourceTreeToPsiMap.psiElementToTree(file)).getCharTable();
+    ASTNode astNode = SourceTreeToPsiMap.psiElementToTree(file);
+    if (!(astNode instanceof FileElement)) {
+      return null;
+    } 
+    final CharTable charTable = ((FileElement)astNode).getCharTable();
     PsiElement elementAt = findElementInTreeWithFormatterEnabled(file, offset);
     if( elementAt == null )
     {
       return null;
     }
     ASTNode element = SourceTreeToPsiMap.psiElementToTree(elementAt);
+    if (element == null) {
+      return null;
+    } 
     ASTNode parent = element.getTreeParent();
     int elementStart = element.getTextRange().getStartOffset();
     if (element.getElementType() != TokenType.WHITE_SPACE) {
@@ -507,6 +518,21 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
       */
       return null;
     }
+
+    // We don't want to insert a marker if target line is not blank (doesn't consist from white space symbols only).
+    if (offset == element.getTextRange().getStartOffset()) {
+      for (ASTNode prev = TreeUtil.prevLeaf(element); ; prev = TreeUtil.prevLeaf(prev)) {
+        if (prev == null) {
+          return null;
+        }
+        if (prev.getTextRange().isEmpty()) {
+          continue;
+        }
+        if (prev.getElementType() != TokenType.WHITE_SPACE) {
+          return null;
+        } 
+      }
+    } 
 
     ASTNode space1 = splitSpaceElement((TreeElement)element, offset - elementStart, charTable);
     ASTNode marker = Factory.createSingleLeafElement(TokenType.NEW_LINE_INDENT, DUMMY_IDENTIFIER, charTable, file.getManager());
