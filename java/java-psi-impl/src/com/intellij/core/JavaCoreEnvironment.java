@@ -17,6 +17,7 @@ package com.intellij.core;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiElementFinder;
 import com.intellij.psi.impl.JavaPsiFacadeImpl;
 
 /**
@@ -25,8 +26,12 @@ import com.intellij.psi.impl.JavaPsiFacadeImpl;
 public class JavaCoreEnvironment extends CoreEnvironment {
   public JavaCoreEnvironment(Disposable parentDisposable) {
     super(parentDisposable);
+    registerProjectExtensionPoint(PsiElementFinder.EP_NAME, PsiElementFinder.class);
+    JavaPsiFacadeImpl javaPsiFacade = new JavaPsiFacadeImpl(myProject, myPsiManager, null, null);
     registerComponentInstance(myProject.getPicoContainer(),
                               JavaPsiFacade.class,
-                              new JavaPsiFacadeImpl(myProject, myPsiManager, null, null));
+                              javaPsiFacade);
+    myProject.registerService(JavaPsiFacade.class, javaPsiFacade);
+
   }
 }

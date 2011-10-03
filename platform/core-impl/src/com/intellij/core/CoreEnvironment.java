@@ -23,6 +23,10 @@ import com.intellij.openapi.application.ApplicationComponentLocator;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.impl.DocumentImpl;
+import com.intellij.openapi.extensions.ExtensionPoint;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
@@ -33,17 +37,18 @@ import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.openapi.vfs.local.CoreLocalFileSystem;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.PsiCachedValuesFactory;
-import com.intellij.psi.impl.PsiFileFactoryImpl;
-import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.psi.impl.file.PsiDirectoryFactoryImpl;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.CachedValuesManagerImpl;
 import com.intellij.util.Function;
 import org.picocontainer.MutablePicoContainer;
+
+import java.lang.reflect.Modifier;
 
 /**
  * @author yole
@@ -83,6 +88,7 @@ public class CoreEnvironment {
     ApplicationComponentLocator.setInstance(myApplication);
     myLocalFileSystem = new CoreLocalFileSystem();
 
+    Extensions.registerAreaClass("IDEA_PROJECT", null);
     myProject = new MockProject(myApplication.getPicoContainer(), parentDisposable);
 
     final MutablePicoContainer appContainer = myApplication.getPicoContainer();
@@ -99,6 +105,10 @@ public class CoreEnvironment {
 
     myFileIndexFacade = new MockFileIndexFacade(myProject);
     final MutablePicoContainer projectContainer = myProject.getPicoContainer();
+    
+    myProject.registerService(PsiModificationTracker.class, new PsiModificationTrackerImpl(myProject));
+    
+    registerProjectExtensionPoint(PsiTreeChangePreprocessor.EP_NAME, PsiTreeChangePreprocessor.class);
     myPsiManager = new PsiManagerImpl(myProject, null, null, myFileIndexFacade, null);
     ((FileManagerImpl) myPsiManager.getFileManager()).markInitialized();
     registerComponentInstance(projectContainer, PsiManager.class, myPsiManager);
@@ -133,6 +143,20 @@ public class CoreEnvironment {
         instance.removeExplicitExtension(language, object);
       }
     });
+  }
+
+  protected <T> void registerExtensionPoint(final ExtensionsArea area, final ExtensionPointName<T> extensionPointName,
+                                            final Class<? extends T> aClass) {
+    final String name = extensionPointName.getName();
+    if (!area.hasExtensionPoint(name)) {
+      ExtensionPoint.Kind kind = aClass.isInterface() || (aClass.getModifiers() & Modifier.ABSTRACT) != 0 ? ExtensionPoint.Kind.INTERFACE : ExtensionPoint.Kind.BEAN_CLASS;
+      area.registerExtensionPoint(name, aClass.getName(), kind);
+    }
+  }
+
+  protected <T> void registerProjectExtensionPoint(final ExtensionPointName<T> extensionPointName,
+                                            final Class<? extends T> aClass) {
+    registerExtensionPoint(Extensions.getArea(myProject), extensionPointName, aClass);
   }
 
   public CoreLocalFileSystem getLocalFileSystem() {
