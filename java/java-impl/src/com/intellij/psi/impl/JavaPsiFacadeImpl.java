@@ -15,24 +15,19 @@
  */
 package com.intellij.psi.impl;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.PackageIndex;
-import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.file.PsiPackageImpl;
 import com.intellij.psi.impl.file.impl.JavaFileManager;
-import com.intellij.psi.impl.file.impl.JavaFileManagerImpl;
 import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.JavaDummyHolder;
 import com.intellij.psi.impl.source.JavaDummyHolderFactory;
@@ -58,7 +53,7 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * @author max
  */
-public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
+public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.JavaPsiFacadeImpl");
 
   private final PsiElementFinder[] myElementFinders;
@@ -67,13 +62,10 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
   private final PsiConstantEvaluationHelper myConstantEvaluationHelper;
   private final ConcurrentMap<String, PsiPackage> myPackageCache = new ConcurrentHashMap<String, PsiPackage>();
   private final Project myProject;
-  private final JavaFileManager myFileManager;
 
 
   public JavaPsiFacadeImpl(Project project,
                            PsiManagerImpl psiManager,
-                           final ProjectRootManagerEx projectRootManagerEx,
-                           StartupManager startupManager,
                            MessageBus bus) {
     myProject = project;
     myResolveHelper = new PsiResolveHelperImpl(PsiManager.getInstance(project));
@@ -84,8 +76,6 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
     elementFinders.add(new PsiElementFinderImpl());
     ContainerUtil.addAll(elementFinders, myProject.getExtensions(PsiElementFinder.EP_NAME));
     myElementFinders = elementFinders.toArray(new PsiElementFinder[elementFinders.size()]);
-
-    myFileManager = new JavaFileManagerImpl(psiManager, projectRootManagerEx, psiManager.getFileManager(), bus);
 
     final PsiModificationTrackerImpl modificationTracker = (PsiModificationTrackerImpl)psiManager.getModificationTracker();
     psiManager.addTreeChangePreprocessor(new JavaCodeBlockModificationListener(modificationTracker));
@@ -102,26 +92,8 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
       }
     });
 
-    startupManager.registerStartupActivity(
-      new Runnable() {
-        public void run() {
-          runStartupActivity();
-        }
-      }
-    );
-
-
     DummyHolderFactory.setFactory(new JavaDummyHolderFactory());
     JavaElementType.ANNOTATION.getIndex(); // Initialize stubs.
-    Disposer.register(project, this);
-  }
-
-  private void runStartupActivity() {
-    myFileManager.initialize();
-  }
-
-  public void dispose() {
-    myFileManager.dispose();
   }
 
   /**
@@ -277,11 +249,13 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
     return result.toArray(new PsiPackage[result.size()]);
   }
 
-  public JavaFileManager getJavaFileManager() {
-    return myFileManager;
-  }
-
   private class PsiElementFinderImpl extends PsiElementFinder {
+    private final JavaFileManager myFileManager;
+
+    private PsiElementFinderImpl() {
+      myFileManager = myProject.getComponent(JavaFileManager.class);
+    }
+
     public PsiClass findClass(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
       return myFileManager.findClass(qualifiedName, scope);
     }
@@ -373,7 +347,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
 
 
   public boolean isPartOfPackagePrefix(String packageName) {
-    final Collection<String> packagePrefixes = myFileManager.getNonTrivialPackagePrefixes();
+    final Collection<String> packagePrefixes = myProject.getComponent(JavaFileManager.class).getNonTrivialPackagePrefixes();
     for (final String subpackageName : packagePrefixes) {
       if (isSubpackageOf(subpackageName, packageName)) return true;
     }

@@ -18,10 +18,13 @@ package com.intellij.psi.impl.file.impl;
 
 import com.intellij.AppTopics;
 import com.intellij.ProjectTopics;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
@@ -47,7 +50,7 @@ import java.util.*;
 /**
  * @author max
  */
-public class JavaFileManagerImpl implements JavaFileManager {
+public class JavaFileManagerImpl implements JavaFileManager, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.file.impl.JavaFileManagerImpl");
 
   @NonNls private static final String JAVA_EXTENSION = ".java";
@@ -65,10 +68,11 @@ public class JavaFileManagerImpl implements JavaFileManager {
   private final PackageIndex myPackageIndex;
 
 
-  public JavaFileManagerImpl(final PsiManagerEx manager, final ProjectRootManager projectRootManager, FileManager fileManager, MessageBus bus) {
+  public JavaFileManagerImpl(final PsiManagerEx manager, final ProjectRootManager projectRootManager, MessageBus bus,
+                             final StartupManager startupManager) {
     myManager = manager;
     myProjectRootManager = projectRootManager;
-    myFileManager = fileManager;
+    myFileManager = manager.getFileManager();
 
     myUseRepository = true;
 
@@ -106,6 +110,15 @@ public class JavaFileManagerImpl implements JavaFileManager {
     });
     
     myPackageIndex = PackageIndex.getInstance(myManager.getProject());
+
+    startupManager.registerStartupActivity(
+      new Runnable() {
+        public void run() {
+          initialize();
+        }
+      }
+    );
+    Disposer.register(myManager.getProject(), this);
   }
 
   public void initialize() {
