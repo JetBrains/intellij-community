@@ -234,4 +234,13 @@ public class ForCanBeForEach {
             }
         }
     }
+
+  void indexedList(List<String> l) {
+    for (int i = 0, max = l.size(); i < max; i++) {
+
+    }
+    for (int i = (0), max = (l.size()); ((max) > (i)); ((i)++) {
+
+    }
+  }
 }

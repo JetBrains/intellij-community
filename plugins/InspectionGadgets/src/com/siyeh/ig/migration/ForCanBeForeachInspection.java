@@ -132,32 +132,43 @@ public class ForCanBeForeachInspection extends BaseInspection {
       if (condition == null) {
         return null;
       }
-      final PsiExpression lhs = condition.getLOperand();
-      final String indexName = lhs.getText();
-      PsiExpression rOperand = ParenthesesUtils.stripParentheses(
-        condition.getROperand());
-      if (rOperand instanceof PsiReferenceExpression) {
-        final PsiReferenceExpression referenceExpression =
-          (PsiReferenceExpression)rOperand;
+      final PsiExpression lhs = ParenthesesUtils.stripParentheses(condition.getLOperand());
+      if (lhs == null) {
+        return null;
+      }
+      PsiExpression rhs = ParenthesesUtils.stripParentheses(condition.getROperand());
+      if (rhs == null) {
+        return null;
+      }
+      final IElementType tokenType = condition.getOperationTokenType();
+      final String indexName;
+      PsiExpression collectionSize;
+      if (JavaTokenType.LT.equals(tokenType)) {
+        indexName = lhs.getText();
+        collectionSize = rhs;
+      } else if (JavaTokenType.GT.equals(tokenType)) {
+        indexName = rhs.getText();
+        collectionSize = lhs;
+      } else {
+        return null;
+      }
+      if (collectionSize instanceof PsiReferenceExpression) {
+        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)collectionSize;
         final PsiElement target = referenceExpression.resolve();
         if (target instanceof PsiVariable) {
           final PsiVariable variable = (PsiVariable)target;
-          rOperand = variable.getInitializer();
+          collectionSize = ParenthesesUtils.stripParentheses(variable.getInitializer());
         }
       }
-      if (!(rOperand instanceof PsiMethodCallExpression)) {
+      if (!(collectionSize instanceof PsiMethodCallExpression)) {
         return null;
       }
-      final PsiMethodCallExpression methodCallExpression =
-        (PsiMethodCallExpression)
-          ParenthesesUtils.stripParentheses(rOperand);
+      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)ParenthesesUtils.stripParentheses(collectionSize);
       if (methodCallExpression == null) {
         return null;
       }
-      final PsiReferenceExpression listLengthExpression =
-        methodCallExpression.getMethodExpression();
-      final PsiExpression qualifier =
-        listLengthExpression.getQualifierExpression();
+      final PsiReferenceExpression listLengthExpression = methodCallExpression.getMethodExpression();
+      final PsiExpression qualifier = listLengthExpression.getQualifierExpression();
       final PsiReferenceExpression listReference;
       if (!(qualifier instanceof PsiReferenceExpression)) {
         listReference = null;
@@ -167,8 +178,7 @@ public class ForCanBeForeachInspection extends BaseInspection {
       }
       PsiType parameterType;
       if (listReference == null) {
-        parameterType =
-          extractListTypeFromContainingClass(forStatement);
+        parameterType = extractListTypeFromContainingClass(forStatement);
       }
       else {
         final PsiType type = listReference.getType();
@@ -178,9 +188,7 @@ public class ForCanBeForeachInspection extends BaseInspection {
         parameterType = extractContentTypeFromType(type);
       }
       if (parameterType == null) {
-        parameterType = PsiType.getJavaLangObject(
-          forStatement.getManager(),
-          forStatement.getResolveScope());
+        parameterType = PsiType.getJavaLangObject(forStatement.getManager(), forStatement.getResolveScope());
       }
       final String typeString = parameterType.getCanonicalText();
       final PsiVariable listVariable;
@@ -196,17 +204,14 @@ public class ForCanBeForeachInspection extends BaseInspection {
       }
       final PsiStatement body = forStatement.getBody();
       final PsiStatement firstStatement = getFirstStatement(body);
-      final boolean isDeclaration = isListElementDeclaration(
-        firstStatement, listVariable, indexName, parameterType);
+      final boolean isDeclaration = isListElementDeclaration(firstStatement, listVariable, indexName, parameterType);
       final String contentVariableName;
       @NonNls final String finalString;
       final PsiStatement statementToSkip;
       if (isDeclaration) {
-        final PsiDeclarationStatement declarationStatement =
-          (PsiDeclarationStatement)firstStatement;
+        final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)firstStatement;
         assert declarationStatement != null;
-        final PsiElement[] declaredElements =
-          declarationStatement.getDeclaredElements();
+        final PsiElement[] declaredElements = declarationStatement.getDeclaredElements();
         final PsiElement declaredElement = declaredElements[0];
         if (!(declaredElement instanceof PsiVariable)) {
           return null;
@@ -229,8 +234,7 @@ public class ForCanBeForeachInspection extends BaseInspection {
         else {
           collectionName = listReference.getReferenceName();
         }
-        contentVariableName = createNewVariableName(forStatement,
-                                                    parameterType, collectionName);
+        contentVariableName = createNewVariableName(forStatement, parameterType, collectionName);
         finalString = "";
         statementToSkip = null;
       }
@@ -251,8 +255,7 @@ public class ForCanBeForeachInspection extends BaseInspection {
       out.append(listName);
       out.append(')');
       if (body != null) {
-        replaceCollectionGetAccess(body, contentVariableName,
-                                   listVariable, indexName, statementToSkip, out);
+        replaceCollectionGetAccess(body, contentVariableName, listVariable, indexName, statementToSkip, out);
       }
       return out.toString();
     }
@@ -976,16 +979,14 @@ public class ForCanBeForeachInspection extends BaseInspection {
     }
   }
 
-  private static boolean isIndexedListLoopStatement(
-    PsiForStatement forStatement, boolean ignoreUntypedCollections) {
+  private static boolean isIndexedListLoopStatement(PsiForStatement forStatement, boolean ignoreUntypedCollections) {
     final PsiStatement initialization = forStatement.getInitialization();
     if (!(initialization instanceof PsiDeclarationStatement)) {
       return false;
     }
-    final PsiDeclarationStatement declaration =
-      (PsiDeclarationStatement)initialization;
+    final PsiDeclarationStatement declaration = (PsiDeclarationStatement)initialization;
     final PsiElement[] declaredElements = declaration.getDeclaredElements();
-    if (declaredElements.length != 1) {
+    if (declaredElements.length < 1) {
       return false;
     }
     final PsiElement declaredElement = declaredElements[0];
@@ -997,8 +998,7 @@ public class ForCanBeForeachInspection extends BaseInspection {
     if (initialValue == null) {
       return false;
     }
-    final Object constant =
-      ExpressionUtils.computeConstantExpression(initialValue);
+    final Object constant = ExpressionUtils.computeConstantExpression(initialValue);
     if (!(constant instanceof Number)) {
       return false;
     }
@@ -1007,8 +1007,7 @@ public class ForCanBeForeachInspection extends BaseInspection {
       return false;
     }
     final PsiExpression condition = forStatement.getCondition();
-    final Holder collectionHolder =
-      getCollectionFromSizeComparison(condition, indexVariable);
+    final Holder collectionHolder = getCollectionFromSizeComparison(condition, indexVariable);
     if (collectionHolder == null) {
       return false;
     }
@@ -1017,14 +1016,12 @@ public class ForCanBeForeachInspection extends BaseInspection {
       return false;
     }
     final PsiStatement body = forStatement.getBody();
-    if (!isIndexVariableOnlyUsedAsListIndex(collectionHolder,
-                                            indexVariable, body)) {
+    if (!isIndexVariableOnlyUsedAsListIndex(collectionHolder, indexVariable, body)) {
       return false;
     }
     if (collectionHolder != Holder.DUMMY) {
       final PsiVariable collection = collectionHolder.getVariable();
-      final PsiClassType collectionType =
-        (PsiClassType)collection.getType();
+      final PsiClassType collectionType = (PsiClassType)collection.getType();
       final PsiType[] parameters = collectionType.getParameters();
       if (ignoreUntypedCollections && parameters.length == 0) {
         return false;
@@ -1224,8 +1221,7 @@ public class ForCanBeForeachInspection extends BaseInspection {
     }
     return !VariableAccessUtils.variableIsReturned(variable, body) &&
            !VariableAccessUtils.variableIsAssigned(variable, body) &&
-           !VariableAccessUtils.variableIsPassedAsMethodArgument(variable,
-                                                                 body);
+           !VariableAccessUtils.variableIsPassedAsMethodArgument(variable, body);
   }
 
   private static int calculateCallsToIteratorNext(PsiVariable iterator,
@@ -1341,19 +1337,23 @@ public class ForCanBeForeachInspection extends BaseInspection {
     if (!(condition instanceof PsiBinaryExpression)) {
       return null;
     }
-    final PsiBinaryExpression binaryExpression =
-      (PsiBinaryExpression)condition;
+    final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)condition;
     final IElementType tokenType = binaryExpression.getOperationTokenType();
-    if (!tokenType.equals(JavaTokenType.LT)) {
-      return null;
-    }
-    final PsiExpression lhs = binaryExpression.getLOperand();
-    if (!VariableAccessUtils.evaluatesToVariable(lhs, variable)) {
-      return null;
-    }
     final PsiExpression rhs = binaryExpression.getROperand();
-    return getCollectionFromListMethodCall(rhs,
-                                           HardcodedMethodConstants.SIZE);
+    final PsiExpression lhs = binaryExpression.getLOperand();
+    if (tokenType.equals(JavaTokenType.LT)) {
+      if (!VariableAccessUtils.evaluatesToVariable(lhs, variable)) {
+        return null;
+      }
+      return getCollectionFromListMethodCall(rhs, HardcodedMethodConstants.SIZE);
+    }
+    else if (tokenType.equals(JavaTokenType.GT)) {
+      if (!VariableAccessUtils.evaluatesToVariable(rhs, variable)) {
+        return null;
+      }
+      return getCollectionFromListMethodCall(lhs, HardcodedMethodConstants.SIZE);
+    }
+    return null;
   }
 
   static boolean expressionIsListGetLookup(PsiExpression expression) {
@@ -1382,22 +1382,19 @@ public class ForCanBeForeachInspection extends BaseInspection {
     PsiExpression expression, String methodName) {
     expression = ParenthesesUtils.stripParentheses(expression);
     if (expression instanceof PsiReferenceExpression) {
-      final PsiReferenceExpression referenceExpression =
-        (PsiReferenceExpression)expression;
+      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
       final PsiElement target = referenceExpression.resolve();
       if (target instanceof PsiVariable) {
         final PsiVariable variable = (PsiVariable)target;
-        final PsiCodeBlock context =
-          PsiTreeUtil.getParentOfType(variable,
-                                      PsiCodeBlock.class);
+        final PsiCodeBlock context = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
         if (context != null) {
-          if (!VariableAccessUtils.variableIsAssigned(variable,
-                                                      context)) {
-            expression = variable.getInitializer();
+          if (!VariableAccessUtils.variableIsAssigned(variable, context)) {
+            expression = ParenthesesUtils.stripParentheses(variable.getInitializer());
           }
         }
       }
     }
+
     if (!(expression instanceof PsiMethodCallExpression)) {
       return null;
     }

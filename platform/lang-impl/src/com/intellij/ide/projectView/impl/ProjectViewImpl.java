@@ -82,10 +82,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.switcher.QuickActionProvider;
-import com.intellij.util.Alarm;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.IJSwingUtilities;
-import com.intellij.util.PlatformIcons;
+import com.intellij.util.*;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -748,9 +745,13 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         }
       }).setAsSecondary(true);
     }
-    myActionGroup.addAction(new PaneOptionAction(myShowMembers, IdeBundle.message("action.show.members"),
-                                           IdeBundle.message("action.show.hide.members"),
-                                           IconLoader.getIcon("/objectBrowser/showMembers.png"), ourShowMembersDefaults)).setAsSecondary(true);
+
+    if (!PlatformUtils.isCidr()) {
+      myActionGroup.addAction(new PaneOptionAction(myShowMembers, IdeBundle.message("action.show.members"),
+                                                   IdeBundle.message("action.show.hide.members"),
+                                                   IconLoader.getIcon("/objectBrowser/showMembers.png"), ourShowMembersDefaults))
+        .setAsSecondary(true);
+    }
     myActionGroup.addAction(myAutoScrollToSourceHandler.createToggleAction()).setAsSecondary(true);
     myActionGroup.addAction(myAutoScrollFromSourceHandler.createToggleAction()).setAsSecondary(true);
     myActionGroup.addAction(new SortByTypeAction()).setAsSecondary(true);

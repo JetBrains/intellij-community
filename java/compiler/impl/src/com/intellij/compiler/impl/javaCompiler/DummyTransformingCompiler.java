@@ -22,6 +22,7 @@ import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.compiler.JavaSourceTransformingCompiler;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -45,11 +46,16 @@ public class DummyTransformingCompiler implements JavaSourceTransformingCompiler
     });
     context.getProgressIndicator().setText("Transforming file: " + url);
     try {
-      FileOutputStream fos = new FileOutputStream(new File(url));
-      DataOutput out = new DataOutputStream(new BufferedOutputStream(fos));
+      OutputStream os = new BufferedOutputStream(new FileOutputStream(new File(url)));
+      DataOutput out = new DataOutputStream(os);
       out.writeBytes("package a; ");
       out.writeBytes("public class A { public static void main(String[] args) { System.out.println(\"Hello from modified class\");} }");
-      fos.close();
+      os.close();
+      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+        public void run() {
+          file.refresh(false, false);
+        }
+      });
       return true;
     }
     catch (FileNotFoundException e) {
