@@ -155,6 +155,7 @@
     <action id="FileChooser.TogglePathShowing" />
     <action id="FindInPath">
       <keyboard-shortcut first-keystroke="shift control F" />
+      <keyboard-shortcut first-keystroke="shift meta F" />
     </action>
     <action id="FindNext">
       <keyboard-shortcut first-keystroke="F3" />
@@ -168,7 +169,6 @@
     <action id="FindUsages">
       <keyboard-shortcut first-keystroke="alt F7" />
       <keyboard-shortcut first-keystroke="meta F7" />
-      <keyboard-shortcut first-keystroke="shift meta F" />
     </action>
     <action id="Forward">
       <keyboard-shortcut first-keystroke="control meta RIGHT" />
