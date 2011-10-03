@@ -39,8 +39,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaPsiFacadeImpl;
 import com.intellij.psi.impl.PackagePrefixElementFinder;
 import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.impl.migration.PsiMigrationImpl;
-import com.intellij.psi.impl.migration.PsiMigrationManager;
 import com.intellij.psi.impl.source.tree.java.PsiCompositeModifierList;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
@@ -276,18 +274,15 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
 
     final JavaPsiFacadeImpl facade = getFacade();
-    final PsiMigrationImpl migration = PsiMigrationManager.getInstance(getProject()).getCurrentMigration();
-
     final Condition<String> prefixMatcher = processor.getHint(JavaCompletionHints.NAME_FILTER);
 
     if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.CLASS)) {
       NameHint nameHint = processor.getHint(NameHint.KEY);
       if (nameHint != null) {
         final String shortName = nameHint.getName(state);
-        if ((migration != null || containsClassNamed(shortName))
-            && processClassesByName(processor, state, place, scope, shortName)) return false;
+        if (containsClassNamed(shortName) && processClassesByName(processor, state, place, scope, shortName)) return false;
       }
-      else if (prefixMatcher != null && migration == null) {
+      else if (prefixMatcher != null) {
         for (String className : getClassNamesCache()) {
           if (prefixMatcher.value(className)) {
             if (processClassesByName(processor, state, place, scope, className)) return false;
