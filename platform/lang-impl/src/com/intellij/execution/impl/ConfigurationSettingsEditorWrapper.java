@@ -33,7 +33,6 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
