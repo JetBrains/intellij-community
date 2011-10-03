@@ -20,6 +20,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.util.QueryExecutor;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -27,11 +28,8 @@ import java.util.ArrayList;
 public class MethodImplementationsSearch implements QueryExecutor<PsiElement, PsiElement> {
   public boolean execute(@NotNull final PsiElement sourceElement, @NotNull final Processor<PsiElement> consumer) {
     if (sourceElement instanceof PsiMethod) {
-      for (PsiElement implementation : getMethodImplementations((PsiMethod)sourceElement)) {
-        if ( ! consumer.process(implementation) ) {
-          return false;
-        }
-      }
+      PsiMethod[] implementations = getMethodImplementations((PsiMethod)sourceElement);
+      return ContainerUtil.process(implementations, consumer);
     }
     return true;
   }
