@@ -50,4 +50,13 @@ public class ExceptionFromCatchWhichDoesntWrap {
         }
     }
 
+  private void foo() {
+    try {
+
+    } catch (NullPointerException e) {
+      RuntimeException exception = new RuntimeException();
+      exception.initCause(e);
+      throw exception;
+    }
+  }
 }

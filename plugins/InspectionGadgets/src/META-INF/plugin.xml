@@ -2450,8 +2450,8 @@
                       groupKey="group.names.class.structure" enabledByDefault="false" level="WARNING"
                       implementationClass="com.siyeh.ig.classlayout.MethodReturnAlwaysConstantInspection"/>
     <globalInspection shortName="BooleanMethodIsAlwaysInverted" bundle="messages.InspectionsBundle"
-                      key="boolean.method.is.always.inverted.display.name" groupName="Data flow issues" enabledByDefault="true"
-                      level="WARNING"
+                      key="boolean.method.is.always.inverted.display.name" groupBundle="messages.InspectionsBundle"
+                      groupKey="group.names.data.flow.issues" enabledByDefault="true" level="WARNING"
                       implementationClass="com.intellij.codeInspection.booleanIsAlwaysInverted.BooleanMethodIsAlwaysInvertedInspection"/>
 
   </extensions>

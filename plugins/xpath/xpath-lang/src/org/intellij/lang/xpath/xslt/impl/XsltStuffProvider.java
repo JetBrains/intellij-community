@@ -16,7 +16,6 @@
 
 package org.intellij.lang.xpath.xslt.impl;
 
-import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
@@ -46,7 +45,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.xml.namespace.QName;
 
-public class XsltStuffProvider implements UsageGroupingRuleProvider, InspectionToolProvider {
+public class XsltStuffProvider implements UsageGroupingRuleProvider {
 
     @SuppressWarnings({"unchecked"})
     public  static final Class<? extends LocalInspectionTool>[] INSPECTION_CLASSES = new Class[]{
@@ -62,11 +61,7 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider, InspectionT
       myUsageGroupingRules = new UsageGroupingRule[]{ new TemplateUsageGroupingRule() };
     }
 
-    public Class[] getInspectionClasses() {
-        return INSPECTION_CLASSES;
-    }
-
-    @NotNull
+  @NotNull
     public UsageGroupingRule[] getActiveRules(Project project) {
         return myUsageGroupingRules;
     }

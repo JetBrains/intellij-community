@@ -4907,11 +4907,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           if (!e.isPopupTrigger()) {
             switch (e.getClickCount()) {
               case 2:
-                selectWordAtCaret(mySettings.isMouseClickSelectionHonorsCamelWords());
+                selectWordAtCaret(mySettings.isMouseClickSelectionHonorsCamelWords() && mySettings.isCamelWords());
                 break;
 
               case 3:
-                if (mySettings.isMouseClickSelectionHonorsCamelWords()) {
+                if (mySettings.isMouseClickSelectionHonorsCamelWords() && mySettings.isCamelWords()) {
                   // We want to differentiate between triple and quadruple clicks when 'select by camel humps' is on. The former
                   // is assumed to select 'hump' while the later points to the whole word.
                   selectWordAtCaret(false);

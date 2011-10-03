@@ -77,8 +77,9 @@ public class ControlFlowUtil {
     return -1;
   }
 
-  // Process control flow in depth first order
-
+  /**
+   * Process control flow graph in depth first order
+   */
   public static boolean process(final Instruction[] flow, final int start, final Processor<Instruction> processor){
     final int length = flow.length;
     boolean[] visited = new boolean[length];
@@ -105,6 +106,9 @@ public class ControlFlowUtil {
     return true;
   }
 
+  /**
+   * Iterates over write instructions in CFG with reversed order
+   */
   public static void iteratePrev(final int startInstruction,
                                  @NotNull final Instruction[] instructions,
                                  @NotNull final Function<Instruction, Operation> closure) {
@@ -117,12 +121,16 @@ public class ControlFlowUtil {
       final int num = stack.pop();
       final Instruction instr = instructions[num];
       final Operation nextOperation = closure.fun(instr);
+      // Just ignore previous instructions for current node and move further
       if (nextOperation == Operation.CONTINUE) {
         continue;
       }
+      // STOP iteration
       if (nextOperation == Operation.BREAK) {
         break;
       }
+      // If we are here, we should process previous nodes in natural way
+      assert nextOperation == Operation.NEXT;
       for (Instruction pred : instr.allPred()) {
         final int predNum = pred.num();
         if (!visited[predNum]) {
@@ -134,6 +142,17 @@ public class ControlFlowUtil {
   }
 
   public static enum Operation {
-    CONTINUE, BREAK, NEXT
+    /**
+     * CONTINUE is used to ignore previous elements processing for the node, however it doesn't stop the iteration process
+     */
+    CONTINUE,
+    /**
+     * BREAK is used to stop iteration process
+     */
+    BREAK,
+    /**
+     * NEXT is used to indicate that iteration should be continued in natural way
+     */
+    NEXT
   }
 }

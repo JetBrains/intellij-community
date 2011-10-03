@@ -81,7 +81,17 @@ public class CodeStyleSpacesPanel extends OptionTreeWithPreviewPanel {
     initBooleanField("SPACE_WITHIN_ARRAY_INITIALIZER_BRACES", ApplicationBundle.message("checkbox.spaces.within.array.initializer.braces"), SPACES_WITHIN);
     initBooleanField("SPACE_WITHIN_PARENTHESES", ApplicationBundle.message("checkbox.spaces.within.parentheses"), SPACES_WITHIN);
     initBooleanField("SPACE_WITHIN_METHOD_CALL_PARENTHESES", ApplicationBundle.message("checkbox.spaces.checkbox.spaces.method.call.parentheses"), SPACES_WITHIN);
+    initBooleanField(
+      "SPACE_WITHIN_EMPTY_METHOD_CALL_PARENTHESES",
+      ApplicationBundle.message("checkbox.spaces.checkbox.spaces.empty.method.call.parentheses"),
+      SPACES_WITHIN
+    );
     initBooleanField("SPACE_WITHIN_METHOD_PARENTHESES", ApplicationBundle.message("checkbox.spaces.checkbox.spaces.method.declaration.parentheses"), SPACES_WITHIN);
+    initBooleanField(
+      "SPACE_WITHIN_EMPTY_METHOD_PARENTHESES",
+      ApplicationBundle.message("checkbox.spaces.checkbox.spaces.empty.method.declaration.parentheses"),
+      SPACES_WITHIN
+    );
     initBooleanField("SPACE_WITHIN_IF_PARENTHESES", ApplicationBundle.message("checkbox.spaces.if.parentheses"), SPACES_WITHIN);
     initBooleanField("SPACE_WITHIN_FOR_PARENTHESES", ApplicationBundle.message("checkbox.spaces.for.parentheses"), SPACES_WITHIN);
     initBooleanField("SPACE_WITHIN_WHILE_PARENTHESES", ApplicationBundle.message("checkbox.spaces.while.parentheses"), SPACES_WITHIN);
