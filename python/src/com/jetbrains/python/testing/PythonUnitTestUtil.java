@@ -3,13 +3,12 @@ package com.jetbrains.python.testing;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.Stack;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Pattern;
 
 
@@ -60,8 +59,10 @@ public class PythonUnitTestUtil {
     return false;
   }
 
-  public static List<PyStatement> getTestCaseClassesFromFile(PyFile file) {
-    return getTestCaseClassesFromFile(file, PYTHON_TEST_QUALIFIED_CLASSES);
+  public static List<PyStatement> getTestCaseClassesFromFile(PsiFile file) {
+    if (file instanceof PyFile)
+      return getTestCaseClassesFromFile((PyFile)file, PYTHON_TEST_QUALIFIED_CLASSES);
+    return Collections.emptyList();
   }
 
   public static List<PyStatement> getTestCaseClassesFromFile(PyFile file, Set<String> testQualifiedNames) {

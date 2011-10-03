@@ -14,22 +14,35 @@ public class PyTypeChecker {
   }
 
   public static boolean match(@Nullable PyType expected, @Nullable PyType actual, TypeEvalContext context) {
+    return match(expected, actual, context, true);
+  }
+
+  private static boolean match(@Nullable PyType expected, @Nullable PyType actual, TypeEvalContext context, boolean resolveReferences) {
     // TODO: subscriptable types?, module types?, etc.
     if (expected == null || actual == null) {
       return true;
     }
+    if (expected instanceof PyClassType) {
+      final PyClass c = ((PyClassType)expected).getPyClass();
+      if (c != null && "object".equals(c.getName())) {
+        return true;
+      }
+    }
+    if ((expected instanceof PyTypeReference || actual instanceof PyTypeReference) && !resolveReferences) {
+      return true;
+    }
     if (expected instanceof PyTypeReference) {
-      return match(((PyTypeReference)expected).resolve(null, context), actual, context);
+      return match(((PyTypeReference)expected).resolve(null, context), actual, context, resolveReferences);
     }
     if (actual instanceof PyTypeReference) {
-      return match(expected, ((PyTypeReference)actual).resolve(null, context), context);
+      return match(expected, ((PyTypeReference)actual).resolve(null, context), context, false);
     }
     if (isUnknown(actual)) {
       return true;
     }
     if (actual instanceof PyUnionType) {
       for (PyType m : ((PyUnionType)actual).getMembers()) {
-        if (!match(expected, m, context)) {
+        if (!match(expected, m, context, resolveReferences)) {
           return false;
         }
       }
@@ -37,17 +50,11 @@ public class PyTypeChecker {
     }
     if (expected instanceof PyUnionType) {
       for (PyType t : ((PyUnionType)expected).getMembers()) {
-        if (match(t, actual, context)) {
+        if (match(t, actual, context, resolveReferences)) {
           return true;
         }
       }
       return false;
-    }
-    if (expected instanceof PyClassType) {
-      final PyClass c = ((PyClassType)expected).getPyClass();
-      if (c != null && "object".equals(c.getName())) {
-        return true;
-      }
     }
     if (expected instanceof PyClassType && actual instanceof PyClassType) {
       final PyClass superClass = ((PyClassType)expected).getPyClass();
@@ -58,7 +65,7 @@ public class PyTypeChecker {
         }
         final PyType superElementType = ((PyCollectionType)expected).getElementType(context);
         final PyType subElementType = ((PyCollectionType)actual).getElementType(context);
-        return match(superElementType, subElementType, context);
+        return match(superElementType, subElementType, context, resolveReferences);
       }
       else if (expected instanceof PyTupleType && actual instanceof PyTupleType) {
         final PyTupleType superTupleType = (PyTupleType)expected;
@@ -68,7 +75,7 @@ public class PyTypeChecker {
         }
         else {
           for (int i = 0; i < superTupleType.getElementCount(); i++) {
-            if (!match(superTupleType.getElementType(i), subTupleType.getElementType(i), context)) {
+            if (!match(superTupleType.getElementType(i), subTupleType.getElementType(i), context, resolveReferences)) {
               return false;
             }
           }

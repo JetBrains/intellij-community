@@ -7,8 +7,9 @@ try:
   from nose.config import Config
   from nose.result import TextTestResult
   from nose.util import isclass # backwards compat
-except:
-  raise NameError("Please, install nosetests")
+except (Exception, ):
+  e = sys.exc_info()[1]
+  raise NameError("Something went wrong, do you have nosetest installed? I got this error: %s" % e)
 
 class TeamcityNoseTestResult(TextTestResult, TeamcityTestResult):
     """TeamcityTestResult

@@ -5,6 +5,7 @@ package com.jetbrains.python.testing.doctest;
 
 import com.intellij.execution.Location;
 import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.openapi.module.Module;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
@@ -51,6 +52,8 @@ public class PythonDocTestConfigurationProducer extends PythonTestConfigurationP
     return settings;
   }
   protected boolean isAvailable(Location location) {
+    final Module module = location.getModule();
+    if (!isPythonModule(module)) return false;
     return true;
   }
 }

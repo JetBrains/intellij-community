@@ -22,3 +22,7 @@ if <warning descr="Simplify chained comparison">a > c and b < c</warning>:
 
 if <warning descr="Simplify chained comparison">b >= a > e and b < c</warning>:
   print "q"
+
+#PY-4624
+if a > b and c == b - a:
+  pass

@@ -18,8 +18,10 @@ run_cov = os.getenv('PYCHARM_RUN_COVERAGE')
 if coverage_file:
     os.environ['COVERAGE_FILE'] = coverage_file
 if run_cov:
-    with open(coverage_file + '.workdir.txt', mode='w') as a_file:
-        a_file.write(os.getcwd())
+    a_file = open(coverage_file + '.syspath.txt', mode='w')
+    a_file.write(os.getcwd()+"\n")
+    for path in sys.path: a_file.write(path + "\n")
+    a_file.close()
 main()
 if run_cov:
     main(["xml", "-o", coverage_file + ".xml"])
