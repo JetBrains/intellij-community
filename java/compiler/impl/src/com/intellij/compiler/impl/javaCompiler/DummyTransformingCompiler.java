@@ -45,11 +45,11 @@ public class DummyTransformingCompiler implements JavaSourceTransformingCompiler
     });
     context.getProgressIndicator().setText("Transforming file: " + url);
     try {
-      FileOutputStream fos = new FileOutputStream(new File(url));
-      DataOutput out = new DataOutputStream(new BufferedOutputStream(fos));
+      OutputStream os = new BufferedOutputStream(new FileOutputStream(new File(url)));
+      DataOutput out = new DataOutputStream(os);
       out.writeBytes("package a; ");
       out.writeBytes("public class A { public static void main(String[] args) { System.out.println(\"Hello from modified class\");} }");
-      fos.close();
+      os.close();
       return true;
     }
     catch (FileNotFoundException e) {
