@@ -635,7 +635,13 @@
   <applicationService serviceInterface="com.intellij.ui.debugger.extensions.PlaybackDebugger$PlaybackDebuggerState"
                       serviceImplementation="com.intellij.ui.debugger.extensions.PlaybackDebugger$PlaybackDebuggerState"/>
 
-  <inspectionToolProvider implementation="com.intellij.codeInspection.PlatformInspectionToolProvider"/>
+  <globalInspection shortName="Annotator" displayName="Annotator" groupName="General" enabledByDefault="true" level="ERROR"
+                    implementationClass="com.intellij.codeInspection.DefaultHighlightVisitorBasedInspection$AnnotatorBasedInspection"/>
+  <globalInspection shortName="SyntaxError" displayName="Syntax error" groupName="General" enabledByDefault="true" level="ERROR"
+                    implementationClass="com.intellij.codeInspection.DefaultHighlightVisitorBasedInspection$SyntaxErrorInspection"/>
+  <localInspection shortName="LossyEncoding" bundle="messages.InspectionsBundle" key="lossy.encoding"
+                   groupKey="group.names.internationalization.issues" enabledByDefault="false" level="WARNING"
+                   implementationClass="com.intellij.codeInspection.LossyEncodingInspection"/>
 
   <applicationService serviceInterface="com.intellij.codeInsight.template.TemplateBuilderFactory"
                       serviceImplementation="com.intellij.codeInsight.template.TemplateBuilderFactoryImpl"/>
