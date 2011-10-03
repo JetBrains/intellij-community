@@ -33,7 +33,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.file.PsiPackageImpl;
 import com.intellij.psi.impl.file.impl.JavaFileManager;
 import com.intellij.psi.impl.file.impl.JavaFileManagerImpl;
-import com.intellij.psi.impl.migration.PsiMigrationManager;
 import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.JavaDummyHolder;
 import com.intellij.psi.impl.source.JavaDummyHolderFactory;
@@ -52,7 +51,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
@@ -283,42 +281,18 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
     return myFileManager;
   }
 
-  @Nullable
-  private PsiPackage findPackageDefault(String qualifiedName) {
-    final PsiPackage aPackage = myFileManager.findPackage(qualifiedName);
-    if (aPackage == null && PsiMigrationManager.getInstance(myProject).getCurrentMigration() != null) {
-      final PsiPackage migrationPackage = PsiMigrationManager.getInstance(myProject).getCurrentMigration().getMigrationPackage(qualifiedName);
-      if (migrationPackage != null) return migrationPackage;
-    }
-
-    return aPackage;
-  }
-
   private class PsiElementFinderImpl extends PsiElementFinder {
     public PsiClass findClass(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
-      PsiClass psiClass = myFileManager.findClass(qualifiedName, scope);
-
-      if (psiClass == null && PsiMigrationManager.getInstance(myProject).getCurrentMigration() != null) {
-        psiClass = PsiMigrationManager.getInstance(myProject).getCurrentMigration().getMigrationClass(qualifiedName);
-      }
-
-      return psiClass;
+      return myFileManager.findClass(qualifiedName, scope);
     }
 
     @NotNull
     public PsiClass[] findClasses(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
-      final PsiClass[] classes = myFileManager.findClasses(qualifiedName, scope);
-      if (classes.length == 0 && PsiMigrationManager.getInstance(myProject).getCurrentMigration() != null) {
-        final PsiClass migrationClass = PsiMigrationManager.getInstance(myProject).getCurrentMigration().getMigrationClass(qualifiedName);
-        if (migrationClass != null) {
-          return new PsiClass[]{migrationClass};
-        }
-      }
-      return classes;
+      return myFileManager.findClasses(qualifiedName, scope);
     }
 
     public PsiPackage findPackage(@NotNull String qualifiedName) {
-      return findPackageDefault(qualifiedName);
+      return myFileManager.findPackage(qualifiedName);
     }
 
     @NotNull
