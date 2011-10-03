@@ -122,8 +122,6 @@ public class GithubCreateGistAction extends DumbAwareAction {
       @Override
       public void run() {
         final HttpClient client = anonymous ? GithubUtil.getHttpClient(null, null) : GithubUtil.getHttpClient(settings.getLogin(), password);
-        client.getParams().setContentCharset("UTF-8");
-    
         final PostMethod method = new PostMethod("https://gist.github.com/gists");
         method.addParameters(new NameValuePair[]{
           new NameValuePair("description", description),
