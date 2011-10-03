@@ -30,6 +30,7 @@ import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
@@ -118,6 +119,7 @@ public class CoreEnvironment {
     myProject.registerService(CachedValuesManager.class, new CachedValuesManagerImpl(myProject, new PsiCachedValuesFactory(myPsiManager)));
     myProject.registerService(PsiDirectoryFactory.class, new PsiDirectoryFactoryImpl(myPsiManager));
     myProject.registerService(ProjectScopeBuilder.class, new CoreProjectScopeBuilder(myProject, myFileIndexFacade));
+    myProject.registerService(DumbService.class, new MockDumbService(myProject));
   }
 
   public Project getProject() {
