@@ -37,6 +37,7 @@ public abstract class FileIndexFacade {
 
   public abstract boolean isInContent(VirtualFile file);
   public abstract boolean isInSource(VirtualFile file);
+  public abstract boolean isInSourceContent(VirtualFile file);
   public abstract boolean isInLibraryClasses(VirtualFile file);
   public abstract boolean isInLibrarySource(VirtualFile file);
   public abstract boolean isExcludedFile(VirtualFile file);

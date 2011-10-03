@@ -45,6 +45,11 @@ public class DefaultFileIndexFacade extends FileIndexFacade {
   }
 
   @Override
+  public boolean isInSourceContent(VirtualFile file) {
+    return isInContent(file);
+  }
+
+  @Override
   public boolean isInLibraryClasses(VirtualFile file) {
     return false;
   }

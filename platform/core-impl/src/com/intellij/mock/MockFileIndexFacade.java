@@ -43,6 +43,11 @@ public class MockFileIndexFacade extends FileIndexFacade {
   }
 
   @Override
+  public boolean isInSourceContent(VirtualFile file) {
+    return true;
+  }
+
+  @Override
   public boolean isInLibraryClasses(VirtualFile file) {
     return false;
   }

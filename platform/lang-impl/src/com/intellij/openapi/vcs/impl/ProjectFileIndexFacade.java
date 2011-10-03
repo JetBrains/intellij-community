@@ -47,6 +47,11 @@ public class ProjectFileIndexFacade extends FileIndexFacade {
   }
 
   @Override
+  public boolean isInSourceContent(VirtualFile file) {
+    return myRootManager.getFileIndex().isInSourceContent(file);
+  }
+
+  @Override
   public boolean isInLibraryClasses(VirtualFile file) {
     return myRootManager.getFileIndex().isInLibraryClasses(file);
   }

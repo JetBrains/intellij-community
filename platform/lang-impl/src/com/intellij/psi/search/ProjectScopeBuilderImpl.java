@@ -15,13 +15,11 @@
  */
 package com.intellij.psi.search;
 
-import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiBundle;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -66,51 +64,7 @@ public class ProjectScopeBuilderImpl extends ProjectScopeBuilder {
       };
     }
     else {
-      return new GlobalSearchScope(myProject) {
-        private final ProjectFileIndex myFileIndex = projectRootManager.getFileIndex();
-
-        public boolean contains(VirtualFile file) {
-          if (file instanceof VirtualFileWindow) return true;
-
-          if (myFileIndex.isInLibraryClasses(file) && !myFileIndex.isInSourceContent(file)) return false;
-
-          return myFileIndex.isInContent(file);
-        }
-
-        public int compare(VirtualFile file1, VirtualFile file2) {
-          return 0;
-        }
-
-        public boolean isSearchInModuleContent(@NotNull Module aModule) {
-          return true;
-        }
-
-        public boolean isSearchInLibraries() {
-          return false;
-        }
-
-        public String getDisplayName() {
-          return PsiBundle.message("psi.search.scope.project");
-        }
-
-        public String toString() {
-          return getDisplayName();
-        }
-
-        @Override
-        public GlobalSearchScope uniteWith(@NotNull GlobalSearchScope scope) {
-          if (scope == this || !scope.isSearchInLibraries() || !scope.isSearchOutsideRootModel()) return this;
-          return super.uniteWith(scope);
-        }
-
-        @NotNull
-        @Override
-        public GlobalSearchScope intersectWith(@NotNull GlobalSearchScope scope) {
-          if (scope == this) return this;
-          if (!scope.isSearchInLibraries()) return scope;
-          return super.intersectWith(scope);
-        }
-      };
+      return new ProjectScopeImpl(myProject, FileIndexFacade.getInstance(myProject));
     }
   }
 }
