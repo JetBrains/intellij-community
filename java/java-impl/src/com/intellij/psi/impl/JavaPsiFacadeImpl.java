@@ -25,7 +25,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.file.PsiPackageImpl;
 import com.intellij.psi.impl.file.impl.JavaFileManager;
 import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.JavaDummyHolder;
@@ -130,7 +129,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
       return Collections.emptyList();
     }
 
-    if (pkg == null || pkg instanceof PsiPackageImpl && !((PsiPackageImpl)pkg).containsClassNamed(className)) {
+    if (pkg == null || !pkg.containsClassNamed(className)) {
       return Collections.emptyList();
     }
 

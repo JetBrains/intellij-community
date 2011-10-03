@@ -250,6 +250,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     return getFacade().findClasses(classQName, scope);
   }
 
+  @Override
   public boolean containsClassNamed(String name) {
     return getClassNamesCache().contains(name);
   }

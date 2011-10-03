@@ -105,4 +105,6 @@ public interface PsiPackage extends PsiCheckedRenameElement, NavigationItem, Psi
   @Nullable("default package")
   @NonNls
   String getName();
+
+  boolean containsClassNamed(String name);
 }
