@@ -505,11 +505,25 @@ public class CommonCodeStyleSettings {
   public boolean SPACE_WITHIN_METHOD_CALL_PARENTHESES = false;
 
   /**
+   * "f( )"
+   * or
+   * "f()"
+   */
+  public boolean SPACE_WITHIN_EMPTY_METHOD_CALL_PARENTHESES = false;
+
+  /**
    * "void f( int param )"
    * or
    * "void f(int param)"
    */
   public boolean SPACE_WITHIN_METHOD_PARENTHESES = false;
+
+  /**
+   * "void f( )"
+   * or
+   * "void f()"
+   */
+  public boolean SPACE_WITHIN_EMPTY_METHOD_PARENTHESES = false;
 
   /**
    * "if( expr )"

@@ -403,7 +403,9 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
   public void testBetweenParenthesesOfNoArgsMethod() throws Exception {
     // Inspired by IDEA-74751
     getSettings().SPACE_WITHIN_METHOD_CALL_PARENTHESES = false;
+    getSettings().SPACE_WITHIN_EMPTY_METHOD_CALL_PARENTHESES = false;
     getSettings().SPACE_WITHIN_METHOD_PARENTHESES = true;
+    getSettings().SPACE_WITHIN_EMPTY_METHOD_PARENTHESES = true;
     doClassTest(
       "void test() {\n" +
       "    foo();\n" +
@@ -414,7 +416,9 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
     );
 
     getSettings().SPACE_WITHIN_METHOD_CALL_PARENTHESES = true;
+    getSettings().SPACE_WITHIN_EMPTY_METHOD_CALL_PARENTHESES = true;
     getSettings().SPACE_WITHIN_METHOD_PARENTHESES = false;
+    getSettings().SPACE_WITHIN_EMPTY_METHOD_PARENTHESES = false;
     doClassTest(
       "void test() {\n" +
       "    foo();\n" +
