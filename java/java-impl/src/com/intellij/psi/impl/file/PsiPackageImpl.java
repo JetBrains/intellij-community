@@ -297,13 +297,6 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
       else {
         PsiClass[] classes = getClasses(scope);
         if (!processClasses(processor, state, classes)) return false;
-        if (migration != null) {
-          for (PsiClass psiClass : migration.getMigrationClasses(getQualifiedName())) {
-            if (!processor.execute(psiClass, state)) {
-              return false;
-            }
-          }
-        }
       }
     }
     if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.PACKAGE)) {
@@ -324,14 +317,6 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
           }
           if (!processor.execute(pack, state)) {
             return false;
-          }
-        }
-
-        if (migration != null) {
-          for (PsiPackage aPackage : migration.getMigrationPackages(getQualifiedName())) {
-            if (!processor.execute(aPackage, state)) {
-              return false;
-            }
           }
         }
       }

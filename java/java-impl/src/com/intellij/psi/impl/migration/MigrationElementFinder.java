@@ -23,6 +23,8 @@ import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 /**
  * @author yole
  */
@@ -53,6 +55,28 @@ public class MigrationElementFinder extends PsiElementFinder implements DumbAwar
       }
     }
     return PsiClass.EMPTY_ARRAY;
+  }
+
+  @NotNull
+  @Override
+  public PsiClass[] getClasses(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
+    PsiMigrationImpl migration = PsiMigrationManager.getInstance(myProject).getCurrentMigration();
+    if (migration != null) {
+      List<PsiClass> classes = migration.getMigrationClasses(psiPackage.getQualifiedName());
+      return classes.toArray(new PsiClass[classes.size()]);
+    }
+    return PsiClass.EMPTY_ARRAY;
+  }
+
+  @NotNull
+  @Override
+  public PsiPackage[] getSubPackages(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
+    PsiMigrationImpl migration = PsiMigrationManager.getInstance(myProject).getCurrentMigration();
+    if (migration != null) {
+      List<PsiPackage> packages = migration.getMigrationPackages(psiPackage.getQualifiedName());
+      return packages.toArray(new PsiPackage[packages.size()]);
+    }
+    return PsiPackage.EMPTY_ARRAY;
   }
 
   @Override

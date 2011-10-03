@@ -26,6 +26,8 @@ import org.jetbrains.annotations.Nullable;
  * Represents a Java package.
  */
 public interface PsiPackage extends PsiCheckedRenameElement, NavigationItem, PsiModifierListOwner, PsiDirectoryContainer, PsiQualifiedNamedElement {
+  PsiPackage[] EMPTY_ARRAY = new PsiPackage[0];
+
   /**
    * Returns the full-qualified name of the package.
    *
