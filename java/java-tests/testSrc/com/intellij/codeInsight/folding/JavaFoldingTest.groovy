@@ -31,16 +31,14 @@ public class JavaFoldingTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testEditingImports() {
-    myFixture.configureByText "a.java", """\
+    configure """\
 import java.util.List;
 import java.util.Map;
 <caret>
 
 class Foo { List a; Map b; }
 """
-
-    CodeFoldingManagerImpl.getInstance(getProject()).buildInitialFoldings(myFixture.editor);
-    myFixture.doHighlighting()
+    
     assert myFixture.editor.foldingModel.getCollapsedRegionAtOffset(10)
 
     myFixture.type 'import '
@@ -48,5 +46,24 @@ class Foo { List a; Map b; }
     assert !myFixture.editor.foldingModel.getCollapsedRegionAtOffset(10)
   }
 
-
+  public void testJavadocLikeClassHeader() {
+    def text = """\
+/**
+ * This is a header to collapse
+ */
+import java.util.*;
+class Foo { List a; Map b; }
+"""
+    configure text
+    def foldRegion = myFixture.editor.foldingModel.getCollapsedRegionAtOffset(0)
+    assert foldRegion
+    assertEquals 0, foldRegion.startOffset
+    assertEquals text.indexOf("import") - 1, foldRegion.endOffset
+  }
+  
+  private def configure(String text) {
+    myFixture.configureByText("a.java", text)
+    CodeFoldingManagerImpl.getInstance(getProject()).buildInitialFoldings(myFixture.editor);
+    myFixture.doHighlighting()
+  }
 }
