@@ -229,7 +229,7 @@ public class MacFileChooserDialogImpl implements MacFileChooserDialog {
   }
 
   static {
-    final ID delegateClass = Foundation.registerObjcClass(Foundation.getClass("NSObject"), "NSOpenPanelDelegate_");
+    final ID delegateClass = Foundation.allocateObjcClassPair(Foundation.getClass("NSObject"), "NSOpenPanelDelegate_");
     if (!Foundation.addMethod(delegateClass, Foundation.createSelector("panel:shouldShowFilename:"), SHOULD_SHOW_FILENAME_CALLBACK, "B*")) {
       throw new RuntimeException("Unable to add method to objective-c delegate class!");
     }

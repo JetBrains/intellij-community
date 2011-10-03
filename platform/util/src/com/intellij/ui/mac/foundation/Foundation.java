@@ -59,6 +59,10 @@ public class Foundation {
   public static ID getClass(String className) {
     return myFoundationLibrary.objc_getClass(className);
   }
+  
+  public static ID getProtocol(String name) {
+    return myFoundationLibrary.objc_getProtocol(name);
+  }
 
   public static Pointer createSelector(String s) {
     return myFoundationLibrary.sel_registerName(s);
@@ -76,7 +80,7 @@ public class Foundation {
     return invoke(id, createSelector(selector), args);
   }
 
-  public static ID registerObjcClass(ID superCls, String name) {
+  public static ID allocateObjcClassPair(ID superCls, String name) {
     return myFoundationLibrary.objc_allocateClassPair(superCls, name, 0);
   }
 
@@ -90,6 +94,10 @@ public class Foundation {
 
   public static boolean addMethod(ID cls, Pointer selectorName, Callback impl, String types) {
     return myFoundationLibrary.class_addMethod(cls, selectorName, impl, types);
+  }
+  
+  public static boolean addProtocol(ID aClass, ID protocol) {
+    return myFoundationLibrary.class_addProtocol(aClass, protocol);
   }
 
   public static boolean addMethodByID(ID cls, Pointer selectorName, ID impl, String types) {
@@ -230,7 +238,7 @@ public class Foundation {
 
   private static void initRunnableSupport() {
     if (ourRunnableCallback == null) {
-      final ID runnableClass = registerObjcClass(getClass("NSObject"), "IdeaRunnable");
+      final ID runnableClass = allocateObjcClassPair(getClass("NSObject"), "IdeaRunnable");
       registerObjcClassPair(runnableClass);
 
       final Callback callback = new Callback() {

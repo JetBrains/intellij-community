@@ -45,6 +45,8 @@ public interface FoundationLibrary extends Library {
   int CFGetRetainCount (Pointer cfTypeRef);
 
   ID objc_getClass(String className);
+  ID objc_getProtocol(String name);
+
   ID class_createInstance(ID pClass, int extraBytes);
   Pointer sel_registerName(String selectorName);
 
@@ -58,6 +60,7 @@ public interface FoundationLibrary extends Library {
   boolean class_addMethod(ID cls, Pointer selName, Callback imp, String types);
 
   boolean class_addMethod(ID cls, Pointer selName, ID imp, String types);
+  boolean class_addProtocol(ID aClass, ID protocol);
 
   boolean class_isMetaClass(ID cls);
 

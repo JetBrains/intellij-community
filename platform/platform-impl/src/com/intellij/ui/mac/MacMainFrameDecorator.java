@@ -120,7 +120,7 @@ public class MacMainFrameDecorator implements UISettingsListener, Disposable {
       if (SystemInfo.isMacOSLion) {
         // fullscreen support
         
-        final ID delegateClass = Foundation.registerObjcClass(Foundation.getClass("NSObject"), "IdeaNSWindowDelegate" + v);
+        final ID delegateClass = Foundation.allocateObjcClassPair(Foundation.getClass("NSObject"), "IdeaNSWindowDelegate" + v);
         Foundation.registerObjcClassPair(delegateClass);
 
         myDidExit = new Callback() {
@@ -187,7 +187,7 @@ public class MacMainFrameDecorator implements UISettingsListener, Disposable {
       } else {
         // toggle toolbar
         String className = "IdeaToolbar" + v;
-        final ID ownToolbar = Foundation.registerObjcClass(Foundation.getClass("NSToolbar"), className);
+        final ID ownToolbar = Foundation.allocateObjcClassPair(Foundation.getClass("NSToolbar"), className);
         Foundation.registerObjcClassPair(ownToolbar);
 
         ID toolbar = invoke(invoke(className, "alloc"), "initWithIdentifier:", Foundation.nsString(className));
