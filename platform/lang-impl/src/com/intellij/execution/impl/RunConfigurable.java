@@ -447,6 +447,8 @@ class RunConfigurable extends BaseConfigurable {
     myPanel.setLeftComponent(createLeftPanel());
     myPanel.setRightComponent(myRightPanel);
     myPanel.setBorder(null);
+    myPanel.getDividerLocation();
+    myPanel.setDividerLocation((int)myConfig.getFloat(DIVIDER_PROPORTION, 200));
     myWholePanel.add(myPanel, BorderLayout.CENTER);
 
     updateDialog();
@@ -633,7 +635,7 @@ class RunConfigurable extends BaseConfigurable {
       }
     });
     myRightPanel.removeAll();
-    //myConfig.setFloat(DIVIDER_PROPORTION, myPanel.);
+    myConfig.setFloat(DIVIDER_PROPORTION, myPanel.getDividerLocation());
   }
 
   private void updateDialog() {
