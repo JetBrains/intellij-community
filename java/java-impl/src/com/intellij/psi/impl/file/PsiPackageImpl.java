@@ -37,6 +37,7 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaPsiFacadeImpl;
+import com.intellij.psi.impl.PackagePrefixElementFinder;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.migration.PsiMigrationImpl;
 import com.intellij.psi.impl.source.tree.java.PsiCompositeModifierList;
@@ -180,7 +181,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   public boolean isValid() {
     final CommonProcessors.FindFirstProcessor<PsiDirectory> processor = new CommonProcessors.FindFirstProcessor<PsiDirectory>();
     getFacade().processPackageDirectories(this, allScope(), processor);
-    return processor.getFoundValue() != null || getFacade().packagePrefixExists(getQualifiedName());
+    return processor.getFoundValue() != null || PackagePrefixElementFinder.getInstance(getProject()).packagePrefixExists(getQualifiedName());
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {

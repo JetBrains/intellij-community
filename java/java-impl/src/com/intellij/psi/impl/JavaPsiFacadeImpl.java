@@ -71,7 +71,6 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
   private final ConcurrentMap<String, PsiPackage> myPackageCache = new ConcurrentHashMap<String, PsiPackage>();
   private final Project myProject;
   private final JavaFileManager myFileManager;
-  private final PackagePrefixIndex myPackagePrefixIndex;
 
 
   public JavaPsiFacadeImpl(Project project,
@@ -88,10 +87,6 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
     elementFinders.add(new PsiElementFinderImpl());
     ContainerUtil.addAll(elementFinders, myProject.getExtensions(PsiElementFinder.EP_NAME));
     myElementFinders = elementFinders.toArray(new PsiElementFinder[elementFinders.size()]);
-
-    myPackagePrefixIndex = new PackagePrefixIndex(myProject);
-
-    boolean isProjectDefault = project.isDefault();
 
     myFileManager = new JavaFileManagerImpl(psiManager, projectRootManagerEx, psiManager.getFileManager(), bus);
 
@@ -216,15 +211,13 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
       return aPackage;
     }
 
-    if (DumbService.getInstance(getProject()).isDumb()) {
-      aPackage = findPackageDefault(qualifiedName);
-      if (aPackage != null) {
-        return ConcurrencyUtil.cacheOrGet(myPackageCache, qualifiedName, aPackage);
-      }
-      return null;
+    DumbService dumbService = DumbService.getInstance(getProject());
+    List<PsiElementFinder> finders = Arrays.asList(myElementFinders);
+    if (dumbService.isDumb()) {
+      finders = dumbService.filterByDumbAwareness(finders);
     }
 
-    for (PsiElementFinder finder : myElementFinders) {
+    for (PsiElementFinder finder : finders) {
       aPackage = finder.findPackage(qualifiedName);
       if (aPackage != null) {
         return ConcurrencyUtil.cacheOrGet(myPackageCache, qualifiedName, aPackage);
@@ -303,26 +296,12 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
     return myFileManager;
   }
 
-  public boolean packagePrefixExists(String packageQName) {
-    for (final String prefix : myPackagePrefixIndex.getAllPackagePrefixes(null)) {
-      if (StringUtil.startsWithConcatenationOf(prefix, packageQName, ".") || prefix.equals(packageQName)) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
   @Nullable
   private PsiPackage findPackageDefault(String qualifiedName) {
     final PsiPackage aPackage = myFileManager.findPackage(qualifiedName);
     if (aPackage == null && myCurrentMigration != null) {
       final PsiPackage migrationPackage = myCurrentMigration.getMigrationPackage(qualifiedName);
       if (migrationPackage != null) return migrationPackage;
-    }
-
-    if (packagePrefixExists(qualifiedName)) {
-      return new PsiPackageImpl((PsiManagerEx)PsiManager.getInstance(myProject), qualifiedName);
     }
 
     return aPackage;
@@ -368,15 +347,6 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
             if (subQualifiedName.startsWith(qualifiedName) && !packagesMap.containsKey(subQualifiedName)) {
               packagesMap.put(aPackage.getQualifiedName(), aPackage);
             }
-          }
-        }
-      }
-      for (final String prefix : myPackagePrefixIndex.getAllPackagePrefixes(scope)) {
-        if (StringUtil.isEmpty(qualifiedName) || StringUtil.startsWithConcatenationOf(prefix, qualifiedName, ".")) {
-          final int i = prefix.indexOf('.', qualifiedName.length() + 1);
-          String childName = i >= 0 ? prefix.substring(0, i) : prefix;
-          if (!packagesMap.containsKey(childName)) {
-            packagesMap.put(childName, new PsiPackageImpl((PsiManagerEx)psiPackage.getManager(), childName));
           }
         }
       }
