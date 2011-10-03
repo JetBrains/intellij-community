@@ -19,7 +19,6 @@ import org.jetbrains.jps.incremental.ProjectPaths
 class ProjectBuilder {
   private final Set<ModuleChunk> compiledChunks = [] as Set
   private final Set<ModuleChunk> compiledTestChunks = [] as Set
-  private final Map<ClasspathKind, Map<ModuleChunk, List<String>>> cachedClasspaths = [:]
   private ProjectChunks productionChunks
   private ProjectChunks testChunks
 
@@ -69,7 +68,7 @@ class ProjectBuilder {
     projectPaths = null
   }
 
-  private ProjectPaths getProjectPaths() {
+  public ProjectPaths getProjectPaths() {
     if (projectPaths == null) {
       projectPaths = new ProjectPaths(project, targetFolder != null ? new File(targetFolder) : null)
       if (!arrangeModuleCyclesOutputs) {
@@ -118,7 +117,6 @@ class ProjectBuilder {
   public def clean() {
     compiledChunks.clear()
     compiledTestChunks.clear()
-    cachedClasspaths.clear();
   }
 
   public def buildAll() {
@@ -271,13 +269,7 @@ class ProjectBuilder {
     }
 
     if (!project.dryRun) {
-      List<String> chunkClasspath = getProjectPaths().getClasspath(chunk, ClasspathKind.compile(tests))
-
-      if (files != null) {
-        for (Module m: chunk.elements) {
-          chunkClasspath << (tests ? m.testOutputPath : m.outputPath)
-        }
-      }
+      List<String> chunkClasspath = ProjectPaths.getPathsList(getProjectPaths().getClasspathFiles(chunk, ClasspathKind.compile(tests), files == null))
 
       List sourceRootsWithDependencies = getProjectPaths().getSourcePathsForModuleWithDependents(chunk, tests)
       Map<ModuleBuildState, ModuleChunk> states = new HashMap<ModuleBuildState, ModuleChunk>()

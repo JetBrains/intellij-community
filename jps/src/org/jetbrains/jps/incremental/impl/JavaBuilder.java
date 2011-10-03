@@ -46,8 +46,8 @@ public class JavaBuilder extends Builder{
 
     final ProjectPaths paths = new ProjectPaths(context.getScope().getProject());
 
-    final Collection<File> classpath = paths.getClasspathFiles(chunk, getClasspathKind(context));
-    final Collection<File> platformPaths = collectPlatformClasspath(context, chunk);
+    final Collection<File> classpath = paths.getCompilationClasspath(chunk, context.isCompilingTests(), true);
+    final Collection<File> platformPaths = paths.getBootstrapCompilationClasspath(chunk, context.isCompilingTests(), true);
     final Map<File, Set<File>> outs = buildOutputDirectoriesMap(context, chunk);
     final List<String> options = getCompilationOptions(context, chunk);
 
@@ -86,22 +86,6 @@ public class JavaBuilder extends Builder{
 
   private static List<String> getCompilationOptions(CompileContext context, ModuleChunk chunk) {
     return Collections.emptyList();// todo
-  }
-
-  private static ClasspathKind getClasspathKind(CompileContext context) {
-    return context.isCompilingTests() ? ClasspathKind.TEST_COMPILE : ClasspathKind.PRODUCTION_COMPILE;
-  }
-
-  private Collection<File> collectPlatformClasspath(CompileContext context, ModuleChunk chunk) {
-    final Sdk sdk = (Sdk)chunk.getSdk();
-    if (sdk == null) {
-      return Collections.emptyList();
-    }
-    final List<File> files = new ArrayList<File>();
-    for (String path : sdk.getClasspathRoots(getClasspathKind(context))) {
-      files.add(new File(path));
-    }
-    return files;
   }
 
   private static Map<File, Set<File>> buildOutputDirectoriesMap(CompileContext context, ModuleChunk chunk) {

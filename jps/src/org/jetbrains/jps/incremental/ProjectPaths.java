@@ -18,6 +18,7 @@ public class ProjectPaths {
   private final File myProjectTargetDir;
   private final Map<Module, File> myCustomModuleOutputDir = new HashMap<Module, File>();
   private final Map<Module, File> myCustomModuleTestOutputDir = new HashMap<Module, File>();
+  private final Map<ClasspathKind, Map<ModuleChunk, List<String>>> myCachedClasspath = new HashMap<ClasspathKind, Map<ModuleChunk, List<String>>>();
 
   public ProjectPaths(Project project) {
     this(project, null);
@@ -30,7 +31,7 @@ public class ProjectPaths {
 
   public Collection<File> getClasspathFiles(Module module, ClasspathKind kind) {
     final Set<File> files = new LinkedHashSet<File>();
-    collectClasspath(module, kind, files, new HashSet<Module>(), false, !kind.isRuntime());
+    collectClasspath(module, kind, files, new HashSet<Module>(), false, !kind.isRuntime(), ACCEPT_ALL);
     return files;
   }
 
@@ -43,18 +44,35 @@ public class ProjectPaths {
   }
 
   public Collection<File> getClasspathFiles(ModuleChunk chunk, ClasspathKind kind, final boolean excludeMainModuleOutput) {
+    return getClasspathFiles(chunk, kind, excludeMainModuleOutput, ClasspathPart.WHOLE);
+  }
+
+  public Collection<File> getBootstrapCompilationClasspath(ModuleChunk chunk, boolean includeTests, boolean excludeMainModuleOutput) {
+    return getClasspathFiles(chunk, ClasspathKind.compile(includeTests), excludeMainModuleOutput, ClasspathPart.BEFORE_JDK);
+  }
+
+  public Collection<File> getCompilationClasspath(ModuleChunk chunk, boolean includeTests, boolean excludeMainModuleOutput) {
+    return getClasspathFiles(chunk, ClasspathKind.compile(includeTests), excludeMainModuleOutput, ClasspathPart.AFTER_JDK);
+  }
+
+  private Collection<File> getClasspathFiles(ModuleChunk chunk, ClasspathKind kind, final boolean excludeMainModuleOutput, ClasspathPart classpathPart) {
     final Set<File> files = new LinkedHashSet<File>();
     final Set<Module> processedModules = new HashSet<Module>();
     for (Module module : chunk.getModules()) {
-      collectClasspath(module, kind, files, processedModules, false, excludeMainModuleOutput);
+      ClasspathItemFilter filter = classpathPart == ClasspathPart.WHOLE ? ACCEPT_ALL :
+                                   classpathPart == ClasspathPart.BEFORE_JDK ? new BeforeSdkItemFilter(module)
+                                       : new NotFilter(new BeforeSdkItemFilter(module));
+      collectClasspath(module, kind, files, processedModules, false, excludeMainModuleOutput, filter);
     }
     return files;
   }
 
-  private void collectClasspath(Module module, ClasspathKind kind, Set<File> classpath, Set<Module> processed, boolean exportedOnly, boolean excludeMainModuleOutput) {
+  private void collectClasspath(Module module, ClasspathKind kind, Set<File> classpath, Set<Module> processed, boolean exportedOnly, boolean excludeMainModuleOutput, ClasspathItemFilter filter) {
     if (!processed.add(module)) return;
 
     for (ClasspathItem it : module.getClasspath(kind, exportedOnly)) {
+      if (!filter.accept(module, it)) continue;
+
       if (it instanceof Module.ModuleSourceEntry) {
         final Module dep = ((Module.ModuleSourceEntry) it).getModule();
         if (!excludeMainModuleOutput && kind.isTestsIncluded()) {
@@ -65,7 +83,7 @@ public class ProjectPaths {
         }
       }
       else if (it instanceof Module) {
-        collectClasspath((Module) it, kind, classpath, processed, !kind.isRuntime(), false);
+        collectClasspath((Module) it, kind, classpath, processed, !kind.isRuntime(), false, filter);
       }
       else {
         addFiles(classpath, it.getClasspathRoots(kind));
@@ -131,4 +149,44 @@ public class ProjectPaths {
     return new File(forTests ? module.getTestOutputPath() : module.getOutputPath());
   }
 
+  private static interface ClasspathItemFilter {
+    boolean accept(Module module, ClasspathItem item);
+  }
+
+  private static enum ClasspathPart {WHOLE, BEFORE_JDK, AFTER_JDK}
+
+  private static final ClasspathItemFilter ACCEPT_ALL = new ClasspathItemFilter() {
+    public boolean accept(Module module, ClasspathItem item) {
+      return true;
+    }
+  };
+
+  private static class BeforeSdkItemFilter implements ClasspathItemFilter {
+    private Module myModule;
+    private boolean mySdkFound;
+
+    private BeforeSdkItemFilter(Module module) {
+      myModule = module;
+    }
+
+    public boolean accept(Module module, ClasspathItem item) {
+      if (myModule.equals(module) && item instanceof Sdk) {
+        mySdkFound = true;
+        return true;
+      }
+      return !mySdkFound && !(item instanceof Sdk);
+    }
+  }
+
+  private static class NotFilter implements ClasspathItemFilter {
+    private ClasspathItemFilter myFilter;
+
+    private NotFilter(ClasspathItemFilter filter) {
+      myFilter = filter;
+    }
+
+    public boolean accept(Module module, ClasspathItem item) {
+      return !myFilter.accept(module, item);
+    }
+  }
 }

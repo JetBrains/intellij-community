@@ -1,4 +1,6 @@
-package org.jetbrains.jps;
+package org.jetbrains.jps
+
+import org.jetbrains.jps.incremental.ProjectPaths
 
 /**
  * @author nik
@@ -53,9 +55,21 @@ public class ModuleClasspathTest extends JpsBuildTestCase {
              "out/production/test-util","main/lib/service.jar"])
   }
 
+  public void testCompilationClasspath() {
+    ModuleChunk chunk = new ModuleChunk(project.modules['main'])
+    assertClasspath(["util/lib/exported.jar", "out/production/util", "/jdk.jar"],
+            ProjectPaths.getPathsList(project.builder.getProjectPaths().getBootstrapCompilationClasspath(chunk, false, true)))
+    assertClasspath(["main/lib/service.jar"],
+            ProjectPaths.getPathsList(project.builder.getProjectPaths().getCompilationClasspath(chunk, false, true)))
+  }
+
   private def assertClasspath(String module, ClasspathKind classpathKind, List<String> expected) {
-    String basePath = PathUtil.toSystemIndependentPath(new File(getProjectPath()).parentFile.absolutePath) + "/"
     List<String> classpath = project.builder.moduleClasspath(project.modules[module], classpathKind)
+    assertClasspath(expected, classpath)
+  }
+
+  private def assertClasspath(List<String> expected, List<String> classpath) {
+    String basePath = PathUtil.toSystemIndependentPath(new File(getProjectPath()).parentFile.absolutePath) + "/"
     List<String> actual = classpath.collect { String path ->
       path.startsWith(basePath) ? path.substring(basePath.length()) : path
     }
