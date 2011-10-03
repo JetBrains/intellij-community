@@ -15,6 +15,8 @@
  */
 package com.intellij.psi;
 
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.infos.CandidateInfo;
 import org.jetbrains.annotations.NotNull;
@@ -26,6 +28,15 @@ import org.jetbrains.annotations.Nullable;
  * @see JavaPsiFacade#getResolveHelper()
  */
 public interface PsiResolveHelper {
+  class SERVICE {
+    private SERVICE() {
+    }
+
+    public static PsiResolveHelper getInstance(Project project) {
+      return ServiceManager.getService(project, PsiResolveHelper.class);
+    }
+  }
+
   /**
    * Resolves a constructor.
    * The resolved constructor is not necessarily accessible from the point of the call,

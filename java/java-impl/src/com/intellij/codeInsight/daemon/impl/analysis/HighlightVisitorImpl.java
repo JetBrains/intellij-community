@@ -81,12 +81,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
   };
   
-  @SuppressWarnings({"UnusedDeclaration"}) //in plugin.xml
-  public HighlightVisitorImpl(Project project) {
-    this(JavaPsiFacade.getInstance(project).getResolveHelper());
-  }
-
-  private HighlightVisitorImpl(@NotNull PsiResolveHelper resolveHelper) {
+  public HighlightVisitorImpl(@NotNull PsiResolveHelper resolveHelper) {
     myResolveHelper = resolveHelper;
   }
 

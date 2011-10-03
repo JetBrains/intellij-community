@@ -33,7 +33,6 @@ import com.intellij.psi.impl.source.JavaDummyHolder;
 import com.intellij.psi.impl.source.JavaDummyHolderFactory;
 import com.intellij.psi.impl.source.jsp.jspXml.JspDirective;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
-import com.intellij.psi.impl.source.resolve.PsiResolveHelperImpl;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -57,7 +56,6 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.JavaPsiFacadeImpl");
 
   private final PsiElementFinder[] myElementFinders;
-  private final PsiResolveHelper myResolveHelper;
   private final PsiNameHelper myNameHelper;
   private final PsiConstantEvaluationHelper myConstantEvaluationHelper;
   private final ConcurrentMap<String, PsiPackage> myPackageCache = new ConcurrentHashMap<String, PsiPackage>();
@@ -68,7 +66,6 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
                            PsiManagerImpl psiManager,
                            MessageBus bus) {
     myProject = project;
-    myResolveHelper = new PsiResolveHelperImpl(PsiManager.getInstance(project));
     myNameHelper = new PsiNameHelperImpl(this);
     myConstantEvaluationHelper = new PsiConstantEvaluationHelperImpl();
 
@@ -203,7 +200,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
 
   @NotNull
   public PsiResolveHelper getResolveHelper() {
-    return myResolveHelper;
+    return PsiResolveHelper.SERVICE.getInstance(myProject);
   }
 
   @NotNull

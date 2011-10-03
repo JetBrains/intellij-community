@@ -279,6 +279,8 @@
                     serviceImplementation="com.intellij.psi.codeStyle.JavaCodeStyleSettingsFacadeImpl"/>
     <projectService serviceInterface="com.intellij.psi.impl.migration.PsiMigrationManager"
                     serviceImplementation="com.intellij.psi.impl.migration.PsiMigrationManager"/>
+    <projectService serviceInterface="com.intellij.psi.PsiResolveHelper"
+                    serviceImplementation="com.intellij.psi.impl.source.resolve.PsiResolveHelperImpl"/>
 
     <applicationService serviceInterface="com.intellij.psi.JavaDirectoryService"
                         serviceImplementation="com.intellij.psi.impl.file.JavaDirectoryServiceImpl"/>
