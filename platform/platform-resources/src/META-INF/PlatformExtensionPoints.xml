@@ -127,4 +127,7 @@
   <extensionPoint name="fileDocumentSynchronizationVetoer" interface="com.intellij.openapi.fileEditor.FileDocumentSynchronizationVetoer"/>
 
   <extensionPoint name="itemPresentationProvider" beanClass="com.intellij.openapi.util.ClassExtensionPoint"/>
+
+  <extensionPoint name="classpathStorageProvider"
+                      interface="com.intellij.openapi.roots.impl.storage.ClasspathStorageProvider"/>
 </extensionPoints>
