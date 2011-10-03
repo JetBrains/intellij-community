@@ -109,7 +109,7 @@ public class GdkMethodUtil {
           if (!((PsiMethod)element).hasModifierProperty(PsiModifier.STATIC)) return true;
           final PsiParameter[] parameters = ((PsiMethod)element).getParameterList().getParameters();
           if (parameters.length == 0) return true;
-          return processor.execute(new GrGdkMethodImpl((PsiMethod)element, false), state);
+          return processor.execute(GrGdkMethodImpl.createGdkMethod((PsiMethod)element, false), state);
         }
         else {
           return processor.execute(element, state);

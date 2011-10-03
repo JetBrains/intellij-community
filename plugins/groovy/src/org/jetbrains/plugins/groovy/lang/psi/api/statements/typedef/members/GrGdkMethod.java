@@ -15,11 +15,12 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members;
 
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 
 /**
  * @author ven
  */
-public interface GrGdkMethod {
+public interface GrGdkMethod extends PsiElement {
   PsiMethod getStaticMethod();
 }
