@@ -451,7 +451,12 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
         }
 
         final boolean needsRestart = isIdleQueueEmpty();
-        myIdleRequests.add(runnable);
+        if (myIdleRequests.contains(runnable)) {
+          myIdleRequests.remove(runnable);
+          myIdleRequests.add(runnable);
+        } else {
+          myIdleRequests.add(runnable);
+        }
 
         if (canFlushIdleRequests()) {
           flushIdleRequests();
