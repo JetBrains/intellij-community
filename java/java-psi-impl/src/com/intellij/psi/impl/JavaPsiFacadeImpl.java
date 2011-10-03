@@ -73,17 +73,19 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
 
     final PsiModificationTracker modificationTracker = psiManager.getModificationTracker();
 
-    bus.connect().subscribe(PsiModificationTracker.TOPIC, new PsiModificationTracker.Listener() {
-      private long lastTimeSeen = -1L;
+    if (bus != null) {
+      bus.connect().subscribe(PsiModificationTracker.TOPIC, new PsiModificationTracker.Listener() {
+        private long lastTimeSeen = -1L;
 
-      public void modificationCountChanged() {
-        final long now = modificationTracker.getJavaStructureModificationCount();
-        if (lastTimeSeen != now) {
-          lastTimeSeen = now;
-          myPackageCache.clear();
+        public void modificationCountChanged() {
+          final long now = modificationTracker.getJavaStructureModificationCount();
+          if (lastTimeSeen != now) {
+            lastTimeSeen = now;
+            myPackageCache.clear();
+          }
         }
-      }
-    });
+      });
+    }
 
     DummyHolderFactory.setFactory(new JavaDummyHolderFactory());
     JavaElementType.ANNOTATION.getIndex(); // Initialize stubs.

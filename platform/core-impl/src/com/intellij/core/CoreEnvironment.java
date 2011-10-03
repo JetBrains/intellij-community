@@ -52,9 +52,10 @@ public class CoreEnvironment {
   private CoreFileTypeRegistry myFileTypeRegistry;
   private CoreEncodingRegistry myEncodingRegistry;
   private MockApplication myApplication;
-  private MockProject myProject;
+  protected MockProject myProject;
   private CoreLocalFileSystem myLocalFileSystem;
   private MockFileIndexFacade myFileIndexFacade;
+  protected final PsiManagerImpl myPsiManager;
 
   public CoreEnvironment(Disposable parentDisposable) {
     myFileTypeRegistry = new CoreFileTypeRegistry();
@@ -98,13 +99,13 @@ public class CoreEnvironment {
 
     myFileIndexFacade = new MockFileIndexFacade(myProject);
     final MutablePicoContainer projectContainer = myProject.getPicoContainer();
-    PsiManagerImpl psiManager = new PsiManagerImpl(myProject, null, null, myFileIndexFacade, null);
-    ((FileManagerImpl) psiManager.getFileManager()).markInitialized();
-    registerComponentInstance(projectContainer, PsiManager.class, psiManager);
+    myPsiManager = new PsiManagerImpl(myProject, null, null, myFileIndexFacade, null);
+    ((FileManagerImpl) myPsiManager.getFileManager()).markInitialized();
+    registerComponentInstance(projectContainer, PsiManager.class, myPsiManager);
 
-    myProject.registerService(PsiFileFactory.class, new PsiFileFactoryImpl(psiManager));
-    myProject.registerService(CachedValuesManager.class, new CachedValuesManagerImpl(myProject, new PsiCachedValuesFactory(psiManager)));
-    myProject.registerService(PsiDirectoryFactory.class, new PsiDirectoryFactoryImpl(psiManager));
+    myProject.registerService(PsiFileFactory.class, new PsiFileFactoryImpl(myPsiManager));
+    myProject.registerService(CachedValuesManager.class, new CachedValuesManagerImpl(myProject, new PsiCachedValuesFactory(myPsiManager)));
+    myProject.registerService(PsiDirectoryFactory.class, new PsiDirectoryFactoryImpl(myPsiManager));
   }
 
   public Project getProject() {
