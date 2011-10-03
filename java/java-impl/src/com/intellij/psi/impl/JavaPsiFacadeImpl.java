@@ -16,8 +16,7 @@
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.application.ReadActionProcessor;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.PackageIndex;
@@ -51,19 +50,20 @@ import java.util.concurrent.ConcurrentMap;
  * @author max
  */
 public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.JavaPsiFacadeImpl");
-
   private final PsiElementFinder[] myElementFinders;
   private final PsiNameHelper myNameHelper;
   private final PsiConstantEvaluationHelper myConstantEvaluationHelper;
   private final ConcurrentMap<String, PsiPackage> myPackageCache = new ConcurrentHashMap<String, PsiPackage>();
   private final Project myProject;
+  private final JavaFileManager myFileManager;
 
 
   public JavaPsiFacadeImpl(Project project,
                            PsiManagerImpl psiManager,
+                           JavaFileManager javaFileManager,
                            MessageBus bus) {
     myProject = project;
+    myFileManager = javaFileManager;
     myNameHelper = new PsiNameHelperImpl(this);
     myConstantEvaluationHelper = new PsiConstantEvaluationHelperImpl();
 
@@ -98,7 +98,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   }
 
   public PsiClass findClass(@NotNull final String qualifiedName, @NotNull GlobalSearchScope scope) {
-    ProgressManager.checkCanceled(); // We hope this method is being called often enough to cancel daemon processes smoothly
+    ProgressIndicatorProvider.checkCanceled(); // We hope this method is being called often enough to cancel daemon processes smoothly
 
     if (DumbService.getInstance(getProject()).isDumb()) {
       final List<PsiClass> classes = findClassesInDumbMode(qualifiedName, scope);
@@ -205,14 +205,14 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     return myNameHelper;
   }
 
-  public Set<String> getClassNames(PsiPackageImpl psiPackage, GlobalSearchScope scope) {
+  public Set<String> getClassNames(PsiPackage psiPackage, GlobalSearchScope scope) {
     Set<String> result = new HashSet<String>();
     for (PsiElementFinder finder : myElementFinders) {
       result.addAll(finder.getClassNames(psiPackage, scope));
     }
     return result;
   }
-  public PsiClass[] getClasses(PsiPackageImpl psiPackage, GlobalSearchScope scope) {
+  public PsiClass[] getClasses(PsiPackage psiPackage, GlobalSearchScope scope) {
     List<PsiClass> result = null;
     for (PsiElementFinder finder : myElementFinders) {
       PsiClass[] classes = finder.getClasses(psiPackage, scope);
@@ -233,7 +233,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     return true;
   }
 
-  public PsiPackage[] getSubPackages(PsiPackageImpl psiPackage, GlobalSearchScope scope) {
+  public PsiPackage[] getSubPackages(PsiPackage psiPackage, GlobalSearchScope scope) {
     List<PsiPackage> result = new ArrayList<PsiPackage>();
     for (PsiElementFinder finder : myElementFinders) {
       PsiPackage[] packages = finder.getSubPackages(psiPackage, scope);
@@ -244,12 +244,6 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   }
 
   private class PsiElementFinderImpl extends PsiElementFinder {
-    private final JavaFileManager myFileManager;
-
-    private PsiElementFinderImpl() {
-      myFileManager = myProject.getComponent(JavaFileManager.class);
-    }
-
     public PsiClass findClass(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
       return myFileManager.findClass(qualifiedName, scope);
     }
@@ -341,7 +335,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
 
 
   public boolean isPartOfPackagePrefix(String packageName) {
-    final Collection<String> packagePrefixes = myProject.getComponent(JavaFileManager.class).getNonTrivialPackagePrefixes();
+    final Collection<String> packagePrefixes = myFileManager.getNonTrivialPackagePrefixes();
     for (final String subpackageName : packagePrefixes) {
       if (isSubpackageOf(subpackageName, packageName)) return true;
     }
