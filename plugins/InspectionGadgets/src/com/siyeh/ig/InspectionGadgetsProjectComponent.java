@@ -17,13 +17,13 @@ package com.siyeh.ig;
 
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.Consumer;
+import com.siyeh.ig.telemetry.InspectionGadgetsTelemetry;
 import com.siyeh.ig.telemetry.TelemetryToolWindow;
 import org.jetbrains.annotations.NotNull;
 
 public class InspectionGadgetsProjectComponent implements ProjectComponent {
 
-  private TelemetryToolWindow toolWindow = null;
-  private boolean telemetryEnabled = true;
   private final Project project;
 
   public InspectionGadgetsProjectComponent(Project project) {
@@ -32,17 +32,29 @@ public class InspectionGadgetsProjectComponent implements ProjectComponent {
 
   public void projectOpened() {
     final InspectionGadgetsPlugin inspectionGadgetsPlugin = InspectionGadgetsPlugin.getInstance();
-    telemetryEnabled = inspectionGadgetsPlugin.isTelemetryEnabled();
+    final InspectionGadgetsTelemetry telemetry = inspectionGadgetsPlugin.getTelemetry();
+    final boolean telemetryEnabled = InspectionGadgetsPlugin.getUpToDateTelemetryEnabled(new Consumer<Boolean>() {
+
+      @Override
+      public void consume(Boolean value) {
+        final boolean telemetryEnabled = value.booleanValue();
+        if (telemetryEnabled) {
+          final TelemetryToolWindow toolWindow = new TelemetryToolWindow(telemetry);
+          toolWindow.register(project);
+        }
+        else {
+          TelemetryToolWindow.unregister(project);
+        }
+      }
+    }, project);
     if (telemetryEnabled) {
-      toolWindow = new TelemetryToolWindow(inspectionGadgetsPlugin.getTelemetry());
+      final TelemetryToolWindow toolWindow = new TelemetryToolWindow(telemetry);
       toolWindow.register(project);
     }
   }
 
   public void projectClosed() {
-    if (telemetryEnabled && toolWindow != null) {
-      TelemetryToolWindow.unregister(project);
-    }
+    TelemetryToolWindow.unregister(project);
   }
 
   @NotNull
@@ -50,9 +62,7 @@ public class InspectionGadgetsProjectComponent implements ProjectComponent {
     return "InspectionGadgetsProjectComponent";
   }
 
-  public void initComponent() {
-  }
+  public void initComponent() {}
 
-  public void disposeComponent() {
-  }
+  public void disposeComponent() {}
 }
