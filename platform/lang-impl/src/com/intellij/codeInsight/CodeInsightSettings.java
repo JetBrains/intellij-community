@@ -109,7 +109,7 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   public boolean AUTOINSERT_PAIR_BRACKET = true;
   public boolean AUTOINSERT_PAIR_QUOTE = true;
 
-  public int REFORMAT_ON_PASTE = INDENT_BLOCK;
+  public int REFORMAT_ON_PASTE = INDENT_EACH_LINE;
   public static final int NO_REFORMAT = 1;
   public static final int INDENT_BLOCK = 2;
   public static final int INDENT_EACH_LINE = 3;
