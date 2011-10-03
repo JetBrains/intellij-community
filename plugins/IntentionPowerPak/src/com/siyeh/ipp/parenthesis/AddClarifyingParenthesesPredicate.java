@@ -24,42 +24,36 @@ class AddClarifyingParenthesesPredicate implements PsiElementPredicate {
 
   public boolean satisfiedBy(@NotNull PsiElement element) {
     final PsiElement parent = element.getParent();
-    if (element instanceof PsiBinaryExpression) {
-      final PsiBinaryExpression binaryExpression =
-        (PsiBinaryExpression)element;
-      final IElementType tokenType =
-        binaryExpression.getOperationTokenType();
+    if (element instanceof PsiPolyadicExpression) {
+      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)element;
+      final IElementType tokenType = polyadicExpression.getOperationTokenType();
       if (parent instanceof PsiExpression) {
         final PsiExpression expression = (PsiExpression)parent;
         if (needsParentheses(expression, tokenType)) {
           return true;
         }
       }
-      final PsiExpression lhs = binaryExpression.getLOperand();
-      if (needsParentheses(lhs, tokenType)) {
-        return true;
+      final PsiExpression[] operands = polyadicExpression.getOperands();
+      for (PsiExpression operand : operands) {
+        if (needsParentheses(operand, tokenType)) {
+          return true;
+        }
       }
-      final PsiExpression rhs = binaryExpression.getROperand();
-      return needsParentheses(rhs, tokenType);
+      return false;
     }
     else if (parent instanceof PsiConditionalExpression) {
-      final PsiConditionalExpression conditionalExpression =
-        (PsiConditionalExpression)parent;
-      final PsiExpression condition =
-        conditionalExpression.getCondition();
+      final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)parent;
+      final PsiExpression condition = conditionalExpression.getCondition();
       return element == condition;
     }
-    return element instanceof PsiInstanceOfExpression &&
-           parent instanceof PsiBinaryExpression;
+    return element instanceof PsiInstanceOfExpression && parent instanceof PsiBinaryExpression;
   }
 
   private static boolean needsParentheses(PsiExpression expression,
                                           IElementType tokenType) {
-    if (expression instanceof PsiBinaryExpression) {
-      final PsiBinaryExpression binaryExpression =
-        (PsiBinaryExpression)expression;
-      final IElementType expressionTokenType =
-        binaryExpression.getOperationTokenType();
+    if (expression instanceof PsiPolyadicExpression) {
+      final PsiPolyadicExpression binaryExpression = (PsiPolyadicExpression)expression;
+      final IElementType expressionTokenType = binaryExpression.getOperationTokenType();
       if (!tokenType.equals(expressionTokenType)) {
         return true;
       }

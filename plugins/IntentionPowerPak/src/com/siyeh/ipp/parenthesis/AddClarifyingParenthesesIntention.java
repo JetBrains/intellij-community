@@ -16,6 +16,7 @@
 package com.siyeh.ipp.parenthesis;
 
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -37,17 +38,13 @@ public class AddClarifyingParenthesesIntention extends Intention {
     if (expression == null) {
       return;
     }
-    final StringBuilder newExpression =
-      createReplacementText(expression, new StringBuilder());
+    final StringBuilder newExpression = createReplacementText(expression, new StringBuilder());
     final PsiElement parent = expression.getParent();
     if (parent instanceof PsiConditionalExpression) {
-      final PsiConditionalExpression conditionalExpression =
-        (PsiConditionalExpression)parent;
-      final PsiExpression condition =
-        conditionalExpression.getCondition();
+      final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)parent;
+      final PsiExpression condition = conditionalExpression.getCondition();
       if (expression == condition) {
-        replaceExpression('(' + newExpression.toString() + ')',
-                          expression);
+        replaceExpression('(' + newExpression.toString() + ')', expression);
         return;
       }
     }
@@ -61,8 +58,7 @@ public class AddClarifyingParenthesesIntention extends Intention {
     }
     PsiExpression result = (PsiExpression)element;
     PsiElement parent = result.getParent();
-    while (parent instanceof PsiBinaryExpression ||
-           parent instanceof PsiParenthesizedExpression) {
+    while (parent instanceof PsiPolyadicExpression || parent instanceof PsiParenthesizedExpression) {
       result = (PsiExpression)parent;
       parent = result.getParent();
     }
@@ -71,58 +67,25 @@ public class AddClarifyingParenthesesIntention extends Intention {
 
   private static StringBuilder createReplacementText(PsiExpression element,
                                                      StringBuilder out) {
-    if (element instanceof PsiBinaryExpression) {
-      final PsiBinaryExpression binaryExpression =
-        (PsiBinaryExpression)element;
-      final PsiExpression lhs = binaryExpression.getLOperand();
-      final PsiJavaToken operationSign =
-        binaryExpression.getOperationSign();
-      final PsiExpression rhs = binaryExpression.getROperand();
+    if (element instanceof PsiPolyadicExpression) {
+      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)element;
+      final IElementType tokenType = polyadicExpression.getOperationTokenType();
       final PsiElement parent = element.getParent();
-      final String signText = operationSign.getText();
-      final PsiElement lhsNextSibling = lhs.getNextSibling();
-      final PsiElement rhsPrevSibling;
-      if (rhs != null) {
-        rhsPrevSibling = rhs.getPrevSibling();
-      }
-      else {
-        rhsPrevSibling = null;
-      }
-      if (parent instanceof PsiBinaryExpression) {
-        final PsiBinaryExpression parentBinaryExpression =
-          (PsiBinaryExpression)parent;
-        final PsiJavaToken parentOperationSign =
-          parentBinaryExpression.getOperationSign();
-        if (!signText.equals(parentOperationSign.getText())) {
+      if (parent instanceof PsiPolyadicExpression) {
+        final PsiPolyadicExpression parentPolyadicExpression = (PsiPolyadicExpression)parent;
+        final IElementType parentOperationSign = parentPolyadicExpression.getOperationTokenType();
+        if (!tokenType.equals(parentOperationSign)) {
           out.append('(');
-          createReplacementText(lhs, out);
-          if (lhsNextSibling instanceof PsiWhiteSpace) {
-            out.append(lhsNextSibling.getText());
-          }
-          out.append(signText);
-          if (rhsPrevSibling instanceof PsiWhiteSpace) {
-            out.append(rhsPrevSibling.getText());
-          }
-          createReplacementText(rhs, out);
+          createReplacementText(polyadicExpression, out);
           out.append(')');
           return out;
         }
       }
-      createReplacementText(lhs, out);
-      if (lhsNextSibling instanceof PsiWhiteSpace) {
-        out.append(lhsNextSibling.getText());
-      }
-      out.append(signText);
-      if (rhsPrevSibling instanceof PsiWhiteSpace) {
-        out.append(rhsPrevSibling.getText());
-      }
-      createReplacementText(rhs, out);
+      createReplacementText(polyadicExpression, out);
     }
     else if (element instanceof PsiParenthesizedExpression) {
-      final PsiParenthesizedExpression parenthesizedExpression =
-        (PsiParenthesizedExpression)element;
-      final PsiExpression expression =
-        parenthesizedExpression.getExpression();
+      final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)element;
+      final PsiExpression expression = parenthesizedExpression.getExpression();
       out.append('(');
       createReplacementText(expression, out);
       out.append(')');
@@ -136,5 +99,27 @@ public class AddClarifyingParenthesesIntention extends Intention {
       out.append(element.getText());
     }
     return out;
+  }
+
+  private static void createReplacementText(PsiPolyadicExpression polyadicExpression, StringBuilder out) {
+    final PsiExpression[] operands = polyadicExpression.getOperands();
+    for (PsiExpression operand : operands) {
+      if (operand == null) {
+        continue;
+      }
+      final PsiJavaToken token = polyadicExpression.getTokenBeforeOperand(operand);
+      if (token != null) {
+        final PsiElement beforeToken = operand.getNextSibling();
+        if (beforeToken instanceof PsiWhiteSpace) {
+          out.append(beforeToken.getText());
+        }
+        out.append(token.getText());
+        final PsiElement afterToken = token.getNextSibling();
+        if (afterToken instanceof PsiWhiteSpace) {
+          out.append(afterToken.getText());
+        }
+      }
+      createReplacementText(operand, out);
+    }
   }
 }
