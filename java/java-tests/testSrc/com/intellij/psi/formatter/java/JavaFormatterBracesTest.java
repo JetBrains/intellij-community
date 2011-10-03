@@ -15,7 +15,7 @@
  */
 package com.intellij.psi.formatter.java;
 
-import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 
 /**
  * Is intended to hold specific java formatting tests for 'braces placement' settings (
@@ -65,7 +65,7 @@ public class JavaFormatterBracesTest extends AbstractJavaFormatterTest {
   public void testSimpleBlockInOneLinesAndForceBraces() throws Exception {
     // Inspired by IDEA-19328
     getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
-    getSettings().IF_BRACE_FORCE = CodeStyleSettings.FORCE_BRACES_ALWAYS;
+    getSettings().IF_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS;
 
     doMethodTest(
       "if (x > y) System.out.println(\"foo!\");",
@@ -76,7 +76,7 @@ public class JavaFormatterBracesTest extends AbstractJavaFormatterTest {
 
   public void testEnforcingBracesForExpressionEndingWithLineComment() throws Exception {
     // Inspired by IDEA-57936
-    getSettings().IF_BRACE_FORCE = CodeStyleSettings.FORCE_BRACES_ALWAYS;
+    getSettings().IF_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS;
 
     doMethodTest(
       "if (true) i = 1; // Cool if\n" +
@@ -92,7 +92,7 @@ public class JavaFormatterBracesTest extends AbstractJavaFormatterTest {
 
   public void testMoveBraceOnNextLineForAnnotatedMethod() throws Exception {
     // Inspired by IDEA-59336
-    getSettings().METHOD_BRACE_STYLE = CodeStyleSettings.NEXT_LINE;
+    getSettings().METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
     getSettings().KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
 
     doClassTest(
@@ -120,10 +120,18 @@ public class JavaFormatterBracesTest extends AbstractJavaFormatterTest {
     
     String[] tests = {
       "class Test {}",
+      
       "interface Test {}",
+      
       "class Test {\n" +
       "    void test() {\n" +
       "        new Object() {};\n" +
+      "    }\n" +
+      "}",
+      
+      "class Test {\n" +
+      "    void test() {\n" +
+      "        bind(new TypeLiteral<MyType>() {}).toProvider(MyProvider.class);\n" +
       "    }\n" +
       "}"
     };
@@ -131,5 +139,20 @@ public class JavaFormatterBracesTest extends AbstractJavaFormatterTest {
     for (String test : tests) {
       doTextTest(test, test);
     }
+  }
+
+  public void testKeepSimpleClassesInOneLineAndLeftBraceOnNextLine() throws Exception {
+    // Inspired by IDEA-75053.
+    getSettings().KEEP_SIMPLE_CLASSES_IN_ONE_LINE = true;
+    getSettings().CLASS_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
+    
+    String text =
+      "class Test \n" +
+      "{\n" +
+      "    void foo() {\n" +
+      "        bind(new TypeLiteral<MyType>(){}).toProvider(MyProvider.class);\n" +
+      "    }\n" +
+      "}";
+    doTextTest(text, text);
   }
 }
