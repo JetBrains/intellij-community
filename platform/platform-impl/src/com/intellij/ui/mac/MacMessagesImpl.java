@@ -188,7 +188,7 @@ public class MacMessagesImpl extends MacMessages {
 
   static {
     if (SystemInfo.isMac) {
-      final ID delegateClass = Foundation.registerObjcClass(Foundation.getClass("NSObject"), "NSAlertDelegate_");
+      final ID delegateClass = Foundation.allocateObjcClassPair(Foundation.getClass("NSObject"), "NSAlertDelegate_");
       if (!Foundation.addMethod(delegateClass, Foundation.createSelector("alertDidEnd:returnCode:contextInfo:"), SHEET_DID_END, "v*")) {
         throw new RuntimeException("Unable to add method to objective-c delegate class!");
       }

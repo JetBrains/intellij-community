@@ -143,7 +143,7 @@ public class MacOSApplicationProvider implements ApplicationComponent {
       ID appMenu = Foundation.invoke(item, Foundation.createSelector("submenu"));
 
 
-      final ID checkForUpdatesClass = Foundation.registerObjcClass(Foundation.getClass("NSMenuItem"), "NSCheckForUpdates");
+      final ID checkForUpdatesClass = Foundation.allocateObjcClassPair(Foundation.getClass("NSMenuItem"), "NSCheckForUpdates");
       Foundation.addMethod(checkForUpdatesClass, Foundation.createSelector("checkForUpdates"), IMPL, "v");
 
       Foundation.registerObjcClassPair(checkForUpdatesClass);
