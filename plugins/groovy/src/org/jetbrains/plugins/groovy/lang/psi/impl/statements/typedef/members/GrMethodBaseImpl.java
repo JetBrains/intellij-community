@@ -514,6 +514,7 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
           return Result.create(GrReflectedMethodImpl.createReflectedMethods(GrMethodBaseImpl.this), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
         }
       });
+      putUserData(CACHED_REFLECTED_METHODS_KEY, cached);
     }
 
     return cached.getValue();

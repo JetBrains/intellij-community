@@ -408,6 +408,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
           return Result.create(result.toArray(new PsiMethod[result.size()]), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
         }
       }, false);
+      putUserData(CACHED_METHODS, cached);
     }
 
 
