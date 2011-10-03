@@ -17,10 +17,10 @@ package com.intellij.psi.impl.migration;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMigration;
 import com.intellij.psi.PsiPackage;
-import com.intellij.psi.impl.JavaPsiFacadeImpl;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.util.containers.HashMap;
 
@@ -33,7 +33,8 @@ import java.util.Map;
  */
 public class PsiMigrationImpl implements PsiMigration {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.migration.PsiMigrationImpl");
-  private final JavaPsiFacadeImpl myFacade;
+  private final PsiMigrationManager myMigrationManager;
+  private final JavaPsiFacade myFacade;
   private final PsiManagerImpl myManager;
   private final Map<String, MigrationClassImpl> myQNameToClassMap = new HashMap<String, MigrationClassImpl>();
   private final Map<String, List<PsiClass>>  myPackageToClassesMap = new HashMap<String, List<PsiClass>>();
@@ -41,7 +42,8 @@ public class PsiMigrationImpl implements PsiMigration {
   private final Map<String, List<PsiPackage>>  myPackageToSubpackagesMap = new HashMap<String, List<PsiPackage>>();
   private boolean myIsValid = true;
 
-  public PsiMigrationImpl(JavaPsiFacadeImpl facade, PsiManagerImpl manager) {
+  public PsiMigrationImpl(PsiMigrationManager migrationManager, JavaPsiFacade facade, PsiManagerImpl manager) {
+    myMigrationManager = migrationManager;
     myFacade = facade;
     myManager = manager;
   }
@@ -59,7 +61,7 @@ public class PsiMigrationImpl implements PsiMigration {
     }
     List<PsiClass> psiClasses = getClassesList(packageName);
     psiClasses.add(migrationClass);
-    myFacade.migrationModified(false);
+    myMigrationManager.migrationModified(false);
     return migrationClass;
   }
 
@@ -87,7 +89,7 @@ public class PsiMigrationImpl implements PsiMigration {
     }
     List<PsiPackage> psiPackages = getSubpackagesList(parentName);
     psiPackages.add(migrationPackage);
-    myFacade.migrationModified(false);
+    myMigrationManager.migrationModified(false);
     return migrationPackage;
   }
 
@@ -98,7 +100,7 @@ public class PsiMigrationImpl implements PsiMigration {
     myPackageToClassesMap.clear();
     myPackageToSubpackagesMap.clear();
     myIsValid = false;
-    myFacade.migrationModified(true);
+    myMigrationManager.migrationModified(true);
   }
 
   private void assertValid() {

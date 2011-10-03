@@ -22,10 +22,8 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMigration;
+import com.intellij.psi.impl.migration.PsiMigrationManager;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringHelper;
@@ -47,27 +45,27 @@ class MigrationProcessor extends BaseRefactoringProcessor {
   public MigrationProcessor(Project project, MigrationMap migrationMap) {
     super(project);
     myMigrationMap = migrationMap;
-    myPsiMigration = startMigration(PsiManager.getInstance(project));
+    myPsiMigration = startMigration(project);
   }
 
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
     return new MigrationUsagesViewDescriptor(myMigrationMap, false);
   }
 
-  private PsiMigration startMigration(final PsiManager psiManager) {
-    final PsiMigration migration = JavaPsiFacade.getInstance(psiManager.getProject()).startMigration();
-    findOrCreateEntries(psiManager, migration);
+  private PsiMigration startMigration(Project project) {
+    final PsiMigration migration = PsiMigrationManager.getInstance(project).startMigration();
+    findOrCreateEntries(project, migration);
     return migration;
   }
 
-  private void findOrCreateEntries(final PsiManager psiManager, final PsiMigration migration) {
+  private void findOrCreateEntries(Project project, final PsiMigration migration) {
     for (int i = 0; i < myMigrationMap.getEntryCount(); i++) {
       MigrationMapEntry entry = myMigrationMap.getEntryAt(i);
       if (entry.getType() == MigrationMapEntry.PACKAGE) {
-        MigrationUtil.findOrCreatePackage(psiManager, migration, entry.getOldName());
+        MigrationUtil.findOrCreatePackage(project, migration, entry.getOldName());
       }
       else {
-        MigrationUtil.findOrCreateClass(psiManager, migration, entry.getOldName());
+        MigrationUtil.findOrCreateClass(project, migration, entry.getOldName());
       }
     }
   }
@@ -75,7 +73,6 @@ class MigrationProcessor extends BaseRefactoringProcessor {
   @NotNull
   protected UsageInfo[] findUsages() {
     ArrayList<UsageInfo> usagesVector = new ArrayList<UsageInfo>();
-    PsiManager psiManager = PsiManager.getInstance(myProject);
     try {
       if (myMigrationMap == null) {
         return UsageInfo.EMPTY_ARRAY;
@@ -84,10 +81,10 @@ class MigrationProcessor extends BaseRefactoringProcessor {
         MigrationMapEntry entry = myMigrationMap.getEntryAt(i);
         UsageInfo[] usages;
         if (entry.getType() == MigrationMapEntry.PACKAGE) {
-          usages = MigrationUtil.findPackageUsages(psiManager, myPsiMigration, entry.getOldName());
+          usages = MigrationUtil.findPackageUsages(myProject, myPsiMigration, entry.getOldName());
         }
         else {
-          usages = MigrationUtil.findClassUsages(psiManager, myPsiMigration, entry.getOldName());
+          usages = MigrationUtil.findClassUsages(myProject, myPsiMigration, entry.getOldName());
         }
 
         for (UsageInfo usage : usages) {
@@ -112,18 +109,17 @@ class MigrationProcessor extends BaseRefactoringProcessor {
   }
 
   protected void performRefactoring(UsageInfo[] usages) {
-    PsiManager psiManager = PsiManager.getInstance(myProject);
-    final PsiMigration psiMigration = JavaPsiFacade.getInstance(psiManager.getProject()).startMigration();
+    final PsiMigration psiMigration = PsiMigrationManager.getInstance(myProject).startMigration();
     LocalHistoryAction a = LocalHistory.getInstance().startAction(getCommandName());
 
     try {
       for (int i = 0; i < myMigrationMap.getEntryCount(); i++) {
         MigrationMapEntry entry = myMigrationMap.getEntryAt(i);
         if (entry.getType() == MigrationMapEntry.PACKAGE) {
-          MigrationUtil.doPackageMigration(psiManager, psiMigration, entry.getNewName(), usages);
+          MigrationUtil.doPackageMigration(myProject, psiMigration, entry.getNewName(), usages);
         }
         if (entry.getType() == MigrationMapEntry.CLASS) {
-          MigrationUtil.doClassMigration(psiManager, psiMigration, entry.getNewName(), usages);
+          MigrationUtil.doClassMigration(myProject, psiMigration, entry.getNewName(), usages);
         }
       }
 

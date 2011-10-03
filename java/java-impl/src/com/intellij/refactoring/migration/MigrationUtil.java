@@ -17,6 +17,7 @@ package com.intellij.refactoring.migration;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -34,15 +35,15 @@ public class MigrationUtil {
   private MigrationUtil() {
   }
 
-  public static UsageInfo[] findPackageUsages(PsiManager manager, PsiMigration migration, String qName) {
-    PsiPackage aPackage = findOrCreatePackage(manager, migration, qName);
+  public static UsageInfo[] findPackageUsages(Project project, PsiMigration migration, String qName) {
+    PsiPackage aPackage = findOrCreatePackage(project, migration, qName);
 
-    return findRefs(manager, aPackage);
+    return findRefs(project, aPackage);
   }
 
-  public static void doPackageMigration(PsiManager manager, PsiMigration migration, String newQName, UsageInfo[] usages) {
+  public static void doPackageMigration(Project project, PsiMigration migration, String newQName, UsageInfo[] usages) {
     try {
-      PsiPackage aPackage = findOrCreatePackage(manager, migration, newQName);
+      PsiPackage aPackage = findOrCreatePackage(project, migration, newQName);
 
       // rename all references
       for (UsageInfo usage : usages) {
@@ -75,15 +76,15 @@ public class MigrationUtil {
     }
   }
 
-  public static UsageInfo[] findClassUsages(PsiManager manager, PsiMigration migration, String qName) {
-    PsiClass aClass = findOrCreateClass(manager, migration, qName);
+  public static UsageInfo[] findClassUsages(Project project, PsiMigration migration, String qName) {
+    PsiClass aClass = findOrCreateClass(project, migration, qName);
 
-    return findRefs(manager, aClass);
+    return findRefs(project, aClass);
   }
 
-  private static UsageInfo[] findRefs(final PsiManager manager, final PsiElement aClass) {
+  private static UsageInfo[] findRefs(final Project project, final PsiElement aClass) {
     final ArrayList<UsageInfo> results = new ArrayList<UsageInfo>();
-    GlobalSearchScope projectScope = GlobalSearchScope.projectScope(manager.getProject());
+    GlobalSearchScope projectScope = GlobalSearchScope.projectScope(project);
     for (PsiReference usage : ReferencesSearch.search(aClass, projectScope, false)) {
       results.add(new UsageInfo(usage));
     }
@@ -91,9 +92,9 @@ public class MigrationUtil {
     return results.toArray(new UsageInfo[results.size()]);
   }
 
-  public static void doClassMigration(PsiManager manager, PsiMigration migration, String newQName, UsageInfo[] usages) {
+  public static void doClassMigration(Project project, PsiMigration migration, String newQName, UsageInfo[] usages) {
     try {
-      PsiClass aClass = findOrCreateClass(manager, migration, newQName);
+      PsiClass aClass = findOrCreateClass(project, migration, newQName);
 
       // rename all references
       for (UsageInfo usage : usages) {
@@ -114,8 +115,8 @@ public class MigrationUtil {
     }
   }
 
-  static PsiPackage findOrCreatePackage(PsiManager manager, final PsiMigration migration, final String qName) {
-    PsiPackage aPackage = JavaPsiFacade.getInstance(manager.getProject()).findPackage(qName);
+  static PsiPackage findOrCreatePackage(Project project, final PsiMigration migration, final String qName) {
+    PsiPackage aPackage = JavaPsiFacade.getInstance(project).findPackage(qName);
     if (aPackage != null) {
       return aPackage;
     }
@@ -128,8 +129,8 @@ public class MigrationUtil {
     }
   }
 
-  static PsiClass findOrCreateClass(PsiManager manager, final PsiMigration migration, final String qName) {
-    PsiClass aClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(qName, GlobalSearchScope.allScope(manager.getProject()));
+  static PsiClass findOrCreateClass(Project project, final PsiMigration migration, final String qName) {
+    PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(qName, GlobalSearchScope.allScope(project));
     if (aClass == null) {
       aClass = ApplicationManager.getApplication().runWriteAction(new Computable<PsiClass>() {
         public PsiClass compute() {

@@ -112,15 +112,6 @@ public abstract class JavaPsiFacade {
   public abstract PsiResolveHelper getResolveHelper();
 
   /**
-   * Initiates a migrate refactoring. The refactoring is finished when
-   * {@link com.intellij.psi.PsiMigration#finish()} is called.
-   *
-   * @return the migrate operation object.
-   */
-  @NotNull
-  public abstract PsiMigration startMigration();
-
-  /**
    * Returns the name helper for the project, which can be used to validate
    * and parse Java identifiers.
    *

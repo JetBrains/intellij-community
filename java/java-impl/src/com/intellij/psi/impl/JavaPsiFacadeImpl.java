@@ -33,7 +33,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.file.PsiPackageImpl;
 import com.intellij.psi.impl.file.impl.JavaFileManager;
 import com.intellij.psi.impl.file.impl.JavaFileManagerImpl;
-import com.intellij.psi.impl.migration.PsiMigrationImpl;
+import com.intellij.psi.impl.migration.PsiMigrationManager;
 import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.JavaDummyHolder;
 import com.intellij.psi.impl.source.JavaDummyHolderFactory;
@@ -63,7 +63,6 @@ import java.util.concurrent.ConcurrentMap;
 public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.JavaPsiFacadeImpl");
 
-  private PsiMigrationImpl myCurrentMigration;
   private final PsiElementFinder[] myElementFinders;
   private final PsiResolveHelper myResolveHelper;
   private final PsiNameHelper myNameHelper;
@@ -227,11 +226,6 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
     return null;
   }
 
-
-  public PsiMigrationImpl getCurrentMigration() {
-    return myCurrentMigration;
-  }
-
   @NotNull
   public PsiJavaParserFacade getParserFacade() {
     return getElementFactory(); // TODO: lighter implementation which doesn't mark all the elements as generated.
@@ -240,13 +234,6 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
   @NotNull
   public PsiResolveHelper getResolveHelper() {
     return myResolveHelper;
-  }
-
-  @NotNull
-  public PsiMigration startMigration() {
-    LOG.assertTrue(myCurrentMigration == null);
-    myCurrentMigration = new PsiMigrationImpl(this, (PsiManagerImpl)PsiManager.getInstance(myProject));
-    return myCurrentMigration;
   }
 
   @NotNull
@@ -299,8 +286,8 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
   @Nullable
   private PsiPackage findPackageDefault(String qualifiedName) {
     final PsiPackage aPackage = myFileManager.findPackage(qualifiedName);
-    if (aPackage == null && myCurrentMigration != null) {
-      final PsiPackage migrationPackage = myCurrentMigration.getMigrationPackage(qualifiedName);
+    if (aPackage == null && PsiMigrationManager.getInstance(myProject).getCurrentMigration() != null) {
+      final PsiPackage migrationPackage = PsiMigrationManager.getInstance(myProject).getCurrentMigration().getMigrationPackage(qualifiedName);
       if (migrationPackage != null) return migrationPackage;
     }
 
@@ -311,8 +298,8 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
     public PsiClass findClass(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
       PsiClass psiClass = myFileManager.findClass(qualifiedName, scope);
 
-      if (psiClass == null && myCurrentMigration != null) {
-        psiClass = myCurrentMigration.getMigrationClass(qualifiedName);
+      if (psiClass == null && PsiMigrationManager.getInstance(myProject).getCurrentMigration() != null) {
+        psiClass = PsiMigrationManager.getInstance(myProject).getCurrentMigration().getMigrationClass(qualifiedName);
       }
 
       return psiClass;
@@ -321,8 +308,8 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
     @NotNull
     public PsiClass[] findClasses(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
       final PsiClass[] classes = myFileManager.findClasses(qualifiedName, scope);
-      if (classes.length == 0 && myCurrentMigration != null) {
-        final PsiClass migrationClass = myCurrentMigration.getMigrationClass(qualifiedName);
+      if (classes.length == 0 && PsiMigrationManager.getInstance(myProject).getCurrentMigration() != null) {
+        final PsiClass migrationClass = PsiMigrationManager.getInstance(myProject).getCurrentMigration().getMigrationClass(qualifiedName);
         if (migrationClass != null) {
           return new PsiClass[]{migrationClass};
         }
@@ -408,14 +395,6 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
       });
       return true;
     }
-  }
-
-  public void migrationModified(boolean terminated) {
-    if (terminated) {
-      myCurrentMigration = null;
-    }
-
-    ((PsiManagerEx)PsiManager.getInstance(myProject)).beforeChange(true);
   }
 
 

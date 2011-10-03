@@ -40,6 +40,7 @@ import com.intellij.psi.impl.JavaPsiFacadeImpl;
 import com.intellij.psi.impl.PackagePrefixElementFinder;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.migration.PsiMigrationImpl;
+import com.intellij.psi.impl.migration.PsiMigrationManager;
 import com.intellij.psi.impl.source.tree.java.PsiCompositeModifierList;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
@@ -275,7 +276,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
 
     final JavaPsiFacadeImpl facade = getFacade();
-    final PsiMigrationImpl migration = facade.getCurrentMigration();
+    final PsiMigrationImpl migration = PsiMigrationManager.getInstance(getProject()).getCurrentMigration();
 
     final Condition<String> prefixMatcher = processor.getHint(JavaCompletionHints.NAME_FILTER);
 
