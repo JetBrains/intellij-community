@@ -80,7 +80,7 @@ public class JavaFoldingBuilder extends FoldingBuilderEx implements DumbAware {
       PsiElement anchorElementToUse = file;
       PsiElement candidate = file.getFirstChild();
       
-      // There experienced the following problem situation:
+      // We experienced the following problem situation:
       //     1. There is a collapsed class-level javadoc;
       //     2. User starts typing at class definition line (e.g. we had definition like 'public class Test' and user starts
       //        typing 'abstract' between 'public' and 'class');
@@ -224,6 +224,16 @@ public class JavaFoldingBuilder extends FoldingBuilderEx implements DumbAware {
       return !(element.getParent() instanceof PsiFile) && settings.isCollapseInnerClasses();
     }
     else if (element instanceof PsiDocComment) {
+      PsiElement parent = element.getParent();
+      if (parent instanceof PsiJavaFile) {
+        PsiElement firstChild = parent.getFirstChild();
+        if (firstChild instanceof PsiWhiteSpace) {
+          firstChild = firstChild.getNextSibling();
+        }
+        if (element.equals(firstChild)) {
+          return settings.isCollapseFileHeader();
+        } 
+      } 
       return settings.isCollapseJavadocs();
     }
     else if (element instanceof PsiJavaFile) {
@@ -421,7 +431,7 @@ public class JavaFoldingBuilder extends FoldingBuilderEx implements DumbAware {
         processedComments.add(current);
         continue;
       }
-      if (elementType == JavaTokenType.WHITE_SPACE) {
+      if (elementType == TokenType.WHITE_SPACE) {
         continue;
       }
       break;
@@ -592,7 +602,9 @@ public class JavaFoldingBuilder extends FoldingBuilderEx implements DumbAware {
               if (lastLineEnd > 0 && seq.charAt(lastLineEnd) == '\n') lastLineEnd--;
               if (lastLineEnd < firstLineStart) return false;
 
-              final String baseClassName = quick ? anonymousClass.getBaseClassReference().getReferenceName() : anonymousClass.getBaseClassType().resolve().getName();
+              PsiClass resolve = anonymousClass.getBaseClassType().resolve();
+              assert resolve != null;
+              final String baseClassName = quick ? anonymousClass.getBaseClassReference().getReferenceName() : resolve.getName();
               if (lastLineEnd >= seq.length() || firstLineStart >= seq.length() || firstLineStart < 0) {
                 LOG.error("llE=" + lastLineEnd + "; fLS=" + firstLineStart + "; len=" + seq.length() + "rE=" + rangeEnd + "; class=" +
                           baseClassName);
@@ -602,7 +614,9 @@ public class JavaFoldingBuilder extends FoldingBuilderEx implements DumbAware {
                 public String fun(final PsiParameter psiParameter) {
                   String typeName;
                   if (quick) {
-                    typeName = psiParameter.getTypeElement().getText();
+                    PsiTypeElement typeElement = psiParameter.getTypeElement();
+                    assert typeElement != null;
+                    typeName = typeElement.getText();
                   }
                   else {
                     typeName = psiParameter.getType().getPresentableText();

@@ -80,7 +80,7 @@ class RunConfigurable extends BaseConfigurable {
   private final Tree myTree = new Tree(myRoot);
   private final JPanel myRightPanel = new JPanel(new BorderLayout());
   private JComponent myToolbarComponent;
-  private final Splitter myPanel = new Splitter();
+  private final JSplitPane myPanel = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, true);
   private JPanel myWholePanel;
   private StorageAccessors myConfig;
   private Configurable mySelectedConfigurable = null;
@@ -443,13 +443,12 @@ class RunConfigurable extends BaseConfigurable {
 
   public JComponent createComponent() {
     myWholePanel = new JPanel(new BorderLayout());
-    myPanel.setHonorComponentsMinimumSize(true);
     myConfig = StorageAccessors.createGlobal("runConfigurationTab");
-    myPanel.setShowDividerControls(true);
-    myPanel.setProportion(myConfig.getFloat(DIVIDER_PROPORTION, 0.2f));
-    myPanel.setHonorComponentsMinimumSize(true);
-    myPanel.setFirstComponent(createLeftPanel());
-    myPanel.setSecondComponent(myRightPanel);
+    myPanel.setLeftComponent(createLeftPanel());
+    myPanel.setRightComponent(myRightPanel);
+    myPanel.setBorder(null);
+    myPanel.getDividerLocation();
+    myPanel.setDividerLocation((int)myConfig.getFloat(DIVIDER_PROPORTION, 200));
     myWholePanel.add(myPanel, BorderLayout.CENTER);
 
     updateDialog();
@@ -636,8 +635,7 @@ class RunConfigurable extends BaseConfigurable {
       }
     });
     myRightPanel.removeAll();
-    myConfig.setFloat(DIVIDER_PROPORTION, myPanel.getProportion());
-    myPanel.dispose();
+    myConfig.setFloat(DIVIDER_PROPORTION, myPanel.getDividerLocation());
   }
 
   private void updateDialog() {

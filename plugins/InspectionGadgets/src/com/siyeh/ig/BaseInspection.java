@@ -32,7 +32,6 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.text.Document;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.List;
@@ -46,7 +45,6 @@ public abstract class BaseInspection extends BaseJavaLocalInspectionTool {
   private String m_shortName = null;
   private long timestamp = -1L;
   private final InspectionGadgetsPlugin inspectionGadgetsPlugin = InspectionGadgetsPlugin.getInstance();
-
 
   @Override
   @NotNull
@@ -62,7 +60,6 @@ public abstract class BaseInspection extends BaseJavaLocalInspectionTool {
     }
     return m_shortName;
   }
-
 
   @Override
   @Nls
@@ -88,18 +85,6 @@ public abstract class BaseInspection extends BaseJavaLocalInspectionTool {
     return InspectionGadgetsFix.EMPTY_ARRAY;
   }
 
-  public boolean hasQuickFix() {
-    final Class<? extends BaseInspection> aClass = getClass();
-    final Method[] methods = aClass.getDeclaredMethods();
-    for (final Method method : methods) {
-      @NonNls final String methodName = method.getName();
-      if ("buildFix".equals(methodName)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   public abstract BaseInspectionVisitor buildVisitor();
 
   @Override
@@ -112,7 +97,6 @@ public abstract class BaseInspection extends BaseJavaLocalInspectionTool {
     visitor.setInspection(this);
     return visitor;
   }
-
 
   protected JFormattedTextField prepareNumberEditor(@NonNls String fieldName) {
     try {

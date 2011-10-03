@@ -306,7 +306,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
     }
     
     if (isVisible() && myRestoreFullscreen) {
-      MacMainFrameDecorator.toggleFullScreen(this);
+      MacMainFrameDecorator.toggleFullScreen(this, true);
       myRestoreFullscreen = false;
       storeFullScreenStateIfNeeded(false); // reset
     }
@@ -403,7 +403,8 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
     if (!SystemInfo.isMacOSLion) return false;
     
     if (project != null) {
-      return PropertiesComponent.getInstance(project).getBoolean(FULL_SCREEN, false);
+      return project.getUserData(MacMainFrameDecorator.SHOULD_OPEN_IN_FULLSCREEN) == Boolean.TRUE 
+             || PropertiesComponent.getInstance(project).getBoolean(FULL_SCREEN, false);
     } else {
       return false; // PropertiesComponent.getInstance().getBoolean(FULL_SCREEN, false);
     }

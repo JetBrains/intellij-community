@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -199,6 +199,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
       myNewBuildNumber.setText(myLatestBuild.getNumber().asStringWithoutProductCode() + ")");
       myNewVersionNumber.setText(myLatestBuild.getVersion());
       myUpdateMessageLabel.setBackground(UIUtil.getLabelBackground());
+      myScrollPane.setBackground(UIUtil.getLabelBackground());
       myScrollPane.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
       if (myLatestBuild.getMessage() != null) {
         StringBuilder builder = new StringBuilder();

@@ -20,6 +20,7 @@ import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.mac.foundation.Foundation;
@@ -43,6 +44,7 @@ import static com.intellij.ui.mac.foundation.Foundation.invoke;
 public class MacMainFrameDecorator implements UISettingsListener, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.mac.MacMainFrameDecorator");
   
+  public static final Key<Boolean> SHOULD_OPEN_IN_FULLSCREEN = Key.create("mac.should.open.in.fullscreen");
   private static boolean SHOWN = false;
 
   private static Callback SET_VISIBLE_CALLBACK = new Callback() {
@@ -228,6 +230,19 @@ public class MacMainFrameDecorator implements UISettingsListener, Disposable {
     if (window == null) return;
 
     invoke(window, "toggleFullScreen:", window);
+  }
+  
+  public static void toggleFullScreen(Frame frame, boolean state) {
+    if (!SystemInfo.isMacOSLion) return;
+    
+    final ID window = MacUtil.findWindowForTitle(frame.getTitle());
+    if (window == null) return;
+
+    final ID mask = invoke(window, "styleMask");
+    boolean inFullscreenAlready = (mask.intValue() & (1 << 14)) == (1 << 14);
+    if (state != inFullscreenAlready) {
+      invoke(window, "toggleFullScreen:", window);
+    }
   }
 
   public static boolean isFullScreenMode(@NotNull Frame frame) {
