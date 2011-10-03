@@ -1119,6 +1119,9 @@
 
     <iconLayerProvider implementation="com.intellij.compiler.CompilerIconLayerProvider"/>
 
+    <treeCopyHandler implementation="com.intellij.psi.impl.source.tree.JavaTreeCopyHandler"/>
+    <treeGenerator implementation="com.intellij.psi.impl.source.tree.JavaTreeGenerator"/>
+
     <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable"/>
     <projectService serviceInterface="com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureProblemsSettings"
                     serviceImplementation="com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureProblemsSettingsImpl"/>

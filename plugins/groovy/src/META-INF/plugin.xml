@@ -365,6 +365,8 @@
 
     <postStartupActivity implementation="org.jetbrains.plugins.groovy.mvc.MvcProjectWithoutLibraryNotificator" />
 
+    <treeCopyHandler implementation="org.jetbrains.plugins.groovy.lang.GroovyChangeUtilSupport"/>
+
     <localInspection language="Groovy" shortName="SecondUnsafeCall" bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
                      key="second.unsafe.call" groupName="Probable bugs" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.secondUnsafeCall.SecondUnsafeCallInspection"/>
@@ -1039,9 +1041,6 @@
   </actions>
 
   <application-components>
-    <component>
-      <implementation-class>org.jetbrains.plugins.groovy.GroovyLoader</implementation-class>
-    </component>
     <component>
       <implementation-class>org.jetbrains.plugins.groovy.gant.GantLoader</implementation-class>
     </component>

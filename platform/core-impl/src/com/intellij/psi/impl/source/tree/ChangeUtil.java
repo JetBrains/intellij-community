@@ -19,6 +19,7 @@ package com.intellij.psi.impl.source.tree;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.pom.PomManager;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.event.PomModelEvent;
@@ -47,18 +48,8 @@ import java.util.Map;
 
 public class ChangeUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.ChangeUtil");
-  private static final List<TreeCopyHandler> ourCopyHandlers = ContainerUtil.createEmptyCOWList();
-  private static final List<TreeGenerator> ourTreeGenerators = ContainerUtil.createEmptyCOWList();
 
   private ChangeUtil() { }
-
-  public static void registerCopyHandler(TreeCopyHandler handler) {
-    ourCopyHandlers.add(handler);
-  }
-
-  public static void registerTreeGenerator(TreeGenerator generator) {
-    ourTreeGenerators.add(generator);
-  }
 
   public static void changeElementInPlace(final ASTNode element, final ChangeAction action){
     prepareAndRunChangeAction(new ChangeAction() {
@@ -68,11 +59,11 @@ public class ChangeUtil {
         ASTNode node = element;
         while (node != null) {
           ASTNode parent = node.getTreeParent();
-          ((TreeElement) node).clearCaches();
+          ((TreeElement)node).clearCaches();
           node = parent;
         }
       }
-    }, (TreeElement) element);
+    }, (TreeElement)element);
   }
 
   public static void encodeInformation(TreeElement element) {
@@ -84,7 +75,7 @@ public class ChangeUtil {
   }
 
   private static void encodeInformation(TreeElement element, ASTNode original, Map<Object, Object> state) {
-    for (TreeCopyHandler handler : ourCopyHandlers) {
+    for (TreeCopyHandler handler : Extensions.getExtensions(TreeCopyHandler.EP_NAME)) {
       handler.encodeInformation(element, original, state);
     }
 
@@ -110,7 +101,7 @@ public class ChangeUtil {
       child = child.getTreeNext();
     }
 
-    for (TreeCopyHandler handler : ourCopyHandlers) {
+    for (TreeCopyHandler handler : Extensions.getExtensions(TreeCopyHandler.EP_NAME)) {
       final TreeElement handled = handler.decodeInformation(element, state);
       if (handled != null) return handled;
     }
@@ -169,7 +160,7 @@ public class ChangeUtil {
       return copyElement((TreeElement)SourceTreeToPsiMap.psiElementToTree(original), table);
     }
     else {
-      for (TreeGenerator generator : ourTreeGenerators) {
+      for (TreeGenerator generator : Extensions.getExtensions(TreeGenerator.EP_NAME)) {
         final TreeElement element = generator.generateTreeFor(original, table, manager);
         if (element != null) return element;
       }

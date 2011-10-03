@@ -19,12 +19,15 @@
  */
 package com.intellij.psi.impl.source.tree;
 
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.CharTable;
 import org.jetbrains.annotations.Nullable;
 
 public interface TreeGenerator {
+  ExtensionPointName<TreeGenerator> EP_NAME = ExtensionPointName.create("com.intellij.treeGenerator");
+  
   @Nullable
   TreeElement generateTreeFor(PsiElement original, CharTable table, final PsiManager manager);
 }

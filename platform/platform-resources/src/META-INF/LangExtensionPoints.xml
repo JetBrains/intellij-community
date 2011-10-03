@@ -503,4 +503,9 @@
 
   <extensionPoint name="project.converterProvider"
                   interface="com.intellij.conversion.ConverterProvider"/>
+  
+  <extensionPoint name="treeCopyHandler"
+                  interface="com.intellij.psi.impl.source.tree.TreeCopyHandler"/>
+  <extensionPoint name="treeGenerator"
+                  interface="com.intellij.psi.impl.source.tree.TreeGenerator"/>
 </extensionPoints>
