@@ -46,7 +46,7 @@ public class JavaBuilder extends Builder{
 
     final ProjectPaths paths = new ProjectPaths(context.getScope().getProject());
 
-    final Collection<File> classpath = paths.getClasspath(getClasspathKind(context), chunk);
+    final Collection<File> classpath = paths.getClasspathFiles(chunk, getClasspathKind(context));
     final Collection<File> platformPaths = collectPlatformClasspath(context, chunk);
     final Map<File, Set<File>> outs = buildOutputDirectoriesMap(context, chunk);
     final List<String> options = getCompilationOptions(context, chunk);

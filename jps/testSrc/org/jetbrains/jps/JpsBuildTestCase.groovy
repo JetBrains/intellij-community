@@ -54,9 +54,14 @@ abstract class JpsBuildTestCase extends TestCase {
   }
 
   protected Project loadProject(String projectPath, Map<String, String> pathVariables) {
+    return loadProject(projectPath, pathVariables, {})
+  }
+
+  protected Project loadProject(String projectPath, Map<String, String> pathVariables, Closure initGlobal) {
     def binding = new GantBinding()
     binding.includeTool << Jps
     def project = new Project(binding)
+    initGlobal(project)
     IdeaProjectLoader.loadFromPath(project, projectPath, pathVariables, null)
     return project
   }

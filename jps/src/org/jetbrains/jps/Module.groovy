@@ -6,156 +6,176 @@ import org.jetbrains.jps.idea.Facet
  * @author max
  */
 class Module extends LazyInitializeableObject implements ClasspathItem {//}, Comparable {
-    Project project;
-    String name;
-    Sdk sdk;
+  Project project;
+  String name;
+  Sdk sdk;
 
-    private List<ModuleDependency> dependencies = []
-    List sourceRoots = []
-    List testRoots = []
-    List excludes = []
+  private List<ModuleDependency> dependencies = []
+  List sourceRoots = []
+  List testRoots = []
+  List excludes = []
 
-    String basePath
-    String outputPath
-    String testOutputPath
-    Map<String, Facet> facets = [:]
-    Map<String, Object> props = [:]
-    Map<String, String> sourceRootPrefixes = [:]
-    Map<String, Library> libraries = [:]
+  String basePath
+  String outputPath
+  String testOutputPath
+  Map<String, Facet> facets = [:]
+  Map<String, Object> props = [:]
+  Map<String, String> sourceRootPrefixes = [:]
+  Map<String, Library> libraries = [:]
 
-    /*int compareTo(Object o) {
-        if (o instanceof Module) {
-            ((Module) o).name.compareTo(name);
+  /*int compareTo(Object o) {
+      if (o instanceof Module) {
+          ((Module) o).name.compareTo(name);
+      }
+
+      return -1
+  }*/
+
+  def Module(project, name, initializer) {
+    this.project = project;
+    this.name = name;
+
+    setInitializer({
+      def meta = new InitializingExpando()
+
+      meta.dependency = {Object item, DependencyScope scope, boolean exported ->
+        dependencies << new ModuleDependency(project.resolve(item), scope, exported)
+      }
+
+      meta.classpath = {Object[] arg ->
+        arg.each { dependencies << new ModuleDependency(project.resolve(it), PredefinedDependencyScopes.COMPILE, false) }
+      }
+
+      meta.testclasspath = {Object[] arg ->
+        arg.each { dependencies << new ModuleDependency(project.resolve(it), PredefinedDependencyScopes.TEST, false) }
+      }
+
+      meta.moduleSource = {
+        dependencies << new ModuleDependency(new ModuleSourceEntry(module: this), PredefinedDependencyScopes.COMPILE, true)
+      }
+
+      meta.src = {Object[] arg ->
+        arg.each { sourceRoots << it }
+      }
+
+      meta.testSrc = {Object[] arg ->
+        arg.each { testRoots << it }
+      }
+
+      meta.exclude = {Object[] arg ->
+        arg.each { excludes << it }
+      }
+
+      initializer.delegate = meta
+      initializer.setResolveStrategy Closure.DELEGATE_FIRST
+      initializer.call()
+
+      def wrongProperties = ["dependency", "classpath", "testclasspath", "src", "testSrc", "exclude"] as Set
+      meta.getProperties().each {String key, Object value ->
+        if (!wrongProperties.contains(key)) {
+          props[key] = value
         }
+      }
+    })
+  }
 
-        return -1
-    }*/
+  def String toString() {
+    return "module ${name}"
+  }
 
-    def Module(project, name, initializer) {
-        this.project = project;
-        this.name = name;
+  def getAt(String key) {
+    if (props[key] != null) return props[key]
+    project[key]
+  }
 
-        setInitializer({
-            def meta = new InitializingExpando()
+  def putAt(String key, Object value) {
+    props[key] = value
+  }
 
-            meta.dependency = {Object item, DependencyScope scope ->
-                dependencies << new ModuleDependency(project.resolve(item), scope)
-            }
+  def make() {
+    project.builder.makeModule(this)
+  }
 
-            meta.classpath = {Object[] arg ->
-                arg.each { dependencies << new ModuleDependency(project.resolve(it), PredefinedDependencyScopes.COMPILE) }
-            }
+  def getOutput() {
+    return project.builder.moduleOutput(this)
+  }
 
-            meta.testclasspath = {Object[] arg ->
-                arg.each { dependencies << new ModuleDependency(project.resolve(it), PredefinedDependencyScopes.TEST) }
-            }
+  List<String> runtimeClasspath() {
+    project.builder.moduleRuntimeClasspath(this, false)
+  }
 
-            meta.src = {Object[] arg ->
-                arg.each { sourceRoots << it }
-            }
+  List<String> testRuntimeClasspath() {
+    project.builder.moduleRuntimeClasspath(this, true)
+  }
 
-            meta.testSrc = {Object[] arg ->
-                arg.each { testRoots << it }
-            }
+  def makeTests() {
+    project.builder.makeModuleTests(this)
+  }
 
-            meta.exclude = {Object[] arg ->
-                arg.each { excludes << it }
-            }
+  def List<String> getClasspathRoots(ClasspathKind kind) {
+    if (kind.isTestsIncluded()) {
+      return [project.builder.moduleTestsOutput(this), project.builder.moduleOutput(this)]
+    }
+    else {
+      return [project.builder.moduleOutput(this)]
+    }
+  }
 
-            initializer.delegate = meta
-            initializer.setResolveStrategy Closure.DELEGATE_FIRST
-            initializer.call()
+  @Deprecated
+  def List<ClasspathItem> getFullClasspath() {
+    return dependencies*.item;
+  }
 
-            def wrongProperties = ["dependency", "classpath", "testclasspath", "src", "testSrc", "exclude"] as Set
-            meta.getProperties().each {String key, Object value ->
-                if (!wrongProperties.contains(key)) {
-                    props[key] = value
-                }
-            }
-        })
+  def List<ClasspathItem> getClasspath(ClasspathKind kind) {
+    return getClasspath(kind, false)
+  }
+
+  def List<ClasspathItem> getClasspath(ClasspathKind kind, boolean exportedOnly) {
+    return dependencies.findAll({it.scope.isIncludedIn(kind) && (!exportedOnly || it.exported)})*.item;
+  }
+
+  @Deprecated
+  def List<ModuleDependency> getDependencies() {
+    return dependencies;
+  }
+
+  private static class ModuleDependency {
+    ClasspathItem item
+    DependencyScope scope
+    boolean exported
+
+    def ClasspathItem getItem() {
+      return item;
     }
 
-    def String toString() {
-        return "module ${name}"
+    ModuleDependency(ClasspathItem item, DependencyScope scope, boolean exported) {
+      this.item = item
+      this.scope = scope
+      this.exported = exported
     }
+  }
 
-    def getAt(String key) {
-        if (props[key] != null) return props[key]
-        project[key]
+  boolean equals(o) {
+    if (this.is(o)) return true;
+    if (getClass() != o.class) return false;
+
+    Module module = (Module) o;
+
+    if (name != module.name) return false;
+
+    return true;
+  }
+
+  int hashCode() {
+    return (name != null ? name.hashCode() : 0);
+  }
+
+  public static class ModuleSourceEntry implements ClasspathItem {
+    Module module
+
+    List<String> getClasspathRoots(ClasspathKind kind) {
+      return []
     }
-
-    def putAt(String key, Object value) {
-        props[key] = value
-    }
-
-    def make() {
-        project.builder.makeModule(this)
-    }
-
-    def getOutput() {
-        return project.builder.moduleOutput(this)
-    }
-
-    List<String> runtimeClasspath() {
-        project.builder.moduleRuntimeClasspath(this, false)
-    }
-
-    List<String> testRuntimeClasspath() {
-        project.builder.moduleRuntimeClasspath(this, true)
-    }
-
-    def makeTests() {
-        project.builder.makeModuleTests(this)
-    }
-
-    def List<String> getClasspathRoots(ClasspathKind kind) {
-        if (kind.isTestsIncluded()) {
-            return [project.builder.moduleTestsOutput(this), project.builder.moduleOutput(this)]
-        }
-        else {
-            return [project.builder.moduleOutput(this)]
-        }
-    }
-
-    def List<ClasspathItem> getFullClasspath() {
-        return dependencies*.item;
-    }
-
-    def List<ClasspathItem> getClasspath(ClasspathKind kind) {
-        return dependencies.findAll({it.scope.isIncludedIn(kind)})*.item;
-    }
-
-    def List<ModuleDependency> getDependencies() {
-        return dependencies;
-    }
-
-    static class ModuleDependency {
-        ClasspathItem item
-        DependencyScope scope
-
-        def ClasspathItem getItem() {
-            return item;
-        }
-
-        ModuleDependency(ClasspathItem item, DependencyScope scope) {
-            this.item = item
-            this.scope = scope
-        }
-    }
-
-    boolean equals(o) {
-        if (this.is(o)) return true;
-        if (getClass() != o.class) return false;
-
-        Module module = (Module) o;
-
-        if (name != module.name) return false;
-
-        return true;
-    }
-
-    int hashCode() {
-        return (name != null ? name.hashCode() : 0);
-    }
+  }
 }
 

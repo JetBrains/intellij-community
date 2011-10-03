@@ -340,11 +340,7 @@ class JetBrainsInstrumentations implements ModuleBuilder {
 
       final List<PrefixedPath> nestedFormDirs = new ArrayList<PrefixedPath>();
 
-      state.sourceRoots.each {
-        nestedFormDirs << getPrefixedPath(project, it, moduleChunk)
-      }
-
-      state.moduleDependenciesSourceRoots.each {
+      state.sourceRootsFromModuleWithDependencies.each {
         nestedFormDirs << getPrefixedPath(project, it, moduleChunk)
       }
 

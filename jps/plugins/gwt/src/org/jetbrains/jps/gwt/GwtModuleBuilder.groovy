@@ -63,10 +63,7 @@ class GwtModuleBuilder implements ModuleBuilder {
         }
         classpath {
           pathelement(location: "${facet.sdkPath}/gwt-dev.jar")
-          state.sourceRoots.each {
-            pathelement(location: it)
-          }
-          state.moduleDependenciesSourceRoots.each {
+          state.sourceRootsFromModuleWithDependencies.each {
             pathelement(location: it)
           }
           state.classpath.each {

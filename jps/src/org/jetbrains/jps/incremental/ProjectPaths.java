@@ -5,10 +5,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.*;
 
 import java.io.File;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
@@ -19,6 +16,8 @@ public class ProjectPaths {
   private final Project myProject;
   @Nullable
   private final File myProjectTargetDir;
+  private final Map<Module, File> myCustomModuleOutputDir = new HashMap<Module, File>();
+  private final Map<Module, File> myCustomModuleTestOutputDir = new HashMap<Module, File>();
 
   public ProjectPaths(Project project) {
     this(project, null);
@@ -29,91 +28,104 @@ public class ProjectPaths {
     myProjectTargetDir = projectTargetDir;
   }
 
-  public Collection<File> getClasspath(ClasspathKind kind, Module module) {
-    final Set<File> files = new TreeSet<File>();
-    if (kind.isRuntime()) {
-      collectRuntimeClasspath(module, kind, files, new HashSet<Module>());
-    }
-    else {
-      collectCompileClasspath(module, kind, files, new HashSet<Module>(), false);
-    }
+  public Collection<File> getClasspathFiles(Module module, ClasspathKind kind) {
+    final Set<File> files = new LinkedHashSet<File>();
+    collectClasspath(module, kind, files, new HashSet<Module>(), false, !kind.isRuntime());
     return files;
   }
 
-  public Collection<File> getClasspath(ClasspathKind kind, ModuleChunk chunk) {
-    final Set<File> files = new TreeSet<File>();
+  public Collection<File> getClasspathFiles(ModuleChunk chunk, ClasspathKind kind) {
+    return getClasspathFiles(chunk, kind, !kind.isRuntime());
+  }
+
+  public List<String> getClasspath(ModuleChunk chunk, ClasspathKind kind) {
+    return getPathsList(getClasspathFiles(chunk, kind));
+  }
+
+  public Collection<File> getClasspathFiles(ModuleChunk chunk, ClasspathKind kind, final boolean excludeMainModuleOutput) {
+    final Set<File> files = new LinkedHashSet<File>();
     final Set<Module> processedModules = new HashSet<Module>();
     for (Module module : chunk.getModules()) {
-      if (kind.isRuntime()) {
-        collectRuntimeClasspath(module, kind, files, processedModules);
-      }
-      else {
-        collectCompileClasspath(module, kind, files, processedModules, false);
-      }
+      collectClasspath(module, kind, files, processedModules, false, excludeMainModuleOutput);
     }
     return files;
   }
 
-  private void collectCompileClasspath(Module module, ClasspathKind kind, Set<File> classpath, Set<Module> processed, boolean exportedOnly) {
-    if (!processed.contains(module)) {
-      processed.add(module);
-      // IMPORTANT! assuming that ModuleSource order entry is included in module.getClassPath()
-      for (ClasspathItem it : module.getClasspath(kind)) {
-        final boolean shouldAdd = !exportedOnly || isExported(it);
-        if (it instanceof Module) {
-          if (shouldAdd) {
-            if (kind.isTestsIncluded()) {
-              classpath.add(getModuleOutput(module, true));
-            }
-            classpath.add(getModuleOutput(module, false));
-          }
-          collectCompileClasspath((Module)it, kind, classpath, processed, true);
+  private void collectClasspath(Module module, ClasspathKind kind, Set<File> classpath, Set<Module> processed, boolean exportedOnly, boolean excludeMainModuleOutput) {
+    if (!processed.add(module)) return;
+
+    for (ClasspathItem it : module.getClasspath(kind, exportedOnly)) {
+      if (it instanceof Module.ModuleSourceEntry) {
+        final Module dep = ((Module.ModuleSourceEntry) it).getModule();
+        if (!excludeMainModuleOutput && kind.isTestsIncluded()) {
+          classpath.add(getModuleOutputDir(dep, true));
         }
-        else {
-          if (shouldAdd) {
-            for (String root : it.getClasspathRoots(kind)) {
-              classpath.add(new File(root));
-            }
-          }
+        if (!excludeMainModuleOutput || kind.isTestsIncluded()) {
+          classpath.add(getModuleOutputDir(dep, false));
         }
+      }
+      else if (it instanceof Module) {
+        collectClasspath((Module) it, kind, classpath, processed, !kind.isRuntime(), false);
+      }
+      else {
+        addFiles(classpath, it.getClasspathRoots(kind));
       }
     }
   }
 
-  private static boolean isExported(ClasspathItem it) {
-    return true; // todo
+  private void addFiles(Set<File> files, final Collection<String> paths) {
+    for (String root : paths) {
+      files.add(new File(root));
+    }
   }
 
-  private void collectRuntimeClasspath(Module module, ClasspathKind kind, Set<File> classpath, Set<Module> processed) {
-    if (!processed.contains(module)) {
-      processed.add(module);
+  public List<String> getSourcePathsForModuleWithDependents(ModuleChunk chunk, boolean includeTests) {
+    Set<File> sourcePaths = new LinkedHashSet<File>();
+    final HashSet<Module> processed = new HashSet<Module>();
+    for (Module module : chunk.getModules()) {
+      collectSourcePaths(module, ClasspathKind.compile(includeTests), sourcePaths, processed);
+    }
+    return getPathsList(sourcePaths);
+  }
 
-      // IMPORTANT! assuming that ModuleSource order entry is included in module.getClassPath()
-      for (ClasspathItem it : module.getClasspath(kind)) {
-        if (it instanceof Module) {
-          if (kind.isTestsIncluded()) {
-            classpath.add(getModuleOutput(module, true));
-          }
-          classpath.add(getModuleOutput(module, false));
-          collectRuntimeClasspath((Module)it, kind, classpath, processed);
+  public static List<String> getPathsList(Collection<File> files) {
+    final List<String> result = new ArrayList<String>();
+    for (File file : files) {
+      result.add(file.getAbsolutePath());
+    }
+    return result;
+  }
+
+  private void collectSourcePaths(Module module, ClasspathKind kind, Set<File> sourcePaths, Set<Module> processed) {
+    if (!processed.add(module)) return;
+
+    for (ClasspathItem item : module.getClasspath(kind, false)) {
+      if (item instanceof Module.ModuleSourceEntry) {
+        final Module dep = ((Module.ModuleSourceEntry) item).getModule();
+        addFiles(sourcePaths, dep.getSourceRoots());
+        if (kind.isTestsIncluded()) {
+          addFiles(sourcePaths, dep.getTestRoots());
         }
-        else {
-          for (String root : it.getClasspathRoots(kind)) {
-            classpath.add(new File(root));
-          }
-        }
+      }
+      else if (item instanceof Module) {
+        collectSourcePaths(module, kind, sourcePaths, processed);
       }
     }
   }
 
-  private File getModuleOutput(Module module, boolean forTests) {
+  public void setCustomModuleOutputDir(Module module, boolean forTests, File outputDir) {
+    (forTests ? myCustomModuleTestOutputDir : myCustomModuleOutputDir).put(module, outputDir);
+  }
+
+  public File getModuleOutputDir(Module module, boolean forTests) {
+    File customOutput = (forTests ? myCustomModuleTestOutputDir : myCustomModuleOutputDir).get(module);
+    if (customOutput != null) {
+      return customOutput;
+    }
+
     if (myProjectTargetDir != null) {
       final File basePath = new File(myProjectTargetDir, forTests ? "test" : "production");
-      String name = module.getName();
-      if (name.length() > 100) {
-        name = name.substring(0, 100) + "_etc";
-      }
-      return new File(basePath, name);
+      return new File(basePath, module.getName());
     }
 
     return new File(forTests ? module.getTestOutputPath() : module.getOutputPath());

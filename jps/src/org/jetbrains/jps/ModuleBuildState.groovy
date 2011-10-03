@@ -20,7 +20,7 @@ class ModuleBuildState {
   List<String> excludes
   List<String> classpath
   List<String> tempRootsToDelete = []
-  List<String> moduleDependenciesSourceRoots
+  List<String> sourceRootsFromModuleWithDependencies
   String targetFolder
   boolean incremental = false
 

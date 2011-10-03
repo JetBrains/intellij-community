@@ -1,6 +1,5 @@
 package org.jetbrains.jps.runConf.java
 
-import org.jetbrains.jps.ClasspathKind
 import org.jetbrains.jps.RunConfiguration
 import org.jetbrains.jps.runConf.RunConfigurationLauncherService
 
@@ -200,13 +199,6 @@ public abstract class JavaBasedRunConfigurationLauncher extends RunConfiguration
       runConfRuntimeCp.addAll(runConf.module.testRuntimeClasspath());
     } else {
       runConfRuntimeCp.addAll(runConf.project.testRuntimeClasspath());
-    }
-
-    def sdk = runConf.module?.sdk ? runConf.module.sdk : runConf.project.projectSdk;
-    if (sdk != null) {
-      for (String pathEl: sdk.getClasspathRoots(ClasspathKind.TEST_RUNTIME)) {
-        runConfRuntimeCp.add(pathEl);
-      }
     }
 
     return runConfRuntimeCp;

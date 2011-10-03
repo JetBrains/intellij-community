@@ -18,6 +18,14 @@ enum ClasspathKind {
   boolean isRuntime() {
     return this == PRODUCTION_RUNTIME || this == TEST_RUNTIME
   }
+
+  public static ClasspathKind compile(boolean tests) {
+    return tests ? ClasspathKind.TEST_COMPILE : ClasspathKind.PRODUCTION_COMPILE
+  }
+
+  public static ClasspathKind runtime(boolean tests) {
+    return tests ? ClasspathKind.TEST_RUNTIME : ClasspathKind.PRODUCTION_RUNTIME
+  }
 }
 
 class DependencyScope {

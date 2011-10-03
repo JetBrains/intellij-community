@@ -231,7 +231,7 @@ public class IdeaProjectLoader {
   }
 
   private Library loadLibrary(Project project, String name, Node libraryTag, MacroExpander macroExpander) {
-    return new Library(project, name, libraryInitializer(libraryTag, macroExpander))
+    return new Library(project, name, true, libraryInitializer(libraryTag, macroExpander))
   }
 
   private Closure libraryInitializer(Node libraryTag, MacroExpander macroExpander) {
@@ -295,6 +295,7 @@ public class IdeaProjectLoader {
         componentTag.orderEntry.each {Node entryTag ->
           String type = entryTag.@type
           DependencyScope scope = getScopeById(entryTag.@scope)
+          boolean exported = entryTag.@exported != null
           switch (type) {
             case "module":
               def moduleName = entryTag.attribute("module-name")
@@ -303,8 +304,12 @@ public class IdeaProjectLoader {
                 project.warning("Cannot resolve module $moduleName in $currentModuleName")
               }
               else {
-                dependency(module, scope)
+                dependency(module, scope, exported)
               }
+              break
+
+            case "sourceFolder":
+              moduleSource()
               break
 
             case "module-library":
@@ -312,7 +317,7 @@ public class IdeaProjectLoader {
               def libraryName = libraryTag."@name"
               def moduleLibrary = loadLibrary(project, libraryName != null ? libraryName : "moduleLibrary#${libraryCount++}",
                                               libraryTag, moduleMacroExpander)
-              dependency(moduleLibrary, scope)
+              dependency(moduleLibrary, scope, exported)
 
               if (libraryName != null) {
                 currentModule.libraries[libraryName] = moduleLibrary
@@ -335,7 +340,7 @@ public class IdeaProjectLoader {
               }
 
               if (library != null) {
-                dependency(library, scope)
+                dependency(library, scope, exported)
               }
               break
 
@@ -347,7 +352,7 @@ public class IdeaProjectLoader {
               }
               else {
                 currentModule.sdk = sdk
-                dependency(sdk, PredefinedDependencyScopes.PROVIDED)
+                dependency(sdk, PredefinedDependencyScopes.COMPILE, false)
               }
               break
 
@@ -355,7 +360,7 @@ public class IdeaProjectLoader {
               def sdk = project.projectSdk
               if (sdk != null) {
                 currentModule.sdk = sdk
-                dependency(sdk, PredefinedDependencyScopes.PROVIDED)
+                dependency(sdk, PredefinedDependencyScopes.COMPILE, false)
               }
               break
           }

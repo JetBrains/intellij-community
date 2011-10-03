@@ -29,7 +29,6 @@ class Project {
   final Map<String, Artifact> artifacts = [:]
   final Map<String, RunConfiguration> runConfigurations = [:]
 
-  String targetFolder = null
   String tempFolder = null
 
   boolean dryRun = false
@@ -50,6 +49,14 @@ class Project {
     }
 
     props["compiler.resources.id"] = "default.compiler.resources"
+  }
+
+  String getTargetFolder() {
+    return builder.targetFolder
+  }
+
+  void setTargetFolder(String targetFolder) {
+    builder.targetFolder = targetFolder
   }
 
   def List<ModuleChunk> getChunks (boolean tests) {
@@ -273,6 +280,6 @@ class Project {
   }
 
   def ClasspathKind getCompileClasspathKind (final boolean tests) {
-    return builder.getCompileClasspathKind (tests)
+    return ClasspathKind.compile (tests)
   }
 }
