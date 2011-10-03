@@ -121,7 +121,8 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
 
   @Override
   protected URL getDescriptionUrl() {
-    if (myEP == null || ApplicationManager.getApplication().isUnitTestMode()) return super.getDescriptionUrl();
+    if (myEP == null || ApplicationManager.getApplication().isUnitTestMode() ||
+        ApplicationManager.getApplication().isHeadlessEnvironment()) return super.getDescriptionUrl();
     String fileName = getDescriptionFileName();
     if (fileName == null) return null;
     return myEP.getLoaderForClass().getResource("/inspectionDescriptions/" + fileName);
