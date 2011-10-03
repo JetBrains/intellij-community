@@ -84,8 +84,7 @@ public abstract class ToolWindowManager {
   }
 
   /**
-   * @exception java.lang.IllegalArgumentException if tool window with specified isn't
-   * registered.
+   * does nothing if tool window with specified isn't registered.
    */
   public abstract void unregisterToolWindow(@NotNull String id);
 
