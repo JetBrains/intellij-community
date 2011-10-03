@@ -841,18 +841,34 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
         }
       }
 
-      public void windowOpened(final WindowEvent e) {
+
+      @Override
+      public void windowOpened(WindowEvent e) {
         SwingUtilities.invokeLater(new Runnable() {
+          @Override
           public void run() {
             myOpened = true;
             final DialogWrapper activeWrapper = getActiveWrapper();
             if (activeWrapper == null) {
               myFocusedCallback.setRejected();
               myTypeAheadDone.setRejected();
+            }
+          }
+        });        
+      }
+
+      public void windowActivated(final WindowEvent e) {
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            final DialogWrapper wrapper = getActiveWrapper();
+            if (wrapper == null && !myFocusedCallback.isProcessed()) {
+              myFocusedCallback.setRejected();
+              myTypeAheadDone.setRejected();
               return;
             }
 
-            JComponent toFocus = activeWrapper.getPreferredFocusedComponent();
+
+            JComponent toFocus = wrapper.getPreferredFocusedComponent();
             if (toFocus == null) {
               toFocus = getRootPane().getDefaultButton();
             }
@@ -866,13 +882,13 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
                 public void run() {
                   if (isShowing() && isActive()) {
                     getFocusManager().requestFocus(toRequest, true);
-                    notifyFocused(activeWrapper);
+                    notifyFocused(wrapper);
                   }
                 }
               });
             } else {
               if (isShowing()) {
-                notifyFocused(activeWrapper);
+                notifyFocused(wrapper);
               }
             }
           }
