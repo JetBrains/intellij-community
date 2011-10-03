@@ -16,9 +16,13 @@
 
 package com.intellij.psi.impl;
 
+import com.intellij.openapi.extensions.ExtensionPointName;
+
 /**
  * @author yole
  */
 public interface PsiTreeChangePreprocessor {
+  ExtensionPointName<PsiTreeChangePreprocessor> EP_NAME = ExtensionPointName.create("com.intellij.psi.treeChangePreprocessor");
+
   void treeChanged(PsiTreeChangeEventImpl event);
 }

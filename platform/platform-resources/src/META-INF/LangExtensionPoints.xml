@@ -508,4 +508,8 @@
                   interface="com.intellij.psi.impl.source.tree.TreeCopyHandler"/>
   <extensionPoint name="treeGenerator"
                   interface="com.intellij.psi.impl.source.tree.TreeGenerator"/>
+
+  <extensionPoint name="psi.treeChangePreprocessor"
+                  interface="com.intellij.psi.impl.PsiTreeChangePreprocessor"
+                  area="IDEA_PROJECT"/>
 </extensionPoints>

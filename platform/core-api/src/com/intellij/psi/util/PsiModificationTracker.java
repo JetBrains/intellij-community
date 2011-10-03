@@ -15,11 +15,22 @@
  */
 package com.intellij.psi.util;
 
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.util.messages.Topic;
 
 public interface PsiModificationTracker extends ModificationTracker {
+  class SERVICE {
+    private SERVICE() {
+    }
+
+    public static PsiModificationTracker getInstance(Project project) {
+      return ServiceManager.getService(project, PsiModificationTracker.class);
+    }
+  }
+  
   /**
    * This key can be passed as a dependency in a {@link com.intellij.psi.util.CachedValueProvider}.
    * @see #getModificationCount()

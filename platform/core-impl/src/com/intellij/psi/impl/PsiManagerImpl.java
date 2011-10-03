@@ -21,6 +21,7 @@ import com.intellij.lang.PsiBuilderFactory;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
@@ -43,6 +44,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -54,7 +56,6 @@ public class PsiManagerImpl extends PsiManagerEx {
   private final MessageBus myMessageBus;
 
   private final FileManager myFileManager;
-  private final PsiModificationTrackerImpl myModificationTracker;
 
   private final List<PsiTreeChangePreprocessor> myTreeChangePreprocessors = ContainerUtil.createEmptyCOWList();
   private final List<PsiTreeChangeListener> myTreeChangeListeners = ContainerUtil.createEmptyCOWList();
@@ -85,8 +86,8 @@ public class PsiManagerImpl extends PsiManagerEx {
 
     myFileManager = isProjectDefault ? new EmptyFileManager(this) : new FileManagerImpl(this, fileDocumentManager, excludedFileIndex);
 
-    myModificationTracker = new PsiModificationTrackerImpl(myProject);
-    myTreeChangePreprocessors.add(myModificationTracker);
+    myTreeChangePreprocessors.add((PsiTreeChangePreprocessor) PsiModificationTracker.SERVICE.getInstance(project));
+    Collections.addAll(myTreeChangePreprocessors, Extensions.getExtensions(PsiTreeChangePreprocessor.EP_NAME, myProject));
 
     Disposer.register(project, new Disposable() {
       @Override
@@ -504,7 +505,7 @@ public class PsiManagerImpl extends PsiManagerEx {
 
   @NotNull
   public PsiModificationTracker getModificationTracker() {
-    return myModificationTracker;
+    return PsiModificationTracker.SERVICE.getInstance(myProject);
   }
 
   public void startBatchFilesProcessingMode() {

@@ -347,6 +347,8 @@
 
     <java.shortNamesCache implementation="com.intellij.psi.impl.PsiShortNamesCacheImpl"/>
 
+    <psi.treeChangePreprocessor implementation="com.intellij.psi.impl.JavaCodeBlockModificationListener"/>
+
     <applicationService serviceInterface="com.intellij.framework.library.DownloadableLibraryService"
                         serviceImplementation="com.intellij.framework.library.impl.DownloadableLibraryServiceImpl"/>
 
