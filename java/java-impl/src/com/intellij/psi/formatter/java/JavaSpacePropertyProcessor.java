@@ -766,7 +766,8 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     else if (lhsStatement && rhsStatement) {
       int minSpaces = 0;
       int minLineFeeds = 1;
-      if (mySettings.KEEP_MULTIPLE_EXPRESSIONS_IN_ONE_LINE) {
+      PsiElement psi = myChild1.getPsi();
+      if (mySettings.KEEP_MULTIPLE_EXPRESSIONS_IN_ONE_LINE || (psi != null && PsiTreeUtil.hasErrorElements(psi))) {
         minSpaces = 1;
         minLineFeeds = 0;
       }

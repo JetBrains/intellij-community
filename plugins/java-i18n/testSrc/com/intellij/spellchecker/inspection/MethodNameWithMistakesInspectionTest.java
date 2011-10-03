@@ -15,8 +15,6 @@
  */
 package com.intellij.spellchecker.inspection;
 
-import com.intellij.spellchecker.inspections.SpellCheckerInspectionToolProvider;
-
 /**
  * Created by IntelliJ IDEA.
  * User: Ekaterina Shliakhovetskaja
@@ -29,7 +27,7 @@ public class MethodNameWithMistakesInspectionTest extends JavaSpellcheckerInspec
   }
 
   public void testJava() throws Throwable {
-    doTest("SPITest4.java", SpellCheckerInspectionToolProvider.getInspectionTools());
+    doTest("SPITest4.java", SpellcheckerInspectionTestCase.getInspectionTools());
   }
 
 }

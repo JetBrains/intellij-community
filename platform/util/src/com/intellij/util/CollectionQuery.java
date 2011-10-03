@@ -16,6 +16,7 @@
 
 package com.intellij.util;
 
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -42,10 +43,7 @@ public class CollectionQuery<T> implements Query<T> {
   }
 
   public boolean forEach(@NotNull final Processor<T> consumer) {
-    for (T t : myCollection) {
-      if (!consumer.process(t)) return false;
-    }
-    return true;
+    return ContainerUtil.process(myCollection, consumer);
   }
 
   public T[] toArray(final T[] a) {

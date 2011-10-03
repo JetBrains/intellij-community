@@ -54,7 +54,7 @@ public class CreateLibraryFromFilesDialog extends DialogWrapper {
   private JPanel myPanel;
   private final LibrariesContainer myLibrariesContainer;
   private final String myDefaultName;
-  private final ModifiableRootModel myModifiableModel;
+  @Nullable private final ModifiableRootModel myModifiableModel;
 
   public CreateLibraryFromFilesDialog(@NotNull Project project, @NotNull List<OrderRoot> roots) {
     super(project, true);
@@ -143,11 +143,13 @@ public class CreateLibraryFromFilesDialog extends DialogWrapper {
     try {
       final Library library = myLibrariesContainer.createLibrary(myNameAndLevelPanel.getLibraryName(),
                                                                  level, myRoots);
-      if (level == LibrariesContainer.LibraryLevel.MODULE) {
-        myModifiableModel.commit();
-      }
-      else {
-        myModifiableModel.dispose();
+      if (myModifiableModel != null) {
+        if (level == LibrariesContainer.LibraryLevel.MODULE) {
+          myModifiableModel.commit();
+        }
+        else {
+          myModifiableModel.dispose();
+        }
       }
       final Module module = myModulesCombobox.getSelectedModule();
       if (module != null && level != LibrariesContainer.LibraryLevel.MODULE) {
@@ -164,7 +166,9 @@ public class CreateLibraryFromFilesDialog extends DialogWrapper {
 
   @Override
   public void doCancelAction() {
-    myModifiableModel.dispose();
+    if (myModifiableModel != null) {
+      myModifiableModel.dispose();
+    }
     super.doCancelAction();
   }
 

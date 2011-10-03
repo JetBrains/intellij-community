@@ -15,8 +15,6 @@
  */
 package com.intellij.spellchecker.inspection;
 
-import com.intellij.spellchecker.inspections.SpellCheckerInspectionToolProvider;
-
 /**
  * Created by IntelliJ IDEA.
  * User: Ekaterina Shliakhovetskaja
@@ -30,15 +28,15 @@ public class JavaSpellcheckingTest extends SpellcheckerInspectionTestCase {
   }
 
   public void testCorrectJava() throws Throwable {
-    doTest("GenericTest.java", SpellCheckerInspectionToolProvider.getInspectionTools());
+    doTest("GenericTest.java", getInspectionTools());
   }
 
   public void testTypoInJava() throws Throwable {
-    doTest("GenericTestt.java", SpellCheckerInspectionToolProvider.getInspectionTools());
+    doTest("GenericTestt.java", getInspectionTools());
   }
 
   public void testVarArg() throws Throwable {
-    doTest("VarArgTest.java", SpellCheckerInspectionToolProvider.getInspectionTools());
+    doTest("VarArgTest.java", getInspectionTools());
   }
 
 

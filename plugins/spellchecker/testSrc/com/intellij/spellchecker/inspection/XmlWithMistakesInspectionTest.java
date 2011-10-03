@@ -15,8 +15,6 @@
  */
 package com.intellij.spellchecker.inspection;
 
-import com.intellij.spellchecker.inspections.SpellCheckerInspectionToolProvider;
-
 /**
  * Created by IntelliJ IDEA.
  * User: Ekaterina Shliakhovetskaja
@@ -28,7 +26,7 @@ public class XmlWithMistakesInspectionTest extends SpellcheckerInspectionTestCas
   }
 
   public void testXml() throws Throwable {
-    doTest("test.xml", SpellCheckerInspectionToolProvider.getInspectionTools());
+    doTest("test.xml", getInspectionTools());
   }
 }
 

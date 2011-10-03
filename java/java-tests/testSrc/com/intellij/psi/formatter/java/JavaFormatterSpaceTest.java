@@ -424,4 +424,12 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
       "}"
     );
   }
+
+  public void testIncompleteCastExpression() throws Exception {
+    // Inspired by IDEA-75043.
+    String text = "void test(int i) {\n" +
+                  "    (() i)\n" +
+                  "}";
+    doClassTest(text, text);
+  }
 }

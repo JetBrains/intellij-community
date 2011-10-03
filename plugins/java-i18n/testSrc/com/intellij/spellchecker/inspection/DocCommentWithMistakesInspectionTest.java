@@ -15,8 +15,6 @@
  */
 package com.intellij.spellchecker.inspection;
 
-import com.intellij.spellchecker.inspections.SpellCheckerInspectionToolProvider;
-
 /**
  * Created by IntelliJ IDEA.
  * User: Ekaterina Shliakhovetskaja
@@ -30,6 +28,6 @@ public class DocCommentWithMistakesInspectionTest extends JavaSpellcheckerInspec
   }
 
   public void testJava() throws Throwable {
-    doTest("SPITest6.java", SpellCheckerInspectionToolProvider.getInspectionTools());
+    doTest("SPITest6.java", SpellcheckerInspectionTestCase.getInspectionTools());
   }
 }

@@ -418,7 +418,7 @@ public class InspectionApplication {
             xmlWriter.setValue(description);
           }
           else {
-            LOG.error(entry.getShortName() + " descriptionUrl==null");
+            LOG.error(entry.getShortName() + " descriptionUrl==" + entry.getDescriptionUrl());
           }
           xmlWriter.endNode();
         }

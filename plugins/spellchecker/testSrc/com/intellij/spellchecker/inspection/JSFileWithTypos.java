@@ -15,8 +15,6 @@
  */
 package com.intellij.spellchecker.inspection;
 
-import com.intellij.spellchecker.inspections.SpellCheckerInspectionToolProvider;
-
 /**
  * Created by IntelliJ IDEA.
  * User: Ekaterina Shliakhovetskaja
@@ -29,7 +27,7 @@ public class JSFileWithTypos extends SpellcheckerInspectionTestCase {
   }
 
   public void testJS() throws Throwable {
-    doTest("test.js",SpellCheckerInspectionToolProvider.getInspectionTools());
+    doTest("test.js", getInspectionTools());
   }
 
 

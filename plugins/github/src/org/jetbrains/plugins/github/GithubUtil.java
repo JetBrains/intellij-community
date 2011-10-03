@@ -116,7 +116,6 @@ public class GithubUtil {
 
   public static HttpMethod doREST(final String url, final String login, final String password, final String request, final boolean post) throws Exception {
     final HttpClient client = getHttpClient(login, password);
-    client.getParams().setContentCharset("UTF-8");
     final String uri = "https://" + getHostByUrl(url) + API_URL + request;
     final HttpMethod method = post ? new PostMethod(uri) : new GetMethod(uri);
     client.executeMethod(method);
@@ -125,6 +124,7 @@ public class GithubUtil {
 
   public static HttpClient getHttpClient(@Nullable final String login, @Nullable final String password) {
     final HttpClient client = new HttpClient();
+    client.getParams().setContentCharset("UTF-8");
     // Configure proxySettings if it is required
     final HttpConfigurable proxySettings = HttpConfigurable.getInstance();
     if (proxySettings.USE_HTTP_PROXY){
@@ -135,6 +135,7 @@ public class GithubUtil {
       }
     }
     if (login != null && password != null) {
+      client.getParams().setCredentialCharset("UTF-8");
       client.getParams().setAuthenticationPreemptive(true);
       client.getState().setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(login, password));
     }

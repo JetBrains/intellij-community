@@ -20,6 +20,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
@@ -37,9 +38,9 @@ public class GroovyImplementationSearch implements QueryExecutor<PsiElement, Psi
     }
     else if (source instanceof GrField) {
       for (GrAccessorMethod method : GroovyPropertyUtils.getFieldAccessors((GrField)source)) {
-        for (PsiMethod impl : MethodImplementationsSearch.getMethodImplementations(method)) {
-          if (!consumer.process(impl)) return false;
-        }
+
+        PsiMethod[] implementations = MethodImplementationsSearch.getMethodImplementations(method);
+        if (!ContainerUtil.process(implementations, consumer)) return false;
       }
     }
     return true;

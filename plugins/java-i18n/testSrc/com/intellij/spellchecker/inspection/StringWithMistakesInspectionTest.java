@@ -15,8 +15,6 @@
  */
 package com.intellij.spellchecker.inspection;
 
-import com.intellij.spellchecker.inspections.SpellCheckerInspectionToolProvider;
-
 
 /**
  * Created by IntelliJ IDEA.
@@ -31,7 +29,7 @@ public class StringWithMistakesInspectionTest extends JavaSpellcheckerInspection
 
 
   public void testJava() throws Throwable {
-    doTest("SPITest5.java", SpellCheckerInspectionToolProvider.getInspectionTools());
+    doTest("SPITest5.java", SpellcheckerInspectionTestCase.getInspectionTools());
   }
 
   

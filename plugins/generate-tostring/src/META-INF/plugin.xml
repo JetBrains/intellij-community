@@ -21,6 +21,13 @@
                             serviceImplementation="org.jetbrains.generate.tostring.template.TemplatesManager"/>
         <applicationService serviceInterface="org.jetbrains.generate.tostring.GenerateToStringContext"
                             serviceImplementation="org.jetbrains.generate.tostring.GenerateToStringContext"/>
-        <inspectionToolProvider implementation="org.jetbrains.generate.tostring.GenerateToStringInspectionsProvider"/>
+
+      <localInspection shortName="ClassHasNoToStringMethod" displayName="Class does not overwrite toString() method"
+                       groupName="toString() issues" enabledByDefault="false" level="WARNING"
+                       implementationClass="org.jetbrains.generate.tostring.inspection.ClassHasNoToStringMethodInspection"/>
+      <localInspection shortName="FieldNotUsedInToString" displayName="Field not used in toString() method" groupName="toString() issues"
+                       enabledByDefault="false" level="WARNING"
+                       implementationClass="org.jetbrains.generate.tostring.inspection.FieldNotUsedInToStringInspection"/>
+
     </extensions>
 </idea-plugin>

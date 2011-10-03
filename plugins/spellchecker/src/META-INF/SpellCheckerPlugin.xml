@@ -1,4 +1,4 @@
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+<idea-plugin>
 
   <actions>
     <group id="com.intellij.spellchecker.actions.SpellingPopupActionGroup"
@@ -24,8 +24,10 @@
     <projectConfigurable instance="com.intellij.spellchecker.settings.SpellCheckerSettingsManager"/>
 
 
-    <inspectionToolProvider
-        implementation="com.intellij.spellchecker.inspections.SpellCheckerInspectionToolProvider"/>
+    <localInspection shortName="SpellCheckingInspection" bundle="com.intellij.spellchecker.util.SpellCheckerBundle"
+                     key="spellchecking.inspection.name" groupKey="spelling" enabledByDefault="true" level="TYPO"
+                     implementationClass="com.intellij.spellchecker.inspections.SpellCheckingInspection"/>
+
     <nameSuggestionProvider id="DictionarySuggestionProvider" implementation="com.intellij.spellchecker.quickfixes.DictionarySuggestionProvider"/>
     <severitiesProvider implementation="com.intellij.spellchecker.SpellCheckerSeveritiesProvider"/>
     
