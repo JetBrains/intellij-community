@@ -167,6 +167,7 @@ public class ClassfileAnalyzer {
 
         private final SignatureVisitor signatureCrawler = new SignatureVisitor() {
             public void visitFormalTypeParameter(String name) {
+                return;
             }
 
             public SignatureVisitor visitClassBound() {
@@ -198,9 +199,11 @@ public class ClassfileAnalyzer {
             }
 
             public void visitBaseType(char descriptor) {
+                return;
             }
 
             public void visitTypeVariable(String name) {
+                return;
             }
 
             public SignatureVisitor visitArrayType() {
@@ -208,9 +211,11 @@ public class ClassfileAnalyzer {
             }
 
             public void visitInnerClassType(String name) {
+                return;
             }
 
             public void visitTypeArgument() {
+                return;
             }
 
             public SignatureVisitor visitTypeArgument(char wildcard) {

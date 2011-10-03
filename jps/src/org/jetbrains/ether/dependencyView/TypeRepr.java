@@ -5,10 +5,7 @@ import org.objectweb.asm.Type;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -113,6 +110,7 @@ public class TypeRepr {
 
     public static class ClassType extends AbstractType {
         public final StringCache.S className;
+        public final AbstractType[] typeArgs;
 
         @Override
         public String getDescr() {
@@ -124,12 +122,30 @@ public class TypeRepr {
             s.add(UsageRepr.createClassUsage(className));
         }
 
+        ClassType(final BufferedReader r){
+            className = StringCache.get(RW.readString(r));
+            final Collection<AbstractType> args = RW.readMany(r, reader, new LinkedList<AbstractType>());
+            typeArgs = args.toArray(new AbstractType[args.size()]);
+        }
+
         ClassType(final String className) {
             this.className = StringCache.get(className);
+            typeArgs = new AbstractType[0];
         }
 
         ClassType(final StringCache.S className) {
             this.className = className;
+            typeArgs = new AbstractType[0];
+        }
+
+        ClassType(final String className, final AbstractType[] typeArgs) {
+            this.className = StringCache.get(className);
+            this.typeArgs = typeArgs;
+        }
+
+        ClassType(final StringCache.S className, final AbstractType[] typeArgs) {
+            this.className = className;
+            this.typeArgs = typeArgs;
         }
 
         @Override
@@ -139,17 +155,23 @@ public class TypeRepr {
 
             final ClassType classType = (ClassType) o;
 
-            return className.equals(classType.className);
+            if (className != null ? !className.equals(classType.className) : classType.className != null) return false;
+            if (!Arrays.equals(typeArgs, classType.typeArgs)) return false;
+
+            return true;
         }
 
         @Override
         public int hashCode() {
-            return className != null ? className.hashCode() : 0;
+            int result = className != null ? className.hashCode() : 0;
+            result = 31 * result + (typeArgs != null ? Arrays.hashCode(typeArgs) : 0);
+            return result;
         }
 
         public void write(BufferedWriter w) {
             RW.writeln(w, "class");
             RW.writeln(w, className.value);
+            RW.writeln(w, typeArgs);
         }
     }
 
@@ -265,7 +287,7 @@ public class TypeRepr {
                 }
 
                 if (tag.equals("class")) {
-                    elementType = getType(new ClassType(RW.readString(r)));
+                    elementType = getType(new ClassType(r));
                     break;
                 }
 

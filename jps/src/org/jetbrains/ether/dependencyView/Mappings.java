@@ -232,12 +232,13 @@ public class Mappings {
 
                 final boolean superClassChanged = (diff.base() & Difference.SUPERCLASS) > 0;
                 final boolean interfacesChanged = !diff.interfaces().unchanged();
+                final boolean signatureChanged = (diff.base() & Difference.SIGNATURE) > 0;
 
-                if (superClassChanged || interfacesChanged) {
+                if (superClassChanged || interfacesChanged || signatureChanged) {
                     final boolean extendsChanged = superClassChanged && !diff.extendsAdded();
                     final boolean interfacesRemoved = interfacesChanged && !diff.interfaces().removed().isEmpty();
 
-                    affectSubclasses(it.name, affectedFiles, affectedUsages, dependants, extendsChanged || interfacesRemoved);
+                    affectSubclasses(it.name, affectedFiles, affectedUsages, dependants, extendsChanged || interfacesRemoved || signatureChanged);
                 }
 
                 if ((diff.addedModifiers() & Opcodes.ACC_INTERFACE) > 0 ||
@@ -348,7 +349,7 @@ public class Mappings {
                     if (d.base() != Difference.NONE) {
                         final Collection<StringCache.S> propagated = propagateFieldAccess(field.name, it.name);
 
-                        if ((d.base() & Difference.TYPE) > 0) {
+                        if ((d.base() & Difference.TYPE) > 0 || (d.base() & Difference.SIGNATURE) > 0) {
                             affectFieldUsages(field, propagated, field.createUsage(it.name), affectedUsages, dependants);
                         } else if ((d.base() & Difference.ACCESS) > 0) {
                             if ((d.addedModifiers() & Opcodes.ACC_STATIC) > 0 ||

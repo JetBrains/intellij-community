@@ -71,6 +71,19 @@ public class RW {
         }
     }
 
+    public static <T extends Writable> void writeln(final BufferedWriter w, final T[] c) {
+            if (c == null) {
+                writeln(w, "0");
+                return;
+            }
+
+            writeln(w, Integer.toString(c.length));
+
+            for (int i = 0; i < c.length; i++) {
+                c[i].write(w);
+            }
+        }
+
     public static void writeln(final BufferedWriter w, final String s) {
         try {
             if (s == null)
