@@ -26,6 +26,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -435,9 +436,11 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
    * E.g. there is a possible case that particular range marker serves for defining formatting range, hence, its start/end offsets
    * are updated correspondingly after current method call and whole white space region is reformatted.
    *
+   * @param file        target PSI file
    * @param document    target document
    * @param offset      offset that defines end boundary of the target line text fragment (start boundary is the first line's symbol)
    * @return            text range that points to the newly inserted dummy text if any; <code>null</code> otherwise
+   * @throws IncorrectOperationException  if given file is read-only
    */
   @Nullable
   public static TextRange insertNewLineIndentMarker(@NotNull PsiFile file, @NotNull Document document, int offset) 
@@ -449,8 +452,54 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     }
     return result;
   }
-  
-  
+
+
+  @Nullable
+  private static TextRange insertNewLineIndentMarker(@NotNull PsiFile file, int offset) throws IncorrectOperationException {
+    CheckUtil.checkWritable(file);
+
+    final Pair<ASTNode, CharTable> pair = doFindWhiteSpaceNode(file, offset);
+    ASTNode element = pair.first;
+    if (pair.first == null) {
+      return null;
+    }
+    
+    ASTNode parent = element.getTreeParent();
+    int elementStart = element.getTextRange().getStartOffset();
+    if (element.getElementType() != TokenType.WHITE_SPACE) {
+      /*
+      if (elementStart < offset) return null;
+      Element marker = Factory.createLeafElement(ElementType.NEW_LINE_INDENT, "###".toCharArray(), 0, "###".length());
+      ChangeUtil.addChild(parent, marker, element);
+      return marker;
+      */
+      return null;
+    }
+
+    // We don't want to insert a marker if target line is not blank (doesn't consist from white space symbols only).
+    if (offset == elementStart) {
+      for (ASTNode prev = TreeUtil.prevLeaf(element); ; prev = TreeUtil.prevLeaf(prev)) {
+        if (prev == null) {
+          return null;
+        }
+        if (prev.getTextRange().isEmpty()) {
+          continue;
+        }
+        if (prev.getElementType() != TokenType.WHITE_SPACE) {
+          return null;
+        }
+      }
+    }
+
+    CharTable charTable = pair.second;
+    ASTNode space1 = splitSpaceElement((TreeElement)element, offset - elementStart, charTable);
+    ASTNode marker = Factory.createSingleLeafElement(TokenType.NEW_LINE_INDENT, DUMMY_IDENTIFIER, charTable, file.getManager());
+    setSequentialProcessingAllowed(false);
+    parent.addChild(marker, space1.getTreeNext());
+    PsiElement psiElement = SourceTreeToPsiMap.treeElementToPsi(marker);
+    return psiElement == null ? null : psiElement.getTextRange();
+  }
+
   @Nullable
   private static TextRange insertNewLineIndentMarker(@NotNull Document document, final int offset) {
     CharSequence text = document.getCharsSequence();
@@ -490,58 +539,33 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     return new TextRange(offset, offset + DUMMY_IDENTIFIER.length());
   }
 
+  /**
+   * Allows to check if given offset points to white space element within the given PSI file and return that white space
+   * element in the case of positive answer.
+   * 
+   * @param file    target file
+   * @param offset  offset that might point to white space element within the given PSI file
+   * @return        target white space element for the given offset within the given file (if any); <code>null</code> otherwise
+   */
   @Nullable
-  private static TextRange insertNewLineIndentMarker(@NotNull PsiFile file, int offset) throws IncorrectOperationException {
-    CheckUtil.checkWritable(file);
-    ASTNode astNode = SourceTreeToPsiMap.psiElementToTree(file);
-    if (!(astNode instanceof FileElement)) {
-      return null;
-    } 
-    final CharTable charTable = ((FileElement)astNode).getCharTable();
-    PsiElement elementAt = findElementInTreeWithFormatterEnabled(file, offset);
-    if( elementAt == null )
-    {
-      return null;
-    }
-    ASTNode element = SourceTreeToPsiMap.psiElementToTree(elementAt);
-    if (element == null) {
-      return null;
-    } 
-    ASTNode parent = element.getTreeParent();
-    int elementStart = element.getTextRange().getStartOffset();
-    if (element.getElementType() != TokenType.WHITE_SPACE) {
-      /*
-      if (elementStart < offset) return null;
-      Element marker = Factory.createLeafElement(ElementType.NEW_LINE_INDENT, "###".toCharArray(), 0, "###".length());
-      ChangeUtil.addChild(parent, marker, element);
-      return marker;
-      */
-      return null;
-    }
-
-    // We don't want to insert a marker if target line is not blank (doesn't consist from white space symbols only).
-    if (offset == element.getTextRange().getStartOffset()) {
-      for (ASTNode prev = TreeUtil.prevLeaf(element); ; prev = TreeUtil.prevLeaf(prev)) {
-        if (prev == null) {
-          return null;
-        }
-        if (prev.getTextRange().isEmpty()) {
-          continue;
-        }
-        if (prev.getElementType() != TokenType.WHITE_SPACE) {
-          return null;
-        } 
-      }
-    } 
-
-    ASTNode space1 = splitSpaceElement((TreeElement)element, offset - elementStart, charTable);
-    ASTNode marker = Factory.createSingleLeafElement(TokenType.NEW_LINE_INDENT, DUMMY_IDENTIFIER, charTable, file.getManager());
-    setSequentialProcessingAllowed(false);
-    parent.addChild(marker, space1.getTreeNext());
-    PsiElement psiElement = SourceTreeToPsiMap.treeElementToPsi(marker);
-    return psiElement == null ? null : psiElement.getTextRange();
+  public static ASTNode findWhiteSpaceNode(@NotNull PsiFile file, int offset) {
+    return doFindWhiteSpaceNode(file, offset).first;
   }
 
+  @NotNull
+  private static Pair<ASTNode, CharTable> doFindWhiteSpaceNode(@NotNull PsiFile file, int offset) {
+    ASTNode astNode = SourceTreeToPsiMap.psiElementToTree(file);
+    if (!(astNode instanceof FileElement)) {
+      return new Pair<ASTNode, CharTable>(null, null);
+    }
+    final CharTable charTable = ((FileElement)astNode).getCharTable();
+    PsiElement elementAt = findElementInTreeWithFormatterEnabled(file, offset);
+    if( elementAt == null ) {
+      return new Pair<ASTNode, CharTable>(null, charTable);
+    }
+    return new Pair<ASTNode, CharTable>(SourceTreeToPsiMap.psiElementToTree(elementAt), charTable);
+  }
+  
   public Indent getIndent(String text, FileType fileType) {
     int indent = IndentHelperImpl.getIndent(myProject, fileType, text, true);
     int indenLevel = indent / IndentHelperImpl.INDENT_FACTOR;

@@ -24,6 +24,7 @@ import com.intellij.codeInsight.completion.OffsetMap;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.*;
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageLiteralEscapers;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -983,22 +984,36 @@ public class TemplateState implements Disposable {
         try {
           int endSegmentNumber = myTemplate.getEndSegmentNumber();
           PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
-          RangeMarker rangeMarker = null;
+          RangeMarker dummyAdjustLineMarkerRange = null;
+          int endVarOffset = -1;
           if (endSegmentNumber >= 0) {
-            int endVarOffset = mySegments.getSegmentStart(endSegmentNumber);
+            endVarOffset = mySegments.getSegmentStart(endSegmentNumber);
             TextRange range = CodeStyleManagerImpl.insertNewLineIndentMarker(file, myDocument, endVarOffset);
-            if (range != null) rangeMarker = myDocument.createRangeMarker(range);
+            if (range != null) dummyAdjustLineMarkerRange = myDocument.createRangeMarker(range);
           }
-          int startOffset = rangeMarkerToReformat != null ? rangeMarkerToReformat.getStartOffset() : myTemplateRange.getStartOffset();
-          int endOffset = rangeMarkerToReformat != null ? rangeMarkerToReformat.getEndOffset() : myTemplateRange.getEndOffset();
-          style.reformatText(file, startOffset, endOffset);
+          int reformatStartOffset = myTemplateRange.getStartOffset();
+          int reformatEndOffset = myTemplateRange.getEndOffset();
+          if (rangeMarkerToReformat != null) {
+            reformatStartOffset = rangeMarkerToReformat.getStartOffset();
+            reformatEndOffset = rangeMarkerToReformat.getEndOffset();
+          }
+          if (dummyAdjustLineMarkerRange == null && endVarOffset >= 0) {
+            // There is a possible case that indent marker element was not inserted (e.g. because there is no blank line
+            // at the target offset). However, we want to reformat white space adjacent to the current template (if any).
+            ASTNode whiteSpaceNode = CodeStyleManagerImpl.findWhiteSpaceNode(file, endVarOffset);
+            if (whiteSpaceNode != null) {
+              reformatStartOffset = Math.min(reformatStartOffset, whiteSpaceNode.getTextRange().getStartOffset());
+              reformatEndOffset = Math.max(reformatEndOffset, whiteSpaceNode.getTextRange().getEndOffset());
+            } 
+          }
+          style.reformatText(file, reformatStartOffset, reformatEndOffset);
           PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
           PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(myDocument);
 
-          if (rangeMarker != null && rangeMarker.isValid()) {
+          if (dummyAdjustLineMarkerRange != null && dummyAdjustLineMarkerRange.isValid()) {
             //[ven] TODO: [max] correct javadoc reformatting to eliminate isValid() check!!!
-            mySegments.replaceSegmentAt(endSegmentNumber, rangeMarker.getStartOffset(), rangeMarker.getEndOffset());
-            myDocument.deleteString(rangeMarker.getStartOffset(), rangeMarker.getEndOffset());
+            mySegments.replaceSegmentAt(endSegmentNumber, dummyAdjustLineMarkerRange.getStartOffset(), dummyAdjustLineMarkerRange.getEndOffset());
+            myDocument.deleteString(dummyAdjustLineMarkerRange.getStartOffset(), dummyAdjustLineMarkerRange.getEndOffset());
             PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
           }
           if (endSegmentNumber >= 0) {
