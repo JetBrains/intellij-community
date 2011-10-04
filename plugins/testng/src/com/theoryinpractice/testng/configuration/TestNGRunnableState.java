@@ -307,7 +307,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
     for (Object o : Extensions.getExtensions(IDEATestNGListener.EP_NAME)) {
       boolean enabled = true;
       for (RunConfigurationExtension extension : Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
-        if (extension.isListenerDisabled(config, o)) {
+        if (extension.isListenerDisabled(config, o, getRunnerSettings())) {
           enabled = false;
           break;
         }
