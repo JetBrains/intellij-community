@@ -31,7 +31,7 @@ public class ProjectPaths {
 
   public Collection<File> getClasspathFiles(Module module, ClasspathKind kind) {
     final Set<File> files = new LinkedHashSet<File>();
-    collectClasspath(module, kind, files, new HashSet<Module>(), false, !kind.isRuntime(), ACCEPT_ALL);
+    collectClasspath(module, kind, files, new HashSet<Module>(), false, !kind.isRuntime(), false, ACCEPT_ALL);
     return files;
   }
 
@@ -62,16 +62,18 @@ public class ProjectPaths {
       ClasspathItemFilter filter = classpathPart == ClasspathPart.WHOLE ? ACCEPT_ALL :
                                    classpathPart == ClasspathPart.BEFORE_JDK ? new BeforeSdkItemFilter(module)
                                        : new NotFilter(new BeforeSdkItemFilter(module));
-      collectClasspath(module, kind, files, processedModules, false, excludeMainModuleOutput, filter);
+      collectClasspath(module, kind, files, processedModules, false, excludeMainModuleOutput, false, filter);
     }
     return files;
   }
 
-  private void collectClasspath(Module module, ClasspathKind kind, Set<File> classpath, Set<Module> processed, boolean exportedOnly, boolean excludeMainModuleOutput, ClasspathItemFilter filter) {
+  private void collectClasspath(Module module, ClasspathKind kind, Set<File> classpath, Set<Module> processed, boolean exportedOnly,
+                                boolean excludeMainModuleOutput, final boolean excludeSdk, ClasspathItemFilter filter) {
     if (!processed.add(module)) return;
 
     for (ClasspathItem it : module.getClasspath(kind, exportedOnly)) {
-      if (!filter.accept(module, it)) continue;
+      if (!filter.accept(module, it)
+          || it instanceof Sdk && excludeSdk) continue;
 
       if (it instanceof Module.ModuleSourceEntry) {
         final Module dep = ((Module.ModuleSourceEntry) it).getModule();
@@ -83,7 +85,7 @@ public class ProjectPaths {
         }
       }
       else if (it instanceof Module) {
-        collectClasspath((Module) it, kind, classpath, processed, !kind.isRuntime(), false, filter);
+        collectClasspath((Module) it, kind, classpath, processed, !kind.isRuntime(), false, true, filter);
       }
       else {
         addFiles(classpath, it.getClasspathRoots(kind));
