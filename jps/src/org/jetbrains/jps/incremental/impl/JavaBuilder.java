@@ -1,9 +1,7 @@
 package org.jetbrains.jps.incremental.impl;
 
-import org.jetbrains.jps.ClasspathKind;
 import org.jetbrains.jps.Module;
 import org.jetbrains.jps.ModuleChunk;
-import org.jetbrains.jps.Sdk;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 
@@ -41,7 +39,7 @@ public class JavaBuilder extends Builder{
 
   private ExitCode compile(final CompileContext context, ModuleChunk chunk, List<File> files) throws ProjectBuildException {
     if (files.isEmpty()) {
-      return ExitCode.FINISHED;
+      return ExitCode.OK;
     }
 
     final ProjectPaths paths = new ProjectPaths(context.getScope().getProject());
@@ -77,7 +75,7 @@ public class JavaBuilder extends Builder{
       throw new ProjectBuildException("Compilation failed: errors: " + statistics[ERROR] + "; warnings: " + statistics[WARNING]);
     }
 
-    return ExitCode.FINISHED;
+    return ExitCode.OK;
   }
 
   public String getDescription() {

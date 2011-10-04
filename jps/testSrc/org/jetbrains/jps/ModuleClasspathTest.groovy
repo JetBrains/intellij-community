@@ -73,15 +73,23 @@ public class ModuleClasspathTest extends JpsBuildTestCase {
   }
 
   private def assertClasspath(String module, ClasspathKind classpathKind, List<String> expected) {
-    List<String> classpath = project.builder.moduleClasspath(project.modules[module], classpathKind)
-    assertClasspath(expected, classpath)
+    final List<String> classpath = project.builder.moduleClasspath(project.modules[module], classpathKind)
+    assertClasspath(expected, toSystemIndependentPaths(classpath))
   }
 
   private def assertClasspath(List<String> expected, List<String> classpath) {
     String basePath = PathUtil.toSystemIndependentPath(new File(getProjectPath()).parentFile.absolutePath) + "/"
-    List<String> actual = classpath.collect { String path ->
+    List<String> actual = toSystemIndependentPaths(classpath).collect { String path ->
       path.startsWith(basePath) ? path.substring(basePath.length()) : path
     }
     assertEquals(expected.join("\n"), actual.join("\n"))
+  }
+
+  private static List<String> toSystemIndependentPaths(List<String> classpath) {
+    final List<String> result = new ArrayList<String>()
+    for (String path: classpath) {
+      result.add(PathUtil.toSystemIndependentPath(path));
+    }
+    return result
   }
 }

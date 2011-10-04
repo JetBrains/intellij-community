@@ -57,23 +57,24 @@ public class ProjectPaths {
 
   private Collection<File> getClasspathFiles(ModuleChunk chunk, ClasspathKind kind, final boolean excludeMainModuleOutput, ClasspathPart classpathPart) {
     final Set<File> files = new LinkedHashSet<File>();
-    final Set<Module> processedModules = new HashSet<Module>();
     for (Module module : chunk.getModules()) {
-      ClasspathItemFilter filter = classpathPart == ClasspathPart.WHOLE ? ACCEPT_ALL :
-                                   classpathPart == ClasspathPart.BEFORE_JDK ? new BeforeSdkItemFilter(module)
-                                       : new NotFilter(new BeforeSdkItemFilter(module));
-      collectClasspath(module, kind, files, processedModules, false, excludeMainModuleOutput, false, filter);
+      final ClasspathItemFilter filter = classpathPart == ClasspathPart.WHOLE ? ACCEPT_ALL :
+                                         classpathPart == ClasspathPart.BEFORE_JDK ? new BeforeSdkItemFilter(module) : new NotFilter(new BeforeSdkItemFilter(module));
+      collectClasspath(module, kind, files, new HashSet<Module>(), false, excludeMainModuleOutput, false, filter);
     }
     return files;
   }
 
   private void collectClasspath(Module module, ClasspathKind kind, Set<File> classpath, Set<Module> processed, boolean exportedOnly,
                                 boolean excludeMainModuleOutput, final boolean excludeSdk, ClasspathItemFilter filter) {
-    if (!processed.add(module)) return;
+    if (!processed.add(module)) {
+      return;
+    }
 
     for (ClasspathItem it : module.getClasspath(kind, exportedOnly)) {
-      if (!filter.accept(module, it)
-          || it instanceof Sdk && excludeSdk) continue;
+      if (!filter.accept(module, it) || it instanceof Sdk && excludeSdk) {
+        continue;
+      }
 
       if (it instanceof ModuleSourceEntry) {
         final Module dep = ((ModuleSourceEntry) it).getModule();
@@ -111,7 +112,7 @@ public class ProjectPaths {
   public static List<String> getPathsList(Collection<File> files) {
     final List<String> result = new ArrayList<String>();
     for (File file : files) {
-      result.add(file.getAbsolutePath());
+      result.add(file.getPath());
     }
     return result;
   }

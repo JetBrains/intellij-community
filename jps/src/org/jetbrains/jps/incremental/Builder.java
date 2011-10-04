@@ -8,7 +8,7 @@ import org.jetbrains.jps.ModuleChunk;
  */
 public abstract class Builder {
   public static enum ExitCode {
-    FINISHED, ABORT, ADDITIONAL_PASS_REQUIRED
+    OK, ABORT, ADDITIONAL_PASS_REQUIRED
   }
 
   public abstract ExitCode build(CompileContext context, ModuleChunk chunk) throws ProjectBuildException;
