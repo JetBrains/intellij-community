@@ -47,7 +47,7 @@ public class ProjectPaths {
     return getClasspathFiles(chunk, kind, excludeMainModuleOutput, ClasspathPart.WHOLE);
   }
 
-  public Collection<File> getBootstrapCompilationClasspath(ModuleChunk chunk, boolean includeTests, boolean excludeMainModuleOutput) {
+  public Collection<File> getPlatformCompilationClasspath(ModuleChunk chunk, boolean includeTests, boolean excludeMainModuleOutput) {
     return getClasspathFiles(chunk, ClasspathKind.compile(includeTests), excludeMainModuleOutput, ClasspathPart.BEFORE_JDK);
   }
 

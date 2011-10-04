@@ -1,9 +1,12 @@
 package org.jetbrains.jps.server;
 
 import org.codehaus.gant.GantBinding;
-import org.jetbrains.ether.ProjectWrapper;
+import org.codehaus.groovy.runtime.MethodClosure;
+import org.jetbrains.jps.JavaSdk;
+import org.jetbrains.jps.Library;
 import org.jetbrains.jps.Module;
 import org.jetbrains.jps.Project;
+import org.jetbrains.jps.idea.IdeaProjectLoader;
 import org.jetbrains.jps.incremental.BuilderRegistry;
 import org.jetbrains.jps.incremental.CompileScope;
 import org.jetbrains.jps.incremental.IncProjectBuilder;
@@ -11,6 +14,7 @@ import org.jetbrains.jps.incremental.MessageHandler;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 
+import java.io.File;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -20,7 +24,9 @@ import java.util.concurrent.ConcurrentHashMap;
  * @noinspection UnusedDeclaration
  */
 public class Facade {
-  private final Map<String, ProjectWrapper> myProjects = new HashMap<String, ProjectWrapper>();
+  public static final String IDEA_PROJECT_DIRNAME = ".idea";
+
+  private final Map<String, Project> myProjects = new HashMap<String, Project>();
   private final Map<String, String> myPathVariables = new ConcurrentHashMap<String, String>();
 
   public void setPathVariables(Map<String, String> vars) {
@@ -33,15 +39,12 @@ public class Facade {
   }
 
   public void startBuild(String projectPath, Set<String> modules, final BuildParameters params, final MessagesConsumer consumer) throws Throwable {
-    ProjectWrapper pw = myProjects.get(projectPath);
-    if (pw == null) {
-      pw = ProjectWrapper.load(new GantBinding(), projectPath, getStartupScript(), myPathVariables, false);
-      myProjects.put(projectPath, pw);
+    Project project = myProjects.get(projectPath);
+
+    if (project == null) {
+      project = loadProject(projectPath, params);
+      myProjects.put(projectPath, project);
     }
-
-    configureProject(pw, params, consumer);
-
-    final Project project = pw.getProject();
 
     final List<Module> toCompile = new ArrayList<Module>();
     if (modules != null && modules.size() > 0) {
@@ -74,11 +77,11 @@ public class Facade {
     });
     switch (params.buildType) {
       case REBUILD:
-        builder.build(compileScope);
+        builder.build(compileScope, false);
         break;
 
       case MAKE:
-        builder.build(compileScope);
+        builder.build(compileScope, true);
         break;
 
       case CLEAN:
@@ -88,42 +91,30 @@ public class Facade {
     //pw.save();
   }
 
-  private void configureProject(ProjectWrapper pw, BuildParameters params, final MessagesConsumer consumer) {
-    //pw.getProject().getBuilder().setUseInProcessJavac(params.useInProcessJavac);
-    //pw.getProject().getBuilder().setBuildInfoPrinter(new BuildInfoPrinter() {
-    //  public Object printProgressMessage(Project project, String message) {
-    //    consumer.consumeProgressMessage(message);
-    //    return null;
-    //  }
-    //
-    //  public Object printCompilationErrors(Project project, String compilerName, String messages) {
-    //    consumer.consumeCompilerMessage(compilerName, messages);
-    //    return null;
-    //  }
-    //});
-    //pw.getProject().getBinding().addBuildListener(new org.apache.tools.ant.BuildListener() {
-    //  public void buildStarted(BuildEvent buildEvent) {
-    //  }
-    //
-    //  public void buildFinished(BuildEvent buildEvent) {
-    //  }
-    //
-    //  public void targetStarted(BuildEvent buildEvent) {
-    //  }
-    //
-    //  public void targetFinished(BuildEvent buildEvent) {
-    //  }
-    //
-    //  public void taskStarted(BuildEvent buildEvent) {
-    //  }
-    //
-    //  public void taskFinished(BuildEvent buildEvent) {
-    //  }
-    //
-    //  public void messageLogged(BuildEvent buildEvent) {
-    //    consumer.consumeCompilerMessage("ANT", buildEvent.getMessage());
-    //  }
-    //});
+  private Project loadProject(String projectPath, BuildParameters params) {
+    final Project project = new Project(new GantBinding());
+    // setup JDKs and global libraries
+    final MethodClosure fakeClosure = new MethodClosure(new Object(), "hashCode");
+    for (GlobalLibrary library : params.globalLibraries) {
+      if (library instanceof SdkLibrary) {
+        final SdkLibrary sdk = (SdkLibrary)library;
+        final JavaSdk jdk = project.createJavaSdk(sdk.getName(), sdk.getHomePath(), fakeClosure);
+        jdk.setClasspath(sdk.getPaths());
+      }
+      else {
+        final Library lib = project.createGlobalLibrary(library.getName(), fakeClosure);
+        lib.setClasspath(library.getPaths());
+      }
+    }
+
+    final File projectFile = new File(projectPath);
+    final boolean dirBased = !(projectFile.isFile() && projectPath.endsWith(".ipr"));
+
+    //String root = dirBased ? projectPath : projectFile.getParent();
+
+    final String loadPath = dirBased ? new File(projectFile, IDEA_PROJECT_DIRNAME).getPath() : projectPath;
+    IdeaProjectLoader.loadFromPath(project, loadPath, myPathVariables, getStartupScript());
+    return project;
   }
 
   private String getStartupScript() {

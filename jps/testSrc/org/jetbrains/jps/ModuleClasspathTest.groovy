@@ -60,7 +60,7 @@ public class ModuleClasspathTest extends JpsBuildTestCase {
   public void testCompilationClasspath() {
     ModuleChunk chunk = new ModuleChunk(project.modules['main'])
     assertClasspath(["util/lib/exported.jar", "out/production/util", "/jdk.jar"],
-            ProjectPaths.getPathsList(project.builder.getProjectPaths().getBootstrapCompilationClasspath(chunk, false, true)))
+            ProjectPaths.getPathsList(project.builder.getProjectPaths().getPlatformCompilationClasspath(chunk, false, true)))
     assertClasspath(["main/lib/service.jar"],
             ProjectPaths.getPathsList(project.builder.getProjectPaths().getCompilationClasspath(chunk, false, true)))
   }

@@ -44,15 +44,15 @@ public class JavaBuilder extends Builder{
 
     final ProjectPaths paths = new ProjectPaths(context.getScope().getProject());
 
-    final Collection<File> classpath = paths.getCompilationClasspath(chunk, context.isCompilingTests(), true);
-    final Collection<File> platformPaths = paths.getBootstrapCompilationClasspath(chunk, context.isCompilingTests(), true);
+    final Collection<File> classpath = paths.getCompilationClasspath(chunk, context.isCompilingTests(), !context.isMake());
+    final Collection<File> platformCp = paths.getPlatformCompilationClasspath(chunk, context.isCompilingTests(), !context.isMake());
     final Map<File, Set<File>> outs = buildOutputDirectoriesMap(context, chunk);
     final List<String> options = getCompilationOptions(context, chunk);
 
     final int ERROR = 0, WARNING = 1;
     final int[] statistics = new int[] {0, 0};
 
-    final boolean compilationOk = myJavacCompiler.compile(options, files, classpath, platformPaths, outs, new EmbeddedJavac.OutputConsumer() {
+    final boolean compilationOk = myJavacCompiler.compile(options, files, classpath, platformCp, outs, new EmbeddedJavac.OutputConsumer() {
       public void outputLineAvailable(String line) {
         context.processMessage(new CompilerMessage(JAVAC_COMPILER_NAME, line));
       }

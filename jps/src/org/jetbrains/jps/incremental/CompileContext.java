@@ -14,10 +14,16 @@ import java.util.Set;
  */
 public abstract class CompileContext implements MessageHandler {
   private final CompileScope myScope;
+  private final boolean myIsMake;
   private boolean myCompilingTests = false;
 
-  public CompileContext(CompileScope scope) {
+  public CompileContext(CompileScope scope, boolean isMake) {
     myScope = scope;
+    myIsMake = isMake;
+  }
+
+  public boolean isMake() {
+    return myIsMake;
   }
 
   public boolean isCompilingTests() {

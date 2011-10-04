@@ -1,5 +1,8 @@
 package org.jetbrains.jps.server;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
 * @author Eugene Zhuravlev
 *         Date: 9/10/11
@@ -7,6 +10,7 @@ package org.jetbrains.jps.server;
 public class BuildParameters {
   public BuildType buildType = BuildType.MAKE;
   public boolean useInProcessJavac = true;
+  public final List<GlobalLibrary> globalLibraries = new ArrayList<GlobalLibrary>();
 
   public BuildParameters() {
   }

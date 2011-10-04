@@ -30,8 +30,8 @@ public class IncProjectBuilder {
     myMessageHandlers.add(handler);
   }
 
-  public void build(CompileScope scope) {
-    final CompileContext context = new CompileContext(scope) {
+  public void build(CompileScope scope, boolean isMake) {
+    final CompileContext context = new CompileContext(scope, isMake) {
       public void processMessage(BuildMessage msg) {
         for (MessageHandler h : myMessageHandlers) {
           h.processMessage(msg);
