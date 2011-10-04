@@ -205,7 +205,16 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       }
       int tokenStart = myLexer.getTokenStart();
       if (tokenStart < offset) {
-        LOG.error("Token sequence broken: '" + myLexer.getTokenText() + "'");
+        final StringBuilder sb = new StringBuilder();
+        sb.append("Token sequence broken")
+          .append("\n  this: '").append(myLexer.getTokenText()).append("' (").append(myLexer.getTokenType()).append(") ")
+          .append(tokenStart).append(":").append(myLexer.getTokenEnd());
+        if (i > 0) {
+          final int prevStart = myLexStarts[i - 1];
+          sb.append("\n  prev: '").append(myText.subSequence(prevStart, offset)).append("' (").append(myLexTypes[i - 1]).append(") ")
+            .append(prevStart).append(":").append(offset);
+        }
+        LOG.error(sb);
       }
       myLexStarts[i] = offset = tokenStart;
       myLexTypes[i] = type;
