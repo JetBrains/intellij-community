@@ -66,12 +66,12 @@ public final class XmlLanguageInjector implements MultiHostInjector {
 
   @NotNull
   public List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
-    return Arrays.asList(XmlTag.class, XmlAttribute.class);
+    return Arrays.asList(XmlTag.class, XmlAttributeValue.class);
   }
 
   public void getLanguagesToInject(@NotNull final MultiHostRegistrar registrar, @NotNull PsiElement host) {
     final XmlElement xmlElement = (XmlElement) host;
-    if (notInIndex(xmlElement)) return;
+    if (!isInIndex(xmlElement)) return;
     final TreeSet<TextRange> ranges = new TreeSet<TextRange>(InjectorUtils.RANGE_COMPARATOR);
     final PsiFile containingFile = xmlElement.getContainingFile();
     getInjectedLanguage(xmlElement, new PairProcessor<Language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>>() {
@@ -143,10 +143,10 @@ public final class XmlLanguageInjector implements MultiHostInjector {
         }
       }
     }
-    else if (place instanceof XmlAttribute) {
-      final XmlAttribute attribute = (XmlAttribute)place;
-      final XmlAttributeValue value = attribute.getValueElement();
-      if (value == null) return;
+    else if (place instanceof XmlAttributeValue && place.getParent() instanceof XmlAttribute) {
+      final XmlAttribute attribute = (XmlAttribute)place.getParent();
+      final XmlAttributeValue value = (XmlAttributeValue)place;
+      //if (value == null) return;
       // Check that we don't inject anything into embedded (e.g. JavaScript) content:
       // XmlToken: "
       // JSEmbeddedContent
@@ -189,20 +189,26 @@ public final class XmlLanguageInjector implements MultiHostInjector {
   }
 
   // NOTE: local name of an xml entity or attribute value should match at least one string in the index 
-  private boolean notInIndex(XmlElement xmlElement) {
+  private boolean isInIndex(XmlElement xmlElement) {
     final Trinity<Long, Pattern, Collection<String>> index = getXmlAnnotatedElementsValue();
+    if (xmlElement instanceof XmlAttributeValue) xmlElement = (XmlElement)xmlElement.getParent();
     final XmlTag tag;
     if (xmlElement instanceof XmlAttribute) {
       final XmlAttribute attribute = (XmlAttribute)xmlElement;
-      if (areThereInjectionsWithText(attribute.getLocalName(), index)) return false;
-      if (areThereInjectionsWithText(attribute.getValue(), index)) return false;
+      if (areThereInjectionsWithText(attribute.getLocalName(), index)) return true;
+      if (areThereInjectionsWithText(attribute.getValue(), index)) return true;
       //if (areThereInjectionsWithText(attribute.getNamespace(), index)) return false;
       tag = attribute.getParent();
     }
-    else tag = (XmlTag)xmlElement;
-    if (areThereInjectionsWithText(tag.getLocalName(), index)) return false;
+    else if (xmlElement instanceof XmlTag) {
+      tag = (XmlTag)xmlElement;
+    }
+    else {
+      return false;
+    }
+    if (areThereInjectionsWithText(tag.getLocalName(), index)) return true;
     //if (areThereInjectionsWithText(tag.getNamespace(), index)) return false;
-    return true;
+    return false;
   }
 
 
