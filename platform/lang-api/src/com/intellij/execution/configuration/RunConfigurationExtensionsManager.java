@@ -2,10 +2,12 @@ package com.intellij.execution.configuration;
 
 import com.google.common.collect.Maps;
 import com.intellij.execution.Location;
+import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.SettingsEditor;
@@ -112,6 +114,13 @@ public class RunConfigurationExtensionsManager<U extends RunConfigurationBase, T
     // only for enabled extensions
     for (T extension : getEnabledExtensions(configuration, null)) {
       extension.validateConfiguration(configuration, isExecution);
+    }
+  }
+
+  public void checkRunnerSettings(@NotNull final U configuration, ProgramRunner runner, RunnerSettings runnerSettings, ConfigurationPerRunnerSettings configPerRunnerSettings) throws Exception {
+    // only for enabled extensions
+    for (T extension : getEnabledExtensions(configuration, null)) {
+      extension.checkRunnerSettings(configuration, runner, runnerSettings, configPerRunnerSettings);
     }
   }
 
