@@ -24,6 +24,9 @@ class AddClarifyingParenthesesPredicate implements PsiElementPredicate {
 
   public boolean satisfiedBy(@NotNull PsiElement element) {
     final PsiElement parent = element.getParent();
+    if (element instanceof PsiParenthesizedExpression) {
+      return false;
+    }
     if (element instanceof PsiPolyadicExpression) {
       final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)element;
       final IElementType tokenType = polyadicExpression.getOperationTokenType();
@@ -41,12 +44,12 @@ class AddClarifyingParenthesesPredicate implements PsiElementPredicate {
       }
       return false;
     }
-    else if (parent instanceof PsiConditionalExpression) {
+    if (parent instanceof PsiConditionalExpression) {
       final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)parent;
       final PsiExpression condition = conditionalExpression.getCondition();
       return element == condition;
     }
-    return element instanceof PsiInstanceOfExpression && parent instanceof PsiBinaryExpression;
+    return element instanceof PsiInstanceOfExpression && parent instanceof PsiPolyadicExpression;
   }
 
   private static boolean needsParentheses(PsiExpression expression,
