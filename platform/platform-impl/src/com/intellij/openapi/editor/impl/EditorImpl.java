@@ -312,13 +312,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       public void attributesChanged(@NotNull RangeHighlighterEx highlighter) {
         int textLength = myDocument.getTextLength();
-        if (textLength == 0) return;
 
         int start = Math.min(Math.max(highlighter.getAffectedAreaStartOffset(), 0), textLength - 1);
         int end = Math.min(Math.max(highlighter.getAffectedAreaEndOffset(), 0), textLength - 1);
 
-        int startLine = myDocument.getLineNumber(start);
-        int endLine = myDocument.getLineNumber(end);
+        int startLine = start == -1 ? 0 : myDocument.getLineNumber(start);
+        int endLine = end == -1 ? myDocument.getLineCount() : myDocument.getLineNumber(end);
         repaintLines(Math.max(0, startLine - 1), Math.min(endLine + 1, getDocument().getLineCount()));
         GutterIconRenderer renderer = highlighter.getGutterIconRenderer();
 
@@ -1349,6 +1348,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myEditorComponent.repaintEditorComponent(visibleArea.x, yStartLine, visibleArea.x + visibleArea.width, yEndLine - yStartLine);
     myGutterComponent.repaint(0, yStartLine, myGutterComponent.getWidth(), yEndLine - yStartLine);
+    ((EditorMarkupModelImpl)getMarkupModel()).repaint(-1, -1);
   }
 
   /**
@@ -1448,11 +1448,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       repaintLines(startLine, endLine);
     }
 
-    if (!myDocument.isInBulkUpdate()) {
-      Point caretLocation = visualPositionToXY(getCaretModel().getVisualPosition());
-      int scrollOffset = caretLocation.y - myCaretUpdateVShift;
-      getScrollingModel().scrollVertically(scrollOffset);
-    }
+    Point caretLocation = visualPositionToXY(getCaretModel().getVisualPosition());
+    int scrollOffset = caretLocation.y - myCaretUpdateVShift;
+    getScrollingModel().scrollVertically(scrollOffset);
   }
 
   public boolean isScrollToCaret() {
