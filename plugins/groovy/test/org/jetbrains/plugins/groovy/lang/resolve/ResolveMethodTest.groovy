@@ -796,4 +796,17 @@ print new B().f<caret>oo()
     assertInstanceOf(resolved, GrMethod)
     assertTrue(resolved.isPhysical())
   }
+
+  void testDisjunctionType() {
+    def ref = configureByText ("""
+import java.sql.SQLException
+def test() {
+        try {}
+        catch (IOException | SQLException ex) {
+            ex.prin<caret>tStackTrace();
+        }
+}""")
+    assertNotNull(ref.resolve())
+  }
+
 }
