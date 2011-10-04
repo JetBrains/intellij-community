@@ -191,6 +191,10 @@ public class AndroidUtils {
     return ApplicationManager.getApplication().runReadAction(new Computable<T>() {
       @Nullable
       public T compute() {
+        if (module.isDisposed()) {
+          return null;
+        }
+
         Project project = module.getProject();
         if (project.isDisposed()) return null;
         PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
