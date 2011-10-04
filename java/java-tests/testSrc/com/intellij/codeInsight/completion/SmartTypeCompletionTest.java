@@ -4,6 +4,7 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
 import com.intellij.codeInsight.template.SmartCompletionContextType;
 import com.intellij.codeInsight.template.Template;
@@ -783,6 +784,12 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   public void testClassLiteral() throws Exception {
     doActionTest();
     assertStringItems("String.class");
+
+    LookupElementPresentation p = new LookupElementPresentation();
+    myFixture.getLookupElements()[0].renderElement(p);
+    assertEquals("String.class", p.getItemText());
+    assertEquals(" (java.lang)", p.getTailText());
+    assertNull(p.getTypeText());
   }
   public void testNoClassLiteral() throws Exception {
     doActionTest();
