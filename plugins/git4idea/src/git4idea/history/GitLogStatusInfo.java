@@ -15,6 +15,7 @@
  */
 package git4idea.history;
 
+import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,6 +25,9 @@ import org.jetbrains.annotations.Nullable;
  * @author Kirill Likhodedov
  */
 class GitLogStatusInfo {
+  
+  private static final Logger LOG = Logger.getInstance(GitLogStatusInfo.class);
+  
   private final GitChangeType myType;
   private final String myPath;
   private final String mySecondPath;
@@ -39,10 +43,10 @@ class GitLogStatusInfo {
    * SecondPath == null iff it the type is rename
    */
   private static void verifyParameters(@NotNull GitChangeType type, @NotNull String path, @Nullable String secondPath) {
-    if (type == GitChangeType.RENAMED) {
-      assert secondPath != null;
+    if (type.requiresSecondPath()) {
+      LOG.assertTrue(secondPath != null, "Rename change should have the second path");
     } else {
-      assert secondPath == null;
+      LOG.assertTrue(secondPath == null, "Second path should be null in case of change type [" + type + "]");
     }
   }
 
