@@ -54,6 +54,9 @@ class JavacBuilder implements ModuleBuilder, ModuleCycleBuilder {
     def boolean nowarn = "true".equals(javacOpts["GENERATE_NO_WARNINGS"]);
     def boolean deprecation = !"false".equals(javacOpts["DEPRECATION"]);
     customArgs = javacOpts["ADDITIONAL_OPTIONS_STRING"];
+    if ((customArgs == null || customArgs.indexOf("-encoding") == -1) && module.project.projectCharset != null) {
+      params.encoding = module.project.projectCharset;
+    }
 
     params.fork = "true"
     params.memoryMaximumSize = memHeapSize;

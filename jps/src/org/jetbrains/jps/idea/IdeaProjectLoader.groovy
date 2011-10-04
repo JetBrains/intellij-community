@@ -89,6 +89,7 @@ public class IdeaProjectLoader {
     def root = new XmlParser(false, false).parse(iprFile)
     loadProjectJdkAndOutput(root)
     loadCompilerConfiguration(root)
+    loadProjectFileEncodings(root)
     loadModules(getComponent(root, "ProjectModuleManager"))
     loadProjectLibraries(getComponent(root, "libraryTable"))
     loadArtifacts(getComponent(root, "ArtifactManager"))
@@ -103,6 +104,11 @@ public class IdeaProjectLoader {
     def miscXml = new File(dir, "misc.xml")
     if (!miscXml.exists()) project.error("Cannot find misc.xml in $dir")
     loadProjectJdkAndOutput(new XmlParser(false, false).parse(miscXml))
+
+    def encodingsXml = new File(dir, "encodings.xml")
+    if (encodingsXml.exists()) {
+      loadProjectFileEncodings(new XmlParser(false, false).parse(encodingsXml))
+    }
 
     def compilerXml = new File(dir, "compiler.xml")
     if (compilerXml.exists()) {
@@ -193,6 +199,19 @@ public class IdeaProjectLoader {
     projectOutputPath = outputPath != null && outputPath.length() > 0 ? projectMacroExpander.expandMacros(outputPath) : null
     project.projectSdk = sdk
     projectLanguageLevel = componentTag?."@languageLevel"
+  }
+
+  private def loadProjectFileEncodings(Node root) {
+    def componentTag = getComponent(root, "Encoding");
+    if (componentTag == null) return;
+    componentTag.file?.each {Node fileNode ->
+      def url = fileNode."@url";
+      def charset = fileNode."@charset";
+
+      if ("PROJECT".equals(url)) {
+        project.projectCharset = charset;
+      }
+    }
   }
 
   private NodeList loadProjectLibraries(Node librariesComponent) {
