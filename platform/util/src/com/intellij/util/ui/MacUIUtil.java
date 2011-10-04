@@ -176,43 +176,45 @@ public class MacUIUtil {
     g2d.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
                          USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
 
+    int _y = SystemInfo.isMacOSLion ? 1 : 0;
+    
     final GeneralPath path1 = new GeneralPath();
-    path1.moveTo(2, 4);
-    path1.quadTo(2, 2, 4, 2);
-    path1.lineTo(bounds.width - 7, 2);
-    path1.quadTo(bounds.width - 5, 3, bounds.width - 4, 5);
-    path1.lineTo(bounds.width - 4, bounds.height - 7);
-    path1.quadTo(bounds.width - 5, bounds.height - 5, bounds.width - 7, bounds.height - 4);
-    path1.lineTo(4, bounds.height - 4);
-    path1.quadTo(2, bounds.height - 4, 2, bounds.height - 6);
+    path1.moveTo(2, _y + 4);
+    path1.quadTo(2, +_y + 2, 4, _y + 2);
+    path1.lineTo(bounds.width - 7, _y + 2);
+    path1.quadTo(bounds.width - 5, _y + 3, bounds.width - 4, _y + 5);
+    path1.lineTo(bounds.width - 4, bounds.height - 7 + _y);
+    path1.quadTo(bounds.width - 5, bounds.height - 5 + _y, bounds.width - 7, bounds.height - 4 + _y);
+    path1.lineTo(4, bounds.height - 4 + _y);
+    path1.quadTo(2, bounds.height - 4 + _y, 2, bounds.height - 6 + _y);
     path1.closePath();
 
     g2d.setColor(colors[0]);
     g2d.draw(path1);
 
     final GeneralPath path2 = new GeneralPath();
-    path2.moveTo(1, 5);
-    path2.quadTo(1, 1, 5, 1);
-    path2.lineTo(bounds.width - 8, 1);
-    path2.quadTo(bounds.width - 4, 2, bounds.width - 3, 6);
-    path2.lineTo(bounds.width - 3, bounds.height - 7);
-    path2.quadTo(bounds.width - 4, bounds.height - 4, bounds.width - 8, bounds.height - 3);
-    path2.lineTo(4, bounds.height - 3);
-    path2.quadTo(1, bounds.height - 3, 1, bounds.height - 6);
+    path2.moveTo(1, 5 + _y);
+    path2.quadTo(1, 1 + _y, 5, 1 + _y);
+    path2.lineTo(bounds.width - 8, 1 + _y);
+    path2.quadTo(bounds.width - 4, 2 + _y, bounds.width - 3, 6 + _y);
+    path2.lineTo(bounds.width - 3, bounds.height - 7 + _y);
+    path2.quadTo(bounds.width - 4, bounds.height - 4 + _y, bounds.width - 8, bounds.height - 3 + _y);
+    path2.lineTo(4, bounds.height - 3 + _y);
+    path2.quadTo(1, bounds.height - 3 + _y, 1, bounds.height - 6 + _y);
     path2.closePath();
 
     g2d.setColor(colors[1]);
     g2d.draw(path2);
 
     final GeneralPath path3 = new GeneralPath();
-    path3.moveTo(0, 4);
-    path3.quadTo(0, 0, 7, 0);
-    path3.lineTo(bounds.width - 9, 0);
-    path3.quadTo(bounds.width - 2, 1, bounds.width - 2, 7);
-    path3.lineTo(bounds.width - 2, bounds.height - 8);
-    path3.quadTo(bounds.width - 3, bounds.height - 1, bounds.width - 12, bounds.height - 2);
-    path3.lineTo(7, bounds.height - 2);
-    path3.quadTo(0, bounds.height - 1, 0, bounds.height - 7);
+    path3.moveTo(0, 4 + _y);
+    path3.quadTo(0, _y, 7, _y);
+    path3.lineTo(bounds.width - 9, _y);
+    path3.quadTo(bounds.width - 2, 1 + _y, bounds.width - 2, 7 + _y);
+    path3.lineTo(bounds.width - 2, bounds.height - 8 + _y);
+    path3.quadTo(bounds.width - 3, bounds.height - 1 + _y, bounds.width - 12, bounds.height - 2 + _y);
+    path3.lineTo(7, bounds.height - 2 + _y);
+    path3.quadTo(0, bounds.height - 1 + _y, 0, bounds.height - 7 + _y);
     path3.closePath();
 
     g2d.setColor(colors[2]);
