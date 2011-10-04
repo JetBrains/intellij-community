@@ -29,20 +29,18 @@ import java.lang.ref.SoftReference;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * @author cdr
  */
 abstract class CharArray implements CharSequenceBackedByArray {
   
-  //TODO den remove
-  private static final boolean DISABLE_DEFERRED_PROCESSING = false;
-  //TODO den uncomment
-  //private static final boolean DISABLE_DEFERRED_PROCESSING = Boolean.getBoolean("idea.document.deny.deferred.changes");
-  //TODO den remove
-  private static final boolean DEBUG_DEFERRED_PROCESSING = true;
-  //TODO den uncomment
-  //private static final boolean DEBUG_DEFERRED_PROCESSING = Boolean.getBoolean("idea.document.debug.bulk.processing");
+  @SuppressWarnings("UseOfArchaicSystemPropertyAccessors")
+  private static final boolean DISABLE_DEFERRED_PROCESSING = Boolean.getBoolean("idea.document.deny.deferred.changes");
+  @SuppressWarnings("UseOfArchaicSystemPropertyAccessors")
+  private static final boolean DEBUG_DEFERRED_PROCESSING = Boolean.getBoolean("idea.document.debug.bulk.processing");
   
   private static final Logger LOG = Logger.getInstance("#" + CharArray.class.getName());
 
@@ -54,6 +52,8 @@ abstract class CharArray implements CharSequenceBackedByArray {
    */
   private static final int MAX_DEFERRED_CHANGES_NUMBER = 10000;
 
+  private final Lock myDeferredChangesLock = new ReentrantLock();
+  
   @NotNull
   private TextChangesStorage myDeferredChangesStorage;
   
@@ -270,10 +270,20 @@ abstract class CharArray implements CharSequenceBackedByArray {
   /**
    * Stores given change at collection of deferred changes (merging it with others if necessary) and updates current object
    * state ({@link #length() length} etc).
-   * 
+   *
    * @param change      new change to store
    */
   private void storeChange(@NotNull TextChangeImpl change) {
+    myDeferredChangesLock.lock();
+    try {
+      doStoreChange(change);
+    }
+    finally {
+      myDeferredChangesLock.unlock();
+    }
+  }
+  
+  private void doStoreChange(@NotNull TextChangeImpl change) {
     if (myDeferredChangesStorage.size() >= MAX_DEFERRED_CHANGES_NUMBER) {
       flushDeferredChanged();
     }
@@ -528,8 +538,18 @@ abstract class CharArray implements CharSequenceBackedByArray {
       flushDeferredChanged();
     }
   }
-  
+
   private void flushDeferredChanged() {
+    myDeferredChangesLock.lock();
+    try {
+      doFlushDeferredChanged();
+    }
+    finally {
+      myDeferredChangesLock.unlock();
+    }
+  }
+  
+  private void doFlushDeferredChanged() {
     List<TextChangeImpl> changes = myDeferredChangesStorage.getChanges();
     if (changes.isEmpty()) {
       return;
@@ -589,20 +609,18 @@ abstract class CharArray implements CharSequenceBackedByArray {
   }
 
   private void dumpDebugInfo(@NotNull String problem) {
-    //TODO den remove
-    LOG.error(String.format(
-      "/***********************************************************\n" +
-      " * Please email idea.log to Denis.Zhdanov@jetbrains.com\n" +
-      " ***********************************************************/\n" +
-      "Incorrect CharArray processing detected: '%s'. Start: %d, end: %d, text on batch update start: '%s', deferred changes history: %s, "
-      + "current deferred changes: %s",
-      problem, myStart, myEnd, myDebugTextOnBatchUpdateStart, myDebugDeferredChanges, myDeferredChangesStorage
-    ));
-    //TODO den uncomment
     //LOG.error(String.format(
+    //  "/***********************************************************\n" +
+    //  " * Please email idea.log to Denis.Zhdanov@jetbrains.com\n" +
+    //  " ***********************************************************/\n" +
     //  "Incorrect CharArray processing detected: '%s'. Start: %d, end: %d, text on batch update start: '%s', deferred changes history: %s, "
     //  + "current deferred changes: %s",
     //  problem, myStart, myEnd, myDebugTextOnBatchUpdateStart, myDebugDeferredChanges, myDeferredChangesStorage
     //));
+    LOG.error(String.format(
+      "Incorrect CharArray processing detected: '%s'. Start: %d, end: %d, text on batch update start: '%s', deferred changes history: %s, "
+      + "current deferred changes: %s",
+      problem, myStart, myEnd, myDebugTextOnBatchUpdateStart, myDebugDeferredChanges, myDeferredChangesStorage
+    ));
   }
 }
