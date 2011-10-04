@@ -38,7 +38,7 @@ public class XMLLanguage extends CompositeLanguage {
   protected static final EncodeEachSymbolPolicy ENCODE_EACH_SYMBOL_POLICY = new EncodeEachSymbolPolicy();
 
   private XMLLanguage() {
-    this("XML", "text/xml");
+    super("XML", "text/xml");
 
     SyntaxHighlighterFactory.LANGUAGE_FACTORY.addExplicitExtension(this, new SingleLazyInstanceSyntaxHighlighterFactory() {
       @NotNull
@@ -48,6 +48,7 @@ public class XMLLanguage extends CompositeLanguage {
     });
   }
 
+  @Deprecated
   protected XMLLanguage(@NonNls String name, @NonNls String... mime) {
     super(name, mime);
   }

@@ -31,7 +31,7 @@ public class XHTMLLanguage extends XMLLanguage {
   public static final XHTMLLanguage INSTANCE = new XHTMLLanguage();
 
   private XHTMLLanguage() {
-    super("XHTML", "text/xhtml", "application/xhtml+xml");
+    super(XMLLanguage.INSTANCE, "XHTML", "text/xhtml", "application/xhtml+xml");
     SyntaxHighlighterFactory.LANGUAGE_FACTORY.addExplicitExtension(this, new SingleLazyInstanceSyntaxHighlighterFactory() {
       @NotNull
       protected SyntaxHighlighter createHighlighter() {

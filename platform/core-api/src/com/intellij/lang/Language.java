@@ -26,10 +26,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
+import java.util.*;
 
 /**
  * The base class for all programming language support implementations. Specific language implementations should inherit from this class
@@ -48,6 +45,7 @@ public abstract class Language extends UserDataHolderBase {
   private final Language myBaseLanguage;
   private final String myID;
   private final String[] myMimeTypes;
+  private List<Language> myDialects = new ArrayList<Language>();
   public static final Language ANY = new Language("") {
     @Override
     public String toString() {
@@ -77,6 +75,9 @@ public abstract class Language extends UserDataHolderBase {
     prev = ourRegisteredIDs.put(ID, this);
     if (prev != null) {
       LOG.error("Language with ID '" + ID + "' is already registered: "+prev.getClass());
+    }
+    if (baseLanguage != null) {
+      baseLanguage.myDialects.add(this);
     }
   }
 
@@ -164,6 +165,10 @@ public abstract class Language extends UserDataHolderBase {
       l = l.getBaseLanguage();
     }
     return false;
+  }
+
+  public List<Language> getDialects() {
+    return myDialects;
   }
 
   @Nullable
