@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.mvc.projectView;
 
 import com.intellij.ide.util.EditorHelper;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.*;
@@ -97,13 +98,27 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
       }
     };
 
-    project.getMessageBus().connect(this).subscribe(PsiModificationTracker.TOPIC, new PsiModificationTracker.Listener() {
-      public void modificationCountChanged() {
+    class TreeUpdater implements Runnable, PsiModificationTracker.Listener {
+      private volatile boolean myInQueue;
+
+      @Override
+      public void run() {
         if (getTree() != null && getTreeBuilder() != null) {
           updateFromRoot(true);
         }
+        myInQueue = false;
       }
-    });
+
+      @Override
+      public void modificationCountChanged() {
+        if (!myInQueue) {
+          myInQueue = true;
+          ApplicationManager.getApplication().invokeLater(this);
+        }
+      }
+    }
+
+    project.getMessageBus().connect(this).subscribe(PsiModificationTracker.TOPIC, new TreeUpdater());
 
     myComponent = new JPanel(new BorderLayout());
     myComponent.add(createComponent(), BorderLayout.CENTER);
