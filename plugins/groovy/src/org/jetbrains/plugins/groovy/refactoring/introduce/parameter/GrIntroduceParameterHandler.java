@@ -177,6 +177,7 @@ public class GrIntroduceParameterHandler implements RefactoringActionHandler {
       final GrParametersOwner owner = scopes.get(0);
       if (owner instanceof GrMethod) {
         PsiMethod newMethod = SuperMethodWarningUtil.checkSuperMethod((PsiMethod)owner, RefactoringBundle.message("to.refactor"));
+        if (newMethod == null) return;
         getContext(project, editor, expression, variable, owner, newMethod);
         return;
       }
