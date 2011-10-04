@@ -99,6 +99,7 @@ public class GrIntroduceParameterDialog extends RefactoringDialog implements GrI
     myDeclareFinalCheckBox.setSelected(hasFinalModifier());
     
     myChangeVarUsages.setVisible(context.toReplaceIn instanceof GrClosableBlock && context.toSearchFor instanceof GrVariable);
+    myChangeVarUsages.setSelected(true);
 
     setTitle(RefactoringBundle.message("introduce.parameter.title"));
     init();
@@ -176,7 +177,7 @@ public class GrIntroduceParameterDialog extends RefactoringDialog implements GrI
 
   @Override
   protected JComponent createCenterPanel() {
-    final GridBag c = new GridBag().setDefaultAnchor(GridBagConstraints.WEST).setLine(3);
+    final GridBag c = new GridBag().setDefaultAnchor(GridBagConstraints.WEST).setLine(4);
     for (Object o : toRemoveCBs.keys()) {
       c.nextLine();
       myCheckBoxContainer.add(((JCheckBox)o), c);
