@@ -136,6 +136,10 @@ public class MethodCandidateInfo extends CandidateInfo{
                                      myArgumentList.getParent(), forCompletion);
   }
 
+  public boolean isInferencePossible() {
+    return myArgumentList.isValid();
+  }
+
   public static class ApplicabilityLevel {
     public static final int NOT_APPLICABLE = 1;
     public static final int VARARGS = 2;
