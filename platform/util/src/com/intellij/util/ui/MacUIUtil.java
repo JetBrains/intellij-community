@@ -33,6 +33,7 @@ public class MacUIUtil {
 
   public static final boolean USE_QUARTZ = "true".equals(System.getProperty("apple.awt.graphics.UseQuartz"));
   public static final String MAC_FILL_BORDER = "MAC_FILL_BORDER";
+  public static final int MAC_COMBO_BORDER_V_OFFSET = SystemInfo.isMacOSLion ? 1 : 0;
   private static Cursor INVERTED_TEXT_CURSOR;
 
   private MacUIUtil() {
@@ -176,7 +177,7 @@ public class MacUIUtil {
     g2d.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
                          USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
 
-    int _y = SystemInfo.isMacOSLion ? 1 : 0;
+    int _y = MAC_COMBO_BORDER_V_OFFSET;
     
     final GeneralPath path1 = new GeneralPath();
     path1.moveTo(2, _y + 4);

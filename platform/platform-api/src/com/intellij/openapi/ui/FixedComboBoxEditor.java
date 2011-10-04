@@ -16,6 +16,7 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -295,7 +296,7 @@ public class FixedComboBoxEditor implements ComboBoxEditor {
         bottomColor = new Color(200, 200, 200);
       }
 
-      int _y = y + (SystemInfo.isMacOSLion ? 1 : 0);
+      int _y = y + MacUIUtil.MAC_COMBO_BORDER_V_OFFSET;
       
       g.setColor(topColor);
       g.drawLine(x + 3, _y + 3, x + width - 1, _y + 3);
