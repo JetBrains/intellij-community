@@ -13,6 +13,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.arithmetic.GrRangeExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrRangeType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -85,6 +86,10 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
   @Nullable
   protected PsiType getClosureParameterType(GrClosableBlock closure, int index) {
     PsiElement parent = closure.getParent();
+    if (parent instanceof GrStringInjection && index == 0) {
+      return TypesUtil.createTypeByFQClassName(CommonClassNames.JAVA_LANG_STRING_BUILDER, closure);
+    }
+    
     if (parent instanceof GrArgumentList) parent = parent.getParent();
     if (!(parent instanceof GrMethodCall)) {
       return null;

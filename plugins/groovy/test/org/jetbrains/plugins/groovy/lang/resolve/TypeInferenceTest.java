@@ -243,6 +243,6 @@ public class TypeInferenceTest extends GroovyResolveTestCase {
   }
 
   public void testSingleParameterInStringInjection() {
-    assertTypeEquals("java.util.StringBuilder", "a.groovy");
+    assertTypeEquals("java.lang.StringBuilder", "a.groovy");
   }
 }
