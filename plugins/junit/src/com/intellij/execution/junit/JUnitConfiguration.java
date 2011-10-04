@@ -279,7 +279,7 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
   public void readExternal(final Element element) throws InvalidDataException {
     PathMacroManager.getInstance(getProject()).expandPaths(element);
     super.readExternal(element);
-    RunConfigurationExtension.readSettings(this, element);
+    JavaRunConfigurationExtensionManager.getInstance().readExternal(this, element);
     readModule(element);
     DefaultJDOMExternalizer.readExternal(this, element);
     DefaultJDOMExternalizer.readExternal(getPersistentData(), element);
@@ -309,7 +309,7 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
 
   public void writeExternal(final Element element) throws WriteExternalException {
     super.writeExternal(element);
-    RunConfigurationExtension.writeSettings(this, element);
+    JavaRunConfigurationExtensionManager.getInstance().writeExternal(this, element);
     writeModule(element);
     DefaultJDOMExternalizer.writeExternal(this, element);
     final Data persistentData = getPersistentData();

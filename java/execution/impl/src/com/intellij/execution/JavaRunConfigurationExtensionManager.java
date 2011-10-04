@@ -44,4 +44,14 @@ public class JavaRunConfigurationExtensionManager extends RunConfigurationExtens
       LOG.error(e);
     }
   }
+
+  @Override
+  protected String getIdAttrName() {
+    return "name";
+  }
+
+  @Override
+  protected String getExtensionRootAttr() {
+    return "extension";
+  }
 }

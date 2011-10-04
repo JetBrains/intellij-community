@@ -159,7 +159,7 @@ public abstract class MvcRunConfiguration extends ModuleBasedConfiguration<RunCo
     envs.clear();
     JDOMExternalizer.readMap(element, envs, null, "env");
 
-    RunConfigurationExtension.readSettings(this, element);
+    JavaRunConfigurationExtensionManager.getInstance().readExternal(this, element);
 
     depsClasspath = !"false".equals(JDOMExternalizer.readString(element, "depsClasspath"));
   }
@@ -173,7 +173,7 @@ public abstract class MvcRunConfiguration extends ModuleBasedConfiguration<RunCo
     JDOMExternalizer.writeMap(element, envs, null, "env");
     JDOMExternalizer.write(element, "passParentEnv", passParentEnv);
 
-    RunConfigurationExtension.writeSettings(this, element);
+    JavaRunConfigurationExtensionManager.getInstance().writeExternal(this, element);
 
     PathMacroManager.getInstance(getProject()).collapsePathsRecursively(element);
   }

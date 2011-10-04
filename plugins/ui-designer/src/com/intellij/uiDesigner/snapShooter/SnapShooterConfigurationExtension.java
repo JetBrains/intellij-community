@@ -106,7 +106,7 @@ public class SnapShooterConfigurationExtension extends RunConfigurationExtension
     return configuration instanceof ApplicationConfiguration;
   }
 
-  public void attachToProcess(final RunConfigurationBase configuration, final ProcessHandler handler, RunnerSettings runnerSettings) {
+  public void attachToProcess(@NotNull final RunConfigurationBase configuration, @NotNull final ProcessHandler handler, RunnerSettings runnerSettings) {
     SnapShooterConfigurationSettings settings = configuration.getUserData(SnapShooterConfigurationSettings.SNAP_SHOOTER_KEY);
     if (settings != null) {
       final Runnable runnable = settings.getNotifyRunnable();
@@ -122,7 +122,7 @@ public class SnapShooterConfigurationExtension extends RunConfigurationExtension
   }
 
   @Override
-  public SettingsEditor createEditor(RunConfigurationBase configuration) {
+  public SettingsEditor createEditor(@NotNull RunConfigurationBase configuration) {
     return null;
   }
 
@@ -131,26 +131,27 @@ public class SnapShooterConfigurationExtension extends RunConfigurationExtension
     return null;
   }
 
+  @NotNull
   @Override
   public String getSerializationId() {
     return "snapshooter";
   }
 
   @Override
-  public void readExternal(RunConfigurationBase runConfiguration, Element element) throws InvalidDataException {
+  public void readExternal(@NotNull RunConfigurationBase runConfiguration, @NotNull Element element) throws InvalidDataException {
   }
 
   @Override
-  public void writeExternal(RunConfigurationBase runConfiguration, Element element) throws WriteExternalException {
+  public void writeExternal(@NotNull RunConfigurationBase runConfiguration, @NotNull Element element) throws WriteExternalException {
     throw new WriteExternalException();
   }
 
   @Override
-  public void extendCreatedConfiguration(RunConfigurationBase runJavaConfiguration, Location location) {
+  public void extendCreatedConfiguration(@NotNull RunConfigurationBase runJavaConfiguration, @NotNull Location location) {
   }
 
   @Override
-  public void validateConfiguration(RunConfigurationBase runJavaConfiguration, boolean isExecution)
+  public void validateConfiguration(@NotNull RunConfigurationBase runJavaConfiguration, boolean isExecution)
     throws RuntimeConfigurationException {
 
   }

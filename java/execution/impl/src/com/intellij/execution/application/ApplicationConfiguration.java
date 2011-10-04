@@ -228,7 +228,7 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
   public void readExternal(final Element element) throws InvalidDataException {
     PathMacroManager.getInstance(getProject()).expandPaths(element);
     super.readExternal(element);
-    RunConfigurationExtension.readSettings(this, element);
+    JavaRunConfigurationExtensionManager.getInstance().readExternal(this, element);
     DefaultJDOMExternalizer.readExternal(this, element);
     readModule(element);
     EnvironmentVariablesComponent.readExternal(element, getEnvs());
@@ -236,7 +236,7 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
 
   public void writeExternal(final Element element) throws WriteExternalException {
     super.writeExternal(element);
-    RunConfigurationExtension.writeSettings(this, element);
+    JavaRunConfigurationExtensionManager.getInstance().writeExternal(this, element);
     DefaultJDOMExternalizer.writeExternal(this, element);
     writeModule(element);
     EnvironmentVariablesComponent.writeExternal(element, getEnvs());

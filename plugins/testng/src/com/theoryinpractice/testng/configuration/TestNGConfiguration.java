@@ -314,7 +314,7 @@ public class TestNGConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
   public void readExternal(Element element) throws InvalidDataException {
     PathMacroManager.getInstance(getProject()).expandPaths(element);
     super.readExternal(element);
-    RunConfigurationExtension.readSettings(this, element);
+    JavaRunConfigurationExtensionManager.getInstance().readExternal(this, element);
     readModule(element);
     DefaultJDOMExternalizer.readExternal(this, element);
     DefaultJDOMExternalizer.readExternal(getPersistantData(), element);
@@ -344,7 +344,7 @@ public class TestNGConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
   @Override
   public void writeExternal(Element element) throws WriteExternalException {
     super.writeExternal(element);
-    RunConfigurationExtension.writeSettings(this, element);
+    JavaRunConfigurationExtensionManager.getInstance().writeExternal(this, element);
     writeModule(element);
     DefaultJDOMExternalizer.writeExternal(this, element);
     DefaultJDOMExternalizer.writeExternal(getPersistantData(), element);

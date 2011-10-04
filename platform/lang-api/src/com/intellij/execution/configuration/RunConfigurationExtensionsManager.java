@@ -17,10 +17,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 /**
  * @author traff
@@ -37,7 +34,7 @@ public class RunConfigurationExtensionsManager<U extends RunConfigurationBase, T
 
   public void readExternal(@NotNull final U configuration,
                            @NotNull final Element parentNode) throws InvalidDataException {
-    final List<Element> children = parentNode.getChildren(EXTENSION_ROOT_ATTR);
+    final List<Element> children = parentNode.getChildren(getExtensionRootAttr());
     final Map<String, T> extensions = Maps.newHashMap();
     for (T extension : getApplicableExtensions(configuration)) {
       extensions.put(extension.getSerializationId(), extension);
@@ -48,7 +45,7 @@ public class RunConfigurationExtensionsManager<U extends RunConfigurationBase, T
     boolean found = true;
     for (Object o : children) {
       final Element element = (Element)o;
-      final String extensionName = element.getAttributeValue(EXT_ID_ATTR);
+      final String extensionName = element.getAttributeValue(getIdAttrName());
       final T extension = extensions.remove(extensionName);
       if (extension != null) {
         extension.readExternal(configuration, element);
@@ -62,20 +59,28 @@ public class RunConfigurationExtensionsManager<U extends RunConfigurationBase, T
     }
   }
 
+  protected String getIdAttrName() {
+    return EXT_ID_ATTR;
+  }
+
+  protected String getExtensionRootAttr() {
+    return EXTENSION_ROOT_ATTR;
+  }
+
   public void writeExternal(@NotNull final U configuration,
                             @NotNull final Element parentNode) throws WriteExternalException {
     final TreeMap<String, Element> map = Maps.newTreeMap();
     final List<Element> elements = configuration.getCopyableUserData(RUN_EXTENSIONS);
     if (elements != null) {
       for (Element el : elements) {
-        final String name = el.getAttributeValue(EXT_ID_ATTR);
+        final String name = el.getAttributeValue(getIdAttrName());
         map.put(name, (Element)el.clone());
       }
     }
 
     for (T extension : getApplicableExtensions(configuration)) {
-      Element el = new Element(EXTENSION_ROOT_ATTR);
-      el.setAttribute(EXT_ID_ATTR, extension.getSerializationId());
+      Element el = new Element(getExtensionRootAttr());
+      el.setAttribute(getIdAttrName(), extension.getSerializationId());
       extension.writeExternal(configuration, el);
       map.put(extension.getSerializationId(), el);
     }
