@@ -112,10 +112,24 @@ public final class InjectedLanguageBlockWrapper implements Block {
     return myOriginal.getWrap();
   }
 
-  @Nullable public Spacing getSpacing(Block child1, Block child2) {
-    if (child1 instanceof InjectedLanguageBlockWrapper) child1 = ((InjectedLanguageBlockWrapper)child1).myOriginal;
-    if (child2 instanceof InjectedLanguageBlockWrapper) child2 = ((InjectedLanguageBlockWrapper)child2).myOriginal;
-    return myOriginal.getSpacing(child1,  child2);
+  @Nullable public Spacing getSpacing(final Block child1, final Block child2) {
+    int shift = 0;
+    Block child1ToUse = child1;
+    Block child2ToUse = child2;
+    if (child1 instanceof InjectedLanguageBlockWrapper) {
+      child1ToUse = ((InjectedLanguageBlockWrapper)child1).myOriginal;
+      shift = child1.getTextRange().getStartOffset() - child1ToUse.getTextRange().getStartOffset();
+    }
+    if (child2 instanceof InjectedLanguageBlockWrapper) child2ToUse = ((InjectedLanguageBlockWrapper)child2).myOriginal;
+    Spacing spacing = myOriginal.getSpacing(child1ToUse, child2ToUse);
+    if (spacing instanceof DependantSpacingImpl && shift != 0) {
+      DependantSpacingImpl hostSpacing = (DependantSpacingImpl)spacing;
+      return new DependantSpacingImpl(
+        hostSpacing.getMinSpaces(), hostSpacing.getMaxSpaces(), hostSpacing.getDependency().shiftRight(shift),
+        hostSpacing.shouldKeepLineFeeds(), hostSpacing.getKeepBlankLines()
+      );
+    } 
+    return spacing;
   }
 
   @NotNull

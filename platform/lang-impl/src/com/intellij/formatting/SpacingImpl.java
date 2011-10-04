@@ -64,15 +64,15 @@ class SpacingImpl extends Spacing {
       (keepFirstColumn ? SHOULD_KEEP_FIRST_COLUMN_MASK:0);
   }
 
-  int getMinSpaces() {
+  public int getMinSpaces() {
     return myMinSpaces;
   }
 
-  int getMaxSpaces() {
+  public int getMaxSpaces() {
     return myMaxSpaces;
   }
 
-  int getMinLineFeeds() {
+  public int getMinLineFeeds() {
     return myMinLineFeeds;
   }
 

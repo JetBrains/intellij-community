@@ -40,7 +40,7 @@ public class DependantSpacingImpl extends SpacingImpl {
   /**
    * @return    <code>1</code> if dependency has line feeds; <code>0</code> otherwise
    */
-  int getMinLineFeeds() {
+  public int getMinLineFeeds() {
     if ((myFlags & DEPENDENCE_CONTAINS_LF_MASK) != 0) {
       return 1;
     }
