@@ -75,9 +75,9 @@ public class GdkMethodDslProvider implements GdslMembersProvider {
   }
 
   public static GdkMethodHolder retrieveMethodMap(final Project project,
-                                                              final GlobalSearchScope scope,
-                                                              final boolean isStatic,
-                                                              @NotNull final PsiClass categoryClass) {
+                                                  final GlobalSearchScope scope,
+                                                  final boolean isStatic,
+                                                  @NotNull final PsiClass categoryClass) {
     return CachedValuesManager.getManager(project)
       .getCachedValue(categoryClass, METHOD_KEY, new CachedValueProvider<GdkMethodHolder>() {
         @Override
@@ -86,7 +86,8 @@ public class GdkMethodDslProvider implements GdslMembersProvider {
 
           final ProjectRootManager rootManager = ProjectRootManager.getInstance(project);
           final VirtualFile vfile = categoryClass.getContainingFile().getVirtualFile();
-          if (vfile != null && (rootManager.getFileIndex().isInLibraryClasses(vfile) || rootManager.getFileIndex().isInLibrarySource(vfile))) {
+          if (vfile != null &&
+              (rootManager.getFileIndex().isInLibraryClasses(vfile) || rootManager.getFileIndex().isInLibrarySource(vfile))) {
             return Result.create(result, rootManager);
           }
 
@@ -94,7 +95,7 @@ public class GdkMethodDslProvider implements GdslMembersProvider {
         }
       }, false);
   }
-  
+
   private static class GdkMethodHolder {
     private final MultiMap<String, PsiMethod> originalMethodsByName;
     private final NotNullLazyValue<MultiMap<String, PsiMethod>> originalMethodByType;
@@ -110,7 +111,7 @@ public class GdkMethodDslProvider implements GdslMembersProvider {
       for (PsiMethod m : categoryClass.getMethods()) {
         final PsiParameter[] params = m.getParameterList().getParameters();
         if (params.length == 0) continue;
-        
+
         byName.putValue(m.getName(), m);
       }
       this.originalMethodsByName = byName;
@@ -121,7 +122,6 @@ public class GdkMethodDslProvider implements GdslMembersProvider {
           MultiMap<String, PsiMethod> map = new MultiMap<String, PsiMethod>();
           for (PsiMethod method : originalMethodsByName.values()) {
             map.putValue(getCategoryTargetType(method).getCanonicalText(), method);
-            
           }
           return map;
         }
@@ -142,7 +142,7 @@ public class GdkMethodDslProvider implements GdslMembersProvider {
       if (name != null) {
         for (PsiMethod method : originalMethodsByName.get(name)) {
           if (getCategoryTargetType(method).isAssignableFrom(psiType)) {
-            if (!processor.execute(new GrGdkMethodImpl(method, myStatic), state)) {
+            if (!processor.execute(GrGdkMethodImpl.createGdkMethod(method, myStatic), state)) {
               return false;
             }
           }
@@ -153,14 +153,13 @@ public class GdkMethodDslProvider implements GdslMembersProvider {
 
       for (String superType : ResolveUtil.getAllSuperTypes(psiType, descriptor.getProject()).keySet()) {
         for (PsiMethod method : originalMethodByType.getValue().get(superType)) {
-          if (!processor.execute(new GrGdkMethodImpl(method, myStatic), state)) {
+          if (!processor.execute(GrGdkMethodImpl.createGdkMethod(method, myStatic), state)) {
             return false;
           }
         }
       }
 
       return true;
-
     }
   }
 }

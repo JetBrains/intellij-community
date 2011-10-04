@@ -46,7 +46,8 @@ public final class GroovyCommonClassNames {
   @NonNls public static final String GROOVY_TRANSFORM_AUTO_EXTERNALIZE = "groovy.transform.AutoExternalize";
   @NonNls public static final String GROOVY_TRANSFORM_AUTO_CLONE = "groovy.transform.AutoClone";
   @NonNls public static final String GROOVY_LANG_CATEGORY = "groovy.lang.Category";
-  public static final String GROOVY_LANG_USE = "groovy.lang.Use";
+  @NonNls public static final String GROOVY_LANG_USE = "groovy.lang.Use";
+  @NonNls public static final String GROOVY_LANG_MIXIN = "groovy.lang.Mixin";
 
 
   private GroovyCommonClassNames() {

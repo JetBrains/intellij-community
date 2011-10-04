@@ -42,6 +42,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -75,12 +76,21 @@ public class ResolveUtil {
   private ResolveUtil() {
   }
 
+  /**
+   * 
+   * @param place - place to start tree walk up
+   * @param processor 
+   * @param processNonCodeMethods. this parameter tells us if we need non code members. But non code members are started to process only after we walk up any code block or script
+   * @return
+   */
   public static boolean treeWalkUp(@NotNull GroovyPsiElement place, PsiScopeProcessor processor, boolean processNonCodeMethods) {
     PsiElement lastParent = null;
     PsiElement run = place;
 
     final Project project = place.getProject();
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+    
+    boolean doProcessNonCodeMembers = false;
 
     while (run != null) {
       if (!run.processDeclarations(processor, ResolveState.initial(), lastParent, place)) return false;
@@ -89,18 +99,24 @@ public class ResolveUtil {
         if (superClass != null && !superClass.processDeclarations(processor, ResolveState.initial(), null, place)) return false;
       }
       if (processNonCodeMethods) {
-        if (run instanceof GrTypeDefinition) {
-          if (!processNonCodeMembers(factory.createType(((GrTypeDefinition)run)), processor, place)) return false;
+        if (!doProcessNonCodeMembers) {
+          if (run instanceof GrCodeBlock) doProcessNonCodeMembers = true;
+          else if (run instanceof GrStatement && run.getContext() instanceof GroovyFile) doProcessNonCodeMembers = true;
         }
-        else if ((run instanceof GroovyFileBase) && ((GroovyFileBase)run).isScript()) {
-          final PsiClass psiClass = ((GroovyFileBase)run).getScriptClass();
-          if (psiClass != null) {
-            if (!processNonCodeMembers(factory.createType(psiClass), processor, place)) return false;
+        if (doProcessNonCodeMembers) {
+          if (run instanceof GrTypeDefinition) {
+            if (!processNonCodeMembers(factory.createType(((GrTypeDefinition)run)), processor, place)) return false;
           }
-        }
-        else if (run instanceof GrClosableBlock) {
-          if (!GdkMethodUtil.categoryIteration((GrClosableBlock)run, processor)) return false;
-          if (!GdkMethodUtil.withIteration((GrClosableBlock)run, processor, place)) return false;
+          else if ((run instanceof GroovyFileBase) && ((GroovyFileBase)run).isScript()) {
+            final PsiClass psiClass = ((GroovyFileBase)run).getScriptClass();
+            if (psiClass != null) {
+              if (!processNonCodeMembers(factory.createType(psiClass), processor, place)) return false;
+            }
+          }
+          else if (run instanceof GrClosableBlock) {
+            if (!GdkMethodUtil.categoryIteration((GrClosableBlock)run, processor)) return false;
+            if (!GdkMethodUtil.withIteration((GrClosableBlock)run, processor, place)) return false;
+          }
         }
       }
       lastParent = run;

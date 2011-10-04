@@ -757,4 +757,43 @@ class Foo {
     assertInstanceOf(resolved, GrReflectedMethod)
     assertTrue(resolved.modifierList.hasModifierProperty(PsiModifier.STATIC))
   }
+
+  void testMixinAndCategory() {
+    def ref = configureByText("""
+@Category(B)
+class A {
+  def foo() {print getName()}
+}
+
+@Mixin(A)
+class B {
+  def getName('B');
+}
+
+print new B().f<caret>oo()
+""")
+
+    def resolved = ref.resolve()
+    assertInstanceOf(resolved, GrGdkMethod)
+    assertInstanceOf(resolved.staticMethod, GrReflectedMethod)
+  }
+
+  void testOnlyMixin() {
+    def ref = configureByText("""
+class A {
+  def foo() {print getName()}
+}
+
+@Mixin(A)
+class B {
+  def getName('B');
+}
+
+print new B().f<caret>oo()
+""")
+
+    def resolved = ref.resolve()
+    assertInstanceOf(resolved, GrMethod)
+    assertTrue(resolved.isPhysical())
+  }
 }
