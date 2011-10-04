@@ -16,10 +16,7 @@
 
 package com.intellij.execution.junit;
 
-import com.intellij.execution.JavaExecutionUtil;
-import com.intellij.execution.Location;
-import com.intellij.execution.RunConfigurationExtension;
-import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.*;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.Module;
@@ -47,7 +44,7 @@ public class TestClassConfigurationProducer extends JUnitConfigurationProducer {
     final Module originalModule = configuration.getConfigurationModule().getModule();
     configuration.beClassConfiguration(myTestClass);
     configuration.restoreOriginalModule(originalModule);
-    RunConfigurationExtension.patchCreatedConfiguration(configuration);
+    JavaRunConfigurationExtensionManager.getInstance().extendCreatedConfiguration(configuration, location);
     return settings;
   }
 

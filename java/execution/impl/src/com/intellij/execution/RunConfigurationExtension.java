@@ -22,44 +22,50 @@
  */
 package com.intellij.execution;
 
-import com.intellij.execution.configurations.*;
-import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.configuration.AbstractRunConfiguration;
+import com.intellij.execution.configuration.RunConfigurationExtensionBase;
+import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.execution.configurations.RunConfigurationBase;
+import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.options.SettingsEditor;
-import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
-import com.intellij.ui.LayeredIcon;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-public abstract class RunConfigurationExtension {
+public abstract class RunConfigurationExtension extends RunConfigurationExtensionBase<RunConfigurationBase>{
   public static final ExtensionPointName<RunConfigurationExtension> EP_NAME = new ExtensionPointName<RunConfigurationExtension>("com.intellij.runConfigurationExtension");
   public static final Key<List> RUN_EXTENSIONS = Key.create("run.extension.elemnts");
-  public abstract void handleStartProcess(final RunConfigurationBase configuration,
-                                          final OSProcessHandler handler,
-                                          RunnerSettings runnerSettings);
-  @Nullable  
-  public abstract SettingsEditor createEditor(RunConfigurationBase configuration);
-  public abstract String getEditorTitle();
-  public abstract String getName();
+
 
   public abstract <T extends RunConfigurationBase > void updateJavaParameters(final T configuration, final JavaParameters params, RunnerSettings runnerSettings);
 
-  protected abstract void readExternal(RunConfigurationBase runConfiguration, Element element) throws InvalidDataException;
-  protected abstract void writeExternal(RunConfigurationBase runConfiguration, Element element) throws WriteExternalException;
-  public abstract void patchConfiguration(RunConfigurationBase runJavaConfiguration);
-  public abstract void checkConfiguration(RunConfigurationBase runJavaConfiguration) throws RuntimeConfigurationException;
+
+  @Override
+  protected void patchCommandLine(@NotNull RunConfigurationBase configuration,
+                                  RunnerSettings runnerSettings,
+                                  @NotNull GeneralCommandLine cmdLine,
+                                  @NotNull AbstractRunConfiguration.RunnerType type) {}
+
+  @Override
+  protected boolean isEnabledFor(@NotNull RunConfigurationBase applicableConfiguration, @Nullable RunnerSettings runnerSettings) {
+    return true;
+  }
+
+  @Override
+  protected void extendTemplateConfiguration(@NotNull RunConfigurationBase configuration) {
+  }
 
   public void cleanUserData(RunConfigurationBase runConfigurationBase) {}
 
@@ -84,22 +90,12 @@ public abstract class RunConfigurationExtension {
     return listener;
   }
 
-  public static  void appendEditors(RunConfigurationBase configuration, SettingsEditorGroup group) {
-    for (RunConfigurationExtension extension : Extensions.getExtensions(EP_NAME)) {
-      final SettingsEditor editor = extension.createEditor(configuration);
-      if (editor != null) {
-        group.addEditor(extension.getEditorTitle(), editor);
-      }
-    }
-  }
-
-
 
   public static void readSettings(RunConfigurationBase runConfiguration, Element parentNode) throws InvalidDataException {
     final List children = parentNode.getChildren("extension");
     final Map<String, RunConfigurationExtension> extensions = new HashMap<String, RunConfigurationExtension>();
     for (RunConfigurationExtension extension : Extensions.getExtensions(EP_NAME)) {
-      extensions.put(extension.getName(), extension);
+      extensions.put(extension.getSerializationId(), extension);
     }
     for (Object o : children) {
       final Element element = (Element)o;
@@ -128,15 +124,15 @@ public abstract class RunConfigurationExtension {
 
     for (RunConfigurationExtension extension : Extensions.getExtensions(EP_NAME)) {
       Element el = new Element("extension");
-      el.setAttribute("name", extension.getName());
+      el.setAttribute("name", extension.getSerializationId());
       try {
         extension.writeExternal(runConfiguration, el);
       }
       catch (WriteExternalException e) {
-        map.remove(extension.getName());
+        map.remove(extension.getSerializationId());
         continue;
       }
-      map.put(extension.getName(), el);
+      map.put(extension.getSerializationId(), el);
     }
 
     for (Element val : map.values()) {
@@ -144,18 +140,6 @@ public abstract class RunConfigurationExtension {
     }
   }
 
-
-  public static void patchCreatedConfiguration(RunConfigurationBase configuration) {
-    for (RunConfigurationExtension extension : Extensions.getExtensions(EP_NAME)) {
-      extension.patchConfiguration(configuration);
-    }
-  }
-
-  public static void checkConfigurationIsValid(RunConfigurationBase configuration) throws RuntimeConfigurationException {
-    for (RunConfigurationExtension extension : Extensions.getExtensions(EP_NAME)) {
-      extension.checkConfiguration(configuration);
-    }
-  }
 
   public  boolean isListenerDisabled(RunConfigurationBase configuration, Object listener) {
     return false;

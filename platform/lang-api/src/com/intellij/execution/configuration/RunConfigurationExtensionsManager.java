@@ -3,6 +3,7 @@ package com.intellij.execution.configuration;
 import com.google.common.collect.Maps;
 import com.intellij.execution.Location;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -24,7 +25,7 @@ import java.util.TreeMap;
 /**
  * @author traff
  */
-public class RunConfigurationExtensionsManager<U extends AbstractRunConfiguration, T extends RunConfigurationExtension<U>> {
+public class RunConfigurationExtensionsManager<U extends RunConfigurationBase, T extends RunConfigurationExtensionBase<U>> {
   public static final Key<List<Element>> RUN_EXTENSIONS = Key.create("run.extension.elements");
   private static final String EXT_ID_ATTR = "ID";
   private static final String EXTENSION_ROOT_ATTR = "EXTENSION";

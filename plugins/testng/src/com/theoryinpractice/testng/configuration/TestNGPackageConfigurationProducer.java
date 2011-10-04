@@ -15,11 +15,10 @@
  */
 package com.theoryinpractice.testng.configuration;
 
+import com.intellij.execution.JavaRunConfigurationExtensionManager;
 import com.intellij.execution.Location;
-import com.intellij.execution.RunConfigurationExtension;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
-import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
@@ -59,7 +58,7 @@ public class TestNGPackageConfigurationProducer extends TestNGConfigurationProdu
     data.TEST_OBJECT = TestType.PACKAGE.getType();
     data.setScope(setupPackageConfiguration(context, project, configuration, data.getScope()));
     configuration.setGeneratedName();
-    RunConfigurationExtension.patchCreatedConfiguration(configuration);
+    JavaRunConfigurationExtensionManager.getInstance().extendCreatedConfiguration(configuration, location);
     return settings;
   }
 

@@ -85,7 +85,7 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     SettingsEditorGroup<JUnitConfiguration> group = new SettingsEditorGroup<JUnitConfiguration>();
     group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"), new JUnitConfigurable(getProject()));
-    RunConfigurationExtension.appendEditors(this, group);
+    JavaRunConfigurationExtensionManager.getInstance().appendEditors(this, group);
     group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<JUnitConfiguration>());
     return group;
   }
@@ -105,7 +105,7 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
 
   public void checkConfiguration() throws RuntimeConfigurationException {
     myData.getTestObject(getProject(), this).checkConfiguration();
-    RunConfigurationExtension.checkConfigurationIsValid(this);
+    JavaRunConfigurationExtensionManager.checkConfigurationIsValid(this);
   }
 
   public Collection<Module> getValidModules() {

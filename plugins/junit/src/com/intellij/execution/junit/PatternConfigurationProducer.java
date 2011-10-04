@@ -16,8 +16,8 @@
 
 package com.intellij.execution.junit;
 
+import com.intellij.execution.JavaRunConfigurationExtensionManager;
 import com.intellij.execution.Location;
-import com.intellij.execution.RunConfigurationExtension;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -47,7 +47,7 @@ public class PatternConfigurationProducer extends JUnitConfigurationProducer {
     data.TEST_OBJECT = JUnitConfiguration.TEST_PATTERN;
     data.setScope(setupPackageConfiguration(context, project, configuration, data.getScope()));
     configuration.setGeneratedName();
-    RunConfigurationExtension.patchCreatedConfiguration(configuration);
+    JavaRunConfigurationExtensionManager.getInstance().extendCreatedConfiguration(configuration, location);
     return settings;
   }
 

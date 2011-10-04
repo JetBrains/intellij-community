@@ -697,5 +697,5 @@
 
   <editorTabTitleProvider implementation="com.intellij.openapi.fileEditor.impl.UniqueNameEditorTabTitleProvider"/>
   <fileDocumentManagerListener implementation="com.intellij.openapi.fileEditor.impl.TrailingSpacesStripper"/>
-
+  <applicationService serviceImplementation="com.intellij.execution.JavaRunConfigurationExtensionManager"/>
 </extensions>

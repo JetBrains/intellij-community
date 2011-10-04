@@ -54,24 +54,24 @@ public class ApplicationConfigurationProducer extends JavaRuntimeConfigurationPr
       final PsiClass aClass = method.getContainingClass();
       if (ConfigurationUtil.MAIN_CLASS.value(aClass)) {
         myPsiElement = method;
-        return createConfiguration(aClass, context);
+        return createConfiguration(aClass, context, location);
       }
       currentElement = method.getParent();
     }
     final PsiClass aClass = ApplicationConfigurationType.getMainClass(element);
     if (aClass == null) return null;
     myPsiElement = aClass;
-    return createConfiguration(aClass, context);
+    return createConfiguration(aClass, context, location);
   }
 
-  private RunnerAndConfigurationSettings createConfiguration(final PsiClass aClass, final ConfigurationContext context) {
+  private RunnerAndConfigurationSettings createConfiguration(final PsiClass aClass, final ConfigurationContext context, Location location) {
     final Project project = aClass.getProject();
     RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(project, context);
     final ApplicationConfiguration configuration = (ApplicationConfiguration)settings.getConfiguration();
     configuration.MAIN_CLASS_NAME = JavaExecutionUtil.getRuntimeQualifiedName(aClass);
     configuration.setName(configuration.getGeneratedName());
     setupConfigurationModule(context, configuration);
-    RunConfigurationExtension.patchCreatedConfiguration(configuration);
+    JavaRunConfigurationExtensionManager.getInstance().extendCreatedConfiguration(configuration, location);
     return settings;
   }
 

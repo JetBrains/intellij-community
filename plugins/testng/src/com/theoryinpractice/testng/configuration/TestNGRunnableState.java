@@ -131,9 +131,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
     console.initUI();
     unboundOutputRoot.setPrinter(console.getPrinter());
     Disposer.register(console, unboundOutputRoot);
-    for (RunConfigurationExtension ext : Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
-      ext.handleStartProcess(config, processHandler, runnerSettings);
-    }
+    JavaRunConfigurationExtensionManager.getInstance().attachExtensionsToProcess(config, processHandler, runnerSettings);
     final SearchingForTestsTask task = createSearchingForTestsTask(myServerSocket, config, myTempFile);
     processHandler.addProcessListener(new ProcessAdapter() {
       @Override

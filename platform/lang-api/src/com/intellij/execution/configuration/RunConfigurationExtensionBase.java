@@ -17,6 +17,7 @@ package com.intellij.execution.configuration;
 
 import com.intellij.execution.Location;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.options.SettingsEditor;
@@ -26,12 +27,10 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-
 /**
  * @author traff
  */
-public abstract class RunConfigurationExtension<T extends AbstractRunConfiguration> {
+public abstract class RunConfigurationExtensionBase<T extends RunConfigurationBase> {
   @NotNull
   protected abstract String getSerializationId();
 

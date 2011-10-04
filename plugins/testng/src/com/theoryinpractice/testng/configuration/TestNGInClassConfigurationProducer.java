@@ -20,10 +20,7 @@
  */
 package com.theoryinpractice.testng.configuration;
 
-import com.intellij.execution.Location;
-import com.intellij.execution.PsiLocation;
-import com.intellij.execution.RunConfigurationExtension;
-import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.*;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -80,7 +77,7 @@ public class TestNGInClassConfigurationProducer extends TestNGConfigurationProdu
 
     configuration.restoreOriginalModule(originalModule);
     settings.setName(configuration.getName());
-    RunConfigurationExtension.patchCreatedConfiguration(configuration);
+    JavaRunConfigurationExtensionManager.getInstance().extendCreatedConfiguration(configuration, location);
     return settings;
   }
 

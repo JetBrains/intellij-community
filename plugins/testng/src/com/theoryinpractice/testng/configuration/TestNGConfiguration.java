@@ -29,7 +29,6 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.junit.RefactoringListeners;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.SourceScope;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
@@ -265,7 +264,7 @@ public class TestNGConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     SettingsEditorGroup<TestNGConfiguration> group = new SettingsEditorGroup<TestNGConfiguration>();
     group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"), new TestNGConfigurationEditor(getProject()));
-    RunConfigurationExtension.appendEditors(this, group);
+    JavaRunConfigurationExtensionManager.getInstance().appendEditors(this, group);
     group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<TestNGConfiguration>());
     return group;
   }
@@ -307,7 +306,7 @@ public class TestNGConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
         throw new RuntimeConfigurationException("Unable to parse '" + data.getSuiteName() + "' specified");
       }
     }
-    RunConfigurationExtension.checkConfigurationIsValid(this);
+    JavaRunConfigurationExtensionManager.checkConfigurationIsValid(this);
     //TODO add various checks here
   }
 

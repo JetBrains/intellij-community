@@ -84,7 +84,7 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     SettingsEditorGroup<ApplicationConfiguration> group = new SettingsEditorGroup<ApplicationConfiguration>();
     group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"), new ApplicationConfigurable(getProject()));
-    RunConfigurationExtension.appendEditors(this, group);
+    JavaRunConfigurationExtensionManager.getInstance().appendEditors(this, group);
     group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<ApplicationConfiguration>());
     return group;
   }
@@ -147,7 +147,7 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
       throw new RuntimeConfigurationWarning(ExecutionBundle.message("main.method.not.found.in.class.error.message", MAIN_CLASS_NAME));
     }
 
-    RunConfigurationExtension.checkConfigurationIsValid(this);
+    JavaRunConfigurationExtensionManager.checkConfigurationIsValid(this);
   }
 
   public void setVMParameters(String value) {
@@ -267,10 +267,7 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     protected OSProcessHandler startProcess() throws ExecutionException {
       final OSProcessHandler handler = super.startProcess();
       RunnerSettings runnerSettings = getRunnerSettings();
-      for(RunConfigurationExtension ext: Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
-        ext.handleStartProcess(ApplicationConfiguration.this, handler, runnerSettings);
-      }
-
+      JavaRunConfigurationExtensionManager.getInstance().attachExtensionsToProcess(ApplicationConfiguration.this, handler, runnerSettings);
       return handler;
     }
   }

@@ -16,8 +16,8 @@
 
 package com.intellij.execution.junit;
 
+import com.intellij.execution.JavaRunConfigurationExtensionManager;
 import com.intellij.execution.Location;
-import com.intellij.execution.RunConfigurationExtension;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.openapi.module.Module;
@@ -41,7 +41,7 @@ public class TestMethodConfigurationProducer extends JUnitConfigurationProducer 
     final Module originalModule = configuration.getConfigurationModule().getModule();
     configuration.beMethodConfiguration(myMethodLocation);
     configuration.restoreOriginalModule(originalModule);
-    RunConfigurationExtension.patchCreatedConfiguration(configuration);
+    JavaRunConfigurationExtensionManager.getInstance().extendCreatedConfiguration(configuration, location);
     return settings;
   }
 

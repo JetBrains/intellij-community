@@ -16,15 +16,16 @@
 
 package com.intellij.uiDesigner.snapShooter;
 
+import com.intellij.execution.Location;
 import com.intellij.execution.RunConfigurationExtension;
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
-import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.components.BaseComponent;
@@ -44,6 +45,7 @@ import com.jgoodies.forms.layout.FormLayout;
 import gnu.trove.THashMap;
 import org.jdom.Document;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.Set;
@@ -55,7 +57,7 @@ import java.util.TreeSet;
 public class SnapShooterConfigurationExtension extends RunConfigurationExtension {
   @Override
   public void updateJavaParameters(RunConfigurationBase configuration, JavaParameters params, RunnerSettings runnerSettings) {
-    if (!(configuration instanceof ApplicationConfiguration)) {
+    if (!isApplicableFor(configuration)) {
       return;
     }
     ApplicationConfiguration appConfiguration = (ApplicationConfiguration) configuration;
@@ -100,7 +102,11 @@ public class SnapShooterConfigurationExtension extends RunConfigurationExtension
     }
   }
 
-  public void handleStartProcess(final RunConfigurationBase configuration, final OSProcessHandler handler, RunnerSettings runnerSettings) {
+  protected boolean isApplicableFor(@NotNull RunConfigurationBase configuration) {
+    return configuration instanceof ApplicationConfiguration;
+  }
+
+  public void attachToProcess(final RunConfigurationBase configuration, final ProcessHandler handler, RunnerSettings runnerSettings) {
     SnapShooterConfigurationSettings settings = configuration.getUserData(SnapShooterConfigurationSettings.SNAP_SHOOTER_KEY);
     if (settings != null) {
       final Runnable runnable = settings.getNotifyRunnable();
@@ -126,13 +132,12 @@ public class SnapShooterConfigurationExtension extends RunConfigurationExtension
   }
 
   @Override
-  public String getName() {
+  public String getSerializationId() {
     return "snapshooter";
   }
 
   @Override
   public void readExternal(RunConfigurationBase runConfiguration, Element element) throws InvalidDataException {
-
   }
 
   @Override
@@ -141,11 +146,11 @@ public class SnapShooterConfigurationExtension extends RunConfigurationExtension
   }
 
   @Override
-  public void patchConfiguration(RunConfigurationBase runJavaConfiguration) {
+  public void extendCreatedConfiguration(RunConfigurationBase runJavaConfiguration, Location location) {
   }
 
   @Override
-  public void checkConfiguration(RunConfigurationBase runJavaConfiguration)
+  public void validateConfiguration(RunConfigurationBase runJavaConfiguration, boolean isExecution)
     throws RuntimeConfigurationException {
 
   }
