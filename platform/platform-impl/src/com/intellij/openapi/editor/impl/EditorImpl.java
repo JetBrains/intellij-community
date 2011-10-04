@@ -312,6 +312,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       public void attributesChanged(@NotNull RangeHighlighterEx highlighter) {
         int textLength = myDocument.getTextLength();
+        if (textLength == 0) return;
+
         int start = Math.min(Math.max(highlighter.getAffectedAreaStartOffset(), 0), textLength - 1);
         int end = Math.min(Math.max(highlighter.getAffectedAreaEndOffset(), 0), textLength - 1);
 
