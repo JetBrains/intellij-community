@@ -3,11 +3,15 @@ package de.plushnikov.intellij.lombok.processor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import de.plushnikov.intellij.lombok.UserMapKeys;
 import de.plushnikov.intellij.lombok.problem.LombokProblem;
 import de.plushnikov.intellij.lombok.problem.ProblemNewBuilder;
 import de.plushnikov.intellij.lombok.quickfix.PsiQuickFixFactory;
@@ -56,8 +60,12 @@ public class SynchronizedProcessor extends AbstractLombokProcessor {
               problemNewBuilder.addWarning(String.format("Synchronization on a non-final field %s.", lockFieldName),
                   PsiQuickFixFactory.createModifierListFix(lockField, PsiModifier.FINAL, true, false));
             }
+            UserMapKeys.addReadUsageFor(lockField);
           } else {
-            problemNewBuilder.addError(String.format("The field %s does not exist.", lockFieldName));  //TODO add QuickFix for creating this field
+            final PsiClassType javaLangObjectType = PsiType.getJavaLangObject(containingClass.getManager(), GlobalSearchScope.allScope(containingClass.getProject()));
+
+            problemNewBuilder.addError(String.format("The field %s does not exist.", lockFieldName),
+                PsiQuickFixFactory.createNewFieldFix(containingClass, lockFieldName, javaLangObjectType, "new Object()", PsiModifier.PRIVATE, PsiModifier.FINAL));
           }
         }
       }
