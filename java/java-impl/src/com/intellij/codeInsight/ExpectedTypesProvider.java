@@ -994,7 +994,7 @@ public class ExpectedTypesProvider {
       PsiType parameterType = getParameterType(parameter, substitutor);
 
       TailType tailType = getMethodArgumentTailType(argument, index, method, substitutor, parameters);
-      PsiType defaultType = getDefaultType(method, substitutor, parameterType, argument, args);
+      PsiType defaultType = getDefaultType(method, substitutor, parameterType, argument, args, index);
 
       ExpectedTypeInfoImpl info = createInfoImpl(parameterType, ExpectedTypeInfo.TYPE_OR_SUBTYPE, defaultType, tailType);
       info.setInsertExplicitTypeParams(true);
@@ -1053,7 +1053,7 @@ public class ExpectedTypesProvider {
 
     @Nullable
     private static PsiType getDefaultType(final PsiMethod method, final PsiSubstitutor substitutor, final PsiType parameterType,
-                                          final PsiExpression argument, PsiExpression[] args) {
+                                          final PsiExpression argument, PsiExpression[] args, int index) {
       final PsiClass containingClass = method.getContainingClass();
       if (containingClass == null) return parameterType;
 
@@ -1094,10 +1094,17 @@ public class ExpectedTypesProvider {
         });
         if (type != null) return type;
       }
-      if (("assertEquals".equals(name) || "assertSame".equals(name)) && method.getParameterList().getParametersCount() == 2 && args.length == 2) {
-        ExpectedTypeInfo info = getEqualsType(args[0] == argument ? args[1] : args[0]);
-        if (info != null && parameterType.isAssignableFrom(info.getDefaultType())) {
-          return info.getDefaultType();
+      int argCount = Math.max(index + 1, args.length);
+      if ("assertEquals".equals(name) || "assertSame".equals(name) && method.getParameterList().getParametersCount() == argCount) {
+        if (argCount == 2 ||
+            argCount == 3 && method.getParameterList().getParameters()[0].getType().equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+          int other = index == argCount - 1 ? index - 1 : index + 1;
+          if (args.length > other) {
+            ExpectedTypeInfo info = getEqualsType(args[other]);
+            if (info != null && parameterType.isAssignableFrom(info.getDefaultType())) {
+              return info.getDefaultType();
+            }
+          }
         }
       }
       return parameterType;

@@ -62,8 +62,8 @@ public class ChangeToAppendFix implements IntentionAction {
     return JavaTokenType.PLUSEQ == myTokenType &&
            myAssignmentExpression.isValid() &&
            myAssignmentExpression.getManager().isInProject(myAssignmentExpression) &&
-           myRhsType.equalsToText("java.lang.String") &&
-           (myLhsType.equalsToText("java.lang.StringBuilder") || myLhsType.equalsToText("java.lang.StringBuffer"));
+           myRhsType.equalsToText(CommonClassNames.JAVA_LANG_STRING) &&
+           (myLhsType.equalsToText(CommonClassNames.JAVA_LANG_STRING_BUILDER) || myLhsType.equalsToText(CommonClassNames.JAVA_LANG_STRING_BUFFER));
   }
 
   @Override

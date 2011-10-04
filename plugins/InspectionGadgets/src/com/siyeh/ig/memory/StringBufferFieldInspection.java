@@ -54,7 +54,7 @@ public class StringBufferFieldInspection extends BaseInspection {
       super.visitField(field);
       final PsiType type = field.getType();
       if (!type.equalsToText(CommonClassNames.JAVA_LANG_STRING_BUFFER) &&
-          !type.equalsToText("java.lang.StringBuilder")) {
+          !type.equalsToText(CommonClassNames.JAVA_LANG_STRING_BUILDER)) {
         return;
       }
       registerFieldError(field, type);

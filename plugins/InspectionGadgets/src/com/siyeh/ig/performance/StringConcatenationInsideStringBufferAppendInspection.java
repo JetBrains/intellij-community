@@ -111,7 +111,7 @@ public class StringConcatenationInsideStringBufferAppendInspection
           else {
             useStringValueOf = !qualifiedName.equals(
               CommonClassNames.JAVA_LANG_STRING_BUFFER) &&
-                               !qualifiedName.equals("java.lang.StringBuilder");
+                               !qualifiedName.equals(CommonClassNames.JAVA_LANG_STRING_BUILDER);
           }
         }
       }
@@ -245,7 +245,7 @@ public class StringConcatenationInsideStringBufferAppendInspection
       }
       final String className = containingClass.getQualifiedName();
       if (CommonClassNames.JAVA_LANG_STRING_BUFFER.equals(className) ||
-          "java.lang.StringBuilder".equals(className)) {
+          CommonClassNames.JAVA_LANG_STRING_BUILDER.equals(className)) {
         registerMethodCallError(expression, containingClass);
         return;
       }

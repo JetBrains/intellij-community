@@ -193,7 +193,7 @@ public class MismatchedStringBuilderQueryUpdateInspection
       }
       final PsiClass aClass = (PsiClass)target;
       final String qualifiedName = aClass.getQualifiedName();
-      if (!"java.lang.StringBuilder".equals(qualifiedName) &&
+      if (!CommonClassNames.JAVA_LANG_STRING_BUILDER.equals(qualifiedName) &&
           !"java.lang.StringBuffer".equals(qualifiedName)) {
         return false;
       }

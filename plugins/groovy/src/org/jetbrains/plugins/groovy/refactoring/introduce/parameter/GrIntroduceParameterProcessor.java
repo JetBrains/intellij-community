@@ -312,8 +312,8 @@ public class GrIntroduceParameterProcessor extends BaseRefactoringProcessor impl
     final GrOpenBlock block = factory.createMethodFromText(call.toString()).getBlock();
 
     result.getBlock().replace(block);
-    final PsiElement parent = myContext.toReplaceIn.getParent();
-    return (GrMethod)parent.addBefore(result, myContext.toReplaceIn);
+    final PsiElement parent = prototype.getParent();
+    return (GrMethod)parent.addBefore(result, prototype);
   }
 
   private void processChangedMethodCall(PsiElement element) {

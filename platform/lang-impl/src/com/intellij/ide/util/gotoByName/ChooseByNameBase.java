@@ -19,6 +19,7 @@ package com.intellij.ide.util.gotoByName;
 import com.intellij.Patches;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
+import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.CopyReferenceAction;
 import com.intellij.ide.ui.UISettings;
@@ -1623,16 +1624,22 @@ public abstract class ChooseByNameBase {
       presentation.setCodeUsagesString(pattern);
       presentation.setTabName(pattern);
       presentation.setTabText(pattern);
+      presentation.setTargetsNodeText("Unsorted " + StringUtil.toLowerCase(pattern.toLowerCase()));
       final PsiElement[] elements = getElements();
-      final UsageInfo[] usages = new UsageInfo[elements.length];
-      for (int i = 0; i < elements.length; i++) {
-        usages[i] = new UsageInfo(elements[i]);
+      final List<UsageInfo> usageInfos = new ArrayList<UsageInfo>();
+      final List<PsiElement> targets = new ArrayList<PsiElement>();
+      for (PsiElement element : elements) {
+        if (element.getTextRange() != null) {
+          usageInfos.add(new UsageInfo(element));
+        } else {
+          targets.add(element);
+        }
       }
       final UsageInfoToUsageConverter.TargetElementsDescriptor descriptor =
         new UsageInfoToUsageConverter.TargetElementsDescriptor(elements);
       final UsageViewImpl usageView =
-        (UsageViewImpl)UsageViewManager.getInstance(myProject).showUsages(UsageTarget.EMPTY_ARRAY, UsageInfoToUsageConverter.convert(
-          descriptor, usages), presentation);
+        (UsageViewImpl)UsageViewManager.getInstance(myProject).showUsages(targets.isEmpty() ? UsageTarget.EMPTY_ARRAY : PsiElement2UsageTargetAdapter.convert(targets.toArray(new PsiElement[targets.size()])),
+                                                                          UsageInfoToUsageConverter.convert(descriptor, usageInfos.toArray(new UsageInfo[usageInfos.size()])), presentation);
       if (myListModel.contains(EXTRA_ELEM)) { //start searching for the rest
         final String text = myTextField.getText();
         final boolean checkboxState = myCheckBox.isSelected();

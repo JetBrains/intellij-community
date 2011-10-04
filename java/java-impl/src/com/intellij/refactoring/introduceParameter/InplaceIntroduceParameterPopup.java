@@ -34,6 +34,7 @@ import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.usageView.UsageInfo;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntProcedure;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -151,7 +152,7 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
 
 
   @Override
-  protected void saveSettings(PsiVariable psiVariable) {
+  protected void saveSettings(@NotNull PsiVariable psiVariable) {
     myPanel.saveSettings(JavaRefactoringSettings.getInstance());
   }
 

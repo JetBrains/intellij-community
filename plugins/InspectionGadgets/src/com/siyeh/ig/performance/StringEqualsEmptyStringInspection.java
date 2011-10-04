@@ -154,7 +154,7 @@ public class StringEqualsEmptyStringInspection extends BaseInspection {
       if (HardcodedMethodConstants.TO_STRING.equals(referenceName) &&
           type != null && (type.equalsToText(
         CommonClassNames.JAVA_LANG_STRING_BUFFER) ||
-                           type.equalsToText("java.lang.StringBuilder"))) {
+                           type.equalsToText(CommonClassNames.JAVA_LANG_STRING_BUILDER))) {
         return qualifierExpression.getText();
       }
       else {
