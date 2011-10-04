@@ -1,5 +1,6 @@
 package org.jetbrains.ether.dependencyView;
 
+import groovyjarjarasm.asm.Opcodes;
 import org.jetbrains.ether.RW;
 
 import java.io.BufferedReader;
@@ -67,6 +68,21 @@ public abstract class Proto implements RW.Writable {
             @Override
             public int removedModifiers() {
                 return ~access & past.access;
+            }
+
+            @Override
+            public boolean packageLocalOn() {
+                return
+                        ((past.access & Opcodes.ACC_PRIVATE) != 0 ||
+                                (past.access & Opcodes.ACC_PUBLIC) != 0 ||
+                                (past.access & Opcodes.ACC_PROTECTED) != 0
+                        )
+
+                                &&
+
+                                ((access & Opcodes.ACC_PRIVATE) == 0 &&
+                                        (access & Opcodes.ACC_PROTECTED) == 0 &&
+                                        (access & Opcodes.ACC_PUBLIC) == 0);
             }
         };
     }

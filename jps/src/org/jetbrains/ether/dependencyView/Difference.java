@@ -111,4 +111,5 @@ public abstract class Difference {
     public abstract boolean no();
     public abstract int addedModifiers ();
     public abstract int removedModifiers ();
+    public abstract boolean packageLocalOn();
 }

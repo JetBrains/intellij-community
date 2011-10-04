@@ -69,6 +69,11 @@ public class MethodRepr extends ProtoMember {
             public int base() {
                 return diff.base();
             }
+
+            @Override
+            public boolean packageLocalOn() {
+                return diff.packageLocalOn();
+            }
         };
     }
 

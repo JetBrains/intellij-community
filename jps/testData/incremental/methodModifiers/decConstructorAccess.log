@@ -1,0 +1,24 @@
+Request to make modules:
+module DecConstructorAccess
+End of request
+digraph X {
+  DecConstructorAccess[label="DecConstructorAccess"];
+}
+digraph X {
+  DecConstructorAccess[label="DecConstructorAccess"];
+}
+Propagated modules:
+module DecConstructorAccess
+End of propagated
+Cleaning output files:
+out/production/DecConstructorAccess/impl/Server.class
+End of files
+Compiling files:
+src/impl/Server.java
+End of files
+Cleaning output files:
+out/production/DecConstructorAccess/Client.class
+End of files
+Compiling files:
+src/Client.java
+End of files

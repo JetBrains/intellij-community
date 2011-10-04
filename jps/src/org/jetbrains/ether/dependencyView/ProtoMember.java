@@ -132,6 +132,11 @@ public abstract class ProtoMember extends Proto {
             public int removedModifiers() {
                 return diff.removedModifiers();
             }
+
+            @Override
+            public boolean packageLocalOn() {
+                return diff.packageLocalOn();
+            }
         };
     }
 }

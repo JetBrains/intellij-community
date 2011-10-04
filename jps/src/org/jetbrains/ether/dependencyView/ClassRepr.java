@@ -43,8 +43,6 @@ public class ClassRepr extends Proto {
 
         public abstract boolean retentionChanged();
 
-        public abstract boolean packageLocalOn();
-
         public abstract boolean extendsAdded ();
 
         public boolean no() {
@@ -78,17 +76,7 @@ public class ClassRepr extends Proto {
 
             @Override
             public boolean packageLocalOn() {
-                return
-                        ((past.access & Opcodes.ACC_PRIVATE) != 0 ||
-                                (past.access & Opcodes.ACC_PUBLIC) != 0 ||
-                                (past.access & Opcodes.ACC_PROTECTED) != 0
-                        )
-
-                                &&
-
-                                ((access & Opcodes.ACC_PRIVATE) == 0 &&
-                                        (access & Opcodes.ACC_PROTECTED) == 0 &&
-                                        (access & Opcodes.ACC_PUBLIC) == 0);
+                return diff.packageLocalOn();
             }
 
             @Override

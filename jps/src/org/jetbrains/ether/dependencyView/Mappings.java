@@ -164,6 +164,15 @@ public class Mappings {
         }
     }
 
+    private void affectMethodUsages(final MethodRepr method, final Collection<StringCache.S> subclasses, final UsageRepr.Usage rootUsage, final Set<UsageRepr.Usage> affectedUsages, final Set<StringCache.S> dependents) {
+        affectedUsages.add(rootUsage);
+
+        for (StringCache.S p : subclasses) {
+            dependents.addAll(fileToFileDependency.foxyGet(classToSourceFile.get(p)));
+            affectedUsages.add(method.createUsage(p));
+        }
+    }
+
     private void affectAll(final StringCache.S fileName, final Set<StringCache.S> affectedFiles) {
         final Set<StringCache.S> dependants = (Set<StringCache.S>) fileToFileDependency.foxyGet(fileName);
 
@@ -303,6 +312,10 @@ public class Mappings {
                 }
 
                 for (MethodRepr m : diff.methods().removed()) {
+                    final Collection<StringCache.S> propagated = propagateMethodAccess(m.name, it.name);
+
+                    affectMethodUsages(m, propagated, m.createUsage(it.name), affectedUsages, dependants);
+
                     affectedUsages.add(m.createUsage(it.name));
                 }
 
@@ -317,14 +330,44 @@ public class Mappings {
                             annotationQuery.add((UsageRepr.AnnotationUsage) UsageRepr.createAnnotationUsage(TypeRepr.createClassType(it.name), l, null));
                         }
                     } else if (d.base() != Difference.NONE) {
-                        // TODO!!
-                        if (d.base() == Difference.ACCESS && d.removedModifiers() == Opcodes.ACC_ABSTRACT) {
+                        if (d.packageLocalOn()) {
+                            final UsageRepr.Usage usage = m.createUsage(it.name);
 
-                        } else {
-                            affectedUsages.add(mr.fst.createUsage(it.name));
+                            affectedUsages.add(usage);
+                            usageConstraints.put(usage, new PackageConstraint(it.getPackageName()));
+                        }
+
+                        final Collection<StringCache.S> propagated = propagateMethodAccess(m.name, it.name);
+
+                        if ((d.base() & Difference.TYPE) > 0 || (d.base() & Difference.SIGNATURE) > 0) {
+                            affectMethodUsages(m, propagated, m.createUsage(it.name), affectedUsages, dependants);
+                        } else if ((d.base() & Difference.ACCESS) > 0) {
+                            if ((d.addedModifiers() & Opcodes.ACC_STATIC) > 0 ||
+                                    (d.removedModifiers() & Opcodes.ACC_STATIC) > 0 ||
+                                    (d.addedModifiers() & Opcodes.ACC_PRIVATE) > 0) {
+                                affectMethodUsages(m, propagated, m.createUsage(it.name), affectedUsages, dependants);
+                            } else {
+                                if ((d.addedModifiers() & Opcodes.ACC_FINAL) > 0 ||
+                                        (d.addedModifiers() & Opcodes.ACC_PUBLIC) > 0 ||
+                                        (d.addedModifiers() & Opcodes.ACC_ABSTRACT) > 0) {
+                                    affectSubclasses(it.name, affectedFiles, affectedUsages, dependants, false);
+                                }
+
+                                if ((d.addedModifiers() & Opcodes.ACC_PROTECTED) > 0 && (d.removedModifiers() & Opcodes.ACC_PUBLIC) > 0) {
+                                    final Set<UsageRepr.Usage> usages = new HashSet<UsageRepr.Usage>();
+                                    affectMethodUsages(m, propagated, m.createUsage(it.name), usages, dependants);
+
+                                    for (UsageRepr.Usage u : usages) {
+                                        usageConstraints.put(u, new InheritanceConstraint(it.name));
+                                    }
+
+                                    affectedUsages.addAll(usages);
+                                }
+                            }
                         }
                     }
                 }
+
 
                 final int mask = Opcodes.ACC_STATIC | Opcodes.ACC_FINAL;
 
@@ -333,7 +376,9 @@ public class Mappings {
                         return false;
                     }
 
-                    affectedUsages.add(f.createUsage(it.name));
+                    final Collection<StringCache.S> propagated = propagateFieldAccess(f.name, it.name);
+
+                    affectFieldUsages(f, propagated, f.createUsage(it.name), affectedUsages, dependants);
                 }
 
                 for (Pair<FieldRepr, Difference> f : diff.fields().changed()) {
