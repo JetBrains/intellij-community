@@ -61,6 +61,7 @@ public class PsiBinaryExpressionImpl extends ExpressionPsiElement implements Psi
 
   @Override
   public PsiJavaToken getTokenBeforeOperand(@NotNull PsiExpression operand) {
+    if (operand != getROperand()) return null;
     return getOperationSign();
   }
 

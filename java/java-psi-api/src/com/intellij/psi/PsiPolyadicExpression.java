@@ -17,6 +17,7 @@ package com.intellij.psi;
 
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * User: cdr
@@ -26,5 +27,7 @@ public interface PsiPolyadicExpression extends PsiExpression {
 
   @NotNull
   IElementType getOperationTokenType();
+
+  @Nullable
   PsiJavaToken getTokenBeforeOperand(@NotNull PsiExpression operand);
 }
