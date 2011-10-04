@@ -113,6 +113,10 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
     Ref<Boolean> cancelled = new Ref<Boolean>();
     if (projectDir.exists()) {
       try {
+        for (ProjectOpenProcessor processor : ProjectOpenProcessor.EXTENSION_POINT_NAME.getExtensions()) {
+          processor.refreshProjectFiles(projectDir);
+        }
+
         project = ((ProjectManagerImpl) projectManager).convertAndLoadProject(baseDir.getPath(), cancelled);
       }
       catch (Exception e) {
