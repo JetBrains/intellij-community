@@ -5,7 +5,6 @@
 
   <category>inspection</category>
   <version>1.0</version>
-  <idea-version min="4.0" max="6.0"/>
 
   <resource-bundle>com.siyeh.InspectionGadgetsBundle</resource-bundle>
 
@@ -2219,6 +2218,11 @@
                      key="unqualified.static.usage.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.style.UnqualifiedStaticUsageInspection"/>
+    <localInspection language="JAVA" shortName="UnclearBinaryExpression" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="unclear.binary.expression.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.siyeh.ig.style.UnclearBinaryExpressionInspection"/>
+
     <localInspection language="JAVA" suppressId="AccessToNonThreadSafeStaticField" shortName="AccessToNonThreadSafeStaticFieldFromInstance"
                      bundle="com.siyeh.InspectionGadgetsBundle" key="access.to.non.thread.safe.static.field.from.instance.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.threading.issues" enabledByDefault="false"
