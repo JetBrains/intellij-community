@@ -987,8 +987,8 @@ public class PluginManager {
 
   @Nullable
   private static ClassLoader createPluginClassLoader(final File[] classPath,
-                                                         final ClassLoader[] parentLoaders,
-                                                         IdeaPluginDescriptor pluginDescriptor) {
+                                                     final ClassLoader[] parentLoaders,
+                                                     IdeaPluginDescriptor pluginDescriptor) {
 
     if (pluginDescriptor.getUseIdeaClassLoader()) {
       try {
@@ -998,7 +998,7 @@ public class PluginManager {
 
         for (File aClassPath : classPath) {
           final File file = aClassPath.getCanonicalFile();
-          addUrlMethod.invoke(loader,  file.toURI().toURL());
+          addUrlMethod.invoke(loader, file.toURI().toURL());
         }
 
         return loader;
@@ -1027,7 +1027,7 @@ public class PluginManager {
         final File file = aClassPath.getCanonicalFile(); // it is critical not to have "." and ".." in classpath elements
         urls.add(file.toURI().toURL());
       }
-      return new PluginClassLoader(urls, parentLoaders, pluginId, pluginRoot);
+      return new PluginClassLoader(urls, parentLoaders, pluginId, pluginDescriptor.getVersion(), pluginRoot);
     }
     catch (MalformedURLException e) {
       e.printStackTrace();

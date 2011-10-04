@@ -33,27 +33,33 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- * Date: Mar 6, 2003
+ * @since 6.03.2003
  */
 @SuppressWarnings({"UseOfSystemOutOrSystemErr"})
 public class PluginClassLoader extends UrlClassLoader {
   private final ClassLoader[] myParents;
   private final PluginId myPluginId;
+  private final String myPluginVersion;
   private final File myLibDirectory;
 
-  public PluginClassLoader(List<URL> urls, ClassLoader[] parents, PluginId pluginId, File pluginRoot) {
+  public PluginClassLoader(final List<URL> urls,
+                           final ClassLoader[] parents,
+                           final PluginId pluginId,
+                           final String version,
+                           final File pluginRoot) {
     super(urls, null, true, true);
     myParents = parents;
     myPluginId = pluginId;
+    myPluginVersion = version;
 
     //noinspection HardCodedStringLiteral
     final File file = new File(pluginRoot, "lib");
     myLibDirectory = file.exists()? file : null;
   }
 
-  // changed sequence in which classes are searched, this is essential if plugin uses library, a different version of which
-  // is used in IDEA.
-  public Class loadClass(final String name, final boolean resolve) throws ClassNotFoundException{
+  // Changed sequence in which classes are searched, this is essential if plugin uses library,
+  // a different version of which is used in IDEA.
+  public Class loadClass(final String name, final boolean resolve) throws ClassNotFoundException {
     Class c = loadClassInsideSelf(name);
 
     if (c == null) {
@@ -66,8 +72,9 @@ public class PluginClassLoader extends UrlClassLoader {
       }
       return c;
     }
+
     PluginManager.addPluginClass(name, myPluginId);
-    throw new ClassNotFoundException(name + " [" + myPluginId + "]");
+    throw new ClassNotFoundException(name + " " + this);
   }
 
   @Nullable
@@ -229,6 +236,6 @@ public class PluginClassLoader extends UrlClassLoader {
   }
 
   public String toString() {
-    return "PluginClassloader[" + myPluginId + "]";
+    return "PluginClassLoader[" + myPluginId + ", " + myPluginVersion + "]";
   }
 }
