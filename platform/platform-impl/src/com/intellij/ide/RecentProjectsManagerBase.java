@@ -52,7 +52,7 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
 
   private State myState = new State();
 
-  private static final int MAX_RECENT_PROJECTS = 15;
+  private static final int MAX_RECENT_PROJECTS = 25;
 
   public RecentProjectsManagerBase(ProjectManager projectManager, MessageBus messageBus) {
     projectManager.addProjectManagerListener(new MyProjectManagerListener());
