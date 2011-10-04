@@ -464,8 +464,11 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     if (!auxMove(file, newParent)) {
       final File ioFrom = convertToIOFile(file);
       final File ioParent = convertToIOFile(newParent);
+      if (!ioParent.isDirectory()) {
+        throw new IOException("Target '" + ioParent + "' is not a directory");
+      }
       if (!ioFrom.renameTo(new File(ioParent, file.getName()))) {
-        LOG.error("Failed: " + file.getPath() + " => " + newParent.getPath());
+        throw new IOException("Move failed: '" + file.getPath() + "' to '" + newParent.getPath() +"'");
       }
     }
     auxNotifyCompleted(new ThrowableConsumer<LocalFileOperationsHandler, IOException>() {
