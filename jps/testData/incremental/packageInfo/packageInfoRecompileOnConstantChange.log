@@ -1,0 +1,26 @@
+Request to make modules:
+module PackageInfoRecompileOnConstantChange
+End of request
+digraph X {
+  PackageInfoRecompileOnConstantChange[label="PackageInfoRecompileOnConstantChange"];
+}
+digraph X {
+  PackageInfoRecompileOnConstantChange[label="PackageInfoRecompileOnConstantChange"];
+}
+Propagated modules:
+module PackageInfoRecompileOnConstantChange
+End of propagated
+Cleaning output files:
+out/production/PackageInfoRecompileOnConstantChange/bug/Namespace.class
+End of files
+Compiling files:
+src/bug/Namespace.java
+End of files
+Cleaning output files:
+out/production/PackageInfoRecompileOnConstantChange/bug/Ann.class
+out/production/PackageInfoRecompileOnConstantChange/bug/package-info.class
+End of files
+Compiling files:
+src/bug/Ann.java
+src/bug/package-info.java
+End of files
