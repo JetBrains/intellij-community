@@ -42,19 +42,12 @@ import java.util.List;
  * Registers "Coverage" tab in Java run configurations
  */
 public class CoverageJavaRunConfigurationExtension extends RunConfigurationExtension {
-  public void attachToProcess(final RunConfigurationBase configuration, ProcessHandler handler, RunnerSettings runnerSettings) {
-    if (!isApplicableFor(configuration)) {
-      return;
-    }
-
+  public void attachToProcess(@NotNull final RunConfigurationBase configuration, @NotNull ProcessHandler handler, RunnerSettings runnerSettings) {
     CoverageDataManager.getInstance(configuration.getProject()).attachToProcess(handler, configuration, runnerSettings);
   }
 
   @Nullable
-  public SettingsEditor createEditor(RunConfigurationBase configuration) {
-    if (!isApplicableFor(configuration)) {
-      return null;
-    }
+  public SettingsEditor createEditor(@NotNull RunConfigurationBase configuration) {
     return new CoverageConfigurable(configuration);
   }
 
@@ -62,6 +55,7 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
     return CoverageEngine.getEditorTitle();
   }
 
+  @NotNull
   @Override
   public String getSerializationId() {
     return "coverage";
@@ -92,7 +86,7 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
   }
 
   @Override
-  public void readExternal(final RunConfigurationBase runConfiguration, Element element) throws InvalidDataException {
+  public void readExternal(@NotNull final RunConfigurationBase runConfiguration, @NotNull Element element) throws InvalidDataException {
      if (!isApplicableFor(runConfiguration)) {
       return;
     }
@@ -102,7 +96,7 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
   }
 
   @Override
-  public void writeExternal(RunConfigurationBase runConfiguration, Element element) throws WriteExternalException {
+  public void writeExternal(@NotNull RunConfigurationBase runConfiguration, @NotNull Element element) throws WriteExternalException {
     if (!isApplicableFor(runConfiguration)) {
       return;
     }
@@ -111,10 +105,7 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
   }
 
   @Override
-  public void extendCreatedConfiguration(RunConfigurationBase runJavaConfiguration, Location location) {
-    if (!isApplicableFor(runJavaConfiguration)) {
-      return;
-    }
+  public void extendCreatedConfiguration(@NotNull RunConfigurationBase runJavaConfiguration, @NotNull Location location) {
     final JavaCoverageEnabledConfiguration coverageEnabledConfiguration = JavaCoverageEnabledConfiguration.getFrom(runJavaConfiguration);
     assert coverageEnabledConfiguration != null;
     if (runJavaConfiguration instanceof CommonJavaRunConfigurationParameters) {
@@ -129,7 +120,7 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
   }
 
   @Override
-  public void validateConfiguration(RunConfigurationBase runJavaConfiguration, boolean isExecution)
+  public void validateConfiguration(@NotNull RunConfigurationBase runJavaConfiguration, boolean isExecution)
     throws RuntimeConfigurationException {
   }
 
