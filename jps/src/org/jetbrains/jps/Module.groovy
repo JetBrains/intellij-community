@@ -170,12 +170,13 @@ class Module extends LazyInitializeableObject implements ClasspathItem {//}, Com
     return (name != null ? name.hashCode() : 0);
   }
 
-  public static class ModuleSourceEntry implements ClasspathItem {
-    Module module
+}
 
-    List<String> getClasspathRoots(ClasspathKind kind) {
-      return []
-    }
+class ModuleSourceEntry implements ClasspathItem {
+  Module module
+
+  List<String> getClasspathRoots(ClasspathKind kind) {
+    return []
   }
 }
 

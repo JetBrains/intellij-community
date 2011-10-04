@@ -75,8 +75,8 @@ public class ProjectPaths {
       if (!filter.accept(module, it)
           || it instanceof Sdk && excludeSdk) continue;
 
-      if (it instanceof Module.ModuleSourceEntry) {
-        final Module dep = ((Module.ModuleSourceEntry) it).getModule();
+      if (it instanceof ModuleSourceEntry) {
+        final Module dep = ((ModuleSourceEntry) it).getModule();
         if (!excludeMainModuleOutput && kind.isTestsIncluded()) {
           classpath.add(getModuleOutputDir(dep, true));
         }
@@ -120,8 +120,8 @@ public class ProjectPaths {
     if (!processed.add(module)) return;
 
     for (ClasspathItem item : module.getClasspath(kind, false)) {
-      if (item instanceof Module.ModuleSourceEntry) {
-        final Module dep = ((Module.ModuleSourceEntry) item).getModule();
+      if (item instanceof ModuleSourceEntry) {
+        final Module dep = ((ModuleSourceEntry) item).getModule();
         addFiles(sourcePaths, dep.getSourceRoots());
         if (kind.isTestsIncluded()) {
           addFiles(sourcePaths, dep.getTestRoots());
