@@ -809,4 +809,10 @@ def test() {
     assertNotNull(ref.resolve())
   }
 
+  void testStringInjectionDontOverrideItParameter() {
+    def ref = configureByText("""
+[2, 3, 4].collect {"\${it.toBigDeci<caret>mal()}"}
+""")
+    assertNotNull(ref.resolve())
+  }
 }

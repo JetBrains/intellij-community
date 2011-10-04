@@ -229,16 +229,20 @@ public class TypeInferenceTest extends GroovyResolveTestCase {
   public void testIncMethod() {
     assertTypeEquals(JAVA_LANG_INTEGER, "A.groovy");
   }
-  
+
   public void testDGMFind() {
     assertTypeEquals("java.io.File", "a.groovy");
   }
-  
+
   public void testMultiTypeParameter() {
     assertTypeEquals("X | Y", "a.groovy");
   }
 
   public void testTypeArgsInAccessor() {
     assertTypeEquals("Foo<java.lang.String>", "a.groovy");
+  }
+
+  public void testSingleParameterInStringInjection() {
+    assertTypeEquals("java.util.StringBuilder", "a.groovy");
   }
 }
