@@ -152,10 +152,15 @@ public class GrLightModifierList extends LightElement implements GrModifierList 
 
     PsiModifierList modifierList = modifierOwner.getModifierList();
     if (modifierList != null) {
-      for (Object o : PsiModifierListImpl.NAME_TO_MODIFIER_FLAG_MAP.keys()) {
-        String modifier = (String)o;
-        if (modifierList.hasExplicitModifier(modifier)) {
-          mod |= GrModifierListImpl.NAME_TO_MODIFIER_FLAG_MAP.get(modifier);
+      if (modifierList instanceof GrLightModifierList) {
+        mod = ((GrLightModifierList)modifierList).getModifiersAsInt();
+      }
+      else {
+        for (Object o : PsiModifierListImpl.NAME_TO_MODIFIER_FLAG_MAP.keys()) {
+          String modifier = (String)o;
+          if (modifierList.hasExplicitModifier(modifier)) {
+            mod |= GrModifierListImpl.NAME_TO_MODIFIER_FLAG_MAP.get(modifier);
+          }
         }
       }
     }

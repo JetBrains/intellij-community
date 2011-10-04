@@ -62,6 +62,18 @@ public class GrLightParameterListBuilder extends LightElement implements GrParam
     return myCachedParameters;
   }
 
+  public void copyParameters(@NotNull PsiMethod method) {
+    for (PsiParameter parameter : method.getParameterList().getParameters()) {
+      GrLightParameter p = new GrLightParameter(parameter.getName(), parameter.getType(), this);
+
+      if (parameter instanceof GrParameter) {
+        p.setOptional(((GrParameter)parameter).isOptional());
+      }
+
+      addParameter(p);
+    }
+  }
+
   @Override
   public void addParameterToEnd(GrParameter parameter) {
     addParameter(parameter);

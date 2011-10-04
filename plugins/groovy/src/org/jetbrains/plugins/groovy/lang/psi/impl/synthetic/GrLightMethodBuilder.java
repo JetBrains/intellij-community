@@ -39,16 +39,13 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListImpl;
 
 import javax.swing.*;
 import java.util.List;
@@ -59,8 +56,8 @@ import java.util.List;
 public class GrLightMethodBuilder extends LightElement implements GrMethod {
   private String myName;
   private PsiType myReturnType = PsiType.VOID;
-  private final GrModifierList myModifierList;
-  private GrParameterList myParameterList;
+  private final GrLightModifierList myModifierList;
+  private final GrLightParameterListBuilder myParameterList;
   private Icon myBaseIcon;
   private PsiClass myContainingClass;
   private Object myMethodKind;
@@ -70,17 +67,10 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod {
   private Object myData;
 
   public GrLightMethodBuilder(PsiManager manager, String name) {
-    this(manager, name, new GrLightParameterListBuilder(manager, GroovyFileType.GROOVY_LANGUAGE), null);
-  }
-
-  public GrLightMethodBuilder(PsiManager manager,
-                              String name,
-                              GrParameterList parameterList,
-                              GrModifierList modifierList) {
     super(manager, GroovyFileType.GROOVY_LANGUAGE);
     myName = name;
-    myParameterList = parameterList;
-    myModifierList = modifierList == null ? new GrLightModifierList(this) : modifierList;
+    myParameterList = new GrLightParameterListBuilder(manager, GroovyFileType.GROOVY_LANGUAGE);
+    myModifierList = new GrLightModifierList(this);
   }
 
   public void setNamedParametersArray(@NotNull String[] namedParametersArray) {
@@ -151,7 +141,7 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod {
   }
 
   @NotNull
-  public GrModifierList getModifierList() {
+  public GrLightModifierList getModifierList() {
     return myModifierList;
   }
 
@@ -168,22 +158,22 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod {
   }
 
   public GrLightMethodBuilder addModifier(String modifier) {
-    ((GrLightModifierList)myModifierList).addModifier(modifier);
+    myModifierList.addModifier(modifier);
     return this;
   }
 
   public GrLightMethodBuilder addModifier(int modifier) {
-    ((GrLightModifierList)myModifierList).addModifier(modifier);
+    myModifierList.addModifier(modifier);
     return this;
   }
 
   public GrLightMethodBuilder setModifiers(String[] modifiers) {
-    ((GrLightModifierList)myModifierList).setModifiers(modifiers);
+    myModifierList.setModifiers(modifiers);
     return this;
   }
 
   public GrLightMethodBuilder setModifiers(int modifiers) {
-    ((GrLightModifierList)myModifierList).setModifiers(modifiers);
+    myModifierList.setModifiers(modifiers);
     return this;
   }
 
@@ -232,12 +222,12 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod {
   }
 
   @NotNull
-  public GrParameterList getParameterList() {
+  public GrLightParameterListBuilder getParameterList() {
     return myParameterList;
   }
 
   public GrLightMethodBuilder addParameter(@NotNull GrParameter parameter) {
-    ((GrLightParameterListBuilder)myParameterList).addParameter(parameter);
+    myParameterList.addParameter(parameter);
     return this;
   }
 
@@ -424,17 +414,7 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod {
     copy.setBaseIcon(myBaseIcon);
     copy.setReturnType(myReturnType);
 
-    if (myModifierList instanceof GrLightModifierList) {
-      ((GrLightModifierList)copy.getModifierList()).setModifiers(((GrLightModifierList)myModifierList).getModifiersAsInt());
-    }
-    else {
-      for (Object o : GrModifierListImpl.NAME_TO_MODIFIER_FLAG_MAP.keys()) {
-        String modifier = (String)o;
-        if (myModifierList.hasExplicitModifier(modifier)) {
-          copy.addModifier(modifier);
-        }
-      }
-    }
+    copy.getModifierList().copyModifiers(this);
 
     for (GrParameter parameter : myParameterList.getParameters()) {
       copy.addParameter(parameter);
