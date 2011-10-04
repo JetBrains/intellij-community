@@ -29,6 +29,8 @@ import java.net.Socket;
  */
 public class SocketConnectionImpl<Request extends AbstractRequest, Response extends AbstractResponse> extends SocketConnectionBase<Request, Response> implements ClientSocketConnection<Request, Response> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.socketConnection.impl.SocketConnectionImpl");
+  private static final int MAX_CONNECTION_ATTEMPTS = 60;
+  private static final int CONNECTION_ATTEMPT_DELAY = 500;
   private final InetAddress myHost;
   private final int myInitialPort;
   private final int myPortsNumberToTry;
@@ -84,7 +86,7 @@ public class SocketConnectionImpl<Request extends AbstractRequest, Response exte
       public void run() {
         addThreadToInterrupt();
         try {
-          while (true) {
+          for (int attempt = 0; attempt < MAX_CONNECTION_ATTEMPTS; attempt++) {
             try {
               open();
               return;
@@ -93,8 +95,10 @@ public class SocketConnectionImpl<Request extends AbstractRequest, Response exte
               LOG.debug(e);
             }
 
-            Thread.sleep(500);
+            //noinspection BusyWait
+            Thread.sleep(CONNECTION_ATTEMPT_DELAY);
           }
+          setStatus(ConnectionStatus.CONNECTION_FAILED, "Cannot connect to " + myHost + ", the maximum number of connection attempts exceeded");
         }
         catch (InterruptedException ignored) {
         }
