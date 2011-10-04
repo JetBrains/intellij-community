@@ -91,8 +91,8 @@ import static org.jetbrains.plugins.groovy.refactoring.HelpID.GROOVY_INTRODUCE_P
 public class GrIntroduceParameterHandler implements RefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance(GrIntroduceParameterHandler.class);
 
-  @NonNls public static final String USE_SUPER_METHOD_OF = "Use super method of";
-  @NonNls public static final String CHANGE_USAGES_OF = "Change usages of";
+  @NonNls public static final String USE_SUPER_METHOD_OF = "Change base method";
+  @NonNls public static final String CHANGE_USAGES_OF = "Change usages";
   private JBPopup myEnclosingMethodsPopup;
 
   public void invoke(final @NotNull Project project, final Editor editor, final PsiFile file, final @Nullable DataContext dataContext) {
