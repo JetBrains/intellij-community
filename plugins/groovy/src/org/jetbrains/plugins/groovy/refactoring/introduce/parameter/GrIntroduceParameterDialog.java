@@ -33,6 +33,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
@@ -95,6 +97,8 @@ public class GrIntroduceParameterDialog extends RefactoringDialog implements GrI
     initReplaceFieldsWithGetters(settings);
 
     myDeclareFinalCheckBox.setSelected(hasFinalModifier());
+    
+    myChangeVarUsages.setVisible(context.toReplaceIn instanceof GrClosableBlock && context.toSearchFor instanceof GrVariable);
 
     setTitle(RefactoringBundle.message("introduce.parameter.title"));
     init();
@@ -151,6 +155,9 @@ public class GrIntroduceParameterDialog extends RefactoringDialog implements GrI
       processor = new GrIntroduceParameterProcessor(settings, myContext);
     }
     else {
+      if (!myChangeVarUsages.isSelected() && myContext.toSearchFor != null) {
+        myContext = new GrIntroduceParameterContext(myContext, myContext.toReplaceIn, null);
+      }
       processor = new GrIntroduceClosureParameterProcessor(settings, myContext);
     }
     invokeRefactoring(processor);

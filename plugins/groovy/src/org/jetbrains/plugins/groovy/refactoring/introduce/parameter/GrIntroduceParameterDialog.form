@@ -86,7 +86,7 @@
               <gridbag weightx="1.0" weighty="1.0"/>
             </constraints>
             <properties>
-              <text value="Remove local variable"/>
+              <text value="Remove local &amp;variable"/>
             </properties>
           </component>
           <component id="d4b2" class="javax.swing.JCheckBox" binding="myChangeVarUsages">
@@ -95,7 +95,7 @@
               <gridbag weightx="0.0" weighty="0.0"/>
             </constraints>
             <properties>
-              <text value="Change usages of variable"/>
+              <text value="&amp;Change usages of closure"/>
             </properties>
           </component>
         </children>
