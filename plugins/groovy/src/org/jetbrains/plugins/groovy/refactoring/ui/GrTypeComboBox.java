@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.ui;
 
+import com.intellij.psi.PsiDisjunctionType;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
@@ -34,6 +35,7 @@ public class GrTypeComboBox extends JComboBox {
 
   public GrTypeComboBox(PsiType type, boolean selectType) {
     super();
+    if (type instanceof PsiDisjunctionType) type = ((PsiDisjunctionType)type).getLeastUpperBound();
     myType = type;
     initialize();
     if (selectType && getItemCount() > 1) {
