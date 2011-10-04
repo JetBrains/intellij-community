@@ -54,7 +54,7 @@ public class GitHubCreateGistDialog extends DialogWrapper {
 
   @Override
   protected String getHelpId() {
-    return null;
+    return "create.gist.dialog";
   }
 
   @Override
