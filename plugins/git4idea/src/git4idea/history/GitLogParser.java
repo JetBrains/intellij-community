@@ -22,6 +22,7 @@ import git4idea.GitFormatException;
 import git4idea.GitVcs;
 import git4idea.config.GitVersionSpecialty;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -181,8 +182,11 @@ class GitLogParser {
    * @return GitLogRecord with information about the revision or {@code null} if the given line is empty.
    * @throws GitFormatException if the line is given in unexpected format.
    */
-  @NotNull
+  @Nullable
   GitLogRecord parseOneRecord(@NotNull String line) {
+    if (line.isEmpty()) {
+      return null;
+    }
     Matcher matcher = ONE_RECORD.matcher(line);
     if (!matcher.matches()) {
       throwGFE("ONE_RECORD didn't match", line);
@@ -191,13 +195,13 @@ class GitLogParser {
     if (commitInfo == null) {
       throwGFE("No match for group#1 in", line);
     }
-    
+
     final Map<GitLogOption, String> res = parseCommitInfo(commitInfo);
 
     // parsing status and path (if given)
     final List<String> paths = new ArrayList<String>(1);
-    final List<GitLogStatusInfo> statuses = new ArrayList<GitLogStatusInfo>();    
-    
+    final List<GitLogStatusInfo> statuses = new ArrayList<GitLogStatusInfo>();
+
     if (myNameStatusOption != NameStatus.NONE) {
       String pathsAndStatuses = matcher.group(2);
       if (pathsAndStatuses == null) {
@@ -215,7 +219,8 @@ class GitLogParser {
             paths.add(path2);
           }
         }
-      } else {
+      }
+      else {
         Matcher nameStatusMatcher = NAME_STATUS.matcher(pathsAndStatuses);
         while (nameStatusMatcher.find()) {
           String status = nameStatusMatcher.group(1);
