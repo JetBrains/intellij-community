@@ -246,7 +246,7 @@ public class BraceHighlightingHandler {
       boolean searchForward = c != '\n';
 
       // Try to find matched brace backwards.
-      if (offset >= originalOffset && (c == ' ' || c == '\t')) {
+      if (offset >= originalOffset && (c == ' ' || c == '\t' || c == '\n')) {
         int backwardNonWsOffset = CharArrayUtil.shiftBackward(chars, offset - 1, "\t ");
         if (backwardNonWsOffset >= 0) {
           iterator = getEditorHighlighter().createIterator(backwardNonWsOffset);
