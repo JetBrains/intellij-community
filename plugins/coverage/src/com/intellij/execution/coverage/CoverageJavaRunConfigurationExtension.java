@@ -7,13 +7,14 @@ package com.intellij.execution.coverage;
 import com.intellij.coverage.*;
 import com.intellij.coverage.listeners.CoverageListener;
 import com.intellij.execution.CommonJavaRunConfigurationParameters;
+import com.intellij.execution.Location;
 import com.intellij.execution.RunConfigurationExtension;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.configurations.coverage.CoverageConfigurable;
 import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
 import com.intellij.execution.configurations.coverage.JavaCoverageEnabledConfiguration;
 import com.intellij.execution.junit.RefactoringListeners;
-import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -31,6 +32,7 @@ import com.intellij.refactoring.listeners.RefactoringElementListenerComposite;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -40,7 +42,7 @@ import java.util.List;
  * Registers "Coverage" tab in Java run configurations
  */
 public class CoverageJavaRunConfigurationExtension extends RunConfigurationExtension {
-  public void handleStartProcess(final RunConfigurationBase configuration, OSProcessHandler handler, RunnerSettings runnerSettings) {
+  public void attachToProcess(final RunConfigurationBase configuration, ProcessHandler handler, RunnerSettings runnerSettings) {
     if (!isApplicableFor(configuration)) {
       return;
     }
@@ -61,7 +63,7 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
   }
 
   @Override
-  public String getName() {
+  public String getSerializationId() {
     return "coverage";
   }
 
@@ -109,7 +111,7 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
   }
 
   @Override
-  public void patchConfiguration(RunConfigurationBase runJavaConfiguration) {
+  public void extendCreatedConfiguration(RunConfigurationBase runJavaConfiguration, Location location) {
     if (!isApplicableFor(runJavaConfiguration)) {
       return;
     }
@@ -127,7 +129,7 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
   }
 
   @Override
-  public void checkConfiguration(RunConfigurationBase runJavaConfiguration)
+  public void validateConfiguration(RunConfigurationBase runJavaConfiguration, boolean isExecution)
     throws RuntimeConfigurationException {
   }
 
@@ -212,8 +214,8 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
     return false;
   }
 
-  private static boolean isApplicableFor(final RunConfigurationBase configuration) {
-    return JavaCoverageEnabledConfiguration.isApplicableTo(configuration);
+  protected boolean isApplicableFor(@NotNull final RunConfigurationBase configuration) {
+    return CoverageEnabledConfiguration.isApplicableTo(configuration);
   }
 
   private static class MyPackageAccessor extends MyAccessor implements RefactoringListeners.Accessor<PsiPackage> {
