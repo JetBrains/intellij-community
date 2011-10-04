@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package com.intellij.util.lang;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.misc.Resource;
 
@@ -33,23 +34,23 @@ public class UrlClassLoader extends ClassLoader {
   protected static final boolean myDebugTime = false;
   protected static final long NS_THRESHOLD = 10000000;
 
-  public UrlClassLoader(ClassLoader parent) {
+  public UrlClassLoader(@NotNull ClassLoader parent) {
     this(Arrays.asList(((URLClassLoader)parent).getURLs()), parent.getParent(), true, true);
   }
 
-  public UrlClassLoader(List<URL> urls, ClassLoader parent) {
+  public UrlClassLoader(List<URL> urls, @Nullable ClassLoader parent) {
     this(urls, parent, false, false);
   }
 
-  public UrlClassLoader(URL[] urls, ClassLoader parent) {
+  public UrlClassLoader(URL[] urls, @Nullable ClassLoader parent) {
     this(Arrays.asList(urls), parent, false, false);
   }
 
-  public UrlClassLoader(List<URL> urls, ClassLoader parent, boolean canLockJars, boolean canUseCache) {
+  public UrlClassLoader(List<URL> urls, @Nullable ClassLoader parent, boolean canLockJars, boolean canUseCache) {
     this(urls, parent, canLockJars, canUseCache, false);
   }
 
-  public UrlClassLoader(List<URL> urls, ClassLoader parent, boolean canLockJars, boolean canUseCache, boolean acceptUnescapedUrls) {
+  public UrlClassLoader(List<URL> urls, @Nullable ClassLoader parent, boolean canLockJars, boolean canUseCache, boolean acceptUnescapedUrls) {
     super(parent);
 
     myClassPath = new ClassPath(urls.toArray(new URL[urls.size()]), canLockJars, canUseCache, acceptUnescapedUrls);
