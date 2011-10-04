@@ -15,6 +15,7 @@
  */
 package com.siyeh.ipp.parenthesis;
 
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
@@ -65,51 +66,56 @@ public class AddClarifyingParenthesesIntention extends Intention {
     return result;
   }
 
-  private static StringBuilder createReplacementText(PsiExpression element,
-                                                     StringBuilder out) {
-    if (element instanceof PsiPolyadicExpression) {
-      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)element;
+  private static StringBuilder createReplacementText(PsiExpression expression, StringBuilder out) {
+    if (expression instanceof PsiPolyadicExpression) {
+      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
       final IElementType tokenType = polyadicExpression.getOperationTokenType();
-      final PsiElement parent = element.getParent();
+      final PsiElement parent = expression.getParent();
       if (parent instanceof PsiPolyadicExpression) {
         final PsiPolyadicExpression parentPolyadicExpression = (PsiPolyadicExpression)parent;
         final IElementType parentOperationSign = parentPolyadicExpression.getOperationTokenType();
         if (!tokenType.equals(parentOperationSign)) {
           out.append('(');
-          createReplacementText(polyadicExpression, out);
+          createText(polyadicExpression, out);
           out.append(')');
           return out;
         }
       }
-      createReplacementText(polyadicExpression, out);
+      createText(polyadicExpression, out);
     }
-    else if (element instanceof PsiParenthesizedExpression) {
-      final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)element;
-      final PsiExpression expression = parenthesizedExpression.getExpression();
+    else if (expression instanceof PsiParenthesizedExpression) {
+      final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)expression;
+      final PsiExpression unwrappedExpression = parenthesizedExpression.getExpression();
       out.append('(');
-      createReplacementText(expression, out);
+      createReplacementText(unwrappedExpression, out);
       out.append(')');
     }
-    else if (element instanceof PsiInstanceOfExpression) {
+    else if (expression instanceof PsiInstanceOfExpression) {
       out.append('(');
-      out.append(element.getText());
+      out.append(expression.getText());
       out.append(')');
     }
-    else if (element != null) {
-      out.append(element.getText());
+    else if (expression != null) {
+      out.append(expression.getText());
     }
     return out;
   }
 
-  private static void createReplacementText(PsiPolyadicExpression polyadicExpression, StringBuilder out) {
+  private static void createText(PsiPolyadicExpression polyadicExpression, StringBuilder out) {
     final PsiExpression[] operands = polyadicExpression.getOperands();
     for (PsiExpression operand : operands) {
       if (operand == null) {
         continue;
       }
+      if (operand.getType() == PsiType.VOID) {
+        throw new ProcessCanceledException();
+      }
+      if (operands.length == 1) {
+        createReplacementText(operand, out);
+      }
       final PsiJavaToken token = polyadicExpression.getTokenBeforeOperand(operand);
       if (token != null) {
-        final PsiElement beforeToken = operand.getNextSibling();
+        final PsiElement beforeToken = token.getPrevSibling();
         if (beforeToken instanceof PsiWhiteSpace) {
           out.append(beforeToken.getText());
         }
@@ -119,7 +125,9 @@ public class AddClarifyingParenthesesIntention extends Intention {
           out.append(afterToken.getText());
         }
       }
-      createReplacementText(operand, out);
+      if (operands.length != 1) {
+        createReplacementText(operand, out);
+      }
     }
   }
 }
