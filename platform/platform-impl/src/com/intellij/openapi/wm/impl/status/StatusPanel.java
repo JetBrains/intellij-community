@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.text.DateFormatUtil;
@@ -90,9 +91,12 @@ class StatusPanel extends JPanel {
   private Project getActiveProject() {
     // a better way of finding a project would be great
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      final JComponent frame = WindowManager.getInstance().getIdeFrame(project).getComponent();
-      if (SwingUtilities.isDescendingFrom(myTextPanel, frame)) {
-        return project;
+      IdeFrame ideFrame = WindowManager.getInstance().getIdeFrame(project);
+      if (ideFrame != null) {
+        final JComponent frame = ideFrame.getComponent();
+        if (SwingUtilities.isDescendingFrom(myTextPanel, frame)) {
+          return project;
+        }
       }
     }
     return null;
