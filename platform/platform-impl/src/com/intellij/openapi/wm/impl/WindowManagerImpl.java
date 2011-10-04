@@ -41,7 +41,6 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManagerListener;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.ScreenUtil;
-import com.intellij.ui.mac.MacMainFrameDecorator;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
@@ -250,7 +249,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
 
   @Override
   public boolean isFullScreen(@NotNull Frame frame) {
-    return MacMainFrameDecorator.isFullScreenMode(frame);
+    return frame instanceof IdeFrameImpl && ((IdeFrameImpl)frame).getFrameDecorator().isInFullScreen();
   }
 
   @Override
