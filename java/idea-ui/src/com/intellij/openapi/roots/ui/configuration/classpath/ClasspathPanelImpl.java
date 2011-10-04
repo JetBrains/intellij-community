@@ -677,17 +677,21 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     }
   }
 
-  private class ModuleChooser extends ChooseModulesDialog implements ClasspathElementChooser<Module> {
+  private class ModuleChooser implements ClasspathElementChooser<Module> {
+    private final List<Module> myItems;
+    private final String myTitle;
+    private final String myDescription;
+
     public ModuleChooser(final List<Module> items, final String title, String description) {
-      super(ClasspathPanelImpl.this, items, title, description);
+      myItems = items;
+      myTitle = title;
+      myDescription = description;
     }
 
-    public void doChoose() {
-      show();
-    }
-
-    public void dispose() {
-      super.dispose();
+    public List<Module> chooseElements() {
+      ChooseModulesDialog dialog = new ChooseModulesDialog(ClasspathPanelImpl.this, myItems, myTitle, myDescription);
+      dialog.show();
+      return dialog.getChosenElements();
     }
   }
 

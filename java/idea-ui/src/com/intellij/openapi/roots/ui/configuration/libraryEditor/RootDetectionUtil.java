@@ -43,6 +43,7 @@ public class RootDetectionUtil {
   private RootDetectionUtil() {
   }
 
+  @NotNull
   public static List<OrderRoot> detectRoots(@NotNull final Collection<VirtualFile> rootCandidates,
                                             @Nullable Component parentComponent,
                                             @Nullable Project project,

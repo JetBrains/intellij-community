@@ -15,15 +15,11 @@
  */
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
-import com.intellij.openapi.Disposable;
-
 import java.util.List;
 
 /**
 * @author nik
 */
-interface ClasspathElementChooser<T> extends Disposable {
-  List<T> getChosenElements();
-  void doChoose();
-  boolean isOK();
+interface ClasspathElementChooser<T> {
+  List<T> chooseElements();
 }

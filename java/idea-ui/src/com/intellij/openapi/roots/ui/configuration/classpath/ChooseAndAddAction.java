@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
-import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -25,7 +24,7 @@ import java.util.List;
  * @author nik
  */
 public abstract class ChooseAndAddAction<ItemType> extends ClasspathPanelAction {
-  public ChooseAndAddAction(ClasspathPanel classpathPanel) {
+  protected ChooseAndAddAction(ClasspathPanel classpathPanel) {
     super(classpathPanel);
   }
 
@@ -35,27 +34,18 @@ public abstract class ChooseAndAddAction<ItemType> extends ClasspathPanelAction 
     if (dialog == null) {
       return;
     }
-    try {
-      dialog.doChoose();
-      if (!dialog.isOK()) {
-        return;
-      }
-      final List<ItemType> chosen = dialog.getChosenElements();
-      if (chosen.isEmpty()) {
-        return;
-      }
-      List<ClasspathTableItem<?>> toAdd = new ArrayList<ClasspathTableItem<?>>();
-      for (ItemType item : chosen) {
-        final ClasspathTableItem<?> tableItem = createTableItem(item);
-        if (tableItem != null) {
-          toAdd.add(tableItem);
-        }
-      }
-      myClasspathPanel.addItems(toAdd);
+    final List<ItemType> chosen = dialog.chooseElements();
+    if (chosen.isEmpty()) {
+      return;
     }
-    finally {
-      Disposer.dispose(dialog);
+    List<ClasspathTableItem<?>> toAdd = new ArrayList<ClasspathTableItem<?>>();
+    for (ItemType item : chosen) {
+      final ClasspathTableItem<?> tableItem = createTableItem(item);
+      if (tableItem != null) {
+        toAdd.add(tableItem);
+      }
     }
+    myClasspathPanel.addItems(toAdd);
   }
 
   @Nullable

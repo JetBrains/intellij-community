@@ -17,6 +17,7 @@ package com.intellij.openapi.roots.ui.configuration.classpath;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -37,13 +38,11 @@ import java.util.List;
 * @author nik
 */
 class NewLibraryChooser implements ClasspathElementChooser<Library> {
-  private boolean myIsOk;
   private final ModifiableRootModel myRootModel;
-  private Library myChosenLibrary;
-  private StructureConfigurableContext myContext;
+  private final StructureConfigurableContext myContext;
   private final JComponent myParentComponent;
   private final Project myProject;
-  private LibraryType myLibraryType;
+  private final LibraryType myLibraryType;
 
   public NewLibraryChooser(final Project project,
                            final ModifiableRootModel rootModel,
@@ -55,11 +54,7 @@ class NewLibraryChooser implements ClasspathElementChooser<Library> {
     myProject = project;
   }
 
-  public List<Library> getChosenElements() {
-    return myChosenLibrary == null? Collections.<Library>emptyList() : Collections.singletonList(myChosenLibrary);
-  }
-
-  public void doChoose() {
+  public List<Library> chooseElements() {
     final NewLibraryEditor libraryEditor;
     if (myLibraryType == null) {
       libraryEditor = new NewLibraryEditor();
@@ -74,22 +69,12 @@ class NewLibraryChooser implements ClasspathElementChooser<Library> {
                                               registrar.getLibraryTable());
 
     CreateNewLibraryDialog dialog = new CreateNewLibraryDialog(myParentComponent, myContext, libraryEditor, tables, 1);
-    final Module contextModule = DataKeys.MODULE_CONTEXT.getData(DataManager.getInstance().getDataContext(myParentComponent));
+    final Module contextModule = LangDataKeys.MODULE_CONTEXT.getData(DataManager.getInstance().getDataContext(myParentComponent));
     dialog.setContextModule(contextModule);
     dialog.show();
-    myIsOk = dialog.isOK();
-    if (myIsOk) {
-      myChosenLibrary = dialog.createLibrary();
+    if (dialog.isOK()) {
+      return Collections.singletonList(dialog.createLibrary());
     }
-    else {
-      myChosenLibrary = null;
-    }
-  }
-
-  public boolean isOK() {
-    return myIsOk;
-  }
-
-  public void dispose() {
+    return Collections.emptyList();
   }
 }

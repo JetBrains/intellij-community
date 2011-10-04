@@ -38,7 +38,7 @@ import java.util.List;
 * @author nik
 */
 class AddLibraryAction extends AddItemPopupAction<Library> {
-  private StructureConfigurableContext myContext;
+  private final StructureConfigurableContext myContext;
 
   public AddLibraryAction(ClasspathPanel classpathPanel, final int index, final String title,
                           final StructureConfigurableContext context) {
@@ -112,25 +112,12 @@ class AddLibraryAction extends AddItemPopupAction<Library> {
   }
 
   class ExistingLibraryChooser implements ClasspathElementChooser<Library> {
-    private List<Library> mySelectedLibraries;
-
-    public List<Library> getChosenElements() {
-      return mySelectedLibraries;
-    }
-
-    public void doChoose() {
+    public List<Library> chooseElements() {
       final Predicate<Library> condition = LibraryEditingUtil.getNotAddedLibrariesCondition(myClasspathPanel.getRootModel());
       ProjectStructureChooseLibrariesDialog dialog = new ProjectStructureChooseLibrariesDialog(myClasspathPanel, myContext,
                                                                                                condition);
       dialog.show();
-      mySelectedLibraries = dialog.getSelectedLibraries();
-    }
-
-    public boolean isOK() {
-      return mySelectedLibraries != null && !mySelectedLibraries.isEmpty();
-    }
-
-    public void dispose() {
+      return dialog.getSelectedLibraries();
     }
   }
 }

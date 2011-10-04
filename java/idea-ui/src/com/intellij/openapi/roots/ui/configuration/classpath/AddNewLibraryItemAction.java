@@ -29,6 +29,7 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -79,7 +80,7 @@ class AddNewLibraryItemAction extends ChooseAndAddAction<Library> {
 
   public static BaseListPopupStep<LibraryType> createChooseTypeStep(final ClasspathPanel classpathPanel,
                                                                     final StructureConfigurableContext context,
-                                                                    final DialogWrapper parentDialog) {
+                                                                    final @Nullable DialogWrapper parentDialog) {
     return new BaseListPopupStep<LibraryType>("Select Library Type", LibraryEditingUtil.getSuitableTypes(classpathPanel)) {
           @NotNull
           @Override
