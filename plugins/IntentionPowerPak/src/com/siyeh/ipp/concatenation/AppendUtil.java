@@ -62,8 +62,8 @@ class AppendUtil {
       return false;
     }
     final String name = containingClass.getQualifiedName();
-    if ("java.lang.StringBuffer".equals(name) ||
-        "java.lang.StringBuilder".equals(name)) {
+    if (CommonClassNames.JAVA_LANG_STRING_BUFFER.equals(name) ||
+        CommonClassNames.JAVA_LANG_STRING_BUILDER.equals(name)) {
       return true;
     }
     final Project project = containingClass.getProject();

@@ -110,8 +110,8 @@ public class ReplaceConcatenationWithStringBufferIntention extends MutablyNamedI
       return false;
     }
     final String className = type.getCanonicalText();
-    if (!"java.lang.StringBuffer".equals(className) &&
-        !"java.lang.StringBuilder".equals(className)) {
+    if (!CommonClassNames.JAVA_LANG_STRING_BUFFER.equals(className) &&
+        !CommonClassNames.JAVA_LANG_STRING_BUILDER.equals(className)) {
       return false;
     }
     @NonNls final String methodName = methodExpression.getReferenceName();
