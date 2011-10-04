@@ -295,24 +295,26 @@ public class FixedComboBoxEditor implements ComboBoxEditor {
         bottomColor = new Color(200, 200, 200);
       }
 
+      int _y = y + (SystemInfo.isMacOSLion ? 1 : 0);
+      
       g.setColor(topColor);
-      g.drawLine(x + 3, y + 3, x + width - 1, y + 3);
+      g.drawLine(x + 3, _y + 3, x + width - 1, _y + 3);
 
       g.setColor(secondTopColor);
-      g.drawLine(x + 3, y + 4, x + width - 1, y + 4);
+      g.drawLine(x + 3, _y + 4, x + width - 1, _y + 4);
 
       g.setColor(leftRightColor);
-      g.drawLine(x + 3, y + 4, x + 3, y + height - 4);
-      g.drawLine(x + width - 1, y + 4, x + width - 1, y + height - 4);
+      g.drawLine(x + 3, _y + 4, x + 3, _y + height - 4);
+      g.drawLine(x + width - 1, _y + 4, x + width - 1, _y + height - 4);
 
       g.setColor(bottomColor);
-      g.drawLine(x + 4, y + height - 4, x + width - 2, y + height - 4);
+      g.drawLine(x + 4, _y + height - 4, x + width - 2, _y + height - 4);
 
       g.setColor(UIUtil.getPanelBackground());
 
-      g.fillRect(x, y, width, 3);
-      g.fillRect(x, y, 3, height);
-      g.fillRect(x, y + height - 3, width, 3);
+      g.fillRect(x,  y, width, 3 + (SystemInfo.isMacOSLion ? 1 : 0));
+      g.fillRect(x, _y, 3, height);
+      g.fillRect(x, _y + height - 3, width, 3);
     }
 
     @Override
