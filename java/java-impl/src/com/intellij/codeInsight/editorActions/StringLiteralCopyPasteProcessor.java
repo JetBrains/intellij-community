@@ -71,6 +71,9 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
       if (rawText != null && rawText.rawText != null) return rawText.rawText; // Copied from the string literal. Copy as is.
       return escapeCharCharacters(text);
     }
+    else {
+      text = escapePastedLiteral(text);
+    }
     return text;
   }
 
@@ -117,6 +120,40 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
   public static String escapeCharCharacters(@NotNull String s) {
     StringBuilder buffer = new StringBuilder();
     StringUtil.escapeStringCharacters(s.length(), s, "\'", buffer);
+    return buffer.toString();
+  }
+
+  /**
+   * There is a possible case that pasted string contains string literal. We need to escape problem symbols within it then
+   * (see IDEA-74544 for the problem example).
+   * 
+   * @param s  target string to paste
+   * @return   string that should be actually pasted
+   */
+  @SuppressWarnings("AssignmentToForLoopParameter")
+  public static String escapePastedLiteral(@NotNull String s) {
+    StringBuilder buffer = new StringBuilder();
+    int literalStart = -1;
+    int literalEnd = 0;
+    for (int i = 0; i < s.length(); i++) {
+      char c = s.charAt(i);
+      switch (c) {
+        case '\\': i++;break;
+        case '"':
+          if (literalStart < 0) {
+            literalStart = i + 1;
+            buffer.append(s, literalEnd, literalStart);
+          }
+          else {
+            literalEnd = i;
+            buffer.append(StringUtil.escapeStringCharacters(s.substring(literalStart, literalEnd)));
+            literalStart = -1;
+          }
+      }
+    }
+    if (literalEnd < s.length()) {
+      buffer.append(s.substring(Math.max(literalStart, literalEnd)));
+    } 
     return buffer.toString();
   }
 }
