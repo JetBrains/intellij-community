@@ -15,6 +15,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.StringBuilderSpinAllocator;
 import de.plushnikov.intellij.lombok.UserMapKeys;
 import de.plushnikov.intellij.lombok.problem.ProblemBuilder;
+import de.plushnikov.intellij.lombok.quickfix.PsiQuickFixFactory;
 import de.plushnikov.intellij.lombok.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.lombok.util.PsiClassUtil;
 import de.plushnikov.intellij.lombok.util.PsiFieldUtil;
@@ -54,7 +55,8 @@ public class EqualsAndHashCodeProcessor extends AbstractLombokClassProcessor {
     final Collection<String> ofProperty = PsiAnnotationUtil.getAnnotationValues(psiAnnotation, "of", String.class);
 
     if (!excludeProperty.isEmpty() && !ofProperty.isEmpty()) {
-      builder.addWarning("exclude and of are mutually exclusive; the 'exclude' parameter will be ignored");//TODO add QuickFix  : remove all exclude params
+      builder.addWarning("exclude and of are mutually exclusive; the 'exclude' parameter will be ignored",
+          PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "exclude", null));
     } else {
       validateExcludeParam(psiClass, builder, excludeProperty);
     }
@@ -71,7 +73,9 @@ public class EqualsAndHashCodeProcessor extends AbstractLombokClassProcessor {
     if (null != callSuperProperty && callSuperProperty) {
       final PsiClass superClass = psiClass.getSuperClass();
       if (null != superClass && CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName())) {
-        builder.addError("Generating equals/hashCode with a supercall to java.lang.Object is pointless.");//TODO add QuickFix : set callSuper param = false
+        builder.addError("Generating equals/hashCode with a supercall to java.lang.Object is pointless.",
+            PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "callSuper", "false"),
+            PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "callSuper", null));
       }
     }
   }

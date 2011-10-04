@@ -15,6 +15,7 @@ import de.plushnikov.intellij.lombok.problem.ProblemBuilder;
 import de.plushnikov.intellij.lombok.problem.ProblemEmptyBuilder;
 import de.plushnikov.intellij.lombok.problem.ProblemNewBuilder;
 import de.plushnikov.intellij.lombok.processor.AbstractLombokProcessor;
+import de.plushnikov.intellij.lombok.quickfix.PsiQuickFixFactory;
 import de.plushnikov.intellij.lombok.util.PsiAnnotationUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -64,7 +65,9 @@ public abstract class AbstractLombokClassProcessor extends AbstractLombokProcess
       if (null != superClass && !CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName())) {
         builder.addWarning("Generating " + generatedMethodName + " implementation but without a call to superclass, " +
             "even though this class does not extend java.lang.Object." +
-            "If this is intentional, add '(callSuper=false)' to your type.");//TODO add QuickFix : add callSuper param
+            "If this is intentional, add '(callSuper=false)' to your type.",
+            PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "callSuper", "true"),
+            PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "callSuper", "false"));
       }
     }
   }

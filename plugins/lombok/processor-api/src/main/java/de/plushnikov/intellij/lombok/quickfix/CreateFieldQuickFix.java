@@ -48,7 +48,7 @@ public class CreateFieldQuickFix implements IntentionAction, LocalQuickFix {
 
   @NotNull
   public String getText() {
-    return "Create new field '" + myName + "'";
+    return String.format("Create new field '%s'", myName);
   }
 
   @NotNull
@@ -74,10 +74,10 @@ public class CreateFieldQuickFix implements IntentionAction, LocalQuickFix {
   }
 
   private void applyFixInner(final Project project) {
-    final PsiFile file = myClass.getContainingFile();
-    final Editor editor = CodeInsightUtil.positionCursor(project, myClass.getContainingFile(), myClass.getLBrace());
+    final PsiFile psiFile = myClass.getContainingFile();
+    final Editor editor = CodeInsightUtil.positionCursor(project, psiFile, myClass.getLBrace());
     if (editor != null) {
-      new WriteCommandAction(project, file) {
+      new WriteCommandAction(project, psiFile) {
         protected void run(Result result) throws Throwable {
 
           final PsiElementFactory psiElementFactory = JavaPsiFacade.getInstance(myClass.getProject()).getElementFactory();
@@ -101,7 +101,7 @@ public class CreateFieldQuickFix implements IntentionAction, LocalQuickFix {
             editor.getCaretModel().moveToOffset(psiMember.getTextRange().getEndOffset());
           }
 
-          UndoUtil.markPsiFileForUndo(myClass.getContainingFile());
+          UndoUtil.markPsiFileForUndo(psiFile);
         }
 
         @Override

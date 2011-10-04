@@ -34,7 +34,6 @@ import java.util.regex.Pattern;
  * @author Plushnikov Michail
  */
 public class PsiAnnotationUtil {
-  private static final String[] EMPTY_STRING_ARRAY = new String[0];
 
   public static boolean isNotAnnotatedWith(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull final Class<? extends Annotation>... annotationTypes) {
     return !isAnnotatedWith(psiModifierListOwner, annotationTypes);
@@ -51,7 +50,7 @@ public class PsiAnnotationUtil {
     }
     final PsiModifierList psiModifierList = psiModifierListOwner.getModifierList();
     if (psiModifierList != null) {
-      for (PsiAnnotation psiAnnotation : psiModifierList.getApplicableAnnotations()) {
+      for (PsiAnnotation psiAnnotation : psiModifierList.getAnnotations()) {
         if (annotationTypeNames.contains(psiAnnotation.getQualifiedName())) {
           return true;
         }
@@ -63,7 +62,7 @@ public class PsiAnnotationUtil {
   public static boolean isAnnotatedWith(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull final Class<? extends Annotation> annotationType) {
     final PsiModifierList psiModifierList = psiModifierListOwner.getModifierList();
     if (psiModifierList != null) {
-      for (PsiAnnotation psiAnnotation : psiModifierList.getApplicableAnnotations()) {
+      for (PsiAnnotation psiAnnotation : psiModifierList.getAnnotations()) {
         if (annotationType.getName().equals(psiAnnotation.getQualifiedName())) {
           return true;
         }
@@ -75,7 +74,7 @@ public class PsiAnnotationUtil {
   public static boolean isAnnotatedWith(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull final Pattern annotationPattern) {
     final PsiModifierList psiModifierList = psiModifierListOwner.getModifierList();
     if (psiModifierList != null) {
-      for (PsiAnnotation psiAnnotation : psiModifierList.getApplicableAnnotations()) {
+      for (PsiAnnotation psiAnnotation : psiModifierList.getAnnotations()) {
         final String suspect = getSimpleNameOf(psiAnnotation);
         if (annotationPattern.matcher(suspect).matches()) {
           return true;
@@ -95,7 +94,7 @@ public class PsiAnnotationUtil {
     final List<PsiAnnotation> annoations = new ArrayList<PsiAnnotation>();
     final PsiModifierList psiModifierList = psiModifierListOwner.getModifierList();
     if (psiModifierList != null) {
-      for (PsiAnnotation psiAnnotation : psiModifierList.getApplicableAnnotations()) {
+      for (PsiAnnotation psiAnnotation : psiModifierList.getAnnotations()) {
         final String name = getSimpleNameOf(psiAnnotation);
         if (annotationPattern.matcher(name).matches()) {
           annoations.add(psiAnnotation);

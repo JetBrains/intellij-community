@@ -37,6 +37,10 @@ public class PsiQuickFixFactory {
     return new CreateFieldQuickFix(psiClass, name, psiType, initializerText, modifiers);
   }
 
+  public static LocalQuickFix createChangeAnnotationParameterFix(@NotNull PsiAnnotation psiAnnotation, @NotNull String name, @Nullable String newValue) {
+    return new ChangeAnnotationParameterQuickFix(psiAnnotation, name, newValue);
+  }
+
 //  private void register(String message) {
 //    TextRange textRange = new TextRange(0, 0);
 //    HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, message);

@@ -136,7 +136,7 @@ public abstract class LombokLightVariableBuilder extends LightElement implements
     throw new UnsupportedOperationException("setName is not implemented yet in com.intellij.psi.impl.light.LightVariableBuilder");
   }
 
-  @Override
+
   public PsiType getTypeNoResolve() {
     return getType();
   }
