@@ -64,6 +64,7 @@ public class LocalInspectionsPassFactory extends AbstractProjectComponent implem
   @Override
   public TextEditorHighlightingPass createMainHighlightingPass(@NotNull PsiFile file, @NotNull Document document) {
     final TextRange textRange = file.getTextRange();
+    assert textRange != null : "null range " + file.getClass();
     return new MyLocalInspectionsPass(file, document, textRange, LocalInspectionsPass.EMPTY_PRIORITY_RANGE);
   }
 
@@ -72,7 +73,7 @@ public class LocalInspectionsPassFactory extends AbstractProjectComponent implem
   }
 
   private static class MyLocalInspectionsPass extends LocalInspectionsPass {
-    public MyLocalInspectionsPass(PsiFile file, Document document, TextRange textRange, TextRange visibleRange) {
+    public MyLocalInspectionsPass(PsiFile file, Document document, @NotNull TextRange textRange, TextRange visibleRange) {
       super(file, document, textRange.getStartOffset(), textRange.getEndOffset(), visibleRange, true);
     }
 
