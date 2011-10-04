@@ -109,7 +109,7 @@ public class SegmentArray {
   public final int findSegmentIndex(int offset) {
     if (mySegmentCount <= 0) {
       if (offset == 0) return 0;
-      throw new IllegalStateException("no segments available");
+      throw new IllegalStateException("no segments available. offset = "+offset);
     }
 
     final int lastValidOffset = getLastValidOffset();
