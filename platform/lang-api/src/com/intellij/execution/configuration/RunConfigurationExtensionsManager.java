@@ -81,7 +81,13 @@ public class RunConfigurationExtensionsManager<U extends RunConfigurationBase, T
     for (T extension : getApplicableExtensions(configuration)) {
       Element el = new Element(getExtensionRootAttr());
       el.setAttribute(getIdAttrName(), extension.getSerializationId());
-      extension.writeExternal(configuration, el);
+      try {
+        extension.writeExternal(configuration, el);
+      }
+      catch (WriteExternalException e) {
+        map.remove(extension.getSerializationId());
+        continue;
+      }
       map.put(extension.getSerializationId(), el);
     }
 
