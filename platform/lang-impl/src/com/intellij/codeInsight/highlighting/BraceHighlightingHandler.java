@@ -237,7 +237,7 @@ public class BraceHighlightingHandler {
       doHighlight(offset, originalOffset, fileType);
     }
     else if (offset > 0 && offset < chars.length()) {
-      // There is a possible case that there is paired braces nearby the caret position and the document contains only white
+      // There is a possible case that there are paired braces nearby the caret position and the document contains only white
       // space symbols between them. We want to highlight such braces as well.
       // Example: 
       //     public void test() { <caret>
