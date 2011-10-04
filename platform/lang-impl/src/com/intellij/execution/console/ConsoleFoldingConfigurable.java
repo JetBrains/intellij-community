@@ -3,14 +3,14 @@ package com.intellij.execution.console;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.ui.Splitter;
 import com.intellij.ui.AddEditDeleteListPanel;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -26,11 +26,13 @@ public class ConsoleFoldingConfigurable implements SearchableConfigurable {
 
   public JComponent createComponent() {
     if (myMainComponent == null) {
-      myMainComponent = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, false));
+      myMainComponent = new JPanel(new BorderLayout());
+      Splitter splitter = new Splitter(true);
+      myMainComponent.add(splitter);
       myPositivePanel = new MyAddDeleteListPanel("Fold console lines that contain", "Enter a substring of a console line you'd like to see folded:");
       myNegativePanel = new MyAddDeleteListPanel("Exceptions", "Enter a substring of a console line you don't want to fold:");
-      myMainComponent.add(myPositivePanel);
-      myMainComponent.add(myNegativePanel);
+      splitter.setFirstComponent(myPositivePanel);
+      splitter.setSecondComponent(myNegativePanel);
 
       myPositivePanel.getEmptyText().setText("Fold nothing");
       myNegativePanel.getEmptyText().setText("No exceptions");
@@ -121,6 +123,11 @@ public class ConsoleFoldingConfigurable implements SearchableConfigurable {
 
     public void addRule(String rule) {
       addElement(rule);
+    }
+
+    @Override
+    public void setBounds(int x, int y, int width, int height) {
+      super.setBounds(x, y, width, height);
     }
 
     @Override
