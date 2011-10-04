@@ -323,6 +323,8 @@ public class GrIntroduceParameterTest extends LightCodeInsightFixtureTestCase {
 
   public void testDelegate1() {doDelegateTest();}
   public void testDelegate2() {doDelegateTest();}
+  
+  public void testDelegaterInSuper() {doDelegateTest();}
 
   private void doDelegateTest() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, null, true);
