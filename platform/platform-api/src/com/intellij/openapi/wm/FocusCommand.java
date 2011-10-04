@@ -27,14 +27,10 @@ import java.awt.*;
 import java.util.Arrays;
 
 public abstract class FocusCommand extends ActiveRunnable implements Expirable {
-
-  private Component myDominationComponent;
+  protected Component myDominationComponent;
   private Throwable myAllocation;
-
   private ActionCallback myCallback;
-
   private boolean myInvalidatesPendingFurtherRequestors = true;
-
   private Expirable myExpirable;
 
   protected FocusCommand() {
@@ -137,7 +133,6 @@ public abstract class FocusCommand extends ActiveRunnable implements Expirable {
   }
 
   public static class ByComponent extends FocusCommand {
-
     private Component myToFocus;
 
     public ByComponent(@Nullable Component toFocus) {
@@ -155,12 +150,25 @@ public abstract class FocusCommand extends ActiveRunnable implements Expirable {
           myToFocus.requestFocus();
         }
       }
+      clear();
       return new ActionCallback.Done();
+    }
+
+    private void clear() {
+      myToFocus = null;
+      myDominationComponent = null;
     }
 
     @Override
     public boolean isExpired() {
-      return myToFocus == null || SwingUtilities.getWindowAncestor(myToFocus) == null;
+      if (myToFocus == null) {
+        return true;
+      }
+      if (SwingUtilities.getWindowAncestor(myToFocus) == null) {
+        clear();
+        return true;
+      }
+      return false;
     }
 
     public Component getComponent() {

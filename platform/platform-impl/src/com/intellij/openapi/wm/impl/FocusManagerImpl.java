@@ -76,7 +76,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   final EdtAlarm myFocusedComponentAlaram;
   private final EdtAlarm myForcedFocusRequestsAlarm;
 
-  private SimpleTimer myTimer = SimpleTimer.newInstance("FocusManager timer");
+  private final SimpleTimer myTimer = SimpleTimer.newInstance("FocusManager timer");
   
   private final EdtAlarm myIdleAlarm;
   private final Set<Runnable> myIdleRequests = new LinkedHashSet<Runnable>();
@@ -84,10 +84,10 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   private boolean myFlushWasDelayedToFixFocus;
   private ExpirableRunnable myFocusRevalidator;
 
-  private Set<FurtherRequestor> myValidFurtherRequestors = new HashSet<FurtherRequestor>();
+  private final Set<FurtherRequestor> myValidFurtherRequestors = new HashSet<FurtherRequestor>();
 
-  private Set<ActionCallback> myTypeAheadRequestors = new HashSet<ActionCallback>();
-  private UiActivityMonitor myActivityMonitor;
+  private final Set<ActionCallback> myTypeAheadRequestors = new HashSet<ActionCallback>();
+  private final UiActivityMonitor myActivityMonitor;
   private boolean myTypeaheadEnabled = true;
   private int myModalityStateForLastForcedRequest;
 
@@ -114,7 +114,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     return isFocusTransferReady()
            && !isIdleQueueEmpty()
            && !IdeEventQueue.getInstance().isDispatchingFocusEvent()
-           && !(focusOwner == null && (myValidFurtherRequestors.size() > 0 || myFocusRevalidator != null && !myFocusRevalidator.isExpired()));
+           && !(focusOwner == null && (!myValidFurtherRequestors.isEmpty() || myFocusRevalidator != null && !myFocusRevalidator.isExpired()));
   }
 
   private final Map<IdeFrame, WeakReference<Component>> myLastFocused = new HashMap<IdeFrame, WeakReference<Component>>();
@@ -289,11 +289,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
           }).doWhenProcessed(new Runnable() {
             public void run() {
               if (forced) {
-                myForcedFocusRequestsAlarm.addRequest(new EdtRunnable() {
-                  public void runEdt() {
-                    setLastEffectiveForcedRequest(null);
-                  }
-                }, 250);
+                myForcedFocusRequestsAlarm.addRequest(new SetLastEffectiveRunnable(), 250);
               }
             }
           }).notify(focusTimeout);
@@ -414,6 +410,8 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   }
 
   public void dispose() {
+    myForcedFocusRequestsAlarm.cancelAllRequests();
+    myFocusedComponentAlaram.cancelAllRequests();
   }
 
   private class KeyProcessorConext implements KeyEventProcessor.Context {
@@ -485,7 +483,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
          myTypeAheadRequestors.clear();
        }
 
-      if (myToDispatchOnDone.size() > 0 && myTypeAheadRequestors.size() == 0) {
+      if (!myToDispatchOnDone.isEmpty() && myTypeAheadRequestors.isEmpty()) {
         final KeyEvent[] events = myToDispatchOnDone.toArray(new KeyEvent[myToDispatchOnDone.size()]);
 
         IdeEventQueue.getInstance().getKeyEventDispatcher().resetState();
@@ -496,7 +494,6 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
           }
 
           KeyEvent each = events[eachIndex];
-          boolean toDispatch = false;
 
           Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
           if (owner == null) {
@@ -509,6 +506,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
             each.getKeyCode() == KeyEvent.VK_SHIFT ||
             each.getKeyCode() == KeyEvent.VK_META;
 
+          boolean toDispatch = false;
           if (!metaKey && (each.getID() == KeyEvent.KEY_RELEASED || each.getID() == KeyEvent.KEY_TYPED)) {
             for (int i = 0; i < eachIndex; i++) {
               final KeyEvent prev = events[i];
@@ -544,7 +542,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
           }
         }
         
-        if (myToDispatchOnDone.size() == 0 && myTypeAheadRequestors.size() == 0) {
+        if (myToDispatchOnDone.isEmpty() && myTypeAheadRequestors.isEmpty()) {
           myActivityMonitor.removeActivity(TYPEAHEAD);
         }
       }
@@ -655,7 +653,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     if (!isTypeaheadEnabled()) return false;
     if (isFlushingIdleRequests()) return false;
 
-    if (!isFocusTransferReady() || !isPendingKeyEventsRedispatched() || myTypeAheadRequestors.size() > 0) {
+    if (!isFocusTransferReady() || !isPendingKeyEventsRedispatched() || !myTypeAheadRequestors.isEmpty()) {
       for (FocusCommand each : myFocusRequests) {
         final KeyEventProcessor processor = each.getProcessor();
         if (processor != null) {
@@ -908,7 +906,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
 
   class EdtAlarm {
 
-    private Set<EdtRunnable> myRequests = new HashSet<EdtRunnable>();
+    private final Set<EdtRunnable> myRequests = new HashSet<EdtRunnable>();
     
     public void cancelAllRequests() {
       for (EdtRunnable each : myRequests) {
@@ -1065,5 +1063,11 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
 
   private static void assertDispatchThread() {
     //ApplicationManager.getApplication().assertIsDispatchThread(); // todo: uncomment after IDEA 11 EAP
+  }
+
+  private class SetLastEffectiveRunnable extends EdtRunnable {
+    public void runEdt() {
+      setLastEffectiveForcedRequest(null);
+    }
   }
 }

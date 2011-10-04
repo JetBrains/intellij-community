@@ -18,6 +18,7 @@ package com.intellij.openapi.fileEditor.impl;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.*;
@@ -496,7 +497,7 @@ public class EditorsSplitters extends JPanel {
   protected IdeFrame getFrame(Project project) {
     final WindowManagerEx windowManagerEx = WindowManagerEx.getInstanceEx();
     final IdeFrame frame = windowManagerEx.getFrame(project);
-    LOG.assertTrue(frame != null);
+    LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode() || frame != null);
     return frame;
   }
 

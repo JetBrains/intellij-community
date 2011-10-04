@@ -21,6 +21,7 @@ import com.intellij.execution.impl.EditorCopyAction;
 import com.intellij.execution.impl.EditorHyperlinkSupport;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.notification.impl.NotificationsManagerImpl;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -33,6 +34,7 @@ import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -54,7 +56,7 @@ class EventLogConsole {
     @NotNull
     @Override
     protected Editor compute() {
-      return createLogEditor(myProjectModel.getProject());
+      return createLogEditor();
     }
   };
 
@@ -71,11 +73,17 @@ class EventLogConsole {
     myProjectModel = model;
   }
 
-  private Editor createLogEditor(Project project) {
-    Editor editor = ConsoleViewUtil.setupConsoleEditor(project, false, false);
+  private Editor createLogEditor() {
+    Project project = myProjectModel.getProject();
+    final Editor editor = ConsoleViewUtil.setupConsoleEditor(project, false, false);
+    Disposer.register(myProjectModel, new Disposable() {
+      @Override
+      public void dispose() {
+        EditorFactory.getInstance().releaseEditor(editor);
+      }
+    });
 
-    ((EditorMarkupModel) editor.getMarkupModel()).setErrorStripeVisible(true);
-
+    ((EditorMarkupModel)editor.getMarkupModel()).setErrorStripeVisible(true);
 
     editor.addEditorMouseListener(new EditorPopupHandler() {
       public void invokePopup(final EditorMouseEvent event) {
@@ -86,10 +94,6 @@ class EventLogConsole {
       }
     });
     return editor;
-  }
-
-  void releaseEditor() {
-    EditorFactory.getInstance().releaseEditor(myLogEditor.getValue());
   }
 
   private DefaultActionGroup createPopupActions(ActionManager actionManager) {

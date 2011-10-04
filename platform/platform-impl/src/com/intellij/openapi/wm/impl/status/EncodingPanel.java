@@ -89,6 +89,7 @@ public class EncodingPanel extends EditorBasedWidget implements StatusBarWidget.
 
   @Override
   public void selectionChanged(FileEditorManagerEvent event) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
     update();
   }
 

@@ -361,7 +361,9 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
   @Override
   protected void tearDown() throws Exception {
-    LightPlatformTestCase.doTearDown(getProject(), ourApplication, false);
+    if (myProject != null) {
+      LightPlatformTestCase.doTearDown(getProject(), ourApplication, false);
+    }
 
     try {
       checkForSettingsDamage();

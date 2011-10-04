@@ -17,11 +17,14 @@ package com.intellij.notification;
 
 import com.intellij.notification.impl.NotificationsConfiguration;
 import com.intellij.notification.impl.NotificationsManagerImpl;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -32,14 +35,15 @@ import java.util.Map;
 /**
  * @author peter
  */
-public class LogModel {
+public class LogModel implements Disposable {
   private final List<Notification> myNotifications = new ArrayList<Notification>();
   private Notification myStatusMessage;
   private final Project myProject;
   final Map<Notification, Runnable> removeHandlers = new THashMap<Notification, Runnable>();
 
-  LogModel(@Nullable Project project) {
+  LogModel(@Nullable Project project, @NotNull Disposable parentDisposable) {
     myProject = project;
+    Disposer.register(parentDisposable, this);
   }
 
   void addNotification(Notification notification) {
@@ -119,5 +123,9 @@ public class LogModel {
 
   public Project getProject() {
     return myProject;
+  }
+
+  @Override
+  public void dispose() {
   }
 }

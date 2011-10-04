@@ -73,7 +73,7 @@ public class EditorTracker extends AbstractProjectComponent {
     myIdeFrame = ((WindowManagerEx)myWindowManager).getFrame(myProject);
     myProject.getMessageBus().connect(myProject).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
       public void selectionChanged(FileEditorManagerEvent event) {
-        if (myIdeFrame.getFocusOwner() == null) return;
+        if (myIdeFrame == null || myIdeFrame.getFocusOwner() == null) return;
         setActiveWindow(myIdeFrame);
       }
     });

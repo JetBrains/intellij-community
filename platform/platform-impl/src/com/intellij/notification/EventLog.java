@@ -67,7 +67,7 @@ public class EventLog implements Notifications {
   public static final String LOG_REQUESTOR = "Internal log requestor";
   public static final String LOG_TOOL_WINDOW_ID = "Event Log";
   public static final String HELP_ID = "reference.toolwindows.event.log";
-  private final LogModel myModel = new LogModel(null);
+  private final LogModel myModel = new LogModel(null, ApplicationManager.getApplication());
   private static final String A_CLOSING = "</a>";
   private static final Pattern TAG_PATTERN = Pattern.compile("<[^>]*>");
   private static final Pattern A_PATTERN = Pattern.compile("<a ([^>]* )?href=[\"\']([^>]*)[\"\'][^>]*>");
@@ -224,13 +224,13 @@ public class EventLog implements Notifications {
 
   public static class ProjectTracker extends AbstractProjectComponent {
     private volatile EventLogConsole myConsole;
-    private List<Notification> myInitial = new CopyOnWriteArrayList<Notification>();
+    private final List<Notification> myInitial = new CopyOnWriteArrayList<Notification>();
     private final LogModel myProjectModel;
 
-    public ProjectTracker(final Project project) {
+    public ProjectTracker(@NotNull final Project project) {
       super(project);
 
-      myProjectModel = new LogModel(project);
+      myProjectModel = new LogModel(project, project);
 
       for (Notification notification : getApplicationComponent().myModel.takeNotifications()) {
         printNotification(notification);
@@ -261,7 +261,6 @@ public class EventLog implements Notifications {
 
     @Override
     public void projectClosed() {
-      myConsole.releaseEditor();
       getApplicationComponent().myModel.setStatusMessage(null);
     }
 

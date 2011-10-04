@@ -5444,9 +5444,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
   private class EditorSizeContainer {
-
     /** Holds logical line widths in pixels. */
     private TIntArrayList myLineWidths;
+    private int maxCalculatedLine = -1;
 
     /** Holds value that indicates if line widths recalculation should be performed. */
     private volatile boolean myIsDirty;
@@ -5460,16 +5460,24 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     public synchronized void reset() {
       int lineCount = getDocument().getLineCount();
       myLineWidths = new TIntArrayList(lineCount + 300);
+      insertNewLines(lineCount, 0);
+      maxCalculatedLine = -1;
+      myIsDirty = true;
+    }
+
+    private void insertNewLines(int lineCount, int index) {
       int[] values = new int[lineCount];
       Arrays.fill(values, -1);
-      myLineWidths.add(values);
-      myIsDirty = true;
+      myLineWidths.insert(index, values);
+      if (index <= maxCalculatedLine) {
+        maxCalculatedLine += lineCount;
+      }
     }
 
     @SuppressWarnings({"NonPrivateFieldAccessedInSynchronizedContext"})
     public synchronized void beforeChange(DocumentEvent e) {
       if (myDocument.isInBulkUpdate()) {
-        myMaxWidth = mySize != null ? mySize.width : -1;
+        myMaxWidth = mySize == null ? -1 : mySize.width;
       }
 
       myOldEndLine = offsetToLogicalLine(e.getOffset() + e.getOldLength());
@@ -5523,18 +5531,23 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         final boolean toAddNewLines = min >= lineWidthSize;
 
         if (toAddNewLines) {
-          final int[] delta = new int[min - lineWidthSize + 1];
-          myLineWidths.insert(lineWidthSize, delta);
+          insertNewLines(min - lineWidthSize + 1, lineWidthSize);
         }
 
-        for (int i = startLine; i <= min; i++) myLineWidths.set(i, -1);
+        for (int i = min; i > startLine - 1; i--) {
+          myLineWidths.set(i, -1);
+          if (maxCalculatedLine == i) maxCalculatedLine--;
+        }
         if (newEndLine > oldEndLine) {
-          int[] delta = new int[newEndLine - oldEndLine];
-          Arrays.fill(delta, -1);
-          myLineWidths.insert(oldEndLine + 1, delta);
+          insertNewLines(newEndLine - oldEndLine, oldEndLine + 1);
         }
         else if (oldEndLine > newEndLine && !toAddNewLines && newEndLine + 1 < lineWidthSize) {
-          myLineWidths.remove(newEndLine + 1, Math.min(oldEndLine, lineWidthSize) - newEndLine - 1);
+          int length = Math.min(oldEndLine, lineWidthSize) - newEndLine - 1;
+          int index = newEndLine + 1;
+          myLineWidths.remove(index, length);
+          if (index <= maxCalculatedLine) {
+            maxCalculatedLine -= length;
+          }
         }
         myIsDirty = true;
       }
@@ -5559,6 +5572,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         if (widthInPixels > myMaxWidth) {
           myMaxWidth = widthInPixels;
         }
+        maxCalculatedLine = Math.max(maxCalculatedLine, logicalLine);
       }
     }
 
@@ -5605,6 +5619,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
           if (offset >= myDocument.getTextLength()) {
             myLineWidths.set(line, 0);
+            maxCalculatedLine = Math.max(maxCalculatedLine, line);
             break;
           }
 
@@ -5616,9 +5631,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           }
 
           int endLine;
-          for (endLine=line+1; endLine<lineCount;endLine++) {
-            if (myLineWidths.getQuick(endLine) != -1) {
-              break;
+          if (maxCalculatedLine < line+1) {
+            endLine = lineCount;
+          }
+          else {
+            for (endLine=line+1; endLine<maxCalculatedLine;endLine++) {
+              if (myLineWidths.getQuick(endLine) != -1) {
+                break;
+              }
             }
           }
           int endOffset = endLine==lineCount ? documentLength : myDocument.getLineEndOffset(endLine);
@@ -5667,28 +5687,26 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
               offset = collapsed.getEndOffset();
               line = myDocument.getLineNumber(offset);
             }
+            else if (c == '\t') {
+              x = EditorUtil.nextTabStop(x, EditorImpl.this);
+              offset++;
+            }
+            else if (c == '\n') {
+              int width = Math.max(x, maxPreviousSoftWrappedWidth);
+              myLineWidths.set(line, width);
+              maxCalculatedLine = Math.max(maxCalculatedLine, line);
+              if (line + 1 >= lineCount || myLineWidths.getQuick(line + 1) != -1) break;
+              offset++;
+              x = 0;
+              //noinspection AssignmentToForLoopParameter
+              line++;
+              if (line == lineCount - 1) {
+                lastLineLengthCalculated = true;
+              }
+            }
             else {
-              if (c == '\t') {
-                x = EditorUtil.nextTabStop(x, EditorImpl.this);
-                offset++;
-              }
-              else {
-                if (c == '\n') {
-                  myLineWidths.set(line, Math.max(x, maxPreviousSoftWrappedWidth));
-                  if (line + 1 >= lineCount || myLineWidths.getQuick(line + 1) != -1) break;
-                  offset++;
-                  x = 0;
-                  //noinspection AssignmentToForLoopParameter
-                  line++;
-                  if (line == lineCount - 1) {
-                     lastLineLengthCalculated = true;
-                  }
-                }
-                else {
-                  x += ComplementaryFontsRegistry.getFontAbleToDisplay(c, fontSize, fontType, fontName).charWidth(c, myEditorComponent);
-                  offset++;
-                }
-              }
+              x += ComplementaryFontsRegistry.getFontAbleToDisplay(c, fontSize, fontType, fontName).charWidth(c, myEditorComponent);
+              offset++;
             }
           }
         }
@@ -5696,6 +5714,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         if (lineCount > 0 && lastLineLengthCalculated) {
           myLineWidths.set(lineCount - 1,
                            x);    // Last line can be non-zero length and won't be caught by in-loop procedure since latter only react on \n's
+          maxCalculatedLine = Math.max(maxCalculatedLine, lineCount-1);
         }
 
         // There is a following possible situation:

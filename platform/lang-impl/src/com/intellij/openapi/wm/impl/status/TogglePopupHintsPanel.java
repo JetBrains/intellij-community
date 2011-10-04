@@ -20,6 +20,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.HectorComponent;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil;
 import com.intellij.ide.PowerSaveMode;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.project.Project;
@@ -140,12 +141,15 @@ public class TogglePopupHintsPanel extends EditorBasedWidget implements StatusBa
         myToolTipText = "Inspections are off. ";
       }
       myToolTipText += UIBundle.message("popup.hints.panel.click.to.configure.highlighting.tooltip.text");
-    } else {
+    }
+    else {
       myCurrentIcon = EMPTY_ICON;
       myToolTipText = null;
     }
 
-    myStatusBar.updateWidget(ID());
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      myStatusBar.updateWidget(ID());
+    }
   }
 
   private static boolean isStateChangeable(PsiFile file) {

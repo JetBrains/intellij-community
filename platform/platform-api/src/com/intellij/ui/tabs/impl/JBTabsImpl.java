@@ -122,7 +122,7 @@ public class JBTabsImpl extends JComponent
   private boolean myRequestFocusOnLastFocusedComponent = false;
   private boolean myListenerAdded;
   final Set<TabInfo> myAttractions = new HashSet<TabInfo>();
-  private Animator myAnimator;
+  private final Animator myAnimator;
   private List<TabInfo> myAllTabs;
   private boolean myPaintBlocked;
   private BufferedImage myImage;
@@ -2316,6 +2316,9 @@ public class JBTabsImpl extends JComponent
     resetTabsCache();
 
     updateAll(false, false);
+
+    // avoid leaks
+    myLastPaintedSelection = null;
   }
 
   public TabInfo findInfo(Component component) {
@@ -2365,7 +2368,7 @@ public class JBTabsImpl extends JComponent
       if (component instanceof TabLabel) {
         return ((TabLabel)component).getInfo();
       }
-      else if (!labelsOnly) {
+      if (!labelsOnly) {
         final TabInfo info = findInfo(component);
         if (info != null) return info;
       }
@@ -2430,7 +2433,7 @@ public class JBTabsImpl extends JComponent
   }
 
 
-  private boolean isToDeferRemoveForLater(JComponent c) {
+  private static boolean isToDeferRemoveForLater(JComponent c) {
     return c.getRootPane() != null;
   }
 
@@ -2439,10 +2442,6 @@ public class JBTabsImpl extends JComponent
       myForcedRelayout = forced;
     }
     revalidateAndRepaint(layoutNow);
-  }
-
-  ActionManager getActionManager() {
-    return myActionManager;
   }
 
   public TabsBorder getTabsBorder() {
@@ -2597,7 +2596,7 @@ public class JBTabsImpl extends JComponent
     return this;
   }
 
-  private boolean isChanged(Object oldObject, Object newObject) {
+  private static boolean isChanged(Object oldObject, Object newObject) {
     if (oldObject == null && newObject == null) return false;
     return oldObject != null && !oldObject.equals(newObject) || newObject != null && !newObject.equals(oldObject);
   }
@@ -3033,7 +3032,7 @@ public class JBTabsImpl extends JComponent
 
   private class TabTarget extends ComparableObject.Impl implements SwitchTarget {
 
-    private TabInfo myInfo;
+    private final TabInfo myInfo;
 
     private TabTarget(TabInfo info) {
       myInfo = info;

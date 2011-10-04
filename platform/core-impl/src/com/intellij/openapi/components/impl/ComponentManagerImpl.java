@@ -245,6 +245,11 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     myComponentsRegistry.registerComponent(config);
   }
 
+  public synchronized void registerComponentImplementation(Class componentKey, Class componentImplementation) {
+    getPicoContainer().registerComponentImplementation(componentKey.getName(), componentImplementation);
+    myInitializedComponents.remove(componentKey);
+  }
+
   public synchronized boolean hasComponent(@NotNull Class interfaceClass) {
     return myComponentsRegistry.containsInterface(interfaceClass);
   }
