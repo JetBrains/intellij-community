@@ -313,7 +313,7 @@
                      groupName="XML" enabledByDefault="true" level="ERROR"
                      implementationClass="com.intellij.xml.util.CheckXmlFileWithXercesValidatorInspection"/>
     <localInspection shortName="XmlDuplicatedId" bundle="messages.XmlBundle" key="xml.inspections.duplicate.id"
-                     groupKey="xml.inspections.group.name" enabledByDefault="true" level="ERROR"
+                     groupKey="xml.inspections.group.name" enabledByDefault="true" level="ERROR" runForWholeFile="true"
                      implementationClass="com.intellij.xml.util.XmlDuplicatedIdInspection"/>
     <localInspection shortName="RequiredAttributes" bundle="messages.InspectionsBundle" key="inspection.required.attributes.display.name"
                      groupName="HTML" enabledByDefault="true" level="WARNING"

@@ -20,6 +20,7 @@ import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionProfileWrapper;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
@@ -46,7 +47,7 @@ import java.util.Map;
  */
 public class SpellCheckingEditorCustomization extends AbstractEditorCustomization {
 
-  private static final Map<String, LocalInspectionTool> SPELL_CHECK_TOOLS = new HashMap<String, LocalInspectionTool>();
+  private static final Map<String, LocalInspectionToolWrapper> SPELL_CHECK_TOOLS = new HashMap<String, LocalInspectionToolWrapper>();
   private static final boolean READY = init();
   
   @SuppressWarnings({"unchecked"})
@@ -58,7 +59,7 @@ public class SpellCheckingEditorCustomization extends AbstractEditorCustomizatio
     for (Class<LocalInspectionTool> inspectionClass : inspectionClasses) {
       try {
         LocalInspectionTool tool = inspectionClass.newInstance();
-        SPELL_CHECK_TOOLS.put(tool.getID(), tool);
+        SPELL_CHECK_TOOLS.put(tool.getID(), new LocalInspectionToolWrapper(tool));
       }
       catch (Throwable e) {
         return false;
@@ -144,19 +145,19 @@ public class SpellCheckingEditorCustomization extends AbstractEditorCustomizatio
     }
 
     @Override
-    public List<LocalInspectionTool> getHighlightingLocalInspectionTools(PsiElement element) {
-      List<LocalInspectionTool> result = new ArrayList<LocalInspectionTool>(myDelegate.getHighlightingLocalInspectionTools(element));
+    public List<LocalInspectionToolWrapper> getHighlightingLocalInspectionTools(PsiElement element) {
+      List<LocalInspectionToolWrapper> result = new ArrayList<LocalInspectionToolWrapper>(myDelegate.getHighlightingLocalInspectionTools(element));
       
       if (myUseSpellCheck) {
-        Map<String, LocalInspectionTool> spellingTools = new HashMap<String, LocalInspectionTool>(SPELL_CHECK_TOOLS);
-        for (LocalInspectionTool tool : result) {
+        Map<String, LocalInspectionToolWrapper> spellingTools = new HashMap<String, LocalInspectionToolWrapper>(SPELL_CHECK_TOOLS);
+        for (LocalInspectionToolWrapper tool : result) {
           spellingTools.remove(tool.getID());
         }
         result.addAll(spellingTools.values());
       }
       else {
         for (int i = result.size() - 1; i >= 0; i--) {
-          LocalInspectionTool tool = result.get(i);
+          LocalInspectionToolWrapper tool = result.get(i);
           if (SPELL_CHECK_TOOLS.containsKey(tool.getID())) {
             result.remove(i);
           }

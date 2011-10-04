@@ -128,8 +128,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       if (!HighlightLevelUtil.shouldInspect(myFile)) return;
       final InspectionManagerEx iManager = (InspectionManagerEx)InspectionManager.getInstance(myProject);
       final InspectionProfileWrapper profile = myProfileWrapper;
-      final List<LocalInspectionTool> tools = DumbService.getInstance(myProject).filterByDumbAwareness(getInspectionTools(profile));
-      inspect(tools, iManager, true, true, progress);
+      inspect(getInspectionTools(profile), iManager, true, true, DumbService.isDumb(myProject), progress);
     }
     finally {
       disposeDescriptors();
@@ -145,10 +144,9 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     for (InspectionProfileEntry toolWrapper : toolWrappers) {
       tool2Wrapper.put(((LocalInspectionToolWrapper)toolWrapper).getTool(), (LocalInspectionToolWrapper)toolWrapper);
     }
-    List<LocalInspectionTool> tools = new ArrayList<LocalInspectionTool>(tool2Wrapper.keySet());
 
     ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
-    inspect(tools, iManager, false, false, progress);
+    inspect(new ArrayList<LocalInspectionToolWrapper>(tool2Wrapper.values()), iManager, false, false, false, progress);
     addDescriptorsFromInjectedResults(tool2Wrapper, iManager);
     List<InspectionResult> resultList = result.get(myFile);
     if (resultList == null) return;
@@ -206,25 +204,43 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     }
   }
 
-  private void inspect(@NotNull final List<LocalInspectionTool> tools,
+  private void inspect(@NotNull final List<LocalInspectionToolWrapper> toolWrappers,
                        @NotNull final InspectionManagerEx iManager,
                        final boolean isOnTheFly,
                        boolean failFastOnAcquireReadAction,
+                       boolean checkDumbAwareness,
                        @NotNull final ProgressIndicator indicator) {
     myFailFastOnAcquireReadAction = failFastOnAcquireReadAction;
-    if (tools.isEmpty()) return;
+    if (toolWrappers.isEmpty()) return;
 
     List<PsiElement> inside = new ArrayList<PsiElement>();
     List<PsiElement> outside = new ArrayList<PsiElement>();
     Divider.divideInsideAndOutside(myFile, myStartOffset, myEndOffset, myPriorityRange, inside, outside,
                                    HighlightLevelUtil.AnalysisLevel.HIGHLIGHT_AND_INSPECT,true);
 
+    Set<String> languages = new HashSet<String>();
+    for (PsiElement element : inside) {
+      languages.add(element.getLanguage().getID());
+    }
+    for (PsiElement element : outside) {
+      languages.add(element.getLanguage().getID());
+    }
+    List<LocalInspectionTool> tools = new ArrayList<LocalInspectionTool>();
+    for (LocalInspectionToolWrapper wrapper : toolWrappers) {
+      if (wrapper.getLanguage() == null || languages.contains(wrapper.getLanguage())) {
+        LocalInspectionTool tool = wrapper.getTool();
+        if (!checkDumbAwareness || tool instanceof DumbAware) {
+          tools.add(tool);
+        }
+      }
+    }
+
     setProgressLimit(1L * tools.size() * 2);
     final LocalInspectionToolSession session = new LocalInspectionToolSession(myFile, myStartOffset, myEndOffset);
 
     List<Trinity<LocalInspectionTool, ProblemsHolder, PsiElementVisitor>> init = new ArrayList<Trinity<LocalInspectionTool, ProblemsHolder, PsiElementVisitor>>();
     visitPriorityElementsAndInit(tools, iManager, isOnTheFly, indicator, inside, session, init);
-    visitRestElementsAndCleanup(tools,iManager,isOnTheFly, indicator, outside, session, init);
+    visitRestElementsAndCleanup(tools, iManager, isOnTheFly, indicator, outside, session, init);
 
     indicator.checkCanceled();
 
@@ -640,7 +656,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     return new ArrayList<PsiElement>(result);
   }
 
-  List<LocalInspectionTool> getInspectionTools(InspectionProfileWrapper profile) {
+  List<LocalInspectionToolWrapper> getInspectionTools(InspectionProfileWrapper profile) {
     return profile.getHighlightingLocalInspectionTools(myFile);
   }
 

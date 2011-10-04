@@ -196,4 +196,8 @@ public final class LocalInspectionToolWrapper extends InspectionToolWrapper<Loca
   public String getAlternativeID() {
     return myEP == null ? getTool().getAlternativeID() : myEP.alternativeId;
   }
+
+  public boolean runForWholeFile() {
+    return myEP == null ? getTool().runForWholeFile() : myEP.runForWholeFile;
+  }
 }

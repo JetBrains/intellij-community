@@ -422,7 +422,7 @@
     <localInspection shortName="Dependency" displayName="Illegal package dependencies" groupName="" enabledByDefault="true" level="ERROR"
                      implementationClass="com.intellij.codeInspection.dependencyViolation.DependencyInspection"/>
     <localInspection shortName="FieldCanBeLocal" bundle="messages.InspectionsBundle" key="inspection.field.can.be.local.display.name"
-                     groupName="Class structure" enabledByDefault="true" level="WARNING"
+                     groupName="Class structure" enabledByDefault="true" level="WARNING" runForWholeFile="true"
                      implementationClass="com.intellij.codeInspection.varScopeCanBeNarrowed.FieldCanBeLocalInspection"/>
     <localInspection shortName="NullableProblems" bundle="messages.InspectionsBundle" key="inspection.nullable.problems.display.name"
                      groupName="Probable bugs" enabledByDefault="true" level="WARNING"

@@ -26,7 +26,7 @@
                        groupName="toString() issues" enabledByDefault="false" level="WARNING"
                        implementationClass="org.jetbrains.generate.tostring.inspection.ClassHasNoToStringMethodInspection"/>
       <localInspection shortName="FieldNotUsedInToString" displayName="Field not used in toString() method" groupName="toString() issues"
-                       enabledByDefault="false" level="WARNING"
+                       enabledByDefault="false" level="WARNING" runForWholeFile="true"
                        implementationClass="org.jetbrains.generate.tostring.inspection.FieldNotUsedInToStringInspection"/>
 
     </extensions>

@@ -73,7 +73,7 @@ public class EmptyIntentionInspectionQuickFixTest extends LightQuickFixTestCase{
       IntentionAction action = emptyActions.get(i);
       if (!(action instanceof EmptyIntentionAction)) emptyActions.remove(i);
     }
-    assertEquals(1, emptyActions.size());
+    assertEquals(emptyActions.toString(), 1, emptyActions.size());
   }
 
   public void testLowPriority() throws Exception {

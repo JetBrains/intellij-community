@@ -18,7 +18,6 @@ package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -55,15 +54,13 @@ public class InspectionProfileWrapper {
      return (InspectionTool[])myProfile.getInspectionTools(element);
   }
 
-  public List<LocalInspectionTool> getHighlightingLocalInspectionTools(PsiElement element) {
-    List<LocalInspectionTool> enabled = new ArrayList<LocalInspectionTool>();
+  public List<LocalInspectionToolWrapper> getHighlightingLocalInspectionTools(PsiElement element) {
+    List<LocalInspectionToolWrapper> enabled = new ArrayList<LocalInspectionToolWrapper>();
     final InspectionTool[] tools = getInspectionTools(element);
     checkInspectionsDuplicates(tools);
     for (InspectionTool tool : tools) {
-      if (tool instanceof LocalInspectionToolWrapper) {
-        if (myProfile.isToolEnabled(HighlightDisplayKey.find(tool.getShortName()), element)) {
-          enabled.add(((LocalInspectionToolWrapper)tool).getTool());
-        }
+      if (tool instanceof LocalInspectionToolWrapper && myProfile.isToolEnabled(HighlightDisplayKey.find(tool.getShortName()), element)) {
+        enabled.add((LocalInspectionToolWrapper)tool);
       }
     }
     return enabled;

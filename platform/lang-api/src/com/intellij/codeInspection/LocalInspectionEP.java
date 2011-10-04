@@ -31,4 +31,7 @@ public class LocalInspectionEP extends InspectionEP {
 
   @Attribute("alternativeId")
   public String alternativeId;
+
+  @Attribute("runForWholeFile")
+  public boolean runForWholeFile;
 }

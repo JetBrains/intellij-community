@@ -262,11 +262,11 @@
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.bugs.MismatchedArrayReadWriteInspection"/>
     <localInspection suppressId="MismatchedQueryAndUpdateOfCollection" shortName="MismatchedCollectionQueryUpdate"
-                     bundle="com.siyeh.InspectionGadgetsBundle" key="mismatched.update.collection.display.name"
+                     bundle="com.siyeh.InspectionGadgetsBundle" key="mismatched.update.collection.display.name" runForWholeFile="true"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.bugs.MismatchedCollectionQueryUpdateInspection"/>
     <localInspection suppressId="MismatchedQueryAndUpdateOfStringBuilder" shortName="MismatchedStringBuilderQueryUpdate"
-                     bundle="com.siyeh.InspectionGadgetsBundle" key="mismatched.string.builder.query.update.display.name"
+                     bundle="com.siyeh.InspectionGadgetsBundle" key="mismatched.string.builder.query.update.display.name" runForWholeFile="true"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.bugs.MismatchedStringBuilderQueryUpdateInspection"/>
     <localInspection shortName="MisspelledCompareTo" bundle="com.siyeh.InspectionGadgetsBundle" key="misspelled.compareto.display.name"
@@ -462,7 +462,7 @@
                      groupKey="group.names.class.structure" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.classlayout.PublicConstructorInNonPublicClassInspection"/>
     <localInspection shortName="Singleton" bundle="com.siyeh.InspectionGadgetsBundle" key="singleton.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.class.structure" enabledByDefault="false"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.class.structure" enabledByDefault="false" runForWholeFile="true"
                      level="WARNING" implementationClass="com.siyeh.ig.classlayout.SingletonInspection"/>
     <localInspection shortName="StaticNonFinalField" bundle="com.siyeh.InspectionGadgetsBundle" key="static.non.final.field.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.class.structure" enabledByDefault="false"
@@ -902,7 +902,7 @@
     <localInspection shortName="StaticImport" bundle="com.siyeh.InspectionGadgetsBundle" key="static.import.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.imports" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.imports.StaticImportInspection"/>
-    <localInspection shortName="UnusedImport" bundle="com.siyeh.InspectionGadgetsBundle" key="unused.import.display.name"
+    <localInspection shortName="UnusedImport" bundle="com.siyeh.InspectionGadgetsBundle" key="unused.import.display.name" runForWholeFile="true"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.imports" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.imports.UnusedImportInspection"/>
     <localInspection shortName="AbstractClassExtendsConcreteClass" bundle="com.siyeh.InspectionGadgetsBundle"
@@ -1720,7 +1720,7 @@
                      level="WARNING" implementationClass="com.siyeh.ig.performance.FieldMayBeStaticInspection"/>
     <localInspection shortName="InnerClassMayBeStatic" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="inner.class.may.be.static.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.performance.issues" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.performance.issues" enabledByDefault="false" level="WARNING" runForWholeFile="true"
                      implementationClass="com.siyeh.ig.performance.InnerClassMayBeStaticInspection"/>
     <localInspection shortName="InstantiatingObjectToGetClassObject" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="instantiating.object.to.get.class.object.display.name" groupBundle="messages.InspectionsBundle"
@@ -2091,10 +2091,10 @@
                      key="extends.object.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues"
                      enabledByDefault="true" level="WARNING" implementationClass="com.siyeh.ig.style.ExtendsObjectInspection"/>
     <localInspection shortName="FieldMayBeFinal" bundle="com.siyeh.InspectionGadgetsBundle" key="field.may.be.final.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues" enabledByDefault="false"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues" enabledByDefault="false" runForWholeFile="true"
                      level="WARNING" implementationClass="com.siyeh.ig.style.FieldMayBeFinalInspection"/>
     <localInspection shortName="ImplicitCallToSuper" bundle="com.siyeh.InspectionGadgetsBundle" key="implicit.call.to.super.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues" enabledByDefault="false"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues" enabledByDefault="false" runForWholeFile="true"
                      level="WARNING" implementationClass="com.siyeh.ig.style.ImplicitCallToSuperInspection"/>
     <localInspection shortName="ListIndexOfReplaceableByContains" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="indexof.replaceable.by.contains.display.name" groupBundle="messages.InspectionsBundle"
@@ -2256,11 +2256,11 @@
                      enabledByDefault="false" level="WARNING" implementationClass="com.siyeh.ig.threading.ExtendsThreadInspection"/>
     <localInspection shortName="FieldAccessedSynchronizedAndUnsynchronized" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="field.accessed.synchronized.and.unsynchronized.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.threading.issues" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.threading.issues" enabledByDefault="false" level="WARNING" runForWholeFile="true"
                      implementationClass="com.siyeh.ig.threading.FieldAccessedSynchronizedAndUnsynchronizedInspection"/>
     <localInspection shortName="MethodMayBeSynchronized" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="method.may.be.synchronized.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.threading.issues" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.threading.issues" enabledByDefault="false" level="WARNING" runForWholeFile="true"
                      implementationClass="com.siyeh.ig.threading.MethodMayBeSynchronizedInspection"/>
     <localInspection shortName="NakedNotify" bundle="com.siyeh.InspectionGadgetsBundle" key="naked.notify.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.threading.issues" enabledByDefault="false"

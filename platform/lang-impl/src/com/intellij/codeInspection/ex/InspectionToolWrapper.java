@@ -60,6 +60,11 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
     return myTool != null;
   }
 
+  @Nullable
+  public String getLanguage() {
+    return myEP == null ? null : myEP.language;
+  }
+
   @NotNull
   public String getShortName() {
     return myEP == null ? getTool().getShortName() : myEP.shortName;

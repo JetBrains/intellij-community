@@ -16,9 +16,12 @@
 
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeHighlighting.*;
-import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeHighlighting.MainHighlightingPassFactory;
+import com.intellij.codeHighlighting.Pass;
+import com.intellij.codeHighlighting.TextEditorHighlightingPass;
+import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.codeInspection.ex.InspectionProfileWrapper;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -26,7 +29,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,10 +76,10 @@ public class LocalInspectionsPassFactory extends AbstractProjectComponent implem
       super(file, document, textRange.getStartOffset(), textRange.getEndOffset(), visibleRange, true);
     }
 
-    List<LocalInspectionTool> getInspectionTools(InspectionProfileWrapper profile) {
-      List<LocalInspectionTool> tools = super.getInspectionTools(profile);
-      List<LocalInspectionTool> result = new ArrayList<LocalInspectionTool>(tools.size());
-      for (LocalInspectionTool tool : tools) {
+    List<LocalInspectionToolWrapper> getInspectionTools(InspectionProfileWrapper profile) {
+      List<LocalInspectionToolWrapper> tools = super.getInspectionTools(profile);
+      List<LocalInspectionToolWrapper> result = new ArrayList<LocalInspectionToolWrapper>(tools.size());
+      for (LocalInspectionToolWrapper tool : tools) {
         if (!tool.runForWholeFile()) result.add(tool);
       }
       return result;

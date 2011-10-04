@@ -23,6 +23,7 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionProfileWrapper;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.editor.Editor;
@@ -94,11 +95,12 @@ public class WholeFileLocalInspectionsPassFactory extends AbstractProjectCompone
         myFileTools.containsKey(file) && !myFileTools.get(file)) {
       return null;
     }
+
     return new LocalInspectionsPass(file, editor.getDocument(), 0, file.getTextLength(), LocalInspectionsPass.EMPTY_PRIORITY_RANGE, true) {
-      List<LocalInspectionTool> getInspectionTools(InspectionProfileWrapper profile) {
-        List<LocalInspectionTool> tools = super.getInspectionTools(profile);
-        List<LocalInspectionTool> result = new ArrayList<LocalInspectionTool>();
-        for (LocalInspectionTool tool : tools) {
+      List<LocalInspectionToolWrapper> getInspectionTools(InspectionProfileWrapper profile) {
+        List<LocalInspectionToolWrapper> tools = super.getInspectionTools(profile);
+        List<LocalInspectionToolWrapper> result = new ArrayList<LocalInspectionToolWrapper>(tools.size());
+        for (LocalInspectionToolWrapper tool : tools) {
           if (tool.runForWholeFile()) result.add(tool);
         }
         myFileTools.put(file, !result.isEmpty());
