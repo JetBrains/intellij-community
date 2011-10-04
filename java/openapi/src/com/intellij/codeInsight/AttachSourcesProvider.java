@@ -32,4 +32,12 @@ public interface AttachSourcesProvider {
     String getBusyText();
     ActionCallback perform(List<LibraryOrderEntry> orderEntriesContainingFile);
   }
+
+  /**
+   * This marker interface means what this action will be shown only if it is single action.
+   */
+  interface LightAttachSourcesAction extends AttachSourcesAction {
+
+  }
+
 }

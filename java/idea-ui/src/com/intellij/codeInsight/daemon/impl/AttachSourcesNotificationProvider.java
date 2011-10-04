@@ -108,20 +108,35 @@ public class AttachSourcesNotificationProvider implements EditorNotifications.Pr
       defaultAction = new ChooseAndAttachSourcesAction(myProject, panel);
     }
 
-    TreeSet<AttachSourcesProvider.AttachSourcesAction> actions = new TreeSet<AttachSourcesProvider.AttachSourcesAction>(
-      new Comparator<AttachSourcesProvider.AttachSourcesAction>() {
-        public int compare(AttachSourcesProvider.AttachSourcesAction o1, AttachSourcesProvider.AttachSourcesAction o2) {
-          if (o1 == defaultAction) return 1;
-          if (o2 == defaultAction) return -1;
-          return o1.getName().compareToIgnoreCase(o2.getName());
+    List<AttachSourcesProvider.AttachSourcesAction> actions = new ArrayList<AttachSourcesProvider.AttachSourcesAction>();
+
+    boolean hasNonLightAction = false;
+
+    for (AttachSourcesProvider each : Extensions.getExtensions(EXTENSION_POINT_NAME)) {
+      for (AttachSourcesProvider.AttachSourcesAction action : each.getActions(libraries, psiFile)) {
+        if (hasNonLightAction) {
+          if (action instanceof AttachSourcesProvider.LightAttachSourcesAction) {
+            continue; // Don't add LightAttachSourcesAction if non light action exists.
+          }
         }
+        else {
+          if (!(action instanceof AttachSourcesProvider.LightAttachSourcesAction)) {
+            actions.clear(); // All previous actions is LightAttachSourcesAction and should be removed.
+            hasNonLightAction = true;
+          }
+        }
+
+        actions.add(action);
       }
-    );
+    }
+
+    Collections.sort(actions, new Comparator<AttachSourcesProvider.AttachSourcesAction>() {
+      public int compare(AttachSourcesProvider.AttachSourcesAction o1, AttachSourcesProvider.AttachSourcesAction o2) {
+        return o1.getName().compareToIgnoreCase(o2.getName());
+      }
+    });
 
     actions.add(defaultAction);
-    for (AttachSourcesProvider each : Extensions.getExtensions(EXTENSION_POINT_NAME)) {
-      actions.addAll(each.getActions(libraries, psiFile));
-    }
 
     for (final AttachSourcesProvider.AttachSourcesAction each : actions) {
       panel.createActionLabel(GuiUtils.getTextWithoutMnemonicEscaping(each.getName()), new Runnable() {
