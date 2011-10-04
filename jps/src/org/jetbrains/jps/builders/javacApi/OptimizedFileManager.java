@@ -7,6 +7,7 @@ import com.sun.tools.javac.util.DefaultFileManager;
 import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.ListBuffer;
 import org.jetbrains.ether.dependencyView.Callbacks;
+import org.jetbrains.jps.PathUtil;
 import org.objectweb.asm.ClassReader;
 
 import javax.lang.model.SourceVersion;
@@ -171,8 +172,8 @@ public class OptimizedFileManager extends DefaultFileManager {
     @Override
     public JavaFileObject getJavaFileForOutput(Location location, final String className, final JavaFileObject.Kind kind, FileObject fileObject) throws IOException {
         final JavaFileObject result = super.getJavaFileForOutput(location, className, kind, fileObject);
-        final String classFileName = result.toUri().toString();
-        final String sourceFileName = fileObject.toUri().toString();
+        final String classFileName = PathUtil.toPath(result.toUri());
+        final String sourceFileName = PathUtil.toPath(fileObject.toUri());
 
         return new ForwardingJavaFileObject<JavaFileObject>(result) {
             private OutputStream superOpenOutputStream() throws IOException {
