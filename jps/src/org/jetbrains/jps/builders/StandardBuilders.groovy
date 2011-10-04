@@ -162,6 +162,11 @@ class ResourceCopier implements ModuleBuilder {
           fileset(dir: root) {
             patternset(refid: moduleChunk["compiler.resources.id"])
             type(type: "file")
+            state.excludes.each { String excludedRoot ->
+              if (excludedRoot.startsWith("${root}/")) {
+                exclude(name: "${excludedRoot.substring(root.length() + 1)}/**")
+              }
+            }
           }
         }
       }
