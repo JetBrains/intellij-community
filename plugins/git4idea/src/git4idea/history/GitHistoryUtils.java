@@ -96,6 +96,9 @@ public class GitHistoryUtils {
       return null;
     }
     final GitLogRecord record = parser.parseOneRecord(result);
+    if (record == null) {
+      return null;
+    }
     record.setUsedHandler(h);
     return new GitRevisionNumber(record.getHash(), record.getDate());
   }
@@ -120,6 +123,9 @@ public class GitHistoryUtils {
       return null;
     }
     final GitLogRecord record = parser.parseOneRecord(result);
+    if (record == null) {
+      return null;
+    }
     record.setUsedHandler(h);
 
     final String author = Comparing.equal(record.getAuthorName(), record.getCommitterName()) ? record.getAuthorName() :
@@ -157,6 +163,9 @@ public class GitHistoryUtils {
       return null;
     }
     GitLogRecord record = parser.parseOneRecord(result);
+    if (record == null) {
+      return null;
+    }
     final List<Change> changes = record.parseChanges(project, root);
     boolean exists = ! FileStatus.DELETED.equals(changes.get(0).getFileStatus());
     record.setUsedHandler(h);
