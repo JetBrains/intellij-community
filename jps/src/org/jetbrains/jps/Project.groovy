@@ -168,11 +168,11 @@ class Project {
   }
 
   List<String> runtimeClasspath() {
-    return builder.projectRuntimeClasspath(false);
+    return builder.getProjectPaths().getProjectRuntimeClasspath(false);
   }
 
   List<String> testRuntimeClasspath() {
-    return builder.projectRuntimeClasspath(true);
+    return builder.getProjectPaths().getProjectRuntimeClasspath(true);
   }
 
   def cleanModule (Module m) {
@@ -277,9 +277,5 @@ class Project {
         classpath (refid: additionalClasspathId)
       }
     }
-  }
-
-  def ClasspathKind getCompileClasspathKind (final boolean tests) {
-    return ClasspathKind.compile (tests)
   }
 }

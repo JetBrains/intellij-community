@@ -65,6 +65,13 @@ public class ModuleClasspathTest extends JpsBuildTestCase {
             ProjectPaths.getPathsList(project.builder.getProjectPaths().getCompilationClasspath(chunk, false, true)))
   }
 
+  public void testProjectClasspath() {
+    assertClasspath(["out/production/main", "/jdk.jar", "main/lib/service.jar",
+                     "test-util/lib/runtime.jar", "out/production/test-util",
+                     "util/lib/exported.jar", "/jdk15.jar", "out/production/util"],
+                    project.builder.getProjectPaths().getProjectRuntimeClasspath(false))
+  }
+
   private def assertClasspath(String module, ClasspathKind classpathKind, List<String> expected) {
     List<String> classpath = project.builder.moduleClasspath(project.modules[module], classpathKind)
     assertClasspath(expected, classpath)

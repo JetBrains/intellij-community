@@ -372,20 +372,6 @@ class ProjectBuilder {
     return dst.absolutePath
   }
 
-  List<String> projectRuntimeClasspath(boolean tests) {
-    Set<String> result = new LinkedHashSet<String>()
-    ClasspathKind kind = ClasspathKind.runtime(tests)
-    project.modules.values().each {Module module ->
-      result.addAll(module.getClasspathRoots(kind))
-      module.getClasspath(kind).each {ClasspathItem item ->
-        if (!(item instanceof Module)) {
-          result.addAll(item.getClasspathRoots(kind))
-        }
-      }
-    }
-    return result.asList()
-  }
-
   List<String> moduleClasspath(Module module, ClasspathKind classpathKind) {
     return getProjectPaths().getClasspath(chunkForModule(module, classpathKind.isTestsIncluded()), classpathKind)
   }

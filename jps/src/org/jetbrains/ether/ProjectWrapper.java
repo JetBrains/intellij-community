@@ -691,9 +691,7 @@ public class ProjectWrapper {
 
             final List<ClasspathItemWrapper> result = new ArrayList<ClasspathItemWrapper>();
 
-            final ClasspathKind kind = myProject.getCompileClasspathKind(tests);
-
-            for (ClasspathItem cpi : myModule.getClasspath(kind)) {
+            for (ClasspathItem cpi : myModule.getClasspath(ClasspathKind.compile(tests))) {
                 if (cpi instanceof Module) {
                     result.add(getModule(((Module) cpi).getName()));
                 } else if (cpi instanceof Library) {
@@ -1306,7 +1304,7 @@ public class ProjectWrapper {
             }
         }.log();
 
-        final ClasspathKind kind = myProject.getCompileClasspathKind(flags.tests());
+        final ClasspathKind kind = ClasspathKind.compile(flags.tests());
 
         final Set<Module> modules = new HashSet<Module>();
         final Set<String> marked = new HashSet<String>();

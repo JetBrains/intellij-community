@@ -151,6 +151,15 @@ public class ProjectPaths {
     return new File(forTests ? module.getTestOutputPath() : module.getOutputPath());
   }
 
+  public List<String> getProjectRuntimeClasspath(boolean includeTests) {
+    Set<File> classpath = new LinkedHashSet<File>();
+    final ClasspathKind kind = ClasspathKind.runtime(includeTests);
+    for (Module module : myProject.getModules().values()) {
+      collectClasspath(module, kind, classpath, new HashSet<Module>(), false, false, false, WITHOUT_DEP_MODULES);
+    }
+    return getPathsList(classpath);
+  }
+
   private static interface ClasspathItemFilter {
     boolean accept(Module module, ClasspathItem item);
   }
@@ -160,6 +169,12 @@ public class ProjectPaths {
   private static final ClasspathItemFilter ACCEPT_ALL = new ClasspathItemFilter() {
     public boolean accept(Module module, ClasspathItem item) {
       return true;
+    }
+  };
+
+  private static final ClasspathItemFilter WITHOUT_DEP_MODULES = new ClasspathItemFilter() {
+    public boolean accept(Module module, ClasspathItem item) {
+      return !(item instanceof Module);
     }
   };
 
