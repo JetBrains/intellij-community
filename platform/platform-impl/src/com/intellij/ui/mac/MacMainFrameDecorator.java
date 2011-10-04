@@ -31,7 +31,6 @@ import com.sun.jna.Callback;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -99,8 +98,12 @@ public class MacMainFrameDecorator implements UISettingsListener, Disposable {
   
   private Callback myDidExit;
   private Callback myDidEnter;
+  private boolean myInFullScreen;
+  private IdeFrameImpl myFrame;
 
-  public MacMainFrameDecorator(@NotNull final Frame frame, final boolean navBar) {
+  public MacMainFrameDecorator(@NotNull final IdeFrameImpl frame, final boolean navBar) {
+    myFrame = frame;
+
     final ID window = MacUtil.findWindowForTitle(frame.getTitle());
     if (window == null) return;
 
@@ -128,9 +131,8 @@ public class MacMainFrameDecorator implements UISettingsListener, Disposable {
             SwingUtilities.invokeLater(new Runnable() {
               @Override
               public void run() {
-                if (frame instanceof IdeFrameImpl) {
-                  ((IdeFrameImpl)frame).storeFullScreenStateIfNeeded(false);
-                }
+                myInFullScreen = false;
+                frame.storeFullScreenStateIfNeeded(false);
               }
             });
           }
@@ -142,28 +144,27 @@ public class MacMainFrameDecorator implements UISettingsListener, Disposable {
             SwingUtilities.invokeLater(new Runnable() {
               @Override
               public void run() {
-                if (frame instanceof IdeFrameImpl) {
-                  //((IdeFrameImpl)frame).storeFullScreenStateIfNeeded(true);
-                  
-                  // fix problem with bottom empty bar
-                  // it seems like the title is still visible in fullscreen but the window itself shifted up for titlebar height
-                  // and the size of the frame is still calculated to be the height of the screen which is wrong
-                  // so just add these titlebar height to the frame height once again
-                  Timer timer = new Timer(300, new ActionListener() {
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                      SwingUtilities.invokeLater(new Runnable() {
-                        @Override
-                        public void run() {
-                          frame.setSize(frame.getWidth(), frame.getHeight() + frame.getInsets().top);
-                        }
-                      });
-                    }
-                  });
-                  
-                  timer.setRepeats(false);
-                  timer.start();
-                }
+                myInFullScreen = true;
+                //((IdeFrameImpl)frame).storeFullScreenStateIfNeeded(true);
+
+                // fix problem with bottom empty bar
+                // it seems like the title is still visible in fullscreen but the window itself shifted up for titlebar height
+                // and the size of the frame is still calculated to be the height of the screen which is wrong
+                // so just add these titlebar height to the frame height once again
+                Timer timer = new Timer(300, new ActionListener() {
+                  @Override
+                  public void actionPerformed(ActionEvent e) {
+                    SwingUtilities.invokeLater(new Runnable() {
+                      @Override
+                      public void run() {
+                        frame.setSize(frame.getWidth(), frame.getHeight() + frame.getInsets().top);
+                      }
+                    });
+                  }
+                });
+
+                timer.setRepeats(false);
+                timer.start();
               }
             });
           }
@@ -181,9 +182,9 @@ public class MacMainFrameDecorator implements UISettingsListener, Disposable {
                Foundation.createSelector("windowDidEnterFullScreen:"), 
                Foundation.nsString("NSWindowDidEnterFullScreenNotification"), window);
 
-        //invoke(notificationCenter, "addObserver:selector:name:object:", delegate, 
-        //       Foundation.createSelector("windowDidExitFullScreen:"), 
-        //       Foundation.nsString("NSWindowDidExitFullScreenNotification"), window);
+        invoke(notificationCenter, "addObserver:selector:name:object:", delegate, 
+               Foundation.createSelector("windowDidExitFullScreen:"), 
+               Foundation.nsString("NSWindowDidExitFullScreenNotification"), window);
       } else {
         // toggle toolbar
         String className = "IdeaToolbar" + v;
@@ -221,38 +222,23 @@ public class MacMainFrameDecorator implements UISettingsListener, Disposable {
 
   @Override
   public void dispose() {
+    myFrame = null;
   }
 
-  public static void toggleFullScreen(Frame frame) {
-    if (!SystemInfo.isMacOSLion) return;
-    
-    final ID window = MacUtil.findWindowForTitle(frame.getTitle());
-    if (window == null) return;
-
-    invoke(window, "toggleFullScreen:", window);
+  public void toggleFullScreen() {
+    toggleFullScreen(!isInFullScreen());
   }
-  
-  public static void toggleFullScreen(Frame frame, boolean state) {
-    if (!SystemInfo.isMacOSLion) return;
-    
-    final ID window = MacUtil.findWindowForTitle(frame.getTitle());
-    if (window == null) return;
 
-    final ID mask = invoke(window, "styleMask");
-    boolean inFullscreenAlready = (mask.intValue() & (1 << 14)) == (1 << 14);
-    if (state != inFullscreenAlready) {
+  public boolean isInFullScreen() {
+    return myInFullScreen;
+  }
+
+  public void toggleFullScreen(boolean state) {
+    if (!SystemInfo.isMacOSLion || myFrame == null) return;
+    if (myInFullScreen != state) {
+      final ID window = MacUtil.findWindowForTitle(myFrame.getTitle());
+      if (window == null) return;
       invoke(window, "toggleFullScreen:", window);
     }
   }
-
-  public static boolean isFullScreenMode(@NotNull Frame frame) {
-    if (!SystemInfo.isMacOSLion) return false;
-
-    final ID window = MacUtil.findWindowForTitle(frame.getTitle());
-    if (window == null) return false;
-
-    final ID mask = invoke(window, "styleMask");
-    return (mask.intValue() & (1 << 14)) == (1 << 14);
-  }
-
 }

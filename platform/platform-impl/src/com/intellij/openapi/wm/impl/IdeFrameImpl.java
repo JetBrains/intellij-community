@@ -306,7 +306,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
     }
     
     if (isVisible() && myRestoreFullscreen) {
-      MacMainFrameDecorator.toggleFullScreen(this, true);
+      getFrameDecorator().toggleFullScreen(true);
       myRestoreFullscreen = false;
       storeFullScreenStateIfNeeded(false); // reset
     }
@@ -320,7 +320,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
       SwingUtilities.invokeLater(new Runnable() {
         @Override
         public void run() {
-          MacMainFrameDecorator.toggleFullScreen(IdeFrameImpl.this);
+          getFrameDecorator().toggleFullScreen();
           myRestoreFullscreen = false;
           storeFullScreenStateIfNeeded(false); // reset
         }
@@ -378,6 +378,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
 
     if (myFrameDecorator != null) {
       myFrameDecorator.remove();
+      myFrameDecorator = null;
     }
 
     FocusTrackback.release(this);
@@ -385,8 +386,12 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
     super.dispose();
   }
 
+  public MacMainFrameDecorator getFrameDecorator() {
+    return myFrameDecorator;
+  }
+
   public void storeFullScreenStateIfNeeded() {
-    storeFullScreenStateIfNeeded(MacMainFrameDecorator.isFullScreenMode(this));
+    storeFullScreenStateIfNeeded(myFrameDecorator.isInFullScreen());
   }
 
   public void storeFullScreenStateIfNeeded(boolean state) {
