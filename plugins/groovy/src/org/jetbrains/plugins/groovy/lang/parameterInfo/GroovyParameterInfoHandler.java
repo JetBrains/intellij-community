@@ -169,6 +169,12 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
   }
 
   public void updateParameterInfo(@NotNull GroovyPsiElement place, UpdateParameterInfoContext context) {
+    final PsiElement parameterOwner = context.getParameterOwner();
+    if (parameterOwner != place) {
+      context.removeHint();
+      return;
+    }
+
     int offset = context.getEditor().getCaretModel().getOffset();
     offset = CharArrayUtil.shiftForward(context.getEditor().getDocument().getText(), offset, " \t\n");
     final int currIndex = getCurrentParameterIndex(place, offset);
