@@ -20,6 +20,7 @@ import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.completion.scope.CompletionElement;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
+import com.intellij.codeInsight.daemon.impl.quickfix.StaticImportMethodFix;
 import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.lang.ASTNode;
@@ -171,8 +172,8 @@ public class JavaCompletionUtil {
     return type;
   }
 
-  public static boolean isInExcludedPackage(@NotNull final PsiClass psiClass) {
-    final String name = psiClass.getQualifiedName();
+  public static boolean isInExcludedPackage(@NotNull final PsiMember member) {
+    final String name = StaticImportMethodFix.getMemberQualifiedName(member);
     if (name == null) return false;
     CodeInsightSettings cis = CodeInsightSettings.getInstance();
     for (String excluded : cis.EXCLUDED_PACKAGES) {
@@ -437,12 +438,13 @@ public class JavaCompletionUtil {
       LookupElement item = createLookupElement(completionElement, qualifierType);
       if (item != null) {
         final Object o = item.getObject();
-        if (o instanceof PsiClass) {
-          if (!isSourceLevelAccessible(element, (PsiClass)o, pkgContext) || isInExcludedPackage((PsiClass)o)) {
-            continue;
-          }
+        if (o instanceof PsiClass && !isSourceLevelAccessible(element, (PsiClass)o, pkgContext)) {
+          continue;
         }
         if (o instanceof PsiMember) {
+          if (isInExcludedPackage((PsiMember)o)) {
+            continue;
+          }
           mentioned.add((PsiMember)o);
         }
         set.add(mayHighlight ? highlightIfNeeded(qualifierType, item, o) : item);
