@@ -283,7 +283,7 @@ class ProjectBuilder {
               callback: callback,
               sourceFiles: sourceFiles,
               sourceRoots: chunkSources,
-              excludes: chunk.excludes,
+              excludes: computeExcludes(chunk.elements, chunkSources),
               classpath: chunkClasspath,
               sourceRootsFromModuleWithDependencies: sourceRootsWithDependencies,
       )
@@ -301,7 +301,7 @@ class ProjectBuilder {
                     callback: callback,
                     sourceFiles: sourceFiles,
                     sourceRoots: sourceRoots,
-                    excludes: it.excludes,
+                    excludes: computeExcludes([it], sourceRoots),
                     classpath: chunkClasspath,
                     targetFolder: createOutputFolder(it.name, it, tests),
                     sourceRootsFromModuleWithDependencies: sourceRootsWithDependencies
@@ -360,6 +360,38 @@ class ProjectBuilder {
       Reporter.reportBuildSuccess(it, tests)
       project.exportProperty("module.${it.name}.output.${tests ? "test" : "main"}", getModuleOutputFolder(it, tests))
     }
+  }
+
+  private List<String> computeExcludes(Collection<Module> modules, List<String> sourceRoots) {
+    Set<Module> otherModules = new HashSet<Module>(project.modules.values())
+    otherModules.removeAll(modules)
+
+    Set<String> excludes = [] as Set
+    modules.each {Module module ->
+      excludes.addAll(module.excludes)
+    }
+    Set<File> sourceRootFiles = sourceRoots.collect {new File(it)} as Set
+    otherModules.each {Module module ->
+      module.contentRoots.each {
+        if (PathUtil.isUnder(sourceRootFiles, new File(it))) {
+          excludes << it
+        }
+      }
+    }
+
+    return excludes.asList()
+  }
+
+  private Set<String> getContentRootsUnder(Set<String> root, Set<Module> modules) {
+    Set<String> result = [] as Set
+    modules.each {
+      it.contentRoots.each {String contentRoot ->
+        if (PathUtil.isUnder(root, contentRoot)) {
+          result << contentRoot
+        }
+      }
+    }
+    return result
   }
 
   private String createOutputFolder(String name, Module module, boolean tests) {

@@ -11,6 +11,7 @@ class Module extends LazyInitializeableObject implements ClasspathItem {//}, Com
   Sdk sdk;
 
   private List<ModuleDependency> dependencies = []
+  List contentRoots = []
   List sourceRoots = []
   List testRoots = []
   List excludes = []
@@ -52,6 +53,10 @@ class Module extends LazyInitializeableObject implements ClasspathItem {//}, Com
 
       meta.moduleSource = {
         dependencies << new ModuleDependency(new ModuleSourceEntry(module: this), PredefinedDependencyScopes.COMPILE, true)
+      }
+
+      meta.content = {Object[] arg ->
+        arg.each { contentRoots << it}
       }
 
       meta.src = {Object[] arg ->

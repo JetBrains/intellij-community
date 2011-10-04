@@ -2,6 +2,7 @@ package org.jetbrains.jps;
 
 import java.io.File;
 import java.net.URI;
+import java.util.Set;
 
 /**
  * @author nik
@@ -16,5 +17,16 @@ public class PathUtil {
       return uri.getPath();
     }
     return new File(uri).getAbsolutePath();
+  }
+
+  public static boolean isUnder(Set<File> ancestors, File file) {
+    File current = file;
+    while (current != null) {
+      if (ancestors.contains(current)) {
+        return true;
+      }
+      current = current.getParentFile();
+    }
+    return false;
   }
 }

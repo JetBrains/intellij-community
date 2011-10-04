@@ -368,6 +368,10 @@ public class IdeaProjectLoader {
 
         def srcFolderExists = componentTag.content.sourceFolder[0] != null;
 
+        componentTag.content.each {Node contentTag ->
+          content moduleMacroExpander.expandMacros(IdeaProjectLoadingUtil.pathFromUrl(contentTag.@url))
+        }
+
         componentTag.content.sourceFolder.each {Node folderTag ->
           String path = moduleMacroExpander.expandMacros(IdeaProjectLoadingUtil.pathFromUrl(folderTag.@url))
           String prefix = folderTag.@packagePrefix
