@@ -103,19 +103,20 @@ public class MacMessagesImpl extends MacMessages {
         invoke(alert, "addButtonWithTitle:", button);
       }
 
-      int count = invoke(buttons, "count").intValue();
       if (defaultOptionIndex != -1) {
         invoke(invoke(alert, "window"), "setDefaultButtonCell:", 
                invoke(invoke(invoke(alert, "buttons"), "objectAtIndex:", defaultOptionIndex), "cell"));
       }
       
-      if (focusedOptionIndex != -1) {
-        invoke(invoke(alert, "window"), "makeFirstResponder:", 
-               invoke(invoke(alert, "buttons"), "objectAtIndex:", focusedOptionIndex));
-      } else {
-        invoke(invoke(alert, "window"), "makeFirstResponder:", 
-               invoke(invoke(alert, "buttons"), "objectAtIndex:", count == 1 ? 0 : 1));
-      }
+      // it seems like asking for focus will cause java to go and query focus owner too, which may cause dead locks on main-thread
+      //if (focusedOptionIndex != -1) {
+      //  invoke(invoke(alert, "window"), "makeFirstResponder:", 
+      //         invoke(invoke(alert, "buttons"), "objectAtIndex:", focusedOptionIndex));
+      //} else {
+      //  int count = invoke(buttons, "count").intValue();
+      //  invoke(invoke(alert, "window"), "makeFirstResponder:", 
+      //         invoke(invoke(alert, "buttons"), "objectAtIndex:", count == 1 ? 0 : 1));
+      //}
       
       String doNotAsk = toStringViaUTF8(doNotAskText);
       if (!"-1".equals(doNotAsk)) {
@@ -150,10 +151,10 @@ public class MacMessagesImpl extends MacMessages {
         invoke(alert, "setAlertStyle:", 2); // NSCriticalAlertStyle = 2
       }
 
-      ID window = invoke(alert, "window");
-
-      invoke(window, "makeFirstResponder:", 
-             invoke(invoke(alert, "buttons"), "objectAtIndex:", alternateExist ? 2 : otherExist ? 1 : 0));
+      // it seems like asking for focus will cause java to go and query focus owner too, which may cause dead locks on main-thread
+      //ID window = invoke(alert, "window");
+      //invoke(window, "makeFirstResponder:", 
+      //       invoke(invoke(alert, "buttons"), "objectAtIndex:", alternateExist ? 2 : otherExist ? 1 : 0));
       
       
       // it is impossible to override ESCAPE key behavior -> key should be named "Cancel" to be bound to ESC
