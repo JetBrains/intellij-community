@@ -15,19 +15,15 @@
  */
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryEditingUtil;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.ui.popup.PopupStep;
-import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.util.PlatformIcons;
+import com.intellij.util.ParameterizedRunnable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,7 +34,7 @@ import javax.swing.*;
 */
 class AddNewLibraryItemAction extends ChooseAndAddAction<Library> {
   private final StructureConfigurableContext myContext;
-  private LibraryType myLibraryType;
+  private final LibraryType myLibraryType;
 
   public AddNewLibraryItemAction(final ClasspathPanel classpathPanel,
                                  StructureConfigurableContext context, LibraryType libraryType) {
@@ -64,45 +60,34 @@ class AddNewLibraryItemAction extends ChooseAndAddAction<Library> {
     return new NewLibraryChooser(myClasspathPanel.getProject(), myClasspathPanel.getRootModel(), myLibraryType, myContext, myClasspathPanel.getComponent());
   }
 
-  public static void chooseTypeAndExecute(final ClasspathPanel classpathPanel,
-                                          final StructureConfigurableContext context,
-                                          final DialogWrapper parentDialog,
-                                          JButton contextButton) {
+  public static void chooseTypeAndCreate(final ClasspathPanel classpathPanel,
+                                         final StructureConfigurableContext context,
+                                         final JButton contextButton, @NotNull final LibraryCreatedCallback callback) {
     if (LibraryEditingUtil.hasSuitableTypes(classpathPanel)) {
-      final ListPopup popup = JBPopupFactory.getInstance().createListPopup(createChooseTypeStep(classpathPanel, context, parentDialog));
+      final ListPopup popup = JBPopupFactory.getInstance().createListPopup(LibraryEditingUtil.createChooseTypeStep(classpathPanel, new ParameterizedRunnable<LibraryType>() {
+        @Override
+        public void run(LibraryType libraryType) {
+          doCreateLibrary(classpathPanel, context, callback, contextButton, libraryType);
+        }
+      }));
       popup.showUnderneathOf(contextButton);
     }
     else {
-      if (parentDialog != null) parentDialog.close(DialogWrapper.CANCEL_EXIT_CODE);
-      new AddNewLibraryItemAction(classpathPanel, context, null).execute();
+      doCreateLibrary(classpathPanel, context, callback, contextButton, null);
     }
   }
 
-  public static BaseListPopupStep<LibraryType> createChooseTypeStep(final ClasspathPanel classpathPanel,
-                                                                    final StructureConfigurableContext context,
-                                                                    final @Nullable DialogWrapper parentDialog) {
-    return new BaseListPopupStep<LibraryType>("Select Library Type", LibraryEditingUtil.getSuitableTypes(classpathPanel)) {
-          @NotNull
-          @Override
-          public String getTextFor(LibraryType value) {
-            return value != null ? value.getCreateActionName() : IdeBundle.message("create.default.library.type.action.name");
-          }
+  private static void doCreateLibrary(ClasspathPanel classpathPanel,
+                                      StructureConfigurableContext context,
+                                      LibraryCreatedCallback callback, final JComponent component, final @Nullable LibraryType libraryType) {
+    final NewLibraryChooser chooser = new NewLibraryChooser(classpathPanel.getProject(), classpathPanel.getRootModel(), libraryType, context, component);
+    final Library library = chooser.createLibrary();
+    if (library != null) {
+      callback.libraryCreated(library);
+    }
+  }
 
-          @Override
-          public Icon getIconFor(LibraryType aValue) {
-            return aValue != null ? aValue.getIcon() : PlatformIcons.LIBRARY_ICON;
-          }
-
-          @Override
-          public PopupStep onChosen(final LibraryType selectedValue, boolean finalChoice) {
-            return doFinalStep(new Runnable() {
-              @Override
-              public void run() {
-                if (parentDialog != null) parentDialog.close(DialogWrapper.CANCEL_EXIT_CODE);
-                new AddNewLibraryItemAction(classpathPanel, context, selectedValue).execute();
-              }
-            });
-          }
-        };
+  interface LibraryCreatedCallback {
+    void libraryCreated(@NotNull Library library);
   }
 }

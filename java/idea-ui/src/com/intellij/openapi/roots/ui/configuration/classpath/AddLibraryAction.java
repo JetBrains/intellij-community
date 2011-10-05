@@ -23,13 +23,16 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryEditingUtil;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.PopupStep;
+import com.intellij.util.ParameterizedRunnable;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.classpath.ChooseLibrariesFromTablesDialog;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -53,7 +56,12 @@ class AddLibraryAction extends AddItemPopupAction<Library> {
 
   @Override
   public PopupStep createSubStep() {
-    return AddNewLibraryItemAction.createChooseTypeStep(myClasspathPanel, myContext, null);
+    return LibraryEditingUtil.createChooseTypeStep(myClasspathPanel, new ParameterizedRunnable<LibraryType>() {
+      @Override
+      public void run(LibraryType libraryType) {
+        new AddNewLibraryItemAction(myClasspathPanel, myContext, libraryType).execute();
+      }
+    });
   }
 
   @Override
@@ -88,12 +96,17 @@ class AddLibraryAction extends AddItemPopupAction<Library> {
     final OrderEntry[] orderEntries = rootModel.getOrderEntries();
     for (OrderEntry orderEntry : orderEntries) {
       if (orderEntry instanceof LibraryOrderEntry) {
-        if (item.getName().equals(((LibraryOrderEntry)orderEntry).getLibraryName())) {
+        final LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)orderEntry;
+        if (item.equals(libraryOrderEntry.getLibrary())) {
+          return ClasspathTableItem.createLibItem(libraryOrderEntry, myContext);
+        }
+        if (item.getName().equals(libraryOrderEntry.getLibraryName())) {
           if (orderEntry.isValid()) {
-            Messages.showErrorDialog(ProjectBundle.message("classpath.message.library.already.added",item.getName()),
+            Messages.showErrorDialog(ProjectBundle.message("classpath.message.library.already.added", item.getName()),
                                      ProjectBundle.message("classpath.title.adding.dependency"));
             return null;
-          } else {
+          }
+          else {
             rootModel.removeOrderEntry(orderEntry);
           }
         }
@@ -112,6 +125,7 @@ class AddLibraryAction extends AddItemPopupAction<Library> {
   }
 
   class ExistingLibraryChooser implements ClasspathElementChooser<Library> {
+    @NotNull
     public List<Library> chooseElements() {
       final Predicate<Library> condition = LibraryEditingUtil.getNotAddedLibrariesCondition(myClasspathPanel.getRootModel());
       ProjectStructureChooseLibrariesDialog dialog = new ProjectStructureChooseLibrariesDialog(myClasspathPanel, myContext,

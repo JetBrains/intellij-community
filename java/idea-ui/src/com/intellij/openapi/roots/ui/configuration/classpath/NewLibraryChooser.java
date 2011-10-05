@@ -16,7 +16,6 @@
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -28,10 +27,12 @@ import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.CreateNewLibraryDialog;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -54,7 +55,13 @@ class NewLibraryChooser implements ClasspathElementChooser<Library> {
     myProject = project;
   }
 
+  @NotNull
   public List<Library> chooseElements() {
+    return ContainerUtil.createMaybeSingletonList(createLibrary());
+  }
+
+  @Nullable
+  public Library createLibrary() {
     final NewLibraryEditor libraryEditor;
     if (myLibraryType == null) {
       libraryEditor = new NewLibraryEditor();
@@ -73,8 +80,8 @@ class NewLibraryChooser implements ClasspathElementChooser<Library> {
     dialog.setContextModule(contextModule);
     dialog.show();
     if (dialog.isOK()) {
-      return Collections.singletonList(dialog.createLibrary());
+      return dialog.createLibrary();
     }
-    return Collections.emptyList();
+    return null;
   }
 }

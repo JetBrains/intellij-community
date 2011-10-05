@@ -32,6 +32,7 @@ import com.intellij.openapi.roots.ui.configuration.libraryEditor.RootDetectionUt
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.*;
@@ -44,7 +45,6 @@ public class CreateModuleLibraryChooser implements ClasspathElementChooser<Libra
   private final Module myModule;
   private final LibraryTable.ModifiableModel myModuleLibrariesModel;
   private final HashMap<LibraryRootsComponentDescriptor,LibraryType> myLibraryTypes;
-  private LibraryType myLibraryType;
   private final DefaultLibraryRootsComponentDescriptor myDefaultDescriptor;
 
   public CreateModuleLibraryChooser(ClasspathPanel classpathPanel, LibraryTable.ModifiableModel moduleLibraryModel) {
@@ -111,6 +111,7 @@ public class CreateModuleLibraryChooser implements ClasspathElementChooser<Libra
     return false;
   }
 
+  @NotNull
   public List<Library> chooseElements() {
     final FileChooserDescriptor chooserDescriptor;
     final List<Pair<LibraryRootsComponentDescriptor, FileChooserDescriptor>> descriptors = new ArrayList<Pair<LibraryRootsComponentDescriptor, FileChooserDescriptor>>();

@@ -688,6 +688,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
       myDescription = description;
     }
 
+    @NotNull
     public List<Module> chooseElements() {
       ChooseModulesDialog dialog = new ChooseModulesDialog(ClasspathPanelImpl.this, myItems, myTitle, myDescription);
       dialog.show();

@@ -98,6 +98,7 @@ public abstract class ChooseElementsDialog<T> extends DialogWrapper {
   @Nullable
   protected abstract Icon getItemIcon(T item);
 
+  @NotNull
   public List<T> getChosenElements() {
     return isOK() ? myChooser.getSelectedElements() : Collections.<T>emptyList();
   }

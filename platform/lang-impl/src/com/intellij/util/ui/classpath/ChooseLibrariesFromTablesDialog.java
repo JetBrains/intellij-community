@@ -17,6 +17,7 @@ package com.intellij.util.ui.classpath;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
@@ -32,8 +33,8 @@ import java.util.List;
  * @author nik
  */
 public class ChooseLibrariesFromTablesDialog extends ChooseLibrariesDialogBase {
-  private @Nullable Project myProject;
-  private boolean myShowCustomLibraryTables;
+  private @Nullable final Project myProject;
+  private final boolean myShowCustomLibraryTables;
 
   private ChooseLibrariesFromTablesDialog(@NotNull String title, @NotNull Project project, final boolean showCustomLibraryTables) {
     super(project, title);
@@ -113,9 +114,10 @@ public class ChooseLibrariesFromTablesDialog extends ChooseLibrariesDialogBase {
 
   @Override
   protected int getLibraryTableWeight(@NotNull LibraryTable libraryTable) {
-    if (isProjectLibraryTable(libraryTable)) return 0;
-    if (isApplicationLibraryTable(libraryTable)) return 1;
-    return 2;
+    if (libraryTable.getTableLevel().equals(LibraryTableImplUtil.MODULE_LEVEL)) return 0;
+    if (isProjectLibraryTable(libraryTable)) return 1;
+    if (isApplicationLibraryTable(libraryTable)) return 2;
+    return 3;
   }
 
   private static boolean isApplicationLibraryTable(LibraryTable libraryTable) {
