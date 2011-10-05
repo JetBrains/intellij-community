@@ -11,8 +11,6 @@ import org.jetbrains.jps.incremental.BuilderRegistry;
 import org.jetbrains.jps.incremental.CompileScope;
 import org.jetbrains.jps.incremental.IncProjectBuilder;
 import org.jetbrains.jps.incremental.MessageHandler;
-import org.jetbrains.jps.incremental.messages.BuildMessage;
-import org.jetbrains.jps.incremental.messages.CompilerMessage;
 
 import java.io.File;
 import java.util.*;
@@ -45,7 +43,7 @@ public class Facade {
     }
   }
 
-  public void startBuild(String projectPath, Set<String> modules, final BuildParameters params, final MessagesConsumer consumer) throws Throwable {
+  public void startBuild(String projectPath, Set<String> modules, final BuildParameters params, final MessageHandler msgHandler) throws Throwable {
     Project project;
 
     synchronized (myConfigurationLock) {
@@ -75,16 +73,9 @@ public class Facade {
     };
 
     final IncProjectBuilder builder = new IncProjectBuilder(project, BuilderRegistry.getInstance());
-    builder.addMessageHandler(new MessageHandler() {
-      public void processMessage(BuildMessage msg) {
-        if (msg instanceof CompilerMessage) {
-          consumer.consumeCompilerMessage(((CompilerMessage)msg).getCompilerName(), msg.getMessageText());
-        }
-        else {
-          consumer.consumeProgressMessage(msg.getMessageText());
-        }
-      }
-    });
+    if (msgHandler != null) {
+      builder.addMessageHandler(msgHandler);
+    }
     switch (params.buildType) {
       case REBUILD:
         builder.build(compileScope, false);

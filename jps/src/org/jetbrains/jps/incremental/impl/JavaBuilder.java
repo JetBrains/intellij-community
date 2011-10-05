@@ -2,7 +2,9 @@ package org.jetbrains.jps.incremental.impl;
 
 import org.jetbrains.jps.Module;
 import org.jetbrains.jps.ModuleChunk;
+import org.jetbrains.jps.PathUtil;
 import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 
 import javax.tools.Diagnostic;
@@ -54,20 +56,40 @@ public class JavaBuilder extends Builder{
 
     final boolean compilationOk = myJavacCompiler.compile(options, files, classpath, platformCp, outs, new EmbeddedJavac.OutputConsumer() {
       public void outputLineAvailable(String line) {
-        context.processMessage(new CompilerMessage(JAVAC_COMPILER_NAME, line));
+        context.processMessage(new CompilerMessage(JAVAC_COMPILER_NAME, BuildMessage.Kind.INFO, line));
       }
 
       public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
-        context.processMessage(new CompilerMessage(JAVAC_COMPILER_NAME, diagnostic.getKind().name() + "/" + diagnostic.getMessage(Locale.US)));
+        final CompilerMessage.Kind kind;
         switch (diagnostic.getKind()) {
           case ERROR:
+            kind = BuildMessage.Kind.ERROR;
             statistics[ERROR]++;
             break;
           case MANDATORY_WARNING:
           case WARNING:
+            kind = BuildMessage.Kind.WARNING;
             statistics[WARNING]++;
             break;
+          default:
+            kind = BuildMessage.Kind.INFO;
         }
+        final String srcPath;
+        final JavaFileObject source = diagnostic.getSource();
+        if (source != null) {
+          srcPath = PathUtil.toSystemIndependentPath(new File(source.toUri()).getPath());
+        }
+        else {
+          srcPath = null;
+        }
+        context.processMessage(new CompilerMessage(
+          JAVAC_COMPILER_NAME,
+          kind,
+          diagnostic.getKind().name() + "/" + diagnostic.getMessage(Locale.US),
+          srcPath,
+          diagnostic.getStartPosition(), diagnostic.getEndPosition(), diagnostic.getPosition(),
+          diagnostic.getLineNumber(), diagnostic.getColumnNumber()
+        ));
       }
     });
 
@@ -83,7 +105,7 @@ public class JavaBuilder extends Builder{
   }
 
   private static List<String> getCompilationOptions(CompileContext context, ModuleChunk chunk) {
-    return Arrays.asList("-verbose");
+    return Collections.emptyList();
   }
 
   private static Map<File, Set<File>> buildOutputDirectoriesMap(CompileContext context, ModuleChunk chunk) {

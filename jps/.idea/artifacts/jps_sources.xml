@@ -7,6 +7,7 @@
       <element id="dir-copy" path="$PROJECT_DIR$/plugins/gwt/src" />
       <element id="dir-copy" path="$PROJECT_DIR$/plugins/jpa/src" />
       <element id="dir-copy" path="$PROJECT_DIR$/antLayout/src" />
+      <element id="dir-copy" path="$PROJECT_DIR$/serverFacade/src" />
     </root>
   </artifact>
 </component>

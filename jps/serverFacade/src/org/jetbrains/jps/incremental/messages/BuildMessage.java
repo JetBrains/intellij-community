@@ -5,14 +5,27 @@ package org.jetbrains.jps.incremental.messages;
  *         Date: 9/29/11
  */
 public abstract class BuildMessage {
+  public static enum Kind {
+    ERROR, WARNING, INFO, PROGRESS
+  }
 
   private final String myMessageText;
+  private final Kind myKind;
 
-  public BuildMessage(String messageText) {
+  protected BuildMessage(String messageText, Kind kind) {
     myMessageText = messageText;
+    myKind = kind;
+  }
+
+  public Kind getKind() {
+    return myKind;
   }
 
   public String getMessageText() {
     return myMessageText;
+  }
+
+  public String toString() {
+    return getMessageText();
   }
 }

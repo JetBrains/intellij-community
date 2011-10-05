@@ -6,6 +6,6 @@ package org.jetbrains.jps.incremental.messages;
  */
 public class ProgressMessage extends BuildMessage {
   public ProgressMessage(String messageText) {
-    super(messageText);
+    super(messageText, Kind.PROGRESS);
   }
 }
