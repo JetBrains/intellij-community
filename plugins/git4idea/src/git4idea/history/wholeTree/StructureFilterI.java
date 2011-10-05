@@ -30,4 +30,5 @@ public interface StructureFilterI {
   void select(final Collection<VirtualFile> files);
   Collection<VirtualFile> getSelected();
   List<VirtualFile> getRoots();
+  boolean isAllSelected();
 }
