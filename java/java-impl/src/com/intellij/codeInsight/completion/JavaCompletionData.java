@@ -71,7 +71,7 @@ public class JavaCompletionData extends JavaAwareCompletionData{
   public static final PsiJavaElementPattern.Capture<PsiElement> INSIDE_PARAMETER_LIST =
     PsiJavaPatterns.psiElement().withParent(
       psiElement(PsiJavaCodeReferenceElement.class).insideStarting(
-        psiElement().withParent(PsiParameterList.class)));
+        psiElement().withParent(psiElement(PsiParameterList.class).andNot(psiElement(PsiAnnotationParameterList.class)))));
 
   private static final AndFilter START_OF_CODE_FRAGMENT = new AndFilter(
     new ScopeFilter(new AndFilter(
@@ -523,7 +523,8 @@ public class JavaCompletionData extends JavaAwareCompletionData{
       result.addElement(TailTypeDecorator.withTail(createKeyword(position, PsiKeyword.FINAL), TailType.SPACE));
     }
 
-    if (CLASS_START.isAcceptable(position, position)) {
+    if (CLASS_START.isAcceptable(position, position) &&
+        PsiTreeUtil.getNonStrictParentOfType(position, PsiLiteralExpression.class, PsiComment.class) == null) {
       for (String s : ModifierChooser.getKeywords(position)) {
         result.addElement(new OverrideableSpace(createKeyword(position, s), TailType.SPACE));
       }
