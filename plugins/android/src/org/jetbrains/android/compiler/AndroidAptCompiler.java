@@ -126,7 +126,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
           if (aptItem.myGeneratedFile.exists()) {
             ApplicationManager.getApplication().runReadAction(new Runnable() {
               public void run() {
-                if (context.getProject().isDisposed()) {
+                if (context.getProject().isDisposed() || aptItem.myModule.isDisposed()) {
                   return;
                 }
                 String className = FileUtil.getNameWithoutExtension(aptItem.myGeneratedFile);
