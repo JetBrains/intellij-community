@@ -299,7 +299,7 @@ public class IdeaProjectLoader {
       return
     }
 
-    def moduleBasePath = moduleFile.getParentFile().getAbsolutePath()
+    def moduleBasePath = PathUtil.toSystemIndependentPath(moduleFile.getParentFile().getAbsolutePath())
     MacroExpander moduleMacroExpander = new ModuleMacroExpander(projectMacroExpander, moduleBasePath)
     def currentModuleName = moduleName(imlPath)
     project.createModule(currentModuleName) {

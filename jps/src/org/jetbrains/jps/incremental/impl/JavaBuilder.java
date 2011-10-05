@@ -83,10 +83,7 @@ public class JavaBuilder extends Builder{
           srcPath = null;
         }
         context.processMessage(new CompilerMessage(
-          JAVAC_COMPILER_NAME,
-          kind,
-          diagnostic.getKind().name() + "/" + diagnostic.getMessage(Locale.US),
-          srcPath,
+          JAVAC_COMPILER_NAME, kind, diagnostic.getMessage(Locale.US), srcPath,
           diagnostic.getStartPosition(), diagnostic.getEndPosition(), diagnostic.getPosition(),
           diagnostic.getLineNumber(), diagnostic.getColumnNumber()
         ));
