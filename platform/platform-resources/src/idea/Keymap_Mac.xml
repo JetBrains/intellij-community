@@ -4,6 +4,19 @@
       <keyboard-shortcut first-keystroke="meta P"/>
     </action>
 
+    <action id="$Delete">
+      <keyboard-shortcut first-keystroke="DELETE"/>
+      <keyboard-shortcut first-keystroke="BACK_SPACE"/>
+    </action>
+
+    <action id="EditorDelete">
+      <keyboard-shortcut first-keystroke="DELETE"/>
+    </action>
+
+    <action id="EditorBackSpace">
+      <keyboard-shortcut first-keystroke="BACK_SPACE"/>
+    </action>
+
     <action id="NextSplitter">
       <keyboard-shortcut first-keystroke="alt TAB"/>
     </action>
@@ -47,6 +60,7 @@
     </action>
     <action id="SafeDelete">
       <keyboard-shortcut first-keystroke="meta DELETE"/>
+      <keyboard-shortcut first-keystroke="meta BACK_SPACE"/>
     </action>
     <action id="RemoveFromFavorites">
       <keyboard-shortcut first-keystroke="control DELETE"/>
