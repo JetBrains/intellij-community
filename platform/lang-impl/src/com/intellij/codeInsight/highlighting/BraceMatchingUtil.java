@@ -57,9 +57,6 @@ public class BraceMatchingUtil {
     BRACE_MATCHERS.put(fileType, braceMatcher);
   }
 
-  private static final Stack<IElementType> ourBraceStack = new Stack<IElementType>();
-  private static final Stack<String> ourTagNameStack = new Stack<String>();
-
   private static class MatchBraceContext {
     CharSequence fileText;
     FileType fileType;
@@ -73,6 +70,9 @@ public class BraceMatchingUtil {
     boolean isCaseSensitive;
     boolean isStructural;
     private BraceMatcher myMatcher;
+
+    private final Stack<IElementType> myBraceStack = new Stack<IElementType>();
+    private final Stack<String> myTagNameStack = new Stack<String>();
 
     MatchBraceContext(CharSequence _fileText, FileType _fileType, HighlighterIterator _iterator, boolean _forward) {
       fileText = _fileText;
@@ -97,11 +97,11 @@ public class BraceMatchingUtil {
     }
 
     boolean doBraceMatch() {
-      ourBraceStack.clear();
-      ourTagNameStack.clear();
-      ourBraceStack.push(brace1Token);
+      myBraceStack.clear();
+      myTagNameStack.clear();
+      myBraceStack.push(brace1Token);
       if (isStrict) {
-        ourTagNameStack.push(brace1TagName);
+        myTagNameStack.push(brace1TagName);
       }
       boolean matched = false;
       while (true) {
@@ -126,20 +126,20 @@ public class BraceMatchingUtil {
         if (isStructural && (forward ? isRBraceToken(iterator, fileText, fileType) && !isPairBraces(brace1Token, tokenType, fileType)
                                      : isLBraceToken(iterator, fileText, fileType) && !isPairBraces(brace1Token, tokenType, fileType))) {
 
-          if (!ourBraceStack.isEmpty() && myMatcher != null) {
+          if (!myBraceStack.isEmpty() && myMatcher != null) {
             boolean shouldContinue;
             if (myMatcher instanceof NontrivialBraceMatcher) {
               if (((NontrivialBraceMatcher)myMatcher).shouldStopMatch(forward, brace1Token, iterator)) return false;
               shouldContinue = true;
               List<IElementType> oppositeElementTypes = ((NontrivialBraceMatcher)myMatcher).getOppositeBraceTokenTypes(tokenType);
-              for (int i = ourBraceStack.size() - 1; i >= 0; i--) {
-                if (oppositeElementTypes.contains(ourBraceStack.get(i))) {
+              for (int i = myBraceStack.size() - 1; i >= 0; i--) {
+                if (oppositeElementTypes.contains(myBraceStack.get(i))) {
                   shouldContinue = false;
                 }
               }
             }
             else {
-              shouldContinue = !ourBraceStack.contains(myMatcher.getOppositeBraceTokenType(tokenType));
+              shouldContinue = !myBraceStack.contains(myMatcher.getOppositeBraceTokenType(tokenType));
             }
             if (shouldContinue) {
               continue;
@@ -148,21 +148,21 @@ public class BraceMatchingUtil {
         }
 
         if (forward ? isLBraceToken(iterator, fileText, fileType) : isRBraceToken(iterator, fileText, fileType)) {
-          ourBraceStack.push(tokenType);
+          myBraceStack.push(tokenType);
           if (isStrict) {
-            ourTagNameStack.push(tagName);
+            myTagNameStack.push(tagName);
           }
         }
         else if (forward ? isRBraceToken(iterator, fileText, fileType) : isLBraceToken(iterator, fileText, fileType)) {
-          IElementType topTokenType = ourBraceStack.pop();
+          IElementType topTokenType = myBraceStack.pop();
           String topTagName = null;
           if (isStrict) {
-            topTagName = ourTagNameStack.pop();
+            topTagName = myTagNameStack.pop();
           }
 
-          if (!isStrict && myMatcher != null && ourBraceStack.contains(myMatcher.getOppositeBraceTokenType(tokenType))) {
-            while (!isPairBraces(topTokenType, tokenType, fileType) && !ourBraceStack.empty()) {
-              topTokenType = ourBraceStack.pop();
+          if (!isStrict && myMatcher != null && myBraceStack.contains(myMatcher.getOppositeBraceTokenType(tokenType))) {
+            while (!isPairBraces(topTokenType, tokenType, fileType) && !myBraceStack.empty()) {
+              topTokenType = myBraceStack.pop();
             }
           }
 
@@ -173,7 +173,7 @@ public class BraceMatchingUtil {
             break;
           }
 
-          if (ourBraceStack.isEmpty()) {
+          if (myBraceStack.isEmpty()) {
             matched = true;
             break;
           }
@@ -195,23 +195,23 @@ public class BraceMatchingUtil {
   }
 
   public static boolean findStructuralLeftBrace(FileType fileType, HighlighterIterator iterator, CharSequence fileText) {
-    ourBraceStack.clear();
-    ourTagNameStack.clear();
+    final Stack<IElementType> braceStack = new Stack<IElementType>();
+    final Stack<String> tagNameStack = new Stack<String>();
 
     BraceMatcher matcher = getBraceMatcher(fileType, iterator);
 
     while (!iterator.atEnd()) {
       if (isStructuralBraceToken(fileType, iterator, fileText)) {
         if (isRBraceToken(iterator, fileText, fileType)) {
-          ourBraceStack.push(iterator.getTokenType());
-          ourTagNameStack.push(getTagName(matcher, fileText, iterator));
+          braceStack.push(iterator.getTokenType());
+          tagNameStack.push(getTagName(matcher, fileText, iterator));
         }
         if (isLBraceToken(iterator, fileText, fileType)) {
-          if (ourBraceStack.isEmpty()) return true;
+          if (braceStack.isEmpty()) return true;
 
           final int group = matcher.getBraceTokenGroupId(iterator.getTokenType());
 
-          final IElementType topTokenType = ourBraceStack.pop();
+          final IElementType topTokenType = braceStack.pop();
           final IElementType tokenType = iterator.getTokenType();
 
           boolean isStrict = isStrictTagMatching(matcher, fileType, group);
@@ -220,7 +220,7 @@ public class BraceMatchingUtil {
           String topTagName = null;
           String tagName = null;
           if (isStrict) {
-            topTagName = ourTagNameStack.pop();
+            topTagName = tagNameStack.pop();
             tagName = getTagName(matcher, fileText, iterator);
           }
 
