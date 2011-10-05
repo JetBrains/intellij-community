@@ -18,9 +18,16 @@ package com.intellij.codeInsight.template;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.xml.XMLLanguage;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.xml.XmlComment;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlText;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -40,4 +47,39 @@ public class XmlContextType extends FileTypeBasedContextType {
     Language languageAtOffset = PsiUtilBase.getLanguageAtOffset(file, offset);
     return !(languageAtOffset.isKindOf(XMLLanguage.INSTANCE) || languageAtOffset instanceof XMLLanguage);
   }
+
+  public static class XmlTextContextType extends TemplateContextType {
+    protected XmlTextContextType() {
+      super("XML_TEXT", "XML Text", XmlContextType.class);
+    }
+
+    @Override
+    public boolean isInContext(@NotNull PsiFile file, int offset) {
+      if (!file.getLanguage().isKindOf(XMLLanguage.INSTANCE)) {
+        return false;
+      }
+      PsiElement element = file.findElementAt(offset);
+      return element == null || isInXmlText(element);
+    }
+
+    public static boolean isInXmlText(@NotNull PsiElement element) {
+      if (PsiTreeUtil.getParentOfType(element, XmlComment.class) != null) {
+        return false;
+      }
+      if (PsiTreeUtil.getParentOfType(element, XmlText.class) != null) {
+        return true;
+      }
+      PsiElement parent = element.getParent();
+      if (parent instanceof PsiErrorElement) {
+        parent = parent.getParent();
+      }
+      return parent instanceof XmlDocument;
+    }
+
+    @Override
+    public boolean isInContext(@NotNull FileType fileType) {
+      return false;
+    }
+  }
+
 }

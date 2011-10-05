@@ -38,12 +38,12 @@ public class HtmlContextType extends FileTypeBasedContextType {
   }
 
   static boolean isMyLanguage(Language language) {
-    return language.isKindOf(HTMLLanguage.INSTANCE) || language.isKindOf(XHTMLLanguage.INSTANCE);
+    return language.isKindOf(HTMLLanguage.INSTANCE) || language.isKindOf(XHTMLLanguage.INSTANCE) || language.isKindOf(StdFileTypes.JSPX.getLanguage());
   }
 
   @Override
   public boolean isInContext(@NotNull final FileType fileType) {
-    return fileType == StdFileTypes.HTML || fileType == StdFileTypes.XHTML;
+    return fileType == StdFileTypes.HTML || fileType == StdFileTypes.XHTML || fileType == StdFileTypes.JSPX;
   }
 
 }
