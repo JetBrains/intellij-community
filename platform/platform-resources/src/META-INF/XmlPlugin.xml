@@ -334,7 +334,7 @@
                      groupKey="xml.inspections.group.name" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInsight.daemon.impl.analysis.XmlUnboundNsPrefixInspection"/>
     <localInspection shortName="XmlUnusedNamespaceDeclaration" displayName="Unused XML schema declaration"
-                     groupKey="xml.inspections.group.name" enabledByDefault="true" level="WARNING"
+                     groupKey="xml.inspections.group.name" bundle="messages.XmlBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInsight.daemon.impl.analysis.XmlUnusedNamespaceInspection"/>
     <globalInspection shortName="XmlHighlighting" displayName="Xml Highlighting" groupName="General" enabledByDefault="true" level="ERROR"
                       implementationClass="com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitorBasedInspection"/>

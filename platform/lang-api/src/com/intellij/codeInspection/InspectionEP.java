@@ -90,7 +90,7 @@ public class InspectionEP extends LanguageExtensionPoint {
     if (displayName != null) return displayName;
     final String baseName = bundleName != null ? bundleName : bundle == null ? ((IdeaPluginDescriptor)myPluginDescriptor).getResourceBundleBaseName() : bundle;
     if (baseName == null) {
-      LOG.error("No resource bundle specified for " + myPluginDescriptor);
+      LOG.error("No resource bundle specified for " + myPluginDescriptor + " Inspection: " + implementationClass);
     }
     final ResourceBundle bundle = ResourceBundle.getBundle(baseName, Locale.getDefault(), myPluginDescriptor.getPluginClassLoader());
     return CommonBundle.message(bundle, key);
