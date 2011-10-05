@@ -8,7 +8,7 @@ import javax.tools.StandardLocation
 import javax.tools.ToolProvider
 import org.jetbrains.jps.ModuleBuildState
 import org.jetbrains.jps.ModuleChunk
-import org.jetbrains.jps.Project
+import org.jetbrains.jps.ProjectBuilder
 import org.jetbrains.jps.Sdk
 import org.jetbrains.jps.builders.JavaFileCollector
 
@@ -32,7 +32,7 @@ class Java16ApiCompiler {
         fileManager = new OptimizedFileManager();
     }
 
-    def compile(ModuleChunk chunk, ModuleBuildState state, String sourceLevel, String targetLevel, String customArgs) {
+    def compile(ModuleChunk chunk, ProjectBuilder projectBuilder, ModuleBuildState state, String sourceLevel, String targetLevel, String customArgs) {
         List<String> options = []
 
         if (customArgs != null) {
@@ -92,21 +92,20 @@ class Java16ApiCompiler {
             fileManager.setProperties(state.callback, InstrumentationUtil.createPseudoClassLoader(cp.toString()))
 
             Iterable<? extends JavaFileObject> toCompile = fileManager.getJavaFileObjectsFromFiles(filesToCompile)
-            Project project = chunk.project
             StringWriter out = new StringWriter()
             CompilationTask task = compiler.getTask(new PrintWriter(out), fileManager, null, options, null, toCompile)
 
             if (!task.call()) {
-                project.builder.buildInfoPrinter.printCompilationErrors(project, "javac", out.toString())
-                project.error("Compilation failed")
+                projectBuilder.buildInfoPrinter.printCompilationErrors(project, "javac", out.toString())
+                projectBuilder.error("Compilation failed")
             }
             else {
                 System.out.println(out.toString());
             }
-            project.builder.listeners*.onJavaFilesCompiled(chunk, filesToCompile.size())
+            projectBuilder.listeners*.onJavaFilesCompiled(chunk, filesToCompile.size())
         }
         else {
-            chunk.project.info("No java source files found in '${chunk.name}', skipping compilation")
+            projectBuilder.info("No java source files found in '${chunk.name}', skipping compilation")
         }
     }
 

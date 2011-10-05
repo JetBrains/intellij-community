@@ -1,16 +1,16 @@
 package org.jetbrains.jps.artifacts.ant
 
-import org.jetbrains.jps.Project
+import org.jetbrains.jps.ProjectBuilder
 import org.jetbrains.jps.artifacts.Artifact
 import org.jetbrains.jps.artifacts.ArtifactBuildTask
 import org.jetbrains.jps.artifacts.ArtifactProperties
 
 class CallAntBuildTask implements ArtifactBuildTask {
-  private final Project project
+  private final ProjectBuilder projectBuilder
   private final String propertiesId
 
-  CallAntBuildTask(Project project, String propertiesId) {
-    this.project = project
+  CallAntBuildTask(ProjectBuilder projectBuilder, String propertiesId) {
+    this.projectBuilder = projectBuilder
     this.propertiesId = propertiesId
   }
 
@@ -30,7 +30,7 @@ class CallAntBuildTask implements ArtifactBuildTask {
 
     def buildProperties = [["artifact.output.path", artifact.outputPath]]
     buildProperties.addAll(antProperties.buildProperties)
-    project.binding.ant.ant(attrs) {
+    projectBuilder.binding.ant.ant(attrs) {
       buildProperties.each {List<String> nameValue ->
         property(name: nameValue[0], value: nameValue[1])
       }

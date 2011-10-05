@@ -1,16 +1,16 @@
 package org.jetbrains.jps.listeners
 
-import org.jetbrains.jps.ModuleChunk
-import org.jetbrains.jps.Project
 import org.jetbrains.jps.ModuleBuilder
+import org.jetbrains.jps.ModuleChunk
+import org.jetbrains.jps.ProjectBuilder
 
 /**
  * @author nik
  */
 interface JpsBuildListener {
   
-  def onBuildStarted(Project project)
-  def onBuildFinished(Project project)
+  def onBuildStarted(ProjectBuilder projectBuilder)
+  def onBuildFinished(ProjectBuilder projectBuilder)
 
   def onCompilationStarted(ModuleChunk moduleChunk)
   def onCompilationFinished(ModuleChunk moduleChunk)

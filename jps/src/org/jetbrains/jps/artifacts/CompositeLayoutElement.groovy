@@ -1,16 +1,17 @@
 package org.jetbrains.jps.artifacts
 
 import org.jetbrains.jps.Project
+import org.jetbrains.jps.ProjectBuilder
 
- /**
+/**
  * @author nik
  */
 abstract class CompositeLayoutElement extends LayoutElement {
   String name
   protected final List<LayoutElement> children = []
 
-  def buildChildren(Project project) {
-    children*.build(project)
+  def buildChildren(ProjectBuilder projectBuilder) {
+    children*.build(projectBuilder)
   }
 
   List<LayoutElement> getChildren() {
@@ -34,8 +35,8 @@ class RootElement extends CompositeLayoutElement {
     this.children.addAll(children)
   }
 
-  def build(Project project) {
-    buildChildren(project)
+  def build(ProjectBuilder projectBuilder) {
+    buildChildren(projectBuilder)
   }
 }
 
@@ -45,9 +46,9 @@ class DirectoryElement extends CompositeLayoutElement {
     this.children.addAll(children)
   }
 
-  def build(Project project) {
-    project.binding.dir.call([name, {
-      buildChildren(project)
+  def build(ProjectBuilder projectBuilder) {
+    projectBuilder.binding.dir.call([name, {
+      buildChildren(projectBuilder)
     }].toArray())
   }
 }
@@ -58,16 +59,16 @@ class ArchiveElement extends CompositeLayoutElement {
     this.children.addAll(children)
   }
 
-  def build(Project project) {
+  def build(ProjectBuilder projectBuilder) {
     if (name.endsWith(".jar")) {
-      project.binding.ant.jar(name: name, filesetmanifest: "mergewithoutmain", duplicate: "preserve",
-                              compress: project.builder.compressJars, {
-            buildChildren(project)
+      projectBuilder.binding.ant.jar(name: name, filesetmanifest: "mergewithoutmain", duplicate: "preserve",
+                              compress: projectBuilder.compressJars, {
+            buildChildren(projectBuilder)
       })
     }
     else {
-      project.binding.ant.zip(name: name, duplicate: "preserve", {
-        buildChildren(project)
+      projectBuilder.binding.ant.zip(name: name, duplicate: "preserve", {
+        buildChildren(projectBuilder)
       })
     }
   }

@@ -1,10 +1,7 @@
 package org.jetbrains.jps
 
-import org.apache.tools.ant.BuildException
 import org.codehaus.gant.GantBinding
 import org.jetbrains.jps.artifacts.Artifact
-import org.jetbrains.jps.artifacts.ArtifactBuilder
-import org.jetbrains.jps.builders.BuildUtil
 import org.jetbrains.jps.resolvers.LibraryResolver
 import org.jetbrains.jps.resolvers.ModuleResolver
 import org.jetbrains.jps.resolvers.PathEntry
@@ -17,7 +14,6 @@ class Project {
   final ProjectBuilder builder;
   final GantBinding binding;
   final List<Resolver> resolvers = []
-  final ArtifactBuilder artifactBuilder
   final Map<String, Object> props = [:]
 
   final Map<String, Library> globalLibraries = [:]
@@ -32,12 +28,9 @@ class Project {
   String projectCharset; // contains project charset, if not specified default charset will be used (used by compilers)
   String tempFolder = null
 
-  boolean dryRun = false
-
   def Project(GantBinding binding) {
     this.binding = binding
     builder = new ProjectBuilder(binding, this)
-    artifactBuilder = new ArtifactBuilder(this)
 
     resolvers << new ModuleResolver(project: this)
     resolvers << new LibraryResolver(project: this)
@@ -125,23 +118,19 @@ class Project {
   }
 
   def error(String message) {
-    throw new BuildException(message)
+    builder.error(message)
   }
 
   def warning(String message) {
-    binding.ant.project.log(message, org.apache.tools.ant.Project.MSG_WARN)
-  }
-
-  def stage(String message) {
-    builder.buildInfoPrinter.printProgressMessage(this, message)
+    builder.warning(message)
   }
 
   def info(String message) {
-    binding.ant.project.log(message, org.apache.tools.ant.Project.MSG_INFO)
+    builder.info(message)
   }
 
   def debug(String message) {
-    binding.ant.project.log(message, org.apache.tools.ant.Project.MSG_DEBUG)
+    builder.debug(message)
   }
 
   def makeSelected (Collection<Module> modules, boolean tests) {
@@ -157,7 +146,7 @@ class Project {
   }
 
   def buildArtifacts() {
-    artifactBuilder.buildArtifacts()
+    builder.artifactBuilder.buildArtifacts()
   }
 
   def buildArtifact(String artifactName) {
@@ -165,7 +154,7 @@ class Project {
     if (artifact == null) {
       error("Artifact '$artifactName' not found")
     }
-    artifactBuilder.buildArtifact(artifact)
+    builder.artifactBuilder.buildArtifact(artifact)
   }
 
   List<String> runtimeClasspath() {
@@ -176,32 +165,7 @@ class Project {
     return builder.getProjectPaths().getProjectRuntimeClasspath(true);
   }
 
-  def cleanModule (Module m) {
-    binding.ant.delete(dir: m.outputPath)
-    binding.ant.delete(dir: m.testOutputPath)
-  }
-
   def clean() {
-    if (!dryRun) {
-      if (targetFolder != null) {
-        stage("Cleaning $targetFolder")
-        BuildUtil.deleteDir(this, targetFolder)
-      }
-      else {
-        stage("Cleaning output folders for ${modules.size()} modules")
-        modules.values().each {
-          BuildUtil.deleteDir(this, it.outputPath)
-          BuildUtil.deleteDir(this, it.testOutputPath)
-        }
-        stage("Cleaning output folders for ${artifacts.size()} artifacts")
-        artifacts.values().each {
-          artifactBuilder.cleanOutput(it)
-        }
-      }
-    }
-    else {
-      stage("Cleaning skipped as we're running dry")
-    }
     builder.clean()
   }
 

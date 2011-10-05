@@ -2,15 +2,16 @@ package org.jetbrains.jps.artifacts
 
 import org.jetbrains.jps.Library
 import org.jetbrains.jps.Project
+import org.jetbrains.jps.ProjectBuilder
 
- /**
+/**
  * @author nik
  */
 abstract class ComplexLayoutElement extends LayoutElement {
   abstract List<LayoutElement> getSubstitution(Project project)
 
-  def build(Project project) {
-    getSubstitution(project)*.build(project)
+  def build(ProjectBuilder projectBuilder) {
+    getSubstitution(projectBuilder.project)*.build(projectBuilder)
   }
 
   boolean process(Project project, Closure processor) {
@@ -68,23 +69,23 @@ class ArtifactLayoutElement extends ComplexLayoutElement {
     return [root]
   }
 
-  def build(Project project) {
-    def artifact = findArtifact(project)
+  def build(ProjectBuilder projectBuilder) {
+    def artifact = findArtifact(projectBuilder.project)
     if (artifact == null) {
-      project.error("unknown artifact: $artifactName")
+      projectBuilder.error("unknown artifact: $artifactName")
     }
-    def output = project.artifactBuilder.artifactOutputs[artifact]
+    def output = projectBuilder.artifactBuilder.artifactOutputs[artifact]
     if (output != null) {
       LayoutElement root = artifact.rootElement
       if (root instanceof ArchiveElement) {
-        project.binding.ant.fileset(file: "$output/$root.name")
+        projectBuilder.binding.ant.fileset(file: "$output/$root.name")
       }
       else {
-        project.binding.ant.fileset(dir: output)
+        projectBuilder.binding.ant.fileset(dir: output)
       }
     }
     else {
-      project.error("Required artifact $artifactName is not build")
+      projectBuilder.error("Required artifact $artifactName is not build")
     }
   }
 

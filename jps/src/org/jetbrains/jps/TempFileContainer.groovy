@@ -8,20 +8,20 @@ import org.jetbrains.jps.builders.BuildUtil
 class TempFileContainer {
   private File baseDirectory
   private final String tempDirectoryName
-  private final Project project
+  private final ProjectBuilder projectBuilder
   private final Set<String> usedNames = [] as Set
 
-  TempFileContainer(Project project, String tempDirectoryName) {
-    this.project = project
+  TempFileContainer(ProjectBuilder projectBuilder, String tempDirectoryName) {
+    this.projectBuilder = projectBuilder
     this.tempDirectoryName = tempDirectoryName
   }
 
   private File getBaseDirectory() {
     if (baseDirectory == null) {
-      def ant = project.binding.ant
-      String basePath = project.tempFolder ?: project.targetFolder ?: "."
+      def ant = projectBuilder.binding.ant
+      String basePath = projectBuilder.project.tempFolder ?: projectBuilder.targetFolder ?: "."
       baseDirectory = new File(basePath, tempDirectoryName)
-      BuildUtil.deleteDir(project, baseDirectory.absolutePath)
+      BuildUtil.deleteDir(projectBuilder, baseDirectory.absolutePath)
       ant.mkdir(dir: baseDirectory.absolutePath)
     }
     return baseDirectory
@@ -42,8 +42,7 @@ class TempFileContainer {
 
   def clean() {
     if (baseDirectory != null) {
-      def ant = project.binding.ant
-      BuildUtil.deleteDir(project, baseDirectory.absolutePath)
+      BuildUtil.deleteDir(projectBuilder, baseDirectory.absolutePath)
     }
 
   }

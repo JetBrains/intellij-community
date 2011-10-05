@@ -1,8 +1,8 @@
 package org.jetbrains.jps.listeners
 
-import org.jetbrains.jps.Project
 import org.jetbrains.jps.ModuleChunk
 import org.jetbrains.jps.ModuleBuilder
+import org.jetbrains.jps.ProjectBuilder
 
 /**
  * @author nik
@@ -14,17 +14,17 @@ class BuildStatisticsListener implements JpsBuildListener {
   private long moduleBuilderStartTime
   private long buildStartTime
 
-  def onBuildStarted(Project project) {
+  def onBuildStarted(ProjectBuilder projectBuilder) {
     buildStartTime = System.currentTimeMillis()
     compiledChunks = 0
     compiledJavaFiles = 0
   }
 
-  def onBuildFinished(Project project) {
+  def onBuildFinished(ProjectBuilder projectBuilder) {
     long delta = System.currentTimeMillis() - buildStartTime
-    project.info("Total compilation time: ${formatTime(delta)}, ${compiledJavaFiles} java files in ${compiledChunks} chunks compiled")
+    projectBuilder.info("Total compilation time: ${formatTime(delta)}, ${compiledJavaFiles} java files in ${compiledChunks} chunks compiled")
     elapsedTime.each {key, time ->
-      project.info(" $key: ${formatTime(time)}")
+      projectBuilder.info(" $key: ${formatTime(time)}")
     }
   }
 

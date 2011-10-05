@@ -8,21 +8,24 @@ import org.jetbrains.jps.dag.DagBuilder
 import org.jetbrains.jps.dag.DagNode
 import org.jetbrains.jps.artifacts.ant.PreprocessingAntArtifactPropertiesProvider
 import org.jetbrains.jps.artifacts.ant.PostprocessingAntArtifactPropertiesProvider
+import org.jetbrains.jps.ProjectBuilder
 
 /**
  * @author nik
  */
 class ArtifactBuilder {
+  private final ProjectBuilder projectBuilder
   private final Project project
   final List<ArtifactBuildTask> preBuildTasks = []
   final List<ArtifactBuildTask> postBuildTasks = []
   final Map<Artifact, String> artifactOutputs = [:]
   private List<Artifact> sortedArtifacts
 
-  def ArtifactBuilder(Project project) {
-    this.project = project
-    preBuildTasks.add(new CallAntBuildTask(project, PreprocessingAntArtifactPropertiesProvider.ID))
-    postBuildTasks.add(new CallAntBuildTask(project, PostprocessingAntArtifactPropertiesProvider.ID))
+  def ArtifactBuilder(ProjectBuilder projectBuilder) {
+    this.projectBuilder = projectBuilder
+    this.project = projectBuilder.project
+    preBuildTasks.add(new CallAntBuildTask(projectBuilder, PreprocessingAntArtifactPropertiesProvider.ID))
+    postBuildTasks.add(new CallAntBuildTask(projectBuilder, PostprocessingAntArtifactPropertiesProvider.ID))
   }
 
   def getSortedArtifacts() {
@@ -34,7 +37,7 @@ class ArtifactBuilder {
       def nodes = dagBuilder.build(project, project.artifacts.values())
       sortedArtifacts = nodes.collect {
         if (it.elements.size() > 1) {
-          project.error("Circular inclusion of artifacts: ${it.elements}")
+          projectBuilder.error("Circular inclusion of artifacts: ${it.elements}")
         }
         it.elements.iterator().next()
       }
@@ -67,7 +70,7 @@ class ArtifactBuilder {
 
   private def collectIncludedArtifacts(Artifact artifact, Set<Artifact> parents, Set<Artifact> result) {
     if (artifact in parents) {
-      project.error("Circular inclusion of artifacts: $parents")
+      projectBuilder.error("Circular inclusion of artifacts: $parents")
     }
     if (result.contains(artifact)) {
       return
@@ -108,23 +111,23 @@ class ArtifactBuilder {
     def output = artifactOutputs[artifact]
     if (output != null) return output
 
-    project.stage("Building '${artifact.name}' artifact")
+    projectBuilder.stage("Building '${artifact.name}' artifact")
     output = getArtifactOutputFolder(artifact)
     if (output == null) {
-      output = project.builder.getTempDirectoryPath(artifact.name)
-      project.info("Output path for artifact '$artifact.name' is not specified so it will be built to $output")
+      output = projectBuilder.getTempDirectoryPath(artifact.name)
+      projectBuilder.info("Output path for artifact '$artifact.name' is not specified so it will be built to $output")
     }
     artifactOutputs[artifact] = output
     preBuildTasks*.perform(artifact, output)
-    project.binding.layout.call([output, {
-      artifact.rootElement.build(project)
+    projectBuilder.binding.layout.call([output, {
+      artifact.rootElement.build(projectBuilder)
     }])
     postBuildTasks*.perform(artifact, output)
     return output
   }
 
   String getArtifactOutputFolder(Artifact artifact) {
-    String targetFolder = project.targetFolder
+    String targetFolder = projectBuilder.targetFolder
     if (targetFolder == null) {
       return artifact.outputPath
     }
@@ -151,14 +154,14 @@ class ArtifactBuilder {
     String outputPath = artifact.outputPath
     if (outputPath == null) return
 
-    def ant = project.binding.ant
+    def ant = projectBuilder.binding.ant
     LayoutElement root = artifact.rootElement
     if (root instanceof ArchiveElement) {
       ant.delete(file: "$outputPath/${root.name}")
     }
     else {
       checkCanCleanDirectory(outputPath)
-      BuildUtil.deleteDir(project, outputPath)
+      BuildUtil.deleteDir(projectBuilder, outputPath)
     }
   }
 
@@ -166,7 +169,7 @@ class ArtifactBuilder {
     project.modules.values().each {Module module ->
       (module.sourceRoots + module.testRoots).each {
         if (isAncestor(path, it)) {
-          project.error("Cannot clean directory $path: it contains source root $it")
+          projectBuilder.error("Cannot clean directory $path: it contains source root $it")
         }
       }
     }

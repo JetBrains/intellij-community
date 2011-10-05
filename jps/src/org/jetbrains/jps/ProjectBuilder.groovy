@@ -1,17 +1,19 @@
 package org.jetbrains.jps
 
+import org.apache.tools.ant.BuildException
 import org.codehaus.gant.GantBinding
 import org.jetbrains.ether.ProjectWrapper
 import org.jetbrains.ether.Reporter
 import org.jetbrains.ether.dependencyView.Callbacks.Backend
 import org.jetbrains.ether.dependencyView.StringCache
+import org.jetbrains.jps.artifacts.ArtifactBuilder
 import org.jetbrains.jps.idea.OwnServiceLoader
+import org.jetbrains.jps.incremental.ProjectPaths
 import org.jetbrains.jps.listeners.BuildInfoPrinter
 import org.jetbrains.jps.listeners.BuildStatisticsListener
 import org.jetbrains.jps.listeners.DefaultBuildInfoPrinter
 import org.jetbrains.jps.listeners.JpsBuildListener
 import org.jetbrains.jps.builders.*
-import org.jetbrains.jps.incremental.ProjectPaths
 
 /**
  * @author max
@@ -24,6 +26,7 @@ class ProjectBuilder {
 
   final Project project;
   final GantBinding binding;
+  final ArtifactBuilder artifactBuilder
 
   final List<ModuleBuilder> sourceGeneratingBuilders = []
   final List<ModuleBuilder> sourceModifyingBuilders = []
@@ -43,11 +46,13 @@ class ProjectBuilder {
   private String targetFolder = null
 
   private final TempFileContainer tempFileContainer
+  boolean dryRun = false
 
   def ProjectBuilder(GantBinding binding, Project project) {
     this.project = project
     this.binding = binding
-    tempFileContainer = new TempFileContainer(project, "__build_temp__")
+    artifactBuilder = new ArtifactBuilder(this)
+    tempFileContainer = new TempFileContainer(this, "__build_temp__")
     sourceGeneratingBuilders << new GroovyStubGenerator(project)
     translatingBuilders << new JavacBuilder()
     translatingBuilders << new GroovycBuilder(project)
@@ -88,7 +93,6 @@ class ProjectBuilder {
     chunks.chunkList.each { ModuleChunk chunk ->
       if (chunk.elements.size() > 1) {
         File outputDir
-        String targetFolder = project.targetFolder
         if (targetFolder != null) {
           def basePath = tests ? new File(targetFolder, "test").absolutePath : new File(targetFolder, "production").absolutePath
           if (name.length() > 100) {
@@ -115,8 +119,33 @@ class ProjectBuilder {
   }
 
   public def clean() {
+    if (!dryRun) {
+      if (targetFolder != null) {
+        stage("Cleaning $targetFolder")
+        BuildUtil.deleteDir(this, targetFolder)
+      }
+      else {
+        stage("Cleaning output folders for ${project.modules.size()} modules")
+        project.modules.values().each {
+          BuildUtil.deleteDir(this, it.outputPath)
+          BuildUtil.deleteDir(this, it.testOutputPath)
+        }
+        stage("Cleaning output folders for ${project.artifacts.size()} artifacts")
+        project.artifacts.values().each {
+          artifactBuilder.cleanOutput(it)
+        }
+      }
+    }
+    else {
+      stage("Cleaning skipped as we're running dry")
+    }
     compiledChunks.clear()
     compiledTestChunks.clear()
+  }
+
+  def cleanModule(Module m) {
+    binding.ant.delete(dir: m.outputPath)
+    binding.ant.delete(dir: m.testOutputPath)
   }
 
   public def buildAll() {
@@ -143,12 +172,32 @@ class ProjectBuilder {
     }
   }
 
+  def error(String message) {
+    throw new BuildException(message)
+  }
+
+  def warning(String message) {
+    binding.ant.project.log(message, org.apache.tools.ant.Project.MSG_WARN)
+  }
+
+  def stage(String message) {
+    buildInfoPrinter.printProgressMessage(this, message)
+  }
+
+  def info(String message) {
+    binding.ant.project.log(message, org.apache.tools.ant.Project.MSG_INFO)
+  }
+
+  def debug(String message) {
+    binding.ant.project.log(message, org.apache.tools.ant.Project.MSG_DEBUG)
+  }
+
   def buildStart() {
-    listeners*.onBuildStarted(project)
+    listeners*.onBuildStarted(this)
   }
 
   def buildStop() {
-    listeners*.onBuildFinished(project)
+    listeners*.onBuildFinished(this)
   }
 
   private def buildModules(Collection<Module> modules, boolean includeTests) {
@@ -211,13 +260,13 @@ class ProjectBuilder {
   }
 
   def clearChunk(ModuleChunk chunk, Collection<StringCache.S> files, ProjectWrapper pw) {
-    if (!project.dryRun) {
+    if (!dryRun) {
       if (files == null) {
-        project.stage("Cleaning module ${chunk.name}")
-        chunk.modules.each {project.cleanModule it}
+        stage("Cleaning module ${chunk.name}")
+        chunk.modules.each {cleanModule it}
       }
       else {
-        project.stage("Cleaning output files for module ${chunk.name}")
+        stage("Cleaning output files for module ${chunk.name}")
 
         files.each {
           binding.ant.delete(file: pw.getAbsolutePath(it.value))
@@ -244,9 +293,9 @@ class ProjectBuilder {
     if (compiledSet.contains(chunk) && files == null) return
     compiledSet.add(chunk)
 
-    project.stage("Making${tests ? ' tests for' : ''} module ${chunk.name}")
-    if (project.targetFolder == null && !arrangeModuleCyclesOutputs && chunk.modules.size() > 1) {
-      project.warning("Modules $chunk.modules with cyclic dependencies will be compiled to output of ${chunk.modules.toList().first()} module")
+    stage("Making${tests ? ' tests for' : ''} module ${chunk.name}")
+    if (targetFolder == null && !arrangeModuleCyclesOutputs && chunk.modules.size() > 1) {
+      warning("Modules $chunk.modules with cyclic dependencies will be compiled to output of ${chunk.modules.toList().first()} module")
     }
 
     compile(chunk, tests, files, callback, pw)
@@ -268,7 +317,7 @@ class ProjectBuilder {
       }
     }
 
-    if (!project.dryRun) {
+    if (!dryRun) {
       List<String> chunkClasspath = ProjectPaths.getPathsList(getProjectPaths().getClasspathFiles(chunk, ClasspathKind.compile(tests), files == null))
 
       List sourceRootsWithDependencies = getProjectPaths().getSourcePathsForModuleWithDependents(chunk, tests)
@@ -327,10 +376,10 @@ class ProjectBuilder {
         builders().each {ModuleBuilder builder ->
           listeners*.onModuleBuilderStarted(builder, chunk)
           if (arrangeModuleCyclesOutputs && chunk.modules.size() > 1 && builder instanceof ModuleCycleBuilder) {
-            ((ModuleCycleBuilder) builder).preprocessModuleCycle(chunkState, chunk, project)
+            ((ModuleCycleBuilder) builder).preprocessModuleCycle(chunkState, chunk, this)
           }
           states.keySet().each {
-            builder.processModule(it, states[it], project)
+            builder.processModule(it, states[it], this)
           }
           listeners*.onModuleBuilderFinished(builder, chunk)
         }
@@ -347,11 +396,11 @@ class ProjectBuilder {
 
       states.keySet().each {
         it.tempRootsToDelete.each {
-          BuildUtil.deleteDir(project, it)
+          BuildUtil.deleteDir(this, it)
         }
       }
       chunkState.tempRootsToDelete.each {
-        BuildUtil.deleteDir(project, it)
+        BuildUtil.deleteDir(this, it)
       }
       listeners*.onCompilationFinished(chunk)
     }

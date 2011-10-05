@@ -1,14 +1,14 @@
 package org.jetbrains.jps.listeners
 
-import org.jetbrains.jps.Project
+import org.jetbrains.jps.ProjectBuilder
 
 /**
  * @author nik
  */
 public interface BuildInfoPrinter {
 
-  def printProgressMessage(Project project, String message)
+  def printProgressMessage(ProjectBuilder projectBuilder, String message)
 
-  def printCompilationErrors(Project project, String compilerName, String messages)
+  def printCompilationErrors(ProjectBuilder projectBuilder, String compilerName, String messages)
 
 }

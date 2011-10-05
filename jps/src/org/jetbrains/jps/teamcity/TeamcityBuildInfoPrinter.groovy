@@ -1,7 +1,8 @@
 package org.jetbrains.jps.teamcity
 
 import org.jetbrains.jps.listeners.BuildInfoPrinter
-import org.jetbrains.jps.Project
+
+import org.jetbrains.jps.ProjectBuilder
 
 /**
  * @author nik
@@ -37,16 +38,16 @@ class TeamcityBuildInfoPrinter implements BuildInfoPrinter {
     return escaped.toString();
   }
 
-  def printProgressMessage(Project project, String message) {
+  def printProgressMessage(ProjectBuilder projectBuilder, String message) {
     def escapedMessage = escape(message)
-    project.info("##teamcity[progressMessage '$escapedMessage']");
+    projectBuilder.info("##teamcity[progressMessage '$escapedMessage']");
   }
 
-  def printCompilationErrors(Project project, String compilerName, String messages) {
+  def printCompilationErrors(ProjectBuilder projectBuilder, String compilerName, String messages) {
     def escapedCompiler = escape(compilerName)
     def escapedOutput = escape(messages)
-    project.info("##teamcity[compilationStarted compiler='$escapedCompiler']");
-    project.info("##teamcity[message text='$escapedOutput' status='ERROR']");
-    project.info("##teamcity[compilationFinished compiler='$escapedCompiler']");
+    projectBuilder.info("##teamcity[compilationStarted compiler='$escapedCompiler']");
+    projectBuilder.info("##teamcity[message text='$escapedOutput' status='ERROR']");
+    projectBuilder.info("##teamcity[compilationFinished compiler='$escapedCompiler']");
   }
 }

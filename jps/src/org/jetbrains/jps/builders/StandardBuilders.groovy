@@ -17,29 +17,29 @@ import org.jetbrains.jps.*
  */
 class JavacBuilder implements ModuleBuilder, ModuleCycleBuilder {
 
-  def preprocessModuleCycle(ModuleBuildState state, ModuleChunk moduleChunk, org.jetbrains.jps.Project project) {
-    doBuildModule(moduleChunk, state)
+  def preprocessModuleCycle(ModuleBuildState state, ModuleChunk moduleChunk, ProjectBuilder projectBuilder) {
+    doBuildModule(moduleChunk, state, projectBuilder)
   }
 
-  def processModule(ModuleBuildState state, ModuleChunk moduleChunk, org.jetbrains.jps.Project project) {
-    doBuildModule(moduleChunk, state)
+  def processModule(ModuleBuildState state, ModuleChunk moduleChunk, ProjectBuilder projectBuilder) {
+    doBuildModule(moduleChunk, state, projectBuilder)
   }
 
-  def doBuildModule(ModuleChunk module, ModuleBuildState state) {
+  def doBuildModule(ModuleChunk module, ModuleBuildState state, ProjectBuilder projectBuilder) {
     if (state.sourceRoots.isEmpty()) return;
 
     String sourceLevel = module["sourceLevel"]
     String targetLevel = module["targetLevel"]
     String customArgs = module["javac_args"]; // it seems javac_args property is not set, can we drop it?
-    if (module.project.builder.useInProcessJavac) {
+    if (projectBuilder.useInProcessJavac) {
       String version = System.getProperty("java.version")
       if (true) {
-        if (Java16ApiCompilerRunner.compile(module, state, sourceLevel, targetLevel, customArgs)) {
+        if (Java16ApiCompilerRunner.compile(module, projectBuilder, state, sourceLevel, targetLevel, customArgs)) {
           return
         }
       }
       else {
-        module.project.info("In-process Javac won't be used for '${module.name}', because Java version ($version) doesn't match to source level ($sourceLevel)")
+        projectBuilder.info("In-process Javac won't be used for '${module.name}', because Java version ($version) doesn't match to source level ($sourceLevel)")
       }
     }
 
@@ -70,7 +70,7 @@ class JavacBuilder implements ModuleBuilder, ModuleCycleBuilder {
       params.executable = javacExecutable
     }
 
-    def ant = module.project.binding.ant
+    def ant = projectBuilder.binding.ant
 
     final BuildListener listener = new AntListener(state.targetFolder, state.sourceRoots, state.callback);
 
@@ -120,7 +120,7 @@ class JavacBuilder implements ModuleBuilder, ModuleCycleBuilder {
     ant.project.removeBuildListener(listener);
 
     if (state.sourceFiles != null) {
-      module.project.builder.listeners*.onJavaFilesCompiled(module, state.sourceFiles.size())
+      projectBuilder.listeners*.onJavaFilesCompiled(module, state.sourceFiles.size())
     }
   }
 
@@ -139,14 +139,14 @@ class JavacBuilder implements ModuleBuilder, ModuleCycleBuilder {
 
 class ResourceCopier implements ModuleBuilder {
 
-  def processModule(ModuleBuildState state, ModuleChunk moduleChunk, org.jetbrains.jps.Project project) {
+  def processModule(ModuleBuildState state, ModuleChunk moduleChunk, ProjectBuilder projectBuilder) {
     if (state.iterated) return;
 
     state.iterated = true
 
     if (state.sourceRoots.isEmpty()) return;
 
-    def ant = project.binding.ant
+    def ant = projectBuilder.binding.ant
 
     state.sourceRoots.each {String root ->
       final File f = MockFS.fromFiles(root, state.sourceFiles)
@@ -174,7 +174,7 @@ class ResourceCopier implements ModuleBuilder {
         }
       }
       else {
-        project.warning("$root doesn't exist")
+        projectBuilder.warning("$root doesn't exist")
       }
     }
   }
@@ -185,10 +185,10 @@ class GroovycBuilder implements ModuleBuilder {
     project.taskdef(name: "groovyc", classname: "org.codehaus.groovy.ant.Groovyc")
   }
 
-  def processModule(ModuleBuildState state, ModuleChunk moduleChunk, org.jetbrains.jps.Project project) {
+  def processModule(ModuleBuildState state, ModuleChunk moduleChunk, ProjectBuilder projectBuilder) {
     if (!GroovyFileSearcher.containGroovyFiles(state.sourceRoots)) return
 
-    def ant = project.binding.ant
+    def ant = projectBuilder.binding.ant
 
     final String destDir = state.targetFolder
 
@@ -229,14 +229,14 @@ class GroovyStubGenerator implements ModuleBuilder {
     project.taskdef(name: "generatestubs", classname: "org.codehaus.groovy.ant.GenerateStubsTask")
   }
 
-  def processModule(ModuleBuildState state, ModuleChunk moduleChunk, org.jetbrains.jps.Project project) {
+  def processModule(ModuleBuildState state, ModuleChunk moduleChunk, ProjectBuilder projectBuilder) {
     if (!GroovyFileSearcher.containGroovyFiles(state.sourceRoots)) return
 
-    def ant = project.binding.ant
+    def ant = projectBuilder.binding.ant
 
-    String targetFolder = project.targetFolder
+    String targetFolder = projectBuilder.targetFolder
     File dir = new File(targetFolder != null ? targetFolder : ".", "___temp___")
-    BuildUtil.deleteDir(project, dir.absolutePath)
+    BuildUtil.deleteDir(projectBuilder, dir.absolutePath)
     ant.mkdir(dir: dir)
 
     def stubsRoot = dir.getAbsolutePath()
@@ -307,8 +307,8 @@ class JetBrainsInstrumentations implements ModuleBuilder {
     project.taskdef(name: "jb_instrumentations", classname: "com.intellij.ant.InstrumentIdeaExtensions")
   }
 
-  def getPrefixedPath(org.jetbrains.jps.Project project, String root, ModuleChunk moduleChunk) {
-    final path = new PrefixedPath(project.binding.ant.project, root)
+  def getPrefixedPath(org.jetbrains.jps.ProjectBuilder projectBuilder, String root, ModuleChunk moduleChunk) {
+    final path = new PrefixedPath(projectBuilder.binding.ant.project, root)
 
     moduleChunk.elements.each {module ->
       final String prefix = module.sourceRootPrefixes[root]
@@ -320,7 +320,7 @@ class JetBrainsInstrumentations implements ModuleBuilder {
     return path
   }
 
-  def processModule(ModuleBuildState state, ModuleChunk moduleChunk, org.jetbrains.jps.Project project) {
+  def processModule(ModuleBuildState state, ModuleChunk moduleChunk, ProjectBuilder projectBuilder) {
     if (state.loader == null) {
       final StringBuilder cp = new StringBuilder()
 
@@ -349,7 +349,7 @@ class JetBrainsInstrumentations implements ModuleBuilder {
       final List<PrefixedPath> nestedFormDirs = new ArrayList<PrefixedPath>();
 
       state.sourceRootsFromModuleWithDependencies.each {
-        nestedFormDirs << getPrefixedPath(project, it, moduleChunk)
+        nestedFormDirs << getPrefixedPath(projectBuilder, it, moduleChunk)
       }
 
       state.formInstrumenter = new CustomFormInstrumenter(new File(state.targetFolder), nestedFormDirs, formFiles, state);
@@ -369,7 +369,7 @@ class JetBrainsInstrumentations implements ModuleBuilder {
       }
     }
 
-    if (project.getBuilder().useInProcessJavac)
+    if (projectBuilder.useInProcessJavac)
       return;
 
     if (!state.incremental) {
@@ -403,7 +403,7 @@ class JetBrainsInstrumentations implements ModuleBuilder {
 class CustomTasksBuilder implements ModuleBuilder {
   List<ModuleBuildTask> tasks = []
 
-  def processModule(ModuleBuildState state, ModuleChunk moduleChunk, org.jetbrains.jps.Project project) {
+  def processModule(ModuleBuildState state, ModuleChunk moduleChunk, ProjectBuilder projectBuilder) {
     moduleChunk.modules.each {Module module ->
       tasks*.perform(module, state.targetFolder)
     }
