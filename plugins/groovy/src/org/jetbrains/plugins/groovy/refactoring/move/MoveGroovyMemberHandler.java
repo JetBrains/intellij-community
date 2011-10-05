@@ -21,12 +21,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.moveMembers.MoveMemberHandler;
 import com.intellij.refactoring.move.moveMembers.MoveMembersOptions;
 import com.intellij.refactoring.move.moveMembers.MoveMembersProcessor;
 import com.intellij.refactoring.util.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.MultiMap;
@@ -42,6 +44,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaratio
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstantList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
@@ -87,77 +90,87 @@ public class MoveGroovyMemberHandler implements MoveMemberHandler {
   public PsiMember doMove(@NotNull MoveMembersOptions options, @NotNull PsiMember member, PsiElement anchor, @NotNull PsiClass targetClass) {
     GroovyChangeContextUtil.encodeContextInfo(member);
 
-    PsiMember memberCopy;
+    final PsiDocComment docComment;
+    if (member instanceof PsiDocCommentOwner) {
+      docComment = ((PsiDocCommentOwner)member).getDocComment();
+    }
+    else {
+      docComment = null;
+    }
+    
+    PsiMember moved;
     if (options.makeEnumConstant() &&
         member instanceof GrVariable &&
         EnumConstantsUtil.isSuitableForEnumConstant(((PsiVariable)member).getType(), targetClass)) {
-      memberCopy = createEnumConstant(member.getName(), ((GrVariable)member).getInitializerGroovy(), member.getProject());
+      final GrEnumConstant prototype = createEnumConstant(member.getName(), ((GrVariable)member).getInitializerGroovy(), member.getProject());
+      moved = (PsiMember)addEnumConstant(targetClass, prototype, anchor);
       member.delete();
-      memberCopy = (PsiMember)addEnumConstant(targetClass, (GrEnumConstant)memberCopy, anchor);
     }
     else if (member instanceof GrEnumConstant) {
-      memberCopy = (PsiMember)member.copy();
-      member.delete();
-      memberCopy = (PsiMember)addEnumConstant(targetClass, (GrEnumConstant)memberCopy, null);
+      moved = (PsiMember)addEnumConstant(targetClass, (GrEnumConstant)member, null);
     }
     else if (member instanceof GrField) {
-      GrVariableDeclaration parentCopy;
+      if (anchor != null) anchor = anchor.getParent();
+
       final GrVariableDeclaration parent = (GrVariableDeclaration)member.getParent();
-      int number = findMemberNumber(parent.getMembers(), (GrField)member);
-      parentCopy = (GrVariableDeclaration)parent.copy();
-      final GrMember[] members = parentCopy.getMembers();
+      GrVariableDeclaration movedDeclaration = (GrVariableDeclaration)targetClass.addAfter(parent, anchor);
+      
+      int number = ArrayUtil.find(parent.getMembers(), member);
+      final GrMember[] members = movedDeclaration.getMembers();
       for (int i = 0; i < number; i++) {
         members[i].delete();
       }
       for (int i = number + 1; i < members.length; i++) {
         members[i].delete();
       }
-      memberCopy = parentCopy.getMembers()[0];
-
+      
       if (member.getContainingClass().isInterface() && !targetClass.isInterface()) {
         //might need to make modifiers explicit, see IDEADEV-11416
-        final PsiModifierList list = memberCopy.getModifierList();
+        final PsiModifierList list = movedDeclaration.getModifierList();
         assert list != null;
         VisibilityUtil.setVisibility(list, VisibilityUtil.getVisibilityModifier(member.getModifierList()));
         list.setModifierProperty(PsiModifier.STATIC, member.hasModifierProperty(PsiModifier.STATIC));
         list.setModifierProperty(PsiModifier.FINAL, member.hasModifierProperty(PsiModifier.FINAL));
       }
-      member.delete();
-      if (anchor != null) anchor = anchor.getParent();
-      parentCopy = (GrVariableDeclaration)targetClass.addAfter(parentCopy, anchor);
-      return parentCopy.getMembers()[0];
+      
+      moved = movedDeclaration.getMembers()[0];
     }
     else if (member instanceof GrMethod) {
-      memberCopy = (PsiMember)member.copy();
+      moved = (PsiMember)targetClass.addAfter(member, anchor);
       if (member.getContainingClass().isInterface() && !targetClass.isInterface()) {
         //might need to make modifiers explicit, see IDEADEV-11416
-        final PsiModifierList list = memberCopy.getModifierList();
+        final PsiModifierList list = moved.getModifierList();
         assert list != null;
         list.setModifierProperty(PsiModifier.STATIC, member.hasModifierProperty(PsiModifier.STATIC));
         list.setModifierProperty(PsiModifier.FINAL, member.hasModifierProperty(PsiModifier.FINAL));
         VisibilityUtil.setVisibility(list, VisibilityUtil.getVisibilityModifier(member.getModifierList()));
       }
 
-      member.delete();
-      memberCopy = (PsiMember)targetClass.addAfter(memberCopy, anchor);
     }
     else {
-      memberCopy = (PsiMember)member.copy();
-      member.delete();
-      memberCopy = (PsiMember)targetClass.addAfter(memberCopy, anchor);
+      moved = (PsiMember)targetClass.addAfter(member, anchor);
     }
-    return memberCopy;
+
+    if (docComment != null) {
+      final ASTNode beforeAnchor;
+      if (anchor == null) {
+        final PsiElement lBrace = ((GrTypeDefinition)targetClass).getBody().getLBrace();
+        beforeAnchor = lBrace == null ? null : lBrace.getNode().getTreeNext();
+      }
+      else {
+        beforeAnchor = anchor.getNode().getTreeNext();
+      }
+      ((GrTypeDefinition)targetClass).getBody().getNode().addLeaf(GroovyTokenTypes.mNLS, "\n", beforeAnchor);
+      anchor = beforeAnchor.getTreePrev().getPsi();
+      targetClass.addAfter(docComment, anchor);
+      docComment.delete();
+    }
+    member.delete();
+    return moved;
   }
 
   public void decodeContextInfo(@NotNull PsiElement scope) {
     GroovyChangeContextUtil.decodeContextInfo(scope, null, null);
-  }
-
-  private static int findMemberNumber(PsiMember[] members, GrMember member) {
-    for (int i = 0; i < members.length; i++) {
-      if (members[i].equals(member)) return i;
-    }
-    return -1;
   }
 
   private static void changeQualifier(GrReferenceExpression refExpr, PsiClass aClass, PsiMember member) throws IncorrectOperationException {
