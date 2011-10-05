@@ -15,16 +15,19 @@
  */
 package org.jetbrains.plugins.groovy.lang.resolve;
 
-import com.intellij.psi.PsiIntersectionType;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiType;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
-import org.jetbrains.plugins.groovy.util.TestUtils;
 
-import static com.intellij.psi.CommonClassNames.JAVA_LANG_INTEGER;
-import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
+import com.intellij.psi.CommonClassNames
+import com.intellij.psi.PsiIntersectionType
+import com.intellij.psi.PsiReference
+import com.intellij.psi.PsiType
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType
+import org.jetbrains.plugins.groovy.util.TestUtils
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_INTEGER
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING
 
 /**
  * @author ven
@@ -244,5 +247,23 @@ public class TypeInferenceTest extends GroovyResolveTestCase {
 
   public void testSingleParameterInStringInjection() {
     assertTypeEquals("java.lang.StringBuilder", "a.groovy");
+  }
+
+  void testIndexPropertyPlusAssigned() {
+    GroovyFile file = myFixture.configureByText('a.groovy', '''
+class X {
+    def putAt(String s, X x){new Date()}
+
+    def getAt(String s) {new X()}
+
+    def plus(X x, int i) {x}
+}
+
+map = new X()
+
+map['i'] += 2
+''')
+    GrAssignmentExpression assignment = file.topStatements[2]
+    assertTrue(assignment.getLValue().getType().equalsToText(CommonClassNames.JAVA_UTIL_DATE))
   }
 }

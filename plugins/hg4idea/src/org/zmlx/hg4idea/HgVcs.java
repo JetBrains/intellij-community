@@ -273,12 +273,13 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
 
     // updaters and listeners
     final HgRemoteStatusUpdater remoteUpdater = new HgRemoteStatusUpdater(this, incomingChangesStatus, outgoingChangesStatus, projectSettings);
+    int checkIntervalSeconds = HgGlobalSettings.getIncomingCheckIntervalSeconds();
     changesUpdaterScheduledFuture = JobScheduler.getScheduler().scheduleWithFixedDelay(
       new Runnable() {
         public void run() {
           remoteUpdater.update(myProject);
         }
-      }, 0, HgGlobalSettings.getIncomingCheckIntervalSeconds(), TimeUnit.SECONDS);
+      }, checkIntervalSeconds, checkIntervalSeconds, TimeUnit.SECONDS);
 
     messageBusConnection = myProject.getMessageBus().connect();
     messageBusConnection.subscribe(REMOTE_TOPIC, remoteUpdater);
