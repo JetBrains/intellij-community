@@ -238,18 +238,13 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testObjectsInThrowsBlock() throws Exception {
     configureByFile("InThrowsCompletion.java");
-
-    Arrays.sort(myItems);
-    assertTrue("Exception not found", Arrays.binarySearch(myItems, "C") > 0);
-    assertFalse("Found not an Exception", Arrays.binarySearch(myItems, "B") > 0);
+    assert "C" in myFixture.lookupElementStrings
+    assert !("B" in myFixture.lookupElementStrings)
   }
 
   public void testAfterInstanceof() throws Exception {
     configureByFile("AfterInstanceof.java");
-
-    assertNotNull(myItems);
-    Arrays.sort(myItems);
-    assertTrue("Classes not found after instanceof", Arrays.binarySearch(myItems, "A") >= 0);
+    assert "A" in myFixture.lookupElementStrings
   }
 
   public void testAfterCast1() throws Exception {
