@@ -51,7 +51,7 @@ public class ModifierChooser {
         return addClassModifiers(list);
       }
       if (scope instanceof PsiClass) {
-        return addMemberModifiers(list, (PsiClass)scope);
+        return addMemberModifiers(list, ((PsiClass)scope).isInterface());
       }
 
       scope = scope.getParent();
@@ -67,8 +67,8 @@ public class ModifierChooser {
     });
   }
 
-  public static String[] addMemberModifiers(PsiModifierList list, PsiClass scope) {
-    return addKeywords(list, scope.isInterface() ? new String[][]{
+  public static String[] addMemberModifiers(PsiModifierList list, final boolean inInterface) {
+    return addKeywords(list, inInterface ? new String[][]{
       new String[]{"public", "protected"},
       new String[]{"static"},
       new String[]{"final"}
