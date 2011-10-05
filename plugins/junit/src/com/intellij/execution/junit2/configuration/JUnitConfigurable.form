@@ -58,7 +58,7 @@
               <componentClass value="javax.swing.JComboBox"/>
               <enabled value="true"/>
               <labelLocation value="West"/>
-              <text resource-bundle="messages/ExecutionBundle" key="junit.configuration.use.classpath.and.jdk.of.module.label"/>
+              <text resource-bundle="messages/ExecutionBundle" key="application.configuration.use.classpath.and.jdk.of.module.label"/>
             </properties>
           </component>
           <component id="e5163" class="com.intellij.execution.ui.AlternativeJREPanel" binding="myAlternativeJREPanel">

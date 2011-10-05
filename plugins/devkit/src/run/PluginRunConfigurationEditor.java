@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.devkit.run;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.LogFileOptions;
 import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.diagnostic.Logger;
@@ -50,7 +51,7 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
 
   private DefaultComboBoxModel myModulesModel = new DefaultComboBoxModel();
   private final JComboBox myModules = new JComboBox(myModulesModel);
-  private final JBLabel myModuleLabel = new JBLabel(DevKitBundle.message("run.configuration.classpath.from.module.choose"));
+  private final JBLabel myModuleLabel = new JBLabel(ExecutionBundle.message("application.configuration.use.classpath.and.jdk.of.module.label"));
   private final LabeledComponent<RawCommandLineEditor> myVMParameters = new LabeledComponent<RawCommandLineEditor>();
   private final LabeledComponent<RawCommandLineEditor> myProgramParameters = new LabeledComponent<RawCommandLineEditor>();
   private JComponent anchor;
