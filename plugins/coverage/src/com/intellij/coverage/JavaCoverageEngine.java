@@ -24,10 +24,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.CompilerModuleExtension;
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.SourceFolder;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
@@ -161,10 +158,17 @@ public class JavaCoverageEngine extends CoverageEngine {
   }
 
   public boolean acceptedByFilters(@NotNull final PsiFile psiFile, @NotNull final CoverageSuitesBundle suite) {
+    final VirtualFile virtualFile = psiFile.getVirtualFile();
+    if (virtualFile == null) return false;
+    final Project project = psiFile.getProject();
+    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    if (!suite.isTrackTestFolders() && fileIndex.isInTestSourceContent(virtualFile)) {
+      return false;
+    }
+
     for (CoverageSuite coverageSuite : suite.getSuites()) {
       final JavaCoverageSuite javaSuite = (JavaCoverageSuite)coverageSuite;
 
-      final Project project = psiFile.getProject();
       final List<PsiPackage> packages = javaSuite.getCurrentSuitePackages(project);
       if (isUnderFilteredPackages((PsiClassOwner)psiFile, packages)) {
         return true;
