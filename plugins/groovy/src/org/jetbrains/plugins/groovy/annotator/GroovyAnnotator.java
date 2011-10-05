@@ -1571,7 +1571,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     PsiElement parent = refElement.getParent();
     if (element instanceof PsiClass) {
       if (((PsiClass)element).isAnnotationType() && !(parent instanceof GrImportStatement)) {
-        Annotation annotation = holder.createInfoAnnotation(parent, null);
+        Annotation annotation = holder.createInfoAnnotation(refElement, null);
         annotation.setTextAttributes(DefaultHighlighter.ANNOTATION);
         GroovyPsiElement context = result.getCurrentFileResolveContext();
         if (context instanceof GrImportStatement) {
