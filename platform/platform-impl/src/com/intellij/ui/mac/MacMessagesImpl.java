@@ -265,7 +265,7 @@ public class MacMessagesImpl extends MacMessages {
             final ID buttonsArray = invoke("NSMutableArray", "array");
             for (String s : buttons) {
               ID s1 = nsString(UIUtil.removeMnemonic(s));
-              invoke(buttonsArray, "addObject:", s);
+              invoke(buttonsArray, "addObject:", s1);
               cfRelease(s1);
             }
 
