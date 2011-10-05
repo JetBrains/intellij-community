@@ -18,7 +18,12 @@ package com.intellij.codeInsight.template;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.XmlComment;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlText;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -39,7 +44,17 @@ public class HtmlTextContextType extends TemplateContextType {
   }
 
   public static boolean isInContext(@NotNull PsiElement element) {
-    return XmlContextType.XmlTextContextType.isInXmlText(element);
+    if (PsiTreeUtil.getParentOfType(element, XmlComment.class) != null) {
+      return false;
+    }
+    if (PsiTreeUtil.getParentOfType(element, XmlText.class) != null) {
+      return true;
+    }
+    PsiElement parent = element.getParent();
+    if (parent instanceof PsiErrorElement) {
+      parent = parent.getParent();
+    }
+    return parent instanceof XmlDocument;
   }
 
   @Override
