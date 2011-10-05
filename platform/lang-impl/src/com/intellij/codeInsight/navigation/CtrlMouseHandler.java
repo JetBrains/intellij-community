@@ -407,7 +407,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
         return new InfoSingle(ref, resolvedElements.get(0));
       }
       else if (resolvedElements.size() > 1) {
-        return new InfoMultiple(elementAtPointer);
+        return elementAtPointer != null ? new InfoMultiple(elementAtPointer) : null;
       }
     }
     else if (browseMode == BrowseMode.Implementation) {
