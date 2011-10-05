@@ -83,7 +83,7 @@ public class JavaBuilder extends Builder{
   }
 
   private static List<String> getCompilationOptions(CompileContext context, ModuleChunk chunk) {
-    return Collections.emptyList();// todo
+    return Arrays.asList("-verbose");
   }
 
   private static Map<File, Set<File>> buildOutputDirectoriesMap(CompileContext context, ModuleChunk chunk) {
