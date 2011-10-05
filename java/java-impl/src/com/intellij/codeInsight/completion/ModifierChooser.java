@@ -16,7 +16,10 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.psi.*;
-import com.intellij.psi.filters.*;
+import com.intellij.psi.filters.ClassFilter;
+import com.intellij.psi.filters.ElementFilter;
+import com.intellij.psi.filters.FilterPositionUtil;
+import com.intellij.psi.filters.NotFilter;
 import com.intellij.psi.filters.classes.InterfaceFilter;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClassLevelDeclarationStatement;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -27,7 +30,6 @@ import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -67,16 +69,9 @@ public class ModifierChooser {
       new String[]{"final", "abstract"}
     });
 
-    myMap.put(new ClassFilter(PsiParameterList.class), new String[][]{
-      new String[]{"final"}
-    });
   }
 
   public static String[] getKeywords(@NotNull PsiElement position) {
-    if (JavaCompletionData.INSIDE_SWITCH.isAcceptable(position, position)) {
-      return ArrayUtil.EMPTY_STRING_ARRAY;
-    }
-
     final List<String> ret = new ArrayList<String>();
     try {
       PsiElement scope;
@@ -154,13 +149,7 @@ public class ModifierChooser {
     for (final Object o : myMap.keySet()) {
       final ElementFilter filter = (ElementFilter)o;
       if (filter.isClassAcceptable(parent.getClass()) && filter.isAcceptable(parent, parent.getParent())) {
-        if (parent instanceof PsiParameterList) {
-          if (prev == null || Arrays.asList(new String[]{"(", ","}).contains(prev.getText())
-              || Arrays.asList(new String[]{"(", ","}).contains(element.getText())) {
-            return null;
-          }
-        }
-        else if (prev == null || JavaCompletionData.END_OF_BLOCK.isAcceptable(element, prev.getParent())) {
+        if (prev == null || JavaCompletionData.END_OF_BLOCK.isAcceptable(element, prev.getParent())) {
           return null;
         }
       }

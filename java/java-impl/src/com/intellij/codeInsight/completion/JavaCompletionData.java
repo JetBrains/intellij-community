@@ -519,7 +519,11 @@ public class JavaCompletionData extends JavaAwareCompletionData{
       result.addElement(createKeyword(position, PsiKeyword.FALSE));
     }
 
-    if (CLASS_START.isAcceptable(position, position) || INSIDE_PARAMETER_LIST.accepts(position)) {
+    if (INSIDE_PARAMETER_LIST.accepts(position) && !psiElement().afterLeaf(PsiKeyword.FINAL).accepts(position) && !AFTER_DOT.accepts(position)) {
+      result.addElement(TailTypeDecorator.withTail(createKeyword(position, PsiKeyword.FINAL), TailType.SPACE));
+    }
+
+    if (CLASS_START.isAcceptable(position, position)) {
       for (String s : ModifierChooser.getKeywords(position)) {
         result.addElement(new OverrideableSpace(createKeyword(position, s), TailType.SPACE));
       }
