@@ -39,12 +39,6 @@
     <action id="SmartTypeCompletion">
       <keyboard-shortcut first-keystroke="control shift SPACE"/>
     </action>
-    <action id="EditorScrollUp">
-      <keyboard-shortcut first-keystroke="meta UP"/>
-    </action>
-    <action id="EditorScrollDown">
-      <keyboard-shortcut first-keystroke="meta DOWN"/>
-    </action>
     <action id="PreviousTab">
       <keyboard-shortcut first-keystroke="control LEFT"/>
     </action>
@@ -291,6 +285,7 @@
       <keyboard-shortcut first-keystroke="control shift DIVIDE"/>
       <keyboard-shortcut first-keystroke="meta shift SLASH"/>
       <keyboard-shortcut first-keystroke="meta shift DIVIDE"/>
+      <keyboard-shortcut first-keystroke="meta shift DIVIDE"/>
     </action>
 
     <action id="Refresh">
@@ -447,6 +442,11 @@
     <action id="Vcs.ShowMessageHistory">
       <keyboard-shortcut first-keystroke="control M"/>
       <keyboard-shortcut first-keystroke="meta E"/>
+    </action>
+
+    <action id="ShowNavBar">
+      <keyboard-shortcut first-keystroke="meta UP"/>
+      <keyboard-shortcut first-keystroke="alt HOME"/>
     </action>
 
     <action id="EditorScrollUp"/> <!-- Disables meta up -->
