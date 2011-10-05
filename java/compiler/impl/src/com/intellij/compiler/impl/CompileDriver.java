@@ -43,6 +43,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
@@ -71,6 +72,7 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.pom.Navigatable;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.*;
@@ -431,8 +433,20 @@ public class CompileDriver {
         else {
           final CompilerMessageCategory category = kind == JpsRemoteProto.Message.Response.CompileMessage.Kind.ERROR ? CompilerMessageCategory.ERROR
                                                    : kind == JpsRemoteProto.Message.Response.CompileMessage.Kind.WARNING ? CompilerMessageCategory.WARNING : CompilerMessageCategory.INFORMATION;
-          compileContext.addMessage(category, compilerMessage.getText(), compilerMessage.getSourceFilePath(), compilerMessage.getLine(),
-                                    compilerMessage.getColumn());
+          Navigatable navigatable = null;
+
+          final String sourceFilePath = compilerMessage.getSourceFilePath();
+          final long offset = compilerMessage.hasProblemLocationOffset()? compilerMessage.getProblemLocationOffset() : -1L;
+          if (sourceFilePath != null && offset >= 0L) {
+            final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(sourceFilePath));
+            if (file != null) {
+              navigatable = new OpenFileDescriptor(myProject, file, (int)offset);
+            }
+          }
+
+          compileContext.addMessage(
+            category, compilerMessage.getText(), sourceFilePath, (int)compilerMessage.getLine(), (int)compilerMessage.getColumn(), navigatable
+          );
         }
       }
 

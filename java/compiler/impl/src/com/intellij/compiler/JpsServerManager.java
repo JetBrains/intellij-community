@@ -24,19 +24,24 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.JavaSdkType;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.ShutDownTracker;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.net.NetUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.server.GlobalLibrary;
+import org.jetbrains.jps.server.SdkLibrary;
 import org.jetbrains.jpsservice.Bootstrap;
 import org.jetbrains.jpsservice.Client;
 
 import java.io.File;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
@@ -107,8 +112,13 @@ public class JpsServerManager implements ApplicationComponent{
           for (String name : pathVars.getAllMacroNames()) {
             data.put(name, pathVars.getValue(name));
           }
-          myServerClient.sendSetupRequest(data);
 
+          final List<GlobalLibrary> globals = new ArrayList<GlobalLibrary>();
+
+          fillSdks(globals);
+          fillGlobalLibraries(globals);
+
+          myServerClient.sendSetupRequest(data, globals);
         }
 
         myProcessHandler = processHandler;
@@ -122,10 +132,42 @@ public class JpsServerManager implements ApplicationComponent{
     return false;
   }
 
+  private void fillSdks(List<GlobalLibrary> globals) {
+    for (Sdk sdk : ProjectJdkTable.getInstance().getAllJdks()) {
+      final String name = sdk.getName();
+      final String homePath = sdk.getHomePath();
+      if (homePath == null) {
+        continue;
+      }
+      final List<String> paths = new ArrayList<String>();
+      for (VirtualFile file : sdk.getRootProvider().getFiles(OrderRootType.CLASSES)) {
+        paths.add(file.getPath());
+      }
+      globals.add(new SdkLibrary(name, homePath, paths));
+    }
+  }
+
+  private void fillGlobalLibraries(List<GlobalLibrary> globals) {
+    final Iterator<Library> iterator = LibraryTablesRegistrar.getInstance().getLibraryTable().getLibraryIterator();
+    while (iterator.hasNext()) {
+      Library library = iterator.next();
+      final String name = library.getName();
+
+      if (name != null) {
+        final List<String> paths = new ArrayList<String>();
+        for (VirtualFile file : library.getFiles(OrderRootType.CLASSES)) {
+          paths.add(file.getPath());
+        }
+        globals.add(new GlobalLibrary(name, paths));
+      }
+    }
+  }
+
   private static Process launchServer(int port) throws ExecutionException {
     final Sdk projectJdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
     final GeneralCommandLine cmdLine = new GeneralCommandLine();
     cmdLine.setExePath(((JavaSdkType)projectJdk.getSdkType()).getVMExecutablePath(projectJdk));
+    //cmdLine.addParameter("-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5007");
     cmdLine.addParameter("-Xmx256m");
     cmdLine.addParameter("-classpath");
 

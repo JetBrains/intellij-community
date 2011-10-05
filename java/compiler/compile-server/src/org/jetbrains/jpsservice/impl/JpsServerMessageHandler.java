@@ -2,10 +2,13 @@ package org.jetbrains.jpsservice.impl;
 
 import org.jboss.netty.channel.*;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.incremental.MessageHandler;
+import org.jetbrains.jps.incremental.messages.BuildMessage;
+import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.server.BuildParameters;
 import org.jetbrains.jps.server.BuildType;
 import org.jetbrains.jps.server.Facade;
-import org.jetbrains.jps.server.MessagesConsumer;
+import org.jetbrains.jps.server.GlobalLibrary;
 import org.jetbrains.jpsservice.JpsRemoteProto;
 import org.jetbrains.jpsservice.Server;
 
@@ -53,7 +56,7 @@ public class JpsServerMessageHandler extends SimpleChannelHandler {
           for (JpsRemoteProto.Message.Request.SetupCommand.PathVariable variable : setupCommand.getPathVariableList()) {
             data.put(variable.getName(), variable.getValue());
           }
-          Facade.getInstance().setPathVariables(data);
+          Facade.getInstance().setGlobals(Collections.<GlobalLibrary>emptyList(), data);
           reply = ProtoUtil.toMessage(sessionId, ProtoUtil.createCommandCompletedEvent(null));
           break;
 
@@ -145,19 +148,21 @@ public class JpsServerMessageHandler extends SimpleChannelHandler {
       Channels.write(myChannelContext.getChannel(), ProtoUtil.toMessage(mySessionId, ProtoUtil.createBuildStartedEvent("build started")));
       Throwable error = null;
       try {
-        Facade.getInstance().startBuild(myProjectPath, myModules, myParams, new MessagesConsumer() {
-          public void consumeProgressMessage(String message) {
-            Channels.write(
-              myChannelContext.getChannel(), ProtoUtil.toMessage(mySessionId, ProtoUtil.createCompileProgressMessageResponse(message))
-            );
-          }
-
-          public void consumeCompilerMessage(String compilerName, String message) {
-            final JpsRemoteProto.Message.Response.CompileMessage.Kind kind =
-              message.contains("error:")? JpsRemoteProto.Message.Response.CompileMessage.Kind.ERROR : JpsRemoteProto.Message.Response.CompileMessage.Kind.INFO;
-            Channels.write(
-              myChannelContext.getChannel(), ProtoUtil.toMessage(mySessionId, ProtoUtil.createCompileMessageResponse(kind, message, null, -1, -1))
-            );
+        Facade.getInstance().startBuild(myProjectPath, myModules, myParams, new MessageHandler() {
+          public void processMessage(BuildMessage buildMessage) {
+            final JpsRemoteProto.Message.Response response;
+            if (buildMessage instanceof CompilerMessage) {
+              final CompilerMessage compilerMessage = (CompilerMessage)buildMessage;
+              response = ProtoUtil.createCompileMessageResponse(
+                compilerMessage.getKind(), compilerMessage.getMessageText(), compilerMessage.getSourcePath(),
+                compilerMessage.getProblemBeginOffset(), compilerMessage.getProblemEndOffset(),
+                compilerMessage.getProblemLocationOffset(), compilerMessage.getLine(), compilerMessage.getColumn()
+              );
+            }
+            else {
+              response = ProtoUtil.createCompileProgressMessageResponse(buildMessage.getMessageText());
+            }
+            Channels.write(myChannelContext.getChannel(), ProtoUtil.toMessage(mySessionId, response));
           }
         });
       }

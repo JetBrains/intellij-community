@@ -9,6 +9,7 @@ import org.jboss.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import org.jboss.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.server.GlobalLibrary;
 import org.jetbrains.jpsservice.impl.JpsClientMessageHandler;
 import org.jetbrains.jpsservice.impl.ProtoUtil;
 
@@ -109,11 +110,11 @@ public class Client {
   }
 
   @NotNull
-  public RequestFuture sendSetupRequest(final Map<String, String> pathVariables) throws Exception {
+  public RequestFuture sendSetupRequest(final Map<String, String> pathVariables, final List<GlobalLibrary> sdkAndLibs) throws Exception {
     if (myState.get() != State.CONNECTED) {
       throw new Exception("Client not connected");
     }
-    return sendRequest(ProtoUtil.createSetupRequest(pathVariables), null);
+    return sendRequest(ProtoUtil.createSetupRequest(pathVariables, sdkAndLibs), null);
   }
 
   private RequestFuture sendRequest(JpsRemoteProto.Message.Request request, @Nullable JpsServerResponseHandler handler) {
