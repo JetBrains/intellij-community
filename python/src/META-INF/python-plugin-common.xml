@@ -216,8 +216,59 @@
 
     <stubElementTypeHolder class="com.jetbrains.python.PyElementTypes"/>
     <stubElementTypeHolder class="com.jetbrains.cython.CythonElementTypes"/>
-    <inspectionToolProvider implementation="com.jetbrains.python.inspections.PythonInspectionToolProvider"/>
 
+    <localInspection language="Pyton" shortName="PyArgumentListInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.incorrect.call.arguments" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyArgumentListInspection"/>
+    <localInspection language="Pyton" shortName="PyRedeclarationInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.redeclaration" groupKey="INSP.GROUP.python" enabledByDefault="false"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyRedeclarationInspection"/>
+    <localInspection language="Pyton" shortName="PyUnresolvedReferencesInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.unresolved.refs" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyUnresolvedReferencesInspection"/>
+    <localInspection language="Pyton" shortName="PyMethodParametersInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.problematic.first.parameter" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyMethodParametersInspection"/>
+    <localInspection language="Pyton" shortName="PyUnreachableCodeInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.unreachable.code" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyUnreachableCodeInspection"/>
+    <localInspection language="Pyton" shortName="PyMethodFirstArgAssignmentInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.first.arg.assign" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyMethodFirstArgAssignmentInspection"/>
+    <localInspection language="Pyton" shortName="PyStringFormatInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.str.format" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyStringFormatInspection"/>
+    <localInspection language="Pyton" shortName="PyMethodOverridingInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.method.over" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyMethodOverridingInspection"/>
+    <localInspection language="Pyton" shortName="PyInitNewSignatureInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.new.init.signature" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyInitNewSignatureInspection"/>
+    <localInspection language="Pyton" shortName="PyTrailingSemicolonInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.trailing.semicolon" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyTrailingSemicolonInspection"/>
+    <localInspection language="Pyton" shortName="PyReturnFromInitInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.init.return" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyReturnFromInitInspection"/>
+    <localInspection language="Pyton" shortName="PyUnusedLocalInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.unused" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyUnusedLocalInspection"/>
+    <localInspection language="Pyton" shortName="PyDictCreationInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.dict.creation" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyDictCreationInspection"/>
+    <localInspection language="Pyton" shortName="PyDictDuplicateKeysInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.duplicate.keys" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyDictDuplicateKeysInspection"/>
+    <localInspection language="Pyton" shortName="PyExceptClausesOrderInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.bad.except.clauses.order" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyExceptClausesOrderInspection"/>
+    <localInspection language="Pyton" shortName="PyTupleAssignmentBalanceInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.incorrect.assignment" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyTupleAssignmentBalanceInspection"/>
+    <localInspection language="Pyton" shortName="PyClassicStyleClassInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.classic.class.usage" groupKey="INSP.GROUP.python" enabledByDefault="false"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyClassicStyleClassInspection"/>
+    <localInspection language="Pyton" shortName="PyExceptionInheritInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.exception.not.inherit" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyExceptionInheritInspection"/>
+    <localInspection language="Pyton" shortName="PyDefaultArgumentInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.default.argument" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyDefaultArgumentInspection"/>
+    <localInspection language="Pyton" shortName="PyRaisingNewStyleClassInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.raising.new.style.class" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyRaisingNewStyleClassInspection"/>
+    <localInspection language="Pyton" shortName="PyDocstringInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.docstring" groupKey="INSP.GROUP.python" enabledByDefault="false"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyDocstringInspection"/>
+    <localInspection language="Pyton" shortName="PyUnboundLocalVariableInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.unbound" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyUnboundLocalVariableInspection"/>
+    <localInspection language="Pyton" shortName="PyStatementEffectInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.statement.effect" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyStatementEffectInspection"/>
+    <localInspection language="Pyton" shortName="PySimplifyBooleanCheckInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.check.can.be.simplified" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PySimplifyBooleanCheckInspection"/>
+    <localInspection language="Pyton" shortName="PyFromFutureImportInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.from.future.import" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyFromFutureImportInspection"/>
+    <localInspection language="Pyton" shortName="PyComparisonWithNoneInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.comparison.with.none" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyComparisonWithNoneInspection"/>
+    <localInspection language="Pyton" shortName="PyStringExceptionInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.raising.string.exception" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyStringExceptionInspection"/>
+    <localInspection language="Pyton" shortName="PySuperArgumentsInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.wrong.super.arguments" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PySuperArgumentsInspection"/>
+    <localInspection language="Pyton" shortName="PyByteLiteralInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.byte.literal" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyByteLiteralInspection"/>
+    <localInspection language="Pyton" shortName="PyTupleItemAssignmentInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.tuple.item.assignment" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyTupleItemAssignmentInspection"/>
+    <localInspection language="Pyton" shortName="PyCallingNonCallableInspection" displayName="Trying to call a non-callable object" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyCallingNonCallableInspection"/>
+    <localInspection language="Pyton" shortName="PyPropertyAccessInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.property.access" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyPropertyAccessInspection"/>
+    <localInspection language="Pyton" shortName="PyPropertyDefinitionInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.property.definition" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyPropertyDefinitionInspection"/>
+    <localInspection language="Pyton" shortName="PyInconsistentIndentationInspection" displayName="Inconsistent indentation" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyInconsistentIndentationInspection"/>
+    <localInspection language="Pyton" shortName="PyNestedDecoratorsInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.nested.decorators" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyNestedDecoratorsInspection"/>
+    <localInspection language="Pyton" shortName="PyCallByClassInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.different.class.call" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyCallByClassInspection"/>
+    <localInspection language="Pyton" shortName="PyBroadExceptionInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.too.broad.exception.clauses" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyBroadExceptionInspection"/>
+    <localInspection language="Pyton" shortName="PyRedundantParenthesesInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.redundant.parentheses" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyRedundantParenthesesInspection"/>
+    <localInspection language="Pyton" shortName="PyAugmentAssignmentInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.augment.assignment" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyAugmentAssignmentInspection"/>
+    <localInspection language="Pyton" shortName="PyChainedComparisonsInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.chained.comparisons" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyChainedComparisonsInspection"/>
+    <localInspection language="Pyton" shortName="PyOldStyleClassesInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.oldstyle.class" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyOldStyleClassesInspection"/>
+    <localInspection language="Pyton" shortName="PyCompatibilityInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.compatibility" groupKey="INSP.GROUP.python" enabledByDefault="false"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyCompatibilityInspection"/>
+    <localInspection language="Pyton" shortName="PyListCreationInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.list.creation" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyListCreationInspection"/>
+    <localInspection language="Pyton" shortName="PyUnnecessaryBackslashInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.unnecessary.backslash" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyUnnecessaryBackslashInspection"/>
+    <localInspection language="Pyton" shortName="PySingleQuotedDocstringInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.single.quoted.docstring" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PySingleQuotedDocstringInspection"/>
+    <localInspection language="Pyton" shortName="PyMissingConstructorInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.missing.super.constructor" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyMissingConstructorInspection"/>
+    <localInspection language="Pyton" shortName="PyArgumentEqualDefaultInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.argument.equal.default" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyArgumentEqualDefaultInspection"/>
+    <localInspection language="Pyton" shortName="PySetFunctionToLiteralInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.set.function.to.literal" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PySetFunctionToLiteralInspection"/>
+    <localInspection language="Pyton" shortName="PyDecoratorInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.decorator.outside.class" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyDecoratorInspection"/>
+    <localInspection language="Pyton" shortName="PyTypeCheckerInspection" displayName="Type checker" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyTypeCheckerInspection"/>
+    <localInspection language="Pyton" shortName="PyDeprecationInspection" displayName="Deprecated function, class or module" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyDeprecationInspection"/>
+    
     <liveTemplateContext implementation="com.jetbrains.python.codeInsight.PythonTemplateContextType"/>
     <liveTemplateMacro implementation="com.jetbrains.python.codeInsight.CollectionElementNameMacro"/>
 
@@ -357,7 +408,33 @@
 
     <psi.referenceContributor implementation="com.jetbrains.django.ref.DjangoReferenceContributor"/>
 
-    <inspectionToolProvider implementation="com.jetbrains.django.lang.template.inspection.DjangoInspectionToolProvider"/>
+    <localInspection shortName="DjangoCloseTagInspection" bundle="com.jetbrains.django.ui.Django" key="inspection.close.tag.name"
+                     groupKey="django" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.django.lang.template.inspection.TemplateCloseTagInspection"/>
+    <localInspection shortName="DuplicatedBlockNamesInspection" bundle="com.jetbrains.django.ui.Django"
+                     key="INSP.NAME.duplicated.block.names" groupKey="django" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.django.lang.template.inspection.DuplicatedBlockNamesInspection"/>
+    <localInspection shortName="ExtendsTagPositionInspection" bundle="com.jetbrains.django.ui.Django" key="INSP.NAME.extends.tag.position"
+                     groupKey="django" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.django.lang.template.inspection.ExtendsTagPositionInspection"/>
+    <localInspection shortName="DjangoUnresolvedTemplateReferenceInspection" bundle="com.jetbrains.django.ui.Django"
+                     key="inspection.unresolved-template-reference.display-name" groupKey="django" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.django.lang.template.inspection.UnresolvedTemplateReferenceInspection"/>
+    <localInspection shortName="DjangoUnresolvedStaticReferenceInspection" bundle="com.jetbrains.django.ui.Django"
+                     key="inspection.unresolved-static-reference.display-name" groupKey="django" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.django.lang.template.inspection.UnresolvedStaticReferenceInspection"/>
+    <localInspection shortName="DjangoBrokenLineCommentInspection" bundle="com.jetbrains.django.ui.Django"
+                     key="broken.line.comment.inspection.name" groupKey="django" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.django.lang.template.inspection.DjangoBrokenLineCommentInspection"/>
+    <localInspection shortName="DjangoUnresolvedTagInspection" bundle="com.jetbrains.django.ui.Django"
+                     key="inspection.unresolved-tag.display-name" groupKey="django" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.django.lang.template.inspection.UnresolvedTagInspection"/>
+    <localInspection shortName="DjangoUnresolvedFilterInspection" bundle="com.jetbrains.django.ui.Django"
+                     key="inspection.unresolved-filter.display-name" groupKey="django" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.django.lang.template.inspection.UnresolvedFilterInspection"/>
+    <localInspection shortName="DjangoUnresolvedLoadInspection" bundle="com.jetbrains.django.ui.Django"
+                     key="inspection.unresolved-load.display-name" groupKey="django" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.django.lang.template.inspection.UnresolvedLoadReferenceInspection"/>
 
     <moduleService serviceInterface="com.jetbrains.django.model.TemplateManager"
                    serviceImplementation="com.jetbrains.django.model.TemplateManager"/>
@@ -471,7 +548,18 @@
 
     <psi.referenceContributor implementation="com.jetbrains.appengine.ref.AppEngineReferenceContributor"/>
 
-    <inspectionToolProvider implementation="com.jetbrains.appengine.inspection.AppEngineInspectionToolProvider"/>
+    <localInspection shortName="Query_index_required" bundle="com.jetbrains.appengine.ui.Messages" key="query-inspection-name"
+                     groupKey="app-engine-python" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.appengine.inspection.IndexRequiredQueryInspection"/>
+    <localInspection shortName="Query_restricted" bundle="com.jetbrains.appengine.ui.Messages" key="restricted-query-inspection-name"
+                     groupKey="app-engine-python" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.appengine.inspection.RestrictedQueryInspection"/>
+    <localInspection shortName="Query_bound_parameters" bundle="com.jetbrains.appengine.ui.Messages" key="query-bound-param-inspection-name"
+                     groupKey="app-engine-python" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.appengine.inspection.QueryBoundParametersInspection"/>
+    <localInspection shortName="Restricted_Python_calls" bundle="com.jetbrains.appengine.ui.Messages" key="sandbox-inspection-name"
+                     groupKey="app-engine-python" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.appengine.inspection.SandboxInspection"/>
 
     <colorSettingsPage implementation="com.jetbrains.appengine.lang.gql.highlighting.GqlColorsPage"/>
 
@@ -486,7 +574,11 @@
     <fileTypeFactory implementation="com.jetbrains.python.buildout.config.BuildoutCfgFileTypeFactory"/>
     <lang.syntaxHighlighterFactory key="BuildoutCfg"
                                    implementationClass="com.jetbrains.python.buildout.config.BuildoutCfgHighlighterFactory"/>
-    <inspectionToolProvider implementation="com.jetbrains.python.buildout.config.inspection.BuildoutInspectionToolProvider"/>
+
+    <localInspection language="BuildoutCfg" shortName="BuildoutUnresolvedPartInspection" bundle="com.jetbrains.python.PyBundle"
+                     key="buildout.unresolved.part.inspection" groupKey="buildout" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.python.buildout.config.inspection.BuildoutUnresolvedPartInspection"/>
+
     <colorSettingsPage implementation="com.jetbrains.python.buildout.config.BuildoutCfgColorsPage"/>
     <projectService serviceInterface="com.jetbrains.python.testing.TestRunnerService"
                     serviceImplementation="com.jetbrains.python.testing.TestRunnerService"/>
@@ -526,7 +618,11 @@
     <lang.psiStructureViewFactory language="ReST"
                                   implementationClass="com.jetbrains.rest.structureView.RestStructureViewFactory"/>
     <annotator language="ReST" implementationClass="com.jetbrains.rest.validation.RestAnnotatingVisitor"/>
-    <inspectionToolProvider implementation="com.jetbrains.rest.inspections.RestInspectionToolProvider"/>
+
+    <localInspection language="ReST" shortName="RestRoleInspection" bundle="com.jetbrains.rest.RestBundle" key="INSP.role.not.defined"
+                     groupKey="INSP.GROUP.rest" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.jetbrains.rest.inspections.RestRoleInspection"/>
+
     <lang.substitutor language="TEXT" implementationClass="com.jetbrains.rest.RestLanguageSubstitutor"/>
     <configurationType implementation="com.jetbrains.rest.run.RestRunConfigurationType"/>
     <configurationProducer implementation="com.jetbrains.rest.run.docutils.DocutilsConfigurationProducer"/>
