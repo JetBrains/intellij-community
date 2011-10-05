@@ -146,6 +146,14 @@ public class ImportUtils {
           return false;
         }
       }
+      PsiField field = containingClass.findFieldByName(shortName, false);
+      if (field != null) {
+        return false;
+      }
+      field = containingClass.findFieldByName(shortName, true);
+      if (field != null && PsiUtil.isAccessible(field, containingClass, null)) {
+        return false;
+      }
     }
     final PsiJavaFile file =
       PsiTreeUtil.getParentOfType(context, PsiJavaFile.class);
