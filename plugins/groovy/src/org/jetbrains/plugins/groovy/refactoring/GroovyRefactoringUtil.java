@@ -181,6 +181,7 @@ public abstract class GroovyRefactoringUtil {
 
   // todo add type hierarchy
   public static Map<String, PsiType> getCompatibleTypeNames(@NotNull PsiType type) {
+    if (type instanceof PsiDisjunctionType) type = ((PsiDisjunctionType)type).getLeastUpperBound();
     Map<String, PsiType> map = new LinkedHashMap<String, PsiType>();
     final PsiPrimitiveType unboxed = PsiPrimitiveType.getUnboxedType(type);
     if (unboxed != null) type = unboxed;

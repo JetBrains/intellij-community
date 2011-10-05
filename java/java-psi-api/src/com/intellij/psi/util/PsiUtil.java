@@ -437,7 +437,7 @@ public final class PsiUtil extends PsiUtilCore {
     return getApplicabilityLevel(method, substitutorForMethod, argList.getExpressionTypes(), getLanguageLevel(argList));
   }
 
-  public static int getApplicabilityLevel(final PsiMethod method, final PsiSubstitutor substitutorForMethod, final PsiType[] args,
+  public static int getApplicabilityLevel(final PsiMethod method, final PsiSubstitutor substitutorForMethod, @NotNull final PsiType[] args,
                                            final LanguageLevel languageLevel) {
     final PsiParameter[] parms = method.getParameterList().getParameters();
     if (args.length < parms.length - 1) return ApplicabilityLevel.NOT_APPLICABLE;

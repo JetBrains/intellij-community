@@ -193,7 +193,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
   public abstract void setReplaceAllOccurrences(boolean allOccurrences);
   protected abstract JComponent getComponent();
 
-  protected abstract void saveSettings(V variable);
+  protected abstract void saveSettings(@NotNull V variable);
   protected abstract V getVariable();
 
   public abstract E restoreExpression(PsiFile containingFile, V variable, RangeMarker marker, String exprText);
@@ -483,7 +483,10 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
         }.execute();
       }
       performIntroduce();
-      saveSettings(getVariable());
+      V variable = getVariable();
+      if (variable != null) {
+        saveSettings(variable);
+      }
     }
     if (getLocalVariable() != null && getLocalVariable().isValid()) {
       myEditor.getCaretModel().moveToOffset(getLocalVariable().getTextOffset());

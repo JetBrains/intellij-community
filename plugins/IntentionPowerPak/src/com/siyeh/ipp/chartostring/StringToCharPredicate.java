@@ -114,8 +114,8 @@ class StringToCharPredicate implements PsiElementPredicate {
         return false;
       }
       final String className = type.getCanonicalText();
-      if ("java.lang.StringBuffer".equals(className) ||
-          "java.lang.StringBuilder".equals(className)) {
+      if (CommonClassNames.JAVA_LANG_STRING_BUFFER.equals(className) ||
+          CommonClassNames.JAVA_LANG_STRING_BUILDER.equals(className)) {
         @NonNls final String methodName =
           methodExpression.getReferenceName();
         if (!"append".equals(methodName) &&

@@ -292,6 +292,22 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
       }
     });
   }
+  
+  public Self insideStarting(final ElementPattern<PsiElement> ancestor) {
+    return with(new PatternCondition<PsiElement>("insideStarting") {
+      @Override
+      public boolean accepts(@NotNull PsiElement start, ProcessingContext context) {
+        PsiElement element = getParent(start);
+        while (element != null && element.getTextRange().getStartOffset() == start.getTextRange().getStartOffset()) {
+          if (ancestor.accepts(element, context)) {
+            return true;
+          }
+          element = getParent(element);
+        }
+        return false;
+      }
+    });
+  }
 
   public static class Capture<T extends PsiElement> extends PsiElementPattern<T,Capture<T>> {
 

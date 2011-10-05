@@ -102,7 +102,7 @@ public class StringBufferReplaceableByStringBuilderInspection
     extends BaseInspectionVisitor {
 
     private static final Set<String> excludes = new HashSet(Arrays.asList(
-      "java.lang.StringBuilder",
+      CommonClassNames.JAVA_LANG_STRING_BUILDER,
       CommonClassNames.JAVA_LANG_STRING_BUFFER));
 
     @Override

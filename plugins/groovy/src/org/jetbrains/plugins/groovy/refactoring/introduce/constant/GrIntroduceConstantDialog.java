@@ -231,13 +231,18 @@ public class GrIntroduceConstantDialog extends DialogWrapper
 
 
   private void initializeTypeCombo() {
-    final PsiType expressionType;
+    PsiType expressionType;
     if (myContext.expression != null) {
       expressionType = myContext.expression.getType();
     }
     else {
       expressionType = myContext.var.getDeclaredType();
     }
+    
+    if (expressionType instanceof PsiDisjunctionType) {
+      expressionType = ((PsiDisjunctionType)expressionType).getLeastUpperBound();
+    }
+    
     if (expressionType != null) {
       myTypes = GroovyRefactoringUtil.getCompatibleTypeNames(expressionType);
       for (String typeName : myTypes.keySet()) {

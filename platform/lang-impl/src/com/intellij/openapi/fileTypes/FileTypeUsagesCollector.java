@@ -18,6 +18,7 @@ package com.intellij.openapi.fileTypes;
 import com.intellij.internal.statistic.AbstractApplicationUsagesCollector;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.FileTypeIndex;
@@ -45,23 +46,30 @@ public class FileTypeUsagesCollector extends AbstractApplicationUsagesCollector 
 
   @NotNull
   @Override
-  public Set<UsageDescriptor> getProjectUsages(@NotNull Project project) {
+  public Set<UsageDescriptor> getProjectUsages(@NotNull final Project project) {
     final Set<FileType> usedFileTypes = new HashSet<FileType>();
-    final FileType[] registeredFileTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
-    for (final FileType fileType : registeredFileTypes) {
-      FileBasedIndex.getInstance().processValues(
-        FileTypeIndex.NAME,
-        fileType,
-        null,
-        new FileBasedIndex.ValueProcessor<Void>() {
-          @Override
-          public boolean process(VirtualFile file, Void value) {
-            usedFileTypes.add(fileType);
-            return false;
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
+      public void run() {
+        if (!project.isDisposed()) {
+          final FileType[] registeredFileTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
+          for (final FileType fileType : registeredFileTypes) {
+            FileBasedIndex.getInstance().processValues(
+              FileTypeIndex.NAME,
+              fileType,
+              null,
+              new FileBasedIndex.ValueProcessor<Void>() {
+                @Override
+                public boolean process(VirtualFile file, Void value) {
+                  usedFileTypes.add(fileType);
+                  return false;
+                }
+              }, GlobalSearchScope.projectScope(project));
           }
-        }, GlobalSearchScope.projectScope(project));
-    }
-    usedFileTypes.add(UnknownFileType.INSTANCE);
+          usedFileTypes.add(UnknownFileType.INSTANCE);
+        }
+      }
+    });
     return ContainerUtil.map2Set(usedFileTypes, new NotNullFunction<FileType, UsageDescriptor>() {
       @NotNull
       @Override

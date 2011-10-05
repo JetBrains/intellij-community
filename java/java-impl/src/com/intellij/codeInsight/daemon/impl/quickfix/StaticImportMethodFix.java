@@ -103,14 +103,13 @@ public class StaticImportMethodFix implements IntentionAction {
     List<PsiMethod> applicableList = new ArrayList<PsiMethod>();
     for (PsiMethod method : methods) {
       ProgressManager.checkCanceled();
-      PsiClass aClass = method.getContainingClass();
-      if (aClass != null && JavaCompletionUtil.isInExcludedPackage(aClass)) continue;
+      if (JavaCompletionUtil.isInExcludedPackage(method)) continue;
       if (!method.hasModifierProperty(PsiModifier.STATIC)) continue;
       PsiFile file = method.getContainingFile();
       if (file instanceof PsiJavaFile
           //do not show methods from default package
           && ((PsiJavaFile)file).getPackageName().length() != 0
-          && PsiUtil.isAccessible(method, element, aClass)) {
+          && PsiUtil.isAccessible(method, element, method.getContainingClass())) {
         list.add(method);
         if (PsiUtil.isApplicable(method, PsiSubstitutor.EMPTY, argumentList)) {
           applicableList.add(method);
@@ -269,12 +268,16 @@ public class StaticImportMethodFix implements IntentionAction {
   }
 
   @Nullable
-  public static String getMemberQualifiedName(PsiMember method) {
-    PsiClass containingClass = method.getContainingClass();
+  public static String getMemberQualifiedName(PsiMember member) {
+    if (member instanceof PsiClass) {
+      return ((PsiClass)member).getQualifiedName();
+    }
+
+    PsiClass containingClass = member.getContainingClass();
     if (containingClass == null) return null;
     String className = containingClass.getQualifiedName();
     if (className == null) return null;
-    return className + "." + method.getName();
+    return className + "." + member.getName();
   }
 
   public boolean startInWriteAction() {

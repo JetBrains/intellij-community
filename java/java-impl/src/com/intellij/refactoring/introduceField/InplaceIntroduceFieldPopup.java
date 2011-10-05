@@ -27,6 +27,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.occurrences.OccurrenceManager;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -141,7 +142,7 @@ public class InplaceIntroduceFieldPopup extends AbstractInplaceIntroduceFieldPop
     }
 
     @Override
-    protected void saveSettings(PsiVariable psiVariable) {
+    protected void saveSettings(@NotNull PsiVariable psiVariable) {
       super.saveSettings(psiVariable);
       JavaRefactoringSettings.getInstance().INTRODUCE_FIELD_VISIBILITY = myIntroduceFieldPanel.getFieldVisibility();
       myIntroduceFieldPanel.saveFinalState();

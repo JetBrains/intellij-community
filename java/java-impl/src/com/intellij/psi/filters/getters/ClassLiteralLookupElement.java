@@ -16,11 +16,14 @@
 package com.intellij.psi.filters.getters;
 
 import com.intellij.codeInsight.completion.InsertionContext;
-import com.intellij.codeInsight.lookup.*;
-import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
+import com.intellij.codeInsight.lookup.TypedLookupItem;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -49,9 +52,9 @@ public class ClassLiteralLookupElement extends LookupElement implements TypedLoo
   public void renderElement(LookupElementPresentation presentation) {
     presentation.setItemText(getLookupString());
     presentation.setIcon(myExpr.getIcon(0));
-    final PsiType type = myExpr.getType();
-    if (type != null) {
-      presentation.setTypeText(type.getPresentableText());
+    String pkg = StringUtil.getPackageName(myCanonicalText);
+    if (StringUtil.isNotEmpty(pkg)) {
+      presentation.setTailText(" (" + pkg + ")", true);
     }
   }
 

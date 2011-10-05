@@ -140,18 +140,18 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     final PsiElement parent = place.getParent();
     if (parent instanceof GrMethodCall) {
       final GrExpression invoked = ((GrMethodCall)parent).getInvokedExpression();
-      if (isSimpleMethodInvoked(invoked)) {
-        elementToShow.addAll(ContainerUtil.findAll(variants, condition));
-      }
-      else {
+      if (isPropertyInvoked(invoked)) {
         final PsiType type = invoked.getType();
         if (type instanceof GrClosureType) {
           elementToShow.add(type);
         }
         else if (type != null) {
-          elementToShow.addAll(
-            ContainerUtil.findAll(ResolveUtil.getMethodCandidates(type, "call", place, PsiUtil.getArgumentTypes(place, true)), condition));
+          final GroovyResolveResult[] calls = ResolveUtil.getMethodCandidates(type, "call", place, PsiUtil.getArgumentTypes(place, true));
+          elementToShow.addAll(ContainerUtil.findAll(calls, condition));
         }
+      }
+      else {
+        elementToShow.addAll(ContainerUtil.findAll(variants, condition));
       }
     }
     else {
@@ -161,14 +161,20 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     context.showHint(place, place.getTextRange().getStartOffset(), this);
   }
 
-  private static boolean isSimpleMethodInvoked(GrExpression invoked) {
+  private static boolean isPropertyInvoked(GrExpression invoked) {
     if (!(invoked instanceof GrReferenceExpression)) return false;
 
     final GroovyResolveResult resolveResult = ((GrReferenceExpression)invoked).advancedResolve();
-    return resolveResult.getElement() instanceof PsiMethod && !resolveResult.isInvokedOnProperty();
+    return resolveResult.isInvokedOnProperty();
   }
 
   public void updateParameterInfo(@NotNull GroovyPsiElement place, UpdateParameterInfoContext context) {
+    final PsiElement parameterOwner = context.getParameterOwner();
+    if (parameterOwner != place) {
+      context.removeHint();
+      return;
+    }
+
     int offset = context.getEditor().getCaretModel().getOffset();
     offset = CharArrayUtil.shiftForward(context.getEditor().getDocument().getText(), offset, " \t\n");
     final int currIndex = getCurrentParameterIndex(place, offset);

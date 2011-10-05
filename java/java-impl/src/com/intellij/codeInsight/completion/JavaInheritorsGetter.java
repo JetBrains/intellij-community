@@ -153,7 +153,7 @@ public class JavaInheritorsGetter extends CompletionProvider<CompletionParameter
     return LookupElementDecorator.withInsertHandler(item, myConstructorInsertHandler);
   }
 
-  private static boolean areInferredTypesApplicable(PsiType[] types, PsiElement originalPosition) {
+  private static boolean areInferredTypesApplicable(@NotNull PsiType[] types, PsiElement originalPosition) {
     final PsiNewExpression newExpression = PsiTreeUtil.getParentOfType(originalPosition, PsiNewExpression.class);
     if (newExpression != null) {
       final PsiMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(originalPosition, PsiMethodCallExpression.class);

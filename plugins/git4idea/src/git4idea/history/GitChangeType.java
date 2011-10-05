@@ -24,19 +24,30 @@ import org.jetbrains.annotations.NotNull;
 enum GitChangeType {
   MODIFIED('M'),
   ADDED('A'),
-  COPIED('C'),
+  COPIED('C', true),
   DELETED('D'),
-  RENAMED('R'),
+  RENAMED('R', true),
   UNRESOLVED('U'),
   TYPE_CHANGED('T')
   ;
 
-  private char myChar;
+  private final char myChar;
+  private final boolean myRequiresSecondPath;
 
   GitChangeType(char c) {
+    this(c, false);
+  }
+  
+  GitChangeType(char c, boolean requiresSecondPath) {
     myChar = c;
+    myRequiresSecondPath = requiresSecondPath;
   }
 
+  /**
+   * Finds the GitChangeType by the given string returned by Git.
+   * @throws GitFormatException if such status can't be found: it means either a developer mistake missing a possible valid status,
+   * or a Git invalid output.
+   */
   @NotNull
   static GitChangeType fromString(@NotNull String statusString) {
     assert statusString.length() > 0;
@@ -47,6 +58,13 @@ enum GitChangeType {
       }
     }
     throw new GitFormatException("Unexpected status [" + statusString + "]");
+  }
+
+  /**
+   * @return true if this change type has 2 paths: old and new. This is true for renames and copies.
+   */
+  boolean requiresSecondPath() {
+    return myRequiresSecondPath;
   }
   
 }

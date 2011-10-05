@@ -113,8 +113,7 @@ public class GroovyStaticImportMethodFix implements IntentionAction {
     List<PsiMethod> applicableList = new ArrayList<PsiMethod>();
     for (PsiMethod method : methods) {
       ProgressManager.checkCanceled();
-      PsiClass aClass = method.getContainingClass();
-      if (aClass != null && JavaCompletionUtil.isInExcludedPackage(aClass)) continue;
+      if (JavaCompletionUtil.isInExcludedPackage(method)) continue;
       if (!method.hasModifierProperty(PsiModifier.STATIC)) continue;
       PsiFile file = method.getContainingFile();
       if (file instanceof PsiClassOwner

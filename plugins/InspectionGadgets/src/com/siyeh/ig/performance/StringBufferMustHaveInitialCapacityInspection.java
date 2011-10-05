@@ -61,7 +61,7 @@ public class StringBufferMustHaveInitialCapacityInspection
 
       if (!TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_STRING_BUFFER,
                                 type) &&
-          !TypeUtils.typeEquals("java.lang.StringBuilder", type)) {
+          !TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_STRING_BUILDER, type)) {
         return;
       }
       final PsiExpressionList argumentList = expression.getArgumentList();
