@@ -162,18 +162,15 @@ public class IdeaProjectLoader {
         includePatterns << convertPattern(pattern)
       }
     }
+    CompilerConfiguration configuration = project.compilerConfiguration
     if (!includePatterns.isEmpty() || !excludePatterns.isEmpty()) {
-      project.binding.ant.patternset(id: "compiler.resources") {
-        includePatterns.each { include(name: it)}
-        excludePatterns.each { exclude(name: it)}
-      }
-      project.props["compiler.resources.id"] = "compiler.resources"
+      configuration.resourceIncludePatterns = includePatterns
+      configuration.resourceExcludePatterns = excludePatterns
     }
 
     def javacComponentTag = getComponent(root, "JavacSettings");
-    project.props["compiler.javac.options"] = [:];
     javacComponentTag?.option?.each {Node optionTag ->
-      project.props["compiler.javac.options"][optionTag."@name"] = optionTag."@value";
+      configuration.javacOptions[optionTag."@name"] = optionTag."@value";
     }
   }
 

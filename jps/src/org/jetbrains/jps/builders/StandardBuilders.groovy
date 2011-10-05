@@ -48,7 +48,7 @@ class JavacBuilder implements ModuleBuilder, ModuleCycleBuilder {
     if (sourceLevel != null) params.source = sourceLevel
     if (targetLevel != null) params.target = targetLevel
 
-    def javacOpts = module.project.props["compiler.javac.options"] ?: [:];
+    def javacOpts = module.project.compilerConfiguration.javacOptions;
     def memHeapSize = javacOpts["MAXIMUM_HEAP_SIZE"] == null ? "512m" : javacOpts["MAXIMUM_HEAP_SIZE"] + "m";
     def boolean debugInfo = !"false".equals(javacOpts["DEBUGGING_INFO"]);
     def boolean nowarn = "true".equals(javacOpts["GENERATE_NO_WARNINGS"]);
@@ -138,8 +138,18 @@ class JavacBuilder implements ModuleBuilder, ModuleCycleBuilder {
 }
 
 class ResourceCopier implements ModuleBuilder {
+  private boolean resourcePatternInitialized
 
   def processModule(ModuleBuildState state, ModuleChunk moduleChunk, ProjectBuilder projectBuilder) {
+    if (!resourcePatternInitialized) {
+      CompilerConfiguration configuration = projectBuilder.project.compilerConfiguration
+      projectBuilder.binding.ant.patternset(id: "compiler.resources") {
+        configuration.resourceIncludePatterns.each { include(name: it)}
+        configuration.resourceExcludePatterns.each { exclude(name: it)}
+      }
+      resourcePatternInitialized = true
+    }
+
     if (state.iterated) return;
 
     state.iterated = true
@@ -163,7 +173,7 @@ class ResourceCopier implements ModuleBuilder {
 
         ant.copy(todir: target) {
           fileset(dir: root) {
-            patternset(refid: moduleChunk["compiler.resources.id"])
+            patternset(refid: "compiler.resources")
             type(type: "file")
             state.excludes.each { String excludedRoot ->
               if (excludedRoot.startsWith("${root}/")) {
@@ -337,11 +347,13 @@ class JetBrainsInstrumentations implements ModuleBuilder {
       final List<File> formFiles = new ArrayList<File>();
       final ProjectWrapper pw = state.projectWrapper;
 
-      for (Module m: moduleChunk.elements) {
-        final Set<S> names = state.tests ? pw.getModule(m.getName()).getTests() : pw.getModule(m.getName()).getSources();
-        for (S name: names) {
-          if (name.value.endsWith(".form")) {
-            formFiles.add(new File(pw.getAbsolutePath(name.value)));
+      if (pw != null) {
+        for (Module m: moduleChunk.elements) {
+          final Set<S> names = state.tests ? pw.getModule(m.getName()).getTests() : pw.getModule(m.getName()).getSources();
+          for (S name: names) {
+            if (name.value.endsWith(".form")) {
+              formFiles.add(new File(pw.getAbsolutePath(name.value)));
+            }
           }
         }
       }

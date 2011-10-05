@@ -24,6 +24,7 @@ class Project {
   final Map<String, Library> libraries = [:]
   final Map<String, Artifact> artifacts = [:]
   final Map<String, RunConfiguration> runConfigurations = [:]
+  final CompilerConfiguration compilerConfiguration = new CompilerConfiguration()
 
   String projectCharset; // contains project charset, if not specified default charset will be used (used by compilers)
   String tempFolder = null
@@ -34,15 +35,6 @@ class Project {
 
     resolvers << new ModuleResolver(project: this)
     resolvers << new LibraryResolver(project: this)
-
-    def defaultResourceExtensions = "properties,xml,gif,png,jpeg,jpg,jtml,dtd,tld,ftl"
-    List exts = defaultResourceExtensions.split(",")
-    
-    binding.ant.patternset(id : "default.compiler.resources") {
-      exts.each {ext -> include (name : "**/?*.${ext}")}
-    }
-
-    props["compiler.resources.id"] = "default.compiler.resources"
   }
 
   String getTargetFolder() {
