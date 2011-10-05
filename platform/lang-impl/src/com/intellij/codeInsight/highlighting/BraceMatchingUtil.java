@@ -126,24 +126,8 @@ public class BraceMatchingUtil {
         if (isStructural && (forward ? isRBraceToken(iterator, fileText, fileType) && !isPairBraces(brace1Token, tokenType, fileType)
                                      : isLBraceToken(iterator, fileText, fileType) && !isPairBraces(brace1Token, tokenType, fileType))) {
 
-          if (!myBraceStack.isEmpty() && myMatcher != null) {
-            boolean shouldContinue;
-            if (myMatcher instanceof NontrivialBraceMatcher) {
-              if (((NontrivialBraceMatcher)myMatcher).shouldStopMatch(forward, brace1Token, iterator)) return false;
-              shouldContinue = true;
-              List<IElementType> oppositeElementTypes = ((NontrivialBraceMatcher)myMatcher).getOppositeBraceTokenTypes(tokenType);
-              for (int i = myBraceStack.size() - 1; i >= 0; i--) {
-                if (oppositeElementTypes.contains(myBraceStack.get(i))) {
-                  shouldContinue = false;
-                }
-              }
-            }
-            else {
-              shouldContinue = !myBraceStack.contains(myMatcher.getOppositeBraceTokenType(tokenType));
-            }
-            if (shouldContinue) {
-              continue;
-            }
+          if (!myBraceStack.isEmpty() && myMatcher != null && shouldStopMatching(tokenType)) {
+            return false;
           }
         }
 
@@ -180,6 +164,20 @@ public class BraceMatchingUtil {
         }
       }
       return matched;
+    }
+
+    private boolean shouldStopMatching(IElementType tokenType) {
+      if (myMatcher instanceof NontrivialBraceMatcher) {
+        if (((NontrivialBraceMatcher)myMatcher).shouldStopMatch(forward, brace1Token, iterator)) return true;
+        List<IElementType> oppositeElementTypes = ((NontrivialBraceMatcher)myMatcher).getOppositeBraceTokenTypes(tokenType);
+        for (int i = myBraceStack.size() - 1; i >= 0; i--) {
+          if (oppositeElementTypes.contains(myBraceStack.get(i))) {
+            return false;
+          }
+        }
+        return true;
+      }
+      return !myBraceStack.contains(myMatcher.getOppositeBraceTokenType(tokenType));
     }
   }
 
