@@ -474,6 +474,8 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
           !ApplicationManager.getApplication().isUnitTestMode()) {
         CompletionServiceImpl.setCompletionPhase(hasModifiers? new CompletionPhase.InsertedSingleItem(indicator, restorePrefix) : CompletionPhase.NoCompletion);
       }
+    } else if (decision == AutoCompletionDecision.CLOSE_LOOKUP) {
+      LookupManager.getInstance(indicator.getProject()).hideActiveLookup();
     }
   }
 

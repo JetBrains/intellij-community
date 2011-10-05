@@ -30,7 +30,7 @@ public class RunContentDescriptor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.ui.RunContentDescriptor");
 
   private final ExecutionConsole myExecutionConsole;
-  private final ProcessHandler myProcessHandler;
+  private ProcessHandler myProcessHandler;
   private final JComponent myComponent;
   private final String myDisplayName;
   private final Icon myIcon;
@@ -82,6 +82,10 @@ public class RunContentDescriptor {
   @Nullable
   public ProcessHandler getProcessHandler() {
     return myProcessHandler;
+  }
+
+  public void setProcessHandler(ProcessHandler processHandler) {
+    myProcessHandler = processHandler;
   }
 
   public boolean isContentReuseProhibited() {
