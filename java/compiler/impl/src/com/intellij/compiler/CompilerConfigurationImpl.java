@@ -27,11 +27,13 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
@@ -399,9 +401,6 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
       dirPattern = StringUtil.trimEnd(dirPattern, "/");
 
       dirPattern = optimize(dirPattern);
-
-      dirPattern = ".*" + dirPattern;
-
     }
 
     wildcardPattern = normalizeWildcards(wildcardPattern);
@@ -479,9 +478,10 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
 
     String parentPath = parentRef.get();
     if (parentPath == null) {
-      parentRef.set(parentPath = parent.getPath());
+      VirtualFile srcRoot = ProjectRootManager.getInstance(myProject).getFileIndex().getSourceRootForFile(parent);
+      parentRef.set(parentPath = srcRoot == null ? parent.getPath() : VfsUtilCore.getRelativePath(parent, srcRoot, '/'));
     }
-    return matches(parentPath, dirPattern);
+    return parentPath != null && matches("/" + parentPath, dirPattern);
   }
 
   // property names
