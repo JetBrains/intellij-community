@@ -269,12 +269,22 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
                   }
                 }
               });
-              if (myProjectType == ProjectType.APPLICATION) {
-                addRunConfiguration(facet);
-              }
-              else if (myProjectType == ProjectType.TEST) {
-                addTestRunConfiguration(facet);
-              }
+
+              ApplicationManager.getApplication().runReadAction(new Runnable() {
+                @Override
+                public void run() {
+                  if (project.isDisposed() || facet.getModule().isDisposed()) {
+                    return;
+                  }
+                  
+                  if (myProjectType == ProjectType.APPLICATION) {
+                    addRunConfiguration(facet);
+                  }
+                  else if (myProjectType == ProjectType.TEST) {
+                    addTestRunConfiguration(facet);
+                  }
+                }
+              });
             }
           });
         }
