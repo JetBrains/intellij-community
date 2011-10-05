@@ -101,6 +101,8 @@ public class GrIntroduceParameterDialog extends RefactoringDialog implements GrI
     myChangeVarUsages.setVisible(context.toReplaceIn instanceof GrClosableBlock && context.toSearchFor instanceof GrVariable);
     myChangeVarUsages.setSelected(true);
 
+    myDelegateViaOverloadingMethodCheckBox.setVisible(context.toSearchFor != null);
+
     setTitle(RefactoringBundle.message("introduce.parameter.title"));
     init();
   }
