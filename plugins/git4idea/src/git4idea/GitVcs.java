@@ -345,10 +345,10 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   @Override
   protected void activate() {
     isActivated = true;
-    myExecutableValidator = new GitExecutableValidator(myProject);
+    myExecutableValidator = new GitExecutableValidator(myProject, this);
 
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      myExecutableValidator.checkExecutableAndShowDialogIfNeeded();
+      myExecutableValidator.checkExecutableAndNotifyIfNeeded();
       checkVersion();
     }
 

@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import git4idea.GitVcs;
 import git4idea.i18n.GitBundle;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Project service that is used to check whether currently set git executable is valid (just calls 'git version' and parses the output),
@@ -35,16 +36,10 @@ public class GitExecutableValidator extends ExecutableValidator {
 
   private GitVcs myVcs;
 
-  public GitExecutableValidator(Project project) {
-    super(project, GitVcs.NOTIFICATION_GROUP_ID.getDisplayId());
-    myVcs = GitVcs.getInstance(project);
-    setMessagesAndTitles(GitBundle.message("git.executable.notification.title"),
-                         GitBundle.message("git.executable.notification.description"),
-                         GitBundle.message("git.executable.dialog.title"),
-                         GitBundle.message("git.executable.dialog.description"),
-                         GitBundle.message("git.executable.dialog.error"),
-                         GitBundle.message("git.executable.filechooser.title"),
-                         GitBundle.message("git.executable.filechooser.description"));
+  public GitExecutableValidator(@NotNull Project project, @NotNull GitVcs vcs) {
+    super(project, GitVcs.NOTIFICATION_GROUP_ID.getDisplayId(),
+          GitBundle.message("git.executable.notification.title"), GitBundle.message("git.executable.notification.description"));
+    myVcs = vcs;
   }
 
   @Override
@@ -52,13 +47,14 @@ public class GitExecutableValidator extends ExecutableValidator {
     return myVcs.getAppSettings().getPathToGit();
   }
 
+  @NotNull
   @Override
-  protected Configurable getConfigurable(Project project) {
-    return myVcs == null ? null : myVcs.getConfigurable();
+  protected Configurable getConfigurable() {
+    return myVcs.getConfigurable();
   }
 
   @Override
-  public boolean isExecutableValid(String executable) {
+  public boolean isExecutableValid(@NotNull String executable) {
     try {
       GeneralCommandLine commandLine = new GeneralCommandLine();
       commandLine.setExePath(executable);
@@ -69,12 +65,6 @@ public class GitExecutableValidator extends ExecutableValidator {
     } catch (Throwable e) {
       return false;
     }
-  }
-
-  @Override
-  protected void saveCurrentExecutable(String executable) {
-    myVcs.getAppSettings().setPathToGit(executable);
-    myVcs.checkVersion();
   }
 
   /**

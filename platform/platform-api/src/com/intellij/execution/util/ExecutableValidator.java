@@ -29,87 +29,56 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
 
 /**
- * Validates the supplied external executable.
- * Shows notification or a dialog to fix it.
+ * Validates the given external executable. If it is not valid, shows notification to fix it.
+ *
  * @author Kirill Likhodedov
  */
 public abstract class ExecutableValidator {
 
-  private Notification myNotification;
-  protected final Project myProject;
+  private final Project myProject;
   private final String myNotificationGroupId;
+  private final String myNotificationErrorTitle;
+  private final String myNotificationErrorDescription;
 
-  private String myNotificationErrorTitle = "Executable not valid";
-  private String myNotificationErrorDescription = "You haven't configured a valid executable. <a href=''>Fix</a>";
-  private String myDialogTitle = "Executable";
-  private String myDialogDescription = "Specify the full path to the executable";
-  private String myDialogErrorText = "It doesn't appear to be a valid executable";
-  private String myFileChooserTitle = "Executable";
-  private String myFileChooserDescription = "Specify the full path to the executable";
-
-  public ExecutableValidator(Project project, String notificationGroupId) {
-    myProject = project;
-    myNotificationGroupId = notificationGroupId;
-  }
+  private Notification myNotification;
 
   /**
    * Configures notification and dialog by setting text messages and titles specific to the whoever uses the validator.
    * @param notificationErrorTitle       title of the notification about not valid executable.
    * @param notificationErrorDescription description of this notification with a link to fix it (link action is defined by
-   *                          {@link #notificationHyperlinkUpdate(com.intellij.notification.Notification, javax.swing.event.HyperlinkEvent)}
-   * @param dialogTitle
-   * @param dialogDescription
-   * @param dialogErrorText
-   * @param fileChooserTitle
+   *                          {@link #showSettingsAndExpireIfFixed(com.intellij.notification.Notification)}
    */
-  public void setMessagesAndTitles(String notificationErrorTitle, String notificationErrorDescription,
-                                   String dialogTitle, String dialogDescription, String dialogErrorText,
-                                   String fileChooserTitle, String fileChooserDescription) {
+  public ExecutableValidator(Project project, String notificationGroupId, String notificationErrorTitle, String notificationErrorDescription) {
+    myProject = project;
+    myNotificationGroupId = notificationGroupId;
     myNotificationErrorTitle = notificationErrorTitle;
     myNotificationErrorDescription = notificationErrorDescription;
-    myDialogTitle = dialogTitle;
-    myDialogDescription = dialogDescription;
-    myDialogErrorText = dialogErrorText;
-    myFileChooserTitle = fileChooserTitle;
-    myFileChooserDescription = fileChooserDescription;
   }
 
   /**
-   * Returns current executable persisted in the settings or elsewhere.
-   * @return Path to current executable.
+   * @return path to current executable.
    */
   protected abstract String getCurrentExecutable();
 
   /**
-   * Override this to save new (correct) executable path entered in the dialog.
-   * @param executable
+   * @return the settings configurable where the executable is shown and can be fixed.
+   *         This configurable will be opened if user presses "Fix" on the notification about invalid executable.
    */
-  protected void saveCurrentExecutable(String executable) {
-  }
-
-  /**
-   * Returns the configurable page for the vcs containing settings for executable.
-   * This configurable will be opened if user presses "Fix" on the notification about invalid executable.
-   * May return null - in this case the settings dialog won't be displayed.
-   */
-  @Nullable
-  protected Configurable getConfigurable(Project project) {
-    return null;
-  }
+  @NotNull
+  protected abstract Configurable getConfigurable();
 
   /**
    * Returns true if the supplied executable is valid.
    * Default implementation: try to execute the given executable and test if output returned errors.
+   * This can take a long time since it spawns external process.
    * @param executable Path to executable.
    * @return true if process with the supplied executable completed without errors and with exit code 0.
    */
-  @SuppressWarnings({"MethodMayBeStatic"})
-  public boolean isExecutableValid(String executable) {
+  protected boolean isExecutableValid(String executable) {
     try {
       GeneralCommandLine commandLine = new GeneralCommandLine();
       commandLine.setExePath(executable);
@@ -121,36 +90,12 @@ public abstract class ExecutableValidator {
     }
   }
 
-  public boolean showDialog() {
-    final ExecutableDialog dialog = new ExecutableDialog(myProject, this);
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        dialog.show();
-      }
-    });
-    if (dialog.isOK()) {
-      saveCurrentExecutable(dialog.getPath());
-      return true;
-    } else { // user pressed cancel
-      showExecutableNotConfiguredNotification();
-      return false;
-    }
-  }
-
-  public boolean checkExecutableAndShowDialogIfNeeded() {
-    if (!isExecutableValid(getCurrentExecutable())) {
-      return showDialog();
-    }
-    return true;
-  }
-
   /**
    * Shows a notification about not configured executable with a link to the Settings to fix it.
    * Expires the notification if user fixes the path from the opened Settings dialog.
    * Makes sure that there is always only one notification about the problem in the stack of notifications.
    */
-  public void showExecutableNotConfiguredNotification() {
+  private void showExecutableNotConfiguredNotification() {
     if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment()) {
       return;
     }
@@ -159,7 +104,7 @@ public abstract class ExecutableValidator {
       myNotificationErrorDescription, NotificationType.ERROR,
       new NotificationListener() {
         public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-          notificationHyperlinkUpdate(notification, event);
+          showSettingsAndExpireIfFixed(notification);
         }
       });
 
@@ -178,26 +123,17 @@ public abstract class ExecutableValidator {
     });
   }
 
-  /**
-   * The action which will be executed when the user presses "Fix" link in the notification description.
-   * By default it opens the Settings dialog on the page correspondent to the supplied configurable (e.g. Git configurable)
-   * and expires the notification after dialog is closed if executable was fixed in that dialog.
-   * One may override the method.
-   * Parameters are the same as in {@link com.intellij.notification.NotificationListener#hyperlinkUpdate(com.intellij.notification.Notification, javax.swing.event.HyperlinkEvent)}
-   */
-  protected void notificationHyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-    Configurable configurable = getConfigurable(myProject);
-    if (configurable != null) {
-      ShowSettingsUtil.getInstance().showSettingsDialog(myProject, configurable);
-      if (isExecutableValid(getCurrentExecutable())) {
-        notification.expire();
-      }
+  private void showSettingsAndExpireIfFixed(@NotNull Notification notification) {
+    Configurable configurable = getConfigurable();
+    ShowSettingsUtil.getInstance().showSettingsDialog(myProject, configurable);
+    if (isExecutableValid(getCurrentExecutable())) {
+      notification.expire();
     }
   }
 
   /**
    * Checks if executable is valid and displays the notification if not.
-   * @return true if executable was valid, false - if not valid (and notification is shown in that case).
+   * @return true if executable was valid, false - if not valid (and notification was shown in that case).
    */
   public boolean checkExecutableAndNotifyIfNeeded() {
     if (!isExecutableValid(getCurrentExecutable())) {
@@ -206,24 +142,5 @@ public abstract class ExecutableValidator {
     }
     return true;
   }
-
-  String getDialogTitle() {
-    return myDialogTitle;
-  }
-
-  String getDialogErrorText() {
-    return myDialogErrorText;
-  }
-
-  String getFileChooserDescription() {
-    return myFileChooserDescription;
-  }
-
-  String getFileChooserTitle() {
-    return myFileChooserTitle;
-  }
-
-  public String getDialogDescription() {
-    return myDialogDescription;
-  }
+  
 }
