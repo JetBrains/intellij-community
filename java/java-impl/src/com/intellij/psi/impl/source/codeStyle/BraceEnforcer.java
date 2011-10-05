@@ -115,7 +115,7 @@ public class BraceEnforcer extends JavaJspRecursiveElementVisitor {
     
     String oldText = blockCandidate.getText();
     // There is a possible case that target block to wrap ends with single-line comment. Example:
-    //     if (true) i = 1; // Cool assignement
+    //     if (true) i = 1; // Cool assignment
     // We can't just surround target block of code with curly braces because the closing one will be treated as comment as well.
     // Hence, we perform a check if we have such situation at the moment and insert new line before the closing brace.
     int lastLineFeedIndex = oldText.lastIndexOf("\n");
