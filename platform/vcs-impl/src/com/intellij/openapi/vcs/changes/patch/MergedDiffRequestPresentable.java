@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.changes.patch;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.diff.DiffRequestFactory;
 import com.intellij.openapi.diff.MergeRequest;
+import com.intellij.openapi.diff.SimpleDiffRequest;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.actions.DiffChainContext;
@@ -43,6 +44,10 @@ public class MergedDiffRequestPresentable implements DiffRequestPresentable {
   }
 
   public MyResult step(DiffChainContext context) {
+    if (myTexts.getBase() == null) {
+      final SimpleDiffRequest badDiffRequest = ApplyPatchAction.createBadDiffRequest(myProject, myFile, myTexts, true);
+      return new MyResult(badDiffRequest, DiffPresentationReturnValue.useRequest);
+    }
     final MergeRequest request = DiffRequestFactory.getInstance()
       .create3WayDiffRequest(myTexts.getLocal().toString(), myTexts.getPatched(), myTexts.getBase().toString(), myProject, null, null);
     request.setWindowTitle(VcsBundle.message("patch.apply.conflict.title", myFile.getPresentableUrl()));

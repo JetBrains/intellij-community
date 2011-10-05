@@ -40,6 +40,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.openapi.vcs.changes.patch.RelativePathCalculator;
@@ -220,7 +221,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       model.insertNodeInto(node, myRoot, myRoot.getChildCount());
 
       final List<Object> shelvedFilesNodes = new ArrayList<Object>();
-      List<ShelvedChange> changes = changeList.getChanges();
+      List<ShelvedChange> changes = changeList.getChanges(myProject);
       for(ShelvedChange change: changes) {
         putMovedMessage(change.getBeforePath(), change.getAfterPath());
         shelvedFilesNodes.add(change);
@@ -317,7 +318,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
           if (changeLists.size() > 0) {
             List<Change> changes = new ArrayList<Change>();
             for(ShelvedChangeList changeList: changeLists) {
-              shelvedChanges = changeList.getChanges();
+              shelvedChanges = changeList.getChanges(myProject);
               for(ShelvedChange shelvedChange: shelvedChanges) {
                 changes.add(shelvedChange.getChange(myProject));
               }
@@ -333,7 +334,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
         final ArrayDeque<Navigatable> navigatables = new ArrayDeque<Navigatable>();
         final List<ShelvedChangeList> changeLists = TreeUtil.collectSelectedObjectsOfType(this, ShelvedChangeList.class);
         for (ShelvedChangeList changeList : changeLists) {
-          shelvedChanges.addAll(changeList.getChanges());
+          shelvedChanges.addAll(changeList.getChanges(myProject));
         }
         for (final ShelvedChange shelvedChange : shelvedChanges) {
           if (shelvedChange.getBeforePath() != null && ! FileStatus.ADDED.equals(shelvedChange.getFileStatus())) {
@@ -512,6 +513,8 @@ public class ShelvedChangesViewManager implements ProjectComponent {
 
   private class MyChangesDeleteProvider implements DeleteProvider {
     public void deleteElement(DataContext dataContext) {
+      final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+      if (project == null) return;
       final ShelvedChangeList[] shelved = SHELVED_CHANGELIST_KEY.getData(dataContext);
       if (shelved == null || (shelved.length != 1)) return;
       final List<ShelvedChange> changes = SHELVED_CHANGE_KEY.getData(dataContext);
@@ -525,16 +528,17 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       if (rc != 0) return;
 
       final ArrayList<ShelvedBinaryFile> oldBinaries = new ArrayList<ShelvedBinaryFile>(list.getBinaryFiles());
-      final ArrayList<ShelvedChange> oldChanges = new ArrayList<ShelvedChange>(list.getChanges());
+      final ArrayList<ShelvedChange> oldChanges = new ArrayList<ShelvedChange>(list.getChanges(project));
 
       oldBinaries.removeAll(binaryFiles);
       oldChanges.removeAll(changes);
 
+      final CommitContext commitContext = new CommitContext();
       final List<FilePatch> patches = new ArrayList<FilePatch>();
       final List<VcsException> exceptions = new ArrayList<VcsException>();
       for (ShelvedChange change : oldChanges) {
         try {
-          patches.add(change.loadFilePatch());
+          patches.add(change.loadFilePatch(myProject, commitContext));
         }
         catch (IOException e) {
           //noinspection ThrowableInstanceNeverThrown
@@ -546,7 +550,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
         }
       }
 
-      myShelveChangesManager.saveRemainingPatches(list, patches, oldBinaries);
+      myShelveChangesManager.saveRemainingPatches(list, patches, oldBinaries, commitContext);
 
       if (! exceptions.isEmpty()) {
         String title = list.DESCRIPTION == null ? "" : list.DESCRIPTION;

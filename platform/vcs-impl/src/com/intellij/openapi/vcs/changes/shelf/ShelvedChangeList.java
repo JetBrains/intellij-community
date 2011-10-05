@@ -25,6 +25,7 @@ package com.intellij.openapi.vcs.changes.shelf;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -33,11 +34,11 @@ import com.intellij.openapi.vcs.FileStatus;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
+import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
-import java.util.Collection;
-import java.io.File;
 
 public class ShelvedChangeList implements JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList");
@@ -103,10 +104,10 @@ public class ShelvedChangeList implements JDOMExternalizable {
     return DESCRIPTION;
   }
 
-  public List<ShelvedChange> getChanges() {
+  public List<ShelvedChange> getChanges(Project project) {
     if (myChanges == null) {
       try {
-        final List<TextFilePatch> list = ShelveChangesManager.loadPatches(PATH);
+        final List<TextFilePatch> list = ShelveChangesManager.loadPatches(project, PATH, null);
         myChanges = new ArrayList<ShelvedChange>();
         for (FilePatch patch : list) {
           FileStatus status;
