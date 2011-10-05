@@ -96,7 +96,7 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
         }
       }
 
-      myStepsPanel.setLayout(new GridLayout(stepsRows.size(), 1, UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP));
+      myStepsPanel.setLayout(new GridLayout((stepsRows.size() + 1) / 2, 1, UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP));
       for (StepBeforeLaunchRow stepRow : stepsRows) {
         myStepsPanel.add(stepRow);
       }
