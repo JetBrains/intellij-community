@@ -435,17 +435,20 @@ public class CompileDriver {
                                                    : kind == JpsRemoteProto.Message.Response.CompileMessage.Kind.WARNING ? CompilerMessageCategory.WARNING : CompilerMessageCategory.INFORMATION;
           Navigatable navigatable = null;
 
-          final String sourceFilePath = compilerMessage.getSourceFilePath();
+          String sourceFilePath = compilerMessage.hasSourceFilePath()? compilerMessage.getSourceFilePath() : null;
+          if (sourceFilePath != null) {
+            sourceFilePath = FileUtil.toSystemIndependentName(sourceFilePath);
+          }
           final long offset = compilerMessage.hasProblemLocationOffset()? compilerMessage.getProblemLocationOffset() : -1L;
           if (sourceFilePath != null && offset >= 0L) {
-            final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(sourceFilePath));
+            final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(sourceFilePath);
             if (file != null) {
               navigatable = new OpenFileDescriptor(myProject, file, (int)offset);
             }
           }
-
+          final String srcUrl = sourceFilePath != null? VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, sourceFilePath) : null;
           compileContext.addMessage(
-            category, compilerMessage.getText(), sourceFilePath, (int)compilerMessage.getLine(), (int)compilerMessage.getColumn(), navigatable
+            category, compilerMessage.getText(), srcUrl, (int)compilerMessage.getLine(), (int)compilerMessage.getColumn(), navigatable
           );
         }
       }

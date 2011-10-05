@@ -5,10 +5,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.MessageHandler;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
-import org.jetbrains.jps.server.BuildParameters;
-import org.jetbrains.jps.server.BuildType;
-import org.jetbrains.jps.server.Facade;
-import org.jetbrains.jps.server.GlobalLibrary;
+import org.jetbrains.jps.server.*;
 import org.jetbrains.jpsservice.JpsRemoteProto;
 import org.jetbrains.jpsservice.Server;
 
@@ -51,12 +48,20 @@ public class JpsServerMessageHandler extends SimpleChannelHandler {
           break;
 
         case SETUP_COMMAND:
-          final Map<String, String> data = new HashMap<String, String>();
+          final Map<String, String> pathVars = new HashMap<String, String>();
           final JpsRemoteProto.Message.Request.SetupCommand setupCommand = request.getSetupCommand();
           for (JpsRemoteProto.Message.Request.SetupCommand.PathVariable variable : setupCommand.getPathVariableList()) {
-            data.put(variable.getName(), variable.getValue());
+            pathVars.put(variable.getName(), variable.getValue());
           }
-          Facade.getInstance().setGlobals(Collections.<GlobalLibrary>emptyList(), data);
+          final List<GlobalLibrary> libs = new ArrayList<GlobalLibrary>();
+          for (JpsRemoteProto.Message.Request.SetupCommand.GlobalLibrary library : setupCommand.getGlobalLibraryList()) {
+            libs.add(
+              library.hasHomePath()?
+              new SdkLibrary(library.getName(), library.getHomePath(), library.getPathList()) :
+              new GlobalLibrary(library.getName(), library.getPathList())
+            );
+          }
+          Facade.getInstance().setGlobals(libs, pathVars);
           reply = ProtoUtil.toMessage(sessionId, ProtoUtil.createCommandCompletedEvent(null));
           break;
 

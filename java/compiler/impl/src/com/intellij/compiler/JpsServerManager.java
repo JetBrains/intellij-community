@@ -31,6 +31,9 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.ShutDownTracker;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.net.NetUtils;
 import org.jetbrains.annotations.NotNull;
@@ -110,7 +113,10 @@ public class JpsServerManager implements ApplicationComponent{
           final PathMacros pathVars = PathMacros.getInstance();
           final Map<String, String> data = new HashMap<String, String>();
           for (String name : pathVars.getAllMacroNames()) {
-            data.put(name, pathVars.getValue(name));
+            final String path = pathVars.getValue(name);
+            if (path != null) {
+              data.put(name, FileUtil.toSystemIndependentName(path));
+            }
           }
 
           final List<GlobalLibrary> globals = new ArrayList<GlobalLibrary>();
@@ -132,35 +138,39 @@ public class JpsServerManager implements ApplicationComponent{
     return false;
   }
 
-  private void fillSdks(List<GlobalLibrary> globals) {
+  private static void fillSdks(List<GlobalLibrary> globals) {
     for (Sdk sdk : ProjectJdkTable.getInstance().getAllJdks()) {
       final String name = sdk.getName();
       final String homePath = sdk.getHomePath();
       if (homePath == null) {
         continue;
       }
-      final List<String> paths = new ArrayList<String>();
-      for (VirtualFile file : sdk.getRootProvider().getFiles(OrderRootType.CLASSES)) {
-        paths.add(file.getPath());
-      }
+      final List<String> paths = convertToLocalPaths(sdk.getRootProvider().getFiles(OrderRootType.CLASSES));
       globals.add(new SdkLibrary(name, homePath, paths));
     }
   }
 
-  private void fillGlobalLibraries(List<GlobalLibrary> globals) {
+  private static void fillGlobalLibraries(List<GlobalLibrary> globals) {
     final Iterator<Library> iterator = LibraryTablesRegistrar.getInstance().getLibraryTable().getLibraryIterator();
     while (iterator.hasNext()) {
       Library library = iterator.next();
       final String name = library.getName();
 
       if (name != null) {
-        final List<String> paths = new ArrayList<String>();
-        for (VirtualFile file : library.getFiles(OrderRootType.CLASSES)) {
-          paths.add(file.getPath());
-        }
+        final List<String> paths = convertToLocalPaths(library.getFiles(OrderRootType.CLASSES));
         globals.add(new GlobalLibrary(name, paths));
       }
     }
+  }
+
+  private static List<String> convertToLocalPaths(VirtualFile[] files) {
+    final List<String> paths = new ArrayList<String>();
+    for (VirtualFile file : files) {
+      if (file.isValid()) {
+        paths.add(StringUtil.trimEnd(FileUtil.toSystemIndependentName(file.getPath()), JarFileSystem.JAR_SEPARATOR));
+      }
+    }
+    return paths;
   }
 
   private static Process launchServer(int port) throws ExecutionException {
