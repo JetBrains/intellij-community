@@ -25,6 +25,7 @@ import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -32,6 +33,11 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author mike
@@ -106,12 +112,30 @@ public class PsiDocParamRef extends CompositePsiElement implements PsiDocTagValu
       @NotNull
       public PsiElement[] getVariants() {
         final PsiElement firstChild = getFirstChild();
-        if (firstChild instanceof PsiDocToken && ((PsiDocToken)firstChild).getTokenType().equals(JavaDocTokenType.DOC_TAG_VALUE_LT)) {
-          return ((PsiTypeParameterListOwner)owner).getTypeParameters();
-        } else if (owner instanceof PsiMethod) {
-          return ((PsiMethod)owner).getParameterList().getParameters();
+
+        Set<String> usedNames = new HashSet<String>();
+        for (PsiDocTag tag : comment.getTags()) {
+          if (tag.getName().equals("param")) {
+            PsiDocTagValue valueElement = tag.getValueElement();
+            if (valueElement != null) {
+              usedNames.add(valueElement.getText());
+            }
+          }
         }
-        return PsiElement.EMPTY_ARRAY;
+
+        PsiNamedElement[] result = PsiNamedElement.EMPTY_ARRAY;
+        if (firstChild instanceof PsiDocToken && ((PsiDocToken)firstChild).getTokenType().equals(JavaDocTokenType.DOC_TAG_VALUE_LT)) {
+          result = ((PsiTypeParameterListOwner)owner).getTypeParameters();
+        } else if (owner instanceof PsiMethod) {
+          result = ((PsiMethod)owner).getParameterList().getParameters();
+        }
+        List<PsiElement> filtered = new ArrayList<PsiElement>();
+        for (PsiNamedElement namedElement : result) {
+          if (!usedNames.contains(namedElement.getName())) {
+            filtered.add(namedElement);
+          }
+        }
+        return filtered.toArray(new PsiElement[filtered.size()]);
       }
 
       public boolean isSoft(){
