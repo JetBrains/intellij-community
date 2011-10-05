@@ -50,6 +50,10 @@ public class NamedArgumentInsertHandler implements InsertHandler<LookupElement> 
     final Editor editor = context.getEditor();
 
     if (argumentList != null) {
+      if (context.getCompletionChar() == ':' || context.getCompletionChar() == ' ') {
+        context.setAddCompletionChar(false);
+      }
+      
       String argumentListText = argumentList.getText();
 
       String s = argumentListText.substring(tailOffset - argumentList.getTextOffset());
@@ -60,25 +64,36 @@ public class NamedArgumentInsertHandler implements InsertHandler<LookupElement> 
         editor.getCaretModel().moveToOffset(tailOffset + 2);
       }
       else {
-        Matcher m = Pattern.compile("(\\s*)(:)?(\\s*),?\\s?(\\s*)(.*)", Pattern.DOTALL).matcher(s);
-        if (!m.matches()) throw new RuntimeException("This pattern must match any non-empty string! (" + s + ")");
+        Matcher m = Pattern.compile("([ \\t]*):([ \\t]*)(.*)", Pattern.DOTALL).matcher(s);
+        if (m.matches()) {
+          int caret = tailOffset + m.end(2);
 
-        if (m.group(2) != null) {
-          editor.getCaretModel().moveToOffset(tailOffset + m.end(3));
+          if (m.group(2).isEmpty()) {
+            editor.getDocument().insertString(caret, " ");
+            caret++;
+          }
+
+          editor.getCaretModel().moveToOffset(caret);
         }
         else {
-          String toInsert = m.group(5).startsWith("]") ? ": " : ": , ";
-          editor.getDocument().replaceString(tailOffset, tailOffset + m.start(4), toInsert);
-          editor.getCaretModel().moveToOffset(tailOffset + 2);
+          m = Pattern.compile("([ \\t]*)([\\n \\t]*)[\\],](.*)", Pattern.DOTALL).matcher(s);
+          if (m.matches()) {
+            editor.getDocument().replaceString(tailOffset, tailOffset + m.start(2), ": ");
+            editor.getCaretModel().moveToOffset(tailOffset + 2);
+          }
+          else {
+            m = Pattern.compile("([ \\t]*)(.*)", Pattern.DOTALL).matcher(s);
+            if (!m.matches()) throw new RuntimeException("This pattern must match any non-empty string! (" + s + ")");
+            
+            String toInsert = m.group(2).startsWith("\n") ? ": ," : ": , ";
+            editor.getDocument().replaceString(tailOffset, tailOffset + m.start(2), toInsert);
+            editor.getCaretModel().moveToOffset(tailOffset + 2);
+          }
         }
       }
-    }
-
-    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-    editor.getSelectionModel().removeSelection();
-
-    if (context.getCompletionChar() == ':' || context.getCompletionChar() == ' ') {
-      context.setAddCompletionChar(false);
+      
+      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+      editor.getSelectionModel().removeSelection();
     }
   }
 }
