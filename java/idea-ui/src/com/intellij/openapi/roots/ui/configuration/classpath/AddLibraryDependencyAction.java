@@ -40,11 +40,11 @@ import java.util.List;
 /**
 * @author nik
 */
-class AddLibraryAction extends AddItemPopupAction<Library> {
+class AddLibraryDependencyAction extends AddItemPopupAction<Library> {
   private final StructureConfigurableContext myContext;
 
-  public AddLibraryAction(ClasspathPanel classpathPanel, final int index, final String title,
-                          final StructureConfigurableContext context) {
+  public AddLibraryDependencyAction(ClasspathPanel classpathPanel, final int index, final String title,
+                                    final StructureConfigurableContext context) {
     super(classpathPanel, index, title, PlatformIcons.LIBRARY_ICON);
     myContext = context;
   }
@@ -59,7 +59,7 @@ class AddLibraryAction extends AddItemPopupAction<Library> {
     return LibraryEditingUtil.createChooseTypeStep(myClasspathPanel, new ParameterizedRunnable<LibraryType>() {
       @Override
       public void run(LibraryType libraryType) {
-        new AddNewLibraryItemAction(myClasspathPanel, myContext, libraryType).execute();
+        new AddNewLibraryDependencyAction(myClasspathPanel, myContext, libraryType).execute();
       }
     });
   }
@@ -70,7 +70,7 @@ class AddLibraryAction extends AddItemPopupAction<Library> {
       super.run();
     }
     else {
-      new AddNewLibraryItemAction(myClasspathPanel, myContext, null).run();
+      new AddNewLibraryDependencyAction(myClasspathPanel, myContext, null).run();
     }
   }
 

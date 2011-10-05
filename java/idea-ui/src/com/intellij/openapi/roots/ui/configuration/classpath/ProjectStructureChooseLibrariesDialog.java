@@ -169,16 +169,16 @@ public class ProjectStructureChooseLibrariesDialog extends ChooseLibrariesFromTa
 
     @Override
     protected void doAction(ActionEvent e) {
-      AddNewLibraryItemAction.chooseTypeAndCreate(myClasspathPanel, myContext, myCreateLibraryButton,
-                                                  new AddNewLibraryItemAction.LibraryCreatedCallback() {
-                                                    @Override
-                                                    public void libraryCreated(@NotNull Library library) {
-                                                      if (library.getTable() == null) {
-                                                        myCreatedModuleLibraries.add(library);
-                                                      }
-                                                      queueUpdateAndSelect(library);
-                                                    }
-                                                  });
+      AddNewLibraryDependencyAction.chooseTypeAndCreate(myClasspathPanel, myContext, myCreateLibraryButton,
+                                                        new AddNewLibraryDependencyAction.LibraryCreatedCallback() {
+                                                          @Override
+                                                          public void libraryCreated(@NotNull Library library) {
+                                                            if (library.getTable() == null) {
+                                                              myCreatedModuleLibraries.add(library);
+                                                            }
+                                                            queueUpdateAndSelect(library);
+                                                          }
+                                                        });
     }
   }
 }

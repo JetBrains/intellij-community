@@ -27,13 +27,13 @@ import com.intellij.util.PlatformIcons;
 /**
 * @author nik
 */
-class AddModuleLibraryAction extends AddItemPopupAction<Library> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.classpath.AddModuleLibraryAction");
+class AddNewModuleLibraryAction extends AddItemPopupAction<Library> {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.classpath.AddNewModuleLibraryAction");
   private final StructureConfigurableContext myContext;
 
-  public AddModuleLibraryAction(final ClasspathPanel classpathPanel,
-                                int actionIndex,
-                                StructureConfigurableContext context) {
+  public AddNewModuleLibraryAction(final ClasspathPanel classpathPanel,
+                                   int actionIndex,
+                                   StructureConfigurableContext context) {
     super(classpathPanel, actionIndex, ProjectBundle.message("classpath.add.simple.module.library.action"), PlatformIcons.JAR_ICON);
     myContext = context;
   }

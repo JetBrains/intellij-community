@@ -32,12 +32,12 @@ import javax.swing.*;
 /**
 * @author nik
 */
-class AddNewLibraryItemAction extends ChooseAndAddAction<Library> {
+class AddNewLibraryDependencyAction extends ChooseAndAddAction<Library> {
   private final StructureConfigurableContext myContext;
   private final LibraryType myLibraryType;
 
-  public AddNewLibraryItemAction(final ClasspathPanel classpathPanel,
-                                 StructureConfigurableContext context, LibraryType libraryType) {
+  public AddNewLibraryDependencyAction(final ClasspathPanel classpathPanel,
+                                       StructureConfigurableContext context, LibraryType libraryType) {
     super(classpathPanel);
     myContext = context;
     myLibraryType = libraryType;
