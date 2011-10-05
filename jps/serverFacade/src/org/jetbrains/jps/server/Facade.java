@@ -37,9 +37,9 @@ public class Facade {
     }
   }
 
-  public void clearProjectCache(String projectPath) {
+  public void clearProjectCache(Collection<String> projectPaths) {
     synchronized (myConfigurationLock) {
-      myProjects.remove(projectPath);
+      myProjects.keySet().removeAll(projectPaths);
     }
   }
 

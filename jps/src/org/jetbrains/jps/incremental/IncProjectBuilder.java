@@ -86,8 +86,8 @@ public class IncProjectBuilder {
       nextPassRequired = false;
       for (Builder builder : builders) {
 
-        final String sourcesKind = context.isCompilingTests() ? " on test sources of " : " on production sources of ";
-        context.processMessage(new ProgressMessage("Running " + builder.getDescription() + sourcesKind + chunk.getName()));
+        final String sourcesKind = context.isCompilingTests() ? "test" : "production";
+        context.processMessage(new ProgressMessage("Compiling " + chunk.getName() + "[" + sourcesKind+"]; Compiler: " + builder.getDescription()));
 
         final Builder.ExitCode buildResult = builder.build(context, chunk);
         if (buildResult == Builder.ExitCode.ABORT) {
