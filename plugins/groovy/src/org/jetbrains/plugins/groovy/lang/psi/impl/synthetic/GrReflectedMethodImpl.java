@@ -88,6 +88,9 @@ public class GrReflectedMethodImpl extends LightMethodBuilder implements GrRefle
         if (qualifiedName != null) {
           myModifierList.addAnnotation(qualifiedName);
         }
+        else {
+          myModifierList.addAnnotation(((GrAnnotation)modifier).getShortName());
+        }
       }
       else {
         myModifierList.addModifier(modifier.getText());
