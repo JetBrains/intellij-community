@@ -42,11 +42,15 @@ public class JpsServerMessageHandler extends SimpleChannelHandler {
     else {
       final JpsRemoteProto.Message.Request request = message.getRequest();
       final JpsRemoteProto.Message.Request.Type requestType = request.getRequestType();
+      final Facade facade = Facade.getInstance();
       switch (requestType) {
         case COMPILE_REQUEST :
           reply = startBuild(sessionId, ctx, request.getCompileRequest());
           break;
-
+        case RELOAD_PROJECT_COMMAND:
+          final JpsRemoteProto.Message.Request.ReloadProjectCommand reloadProjectCommand = request.getReloadProjectCommand();
+          facade.clearProjectCache(reloadProjectCommand.getProjectIdList());
+          break;
         case SETUP_COMMAND:
           final Map<String, String> pathVars = new HashMap<String, String>();
           final JpsRemoteProto.Message.Request.SetupCommand setupCommand = request.getSetupCommand();
@@ -61,7 +65,7 @@ public class JpsServerMessageHandler extends SimpleChannelHandler {
               new GlobalLibrary(library.getName(), library.getPathList())
             );
           }
-          Facade.getInstance().setGlobals(libs, pathVars);
+          facade.setGlobals(libs, pathVars);
           reply = ProtoUtil.toMessage(sessionId, ProtoUtil.createCommandCompletedEvent(null));
           break;
 
@@ -93,6 +97,7 @@ public class JpsServerMessageHandler extends SimpleChannelHandler {
     final JpsRemoteProto.Message.Request.CompilationRequest.Type compileType = compileRequest.getCommandType();
 
     switch (compileType) {
+      // todo
       case CLEAN:
       case MAKE:
       case REBUILD: {

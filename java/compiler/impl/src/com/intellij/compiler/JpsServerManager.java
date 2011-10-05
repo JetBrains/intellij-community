@@ -15,6 +15,7 @@
  */
 package com.intellij.compiler;
 
+import com.intellij.ProjectTopics;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.OSProcessHandler;
@@ -23,10 +24,15 @@ import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
+import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
@@ -35,6 +41,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.NetUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,7 +65,8 @@ public class JpsServerManager implements ApplicationComponent{
   private volatile Client myServerClient;
   private volatile OSProcessHandler myProcessHandler;
 
-  public JpsServerManager() {
+  public JpsServerManager(ProjectManager projectManager) {
+    projectManager.addProjectManagerListener(new ProjectWatcher());
     ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
       @Override
       public void run() {
@@ -177,7 +185,7 @@ public class JpsServerManager implements ApplicationComponent{
     final Sdk projectJdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
     final GeneralCommandLine cmdLine = new GeneralCommandLine();
     cmdLine.setExePath(((JavaSdkType)projectJdk.getSdkType()).getVMExecutablePath(projectJdk));
-    //cmdLine.addParameter("-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5007");
+    cmdLine.addParameter("-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5007");
     cmdLine.addParameter("-Xmx256m");
     cmdLine.addParameter("-classpath");
 
@@ -222,5 +230,46 @@ public class JpsServerManager implements ApplicationComponent{
       builder.append(file.getAbsolutePath());
     }
     return builder.toString();
+  }
+
+  private class ProjectWatcher extends ProjectManagerAdapter {
+    private final Map<Project, MessageBusConnection> myConnections = new HashMap<Project, MessageBusConnection>();
+
+    public void projectOpened(final Project project) {
+      final MessageBusConnection conn = project.getMessageBus().connect();
+      myConnections.put(project, conn);
+      conn.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+        public void beforeRootsChange(final ModuleRootEvent event) {
+          sendReloadRequest(project);
+        }
+
+        public void rootsChanged(final ModuleRootEvent event) {
+        }
+      });
+
+    }
+
+    public void projectClosing(Project project) {
+      sendReloadRequest(project);
+    }
+
+    public void projectClosed(Project project) {
+      final MessageBusConnection conn = myConnections.remove(project);
+      if (conn != null) {
+        conn.disconnect();
+      }
+    }
+
+    private void sendReloadRequest(Project project) {
+      final Client client = myServerClient;
+      if (client != null) {
+        try {
+          client.sendProjectReloadRequest(Collections.singletonList(project.getLocation()));
+        }
+        catch (Exception e) {
+          LOG.info(e);
+        }
+      }
+    }
   }
 }
