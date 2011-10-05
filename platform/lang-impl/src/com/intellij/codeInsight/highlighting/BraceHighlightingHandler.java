@@ -364,7 +364,7 @@ public class BraceHighlightingHandler {
 
     TextRange brace2 = iterator.atEnd() ? null : TextRange.create(iterator.getStart(), iterator.getEnd());
 
-    highlightBraces(brace2, brace1, matched, false, fileType);
+    highlightBraces(matched ? brace2 : null, brace1, matched, false, fileType);
   }
 
   private void highlightLeftBrace(HighlighterIterator iterator, boolean scopeHighlighting, FileType fileType) {
@@ -373,7 +373,7 @@ public class BraceHighlightingHandler {
 
     TextRange brace2End = iterator.atEnd() ? null : TextRange.create(iterator.getStart(), iterator.getEnd());
 
-    highlightBraces(brace1Start, brace2End, matched, scopeHighlighting, fileType);
+    highlightBraces(brace1Start, matched ? brace2End : null, matched, scopeHighlighting, fileType);
   }
 
   private void highlightBraces(final TextRange lBrace, TextRange rBrace, boolean matched, boolean scopeHighlighting, FileType fileType) {
