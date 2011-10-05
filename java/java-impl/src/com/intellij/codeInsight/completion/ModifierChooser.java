@@ -24,6 +24,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -39,8 +40,7 @@ import java.util.Map;
  */
 
 @SuppressWarnings({"HardCodedStringLiteral"})
-public class ModifierChooser
- implements KeywordChooser{
+public class ModifierChooser {
   private static final Map<ElementFilter, String[][]> myMap = new HashMap<ElementFilter, String[][]>();
 
   static {
@@ -72,7 +72,7 @@ public class ModifierChooser
     });
   }
 
-  public String[] getKeywords(CompletionContext context, PsiElement position) {
+  public static String[] getKeywords(@NotNull PsiElement position) {
     if (JavaCompletionData.INSIDE_SWITCH.isAcceptable(position, position)) {
       return ArrayUtil.EMPTY_STRING_ARRAY;
     }
@@ -81,12 +81,7 @@ public class ModifierChooser
     try {
       PsiElement scope;
 
-      if (position == null) {
-        scope = context.file;
-      }
-      else {
-        scope = position.getParent();
-      }
+      scope = position.getParent();
 
       final PsiModifierList list = getModifierList(position);
 
@@ -126,8 +121,7 @@ public class ModifierChooser
     return ArrayUtil.toStringArray(ret);
   }
 
-  private static PsiModifierList getModifierList(PsiElement element)
-  throws Exception{
+  private static PsiModifierList getModifierList(PsiElement element) throws Exception{
     if(element == null){
       return null;
     }
@@ -175,7 +169,4 @@ public class ModifierChooser
     throw new Exception("Can't find modifier list");
   }
 
-  public String toString(){
-    return "modifier-chooser";
-  }
 }

@@ -155,23 +155,24 @@ public class JavaCompletionData extends JavaAwareCompletionData{
     new AfterElementFilter(new TextFilter("{")),
     new ScopeFilter(new ClassFilter(JspClassLevelDeclarationStatement.class)));
   public static final ElementPattern<PsiElement> START_FOR =
-    psiElement().afterLeaf(psiElement().withText("(").afterLeaf("for")).withParents(PsiJavaCodeReferenceElement.class, PsiExpressionStatement.class, PsiForStatement.class);
+    psiElement().afterLeaf(psiElement().withText("(").afterLeaf("for")).withParents(PsiJavaCodeReferenceElement.class,
+                                                                                    PsiExpressionStatement.class, PsiForStatement.class);
   private static final PsiJavaElementPattern.Capture<PsiElement> CLASS_REFERENCE =
     psiElement().withParent(psiReferenceExpression().referencing(psiClass()));
+  public static final ElementPattern<PsiElement> EXPR_KEYWORDS = and(
+    psiElement().withParent(psiElement(PsiReferenceExpression.class).withParent(
+      not(
+        or(psiElement(PsiTypeCastExpression.class),
+           psiElement(PsiSwitchLabelStatement.class),
+           psiElement(PsiExpressionStatement.class)
+        )
+      )
+    )),
+    not(psiElement().afterLeaf("."))
+  );
 
   public JavaCompletionData(){
     declareCompletionSpaces();
-
-    final CompletionVariant variant = new CompletionVariant(PsiMethod.class,
-                                                            new PatternFilter(not(psiElement().afterLeaf("@", "."))));
-    variant.includeScopeClass(PsiVariable.class);
-    variant.includeScopeClass(PsiClass.class);
-    variant.includeScopeClass(PsiFile.class);
-    variant.includeScopeClass(PsiParameterList.class);
-
-    variant.addCompletion(new ModifierChooser());
-
-    registerVariant(variant);
 
     initVariantsInFileScope();
     initVariantsInClassScope();
@@ -472,7 +473,7 @@ public class JavaCompletionData extends JavaAwareCompletionData{
         result.addElement(new OverrideableSpace(createKeyword(position, PsiKeyword.FINAL), TailType.SPACE));
       }
     }
-    
+
     if (isStatementPosition(position)) {
       if (INSIDE_SWITCH.isAcceptable(position, position)) {
         result.addElement(new OverrideableSpace(createKeyword(position, PsiKeyword.CASE), TailType.SPACE));
@@ -511,22 +512,17 @@ public class JavaCompletionData extends JavaAwareCompletionData{
       }
     }
 
-    final ElementPattern<PsiElement> exprKeywords = and(
-      psiElement().withParent(psiElement(PsiReferenceExpression.class).withParent(
-        not(
-          or(psiElement(PsiTypeCastExpression.class),
-             psiElement(PsiSwitchLabelStatement.class),
-             psiElement(PsiExpressionStatement.class)
-          )
-        )
-      )),
-      not(psiElement().afterLeaf("."))
-    );
-    if (exprKeywords.accepts(position)) {
+    if (EXPR_KEYWORDS.accepts(position)) {
       result.addElement(TailTypeDecorator.withTail(createKeyword(position, PsiKeyword.NEW), TailType.SPACE));
       result.addElement(createKeyword(position, PsiKeyword.NULL));
       result.addElement(createKeyword(position, PsiKeyword.TRUE));
       result.addElement(createKeyword(position, PsiKeyword.FALSE));
+    }
+
+    if (CLASS_START.isAcceptable(position, position) || INSIDE_PARAMETER_LIST.accepts(position)) {
+      for (String s : ModifierChooser.getKeywords(position)) {
+        result.addElement(new OverrideableSpace(createKeyword(position, s), TailType.SPACE));
+      }
     }
 
     addPrimitiveTypes(result, position);
