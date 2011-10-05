@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<application>
+  <component name="NodeRendererSettings">
+    <option name="HEX_VIEW_ENABLED" value="false" />
+    <option name="ALTERNATIVE_COLLECTION_VIEW_ENABLED" value="true" />
+    <Renderer ID="ArrayRenderer">
+      <option name="NAME" value="unnamed" />
+      <option name="ENABLED" value="true" />
+      <option name="START_INDEX" value="0" />
+      <option name="END_INDEX" value="100" />
+      <option name="ENTRIES_LIMIT" value="101" />
+    </Renderer>
+    <Renderer ID="ToStringRenderer">
+      <option name="NAME" value="unnamed" />
+      <option name="ENABLED" value="true" />
+      <option name="USE_CLASS_FILTERS" value="false" />
+    </Renderer>
+    <Renderer ID="ClassRenderer">
+      <option name="NAME" value="unnamed" />
+      <option name="ENABLED" value="true" />
+      <option name="SORT_ASCENDING" value="false" />
+      <option name="SHOW_SYNTHETICS" value="true" />
+      <option name="SHOW_STATIC" value="false" />
+      <option name="SHOW_STATIC_FINAL" value="false" />
+      <option name="SHOW_DECLARED_TYPE" value="false" />
+      <option name="SHOW_OBJECT_ID" value="true" />
+    </Renderer>
+  </component>
+</application>
+
