@@ -97,26 +97,6 @@ class Module extends LazyInitializeableObject implements ClasspathItem {//}, Com
     props[key] = value
   }
 
-  def make() {
-    project.builder.makeModule(this)
-  }
-
-  def getOutput() {
-    return project.builder.moduleOutput(this)
-  }
-
-  List<String> runtimeClasspath() {
-    project.builder.moduleRuntimeClasspath(this, false)
-  }
-
-  List<String> testRuntimeClasspath() {
-    project.builder.moduleRuntimeClasspath(this, true)
-  }
-
-  def makeTests() {
-    project.builder.makeModuleTests(this)
-  }
-
   def List<String> getClasspathRoots(ClasspathKind kind) {
     if (kind.isTestsIncluded()) {
       return [project.builder.moduleTestsOutput(this), project.builder.moduleOutput(this)]
@@ -126,22 +106,12 @@ class Module extends LazyInitializeableObject implements ClasspathItem {//}, Com
     }
   }
 
-  @Deprecated
-  def List<ClasspathItem> getFullClasspath() {
-    return dependencies*.item;
-  }
-
   def List<ClasspathItem> getClasspath(ClasspathKind kind) {
     return getClasspath(kind, false)
   }
 
   def List<ClasspathItem> getClasspath(ClasspathKind kind, boolean exportedOnly) {
     return dependencies.findAll({it.scope.isIncludedIn(kind) && (!exportedOnly || it.exported)})*.item;
-  }
-
-  @Deprecated
-  def List<ModuleDependency> getDependencies() {
-    return dependencies;
   }
 
   private static class ModuleDependency {

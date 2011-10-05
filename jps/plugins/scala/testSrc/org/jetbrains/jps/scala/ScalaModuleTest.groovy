@@ -18,7 +18,7 @@ class ScalaModuleTest extends JpsBuildTestCase {
     def projectPath = "plugins/scala/testData/scala-test"
     Project project = loadProject(projectPath, [:]);
     project.clean();
-    project.modules["mod1"].make();
+    project.builder.makeModule(project.modules["mod1"]);
 
     def path = projectPath + "/out/production/mod1/HelloWorld.class"
     assertTrue(path, new File(path).isFile());
@@ -28,7 +28,7 @@ class ScalaModuleTest extends JpsBuildTestCase {
     def projectPath = "plugins/scala/testData/scala-test"
     Project project = loadProject(projectPath, [:]);
     project.clean();
-    project.modules["mod2"].make();
+    project.builder.makeModule(project.modules["mod2"]);
 
     def path = projectPath + "/out/production/mod2/"
     assertTrue(path, new File(path, "A.class").isFile());

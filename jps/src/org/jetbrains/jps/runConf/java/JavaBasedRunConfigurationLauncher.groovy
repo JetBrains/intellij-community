@@ -196,7 +196,7 @@ public abstract class JavaBasedRunConfigurationLauncher extends RunConfiguration
   private Collection<String> getRuntimeClasspath(RunConfiguration runConf) {
     def runConfRuntimeCp = new LinkedHashSet<String>();
     if (runConf.module != null) {
-      runConfRuntimeCp.addAll(runConf.module.testRuntimeClasspath());
+      runConfRuntimeCp.addAll(runConf.project.builder.moduleRuntimeClasspath(runConf.module, true));
     } else {
       runConfRuntimeCp.addAll(runConf.project.testRuntimeClasspath());
     }

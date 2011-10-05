@@ -100,7 +100,7 @@ class ArtifactBuilder {
       }
       return true
     }
-    modules.each { it.make() }
+    modules.each { projectBuilder.makeModule(it) }
 
     artifacts.each {
       doBuildArtifact(it)
