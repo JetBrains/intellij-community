@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.template;
 
 import com.intellij.lang.StdLanguages;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -39,11 +38,4 @@ public class JavaStringContextType extends TemplateContextType {
     }
     return false;
   }
-
-  @Override
-  public boolean isInContext(@NotNull FileType fileType) {
-    return false;
-  }
-
-
 }

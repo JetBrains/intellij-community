@@ -16,7 +16,6 @@
 
 package com.intellij.codeInsight.template;
 
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.psi.PsiFile;
@@ -35,11 +34,7 @@ public abstract class FileTypeBasedContextType extends TemplateContextType {
   }
 
   public boolean isInContext(@NotNull final PsiFile file, final int offset) {
-    return isInContext(file.getFileType());
-  }
-
-  public boolean isInContext(@NotNull final FileType fileType) {
-    return fileType == myFileType;
+    return myFileType == file.getFileType();
   }
 
   public SyntaxHighlighter createHighlighter() {

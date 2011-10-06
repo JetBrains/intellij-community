@@ -18,7 +18,6 @@ package com.intellij.codeInsight.template;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.xml.XMLLanguage;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
@@ -37,11 +36,6 @@ public class XmlContextType extends TemplateContextType {
     return file.getLanguage().isKindOf(XMLLanguage.INSTANCE) && !isEmbeddedContent(file, offset) &&
            !HtmlContextType.isMyLanguage(PsiUtilBase.getLanguageAtOffset(file, offset)) &&
            file.getFileType() != StdFileTypes.JSPX && file.getFileType() != StdFileTypes.JSP;
-  }
-
-  @Override
-  public boolean isInContext(@NotNull FileType fileType) {
-    return false;
   }
 
   public static boolean isEmbeddedContent(@NotNull final PsiFile file, final int offset) {

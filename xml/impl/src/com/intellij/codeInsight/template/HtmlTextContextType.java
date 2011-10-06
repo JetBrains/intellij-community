@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.template;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
@@ -55,10 +54,5 @@ public class HtmlTextContextType extends TemplateContextType {
       parent = parent.getParent();
     }
     return parent instanceof XmlDocument;
-  }
-
-  @Override
-  public boolean isInContext(@NotNull FileType fileType) {
-    return false;
   }
 }
