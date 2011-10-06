@@ -34,7 +34,9 @@ public class XmlContextType extends TemplateContextType {
 
   @Override
   public boolean isInContext(@NotNull PsiFile file, int offset) {
-    return file.getFileType() == StdFileTypes.XML && !isEmbeddedContent(file, offset);
+    return file.getLanguage().isKindOf(XMLLanguage.INSTANCE) && !isEmbeddedContent(file, offset) &&
+           !HtmlContextType.isMyLanguage(PsiUtilBase.getLanguageAtOffset(file, offset)) &&
+           file.getFileType() != StdFileTypes.JSPX && file.getFileType() != StdFileTypes.JSP;
   }
 
   @Override
