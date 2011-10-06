@@ -136,10 +136,8 @@ public abstract class MvcFramework {
       final ProcessBuilder pb = createCommandAndShowErrors(null, module, true, result == 0 ? "create-app" : "create-plugin");
       if (pb == null) return;
 
-      MvcConsole.getInstance(module.getProject()).executeProcess(module, pb, new Runnable() {
+      MvcConsole.executeProcess(module, pb, new Runnable() {
         public void run() {
-          if (module.isDisposed()) return;
-
           VirtualFile root = findAppRoot(module);
           if (root == null) return;
 

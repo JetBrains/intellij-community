@@ -215,12 +215,12 @@ public class MvcConsole implements Disposable {
     }
   }
 
-  public ConsoleProcessDescriptor executeProcess(final Module module,
-                                                 final ProcessBuilder pb,
-                                                 final @Nullable Runnable onDone,
-                                                 final boolean closeOnDone,
-                                                 final String... input) {
-    return executeProcess(module, pb, onDone, true, closeOnDone, input);
+  public static ConsoleProcessDescriptor executeProcess(final Module module,
+                                                        final ProcessBuilder pb,
+                                                        final @Nullable Runnable onDone,
+                                                        final boolean closeOnDone,
+                                                        final String... input) {
+    return getInstance(module.getProject()).executeProcess(module, pb, onDone, true, closeOnDone, input);
   }
 
   public ConsoleProcessDescriptor executeProcess(final Module module,
@@ -230,6 +230,8 @@ public class MvcConsole implements Disposable {
                                                  final boolean closeOnDone,
                                                  final String... input) {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    assert module.getProject() == myProject;
+    
     final MyProcessInConsole process = new MyProcessInConsole(module, pb, onDone, showConsole, closeOnDone, input);
     if (isExecuting()) {
       myProcessQueue.add(process);
