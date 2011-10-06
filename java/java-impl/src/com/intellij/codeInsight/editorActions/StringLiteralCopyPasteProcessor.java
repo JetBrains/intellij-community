@@ -27,22 +27,95 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.openapi.util.text.StringUtil.unescapeStringCharacters;
+
 public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
+  
+  private static final TokenSet SYMBOL_LITERAL_TYPES = TokenSet.create(JavaTokenType.STRING_LITERAL, JavaTokenType.CHARACTER_LITERAL);
+  
+  @SuppressWarnings("ForLoopThatDoesntUseLoopVariable")
+  @Override
   public String preprocessOnCopy(final PsiFile file, final int[] startOffsets, final int[] endOffsets, final String text) {
-    boolean isLiteral = true;
-    for (int i = 0; i < startOffsets.length && isLiteral; i++) {
-      if (findLiteralTokenType(file, startOffsets[i], endOffsets[i]) == null) {
-        isLiteral = false;
+    // The main idea is to un-escape string/char literals content if necessary.
+    // Example:
+    //    Suppose we have a following text at the editor: String s = "first <selection>line \n second</selection> line"
+    //    When user copies the selection we want to transform text \n to the real line feed, i.e. clipboard should contains the following:
+    //        line 
+    //        second
+    //
+    // However, we don't want to un-escape literal content if it's copied completely.
+    // Example:
+    //     String s = <selection>"my string"</selection>;
+    
+    StringBuilder buffer = new StringBuilder();
+    int givenTextOffset = 0;
+    boolean textWasChanged = false;
+    for (
+      int i = 0;
+      i < startOffsets.length && givenTextOffset < text.length();
+      i++, givenTextOffset++, buffer.append('\n')) // LF is added for block selection
+    {
+      // Calculate offsets offsets of the selection interval being processed now.
+      final int fileStartOffset = startOffsets[i];
+      final int fileEndOffset = endOffsets[i];
+      int givenTextStartOffset = Math.min(givenTextOffset, text.length());
+      final int givenTextEndOffset = Math.min(givenTextOffset + (fileEndOffset - fileStartOffset), text.length());
+      givenTextOffset = givenTextEndOffset;
+      for (
+        PsiElement element = file.findElementAt(fileStartOffset);
+        givenTextStartOffset < givenTextEndOffset;
+        element = PsiTreeUtil.nextLeaf(element))
+      {
+        if (element == null) {
+          buffer.append(text.substring(givenTextStartOffset, givenTextEndOffset));
+          break;
+        }
+        TextRange elementRange = element.getTextRange();
+        int escapedStartOffset;
+        int escapedEndOffset;
+        if (element instanceof PsiJavaToken && SYMBOL_LITERAL_TYPES.contains(((PsiJavaToken)element).getTokenType())
+            // We don't want to un-escape if complete literal is copied.
+            && (elementRange.getStartOffset() < fileStartOffset || elementRange.getEndOffset() > fileEndOffset))
+        {
+          escapedStartOffset = elementRange.getStartOffset() + 1 /* String/char literal quote */;
+          escapedEndOffset = elementRange.getEndOffset() - 1 /* String/char literal quote */;
+        }
+        else {
+          escapedStartOffset = escapedEndOffset = elementRange.getStartOffset();
+        }
+        
+        // Process text to the left of the escaped fragment (if any).
+        int numberOfSymbolsToCopy = escapedStartOffset - Math.max(fileStartOffset, elementRange.getStartOffset());
+        if (numberOfSymbolsToCopy > 0) {
+          buffer.append(text.substring(givenTextStartOffset, givenTextStartOffset + numberOfSymbolsToCopy));
+          givenTextStartOffset += numberOfSymbolsToCopy;
+        }
+
+        // Process escaped text (un-escape it).
+        numberOfSymbolsToCopy = Math.min(escapedEndOffset, fileEndOffset) - Math.max(fileStartOffset, escapedStartOffset);
+        if (numberOfSymbolsToCopy > 0) {
+          textWasChanged = true;
+          buffer.append(unescapeStringCharacters(text.substring(givenTextStartOffset, givenTextStartOffset + numberOfSymbolsToCopy)));
+          givenTextStartOffset += numberOfSymbolsToCopy;
+        }
+
+        // Process text to the right of the escaped fragment (if any).
+        numberOfSymbolsToCopy = Math.min(fileEndOffset, elementRange.getEndOffset()) - Math.max(fileStartOffset, escapedEndOffset);
+        if (numberOfSymbolsToCopy > 0) {
+          buffer.append(text.substring(givenTextStartOffset, givenTextStartOffset + numberOfSymbolsToCopy));
+          givenTextStartOffset += numberOfSymbolsToCopy;
+        }
       }
     }
-
-    return isLiteral ? StringUtil.unescapeStringCharacters(text) : null;
+    return textWasChanged ? buffer.toString() : null;
   }
-
+  
   public String preprocessOnPaste(final Project project, final PsiFile file, final Editor editor, String text, final RawText rawText) {
     final Document document = editor.getDocument();
     PsiDocumentManager.getInstance(project).commitDocument(document);
@@ -71,9 +144,6 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
       if (rawText != null && rawText.rawText != null) return rawText.rawText; // Copied from the string literal. Copy as is.
       return escapeCharCharacters(text);
     }
-    else {
-      text = escapePastedLiteral(text);
-    }
     return text;
   }
 
@@ -93,7 +163,8 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
       if (!(elementAtSelectionEnd instanceof PsiJavaToken)) {
         return null;
       }
-      if (((PsiJavaToken)elementAtSelectionEnd).getTokenType() == tokenType) {
+      PsiJavaToken tokenAtSelectionEnd = (PsiJavaToken)elementAtSelectionEnd;
+      if (tokenAtSelectionEnd.getTokenType() == tokenType && tokenAtSelectionEnd.getTextRange().getStartOffset() < selectionEnd) {
         return tokenType;
       }
     }
@@ -105,55 +176,10 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
     return tokenType;
   }
 
-  @Nullable
-  private static PsiElement next(final @NotNull PsiElement element) {
-    for (PsiElement anchor = element; anchor != null; anchor = anchor.getParent()) {
-      final PsiElement result = element.getNextSibling();
-      if (result != null) {
-        return result;
-      }
-    }
-    return null;
-  }
-  
   @NotNull
   public static String escapeCharCharacters(@NotNull String s) {
     StringBuilder buffer = new StringBuilder();
     StringUtil.escapeStringCharacters(s.length(), s, "\'", buffer);
-    return buffer.toString();
-  }
-
-  /**
-   * There is a possible case that pasted string contains string literal. We need to escape problem symbols within it then
-   * (see IDEA-74544 for the problem example).
-   * 
-   * @param s  target string to paste
-   * @return   string that should be actually pasted
-   */
-  @SuppressWarnings("AssignmentToForLoopParameter")
-  public static String escapePastedLiteral(@NotNull String s) {
-    StringBuilder buffer = new StringBuilder();
-    int literalStart = -1;
-    int literalEnd = 0;
-    for (int i = 0; i < s.length(); i++) {
-      char c = s.charAt(i);
-      switch (c) {
-        case '\\': i++;break;
-        case '"':
-          if (literalStart < 0) {
-            literalStart = i + 1;
-            buffer.append(s, literalEnd, literalStart);
-          }
-          else {
-            literalEnd = i;
-            buffer.append(StringUtil.escapeStringCharacters(s.substring(literalStart, literalEnd)));
-            literalStart = -1;
-          }
-      }
-    }
-    if (literalEnd < s.length()) {
-      buffer.append(s.substring(Math.max(literalStart, literalEnd)));
-    } 
     return buffer.toString();
   }
 }
