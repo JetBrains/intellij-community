@@ -25,15 +25,21 @@ import java.util.Date;
 public class DateFormatUtilTest extends TestCase {
   private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd.MM.yyyy hh.mm.ss");
 
+  public void testBasics() throws ParseException {
+    Clock.setTime(2004, 11, 10, 17, 10);
+
+    doTestPrettyDate("Today", "10.12.2004 17.00.00");
+    doTestPrettyDate("Today", "10.12.2004 00.00.00");
+    doTestPrettyDate("Yesterday", "09.12.2004 23.59.59");
+    doTestPrettyDate(DateFormatUtil.formatDate(DATE_FORMAT.parse("08.12.2004 23.59.59")), "08.12.2004 23.59.59");
+    doTestPrettyDate(DateFormatUtil.formatDate(DATE_FORMAT.parse("10.12.2003 17.00.00")), "10.12.2003 17.00.00");
+  }
+
   public void testPrettyDate() throws ParseException {
-    Clock.setTime(2004, 11, 10, 17, 0);
+    Clock.setTime(2004, 11, 10, 17, 10, 15);
 
-    doTestDate("Today", "10.12.2004 17.00.00");
-    doTestDate("Today", "10.12.2004 00.00.00");
-    doTestDate("Yesterday", "09.12.2004 23.59.59");
-    doTestDate(DateFormatUtil.formatDate(DATE_FORMAT.parse("08.12.2004 23.59.59")), "08.12.2004 23.59.59");
-
-    doTestDate(DateFormatUtil.formatDate(DATE_FORMAT.parse("10.12.2003 17.00.00")), "10.12.2003 17.00.00");
+    assertEquals("17:10", DateFormatUtil.formatTime(Clock.getTime()));
+    assertEquals("17:10:15", DateFormatUtil.formatTimeWithSeconds(Clock.getTime()));
   }
 
   public void testPrettyDateTime() throws ParseException {
@@ -54,7 +60,7 @@ public class DateFormatUtilTest extends TestCase {
     doTestDateTime("Yesterday " + DateFormatUtil.formatTime(DATE_FORMAT.parse("31.12.2003 15.00.00")), "31.12.2003 15.00.00");
   }
 
-  private void doTestDate(String expected, String date) throws ParseException {
+  private void doTestPrettyDate(String expected, String date) throws ParseException {
     assertEquals(expected, DateFormatUtil.formatPrettyDate(DATE_FORMAT.parse(date)));
   }
 
