@@ -40,6 +40,16 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
   public enum FUTURE {ABSOLUTE_IMPORT, DIVISION, GENERATORS, NESTED_SCOPES, WITH_STATEMENT, PRINT_FUNCTION}
   protected Set<FUTURE> myFutureFlags = EnumSet.noneOf(FUTURE.class);
 
+  public static class ImportTypes {
+    public final IElementType statement;
+    public final IElementType element;
+
+    public ImportTypes(IElementType statement, IElementType element) {
+      this.statement = statement;
+      this.element = element;
+    }
+  }
+
   protected StatementParsing(ParsingContext context, @Nullable FUTURE futureFlag) {
     super(context);
     if (futureFlag != null) {
@@ -133,7 +143,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
       return;
     }
     if (firstToken == PyTokenTypes.IMPORT_KEYWORD) {
-      parseImportStatement(scope, PyElementTypes.IMPORT_STATEMENT);
+      parseImportStatement(scope, PyElementTypes.IMPORT_STATEMENT, PyElementTypes.IMPORT_ELEMENT);
       return;
     }
     if (firstToken == PyTokenTypes.FROM_KEYWORD) {
@@ -337,13 +347,13 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     assertStatement.done(PyElementTypes.ASSERT_STATEMENT);
   }
 
-  protected void parseImportStatement(ParsingScope scope, IElementType elementType) {
+  protected void parseImportStatement(ParsingScope scope, IElementType statementType, IElementType elementType) {
     final PsiBuilder builder = myContext.getBuilder();
     final PsiBuilder.Marker importStatement = builder.mark();
     builder.advanceLexer();
-    parseImportElements(true, false, false);
+    parseImportElements(elementType, true, false, false);
     checkEndOfStatement(scope);
-    importStatement.done(elementType);
+    importStatement.done(statementType);
   }
 
   /*
@@ -359,9 +369,11 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     builder.advanceLexer();
     boolean from_future = false;
     boolean had_dots = parseRelativeImportDots();
-    IElementType elementType = PyElementTypes.FROM_IMPORT_STATEMENT;
+    IElementType statementType = PyElementTypes.FROM_IMPORT_STATEMENT;
     if (had_dots && parseOptionalDottedName() || parseDottedName()) {
-      elementType = checkFromImportKeyword();
+      final ImportTypes types = checkFromImportKeyword();
+      statementType = types.statement;
+      final IElementType elementType = types.element;
       if (myFutureImportPhase == Phase.FUTURE) {
         myFutureImportPhase = Phase.IMPORT;
         from_future = true;
@@ -373,25 +385,26 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
       }
       else if (builder.getTokenType() == PyTokenTypes.LPAR) {
         builder.advanceLexer();
-        parseImportElements(false, true, from_future);
+        parseImportElements(elementType, false, true, from_future);
         checkMatches(PyTokenTypes.RPAR, ") expected");
       }
       else {
-        parseImportElements(false, false, from_future);
+        parseImportElements(elementType, false, false, from_future);
       }
     }
     else if (had_dots) { // from . import ...
-      elementType = checkFromImportKeyword();
-      parseImportElements(false, false, from_future);
+      final ImportTypes types = checkFromImportKeyword();
+      statementType = types.statement;
+      parseImportElements(types.element, false, false, from_future);
     }
     checkEndOfStatement(inSuite);
-    fromImportStatement.done(elementType);
+    fromImportStatement.done(statementType);
     myFutureImportPhase = Phase.NONE;
   }
 
-  protected IElementType checkFromImportKeyword() {
+  protected ImportTypes checkFromImportKeyword() {
     checkMatches(PyTokenTypes.IMPORT_KEYWORD, "'import' expected");
-    return PyElementTypes.FROM_IMPORT_STATEMENT;
+    return new ImportTypes(PyElementTypes.FROM_IMPORT_STATEMENT, PyElementTypes.IMPORT_ELEMENT);
   }
 
   /**
@@ -408,7 +421,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     return had_dots;
   }
 
-  private void parseImportElements(boolean is_module_import, boolean in_parens, final boolean from_future) {
+  private void parseImportElements(IElementType elementType, boolean is_module_import, boolean in_parens, final boolean from_future) {
     PsiBuilder builder = myContext.getBuilder();
     while (true) {
       final PsiBuilder.Marker asMarker = builder.mark();
@@ -439,7 +452,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
         myExpectAsKeyword = false;
         parseIdentifier(PyElementTypes.TARGET_EXPRESSION);
       }
-      asMarker.done(PyElementTypes.IMPORT_ELEMENT);
+      asMarker.done(elementType);
       myExpectAsKeyword = false;
       if (builder.getTokenType() == PyTokenTypes.COMMA) {
         builder.advanceLexer();

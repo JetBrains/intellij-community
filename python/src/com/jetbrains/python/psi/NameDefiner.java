@@ -1,13 +1,15 @@
 package com.jetbrains.python.psi;
 
 import com.intellij.psi.PsiElement;
+import com.jetbrains.python.PythonDialectsTokenSetContributor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * PSI element that (re)defnies names in following namespace, e.g. as assignment statement does.
  *
- * NOTE: When declaring additional elements as name definers, please also adjust the PyResolveUtil.NAME_DEFINERS token set
+ * NOTE: When declaring additional elements as name definers, please also adjust the token set via
+ * {@link PythonDialectsTokenSetContributor#getNameDefinerTokens()}.
  *
  * @author dcheryasov
  */

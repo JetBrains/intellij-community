@@ -6,6 +6,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
+import com.jetbrains.cython.psi.CythonFunction;
 import com.jetbrains.python.fixtures.PyResolveTestCase;
 import com.jetbrains.python.psi.*;
 
@@ -244,22 +245,30 @@ public class PyMultiFileResolveTest extends PyResolveTestCase {
     }
   }
 
-
   public void testImportPrivateNameWithStar() { // PY-2717
     PsiElement psiElement = doResolve();
     assertNull(psiElement);
   }
 
+  public void testCythonSimpleCImport() {
+    assertResolvesTo(CythonFunction.class, "foo");
+  }
+
   private PsiFile prepareFile() {
     String testName = getTestName(true);
-    String fileName = myTestFileName != null ? myTestFileName : getTestName(false) + ".py";
     myFixture.copyDirectoryToProject(testName, "");
     PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
 
-    VirtualFile sourceFile = myFixture.findFileInTempDir(fileName);
-    assert sourceFile != null: "Could not find file in temp dir: " + fileName;
-    PsiFile psiFile = myFixture.getPsiManager().findFile(sourceFile);
-    return psiFile;
+    VirtualFile sourceFile = null;
+    for (String ext : new String[] {".py", ".pyx"}) {
+      final String fileName = myTestFileName != null ? myTestFileName : getTestName(false) + ext;
+      sourceFile = myFixture.findFileInTempDir(fileName);
+      if (sourceFile != null) {
+        break;
+      }
+    }
+    assertNotNull("Could not find test file", sourceFile);
+    return myFixture.getPsiManager().findFile(sourceFile);
   }
 
   @Override
@@ -272,6 +281,7 @@ public class PyMultiFileResolveTest extends PyResolveTestCase {
     PsiFile psiFile = prepareFile();
     int offset = findMarkerOffset(psiFile);
     final PsiPolyVariantReference ref = (PsiPolyVariantReference) psiFile.findReferenceAt(offset);
+    assertNotNull("<ref> in test file not found", ref);
     final PsiManagerImpl psiManager = (PsiManagerImpl)myFixture.getPsiManager();
     psiManager.setAssertOnFileLoadingFilter(new VirtualFileFilter() {
       @Override
@@ -296,6 +306,7 @@ public class PyMultiFileResolveTest extends PyResolveTestCase {
     PsiFile psiFile = prepareFile();
     int offset = findMarkerOffset(psiFile);
     final PsiPolyVariantReference ref = (PsiPolyVariantReference)psiFile.findReferenceAt(offset);
+    assertNotNull("<ref> in test file not found", ref);
     return ref.multiResolve(false);
   }
 }

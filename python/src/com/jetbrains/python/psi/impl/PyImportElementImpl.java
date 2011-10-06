@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.EmptyIterable;
 import com.jetbrains.python.PyElementTypes;
@@ -34,7 +35,11 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
   }
 
   public PyImportElementImpl(PyImportElementStub stub) {
-    super(stub, PyElementTypes.IMPORT_ELEMENT);
+    this(stub, PyElementTypes.IMPORT_ELEMENT);
+  }
+
+  public PyImportElementImpl(PyImportElementStub stub, IStubElementType nodeType) {
+    super(stub, nodeType);
   }
 
   @Nullable
@@ -226,6 +231,6 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
   @Override
   public String toString() {
     final PyQualifiedName qName = getImportedQName();
-    return "PyImportElement:" + (qName != null ? qName : "null");
+    return String.format("%s:%s", super.toString(), qName != null ? qName : "null");
   }
 }
