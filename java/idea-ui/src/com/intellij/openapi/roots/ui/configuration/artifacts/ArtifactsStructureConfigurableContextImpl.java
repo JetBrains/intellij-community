@@ -76,12 +76,6 @@ public class ArtifactsStructureConfigurableContextImpl implements ArtifactsStruc
           }
         }
       }
-
-      public void allProblemsChanged() {
-        for (Map.Entry<Artifact, ArtifactEditorImpl> entry : myArtifactEditors.entrySet()) {
-          updateProblems(entry.getKey(), entry.getValue());
-        }
-      }
     });
   }
 

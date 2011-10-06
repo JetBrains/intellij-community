@@ -179,9 +179,18 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
     myProblemHolders.clear();
   }
 
-  public void clearAllProblems() {
+  public void queueUpdateForAllElementsWithErrors() {
+    List<ProjectStructureElement> toUpdate = new ArrayList<ProjectStructureElement>();
+    for (Map.Entry<ProjectStructureElement, ProjectStructureProblemsHolderImpl> entry : myProblemHolders.entrySet()) {
+      if (entry.getValue().containProblems()) {
+        toUpdate.add(entry.getKey());
+      }
+    }
     myProblemHolders.clear();
-    myDispatcher.getMulticaster().allProblemsChanged();
+    LOG.debug("Adding to queue updates for " + toUpdate.size() + " problematic elements");
+    for (ProjectStructureElement element : toUpdate) {
+      queueUpdate(element);
+    }
   }
 
   public void dispose() {

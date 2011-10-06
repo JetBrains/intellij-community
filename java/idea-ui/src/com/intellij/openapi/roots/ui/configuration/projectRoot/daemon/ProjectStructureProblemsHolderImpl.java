@@ -66,6 +66,10 @@ public class ProjectStructureProblemsHolderImpl implements ProjectStructureProbl
     }
   }
 
+  public boolean containProblems() {
+    return myProblemDescriptions != null && !myProblemDescriptions.isEmpty();
+  }
+
   @Nullable
   public List<ProjectStructureProblemDescription> getProblemDescriptions() {
     return myProblemDescriptions;

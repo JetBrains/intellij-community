@@ -529,7 +529,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     selectNodeInTree(node);
     final ProjectStructureDaemonAnalyzer daemonAnalyzer = myContext.getDaemonAnalyzer();
     daemonAnalyzer.queueUpdate(new ModuleProjectStructureElement(myContext, module));
-    daemonAnalyzer.clearAllProblems(); //missing modules added
+    daemonAnalyzer.queueUpdateForAllElementsWithErrors(); //missing modules added
   }
 
   @Nullable

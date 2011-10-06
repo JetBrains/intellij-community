@@ -47,11 +47,6 @@ public class ProjectConfigurationProblems {
       public void problemsChanged(@NotNull ProjectStructureElement element) {
         updateErrors(element);
       }
-
-      @Override
-      public void allProblemsChanged() {
-        clearProblems();
-      }
     });
   }
 

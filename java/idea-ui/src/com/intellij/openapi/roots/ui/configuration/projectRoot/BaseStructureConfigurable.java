@@ -90,10 +90,6 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
         updateTree();
       }
 
-      public void allProblemsChanged() {
-        updateTree();
-      }
-
       private void updateTree() {
         if (!myTree.isShowing()) return;
 
