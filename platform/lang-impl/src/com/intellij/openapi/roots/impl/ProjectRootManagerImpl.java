@@ -231,10 +231,6 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     ModuleRootManagerImpl.multiCommit(rootModels, moduleModel);
   }
 
-  public VirtualFilePointerListener getVirtualFilePointerListener() {
-    return null;
-  }
-
   @NotNull
   public ProjectFileIndex getFileIndex() {
     return ProjectFileIndex.SERVICE.getInstance(myProject);

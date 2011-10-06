@@ -48,7 +48,7 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
   @NonNls private static final String URL_ATTR = "url";
   private boolean myDisposed;
 
-  public VirtualFilePointerContainerImpl(@NotNull VirtualFilePointerManagerImpl manager, @NotNull Disposable parent, VirtualFilePointerListener listener) {
+  public VirtualFilePointerContainerImpl(@NotNull VirtualFilePointerManagerImpl manager, @NotNull Disposable parent, @Nullable VirtualFilePointerListener listener) {
     myVirtualFilePointerManager = manager;
     myParent = parent;
     myListener = listener;
@@ -266,7 +266,7 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
   }
 
   @NotNull
-  public VirtualFilePointerContainer clone(@NotNull Disposable parent, VirtualFilePointerListener listener) {
+  public VirtualFilePointerContainer clone(@NotNull Disposable parent, @Nullable VirtualFilePointerListener listener) {
     assert !myDisposed;
     VirtualFilePointerContainer clone = myVirtualFilePointerManager.createContainer(parent, listener);
     for (VirtualFilePointer pointer : myList) {
