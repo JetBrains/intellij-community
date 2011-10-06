@@ -507,6 +507,15 @@ public class ControlFlowUtils {
     return false;
   }
 
+  public static String dumpControlFlow(Instruction[] instructions) {
+    StringBuilder builder = new StringBuilder();
+    for (Instruction instruction : instructions) {
+      builder.append(instruction.toString()).append("\n");
+    }
+
+    return builder.toString();
+  }
+
   private static class ReturnFinder extends GroovyRecursiveElementVisitor {
     private boolean m_found = false;
 

@@ -5,6 +5,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
@@ -49,16 +50,6 @@ public class ControlFlowTest extends LightCodeInsightFixtureTestCase {
   public void testReturnMapFromClosure() {doTest();}
   public void testSwitchInTryWithThrows() {doTest();}
 
-  private static String dumpControlFlow(Instruction[] instructions) {
-    StringBuilder builder = new StringBuilder();
-    for (Instruction instruction : instructions) {
-      builder.append(instruction.toString()).append("\n");
-    }
-
-    return builder.toString();
-  }
-
-
   public void doTest() {
     final List<String> input = TestUtils.readInput(getTestDataPath() + getTestName(true) + ".test");
 
@@ -70,7 +61,7 @@ public class ControlFlowTest extends LightCodeInsightFixtureTestCase {
     final PsiElement end = file.findElementAt(model.hasSelection() ? model.getSelectionEnd() - 1 : file.getTextLength() - 1);
     final GrControlFlowOwner owner = PsiTreeUtil.getParentOfType(PsiTreeUtil.findCommonParent(start, end), GrControlFlowOwner.class, false);
     final Instruction[] instructions = new ControlFlowBuilder(getProject()).buildControlFlow(owner);
-    final String cf = dumpControlFlow(instructions);
+    final String cf = ControlFlowUtils.dumpControlFlow(instructions);
     assertEquals(input.get(1).trim(), cf.trim());
   }
 
