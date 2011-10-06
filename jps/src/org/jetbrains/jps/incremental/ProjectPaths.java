@@ -1,5 +1,6 @@
 package org.jetbrains.jps.incremental;
 
+import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.*;
@@ -20,7 +21,7 @@ public class ProjectPaths {
   private final File myProjectTargetDir;
   private final Map<Module, File> myCustomModuleOutputDir = new HashMap<Module, File>();
   private final Map<Module, File> myCustomModuleTestOutputDir = new HashMap<Module, File>();
-  private final Map<ClasspathKind, Map<ModuleChunk, List<String>>> myCachedClasspath = new HashMap<ClasspathKind, Map<ModuleChunk, List<String>>>();
+  //private final Map<ClasspathKind, Map<ModuleChunk, List<String>>> myCachedClasspath = new HashMap<ClasspathKind, Map<ModuleChunk, List<String>>>();
 
   public ProjectPaths(Project project) {
     this(project, null);

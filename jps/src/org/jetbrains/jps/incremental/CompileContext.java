@@ -1,8 +1,12 @@
 package org.jetbrains.jps.incremental;
 
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.*;
+import org.jetbrains.jps.Module;
+import org.jetbrains.jps.ModuleChunk;
+import org.jetbrains.jps.Project;
 
 import java.io.File;
 import java.util.Collection;
