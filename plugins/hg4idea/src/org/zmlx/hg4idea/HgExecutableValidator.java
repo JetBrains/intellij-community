@@ -12,7 +12,7 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
-import com.intellij.execution.util.ExecutableValidator;
+import com.intellij.execution.ExecutableValidator;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
@@ -23,7 +23,7 @@ public class HgExecutableValidator extends ExecutableValidator {
   private final HgVcs myVcs;
 
   public HgExecutableValidator(@NotNull Project project, @NotNull HgVcs vcs) {
-    super(project, HgVcs.NOTIFICATION_GROUP_ID,
+    super(project,
           HgVcsMessages.message("hg4idea.executable.notification.title"),
           HgVcsMessages.message("hg4idea.executable.notification.description"));
     myVcs = vcs;

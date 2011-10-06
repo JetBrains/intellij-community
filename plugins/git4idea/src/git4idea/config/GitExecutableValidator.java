@@ -15,10 +15,10 @@
  */
 package git4idea.config;
 
+import com.intellij.execution.ExecutableValidator;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
-import com.intellij.execution.util.ExecutableValidator;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
@@ -37,7 +37,7 @@ public class GitExecutableValidator extends ExecutableValidator {
   private GitVcs myVcs;
 
   public GitExecutableValidator(@NotNull Project project, @NotNull GitVcs vcs) {
-    super(project, GitVcs.NOTIFICATION_GROUP_ID.getDisplayId(),
+    super(project,
           GitBundle.message("git.executable.notification.title"), GitBundle.message("git.executable.notification.description"));
     myVcs = vcs;
   }

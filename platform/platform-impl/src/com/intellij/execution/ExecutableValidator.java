@@ -13,15 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.execution.util;
+package com.intellij.execution;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
+import com.intellij.notification.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -38,9 +35,10 @@ import javax.swing.event.HyperlinkEvent;
  * @author Kirill Likhodedov
  */
 public abstract class ExecutableValidator {
+  
+  private final NotificationGroup myNotificationGroup = new NotificationGroup("External Executable Critical Failures", NotificationDisplayType.STICKY_BALLOON, true);
 
   private final Project myProject;
-  private final String myNotificationGroupId;
   private final String myNotificationErrorTitle;
   private final String myNotificationErrorDescription;
 
@@ -52,9 +50,8 @@ public abstract class ExecutableValidator {
    * @param notificationErrorDescription description of this notification with a link to fix it (link action is defined by
    *                          {@link #showSettingsAndExpireIfFixed(com.intellij.notification.Notification)}
    */
-  public ExecutableValidator(Project project, String notificationGroupId, String notificationErrorTitle, String notificationErrorDescription) {
+  public ExecutableValidator(Project project, String notificationErrorTitle, String notificationErrorDescription) {
     myProject = project;
-    myNotificationGroupId = notificationGroupId;
     myNotificationErrorTitle = notificationErrorTitle;
     myNotificationErrorDescription = notificationErrorDescription;
   }
@@ -100,8 +97,8 @@ public abstract class ExecutableValidator {
       return;
     }
 
-    final Notification newNotification = new Notification(myNotificationGroupId, myNotificationErrorTitle,
-      myNotificationErrorDescription, NotificationType.ERROR,
+    final String description = prepareDescription();
+    final Notification newNotification = myNotificationGroup.createNotification("", description, NotificationType.ERROR,
       new NotificationListener() {
         public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
           showSettingsAndExpireIfFixed(notification);
@@ -110,7 +107,7 @@ public abstract class ExecutableValidator {
 
     // expire() needs to be called from AWT thread.
     // we also want to be sure that previous notification expires before new one is shown (and assigned to myNotification).
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
         if (myNotification != null && !myNotification.isExpired()) {
@@ -121,6 +118,16 @@ public abstract class ExecutableValidator {
         Notifications.Bus.notify(myNotification, myProject.isDefault() ? null : myProject);
       }
     });
+  }
+
+  @NotNull
+  private String prepareDescription() {
+    String executable = getCurrentExecutable();
+    if (executable.isEmpty()) {
+      return String.format("<b>%s</b>%s", myNotificationErrorTitle, myNotificationErrorDescription);
+    } else {
+      return String.format("<b>%s:</b> <code>%s</code><br/>%s", myNotificationErrorTitle, executable, myNotificationErrorDescription);
+    }
   }
 
   private void showSettingsAndExpireIfFixed(@NotNull Notification notification) {
