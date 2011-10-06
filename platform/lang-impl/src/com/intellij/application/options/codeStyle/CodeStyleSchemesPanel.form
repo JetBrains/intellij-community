@@ -1,120 +1,131 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.application.options.codeStyle.CodeStyleSchemesPanel">
-  <grid id="27dc6" binding="myPanel" layout-manager="GridLayoutManager" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+  <grid id="27dc6" binding="myPanel" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="4" right="0"/>
     <constraints>
-      <xy x="20" y="20" width="998" height="400"/>
+      <xy x="20" y="20" width="1123" height="400"/>
     </constraints>
     <properties/>
     <border type="none"/>
     <children>
-      <vspacer id="d9e80">
+      <scrollpane id="bdbf2" class="com.intellij.ui.components.JBScrollPane" binding="myJBScrollPane">
         <constraints>
-          <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
-        </constraints>
-      </vspacer>
-      <grid id="3fa8b" layout-manager="GridLayoutManager" row-count="2" column-count="10" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-        <margin top="0" left="0" bottom="4" right="0"/>
-        <constraints>
-          <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="1" fill="1" indent="0" use-parent-layout="false">
+            <preferred-size width="-1" height="80"/>
+          </grid>
         </constraints>
         <properties/>
-        <border type="none"/>
+        <border type="none">
+          <color color="-16777216"/>
+        </border>
         <children>
-          <component id="c234b" class="javax.swing.JComboBox" binding="myCombo">
-            <constraints>
-              <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
-            </constraints>
+          <grid id="3fa8b" layout-manager="GridLayoutManager" row-count="2" column-count="10" same-size-horizontally="false" same-size-vertically="true" hgap="-1" vgap="-1">
+            <margin top="0" left="0" bottom="4" right="0"/>
+            <constraints/>
             <properties/>
-          </component>
-          <component id="56195" class="javax.swing.JButton" binding="mySaveAsButton">
-            <constraints>
-              <grid row="1" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text resource-bundle="messages/ApplicationBundle" key="button.save.as"/>
-            </properties>
-          </component>
-          <component id="c23b" class="javax.swing.JButton" binding="myDeleteButton">
-            <constraints>
-              <grid row="1" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text resource-bundle="messages/ApplicationBundle" key="button.delete"/>
-            </properties>
-          </component>
-          <component id="8c10c" class="javax.swing.JButton" binding="myExportButton">
-            <constraints>
-              <grid row="1" column="5" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text value="&amp;Share..."/>
-            </properties>
-          </component>
-          <component id="acae7" class="javax.swing.JRadioButton" binding="myUseGlobalScheme">
-            <constraints>
-              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text value="Use global settings"/>
-            </properties>
-          </component>
-          <component id="2249f" class="javax.swing.JRadioButton" binding="myUseProjectScheme">
-            <constraints>
-              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text value="Use per project settings"/>
-            </properties>
-          </component>
-          <component id="b2f25" class="javax.swing.JButton" binding="myImportButton">
-            <constraints>
-              <grid row="1" column="7" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text value="&amp;Import Shared..."/>
-            </properties>
-          </component>
-          <component id="a1636" class="javax.swing.JLabel">
-            <constraints>
-              <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text resource-bundle="messages/ApplicationBundle" key="editbox.scheme.name"/>
-            </properties>
-          </component>
-          <component id="230d4" class="javax.swing.JButton" binding="myExportAsGlobalButton">
-            <constraints>
-              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text value="Export..."/>
-            </properties>
-          </component>
-          <component id="7a162" class="javax.swing.JButton" binding="myCopyToProjectButton" default-binding="true">
-            <constraints>
-              <grid row="1" column="6" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text value="Copy to Project"/>
-            </properties>
-          </component>
-          <component id="e501" class="javax.swing.JButton" binding="myPredefinedButton">
-            <constraints>
-              <grid row="1" column="9" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <enabled value="false"/>
-              <text value="Predefined..."/>
-            </properties>
-          </component>
-          <hspacer id="6f6d">
-            <constraints>
-              <grid row="1" column="8" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-            </constraints>
-          </hspacer>
+            <border type="none"/>
+            <children>
+              <component id="c234b" class="javax.swing.JComboBox" binding="myCombo">
+                <constraints>
+                  <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties/>
+              </component>
+              <component id="56195" class="javax.swing.JButton" binding="mySaveAsButton">
+                <constraints>
+                  <grid row="1" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <text resource-bundle="messages/ApplicationBundle" key="button.save.as"/>
+                </properties>
+              </component>
+              <component id="c23b" class="javax.swing.JButton" binding="myDeleteButton">
+                <constraints>
+                  <grid row="1" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <text resource-bundle="messages/ApplicationBundle" key="button.delete"/>
+                </properties>
+              </component>
+              <component id="8c10c" class="javax.swing.JButton" binding="myExportButton">
+                <constraints>
+                  <grid row="1" column="5" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <text value="&amp;Share..."/>
+                </properties>
+              </component>
+              <component id="acae7" class="javax.swing.JRadioButton" binding="myUseGlobalScheme">
+                <constraints>
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <text value="Use global settings"/>
+                </properties>
+              </component>
+              <component id="2249f" class="javax.swing.JRadioButton" binding="myUseProjectScheme">
+                <constraints>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <text value="Use per project settings"/>
+                </properties>
+              </component>
+              <component id="b2f25" class="javax.swing.JButton" binding="myImportButton">
+                <constraints>
+                  <grid row="1" column="7" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <text value="&amp;Import Shared..."/>
+                </properties>
+              </component>
+              <component id="a1636" class="javax.swing.JLabel">
+                <constraints>
+                  <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <text resource-bundle="messages/ApplicationBundle" key="editbox.scheme.name"/>
+                </properties>
+              </component>
+              <component id="230d4" class="javax.swing.JButton" binding="myExportAsGlobalButton">
+                <constraints>
+                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <text value="Export..."/>
+                </properties>
+              </component>
+              <component id="7a162" class="javax.swing.JButton" binding="myCopyToProjectButton" default-binding="true">
+                <constraints>
+                  <grid row="1" column="6" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <text value="Copy to Project"/>
+                </properties>
+              </component>
+              <component id="e501" class="javax.swing.JButton" binding="myPredefinedButton">
+                <constraints>
+                  <grid row="1" column="9" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <enabled value="false"/>
+                  <text value="Predefined..."/>
+                </properties>
+              </component>
+              <hspacer id="6f6d">
+                <constraints>
+                  <grid row="1" column="8" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                </constraints>
+              </hspacer>
+            </children>
+          </grid>
         </children>
-      </grid>
+      </scrollpane>
+      <vspacer id="d9e80">
+        <constraints>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+        </constraints>
+      </vspacer>
     </children>
   </grid>
   <buttonGroups>

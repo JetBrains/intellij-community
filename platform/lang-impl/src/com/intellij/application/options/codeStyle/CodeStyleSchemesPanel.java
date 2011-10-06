@@ -26,6 +26,7 @@ import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeImpl;
+import com.intellij.ui.components.JBScrollPane;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -50,6 +51,7 @@ public class CodeStyleSchemesPanel{
   private JButton myExportAsGlobalButton;
   private JButton myCopyToProjectButton;
   public JButton myPredefinedButton;
+  private JBScrollPane myJBScrollPane;
   private boolean myIsReset = false;
   private NewCodeStyleSettingsPanel mySettingsPanel;
 
@@ -158,6 +160,8 @@ public class CodeStyleSchemesPanel{
         selectPredefinedStyle();
       }
     });
+
+    myJBScrollPane.setBorder(null);
   }
 
   private void onExportProjectScheme() {
