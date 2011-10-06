@@ -483,12 +483,14 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
         VcsBalloonProblemNotifier.showOverVersionControlView(myProject, message, MessageType.ERROR);
       }
     } catch (Exception e) {
-      final String reason = (e.getCause() != null ? e.getCause() : e).getMessage();
-      String message = GitBundle.message("vcs.unable.to.run.git", executable, reason);
-      if (!myProject.isDefault()) {
-        showMessage(message, ConsoleViewContentType.SYSTEM_OUTPUT.getAttributes());
+      if (getExecutableValidator().checkExecutableAndNotifyIfNeeded()) { // check executable before notifying error
+        final String reason = (e.getCause() != null ? e.getCause() : e).getMessage();
+        String message = GitBundle.message("vcs.unable.to.run.git", executable, reason);
+        if (!myProject.isDefault()) {
+          showMessage(message, ConsoleViewContentType.SYSTEM_OUTPUT.getAttributes());
+        }
+        VcsBalloonProblemNotifier.showOverVersionControlView(myProject, message, MessageType.ERROR);
       }
-      VcsBalloonProblemNotifier.showOverVersionControlView(myProject, message, MessageType.ERROR);
     }
   }
 
