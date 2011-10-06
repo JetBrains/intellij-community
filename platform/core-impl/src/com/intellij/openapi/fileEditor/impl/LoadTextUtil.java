@@ -36,6 +36,7 @@ import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
+import java.nio.charset.UnsupportedCharsetException;
 
 public final class LoadTextUtil {
   static final Key<String> DETECTED_LINE_SEPARATOR_KEY = Key.create("DETECTED_LINE_SEPARATOR_KEY");
@@ -144,26 +145,32 @@ public final class LoadTextUtil {
   }
 
   // returns offset of the BOM end
-  private static int detectAndSetBOM(@NotNull VirtualFile virtualFile, byte[] content) {
-    final byte[] bom = getBOM(content, virtualFile.getCharset());
+  private static Pair<Integer, Charset> detectAndSetBOM(@NotNull VirtualFile virtualFile, byte[] content) {
+    Pair<byte[], Charset> bomAndCharset = getBOMAndDetectedCharset(content, virtualFile.getCharset());
+    final byte[] bom = bomAndCharset.first;
     if (bom.length != 0) {
       virtualFile.setBOM(bom);
     }
-    return bom.length;
+    return Pair.create(bom.length, bomAndCharset.second);
   }
 
   @NotNull
-  private static byte[] getBOM(@NotNull byte[] content, final Charset charset) {
+  private static Pair<byte[], Charset> getBOMAndDetectedCharset(@NotNull byte[] content, final Charset charset) {
     if (charset != null && charset.name().contains(CharsetToolkit.UTF8) && CharsetToolkit.hasUTF8Bom(content)) {
-      return CharsetToolkit.UTF8_BOM;
+      return Pair.create(CharsetToolkit.UTF8_BOM, charset);
     }
-    if (CharsetToolkit.hasUTF16LEBom(content)) {
-      return CharsetToolkit.UTF16LE_BOM;
+    try {
+      if (CharsetToolkit.hasUTF16LEBom(content)) {
+        return Pair.create(CharsetToolkit.UTF16LE_BOM, Charset.forName("UTF-16LE"));
+      }
+      if (CharsetToolkit.hasUTF16BEBom(content)) {
+        return Pair.create(CharsetToolkit.UTF16BE_BOM, Charset.forName("UTF-16BE"));
+      }
     }
-    if (CharsetToolkit.hasUTF16BEBom(content)) {
-      return CharsetToolkit.UTF16BE_BOM;
+    catch (UnsupportedCharsetException ignore) {
     }
-    return ArrayUtil.EMPTY_BYTE_ARRAY;
+
+    return Pair.create(ArrayUtil.EMPTY_BYTE_ARRAY, charset);
   }
 
   /**
@@ -289,10 +296,10 @@ public final class LoadTextUtil {
 
   @NotNull
   public static CharSequence getTextByBinaryPresentation(@NotNull byte[] bytes, @NotNull VirtualFile virtualFile, final boolean rememberDetectedSeparators) {
-    final Charset charset = detectCharset(virtualFile, bytes);
-    final int offset = detectAndSetBOM(virtualFile, bytes);
+    detectCharset(virtualFile, bytes);
+    final Pair<Integer, Charset> offsetAndCharset = detectAndSetBOM(virtualFile, bytes);
 
-    final Pair<CharSequence, String> result = convertBytes(bytes, charset, offset);
+    final Pair<CharSequence, String> result = convertBytes(bytes, offsetAndCharset.second, offsetAndCharset.first);
     if (rememberDetectedSeparators) {
       virtualFile.putUserData(DETECTED_LINE_SEPARATOR_KEY, result.getSecond());
     }
@@ -359,8 +366,8 @@ public final class LoadTextUtil {
 
   @NotNull
   public static CharSequence getTextByBinaryPresentation(@NotNull byte[] bytes, Charset charset) {
-    final int offset = getBOM(bytes, charset).length;
-    return convertBytes(bytes, charset, offset).getFirst();
+    Pair<byte[], Charset> bomAndCharset = getBOMAndDetectedCharset(bytes, charset);
+    return convertBytes(bytes, bomAndCharset.second, bomAndCharset.first.length).getFirst();
   }
 
   // do not need to think about BOM here. it is processed outside
