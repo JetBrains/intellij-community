@@ -1,6 +1,7 @@
 package org.jetbrains.jps.incremental;
 
-import org.jetbrains.jps.incremental.impl.JavaBuilder;
+import org.jetbrains.jps.incremental.java.JavaBuilder;
+import org.jetbrains.jps.incremental.resourses.ResourcesBuilder;
 
 import java.util.*;
 import java.util.concurrent.ExecutorService;
@@ -35,6 +36,7 @@ public class BuilderRegistry {
 
     // todo: some builder registration mechanism needed
     myBuilders.get(BuilderCategory.TRANSLATOR).add(new JavaBuilder(myTasksExecutor));
+    myBuilders.get(BuilderCategory.TRANSLATOR).add(new ResourcesBuilder());
 
   }
 

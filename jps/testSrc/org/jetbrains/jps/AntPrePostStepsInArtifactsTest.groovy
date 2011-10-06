@@ -18,7 +18,7 @@ class AntPrePostStepsInArtifactsTest extends JpsBuildTestCase {
             file("file.txt")
           }
           file("prestep.txt", "pre1")
-          file("poststep.txt", "${PathUtil.toSystemIndependentPath(outDir.absolutePath)}/artifacts/main")
+          file("poststep.txt", "${com.intellij.openapi.util.io.FileUtil.toSystemIndependentName(outDir.absolutePath)}/artifacts/main")
         }
       }
     }

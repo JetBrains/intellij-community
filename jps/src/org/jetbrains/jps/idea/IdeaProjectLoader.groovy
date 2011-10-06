@@ -1,5 +1,6 @@
 package org.jetbrains.jps.idea
 
+import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.jps.artifacts.Artifact
 import org.jetbrains.jps.*
 
@@ -150,11 +151,13 @@ public class IdeaProjectLoader {
   }
 
   private def loadCompilerConfiguration(Node root) {
+    def rawPatterns = []
     def includePatterns = []
     def excludePatterns = []
     def componentTag = getComponent(root, "CompilerConfiguration")
     componentTag?.wildcardResourcePatterns?.getAt(0)?.entry?.each {Node entryTag ->
       String pattern = entryTag."@name"
+      rawPatterns << pattern;
       if (pattern.startsWith("!")) {
         excludePatterns << convertPattern(pattern.substring(1))
       }
@@ -166,6 +169,9 @@ public class IdeaProjectLoader {
     if (!includePatterns.isEmpty() || !excludePatterns.isEmpty()) {
       configuration.resourceIncludePatterns = includePatterns
       configuration.resourceExcludePatterns = excludePatterns
+    }
+    if (!rawPatterns.isEmpty()) {
+      configuration.resourcePatterns = rawPatterns;
     }
 
     def javacComponentTag = getComponent(root, "JavacSettings");
@@ -299,7 +305,7 @@ public class IdeaProjectLoader {
       return
     }
 
-    def moduleBasePath = PathUtil.toSystemIndependentPath(moduleFile.getParentFile().getAbsolutePath())
+    def moduleBasePath = FileUtil.toSystemIndependentName(moduleFile.getParentFile().getAbsolutePath())
     MacroExpander moduleMacroExpander = new ModuleMacroExpander(projectMacroExpander, moduleBasePath)
     def currentModuleName = moduleName(imlPath)
     project.createModule(currentModuleName) {
@@ -424,8 +430,8 @@ public class IdeaProjectLoader {
             if (projectOutputPath == null) {
               project.error("Module '$currentModuleName' uses output path inherited from project but project output path is not specified")
             }
-            currentModule.outputPath = PathUtil.toSystemIndependentPath(new File(new File(projectOutputPath, "production"), currentModuleName).absolutePath)
-            currentModule.testOutputPath = PathUtil.toSystemIndependentPath(new File(new File(projectOutputPath, "test"), currentModuleName).absolutePath)
+            currentModule.outputPath = FileUtil.toSystemIndependentName(new File(new File(projectOutputPath, "production"), currentModuleName).absolutePath)
+            currentModule.testOutputPath = FileUtil.toSystemIndependentName(new File(new File(projectOutputPath, "test"), currentModuleName).absolutePath)
           }
           else {
             currentModule.outputPath = moduleMacroExpander.expandMacros(IdeaProjectLoadingUtil.pathFromUrl(componentTag.output[0]?.@url))

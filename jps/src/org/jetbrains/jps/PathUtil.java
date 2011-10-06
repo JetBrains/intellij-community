@@ -8,9 +8,6 @@ import java.util.Set;
  * @author nik
  */
 public class PathUtil {
-  public static String toSystemIndependentPath(String path) {
-    return path.replace('\\', '/');
-  }
 
   public static String toPath(URI uri) {
     if (uri.getScheme() == null) {

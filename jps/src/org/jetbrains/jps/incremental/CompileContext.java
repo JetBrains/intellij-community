@@ -1,25 +1,34 @@
 package org.jetbrains.jps.incremental;
 
-import org.jetbrains.jps.Module;
-import org.jetbrains.jps.ModuleChunk;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.*;
 
 import java.io.File;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author Eugene Zhuravlev
  *         Date: 9/17/11
  */
-public abstract class CompileContext implements MessageHandler {
+public abstract class CompileContext implements MessageHandler, UserDataHolder {
+
   private final CompileScope myScope;
   private final boolean myIsMake;
+  private final Map<Key, Object> myUserData = new ConcurrentHashMap<Key, Object>();
   private boolean myCompilingTests = false;
 
   public CompileContext(CompileScope scope, boolean isMake) {
     myScope = scope;
     myIsMake = isMake;
+  }
+
+  public Project getProject() {
+    return myScope.getProject();
   }
 
   public boolean isMake() {
@@ -42,6 +51,14 @@ public abstract class CompileContext implements MessageHandler {
     return true; // todo
   }
 
+  public <T> T getUserData(@NotNull Key<T> key) {
+    return (T)myUserData.get(key);
+  }
+
+  public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
+    myUserData.put(key, value);
+  }
+
   public void processFiles(ModuleChunk chunk, FileProcessor processor) {
     for (Module module : chunk.getModules()) {
       if (!processModule(module, processor)) {
@@ -59,22 +76,23 @@ public abstract class CompileContext implements MessageHandler {
 
     final Collection<String> roots = myCompilingTests? (Collection<String>)module.getTestRoots() : (Collection<String>)module.getSourceRoots();
     for (String root : roots) {
-      if (!processRootRecursively(module, new File(root), processor, excludes)) {
+      final File rootFile = new File(root);
+      if (!processRootRecursively(module, rootFile, root, processor, excludes)) {
         return false;
       }
     }
     return true;
   }
 
-  private static boolean processRootRecursively(final Module module, final File file, FileProcessor processor, final Set<File> excluded) {
-    if (file.isDirectory()) {
-      if (isExcluded(excluded, file)) {
+  private static boolean processRootRecursively(final Module module, final File fromFile, final String sourceRoot, FileProcessor processor, final Set<File> excluded) {
+    if (fromFile.isDirectory()) {
+      if (isExcluded(excluded, fromFile)) {
         return true;
       }
-      final File[] children = file.listFiles();
+      final File[] children = fromFile.listFiles();
       if (children != null) {
         for (File child : children) {
-          final boolean shouldContinue = processRootRecursively(module, child, processor, excluded);
+          final boolean shouldContinue = processRootRecursively(module, child, sourceRoot, processor, excluded);
           if (!shouldContinue) {
             return false;
           }
@@ -82,7 +100,7 @@ public abstract class CompileContext implements MessageHandler {
       }
       return true;
     }
-    return processor.apply(module, file);
+    return processor.apply(module, fromFile, sourceRoot);
   }
 
   private static boolean isExcluded(final Set<File> excludedRoots, File file) {

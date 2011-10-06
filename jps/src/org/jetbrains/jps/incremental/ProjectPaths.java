@@ -12,6 +12,8 @@ import java.util.*;
  *         Date: 9/30/11
  */
 public class ProjectPaths {
+  public static final Key<ProjectPaths> KEY = Key.create("_project_paths_");
+
   @NotNull
   private final Project myProject;
   @Nullable

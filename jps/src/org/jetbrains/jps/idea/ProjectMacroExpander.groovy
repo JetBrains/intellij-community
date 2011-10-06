@@ -1,7 +1,7 @@
 package org.jetbrains.jps.idea
 
+import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.jps.MacroExpander
-import org.jetbrains.jps.PathUtil
 
 /**
  * @author nik
@@ -12,7 +12,7 @@ public class ProjectMacroExpander implements MacroExpander {
 
   ProjectMacroExpander(Map<String, String> pathVariables, String projectBasePath) {
     this.pathVariables = pathVariables
-    this.projectBasePath = PathUtil.toSystemIndependentPath(projectBasePath)
+    this.projectBasePath = FileUtil.toSystemIndependentName(projectBasePath)
   }
 
   @Override

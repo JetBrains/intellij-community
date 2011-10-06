@@ -1,5 +1,6 @@
 package org.jetbrains.jps
 
+import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.jps.incremental.ProjectPaths
 
 /**
@@ -78,7 +79,7 @@ public class ModuleClasspathTest extends JpsBuildTestCase {
   }
 
   private def assertClasspath(List<String> expected, List<String> classpath) {
-    String basePath = PathUtil.toSystemIndependentPath(new File(getProjectPath()).parentFile.absolutePath) + "/"
+    String basePath = FileUtil.toSystemIndependentName(new File(getProjectPath()).parentFile.absolutePath) + "/"
     List<String> actual = toSystemIndependentPaths(classpath).collect { String path ->
       path.startsWith(basePath) ? path.substring(basePath.length()) : path
     }
@@ -88,7 +89,7 @@ public class ModuleClasspathTest extends JpsBuildTestCase {
   private static List<String> toSystemIndependentPaths(List<String> classpath) {
     final List<String> result = new ArrayList<String>()
     for (String path: classpath) {
-      result.add(PathUtil.toSystemIndependentPath(path));
+      result.add(FileUtil.toSystemIndependentName(path));
     }
     return result
   }

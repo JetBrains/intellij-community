@@ -37,7 +37,7 @@ public class FilesCollector implements FileProcessor{
     return myContainer;
   }
 
-  public boolean apply(Module module, File file) {
+  public boolean apply(Module module, File file, String sourceRoot) {
     if (myFilter.accept(file)) {
       myContainer.add(file);
     }

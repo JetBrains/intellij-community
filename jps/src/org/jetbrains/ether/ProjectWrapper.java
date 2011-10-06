@@ -1,5 +1,6 @@
 package org.jetbrains.ether;
 
+import com.intellij.openapi.util.io.FileUtil;
 import org.codehaus.gant.GantBinding;
 import org.codehaus.groovy.runtime.DefaultGroovyMethods;
 import org.jetbrains.ether.dependencyView.*;
@@ -57,7 +58,7 @@ public class ProjectWrapper {
         public void logFilePaths(PrintStream stream, Collection<StringCache.S> paths) {
             List<String> strings = new ArrayList<String>(paths.size());
             for (StringCache.S path : paths) {
-              strings.add(PathUtil.toSystemIndependentPath(path.toString()));
+              strings.add(FileUtil.toSystemIndependentName(path.toString()));
             }
             logMany(stream, strings);
         }

@@ -1,8 +1,8 @@
-package org.jetbrains.jps.incremental.impl;
+package org.jetbrains.jps.incremental.java;
 
+import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.jps.Module;
 import org.jetbrains.jps.ModuleChunk;
-import org.jetbrains.jps.PathUtil;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
@@ -44,7 +44,10 @@ public class JavaBuilder extends Builder{
       return ExitCode.OK;
     }
 
-    final ProjectPaths paths = new ProjectPaths(context.getScope().getProject());
+    ProjectPaths paths = ProjectPaths.KEY.get(context);
+    if (paths == null) {
+      ProjectPaths.KEY.set(context, paths = new ProjectPaths(context.getProject()));
+    }
 
     final Collection<File> classpath = paths.getCompilationClasspath(chunk, context.isCompilingTests(), !context.isMake());
     final Collection<File> platformCp = paths.getPlatformCompilationClasspath(chunk, context.isCompilingTests(), !context.isMake());
@@ -77,7 +80,7 @@ public class JavaBuilder extends Builder{
         final String srcPath;
         final JavaFileObject source = diagnostic.getSource();
         if (source != null) {
-          srcPath = PathUtil.toSystemIndependentPath(new File(source.toUri()).getPath());
+          srcPath = FileUtil.toSystemIndependentName(new File(source.toUri()).getPath());
         }
         else {
           srcPath = null;

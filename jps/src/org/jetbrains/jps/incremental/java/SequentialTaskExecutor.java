@@ -1,4 +1,4 @@
-package org.jetbrains.jps.incremental.impl;
+package org.jetbrains.jps.incremental.java;
 
 import java.util.Queue;
 import java.util.concurrent.ExecutorService;

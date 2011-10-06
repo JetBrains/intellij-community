@@ -22,6 +22,10 @@ public class CompilerMessage extends BuildMessage {
     this(compilerName, kind, messageText, null, -1L, -1L, -1L, -1L, -1L);
   }
 
+  public CompilerMessage(String compilerName, Kind kind, String messageText, String sourcePath) {
+    this(compilerName, kind, messageText, sourcePath, -1L, -1L, -1L, -1L, -1L);
+  }
+
   public CompilerMessage(String compilerName, Kind kind, String messageText,
                          @Nullable String sourcePath,
                          long problemBeginOffset,

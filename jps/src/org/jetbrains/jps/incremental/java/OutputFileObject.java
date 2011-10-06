@@ -1,4 +1,4 @@
-package org.jetbrains.jps.incremental.impl;
+package org.jetbrains.jps.incremental.java;
 
 import javax.tools.JavaFileObject;
 import javax.tools.SimpleJavaFileObject;
