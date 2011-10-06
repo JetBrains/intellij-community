@@ -393,7 +393,7 @@ public class GenericPatchApplier {
           myHadAlreadyAppliedMet = value.isHaveAlreadyApplied();
         } else {
           // deletion
-          myTransformations.put(new TextRange(j, i), new MyAppliedData(Collections.<String>emptyList(), value.isHaveAlreadyApplied(),
+          myTransformations.put(new TextRange(j, i + (cntStart - endSize)), new MyAppliedData(Collections.<String>emptyList(), value.isHaveAlreadyApplied(),
                                                                    value.isPlaceCoinside(), value.isChangedCoinside(), value.myChangeType));
         }
       } else {
@@ -402,7 +402,7 @@ public class GenericPatchApplier {
           // just took one line
           assert cntStart > 0;
           final MyAppliedData newData =
-            new MyAppliedData(new ArrayList<String>(list.subList(cntStart - 1, endSize)), value.isHaveAlreadyApplied(), value.isPlaceCoinside(),
+            new MyAppliedData(new ArrayList<String>(list.subList(cntStart - (j - i), endSize)), value.isHaveAlreadyApplied(), value.isPlaceCoinside(),
                             value.isChangedCoinside(), value.myChangeType);
           final TextRange newRange = new TextRange(i, i);
           myTransformations.put(newRange, newData);
