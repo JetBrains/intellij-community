@@ -55,6 +55,7 @@ class Library extends LazyInitializeableObject implements ClasspathItem {
   }
 
   def List<String> getClasspathRoots(ClasspathKind kind) {
+    forceInit()
     classpath
   }
   

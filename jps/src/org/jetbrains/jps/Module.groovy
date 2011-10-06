@@ -111,6 +111,7 @@ class Module extends LazyInitializeableObject implements ClasspathItem {//}, Com
   }
 
   def List<ClasspathItem> getClasspath(ClasspathKind kind, boolean exportedOnly) {
+    forceInit()
     return dependencies.findAll({it.scope.isIncludedIn(kind) && (!exportedOnly || it.exported)})*.item;
   }
 
