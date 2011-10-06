@@ -122,6 +122,10 @@ class RunConfigurable extends BaseConfigurable {
             append((String) userObject, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
             setIcon(EDIT_DEFAULTS_ICON);
           }
+          else if (userObject instanceof ConfigurationFactory) {
+            append(((ConfigurationFactory)userObject).getName());
+            setIcon(((ConfigurationFactory)userObject).getIcon());
+          }
           else {
             final RunManager runManager = getRunManager();
             RunConfiguration configuration = null;
@@ -171,7 +175,16 @@ class RunConfigurable extends BaseConfigurable {
     final DefaultMutableTreeNode defaults = new DefaultMutableTreeNode("Defaults");
     final ConfigurationType[] configurationTypes = RunManagerImpl.getInstanceImpl(myProject).getConfigurationFactories();
     for (final ConfigurationType type : configurationTypes) {
-      if (!(type instanceof UnknownConfigurationType)) defaults.add(new DefaultMutableTreeNode(type));
+      if (!(type instanceof UnknownConfigurationType)) {
+        ConfigurationFactory[] configurationFactories = type.getConfigurationFactories();
+        DefaultMutableTreeNode typeNode = new DefaultMutableTreeNode(type);
+        defaults.add(typeNode);
+        if (configurationFactories.length != 1) {
+          for (ConfigurationFactory factory : configurationFactories) {
+            typeNode.add(new DefaultMutableTreeNode(factory));
+          }
+        }
+      }
     }
     if (defaults.getChildCount() > 0) myRoot.add(defaults);
 
@@ -197,15 +210,26 @@ class RunConfigurable extends BaseConfigurable {
               drawPressAddButtonMessage(userObject instanceof String ? null : (ConfigurationType)userObject);
             } else {
               final ConfigurationType type = (ConfigurationType)userObject;
-              Configurable configurable = myStoredComponents.get(type);
-              if (configurable == null){
-                configurable = TypeTemplatesConfigurable.createConfigurable(type, myProject);
-                myStoredComponents.put(type, configurable);
-                configurable.reset();
+              ConfigurationFactory[] factories = type.getConfigurationFactories();
+              if (factories.length == 1) {
+                Configurable configurable = myStoredComponents.get(type);
+                if (configurable == null){
+                  configurable = new TemplateConfigurable(RunManagerImpl.getInstanceImpl(myProject).getConfigurationTemplate(factories[0]));
+                  myStoredComponents.put(type, configurable);
+                  configurable.reset();
+                }
+                updateRightPanel(configurable);
               }
-
-              updateRightPanel(configurable);
+              else {
+                drawPressAddButtonMessage((ConfigurationType)userObject);
+              }
             }
+          }
+          else if (userObject instanceof ConfigurationFactory) {
+            TemplateConfigurable configurable = new TemplateConfigurable(
+              RunManagerImpl.getInstanceImpl(myProject).getConfigurationTemplate((ConfigurationFactory)userObject));
+            configurable.reset();
+            updateRightPanel(configurable);
           }
         }
         updateDialog();
