@@ -16,6 +16,7 @@
 package com.intellij.openapi.options.ex;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.OptionsBundle;
 
@@ -27,6 +28,10 @@ import com.intellij.openapi.options.OptionsBundle;
  * To change this template use Options | File Templates.
  */
 public class IdeConfigurablesGroup extends ConfigurablesGroupBase implements ConfigurableGroup {
+  public static IdeConfigurablesGroup getInstance() {
+    return ServiceManager.getService(IdeConfigurablesGroup.class);
+  }
+
   public IdeConfigurablesGroup() {
     super(ApplicationManager.getApplication(), ConfigurableExtensionPointUtil.APPLICATION_CONFIGURABLES, true);
   }
