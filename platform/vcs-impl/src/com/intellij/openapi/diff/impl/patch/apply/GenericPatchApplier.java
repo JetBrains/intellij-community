@@ -400,7 +400,7 @@ public class GenericPatchApplier {
         if (i < j) {
           // insert case
           // just took one line
-          assert j - i == 1 && cntStart > 0;
+          assert cntStart > 0;
           final MyAppliedData newData =
             new MyAppliedData(new ArrayList<String>(list.subList(cntStart - 1, endSize)), value.isHaveAlreadyApplied(), value.isPlaceCoinside(),
                             value.isChangedCoinside(), value.myChangeType);
