@@ -113,6 +113,9 @@ public abstract class GroovyIndentProcessor implements GroovyElementTypes {
     if (psiParent instanceof GrExpression) {
       return getExpressionIndent(psiParent, child);
     }
+    if (psiParent instanceof GrVariable && child.getPsi() == ((GrVariable)psiParent).getInitializerGroovy()) {
+      return Indent.getNormalIndent();
+    }
 
     //For parameter lists
     if (psiParent instanceof GrParameterList ||
@@ -139,7 +142,7 @@ public abstract class GroovyIndentProcessor implements GroovyElementTypes {
       return Indent.getSpaceIndent(GDOC_COMMENT_INDENT);
     }
 
-    if (psiParent instanceof GrNamedArgument) {
+    if (psiParent instanceof GrNamedArgument && child.getPsi() == ((GrNamedArgument)psiParent).getExpression()) {
       return Indent.getContinuationIndent();
     }
 
