@@ -17,6 +17,7 @@
 package com.intellij.openapi.options.ex;
 
 import com.intellij.ide.ui.search.SearchUtil;
+import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -112,13 +113,14 @@ public class GlassPanel extends JComponent {
 
     Insets insetsToIgnore = lightComponent.getInsets();
     final boolean isWithBorder = Boolean.TRUE.equals(lightComponent.getClientProperty(SearchUtil.HIGHLIGHT_WITH_BORDER));
+    final boolean isLabelFromTabbedPane = Boolean.TRUE.equals(lightComponent.getClientProperty(JBTabbedPane.LABEL_FROM_TABBED_PANE));
 
     if ((insetsToIgnore == null || (UIUtil.isUnderAquaLookAndFeel() && lightComponent instanceof JButton)) || isWithBorder) {
       insetsToIgnore = EMPTY_INSETS;
     }
 
-    int hInset = isWithBorder ? 1 : 7;
-    int vInset = isWithBorder ? 1 : 5;
+    int hInset = isWithBorder ? 7 : isLabelFromTabbedPane ? 20 : 7;
+    int vInset = isWithBorder ? 1 : isLabelFromTabbedPane ? 10 : 5;
     final Area area = new Area(new RoundRectangle2D.Double(x - hInset + insetsToIgnore.left,
                                                            y - vInset + insetsToIgnore.top,
                                                            lightComponent.getWidth() + hInset * 2 - insetsToIgnore.right - insetsToIgnore.left,

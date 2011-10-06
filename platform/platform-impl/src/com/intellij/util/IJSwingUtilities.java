@@ -184,19 +184,11 @@ public class IJSwingUtilities {
     if (!UIUtil.isUnderAquaLookAndFeel()) return;
 
     if (component instanceof JComboBox) {
-      addInsets(component, new Insets(0,-2,0,0));
-      addInsets(label, new Insets(0,2,0,0));
+      UIUtil.addInsets(component, new Insets(0,-2,0,0));
+      UIUtil.addInsets(label, new Insets(0,2,0,0));
     }
     if (component instanceof JTextField || component instanceof EditorTextField) {
-      addInsets(label, new Insets(0,3,0,0));
-    }
-  }
-
-  public static void addInsets(JComponent component, Insets insets) {
-    if (component.getBorder() != null) {
-      component.setBorder(new CompoundBorder(new EmptyBorder(insets), component.getBorder()));
-    } else {
-      component.setBorder(new EmptyBorder(insets));
+      UIUtil.addInsets(label, new Insets(0,3,0,0));
     }
   }
 }

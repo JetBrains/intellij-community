@@ -319,7 +319,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
             });
             final JPanel anyVarPanel = new JPanel(new BorderLayout());
             anyVarPanel.add(myAnyVar, BorderLayout.SOUTH);
-            IJSwingUtilities.addInsets(anyVarPanel, new Insets(0,0,8,0));
+            UIUtil.addInsets(anyVarPanel, new Insets(0,0,8,0));
             additionalPanel.add(anyVarPanel, BorderLayout.CENTER);
             //additionalPanel.setPreferredSize(new Dimension(t.getWidth() / 3, -1));
             add(additionalPanel, BorderLayout.SOUTH);
