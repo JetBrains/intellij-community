@@ -313,15 +313,14 @@ public class Mappings {
 
                 for (MethodRepr m : diff.methods().removed()) {
                     final Collection<StringCache.S> propagated = propagateMethodAccess(m.name, it.name);
-
                     affectMethodUsages(m, propagated, m.createUsage(it.name), affectedUsages, dependants);
-
-                    affectedUsages.add(m.createUsage(it.name));
+                    affectSubclasses(it.name, affectedFiles, affectedUsages,dependants, false);
                 }
 
                 for (Pair<MethodRepr, Difference> mr : diff.methods().changed()) {
                     final MethodRepr m = mr.fst;
                     final MethodRepr.Diff d = (MethodRepr.Diff) mr.snd;
+                    final boolean throwsChanged = (d.exceptions().added().size() > 0) || (d.exceptions().changed().size() > 0);
 
                     if (it.isAnnotation()) {
                         if (d.defaultRemoved()) {
@@ -329,7 +328,7 @@ public class Mappings {
                             l.add(m.name);
                             annotationQuery.add((UsageRepr.AnnotationUsage) UsageRepr.createAnnotationUsage(TypeRepr.createClassType(it.name), l, null));
                         }
-                    } else if (d.base() != Difference.NONE) {
+                    } else if (d.base() != Difference.NONE || throwsChanged) {
                         if (d.packageLocalOn()) {
                             final UsageRepr.Usage usage = m.createUsage(it.name);
 
@@ -339,13 +338,17 @@ public class Mappings {
 
                         final Collection<StringCache.S> propagated = propagateMethodAccess(m.name, it.name);
 
-                        if ((d.base() & Difference.TYPE) > 0 || (d.base() & Difference.SIGNATURE) > 0) {
+                        if ((d.base() & Difference.TYPE) > 0 || (d.base() & Difference.SIGNATURE) > 0 || throwsChanged) {
                             affectMethodUsages(m, propagated, m.createUsage(it.name), affectedUsages, dependants);
                         } else if ((d.base() & Difference.ACCESS) > 0) {
                             if ((d.addedModifiers() & Opcodes.ACC_STATIC) > 0 ||
                                     (d.removedModifiers() & Opcodes.ACC_STATIC) > 0 ||
                                     (d.addedModifiers() & Opcodes.ACC_PRIVATE) > 0) {
                                 affectMethodUsages(m, propagated, m.createUsage(it.name), affectedUsages, dependants);
+
+                                if ((d.addedModifiers() & Opcodes.ACC_STATIC) > 0){
+                                    affectSubclasses(it.name, affectedFiles, affectedUsages, dependants, false);
+                                }
                             } else {
                                 if ((d.addedModifiers() & Opcodes.ACC_FINAL) > 0 ||
                                         (d.addedModifiers() & Opcodes.ACC_PUBLIC) > 0 ||
@@ -353,7 +356,7 @@ public class Mappings {
                                     affectSubclasses(it.name, affectedFiles, affectedUsages, dependants, false);
                                 }
 
-                                if ((d.addedModifiers() & Opcodes.ACC_PROTECTED) > 0 && (d.removedModifiers() & Opcodes.ACC_PUBLIC) > 0) {
+                                if ((d.addedModifiers() & Opcodes.ACC_PROTECTED) > 0 && !((d.removedModifiers() & Opcodes.ACC_PRIVATE) > 0)) {
                                     final Set<UsageRepr.Usage> usages = new HashSet<UsageRepr.Usage>();
                                     affectMethodUsages(m, propagated, m.createUsage(it.name), usages, dependants);
 
@@ -368,7 +371,6 @@ public class Mappings {
                     }
                 }
 
-
                 final int mask = Opcodes.ACC_STATIC | Opcodes.ACC_FINAL;
 
                 for (FieldRepr f : diff.fields().removed()) {
@@ -377,7 +379,6 @@ public class Mappings {
                     }
 
                     final Collection<StringCache.S> propagated = propagateFieldAccess(f.name, it.name);
-
                     affectFieldUsages(f, propagated, f.createUsage(it.name), affectedUsages, dependants);
                 }
 

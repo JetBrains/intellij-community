@@ -28,11 +28,24 @@ public class TestMethodModifiers extends IncrementalTestCase {
         doTest();
     }
 
+    public void testSetPrivate() throws Exception {
+        doTest();
+    }
+
+    public void testSetProtected() throws Exception {
+        doTest();
+    }
+
+
     public void testUnsetFinal() throws Exception {
         doTest();
     }
 
     public void testUnsetStatic() throws Exception {
+        doTest();
+    }
+
+    public void testSetStatic() throws Exception {
         doTest();
     }
 }
