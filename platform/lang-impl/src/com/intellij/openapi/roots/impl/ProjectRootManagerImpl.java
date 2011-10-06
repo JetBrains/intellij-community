@@ -701,6 +701,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     Set<OrderEntry> owners = myRegisteredRootProviders.get(provider);
     if (owners == null) {
       owners = new HashSet<OrderEntry>();
+      myRegisteredRootProviders.put(provider, owners);
       provider.addRootSetChangedListener(myRootProviderChangeListener);
     }
     owners.add(owner);
