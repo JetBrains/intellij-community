@@ -22,11 +22,12 @@ import com.intellij.execution.RunCanceledByUserException;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.process.ProcessNotCreatedException;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -36,6 +37,8 @@ import javax.swing.event.HyperlinkListener;
 
 public class ExecutionUtil {
   private static final Logger LOG = Logger.getInstance("com.intellij.execution.runners.ExecutionUtil");
+
+  private static final NotificationGroup ourNotificationGroup = NotificationGroup.logOnlyGroup("Execution");
 
   private ExecutionUtil() {
   }
@@ -54,18 +57,18 @@ public class ExecutionUtil {
     if (e instanceof RunCanceledByUserException) return;
 
     LOG.debug(e);
-    
-    String error = e.getMessage();
+
+    String description = e.getMessage();
     HyperlinkListener listener = null;
 
-    if ((error.contains("87") || error.contains("111") || error.contains("206")) &&
+    if ((description.contains("87") || description.contains("111") || description.contains("206")) &&
         e instanceof ProcessNotCreatedException &&
         !PropertiesComponent.getInstance(project).isTrueValue("dynamic.classpath")) {
       final String commandLineString = ((ProcessNotCreatedException)e).getCommandLine().getCommandLineString();
       if (commandLineString.length() > 1024 * 32) {
-        error = "Command line is too long. In order to reduce its length classpath file can be used.<br>" +
-                "Would you like to enable classpath file mode for all run configurations of your project?<br>" +
-                "<a href=\"\">Enable</a>";
+        description = "Command line is too long. In order to reduce its length classpath file can be used.<br>" +
+                      "Would you like to enable classpath file mode for all run configurations of your project?<br>" +
+                      "<a href=\"\">Enable</a>";
 
         listener = new HyperlinkListener() {
           @Override
@@ -75,17 +78,20 @@ public class ExecutionUtil {
         };
       }
     }
-    final String message = ExecutionBundle.message("error.running.configuration.with.error.error.message", taskName, error);
+    final String title = ExecutionBundle.message("error.running.configuration.message", taskName);
+    final String fullMessage = title + ":<br>" + description;
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      LOG.error(message);
+      LOG.error(fullMessage);
     }
 
     final HyperlinkListener finalListener = listener;
+    final String finalDescription = description;
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
-        ToolWindowManager.getInstance(project).notifyByBalloon(toolWindowId, MessageType.ERROR, message, null, finalListener);
+        ToolWindowManager.getInstance(project).notifyByBalloon(toolWindowId, MessageType.ERROR, fullMessage, null, finalListener);
+        ourNotificationGroup.createNotification(title, finalDescription, NotificationType.ERROR, null).notify(project);
       }
     });
   }

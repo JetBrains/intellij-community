@@ -15,8 +15,6 @@
  */
 package com.intellij.notification;
 
-import com.intellij.notification.impl.NotificationSettings;
-import com.intellij.notification.impl.NotificationsConfiguration;
 import com.intellij.openapi.ui.MessageType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,15 +25,18 @@ import org.jetbrains.annotations.Nullable;
 public class NotificationGroup {
   private final String myDisplayId;
 
-  public NotificationGroup(String displayId, NotificationDisplayType defaultDisplayType, boolean logByDefault) {
+  public NotificationGroup(@NotNull String displayId, @NotNull NotificationDisplayType defaultDisplayType, boolean logByDefault) {
     this(displayId, defaultDisplayType, logByDefault, null);
   }
 
-  public NotificationGroup(String displayId, NotificationDisplayType defaultDisplayType, boolean logByDefault, @Nullable String toolWindowId) {
+  public NotificationGroup(@NotNull String displayId,
+                           @NotNull NotificationDisplayType defaultDisplayType,
+                           boolean logByDefault,
+                           @Nullable String toolWindowId) {
     myDisplayId = displayId;
 
     NotificationsConfiguration configuration = NotificationsConfiguration.getNotificationsConfiguration();
-    configuration.registerDefaultSettings(new NotificationSettings(displayId, defaultDisplayType, logByDefault));
+    configuration.register(displayId, defaultDisplayType, logByDefault);
     if (toolWindowId != null) {
       configuration.registerToolWindowCapability(displayId, toolWindowId);
     }
@@ -65,7 +66,10 @@ public class NotificationGroup {
     return createNotification("", content, type, null);
   }
 
-  public Notification createNotification(@NotNull final String title, @NotNull final String content, @NotNull final NotificationType type, @Nullable NotificationListener listener) {
+  public Notification createNotification(@NotNull final String title,
+                                         @NotNull final String content,
+                                         @NotNull final NotificationType type,
+                                         @Nullable NotificationListener listener) {
     return new Notification(myDisplayId, title, content, type, listener);
   }
 }

@@ -17,7 +17,7 @@ package com.intellij.notification.impl.ui;
 
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.impl.NotificationSettings;
-import com.intellij.notification.impl.NotificationsConfiguration;
+import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.ComboBoxTableRenderer;
 import com.intellij.openapi.ui.StripeTable;
@@ -132,7 +132,7 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
           if (value != NotificationDisplayType.TOOL_WINDOW) return true;
 
           String groupId = ((NotificationsTableModel)getModel()).getSettings(row).getGroupId();
-          return NotificationsConfiguration.getNotificationsConfiguration().hasToolWindowCapability(groupId);
+          return NotificationsConfigurationImpl.getNotificationsConfigurationImpl().hasToolWindowCapability(groupId);
         }
 
         @Override
@@ -221,7 +221,7 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
 
     public void apply() {
       if (myRemoved) {
-        NotificationsConfiguration.remove(myOriginal.getGroupId());
+        NotificationsConfigurationImpl.remove(myOriginal.getGroupId());
       }
       else {
         if (hasChanged()) {
@@ -243,7 +243,7 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
     private final List<SettingsWrapper> mySettings;
 
     public NotificationsTableModel() {
-      final NotificationSettings[] settings = NotificationsConfiguration.getAllSettings();
+      final NotificationSettings[] settings = NotificationsConfigurationImpl.getAllSettings();
       final List<SettingsWrapper> list = new ArrayList<SettingsWrapper>();
       for (NotificationSettings setting : settings) {
         list.add(new SettingsWrapper(setting));
