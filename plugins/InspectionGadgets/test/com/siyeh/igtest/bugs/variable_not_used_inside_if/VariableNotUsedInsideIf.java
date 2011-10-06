@@ -30,5 +30,10 @@ public class VariableNotUsedInsideIf {
     if (s == null) {
       System.out.println();
     }
+    if (s != null) {
+
+    } else {
+      
+    }
   }
 }

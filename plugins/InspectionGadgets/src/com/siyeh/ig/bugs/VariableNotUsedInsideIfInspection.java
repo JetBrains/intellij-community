@@ -94,7 +94,7 @@ public class VariableNotUsedInsideIfInspection extends BaseInspection {
 
     private void checkVariableUsage(PsiReferenceExpression referenceExpression,
                                     PsiElement thenContext, PsiElement elseContext) {
-      if (thenContext == null || elseContext == null) {
+      if (thenContext == null) {
         return;
       }
       final PsiElement target = referenceExpression.resolve();
@@ -105,7 +105,8 @@ public class VariableNotUsedInsideIfInspection extends BaseInspection {
       if (contextExits(thenContext) || VariableAccessUtils.variableIsAssigned(variable, thenContext)) {
         return;
       }
-      if (contextExits(elseContext) || VariableAccessUtils.variableIsUsed(variable, elseContext)) {
+      if (elseContext != null &&
+          (contextExits(elseContext) || VariableAccessUtils.variableIsUsed(variable, elseContext))) {
         return;
       }
       registerError(referenceExpression);
