@@ -143,7 +143,12 @@ public class Mappings {
             affectedUsages.add(reprByName(className).createUsage());
         }
 
-        dependants.addAll(fileToFileDependency.foxyGet(fileName));
+        final Collection<StringCache.S> depFiles = fileToFileDependency.foxyGet(fileName);
+
+        if (depFiles != null) {
+            dependants.addAll(depFiles);
+        }
+
         affectedFiles.add(fileName);
 
         final Collection<StringCache.S> directSubclasses = classToSubclasses.foxyGet(className);
@@ -314,7 +319,7 @@ public class Mappings {
                 for (MethodRepr m : diff.methods().removed()) {
                     final Collection<StringCache.S> propagated = propagateMethodAccess(m.name, it.name);
                     affectMethodUsages(m, propagated, m.createUsage(it.name), affectedUsages, dependants);
-                    affectSubclasses(it.name, affectedFiles, affectedUsages,dependants, false);
+                    affectSubclasses(it.name, affectedFiles, affectedUsages, dependants, false);
                 }
 
                 for (Pair<MethodRepr, Difference> mr : diff.methods().changed()) {
@@ -346,7 +351,7 @@ public class Mappings {
                                     (d.addedModifiers() & Opcodes.ACC_PRIVATE) > 0) {
                                 affectMethodUsages(m, propagated, m.createUsage(it.name), affectedUsages, dependants);
 
-                                if ((d.addedModifiers() & Opcodes.ACC_STATIC) > 0){
+                                if ((d.addedModifiers() & Opcodes.ACC_STATIC) > 0) {
                                     affectSubclasses(it.name, affectedFiles, affectedUsages, dependants, false);
                                 }
                             } else {

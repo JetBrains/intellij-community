@@ -1,0 +1,25 @@
+Request to make modules:
+module DeleteInner
+End of request
+digraph X {
+  DeleteInner[label="DeleteInner"];
+}
+digraph X {
+  DeleteInner[label="DeleteInner"];
+}
+Propagated modules:
+module DeleteInner
+End of propagated
+Cleaning output files:
+out/production/DeleteInner/Outer$Inner.class
+out/production/DeleteInner/Outer.class
+End of files
+Compiling files:
+src/Outer.java
+End of files
+Cleaning output files:
+out/production/DeleteInner/Client.class
+End of files
+Compiling files:
+src/Client.java
+End of files
