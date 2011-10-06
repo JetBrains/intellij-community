@@ -52,6 +52,12 @@ public class ArrayUtil {
       return newStringArray(count);
     }
   };
+  public static final ArrayFactory<Object> OBJECT_ARRAY_FACTORY = new ArrayFactory<Object>() {
+    @Override
+    public Object[] create(int count) {
+      return newObjectArray(count);
+    }
+  };
 
   private ArrayUtil() { }
 
@@ -616,6 +622,10 @@ public class ArrayUtil {
 
   public static String[] newStringArray(int count) {
     return count == 0 ? EMPTY_STRING_ARRAY : new String[count];
+  }
+  @NotNull
+  public static Object[] newObjectArray(int count) {
+    return count == 0 ? EMPTY_OBJECT_ARRAY : new Object[count];
   }
 
   @NotNull
