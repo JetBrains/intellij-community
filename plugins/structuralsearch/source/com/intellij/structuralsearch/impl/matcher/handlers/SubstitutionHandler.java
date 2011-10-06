@@ -352,9 +352,10 @@ public class SubstitutionHandler extends MatchingHandler {
   }
 
   protected boolean doMatchSequentiallyBySimpleHandler(NodeIterator nodes, NodeIterator nodes2, MatchContext context) {
+    final boolean oldValue = context.shouldRecursivelyMatch();
     context.setShouldRecursivelyMatch(false);
     final boolean result = super.matchSequentially(nodes, nodes2, context);
-    context.setShouldRecursivelyMatch(true);
+    context.setShouldRecursivelyMatch(oldValue);
     return result;
   }
 

@@ -193,6 +193,7 @@ public class MatcherImpl {
     MatchOptions options = context.getOptions();
     matchContext.setOptions(options);
     matchContext.setPattern(context.getPattern());
+    matchContext.setShouldRecursivelyMatch(context.shouldRecursivelyMatch());
     visitor.setMatchContext(matchContext);
 
     matchContext.setSink(

@@ -17,6 +17,11 @@ public final class LightTopLevelMatchingHandler extends MatchingHandler implemen
   }
 
   @Override
+  public boolean canMatch(PsiElement patternNode, PsiElement matchedNode) {
+    return myDelegate.canMatch(patternNode, matchedNode);
+  }
+
+  @Override
   public boolean matchSequentially(final NodeIterator nodes, final NodeIterator nodes2, final MatchContext context) {
     return myDelegate.matchSequentially(nodes, nodes2, context);
   }
