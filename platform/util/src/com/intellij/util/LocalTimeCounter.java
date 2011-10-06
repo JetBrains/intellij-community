@@ -15,10 +15,15 @@
  */
 package com.intellij.util;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 public class LocalTimeCounter {
-  private static volatile long ourCurrentTime = 0;
+  private static final AtomicLong ourCurrentTime = new AtomicLong();
+
+  private LocalTimeCounter() {
+  }
 
   public static long currentTime() {
-    return ++ourCurrentTime;
+    return ourCurrentTime.incrementAndGet();
   }
 }
