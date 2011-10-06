@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.Serializable;
 
 public class TextRange implements Segment, Serializable {
+  private static final long serialVersionUID = -670091356599757430L;
   public static final TextRange EMPTY_RANGE = new TextRange(0,0);
   private final int myStartOffset;
   private final int myEndOffset;
