@@ -40,9 +40,6 @@ public abstract class MutableLookupElement<T> extends LookupElement{
   public abstract MutableLookupElement<T> setPriority(double priority);
 
   @NotNull
-  public abstract MutableLookupElement<T> setGrouping(int grouping);
-
-  @NotNull
   public abstract MutableLookupElement<T> setPresentableText(@NotNull String displayText);
 
   @NotNull

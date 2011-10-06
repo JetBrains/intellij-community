@@ -60,7 +60,7 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
 
     InsertHandlerState state = new InsertHandlerState(context.getSelectionEndOffset(), context.getSelectionEndOffset());
 
-    if (CompletionUtil.isOverwrite(item, completionChar)) {
+    if (completionChar == Lookup.REPLACE_SELECT_CHAR) {
       removeEndOfIdentifier(context);
     }
     else if(context.getOffsetMap().getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET) != context.getSelectionEndOffset()) {

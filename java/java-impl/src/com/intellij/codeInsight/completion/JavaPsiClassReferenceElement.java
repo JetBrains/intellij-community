@@ -19,6 +19,7 @@ import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.lookup.DefaultLookupItemRenderer;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
 import com.intellij.codeInsight.lookup.impl.JavaElementLookupRenderer;
 import com.intellij.openapi.util.ClassConditionKey;
 import com.intellij.openapi.util.Comparing;
@@ -110,7 +111,7 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> {
     String tailText = StringUtil.notNullize((String) item.getAttribute(LookupItem.TAIL_TEXT_ATTR));
     PsiSubstitutor substitutor = (PsiSubstitutor)item.getAttribute(LookupItem.SUBSTITUTOR);
 
-    if (item.getAttribute(LookupItem.INDICATE_ANONYMOUS) != null &&
+    if (item instanceof PsiTypeLookupItem && ((PsiTypeLookupItem)item).isIndicateAnonymous() &&
         (psiClass.isInterface() || psiClass.hasModifierProperty(PsiModifier.ABSTRACT))) {
       tailText = "{...}" + tailText;
     }
