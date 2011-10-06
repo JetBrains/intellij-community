@@ -130,15 +130,18 @@ public class MvcConsole implements Disposable {
   }
 
   public void show(@Nullable final Runnable runnable, boolean focus) {
-    myToolWindow.activate(new Runnable() {
-      public void run() {
-        if (myProject.isDisposed()) return;
+    Runnable r = null;
+    if (runnable != null) {
+      r = new Runnable() {
+        public void run() {
+          if (myProject.isDisposed()) return;
 
-        if (runnable != null) {
           runnable.run();
         }
-      }
-    }, focus);
+      };
+    }
+
+    myToolWindow.activate(r, focus);
   }
 
   private static class MyProcessInConsole implements ConsoleProcessDescriptor {
@@ -146,6 +149,7 @@ public class MvcConsole implements Disposable {
     final ProcessBuilder pb;
     final @Nullable Runnable onDone;
     final boolean closeOnDone;
+    final boolean showConsole;
     final String[] input;
     private ProgressIndicator myIndicator;
     private Runnable myAfter;
@@ -156,6 +160,7 @@ public class MvcConsole implements Disposable {
     public MyProcessInConsole(final Module module,
                               final ProcessBuilder pb,
                               final Runnable onDone,
+                              final boolean showConsole,
                               final boolean closeOnDone,
                               final String[] input) {
       this.module = module;
@@ -163,12 +168,14 @@ public class MvcConsole implements Disposable {
       this.onDone = onDone;
       this.closeOnDone = closeOnDone;
       this.input = input;
+      this.showConsole = showConsole;
     }
 
     public ConsoleProcessDescriptor addProcessListener(@NotNull ProcessListener listener) {
       if (myHandler != null) {
         myHandler.addProcessListener(listener);
-      } else {
+      }
+      else {
         myListeners.add(listener);
       }
       return this;
@@ -177,7 +184,8 @@ public class MvcConsole implements Disposable {
     public ConsoleProcessDescriptor waitWith(ProgressIndicator progressIndicator, @Nullable Runnable after) {
       if (myHandler != null) {
         doWait(progressIndicator, after);
-      } else {
+      }
+      else {
         myIndicator = progressIndicator;
         myAfter = after;
       }
@@ -208,15 +216,25 @@ public class MvcConsole implements Disposable {
   }
 
   public ConsoleProcessDescriptor executeProcess(final Module module,
-                                          final ProcessBuilder pb,
-                                          final @Nullable Runnable onDone,
-                                          final boolean closeOnDone,
-                                          final String... input) {
+                                                 final ProcessBuilder pb,
+                                                 final @Nullable Runnable onDone,
+                                                 final boolean closeOnDone,
+                                                 final String... input) {
+    return executeProcess(module, pb, onDone, true, closeOnDone, input);
+  }
+
+  public ConsoleProcessDescriptor executeProcess(final Module module,
+                                                 final ProcessBuilder pb,
+                                                 final @Nullable Runnable onDone,
+                                                 boolean showConsole,
+                                                 final boolean closeOnDone,
+                                                 final String... input) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    final MyProcessInConsole process = new MyProcessInConsole(module, pb, onDone, closeOnDone, input);
+    final MyProcessInConsole process = new MyProcessInConsole(module, pb, onDone, showConsole, closeOnDone, input);
     if (isExecuting()) {
       myProcessQueue.add(process);
-    } else {
+    }
+    else {
       executeProcessImpl(process, true);
     }
     return process;
@@ -339,10 +357,11 @@ public class MvcConsole implements Disposable {
         });
       }
     };
-    
-    if (modalContext) {
+
+    if (modalContext || !pic.showConsole) {
       runnable.run();
-    } else {
+    }
+    else {
       show(runnable, toFocus);
     }
   }
