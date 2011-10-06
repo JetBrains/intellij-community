@@ -32,9 +32,6 @@
       <keyboard-shortcut first-keystroke="meta alt I" />
       <keyboard-shortcut first-keystroke="control I" />
     </action>
-    <action id="Back">
-      <keyboard-shortcut first-keystroke="control meta LEFT" />
-    </action>
     <action id="Build">
       <keyboard-shortcut first-keystroke="meta B" />
     </action>
@@ -188,9 +185,6 @@
       <keyboard-shortcut first-keystroke="alt F7" />
       <keyboard-shortcut first-keystroke="meta F7" />
     </action>
-    <action id="Forward">
-      <keyboard-shortcut first-keystroke="control meta RIGHT" />
-    </action>
     <action id="GotoDeclaration">
       <mouse-shortcut keystroke="meta button1" />
       <mouse-shortcut keystroke="button2" />
@@ -246,9 +240,6 @@
     <action id="MoveStatementUp" />
     <action id="NextEditorTab" />
     <action id="NextProjectWindow" />
-    <action id="NextTab">
-      <keyboard-shortcut first-keystroke="shift meta CLOSE_BRACKET" />
-    </action>
     <action id="OpenFile">
     </action>
     <action id="OpenXcodeProjectAction">
@@ -265,9 +256,6 @@
     </action>
     <action id="PreviousEditorTab" />
     <action id="PreviousProjectWindow" />
-    <action id="PreviousTab">
-      <keyboard-shortcut first-keystroke="shift meta OPEN_BRACKET" />
-    </action>
     <action id="Print">
       <keyboard-shortcut first-keystroke="meta P" />
     </action>
@@ -351,5 +339,33 @@
     <action id="GotoRelated">
       <keyboard-shortcut first-keystroke="control meta UP" />
     </action>
+
+    <action id="PreviousTab">
+      <keyboard-shortcut first-keystroke="meta shift OPEN_BRACKET"/>
+    </action>
+    <action id="NextTab">
+      <keyboard-shortcut first-keystroke="meta shift CLOSE_BRACKET"/>
+    </action>
+    <action id="EditorCodeBlockStart">
+      <keyboard-shortcut first-keystroke="meta alt OPEN_BRACKET"/>
+    </action>
+    <action id="EditorCodeBlockEnd">
+      <keyboard-shortcut first-keystroke="meta alt CLOSE_BRACKET"/>
+    </action>
+    <action id="EditorCodeBlockStartWithSelection">
+      <keyboard-shortcut first-keystroke="meta alt shift OPEN_BRACKET"/>
+    </action>
+    <action id="EditorCodeBlockEndWithSelection">
+      <keyboard-shortcut first-keystroke="meta alt shift CLOSE_BRACKET"/>
+    </action>
+    <action id="Back">
+      <keyboard-shortcut first-keystroke="meta OPEN_BRACKET"/>
+      <keyboard-shortcut first-keystroke="meta control LEFT"/>
+    </action>
+    <action id="Forward">
+      <keyboard-shortcut first-keystroke="meta CLOSE_BRACKET"/>
+      <keyboard-shortcut first-keystroke="meta control RIGHT"/>
+    </action>
+
   </keymap>
 </component>

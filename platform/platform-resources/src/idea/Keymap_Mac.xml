@@ -39,9 +39,6 @@
     <action id="SmartTypeCompletion">
       <keyboard-shortcut first-keystroke="control shift SPACE"/>
     </action>
-    <action id="PreviousTab">
-      <keyboard-shortcut first-keystroke="control LEFT"/>
-    </action>
     <action id="PreviousEditorTab">
       <keyboard-shortcut first-keystroke="control shift LEFT"/>
     </action>
@@ -148,9 +145,6 @@
     
     <action id="MethodUp">
       <keyboard-shortcut first-keystroke="control UP"/>
-    </action>
-    <action id="NextTab">
-      <keyboard-shortcut first-keystroke="control RIGHT"/>
     </action>
     <action id="ShowContent">
       <keyboard-shortcut first-keystroke="control DOWN"/>
@@ -464,6 +458,35 @@
 
     <action id="context.save"/>
     <action id="context.load"/>
+
+    <action id="PreviousTab">
+      <keyboard-shortcut first-keystroke="meta shift OPEN_BRACKET"/>
+      <keyboard-shortcut first-keystroke="control LEFT"/>
+    </action>
+    <action id="NextTab">
+      <keyboard-shortcut first-keystroke="meta shift CLOSE_BRACKET"/>
+      <keyboard-shortcut first-keystroke="control RIGHT"/>
+    </action>
+    <action id="EditorCodeBlockStart">
+      <keyboard-shortcut first-keystroke="meta alt OPEN_BRACKET"/>
+    </action>
+    <action id="EditorCodeBlockEnd">
+      <keyboard-shortcut first-keystroke="meta alt CLOSE_BRACKET"/>
+    </action>
+    <action id="EditorCodeBlockStartWithSelection">
+      <keyboard-shortcut first-keystroke="meta alt shift OPEN_BRACKET"/>
+    </action>
+    <action id="EditorCodeBlockEndWithSelection">
+      <keyboard-shortcut first-keystroke="meta alt shift CLOSE_BRACKET"/>
+    </action>
+    <action id="Back">
+      <keyboard-shortcut first-keystroke="meta OPEN_BRACKET"/>
+      <keyboard-shortcut first-keystroke="meta alt LEFT"/>
+    </action>
+    <action id="Forward">
+      <keyboard-shortcut first-keystroke="meta CLOSE_BRACKET"/>
+      <keyboard-shortcut first-keystroke="meta alt RIGHT"/>
+    </action>
 
   </keymap>
 </component>
