@@ -17,7 +17,6 @@ package org.jetbrains.idea.maven.server.embedder;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -32,15 +31,12 @@ import org.apache.maven.artifact.resolver.ArtifactNotFoundException;
 import org.apache.maven.artifact.resolver.ArtifactResolutionException;
 import org.apache.maven.artifact.resolver.ArtifactResolver;
 import org.apache.maven.artifact.resolver.ResolutionListener;
-import org.apache.maven.artifact.versioning.InvalidVersionSpecificationException;
 import org.apache.maven.model.Activation;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.model.Profile;
-import org.apache.maven.plugin.*;
+import org.apache.maven.plugin.PluginManager;
 import org.apache.maven.plugin.descriptor.PluginDescriptor;
-import org.apache.maven.plugin.version.PluginVersionNotFoundException;
-import org.apache.maven.plugin.version.PluginVersionResolutionException;
 import org.apache.maven.profiles.activation.*;
 import org.apache.maven.project.*;
 import org.apache.maven.project.artifact.ProjectArtifactFactory;
@@ -52,7 +48,6 @@ import org.apache.maven.project.interpolation.ModelInterpolator;
 import org.apache.maven.project.path.DefaultPathTranslator;
 import org.apache.maven.project.path.PathTranslator;
 import org.apache.maven.project.validation.ModelValidationResult;
-import org.apache.maven.settings.Settings;
 import org.apache.maven.shared.dependency.tree.DependencyNode;
 import org.apache.maven.shared.dependency.tree.DependencyTreeResolutionListener;
 import org.codehaus.plexus.PlexusContainer;
@@ -565,37 +560,6 @@ public class Maven2ServerEmbedderImpl extends MavenRemoteObject implements Maven
     MavenEmbedder.setImplementation(c, WagonManager.class, CustomWagonManager.class);
     MavenEmbedder.setImplementation(c, ModelInterpolator.class, CustomModelInterpolator.class);
     MavenEmbedder.setImplementation(c, PluginManager.class, Flexmojos4PluginWorkaround.class);
-  }
-
-  // IDEA-73842
-  private static class Flexmojos4PluginWorkaround extends DefaultPluginManager {
-    @Override
-    public PluginDescriptor verifyPlugin(Plugin plugin, MavenProject project, Settings settings, ArtifactRepository localRepository) throws
-                                                                                                                                     ArtifactResolutionException,
-                                                                                                                                     PluginVersionResolutionException,
-                                                                                                                                     ArtifactNotFoundException,
-                                                                                                                                     InvalidVersionSpecificationException,
-                                                                                                                                     InvalidPluginException,
-                                                                                                                                     PluginManagerException,
-                                                                                                                                     PluginNotFoundException,
-                                                                                                                                     PluginVersionNotFoundException {
-      if ("flexmojos-maven-plugin".equals(plugin.getArtifactId()) && "org.sonatype.flexmojos".equals(plugin.getGroupId())) {
-        String pluginVersion = plugin.getVersion();
-        if (pluginVersion == null) {
-          pluginVersion = pluginVersionManager.resolvePluginVersion(plugin.getGroupId(), plugin.getArtifactId(),
-                                                                    project, settings, localRepository);
-          plugin.setVersion(pluginVersion);
-        }
-
-        if (StringUtil.compareVersionNumbers(pluginVersion, "4") >= 0) {
-          //noinspection ConstantConditions
-          return null;
-        }
-      }
-
-      return super.verifyPlugin(plugin, project, settings,
-                                localRepository);
-    }
   }
 
   public void customize(@Nullable MavenWorkspaceMap workspaceMap,
