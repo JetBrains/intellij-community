@@ -517,7 +517,12 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     if (baseLanguageForBaseLanguage != null) {
       final LanguageFileType associatedFileType = baseLanguageForBaseLanguage.getAssociatedFileType();
       if (associatedFileType != null && associatedFileType != file.getFileType()) {
-        result.addAll(getDirectlyApplicableContextTypes(null, 0, associatedFileType));
+        for (TemplateContextType contextType : getDirectlyApplicableContextTypes(null, 0, associatedFileType)) {
+          if (!(contextType instanceof EverywhereContextType)) {
+            result.add(contextType);
+          }
+        }
+
       }
     }
 
