@@ -67,6 +67,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
 
   public ProjectLayoutPanel(final ModuleInsight insight) {
     super(new BorderLayout());
+    setBorder(BorderFactory.createEmptyBorder(5, 5, 0, 5));
     myInsight = insight;
 
     myEntriesChooser = new ElementsChooser<T>(true) {
@@ -79,12 +80,16 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
     final Splitter splitter = new Splitter(false);
 
     final JScrollPane entriesPane = ScrollPaneFactory.createScrollPane(myEntriesChooser);
-    entriesPane.setBorder(IdeBorderFactory.createTitledBorder(getEntriesChooserTitle(), false, false, true));
-    splitter.setFirstComponent(entriesPane);
+    final JPanel entriesPanel = new JPanel(new BorderLayout());
+    entriesPanel.add(entriesPane, BorderLayout.CENTER);
+    entriesPanel.setBorder(IdeBorderFactory.createTitledBorder(getEntriesChooserTitle(), false, false, true));
+    splitter.setFirstComponent(entriesPanel);
 
     final JScrollPane depsPane = ScrollPaneFactory.createScrollPane(myDependenciesList);
-    depsPane.setBorder(BorderFactory.createCompoundBorder(IdeBorderFactory.createTitledBorder(getDependenciesTitle(), true, true, true), depsPane.getBorder()));
-    splitter.setSecondComponent(depsPane);
+    final JPanel depsPanel = new JPanel(new BorderLayout());
+    depsPanel.add(depsPane, BorderLayout.CENTER);
+    depsPanel.setBorder(IdeBorderFactory.createTitledBorder(getDependenciesTitle(), false, false, true));
+    splitter.setSecondComponent(depsPanel);
     
     JPanel groupPanel = new JPanel(new BorderLayout());
     groupPanel.add(createEntriesActionToolbar().getComponent(), BorderLayout.NORTH);
@@ -92,7 +97,6 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
     groupPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
 
     final MultiLineLabel description = new MultiLineLabel(getStepDescriptionText());
-    description.setBorder(BorderFactory.createEmptyBorder(5, 5, 0, 5));
     add(description, BorderLayout.NORTH);
     add(groupPanel, BorderLayout.CENTER);
     
