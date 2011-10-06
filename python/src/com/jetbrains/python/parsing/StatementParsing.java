@@ -4,6 +4,7 @@ import com.intellij.lang.ITokenTypeRemapper;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.text.CharArrayUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
@@ -250,7 +251,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     }
     while (builder.getTokenType() == PyTokenTypes.COMMA) {
       builder.advanceLexer();
-      if (PyTokenTypes.END_OF_STATEMENT.contains(builder.getTokenType())) {
+      if (getEndOfStatementsTokens().contains(builder.getTokenType())) {
         break;
       }
       getExpressionParser().parseSingleExpression(false);
@@ -270,7 +271,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     LOG.assertTrue(builder.getTokenType() == PyTokenTypes.RETURN_KEYWORD);
     final PsiBuilder.Marker returnStatement = builder.mark();
     builder.advanceLexer();
-    if (builder.getTokenType() != null && !PyTokenTypes.END_OF_STATEMENT.contains(builder.getTokenType())) {
+    if (builder.getTokenType() != null && !getEndOfStatementsTokens().contains(builder.getTokenType())) {
       getExpressionParser().parseExpression();
     }
     checkEndOfStatement(inSuite);
@@ -286,7 +287,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     }
     while (myBuilder.getTokenType() == PyTokenTypes.COMMA) {
       myBuilder.advanceLexer();
-      if (!PyTokenTypes.END_OF_STATEMENT.contains(myBuilder.getTokenType())) {
+      if (!getEndOfStatementsTokens().contains(myBuilder.getTokenType())) {
         if (!getExpressionParser().parseSingleExpression(false)) {
           myBuilder.error("expression expected");
         }
@@ -301,7 +302,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     assertCurrentToken(PyTokenTypes.RAISE_KEYWORD);
     final PsiBuilder.Marker raiseStatement = myBuilder.mark();
     myBuilder.advanceLexer();
-    if (!PyTokenTypes.END_OF_STATEMENT.contains(myBuilder.getTokenType())) {
+    if (!getEndOfStatementsTokens().contains(myBuilder.getTokenType())) {
       getExpressionParser().parseSingleExpression(false);
       if (myBuilder.getTokenType() == PyTokenTypes.COMMA) {
         myBuilder.advanceLexer();
@@ -419,7 +420,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
         }
       }
       else { // from X import _
-        String token_text = parseIdentifier(PyElementTypes.REFERENCE_EXPRESSION);
+        String token_text = parseIdentifier(getReferenceType());
         if (from_future) {
           // TODO: mark all known future feature names
           if (TOK_WITH_STATEMENT.equals(token_text)) {
@@ -486,14 +487,14 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     }
     PsiBuilder.Marker marker = myBuilder.mark();
     myBuilder.advanceLexer();
-    marker.done(PyElementTypes.REFERENCE_EXPRESSION);
+    marker.done(getReferenceType());
     boolean old_expect_AS_kwd = myExpectAsKeyword;
     myExpectAsKeyword = expect_as;
     while (myBuilder.getTokenType() == PyTokenTypes.DOT) {
       marker = marker.precede();
       myBuilder.advanceLexer();
       checkMatches(PyTokenTypes.IDENTIFIER, "identifier expected");
-      marker.done(PyElementTypes.REFERENCE_EXPRESSION);
+      marker.done(getReferenceType());
     }
     myExpectAsKeyword = old_expect_AS_kwd;
     return true;
@@ -811,6 +812,10 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
       }
     }
     return source;
+  }
+
+  protected TokenSet getEndOfStatementsTokens() {
+    return PyTokenTypes.END_OF_STATEMENT;
   }
 
   private static boolean isWordAtPosition(CharSequence text, int start, int end, final String tokenText) {

@@ -2,6 +2,7 @@ package com.jetbrains.python.validation;
 
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.cython.CythonLanguageDialect;
+import com.jetbrains.mako.MakoLanguage;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.ParamHelper;
@@ -14,6 +15,8 @@ import java.util.Set;
 public class ParameterListAnnotator extends PyAnnotator {
   @Override
   public void visitPyParameterList(final PyParameterList paramlist) {
+    if (MakoLanguage._isDisabledFor(paramlist))
+      return;
     final LanguageLevel languageLevel = ((PyFile)paramlist.getContainingFile()).getLanguageLevel();
     ParamHelper.walkDownParamArray(
       paramlist.getParameters(),

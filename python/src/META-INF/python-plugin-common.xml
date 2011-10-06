@@ -605,6 +605,7 @@
     <customTargetExpressionStubType implementation="com.jetbrains.python.psi.impl.stubs.PropertyStubType"/>
     <dialectsTokenSetContributor implementation="com.jetbrains.python.PythonTokenSetContributor"/>
     <dialectsTokenSetContributor implementation="com.jetbrains.cython.CythonTokenSetContributor"/>
+    <dialectsTokenSetContributor implementation="com.jetbrains.mako.MakoTokenSetContributor"/>
     <runConfigurationExtension implementation="com.jetbrains.python.coverage.PythonCoverageRunConfigurationExtension"/>
 
     <pyClassMembersProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibClassMembersProvider"/>
