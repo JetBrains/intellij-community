@@ -108,6 +108,7 @@ public abstract class ChangesTreeList<T> extends JPanel {
 
       protected void processMouseEvent(MouseEvent e) {
         if (e.getID() == MouseEvent.MOUSE_PRESSED) {
+          if (! myTree.isEnabled()) return;
           int row = myTree.getRowForLocation(e.getX(), e.getY());
           if (row >= 0) {
             final Rectangle baseRect = myTree.getRowBounds(row);
@@ -830,5 +831,9 @@ public abstract class ChangesTreeList<T> extends JPanel {
       ++ i;
     }
     return toPass;
+  }
+
+  public void enableSelection(final boolean value) {
+    myTree.setEnabled(value);
   }
 }

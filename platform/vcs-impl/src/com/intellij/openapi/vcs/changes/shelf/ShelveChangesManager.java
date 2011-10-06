@@ -200,7 +200,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
   private void baseRevisionsOfDvcsIntoContext(List<Change> textChanges, CommitContext commitContext) {
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
     if (vcsManager.dvcsUsedInProject() && VcsConfiguration.getInstance(myProject).INCLUDE_TEXT_INTO_SHELF) {
-      final Set<Change> big = SelectFilesToAddTextsToPatchDialog.getBig(textChanges);
+      final Set<Change> big = SelectFilesToAddTextsToPatchPanel.getBig(textChanges);
       final ArrayList<FilePath> toKeep = new ArrayList<FilePath>();
       for (Change change : textChanges) {
         if (change.getBeforeRevision() == null || change.getAfterRevision() == null) continue;

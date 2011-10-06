@@ -17,24 +17,27 @@ package com.intellij.openapi.diff.impl.patch;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.RefreshablePanel;
 import com.intellij.openapi.vcs.changes.ui.ChangeNodeDecorator;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -42,20 +45,19 @@ import java.util.List;
  * Date: 9/15/11
  * Time: 5:30 PM
  */
-public class SelectFilesToAddTextsToPatchDialog extends DialogWrapper {
+public class SelectFilesToAddTextsToPatchPanel implements RefreshablePanel {
   private final Set<String> myBigFiles;
   private final ChangesBrowser myBrowser;
   private JLabel myWarningText;
-  private JLabel myIncludedText;
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.patch.SelectFilesToAddTextsToPatchDialog");
+  //private JLabel myIncludedText;
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.patch.SelectFilesToAddTextsToPatchPanel");
   private final int myTotalSize;
   private JPanel myPanel;
   private final Runnable myInclusionListener;
+  private JLabel myBaseRevisionTextShouldLabel;
 
-  public SelectFilesToAddTextsToPatchDialog(final Project project, final List<Change> changes, final Collection<Change> selectedChanges) {
-    super(project, true);
-    setTitle("Select file(s) to add their base revision text to patch");
-
+  public SelectFilesToAddTextsToPatchPanel(final Project project, final List<Change> changes, final Collection<Change> selectedChanges,
+                                           @NotNull final Runnable inclusionListener) {
     myTotalSize = changes.size();
     myBigFiles = new HashSet<String>();
 
@@ -66,13 +68,14 @@ public class SelectFilesToAddTextsToPatchDialog extends DialogWrapper {
 
     myWarningText = new JLabel("There are big files selected, which increases patch size significantly");
     myWarningText.setIcon(UIUtil.getBalloonWarningIcon());
-    myIncludedText = new JLabel();
+    //myIncludedText = new JLabel();
     myInclusionListener = new Runnable() {
       @Override
       public void run() {
         final Collection<Change> includedChanges = myBrowser.getViewer().getIncludedChanges();
-        myIncludedText
-          .setText("Selected: " + (includedChanges.size() == myTotalSize ? "All" : ("" + includedChanges.size() + " of " + myTotalSize)));
+        /*myIncludedText
+          .setText("Selected: " + (includedChanges.size() == myTotalSize ? "All" : ("" + includedChanges.size() + " of " + myTotalSize)));*/
+        inclusionListener.run();
         for (Change change : includedChanges) {
           if (myBigFiles.contains(ChangesUtil.getFilePath(change).getPath())) {
             myWarningText.setVisible(true);
@@ -110,8 +113,11 @@ public class SelectFilesToAddTextsToPatchDialog extends DialogWrapper {
       myBrowser.getViewer().includeChanges(selectedChanges);
     }
     myWarningText.setVisible(false);
-    init();
     myInclusionListener.run();
+  }
+
+  public void setEnabled(boolean selected) {
+    myBrowser.getViewer().enableSelection(selected);
   }
 
   public static Set<Change> getBig(List<Change> changes) {
@@ -134,27 +140,52 @@ public class SelectFilesToAddTextsToPatchDialog extends DialogWrapper {
   }
 
   @Override
-  public JComponent getPreferredFocusedComponent() {
-    return myBrowser.getViewer();
+  public void dataChanged() {
   }
 
   @Override
-  protected String getDimensionServiceKey() {
-    return "com.intellij.openapi.diff.impl.patch.SelectFilesToAddTextsToPatchDialog";
+  public void refresh() {
   }
 
   @Override
-  protected JComponent createCenterPanel() {
+  public JPanel getPanel() {
+    if (myPanel == null) {
+      createCenterPanel();
+    }
+    return myPanel;
+  }
+
+  @Override
+  public void away() {
+  }
+
+  @Override
+  public void dispose() {
+  }
+
+  public JComponent createCenterPanel() {
     myPanel = new JPanel(new GridBagLayout());
-    final GridBagConstraints gb = new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
+    final GridBagConstraints gb = new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
                                                                    new Insets(1, 1, 1, 1), 0, 0);
+    final StringBuilder sb = new StringBuilder().append("<html><head>").append(UIUtil.getCssFontDeclaration(UIUtil.getLabelFont())).
+      append("</head><body>Base revision text should be included into patch, if it is about to be used in projects under DVCS.").
+      append("<br/>In DVCS commits can be reordered, so there could exist no revision any more with the text matching patch context.<br/><br/>").
+      append("Only modified files texts needs to be added. Add/delete changes are self-descriptive.").
+      append("</body></html>");
+
+    myBaseRevisionTextShouldLabel = new JLabel(sb.toString());
+    myBaseRevisionTextShouldLabel.setForeground(UIUtil.getInactiveTextColor());
+    myPanel.add(myBaseRevisionTextShouldLabel, gb);
+    ++ gb.gridy;
+    gb.fill = GridBagConstraints.BOTH;
+    gb.weighty = 1;
     myPanel.add(myBrowser, gb);
     gb.fill = GridBagConstraints.HORIZONTAL;
     ++ gb.gridy;
     gb.weighty = 0;
     myPanel.add(myWarningText, gb);
-    ++ gb.gridy;
-    myPanel.add(myIncludedText, gb);
+/*    ++ gb.gridy;
+    myPanel.add(myIncludedText, gb);*/
     return myPanel;
   }
   
