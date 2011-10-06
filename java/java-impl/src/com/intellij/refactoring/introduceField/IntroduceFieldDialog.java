@@ -31,6 +31,7 @@ import com.intellij.refactoring.ui.*;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -201,7 +202,7 @@ class IntroduceFieldDialog extends DialogWrapper {
   static NameSuggestionsGenerator createGenerator(final boolean willBeDeclaredStatic,
                                                   final PsiLocalVariable localVariable,
                                                   final PsiExpression initializerExpression,
-                                                  final boolean isInvokedOnDeclaration, final String enteredName, final PsiClass parentClass) {
+                                                  final boolean isInvokedOnDeclaration, @Nullable final String enteredName, final PsiClass parentClass) {
     return new NameSuggestionsGenerator() {
       private final JavaCodeStyleManager myCodeStyleManager = JavaCodeStyleManager.getInstance(localVariable != null ? localVariable.getProject()
                                                                                                                      : initializerExpression.getProject());
