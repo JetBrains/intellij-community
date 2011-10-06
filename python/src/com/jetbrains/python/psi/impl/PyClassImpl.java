@@ -15,6 +15,7 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
@@ -713,9 +714,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
 
   public boolean visitMethods(Processor<PyFunction> processor, boolean inherited) {
     PyFunction[] methods = getMethods();
-    for(PyFunction method: methods) {
-      if (! processor.process(method)) return false;
-    }
+    if (!ContainerUtil.process(methods, processor)) return false;
     if (inherited) {
       for (PyClass ancestor : iterateAncestorClasses()) {
         if (!ancestor.visitMethods(processor, false)) {
@@ -728,9 +727,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
 
   public boolean visitNestedClasses(Processor<PyClass> processor, boolean inherited) {
     PyClass[] nestedClasses = getNestedClasses();
-    for (PyClass nestedClass : nestedClasses) {
-      if (!processor.process(nestedClass)) return false;
-    }
+    if (!ContainerUtil.process(nestedClasses, processor)) return false;
     if (inherited) {
       for (PyClass ancestor : iterateAncestorClasses()) {
         if (!((PyClassImpl) ancestor).visitNestedClasses(processor, false)) {
@@ -743,9 +740,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
 
   public boolean visitClassAttributes(Processor<PyTargetExpression> processor, boolean inherited) {
     List<PyTargetExpression> methods = getClassAttributes();
-    for(PyTargetExpression attribute: methods) {
-      if (! processor.process(attribute)) return false;
-    }
+    if (!ContainerUtil.process(methods, processor)) return false;
     if (inherited) {
       for (PyClass ancestor : iterateAncestorClasses()) {
         if (!ancestor.visitClassAttributes(processor, false)) {

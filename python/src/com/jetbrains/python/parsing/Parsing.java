@@ -3,6 +3,7 @@ package com.jetbrains.python.parsing;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.tree.IElementType;
+import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyElementType;
 import org.jetbrains.annotations.Nullable;
 
@@ -76,5 +77,9 @@ public class Parsing {
     final PsiBuilder.Marker marker = builder.mark();
     builder.advanceLexer();
     marker.done(type);
+  }
+
+  protected IElementType getReferenceType() {
+    return PyElementTypes.REFERENCE_EXPRESSION;
   }
 }

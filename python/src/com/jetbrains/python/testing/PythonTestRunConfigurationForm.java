@@ -202,7 +202,8 @@ public class PythonTestRunConfigurationForm implements AbstractPythonTestRunConf
     myTestMethodTextField.setVisible(testType == TestType.TEST_METHOD || testType == TestType.TEST_FUNCTION);
     myPatternTextField.setEnabled(myPatternCheckBox.isSelected());
     myParamTextField.setEnabled(myParamCheckBox.isSelected());
-
+    myTestMethodComponent.getLabel().setText(testType == TestType.TEST_METHOD? PyBundle.message("runcfg.unittest.dlg.method_label")
+                                                                             : PyBundle.message("runcfg.unittest.dlg.function_label"));
   }
 
   public JComponent getPanel() {

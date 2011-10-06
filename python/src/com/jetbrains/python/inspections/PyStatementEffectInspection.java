@@ -5,6 +5,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.mako.MakoLanguage;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.actions.StatementEffectDocstringQuickFix;
 import com.jetbrains.python.actions.StatementEffectFunctionCallQuickFix;
@@ -47,7 +48,7 @@ public class PyStatementEffectInspection extends PyInspection {
 
     @Override
     public void visitPyExpressionStatement(final PyExpressionStatement node) {
-      if (PydevConsoleRunner.isInPydevConsole(node)) {
+      if (PydevConsoleRunner.isInPydevConsole(node) || MakoLanguage._isDisabledFor(node)) {
         return;
       }
       final PyExpression expression = node.getExpression();

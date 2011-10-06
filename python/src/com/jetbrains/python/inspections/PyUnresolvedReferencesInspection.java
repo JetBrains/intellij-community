@@ -15,6 +15,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
 import com.jetbrains.cython.CythonLanguageDialect;
+import com.jetbrains.mako.MakoLanguage;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.actions.*;
@@ -211,7 +212,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     @Override
     public void visitPyElement(final PyElement node) {
       super.visitPyElement(node);
-      if (CythonLanguageDialect._isDisabledFor(node)) {
+      if (CythonLanguageDialect._isDisabledFor(node) || MakoLanguage._isDisabledFor(node)) {
         return;
       }
       if (node instanceof PyReferenceOwner) {
