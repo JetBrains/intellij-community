@@ -15,7 +15,7 @@
  */
 package com.intellij.notification;
 
-import com.intellij.notification.impl.NotificationsConfiguration;
+import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -43,7 +43,7 @@ public class LogModel {
   }
 
   void addNotification(Notification notification) {
-    NotificationDisplayType type = NotificationsConfiguration.getSettings(notification.getGroupId()).getDisplayType();
+    NotificationDisplayType type = NotificationsConfigurationImpl.getSettings(notification.getGroupId()).getDisplayType();
     if (notification.isImportant() || (type != NotificationDisplayType.NONE && type != NotificationDisplayType.TOOL_WINDOW)) {
       synchronized (myNotifications) {
         myNotifications.add(notification);

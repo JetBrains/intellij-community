@@ -4,6 +4,19 @@
       <keyboard-shortcut first-keystroke="meta P"/>
     </action>
 
+    <action id="$Delete">
+      <keyboard-shortcut first-keystroke="DELETE"/>
+      <keyboard-shortcut first-keystroke="BACK_SPACE"/>
+    </action>
+
+    <action id="EditorDelete">
+      <keyboard-shortcut first-keystroke="DELETE"/>
+    </action>
+
+    <action id="EditorBackSpace">
+      <keyboard-shortcut first-keystroke="BACK_SPACE"/>
+    </action>
+
     <action id="NextSplitter">
       <keyboard-shortcut first-keystroke="alt TAB"/>
     </action>
@@ -26,15 +39,6 @@
     <action id="SmartTypeCompletion">
       <keyboard-shortcut first-keystroke="control shift SPACE"/>
     </action>
-    <action id="EditorScrollUp">
-      <keyboard-shortcut first-keystroke="meta UP"/>
-    </action>
-    <action id="EditorScrollDown">
-      <keyboard-shortcut first-keystroke="meta DOWN"/>
-    </action>
-    <action id="PreviousTab">
-      <keyboard-shortcut first-keystroke="control LEFT"/>
-    </action>
     <action id="PreviousEditorTab">
       <keyboard-shortcut first-keystroke="control shift LEFT"/>
     </action>
@@ -47,6 +51,7 @@
     </action>
     <action id="SafeDelete">
       <keyboard-shortcut first-keystroke="meta DELETE"/>
+      <keyboard-shortcut first-keystroke="meta BACK_SPACE"/>
     </action>
     <action id="RemoveFromFavorites">
       <keyboard-shortcut first-keystroke="control DELETE"/>
@@ -140,9 +145,6 @@
     
     <action id="MethodUp">
       <keyboard-shortcut first-keystroke="control UP"/>
-    </action>
-    <action id="NextTab">
-      <keyboard-shortcut first-keystroke="control RIGHT"/>
     </action>
     <action id="ShowContent">
       <keyboard-shortcut first-keystroke="control DOWN"/>
@@ -276,6 +278,7 @@
       <keyboard-shortcut first-keystroke="control shift SLASH"/>
       <keyboard-shortcut first-keystroke="control shift DIVIDE"/>
       <keyboard-shortcut first-keystroke="meta shift SLASH"/>
+      <keyboard-shortcut first-keystroke="meta shift DIVIDE"/>
       <keyboard-shortcut first-keystroke="meta shift DIVIDE"/>
     </action>
 
@@ -435,6 +438,11 @@
       <keyboard-shortcut first-keystroke="meta E"/>
     </action>
 
+    <action id="ShowNavBar">
+      <keyboard-shortcut first-keystroke="meta UP"/>
+      <keyboard-shortcut first-keystroke="alt HOME"/>
+    </action>
+
     <action id="EditorScrollUp"/> <!-- Disables meta up -->
     <action id="EditorScrollDown"/>  <!-- Disables meta down -->
     <action id="FindWordAtCaret"/> <!-- Disables meta F3 -->
@@ -450,6 +458,35 @@
 
     <action id="context.save"/>
     <action id="context.load"/>
+
+    <action id="PreviousTab">
+      <keyboard-shortcut first-keystroke="meta shift OPEN_BRACKET"/>
+      <keyboard-shortcut first-keystroke="control LEFT"/>
+    </action>
+    <action id="NextTab">
+      <keyboard-shortcut first-keystroke="meta shift CLOSE_BRACKET"/>
+      <keyboard-shortcut first-keystroke="control RIGHT"/>
+    </action>
+    <action id="EditorCodeBlockStart">
+      <keyboard-shortcut first-keystroke="meta alt OPEN_BRACKET"/>
+    </action>
+    <action id="EditorCodeBlockEnd">
+      <keyboard-shortcut first-keystroke="meta alt CLOSE_BRACKET"/>
+    </action>
+    <action id="EditorCodeBlockStartWithSelection">
+      <keyboard-shortcut first-keystroke="meta alt shift OPEN_BRACKET"/>
+    </action>
+    <action id="EditorCodeBlockEndWithSelection">
+      <keyboard-shortcut first-keystroke="meta alt shift CLOSE_BRACKET"/>
+    </action>
+    <action id="Back">
+      <keyboard-shortcut first-keystroke="meta OPEN_BRACKET"/>
+      <keyboard-shortcut first-keystroke="meta alt LEFT"/>
+    </action>
+    <action id="Forward">
+      <keyboard-shortcut first-keystroke="meta CLOSE_BRACKET"/>
+      <keyboard-shortcut first-keystroke="meta alt RIGHT"/>
+    </action>
 
   </keymap>
 </component>

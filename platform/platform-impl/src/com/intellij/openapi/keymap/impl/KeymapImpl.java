@@ -343,7 +343,7 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
     KeymapManagerEx keymapManager = getKeymapManager();
     LinkedHashSet<Shortcut> listOfShortcuts = myActionId2ListOfShortcuts.get(actionId);
     if (listOfShortcuts != null) {
-      listOfShortcuts = new LinkedHashSet<Shortcut>(listOfShortcuts);
+      return listOfShortcuts;
     }
     else {
       listOfShortcuts = new LinkedHashSet<Shortcut>();

@@ -7,7 +7,7 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
-import com.intellij.notification.impl.NotificationsConfiguration;
+import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -24,7 +24,7 @@ public class StatisticsNotificationManager {
   }
 
   static {
-    NotificationsConfiguration.remove("SendUsagesStatistics");
+    NotificationsConfigurationImpl.remove("SendUsagesStatistics");
   }
 
   public static void showNotification(@NotNull RemotelyConfigurableStatisticsService statisticsService, Project project) {

@@ -81,6 +81,6 @@ public class NotificationsConfigurable implements Configurable, SearchableConfig
   }
 
   public boolean needDisplay() {
-    return NotificationsConfiguration.getAllSettings().length > 0;
+    return NotificationsConfigurationImpl.getAllSettings().length > 0;
   }
 }

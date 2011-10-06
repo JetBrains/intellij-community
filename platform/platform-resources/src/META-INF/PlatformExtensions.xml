@@ -47,6 +47,8 @@
   <applicationService serviceInterface="com.intellij.ide.ui.search.SearchableOptionsRegistrar"
                       serviceImplementation="com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl"/>
 
+  <applicationService serviceImplementation="com.intellij.openapi.options.ex.IdeConfigurablesGroup"/>
+
   <applicationService serviceInterface="com.intellij.diagnostic.ErrorReportConfigurable"
                       serviceImplementation="com.intellij.diagnostic.ErrorReportConfigurable"/>
   <applicationService serviceInterface="com.intellij.util.net.HttpConfigurable"

@@ -33,7 +33,8 @@ public interface Notifications {
   String SYSTEM_MESSAGES_GROUP_ID = "System Messages";
 
   void notify(@NotNull Notification notification);
-  void register(@NotNull final String groupDisplayType, @NotNull final NotificationDisplayType defaultDisplayType);
+  void register(@NotNull final String groupDisplayName, @NotNull final NotificationDisplayType defaultDisplayType);
+  void register(@NotNull final String groupDisplayName, @NotNull final NotificationDisplayType defaultDisplayType, boolean shouldLog);
 
   @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
   class Bus {

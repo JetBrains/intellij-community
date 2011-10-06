@@ -276,7 +276,8 @@ class RunConfigurable extends BaseConfigurable {
         final Object userObject2 = ((DefaultMutableTreeNode)o2).getUserObject();
         if (userObject1 instanceof ConfigurationType && userObject2 instanceof ConfigurationType) {
           return ((ConfigurationType)userObject1).getDisplayName().compareTo(((ConfigurationType)userObject2).getDisplayName());
-        } else if (userObject1 instanceof String && userObject2 instanceof ConfigurationType) {
+        }
+        else if (userObject1 instanceof String && userObject2 instanceof ConfigurationType) {
           return 1;
         }
 
@@ -374,6 +375,9 @@ class RunConfigurable extends BaseConfigurable {
 
     myRightPanel.removeAll();
     myRightPanel.add(scrollPane, BorderLayout.CENTER);
+    if (configurationType == null) {
+      myRightPanel.add(createRecentLimitPanel(), BorderLayout.SOUTH);
+    }
     myRightPanel.revalidate();
     myRightPanel.repaint();
   }
@@ -389,27 +393,26 @@ class RunConfigurable extends BaseConfigurable {
     final JScrollPane pane = ScrollPaneFactory.createScrollPane(myTree);
     pane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     leftPanel.add(pane, BorderLayout.CENTER);
-    final JPanel bottomPanel = new JPanel(new BorderLayout());
+    return leftPanel;
+  }
 
-    Box box = new Box(BoxLayout.LINE_AXIS);
-    box.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
-    box.add(new JLabel("<html>Temporary configurations limit:</html>"));
+  private JPanel createRecentLimitPanel() {
+    final JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.LEADING));
+
+//    box.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
+    bottomPanel.add(new JLabel("<html>Temporary configurations limit:</html>"));
     Dimension size = new Dimension(25, myRecentsLimit.getPreferredSize().height);
     myRecentsLimit.setPreferredSize(size);
     myRecentsLimit.setMaximumSize(size);
     myRecentsLimit.setMinimumSize(size);
-    box.add(myRecentsLimit);
+    bottomPanel.add(myRecentsLimit);
     myRecentsLimit.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
         setModified(true);
       }
     });
-    box.add(Box.createHorizontalGlue());
-    bottomPanel.add(box, BorderLayout.CENTER);
-
-    leftPanel.add(bottomPanel, BorderLayout.SOUTH);
-    return leftPanel;
+    return bottomPanel;
   }
 
   private DefaultActionGroup createActionsGroup() {
@@ -453,8 +456,9 @@ class RunConfigurable extends BaseConfigurable {
     myPanel.setLeftComponent(createLeftPanel());
     myPanel.setRightComponent(myRightPanel);
     myPanel.setBorder(null);
-    myPanel.getDividerLocation();
-    myPanel.setDividerLocation((int)myConfig.getFloat(DIVIDER_PROPORTION, 200));
+    final int value = (int)myConfig.getFloat(DIVIDER_PROPORTION, 200);
+
+    myPanel.setDividerLocation(value > 0 ? value : 200);
     myWholePanel.add(myPanel, BorderLayout.CENTER);
 
     updateDialog();

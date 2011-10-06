@@ -20,7 +20,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsImplUtil;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.HgExecutableValidator;
 import org.zmlx.hg4idea.HgGlobalSettings;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.HgVcsMessages;
@@ -56,8 +55,6 @@ public final class HgCommandExecutor {
   private static final List<String> DEFAULT_OPTIONS = Arrays.asList("--config", "ui.merge=internal:merge");
 
   private final Project myProject;
-  private final HgGlobalSettings mySettings;
-  private final HgExecutableValidator myValidator;
   private final HgVcs myVcs;
 
   private Charset myCharset = HgEncodingUtil.getDefaultCharset();
@@ -68,8 +65,6 @@ public final class HgCommandExecutor {
   public HgCommandExecutor(Project project) {
     myProject = project;
     myVcs = HgVcs.getInstance(myProject);
-    mySettings = myVcs.getGlobalSettings();
-    myValidator = myVcs.getExecutableValidator();
   }
 
   public void setCharset(Charset charset) {
@@ -103,7 +98,7 @@ public final class HgCommandExecutor {
   @Nullable
   public HgCommandResult executeInCurrentThread(@Nullable final VirtualFile repo, final String operation, final List<String> arguments) {
     LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread());
-    if (myProject.isDisposed()) {
+    if (myProject == null || myProject.isDisposed() || myVcs == null) {
       return null;
     }
 
@@ -150,7 +145,7 @@ public final class HgCommandExecutor {
     if (arguments != null && arguments.size() != 0) {
       cmdLine.addAll(arguments);
     }
-    ShellCommand shellCommand = new ShellCommand(mySettings.isRunViaBash());
+    ShellCommand shellCommand = new ShellCommand(myVcs.getGlobalSettings().isRunViaBash());
     HgCommandResult result;
     try {
       String workingDir = repo != null ? repo.getPath() : null;
@@ -160,7 +155,7 @@ public final class HgCommandExecutor {
       }
     } catch (ShellCommandException e) {
       if (!myIsSilent) {
-        if (myValidator.checkExecutableAndNotifyIfNeeded()) {
+        if (myVcs.getExecutableValidator().checkExecutableAndNotifyIfNeeded()) {
           // if the problem was not with invalid executable - show error.
           showError(e);
           LOG.info(e.getMessage(), e);
@@ -186,11 +181,12 @@ public final class HgCommandExecutor {
 
   // logging to the Version Control console (without extensions and configs)
   private void log(String operation, List<String> arguments, HgCommandResult result) {
+    final HgGlobalSettings settings = myVcs.getGlobalSettings();
     String exeName;
-    final int lastSlashIndex = mySettings.getHgExecutable().lastIndexOf(File.separator);
-    exeName = mySettings.getHgExecutable().substring(lastSlashIndex + 1);
+    final int lastSlashIndex = settings.getHgExecutable().lastIndexOf(File.separator);
+    exeName = settings.getHgExecutable().substring(lastSlashIndex + 1);
 
-    final String executable = mySettings.isRunViaBash() ? "bash -c " + exeName : exeName;
+    final String executable = settings.isRunViaBash() ? "bash -c " + exeName : exeName;
     final String cmdString = String.format("%s %s %s", executable, operation, StringUtils.join(arguments, " "));
 
     // log command

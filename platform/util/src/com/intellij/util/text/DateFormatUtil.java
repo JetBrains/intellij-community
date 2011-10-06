@@ -18,7 +18,6 @@ package com.intellij.util.text;
 import com.intellij.CommonBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Clock;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.util.StringBuilderSpinAllocator;
@@ -33,9 +32,10 @@ public class DateFormatUtil {
   private static final Logger LOG = Logger.getInstance("com.intellij.util.text.DateFormatUtil");
 
   // do not expose this constants - they are very likely to be changed in future
-  private static final SyncDateFormat DATE_FORMAT;
-  private static final SyncDateFormat TIME_FORMAT;
-  private static final SyncDateFormat DATE_TIME_FORMAT;
+  private static final SyncDateFormat DATE_FORMAT = getFormat(DateFormat.SHORT, DateType.DATE);
+  private static final SyncDateFormat TIME_FORMAT = getFormat(DateFormat.SHORT, DateType.TIME);
+  private static final SyncDateFormat TIME_WITH_SECONDS_FORMAT =getFormat(DateFormat.MEDIUM, DateType.TIME);
+  private static final SyncDateFormat DATE_TIME_FORMAT = getFormat(DateFormat.SHORT, DateType.DATETIME);
 
   public static final long SECOND = 1000;
   public static final long MINUTE = SECOND * 60;
@@ -52,38 +52,16 @@ public class DateFormatUtil {
 
   private static final Period[] PERIOD = new Period[]{Period.YEAR, Period.MONTH, Period.WEEK, Period.DAY, Period.HOUR, Period.MINUTE};
 
-  static {
-    DateFormat date = null;
-    DateFormat time = null;
-    DateFormat dateTime = null;
-
-    if (SystemInfo.isMac) {
-      try {
-        date = new SimpleDateFormat(getMacTimeFormat(DateFormat.SHORT, DateType.DATE));
-      }
-      catch (Throwable e) {
-        LOG.error(e);
-      }
-      try {
-        time = new SimpleDateFormat(getMacTimeFormat(DateFormat.SHORT, DateType.TIME));
-      }
-      catch (Throwable e) {
-        LOG.error(e);
-      }
-      try {
-        dateTime = new SimpleDateFormat(getMacTimeFormat(DateFormat.SHORT, DateType.DATETIME));
-      }
-      catch (Throwable e) {
-        LOG.error(e);
-      }
+  private static SyncDateFormat getFormat(int format, DateType type) {
+    DateFormat result;
+    try {
+      result = new SimpleDateFormat(getMacTimeFormat(format, type).trim());
     }
-    if (date == null) date = DateFormat.getDateInstance(DateFormat.SHORT);
-    if (time == null) time = DateFormat.getTimeInstance(DateFormat.SHORT);
-    if (dateTime == null) dateTime = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
-
-    DATE_FORMAT = new SyncDateFormat(date);
-    TIME_FORMAT = new SyncDateFormat(time);
-    DATE_TIME_FORMAT = new SyncDateFormat(dateTime);
+    catch (Throwable e) {
+      LOG.error(e);
+      result = DateFormat.getDateInstance(format);
+    }
+    return new SyncDateFormat(result);
   }
 
   private DateFormatUtil() {
@@ -100,6 +78,11 @@ public class DateFormatUtil {
   }
 
   @NotNull
+  public static SyncDateFormat getTimeWithSecondsFormat() {
+    return TIME_WITH_SECONDS_FORMAT;
+  }
+
+  @NotNull
   public static SyncDateFormat getDateTimeFormat() {
     return DATE_TIME_FORMAT;
   }
@@ -112,6 +95,16 @@ public class DateFormatUtil {
   @NotNull
   public static String formatTime(long time) {
     return getTimeFormat().format(time);
+  }
+
+  @NotNull
+  public static String formatTimeWithSeconds(@NotNull Date time) {
+    return formatTimeWithSeconds(time.getTime());
+  }
+
+  @NotNull
+  public static String formatTimeWithSeconds(long time) {
+    return getTimeWithSecondsFormat().format(time);
   }
 
   @NotNull
@@ -155,7 +148,7 @@ public class DateFormatUtil {
   }
 
   @NotNull
-  public static String doFormatPretty(long time, boolean formatTime) {
+  private static String doFormatPretty(long time, boolean formatTime) {
     long currentTime = Clock.getTime();
 
     Calendar c = Calendar.getInstance();
@@ -304,6 +297,7 @@ public class DateFormatUtil {
     }
   }
 
+  @NotNull
   static String getMacTimeFormat(final int type, @NotNull final DateType dateType) {
     final ID autoReleasePool = Foundation.invoke("NSAutoreleasePool", "new");
     try {
