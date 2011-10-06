@@ -19,7 +19,7 @@ package com.intellij.notification;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.notification.impl.NotificationsConfigurable;
-import com.intellij.notification.impl.NotificationsConfiguration;
+import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -99,7 +99,13 @@ public class EventLog implements Notifications {
   }
 
   @Override
-  public void register(@NotNull String groupDisplayType, @NotNull NotificationDisplayType defaultDisplayType) {
+  public void register(@NotNull String groupDisplayName, @NotNull NotificationDisplayType defaultDisplayType) {
+  }
+
+  @Override
+  public void register(@NotNull String groupDisplayName,
+                       @NotNull NotificationDisplayType defaultDisplayType,
+                       boolean shouldLog) {
   }
 
   @NotNull
@@ -243,7 +249,13 @@ public class EventLog implements Notifications {
         }
 
         @Override
-        public void register(@NotNull String groupDisplayType, @NotNull NotificationDisplayType defaultDisplayType) {
+        public void register(@NotNull String groupDisplayName, @NotNull NotificationDisplayType defaultDisplayType) {
+        }
+
+        @Override
+        public void register(@NotNull String groupDisplayName,
+                             @NotNull NotificationDisplayType defaultDisplayType,
+                             boolean shouldLog) {
         }
       });
 
@@ -272,7 +284,7 @@ public class EventLog implements Notifications {
         return;
       }
 
-      if (!NotificationsConfiguration.getSettings(notification.getGroupId()).isShouldLog()) {
+      if (!NotificationsConfigurationImpl.getSettings(notification.getGroupId()).isShouldLog()) {
         return;
       }
 
