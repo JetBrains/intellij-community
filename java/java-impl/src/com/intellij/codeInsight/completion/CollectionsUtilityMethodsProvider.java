@@ -82,8 +82,8 @@ class CollectionsUtilityMethodsProvider {
     }
     
     final PsiMethod method = methods[0];
-    final JavaMethodCallElement item = new JavaMethodCallElement(method);
-    JavaCompletionUtil.qualify(item).setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
+    final JavaMethodCallElement item = new JavaMethodCallElement(method, false, false);
+    item.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
     item.setInferenceSubstitutor(SmartCompletionDecorator.calculateMethodReturnTypeSubstitutor(method, expectedType));
     result.consume(item);
   }

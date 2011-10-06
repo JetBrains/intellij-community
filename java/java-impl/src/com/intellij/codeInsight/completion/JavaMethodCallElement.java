@@ -39,14 +39,20 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
   private final MemberLookupHelper myHelper;
 
   public JavaMethodCallElement(@NotNull PsiMethod method) {
-    this(method, false, false);
+    super(method, method.getName());
+    myMethod = method;
+    myHelper = null;
+    myContainingClass = method.getContainingClass();
   }
 
-  public JavaMethodCallElement(PsiMethod method, boolean canImportStatic, boolean mergedOverloads) {
+  public JavaMethodCallElement(PsiMethod method, boolean shouldImportStatic, boolean mergedOverloads) {
     super(method, method.getName());
     myMethod = method;
     myContainingClass = method.getContainingClass();
-    myHelper = canImportStatic ? new MemberLookupHelper(method, myContainingClass, false, mergedOverloads) : null;
+    myHelper = new MemberLookupHelper(method, myContainingClass, shouldImportStatic, mergedOverloads);
+    if (!shouldImportStatic) {
+      forceQualify();
+    }
   }
 
   public PsiType getType() {
@@ -132,7 +138,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     return !getInferenceSubstitutor().equals(PsiSubstitutor.EMPTY) && myMethod.getParameterList().getParametersCount() == 0;
   }
 
-  private boolean mayNeedTypeParameters(InsertionContext context) {
+  private static boolean mayNeedTypeParameters(InsertionContext context) {
     final PsiElement leaf = context.getFile().findElementAt(context.getStartOffset());
     if (PsiTreeUtil.getParentOfType(leaf, PsiExpressionList.class, true, PsiCodeBlock.class, PsiModifierListOwner.class) == null) {
       if (PsiTreeUtil.getParentOfType(leaf, PsiConditionalExpression.class, true, PsiCodeBlock.class, PsiModifierListOwner.class) == null) {

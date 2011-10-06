@@ -1,10 +1,8 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.VariableLookupItem;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,11 +46,9 @@ public class JavaGlobalMemberNameCompletionContributor extends CompletionContrib
         shouldImport |= originalPosition != null && PsiTreeUtil.isAncestor(containingClass, originalPosition, false);
         
         if (member instanceof PsiMethod) {
-          final JavaMethodCallElement element = new JavaMethodCallElement((PsiMethod)member, true, false);
-          element.setShouldBeImported(shouldImport);
-          return element;
+          return new JavaMethodCallElement((PsiMethod)member, shouldImport, false);
         }
-        return new StaticFieldLookupItem((PsiField)member, shouldImport, containingClass);
+        return new VariableLookupItem((PsiField)member, shouldImport);
       }
 
       @Override
@@ -61,9 +57,8 @@ public class JavaGlobalMemberNameCompletionContributor extends CompletionContrib
                                                   boolean shouldImport) {
         shouldImport |= originalPosition != null && PsiTreeUtil.isAncestor(containingClass, originalPosition, false);
 
-        final JavaMethodCallElement element = new JavaMethodCallElement(overloads.get(0), true, true);
+        final JavaMethodCallElement element = new JavaMethodCallElement(overloads.get(0), shouldImport, true);
         element.putUserData(JavaCompletionUtil.ALL_METHODS_ATTRIBUTE, overloads);
-        element.setShouldBeImported(shouldImport);
         return element;
       }
     };
@@ -78,55 +73,5 @@ public class JavaGlobalMemberNameCompletionContributor extends CompletionContrib
     }
 
     return processor;
-  }
-
-  private static class StaticFieldLookupItem extends VariableLookupItem implements StaticallyImportable {
-    private final MemberLookupHelper myHelper;
-    private final PsiClass myContainingClass;
-
-    public StaticFieldLookupItem(PsiField field, boolean shouldImport, PsiClass containingClass) {
-      super(field);
-      myContainingClass = containingClass;
-      myHelper = new MemberLookupHelper(field, containingClass, shouldImport, false);
-    }
-
-    @Override
-    public void setShouldBeImported(boolean shouldImportStatic) {
-      myHelper.setShouldBeImported(shouldImportStatic);
-    }
-
-    @Override
-    public boolean canBeImported() {
-      return true;
-    }
-
-    @Override
-    public boolean willBeImported() {
-      return myHelper.willBeImported();
-    }
-
-    @Override
-    public void renderElement(LookupElementPresentation presentation) {
-      super.renderElement(presentation);
-      myHelper.renderElement(presentation, getAttribute(FORCE_QUALIFY) != null ? Boolean.TRUE : null, PsiSubstitutor.EMPTY);
-    }
-
-    @Override
-    public void handleInsert(InsertionContext context) {
-      if (willBeImported()) {
-        context.commitDocument();
-        final PsiReferenceExpression ref = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), PsiReferenceExpression.class, false);
-        if (ref != null) {
-          ref.bindToElementViaStaticImport(myContainingClass);
-          PostprocessReformattingAspect.getInstance(ref.getProject()).doPostponedFormatting();
-        }
-      }
-      super.handleInsert(context);
-    }
-
-    @Override
-    protected boolean shouldQualify(PsiField field, InsertionContext context) {
-      return !willBeImported() || super.shouldQualify(field, context);
-    }
   }
 }

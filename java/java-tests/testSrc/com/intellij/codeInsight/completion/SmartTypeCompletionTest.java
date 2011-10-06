@@ -910,7 +910,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testConstructorArgsSmartEnter() throws Exception { doTest(Lookup.COMPLETE_STATEMENT_SELECT_CHAR); }
 
-  private void configureByTestName() throws Exception {
+  private void configureByTestName() {
     configureByFile("/" + getTestName(false) + ".java");
   }
 
@@ -1030,6 +1030,17 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   public void testInheritorEnumMembers() throws Throwable { doTest(); }
   public void testDuplicateMembersFromSuperClass() throws Throwable { doTest(); }
 
+  public void testMemberImportStatically() {
+    configureByTestName();
+    StaticallyImportable item = myItems[0].as(StaticallyImportable.CLASS_CONDITION_KEY);
+    assertNotNull(item);
+    assertTrue(item.canBeImported());
+    assertTrue(myItems[1].as(StaticallyImportable.CLASS_CONDITION_KEY).canBeImported());
+    item.setShouldBeImported(true);
+    type('\n');
+    checkResultByTestName();
+  }
+
   public void testNoNewEnum() throws Throwable {
     configureByTestName();
     assertStringItems("Foo");
@@ -1127,7 +1138,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   }
 
-  private void checkResultByTestName() throws Exception {
+  private void checkResultByTestName() {
     checkResultByFile("/" + getTestName(false) + "-out.java");
   }
 
