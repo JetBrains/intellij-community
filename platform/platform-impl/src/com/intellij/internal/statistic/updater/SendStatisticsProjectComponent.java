@@ -19,6 +19,9 @@ import com.intellij.internal.statistic.StatisticsUploadAssistant;
 import com.intellij.internal.statistic.connect.RemotelyConfigurableStatisticsService;
 import com.intellij.internal.statistic.connect.StatisticsConnectionService;
 import com.intellij.internal.statistic.connect.StatisticsHttpClientSender;
+import com.intellij.notification.NotificationDisplayType;
+import com.intellij.notification.impl.NotificationSettings;
+import com.intellij.notification.impl.NotificationsConfiguration;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -35,6 +38,11 @@ public class SendStatisticsProjectComponent implements ProjectComponent {
   public SendStatisticsProjectComponent(Project project) {
     myProject = project;
     myAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD, myProject);
+
+    NotificationsConfiguration.remove("SendUsagesStatistics");
+    NotificationsConfiguration.getNotificationsConfiguration().registerDefaultSettings(new NotificationSettings(StatisticsNotificationManager.GROUP_DISPLAY_ID,
+                                                                                                                NotificationDisplayType.STICKY_BALLOON,
+                                                                                                                false));
   }
 
   @Override
