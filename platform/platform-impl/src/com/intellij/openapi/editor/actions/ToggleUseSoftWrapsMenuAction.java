@@ -34,13 +34,6 @@ public class ToggleUseSoftWrapsMenuAction extends AbstractToggleUseSoftWrapsActi
   public void update(AnActionEvent e){
     super.update(e);
     e.getPresentation().setIcon(null);
-
-    if (getEditor(e) == null) {
-      e.getPresentation().setEnabled(false);
-      e.getPresentation().setVisible(false);
-    } else {
-      e.getPresentation().setEnabled(true);
-      e.getPresentation().setVisible(true);
-    }
+    e.getPresentation().setEnabled(getEditor(e) != null);
   }
 }

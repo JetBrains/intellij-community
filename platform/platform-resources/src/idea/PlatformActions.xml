@@ -85,11 +85,6 @@
       <action id="EditorDuplicateLines" class="com.intellij.openapi.editor.actions.DuplicateLinesAction"/>
       <action id="EditorToggleInsertState" class="com.intellij.openapi.editor.actions.ToggleInsertStateAction"/>
       <action id="EditorToggleColumnMode" class="com.intellij.openapi.editor.actions.ToggleColumnModeAction"/>
-      <action id="EditorToggleShowWhitespaces" class="com.intellij.openapi.editor.actions.ToggleShowWhitespacesAction"/>
-      <action id="EditorToggleShowLineNumbers" class="com.intellij.openapi.editor.actions.ToggleShowLineNumbersAction"/>
-      <action id="EditorToggleShowIndentLines" class="com.intellij.openapi.editor.actions.ToggleShowIndentLinesAction"/>
-      <action id="EditorToggleUseSoftWraps" class="com.intellij.openapi.editor.actions.ToggleUseSoftWrapsMenuAction"
-              icon="/actions/toggleSoftWrap.png"/>
 
       <action id="EditorScrollToCenter" class="com.intellij.openapi.editor.actions.ScrollToCenterAction"/>
       <action id="EditorToggleCase" class="com.intellij.openapi.editor.actions.ToggleCaseAction"/>
@@ -222,18 +217,18 @@
         </group>
         <separator/>
         <action id="QuickChangeScheme" class="com.intellij.ide.actions.QuickChangeSchemesAction"/>
-        <group id="EditorToggleActions">
-          <separator/>
-          <reference ref="EditorToggleShowWhitespaces"/>
-          <reference ref="EditorToggleShowLineNumbers"/>
-          <reference ref="EditorToggleShowIndentLines"/>
-          <reference ref="EditorToggleUseSoftWraps"/>
-        </group>
         <group id="UIToggleActions">
           <separator/>
           <action id="ViewToolBar" class="com.intellij.ide.actions.ViewToolbarAction"/>
           <action id="ViewToolButtons" class="com.intellij.ide.actions.ViewToolWindowButtonsAction"/>
           <action id="ViewStatusBar" class="com.intellij.ide.actions.ViewStatusBarAction"/>
+        </group>
+
+        <group id="EditorToggleActions" popup="true">
+          <action id="EditorToggleShowWhitespaces" class="com.intellij.openapi.editor.actions.ToggleShowWhitespacesAction"/>
+          <action id="EditorToggleShowLineNumbers" class="com.intellij.openapi.editor.actions.ToggleShowLineNumbersAction"/>
+          <action id="EditorToggleShowIndentLines" class="com.intellij.openapi.editor.actions.ToggleShowIndentLinesAction"/>
+          <action id="EditorToggleUseSoftWraps" class="com.intellij.openapi.editor.actions.ToggleUseSoftWrapsMenuAction" icon="/actions/toggleSoftWrap.png"/>
         </group>
 
         <!-- Mac OS Lion: In native apps toggle full screen mode is the last action in "View" menu -->

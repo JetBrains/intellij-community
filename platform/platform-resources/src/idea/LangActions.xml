@@ -105,6 +105,7 @@
 
     <group id="GoToCodeGroup">
       <separator/>
+      <action id="SelectIn" class="com.intellij.ide.actions.SelectInAction"/>
       <action id="ShowNavBar" class="com.intellij.ide.navigationToolbar.ShowNavBarAction"/>
       <action id="GotoDeclaration" class="com.intellij.codeInsight.navigation.actions.GotoDeclarationAction"/>
       <action id="GotoImplementation" class="com.intellij.codeInsight.navigation.actions.GotoImplementationAction"/>
@@ -112,6 +113,14 @@
       <action id="GotoSuperMethod" class="com.intellij.codeInsight.navigation.actions.GotoSuperAction"/>
       <action id="GotoTest" class="com.intellij.testIntegration.GotoTestOrCodeAction"/>
       <action id="GotoRelated" class="com.intellij.ide.actions.GotoRelatedFileAction"/>
+      <separator/>
+      <action id="FileStructurePopup" class="com.intellij.ide.actions.ViewStructureAction"/>
+      <action id="ShowFilePath" class="com.intellij.ide.actions.ShowFilePathAction"/>
+      <group id="HierarchyGroup">
+        <action id="TypeHierarchy" class="com.intellij.ide.hierarchy.actions.BrowseTypeHierarchyAction"/>
+        <action id="MethodHierarchy" class="com.intellij.ide.hierarchy.actions.BrowseMethodHierarchyAction"/>
+        <action id="CallHierarchy" class="com.intellij.ide.hierarchy.actions.BrowseCallHierarchyAction"/>
+      </group>
       <separator/>
 
       <add-to-group group-id="GoToMenu" anchor="after" relative-to-action="EditBookmarksGroup"/>
@@ -139,10 +148,6 @@
         <action id="ParameterInfo" class="com.intellij.codeInsight.hint.actions.ShowParameterInfoAction"/>
         <action id="EditorContextInfo" class="com.intellij.codeInsight.hint.actions.ShowContainerInfoAction"/>
         <action id="ShowErrorDescription" class="com.intellij.codeInsight.daemon.impl.actions.ShowErrorDescriptionAction"/>
-        <separator/>
-        <action id="SelectIn" class="com.intellij.ide.actions.SelectInAction"/>
-        <action id="FileStructurePopup" class="com.intellij.ide.actions.ViewStructureAction"/>
-        <action id="ShowFilePath" class="com.intellij.ide.actions.ShowFilePathAction"/>
       </group>
       <separator/>
 
@@ -165,33 +170,10 @@
       <add-to-group group-id="ViewMenu" relative-to-action="QuickChangeScheme" anchor="after"/>
     </group>
 
-    <group id="FoldingGroup" popup="true">
-      <action id="ExpandRegion" class="com.intellij.codeInsight.folding.impl.actions.ExpandRegionAction"/>
-      <action id="CollapseRegion" class="com.intellij.codeInsight.folding.impl.actions.CollapseRegionAction"/>
-      <separator/>
-      <action id="ExpandAllRegions" class="com.intellij.codeInsight.folding.impl.actions.ExpandAllRegionsAction"/>
-      <action id="CollapseAllRegions" class="com.intellij.codeInsight.folding.impl.actions.CollapseAllRegionsAction"/>
-      <separator/>
-      <group id="LanguageSpecificFoldingGroup"/>
-      <separator/>
-      <action id="CollapseSelection" class="com.intellij.codeInsight.folding.impl.actions.CollapseSelectionAction"/>
-
-      <add-to-group group-id="ViewMenu" relative-to-action="EditorToggleActions" anchor="before"/>
-    </group>
-
     <action id="RecentChanges" class="com.intellij.history.integration.ui.actions.RecentChangesAction">
       <keyboard-shortcut first-keystroke="alt shift C" keymap="$default"/>
       <add-to-group group-id="ViewRecentActions" anchor="last"/>
     </action>
-
-    <group id="HierarchyGroup">
-      <separator/>
-      <action id="TypeHierarchy" class="com.intellij.ide.hierarchy.actions.BrowseTypeHierarchyAction"/>
-      <action id="MethodHierarchy" class="com.intellij.ide.hierarchy.actions.BrowseMethodHierarchyAction"/>
-      <action id="CallHierarchy" class="com.intellij.ide.hierarchy.actions.BrowseCallHierarchyAction"/>
-      <separator/>
-      <add-to-group group-id="ViewMenu" relative-to-action="CodeEditorBaseGroup" anchor="after"/>
-    </group>
 
     <!-- Go To -->
     <group id="GoToTargetEx">
@@ -228,6 +210,18 @@
         <separator/>
         <action id="HippieCompletion" class="com.intellij.codeInsight.completion.actions.HippieCompletionAction"/>
         <action id="HippieBackwardCompletion" class="com.intellij.codeInsight.completion.actions.HippieBackwardCompletionAction"/>
+      </group>
+
+      <group id="FoldingGroup" popup="true">
+        <action id="ExpandRegion" class="com.intellij.codeInsight.folding.impl.actions.ExpandRegionAction"/>
+        <action id="CollapseRegion" class="com.intellij.codeInsight.folding.impl.actions.CollapseRegionAction"/>
+        <separator/>
+        <action id="ExpandAllRegions" class="com.intellij.codeInsight.folding.impl.actions.ExpandAllRegionsAction"/>
+        <action id="CollapseAllRegions" class="com.intellij.codeInsight.folding.impl.actions.CollapseAllRegionsAction"/>
+        <separator/>
+        <group id="LanguageSpecificFoldingGroup"/>
+        <separator/>
+        <action id="CollapseSelection" class="com.intellij.codeInsight.folding.impl.actions.CollapseSelectionAction"/>
       </group>
 
       <separator/>
