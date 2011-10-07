@@ -5,6 +5,7 @@
 
   <category>inspection</category>
   <vendor logo="/general/ijLogo.png">JetBrains</vendor>
+  <depends>com.intellij.properties</depends>
   <resource-bundle xmlns="">org.jetbrains.idea.devkit.DevKitBundle</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -36,6 +37,7 @@
 
     <moduleConfigurationEditorProvider implementation="org.jetbrains.idea.devkit.module.PluginModuleEditorsProvider"/>
     <implicitUsageProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitEntryPoints"/>
+    <psi.referenceContributor implementation="org.jetbrains.idea.devkit.dom.impl.InspectionsPropertiesReferenceProviderContributor"/>
   </extensions>
 
   <module-components>
