@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.labels.LinkLabel;
@@ -217,7 +218,7 @@ public class ConfigurationErrorsComponent extends JPanel implements Disposable, 
             if (deepestComponentAt instanceof ToolbarAlikeButton) {
               final String name = ((ToolbarAlikeButton)deepestComponentAt).getButtonName();
               if (FIX_ACTION_NAME.equals(name)) {
-                onClickFix(error, (JComponent)deepestComponentAt);
+                onClickFix(error, (JComponent)deepestComponentAt, e);
               }
               else if (NAVIGATE_ACTION_NAME.equals(name)) {
                 error.navigate();
@@ -239,8 +240,8 @@ public class ConfigurationErrorsComponent extends JPanel implements Disposable, 
       }
     }
 
-    private void onClickFix(@NotNull final ConfigurationError error, JComponent component) {
-      error.fix(component);
+    private void onClickFix(@NotNull final ConfigurationError error, JComponent component, MouseEvent e) {
+      error.fix(component, new RelativePoint(e));
     }
 
     @Override
@@ -269,7 +270,7 @@ public class ConfigurationErrorsComponent extends JPanel implements Disposable, 
         }
 
         @Override
-        public void onClick() {
+        public void onClick(MouseEvent e) {
           onViewChange();
         }
       }, BorderLayout.NORTH);
@@ -305,7 +306,7 @@ public class ConfigurationErrorsComponent extends JPanel implements Disposable, 
       myBehavior = new BaseButtonBehavior(this, TimedDeadzone.NULL) {
         @Override
         protected void execute(MouseEvent e) {
-          onClick();
+          onClick(e);
         }
       };
 
@@ -316,7 +317,7 @@ public class ConfigurationErrorsComponent extends JPanel implements Disposable, 
       return myName;
     }
 
-    public void onClick() {}
+    public void onClick(MouseEvent e) {}
 
     @Override
     public Insets getInsets() {
@@ -407,7 +408,7 @@ public class ConfigurationErrorsComponent extends JPanel implements Disposable, 
       myFakeTextPane.setBorder(BorderFactory.createEmptyBorder(3, 0, 3, 0));
       myText.setOpaque(false);
       if (UIUtil.isUnderNimbusLookAndFeel()) {
-        myText.setBackground(new Color(0, 0, 0, 0));
+        myText.setBackground(UIUtil.TRANSPARENT_COLOR);
       }
 
       myText.setEditable(false);
@@ -577,10 +578,10 @@ public class ConfigurationErrorsComponent extends JPanel implements Disposable, 
           }
 
           @Override
-          public void onClick() {
+          public void onClick(MouseEvent e) {
             final Object o = myModel.getElementAt(0);
             if (o instanceof ConfigurationError) {
-              ((ConfigurationError)o).fix(this);
+              ((ConfigurationError)o).fix(this, new RelativePoint(e));
               updateView();
               final Container ancestor = SwingUtilities.getAncestorOfClass(ConfigurationErrorsComponent.class, this);
               if (ancestor != null && ancestor instanceof JComponent) {
@@ -600,7 +601,7 @@ public class ConfigurationErrorsComponent extends JPanel implements Disposable, 
         }
 
         @Override
-        public void onClick() {
+        public void onClick(MouseEvent e) {
           final Object o = myModel.getElementAt(0);
           if (o instanceof ConfigurationError) {
             ((ConfigurationError)o).navigate();
@@ -616,7 +617,7 @@ public class ConfigurationErrorsComponent extends JPanel implements Disposable, 
         }
 
         @Override
-        public void onClick() {
+        public void onClick(MouseEvent e) {
           final Object o = myModel.getElementAt(0);
           if (o instanceof ConfigurationError) {
             ((ConfigurationError)o).ignore(!((ConfigurationError)o).isIgnored());

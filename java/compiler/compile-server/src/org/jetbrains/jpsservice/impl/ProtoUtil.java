@@ -1,14 +1,15 @@
 package org.jetbrains.jpsservice.impl;
 
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.incremental.messages.BuildMessage;
+import org.jetbrains.jps.incremental.messages.CompilerMessage;
+import org.jetbrains.jps.server.GlobalLibrary;
+import org.jetbrains.jps.server.SdkLibrary;
 import org.jetbrains.jpsservice.JpsRemoteProto;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
@@ -71,19 +72,30 @@ public class ProtoUtil {
     return JpsRemoteProto.Message.Request.newBuilder().setRequestType(JpsRemoteProto.Message.Request.Type.RELOAD_PROJECT_COMMAND).setReloadProjectCommand(builder.build()).build();
   }
 
-  public static JpsRemoteProto.Message.Request createSetupRequest(final Map<String, String> pathVars) {
+  public static JpsRemoteProto.Message.Request createSetupRequest(final Map<String, String> pathVars, List<GlobalLibrary> sdkAndLibs) {
     final JpsRemoteProto.Message.Request.SetupCommand.Builder cmdBuilder = JpsRemoteProto.Message.Request.SetupCommand.newBuilder();
 
-    if (pathVars.size() > 0) {
-      final JpsRemoteProto.Message.Request.SetupCommand.PathVariable.Builder pathVarBuilder =
-        JpsRemoteProto.Message.Request.SetupCommand.PathVariable.newBuilder();
-
+    if (!pathVars.isEmpty()) {
       for (Map.Entry<String, String> entry : pathVars.entrySet()) {
         final String var = entry.getKey();
         final String value = entry.getValue();
         if (var != null && value != null) {
+          final JpsRemoteProto.Message.Request.SetupCommand.PathVariable.Builder pathVarBuilder =
+            JpsRemoteProto.Message.Request.SetupCommand.PathVariable.newBuilder();
           cmdBuilder.addPathVariable(pathVarBuilder.setName(var).setValue(value).build());
         }
+      }
+    }
+
+    if (!sdkAndLibs.isEmpty()) {
+      for (GlobalLibrary lib : sdkAndLibs) {
+        final JpsRemoteProto.Message.Request.SetupCommand.GlobalLibrary.Builder libBuilder =
+          JpsRemoteProto.Message.Request.SetupCommand.GlobalLibrary.newBuilder();
+        libBuilder.setName(lib.getName()).addAllPath(lib.getPaths());
+        if (lib instanceof SdkLibrary) {
+          libBuilder.setHomePath(((SdkLibrary)lib).getHomePath());
+        }
+        cmdBuilder.addGlobalLibrary(libBuilder.build());
       }
     }
 
@@ -115,33 +127,61 @@ public class ProtoUtil {
   }
 
   public static JpsRemoteProto.Message.Response createCompileInfoMessageResponse(String text, String path) {
-    return createCompileMessageResponse(JpsRemoteProto.Message.Response.CompileMessage.Kind.INFO, text, path, -1, -1);
+    return createCompileMessageResponse(BuildMessage.Kind.PROGRESS, text, path, -1L, -1L, -1L, -1, -1);
   }
 
   public static JpsRemoteProto.Message.Response createCompileProgressMessageResponse(String text) {
-    return createCompileMessageResponse(JpsRemoteProto.Message.Response.CompileMessage.Kind.PROGRESS, text, null, -1, -1);
+    return createCompileMessageResponse(BuildMessage.Kind.PROGRESS, text, null, -1L, -1L, -1L, -1, -1);
   }
 
-  public static JpsRemoteProto.Message.Response createCompileWarningMessageResponse(String text, String path, int line, int column) {
-    return createCompileMessageResponse(JpsRemoteProto.Message.Response.CompileMessage.Kind.WARNING, text, path, line, column);
+  public static JpsRemoteProto.Message.Response createCompileErrorMessageResponse(String text, String path,
+                                                                                  long beginOffset,
+                                                                                  long endOffset,
+                                                                                  long offset,
+                                                                                  long line,
+                                                                                  long column) {
+    return createCompileMessageResponse(CompilerMessage.Kind.ERROR, text, path, beginOffset, endOffset, offset, line, column);
   }
 
-  public static JpsRemoteProto.Message.Response createCompileErrorMessageResponse(String text, String path, int line, int column) {
-    return createCompileMessageResponse(JpsRemoteProto.Message.Response.CompileMessage.Kind.ERROR, text, path, line, column);
-  }
+  public static JpsRemoteProto.Message.Response createCompileMessageResponse(final BuildMessage.Kind kind,
+                                                                             String text,
+                                                                             String path,
+                                                                             long beginOffset, long endOffset, long offset, long line,
+                                                                             long column) {
 
-  public static JpsRemoteProto.Message.Response createCompileMessageResponse(final JpsRemoteProto.Message.Response.CompileMessage.Kind msgKind, String text, String path, int line, int column) {
-    final JpsRemoteProto.Message.Response.CompileMessage.Builder builder = JpsRemoteProto.Message.Response.CompileMessage.newBuilder().setKind(msgKind);
+    final JpsRemoteProto.Message.Response.CompileMessage.Builder builder = JpsRemoteProto.Message.Response.CompileMessage.newBuilder();
+    switch (kind) {
+      case ERROR:
+        builder.setKind(JpsRemoteProto.Message.Response.CompileMessage.Kind.ERROR);
+        break;
+      case WARNING:
+        builder.setKind(JpsRemoteProto.Message.Response.CompileMessage.Kind.WARNING);
+        break;
+      case INFO:
+        builder.setKind(JpsRemoteProto.Message.Response.CompileMessage.Kind.INFO);
+        break;
+      default:
+        builder.setKind(JpsRemoteProto.Message.Response.CompileMessage.Kind.PROGRESS);
+    }
     if (text != null) {
       builder.setText(text);
     }
     if (path != null) {
       builder.setSourceFilePath(path);
     }
-    if (line >=0) {
+    if (beginOffset >= 0L) {
+      builder.setProblemBeginOffset(beginOffset);
+    }
+    if (endOffset >= 0L) {
+      builder.setProblemEndOffset(endOffset);
+    }
+    if (offset >= 0L) {
+      builder.setProblemLocationOffset(offset);
+    }
+    if (line > 0L) {
       builder.setLine(line);
     }
-    if (column >=0) {
+    if (column > 0L) {
       builder.setColumn(column);
     }
     return JpsRemoteProto.Message.Response.newBuilder().setResponseType(JpsRemoteProto.Message.Response.Type.COMPILE_MESSAGE).setCompileMessage(builder.build()).build();

@@ -94,10 +94,9 @@ public class UIUtil {
                                 MacUIUtil.getInvertedTextCursor(): Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR);
   }
 
-  public enum FontSize { NORMAL, TREE, SMALL, MINI }
+  public enum FontSize {NORMAL, TREE, SMALL, MINI}
   public enum ComponentStyle {REGULAR, SMALL, MINI}
   public enum FontColor {NORMAL, BRIGHTER}
-
 
   public static final char MNEMONIC = 0x1B;
   @NonNls public static final String HTML_MIME = "text/html";
@@ -119,8 +118,10 @@ public class UIUtil {
   private static final Color ACTIVE_HEADER_COLOR = new Color(160, 186, 213);
   private static final Color INACTIVE_HEADER_COLOR = new Color(128, 128, 128);
   private static final Color BORDER_COLOR = Color.LIGHT_GRAY;
-  public static Color AQUA_SEPARATOR_FOREGROUND_COLOR = new Color(190, 190, 190);
-  public static Color AQUA_SEPARATOR_BACKGROUND_COLOR = new Color(240, 240, 240);
+
+  public static final Color AQUA_SEPARATOR_FOREGROUND_COLOR = new Color(190, 190, 190);
+  public static final Color AQUA_SEPARATOR_BACKGROUND_COLOR = new Color(240, 240, 240);
+  public static final Color TRANSPARENT_COLOR = new Color(0, 0, 0, 0);
 
   public static final int DEFAULT_HGAP = 10;
   public static final int DEFAULT_VGAP = 5;

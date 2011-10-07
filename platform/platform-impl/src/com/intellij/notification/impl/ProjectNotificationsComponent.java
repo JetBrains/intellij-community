@@ -57,7 +57,13 @@ public class ProjectNotificationsComponent implements Notifications, ProjectComp
   }
 
   @Override
-  public void register(@NotNull String groupDisplayType, @NotNull NotificationDisplayType defaultDisplayType) {
+  public void register(@NotNull String groupDisplayName, @NotNull NotificationDisplayType defaultDisplayType) {
+  }
+
+  @Override
+  public void register(@NotNull String groupDisplayName,
+                       @NotNull NotificationDisplayType defaultDisplayType,
+                       boolean shouldLog) {
   }
 
   public void notify(@NotNull Notification notification, @NotNull NotificationDisplayType defaultDisplayType) {

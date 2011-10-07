@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<application>
+  <component name="CodeInsightSettings">
+    <option name="AUTO_POPUP_PARAMETER_INFO" value="true" />
+    <option name="PARAMETER_INFO_DELAY" value="1000" />
+    <option name="AUTO_POPUP_JAVADOC_INFO" value="false" />
+    <option name="JAVADOC_INFO_DELAY" value="1000" />
+    <option name="AUTO_POPUP_COMPLETION_LOOKUP" value="true" />
+    <option name="AUTO_LOOKUP_DELAY" value="0" />
+    <option name="COMPLETION_CASE_SENSITIVE" value="3" />
+    <option name="AUTOPOPUP_FOCUS_POLICY" value="2" />
+    <option name="AUTOCOMPLETE_ON_CODE_COMPLETION" value="true" />
+    <option name="AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION" value="true" />
+    <option name="AUTOCOMPLETE_ON_CLASS_NAME_COMPLETION" value="false" />
+    <option name="AUTOCOMPLETE_COMMON_PREFIX" value="true" />
+    <option name="SHOW_STATIC_AFTER_INSTANCE" value="false" />
+    <option name="SHOW_FULL_SIGNATURES_IN_PARAMETER_INFO" value="false" />
+    <option name="SMART_INDENT_ON_ENTER" value="true" />
+    <option name="INSERT_BRACE_ON_ENTER" value="true" />
+    <option name="INSERT_SCRIPTLET_END_ON_ENTER" value="true" />
+    <option name="JAVADOC_STUB_ON_ENTER" value="true" />
+    <option name="SMART_END_ACTION" value="true" />
+    <option name="JAVADOC_GENERATE_CLOSING_TAG" value="true" />
+    <option name="SURROUND_SELECTION_ON_QUOTE_TYPED" value="false" />
+    <option name="AUTOINSERT_PAIR_BRACKET" value="true" />
+    <option name="AUTOINSERT_PAIR_QUOTE" value="true" />
+    <option name="REFORMAT_ON_PASTE" value="3" />
+    <option name="INDENT_TO_CARET_ON_PASTE" value="false" />
+    <option name="ADD_IMPORTS_ON_PASTE" value="3" />
+    <option name="HIGHLIGHT_BRACES" value="true" />
+    <option name="HIGHLIGHT_SCOPE" value="false" />
+    <option name="USE_INSTANCEOF_ON_EQUALS_PARAMETER" value="false" />
+    <option name="HIGHLIGHT_IDENTIFIER_UNDER_CARET" value="false" />
+    <option name="OPTIMIZE_IMPORTS_ON_THE_FLY" value="false" />
+    <option name="ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY" value="false" />
+    <option name="JSP_ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY" value="false" />
+  </component>
+  <component name="DaemonCodeAnalyzerSettings" profile="Default">
+    <option name="NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST" value="false" />
+    <option name="AUTOREPARSE_DELAY" value="300" />
+    <option name="SHOW_ADD_IMPORT_HINTS" value="true" />
+    <option name="NO_AUTO_IMPORT_PATTERN" value="[a-z].?" />
+    <option name="SUPPRESS_WARNINGS" value="true" />
+    <option name="SHOW_METHOD_SEPARATORS" value="false" />
+    <option name="ERROR_STRIPE_MARK_MIN_HEIGHT" value="3" />
+    <option name="SHOW_SMALL_ICONS_IN_GUTTER" value="true" />
+  </component>
+</application>
+

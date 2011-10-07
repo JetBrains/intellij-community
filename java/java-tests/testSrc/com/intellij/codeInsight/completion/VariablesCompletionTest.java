@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -132,6 +133,18 @@ public class VariablesCompletionTest extends CompletionTestCase {
 
   public void testArrayMethodName() throws Throwable {
     doTest("ArrayMethodName.java", "ArrayMethodName-result.java");
+  }
+
+  public void testInitializerMatters() throws Exception {
+    configureByText(JavaFileType.INSTANCE, "class Foo {{ String f<caret>x = getFoo(); }; String getFoo() {}; }");
+    complete();
+    assertStringItems("foo", "fS");
+  }
+
+  public void testFieldInitializerMatters() throws Exception {
+    configureByText(JavaFileType.INSTANCE, "class Foo { String f<caret>x = getFoo(); String getFoo() {}; }");
+    complete();
+    assertStringItems("foo", "fString");
   }
 
   public void testNoKeywordsInForLoopVariableName() throws Throwable {

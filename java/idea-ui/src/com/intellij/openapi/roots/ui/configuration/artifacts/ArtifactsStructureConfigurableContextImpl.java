@@ -64,9 +64,6 @@ public class ArtifactsStructureConfigurableContextImpl implements ArtifactsStruc
     myContext = context;
     myProject = project;
     context.getDaemonAnalyzer().addListener(new ProjectStructureDaemonAnalyzerListener() {
-      public void usagesCollected(@NotNull ProjectStructureElement containingElement) {
-      }
-
       public void problemsChanged(@NotNull ProjectStructureElement element) {
         if (element instanceof ArtifactProjectStructureElement) {
           final Artifact originalArtifact = ((ArtifactProjectStructureElement)element).getOriginalArtifact();
@@ -74,12 +71,6 @@ public class ArtifactsStructureConfigurableContextImpl implements ArtifactsStruc
           if (artifactEditor != null) {
             updateProblems(originalArtifact, artifactEditor);
           }
-        }
-      }
-
-      public void allProblemsChanged() {
-        for (Map.Entry<Artifact, ArtifactEditorImpl> entry : myArtifactEditors.entrySet()) {
-          updateProblems(entry.getKey(), entry.getValue());
         }
       }
     });
@@ -116,7 +107,7 @@ public class ArtifactsStructureConfigurableContextImpl implements ArtifactsStruc
   }
 
   public void queueValidation(Artifact artifact) {
-    myContext.getDaemonAnalyzer().queueUpdate(getOrCreateArtifactElement(artifact), true, false);
+    myContext.getDaemonAnalyzer().queueUpdate(getOrCreateArtifactElement(artifact));
   }
 
   public CompositePackagingElement<?> getRootElement(@NotNull Artifact artifact) {

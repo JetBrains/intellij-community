@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.formatter.xml.XmlCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.intentions.ChooseFileIntentionAction;
@@ -590,15 +591,17 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
     MyFileChooserFactory factory = new MyFileChooserFactory();
     factory.setFiles(new VirtualFile[]{libFile});
     ((ChooseFileIntentionAction)((IntentionActionWrapper)action).getDelegate()).setTestFileChooserFactory(factory);
+    XmlCodeStyleSettings xmlSettings =
+      CodeStyleSettingsManager.getInstance(myProject).getCurrentSettings().getCustomSettings(XmlCodeStyleSettings.class);
 
-    int prevValue = CodeStyleSettingsManager.getInstance(myProject).getCurrentSettings().XML_TEXT_WRAP;
+    int prevValue = xmlSettings.XML_TEXT_WRAP;
     try {
       // prevent file path from wrapping.
-      CodeStyleSettingsManager.getInstance(myProject).getCurrentSettings().XML_TEXT_WRAP = CodeStyleSettings.DO_NOT_WRAP;
+      xmlSettings.XML_TEXT_WRAP = CodeStyleSettings.DO_NOT_WRAP;
       myFixture.launchAction(action);
     }
     finally {
-      CodeStyleSettingsManager.getInstance(myProject).getCurrentSettings().XML_TEXT_WRAP = prevValue;
+      xmlSettings.XML_TEXT_WRAP = prevValue;
       ((ChooseFileIntentionAction)((IntentionActionWrapper)action).getDelegate()).setTestFileChooserFactory(null);
     }
 

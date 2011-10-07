@@ -16,7 +16,6 @@
 package org.jetbrains.idea.maven.utils;
 
 import com.intellij.codeInsight.template.TemplateContextType;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
@@ -28,10 +27,5 @@ public class MavenLiveTemplateContextType extends TemplateContextType {
 
   public boolean isInContext(@NotNull final PsiFile file, final int offset) {
     return MavenDomUtil.isMavenFile(file);
-  }
-
-  @Override
-  public boolean isInContext(@NotNull FileType fileType) {
-    return false;
   }
 }

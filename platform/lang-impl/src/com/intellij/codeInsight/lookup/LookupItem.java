@@ -52,12 +52,9 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
   public static final Key<Object> FORCE_SHOW_SIGNATURE_ATTR = Key.create("forceShowSignature");
 
   public static final Key<Object> BRACKETS_COUNT_ATTR = Key.create("BRACKETS_COUNT_ATTR");
-  public static final Key<Object> OVERWRITE_ON_AUTOCOMPLETE_ATTR = Key.create("OVERWRITE_ON_AUTOCOMPLETE_ATTR");
   public static final Object FORCE_QUALIFY = Key.create("FORCE_QUALIFY");
   public static final Object SUBSTITUTOR = Key.create("SUBSTITUTOR");
-  public static final Object FORCE_LOOKUP_STRING = Key.create("FORCE_LOOKUP_STRING");
   public static final Object TYPE = Key.create("TYPE");
-  public static final Object INDICATE_ANONYMOUS = Key.create("INDICATE ANONYMOUS");
   public static final Key<Object> DEPRECATED_ATTR = Key.create("DEPRECATED");
 
   public static final Object CASE_INSENSITIVE = Key.create("CASE_INSENSITIVE");
@@ -68,7 +65,6 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
   private String myLookupString;
   private InsertHandler myInsertHandler;
   private double myPriority;
-  private int myGrouping;
   private Map<Object,Object> myAttributes = null;
   public static final LookupItem[] EMPTY_ARRAY = new LookupItem[0];
   private final Set<String> myAllLookupStrings = new THashSet<String>();
@@ -302,12 +298,6 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
   @NotNull
   public LookupItem<T> setPriority(double priority) {
     myPriority = priority;
-    return this;
-  }
-
-  @NotNull
-  public LookupItem<T> setGrouping(final int grouping) {
-    myGrouping = grouping;
     return this;
   }
 

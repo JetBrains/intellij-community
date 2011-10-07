@@ -36,6 +36,7 @@ public class ExistingLibraryEditor extends LibraryEditorBase implements Disposab
   private final LibraryEditorListener myListener;
   private String myLibraryName = null;
   private LibraryProperties myLibraryProperties;
+  private LibraryProperties myDetectedLibraryProperties;
   private Library.ModifiableModel myModel = null;
   private LibraryType<?> myDetectedType;
   private boolean myDetectedTypeComputed;
@@ -76,7 +77,7 @@ public class ExistingLibraryEditor extends LibraryEditorBase implements Disposab
       final Pair<LibraryType<?>,LibraryProperties<?>> pair = LibraryDetectionManager.getInstance().detectType(Arrays.asList(getFiles(OrderRootType.CLASSES)));
       if (pair != null) {
         myDetectedType = pair.getFirst();
-        myLibraryProperties = pair.getSecond();
+        myDetectedLibraryProperties = pair.getSecond();
       }
       myDetectedTypeComputed = true;
     }
@@ -87,6 +88,10 @@ public class ExistingLibraryEditor extends LibraryEditorBase implements Disposab
   public LibraryProperties getProperties() {
     final LibraryType type = getType();
     if (type == null) return null;
+
+    if (myDetectedType != null) {
+      return myDetectedLibraryProperties;
+    }
 
     if (myLibraryProperties == null) {
       myLibraryProperties = type.createDefaultProperties();
@@ -155,7 +160,7 @@ public class ExistingLibraryEditor extends LibraryEditorBase implements Disposab
 
   @Override
   public void addJarDirectory(String url, boolean recursive, OrderRootType rootType) {
-    getModel()  .addJarDirectory(url, recursive, rootType);
+    getModel().addJarDirectory(url, recursive, rootType);
   }
 
   @Override

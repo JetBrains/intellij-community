@@ -42,6 +42,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
@@ -51,6 +52,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
+import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
@@ -144,13 +146,26 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
       final PsiType expectedType = method.getReturnType();
       if (expectedType == null || PsiType.VOID.equals(expectedType)) return;
 
-      ControlFlowUtils.visitAllExitPoints(block, new ControlFlowUtils.ExitPointVisitor() {
+      checkReturnTypes(block, expectedType);
+    }
+
+    @Override
+    public void visitClosure(GrClosableBlock closure) {
+      super.visitClosure(closure);
+
+      checkReturnTypes(closure, GroovyExpectedTypesProvider.getExpectedClosureReturnType(closure));
+    }
+
+    private void checkReturnTypes(GrCodeBlock closure, final PsiType expectedReturnType) {
+      if (expectedReturnType == null || PsiType.VOID == expectedReturnType) return;
+
+      ControlFlowUtils.visitAllExitPoints(closure, new ControlFlowUtils.ExitPointVisitor() {
         @Override
         public boolean visitExitPoint(Instruction instruction, @Nullable GrExpression returnValue) {
           if (returnValue != null &&
               !(returnValue.getParent() instanceof GrReturnStatement) &&
               !isNewInstanceInitialingByTuple(returnValue)) {
-            checkAssignability(expectedType, returnValue, returnValue);
+            checkAssignability(expectedReturnType, returnValue, returnValue);
           }
           return true;
         }

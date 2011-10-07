@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<application>
+  <component name="FileBasedIndex">
+    <option name="registeredIndices">
+      <list>
+        <option value="java.anonymous.baseref" />
+        <option value="java.field.name" />
+        <option value="java.annotations" />
+        <option value="java.class.shortname" />
+        <option value="java.class.extlist" />
+        <option value="java.class.fqn" />
+        <option value="java.method.name" />
+      </list>
+    </option>
+  </component>
+</application>
+

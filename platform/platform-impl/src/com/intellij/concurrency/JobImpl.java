@@ -145,8 +145,6 @@ public class JobImpl<T> implements Job<T> {
     Throwable ex = null;
     PrioritizedFutureTask[] tasks = getTasks();
     for (PrioritizedFutureTask f : tasks) {
-      if (f.isDone()) continue;
-
       try {
         // this loop is for workaround of mysterious bug
         // when sometimes future hangs inside parkAndCheckForInterrupt() during unbounded get()

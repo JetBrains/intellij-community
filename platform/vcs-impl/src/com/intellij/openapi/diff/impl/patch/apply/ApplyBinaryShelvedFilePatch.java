@@ -15,8 +15,9 @@
  */
 package com.intellij.openapi.diff.impl.patch.apply;
 
-import com.intellij.openapi.diff.impl.patch.ApplyPatchException;
-import com.intellij.openapi.diff.impl.patch.ApplyPatchStatus;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -27,12 +28,18 @@ public class ApplyBinaryShelvedFilePatch extends ApplyFilePatchBase<ShelveChange
     super(patch);
   }
 
+  // todo check the case!!!
+  // todo check the case!!!
+  // todo check the case!!!
+  // todo check the case!!!
+  // todo check the case!!!
+  // todo check the case!!!
   @Override
-  protected ApplyPatchStatus applyChange(VirtualFile fileToPatch) throws IOException, ApplyPatchException {
+  protected Result applyChange(Project project, VirtualFile fileToPatch, FilePath pathBeforeRename, Getter<CharSequence> baseContents) throws IOException {
     return null;
   }
 
   @Override
-  protected void applyCreate(VirtualFile newFile) throws IOException, ApplyPatchException {
+  protected void applyCreate(VirtualFile newFile) throws IOException {
   }
 }

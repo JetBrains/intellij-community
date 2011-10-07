@@ -1,25 +1,29 @@
 package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.impl.libraries.ApplicationLibraryTable;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.roots.ui.configuration.ChooseModulesDialog;
 import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
+import com.intellij.openapi.roots.ui.configuration.libraries.LibraryEditingUtil;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.ExistingLibraryEditor;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.LibraryConfigurable;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.*;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.vfs.VfsUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -108,7 +112,7 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
     if (this == o) return true;
     if (!(o instanceof LibraryProjectStructureElement)) return false;
 
-    return getSourceOrThis().equals(((LibraryProjectStructureElement)o).getSourceOrThis());
+    return getSourceOrThis() == (((LibraryProjectStructureElement)o).getSourceOrThis());
   }
 
   @NotNull 
@@ -122,13 +126,22 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
   
   @Override
   public int hashCode() {
-    return getSourceOrThis().hashCode();
+    return System.identityHashCode(getSourceOrThis());
   }
 
   @Override
-  public boolean highlightIfUnused() {
+  public boolean shouldShowWarningIfUnused() {
     final LibraryTable libraryTable = myLibrary.getTable();
-    return libraryTable != null && LibraryTablesRegistrar.PROJECT_LEVEL.equals(libraryTable.getTableLevel());
+    if (libraryTable == null) return false;
+    return LibraryTablesRegistrar.PROJECT_LEVEL.equals(libraryTable.getTableLevel())
+        || LibraryTablesRegistrar.APPLICATION_LEVEL.equals(libraryTable.getTableLevel()) && !ApplicationLibraryTable.getApplicationTable().isUsedInOtherProjects(myLibrary, myContext.getProject());
+  }
+
+  @Override
+  public ProjectStructureProblemDescription createUnusedElementWarning() {
+    final List<ConfigurationErrorQuickFix> fixes = Arrays.asList(new AddLibraryToDependenciesFix(), new RemoveLibraryFix());
+    return new ProjectStructureProblemDescription(getPresentableName() + " is not used", null, createPlace(), fixes,
+                                                  ProjectStructureProblemType.unused("unused-library"));
   }
 
   @Override
@@ -173,6 +186,41 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
           }
         });
       }
+    }
+  }
+
+  private class AddLibraryToDependenciesFix extends ConfigurationErrorQuickFix {
+    private AddLibraryToDependenciesFix() {
+      super("Add to Dependencies...");
+    }
+
+    @Override
+    public void performFix() {
+      final Project project = myContext.getProject();
+      final ModuleStructureConfigurable moduleStructureConfigurable = ModuleStructureConfigurable.getInstance(project);
+      final List<Module> modules = LibraryEditingUtil.getSuitableModules(moduleStructureConfigurable, ((LibraryEx)myLibrary).getType());
+      if (modules.isEmpty()) return;
+      final ChooseModulesDialog dlg = new ChooseModulesDialog(project, modules, ProjectBundle.message("choose.modules.dialog.title"),
+                                                              ProjectBundle
+                                                                .message("choose.modules.dialog.description", myLibrary.getName()));
+      dlg.show();
+      if (dlg.isOK()) {
+        final List<Module> chosenModules = dlg.getChosenElements();
+        for (Module module : chosenModules) {
+          moduleStructureConfigurable.addLibraryOrderEntry(module, myLibrary);
+        }
+      }
+    }
+  }
+
+  private class RemoveLibraryFix extends ConfigurationErrorQuickFix {
+    private RemoveLibraryFix() {
+      super("Remove Library");
+    }
+
+    @Override
+    public void performFix() {
+      BaseLibrariesConfigurable.getInstance(myContext.getProject(), myLibrary.getTable().getTableLevel()).removeLibrary(LibraryProjectStructureElement.this);
     }
   }
 }

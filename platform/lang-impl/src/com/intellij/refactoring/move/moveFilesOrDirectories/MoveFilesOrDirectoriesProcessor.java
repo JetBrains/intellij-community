@@ -130,7 +130,9 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
 
   @Override
   protected void performPsiSpoilingRefactoring() {
-    RenameUtil.renameNonCodeUsages(myProject, myNonCodeUsages);
+    if (myNonCodeUsages != null) {
+      RenameUtil.renameNonCodeUsages(myProject, myNonCodeUsages);
+    }
   }
 
   protected void performRefactoring(UsageInfo[] usages) {

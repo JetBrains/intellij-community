@@ -17,7 +17,7 @@ package git4idea;
 
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.notification.NotificationGroup;
-import com.intellij.notification.impl.NotificationsConfiguration;
+import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -54,10 +54,6 @@ import com.intellij.util.containers.ComparatorDelegate;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
 import git4idea.annotate.GitAnnotationProvider;
-import git4idea.ui.branch.GitBranchWidget;
-import git4idea.history.wholeTree.GitCommitsSequentialIndex;
-import git4idea.history.wholeTree.GitCommitsSequentially;
-import git4idea.status.GitChangeProvider;
 import git4idea.changes.GitCommittedChangeListProvider;
 import git4idea.changes.GitOutgoingChangesProvider;
 import git4idea.checkin.GitCheckinEnvironment;
@@ -68,9 +64,13 @@ import git4idea.diff.GitTreeDiffProvider;
 import git4idea.history.GitHistoryProvider;
 import git4idea.history.NewGitUsersComponent;
 import git4idea.history.browser.GitProjectLogManager;
+import git4idea.history.wholeTree.GitCommitsSequentialIndex;
+import git4idea.history.wholeTree.GitCommitsSequentially;
 import git4idea.i18n.GitBundle;
 import git4idea.merge.GitMergeProvider;
 import git4idea.rollback.GitRollbackEnvironment;
+import git4idea.status.GitChangeProvider;
+import git4idea.ui.branch.GitBranchWidget;
 import git4idea.update.GitUpdateEnvironment;
 import git4idea.vfs.*;
 import org.jetbrains.annotations.NotNull;
@@ -91,7 +91,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   public static final NotificationGroup IMPORTANT_ERROR_NOTIFICATION = NotificationGroup.balloonGroup("Git Important Errors");
 
   static {
-    NotificationsConfiguration.remove("Git");
+    NotificationsConfigurationImpl.remove("Git");
   }
 
   public static final String NAME = "Git"; // Vcs name

@@ -142,12 +142,12 @@ public class JavaInheritorsGetter extends CompletionProvider<CompletionParameter
         }
       }
     }
-    final LookupItem item = PsiTypeLookupItem.createLookupItem(psiType, parameters.getPosition());
+    final PsiTypeLookupItem item = PsiTypeLookupItem.createLookupItem(psiType, parameters.getPosition());
     JavaCompletionUtil.setShowFQN(item);
 
     if (psiClass.isInterface() || psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
       item.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
-      item.setAttribute(LookupItem.INDICATE_ANONYMOUS, "");
+      item.setIndicateAnonymous(true);
     }
 
     return LookupElementDecorator.withInsertHandler(item, myConstructorInsertHandler);

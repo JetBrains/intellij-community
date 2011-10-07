@@ -29,7 +29,7 @@ public class UnmarkRootAction extends MarkRootAction {
   @Override
   public void update(AnActionEvent e) {
     Ref<Boolean> rootType = new Ref<Boolean>();
-    boolean enabled = canMark(e, true, true, rootType);
+    boolean enabled = canMark(e, true, true, false, rootType);
     if (rootType.get() == null) {
       enabled = false;
     }

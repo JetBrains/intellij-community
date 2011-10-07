@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,7 +72,13 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
   }
 
   @Override
-  public void register(@NotNull String groupDisplayType, @NotNull NotificationDisplayType defaultDisplayType) {
+  public void register(@NotNull String groupDisplayName, @NotNull NotificationDisplayType defaultDisplayType) {
+  }
+
+  @Override
+  public void register(@NotNull String groupDisplayName,
+                       @NotNull NotificationDisplayType defaultDisplayType,
+                       boolean shouldLog) {
   }
 
   @Override
@@ -122,14 +128,12 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
   }
 
   public void doNotify(@NotNull final Notification notification, @Nullable NotificationDisplayType displayType, @Nullable final Project project) {
-    final NotificationsConfiguration configuration = NotificationsConfiguration.getNotificationsConfiguration();
+    final NotificationsConfigurationImpl configuration = NotificationsConfigurationImpl.getNotificationsConfigurationImpl();
     if (!configuration.isRegistered(notification.getGroupId())) {
-      configuration.registerDefaultSettings(new NotificationSettings(notification.getGroupId(),
-                                                                     displayType == null ? NotificationDisplayType.BALLOON : displayType,
-                                                                     true));
+      configuration.register(notification.getGroupId(), displayType == null ? NotificationDisplayType.BALLOON : displayType);
     }
 
-    final NotificationSettings settings = NotificationsConfiguration.getSettings(notification.getGroupId());
+    final NotificationSettings settings = NotificationsConfigurationImpl.getSettings(notification.getGroupId());
     if (settings.isShouldLog() && settings.getDisplayType() != NotificationDisplayType.NONE) {
       myModel.add(notification, project);
     }
@@ -163,14 +167,14 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
 
   private static void showNotification(final Notification notification, @Nullable final Project project) {
     String groupId = notification.getGroupId();
-    final NotificationSettings settings = NotificationsConfiguration.getSettings(groupId);
+    final NotificationSettings settings = NotificationsConfigurationImpl.getSettings(groupId);
 
     if (EventLog.isEventLogVisible(project) && settings.isShouldLog()) {
       return;
     }
 
     NotificationDisplayType type = settings.getDisplayType();
-    String toolWindowId = NotificationsConfiguration.getNotificationsConfiguration().getToolWindowId(groupId);
+    String toolWindowId = NotificationsConfigurationImpl.getNotificationsConfigurationImpl().getToolWindowId(groupId);
     if (type == NotificationDisplayType.TOOL_WINDOW &&
         (toolWindowId == null || project == null || !Arrays.asList(ToolWindowManager.getInstance(project).getToolWindowIds()).contains(toolWindowId))) {
       type = NotificationDisplayType.BALLOON;
@@ -241,7 +245,7 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
     text.setOpaque(false);
 
     if (UIUtil.isUnderNimbusLookAndFeel()) {
-      text.setBackground(new Color(0, 0, 0, 0));
+      text.setBackground(UIUtil.TRANSPARENT_COLOR);
     }
 
     text.setBorder(null);

@@ -70,7 +70,7 @@ public abstract class AbstractTitledSeparatorWithIcon extends JPanel {
     gb.anchor = GridBagConstraints.NORTHWEST;
     myWrapper = new JPanel(new BorderLayout());
     add(myWrapper, gb);
-    
+
     myLabel.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseReleased(MouseEvent e) {
@@ -91,6 +91,10 @@ public abstract class AbstractTitledSeparatorWithIcon extends JPanel {
         setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
       }
     });
+  }
+  
+  public void setText(final String text) {
+    myLabel.setText(UIUtil.replaceMnemonicAmpersand(text));
   }
 
   protected abstract RefreshablePanel createPanel();

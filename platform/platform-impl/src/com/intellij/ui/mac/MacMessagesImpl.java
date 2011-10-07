@@ -36,7 +36,6 @@ import javax.swing.*;
 import java.awt.*;
 
 import static com.intellij.ui.mac.foundation.Foundation.*;
-import static com.intellij.ui.mac.foundation.Foundation.invoke;
 
 /**
  * @author pegov
@@ -271,7 +270,7 @@ public class MacMessagesImpl extends MacMessages {
 
             ID paramsArray = invoke("NSArray", "arrayWithObjects:", nsString(title),
                                     // replace % -> %% to avoid formatted parameters (causes SIGTERM)
-                                    nsString(StringUtil.stripHtml(message, true).replace("%", "%%")),
+                                    nsString(StringUtil.stripHtml(message == null ? "" : message, true).replace("%", "%%")),
                                     focusedWindow, nsString(fakeTitle), nsString(errorStyle ? "error" : "-1"),
                                     nsString(doNotAskDialogOption == null || !doNotAskDialogOption.canBeHidden()
                                              // TODO: state=!doNotAsk.shouldBeShown()
@@ -434,7 +433,7 @@ public class MacMessagesImpl extends MacMessages {
                                     nsString(otherText == null ? "-1" : UIUtil.removeMnemonic(otherText)),
                                     nsString(alternateText == null ? "-1" : UIUtil.removeMnemonic(alternateText)),
                                     // replace % -> %% to avoid formatted parameters (causes SIGTERM)
-                                    nsString(StringUtil.stripHtml(message, true).replace("%", "%%")),
+                                    nsString(StringUtil.stripHtml(message == null ? "" : message, true).replace("%", "%%")),
                                     focusedWindow, nsString(fakeTitle), nsString(errorStyle ? "error" : "-1"),
                                     nsString(doNotAskDialogOption == null || !doNotAskDialogOption.canBeHidden()
                                              // TODO: state=!doNotAsk.shouldBeShown()

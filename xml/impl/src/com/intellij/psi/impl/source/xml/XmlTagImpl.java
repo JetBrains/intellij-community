@@ -76,6 +76,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlTagImpl");
 
   private volatile String myName = null;
+  private volatile String myLocalName;
   private volatile XmlAttribute[] myAttributes = null;
   private volatile Map<String, String> myAttributeValueMap = null;
   private CachedValue<XmlTag[]> myTags = null;
@@ -110,6 +111,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
 
   public void clearCaches() {
     myName = null;
+    myLocalName = null;
     myNamespaceMap = null;
     myCachedNamespace = null;
     myCachedDescriptor = null;
@@ -157,7 +159,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
   }
 
   private SchemaPrefixReference createPrefixReference(ASTNode startTagName, String prefix, TagNameReference tagRef) {
-    return new SchemaPrefixReference(this, TextRange.from(startTagName.getStartOffset() - this.getStartOffset(), prefix.length()), prefix, tagRef);
+    return new SchemaPrefixReference(this, TextRange.from(startTagName.getStartOffset() - getStartOffset(), prefix.length()), prefix, tagRef);
   }
 
   public XmlNSDescriptor getNSDescriptor(final String namespace, boolean strict) {
@@ -310,7 +312,6 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
                                                                      final String fileLocation,
                                                                      Map<String, CachedValue<XmlNSDescriptor>> map) {
     if (map == null) map = new THashMap<String, CachedValue<XmlNSDescriptor>>();
-    final ExternalResourceManagerEx externalResourceManager = ExternalResourceManagerEx.getInstanceEx();
 
     // We put cached value in any case to cause its value update on e.g. mapping change
     map.put(namespace, CachedValuesManager.getManager(getManager().getProject()).createCachedValue(new CachedValueProvider<XmlNSDescriptor>() {
@@ -514,6 +515,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     return this;
   }
 
+  @NotNull
   public XmlAttribute[] getAttributes() {
     XmlAttribute[] attributes = myAttributes;
     if (attributes == null) {
@@ -526,7 +528,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
   }
 
   @NotNull
-  protected XmlAttribute[] calculateAttributes(final Map<String, String> attributesValueMap) {
+  private XmlAttribute[] calculateAttributes(final Map<String, String> attributesValueMap) {
     final List<XmlAttribute> result = new ArrayList<XmlAttribute>(10);
     processChildren(new PsiElementProcessor() {
       public boolean execute(@NotNull PsiElement element) {
@@ -557,10 +559,10 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
   public String getAttributeValue(String qname) { //todo ?
     Map<String, String> map = myAttributeValueMap;
     while (map == null) {
-      final XmlAttribute[] xmlAttributes = getAttributes();
+      getAttributes();
       map = myAttributeValueMap;
 
-      if (map == null && xmlAttributes != null) {
+      if (map == null) {
         myAttributes = null;
       }
     }
@@ -657,7 +659,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
   }
 
   public XmlAttribute getAttribute(String name, String namespace) {
-    if ((name != null && name.indexOf(':') != -1) ||
+    if (name != null && name.indexOf(':') != -1 ||
         namespace == null ||
         XmlUtil.EMPTY_URI.equals(namespace) ||
         XmlUtil.ANY_URI.equals(namespace)) {
@@ -871,8 +873,12 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
 
   @NotNull
   public String getLocalName() {
-    final String name = getName();
-    return name.substring(name.indexOf(':') + 1);
+    String localName = myLocalName;
+    if (localName == null) {
+      final String name = getName();
+      myLocalName = localName = name.substring(name.indexOf(':') + 1);
+    }
+    return localName;
   }
 
   public boolean hasNamespaceDeclarations() {
@@ -1176,7 +1182,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
                   // in entity
                   final XmlEntityRef entityRef = PsiTreeUtil.getParentOfType(subTags[subTagNum], XmlEntityRef.class);
                   throw new IncorrectOperationException(
-                    "Can't insert subtag to entity! Entity reference text: " + entityRef != null ? entityRef.getText() : "");
+                    "Can't insert subtag to the entity. Entity reference text: " + (entityRef == null ? "" : entityRef.getText()));
                 }
                 myNewElement = XmlTagImpl.super.addInternal(myChild, myChild, subTag, Boolean.FALSE);
               }

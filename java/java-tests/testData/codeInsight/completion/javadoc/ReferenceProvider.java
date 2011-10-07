@@ -1,0 +1,4 @@
+/**
+ * @custom <caret>
+ */
+class A{}

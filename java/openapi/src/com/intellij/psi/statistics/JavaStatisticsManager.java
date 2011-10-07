@@ -25,29 +25,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * @author yole
  */
 public abstract class JavaStatisticsManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.statistics.JavaStatisticsManager");
-  protected static final int MAX_NAME_SUGGESTIONS_COUNT = 5;
   @NonNls public static final String CLASS_PREFIX = "class#";
-
-  @Nullable
-  public static NameContext getContext(final PsiElement element) {
-    if(element instanceof PsiField){
-      if(((PsiField)element).hasModifierProperty(PsiModifier.STATIC) && ((PsiField)element).hasModifierProperty(PsiModifier.FINAL))
-        return NameContext.CONSTANT_NAME;
-      return NameContext.FIELD_NAME;
-    }
-    if(element instanceof PsiLocalVariable) {
-      return NameContext.LOCAL_VARIABLE_NAME;
-    }
-    return null;
-  }
 
   private static StatisticsInfo createVariableUseInfo(final String name, final VariableKind variableKind,
                                                       final String propertyName,
@@ -84,17 +68,6 @@ public abstract class JavaStatisticsManager {
 
   public static void incVariableNameUseCount(String name, VariableKind variableKind, String propertyName, PsiType type) {
     createVariableUseInfo(name, variableKind, propertyName, type).incUseCount();
-  }
-
-  @Nullable
-  private static NameContext getNameUsageContext(String key2){
-    final int startIndex = key2.indexOf("#");
-    LOG.assertTrue(startIndex >= 0);
-    @NonNls String s = key2.substring(0, startIndex);
-    if(!"variableName".equals(s)) return null;
-    final int index = key2.indexOf("#", startIndex + 1);
-    s = key2.substring(startIndex + 1, index);
-    return NameContext.valueOf(s);
   }
 
   @Nullable
@@ -159,19 +132,6 @@ public abstract class JavaStatisticsManager {
     return new StatisticsInfo(getMemberUseKey1(qualifierType), getMemberUseKey2(member));
   }
 
-  private static StatisticsInfo createNameUseInfo(final PsiType type, final NameContext context, final String name) {
-    return new StatisticsInfo(getNameUseKey1(type), getNameUseKey(context, name));
-  }
-
-  private static String getNameUseKey(final NameContext context, final String name) {
-    @NonNls final StringBuilder buffer = new StringBuilder();
-    buffer.append("variableName#");
-    buffer.append(context.name());
-    buffer.append('#');
-    buffer.append(name);
-    return buffer.toString();
-  }
-
   public static String[] getAllVariableNamesUsed(VariableKind variableKind, String propertyName, PsiType type) {
     StatisticsInfo[] keys2 = StatisticsManager.getInstance().getAllValues(getVariableNameUseKey1(propertyName, type));
 
@@ -191,30 +151,4 @@ public abstract class JavaStatisticsManager {
     return getMemberUseKey1(expectedType) + "###smartAfterNew";
   }
 
-  public enum NameContext{
-    LOCAL_VARIABLE_NAME,
-    FIELD_NAME,
-    CONSTANT_NAME
-  }
-
-  public static String[] getNameSuggestions(PsiType type, NameContext context, String prefix) {
-    final List<String> suggestions = new ArrayList<String>();
-    final String key1 = getNameUseKey1(type);
-
-    final StatisticsInfo[] possibleNames = StatisticsManager.getInstance().getAllValues(key1);
-    Arrays.sort(possibleNames);
-
-    for (int i = 0; i < possibleNames.length && suggestions.size() < MAX_NAME_SUGGESTIONS_COUNT; i++) {
-      final String key2 = possibleNames[i].getValue();
-      if(context != getNameUsageContext(key2)) continue;
-      final String name = getName(key2);
-      if(name == null || !name.startsWith(prefix)) continue;
-      suggestions.add(name);
-    }
-    return ArrayUtil.toStringArray(suggestions);
-  }
-
-  public static void incNameUseCount(PsiType type, NameContext context, String name) {
-    createNameUseInfo(type, context, name).incUseCount();
-  }
 }

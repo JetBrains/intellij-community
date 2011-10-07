@@ -237,6 +237,8 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
     Collections.sort(items, new Comparator<DirectoryChooser.ItemWrapper>() {
       @Override
       public int compare(DirectoryChooser.ItemWrapper o1, DirectoryChooser.ItemWrapper o2) {
+        if (o1 == null) return -1;
+        if (o2 == null) return 1;
         return getPresentableText(o1, project).compareToIgnoreCase(getPresentableText(o2, project));
       }
     });

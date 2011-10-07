@@ -166,7 +166,9 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   }
 
   public void initComponent() {
-    setCurrentLookAndFeel(findLaf(myCurrentLaf.getClassName())); // setup default LAF or one specified by readExternal.
+    if (myCurrentLaf != null) {
+      setCurrentLookAndFeel(findLaf(myCurrentLaf.getClassName())); // setup default LAF or one specified by readExternal.
+    }
     updateUI();
 
     if (SystemInfo.isLinux) {
@@ -220,10 +222,13 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
 
   public Element getState() {
     Element element = new Element("state");
-    if(myCurrentLaf.getClassName()!=null){
-      Element child=new Element(ELEMENT_LAF);
-      child.setAttribute(ATTRIBUTE_CLASS_NAME,myCurrentLaf.getClassName());
-      element.addContent(child);
+    if (myCurrentLaf != null) {
+      String className = myCurrentLaf.getClassName();
+      if (className != null){
+        Element child=new Element(ELEMENT_LAF);
+        child.setAttribute(ATTRIBUTE_CLASS_NAME, className);
+        element.addContent(child);
+      }
     }
     return element;
   }

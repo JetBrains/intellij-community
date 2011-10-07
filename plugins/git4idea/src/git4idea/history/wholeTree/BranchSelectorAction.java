@@ -83,6 +83,18 @@ public class BranchSelectorAction extends BasePopupAction {
     }
   }
 
+  public void setPreset(final String selectedBranch) {
+    if (selectedBranch == null) {
+      myLabel.setText(getText("All"));
+    } else {
+      if (selectedBranch.startsWith("refs/")) {
+        myLabel.setText(selectedBranch.substring("refs/".length()));
+      } else {
+        myLabel.setText(selectedBranch);
+      }
+    }
+  }
+
   @Override
   public void actionPerformed(AnActionEvent e) {
     doAction(null);

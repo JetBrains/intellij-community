@@ -22,9 +22,14 @@ import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.ui.playback.commands.KeyCodeTypeCommand;
 import com.intellij.openapi.ui.playback.commands.TypeCommand;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -88,7 +93,9 @@ public class ActionMacro implements JDOMExternalizable {
           text = action.getAttributeValue(ATTRIBUTE_TEXT);
         }
 
-        myActions.add(new TypedDescriptor(text, codes.getFirst(), codes.getSecond()));
+        if (!StringUtil.isEmpty(text)) {
+          myActions.add(new TypedDescriptor(text, codes.getFirst(), codes.getSecond()));
+        }
       }
       else if (ELEMENT_ACTION.equals(action.getName())) {
         myActions.add(new IdActionDescriptor(action.getAttributeValue(ATTRIBUTE_ID)));
@@ -175,7 +182,7 @@ public class ActionMacro implements JDOMExternalizable {
     myActions.add(new IdActionDescriptor(actionId));
   }
 
-  public void appendShortuct(String text) {
+  public void appendShortcut(String text) {
     myActions.add(new ShortcutActionDesciption(text));
   }
 
@@ -208,7 +215,7 @@ public class ActionMacro implements JDOMExternalizable {
     private final List<Integer> myKeyCodes = new ArrayList<Integer>();
     private final List<Integer> myModifiers = new ArrayList<Integer>();
 
-    public TypedDescriptor(String text, List<Integer> keyCodes, List<Integer> modifiers) {
+    public TypedDescriptor(@NotNull String text, List<Integer> keyCodes, List<Integer> modifiers) {
       myText = text;
       myKeyCodes.addAll(keyCodes);
       myModifiers.addAll(modifiers);

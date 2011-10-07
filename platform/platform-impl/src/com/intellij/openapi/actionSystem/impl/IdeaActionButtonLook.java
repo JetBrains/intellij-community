@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,6 @@ public class IdeaActionButtonLook extends ActionButtonLook {
         }
       } else if (state == ActionButtonComponent.POPPED) {
         ((Graphics2D)g).setPaint(new GradientPaint(0, 0, new Color(235, 235, 235), 0, dimension.height, new Color(200, 200, 200)));
-        //g.setColor(new Color(190, 190, 190));
         g.fillRect(1, 1, dimension.width - 3, dimension.height - 3);
       }
     }
@@ -55,26 +54,6 @@ public class IdeaActionButtonLook extends ActionButtonLook {
         
         g.setColor(new Color(0, 0, 0, 30));
         g.drawRect(1, 1, dimension.width - 3, dimension.height - 3);
-
-        /*
-        final Graphics2D g2d = (Graphics2D)g;
-        
-        final int x = 1;
-        
-        g2d.setPaint(new LinearGradientPaint(0, 0, 0, dimension.height, new float[] {0f, 0.5f, 1.0f}, 
-                                             new Color[] {new Color(0, 0, 0, 0), new Color(0, 0, 0, 40), new Color(0, 0, 0, 0)}));
-        g2d.fillRect(x, 0, dimension.width - 2, dimension.height);
-        
-        g2d.setPaint(new LinearGradientPaint(0, 0, 0, dimension.height, new float[] {0f, 0.5f, 1.0f}, 
-                                             new Color[] {new Color(0, 0, 0, 40), new Color(0, 0, 0, 150), new Color(0, 0, 0, 40)}));
-        g2d.drawLine(x, 0, x, dimension.height);
-        g2d.drawLine(dimension.width - 2, 0, dimension.width - 2, dimension.height);
-
-        g2d.setPaint(new LinearGradientPaint(0, 0, 0, dimension.height, new float[] {0f, 0.5f, 1.0f}, 
-                                             new Color[] {new Color(0, 0, 0, 0), new Color(0, 0, 0, 60), new Color(0, 0, 0, 0)}));
-        g2d.drawLine(x + 1, 0, x + 1, dimension.height);
-        g2d.drawLine(dimension.width - 3, 0, dimension.width - 3, dimension.height);
-        */
       }
       else {
         g.setColor(new Color(130, 146, 185));
@@ -91,10 +70,6 @@ public class IdeaActionButtonLook extends ActionButtonLook {
       if (state == ActionButtonComponent.POPPED) {
         g.setColor(new Color(0, 0, 0, 30));
         g.drawRoundRect(r.x, r.y, r.width - 2, r.height - 2, 4, 4);
-        
-        //g.setColor(new Color(0, 0, 0, 30));
-        //g.drawLine(1, r.height - 2, r.width - 3, r.height - 2);
-        //g.drawLine(r.width - 2, 1, r.width - 2, r.height - 3);
       }
     } else {
       Color color = new Color(8, 36, 107);

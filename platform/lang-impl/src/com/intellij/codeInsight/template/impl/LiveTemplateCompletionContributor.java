@@ -18,9 +18,11 @@ package com.intellij.codeInsight.template.impl;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
@@ -40,13 +42,23 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
       @Override
       protected void addCompletions(@NotNull CompletionParameters parameters,
                                     ProcessingContext context,
-                                    @NotNull CompletionResultSet result) {
+                                    @NotNull final CompletionResultSet result) {
         final PsiFile file = parameters.getPosition().getContainingFile();
         final int offset = parameters.getOffset();
+        final List<TemplateImpl> templates = listApplicableTemplates(file, offset);
         if (Registry.is("show.live.templates.in.completion")) {
-          for (final TemplateImpl possible : listApplicableTemplates(file, offset)) {
-            result.addElement(new LiveTemplateLookupElement(possible));
-          }
+          final Ref<Boolean> templatesShown = Ref.create(false);
+          
+          result.runRemainingContributors(parameters, new Consumer<CompletionResult>() {
+            @Override
+            public void consume(CompletionResult completionResult) {
+              result.passResult(completionResult);
+              ensureTemplatesShown(templatesShown, templates, result);
+            }
+          });
+
+          ensureTemplatesShown(templatesShown, templates, result);
+          
           return;
         }
 
@@ -57,12 +69,21 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
         if (template != null) {
           result.addElement(new LiveTemplateLookupElement(template));
         }
-        for (final TemplateImpl possible : listApplicableTemplates(file, offset)) {
+        for (final TemplateImpl possible : templates) {
           result.restartCompletionOnPrefixChange(possible.getKey());
         }
 
       }
     });
+  }
+
+  private void ensureTemplatesShown(Ref<Boolean> templatesShown, List<TemplateImpl> templates, CompletionResultSet result) {
+    if (!templatesShown.get()) {
+      templatesShown.set(true);
+      for (final TemplateImpl possible : templates) {
+        result.addElement(new LiveTemplateLookupElement(possible));
+      }
+    }
   }
 
   private static List<TemplateImpl> listApplicableTemplates(PsiFile file, int offset) {

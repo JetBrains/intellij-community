@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>VariableNotUsedInsideIf.java</file>
+    <line>30</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Reference checked for 'null' is not used inside 'if'</problem_class>
+    <description>&lt;code&gt;s&lt;/code&gt; is not used inside if #loc</description>
+  </problem>
+
+  <problem>
+    <file>VariableNotUsedInsideIf.java</file>
+    <line>33</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Reference checked for 'null' is not used inside 'if'</problem_class>
+    <description>&lt;code&gt;s&lt;/code&gt; is not used inside if #loc</description>
+  </problem>
+</problems>

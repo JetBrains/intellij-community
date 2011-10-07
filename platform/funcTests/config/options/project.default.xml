@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<application>
+  <component name="ProjectManager">
+    <defaultProject version="4">
+      <component name="CompilerConfiguration">
+        <option name="DEFAULT_COMPILER" value="Javac" />
+        <resourceExtensions />
+        <wildcardResourcePatterns>
+          <entry name="?*.properties" />
+          <entry name="?*.xml" />
+          <entry name="?*.gif" />
+          <entry name="?*.png" />
+          <entry name="?*.jpeg" />
+          <entry name="?*.jpg" />
+          <entry name="?*.html" />
+          <entry name="?*.dtd" />
+          <entry name="?*.tld" />
+          <entry name="?*.ftl" />
+        </wildcardResourcePatterns>
+        <annotationProcessing enabled="false" useClasspath="true" />
+      </component>
+      <component name="DaemonCodeAnalyzer">
+        <disable_hints />
+      </component>
+      <component name="DependencyValidationManager">
+        <option name="SKIP_IMPORT_STATEMENTS" value="false" />
+      </component>
+      <component name="Encoding" useUTFGuessing="true" native2AsciiForPropertiesFiles="false" />
+      <component name="Git.Settings">
+        <option name="CHECKOUT_INCLUDE_TAGS" value="false" />
+        <option name="UPDATE_CHANGES_POLICY" value="STASH" />
+        <option name="LINE_SEPARATORS_CONVERSION" value="ASK" />
+      </component>
+      <component name="InspectionProjectProfileManager">
+        <option name="PROJECT_PROFILE" />
+        <option name="USE_PROJECT_PROFILE" value="true" />
+        <version value="1.0" />
+      </component>
+      <component name="ProjectLevelVcsManager" settingsEditedManually="false">
+        <OptionsSetting value="true" id="Add" />
+        <OptionsSetting value="true" id="Remove" />
+        <OptionsSetting value="true" id="Checkout" />
+        <OptionsSetting value="true" id="Update" />
+        <OptionsSetting value="true" id="Status" />
+        <OptionsSetting value="true" id="Edit" />
+        <ConfirmationsSetting value="0" id="Add" />
+        <ConfirmationsSetting value="0" id="Remove" />
+      </component>
+      <component name="ProjectModuleManager">
+        <modules />
+      </component>
+      <component name="ProjectResources">
+        <default-html-doctype>http://www.w3.org/1999/xhtml</default-html-doctype>
+      </component>
+      <component name="ProjectRootManager" version="2" languageLevel="JDK_1_6" assert-keyword="true" jdk-15="true" />
+      <component name="PropertiesComponent">
+        <property name="GoToFile.includeJavaFiles" value="false" />
+        <property name="GoToClass.toSaveIncludeLibraries" value="false" />
+        <property name="options.splitter.main.proportions" value="0.3" />
+        <property name="MemberChooser.sorted" value="false" />
+        <property name="options.lastSelected" value="preferences.keymap" />
+        <property name="MemberChooser.showClasses" value="true" />
+        <property name="GoToClass.includeLibraries" value="false" />
+        <property name="MemberChooser.copyJavadoc" value="false" />
+        <property name="options.splitter.details.proportions" value="0.2" />
+        <property name="options.searchVisible" value="true" />
+      </component>
+      <component name="RunManager">
+        <configuration default="true" type="Remote" factoryName="Remote">
+          <option name="USE_SOCKET_TRANSPORT" value="true" />
+          <option name="SERVER_MODE" value="false" />
+          <option name="SHMEM_ADDRESS" value="javadebug" />
+          <option name="HOST" value="localhost" />
+          <option name="PORT" value="5005" />
+          <method>
+            <option name="BuildArtifacts" enabled="false" />
+          </method>
+        </configuration>
+        <configuration default="true" type="Applet" factoryName="Applet">
+          <module name="" />
+          <option name="MAIN_CLASS_NAME" />
+          <option name="HTML_FILE_NAME" />
+          <option name="HTML_USED" value="false" />
+          <option name="WIDTH" value="400" />
+          <option name="HEIGHT" value="300" />
+          <option name="POLICY_FILE" value="$APPLICATION_HOME_DIR$/bin/appletviewer.policy" />
+          <option name="VM_PARAMETERS" />
+          <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
+          <option name="ALTERNATIVE_JRE_PATH" />
+          <method>
+            <option name="BuildArtifacts" enabled="false" />
+            <option name="Make" enabled="true" />
+          </method>
+        </configuration>
+        <configuration default="true" type="Application" factoryName="Application">
+          <option name="MAIN_CLASS_NAME" />
+          <option name="VM_PARAMETERS" />
+          <option name="PROGRAM_PARAMETERS" />
+          <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+          <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
+          <option name="ALTERNATIVE_JRE_PATH" />
+          <option name="ENABLE_SWING_INSPECTOR" value="false" />
+          <option name="ENV_VARIABLES" />
+          <option name="PASS_PARENT_ENVS" value="true" />
+          <module name="" />
+          <envs />
+          <method>
+            <option name="BuildArtifacts" enabled="false" />
+            <option name="Make" enabled="true" />
+          </method>
+        </configuration>
+        <list size="0" />
+        <configuration name="&lt;template&gt;" type="JUnit" default="true" selected="false">
+          <option name="MAIN_CLASS_NAME" />
+          <option name="VM_PARAMETERS" value="-ea" />
+          <option name="PARAMETERS" />
+          <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+        </configuration>
+        <configuration name="&lt;template&gt;" type="TestNG" default="true" selected="false">
+          <option name="MAIN_CLASS_NAME" />
+          <option name="VM_PARAMETERS" value="-ea" />
+          <option name="PARAMETERS" />
+          <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+        </configuration>
+        <configuration name="&lt;template&gt;" type="#org.jetbrains.idea.devkit.run.PluginConfigurationType" default="true" selected="false">
+          <option name="VM_PARAMETERS" value="-Xmx512m -Xms256m -XX:MaxPermSize=250m" />
+        </configuration>
+        <configuration name="&lt;template&gt;" type="WebApp" default="true" selected="false">
+          <Host>localhost</Host>
+          <Port>5050</Port>
+        </configuration>
+      </component>
+    </defaultProject>
+  </component>
+</application>
+

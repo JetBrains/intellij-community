@@ -25,7 +25,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.ListPopupStep;
@@ -123,6 +122,10 @@ class RunConfigurable extends BaseConfigurable {
             append((String) userObject, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
             setIcon(EDIT_DEFAULTS_ICON);
           }
+          else if (userObject instanceof ConfigurationFactory) {
+            append(((ConfigurationFactory)userObject).getName());
+            setIcon(((ConfigurationFactory)userObject).getIcon());
+          }
           else {
             final RunManager runManager = getRunManager();
             RunConfiguration configuration = null;
@@ -172,7 +175,16 @@ class RunConfigurable extends BaseConfigurable {
     final DefaultMutableTreeNode defaults = new DefaultMutableTreeNode("Defaults");
     final ConfigurationType[] configurationTypes = RunManagerImpl.getInstanceImpl(myProject).getConfigurationFactories();
     for (final ConfigurationType type : configurationTypes) {
-      if (!(type instanceof UnknownConfigurationType)) defaults.add(new DefaultMutableTreeNode(type));
+      if (!(type instanceof UnknownConfigurationType)) {
+        ConfigurationFactory[] configurationFactories = type.getConfigurationFactories();
+        DefaultMutableTreeNode typeNode = new DefaultMutableTreeNode(type);
+        defaults.add(typeNode);
+        if (configurationFactories.length != 1) {
+          for (ConfigurationFactory factory : configurationFactories) {
+            typeNode.add(new DefaultMutableTreeNode(factory));
+          }
+        }
+      }
     }
     if (defaults.getChildCount() > 0) myRoot.add(defaults);
 
@@ -198,15 +210,26 @@ class RunConfigurable extends BaseConfigurable {
               drawPressAddButtonMessage(userObject instanceof String ? null : (ConfigurationType)userObject);
             } else {
               final ConfigurationType type = (ConfigurationType)userObject;
-              Configurable configurable = myStoredComponents.get(type);
-              if (configurable == null){
-                configurable = TypeTemplatesConfigurable.createConfigurable(type, myProject);
-                myStoredComponents.put(type, configurable);
-                configurable.reset();
+              ConfigurationFactory[] factories = type.getConfigurationFactories();
+              if (factories.length == 1) {
+                Configurable configurable = myStoredComponents.get(type);
+                if (configurable == null){
+                  configurable = new TemplateConfigurable(RunManagerImpl.getInstanceImpl(myProject).getConfigurationTemplate(factories[0]));
+                  myStoredComponents.put(type, configurable);
+                  configurable.reset();
+                }
+                updateRightPanel(configurable);
               }
-
-              updateRightPanel(configurable);
+              else {
+                drawPressAddButtonMessage((ConfigurationType)userObject);
+              }
             }
+          }
+          else if (userObject instanceof ConfigurationFactory) {
+            TemplateConfigurable configurable = new TemplateConfigurable(
+              RunManagerImpl.getInstanceImpl(myProject).getConfigurationTemplate((ConfigurationFactory)userObject));
+            configurable.reset();
+            updateRightPanel(configurable);
           }
         }
         updateDialog();
@@ -368,6 +391,9 @@ class RunConfigurable extends BaseConfigurable {
     });
     myRightPanel.removeAll();
     myRightPanel.add(browser, BorderLayout.CENTER);
+    if (configurationType == null) {
+      myRightPanel.add(createRecentLimitPanel(), BorderLayout.SOUTH);
+    }
     myRightPanel.revalidate();
     myRightPanel.repaint();
   }
@@ -383,27 +409,26 @@ class RunConfigurable extends BaseConfigurable {
     final JScrollPane pane = ScrollPaneFactory.createScrollPane(myTree);
     pane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     leftPanel.add(pane, BorderLayout.CENTER);
-    final JPanel bottomPanel = new JPanel(new BorderLayout());
+    return leftPanel;
+  }
 
-    Box box = new Box(BoxLayout.LINE_AXIS);
-    box.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
-    box.add(new JLabel("<html>Temporary configurations limit:</html>"));
+  private JPanel createRecentLimitPanel() {
+    final JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.LEADING));
+
+//    box.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
+    bottomPanel.add(new JLabel("<html>Temporary configurations limit:</html>"));
     Dimension size = new Dimension(25, myRecentsLimit.getPreferredSize().height);
     myRecentsLimit.setPreferredSize(size);
     myRecentsLimit.setMaximumSize(size);
     myRecentsLimit.setMinimumSize(size);
-    box.add(myRecentsLimit);
+    bottomPanel.add(myRecentsLimit);
     myRecentsLimit.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
         setModified(true);
       }
     });
-    box.add(Box.createHorizontalGlue());
-    bottomPanel.add(box, BorderLayout.CENTER);
-
-    leftPanel.add(bottomPanel, BorderLayout.SOUTH);
-    return leftPanel;
+    return bottomPanel;
   }
 
   private DefaultActionGroup createActionsGroup() {

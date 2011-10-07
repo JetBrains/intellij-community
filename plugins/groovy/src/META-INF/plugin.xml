@@ -29,6 +29,7 @@
 
   <extensionPoints>
     <extensionPoint name="membersContributor" interface="org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor"/>
+    <extensionPoint name="classEnhancer" interface="org.jetbrains.plugins.groovy.lang.resolve.GrClassEnhancer"/>
     <extensionPoint name="astTransformContributor" interface="org.jetbrains.plugins.groovy.lang.resolve.AstTransformContributor"/>
     <extensionPoint name="closureMissingMethodContributor" interface="org.jetbrains.plugins.groovy.lang.resolve.ClosureMissingMethodContributor"/>
     <extensionPoint name="variableEnhancer" interface="org.jetbrains.plugins.groovy.lang.psi.GrVariableEnhancer"/>
@@ -69,10 +70,12 @@
     <membersContributor implementation="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicMembersContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.ConstructorAnnotationsProcessor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.GrInheritConstructorContributor"/>
-    <membersContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.GrCollectionTypeMembersProvider"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.LoggingContributor"/>
-    <membersContributor implementation="org.jetbrains.plugins.groovy.spock.SpockMemberContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.MixinMemberContributor"/>
+    <membersContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.GrClassNonCodeMembersContributor"/>
+
+    <classEnhancer implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.GrCollectionTypeMembersProvider"/>
+    <classEnhancer implementation="org.jetbrains.plugins.groovy.spock.SpockMemberContributor"/>
 
     <astTransformContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.DelegatedMethodsContributor"/>
     <astTransformContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.AutoExternalizeContributor"/>
@@ -976,6 +979,11 @@
     <action id="GetPsiTypeAction" class="org.jetbrains.plugins.groovy.actions.GrGetPsiTypeAction" text="get PsiType" description="" internal = "true">
       <add-to-group group-id="Internal" anchor="last"/>
     </action>
+
+    <action id="DumpGroovyControlFlowAction" class="org.jetbrains.plugins.groovy.actions.DumpGroovyControlFlowAction" text="dump groovy control flow" description="" internal="true">
+      <add-to-group group-id="Internal" anchor="last"/>
+    </action>
+
     <action id="RenameJavaFileToGroovyFileAction"
             class="org.jetbrains.plugins.groovy.refactoring.javaToGrovyRename.RenameJavaFileToGroovyFileAction"
             text="Rename To Groovy" description="Rename Java File to Groovy">

@@ -99,19 +99,10 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
     });
     daemonAnalyzer.addListener(new ProjectStructureDaemonAnalyzerListener() {
       @Override
-      public void usagesCollected(@NotNull ProjectStructureElement containingElement) {
-      }
-
-      @Override
       public void problemsChanged(@NotNull ProjectStructureElement element) {
         if (element instanceof GeneralProjectSettingsElement) {
           updateCircularDependencyWarning();
         }
-      }
-
-      @Override
-      public void allProblemsChanged() {
-        updateCircularDependencyWarning();
       }
     });
     init(model);

@@ -252,9 +252,11 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
-        if (myDialog != null) {
+        if (myDialog != null && myDialog.getPanel() != null && myDialog.getPanel().isShowing()) {
           myDialog.hide();
           myFocusTrackback.restoreFocus();
+        } else {
+          myFocusTrackback.consume();
         }
 
         myStoppedAlready = true;

@@ -101,12 +101,17 @@ public class MarkRootAction extends AnAction {
 
   @Override
   public void update(AnActionEvent e) {
-    boolean enabled = canMark(e, myMarkAsTestSources || myMarkAsExcluded || myUnmark, !myMarkAsTestSources || myMarkAsExcluded || myUnmark, null);
+    boolean enabled = canMark(e, myMarkAsTestSources || myMarkAsExcluded || myUnmark, !myMarkAsTestSources || myMarkAsExcluded || myUnmark,
+                              myMarkAsExcluded, null);
     e.getPresentation().setVisible(enabled);
     e.getPresentation().setEnabled(enabled);
   }
 
-  public static boolean canMark(AnActionEvent e, boolean acceptSourceRoot, boolean acceptTestSourceRoot, Ref<Boolean> rootType) {
+  public static boolean canMark(AnActionEvent e,
+                                boolean acceptSourceRoot,
+                                boolean acceptTestSourceRoot,
+                                boolean acceptInSourceContent,
+                                @Nullable Ref<Boolean> rootType) {
     Module module = e.getData(LangDataKeys.MODULE);
     VirtualFile[] vFiles = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
     if (module == null || vFiles == null) {
@@ -131,7 +136,7 @@ public class MarkRootAction extends AnAction {
           return true;
         }
       }
-      if (fileIndex.isInSourceContent(vFile)) {
+      if (fileIndex.isInSourceContent(vFile) && !acceptInSourceContent) {
         return false;
       }
     }

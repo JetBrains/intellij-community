@@ -19,7 +19,8 @@
  */
 package com.intellij.util.lang;
 
-import java.util.ArrayList;
+import com.intellij.util.SmartList;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,7 +44,7 @@ public class ClasspathCache {
     Map<String, List<Loader>> map = isClassFile ? myClassPackagesCache : myResourcePackagesCache;
     List<Loader> list = map.get(packageName);
     if (list == null) {
-      list = new ArrayList<Loader>(1);
+      list = new SmartList<Loader>();
       map.put(packageName, list);
     }
 

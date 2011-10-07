@@ -323,7 +323,6 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
             ((DefaultTreeModel)myTree.getModel()).reload(parent);
           }
           myContext.getDaemonAnalyzer().removeElement(new LibraryProjectStructureElement(myContext, library));
-          // TODO: myContext.invalidateModules(myContext.myLibraryDependencyCache.get(library.getName()));
         }
       }
 
@@ -469,14 +468,6 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     }
     modelProxy.addLibraryEntry(library);
     myContext.getDaemonAnalyzer().queueUpdate(new ModuleProjectStructureElement(myContext, module));
-    /* TODO
-    Set<String> modules = myContext.myLibraryDependencyCache.get(library.getName());
-    if (modules == null) {
-      modules = new HashSet<String>();
-      myContext.myLibraryDependencyCache.put(library.getName(), modules);
-    }
-    modules.add(module.getName());
-    */
     myTree.repaint();
   }
 
@@ -529,7 +520,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     selectNodeInTree(node);
     final ProjectStructureDaemonAnalyzer daemonAnalyzer = myContext.getDaemonAnalyzer();
     daemonAnalyzer.queueUpdate(new ModuleProjectStructureElement(myContext, module));
-    daemonAnalyzer.clearAllProblems(); //missing modules added
+    daemonAnalyzer.queueUpdateForAllElementsWithErrors(); //missing modules added
   }
 
   @Nullable

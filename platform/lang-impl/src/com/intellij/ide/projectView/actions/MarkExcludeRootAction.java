@@ -43,6 +43,6 @@ public class MarkExcludeRootAction extends MarkRootAction {
 
   protected String getPromptText(String message) {
     return "Are you sure you would like to exclude " + message +
-           " from the project?\nYou can restore excluded folders later using the Project Structure dialog.";
+           " from the project?\nYou can restore excluded directories later using the Project Structure dialog.";
   }
 }

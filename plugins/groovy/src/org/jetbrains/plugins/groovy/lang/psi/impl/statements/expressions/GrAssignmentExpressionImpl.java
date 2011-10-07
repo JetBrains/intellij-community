@@ -35,6 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
@@ -203,7 +204,18 @@ public class GrAssignmentExpressionImpl extends GrExpressionImpl implements GrAs
         final IElementType opType = assignmentExpression.getOperationToken();
         if (opType == null || opType == GroovyTokenTypes.mASSIGN) return GroovyResolveResult.EMPTY_ARRAY;
 
-        final PsiType lType = assignmentExpression.getLValue().getType();
+        final GrExpression lValue = assignmentExpression.getLValue();
+        final PsiType lType;
+        if (!(lValue instanceof GrIndexProperty)) {
+          lType = lValue.getType();
+        }
+        else {
+          /*
+          now we have something like map[i] += 2. It equals to map.putAt(i, map.getAt(i).plus(2))
+          by default map[i] resolves to putAt, but we need getAt(). so this hack is for it =)
+           */
+          lType = ((GrExpression)lValue.copy()).getType();
+        }
         if (lType == null) return GroovyResolveResult.EMPTY_ARRAY;
 
         final GrExpression rightOperand = assignmentExpression.getRValue();

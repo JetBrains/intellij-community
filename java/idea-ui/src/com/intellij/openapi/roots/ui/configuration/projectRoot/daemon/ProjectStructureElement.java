@@ -2,6 +2,7 @@ package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -23,7 +24,16 @@ public abstract class ProjectStructureElement {
 
   public abstract List<ProjectStructureElementUsage> getUsagesInElement();
 
-  public abstract boolean highlightIfUnused();
+
+  public boolean shouldShowWarningIfUnused() {
+    return false;
+  }
+
+  @Nullable
+  public ProjectStructureProblemDescription createUnusedElementWarning() {
+    return null;
+  }
+
 
   @Override
   public abstract boolean equals(Object obj);

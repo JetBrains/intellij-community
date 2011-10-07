@@ -1,9 +1,9 @@
 // instantiate abstract
 public class a {
   void f() {
-    new <error descr="'ii' is abstract; cannot be instantiated">ii</error>();
+    <error descr="'ii' is abstract; cannot be instantiated">new ii()</error>;
 
-    new <error descr="'c1' is abstract; cannot be instantiated">c1</error>();
+    <error descr="'c1' is abstract; cannot be instantiated">new c1()</error>;
 
     new <error descr="Class 'Anonymous class derived from c1' must either be declared abstract or implement abstract method 'f1(int)' in 'c1'">c1</error>() {
       public void f2() {}

@@ -966,4 +966,24 @@ class X {
   public void testPrimitiveCastOverwrite() {
     checkCompletion 'byte v1 = (by<caret>te) 0', '\t', 'byte v1 = (byte<caret>) 0'
   }
+
+  public void testInitializerMatters() throws Exception {
+    myFixture.configureByText("a.groovy", "class Foo {{ String f<caret>x = getFoo(); }; String getFoo() {}; }");
+    myFixture.completeBasic()
+    assert myFixture.lookupElementStrings == ["foo"]
+  }
+
+  public void testFieldInitializerMatters() throws Exception {
+    myFixture.configureByText("a.groovy", "class Foo { String f<caret>x = getFoo(); String getFoo() {}; }");
+    myFixture.completeBasic()
+    assert myFixture.lookupElementStrings == ["foo"]
+  }
+
+  public void testNoRepeatingModifiers() {
+    myFixture.configureByText 'a.groovy', 'class A { public static <caret> }'
+    myFixture.completeBasic()
+    assert !('public' in myFixture.lookupElementStrings)
+    assert !('static' in myFixture.lookupElementStrings)
+    assert 'final' in myFixture.lookupElementStrings
+  }
 }

@@ -35,8 +35,7 @@ public class ExcludedOutputFolderImpl extends ContentFolderBaseImpl implements E
   }
 
   public ContentFolder cloneFolder(final ContentEntry contentEntry) {
-    return new ExcludedOutputFolderImpl((ContentEntryImpl)contentEntry, VirtualFilePointerManager.getInstance().create(getUrl(), getRootModel().getModule(),
-                                                                                                                       ((ContentEntryImpl)contentEntry).getRootModel().myVirtualFilePointerListener));
+    return new ExcludedOutputFolderImpl((ContentEntryImpl)contentEntry, VirtualFilePointerManager.getInstance().create(getUrl(), getRootModel().getModule(), null));
   }
 
   @Override

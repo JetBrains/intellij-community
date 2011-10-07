@@ -74,7 +74,9 @@ public class MvcModuleStructureUtil {
   @Nullable
   private static Consumer<ModifiableRootModel> addSourceRootsAndLibDirectory(@NotNull final VirtualFile root,
                                                                              final MvcProjectStructure structure) {
-    Set<VirtualFile> sourceRoots = CollectionFactory.newTroveSet(ModuleRootManager.getInstance(structure.myModule).getSourceRoots());
+    ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(structure.myModule);
+
+    Set<VirtualFile> sourceRoots = CollectionFactory.newTroveSet(moduleRootManager.getSourceRoots());
 
     root.refresh(false, true);
 
@@ -90,14 +92,21 @@ public class MvcModuleStructureUtil {
       removeSrcFolderFromRoots(root.findFileByRelativePath(src), actions, sourceRoots);
     }
 
-    final Set<VirtualFile> excludeRoots = CollectionFactory.newTroveSet(ModuleRootManager.getInstance(structure.myModule).getExcludeRoots());
     for (final String excluded : structure.getExcludedFolders()) {
-      excludeDirectory(root, excluded, actions, excludeRoots);
+      final VirtualFile src = root.findFileByRelativePath(excluded);
+
+      if (src != null && moduleRootManager.getFileIndex().isInContent(src)) {
+        actions.add(new Consumer<ContentEntry>() {
+          public void consume(ContentEntry contentEntry) {
+            contentEntry.addExcludeFolder(src);
+          }
+        });
+      }
     }
 
     final Consumer<ModifiableRootModel> modifyLib = addJarDirectory(root, structure.myModule, structure.getUserLibraryName());
 
-    if (actions.isEmpty() && modifyLib == null && findContentEntry(ModuleRootManager.getInstance(structure.myModule), root) != null) {
+    if (actions.isEmpty() && modifyLib == null && findContentEntry(moduleRootManager, root) != null) {
       return null;
     }
 
@@ -116,17 +125,6 @@ public class MvcModuleStructureUtil {
         }
       }
     };
-  }
-
-  private static void excludeDirectory(VirtualFile root, final String excluded, List<Consumer<ContentEntry>> actions, Set<VirtualFile> excludeRoots) {
-    final VirtualFile src = root.findFileByRelativePath(excluded);
-    if (!excludeRoots.contains(src)) {
-      actions.add(new Consumer<ContentEntry>() {
-        public void consume(ContentEntry contentEntry) {
-          contentEntry.addExcludeFolder(contentEntry.getUrl() + '/' + excluded);
-        }
-      });
-    }
   }
 
   public static void removeSrcFolderFromRoots(final VirtualFile file, List<Consumer<ContentEntry>> actions, Collection<VirtualFile> sourceRoots) {

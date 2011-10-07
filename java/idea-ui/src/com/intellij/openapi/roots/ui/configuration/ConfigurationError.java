@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots.ui.configuration;
 
+import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -67,7 +68,7 @@ public abstract class ConfigurationError implements Comparable<ConfigurationErro
   /**
    * Called when user invokes "Fix" action
    */
-  public void fix(JComponent contextComponent) {
+  public void fix(JComponent contextComponent, RelativePoint relativePoint) {
   }
 
   public boolean canBeFixed() {

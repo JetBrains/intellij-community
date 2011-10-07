@@ -32,7 +32,6 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
@@ -60,7 +59,6 @@ public class RootModelImpl implements ModifiableRootModel {
   private final ModuleLibraryTable myModuleLibraryTable;
   final ModuleRootManagerImpl myModuleRootManager;
   private boolean myWritable;
-  final VirtualFilePointerListener myVirtualFilePointerListener;
   private final VirtualFilePointerManager myFilePointerManager;
 
   VirtualFilePointer myExplodedDirectoryPointer;
@@ -93,7 +91,6 @@ public class RootModelImpl implements ModifiableRootModel {
 
     myWritable = false;
 
-    myVirtualFilePointerListener = projectRootManager.getVirtualFilePointerListener();
     addSourceOrderEntries();
     myModuleLibraryTable = new ModuleLibraryTable(this, myProjectRootManager);
 
@@ -119,7 +116,6 @@ public class RootModelImpl implements ModifiableRootModel {
 
     myModuleLibraryTable = new ModuleLibraryTable(this, myProjectRootManager);
 
-    myVirtualFilePointerListener = null;
     final List contentChildren = element.getChildren(ContentEntryImpl.ELEMENT_NAME);
     for (Object aContentChildren : contentChildren) {
       Element child = (Element)aContentChildren;
@@ -155,7 +151,7 @@ public class RootModelImpl implements ModifiableRootModel {
       if (paths != null) {
         final Element pathsElement = element.getChild(paths);
         if (pathsElement != null) {
-          VirtualFilePointerContainer container = myFilePointerManager.createContainer(myDisposable, myVirtualFilePointerListener);
+          VirtualFilePointerContainer container = myFilePointerManager.createContainer(myDisposable, null);
           myOrderRootPointerContainers.put(orderRootType, container);
           container.readExternal(pathsElement, ROOT_ELEMENT);
         }
@@ -185,7 +181,6 @@ public class RootModelImpl implements ModifiableRootModel {
                 ModuleRootManagerImpl moduleRootManager,
                 final boolean writable,
                 final RootConfigurationAccessor rootConfigurationAccessor,
-                final VirtualFilePointerListener virtualFilePointerListener,
                 VirtualFilePointerManager filePointerManager,
                 ProjectRootManagerImpl projectRootManager) {
     myFilePointerManager = filePointerManager;
@@ -196,10 +191,8 @@ public class RootModelImpl implements ModifiableRootModel {
 
     myWritable = writable;
     myConfigurationAccessor = rootConfigurationAccessor;
-    LOG.assertTrue(!writable || virtualFilePointerListener == null);
-    myVirtualFilePointerListener = virtualFilePointerListener;
 
-    setExplodedFrom(rootModel, virtualFilePointerListener, filePointerManager);
+    setExplodedFrom(rootModel, filePointerManager);
 
     final Set<ContentEntry> thatContent = rootModel.myContent;
     for (ContentEntry contentEntry : thatContent) {
@@ -218,9 +211,9 @@ public class RootModelImpl implements ModifiableRootModel {
     }
   }
 
-  private void setExplodedFrom(RootModelImpl rootModel, VirtualFilePointerListener virtualFilePointerListener, VirtualFilePointerManager filePointerManager) {
+  private void setExplodedFrom(RootModelImpl rootModel, VirtualFilePointerManager filePointerManager) {
     if (rootModel.myExplodedDirectoryPointer != null) {
-      myExplodedDirectoryPointer = filePointerManager.duplicate(rootModel.myExplodedDirectoryPointer, getModule(), virtualFilePointerListener);
+      myExplodedDirectoryPointer = filePointerManager.duplicate(rootModel.myExplodedDirectoryPointer, getModule(), null);
     }
     myExplodedDirectory = rootModel.myExplodedDirectory;
 
@@ -232,7 +225,7 @@ public class RootModelImpl implements ModifiableRootModel {
     for(PersistentOrderRootType orderRootType: OrderRootType.getAllPersistentTypes()) {
       final VirtualFilePointerContainer otherContainer = rootModel.getOrderRootContainer(orderRootType);
       if (otherContainer != null) {
-        myOrderRootPointerContainers.put(orderRootType, otherContainer.clone(myDisposable, myVirtualFilePointerListener));
+        myOrderRootPointerContainers.put(orderRootType, otherContainer.clone(myDisposable, null));
       }
     }
   }
@@ -508,7 +501,7 @@ public class RootModelImpl implements ModifiableRootModel {
       getSourceModel().copyContainersFrom(this);
     }
 
-    getSourceModel().setExplodedFrom(this, myVirtualFilePointerListener, myFilePointerManager);
+    getSourceModel().setExplodedFrom(this, myFilePointerManager);
 
     for (ModuleExtension extension : myExtensions) {
       if (extension.isChanged()) {
@@ -731,7 +724,7 @@ public class RootModelImpl implements ModifiableRootModel {
 
   public void setExplodedDirectory(String url) {
     myExplodedDirectory = url;
-    myExplodedDirectoryPointer = url == null ? null : myFilePointerManager.create(url, myDisposable, myVirtualFilePointerListener);
+    myExplodedDirectoryPointer = url == null ? null : myFilePointerManager.create(url, myDisposable, null);
   }
 
   @NotNull
@@ -1033,7 +1026,7 @@ public class RootModelImpl implements ModifiableRootModel {
     assertWritable();
     VirtualFilePointerContainer container = myOrderRootPointerContainers.get(orderRootType);
     if (container == null) {
-      container = myFilePointerManager.createContainer(myDisposable, myVirtualFilePointerListener);
+      container = myFilePointerManager.createContainer(myDisposable, null);
       myOrderRootPointerContainers.put((PersistentOrderRootType) orderRootType, container);
     }
     container.clear();
@@ -1048,7 +1041,7 @@ public class RootModelImpl implements ModifiableRootModel {
     VirtualFilePointer vptr = null;
     if (outputPathChild != null && createPointer) {
       String outputPath = outputPathChild.getAttributeValue(ATTRIBUTE_URL);
-      vptr = myFilePointerManager.create(outputPath, myDisposable, myVirtualFilePointerListener);
+      vptr = myFilePointerManager.create(outputPath, myDisposable, null);
     }
     return vptr;
   }

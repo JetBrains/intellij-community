@@ -15,7 +15,7 @@
  */
 package com.intellij.notification;
 
-import com.intellij.notification.impl.NotificationsConfiguration;
+import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
@@ -47,7 +47,7 @@ public class LogModel implements Disposable {
   }
 
   void addNotification(Notification notification) {
-    NotificationDisplayType type = NotificationsConfiguration.getSettings(notification.getGroupId()).getDisplayType();
+    NotificationDisplayType type = NotificationsConfigurationImpl.getSettings(notification.getGroupId()).getDisplayType();
     if (notification.isImportant() || (type != NotificationDisplayType.NONE && type != NotificationDisplayType.TOOL_WINDOW)) {
       synchronized (myNotifications) {
         myNotifications.add(notification);

@@ -15,50 +15,40 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.inline;
 
-import com.intellij.lang.refactoring.InlineHandler;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-
-import java.util.Collection;
 
 /**
  * @author Max Medvedev
  */
-public class InlineLocalVarSettings implements InlineHandler.Settings {
+public class InlineLocalVarSettings {
   private GrExpression myInitializer;
-  private Collection<GrReferenceExpression> myRefs;
-  private boolean myRemoveDeclaration;
+  private int myWriteInstructionNumber;
+  private Instruction[] myFlow;
 
-  public InlineLocalVarSettings(GrExpression initializer, Collection<GrReferenceExpression> refs, boolean removeDeclaration) {
+  public InlineLocalVarSettings(GrExpression initializer, int writeInstructionNumber, Instruction[] flow) {
+    myWriteInstructionNumber = writeInstructionNumber;
+    myFlow = flow;
     final PsiElement psiElement = PsiUtil.skipParentheses(initializer, false);
     if (psiElement instanceof GrExpression) {
       myInitializer = (GrExpression)psiElement;
-    } else {
+    }
+    else {
       myInitializer = initializer;
     }
-
-    myRefs = refs;
-    myRemoveDeclaration = removeDeclaration;
-  }
-
-  @Override
-  public boolean isOnlyOneReferenceToInline() {
-    return false;
   }
 
   public GrExpression getInitializer() {
     return myInitializer;
   }
 
-
-  public Collection<? extends PsiReference> getRefs() {
-    return myRefs;
+  public int getWriteInstructionNumber() {
+    return myWriteInstructionNumber;
   }
 
-  public boolean isRemoveDeclaration() {
-    return myRemoveDeclaration;
+  public Instruction[] getFlow() {
+    return myFlow;
   }
 }

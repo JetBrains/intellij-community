@@ -65,6 +65,7 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
       if (argList == null) return null;
 
       PsiType[] argTypes = PsiUtil.getArgumentTypes(argList);
+      if (argTypes == null) return null;
 
       final PsiManager manager = index.getManager();
       final GlobalSearchScope resolveScope = index.getResolveScope();
@@ -124,6 +125,7 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
         if (argList == null) return GroovyResolveResult.EMPTY_ARRAY;
 
         PsiType[] argTypes = PsiUtil.getArgumentTypes(argList);
+        if (argTypes == null) return GroovyResolveResult.EMPTY_ARRAY;
 
         final PsiManager manager = index.getManager();
         final GlobalSearchScope resolveScope = index.getResolveScope();

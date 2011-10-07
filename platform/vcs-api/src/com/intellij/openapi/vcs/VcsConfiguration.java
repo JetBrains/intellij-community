@@ -87,6 +87,7 @@ public final class VcsConfiguration implements PersistentStateComponent<Element>
   // asked only for non-DVCS
   public boolean INCLUDE_TEXT_INTO_PATCH = false;
   public boolean INCLUDE_TEXT_INTO_SHELF = false;
+  public boolean CREATE_PATCH_EXPAND_DETAILS_DEFAULT = true;
 
   public enum StandardOption {
     ADD(VcsBundle.message("vcs.command.name.add")),

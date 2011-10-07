@@ -47,11 +47,11 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
 
   public void lostOwnership(Clipboard clipboard, Transferable contents) {
     myClipboardSynchronizer.resetContent();
-    fireContentChanged(null);
+    fireContentChanged(contents, null);
   }
 
-  void fireContentChanged(@Nullable final Transferable oldTransferable) {
-    myDispatcher.getMulticaster().contentChanged(oldTransferable, getContents());
+  void fireContentChanged(@Nullable final Transferable oldTransferable, @Nullable final Transferable _new) {
+    myDispatcher.getMulticaster().contentChanged(oldTransferable, _new);
   }
 
   public void addContentChangedListener(ContentChangedListener listener) {
@@ -77,7 +77,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
 
     setSystemClipboardContent(contentToUse);
 
-    fireContentChanged(old);
+    fireContentChanged(old, contentToUse);
   }
 
   public boolean isCutElement(@Nullable final Object element) {
@@ -253,15 +253,18 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
     Transferable old = getContents();
     boolean isCurrentClipboardContent = myData.indexOf(t) == 0;
     myData.remove(t);
+    Transferable _new = null;
     if (isCurrentClipboardContent) {
       if (!myData.isEmpty()) {
-        setSystemClipboardContent(myData.get(0));
+        _new = myData.get(0); 
+        setSystemClipboardContent(_new);
       }
       else {
-        setSystemClipboardContent(new StringSelection(""));
+        _new = new StringSelection("");
+        setSystemClipboardContent(_new);
       }
     }
-    fireContentChanged(old);
+    fireContentChanged(old, _new);
   }
 
   public void moveContentTopStackTop(Transferable t) {

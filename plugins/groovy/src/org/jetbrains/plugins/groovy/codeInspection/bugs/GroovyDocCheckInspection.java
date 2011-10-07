@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.codeInspection.bugs;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
@@ -24,7 +25,10 @@ import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocFieldReference;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMemberReference;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMethodReference;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GroovyDocPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 
 /**
@@ -73,6 +77,7 @@ public class GroovyDocCheckInspection extends BaseInspection {
         GroovyResolveResult resolveResult = refElement.advancedResolve();
         if (refElement.getReferenceName() == null) return;
 
+        if (PsiTreeUtil.getParentOfType(refElement, GroovyDocPsiElement.class, true, GrMember.class, GrCodeBlock.class) == null) return;
 
         final PsiElement resolved = resolveResult.getElement();
         if (resolved != null) return;

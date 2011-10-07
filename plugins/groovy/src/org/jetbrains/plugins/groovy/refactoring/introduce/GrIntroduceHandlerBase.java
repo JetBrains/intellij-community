@@ -117,7 +117,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     return false;
   }
 
-  private static int correctOffset(Editor editor, int offset) {
+  public static int correctOffset(Editor editor, int offset) {
     Document document = editor.getDocument();
     CharSequence text = document.getCharsSequence();
     int correctedOffset = offset;

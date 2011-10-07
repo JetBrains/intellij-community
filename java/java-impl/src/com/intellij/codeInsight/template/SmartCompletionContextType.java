@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.template;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,11 +29,6 @@ public class SmartCompletionContextType extends TemplateContextType {
 
   @Override
   public boolean isInContext(@NotNull PsiFile file, int offset) {
-    return false;
-  }
-
-  @Override
-  public boolean isInContext(@NotNull FileType fileType) {
     return false;
   }
 

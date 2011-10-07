@@ -218,7 +218,7 @@ public class HtmlPolicy extends XmlFormattingPolicy {
 
   @Override
   public int getWhiteSpaceAroundCDATAOption() {
-    return CodeStyleSettings.WS_AROUND_CDATA_PRESERVE;
+    return XmlCodeStyleSettings.WS_AROUND_CDATA_PRESERVE;
   }
 
   public CodeStyleSettings getSettings() {

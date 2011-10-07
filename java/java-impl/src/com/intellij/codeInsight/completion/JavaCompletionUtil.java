@@ -129,7 +129,7 @@ public class JavaCompletionUtil {
     JavaMemberNameCompletionContributor.completeVariableNameForRefactoring(project, set, camelHumpMatcher, varType, varKind, true, false);
   }
 
-  public static String[] completeVariableNameForRefactoring(JavaCodeStyleManager codeStyleManager, final PsiType varType,
+  public static String[] completeVariableNameForRefactoring(JavaCodeStyleManager codeStyleManager, @Nullable final PsiType varType,
                                                                final VariableKind varKind,
                                                                SuggestedNameInfo suggestedNameInfo) {
     return JavaMemberNameCompletionContributor

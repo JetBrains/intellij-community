@@ -1030,6 +1030,7 @@ public class ColorPicker extends JPanel implements Consumer<Color>, DocumentList
       }
     }
 
+    @Nullable
     private Pair<Integer, Integer> pointToCellCoords(Point p) {
       int x = p.x;
       int y = p.y;
@@ -1045,7 +1046,7 @@ public class ColorPicker extends JPanel implements Consumer<Color>, DocumentList
       int row = (y - top - 2) / 31;
       row = row > 1 ? 1 : row;
 
-      return Pair.create(row, col);
+      return row >= 0 && col >= 0 ? Pair.create(row, col) : null;
     }
 
     @Override

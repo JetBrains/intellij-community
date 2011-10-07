@@ -93,8 +93,9 @@
     </component>
 
     <component>
-      <implementation-class>com.intellij.notification.impl.NotificationsConfiguration</implementation-class>
-    </component>    
+      <interface-class>com.intellij.notification.NotificationsConfiguration</interface-class>
+      <implementation-class>com.intellij.notification.impl.NotificationsConfigurationImpl</implementation-class>
+    </component>
 
     <component>
       <interface-class>com.intellij.notification.NotificationsManager</interface-class>

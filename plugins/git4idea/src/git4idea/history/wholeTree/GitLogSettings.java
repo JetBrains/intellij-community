@@ -15,16 +15,17 @@
  */
 package git4idea.history.wholeTree;
 
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.HashSet;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author irengrig
@@ -35,10 +36,8 @@ import java.util.Set;
   name = "GitLogSettings",
   storages = {
     @Storage(
-      file = "$PROJECT_FILE$"
-    )
-    ,@Storage( file = "$PROJECT_CONFIG_DIR$/vcs.xml", scheme = StorageScheme.DIRECTORY_BASED)
-    }
+      file = "$WORKSPACE_FILE$"
+    )}
 )
 public class GitLogSettings implements PersistentStateComponent<GitLogSettings.MyState> {
   private MyState myState = new MyState();
@@ -55,6 +54,11 @@ public class GitLogSettings implements PersistentStateComponent<GitLogSettings.M
   public static class MyState {
     public List<String> myContainedLocalBranches = new ArrayList<String>();
     public List<String> myContainedRemoteBranches = new ArrayList<String>();
+
+    public String mySelectedBranch = null;
+    public List<String> myStructureFilterPaths = new ArrayList<String>();
+    public String mySelectedUser = null;
+    public boolean mySelectedUserIsMe;
     // false => filter
     public boolean myHighlight = true;
   }
@@ -67,6 +71,45 @@ public class GitLogSettings implements PersistentStateComponent<GitLogSettings.M
   @Override
   public void loadState(MyState state) {
     myState = state;
+  }
+  
+  public void setSelectedUser(final String selected) {
+    myState.mySelectedUser = selected;
+  }
+  
+  public void setSelectedUserIsMe(final boolean value) {
+    myState.mySelectedUserIsMe = value;
+  }
+
+  public boolean isSelectedUserMe() {
+    return myState.mySelectedUserIsMe;
+  }
+
+  public void setSelectedBranch(final String branch) {
+    myState.mySelectedBranch = branch;
+  }
+
+  public void setSelectedPaths(final Collection<VirtualFile> paths) {
+    if (paths == null) {
+      myState.myStructureFilterPaths = null;
+      return;
+    }
+    myState.myStructureFilterPaths = new ArrayList<String>();
+    for (VirtualFile path : paths) {
+      myState.myStructureFilterPaths.add(path.getPath());
+    }
+  }
+  
+  public String getSelectedBranch() {
+    return myState.mySelectedBranch;
+  }
+  
+  public String getSelectedUser() {
+    return myState.mySelectedUser;
+  }
+  
+  public List<String> getSelectedPaths() {
+    return myState.myStructureFilterPaths;
   }
 
   public static GitLogSettings getInstance(final Project project) {

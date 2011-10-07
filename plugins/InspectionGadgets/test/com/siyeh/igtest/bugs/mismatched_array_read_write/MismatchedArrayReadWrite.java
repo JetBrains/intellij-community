@@ -105,4 +105,15 @@ class Test{
         int[] array = {1, 2, 4};
         assert array.length == 3;
     }
+
+  private String[] getAttrInfos() {
+    return null;
+  }
+  private String mon() {
+    String[] attributeInfo = getAttrInfos();
+    if (attributeInfo != null) {
+      System.out.println("");
+    }
+    return null;
+  }
 }

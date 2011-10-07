@@ -166,9 +166,9 @@ public class GenericDebuggerParametersRunnerConfigurable extends SettingsEditor<
 
   public void applyEditorTo(GenericDebuggerRunnerSettings runnerSettings) throws ConfigurationException {
     runnerSettings.LOCAL = myIsLocal;
-    runnerSettings.setTransport(getTransport());
     checkPort();
     runnerSettings.setDebugPort(getPort());
+    runnerSettings.setTransport(getTransport());
   }
 
 }

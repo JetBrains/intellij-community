@@ -164,6 +164,13 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
       final UsageInfo[] usages = MoveClassesOrPackagesUtil.findUsages(element, mySearchInComments,
                                                                       mySearchInNonJavaFiles, newName);
       allUsages.addAll(new ArrayList<UsageInfo>(Arrays.asList(usages)));
+      if (element instanceof PsiPackage) {
+        for (PsiDirectory directory : ((PsiPackage)element).getDirectories()) {
+          final UsageInfo[] dirUsages = MoveClassesOrPackagesUtil.findUsages(directory, mySearchInComments,
+                                                                             mySearchInNonJavaFiles, newName);
+          allUsages.addAll(new ArrayList<UsageInfo>(Arrays.asList(dirUsages)));
+        }
+      }
     }
     myMoveDestination.analyzeModuleConflicts(Arrays.asList(myElementsToMove), conflicts,
                                              allUsages.toArray(new UsageInfo[allUsages.size()]));
@@ -461,10 +468,15 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
         PsiElement element = myElementsToMove[idx];
         final RefactoringElementListener elementListener = getTransaction().getElementListener(element);
         if (element instanceof PsiPackage) {
-
+          final PsiDirectory[] directories = ((PsiPackage)element).getDirectories();
           final PsiPackage newElement =
           MoveClassesOrPackagesUtil.doMovePackage((PsiPackage)element, myMoveDestination);
           oldToNewElementsMapping.put(element, newElement);
+          int i = 0;
+          final PsiDirectory[] newDirectories = newElement.getDirectories();
+          for (PsiDirectory directory : directories) {
+            oldToNewElementsMapping.put(directory, newDirectories[i++]);
+          }
           element = newElement;
         }
         else if (element instanceof PsiClass) {

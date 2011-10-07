@@ -225,7 +225,12 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
 
     final Set<Configurable> currentConfigurables = new HashSet<Configurable>(contentHits);
     if (options.isEmpty()) { //operate with substring
-      Collections.addAll(options, REG_EXP.split(optionToCheck));
+      String[] components = REG_EXP.split(optionToCheck);
+      if (components.length > 0) {
+        Collections.addAll(options, components);
+      } else {
+        options.add(option);
+      }
     }
     Set<String> helpIds = null;
     for (String opt : options) {

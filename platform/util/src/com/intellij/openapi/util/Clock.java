@@ -46,7 +46,12 @@ public class Clock {
 
   @TestOnly
   public static void setTime(int year, int month, int day, int hours, int minutes) {
-    setTime(new Date(year - 1900, month, day, hours, minutes));
+    setTime(year, month, day, hours, minutes, 0);
+  }
+
+  @TestOnly
+  public static void setTime(int year, int month, int day, int hours, int minutes, int seconds) {
+    setTime(new Date(year - 1900, month, day, hours, minutes, seconds));
   }
 
   @TestOnly

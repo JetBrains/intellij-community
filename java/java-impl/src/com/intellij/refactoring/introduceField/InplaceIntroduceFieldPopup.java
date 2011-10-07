@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.JavaRefactoringSettings;
@@ -101,8 +102,17 @@ public class InplaceIntroduceFieldPopup extends AbstractInplaceIntroduceFieldPop
 
   @Override
   protected String[] suggestNames(PsiType defaultType, String propName) {
-    return IntroduceFieldDialog.createGenerator(myStatic, (PsiLocalVariable)getLocalVariable(), myExpr, getLocalVariable() != null, null, myParentClass)
-            .getSuggestedNameInfo(defaultType).names;
+    return suggestFieldName(defaultType, (PsiLocalVariable)getLocalVariable(), myExpr, myStatic, myParentClass).names;
+  }
+
+  public static SuggestedNameInfo suggestFieldName(@Nullable PsiType defaultType,
+                                                    @Nullable final PsiLocalVariable localVariable,
+                                                    final PsiExpression initializer,
+                                                    final boolean forStatic,
+                                                    @NotNull final PsiClass parentClass) {
+    return IntroduceFieldDialog.
+      createGenerator(forStatic, localVariable, initializer, localVariable != null, null, parentClass).
+      getSuggestedNameInfo(defaultType);
   }
 
   public void setReplaceAllOccurrences(boolean replaceAllOccurrences) {

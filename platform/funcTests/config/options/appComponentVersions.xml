@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<versions>
+  <component name="CodeInsightSettings" version="1317815252467" />
+  <component name="CodeStyleSchemes" version="1317815252477" />
+  <component name="DaemonCodeAnalyzerSettings" version="1317815252477" />
+  <component name="DimensionService" version="1317815252477" />
+  <component name="EditorColorsManagerImpl" version="1317815252477" />
+  <component name="EditorSettings" version="1317815252509" />
+  <component name="Encoding" version="1317815252509" />
+  <component name="FeatureUsageStatistics" version="1317817363837" />
+  <component name="FileBasedIndex" version="1317815252554" />
+  <component name="FileTypeManager" version="1317815252583" />
+  <component name="GeneralSettings" version="1317815252583" />
+  <component name="HttpConfigurable" version="1317815252585" />
+  <component name="KeymapManager" version="1317815252586" />
+  <component name="LafManager" version="1317815252586" />
+  <component name="NotificationConfiguration" version="1317815252586" />
+  <component name="PlaybackDebugger" version="1317816363716" />
+  <component name="ProjectManager" version="1317815252633" />
+  <component name="PropertiesComponent" version="1317815252633" />
+  <component name="RecentProjectsManager" version="1317817363842" />
+  <component name="Registry" version="1317815252633" />
+  <component name="StatisticsApplicationUsages" version="1317817363843" />
+  <component name="TemplateSettings" version="1317815252663" />
+  <component name="TodoConfiguration" version="1317815252663" />
+  <component name="UpdatesConfigurable" version="1317815252706" />
+  <component name="UsagesStatistic" version="1317817325023" />
+  <component name="WindowManager" version="1317815252709" />
+  <component name="com.intellij.ide.fileTemplates.impl.FileTemplateManagerImpl" version="1317815252713" />
+  <component name="com.intellij.javaee.ExternalResourceManagerImpl" version="1317815252714" />
+  <component name="com.intellij.openapi.diff.impl.external.DiffManagerImpl" version="1317815252714" />
+</versions>
+
