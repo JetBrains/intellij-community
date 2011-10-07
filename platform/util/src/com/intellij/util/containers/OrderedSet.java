@@ -75,19 +75,6 @@ public class OrderedSet<T> extends AbstractList<T> implements Set<T>, RandomAcce
     return myElements.toArray(a);
   }
 
-  public Object clone() {
-    try{
-      OrderedSet<T> newSet = (OrderedSet<T>)super.clone();
-      newSet.myHashSet.addAll(myHashSet);
-      newSet.myElements.clear();
-      newSet.myElements.addAll(myElements);
-      return newSet;
-    }
-    catch(CloneNotSupportedException e){
-      throw new InternalError();
-    }
-  }
-
   public boolean addAll(final int index, final Collection<? extends T> c) {
     throw new UnsupportedOperationException();
   }
