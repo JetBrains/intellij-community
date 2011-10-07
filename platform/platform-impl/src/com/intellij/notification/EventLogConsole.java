@@ -133,7 +133,12 @@ class EventLogConsole {
     Document document = editor.getDocument();
     boolean scroll = document.getTextLength() == editor.getCaretModel().getOffset();
 
-    append(document, DateFormatUtil.formatTimeWithSeconds(notification.getCreationTime()) + " ");
+    Long notificationTime = myProjectModel.getNotificationTime(notification);
+    if (notificationTime == null) {
+      return;
+    }
+    
+    append(document, DateFormatUtil.formatTimeWithSeconds(notificationTime) + " ");
 
     EventLog.LogEntry pair = EventLog.formatForLog(notification);
 

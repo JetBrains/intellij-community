@@ -21,22 +21,20 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author peter
  */
 public class LogModel implements Disposable {
-  private final List<Notification> myNotifications = new ArrayList<Notification>();
+  private final Map<Notification, Long> myNotifications = new LinkedHashMap<Notification, Long>();
   private Notification myStatusMessage;
   private final Project myProject;
   final Map<Notification, Runnable> removeHandlers = new THashMap<Notification, Runnable>();
@@ -50,7 +48,7 @@ public class LogModel implements Disposable {
     NotificationDisplayType type = NotificationsConfigurationImpl.getSettings(notification.getGroupId()).getDisplayType();
     if (notification.isImportant() || (type != NotificationDisplayType.NONE && type != NotificationDisplayType.TOOL_WINDOW)) {
       synchronized (myNotifications) {
-        myNotifications.add(notification);
+        myNotifications.put(notification, System.currentTimeMillis());
       }
     }
     setStatusMessage(notification);
@@ -73,9 +71,10 @@ public class LogModel implements Disposable {
     StatusBar.Info.set("", myProject, EventLog.LOG_REQUESTOR);
   }
 
-  Notification getStatusMessage() {
+  @Nullable 
+  Pair<Notification, Long> getStatusMessage() {
     synchronized (myNotifications) {
-      return myStatusMessage;
+      return myStatusMessage == null ? null : Pair.create(myStatusMessage, myNotifications.get(myStatusMessage));
     }
   }
 
@@ -90,7 +89,14 @@ public class LogModel implements Disposable {
 
   public ArrayList<Notification> getNotifications() {
     synchronized (myNotifications) {
-      return new ArrayList<Notification>(myNotifications);
+      return new ArrayList<Notification>(myNotifications.keySet());
+    }
+  }
+
+  @Nullable
+  public Long getNotificationTime(Notification notification) {
+    synchronized (myNotifications) {
+      return myNotifications.get(notification);
     }
   }
 
@@ -105,7 +111,8 @@ public class LogModel implements Disposable {
       handler.run();
     }
 
-    if (notification == getStatusMessage()) {
+    Pair<Notification, Long> oldStatus = getStatusMessage();
+    if (oldStatus != null && notification == oldStatus.first) {
       setStatusToImportant();
     }
   }

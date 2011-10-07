@@ -20,6 +20,7 @@ import com.intellij.notification.Notification;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
@@ -114,7 +115,7 @@ class StatusPanel extends JPanel {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     final Project project = getActiveProject();
-    final Notification statusMessage = EventLog.getStatusMessage(project);
+    final Pair<Notification, Long> statusMessage = EventLog.getStatusMessage(project);
     myLogMode = logAllowed && StringUtil.isEmpty(nonLogText) && statusMessage != null;
     myLogAlarm.cancelAllRequests();
 
@@ -123,9 +124,10 @@ class StatusPanel extends JPanel {
       new Runnable() {
         @Override
         public void run() {
-          String text = EventLog.formatForLog(statusMessage).status;
-          if (myDirty || System.currentTimeMillis() - statusMessage.getCreationTime() >= DateFormatUtil.MINUTE) {
-            text += " (" + StringUtil.decapitalize(DateFormatUtil.formatPrettyDateTime(statusMessage.getCreationTime())) + ")";
+          assert statusMessage != null;
+          String text = EventLog.formatForLog(statusMessage.first).status;
+          if (myDirty || System.currentTimeMillis() - statusMessage.second >= DateFormatUtil.MINUTE) {
+            text += " (" + StringUtil.decapitalize(DateFormatUtil.formatPrettyDateTime(statusMessage.second)) + ")";
           }
           setStatusText(text);
           myLogAlarm.addRequest(this, 30000);

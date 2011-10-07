@@ -114,7 +114,7 @@ public class EventLog implements Notifications {
   }
 
   @Nullable
-  public static Notification getStatusMessage(@Nullable Project project) {
+  public static Pair<Notification, Long> getStatusMessage(@Nullable Project project) {
     return getLogModel(project).getStatusMessage();
   }
 
