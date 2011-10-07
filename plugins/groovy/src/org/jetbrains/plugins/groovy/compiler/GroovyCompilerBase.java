@@ -256,6 +256,8 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
           catch (CacheCorruptedException e) {
             LOG.error(e);
           }
+          catch (FileNotFoundException ignored) {
+          }
           catch (IOException e) {
             LOG.error(e);
           }
