@@ -19,11 +19,9 @@
             text="Com_pare with Specified Revision..." popup="true"/>
     <action id="Vcs.ShowHistoryForBlock" class="com.intellij.openapi.vcs.actions.SelectedBlockHistoryAction"/>
 
-    <group class="com.intellij.openapi.vcs.actions.VcsActionGroup" id="VcsGroup" test="Version Control"/>
+    <group class="com.intellij.openapi.vcs.actions.VcsActionGroup" id="VcsGroup"/>
 
-    <group class="com.intellij.openapi.vcs.actions.VcsGroupsWrapper" id="VcsFileGroupPopup" test="Version Control"
-           popup="true">
-    </group>
+    <group class="com.intellij.openapi.vcs.actions.VcsGroupsWrapper" id="VcsFileGroupPopup" popup="true"/>
 
     <group id="VersionControlsGroup">
       <reference ref="VcsFileGroupPopup"/>
@@ -43,7 +41,7 @@
     <group id="VcsGroups" popup="true">
       <action id="Start.Use.Vcs" class="com.intellij.ide.actions.StartUseVcsAction"/>
       <separator/>
-      <group class="com.intellij.openapi.vcs.actions.VcsActionGroup" id="VcsGlobalGroup" test="Version Control">
+      <group class="com.intellij.openapi.vcs.actions.VcsActionGroup" id="VcsGlobalGroup">
 
         <action id="Vcs.QuickListPopupAction"
                 class = "com.intellij.openapi.vcs.actions.VcsQuickListPopupAction"
