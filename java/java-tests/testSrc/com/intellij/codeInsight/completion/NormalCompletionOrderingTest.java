@@ -284,7 +284,7 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   public void testCaseInsensitivePrefixMatch() {
     CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE;
     try {
-      checkPreferredItems(0, "Foo", "foo1", "foo2");
+      checkPreferredItems(1, "Foo", "foo1", "foo2");
     }
     finally {
       CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER;

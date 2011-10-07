@@ -445,7 +445,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
     if (!model.isEmpty()) {
       LookupElement first = model.iterator().next();
-      if (isFocused() && (!(isExactPrefixItem(first, true) || isExactPrefixItem(first, false)) || mySelectionTouched)) {
+      if (isFocused() && (!isExactPrefixItem(first, true) || mySelectionTouched)) {
         restoreSelection(oldSelected, hasPreselected, oldInvariant, snapshot.second);
       }
       else {

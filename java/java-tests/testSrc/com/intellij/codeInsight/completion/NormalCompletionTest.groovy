@@ -1142,4 +1142,21 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   """
   }
 
+  public void testDontPreselectCaseInsensitivePrefixMatch() {
+    CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
+    try {
+      myFixture.configureByText "a.java", "import java.io.*; class Foo {{ int fileSize; fil<caret>x }}"
+      myFixture.completeBasic()
+      assert lookup.currentItem.lookupString == 'fileSize'
+      myFixture.type('e')
+      
+      assert lookup.items[0].lookupString == 'File'
+      assert lookup.items[1].lookupString == 'fileSize'
+      assert lookup.currentItem == lookup.items[1]
+    }
+    finally {
+      CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER
+    }
+  }
+
 }
