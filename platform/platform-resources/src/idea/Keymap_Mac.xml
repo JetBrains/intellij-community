@@ -42,6 +42,7 @@
       <keyboard-shortcut first-keystroke="alt LEFT"/>
     </action>
     <action id="QuickJavaDoc">
+      <keyboard-shortcut first-keystroke="F1"/>
       <keyboard-shortcut first-keystroke="control J"/>
       <mouse-shortcut keystroke="control button2"/>
     </action>
@@ -172,7 +173,6 @@
       <keyboard-shortcut first-keystroke="meta shift LEFT"/>
     </action>
     <action id="ContextHelp">
-      <keyboard-shortcut first-keystroke="F1"/>
     </action>
     <action id="ActivateMessagesToolWindow">
       <keyboard-shortcut first-keystroke="meta 0"/>
