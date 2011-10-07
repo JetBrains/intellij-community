@@ -250,8 +250,36 @@ public class PyMultiFileResolveTest extends PyResolveTestCase {
     assertNull(psiElement);
   }
 
-  public void testCythonSimpleCImport() {
+  public void testCythonFromModuleCImport() {
     assertResolvesTo(CythonFunction.class, "foo");
+  }
+
+  public void testCythonFromModuleCImportAs() {
+    assertResolvesTo(CythonFunction.class, "foo");
+  }
+
+  public void testCythonFromPackageCImportAttribute() {
+    assertResolvesTo(CythonFunction.class, "foo");
+  }
+
+  public void testCythonFromPackageCImportModule() {
+    assertResolvesTo(PyFile.class, "m1.pxd");
+  }
+
+  public void testCythonFromPackageCImportPackage() {
+    assertResolvesTo(PyFile.class, "__init__.pxd");
+  }
+
+  public void testCythonCImportAttribute() {
+    assertResolvesTo(PyFile.class, "m1.pxd");
+  }
+
+  public void testCythonCImportPackage() {
+    assertResolvesTo(PyFile.class, "__init__.pxd");
+  }
+
+  public void testCythonCImportModule() {
+    assertResolvesTo(PyFile.class, "m1.pxd");
   }
 
   private PsiFile prepareFile() {
