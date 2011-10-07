@@ -15,7 +15,10 @@
  */
 package git4idea.history.wholeTree;
 
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -33,10 +36,8 @@ import java.util.*;
   name = "GitLogSettings",
   storages = {
     @Storage(
-      file = "$PROJECT_FILE$"
-    )
-    ,@Storage( file = "$PROJECT_CONFIG_DIR$/vcs.xml", scheme = StorageScheme.DIRECTORY_BASED)
-    }
+      file = "$WORKSPACE_FILE$"
+    )}
 )
 public class GitLogSettings implements PersistentStateComponent<GitLogSettings.MyState> {
   private MyState myState = new MyState();
