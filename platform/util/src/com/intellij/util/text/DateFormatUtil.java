@@ -18,6 +18,7 @@ package com.intellij.util.text;
 import com.intellij.CommonBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Clock;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.util.StringBuilderSpinAllocator;
@@ -34,7 +35,7 @@ public class DateFormatUtil {
   // do not expose this constants - they are very likely to be changed in future
   private static final SyncDateFormat DATE_FORMAT = getFormat(DateFormat.SHORT, DateType.DATE);
   private static final SyncDateFormat TIME_FORMAT = getFormat(DateFormat.SHORT, DateType.TIME);
-  private static final SyncDateFormat TIME_WITH_SECONDS_FORMAT =getFormat(DateFormat.MEDIUM, DateType.TIME);
+  private static final SyncDateFormat TIME_WITH_SECONDS_FORMAT = getFormat(DateFormat.MEDIUM, DateType.TIME);
   private static final SyncDateFormat DATE_TIME_FORMAT = getFormat(DateFormat.SHORT, DateType.DATETIME);
 
   public static final long SECOND = 1000;
@@ -53,14 +54,16 @@ public class DateFormatUtil {
   private static final Period[] PERIOD = new Period[]{Period.YEAR, Period.MONTH, Period.WEEK, Period.DAY, Period.HOUR, Period.MINUTE};
 
   private static SyncDateFormat getFormat(int format, DateType type) {
-    DateFormat result;
-    try {
-      result = new SimpleDateFormat(getMacTimeFormat(format, type).trim());
+    DateFormat result = null;
+    if (SystemInfo.isMac) {
+      try {
+        result = new SimpleDateFormat(getMacTimeFormat(format, type).trim());
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+      }
     }
-    catch (Throwable e) {
-      LOG.error(e);
-      result = DateFormat.getDateInstance(format);
-    }
+    if (result == null) result = DateFormat.getDateInstance(format);
     return new SyncDateFormat(result);
   }
 
