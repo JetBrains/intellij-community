@@ -63,7 +63,19 @@ public class DateFormatUtil {
         LOG.error(e);
       }
     }
-    if (result == null) result = DateFormat.getDateInstance(format);
+    if (result == null) {
+      switch (type) {
+        case TIME:
+          result = DateFormat.getTimeInstance(format);
+          break;
+        case DATE:
+          result = DateFormat.getDateInstance(format);
+          break;
+        case DATETIME:
+          result = DateFormat.getDateTimeInstance(format, format);
+          break;
+      }
+    }
     return new SyncDateFormat(result);
   }
 
@@ -442,7 +454,7 @@ public class DateFormatUtil {
     }
   }
 
-  enum DateType {
+  private enum DateType {
     TIME, DATE, DATETIME
   }
 
