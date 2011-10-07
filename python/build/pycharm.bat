@@ -35,7 +35,7 @@ SET VM_OPTIONS_FILE=%IDE_BIN_DIR%\pycharm.exe.vmoptions
 SET ACC=
 FOR /F "usebackq delims=" %%i IN ("%VM_OPTIONS_FILE%") DO CALL "%IDE_BIN_DIR%\append.bat" "%%i"
 
-SET REQUIRED_JVM_ARGS="-Xbootclasspath/a:%IDE_HOME%/lib/boot.jar" -Didea.paths.selector=@@system_selector@@ %IDE_PROPERTIES_PROPERTY%
+SET REQUIRED_JVM_ARGS="-Xbootclasspath/a:%IDE_HOME%/lib/boot.jar" -Didea.no.jre.check=true -Didea.paths.selector=@@system_selector@@ %IDE_PROPERTIES_PROPERTY%
 SET SPECIAL_JVM_ARGS=-Didea.platform.prefix=Python
 SET JVM_ARGS=%ACC% %REQUIRED_JVM_ARGS% %SPECIAL_JVM_ARGS% %REQUIRED_PYCHARM_JVM_ARGS%
 
