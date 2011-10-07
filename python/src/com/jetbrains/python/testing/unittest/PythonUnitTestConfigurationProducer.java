@@ -36,6 +36,7 @@ public class PythonUnitTestConfigurationProducer extends PythonTestConfiguration
         }
         if (!result.isEmpty()) return true;
       }
+      else return true;
     }
     return false;
   }
