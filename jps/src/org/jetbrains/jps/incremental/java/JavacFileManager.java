@@ -109,7 +109,7 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
       if (dir == null) {
         dir = getSingleOutputDirectory(StandardLocation.CLASS_OUTPUT, src);
         if (dir == null) {
-          throw new IOException("Neither class output directory nor source output are not specified");
+          throw new IOException("Neither class output directory nor source output are specified");
         }
       }
     }

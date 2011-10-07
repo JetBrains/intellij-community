@@ -7,6 +7,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.Module;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.Project;
+import org.jetbrains.jps.incremental.storage.BuildDataManager;
 
 import java.io.File;
 import java.util.Collection;
@@ -25,10 +26,13 @@ public abstract class CompileContext implements MessageHandler, UserDataHolder {
   private final boolean myIsMake;
   private final Map<Key, Object> myUserData = new ConcurrentHashMap<Key, Object>();
   private boolean myCompilingTests = false;
+  private final BuildDataManager myDataManager;
 
-  public CompileContext(CompileScope scope, boolean isMake) {
+  public CompileContext(CompileScope scope, String projectName, boolean isMake) {
     myScope = scope;
     myIsMake = isMake;
+    final File buildDataRoot = new File(System.getProperty("user.home"), ".jps" + File.separator + projectName + File.separator + "build_data");
+    myDataManager = new BuildDataManager(buildDataRoot);
   }
 
   public Project getProject() {
@@ -51,8 +55,8 @@ public abstract class CompileContext implements MessageHandler, UserDataHolder {
     return myScope;
   }
 
-  public boolean isDirty(File file) {
-    return true; // todo
+  public BuildDataManager getBuildDataManager() {
+    return myDataManager;
   }
 
   public <T> T getUserData(@NotNull Key<T> key) {
@@ -63,7 +67,7 @@ public abstract class CompileContext implements MessageHandler, UserDataHolder {
     myUserData.put(key, value);
   }
 
-  public void processFiles(ModuleChunk chunk, FileProcessor processor) {
+  public void processFiles(ModuleChunk chunk, FileProcessor processor) throws Exception {
     for (Module module : chunk.getModules()) {
       if (!processModule(module, processor)) {
         return;
@@ -72,7 +76,7 @@ public abstract class CompileContext implements MessageHandler, UserDataHolder {
   }
 
   /** @noinspection unchecked*/
-  private boolean processModule(Module module, FileProcessor processor) {
+  private boolean processModule(Module module, FileProcessor processor) throws Exception {
     final Set<File> excludes = new HashSet<File>();
     for (String excludePath : (Collection<String>)module.getExcludes()) {
       excludes.add(new File(excludePath));
@@ -88,7 +92,7 @@ public abstract class CompileContext implements MessageHandler, UserDataHolder {
     return true;
   }
 
-  private static boolean processRootRecursively(final Module module, final File fromFile, final String sourceRoot, FileProcessor processor, final Set<File> excluded) {
+  private static boolean processRootRecursively(final Module module, final File fromFile, final String sourceRoot, FileProcessor processor, final Set<File> excluded) throws Exception {
     if (fromFile.isDirectory()) {
       if (isExcluded(excluded, fromFile)) {
         return true;

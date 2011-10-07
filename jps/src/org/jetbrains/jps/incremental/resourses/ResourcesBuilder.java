@@ -8,6 +8,7 @@ import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
+import org.jetbrains.jps.incremental.storage.TimestampStorage;
 
 import java.io.File;
 import java.io.IOException;
@@ -17,6 +18,7 @@ import java.io.IOException;
  *         Date: 10/6/11
  */
 public class ResourcesBuilder extends Builder{
+  public static final String BUILDER_NAME = "resources";
 
   public ResourcesBuilder() {
   }
@@ -36,27 +38,35 @@ public class ResourcesBuilder extends Builder{
     if (patterns == null) {
       ResourcePatterns.KEY.set(context, patterns = new ResourcePatterns(context.getProject()));
     }
-
-    final ResourcePatterns finalPatterns = patterns;
-    context.processFiles(chunk, new FileProcessor() {
-      public boolean apply(final Module module, final File file, final String sourceRoot) {
-        if (finalPatterns.isResourceFile(file, sourceRoot)) {
-          try {
-            context.processMessage(new ProgressMessage("Copying " + file.getPath()));
-            copyResource(context, module, file, sourceRoot);
+    try {
+      final TimestampStorage tsStorage = context.getBuildDataManager().getTimestampStorage(BUILDER_NAME);
+      final ResourcePatterns finalPatterns = patterns;
+      context.processFiles(chunk, new FileProcessor() {
+        public boolean apply(final Module module, final File file, final String sourceRoot) throws Exception {
+          if (finalPatterns.isResourceFile(file, sourceRoot)) {
+            if (!context.isMake() || tsStorage.getStamp(file) != file.lastModified()) {
+              try {
+                context.processMessage(new ProgressMessage("Copying " + file.getPath()));
+                copyResource(context, module, file, sourceRoot);
+              }
+              catch (IOException e) {
+                context.processMessage(new CompilerMessage("Resource Compiler", BuildMessage.Kind.ERROR, e.getMessage(), FileUtil.toSystemIndependentName(file.getPath())));
+                return false;
+              }
+              tsStorage.saveStamp(file);
+            }
           }
-          catch (IOException e) {
-            context.processMessage(new CompilerMessage("Resource Compiler", BuildMessage.Kind.ERROR, e.getMessage(), FileUtil.toSystemIndependentName(file.getPath())));
-            return false;
-          }
+          return true;
         }
-        return true;
-      }
-    });
+      });
 
-    context.processMessage(new ProgressMessage("Done copying resources for " + chunk.getName()));
+      context.processMessage(new ProgressMessage("Done copying resources for " + chunk.getName()));
 
-    return ExitCode.OK;
+      return ExitCode.OK;
+    }
+    catch (Exception e) {
+      throw new ProjectBuildException(e.getMessage(), e);
+    }
   }
 
   private void copyResource(CompileContext context, Module module, File file, String sourceRoot) throws IOException {

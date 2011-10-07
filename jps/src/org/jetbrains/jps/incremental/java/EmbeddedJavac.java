@@ -1,6 +1,7 @@
 package org.jetbrains.jps.incremental.java;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.incremental.CompileContext;
 
 import javax.tools.*;
 import java.io.*;
@@ -22,10 +23,11 @@ public class EmbeddedJavac {
 
   public static interface OutputConsumer extends DiagnosticListener<JavaFileObject> {
     void outputLineAvailable(String line);
+    void classFileWritten(OutputFileObject output);
   }
 
   public static interface ClassPostProcessor {
-    void process(OutputFileObject out);
+    void process(CompileContext context, OutputFileObject out);
   }
 
   public EmbeddedJavac(ExecutorService taskRunner) {
@@ -38,12 +40,12 @@ public class EmbeddedJavac {
     myClassProcessors.add(processor);
   }
 
-  public boolean compile(final Collection<String> options, final Collection<File> sources, Collection<File> classpath, Collection<File> bootclasspath, File outputDir, final OutputConsumer outConsumer) {
-    return compile(options, sources, classpath, bootclasspath, Collections.singletonMap(outputDir, Collections.<File>emptySet()), outConsumer);
+  public boolean compile(final Collection<String> options, final Collection<File> sources, Collection<File> classpath, Collection<File> bootclasspath, File outputDir, final CompileContext compileContext, final OutputConsumer outConsumer) {
+    return compile(options, sources, classpath, bootclasspath, Collections.singletonMap(outputDir, Collections.<File>emptySet()), compileContext, outConsumer);
   }
 
-  public boolean compile(Collection<String> options, final Collection<File> sources, Collection<File> classpath, Collection<File> platformClasspath, Map<File, Set<File>> outputDirToRoots, final OutputConsumer outConsumer) {
-    final FileManagerContext context = new FileManagerContext(outConsumer);
+  public boolean compile(Collection<String> options, final Collection<File> sources, Collection<File> classpath, Collection<File> platformClasspath, Map<File, Set<File>> outputDirToRoots, CompileContext compileContext, final OutputConsumer outConsumer) {
+    final FileManagerContext context = new FileManagerContext(compileContext, outConsumer);
     for (File outputDir : outputDirToRoots.keySet()) {
       outputDir.mkdirs();
     }
@@ -102,11 +104,13 @@ public class EmbeddedJavac {
   private class FileManagerContext implements JavacFileManager.Context {
 
     private final StandardJavaFileManager myStdManager;
+    private final CompileContext myCompileContext;
     private final OutputConsumer myOutConsumer;
     private int myTasksInProgress = 0;
     private final Object myCounterLock = new Object();
 
-    public FileManagerContext(OutputConsumer outConsumer) {
+    public FileManagerContext(CompileContext compileContext, OutputConsumer outConsumer) {
+      myCompileContext = compileContext;
       myOutConsumer = outConsumer;
       myStdManager = myCompiler.getStandardFileManager(outConsumer, Locale.US, null);
     }
@@ -171,7 +175,7 @@ public class EmbeddedJavac {
 
     private void runProcessors(OutputFileObject cls) {
       for (ClassPostProcessor processor : myClassProcessors) {
-        processor.process(cls);
+        processor.process(myCompileContext, cls);
       }
     }
 
@@ -181,6 +185,7 @@ public class EmbeddedJavac {
         final OutputFileObject.Content content = cls.getContent();
         if (content != null) {
           writeToFile(file, content.getBuffer(), content.getOffset(), content.getLength(), false);
+          myOutConsumer.classFileWritten(cls);
         }
         else {
           myOutConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, "Missing content for file " + file));

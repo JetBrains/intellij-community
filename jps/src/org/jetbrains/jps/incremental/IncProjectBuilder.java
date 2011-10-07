@@ -14,13 +14,15 @@ import java.util.List;
 public class IncProjectBuilder {
 
   private final Project myProject;
+  private final String myProjectName;
   private final BuilderRegistry myBuilderRegistry;
   private ProjectChunks myProductionChunks;
   private ProjectChunks myTestChunks;
   private final List<MessageHandler> myMessageHandlers = new ArrayList<MessageHandler>();
 
-  public IncProjectBuilder(Project project, BuilderRegistry builderRegistry) {
+  public IncProjectBuilder(Project project, String projectName, BuilderRegistry builderRegistry) {
     myProject = project;
+    myProjectName = projectName;
     myBuilderRegistry = builderRegistry;
     myProductionChunks = new ProjectChunks(project, ClasspathKind.PRODUCTION_COMPILE);
     myTestChunks = new ProjectChunks(project, ClasspathKind.TEST_COMPILE);
@@ -30,8 +32,8 @@ public class IncProjectBuilder {
     myMessageHandlers.add(handler);
   }
 
-  public void build(CompileScope scope, boolean isMake) {
-    final CompileContext context = new CompileContext(scope, isMake) {
+  public void build(CompileScope scope, final boolean isMake) {
+    final CompileContext context = new CompileContext(scope, myProjectName, isMake) {
       public void processMessage(BuildMessage msg) {
         for (MessageHandler h : myMessageHandlers) {
           h.processMessage(msg);
@@ -39,6 +41,10 @@ public class IncProjectBuilder {
       }
     };
     try {
+      if (!isMake) {
+        context.getBuildDataManager().clean();
+      }
+
       for (Module module : scope.getAffectedModules()) {
         //context.processMessage(new ProgressMessage("Cleaning module " + module.getName()));
         //myProject.cleanModule(module);
@@ -56,6 +62,9 @@ public class IncProjectBuilder {
     }
     catch (ProjectBuildException e) {
       context.processMessage(new ProgressMessage(e.getMessage()));
+    }
+    finally {
+      context.getBuildDataManager().close();
     }
   }
 

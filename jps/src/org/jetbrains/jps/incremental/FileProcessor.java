@@ -12,5 +12,5 @@ public interface FileProcessor {
   /**
    * @return true if processing should continue, false if should stop
    */
-  boolean apply(Module module, File file, String sourceRoot);
+  boolean apply(Module module, File file, String sourceRoot) throws Exception;
 }

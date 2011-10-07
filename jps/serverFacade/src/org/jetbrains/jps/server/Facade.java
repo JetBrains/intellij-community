@@ -72,7 +72,7 @@ public class Facade {
       }
     };
 
-    final IncProjectBuilder builder = new IncProjectBuilder(project, BuilderRegistry.getInstance());
+    final IncProjectBuilder builder = new IncProjectBuilder(project, getProjectName(projectPath), BuilderRegistry.getInstance());
     if (msgHandler != null) {
       builder.addMessageHandler(msgHandler);
     }
@@ -92,6 +92,15 @@ public class Facade {
     //pw.save();
   }
 
+  private static String getProjectName(String projectPath) {
+    final File path = new File(projectPath);
+    final String name = path.getName().toLowerCase(Locale.US);
+    if (!isDirectoryBased(path) && name.endsWith(".ipr")) {
+      return name.substring(0, name.length() - ".ipr".length());
+    }
+    return name;
+  }
+
   private Project loadProject(String projectPath, BuildParameters params) {
     final Project project = new Project(new GantBinding());
     // setup JDKs and global libraries
@@ -109,13 +118,16 @@ public class Facade {
     }
 
     final File projectFile = new File(projectPath);
-    final boolean dirBased = !(projectFile.isFile() && projectPath.endsWith(".ipr"));
 
     //String root = dirBased ? projectPath : projectFile.getParent();
 
-    final String loadPath = dirBased ? new File(projectFile, IDEA_PROJECT_DIRNAME).getPath() : projectPath;
+    final String loadPath = isDirectoryBased(projectFile) ? new File(projectFile, IDEA_PROJECT_DIRNAME).getPath() : projectPath;
     IdeaProjectLoader.loadFromPath(project, loadPath, myPathVariables, getStartupScript());
     return project;
+  }
+
+  private static boolean isDirectoryBased(File projectFile) {
+    return !(projectFile.isFile() && projectFile.getName().endsWith(".ipr"));
   }
 
   private String getStartupScript() {
