@@ -35,7 +35,7 @@ public class DateFormatUtilTest extends TestCase {
     doTestPrettyDate(DateFormatUtil.formatDate(DATE_FORMAT.parse("10.12.2003 17.00.00")), "10.12.2003 17.00.00");
   }
 
-  public void testPrettyDate() throws ParseException {
+  public void testTime() throws ParseException {
     Clock.setTime(2004, 11, 10, 17, 10, 15);
 
     assertEquals("17:10", DateFormatUtil.formatTime(Clock.getTime()));
