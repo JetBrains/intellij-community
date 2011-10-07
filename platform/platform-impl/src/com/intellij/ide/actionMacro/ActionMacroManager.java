@@ -372,7 +372,7 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
 
           String ready = (modifiers.replaceAll("ctrl", "control").trim() + " " + key.trim()).trim();
           
-          myRecordingMacro.appendShortuct(ready);
+          myRecordingMacro.appendShortcut(ready);
           if (!isEnter) {
             myLastActionInputEvent = null;
           }
