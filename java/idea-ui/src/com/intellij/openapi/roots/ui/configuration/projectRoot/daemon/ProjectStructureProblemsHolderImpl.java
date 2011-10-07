@@ -1,8 +1,8 @@
 package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,19 +30,6 @@ public class ProjectStructureProblemsHolderImpl implements ProjectStructureProbl
     myProblemDescriptions.add(description);
   }
 
-  @Nullable
-  public ProjectStructureProblemType.Severity getSeverity() {
-    if (myProblemDescriptions == null || myProblemDescriptions.isEmpty()) {
-      return null;
-    }
-    for (ProjectStructureProblemDescription description : myProblemDescriptions) {
-      if (description.getSeverity() == ProjectStructureProblemType.Severity.ERROR) {
-        return ProjectStructureProblemType.Severity.ERROR;
-      }
-    }
-    return ProjectStructureProblemType.Severity.WARNING;
-  }
-
   public String composeTooltipMessage() {
     final StringBuilder buf = StringBuilderSpinAllocator.alloc();
     try {
@@ -50,7 +37,7 @@ public class ProjectStructureProblemsHolderImpl implements ProjectStructureProbl
       if (myProblemDescriptions != null) {
         int problems = 0;
         for (ProjectStructureProblemDescription problemDescription : myProblemDescriptions) {
-          buf.append(StringUtil.escapeXml(problemDescription.getMessage())).append("<br>");
+          buf.append(XmlStringUtil.escapeString(problemDescription.getMessage())).append("<br>");
           problems++;
           if (problems >= 10 && myProblemDescriptions.size() > 12) {
             buf.append(myProblemDescriptions.size() - problems).append(" more problems...<br>");
@@ -66,8 +53,19 @@ public class ProjectStructureProblemsHolderImpl implements ProjectStructureProbl
     }
   }
 
-  public boolean containProblems() {
+  public boolean containsProblems() {
     return myProblemDescriptions != null && !myProblemDescriptions.isEmpty();
+  }
+
+  public boolean containsProblems(final ProjectStructureProblemType.Severity severity) {
+    if (myProblemDescriptions != null) {
+      for (ProjectStructureProblemDescription description : myProblemDescriptions) {
+        if (description.getSeverity() == severity) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   public void removeProblem(@NotNull ProjectStructureProblemDescription description) {

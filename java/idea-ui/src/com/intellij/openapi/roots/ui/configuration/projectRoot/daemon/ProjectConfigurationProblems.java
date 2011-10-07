@@ -40,10 +40,6 @@ public class ProjectConfigurationProblems {
     myContext = context;
     analyzer.addListener(new ProjectStructureDaemonAnalyzerListener() {
       @Override
-      public void usagesCollected(@NotNull ProjectStructureElement containingElement) {
-      }
-
-      @Override
       public void problemsChanged(@NotNull ProjectStructureElement element) {
         updateErrors(element);
       }

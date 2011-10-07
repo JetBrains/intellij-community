@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
  * @author nik
  */
 public class ProjectStructureProblemType {
-  public enum Severity { ERROR, WARNING }
+  public enum Severity { ERROR, WARNING, UNUSED }
 
   private final String myId;
   private final Severity mySeverity;
@@ -37,6 +37,10 @@ public class ProjectStructureProblemType {
 
   public static ProjectStructureProblemType warning(@NotNull String id) {
     return new ProjectStructureProblemType(id, Severity.WARNING);
+  }
+
+  public static ProjectStructureProblemType unused(@NotNull String id) {
+    return new ProjectStructureProblemType(id, Severity.UNUSED);
   }
 
   @NotNull

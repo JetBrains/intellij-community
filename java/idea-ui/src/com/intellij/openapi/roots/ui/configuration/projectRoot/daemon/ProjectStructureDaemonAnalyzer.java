@@ -102,7 +102,6 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
           LOG.debug("updating usages for " + element);
         }
         updateUsages(element, usages);
-        myDispatcher.getMulticaster().usagesCollected(element);
       }
     });
   }
@@ -124,7 +123,7 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
     queueUpdate(element, true, true);
   }
 
-  public void queueUpdate(@NotNull final ProjectStructureElement element, final boolean check, final boolean collectUsages) {
+  private void queueUpdate(@NotNull final ProjectStructureElement element, final boolean check, final boolean collectUsages) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("start " + (check ? "checking " : "") + (collectUsages ? "collecting usages " : "") + "for " + element);
     }
@@ -184,17 +183,6 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
     }
   }
 
-  public boolean isUnused(ProjectStructureElement element) {
-    if (!element.shouldShowWarningIfUnused()) {
-      return false;
-    }
-    if (!myElementWithNotCalculatedUsages.isEmpty()) {
-      return false;
-    }
-    final Collection<ProjectStructureElementUsage> usages = mySourceElement2Usages.get(element);
-    return usages == null || usages.isEmpty();
-  }
-
   private void removeUsagesInElement(ProjectStructureElement element) {
     final Collection<ProjectStructureElementUsage> usages = myContainingElement2Usages.removeAll(element);
     if (usages != null) {
@@ -225,7 +213,7 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
   public void queueUpdateForAllElementsWithErrors() {
     List<ProjectStructureElement> toUpdate = new ArrayList<ProjectStructureElement>();
     for (Map.Entry<ProjectStructureElement, ProjectStructureProblemsHolderImpl> entry : myProblemHolders.entrySet()) {
-      if (entry.getValue().containProblems()) {
+      if (entry.getValue().containsProblems()) {
         toUpdate.add(entry.getKey());
       }
     }
@@ -274,6 +262,8 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
   }
 
   public void clear() {
+    myWarningsAboutUnused.clear();
+    myElementsToShowWarningIfUnused.clear();
     mySourceElement2Usages.clear();
     myContainingElement2Usages.clear();
     myElementWithNotCalculatedUsages.clear();

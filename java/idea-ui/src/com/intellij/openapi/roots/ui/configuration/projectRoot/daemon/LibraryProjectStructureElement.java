@@ -111,7 +111,7 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
     if (this == o) return true;
     if (!(o instanceof LibraryProjectStructureElement)) return false;
 
-    return getSourceOrThis().equals(((LibraryProjectStructureElement)o).getSourceOrThis());
+    return getSourceOrThis() == (((LibraryProjectStructureElement)o).getSourceOrThis());
   }
 
   @NotNull 
@@ -125,7 +125,7 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
   
   @Override
   public int hashCode() {
-    return getSourceOrThis().hashCode();
+    return System.identityHashCode(getSourceOrThis());
   }
 
   @Override
@@ -138,7 +138,7 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
   public ProjectStructureProblemDescription createUnusedElementWarning() {
     final List<ConfigurationErrorQuickFix> fixes = Arrays.asList(new AddLibraryToDependenciesFix(), new RemoveLibraryFix());
     return new ProjectStructureProblemDescription(getPresentableName() + " is not used", null, createPlace(), fixes,
-                                                  ProjectStructureProblemType.warning("unused-library"));
+                                                  ProjectStructureProblemType.unused("unused-library"));
   }
 
   @Override

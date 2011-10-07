@@ -64,9 +64,6 @@ public class ArtifactsStructureConfigurableContextImpl implements ArtifactsStruc
     myContext = context;
     myProject = project;
     context.getDaemonAnalyzer().addListener(new ProjectStructureDaemonAnalyzerListener() {
-      public void usagesCollected(@NotNull ProjectStructureElement containingElement) {
-      }
-
       public void problemsChanged(@NotNull ProjectStructureElement element) {
         if (element instanceof ArtifactProjectStructureElement) {
           final Artifact originalArtifact = ((ArtifactProjectStructureElement)element).getOriginalArtifact();
