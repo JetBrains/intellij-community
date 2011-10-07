@@ -167,7 +167,8 @@ public class ShowFilePathAction extends AnAction {
   }
 
   public static boolean isSupported() {
-    return SystemInfo.isWindows || SystemInfo.isMac ||
+    if (SystemInfo.isMac) return false; // This action is unnecessary on Macs
+    return SystemInfo.isWindows ||
            Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN) ||
            SystemInfo.hasXdgOpen || SystemInfo.isGnome || SystemInfo.isKDE;
   }
