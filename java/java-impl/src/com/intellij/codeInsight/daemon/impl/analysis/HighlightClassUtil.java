@@ -22,15 +22,22 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.ClassUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.RefCountHolder;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
+import com.intellij.codeInsight.generation.OverrideImplementUtil;
+import com.intellij.codeInsight.generation.PsiMethodMember;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
@@ -118,11 +125,20 @@ public class HighlightClassUtil {
     if (aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
       String baseClassName = aClass.getName();
       String message = JavaErrorMessages.message("abstract.cannot.be.instantiated", baseClassName);
-      errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, highlightElement, message);
-      if (!aClass.isInterface() && ClassUtil.getAnyAbstractMethod(aClass) == null) {
+      PsiElement parent = highlightElement.getParent();
+      if (parent instanceof PsiNewExpression) {
+        errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, parent, message);
+      } else {
+        errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, highlightElement, message);
+      }
+      final PsiMethod anyAbstractMethod = ClassUtil.getAnyAbstractMethod(aClass);
+      if (!aClass.isInterface() && anyAbstractMethod == null) {
         // suggest to make not abstract only if possible
         IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(aClass, PsiModifier.ABSTRACT, false, false);
         QuickFixAction.registerQuickFixAction(errorResult, fix);
+      }
+      if (anyAbstractMethod != null && parent instanceof PsiNewExpression) {
+        QuickFixAction.registerQuickFixAction(errorResult, new ImplementAbstractClassMethodsFix(parent));
       }
     }
     return errorResult;
@@ -863,4 +879,49 @@ public class HighlightClassUtil {
     return null;
   }
 
+  private static class ImplementAbstractClassMethodsFix extends ImplementMethodsFix {
+    public ImplementAbstractClassMethodsFix(PsiElement highlightElement) {
+      super(highlightElement);
+    }
+
+    @Override
+    public boolean isAvailable(@NotNull Project project,
+                               @NotNull PsiFile file,
+                               @NotNull PsiElement startElement,
+                               @NotNull PsiElement endElement) {
+      return startElement instanceof PsiNewExpression;
+    }
+
+    @Override
+    public void invoke(@NotNull final Project project,
+                       @NotNull PsiFile file,
+                       @Nullable("is null when called from inspection") final Editor editor,
+                       @NotNull final PsiElement startElement,
+                       @NotNull PsiElement endElement) {
+      final PsiFile containingFile = startElement.getContainingFile();
+      if (editor == null || !CodeInsightUtilBase.prepareFileForWrite(containingFile)) return;
+      PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)startElement).getClassReference();
+      final MemberChooser<PsiMethodMember> chooser = chooseMethodsToImplement(editor, startElement, (PsiClass)classReference.resolve());
+      if (chooser == null) return;
+
+      final List<PsiMethodMember> selectedElements = chooser.getSelectedElements();
+      if (selectedElements == null || selectedElements.isEmpty()) return;
+
+      new WriteCommandAction(project, file) {
+        protected void run(final Result result) throws Throwable {
+          PsiNewExpression newExpression =
+            (PsiNewExpression)JavaPsiFacade.getElementFactory(project).createExpressionFromText(startElement.getText() + "{}", startElement);
+          newExpression = (PsiNewExpression)startElement.replace(newExpression);
+          final PsiClass psiClass = newExpression.getAnonymousClass();
+          PsiSubstitutor superClassSubstitutor = TypeConversionUtil
+            .getSuperClassSubstitutor(((PsiAnonymousClass)psiClass).getBaseClassType().resolve(), psiClass, PsiSubstitutor.EMPTY);
+          for (PsiMethodMember selectedElement : selectedElements) {
+            selectedElement.setSubstitutor(superClassSubstitutor);
+          }
+          OverrideImplementUtil.overrideOrImplementMethodsInRightPlace(editor, psiClass, selectedElements, chooser.isCopyJavadoc(),
+                                                                       chooser.isInsertOverrideAnnotation());
+        }
+      }.execute();
+    }
+  }
 }

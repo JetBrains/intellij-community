@@ -26,7 +26,7 @@ import com.intellij.psi.util.PsiFormatUtil;
 */
 public abstract class PsiElementClassMember<T extends PsiDocCommentOwner> extends PsiDocCommentOwnerMemberChooserObject implements ClassMemberWithElement {
   private final T myPsiMember;
-  private final PsiSubstitutor mySubstitutor;
+  private PsiSubstitutor mySubstitutor;
 
   protected PsiElementClassMember(final T psiMember, String text) {
     this(psiMember, PsiSubstitutor.EMPTY, text);
@@ -44,6 +44,10 @@ public abstract class PsiElementClassMember<T extends PsiDocCommentOwner> extend
 
   public PsiSubstitutor getSubstitutor() {
     return mySubstitutor;
+  }
+
+  public void setSubstitutor(PsiSubstitutor substitutor) {
+    mySubstitutor = substitutor;
   }
 
   public MemberChooserObject getParentNodeDelegate() {
