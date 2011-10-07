@@ -15,9 +15,8 @@
  */
 package com.intellij.openapi.vcs.changes.patch;
 
-import com.intellij.openapi.diff.impl.patch.ApplyPatchException;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
-import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase;
+import com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vcs.FilePath;
@@ -43,20 +42,18 @@ public class LazyPatchContentRevision implements ContentRevision {
 
   public String getContent() {
     if (myContent == null) {
-      try {
-        final Document doc = FileDocumentManager.getInstance().getDocument(myVf);
-        if (doc == null) {
-          myPatchApplyFailed = true;
-          return null;
-        }
-        final String baseContent = doc.getText();
-        final StringBuilder newText = new StringBuilder();
-        ApplyFilePatchBase.applyModifications(myPatch, baseContent, newText);
-
-        myContent = newText.toString();
-      } catch (ApplyPatchException e) {
+      final Document doc = FileDocumentManager.getInstance().getDocument(myVf);
+      if (doc == null) {
         myPatchApplyFailed = true;
         return null;
+      }
+      final String localContext = doc.getText();
+
+      final GenericPatchApplier applier = new GenericPatchApplier(localContext, myPatch.getHunks());
+      if (applier.execute()) {
+        myContent = applier.getAfter();
+      } else {
+        myPatchApplyFailed = true;
       }
     }
     return myContent;

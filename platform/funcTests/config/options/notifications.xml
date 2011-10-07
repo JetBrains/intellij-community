@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<application>
+  <component name="NotificationConfiguration">
+    <notification groupId="System Messages" />
+    <notification groupId="Git Important Errors" />
+    <notification groupId="Git Messages" displayType="TOOL_WINDOW" />
+    <notification groupId="Framework Detection" />
+    <notification groupId="IDE Fatal Errors" displayType="NONE" />
+    <notification groupId="Indexing" shouldLog="false" />
+    <toolWindow group="Git Messages" />
+  </component>
+</application>
+

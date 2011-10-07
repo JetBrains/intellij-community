@@ -15,10 +15,11 @@
  */
 package com.intellij.openapi.diff.impl.patch.apply;
 
-import com.intellij.openapi.diff.impl.patch.*;
+import com.intellij.openapi.diff.impl.patch.ApplyPatchContext;
+import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.LineTokenizer;
+import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -26,9 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 public abstract class ApplyFilePatchBase<T extends FilePatch> implements ApplyFilePatch {
   protected final T myPatch;
@@ -48,34 +46,26 @@ public abstract class ApplyFilePatchBase<T extends FilePatch> implements ApplyFi
     return new FilePathImpl(file);
   }
 
-  public ApplyPatchStatus apply(final VirtualFile fileToPatch, final ApplyPatchContext context, final Project project) throws
-                                                                                                                       IOException, ApplyPatchException {
+  public Result apply(final VirtualFile fileToPatch,
+                      final ApplyPatchContext context,
+                      final Project project,
+                      FilePath pathBeforeRename,
+                      Getter<CharSequence> baseContents) throws IOException {
     context.addAffectedFile(getTarget(fileToPatch));
-    return applyImpl(fileToPatch, project);
-  }
-
-  public ApplyPatchStatus applyImpl(final VirtualFile fileToPatch, final Project project) throws IOException, ApplyPatchException {
     if (myPatch.isNewFile()) {
       applyCreate(fileToPatch);
-    }
-    else if (myPatch.isDeletedFile()) {
+    } else if (myPatch.isDeletedFile()) {
       FileEditorManagerImpl.getInstance(project).closeFile(fileToPatch);
       fileToPatch.delete(this);
     }
     else {
-      return applyChange(fileToPatch);
+      return applyChange(project, fileToPatch, pathBeforeRename, baseContents);
     }
-    return ApplyPatchStatus.SUCCESS;
+    return SUCCESS;
   }
 
-  protected abstract void applyCreate(VirtualFile newFile) throws IOException, ApplyPatchException;
-  @Nullable
-  protected abstract ApplyPatchStatus applyChange(VirtualFile fileToPatch) throws IOException, ApplyPatchException;
-
-  @Nullable
-  public VirtualFile findFileToPatch(@NotNull ApplyPatchContext context) throws IOException {
-    return findPatchTarget(context, myPatch.getBeforeName(), myPatch.getAfterName(), myPatch.isNewFile());
-  }
+  protected abstract void applyCreate(VirtualFile newFile) throws IOException;
+  protected abstract Result applyChange(Project project, VirtualFile fileToPatch, FilePath pathBeforeRename, Getter<CharSequence> baseContents) throws IOException;
 
   @Nullable
   public static VirtualFile findPatchTarget(final ApplyPatchContext context, final String beforeName, final String afterName,
@@ -174,7 +164,7 @@ public abstract class ApplyFilePatchBase<T extends FilePatch> implements ApplyFi
     return patchedDir;
   }
 
-  @Nullable
+  /*@Nullable
   public static ApplyPatchStatus applyModifications(final TextFilePatch patch, final CharSequence text, final StringBuilder newText) throws
                                                                                                                                      ApplyPatchException {
     final List<PatchHunk> hunks = patch.getHunks();
@@ -194,5 +184,5 @@ public abstract class ApplyFilePatchBase<T extends FilePatch> implements ApplyFi
       }
     }
     return result;
-  }
+  }*/
 }

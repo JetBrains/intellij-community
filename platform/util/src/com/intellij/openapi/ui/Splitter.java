@@ -43,7 +43,7 @@ public class Splitter extends JPanel {
    * <p/>
    * /-------/
    * |   |   |
-   * This is horihontal split | 1 | 2 |
+   * This is horizontal split | 1 | 2 |
    * |   |   |
    * /-------/
    */
@@ -104,6 +104,17 @@ public class Splitter extends JPanel {
   public void setShowDividerControls(boolean showDividerControls) {
     myShowDividerControls = showDividerControls;
     setOrientation(myVerticalSplit);
+  }
+
+  @Override
+  public Dimension getPreferredSize() {
+    Dimension first = myFirstComponent.getPreferredSize();
+    Dimension second = myFirstComponent.getPreferredSize();
+    if (myVerticalSplit) {
+      return new Dimension(Math.max(first.width, second.width), first.height + second.height + myDividerWidth);
+    }
+
+    return new Dimension(first.width + second.width + myDividerWidth, Math.max(first.height, second.height));
   }
 
   public boolean isHonorMinimumSize() {

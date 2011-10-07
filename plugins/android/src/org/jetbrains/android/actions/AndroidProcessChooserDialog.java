@@ -206,7 +206,7 @@ public class AndroidProcessChooserDialog extends DialogWrapper {
   }
 
   @NotNull
-  private static String getPresentableName(IDevice device) {
+  private static String getPresentableName(@NotNull IDevice device) {
     String serialNumber = device.getSerialNumber();
     final String avdName = device.getAvdName();
 
@@ -373,15 +373,19 @@ public class AndroidProcessChooserDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    super.doOKAction();
-
     final PropertiesComponent properties = PropertiesComponent.getInstance(myProject);
 
     final IDevice selectedDevice = getSelectedDevice();
-    assert selectedDevice != null;
+    if (selectedDevice == null) {
+      return;
+    }
 
     final Client selectedClient = getSelectedClient();
-    assert selectedClient != null;
+    if (selectedClient == null) {
+      return;
+    }
+
+    super.doOKAction();
 
     properties.setValue(DEBUGGABLE_DEVICE_PROPERTY, getPresentableName(selectedDevice));
     properties.setValue(DEBUGGABLE_PROCESS_PROPERTY, selectedClient.getClientData().getClientDescription());

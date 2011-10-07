@@ -4,6 +4,7 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
 import com.intellij.codeInsight.template.SmartCompletionContextType;
 import com.intellij.codeInsight.template.Template;
@@ -783,6 +784,12 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   public void testClassLiteral() throws Exception {
     doActionTest();
     assertStringItems("String.class");
+
+    LookupElementPresentation p = new LookupElementPresentation();
+    myFixture.getLookupElements()[0].renderElement(p);
+    assertEquals("String.class", p.getItemText());
+    assertEquals(" (java.lang)", p.getTailText());
+    assertNull(p.getTypeText());
   }
   public void testNoClassLiteral() throws Exception {
     doActionTest();
@@ -903,7 +910,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testConstructorArgsSmartEnter() throws Exception { doTest(Lookup.COMPLETE_STATEMENT_SELECT_CHAR); }
 
-  private void configureByTestName() throws Exception {
+  private void configureByTestName() {
     configureByFile("/" + getTestName(false) + ".java");
   }
 
@@ -1023,6 +1030,17 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   public void testInheritorEnumMembers() throws Throwable { doTest(); }
   public void testDuplicateMembersFromSuperClass() throws Throwable { doTest(); }
 
+  public void testMemberImportStatically() {
+    configureByTestName();
+    StaticallyImportable item = myItems[0].as(StaticallyImportable.CLASS_CONDITION_KEY);
+    assertNotNull(item);
+    assertTrue(item.canBeImported());
+    assertTrue(myItems[1].as(StaticallyImportable.CLASS_CONDITION_KEY).canBeImported());
+    item.setShouldBeImported(true);
+    type('\n');
+    checkResultByTestName();
+  }
+
   public void testNoNewEnum() throws Throwable {
     configureByTestName();
     assertStringItems("Foo");
@@ -1120,7 +1138,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   }
 
-  private void checkResultByTestName() throws Exception {
+  private void checkResultByTestName() {
     checkResultByFile("/" + getTestName(false) + "-out.java");
   }
 

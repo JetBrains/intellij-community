@@ -34,13 +34,15 @@ import com.intellij.util.ImageLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+
 public class DiffUtil {
   private DiffUtil() {
   }
 
-  public static void initDiffFrame(FrameWrapper frameWrapper, final DiffPanelImpl diffPanel) {
+  public static void initDiffFrame(FrameWrapper frameWrapper, final DiffPanelImpl diffPanel, final JComponent mainComponent) {
     Project project = diffPanel.getProject();
-    frameWrapper.setComponent(diffPanel.getComponent());
+    frameWrapper.setComponent(mainComponent);
     frameWrapper.setProject(project);
     frameWrapper.setImage(ImageLoader.loadFromResource("/diff/Diff.png"));
     frameWrapper.setPreferredFocusedComponent(diffPanel.getPreferredFocusedComponent());

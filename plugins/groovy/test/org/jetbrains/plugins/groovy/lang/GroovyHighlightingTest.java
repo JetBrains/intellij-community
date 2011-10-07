@@ -26,6 +26,7 @@ import org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialConditio
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialIfInspection;
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyUnnecessaryReturnInspection;
 import org.jetbrains.plugins.groovy.codeInspection.metrics.GroovyOverlyLongMethodInspection;
+import org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection;
 import org.jetbrains.plugins.groovy.codeInspection.unassignedVariable.UnassignedVariableAccessInspection;
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUnresolvedAccessInspection;
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUntypedAccessInspection;
@@ -473,5 +474,9 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   
   public void testSpreadArguments() {
     doTest(new GroovyAssignabilityCheckInspection());
+  }
+  
+  public void testMissingReturnInClosure() {
+    doTest(new MissingReturnInspection());
   }
 }

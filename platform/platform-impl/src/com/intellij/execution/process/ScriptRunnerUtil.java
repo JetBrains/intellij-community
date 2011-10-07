@@ -98,7 +98,7 @@ public final class ScriptRunnerUtil {
     return outputBuilder.toString();
   }
 
-  public static OSProcessHandler execute(String exePath,
+  public static OSProcessHandler execute(@NotNull String exePath,
                                          @Nullable String workingDirectory,
                                          @Nullable VirtualFile scriptFile,
                                          String[] parameters) throws ExecutionException {

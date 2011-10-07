@@ -76,12 +76,6 @@ public class ArtifactsStructureConfigurableContextImpl implements ArtifactsStruc
           }
         }
       }
-
-      public void allProblemsChanged() {
-        for (Map.Entry<Artifact, ArtifactEditorImpl> entry : myArtifactEditors.entrySet()) {
-          updateProblems(entry.getKey(), entry.getValue());
-        }
-      }
     });
   }
 
@@ -116,7 +110,7 @@ public class ArtifactsStructureConfigurableContextImpl implements ArtifactsStruc
   }
 
   public void queueValidation(Artifact artifact) {
-    myContext.getDaemonAnalyzer().queueUpdate(getOrCreateArtifactElement(artifact), true, false);
+    myContext.getDaemonAnalyzer().queueUpdate(getOrCreateArtifactElement(artifact));
   }
 
   public CompositePackagingElement<?> getRootElement(@NotNull Artifact artifact) {

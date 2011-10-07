@@ -79,7 +79,7 @@ public abstract class RunConfigurationExtension extends RunConfigurationExtensio
     return listener;
   }
 
-  public  boolean isListenerDisabled(RunConfigurationBase configuration, Object listener) {
+  public  boolean isListenerDisabled(RunConfigurationBase configuration, Object listener, RunnerSettings runnerSettings) {
     return false;
   }
 }

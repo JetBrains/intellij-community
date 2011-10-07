@@ -17,7 +17,6 @@ package com.intellij.openapi.roots.ui.configuration.classpath;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -41,7 +40,6 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ModuleProj
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.SdkProjectStructureElement;
 import com.intellij.openapi.ui.ComboBoxTableRenderer;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
@@ -67,10 +65,8 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
   private final JBTable myEntryTable;
@@ -484,23 +480,9 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
       int actionIndex = 1;
       final List<AddItemPopupAction<?>> actions = new ArrayList<AddItemPopupAction<?>>();
       final StructureConfigurableContext context = getStructureConfigurableContext();
-      actions.add(new AddModuleLibraryAction(this, actionIndex++, context));
-      actions.add(new AddLibraryAction(this, actionIndex++, ProjectBundle.message("classpath.add.library.action"), context));
-      actions.add(new AddItemPopupAction<Module>(this, actionIndex, ProjectBundle.message("classpath.add.module.dependency.action"),
-                                                 StdModuleTypes.JAVA.getNodeIcon(false)) {
-          protected ClasspathTableItem<?> createTableItem(final Module item) {
-            return ClasspathTableItem.createItem(getRootModel().addModuleOrderEntry(item), context);
-          }
-          protected ClasspathElementChooser<Module> createChooser() {
-            final List<Module> chooseItems = getDependencyModules();
-            if (chooseItems.isEmpty()) {
-              Messages.showMessageDialog(ClasspathPanelImpl.this, ProjectBundle.message("message.no.module.dependency.candidates"), getTitle(), Messages.getInformationIcon());
-              return null;
-            }
-            return new ModuleChooser(chooseItems, ProjectBundle.message("classpath.chooser.title.add.module.dependency"),
-                                     ProjectBundle.message("classpath.chooser.description.add.module.dependency"));
-          }
-        }
+      actions.add(new AddNewModuleLibraryAction(this, actionIndex++, context));
+      actions.add(new AddLibraryDependencyAction(this, actionIndex++, ProjectBundle.message("classpath.add.library.action"), context));
+      actions.add(new AddModuleDependencyAction(this, actionIndex, context)
       );
 
       myPopupActions = actions;
@@ -602,29 +584,6 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     TableUtil.selectRows(myEntryTable, selection);
   }
 
-  private List<Module> getDependencyModules() {
-    final int rowCount = myModel.getRowCount();
-    final Set<String> filtered = new HashSet<String>(rowCount);
-    for (int row = 0; row < rowCount; row++) {
-      final OrderEntry entry = myModel.getItemAt(row).getEntry();
-      if (entry instanceof ModuleOrderEntry) {
-        filtered.add(((ModuleOrderEntry)entry).getModuleName());
-      }
-    }
-    final ModulesProvider modulesProvider = myState.getModulesProvider();
-    final Module self = modulesProvider.getModule(getRootModel().getModule().getName());
-    filtered.add(self.getName());
-
-    final Module[] modules = modulesProvider.getModules();
-    final List<Module> elements = new ArrayList<Module>(modules.length);
-    for (final Module module : modules) {
-      if (!filtered.contains(module.getName())) {
-        elements.add(module);
-      }
-    }
-    return elements;
-  }
-
   private static CellAppearanceEx getCellAppearance(final ClasspathTableItem<?> item,
                                                     final StructureConfigurableContext context,
                                                     final boolean selected) {
@@ -677,20 +636,6 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     }
   }
 
-  private class ModuleChooser extends ChooseModulesDialog implements ClasspathElementChooser<Module> {
-    public ModuleChooser(final List<Module> items, final String title, String description) {
-      super(ClasspathPanelImpl.this, items, title, description);
-    }
-
-    public void doChoose() {
-      show();
-    }
-
-    public void dispose() {
-      super.dispose();
-    }
-  }
-
   private class MyFindUsagesAction extends FindUsagesInProjectStructureActionBase {
     private MyFindUsagesAction() {
       super(myEntryTable, myState.getProject());
@@ -730,5 +675,4 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
       return new RelativePoint(myEntryTable, location);
     }
   }
-
 }

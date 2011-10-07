@@ -190,37 +190,42 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
 
     extend(CompletionType.SMART, INSIDE_EXPRESSION, new ExpectedTypeBasedCompletionProvider() {
       protected void addCompletions(final CompletionParameters params, final CompletionResultSet result, final Collection<ExpectedTypeInfo> _infos) {
-        for (final ExpectedTypeInfo info : new THashSet<ExpectedTypeInfo>(_infos, EXPECTED_TYPE_INFO_STRATEGY)) {
-          final JavaSmartCompletionParameters parameters = new JavaSmartCompletionParameters(params, info);
-          final PsiType type = info.getType();
+        Consumer<LookupElement> noTypeCheck = new Consumer<LookupElement>() {
+          public void consume(final LookupElement lookupElement) {
+            result.addElement(decorate(lookupElement, _infos));
+          }
+        };
 
-          BasicExpressionCompletionContributor.fillCompletionVariants(parameters, new Consumer<LookupElement>() {
+        THashSet<ExpectedTypeInfo> mergedInfos = new THashSet<ExpectedTypeInfo>(_infos, EXPECTED_TYPE_INFO_STRATEGY);
+        for (final ExpectedTypeInfo info : mergedInfos) {
+          ReferenceExpressionCompletionContributor.fillCompletionVariants(new JavaSmartCompletionParameters(params, info), noTypeCheck);
+        }
+
+        for (final ExpectedTypeInfo info : mergedInfos) {
+          BasicExpressionCompletionContributor.fillCompletionVariants(new JavaSmartCompletionParameters(params, info), new Consumer<LookupElement>() {
             @Override
             public void consume(LookupElement lookupElement) {
               final TypedLookupItem typed = lookupElement.as(TypedLookupItem.CLASS_CONDITION_KEY);
               if (typed != null) {
                 final PsiType psiType = typed.getType();
-                if (psiType != null && type.isAssignableFrom(psiType)) {
+                if (psiType != null && info.getType().isAssignableFrom(psiType)) {
                   result.addElement(decorate(lookupElement, _infos));
                 }
               }
             }
           }, result.getPrefixMatcher());
-          Consumer<LookupElement> noTypeCheck = new Consumer<LookupElement>() {
-            public void consume(final LookupElement lookupElement) {
-              result.addElement(decorate(lookupElement, _infos));
-            }
-          };
-          ReferenceExpressionCompletionContributor.fillCompletionVariants(parameters, noTypeCheck);
-
-          PsiElement position = parameters.getPosition();
-          if (!BasicExpressionCompletionContributor.AFTER_DOT.accepts(position)) {
-            final PsiElement parent = position.getParent();
-            if (parent != null && !(parent.getParent() instanceof PsiSwitchLabelStatement)) {
-              new JavaMembersGetter(type).addMembers(position, true, noTypeCheck);
-              if (!parameters.getDefaultType().equals(type)) {
-                new JavaMembersGetter(parameters.getDefaultType()).addMembers(position, true, noTypeCheck);
-              }
+          
+        }
+        
+        PsiElement position = params.getPosition();
+        final PsiElement parent = position.getParent();
+        if (!BasicExpressionCompletionContributor.AFTER_DOT.accepts(position) &&
+            parent != null &&
+            !(parent.getParent() instanceof PsiSwitchLabelStatement)) {
+          for (ExpectedTypeInfo info : mergedInfos) {
+            new JavaMembersGetter(info.getType()).addMembers(position, true, noTypeCheck);
+            if (!info.getDefaultType().equals(info.getType())) {
+              new JavaMembersGetter(info.getDefaultType()).addMembers(position, true, noTypeCheck);
             }
           }
         }

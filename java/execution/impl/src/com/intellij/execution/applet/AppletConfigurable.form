@@ -66,7 +66,7 @@
         <properties>
           <componentClass value="javax.swing.JComboBox"/>
           <labelLocation value="West"/>
-          <text resource-bundle="messages/ExecutionBundle" key="applet.configuration.use.classpath.and.jdk.of.module.label"/>
+          <text resource-bundle="messages/ExecutionBundle" key="application.configuration.use.classpath.and.jdk.of.module.label"/>
         </properties>
       </component>
       <grid id="c178e" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">

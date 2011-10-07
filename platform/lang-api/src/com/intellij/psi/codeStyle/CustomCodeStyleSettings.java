@@ -65,4 +65,10 @@ public abstract class CustomCodeStyleSettings implements Cloneable {
     }
   }
 
+  /**
+   * For compatibility with old code style settings stored in CodeStyleSettings.
+   */
+  public void importLegacySettings() {
+  }
+
 }

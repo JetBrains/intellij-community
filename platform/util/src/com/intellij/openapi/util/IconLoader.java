@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.reference.SoftReference;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.WeakHashMap;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +36,6 @@ import java.util.*;
 
 public final class IconLoader {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.IconLoader");
-  private static final Color ourTransparentColor = new Color(0, 0, 0, 0);
 
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   private static final ConcurrentHashMap<URL, Icon> ourIconsCache = new ConcurrentHashMap<URL, Icon>(100, 0.9f,2);
@@ -190,7 +190,7 @@ public final class IconLoader {
       final BufferedImage image = new BufferedImage(icon.getIconWidth(), icon.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
       final Graphics2D graphics = image.createGraphics();
 
-      graphics.setColor(ourTransparentColor);
+      graphics.setColor(UIUtil.TRANSPARENT_COLOR);
       graphics.fillRect(0, 0, icon.getIconWidth(), icon.getIconHeight());
       icon.paintIcon(ourFakeComponent, graphics, 0, 0);
 

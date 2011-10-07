@@ -43,7 +43,6 @@ import javax.swing.event.DocumentEvent;
 import java.io.IOException;
 import java.net.URL;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 
 /**
@@ -226,7 +225,12 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
 
     final Set<Configurable> currentConfigurables = new HashSet<Configurable>(contentHits);
     if (options.isEmpty()) { //operate with substring
-      options.add(option);
+      String[] components = REG_EXP.split(optionToCheck);
+      if (components.length > 0) {
+        Collections.addAll(options, components);
+      } else {
+        options.add(option);
+      }
     }
     Set<String> helpIds = null;
     for (String opt : options) {

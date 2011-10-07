@@ -130,11 +130,6 @@ public class ModuleProjectStructureElement extends ProjectStructureElement {
   }
 
   @Override
-  public boolean highlightIfUnused() {
-    return false;
-  }
-
-  @Override
   public String getPresentableName() {
     return "Module '" + myModule.getName() + "'";
   }

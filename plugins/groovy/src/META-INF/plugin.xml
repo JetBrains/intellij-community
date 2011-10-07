@@ -976,6 +976,11 @@
     <action id="GetPsiTypeAction" class="org.jetbrains.plugins.groovy.actions.GrGetPsiTypeAction" text="get PsiType" description="" internal = "true">
       <add-to-group group-id="Internal" anchor="last"/>
     </action>
+
+    <action id="DumpGroovyControlFlowAction" class="org.jetbrains.plugins.groovy.actions.DumpGroovyControlFlowAction" text="dump groovy control flow" description="" internal="true">
+      <add-to-group group-id="Internal" anchor="last"/>
+    </action>
+
     <action id="RenameJavaFileToGroovyFileAction"
             class="org.jetbrains.plugins.groovy.refactoring.javaToGrovyRename.RenameJavaFileToGroovyFileAction"
             text="Rename To Groovy" description="Rename Java File to Groovy">

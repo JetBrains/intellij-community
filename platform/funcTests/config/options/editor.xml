@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<application>
+  <component name="EditorSettings">
+    <option name="LINE_SEPARATOR" />
+    <option name="USE_SOFT_WRAPS" />
+    <option name="USE_CUSTOM_SOFT_WRAP_INDENT" value="false" />
+    <option name="CUSTOM_SOFT_WRAP_INDENT" value="0" />
+    <option name="IS_VIRTUAL_SPACE" value="true" />
+    <option name="IS_CARET_INSIDE_TABS" value="false" />
+    <option name="STRIP_TRAILING_SPACES" value="Changed" />
+    <option name="IS_ENSURE_NEWLINE_AT_EOF" value="false" />
+    <option name="IS_CARET_BLINKING" value="true" />
+    <option name="CARET_BLINKING_PERIOD" value="500" />
+    <option name="IS_RIGHT_MARGIN_SHOWN" value="true" />
+    <option name="ARE_LINE_NUMBERS_SHOWN" value="false" />
+    <option name="IS_FOLDING_OUTLINE_SHOWN" value="true" />
+    <option name="SMART_HOME" value="true" />
+    <option name="IS_BLOCK_CURSOR" value="false" />
+    <option name="IS_WHITESPACES_SHOWN" value="false" />
+    <option name="IS_ALL_SOFTWRAPS_SHOWN" value="false" />
+    <option name="IS_INDENT_GUIDES_SHOWN" value="true" />
+    <option name="IS_ANIMATED_SCROLLING" value="true" />
+    <option name="IS_CAMEL_WORDS" value="false" />
+    <option name="ADDITIONAL_PAGE_AT_BOTTOM" value="false" />
+    <option name="IS_DND_ENABLED" value="true" />
+    <option name="IS_WHEEL_FONTCHANGE_ENABLED" value="true" />
+    <option name="IS_MOUSE_CLICK_SELECTION_HONORS_CAMEL_WORDS" value="true" />
+    <option name="RENAME_VARIABLES_INPLACE" value="true" />
+    <option name="REFRAIN_FROM_SCROLLING" value="false" />
+    <option name="SHOW_REFORMAT_DIALOG" value="true" />
+    <option name="SHOW_OPIMIZE_IMPORTS_DIALOG" value="true" />
+  </component>
+</application>
+

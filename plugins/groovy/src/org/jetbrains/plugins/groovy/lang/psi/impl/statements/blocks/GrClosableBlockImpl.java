@@ -35,6 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -85,7 +86,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     PsiElement current = place;
     boolean it_already_processed = false;
     while (current != this && current != null) {
-      if (current instanceof GrClosableBlock && !((GrClosableBlock)current).hasParametersSection()) {
+      if (current instanceof GrClosableBlock && !((GrClosableBlock)current).hasParametersSection() && !(current.getParent() instanceof GrStringInjection)) {
         it_already_processed = true;
         break;
       }
@@ -184,6 +185,10 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
   }
 
   public GrParameter[] getSyntheticItParameter() {
+    if (getParent() instanceof GrStringInjection) {
+      return GrParameter.EMPTY_ARRAY;
+    }
+
     GrParameter[] res = mySyntheticItParameter;
     if (res == null) {
       res = new GrParameter[]{new ClosureSyntheticParameter(this)};

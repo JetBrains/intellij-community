@@ -167,7 +167,7 @@
                 </constraints>
                 <properties>
                   <labelLocation value="West"/>
-                  <text value="Use classpath and JDK of m&amp;odule"/>
+                  <text resource-bundle="messages/ExecutionBundle" key="application.configuration.use.classpath.and.jdk.of.module.label"/>
                 </properties>
               </component>
               <component id="baac2" class="com.intellij.execution.ui.AlternativeJREPanel" binding="alternateJDK">

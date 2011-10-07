@@ -54,7 +54,7 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
 
   ContentEntryImpl(String url, RootModelImpl m) {
     super(m);
-    myRoot = VirtualFilePointerManager.getInstance().create(url, this, m.myVirtualFilePointerListener);
+    myRoot = VirtualFilePointerManager.getInstance().create(url, this, null);
   }
 
   ContentEntryImpl(Element e, RootModelImpl m) throws InvalidDataException {

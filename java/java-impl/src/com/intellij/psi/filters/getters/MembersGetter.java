@@ -17,6 +17,7 @@ package com.intellij.psi.filters.getters;
 
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.util.Condition;
@@ -85,6 +86,7 @@ public abstract class MembersGetter {
     for (final PsiElement result : processor.getResults()) {
       if (result instanceof PsiMember && !(result instanceof PsiClass)) {
         final PsiMember member = (PsiMember)result;
+        if (JavaCompletionUtil.isInExcludedPackage(member)) continue;
         if (member.hasModifierProperty(PsiModifier.STATIC) && resolveHelper.isAccessible(member, context, null)) {
           if (result instanceof PsiField && !member.hasModifierProperty(PsiModifier.FINAL)) continue;
           if (result instanceof PsiMethod && acceptMethods) continue;

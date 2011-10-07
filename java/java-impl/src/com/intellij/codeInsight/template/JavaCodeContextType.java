@@ -20,7 +20,6 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.highlighter.JavaFileHighlighter;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -54,11 +53,6 @@ public abstract class JavaCodeContextType extends TemplateContextType {
   }
   
   protected abstract boolean isInContext(@NotNull PsiElement element);
-
-  @Override
-  public boolean isInContext(@NotNull final FileType fileType) {
-    return false;
-  }
 
   @NotNull
   @Override

@@ -166,25 +166,24 @@ public class GitHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     final VirtualFile root = GitUtil.getGitRoot(filePath);
     if (root == null) return false;
 
-    final SHAHash shaHash = GitChangeUtils.commitExists(myProject, root, beforeVersionId, null, "--all");
+    final SHAHash shaHash = GitChangeUtils.commitExists(myProject, root, beforeVersionId, null, "HEAD");
     if (shaHash == null) {
       throw new VcsException("Can not apply patch to " + filePath.getPath() + ".\nCan not find revision '" + beforeVersionId + "'.");
     }
 
-    //common parent
-    final GitRevisionNumber mergeBase = GitHistoryUtils.getMergeBase(myProject, root, "HEAD", shaHash.getValue());
+    /*final GitRevisionNumber mergeBase = GitHistoryUtils.getMergeBase(myProject, root, "HEAD", shaHash.getValue());
     if (mergeBase == null) {
       throw new VcsException("Can not apply patch to " + filePath.getPath() +
                              ".\nBase revision '" + beforeVersionId + "', used in patch, is not on current branch (reachable from current HEAD)," +
                              "\nand there is no merge base between '" + beforeVersionId + "' and HEAD.");
-    }
+    }*/
     final ContentRevision content = GitVcs.getInstance(myProject).getDiffProvider()
       .createFileContent(new GitRevisionNumber(shaHash.getValue()), filePath.getVirtualFile());
     if (content == null) {
       throw new VcsException("Can not load content of '" + filePath.getPath() + "' for revision '" + shaHash.getValue() + "'");
     }
-    final boolean matched = ! processor.process(content.getContent());
-    if (shaHash.getValue().startsWith(mergeBase.getRev())) {
+    return ! processor.process(content.getContent());
+    /*if (shaHash.getValue().startsWith(mergeBase.getRev())) {
       // ok
       return matched;
     } else {
@@ -198,7 +197,7 @@ public class GitHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
                                "\nand found merge base '" + mergeBase.getRev() + "' between '" + beforeVersionId +
                                "' and HEAD doesn't match the context.");
       }
-    }
+    }*/
   }
 
   public void reportAppendableHistory(final FilePath path, final VcsAppendableHistorySessionPartner partner) throws VcsException {

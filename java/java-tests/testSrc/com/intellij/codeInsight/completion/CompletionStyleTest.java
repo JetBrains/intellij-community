@@ -133,7 +133,7 @@ public class CompletionStyleTest extends LightCodeInsightTestCase{
 
     configureByFile(path + "/before6.java");
     performNormalCompletion();
-    select(Lookup.REPLACE_SELECT_CHAR, 3); //equals(), true & false go first
+    select(Lookup.REPLACE_SELECT_CHAR, 0);
     checkResultByFile(path + "/after6.java");
   }
 

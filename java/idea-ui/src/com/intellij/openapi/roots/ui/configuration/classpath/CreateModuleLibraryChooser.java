@@ -32,6 +32,7 @@ import com.intellij.openapi.roots.ui.configuration.libraryEditor.RootDetectionUt
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.*;
@@ -44,9 +45,7 @@ public class CreateModuleLibraryChooser implements ClasspathElementChooser<Libra
   private final Module myModule;
   private final LibraryTable.ModifiableModel myModuleLibrariesModel;
   private final HashMap<LibraryRootsComponentDescriptor,LibraryType> myLibraryTypes;
-  private LibraryType myLibraryType;
   private final DefaultLibraryRootsComponentDescriptor myDefaultDescriptor;
-  private List<OrderRoot> myChosenRoots;
 
   public CreateModuleLibraryChooser(ClasspathPanel classpathPanel, LibraryTable.ModifiableModel moduleLibraryModel) {
     this(LibraryEditingUtil.getSuitableTypes(classpathPanel), classpathPanel.getComponent(), classpathPanel.getRootModel().getModule(),
@@ -73,32 +72,8 @@ public class CreateModuleLibraryChooser implements ClasspathElementChooser<Libra
     }
   }
 
-  public List<Library> getChosenElements() {
-    if (myChosenRoots == null) {
-      return Collections.emptyList();
-    }
-    final List<OrderRoot> roots = filterAlreadyAdded(myChosenRoots);
-    if (roots.isEmpty()) {
-      return Collections.emptyList();
-    }
-    final List<Library> addedLibraries = new ArrayList<Library>();
-    boolean onlyClasses = true;
-    for (OrderRoot root : roots) {
-      onlyClasses &= root.getType() == OrderRootType.CLASSES;
-    }
-    if (onlyClasses) {
-      for (OrderRoot root : roots) {
-        addedLibraries.add(createLibraryFromRoots(Collections.singletonList(root)));
-      }
-    }
-    else {
-      addedLibraries.add(createLibraryFromRoots(roots));
-    }
-    return addedLibraries;
-  }
-
-  private Library createLibraryFromRoots(List<OrderRoot> roots) {
-    final Library library = ((LibraryTableBase.ModifiableModelEx)myModuleLibrariesModel).createLibrary(null, myLibraryType);
+  private Library createLibraryFromRoots(List<OrderRoot> roots, final LibraryType libraryType) {
+    final Library library = ((LibraryTableBase.ModifiableModelEx)myModuleLibrariesModel).createLibrary(null, libraryType);
     final Library.ModifiableModel libModel = library.getModifiableModel();
     for (OrderRoot root : roots) {
       if (root.isJarDirectory()) {
@@ -136,7 +111,8 @@ public class CreateModuleLibraryChooser implements ClasspathElementChooser<Libra
     return false;
   }
 
-  public void doChoose() {
+  @NotNull
+  public List<Library> chooseElements() {
     final FileChooserDescriptor chooserDescriptor;
     final List<Pair<LibraryRootsComponentDescriptor, FileChooserDescriptor>> descriptors = new ArrayList<Pair<LibraryRootsComponentDescriptor, FileChooserDescriptor>>();
     for (LibraryRootsComponentDescriptor componentDescriptor : myLibraryTypes.keySet()) {
@@ -171,7 +147,7 @@ public class CreateModuleLibraryChooser implements ClasspathElementChooser<Libra
     chooserDescriptor.putUserData(LangDataKeys.MODULE_CONTEXT, myModule);
 
     final VirtualFile[] files = FileChooser.chooseFiles(myParentComponent, chooserDescriptor);
-    if (files.length == 0) return;
+    if (files.length == 0) return Collections.emptyList();
 
     List<LibraryRootsComponentDescriptor> suitableDescriptors = new ArrayList<LibraryRootsComponentDescriptor>();
     for (Pair<LibraryRootsComponentDescriptor, FileChooserDescriptor> pair : descriptors) {
@@ -181,15 +157,36 @@ public class CreateModuleLibraryChooser implements ClasspathElementChooser<Libra
     }
 
     final LibraryRootsComponentDescriptor rootsComponentDescriptor;
+    LibraryType libraryType = null;
     if (suitableDescriptors.size() == 1) {
       rootsComponentDescriptor = suitableDescriptors.get(0);
-      myLibraryType = myLibraryTypes.get(rootsComponentDescriptor);
+      libraryType = myLibraryTypes.get(rootsComponentDescriptor);
     }
     else {
       rootsComponentDescriptor = myDefaultDescriptor;
     }
-    myChosenRoots = RootDetectionUtil
-        .detectRoots(Arrays.asList(files), myParentComponent, myModule.getProject(), rootsComponentDescriptor.getRootDetectors(), true);
+    List<OrderRoot> chosenRoots = RootDetectionUtil.detectRoots(Arrays.asList(files), myParentComponent, myModule.getProject(),
+                                                                rootsComponentDescriptor.getRootDetectors(), true);
+
+    final List<OrderRoot> roots = filterAlreadyAdded(chosenRoots);
+    if (roots.isEmpty()) {
+      return Collections.emptyList();
+    }
+
+    final List<Library> addedLibraries = new ArrayList<Library>();
+    boolean onlyClasses = true;
+    for (OrderRoot root : roots) {
+      onlyClasses &= root.getType() == OrderRootType.CLASSES;
+    }
+    if (onlyClasses) {
+      for (OrderRoot root : roots) {
+        addedLibraries.add(createLibraryFromRoots(Collections.singletonList(root), libraryType));
+      }
+    }
+    else {
+      addedLibraries.add(createLibraryFromRoots(roots, libraryType));
+    }
+    return addedLibraries;
   }
 
   private static boolean acceptAll(FileChooserDescriptor descriptor, VirtualFile[] files) {
@@ -199,14 +196,5 @@ public class CreateModuleLibraryChooser implements ClasspathElementChooser<Libra
       }
     }
     return true;
-  }
-
-  @Override
-  public boolean isOK() {
-    return myChosenRoots != null && !myChosenRoots.isEmpty();
-  }
-
-  @Override
-  public void dispose() {
   }
 }

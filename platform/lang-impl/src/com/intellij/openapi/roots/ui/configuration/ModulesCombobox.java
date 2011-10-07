@@ -21,6 +21,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.ui.SortedComboBoxModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,6 +42,16 @@ public class ModulesCombobox extends ComboBox {
   private ModulesCombobox(final SortedComboBoxModel<Module> model) {
     super(model);
     myModel = model;
+    new ComboboxSpeedSearch(this){
+      protected String getElementText(Object element) {
+        if (element instanceof Module) {
+          return ((Module)element).getName();
+        } else if (element == null) {
+          return "";
+        }
+        return super.getElementText(element);
+      }
+    };
     setRenderer(new ListCellRendererWrapper<Module>(this) {
       @Override
       public void customize(JList list, Module value, int index, boolean selected, boolean hasFocus) {

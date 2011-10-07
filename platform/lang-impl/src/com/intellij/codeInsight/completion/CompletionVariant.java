@@ -147,14 +147,6 @@ public class CompletionVariant {
     addCompletion((Object)keyword, tailType);
   }
 
-  public void addCompletion(KeywordChooser chooser){
-    addCompletion(chooser, DEFAULT_TAIL_TYPE);
-  }
-
-  public void addCompletion(KeywordChooser chooser, TailType tailType){
-    addCompletion((Object)chooser, tailType);
-  }
-
   public void addCompletion(ContextGetter chooser){
     addCompletion(chooser, DEFAULT_TAIL_TYPE);
   }

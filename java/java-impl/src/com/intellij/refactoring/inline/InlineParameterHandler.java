@@ -17,6 +17,7 @@ package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInspection.sameParameterValue.SameParameterValueInspection;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -48,7 +49,9 @@ public class InlineParameterHandler extends JavaInlineActionHandler {
   public static final String REFACTORING_NAME = RefactoringBundle.message("inline.parameter.refactoring");
 
   public boolean canInlineElement(PsiElement element) {
-    return element instanceof PsiParameter && element.getParent() instanceof PsiParameterList;
+    return element instanceof PsiParameter &&
+           element.getParent() instanceof PsiParameterList &&
+           element.getLanguage() == JavaLanguage.INSTANCE;
   }
 
   public void inlineElement(final Project project, final Editor editor, final PsiElement psiElement) {

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<application>
+  <component name="StatisticsApplicationUsages">
+    <group name="module type">
+      <project id="fuckYeah" values="JAVA_MODULE" />
+      <project id="project1" values="JAVA_MODULE" />
+    </group>
+    <group name="file-type">
+      <project id="fuckYeah" values="PLAIN_TEXT,JAVA,IDEA_MODULE,XML,UNKNOWN" />
+      <project id="project1" values="JAVA,UNKNOWN" />
+    </group>
+  </component>
+</application>
+

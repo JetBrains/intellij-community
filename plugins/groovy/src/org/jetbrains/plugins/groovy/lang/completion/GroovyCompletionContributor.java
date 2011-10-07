@@ -65,6 +65,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.refactoring.DefaultGroovyVariableNameValidator;
+import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
 import org.jetbrains.plugins.groovy.refactoring.inline.InlineMethodConflictSolver;
 
 import java.util.List;
@@ -422,7 +424,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
           object = ((GroovyResolveResult)object).getElement();
         }
 
-        if (object instanceof PsiClass && JavaCompletionUtil.isInExcludedPackage((PsiClass)object)) {
+        if (object instanceof PsiMember && JavaCompletionUtil.isInExcludedPackage((PsiMember)object)) {
           return;
         }
 
@@ -575,14 +577,18 @@ public class GroovyCompletionContributor extends CompletionContributor {
     return new JavaGlobalMemberLookupElement(member, containingClass, QUALIFIED_METHOD_INSERT_HANDLER, STATIC_IMPORT_INSERT_HANDLER, shouldImport);
   }
 
-  private static final String DUMMY_IDENTIFIER_DECAPITALIZED = "intelliJIdeaRulezzz ";
+  private static final String DUMMY_IDENTIFIER_DECAPITALIZED = StringUtil.decapitalize(CompletionUtil.DUMMY_IDENTIFIER);
 
   public void beforeCompletion(@NotNull final CompletionInitializationContext context) {
     if (context.getCompletionType() == CompletionType.BASIC && context.getFile() instanceof GroovyFile) {
-      if (semicolonNeeded(context)) {
+      PsiElement position = context.getFile().findElementAt(context.getStartOffset());
+      if (position != null && position.getParent() instanceof GrVariable && position == ((GrVariable)position.getParent()).getNameIdentifierGroovy()) {
+        context.setDummyIdentifier(CompletionUtil.DUMMY_IDENTIFIER_TRIMMED);
+      }
+      else if (semicolonNeeded(context)) {
         context.setDummyIdentifier(setCorrectCase(context) + ";");
       }
-      else if (isInPossibleClosureParameter(context.getFile().findElementAt(context.getStartOffset()))) {
+      else if (isInPossibleClosureParameter(position)) {
         context.setDummyIdentifier(setCorrectCase(context) + "->");
       }
       else {
@@ -693,6 +699,14 @@ public class GroovyCompletionContributor extends CompletionContributor {
             }
           }
           for (String name : names) {
+            result.addElement(LookupElementBuilder.create(name));
+          }
+        }
+
+        GrExpression initializer = variable.getInitializerGroovy();
+        if (initializer != null) {
+          for (String name : GroovyNameSuggestionUtil.suggestVariableNames(initializer, new DefaultGroovyVariableNameValidator(variable),
+                                                                        variable.hasModifierProperty(PsiModifier.STATIC))) {
             result.addElement(LookupElementBuilder.create(name));
           }
         }

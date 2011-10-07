@@ -9,14 +9,12 @@ import org.jboss.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import org.jboss.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.server.GlobalLibrary;
 import org.jetbrains.jpsservice.impl.JpsClientMessageHandler;
 import org.jetbrains.jpsservice.impl.ProtoUtil;
 
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
@@ -91,9 +89,7 @@ public class Client {
 
   @NotNull
   public RequestFuture sendCompileRequest(String projectId, List<String> modules, boolean rebuild, JpsServerResponseHandler handler) throws Exception{
-    if (myState.get() != State.CONNECTED) {
-      throw new Exception("Client not connected");
-    }
+    checkConnected();
     return sendRequest(
       rebuild? ProtoUtil.createRebuildRequest(projectId, modules) : ProtoUtil.createMakeRequest(projectId, modules),
       handler
@@ -102,18 +98,26 @@ public class Client {
 
   @NotNull
   public RequestFuture sendShutdownRequest() throws Exception {
-    if (myState.get() != State.CONNECTED) {
-      throw new Exception("Client not connected");
-    }
+    checkConnected();
     return sendRequest(ProtoUtil.createShutdownRequest(true), null);
   }
 
   @NotNull
-  public RequestFuture sendSetupRequest(final Map<String, String> pathVariables) throws Exception {
+  public RequestFuture sendSetupRequest(final Map<String, String> pathVariables, final List<GlobalLibrary> sdkAndLibs) throws Exception {
+    checkConnected();
+    return sendRequest(ProtoUtil.createSetupRequest(pathVariables, sdkAndLibs), null);
+  }
+
+  @NotNull
+  public RequestFuture sendProjectReloadRequest(Collection<String> projectPaths) throws Exception {
+    checkConnected();
+    return sendRequest(ProtoUtil.createReloadProjectRequest(projectPaths), null);
+  }
+
+  private void checkConnected() throws Exception {
     if (myState.get() != State.CONNECTED) {
       throw new Exception("Client not connected");
     }
-    return sendRequest(ProtoUtil.createSetupRequest(pathVariables), null);
   }
 
   private RequestFuture sendRequest(JpsRemoteProto.Message.Request request, @Nullable JpsServerResponseHandler handler) {

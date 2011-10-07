@@ -54,20 +54,11 @@ class LayoutDeviceManager {
     myParserFactory.setNamespaceAware(true);
   }
 
+  @NotNull
   public List<LayoutDevice> getCombinedList() {
-    return myLayoutDevices;
-  }
-
-  public List<LayoutDevice> getDefaultLayoutDevices() {
-    return myDefaultLayoutDevices;
-  }
-
-  public List<LayoutDevice> getAddOnLayoutDevice() {
-    return myAddOnLayoutDevices;
-  }
-
-  public List<LayoutDevice> getUserLayoutDevices() {
-    return myUserLayoutDevices;
+    return myLayoutDevices != null
+           ? myLayoutDevices
+           : Collections.<LayoutDevice>emptyList();
   }
 
   @Nullable

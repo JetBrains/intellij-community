@@ -16,6 +16,7 @@
 package com.intellij.openapi.roots.ui.configuration.libraries;
 
 import com.google.common.base.Predicate;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -31,12 +32,19 @@ import com.intellij.openapi.roots.libraries.*;
 import com.intellij.openapi.roots.libraries.ui.OrderRoot;
 import com.intellij.openapi.roots.ui.configuration.classpath.ClasspathPanel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
+import com.intellij.openapi.ui.popup.PopupStep;
+import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.ParameterizedRunnable;
 import com.intellij.util.PathUtil;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.*;
 
 /**
@@ -166,5 +174,41 @@ public class LibraryEditingUtil {
 
   public static boolean hasSuitableTypes(ClasspathPanel panel) {
     return getSuitableTypes(panel).size() > 1;
+  }
+
+  public static BaseListPopupStep<LibraryType> createChooseTypeStep(final ClasspathPanel classpathPanel,
+                                                                    final ParameterizedRunnable<LibraryType> action) {
+    return new BaseListPopupStep<LibraryType>(IdeBundle.message("popup.title.select.library.type"), getSuitableTypes(classpathPanel)) {
+          @NotNull
+          @Override
+          public String getTextFor(LibraryType value) {
+            return value != null ? value.getCreateActionName() : IdeBundle.message("create.default.library.type.action.name");
+          }
+
+          @Override
+          public Icon getIconFor(LibraryType aValue) {
+            return aValue != null ? aValue.getIcon() : PlatformIcons.LIBRARY_ICON;
+          }
+
+          @Override
+          public PopupStep onChosen(final LibraryType selectedValue, boolean finalChoice) {
+            return doFinalStep(new Runnable() {
+              @Override
+              public void run() {
+                action.run(selectedValue);
+              }
+            });
+          }
+        };
+  }
+
+  public static List<Module> getSuitableModules(@NotNull ModuleStructureConfigurable rootConfigurable, final @Nullable LibraryType type) {
+    final List<Module> modules = new ArrayList<Module>();
+    for (Module module : rootConfigurable.getModules()) {
+      if (type == null || type.isSuitableModule(module, rootConfigurable.getFacetConfigurator())) {
+        modules.add(module);
+      }
+    }
+    return modules;
   }
 }

@@ -84,8 +84,10 @@ public class GitAdd extends BasicAction {
   protected boolean isEnabled(@NotNull Project project, @NotNull GitVcs vcs, @NotNull VirtualFile... vFiles) {
     for (VirtualFile file : vFiles) {
       FileStatus fileStatus = FileStatusManager.getInstance(project).getStatus(file);
-      if (fileStatus == FileStatus.NOT_CHANGED || fileStatus == FileStatus.DELETED) return false;
+      if (file.isDirectory() || (fileStatus != FileStatus.NOT_CHANGED && fileStatus != FileStatus.DELETED)) {
+        return true;
+      }
     }
-    return true;
+    return false;
   }
 }

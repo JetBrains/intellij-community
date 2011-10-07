@@ -21,6 +21,7 @@ import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import org.jetbrains.plugins.groovy.util.TestUtils
+import com.intellij.codeInsight.completion.StaticallyImportable
 
 /**
  * @author peter
@@ -90,6 +91,25 @@ public class GroovySmartCompletionTest extends GroovyCompletionTestBase {
   public void testEnumMembersInAssignmentInsideEnum() {doSmartCompletion "IN_STOCK", "NOWHERE", "ORDERED", "next", "previous" }
 
   void testNativeList() {doSmartCompletion('a1', 'a2')};
+
+  public void testMembersImportStatically() {
+    myFixture.addClass("""
+class Expected {
+  public static final Expected fooField;
+  public static Expected fooMethod() {}
+}
+""")
+    myFixture.configureByText 'a.groovy', 'Expected exp = fo<caret>'
+    def items = myFixture.complete(CompletionType.SMART)
+    assert myFixture.lookupElementStrings == ['fooField', 'fooMethod']
+    assert items[0].as(StaticallyImportable.CLASS_CONDITION_KEY).canBeImported()
+    assert items[1].as(StaticallyImportable.CLASS_CONDITION_KEY).canBeImported()
+    items[0].as(StaticallyImportable.CLASS_CONDITION_KEY).setShouldBeImported(true)
+    myFixture.type('\n')
+    myFixture.checkResult '''import static Expected.fooField
+
+Expected exp = fooField'''
+  }
 
   def getFileText(PsiFile file) {
     return PsiDocumentManager.getInstance(project).getDocument(file).text

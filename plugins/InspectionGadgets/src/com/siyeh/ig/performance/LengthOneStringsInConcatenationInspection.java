@@ -148,7 +148,7 @@ public class LengthOneStringsInConcatenationInspection
       }
       final String className = methodClass.getQualifiedName();
       return CommonClassNames.JAVA_LANG_STRING_BUFFER.equals(className) ||
-             "java.lang.StringBuilder".equals(className);
+             CommonClassNames.JAVA_LANG_STRING_BUILDER.equals(className);
     }
   }
 }

@@ -699,9 +699,6 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
         return element;
       }
 
-      ASTNode node = element.getNode();
-      assert node != null;
-      //body.getNode().addLeaf(GroovyElementTypes.mNLS, "\n", nextChild.getNode());
       return body.addBefore(element, nextChild);
     }
     else {

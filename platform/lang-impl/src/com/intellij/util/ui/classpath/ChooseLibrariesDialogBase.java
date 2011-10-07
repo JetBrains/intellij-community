@@ -134,6 +134,15 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
     return myResult == null? Collections.<Library>emptyList() : myResult;
   }
 
+  protected void queueUpdateAndSelect(@NotNull final Library library) {
+    myBuilder.queueUpdate().doWhenDone(new Runnable() {
+      @Override
+      public void run() {
+        myBuilder.select(library);
+      }
+    });
+  }
+
   private boolean processSelection(final Processor<Library> processor) {
     for (Object element : myBuilder.getSelectedElements()) {
       if (element instanceof Library) {

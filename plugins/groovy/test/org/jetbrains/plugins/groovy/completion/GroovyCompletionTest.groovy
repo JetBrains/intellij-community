@@ -414,24 +414,7 @@ class A {
     myFixture.checkResult """
 class A {
  public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
- { m(arg111: <caret>, )}
-}
-"""
-  }
-
-  public void testCompletionNamedArgument9() {
-    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, """
-class A {
- public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
- { m(arg1<caret>,   )}
-}
-""")
-    myFixture.completeBasic()
-
-    myFixture.checkResult """
-class A {
- public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
- { m(arg111: <caret>,   )}
+ { m(arg111: <caret>,)}
 }
 """
   }
@@ -468,6 +451,85 @@ class A {
 class A {
  public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
  { m(arg111: <caret>)}
+}
+"""
+  }
+
+  public void testCompletionNamedArgumentWithNewLine1() {
+    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, """
+class A {
+ public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
+ {
+   m(arg<caret>
+     arg222: 222,
+   )
+ }
+}
+""")
+    myFixture.completeBasic()
+    myFixture.type(' ')
+
+    myFixture.checkResult """
+class A {
+ public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
+ {
+   m(arg111: <caret>,
+     arg222: 222,
+   )
+ }
+}
+"""
+  }
+
+  public void testCompletionNamedArgumentWithNewLine2() {
+    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, """
+class A {
+ public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
+ {
+   m(arg<caret>,
+     arg222: 222,
+   )
+ }
+}
+""")
+    myFixture.completeBasic()
+    myFixture.type(':')
+
+    myFixture.checkResult """
+class A {
+ public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
+ {
+   m(arg111: <caret>,
+     arg222: 222,
+   )
+ }
+}
+"""
+  }
+
+  public void testCompletionNamedArgumentWithNewLine4() {
+    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, """
+class A {
+ public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
+ {
+   m(arg<caret>
+     , arg222: 222,
+     arg333: 333,
+   )
+ }
+}
+""")
+    myFixture.completeBasic()
+
+    myFixture.checkResult """
+class A {
+ public int m(arg) { return arg.arg111 + arg.arg222 + arg.arg333; }
+ {
+   m(arg111: <caret>
+     , arg222: 222,
+     arg333: 333,
+   )
+ }
 }
 """
   }
@@ -903,5 +965,25 @@ class X {
 
   public void testPrimitiveCastOverwrite() {
     checkCompletion 'byte v1 = (by<caret>te) 0', '\t', 'byte v1 = (byte<caret>) 0'
+  }
+
+  public void testInitializerMatters() throws Exception {
+    myFixture.configureByText("a.groovy", "class Foo {{ String f<caret>x = getFoo(); }; String getFoo() {}; }");
+    myFixture.completeBasic()
+    assert myFixture.lookupElementStrings == ["foo"]
+  }
+
+  public void testFieldInitializerMatters() throws Exception {
+    myFixture.configureByText("a.groovy", "class Foo { String f<caret>x = getFoo(); String getFoo() {}; }");
+    myFixture.completeBasic()
+    assert myFixture.lookupElementStrings == ["foo"]
+  }
+
+  public void testNoRepeatingModifiers() {
+    myFixture.configureByText 'a.groovy', 'class A { public static <caret> }'
+    myFixture.completeBasic()
+    assert !('public' in myFixture.lookupElementStrings)
+    assert !('static' in myFixture.lookupElementStrings)
+    assert 'final' in myFixture.lookupElementStrings
   }
 }

@@ -235,7 +235,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
         layersFromProviders.add(layerIcon);
       }
     }
-    if (flags != 0 && !layersFromProviders.isEmpty()) {
+    if (flags != 0) {
       List<Icon> iconLayers = new SmartList<Icon>();
       for(IconLayer l: ourIconLayers) {
         if ((flags & l.flagMask) != 0) {

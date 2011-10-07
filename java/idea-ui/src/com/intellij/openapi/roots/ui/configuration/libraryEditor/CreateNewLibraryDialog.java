@@ -35,8 +35,8 @@ import java.util.List;
  */
 public class CreateNewLibraryDialog extends LibraryEditorDialogBase {
   private final StructureConfigurableContext myContext;
-  private NewLibraryEditor myLibraryEditor;
-  private ComboBox myLibraryLevelCombobox;
+  private final NewLibraryEditor myLibraryEditor;
+  private final ComboBox myLibraryLevelCombobox;
 
   public CreateNewLibraryDialog(@NotNull JComponent parent, @NotNull StructureConfigurableContext context, @NotNull NewLibraryEditor libraryEditor,
                                  @NotNull List<LibraryTable> libraryTables, int selectedTable) {
@@ -66,6 +66,7 @@ public class CreateNewLibraryDialog extends LibraryEditorDialogBase {
     return myContext.getModifiableLibraryTable(selectedTable);
   }
 
+  @NotNull
   public Library createLibrary() {
     final LibraryTableBase.ModifiableModelEx modifiableModel = (LibraryTableBase.ModifiableModelEx)getTableModifiableModel();
     final Library library = modifiableModel.createLibrary(myLibraryEditor.getName(), myLibraryEditor.getType());
@@ -81,7 +82,7 @@ public class CreateNewLibraryDialog extends LibraryEditorDialogBase {
 
   @Override
   protected void addNorthComponents(FormBuilder formBuilder) {
-    formBuilder.addLabeledComponent("Level:", myLibraryLevelCombobox);
+    formBuilder.addLabeledComponent("&Level:", myLibraryLevelCombobox);
   }
 
   protected boolean shouldCheckName(String newName) {

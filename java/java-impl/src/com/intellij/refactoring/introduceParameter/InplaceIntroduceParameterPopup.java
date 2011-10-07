@@ -34,6 +34,7 @@ import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.usageView.UsageInfo;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntProcedure;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -151,7 +152,7 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
 
 
   @Override
-  protected void saveSettings(PsiVariable psiVariable) {
+  protected void saveSettings(@NotNull PsiVariable psiVariable) {
     myPanel.saveSettings(JavaRefactoringSettings.getInstance());
   }
 
@@ -245,6 +246,7 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
       buf.append(")");
       setPreviewText(buf.toString());
       final MarkupModel markupModel = DocumentMarkupModel.forDocument(getPreviewEditor().getDocument(), myProject, true);
+     // markupModel.removeAllHighlighters();
       for (TextRange textRange : ranges2Remove) {
         markupModel.addRangeHighlighter(textRange.getStartOffset(), textRange.getEndOffset(), 0, getTestAttributesForRemoval(), HighlighterTargetArea.EXACT_RANGE);
       }

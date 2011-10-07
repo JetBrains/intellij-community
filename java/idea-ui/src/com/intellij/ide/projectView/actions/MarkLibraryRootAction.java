@@ -18,6 +18,7 @@ package com.intellij.ide.projectView.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -73,7 +74,7 @@ public class MarkLibraryRootAction extends AnAction {
   public void update(AnActionEvent e) {
     final Project project = getEventProject(e);
     boolean visible = false;
-    if (project != null) {
+    if (project != null && ModuleManager.getInstance(project).getModules().length > 0) {
       final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
       for (VirtualFile root : getRoots(e)) {
         if (!root.isInLocalFileSystem() && !fileIndex.isInLibraryClasses(root)) {

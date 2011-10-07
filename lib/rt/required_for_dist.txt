@@ -8,4 +8,4 @@ jps-incremental/jps.jar
 jps-incremental/jps-gwt.jar
 jps-incremental/jps-javaee.jar
 jps-incremental/jps-jpa.jar
-jps-incremental/jps-facade.jar
+jps-incremental/util.jar

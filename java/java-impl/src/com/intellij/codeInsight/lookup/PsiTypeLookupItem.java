@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.util.ClassConditionKey;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NonNls;
@@ -36,10 +37,20 @@ import org.jetbrains.annotations.Nullable;
 public class PsiTypeLookupItem extends LookupItem {
   public static final ClassConditionKey<PsiTypeLookupItem> CLASS_CONDITION_KEY = ClassConditionKey.create(PsiTypeLookupItem.class);
   private final boolean myDiamond;
+  private boolean myIndicateAnonymous;
 
   private PsiTypeLookupItem(Object o, @NotNull @NonNls String lookupString, boolean diamond) {
     super(o, lookupString);
     myDiamond = diamond;
+  }
+
+
+  public void setIndicateAnonymous(boolean indicateAnonymous) {
+    myIndicateAnonymous = indicateAnonymous;
+  }
+
+  public boolean isIndicateAnonymous() {
+    return myIndicateAnonymous;
   }
 
   @Override
@@ -51,6 +62,7 @@ public class PsiTypeLookupItem extends LookupItem {
   public void handleInsert(InsertionContext context) {
     context.getDocument().insertString(context.getTailOffset(), calcGenerics());
     DefaultInsertHandler.addImportForItem(context, this);
+    PostprocessReformattingAspect.getInstance(context.getProject()).doPostponedFormatting();
 
     int tail = context.getTailOffset();
     String braces = StringUtil.repeat("[]", getBracketsCount());

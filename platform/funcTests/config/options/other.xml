@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<application>
+  <component name="CodeStyleSchemes">
+    <option name="CURRENT_SCHEME_NAME" value="Default" />
+  </component>
+  <component name="HttpConfigurable">
+    <option name="plainProxyPassword" value="" />
+    <option name="USE_HTTP_PROXY" value="false" />
+    <option name="PROXY_HOST" value="" />
+    <option name="PROXY_PORT" value="80" />
+    <option name="PROXY_AUTHENTICATION" value="false" />
+    <option name="PROXY_LOGIN" value="" />
+    <option name="PROXY_PASSWORD_CRYPT" value="" />
+    <option name="KEEP_PROXY_PASSWORD" value="false" />
+  </component>
+  <component name="PlaybackDebugger" currentScript="$APPLICATION_HOME_DIR$/community/platform/funcTests/project1/module1/scripts/actionSystem/doubleShortcut.ijs" />
+  <component name="PluginManagerConfigurable" proportions="" version="1">
+    <option name="AVAILABLE_SORT_COLUMN" value="0" />
+    <option name="INSTALLED_SORT_COLUMN" value="1" />
+    <option name="CART_SORT_COLUMN" value="0" />
+    <option name="AVAILABLE_SORT_COLUMN_ORDER" value="0" />
+    <option name="INSTALLED_SORT_COLUMN_ORDER" value="0" />
+    <option name="CART_SORT_COLUMN_ORDER" value="0" />
+    <available>
+      <option name="myProportion" />
+    </available>
+    <installed>
+      <option name="myProportion" />
+    </installed>
+  </component>
+  <component name="RecentProjectsManager">
+    <option name="recentPaths">
+      <list>
+        <option value="/private/var/folders/je/jecSiheEGia6HkOTN-H5ME+++TI/-Tmp-/funcTest5978661577273969442" />
+        <option value="/private/var/folders/je/jecSiheEGia6HkOTN-H5ME+++TI/-Tmp-/funcTest1180852921552145010" />
+        <option value="/private/var/folders/je/jecSiheEGia6HkOTN-H5ME+++TI/-Tmp-/funcTest67414453842046566" />
+        <option value="/private/var/folders/je/jecSiheEGia6HkOTN-H5ME+++TI/-Tmp-/funcTest7316837983677541881" />
+        <option value="/private/var/folders/je/jecSiheEGia6HkOTN-H5ME+++TI/-Tmp-/funcTest8555550192106571207" />
+        <option value="/private/var/folders/je/jecSiheEGia6HkOTN-H5ME+++TI/-Tmp-/funcTest3026010706539987737" />
+        <option value="/private/var/folders/je/jecSiheEGia6HkOTN-H5ME+++TI/-Tmp-/funcTest7957144931160804604" />
+        <option value="/private/var/folders/je/jecSiheEGia6HkOTN-H5ME+++TI/-Tmp-/funcTest3471338665989834921" />
+        <option value="/private/var/folders/je/jecSiheEGia6HkOTN-H5ME+++TI/-Tmp-/funcTest4140120846336784355" />
+        <option value="/private/var/folders/je/jecSiheEGia6HkOTN-H5ME+++TI/-Tmp-/funcTest5394088145826673454" />
+        <option value="/private/var/folders/je/jecSiheEGia6HkOTN-H5ME+++TI/-Tmp-/funcTest5564175775579642326" />
+        <option value="/private/var/folders/je/jecSiheEGia6HkOTN-H5ME+++TI/-Tmp-/funcTest597695670721422214" />
+        <option value="/private/var/folders/je/jecSiheEGia6HkOTN-H5ME+++TI/-Tmp-/funcTest2849267827601403235" />
+        <option value="/private/var/folders/je/jecSiheEGia6HkOTN-H5ME+++TI/-Tmp-/funcTest2728255184396644135" />
+        <option value="/private/var/folders/je/jecSiheEGia6HkOTN-H5ME+++TI/-Tmp-/funcTest7420764843842172632" />
+      </list>
+    </option>
+    <option name="openPaths">
+      <list>
+        <option value="/private/var/folders/je/jecSiheEGia6HkOTN-H5ME+++TI/-Tmp-/funcTest5978661577273969442" />
+      </list>
+    </option>
+    <option name="lastPath" value="/private/var/folders/je/jecSiheEGia6HkOTN-H5ME+++TI/-Tmp-/funcTest5978661577273969442" />
+  </component>
+  <component name="Registry">
+    <entry key="ide.firstStartup" value="false" />
+  </component>
+  <component name="TemplateSettings">
+    <defaultShortcut shortcut="TAB" />
+  </component>
+  <component name="TodoConfiguration">
+    <pattern icon="default" useCustomColors="false" case-sensitive="false" pattern="\btodo\b.*">
+      <option name="FOREGROUND" value="ff" />
+      <option name="BACKGROUND" />
+      <option name="FONT_TYPE" value="3" />
+      <option name="EFFECT_COLOR" />
+      <option name="EFFECT_TYPE" value="0" />
+      <option name="ERROR_STRIPE_COLOR" value="ff" />
+    </pattern>
+  </component>
+  <component name="UpdatesConfigurable">
+    <option name="myPluginHosts">
+      <value>
+        <list size="0" />
+      </value>
+    </option>
+    <option name="myKnownUpdateChannels">
+      <value>
+        <list size="4">
+          <item index="0" class="java.lang.String" itemvalue="idea90" />
+          <item index="1" class="java.lang.String" itemvalue="IDEA10EAP" />
+          <item index="2" class="java.lang.String" itemvalue="IDEA10" />
+          <item index="3" class="java.lang.String" itemvalue="IDEA11EAP" />
+        </list>
+      </value>
+    </option>
+    <option name="myIgnoredBuildNumbers">
+      <value>
+        <list size="0" />
+      </value>
+    </option>
+    <option name="CHECK_NEEDED" value="true" />
+    <option name="LAST_TIME_CHECKED" value="1317813221798" />
+    <option name="UPDATE_CHANNEL_TYPE" value="eap" />
+  </component>
+  <component name="XDebuggerSettings">
+    <data-views />
+  </component>
+  <component name="com.intellij.ide.fileTemplates.impl.FileTemplateManagerImpl">
+    <recent_templates>
+      <option name="RECENT_TEMPLATES">
+        <value>
+          <list size="0" />
+        </value>
+      </option>
+    </recent_templates>
+    <default_templates />
+    <internal_templates />
+    <includes_templates />
+    <code_templates />
+    <j2ee_templates />
+  </component>
+  <component name="com.intellij.javaee.ExternalResourceManagerImpl">
+    <ignored-resource url="http://relaxng.org/ns/compatibility/annotations/1.0" />
+    <ignored-resource url="http://www.w3.org/1998/Math/MathML" />
+    <ignored-resource url="http://www.w3.org/2000/svg" />
+    <default-html-doctype>http://www.w3.org/1999/xhtml</default-html-doctype>
+  </component>
+  <component name="com.intellij.openapi.diff.impl.external.DiffManagerImpl">
+    <enableFiles value="false" />
+    <enableFolders value="false" />
+    <filesTool value="" newValue="" />
+    <foldersTool value="" newValue="" />
+  </component>
+</application>
+

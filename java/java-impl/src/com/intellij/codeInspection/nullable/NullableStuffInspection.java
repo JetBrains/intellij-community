@@ -117,15 +117,15 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
           final String notNullSimpleName = StringUtil.getShortName(manager.getDefaultNotNull());
           final PsiIdentifier nameIdentifier = getter == null ? null : getter.getNameIdentifier();
           if (nameIdentifier != null) {
-            if (REPORT_NOT_ANNOTATED_GETTER) {
-              if (!AnnotationUtil.isAnnotated(getter, manager.getAllAnnotations()) &&
-                  !TypeConversionUtil.isPrimitiveAndNotNull(getter.getReturnType())) {
-                holder.registerProblem(nameIdentifier, InspectionsBundle
-                  .message("inspection.nullable.problems.annotated.field.getter.not.annotated", StringUtil.getShortName(anno)),
-                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new AnnotateMethodFix(anno, ArrayUtil.toStringArray(annoToRemove)));
-              }
-            }
             if (PropertyUtils.isSimpleGetter(getter)) {
+              if (REPORT_NOT_ANNOTATED_GETTER) {
+                if (!AnnotationUtil.isAnnotated(getter, manager.getAllAnnotations()) &&
+                    !TypeConversionUtil.isPrimitiveAndNotNull(getter.getReturnType())) {
+                  holder.registerProblem(nameIdentifier, InspectionsBundle
+                    .message("inspection.nullable.problems.annotated.field.getter.not.annotated", StringUtil.getShortName(anno)),
+                                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new AnnotateMethodFix(anno, ArrayUtil.toStringArray(annoToRemove)));
+                }
+              }
               if (annotated.isDeclaredNotNull && manager.isNullable(getter, false)) {
                 holder.registerProblem(nameIdentifier, InspectionsBundle.message(
                   "inspection.nullable.problems.annotated.field.getter.conflict", StringUtil.getShortName(anno), nullableSimpleName),

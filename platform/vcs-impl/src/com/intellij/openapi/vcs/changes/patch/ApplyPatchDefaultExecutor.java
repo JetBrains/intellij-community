@@ -73,7 +73,7 @@ public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor {
                                                                                     public FilePatch convert(FilePatchInProgress o) {
                                                                                       return o.getPatch();
                                                                                     }
-                                                                                  }), localList, null);
+                                                                                  }), localList, null, commitContext);
       appliers.add(patchApplier);
     }
     PatchApplier.executePatchGroup(appliers);
@@ -81,7 +81,7 @@ public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor {
     applyAdditionalInfo(myProject, additionalInfo, commitContext);
   }
 
-  private static void applyAdditionalInfoBefore(final Project project,
+  public static void applyAdditionalInfoBefore(final Project project,
                                          TransparentlyFailedValue<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo,
                                          CommitContext commitContext) {
     applyAdditionalInfoImpl(project, additionalInfo, commitContext, new Consumer<InfoGroup>() {

@@ -44,6 +44,7 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
@@ -54,8 +55,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.containers.ConcurrentHashMap;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.*;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.messages.MessageBusConnection;
@@ -98,6 +98,8 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
   private final MessageBusConnection myConnection;
   private final BatchUpdateListener myHandler;
+
+  private final RootProviderChangeListener myRootProviderChangeListener = new RootProviderChangeListener();
 
   private class BatchSession {
     private int myBatchLevel = 0;
@@ -227,10 +229,6 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
   public void multiCommit(ModifiableModuleModel moduleModel, ModifiableRootModel[] rootModels) {
     ModuleRootManagerImpl.multiCommit(rootModels, moduleModel);
-  }
-
-  public VirtualFilePointerListener getVirtualFilePointerListener() {
-    return null;
   }
 
   @NotNull
@@ -699,18 +697,24 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     return ModuleManager.getInstance(myProject);
   }
 
-  void addRootSetChangedListener(RootProvider.RootSetChangedListener rootSetChangedListener, final RootProvider provider) {
-    RootSetChangedMulticaster multicaster = myRegisteredRootProviderListeners.get(provider);
-    if (multicaster == null) {
-      multicaster = new RootSetChangedMulticaster(provider);
+  void subscribeToRootProvider(OrderEntry owner, final RootProvider provider) {
+    Set<OrderEntry> owners = myRegisteredRootProviders.get(provider);
+    if (owners == null) {
+      owners = new HashSet<OrderEntry>();
+      myRegisteredRootProviders.put(provider, owners);
+      provider.addRootSetChangedListener(myRootProviderChangeListener);
     }
-    multicaster.addListener(rootSetChangedListener);
+    owners.add(owner);
   }
 
-  void removeRootSetChangedListener(RootProvider.RootSetChangedListener rootSetChangedListener, final RootProvider provider) {
-    RootSetChangedMulticaster multicaster = myRegisteredRootProviderListeners.get(provider);
-    if (multicaster != null) {
-      multicaster.removeListener(rootSetChangedListener);
+  void unsubscribeFromRootProvider(OrderEntry owner, final RootProvider provider) {
+    Set<OrderEntry> owners = myRegisteredRootProviders.get(provider);
+    if (owners != null) {
+      owners.remove(owner);
+      if (owners.isEmpty()) {
+        provider.removeRootSetChangedListener(myRootProviderChangeListener);
+        myRegisteredRootProviders.remove(provider);
+      }
     }
   }
 
@@ -932,7 +936,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     }
   }
 
-  private final Map<RootProvider, RootSetChangedMulticaster> myRegisteredRootProviderListeners = new HashMap<RootProvider, RootSetChangedMulticaster>();
+  private final Map<RootProvider, Set<OrderEntry>> myRegisteredRootProviders = new HashMap<RootProvider, Set<OrderEntry>>();
 
   void addJdkTableListener(ProjectJdkTable.Listener jdkTableListener) {
     getJdkTableMultiListener().addListener(jdkTableListener);
@@ -950,36 +954,18 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     myJdkTableMultiListener.removeListener(jdkTableListener);
   }
 
-  private class RootSetChangedMulticaster implements RootProvider.RootSetChangedListener {
-    private final EventDispatcher<RootProvider.RootSetChangedListener> myDispatcher = EventDispatcher.create(RootProvider.RootSetChangedListener.class);
-    private final RootProvider myProvider;
-
-    private RootSetChangedMulticaster(RootProvider provider) {
-      myProvider = provider;
-      provider.addRootSetChangedListener(this);
-      myRegisteredRootProviderListeners.put(myProvider, this);
-    }
-
-    private void addListener(RootProvider.RootSetChangedListener listener) {
-      myDispatcher.addListener(listener);
-    }
-
-    private void removeListener(RootProvider.RootSetChangedListener listener) {
-      myDispatcher.removeListener(listener);
-      if (!myDispatcher.hasListeners()) {
-        myProvider.removeRootSetChangedListener(this);
-        myRegisteredRootProviderListeners.remove(myProvider);
-      }
-    }
+  private class RootProviderChangeListener implements RootProvider.RootSetChangedListener {
+    private boolean myInsideRootsChange;
 
     public void rootSetChanged(final RootProvider wrapper) {
-      LOG.assertTrue(myProvider.equals(wrapper));
-      Runnable runnable = new Runnable() {
-        public void run() {
-          myDispatcher.getMulticaster().rootSetChanged(wrapper);
-        }
-      };
-      mergeRootsChangesDuring(runnable);
+      if (myInsideRootsChange) return;
+      myInsideRootsChange = true;
+      try {
+        makeRootsChange(EmptyRunnable.INSTANCE, false, true);
+      }
+      finally {
+        myInsideRootsChange = false;
+      }
     }
   }
 

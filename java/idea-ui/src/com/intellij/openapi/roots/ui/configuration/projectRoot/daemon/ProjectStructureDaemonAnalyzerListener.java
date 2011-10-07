@@ -27,6 +27,4 @@ public interface ProjectStructureDaemonAnalyzerListener extends EventListener {
   void usagesCollected(@NotNull ProjectStructureElement containingElement);
 
   void problemsChanged(@NotNull ProjectStructureElement element);
-
-  void allProblemsChanged();
 }

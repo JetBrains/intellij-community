@@ -18,10 +18,10 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.List;
 
 /**
 * @author nik
@@ -63,25 +63,23 @@ class ProjectConfigurationProblem extends ConfigurationError {
   }
 
   @Override
-  public void fix(final JComponent contextComponent) {
-    final List<ConfigurationErrorQuickFix> fixes = myDescription.getFixes();
-    if (fixes.size() == 1) {
-      fixes.get(0).performFix();
-    }
-    else {
-      JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<ConfigurationErrorQuickFix>(null, fixes) {
-        @NotNull
-        @Override
-        public String getTextFor(ConfigurationErrorQuickFix value) {
-          return value.getActionName();
-        }
+  public void fix(final JComponent contextComponent, RelativePoint relativePoint) {
+    JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<ConfigurationErrorQuickFix>(null, myDescription.getFixes()) {
+      @NotNull
+      @Override
+      public String getTextFor(ConfigurationErrorQuickFix value) {
+        return value.getActionName();
+      }
 
-        @Override
-        public PopupStep onChosen(ConfigurationErrorQuickFix selectedValue, boolean finalChoice) {
-          selectedValue.performFix();
-          return FINAL_CHOICE;
-        }
-      }).showUnderneathOf(contextComponent);
-    }
+      @Override
+      public PopupStep onChosen(final ConfigurationErrorQuickFix selectedValue, boolean finalChoice) {
+        return doFinalStep(new Runnable() {
+          @Override
+          public void run() {
+            selectedValue.performFix();
+          }
+        });
+      }
+    }).show(relativePoint);
   }
 }

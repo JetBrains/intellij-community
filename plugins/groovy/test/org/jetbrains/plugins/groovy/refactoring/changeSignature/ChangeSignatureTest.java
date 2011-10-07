@@ -240,6 +240,10 @@ public class ChangeSignatureTest extends ChangeSignatureTestCase {
     doTest(new SimpleInfo("newName", 0), new SimpleInfo(1));
   }
 
+  public void testDefaultInitializerInJava() {
+    doTest(new SimpleInfo("p", -1, "", "1", ""));
+  }
+
   private PsiType createType(String typeText) {
     return JavaPsiFacade.getElementFactory(getProject()).createTypeByFQClassName(typeText, GlobalSearchScope.allScope(getProject()));
   }

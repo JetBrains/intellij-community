@@ -474,6 +474,8 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
           !ApplicationManager.getApplication().isUnitTestMode()) {
         CompletionServiceImpl.setCompletionPhase(hasModifiers? new CompletionPhase.InsertedSingleItem(indicator, restorePrefix) : CompletionPhase.NoCompletion);
       }
+    } else if (decision == AutoCompletionDecision.CLOSE_LOOKUP) {
+      LookupManager.getInstance(indicator.getProject()).hideActiveLookup();
     }
   }
 
@@ -617,7 +619,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       public void run() {
         final int idEndOffset = Math.max(caretOffset, indicator.getIdentifierEndOffset());
         indicator.getOffsetMap().addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, idEndOffset);
-        if (idEndOffset != indicator.getSelectionEndOffset() && CompletionUtil.isOverwrite(item, completionChar)) {
+        if (idEndOffset != indicator.getSelectionEndOffset() && completionChar == Lookup.REPLACE_SELECT_CHAR) {
           editor.getDocument().deleteString(indicator.getSelectionEndOffset(), idEndOffset);
         }
 

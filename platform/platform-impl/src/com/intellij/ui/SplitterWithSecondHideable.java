@@ -19,6 +19,7 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.changes.RefreshablePanel;
 import com.intellij.util.OnOffListener;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -45,7 +46,7 @@ public abstract class SplitterWithSecondHideable {
   public SplitterWithSecondHideable(final boolean vertical,
                                     final String separatorText,
                                     final JComponent firstComponent,
-                                    final OnOffListener<Integer> listener) {
+                                    final OnOffListener<Integer> listener, final boolean boldFont) {
     myVertical = vertical;
     myListener = listener;
     myFictivePanel = new JPanel(new BorderLayout());
@@ -178,7 +179,14 @@ public abstract class SplitterWithSecondHideable {
     mySplitter.setFirstComponent(firstComponent);
     mySplitter.setSecondComponent(myFictivePanel);
     mySplitter.setProportion(1.0f);
-    mySuperDivider.setResizeEnabled(false);
+  }
+  
+  public void setText(final String value) {
+    myTitledSeparator.setText(value);
+  }
+
+  public void setEnabledColor(final boolean enabled) {
+    myTitledSeparator.myLabel.setForeground(enabled ? UIUtil.getActiveTextColor() : UIUtil.getInactiveTextColor());
   }
 
   public JComponent getComponent() {

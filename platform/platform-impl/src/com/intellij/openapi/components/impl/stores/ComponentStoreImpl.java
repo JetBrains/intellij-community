@@ -90,12 +90,12 @@ abstract class ComponentStoreImpl implements IComponentStore {
     };
 
     final ApplicationEx applicationEx = ApplicationManagerEx.getApplicationEx();
-    //if (applicationEx.isUnitTestMode()) {
-    //  r.run();
-    //}
-    //else {
+    if (applicationEx.isUnitTestMode()) {
+      r.run();      // Todo
+    }
+    else {
       applicationEx.runReadAction(r);
-    //}
+    }
 
     return componentName[0];
   }

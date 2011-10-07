@@ -165,6 +165,9 @@ public class GrReferenceResolveUtil {
                                                   GroovyPsiElement resolveContext,
                                                   GroovyPsiElement place) {
     final ResolveState state;
+    if (qualifierType instanceof PsiDisjunctionType) {
+      qualifierType = ((PsiDisjunctionType)qualifierType).getLeastUpperBound();
+    }
     if (qualifierType instanceof PsiClassType) {
       PsiClassType.ClassResolveResult qualifierResult = ((PsiClassType)qualifierType).resolveGenerics();
       PsiClass qualifierClass = qualifierResult.getElement();

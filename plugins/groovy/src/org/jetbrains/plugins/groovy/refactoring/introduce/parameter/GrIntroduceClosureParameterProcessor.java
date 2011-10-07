@@ -485,8 +485,10 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
     call.append(newName).append('(');
 
     final GrParameter[] parameters = result.getParameters();
-    for (GrParameter parameter : parameters) {
-      call.append(parameter.getName()).append(", ");
+    for (int i = 0; i < parameters.length; i++) {
+      if (!mySettings.parametersToRemove().contains(i)) {
+        call.append(parameters[i].getName()).append(", ");
+      }
     }
     call.append(myParameterInitializer.getText());
     call.append(")");

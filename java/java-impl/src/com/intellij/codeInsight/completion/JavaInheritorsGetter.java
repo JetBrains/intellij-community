@@ -142,18 +142,18 @@ public class JavaInheritorsGetter extends CompletionProvider<CompletionParameter
         }
       }
     }
-    final LookupItem item = PsiTypeLookupItem.createLookupItem(psiType, parameters.getPosition());
+    final PsiTypeLookupItem item = PsiTypeLookupItem.createLookupItem(psiType, parameters.getPosition());
     JavaCompletionUtil.setShowFQN(item);
 
     if (psiClass.isInterface() || psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
       item.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
-      item.setAttribute(LookupItem.INDICATE_ANONYMOUS, "");
+      item.setIndicateAnonymous(true);
     }
 
     return LookupElementDecorator.withInsertHandler(item, myConstructorInsertHandler);
   }
 
-  private static boolean areInferredTypesApplicable(PsiType[] types, PsiElement originalPosition) {
+  private static boolean areInferredTypesApplicable(@NotNull PsiType[] types, PsiElement originalPosition) {
     final PsiNewExpression newExpression = PsiTreeUtil.getParentOfType(originalPosition, PsiNewExpression.class);
     if (newExpression != null) {
       final PsiMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(originalPosition, PsiMethodCallExpression.class);

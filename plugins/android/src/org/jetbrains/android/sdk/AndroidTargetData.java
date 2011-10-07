@@ -71,14 +71,18 @@ public class AndroidTargetData {
   }
 
   @NotNull
-  public Set<String> getThemes(@NotNull Module module) {
+  public Set<String> getThemes(@NotNull final Module module) {
     if (myThemes == null) {
       myThemes = new HashSet<String>();
       final SystemResourceManager systemResourceManager = new SystemResourceManager(module, new AndroidPlatform(mySdk, myTarget));
-      final List<ResourceElement> styles = systemResourceManager.getValueResources(ResourceType.STYLE.getName());
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         @Override
         public void run() {
+          if (module.isDisposed() || module.getProject().isDisposed()) {
+            return;
+          }
+
+          final List<ResourceElement> styles = systemResourceManager.getValueResources(ResourceType.STYLE.getName());
           for (ResourceElement style : styles) {
             final String styleName = style.getName().getValue();
             if (styleName != null && (styleName.equals("Theme") || styleName.startsWith("Theme."))) {

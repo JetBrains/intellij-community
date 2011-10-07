@@ -245,19 +245,9 @@ abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnume
       if (myRecursively && entry instanceof ModuleOrderEntry) {
         ModuleOrderEntry moduleOrderEntry = (ModuleOrderEntry)entry;
         final Module module = moduleOrderEntry.getModule();
-        if (module != null) {
-          boolean processRecursively = true;
-          for (OrderEnumerationHandler handler : myCustomHandlers) {
-            if (!handler.shouldProcessRecursively(moduleOrderEntry)) {
-              processRecursively = false;
-              break;
-            }
-          }
-
-          if (processRecursively) {
-            processEntries(getRootModel(module), processor, processed, false);
-            continue;
-          }
+        if (module != null && shouldProcessRecursively(moduleOrderEntry)) {
+          processEntries(getRootModel(module), processor, processed, false);
+          continue;
         }
       }
 
@@ -266,6 +256,17 @@ abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnume
         return;
       }
     }
+  }
+
+  private boolean shouldProcessRecursively(ModuleOrderEntry moduleOrderEntry) {
+    boolean processRecursively = true;
+    for (OrderEnumerationHandler handler : myCustomHandlers) {
+      if (!handler.shouldProcessRecursively(moduleOrderEntry)) {
+        processRecursively = false;
+        break;
+      }
+    }
+    return processRecursively;
   }
 
   @Override
@@ -293,7 +294,7 @@ abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnume
           final Module module = ((ModuleSourceOrderEntry)orderEntry).getRootModel().getModule();
           return processor.process(module);
         }
-        else if (!myRecursively && orderEntry instanceof ModuleOrderEntry) {
+        else if (orderEntry instanceof ModuleOrderEntry && (!myRecursively || !shouldProcessRecursively((ModuleOrderEntry)orderEntry))) {
           final Module module = ((ModuleOrderEntry)orderEntry).getModule();
           if (module != null) {
             return processor.process(module);

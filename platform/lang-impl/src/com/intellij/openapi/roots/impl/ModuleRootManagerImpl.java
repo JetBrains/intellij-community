@@ -143,7 +143,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
   @NotNull
   public ModifiableRootModel getModifiableModel(final RootConfigurationAccessor accessor) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    final RootModelImpl model = new RootModelImpl(myRootModel, this, true, accessor, null, myFilePointerManager, myProjectRootManager) {
+    final RootModelImpl model = new RootModelImpl(myRootModel, this, true, accessor, myFilePointerManager, myProjectRootManager) {
       @Override
       public void dispose() {
         super.dispose();

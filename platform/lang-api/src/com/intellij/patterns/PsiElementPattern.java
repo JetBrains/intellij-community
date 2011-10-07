@@ -17,6 +17,7 @@ package com.intellij.patterns;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.meta.PsiMetaData;
@@ -289,6 +290,26 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
       @Override
       public boolean accepts(@NotNull T t, ProcessingContext context) {
         return t instanceof PsiCompiledElement;
+      }
+    });
+  }
+  
+  public Self insideStarting(final ElementPattern<PsiElement> ancestor) {
+    return with(new PatternCondition<PsiElement>("insideStarting") {
+      @Override
+      public boolean accepts(@NotNull PsiElement start, ProcessingContext context) {
+        PsiElement element = getParent(start);
+        TextRange range = start.getTextRange();
+        if (range == null) return false;
+
+        int startOffset = range.getStartOffset();
+        while (element != null && element.getTextRange() != null && element.getTextRange().getStartOffset() == startOffset) {
+          if (ancestor.accepts(element, context)) {
+            return true;
+          }
+          element = getParent(element);
+        }
+        return false;
       }
     });
   }

@@ -97,6 +97,9 @@ public class MoveClassesOrPackagesUtil {
     else if (element instanceof PsiClass) {
       return ((PsiClass)element).getQualifiedName();
     }
+    else if (element instanceof PsiDirectory) {
+      return getStringToSearch(JavaDirectoryService.getInstance().getPackage((PsiDirectory)element));
+    }
     else {
       LOG.error("Unknown element type");
       return null;

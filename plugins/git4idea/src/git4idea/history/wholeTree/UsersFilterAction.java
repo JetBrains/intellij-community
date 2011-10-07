@@ -20,7 +20,6 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -42,7 +41,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
 import java.awt.*;
-import java.awt.event.MouseEvent;
 import java.util.Collections;
 import java.util.List;
 
@@ -189,22 +187,43 @@ public class UsersFilterAction extends BasePopupAction {
         final String newText = myEditorField.getText();
         if (Comparing.equal(newText.trim(), myCurrentText.trim())) return;
         myCurrentText = newText;
-        final String[] pieces = myCurrentText.trim().split(",");
-        if (pieces.length == 0) {
-          myLabel.setText(ALL);
-        } else if (pieces.length == 1) {
-          myLabel.setText(pieces[0].trim());
-        } else {
-          myLabel.setText(pieces[0].trim() + "+");
-        }
+        setText(myCurrentText.trim());
         myPanel.setToolTipText(USER + " " + myCurrentText);
         myUserFilterI.filter(myCurrentText);
       }
     };
   }
 
+  private void setText(final String text) {
+    final String[] pieces = text.split(",");
+    if (pieces.length == 0) {
+      myLabel.setText(ALL);
+    } else if (pieces.length == 1) {
+      myLabel.setText(pieces[0].trim());
+    } else {
+      myLabel.setText(pieces[0].trim() + "+");
+    }
+  }
+
+  public void setSelectedPresets(final String selected, final boolean meSelected) {
+    myCurrentText = selected;
+    if (selected == null) {
+      myLabel.setText(ALL);
+    } else if (meSelected) {
+      myLabel.setText(getMeText(selected));
+      myPanel.setToolTipText(USER + " " + selected);
+    } else {
+      setText(selected);
+      myPanel.setToolTipText(USER + " " + selected);
+    }
+  }
+
   private String getMeText() {
-    return new StringBuilder().append("me ( ").append(myUserFilterI.getMe()).append(" )").toString();
+    return getMeText(myUserFilterI.getMe());
+  }
+  
+  private String getMeText(final String name) {
+    return new StringBuilder().append("me ( ").append(name).append(" )").toString();
   }
 
   @Override

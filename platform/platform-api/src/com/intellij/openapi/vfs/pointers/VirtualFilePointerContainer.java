@@ -65,5 +65,5 @@ public interface VirtualFilePointerContainer {
 
   @NotNull VirtualFilePointerContainer clone(@NotNull Disposable parent);
 
-  @NotNull VirtualFilePointerContainer clone(@NotNull Disposable parent, VirtualFilePointerListener listener);
+  @NotNull VirtualFilePointerContainer clone(@NotNull Disposable parent, @Nullable VirtualFilePointerListener listener);
 }

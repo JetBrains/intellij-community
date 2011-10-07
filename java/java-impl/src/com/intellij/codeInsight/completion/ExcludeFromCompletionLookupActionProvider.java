@@ -22,10 +22,7 @@ import com.intellij.codeInsight.lookup.LookupActionProvider;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMember;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
+import com.intellij.psi.*;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,6 +39,11 @@ public class ExcludeFromCompletionLookupActionProvider implements LookupActionPr
       final PsiMethod method = (PsiMethod)o;
       if (method.hasModifierProperty(PsiModifier.STATIC)) {
         addExcludes(consumer, method, StaticImportMethodFix.getMemberQualifiedName(method));
+      }
+    } else if (o instanceof PsiField) {
+      final PsiField field = (PsiField)o;
+      if (field.hasModifierProperty(PsiModifier.STATIC)) {
+        addExcludes(consumer, field, StaticImportMethodFix.getMemberQualifiedName(field));
       }
     }
   }

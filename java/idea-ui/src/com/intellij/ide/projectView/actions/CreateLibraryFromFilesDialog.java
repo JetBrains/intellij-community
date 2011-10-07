@@ -41,6 +41,7 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -51,10 +52,8 @@ public class CreateLibraryFromFilesDialog extends DialogWrapper {
   private final ModulesCombobox myModulesCombobox;
   private final Project myProject;
   private final List<OrderRoot> myRoots;
-  private JPanel myPanel;
-  private final LibrariesContainer myLibrariesContainer;
+  private final JPanel myPanel;
   private final String myDefaultName;
-  @Nullable private final ModifiableRootModel myModifiableModel;
 
   public CreateLibraryFromFilesDialog(@NotNull Project project, @NotNull List<OrderRoot> roots) {
     super(project, true);
@@ -62,21 +61,12 @@ public class CreateLibraryFromFilesDialog extends DialogWrapper {
     myProject = project;
     myRoots = roots;
     final FormBuilder builder = LibraryNameAndLevelPanel.createFormBuilder();
-    Module module = findModule(roots);
-    if (module != null) {
-      myModifiableModel = ModuleRootManager.getInstance(module).getModifiableModel();
-      myLibrariesContainer = LibrariesContainerFactory.createContainer(myModifiableModel);
-    }
-    else {
-      myModifiableModel = null;
-      myLibrariesContainer = LibrariesContainerFactory.createContainer(project);
-    }
-    myDefaultName = myLibrariesContainer.suggestUniqueLibraryName(LibraryEditingUtil.suggestLibraryName(roots));
-    myNameAndLevelPanel = new LibraryNameAndLevelPanel(builder, myDefaultName, myLibrariesContainer.getAvailableLevels(), LibrariesContainer.LibraryLevel.PROJECT);
+    myDefaultName = LibrariesContainerFactory.createContainer(project).suggestUniqueLibraryName(LibraryEditingUtil.suggestLibraryName(roots));
+    myNameAndLevelPanel = new LibraryNameAndLevelPanel(builder, myDefaultName, Arrays.asList(LibrariesContainer.LibraryLevel.values()), LibrariesContainer.LibraryLevel.PROJECT);
     myNameAndLevelPanel.setDefaultName(myDefaultName);
     myModulesCombobox = new ModulesCombobox();
     myModulesCombobox.fillModules(myProject);
-    myModulesCombobox.setSelectedModule(module);
+    myModulesCombobox.setSelectedModule(findModule(roots));
     builder.addLabeledComponent("&Add to module:", myModulesCombobox);
     myPanel = builder.getPanel();
     myNameAndLevelPanel.getLibraryNameField().selectAll();
@@ -141,35 +131,26 @@ public class CreateLibraryFromFilesDialog extends DialogWrapper {
     final LibrariesContainer.LibraryLevel level = myNameAndLevelPanel.getLibraryLevel();
     AccessToken token = WriteAction.start();
     try {
-      final Library library = myLibrariesContainer.createLibrary(myNameAndLevelPanel.getLibraryName(),
-                                                                 level, myRoots);
-      if (myModifiableModel != null) {
-        if (level == LibrariesContainer.LibraryLevel.MODULE) {
-          myModifiableModel.commit();
-        }
-        else {
-          myModifiableModel.dispose();
-        }
-      }
       final Module module = myModulesCombobox.getSelectedModule();
-      if (module != null && level != LibrariesContainer.LibraryLevel.MODULE) {
-        final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-        model.addLibraryEntry(library);
-        model.commit();
+      final String libraryName = myNameAndLevelPanel.getLibraryName();
+      if (level == LibrariesContainer.LibraryLevel.MODULE) {
+        final ModifiableRootModel modifiableModel = ModuleRootManager.getInstance(module).getModifiableModel();
+        LibrariesContainerFactory.createContainer(modifiableModel).createLibrary(libraryName, level, myRoots);
+        modifiableModel.commit();
+      }
+      else {
+        final Library library = LibrariesContainerFactory.createContainer(myProject).createLibrary(libraryName, level, myRoots);
+        if (module != null) {
+          final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+          model.addLibraryEntry(library);
+          model.commit();
+        }
       }
     }
     finally {
       token.finish();
     }
     super.doOKAction();
-  }
-
-  @Override
-  public void doCancelAction() {
-    if (myModifiableModel != null) {
-      myModifiableModel.dispose();
-    }
-    super.doCancelAction();
   }
 
   @Override

@@ -103,8 +103,7 @@ public class GrParameterInfo implements JavaParameterInfo {
   }
 
   public PsiExpression getValue(PsiCallExpression callExpression) {
-    return JavaPsiFacade.getInstance(callExpression.getProject()).getElementFactory()
-      .createExpressionFromText(myDefaultValue, callExpression);
+    return JavaPsiFacade.getElementFactory(callExpression.getProject()).createExpressionFromText(getDefaultValue(), callExpression);
   }
 
   public boolean isVarargType() {

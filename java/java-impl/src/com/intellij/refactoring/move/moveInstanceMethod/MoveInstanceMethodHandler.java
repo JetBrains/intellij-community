@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.move.moveInstanceMethod;
 
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -79,6 +80,8 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
       message = "Move method is not supported for non-project methods";
     } else if (method.isConstructor()) {
       message = RefactoringBundle.message("move.method.is.not.supported.for.constructors");
+    } else if (method.getLanguage()!= JavaLanguage.INSTANCE) {
+      message = RefactoringBundle.message("move.method.is.not.supported.for.0", method.getLanguage().getDisplayName());
     }
     else {
       final PsiClass containingClass = method.getContainingClass();

@@ -41,6 +41,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.MaybeReturnInstruction;
+import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider;
 
 /**
  * @author ven
@@ -68,17 +69,20 @@ public class MissingReturnInspection extends GroovySuppressableInspectionTool {
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder problemsHolder, boolean onTheFly) {
     return new GroovyPsiElementVisitor(new GroovyElementVisitor() {
       public void visitClosure(GrClosableBlock closure) {
-        check(closure, problemsHolder, false);
         super.visitClosure(closure);
+
+        final PsiType expectedClosureType = GroovyExpectedTypesProvider.getExpectedClosureReturnType(closure);
+        check(closure, problemsHolder, expectedClosureType != null && expectedClosureType != PsiType.VOID);
       }
 
       public void visitMethod(GrMethod method) {
+        super.visitMethod(method);
+
         final GrOpenBlock block = method.getBlock();
         if (block != null) {
           final boolean mustReturnValue = method.getReturnTypeElementGroovy() != null && method.getReturnType() != PsiType.VOID;
           check(block, problemsHolder, mustReturnValue);
         }
-        super.visitMethod(method);
       }
     });
 

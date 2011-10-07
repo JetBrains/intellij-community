@@ -35,6 +35,8 @@ public interface DiffTool {
    */
   @NonNls Object HINT_SHOW_NOT_MODAL_DIALOG = "showNotModalDialog";
 
+  @NonNls Object HINT_DIFF_IS_APPROXIMATE = "warnThatDiffIsApproximate";
+
   /**
    * @see DiffManager#getIdeaDiffTool()
    */

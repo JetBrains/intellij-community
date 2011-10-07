@@ -68,6 +68,10 @@ public class CopyFilesOrDirectoriesHandler implements CopyHandlerDelegate {
       if (defaultTargetDirectory == null) return;
     }
 
+    copyAsFiles(elements, defaultTargetDirectory, project);
+  }
+
+  public static void copyAsFiles(PsiElement[] elements, PsiDirectory defaultTargetDirectory, Project project) {
     CopyFilesOrDirectoriesDialog dialog = new CopyFilesOrDirectoriesDialog(elements, defaultTargetDirectory, project, false);
     dialog.show();
     if (dialog.isOK()) {

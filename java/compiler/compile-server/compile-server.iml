@@ -9,7 +9,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" exported="" name="protobuf" level="project" />
     <orderEntry type="library" name="Netty" level="project" />
-    <orderEntry type="library" name="JPS-facade" level="project" />
+    <orderEntry type="library" exported="" name="JPS-facade" level="project" />
     <orderEntry type="module" module-name="util" />
     <orderEntry type="module" module-name="annotations" />
   </component>

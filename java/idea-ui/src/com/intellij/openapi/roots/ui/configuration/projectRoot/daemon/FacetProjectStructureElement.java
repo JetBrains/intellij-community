@@ -44,11 +44,6 @@ public class FacetProjectStructureElement extends ProjectStructureElement {
   }
 
   @Override
-  public boolean highlightIfUnused() {
-    return false;
-  }
-
-  @Override
   public String getPresentableName() {
     return "Facet '" + myFacet.getName() + "' in module '" + myFacet.getModule().getName() + "'";
   }

@@ -39,6 +39,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.patch.ApplyPatchDefaultExecutor;
 import com.intellij.openapi.vcs.changes.patch.PatchFileType;
 import com.intellij.openapi.vcs.changes.patch.PatchNameChecker;
 import com.intellij.openapi.vcs.changes.ui.RollbackWorker;
@@ -46,7 +47,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.continuation.*;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Topic;
@@ -200,7 +200,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
   private void baseRevisionsOfDvcsIntoContext(List<Change> textChanges, CommitContext commitContext) {
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
     if (vcsManager.dvcsUsedInProject() && VcsConfiguration.getInstance(myProject).INCLUDE_TEXT_INTO_SHELF) {
-      final Set<Change> big = SelectFilesToAddTextsToPatchDialog.getBig(textChanges);
+      final Set<Change> big = SelectFilesToAddTextsToPatchPanel.getBig(textChanges);
       final ArrayList<FilePath> toKeep = new ArrayList<FilePath>();
       for (Change change : textChanges) {
         if (change.getBeforeRevision() == null || change.getAfterRevision() == null) continue;
@@ -225,7 +225,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
               UnifiedDiffWriter.write(myProject, patches, writer, "\n", patchTransitExtensions, commitContext);
             }
           },
-          patchPath, null);
+          patchPath, new CommitContext());
 
       final ShelvedChangeList changeList = new ShelvedChangeList(patchPath.toString(), fileName.replace('\n', ' '), new SmartList<ShelvedBinaryFile>());
       myShelvedChangeLists.add(changeList);
@@ -254,7 +254,8 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     return result;
   }
 
-  public List<ShelvedChangeList> importChangeLists(final Collection<VirtualFile> files, final Consumer<VcsException> exceptionConsumer) {
+  public List<ShelvedChangeList> importChangeLists(final Collection<VirtualFile> files,
+                                                   final Consumer<VcsException> exceptionConsumer) {
     final List<ShelvedChangeList> result = new ArrayList<ShelvedChangeList>(files.size());
     try {
       final FilesProgress filesProgress = new FilesProgress(files.size(), "Processing ");
@@ -265,7 +266,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
         final ShelvedChangeList list = new ShelvedChangeList(patchPath.getPath(), description, new SmartList<ShelvedBinaryFile>(),
                                                              file.getTimeStamp());
         try {
-          final List<TextFilePatch> patchesList = loadPatches(file.getPath());
+          final List<TextFilePatch> patchesList = loadPatches(myProject, file.getPath(), new CommitContext());
           if (! patchesList.isEmpty()) {
             FileUtil.copy(new File(file.getPath()), patchPath);
             // add only if ok to read patch
@@ -357,9 +358,10 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
       public void run(ContinuationContext context) {
         final List<FilePatch> remainingPatches = new ArrayList<FilePatch>();
 
+        final CommitContext commitContext = new CommitContext();
         final List<TextFilePatch> textFilePatches;
         try {
-          textFilePatches = loadTextPatches(changeList, changes, remainingPatches);
+          textFilePatches = loadTextPatches(myProject, changeList, changes, remainingPatches, commitContext);
         }
         catch (IOException e) {
           LOG.info(e);
@@ -383,7 +385,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
 
         final BinaryPatchApplier binaryPatchApplier = new BinaryPatchApplier(binaryFilesToUnshelve.size());
         final PatchApplier<ShelvedBinaryFilePatch> patchApplier = new PatchApplier<ShelvedBinaryFilePatch>(myProject, myProject.getBaseDir(),
-            patches, targetChangeList, binaryPatchApplier);
+            patches, targetChangeList, binaryPatchApplier, commitContext);
 
         // after patch applier part
         context.next(new TaskDescriptor("", Where.AWT) {
@@ -395,7 +397,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
               recycleChangeList(changeList);
             }
             else {
-              saveRemainingPatches(changeList, remainingPatches, remainingBinaries);
+              saveRemainingPatches(changeList, remainingPatches, remainingBinaries, commitContext);
             }
           }
         });
@@ -405,10 +407,10 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     });
   }
 
-  private static List<TextFilePatch> loadTextPatches(final ShelvedChangeList changeList, final List<ShelvedChange> changes, final List<FilePatch> remainingPatches)
+  private static List<TextFilePatch> loadTextPatches(final Project project, final ShelvedChangeList changeList, final List<ShelvedChange> changes, final List<FilePatch> remainingPatches, final CommitContext commitContext)
       throws IOException, PatchSyntaxException {
     final List<TextFilePatch> textFilePatches;
-    textFilePatches = loadPatches(changeList.PATH);
+    textFilePatches = loadPatches(project, changeList.PATH, commitContext);
 
     if (changes != null) {
       final Iterator<TextFilePatch> iterator = textFilePatches.iterator();
@@ -522,7 +524,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
   }
 
   void saveRemainingPatches(final ShelvedChangeList changeList, final List<FilePatch> remainingPatches,
-                                    final List<ShelvedBinaryFile> remainingBinaries) {
+                            final List<ShelvedBinaryFile> remainingBinaries, CommitContext commitContext) {
     final File newPath = getPatchPath(changeList.DESCRIPTION);
     try {
       FileUtil.copy(new File(changeList.PATH), newPath);
@@ -535,7 +537,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
                                                              new ArrayList<ShelvedBinaryFile>(changeList.getBinaryFiles()));
     listCopy.DATE = (changeList.DATE == null) ? null : new Date(changeList.DATE.getTime());
 
-    writePatchesToFile(myProject, changeList.PATH, remainingPatches, null);
+    writePatchesToFile(myProject, changeList.PATH, remainingPatches, commitContext);
 
     changeList.getBinaryFiles().retainAll(remainingBinaries);
     changeList.clearLoadedChanges();
@@ -574,9 +576,9 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
           }
         }
       }
-      for (Iterator<ShelvedChange> iterator = listCopy.getChanges().iterator(); iterator.hasNext();) {
+      for (Iterator<ShelvedChange> iterator = listCopy.getChanges(myProject).iterator(); iterator.hasNext();) {
         final ShelvedChange change = iterator.next();
-        for (ShelvedChange newChange : newList.getChanges()) {
+        for (ShelvedChange newChange : newList.getChanges(myProject)) {
           if (Comparing.equal(change.getBeforePath(), newChange.getBeforePath()) &&
               Comparing.equal(change.getAfterPath(), newChange.getAfterPath())) {
             iterator.remove();
@@ -586,11 +588,12 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
 
       // needed only if partial unshelve
       try {
+        final CommitContext commitContext = new CommitContext();
         final List<FilePatch> patches = new ArrayList<FilePatch>();
-        for (ShelvedChange change : listCopy.getChanges()) {
-          patches.add(change.loadFilePatch());
+        for (ShelvedChange change : listCopy.getChanges(myProject)) {
+          patches.add(change.loadFilePatch(myProject, commitContext));
         }
-        writePatchesToFile(myProject, listCopy.PATH, patches, null);
+        writePatchesToFile(myProject, listCopy.PATH, patches, commitContext);
       }
       catch (IOException e) {
         LOG.info(e);
@@ -602,7 +605,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
       }
     }
 
-    if ((! listCopy.getBinaryFiles().isEmpty()) || (! listCopy.getChanges().isEmpty())) {
+    if ((! listCopy.getBinaryFiles().isEmpty()) || (! listCopy.getChanges(myProject).isEmpty())) {
       listCopy.setRecycled(true);
       myRecycledShelvedChangeLists.add(listCopy);
       notifyStateChanged();
@@ -643,10 +646,15 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     notifyStateChanged();
   }
 
-  public static List<TextFilePatch> loadPatches(final String patchPath) throws IOException, PatchSyntaxException {
+  // todo problem: control usage
+  public static List<TextFilePatch> loadPatches(Project project, final String patchPath, CommitContext commitContext) throws IOException, PatchSyntaxException {
     char[] text = FileUtil.loadFileText(new File(patchPath));
     PatchReader reader = new PatchReader(new CharArrayCharSequence(text));
-    return reader.readAllPatches();
+    final List<TextFilePatch> textFilePatches = reader.readAllPatches();
+    final TransparentlyFailedValue<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo = reader.getAdditionalInfo(
+      null);
+    ApplyPatchDefaultExecutor.applyAdditionalInfoBefore(project, additionalInfo, commitContext);
+    return textFilePatches;
   }
 
   public static class ShelvedBinaryFilePatch extends FilePatch {

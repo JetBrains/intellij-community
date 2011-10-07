@@ -19,6 +19,7 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -91,7 +92,7 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
   }
 
   @Override
-  protected void saveSettings(PsiVariable psiVariable) {
+  protected void saveSettings(@NotNull PsiVariable psiVariable) {
     TypeSelectorManagerImpl.typeSelected(psiVariable.getType(), getType());//myDefaultType.getType());
   }
 

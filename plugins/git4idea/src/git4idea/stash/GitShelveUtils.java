@@ -74,7 +74,7 @@ public class GitShelveUtils {
           LOG.info("doSystemUnshelve ");
           // The changes are temporary copied to the first local change list, the next operation will restore them back
           // Refresh files that might be affected by unshelve
-          refreshFilesBeforeUnshelve(shelvedChangeList, projectPath);
+          refreshFilesBeforeUnshelve(project, shelvedChangeList, projectPath);
 
           LOG.info("doSystemUnshelve files refreshed. unshelving in AWT thread.");
         }
@@ -86,7 +86,7 @@ public class GitShelveUtils {
 
           LOG.info("Unshelving in UI thread. shelvedChangeList: " + shelvedChangeList);
           // we pass null as target change list for Patch Applier to do NOTHING with change lists
-          shelveManager.scheduleUnshelveChangeList(shelvedChangeList, shelvedChangeList.getChanges(),
+          shelveManager.scheduleUnshelveChangeList(shelvedChangeList, shelvedChangeList.getChanges(project),
                                                    shelvedChangeList.getBinaryFiles(), null, false, context);
         }
       }, new TaskDescriptor("", Where.AWT) {
@@ -102,7 +102,7 @@ public class GitShelveUtils {
                                            ShelvedChangeList shelvedChangeList,
                                            String projectPath, ContinuationContext context) {
     Collection<FilePath> paths = new ArrayList<FilePath>();
-    for (ShelvedChange c : shelvedChangeList.getChanges()) {
+    for (ShelvedChange c : shelvedChangeList.getChanges(project)) {
       if (c.getBeforePath() == null || !c.getBeforePath().equals(c.getAfterPath()) || c.getFileStatus() == FileStatus.ADDED) {
         paths.add(VcsUtil.getFilePath(projectPath + c.getAfterPath()));
       }
@@ -128,9 +128,9 @@ public class GitShelveUtils {
     }
   }
 
-  public static void refreshFilesBeforeUnshelve(ShelvedChangeList shelvedChangeList, String projectPath) {
+  public static void refreshFilesBeforeUnshelve(final Project project, ShelvedChangeList shelvedChangeList, String projectPath) {
     HashSet<File> filesToRefresh = new HashSet<File>();
-    for (ShelvedChange c : shelvedChangeList.getChanges()) {
+    for (ShelvedChange c : shelvedChangeList.getChanges(project)) {
       if (c.getBeforePath() != null) {
         filesToRefresh.add(new File(projectPath + c.getBeforePath()));
       }

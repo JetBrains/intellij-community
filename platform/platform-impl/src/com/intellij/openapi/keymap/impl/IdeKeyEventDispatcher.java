@@ -368,10 +368,13 @@ public final class IdeKeyEventDispatcher implements Disposable {
     if (myLeftCtrlPressed && myRightAltPressed && focusOwner != null && e.getModifiers() == (InputEvent.CTRL_MASK | InputEvent.ALT_MASK)) {
       final InputContext inputContext = focusOwner.getInputContext();
       if (inputContext != null) {
-        @NonNls final String language = inputContext.getLocale().getLanguage();
-        if (ALT_GR_LAYOUTS.contains(language)) {
-          // don't search for shortcuts
-          return false;
+        Locale locale = inputContext.getLocale();
+        if (locale != null) {
+          @NonNls final String language = locale.getLanguage();
+          if (ALT_GR_LAYOUTS.contains(language)) {
+            // don't search for shortcuts
+            return false;
+          }
         }
       }
     }
@@ -523,10 +526,15 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
     public void performAction(final InputEvent e, final AnAction action, final AnActionEvent actionEvent) {
       e.consume();
-      if (Registry.is("actionSystem.fixLostTyping")) {
-        IdeEventQueue.getInstance().getKeyEventDispatcher().resetState();
-      }
       action.actionPerformed(actionEvent);
+      if (Registry.is("actionSystem.fixLostTyping")) {
+        IdeEventQueue.getInstance().doWhenReady(new Runnable() {
+          @Override
+          public void run() {
+            IdeEventQueue.getInstance().getKeyEventDispatcher().resetState();
+          }
+        });
+      }
     }
   };
 

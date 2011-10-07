@@ -18,7 +18,9 @@ package com.intellij.openapi.roots.ui.configuration.classpath;
 import com.google.common.base.Predicate;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryPresentationManager;
@@ -27,18 +29,24 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigur
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.classpath.ChooseLibrariesFromTablesDialog;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author nik
  */
 public class ProjectStructureChooseLibrariesDialog extends ChooseLibrariesFromTablesDialog {
   private final ClasspathPanel myClasspathPanel;
-  private StructureConfigurableContext myContext;
-  private Predicate<Library> myAcceptedLibraries;
+  private final StructureConfigurableContext myContext;
+  private final Predicate<Library> myAcceptedLibraries;
+  private final List<Library> myCreatedModuleLibraries = new ArrayList<Library>();
   private JButton myCreateLibraryButton;
 
   public ProjectStructureChooseLibrariesDialog(ClasspathPanel classpathPanel,
@@ -52,16 +60,48 @@ public class ProjectStructureChooseLibrariesDialog extends ChooseLibrariesFromTa
     init();
   }
 
+  @Override
+  protected void doOKAction() {
+    super.doOKAction();
+    removeCreatedModuleLibraries(getSelectedLibraries());
+  }
+
+  @Override
+  public void doCancelAction() {
+    super.doCancelAction();
+    removeCreatedModuleLibraries(Collections.<Library>emptyList());
+  }
+
+  private void removeCreatedModuleLibraries(Collection<Library> selected) {
+    for (Library library : myCreatedModuleLibraries) {
+      if (!selected.contains(library)) {
+        myClasspathPanel.getRootModel().getModuleLibraryTable().removeLibrary(library);
+      }
+    }
+  }
+
+  @Override
+  protected void collectChildren(Object element, List<Object> result) {
+    if (element instanceof Application && !myCreatedModuleLibraries.isEmpty()) {
+      result.add(myClasspathPanel.getRootModel().getModuleLibraryTable());
+    }
+    super.collectChildren(element, result);
+  }
+
   @NotNull
   @Override
   protected Library[] getLibraries(@NotNull LibraryTable table) {
+    if (table.getTableLevel().equals(LibraryTableImplUtil.MODULE_LEVEL)) {
+      return myCreatedModuleLibraries.toArray(new Library[myCreatedModuleLibraries.size()]);
+    }
     final LibrariesModifiableModel model = getLibrariesModifiableModel(table);
     if (model == null) return Library.EMPTY_ARRAY;
     return model.getLibraries();
   }
 
+  @Nullable
   private LibrariesModifiableModel getLibrariesModifiableModel(LibraryTable table) {
-    return myContext.myLevel2Providers.get(table.getTableLevel());
+    return table != null ? myContext.myLevel2Providers.get(table.getTableLevel()) : null;
   }
 
   @Override
@@ -129,7 +169,16 @@ public class ProjectStructureChooseLibrariesDialog extends ChooseLibrariesFromTa
 
     @Override
     protected void doAction(ActionEvent e) {
-      AddNewLibraryItemAction.chooseTypeAndExecute(myClasspathPanel, myContext, ProjectStructureChooseLibrariesDialog.this, myCreateLibraryButton);
+      AddNewLibraryDependencyAction.chooseTypeAndCreate(myClasspathPanel, myContext, myCreateLibraryButton,
+                                                        new AddNewLibraryDependencyAction.LibraryCreatedCallback() {
+                                                          @Override
+                                                          public void libraryCreated(@NotNull Library library) {
+                                                            if (library.getTable() == null) {
+                                                              myCreatedModuleLibraries.add(library);
+                                                            }
+                                                            queueUpdateAndSelect(library);
+                                                          }
+                                                        });
     }
   }
 }

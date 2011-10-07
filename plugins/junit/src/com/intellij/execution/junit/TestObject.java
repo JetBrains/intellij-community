@@ -215,7 +215,7 @@ public abstract class TestObject implements JavaCommandLine {
     for (final Object listener : listeners) {
       boolean enabled = true;
       for (RunConfigurationExtension ext : Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
-        if (ext.isListenerDisabled(myConfiguration, listener)) {
+        if (ext.isListenerDisabled(myConfiguration, listener, myRunnerSettings)) {
           enabled = false;
           break;
         }

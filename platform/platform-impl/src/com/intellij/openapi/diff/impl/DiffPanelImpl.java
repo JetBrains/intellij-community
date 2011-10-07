@@ -101,6 +101,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
   private final Project myProject;
   private final boolean myIsHorisontal;
   private CanNotCalculateDiffPanel myNotCalculateDiffPanel;
+  private DiffIsApproximate myDiffIsApproximate;
 
   public DiffPanelImpl(final Window owner, Project project, boolean enableToolbar, boolean horisontal) {
     myProject = project;
@@ -256,6 +257,13 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     setLineBlocks(LineBlocks.EMPTY);
     myNotCalculateDiffPanel = new CanNotCalculateDiffPanel();
     myPanel.insertTopComponent(myNotCalculateDiffPanel);
+  }
+
+  public void setPatchAppliedApproximately() {
+    if (myNotCalculateDiffPanel == null) {
+      myDiffIsApproximate = new DiffIsApproximate();
+      myPanel.insertTopComponent(myDiffIsApproximate);
+    }
   }
 
   public void setTitle1(String title) {
@@ -694,6 +702,12 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
   public static class CanNotCalculateDiffPanel extends EditorNotificationPanel {
     public CanNotCalculateDiffPanel() {
       myLabel.setText("Can not calculate diff. File is too big and there are too many changes.");
+    }
+  }
+
+  public static class DiffIsApproximate extends EditorNotificationPanel {
+    public DiffIsApproximate() {
+      myLabel.setText("<html>Coulnd't find context for patch. Some fragments were applied at the best possible place. <b>Please check carefully.</b></html>");
     }
   }
 }

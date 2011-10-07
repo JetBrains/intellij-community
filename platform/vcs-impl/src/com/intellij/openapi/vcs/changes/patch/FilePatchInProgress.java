@@ -21,6 +21,7 @@ import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.diff.impl.patch.formove.PathMerger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
@@ -220,14 +221,15 @@ public class FilePatchInProgress implements Strippable {
     }
 
     @Nullable
-    public DiffRequestPresentable createDiffRequestPresentable(final Project project) {
+    public DiffRequestPresentable createDiffRequestPresentable(final Project project, final Getter<CharSequence> baseContents) {
       return new DiffRequestPresentableProxy() {
         @NotNull
         @Override
         protected DiffRequestPresentable init() throws VcsException {
           if (myPatchInProgress.isConflictingChange()) {
             final ApplyPatchForBaseRevisionTexts texts = ApplyPatchForBaseRevisionTexts
-              .create(project, myPatchInProgress.getCurrentBase(), new FilePathImpl(myPatchInProgress.getCurrentBase()), myPatchInProgress.getPatch());
+              .create(project, myPatchInProgress.getCurrentBase(),
+                      new FilePathImpl(myPatchInProgress.getCurrentBase()), myPatchInProgress.getPatch(), baseContents);
             return new MergedDiffRequestPresentable(project, texts,
                                                     myPatchInProgress.getCurrentBase(), myPatchInProgress.getPatch().getAfterVersionId());
           } else {

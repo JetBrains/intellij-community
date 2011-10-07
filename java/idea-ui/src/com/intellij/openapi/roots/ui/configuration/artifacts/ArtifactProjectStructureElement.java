@@ -129,11 +129,6 @@ public class ArtifactProjectStructureElement extends ProjectStructureElement {
   }
 
   @Override
-  public boolean highlightIfUnused() {
-    return false;
-  }
-
-  @Override
   public String getPresentableName() {
     return "Artifact '" + getActualArtifactName() + "'";
   }

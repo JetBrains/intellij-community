@@ -114,7 +114,7 @@ public class GroovyCompletionUtil {
   }
 
   /**
-   * Shows wether keyword may be placed asas a new statement beginning
+   * Shows whether keyword may be placed as a new statement beginning
    *
    * @param element
    * @param canBeAfterBrace May be after '{' symbol or not

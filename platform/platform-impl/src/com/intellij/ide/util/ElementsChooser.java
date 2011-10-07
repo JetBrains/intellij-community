@@ -309,6 +309,7 @@ public class ElementsChooser<T> extends JPanel implements ComponentWithEmptyText
     return myTable.getSelectedRow();
   }
 
+  @NotNull
   public List<T> getSelectedElements() {
     final List<T> elements = new ArrayList<T>();
     final int[] selectedRows = myTable.getSelectedRows();

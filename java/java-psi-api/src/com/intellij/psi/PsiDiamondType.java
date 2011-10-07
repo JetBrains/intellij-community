@@ -16,6 +16,7 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +30,7 @@ public abstract class PsiDiamondType extends PsiType {
 
   public static class DiamondInferenceResult {
     public static final DiamondInferenceResult EXPLICIT_CONSTRUCTOR_TYPE_ARGS = new DiamondInferenceResult() {
+      @NotNull
       @Override
       public PsiType[] getTypes() {
         return PsiType.EMPTY_ARRAY;
@@ -41,6 +43,7 @@ public abstract class PsiDiamondType extends PsiType {
     };
 
     public static final DiamondInferenceResult NULL_RESULT = new DiamondInferenceResult() {
+      @NotNull
       @Override
       public PsiType[] getTypes() {
         return PsiType.EMPTY_ARRAY;
@@ -53,6 +56,7 @@ public abstract class PsiDiamondType extends PsiType {
     };
 
     public static final DiamondInferenceResult ANONYMOUS_INNER_RESULT = new DiamondInferenceResult() {
+      @NotNull
       @Override
       public PsiType[] getTypes() {
         return PsiType.EMPTY_ARRAY;
@@ -78,6 +82,7 @@ public abstract class PsiDiamondType extends PsiType {
       myProject = project;
     }
 
+    @NotNull
     public PsiType[] getTypes() {
       if (myErrorMessage != null) {
         return PsiType.EMPTY_ARRAY;

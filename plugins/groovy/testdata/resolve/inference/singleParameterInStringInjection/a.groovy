@@ -1,0 +1,1 @@
+[2, 3, 4].collect {"${builder -> bui<ref>lder.append(it)}"}

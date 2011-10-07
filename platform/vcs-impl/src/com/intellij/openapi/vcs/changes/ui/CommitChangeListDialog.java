@@ -927,7 +927,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
                                                           setSize(dialogSize.width, dialogSize.height - integer);
                                                           repaint();
                                                         }
-                                                      }) {
+                                                      }, true) {
       @Override
       protected RefreshablePanel createDetails() {
         initDetails();
