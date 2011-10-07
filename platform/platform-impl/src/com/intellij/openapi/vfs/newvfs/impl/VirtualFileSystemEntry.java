@@ -422,14 +422,13 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   @Override
-  public boolean isFile() {
-    final NewVirtualFileSystem fs = getFileSystem();
-    return !(fs instanceof LocalFileSystem) || ((LocalFileSystem)fs).isFile(this);
+  public boolean isSymLink() {
+    return ourPersistence.isSymLink(this);
   }
 
   @Override
-  public boolean isSymLink() {
-    return ourPersistence.isSymLink(this);
+  public boolean isSpecialFile() {
+    return ourPersistence.isSpecialFile(this);
   }
 
   @Override

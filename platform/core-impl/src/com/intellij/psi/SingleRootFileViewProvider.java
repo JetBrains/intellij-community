@@ -238,7 +238,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
 
   @Nullable
   protected PsiFile createFile(final Project project, final VirtualFile vFile, final FileType fileType) {
-    if (fileType.isBinary() || !vFile.isFile()) {
+    if (fileType.isBinary() || vFile.isSpecialFile()) {
       return new PsiBinaryFileImpl((PsiManagerImpl)getManager(), this);
     }
 

@@ -196,16 +196,6 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   public abstract boolean isWritable();
 
   /**
-   * Checks whether this file is a regular file.
-   *
-   * @since 11.0
-   * @return <code>true</code> if this file exists and is a regular file, <code>false</code> otherwise
-   */
-  public boolean isFile() {
-    return exists() && !isDirectory();
-  }
-
-  /**
    * Checks whether this file is a directory.
    *
    * @return <code>true</code> if this file is a directory, <code>false</code> otherwise
@@ -219,6 +209,16 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @return <code>true</code> if this file is a symbolic link, <code>false</code> otherwise
    */
   public boolean isSymLink() {
+    return false;
+  }
+
+  /**
+   * Checks whether this file is a special (e.g. FIFO or device) file.
+   *
+   * @since 11.0
+   * @return <code>true</code> if the file exists and is a special one, <code>false</code> otherwise
+   */
+  public boolean isSpecialFile() {
     return false;
   }
 
@@ -287,7 +287,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
 
   /**
    * @return the {@link FileType} of this file.
-   *         When IDEA has no idea what the file type is (i.e. file type is not registered via {@link FileTypeManager}),
+   *         When IDEA has no idea what the file type is (i.e. file type is not registered via {@link FileTypeRegistry}),
    *         it returns {@link com.intellij.openapi.fileTypes.FileTypes#UNKNOWN}
    */
   @NotNull

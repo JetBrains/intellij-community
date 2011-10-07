@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,8 +60,10 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
   private static final int IS_READ_ONLY = 0x04;
   private static final int MUST_RELOAD_CONTENT = 0x08;
   private static final int IS_SYMLINK = 0x10;
+  private static final int IS_SPECIAL = 0x20;
 
-  static final int ALL_VALID_FLAGS = CHILDREN_CACHED_FLAG | IS_DIRECTORY_FLAG | IS_READ_ONLY | MUST_RELOAD_CONTENT | IS_SYMLINK;
+  static final int ALL_VALID_FLAGS =
+    CHILDREN_CACHED_FLAG | IS_DIRECTORY_FLAG | IS_READ_ONLY | MUST_RELOAD_CONTENT | IS_SYMLINK | IS_SPECIAL;
 
   private final MessageBus myEventsBus;
 
@@ -293,7 +295,8 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
 
     FSRecords.setFlags(id, (directory ? IS_DIRECTORY_FLAG : 0) |
                            (delegate.isWritable(file) ? 0 : IS_READ_ONLY) |
-                           (delegate.isSymLink(file) ? IS_SYMLINK : 0), true);
+                           (delegate.isSymLink(file) ? IS_SYMLINK : 0) |
+                           (delegate.isSpecialFile(file) ? IS_SPECIAL : 0), true);
   }
 
   public boolean isDirectory(@NotNull final VirtualFile file) {
@@ -343,10 +346,13 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     return (FSRecords.getFlags(getFileId(file)) & IS_SYMLINK) != 0;
   }
 
-  public boolean isWritable(@NotNull final VirtualFile file) {
-    final int id = getFileId(file);
+  @Override
+  public boolean isSpecialFile(@NotNull VirtualFile file) {
+    return (FSRecords.getFlags(getFileId(file)) & IS_SPECIAL) != 0;
+  }
 
-    return (FSRecords.getFlags(id) & IS_READ_ONLY) == 0;
+  public boolean isWritable(@NotNull final VirtualFile file) {
+    return (FSRecords.getFlags(getFileId(file)) & IS_READ_ONLY) == 0;
   }
 
   public void setWritable(@NotNull final VirtualFile file, final boolean writableFlag) throws IOException {
@@ -616,7 +622,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
       boolean ok = true;
       VirtualFile candidate = event.getFile();
       for (VirtualFile file : filesToBeDeleted) {
-        if (VfsUtil.isAncestor(file, candidate, false)) {
+        if (VfsUtilCore.isAncestor(file, candidate, false)) {
           ok = false;
           break;
         }

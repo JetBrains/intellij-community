@@ -154,11 +154,6 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   }
 
   @Override
-  public boolean isFile(@NotNull final VirtualFile file) {
-    return convertToIOFile(file).isFile();
-  }
-
-  @Override
   public boolean isDirectory(@NotNull final VirtualFile file) {
     return convertToIOFile(file).isDirectory();
   }
@@ -171,6 +166,12 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   @Override
   public boolean isSymLink(@NotNull final VirtualFile file) {
     return SymLinkUtil.isSymLink(file.getPath());
+  }
+
+  @Override
+  public boolean isSpecialFile(@NotNull final VirtualFile file) {
+    final File ioFile = convertToIOFile(file);
+    return ioFile.exists() && !ioFile.isFile() && !ioFile.isDirectory();
   }
 
   @NotNull
