@@ -39,10 +39,11 @@ public class LoggingContributor extends NonCodeMembersContributor {
     build();
 
   @Override
-  public void processDynamicElements(@NotNull PsiType qualifierType, PsiScopeProcessor processor, GroovyPsiElement place, ResolveState state) {
-    if (!(qualifierType instanceof PsiClassType)) return;
-
-    PsiClass psiClass = ((PsiClassType)qualifierType).resolve();
+  public void processDynamicElements(@NotNull PsiType qualifierType,
+                                     PsiClass psiClass,
+                                     PsiScopeProcessor processor,
+                                     GroovyPsiElement place,
+                                     ResolveState state) {
     if (!(psiClass instanceof GrTypeDefinition) || !PsiTreeUtil.isAncestor(psiClass, place, true)) return;
 
     PsiModifierList modifierList = psiClass.getModifierList();

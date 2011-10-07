@@ -42,12 +42,10 @@ public class ConstructorAnnotationsProcessor extends NonCodeMembersContributor {
 
   @Override
   public void processDynamicElements(@NotNull PsiType qualifierType,
+                                     PsiClass psiClass,
                                      PsiScopeProcessor processor,
                                      GroovyPsiElement place,
                                      ResolveState state) {
-    if (!(qualifierType instanceof PsiClassType)) return;
-
-    PsiClass psiClass = ((PsiClassType)qualifierType).resolve();
     if (!(psiClass instanceof GrTypeDefinition) || psiClass.getName() == null) return;
 
     PsiModifierList modifierList = psiClass.getModifierList();

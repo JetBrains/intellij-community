@@ -111,7 +111,7 @@ public abstract class NonCodeMembersContributor {
     return GroovyDslFileIndex.processExecutors(qualifierType, place, processor, state);
   }
 
-  protected static String[] getParentClassNames(PsiClass aClass) {
+  protected static String[] getParentClassNames(@NotNull PsiClass aClass) {
     String[] superClassNames = KEY.getCachedValue(aClass);
     if (superClassNames == null) {
       Set<PsiClass> superClasses = new HashSet<PsiClass>();
