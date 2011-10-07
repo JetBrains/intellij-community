@@ -45,6 +45,10 @@ public class AndroidDrawableResourcesDomTest extends AndroidDomTest {
     doTestHighlighting();
   }
 
+ public void testStateListHighlighting1() throws Throwable {
+    doTestHighlighting();
+  }
+
   public void testStateListCompletion1() throws Throwable {
     doTestCompletion();
   }
@@ -62,6 +66,10 @@ public class AndroidDrawableResourcesDomTest extends AndroidDomTest {
   }
 
   public void testStateListCompletion5() throws Throwable {
+    doTestCompletion();
+  }
+
+  public void testStateListCompletion6() throws Throwable {
     doTestCompletion();
   }
 
