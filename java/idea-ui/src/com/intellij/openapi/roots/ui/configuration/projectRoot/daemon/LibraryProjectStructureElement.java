@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.impl.libraries.ApplicationLibraryTable;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.libraries.Library;
@@ -131,7 +132,9 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
   @Override
   public boolean shouldShowWarningIfUnused() {
     final LibraryTable libraryTable = myLibrary.getTable();
-    return libraryTable != null && LibraryTablesRegistrar.PROJECT_LEVEL.equals(libraryTable.getTableLevel());
+    if (libraryTable == null) return false;
+    return LibraryTablesRegistrar.PROJECT_LEVEL.equals(libraryTable.getTableLevel())
+        || LibraryTablesRegistrar.APPLICATION_LEVEL.equals(libraryTable.getTableLevel()) && !ApplicationLibraryTable.getApplicationTable().isUsedInOtherProjects(myLibrary, myContext.getProject());
   }
 
   @Override
