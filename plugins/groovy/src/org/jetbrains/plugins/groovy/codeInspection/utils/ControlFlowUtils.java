@@ -758,6 +758,9 @@ public class ControlFlowUtils {
           final GrReferenceExpression ref = (GrReferenceExpression)element;
           if (ref.isQualified() || ref.resolve() != var) return;
         }
+        if (!((ReadWriteVariableInstruction)instruction).getVariableName().equals(var.getName())) {
+          return;
+        }
 
         bitSet.clear();
         bitSet.set(instruction.num());

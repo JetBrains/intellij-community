@@ -140,7 +140,9 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     if (scope instanceof GrClosableBlock) {
       buildFlowForClosure((GrClosableBlock)scope);
     }
-    scope.accept(this);
+    else {
+      scope.accept(this);
+    }
 
     final InstructionImpl end = startNode(null);
     checkPending(end); //collect return edges
@@ -173,7 +175,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
           if (!(refExpr.getParent() instanceof GrCall)) {
             final String refName = refExpr.getReferenceName();
             if (!hasDeclaredVariable(refName, closure, refExpr)) {
-              names.add(refName);
+              //names.add(refName);
             }
           }
         }
@@ -222,6 +224,11 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     //do not go inside closures except gstring injections
     if (closure.getParent() instanceof GrStringInjection) {
       super.visitClosure(closure);
+    }
+    else {
+      //create instruction for closure to use it in inline local refactoring
+      final InstructionImpl i = new InstructionImpl(closure, myInstructionNumber++);
+      addNode(i);
     }
   }
 
