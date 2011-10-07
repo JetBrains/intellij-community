@@ -273,7 +273,7 @@ public class EventLog implements Notifications {
 
     @Override
     public void projectClosed() {
-      getApplicationComponent().myModel.setStatusMessage(null);
+      getApplicationComponent().myModel.setStatusMessage(null, 0);
     }
 
     private void printNotification(final Notification notification) {

@@ -111,7 +111,7 @@ class EventLogConsole {
           notification.expire();
           myProjectModel.removeNotification(notification);
         }
-        myProjectModel.setStatusMessage(null);
+        myProjectModel.setStatusMessage(null, 0);
         final Editor editor = e.getData(PlatformDataKeys.EDITOR);
         if (editor != null) {
           editor.getDocument().deleteString(0, editor.getDocument().getTextLength());

@@ -36,6 +36,7 @@ import java.util.*;
 public class LogModel implements Disposable {
   private final Map<Notification, Long> myNotifications = new LinkedHashMap<Notification, Long>();
   private Notification myStatusMessage;
+  private long myStatusTime;
   private final Project myProject;
   final Map<Notification, Runnable> removeHandlers = new THashMap<Notification, Runnable>();
 
@@ -45,13 +46,14 @@ public class LogModel implements Disposable {
   }
 
   void addNotification(Notification notification) {
+    long stamp = System.currentTimeMillis();
     NotificationDisplayType type = NotificationsConfigurationImpl.getSettings(notification.getGroupId()).getDisplayType();
     if (notification.isImportant() || (type != NotificationDisplayType.NONE && type != NotificationDisplayType.TOOL_WINDOW)) {
       synchronized (myNotifications) {
-        myNotifications.put(notification, System.currentTimeMillis());
+        myNotifications.put(notification, stamp);
       }
     }
-    setStatusMessage(notification);
+    setStatusMessage(notification, stamp);
   }
 
   List<Notification> takeNotifications() {
@@ -62,11 +64,12 @@ public class LogModel implements Disposable {
     }
   }
 
-  void setStatusMessage(@Nullable Notification statusMessage) {
+  void setStatusMessage(@Nullable Notification statusMessage, long stamp) {
     synchronized (myNotifications) {
       if (myStatusMessage == statusMessage) return;
 
       myStatusMessage = statusMessage;
+      myStatusTime = stamp;
     }
     StatusBar.Info.set("", myProject, EventLog.LOG_REQUESTOR);
   }
@@ -74,7 +77,7 @@ public class LogModel implements Disposable {
   @Nullable 
   Pair<Notification, Long> getStatusMessage() {
     synchronized (myNotifications) {
-      return myStatusMessage == null ? null : Pair.create(myStatusMessage, myNotifications.get(myStatusMessage));
+      return myStatusMessage == null ? null : Pair.create(myStatusMessage, myStatusTime);
     }
   }
 
@@ -120,12 +123,19 @@ public class LogModel implements Disposable {
   private void setStatusToImportant() {
     ArrayList<Notification> notifications = getNotifications();
     Collections.reverse(notifications);
-    setStatusMessage(ContainerUtil.find(notifications, new Condition<Notification>() {
+    Notification message = ContainerUtil.find(notifications, new Condition<Notification>() {
       @Override
       public boolean value(Notification notification) {
         return notification.isImportant();
       }
-    }));
+    });
+    if (message == null) {
+      setStatusMessage(message, 0);
+    } else {
+      Long notificationTime = getNotificationTime(message);
+      assert notificationTime != null;
+      setStatusMessage(message, notificationTime);
+    }
   }
 
   public Project getProject() {
