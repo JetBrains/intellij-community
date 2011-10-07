@@ -31,10 +31,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.wm.FocusCommand;
-import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
@@ -774,9 +771,48 @@ public class AbstractPopup implements JBPopup {
           }
 
           _requestFocus();
-          afterShow.run();
 
-          return new ActionCallback.Done();
+          final ActionCallback result = new ActionCallback();
+
+          final Runnable afterShowRunnable = new Runnable() {
+            @Override
+            public void run() {
+              afterShow.run();
+              result.setDone();
+            }
+          };
+          if (myNativePopup) {
+            final FocusRequestor furtherRequestor = getFocusManager().getFurtherRequestor();
+            SwingUtilities.invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                if (isDisposed()) {
+                  removeActivity(myActivityKey);
+                  return;
+                }
+
+                furtherRequestor.requestFocus(new FocusCommand() {
+                  @Override
+                  public ActionCallback run() {
+                    if (isDisposed()) {
+                      removeActivity(myActivityKey);
+                      return new ActionCallback.Done();
+                    }
+
+                    _requestFocus();
+
+                    afterShowRunnable.run();
+
+                    return new ActionCallback.Done();
+                  }
+                }, true);
+              }
+            });
+          } else {
+            afterShowRunnable.run();
+          }
+
+          return result;
         }
       }, true).doWhenRejected(new Runnable() {
         @Override
